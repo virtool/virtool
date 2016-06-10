@@ -27,7 +27,7 @@ var Tasks = React.createClass({
 
     render: function () {
 
-        var taskComponents = ['import_reads', 'pathoscope', 'rebuild', 'add_host'].map(function (taskPrefix) {
+        var taskComponents = ['import_reads', 'pathoscope', 'nuvs', 'rebuild', 'add_host'].map(function (taskPrefix) {
             return <Task key={taskPrefix} taskPrefix={taskPrefix} {...this.props} />;
         }, this);
 
