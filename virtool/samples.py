@@ -272,10 +272,10 @@ class Collection(virtool.database.Collection):
             })
 
             yield self.dispatcher.collections["jobs"].new(
-                "analyze",
+                task_args["algorithm"],
                 task_args,
-                self.settings.get("analyze_proc"),
-                self.settings.get("analyze_mem"),
+                self.settings.get(task_args["algorithm"] + "_proc"),
+                self.settings.get(task_args["algorithm"] + "_mem"),
                 username,
                 job_id=job_id
             )

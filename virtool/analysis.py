@@ -10,8 +10,9 @@ class Analyze(virtool.job.Job):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        self.analysis_id = self.task_args["analysis_id"]
         self.sample_id = self.task_args["sample_id"]
+        self.analysis_id = self.task_args["analysis_id"]
+
 
         # Get a connection to the virtool database
         self.log("Setting up database connection")
@@ -19,7 +20,6 @@ class Analyze(virtool.job.Job):
 
         # Get the sample document and the subtraction host document.
         self.sample = self.database["samples"].find_one({"_id": self.sample_id})
-
         self.host = self.database["hosts"].find_one({"_id": self.sample["subtraction"]})
 
         # Get the number of reads in the library.
@@ -56,98 +56,27 @@ class Analyze(virtool.job.Job):
         # The path to the directory where all analysis result files will be written.
         self.paths["analysis"] = os.path.join(self.paths["sample"], "analysis", self.analysis_id)
 
+
+class Pathoscope(Analyze):
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
         self.intermediate = dict()
         self.results = dict()
 
-        self.stage_list = [
+        self.stage_list += [
             self.mk_analysis_dir,
             self.map_viruses,
-            self.identify_candidate_viruses
+            self.identify_candidate_viruses,
+            self.generate_isolate_fasta,
+            self.build_isolate_index,
+            self.map_isolates,
+            self.map_host,
+            self.subtract_virus_mapping,
+            self.pathoscope,
+            self.import_results
         ]
-
-        if self.task_args["algorithm"] == "pathoscope":
-            self.stage_list += [
-                self.generate_isolate_fasta,
-                self.build_isolate_index,
-                self.map_isolates,
-                self.map_host,
-                self.subtract_virus_mapping,
-                self.pathoscope,
-                self.import_results
-            ]
-        else:
-            self.stage_list += [
-                self.generate_sigma_reference,
-                self.sigma_alignment
-            ]
-
-    def on_complete(self):
-        pass
-
-    def generate_sigma_reference(self):
-        ref_path = os.path.join(self.paths["analysis"], "ref")
-
-        os.mkdir(ref_path)
-
-        total_isolate_count = sum([len(virus["isolates"]) for virus in self.intermediate["candidates"]])
-        built_isolate_count = 0
-        last_reported_progress = 0
-
-        for virus in self.intermediate["candidates"]:
-
-            for isolate in virus["isolates"]:
-                # Make a dir for the isolate.
-                isolate_path = os.path.join(ref_path, isolate["isolate_id"])
-                os.mkdir(isolate_path)
-
-                # Make a path for the index FASTA file and the Bowtie2 index prefix.
-                index_path = os.path.join(isolate_path, isolate["isolate_id"])
-                fasta_path = index_path + ".fa"
-
-                with open(fasta_path, "w") as fasta:
-                    for sequence in isolate["sequences"]:
-                        assert len(sequence["sequence"]) > 0
-                        fasta.write(">{}\n{}\n".format(sequence["_id"], sequence["sequence"]))
-
-                self.run_process(['bowtie2-build', fasta_path, index_path])
-
-                built_isolate_count += 1
-
-                stage_progress = built_isolate_count / total_isolate_count
-
-                if stage_progress - last_reported_progress > 0.5:
-                    self.update_stage_progress(stage_progress)
-
-    def sigma_alignment(self):
-        files = self.paths["sample"] + "/reads_1.fastq"
-
-        if self.sample["paired"]:
-            files += ("," + self.paths["sample"] + "/reads_2.fastq")
-
-        indexes = os.listdir(os.path.join(self.paths["analysis"], "ref"))
-
-        alignment_path = os.listdir(os.path.join(self.paths["analysis"], "sigma_alignments_output"))
-
-        index_count = 0
-
-        for index in indexes:
-            index_path = os.path.join(self.paths["analysis"], "ref", index)
-
-            command = [
-                "bowtie2",
-                "-p", str(self.proc),
-                "--very-fast-local",
-                "--no-unal"
-                "-x", index_path,
-                "-U", files,
-                "-S", os.path.join(alignment_path, index + ".sam")
-            ]
-
-            self.run_process(command)
-
-            index_count += 1
-
-            self.update_stage_progress(index_count / len(indexes))
 
     def mk_analysis_dir(self):
         """ Make a directory for RSEM files within the sample directory """
@@ -442,3 +371,5 @@ class Analyze(virtool.job.Job):
             "_id": self.sample_id,
             "analysis_id": self.analysis_id
         })
+
+

@@ -24,9 +24,13 @@ class Settings:
             "proc": "int",
             "mem": "int",
 
-            "analyze_proc": "int",
-            "analyze_mem": "int",
-            "analyze_inst": "int",
+            "pathoscope_proc": "int",
+            "pathoscope_mem": "int",
+            "pathoscope_inst": "int",
+
+            "nuvs_proc": "int",
+            "nuvs_mem": "int",
+            "nuvs_inst": "int",
             
             "import_reads_proc": "int",
             "import_reads_mem": "int",
@@ -73,9 +77,13 @@ class Settings:
             "proc": 8,
             "mem": 16,
 
-            "analyze_proc": 6,
-            "analyze_mem": 36,
-            "analyze_inst": 6,
+            "pathoscope_proc": 6,
+            "pathoscope_mem": 24,
+            "pathoscope_inst": 6,
+
+            "nuvs_proc": 6,
+            "nuvs_mem": 24,
+            "nuvs_inst": 6,
 
             "import_reads_proc": 4,
             "import_reads_mem": 4,

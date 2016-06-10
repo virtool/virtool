@@ -32,16 +32,16 @@ class Job(multiprocessing.Process):
     def __init__(self, _id, settings, message_queue, task, task_args, proc, mem):
         super(Job, self).__init__()
 
-        # A dictionary of server settings
+        # A dictionary of server settings.
         self.settings = settings
 
-        # Used to communicate with the server
+        # Used to communicate with the server.
         self.queue = message_queue
 
-        # The job's database _id
+        # The job's database _id.
         self._id = _id
 
-        # The task name
+        # The task name.
         self.task = task
 
         self.task_args = task_args
@@ -115,7 +115,7 @@ class Job(multiprocessing.Process):
                     # Re-raise the exception so it can be handled outside the func execution loop.
                     raise JobError
 
-                # An error has occured. Handle and parse the error and traceback using the handle_error method.
+                # An error has occurred. Handle and parse the error and traceback using the handle_error method.
                 else:
                     self.error = {
                         "message": exception,

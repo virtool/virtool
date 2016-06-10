@@ -13,14 +13,14 @@ import virtool.database
 from virtool.hosts import AddHost
 from virtool.samples import ImportReads
 from virtool.indexes import Rebuild
-from virtool.analysis import Analyze
+from virtool.analysis import Pathoscope
 
 logger = logging.getLogger(__name__)
 
 #: A dict containing keyed task names with their associated :class:`~.job.Job` subclasses as values.
 TASK_CLASSES = {
     "rebuild": Rebuild,
-    "analyze": Analyze,
+    "pathoscope": Pathoscope,
     "add_host": AddHost,
     "import_reads": ImportReads
 }
