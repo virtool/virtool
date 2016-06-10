@@ -1,0 +1,10 @@
+[Unit]
+Description=Virtool Service
+After=mongod
+
+[Service]
+Type=simple
+PIDFile=/var/run/virtoold/virtoold.pid
+WorkingDirectory=VTPATH
+ExecStart=VTPATH/run
+User=VTUSER

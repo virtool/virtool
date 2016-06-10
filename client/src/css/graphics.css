@@ -1,0 +1,61 @@
+/* Plot containers */
+.plot-div {
+    width: 100%;
+}
+
+/* Plot components */
+.axis path, .axis line {
+    fill: none;
+    stroke: #000;
+    shape-rendering: crispEdges;
+}
+
+.axis-label {
+    text-anchor: middle;
+}
+
+.bar {
+    text-anchor: start;
+}
+
+.bar-group {
+    cursor: pointer;
+}
+
+.bar-group .virus-bar {
+    opacity: 0.7;
+}
+
+.bar-group:hover .virus-bar {
+    opacity: 1;
+}
+
+.bar.virus-bar.coverage {
+    stroke: none;
+    fill: #7aadd9;
+}
+
+.bar.virus-bar.weight {
+    stroke: none;
+    fill: #8ccd8c;
+}
+
+.bar.virus-bar.negative {
+    stroke: none;
+    fill: #e3e3e3;
+}
+
+g.tick {
+    font-size: 12px;
+}
+
+.depth-area {
+	stroke-width: 0;
+	fill: #428bca;
+}
+
+.graph-line {
+    stroke: #428bca;
+    fill: none;
+    stroke-width: 2px;
+}

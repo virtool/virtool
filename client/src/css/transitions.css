@@ -1,0 +1,13 @@
+.tableRow-enter {
+    opacity: 0.01;
+}
+
+.tableRow-enter.tableRow-enter-active {
+    opacity: 1;
+    transition: opacity 400ms ease-in;
+}
+
+.tableRow-leave.tableRow-leave-active {
+    opacity: 0.01;
+    transition: opacity 300ms ease-out;
+}

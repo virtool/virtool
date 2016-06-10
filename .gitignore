@@ -1,0 +1,12 @@
+/misc
+sync.py
+__pycache__
+*.pyc
+/watch
+/data
+/client/node_modules
+/client/dist
+/.idea
+settings.json
+/doc/_build
+/assets/prunus_persica
