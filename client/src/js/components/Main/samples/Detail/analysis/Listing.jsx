@@ -122,6 +122,7 @@ var AnalysisList = React.createClass({
                                 <div style={paddingRight}>
                                     <Input {...selectProps}>
                                         <option value='pathoscope'>Pathoscope</option>
+                                        <option value='nuvs'>NuVs</option>
                                         <option value='sigma' disabled>Sigma</option>
                                     </Input>
                                 </div>
