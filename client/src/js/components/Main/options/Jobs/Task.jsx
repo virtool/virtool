@@ -31,9 +31,11 @@ var Task = React.createClass({
     render: function () {
         var readOnly = _.includes(['add_host', 'rebuild'], this.props.taskPrefix);
 
+        var displayName = this.props.taskPrefix === 'nuvs' ? 'NuVs': _.startCase(this.props.taskPrefix);
+
         return (
             <ListGroupItem>
-                <h5><strong>{_.startCase(this.props.taskPrefix)}</strong></h5>
+                <h5><strong>{displayName}</strong></h5>
                 <Row>
                     <Col md={4}>
                         <TaskField {...this.props} resource='proc' readOnly={readOnly} />
