@@ -225,6 +225,8 @@ class Collection(virtool.database.Collection):
         # Get list of samples from task_args and start a job for each one
         samples = data.pop("samples")
 
+        algorithm = data.pop("algorithm")
+
         # Update the data dictionary with the username of the job submitter.
         data["username"] = username
 
@@ -272,10 +274,10 @@ class Collection(virtool.database.Collection):
             })
 
             yield self.dispatcher.collections["jobs"].new(
-                task_args["algorithm"],
+                algorithm,
                 task_args,
-                self.settings.get(task_args["algorithm"] + "_proc"),
-                self.settings.get(task_args["algorithm"] + "_mem"),
+                self.settings.get(algorithm + "_proc"),
+                self.settings.get(algorithm + "_mem"),
                 username,
                 job_id=job_id
             )
