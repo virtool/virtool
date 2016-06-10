@@ -106,12 +106,12 @@ def random_alphanumeric(length=6, exclude_list=None):
     :rtype: string
 
     """
-    candidate = binascii.hexlify(os.urandom(length)).decode()[0:length]
+    candidate = binascii.hexlify(os.urandom(length * 3)).decode()[0:length]
 
     if not exclude_list or candidate not in exclude_list:
         return candidate
 
-    random_alphanumeric(length, exclude_list)
+    return random_alphanumeric(length, exclude_list)
 
 
 def get_db_client(settings, sync=False):
