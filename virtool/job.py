@@ -162,8 +162,6 @@ class Job(multiprocessing.Process):
         if self.do_cleanup:
             self.cleanup()
 
-        self.on_complete()
-
         # Write the job log to file and clear the log data from the database to save memory.
         write_log(self.settings["data_path"] + "/logs/jobs/" + self._id + ".log", self.log_list)
 
@@ -172,9 +170,6 @@ class Job(multiprocessing.Process):
 
         if had_error:
             self.update_status(state="error", stage=self.stage, error=self.error)
-
-    def on_complete(self):
-        pass
 
     def handle_sigterm(self, *args, **kwargs):
         self.log("Got a termination signal. Raising Termination exception. {} {}".format(repr(args), repr(kwargs)))
