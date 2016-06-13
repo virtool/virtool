@@ -158,24 +158,14 @@ class Collection(virtool.database.Collection):
             if name_count > 0:
                 return False, dict(message="Sample name already exists.")
 
-        # Generate a new sample _id and make sure it is unique.
-        _id = None
-
-        username = transaction.connection.user["_id"]
-
-        while not _id:
-            candidate = virtool.utils.random_alphanumeric(6)
-            found_candidate = yield self.find_one({"_id": candidate}, {"_id": True})
-
-            if not found_candidate:
-                _id = candidate
+        sample_id = yield self.get_new_id()
 
         self.excluded_files += data["files"]
 
         # Construct a new sample entry
         data.update({
-            "_id": _id,
-            "username": username
+            "_id": sample_id,
+            "username": transaction.connection.user["_id"]
         })
 
         sample_group_setting = self.dispatcher.settings.get("sample_group")
@@ -217,7 +207,7 @@ class Collection(virtool.database.Collection):
         # Start the import job
         proc, mem = 2, 6
 
-        self.dispatcher.collections["jobs"].new("import_reads", task_args, proc, mem, username)
+        self.dispatcher.collections["jobs"].new("import_reads", task_args, proc, mem, data["username"])
 
         return True, response
 
@@ -239,27 +229,20 @@ class Collection(virtool.database.Collection):
         data["username"] = username
 
         # A list of _ids that are reserved during the running of this method.
-        used = list()
+        used_ids = list()
 
         index_id, index_version = yield self.dispatcher.collections["indexes"].get_current_index()
 
         # Add an analysis entry and reference and start an analysis job for each sample in samples.
         for sample_id in samples:
             # Generate a unique _id for the analysis entry
-            analysis_id = None
-
-            while not analysis_id:
-                candidate = virtool.utils.random_alphanumeric(8)
-                found_candidate = yield self.analyses_collection.find_one({"_id": candidate})
-
-                if not found_candidate and candidate not in used:
-                    analysis_id = candidate
-                    used.append(analysis_id)
+            analysis_id = yield virtool.utils.get_new_document_id(self.analyses_collection, excluded=used_ids)
+            used_ids.append(analysis_id)
 
             # Insert the new analysis entry in the analysis database collection.
             analysis_document = dict(data)
 
-            job_id = yield self.dispatcher.collections["samples"].get_new_id()
+            job_id = yield self.dispatcher.collections["jobs"].get_new_id()
 
             analysis_document.update({
                 "_id": analysis_id,

@@ -128,9 +128,9 @@ def get_new_document_id(motor_collection, excluded=None):
     :rtype: str
 
     """
-    minimal_documents = yield motor_collection.find({}, {"_id": True}).to_list(length=None)
+    existing_ids = yield motor_collection.find({}, {"_id": True}).distinct("_id")
 
-    exclude = (excluded or list()) + [doc["_id"] for doc in minimal_documents]
+    exclude = (excluded or list()) + existing_ids
 
     return random_alphanumeric(length=8, exclude_list=exclude)
 
