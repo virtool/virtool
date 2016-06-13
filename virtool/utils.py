@@ -114,6 +114,14 @@ def random_alphanumeric(length=6, exclude_list=None):
     return random_alphanumeric(length, exclude_list)
 
 
+def get_new_document_id(collection, exclude=None):
+    used_ids = [doc["_id"] for doc in collection.find({}, {"_id": True})]
+
+    exclude = (exclude or list()) + used_ids
+
+    return random_alphanumeric(length=8, exclude_list=exclude)
+
+
 def get_db_client(settings, sync=False):
     """
     Returns a Mongo client connection given a :class:`.virtool.settings.Settings` object. Returns a

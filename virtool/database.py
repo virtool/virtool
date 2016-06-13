@@ -266,6 +266,11 @@ class Collection:
         return len(coerce_list(data))
 
     @virtool.gen.coroutine
+    def get_new_id(self):
+        excluded = yield self.get_all_field_values("_id")
+        return virtool.utils.random_alphanumeric(length=8, exclude_list=excluded)
+
+    @virtool.gen.coroutine
     def get_field(self, query, key):
         """
         Get the value of a field called ``key`` from a single document specified by ``query``.
