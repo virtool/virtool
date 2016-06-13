@@ -144,9 +144,11 @@ class Job(multiprocessing.Process):
 
         except JobError:
             # When an error occurs in the job the JobError exception is raised immediately to stop all execution of task
-            # code. A message is sent to the job manager detailing the error. In reponse, the manager calls the Job's
+            # code. A message is sent to the job manager detailing the error. In response, the manager calls the Job's
             # terminate method. The SIGTERM is caught and the handle_sigterm method is called to cleanly kill the job.
+            had_error = True
 
+            self.update_status(state="error", stage=self.stage, error=self.error)
 
             try:
                 # Wait after the JobError exception while the server gets around to calling the terminate method.
@@ -167,9 +169,6 @@ class Job(multiprocessing.Process):
 
         if was_cancelled:
             self.update_status(state="cancelled")
-
-        if had_error:
-            self.update_status(state="error", stage=self.stage, error=self.error)
 
     def handle_sigterm(self, *args, **kwargs):
         self.log("Got a termination signal. Raising Termination exception. {} {}".format(repr(args), repr(kwargs)))

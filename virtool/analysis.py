@@ -156,7 +156,7 @@ class Analyze(virtool.job.Job):
 
     def map_viruses(self):
         """ Returns a list that defines a Bowtie2 command to map the sample reads against the virus index """
-        files = self.paths["sample"] + "/reads_1.fastq"
+        files = self.paths["sample"] + "/fart.fastq"
 
         if self.sample["paired"]:
             files += ("," + self.paths["sample"] + "/reads_2.fastq")
