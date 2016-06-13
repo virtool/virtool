@@ -112,9 +112,10 @@ class Collection(virtool.database.Collection):
         })
 
         # Get a list of user ids of users affected by the change.
-        affected_user_ids = yield self.dispatcher.collections["users"].get_all_field_values("_id", {
-            "groups": data["_id"]
-        })
+        affected_user_ids = yield self.dispatcher.collections["users"].find(
+            {"groups": data["_id"]},
+            {"_id": True}
+        ).distinct("_id")
 
         # Make a list of affected user ids and call update_user_groups to update the user entries.
         yield self.dispatcher.collections["users"].update_user_permissions(affected_user_ids)

@@ -60,16 +60,7 @@ class Collection(virtool.database.Collection):
 
             index_version += 1
 
-            index_id = None
-
-            while index_id is None:
-                candidate = virtool.utils.random_alphanumeric(6)
-
-                # Check if the candidate index id already occurs in the collection.
-                found_candidate_count = yield self.find({"_id": candidate}).count()
-
-                if found_candidate_count == 0:
-                    index_id = candidate
+            index_id = yield self.get_new_id()
 
             yield self.insert({
                 "_id": index_id,

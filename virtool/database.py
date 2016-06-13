@@ -134,7 +134,7 @@ class Collection:
         """
         query, multi = coerce_query(query)
 
-        ids_to_update = yield self.get_all_field_values("_id", query)
+        ids_to_update = yield self.find(query, {"_id"}).distinct("_id")
 
         if increment_version:
             update["$inc"] = {"_version": 1}
@@ -266,9 +266,9 @@ class Collection:
         return len(coerce_list(data))
 
     @virtool.gen.coroutine
-    def get_new_id(self):
-        excluded = yield self.get_all_field_values("_id")
-        return virtool.utils.random_alphanumeric(length=8, exclude_list=excluded)
+    def get_new_id(self, excluded=None):
+        document_id = yield virtool.utils.get_new_document_id(self.db, excluded)
+        return document_id
 
     @virtool.gen.coroutine
     def get_field(self, query, key):
@@ -295,37 +295,6 @@ class Collection:
             raise KeyError("Could not find field in entry")
         except TypeError:
             raise ValueError("Could not find entry with given _id")
-
-    @virtool.gen.coroutine
-    def get_all_field_values(self, field, query=None, unique=False):
-        """
-        Returns a list of all values in the Mongo collection for the field ``field``. The scope of documents to
-        search for the values can be narrowed using ``query``. Setting ``unique`` to ``True`` will make the function
-        return only unique values.
-
-        :param field: a fields to extract from all matched documents.
-        :type field: str
-
-        :param query: a query used to specify which documents may be included in the field search.
-        :type query: dict
-
-        :param unique: return only unique values if ``True``.
-        :type unique: bool
-
-        :return: field values.
-        :rtype: list
-
-        """
-        query = query or dict()
-
-        results = yield self.find(query, {field: True}).to_list(None)
-
-        values = [document[field] for document in results]
-
-        if unique:
-            return list(set(values))
-
-        return values
 
 
 def coerce_query(query):

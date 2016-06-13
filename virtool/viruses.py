@@ -947,17 +947,14 @@ class Collection(virtool.database.Collection):
         :return: a unique virus id.
 
         """
-        if not used_virus_fields:
-            used_virus_fields = yield self.get_used_virus_fields()
+        excluded = None
 
-        _id = None
+        if used_virus_fields:
+            excluded = used_virus_fields["_id"]
 
-        # Keep generating new ids until a unique one is found. Return it.
-        while not _id:
-            candidate = virtool.utils.random_alphanumeric(6)
+        virus_id = yield virtool.utils.get_new_document_id(self.db, excluded)
 
-            if candidate not in used_virus_fields["_id"]:
-                return candidate
+        return virus_id
 
     @virtool.gen.coroutine
     def get_used_virus_fields(self):

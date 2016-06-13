@@ -194,7 +194,7 @@ class Collection(virtool.database.Collection):
         """
         # Get the "file" field for all added hosts. This will be used to exclude already-added files from the
         # generated file listing.
-        excluded = yield self.get_all_field_values("file", unique=True)
+        excluded = yield self.find({}, {"file": True}).distinct("file")
 
         # Get a list of the host FASTA files minus those already imported to the hosts collection.
         files = yield virtool.utils.list_files(self.fasta_path, excluded)

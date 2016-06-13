@@ -381,7 +381,7 @@ class Collection(virtool.database.Collection):
         """
         # Generate a new random job id.
         if job_id is None:
-            job_id = virtool.utils.random_alphanumeric()
+            job_id = self.get_new_id()
 
         # Insert a document in the database describing the new job.
         response = yield self.insert({

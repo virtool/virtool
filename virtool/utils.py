@@ -113,11 +113,24 @@ def random_alphanumeric(length=6, exclude_list=None):
 
     return random_alphanumeric(length, exclude_list)
 
+@virtool.gen.coroutine
+def get_new_document_id(motor_collection, excluded=None):
+    """
+    Get a unique 8-character alphanumeric id for the given Motor collection.
 
-def get_new_document_id(collection, exclude=None):
-    used_ids = [doc["_id"] for doc in collection.find({}, {"_id": True})]
+    :param motor_collection: the collection to generate a new unique id for.
+    :type motor_collection: :class:`motor.motor_tornado.MotorCollection`
 
-    exclude = (exclude or list()) + used_ids
+    :param exclude: a list of ids to exclude in addition to the extant ids in the collection
+    :type exclude: list
+
+    :return: a random 8-character alphanumeric document id.
+    :rtype: str
+
+    """
+    minimal_documents = yield motor_collection.find({}, {"_id": True}).to_list(length=None)
+
+    exclude = (excluded or list()) + [doc["_id"] for doc in minimal_documents]
 
     return random_alphanumeric(length=8, exclude_list=exclude)
 

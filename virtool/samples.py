@@ -259,7 +259,7 @@ class Collection(virtool.database.Collection):
             # Insert the new analysis entry in the analysis database collection.
             analysis_document = dict(data)
 
-            job_id = virtool.utils.random_alphanumeric()
+            job_id = yield self.dispatcher.collections["samples"].get_new_id()
 
             analysis_document.update({
                 "_id": analysis_id,
