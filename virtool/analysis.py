@@ -17,15 +17,16 @@ class Analyze(virtool.job.Job):
         self.log("Setting up database connection")
         self.database = virtool.utils.get_db_client(self.settings, sync=True)
 
-        # Get the sample document and the subtraction host document
+        # Get the sample document and the subtraction host document.
         self.sample = self.database["samples"].find_one({"_id": self.sample_id})
 
         self.host = self.database["hosts"].find_one({"_id": self.sample["subtraction"]})
 
+        # Get the number of reads in the library.
         self.read_count = int(self.sample["quality"]["left"]["count"])
 
         if self.sample["paired"]:
-            self.read_count += int(self.sample["quality"]["right"]["count"])
+            self.read_count *= 2
 
         # Construct path strings that will be used by the job to access relevant files.
         self.paths = dict()
