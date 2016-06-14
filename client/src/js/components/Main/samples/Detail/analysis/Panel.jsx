@@ -12,8 +12,7 @@
 var _ = require('lodash');
 var React = require('react');
 var Panel = require('react-bootstrap/lib/Panel');
-var NuVsReport = require('./NuVs/report.jsx');
-var PathoscopeReport = require('./Pathoscope/report.jsx');
+var AnalysisReport = require('./Report.jsx');
 var Listing = require('./Listing.jsx');
 
 /**
@@ -69,25 +68,13 @@ var AnalysisPanel = React.createClass({
             // Get the analysis document that corresponds to the activeAnalysisId.
             var analysisEntry = _.find(this.props.data.analyses, {_id: this.state.activeAnalysisId});
 
-            if (analysisEntry.algorithm === 'pathoscope') {
-                content = (
-                    <PathoscopeReport
-                        readCount={this.props.data.quality.count}
-                        onBack={this.showListing}
-                        {...analysisEntry}
-                    />
-                );
-            }
-
-            if (analysisEntry.algorithm === 'nuvs') {
-                content = (
-                    <NuVsReport
-                        readCount={this.props.data.quality.count}
-                        onBack={this.showListing}
-                        {...analysisEntry}
-                    />
-                )
-            }
+            content = (
+                <AnalysisReport
+                    readCount={this.props.data.quality.count}
+                    onBack={this.showListing}
+                    {...analysisEntry}
+                />
+            );
         }
 
         return (
