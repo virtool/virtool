@@ -3,6 +3,7 @@ var Alert = require('react-bootstrap/lib/Alert');
 var Table = require('react-bootstrap/lib/Table');
 var Label = require('react-bootstrap/lib/Label');
 var Button = require('react-bootstrap/lib/Button');
+var Panel = require('react-bootstrap/lib/Panel');
 var Numeral = require('numeral');
 
 var Flex = require('virtool/js/components/Base/Flex.jsx');
@@ -198,14 +199,24 @@ var Report = React.createClass({
                 disableControl: disableControl
             };
 
-            var buttonStyle = {
-                padding: '1000% 5px 1000% 5px'
-            };
-
             return (
                 <div>
-                    <ControlBar {...this.state} {...controlProps} />
-                    {dataDisplay}
+                    <Table bordered>
+                        <tbody>
+                            <tr>
+                                <th className='col-md-3'>Viruses Hit</th>
+                                <td className='col-md-9'>{this.props.diagnosis.length}</td>
+                            </tr>
+                            <tr>
+                                <th>Reads Mapped</th>
+                                <td>{this.props.diagnosis.length}</td>
+                            </tr>
+                        </tbody>
+                    </Table>
+
+                    <Panel header={<ControlBar {...this.state} {...controlProps} />}>
+                        {dataDisplay}
+                    </Panel>
                 </div>
             );
 

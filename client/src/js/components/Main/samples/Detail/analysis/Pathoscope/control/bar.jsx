@@ -98,17 +98,15 @@ var ControlBar = React.createClass({
         };
 
         return (
-            <Well bsSize='small'>
-                <Flex>
-                    <Flex.Item>
-                        {buttons}
-                    </Flex.Item>
+            <Flex>
+                <Flex.Item>
+                    {buttons}
+                </Flex.Item>
 
-                    <Flex.Item grow={1} pad={5}>
-                        {level}
-                    </Flex.Item>
-                </Flex>
-            </Well>
+                <Flex.Item grow={1} pad={5}>
+                    {level}
+                </Flex.Item>
+            </Flex>
         );
     }
 

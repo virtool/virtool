@@ -1,9 +1,11 @@
 var _ = require('lodash');
+var Numeral = require('numeral');
 var React = require('react');
 var Row = require('react-bootstrap/lib/Row');
 var Col = require('react-bootstrap/lib/Col');
-var ListGroup = require('react-bootstrap/lib/ListGroup');
-var ListGroupItem = require('react-bootstrap/lib/ListGroupItem');
+var Panel = require('react-bootstrap/lib/Panel');
+var Table = require('react-bootstrap/lib/Table');
+var Input = require('react-bootstrap/lib/Input');
 
 var Icon = require('virtool/js/components/Base/Icon.jsx');
 var PushButton = require('virtool/js/components/Base/PushButton.jsx');
@@ -15,6 +17,8 @@ var NuVsReport = require('./NuVs/report.jsx');
 var AnalysisReport = React.createClass({
 
     render: function () {
+
+        console.log(this.props);
 
         if (this.props.algorithm === 'pathoscope') {
             content = (
@@ -34,27 +38,36 @@ var AnalysisReport = React.createClass({
 
         return (
             <div>
-                <ListGroup>
-                    <ListGroupItem>
-                        <Row>
-                            <Col sm={3}>
-                                {this.props.comments || 'Unnamed Analysis'}
-                            </Col>
-                            <Col sm={3} >
-                                {this.props.algorithm === 'nuvs' ? 'NuVs': _.capitalize(this.props.algorithm)}
-                            </Col>
-                            <Col md={2}>
-                                Index v{this.props.index_version}
-                            </Col>
-                            <Col md={4}>
-                                Created <RelativeTime time={this.props.timestamp} /> by {this.props.username}
-                                <Icon name='arrow-back' onClick={this.props.onBack} pullRight />
-                            </Col>
-                        </Row>
-                    </ListGroupItem>
-                </ListGroup>
+                <Table bordered>
+                    <tbody>
+                        <tr>
+                            <th className='col-md-3'>Nickname</th>
+                            <td className='col-md-9'>{this.props.comments || 'Unnamed Analysis'}</td>
+                        </tr>
+                        <tr>
+                            <th>Algorithm</th>
+                            <td>{this.props.algorithm === 'nuvs' ? 'NuVs': _.capitalize(this.props.algorithm)}</td>
+                        </tr>
+                        <tr>
+                            <th>Library Read Count</th>
+                            <td>{Numeral(this.props.readCount).format()}</td>
+                        </tr>
+                        <tr>
+                            <th>Added</th>
+                            <td><RelativeTime time={this.props.timestamp} /></td>
+                        </tr>
+                        <tr>
+                            <th>User</th>
+                            <td>{this.props.username}</td>
+                        </tr>
+                    </tbody>
+                </Table>
 
                 {content}
+
+                <PushButton bsStyle='primary' onClick={this.props.onBack} block>
+                    <Icon name='arrow-back' /> Back
+                </PushButton>
             </div>
         );
     }
