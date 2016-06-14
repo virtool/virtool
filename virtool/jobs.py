@@ -13,7 +13,7 @@ import virtool.database
 from virtool.hosts import AddHost
 from virtool.samples import ImportReads
 from virtool.indexes import Rebuild
-from virtool.analysis import Pathoscope
+from virtool.analysis import Pathoscope, NuVs
 
 logger = logging.getLogger(__name__)
 
@@ -21,6 +21,7 @@ logger = logging.getLogger(__name__)
 TASK_CLASSES = {
     "rebuild": Rebuild,
     "pathoscope": Pathoscope,
+    "nuvs": NuVs,
     "add_host": AddHost,
     "import_reads": ImportReads
 }
