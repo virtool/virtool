@@ -1,9 +1,11 @@
 import os
 
 import virtool.job
+import virtool.vfam
 import virtool.utils
 import virtool.pathoscope
 
+from Bio import SeqIO
 
 class Analyze(virtool.job.Job):
 
@@ -12,7 +14,6 @@ class Analyze(virtool.job.Job):
 
         self.sample_id = self.task_args["sample_id"]
         self.analysis_id = self.task_args["analysis_id"]
-
 
         # Get a connection to the virtool database
         self.log("Setting up database connection")
@@ -85,7 +86,7 @@ class Pathoscope(Analyze):
 
     def map_viruses(self):
         """ Returns a list that defines a Bowtie2 command to map the sample reads against the virus index """
-        files = self.paths["sample"] + "/fart.fastq"
+        files = self.paths["sample"] + "/reads_1.fastq"
 
         if self.sample["paired"]:
             files += ("," + self.paths["sample"] + "/reads_2.fastq")
@@ -373,3 +374,230 @@ class Pathoscope(Analyze):
         })
 
 
+class NuVs(Analyze):
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self.intermediate = dict()
+        self.results = dict()
+
+        self.stage_list += [
+            self.mk_analysis_dir,
+            self.map_viruses,
+            self.map_host,
+            self.assemble,
+            self.process_fasta,
+            self.vfam,
+            self.import_results
+        ]
+
+        print(self.sample_id)
+        print(self.analysis_id)
+
+    def mk_analysis_dir(self):
+        """ Make a directory for RSEM files within the sample directory """
+        os.mkdir(self.paths["analysis"])
+        self.log("Made analysis directory")
+
+    def map_viruses(self):
+        """ Returns a list that defines a Bowtie2 command to map the sample reads against the virus index """
+        files = self.paths["sample"] + "/reads_1.fastq"
+
+        if self.sample["paired"]:
+            files += ("," + self.paths["sample"] + "/reads_2.fastq")
+
+        command = [
+            "bowtie2",
+            "-p", str(self.proc - 1),
+            "--very-fast-local",
+            "-x", self.paths["viruses"],
+            "--un", self.paths["analysis"] + "/unmapped_viruses.fq",
+            "-U", files
+        ]
+
+        # Run the Bowtie2 command append all STDOUT to a list for use in later stages.
+        self.intermediate["to_viruses_count"] = 0
+        self.intermediate["to_viruses_input"] = self.read_count
+        self.intermediate["last_reported_progress"] = 0
+
+        self.run_process(command, stdout_handler=self.map_viruses_handler)
+
+    def map_viruses_handler(self, line):
+        if not line["data"][0] == "@":
+            self.intermediate["to_viruses_count"] += 1
+
+            stage_progress = self.intermediate["to_viruses_count"] / self.intermediate["to_viruses_input"]
+
+            if (stage_progress - self.intermediate["last_reported_progress"]) > 0.05:
+                self.update_stage_progress(stage_progress)
+                self.intermediate["last_reported_progress"] = stage_progress
+
+    def map_host(self):
+        self.log("Mapping to hosts")
+
+        command = [
+            "bowtie2",
+            "--very-fast-local",
+            "-p", str(self.proc - 1),
+            "-x", self.paths["host"],
+            "--un", self.paths["analysis"] + "/unmapped_hosts.fq",
+            "-U", self.paths["analysis"] + "/unmapped_viruses.fq"
+        ]
+
+        self.intermediate["to_hosts_count"] = 0
+        self.intermediate["last_reported_progress"] = 0
+
+        self.run_process(command, stdout_handler=self.map_host_handler)
+
+        for key in ["to_viruses_count", "to_hosts_count"]:
+            self.results[key] = self.intermediate[key]
+
+    def map_host_handler(self, line):
+        if not line["data"][0] == "@":
+            self.intermediate["to_hosts_count"] += 1
+
+            stage_progress = self.intermediate["to_hosts_count"] / self.intermediate["to_viruses_count"]
+
+            if (stage_progress - self.intermediate["last_reported_progress"]) > 0.05:
+                self.update_stage_progress(stage_progress)
+                self.intermediate["last_reported_progress"] = stage_progress
+
+    def assemble(self):
+        command = [
+            "spades.py",
+            "-t", str(self.proc - 1),
+            "-m", str(self.mem),
+            "-s", os.path.join(self.paths["analysis"], "unmapped_hosts.fq"),
+            "-o", os.path.join(self.paths["analysis"], "spades"),
+            "-k", "21,33,55,77"
+        ]
+
+        self.run_process(command)
+
+    def process_fasta(self):
+        self.results["sequences"] = list()
+        self.results["orfs"] = list()
+
+        index = 0
+
+        for record in SeqIO.parse(os.path.join(self.paths["analysis"], "spades", "contigs.fasta"), "fasta"):
+
+            orf_count = 0
+
+            for strand, nuc in [(+1, record.seq), (-1, record.seq.reverse_complement())]:
+                for frame in range(3):
+                    length = 3 * ((len(record) - frame) // 3)
+                    for pro in nuc[frame: frame + length].translate(11).split("*"):
+                        if len(pro) >= 30:
+                            self.results["orfs"].append({
+                                "index": index,
+                                "orf_index": orf_count,
+                                "pro": str(pro),
+                                "nuc": str(nuc),
+                                "frame": frame,
+                                "strand": strand
+                            })
+
+                            orf_count += 1
+
+            if orf_count > 0:
+                self.results["sequences"].append(str(record.seq))
+                index += 1
+
+        with open(os.path.join(self.paths["analysis"], "candidates.fa"), "w") as candidates:
+            for entry in self.results["orfs"]:
+                candidates.write(">sequence_{}.{}\n{}\n".format(
+                    str(entry["index"]),
+                    str(entry["orf_index"]),
+                    entry["pro"]
+                ))
+
+    def vfam(self):
+        self.results["hmm"] = []
+
+        hmm_path = os.path.join(self.paths["analysis"], "hmm.tsv")
+
+        command = [
+            "hmmscan",
+            "--tblout", hmm_path,
+            "--noali",
+            "--cpu", str(self.proc - 1),
+            os.path.join(self.paths["data"], "hmm/vFam.hmm"),
+            os.path.join(self.paths["analysis"], "candidates.fa")
+        ]
+
+        self.run_process(command)
+
+        annotations = virtool.vfam.Annotations(os.path.join(self.paths["data"], "hmm/annotations"))
+        annotations.guess_definitions()
+
+        hit_path = os.path.join(self.paths["analysis"], "hits.tsv")
+
+        header = [
+            "index",
+            "orf_index",
+            "hit",
+            "definition",
+            "families",
+            "full_e",
+            "full_score",
+            "full_bias",
+            "best_e",
+            "best_bias",
+            "best_score"
+        ]
+
+        with open(hmm_path, "r") as hmm_file:
+            with open(hit_path, "w") as hit_file:
+                hit_file.write(",".join(header))
+
+                for line in hmm_file:
+                    if line.startswith("vFam"):
+                        line = line.split()
+
+                        annotation_id = int(line[0].split("_")[1])
+                        annotation = annotations.find(annotation_id)
+
+                        compound_id = line[2].split("_")[1].split(".")
+
+                        entry = {
+                            "index": int(compound_id[0]),
+                            "orf_index": int(compound_id[1]),
+                            "hit": line[0],
+                            "definition": annotation["definition"],
+                            "families": annotation["families"],
+                            "full_e": float(line[4]),
+                            "full_score": float(line[5]),
+                            "full_bias": float(line[6]),
+                            "best_e": float(line[7]),
+                            "best_bias": float(line[8]),
+                            "best_score": float(line[9])
+                        }
+
+                        self.results["hmm"].append(entry)
+
+                        joined = ",".join([('"' + str(entry[key]) + '"') for key in header])
+
+                        hit_file.write(joined + "\n")
+
+    def import_results(self):
+        print(self.results)
+
+        self.collection_operation("samples", "set_analysis", {
+            "_id": self.sample_id,
+            "analysis_id": self.analysis_id,
+            "analysis": self.results
+        })
+
+        self.collection_operation("indexes", "cleanup_index_files")
+
+    def cleanup(self):
+        # Remove changes to sample entry in database that occurred during the failed analysis process
+        '''
+        self.collection_operation("samples", "_remove_analysis", {
+            "_id": self.sample_id,
+            "analysis_id": self.analysis_id
+        })
+        '''
+        pass

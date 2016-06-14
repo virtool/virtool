@@ -1,6 +1,5 @@
 import sys
 import ssl
-import signal
 import logging
 import importlib
 import tornado.web
@@ -152,11 +151,12 @@ class Application:
 
             sys.exit(1)
 
+        except KeyboardInterrupt:
+            self.handle_interrupt()
+
         # Create IOLoop object and start it.
         logger.debug("Starting IOLoop.")
         self.loop = tornado.ioloop.IOLoop.instance()
-
-        signal.signal(signal.SIGINT, self.handle_interrupt)
 
         self.loop.start()
         logger.debug("Started IOLoop.")

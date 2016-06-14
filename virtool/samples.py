@@ -253,6 +253,7 @@ class Collection(virtool.database.Collection):
                 "index_id": index_id,
                 "index_version": index_version,
                 "sample": sample_id,
+                "algorithm": algorithm,
                 "timestamp": virtool.utils.timestamp()
             })
 
@@ -286,6 +287,8 @@ class Collection(virtool.database.Collection):
 
     @virtool.gen.coroutine
     def set_analysis(self, data):
+        print("CALLED SET ANALYSIS")
+
         # Get the analysis in question and update it with the new data.
         analysis = yield self.analyses_collection.find_one({"_id": data["analysis_id"]})
         analysis.update(data["analysis"])
@@ -374,59 +377,68 @@ class Collection(virtool.database.Collection):
         for analysis in analyses:
             # Only included 'ready' analyses in the detail payload.
             if analysis["ready"] is True:
-                # Holds viruses that have already been fetched from the database. If another isolate of a previously
-                # fetched virus is found, there is no need for a round-trip back to the database.
-                fetched_viruses = dict()
+                if analysis["algorithm"] == "pathoscope":
+                    # Holds viruses that have already been fetched from the database. If another isolate of a previously
+                    # fetched virus is found, there is no need for a round-trip back to the database.
+                    fetched_viruses = dict()
 
-                found_isolates = list()
+                    found_isolates = list()
 
-                annotated = dict()
+                    annotated = dict()
 
-                for accession, hit_document in analysis["diagnosis"].items():
+                    for accession, hit_document in analysis["diagnosis"].items():
 
-                    virus_id = hit_document["virus_id"]
-                    virus_version = hit_document["virus_version"]
+                        virus_id = hit_document["virus_id"]
+                        virus_version = hit_document["virus_version"]
 
-                    if virus_id not in fetched_viruses:
-                        # Get the virus entry (patched to correct version).
-                        _, virus_document, _ = yield self.dispatcher.collections["history"].get_versioned_document(
-                            virus_id,
-                            virus_version + 1
-                        )
+                        if virus_id not in fetched_viruses:
+                            # Get the virus entry (patched to correct version).
+                            _, virus_document, _ = yield self.dispatcher.collections["history"].get_versioned_document(
+                                virus_id,
+                                virus_version + 1
+                            )
 
-                        fetched_viruses[virus_id] = virus_document
+                            fetched_viruses[virus_id] = virus_document
 
-                        annotated[virus_id] = {
-                            "_id": virus_id,
-                            "name": virus_document["name"],
-                            "abbreviation": virus_document["abbreviation"],
-                            "isolates": dict()
-                        }
+                            annotated[virus_id] = {
+                                "_id": virus_id,
+                                "name": virus_document["name"],
+                                "abbreviation": virus_document["abbreviation"],
+                                "isolates": dict()
+                            }
 
-                    virus_document = fetched_viruses[virus_id]
+                        virus_document = fetched_viruses[virus_id]
 
-                    for isolate in virus_document["isolates"]:
-                        for sequence in isolate["sequences"]:
-                            if sequence["_id"] == accession:
-                                isolate_id = isolate["isolate_id"]
+                        for isolate in virus_document["isolates"]:
+                            for sequence in isolate["sequences"]:
+                                if sequence["_id"] == accession:
+                                    isolate_id = isolate["isolate_id"]
 
-                                if isolate_id not in found_isolates:
-                                    reduced_isolate = {key: isolate[key] for key in isolate_fields}
-                                    reduced_isolate["hits"] = list()
-                                    annotated[virus_id]["isolates"][isolate_id] = reduced_isolate
-                                    found_isolates.append(isolate["isolate_id"])
+                                    if isolate_id not in found_isolates:
+                                        reduced_isolate = {key: isolate[key] for key in isolate_fields}
+                                        reduced_isolate["hits"] = list()
+                                        annotated[virus_id]["isolates"][isolate_id] = reduced_isolate
+                                        found_isolates.append(isolate["isolate_id"])
 
-                                hit = dict(hit_document)
-                                hit.update({key: sequence[key] for key in sequence_fields})
-                                hit["accession"] = accession
+                                    hit = dict(hit_document)
+                                    hit.update({key: sequence[key] for key in sequence_fields})
+                                    hit["accession"] = accession
 
-                                annotated[virus_id]["isolates"][isolate_id]["hits"].append(hit)
+                                    annotated[virus_id]["isolates"][isolate_id]["hits"].append(hit)
 
-                analysis["diagnosis"] = [annotated[virus_id] for virus_id in annotated]
+                    analysis["diagnosis"] = [annotated[virus_id] for virus_id in annotated]
 
         detail["analyses"] = analyses
 
         return detail
+
+    @virtool.gen.synchronous
+    def parse_pathoscope(self, analysis):
+        pass
+
+    @virtool.gen.synchronous
+    def parse_nuvs(self, analysis):
+        pass
 
     @virtool.gen.synchronous
     def parse_detail(self, detail):
