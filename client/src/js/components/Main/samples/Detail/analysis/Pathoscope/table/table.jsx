@@ -59,7 +59,7 @@ var AnalysisTable = React.createClass({
         }, this);
 
         return (
-            <Table>
+            <Table fill>
                 <Header {...this.state} sortTable={this.sortTable} useRelative={this.props.useRelative} />
                 <tbody>
                     {rowComponents}
