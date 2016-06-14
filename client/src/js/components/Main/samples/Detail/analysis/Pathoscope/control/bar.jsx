@@ -100,20 +100,6 @@ var ControlBar = React.createClass({
         return (
             <Well bsSize='small'>
                 <Flex>
-                    <Flex.Item grow={1}>
-                        <div style={titleStyle}>
-                            {this.props.title}
-                        </div>
-                    </Flex.Item>
-
-                    <Flex.Item pad={5}>
-                        <PushButton bsSize='small' onClick={this.props.onBack}>
-                            <Icon name='arrow-back' /> Back
-                        </PushButton>
-                    </Flex.Item>
-                </Flex>
-
-                <Flex>
                     <Flex.Item>
                         {buttons}
                     </Flex.Item>

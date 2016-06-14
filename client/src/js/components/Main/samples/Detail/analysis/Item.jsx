@@ -17,7 +17,6 @@ var React = require('react');
 var Progress = require('rc-progress').Circle;
 var Row = require('react-bootstrap/lib/Row');
 var Col = require('react-bootstrap/lib/Col');
-var ListGroupItem = require('virtool/js/components/Base/PushListGroupItem.jsx');
 
 var Icon = require('virtool/js/components/Base/Icon.jsx');
 var Flex = require('virtool/js/components/Base/Flex.jsx');
@@ -108,6 +107,7 @@ var AnalysisItem = React.createClass({
                     pending={!this.props.ready || this.state.pending}
                     onClick={this.props.canModify ? this.remove: null}
                     style={this.props.canModify ? null: hidden}
+                    pullRight
                 />
             );
         } else {
@@ -130,26 +130,21 @@ var AnalysisItem = React.createClass({
 
         return (
             <div className={itemClass} onClick={this.handleClick}>
-                <Flex>
-                    <Flex.Item grow={1}>
-                        <Col sm={3} >
-                            {this.props.comments || 'Unnamed Analysis'}
-                        </Col>
-                        <Col sm={3} >
-                            {_.capitalize(this.props.algorithm)}
-                        </Col>
-                        <Col md={2}>
-                            Index v{this.props.index_version}
-                        </Col>
-                        <Col md={4}>
-                            Created <RelativeTime time={this.props.timestamp} /> by {this.props.username}
-                        </Col>
-                    </Flex.Item>
-
-                    <Flex.Item>
+                <Row>
+                    <Col sm={3} >
+                        {this.props.comments || 'Unnamed Analysis'}
+                    </Col>
+                    <Col sm={3} >
+                        {this.props.algorithm === 'nuvs' ? 'NuVs': _.capitalize(this.props.algorithm)}
+                    </Col>
+                    <Col md={2}>
+                        Index v{this.props.index_version}
+                    </Col>
+                    <Col md={4}>
+                        Created <RelativeTime time={this.props.timestamp} /> by {this.props.username}
                         {rightIcon}
-                    </Flex.Item>
-                </Flex>
+                    </Col>
+                </Row>
             </div>
         );
     }
