@@ -485,21 +485,45 @@ class NuVs(Analyze):
 
             orf_count = 0
 
-            for strand, nuc in [(+1, record.seq), (-1, record.seq.reverse_complement())]:
+            for strand, dna in [(+1, record.seq), (-1, record.seq.reverse_complement())]:
                 for frame in range(3):
-                    length = 3 * ((len(record) - frame) // 3)
-                    for pro in nuc[frame: frame + length].translate(11).split("*"):
-                        if len(pro) >= 30:
-                            self.results["orfs"].append({
-                                "index": index,
-                                "orf_index": orf_count,
-                                "pro": str(pro),
-                                "nuc": str(nuc),
-                                "frame": frame,
-                                "strand": strand
-                            })
 
-                            orf_count += 1
+                    framed = dna[frame:]
+                    translated = str(framed.translate(1))
+                    framed = str(framed)
+
+                    translation = [(framed[3 * i: 3 * i + 3], aa) for i, aa in enumerate(translated)]
+
+                    pro = list()
+                    nuc = list()
+
+                    pos = 1
+
+                    for i, codon in enumerate(translation):
+                        if codon[1] == "*":
+                            if len(pro) > 30:
+                                self.results["orfs"].append({
+                                    "index": 1,
+                                    "orf_index": 1,
+                                    "pro": "".join(pro),
+                                    "nuc": "".join(nuc),
+                                    "frame": frame,
+                                    "strand": strand,
+                                    "pos": (pos, 1 + 3 * i)
+                                })
+
+                                orf_count += 1
+
+                            pos = None
+
+                            nuc = list()
+                            pro = list()
+
+                        else:
+                            pos = pos or 1 + 3 * i
+
+                            nuc.append(codon[0])
+                            pro.append(codon[1])
 
             if orf_count > 0:
                 self.results["sequences"].append(str(record.seq))
