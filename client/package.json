@@ -5,6 +5,7 @@
   "devDependencies": {
     "bluebird": "^3.3.5",
     "clean-webpack-plugin": "^0.1.8",
+    "jquery": "^3.0.0",
     "rc-progress": "^1.0.4",
     "reqwest": "^2.0.5"
   },

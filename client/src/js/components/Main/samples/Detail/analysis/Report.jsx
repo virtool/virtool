@@ -17,9 +17,7 @@ var NuVsReport = require('./NuVs/report.jsx');
 var AnalysisReport = React.createClass({
 
     render: function () {
-
-        console.log(this.props);
-
+        
         if (this.props.algorithm === 'pathoscope') {
             content = (
                 <PathoscopeReport
