@@ -7,7 +7,7 @@ var ButtonToolbar = require('react-bootstrap/lib/ButtonToolbar');
 
 var Icon = require('virtool/js/components/Base/Icon.jsx');
 var Flex = require('virtool/js/components/Base/Flex.jsx');
-var PushButton = require('virtool/js/components/Base/PushButton.jsx');
+var Button = require('virtool/js/components/Base/PushButton.jsx');
 
 var ControlBar = React.createClass({
 
@@ -34,16 +34,30 @@ var ControlBar = React.createClass({
             <Flex>
                 <Flex.Item>
                     <ButtonGroup>
-                        <PushButton active={this.props.mode === 'composite'} {...buttonProps} onClick={this.composite}>
+                        <Button active={this.props.mode === 'composite'} {...buttonProps} onClick={this.composite}>
                             <Icon name='bars' /> Composite
-                        </PushButton>
-                        <PushButton active={this.props.mode === 'hmm'} {...buttonProps} onClick={this.hmm}>
+                        </Button>
+
+                        <Button active={this.props.mode === 'hmm'} {...buttonProps} onClick={this.hmm}>
                             <Icon name='search' /> HMMs
-                        </PushButton>
-                        <PushButton active={this.props.mode === 'orf'} {...buttonProps} onClick={this.orf}>
+                        </Button>
+
+                        <Button active={this.props.mode === 'orf'} {...buttonProps} onClick={this.orf}>
                             <Icon name='' /> ORFs
-                        </PushButton>
+                        </Button>
                     </ButtonGroup>
+                </Flex.Item>
+
+                <Flex.Item pad={5}>
+                    <ButtonToolbar>
+                        <Button active={this.props.filterHMM} {...buttonProps} onClick={this.props.toggleFilterHMM}>
+                            <Icon name='filter' /> Filter HMM
+                        </Button>
+
+                        <Button active={this.props.filterORF} {...buttonProps} onClick={this.props.toggleFilterORF}>
+                            <Icon name='filter' /> Filter ORF
+                        </Button>
+                    </ButtonToolbar>
                 </Flex.Item>
             </Flex>
         );

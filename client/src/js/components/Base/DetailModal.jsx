@@ -64,11 +64,14 @@ var DetailModal = React.createClass({
 
     handleExited: function () {
         this.setState({
-            pending: true
+            pending: true,
+            data: null
         });
     },
 
     receivedDetail: function (data) {
+        window.modalData = data;
+
         this.setState({
             pending: false,
             data: data
@@ -87,13 +90,15 @@ var DetailModal = React.createClass({
     },
 
     render: function () {
-        
+
+        console.log('modal rendering');
+
         var modalContent;
         var show = Boolean(this.props.target);
         
         if (!this.state.pending) {
             var ContentComponent = this.props.contentComponent;
-            modalContent = <ContentComponent key='main' detail={this.state.data} {...this.props} />;
+            modalContent = <ContentComponent key='main' detail={_.cloneDeep(this.state.data)} {...this.props} />;
         } else {
             var loadingStyle = {
                 marginTop: '35px',

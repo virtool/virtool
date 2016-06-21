@@ -324,6 +324,7 @@ div.tooltip {
     border: 1px solid rgba(0, 0, 0, 0.2);
     position: fixed;
     opacity: 1;
+
 }
 
 div.tooltip-header {
@@ -546,4 +547,29 @@ div.div-button {
 div.div-button:hover {
     background-color: #f5f5f5;
     border: 1px solid #adadad;
+}
+
+ul.nav.nav-tabs a,
+ul.nav.nav-tabs li:focus {
+    outline: none;
+}
+
+.orf-bar {
+    opacity: 0.8;
+}
+
+.orf-bar:hover {
+    opacity: 1;
+}
+
+.orf-bar line {
+    stroke: #adadad;
+}
+
+.orf-bar.active {
+    cursor: pointer;
+}
+
+.orf-bar.active line {
+    stroke: #337AB7;
 }

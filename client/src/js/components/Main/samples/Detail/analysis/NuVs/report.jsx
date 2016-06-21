@@ -20,35 +20,67 @@ var Report = React.createClass({
 
     getInitialState: function () {
         return {
-            mode: 'hmm',
-            significantHMMOnly: true
+            mode: 'composite',
+            filterHMM: true,
+            filterORF: true
         };
     },
 
+    toggleFilterHMM: function () {
+        this.setState({
+            filterHMM: !this.state.filterHMM
+        });
+    },
+
+    toggleFilterORF: function () {
+        this.setState({
+            filterORF: !this.state.filterORF
+        });
+    },
+
     setMode: function (mode) {
-        console.log('mode: ' + mode);
         this.setState({
             mode: mode
         });
     },
 
     render: function () {
-        console.log(this.props);
 
         var hmms = this.props.hmm;
 
-        if (this.state.significantHMMOnly) {
+        if (this.state.filterHMM) {
             hmms = _.filter(hmms, function (hmm) {
-                return hmm.full_e < 0.00001;
+                return hmm.full_e < 10e-15;
             });
         }
 
         hmms = _.sortBy(hmms, 'full_e');
 
+        var orfs = this.props.orfs;
+
+        if (this.state.filterORF) {
+            var orfsToInclude = hmms.map(function (hmm) {
+                return hmm.index + '.' + hmm.orf_index;
+            });
+
+            orfs = _.filter(orfs, function (orf) {
+                return _.includes(orfsToInclude, orf.index + '.' + orf.orf_index);
+            });
+        }
+
         var view;
 
         if (this.state.mode === 'composite') {
-            view = <CompositeView {...this.props} />;
+            view = (
+                <CompositeView
+                    sequences={this.props.sequences}
+                    hmms={hmms}
+                    orfs={orfs}
+
+                    toggleFilterHMM={this.toggleFilterHMM}
+                    toggleFilterORF={this.toggleFilterORF}
+                />
+            );
         }
 
         if (this.state.mode === 'hmm') {
@@ -56,10 +88,18 @@ var Report = React.createClass({
         }
 
         if (this.state.mode === 'orf') {
-            view = <ORFView {...this.props} />;
+            view = <ORFView {...this.props} orfs={orfs} />;
         }
 
-        var control = <Control mode={this.state.mode} setMode={this.setMode} />;
+        var control = (
+            <Control
+                {...this.state}
+                toggleFilterHMM={this.toggleFilterHMM}
+                toggleFilterORF={this.toggleFilterORF}
+                setMode={this.setMode}
+
+            />
+        );
 
         return (
             <div>
