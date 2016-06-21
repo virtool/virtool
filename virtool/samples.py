@@ -287,8 +287,6 @@ class Collection(virtool.database.Collection):
 
     @virtool.gen.coroutine
     def set_analysis(self, data):
-        print("CALLED SET ANALYSIS")
-
         # Get the analysis in question and update it with the new data.
         analysis = yield self.analyses_collection.find_one({"_id": data["analysis_id"]})
         analysis.update(data["analysis"])

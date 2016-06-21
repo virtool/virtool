@@ -392,9 +392,6 @@ class NuVs(Analyze):
             self.import_results
         ]
 
-        print(self.sample_id)
-        print(self.analysis_id)
-
     def mk_analysis_dir(self):
         """ Make a directory for RSEM files within the sample directory """
         os.mkdir(self.paths["analysis"])
@@ -409,7 +406,8 @@ class NuVs(Analyze):
 
         command = [
             "bowtie2",
-            "-p", str(self.proc - 1),
+            "-p", str(self.proc),
+            "-k", str(1),
             "--very-fast-local",
             "-x", self.paths["viruses"],
             "--un", self.paths["analysis"] + "/unmapped_viruses.fq",
@@ -439,7 +437,8 @@ class NuVs(Analyze):
         command = [
             "bowtie2",
             "--very-fast-local",
-            "-p", str(self.proc - 1),
+            "-k", str(1),
+            "-p", str(self.proc),
             "-x", self.paths["host"],
             "--un", self.paths["analysis"] + "/unmapped_hosts.fq",
             "-U", self.paths["analysis"] + "/unmapped_viruses.fq"
@@ -470,7 +469,7 @@ class NuVs(Analyze):
             "-m", str(self.mem),
             "-s", os.path.join(self.paths["analysis"], "unmapped_hosts.fq"),
             "-o", os.path.join(self.paths["analysis"], "spades"),
-            "-k", "21,33,55,77"
+            "-k", "21,33,55,75"
         ]
 
         self.run_process(command)
@@ -483,47 +482,43 @@ class NuVs(Analyze):
 
         for record in SeqIO.parse(os.path.join(self.paths["analysis"], "spades", "contigs.fasta"), "fasta"):
 
+            seq_len = len(record.seq)
+
             orf_count = 0
 
-            for strand, dna in [(+1, record.seq), (-1, record.seq.reverse_complement())]:
-                for frame in range(3):
+            if seq_len > 300:
+                for strand, nuc in [(+1, record.seq), (-1, record.seq.reverse_complement())]:
+                    for frame in range(3):
+                        trans = str(nuc[frame:].translate(1))
+                        trans_len = len(trans)
+                        aa_start = 0
 
-                    framed = dna[frame:]
-                    translated = str(framed.translate(1))
-                    framed = str(framed)
+                        while aa_start < trans_len:
+                            aa_end = trans.find("*", aa_start)
 
-                    translation = [(framed[3 * i: 3 * i + 3], aa) for i, aa in enumerate(translated)]
+                            if aa_end == -1:
+                                aa_end = trans_len
+                            if aa_end - aa_start >= 100:
+                                if strand == 1:
+                                    start = frame + aa_start * 3
+                                    end = min(seq_len, frame + aa_end * 3 + 3)
+                                else:
+                                    start = seq_len - frame - aa_end * 3 - 3
+                                    end = seq_len - frame - aa_start * 3
 
-                    pro = list()
-                    nuc = list()
-
-                    pos = 1
-
-                    for i, codon in enumerate(translation):
-                        if codon[1] == "*":
-                            if len(pro) > 30:
                                 self.results["orfs"].append({
-                                    "index": 1,
-                                    "orf_index": 1,
-                                    "pro": "".join(pro),
-                                    "nuc": "".join(nuc),
+                                    "index": index,
+                                    "orf_index": orf_count,
+                                    "pro": str(trans[aa_start:aa_end]),
+                                    "nuc": str(nuc[start:end]),
                                     "frame": frame,
                                     "strand": strand,
-                                    "pos": (pos, 1 + 3 * i)
+                                    "pos": (start, end)
                                 })
 
                                 orf_count += 1
 
-                            pos = None
-
-                            nuc = list()
-                            pro = list()
-
-                        else:
-                            pos = pos or 1 + 3 * i
-
-                            nuc.append(codon[0])
-                            pro.append(codon[1])
+                            aa_start = aa_end + 1
 
             if orf_count > 0:
                 self.results["sequences"].append(str(record.seq))
@@ -606,7 +601,15 @@ class NuVs(Analyze):
                         hit_file.write(joined + "\n")
 
     def import_results(self):
-        print(self.results)
+        referenced = [entry["index"] for entry in self.results["hmm"]]
+
+        self.results["sequences"] = [
+            {"sequence": seq, "index": i} for i, seq in enumerate(self.results["sequences"]) if i in referenced
+        ]
+
+        retained = [entry["index"] for entry in self.results["sequences"]]
+
+        self.results["orfs"] = [orf for orf in self.results["orfs"] if orf["index"] in retained]
 
         self.collection_operation("samples", "set_analysis", {
             "_id": self.sample_id,
@@ -618,10 +621,7 @@ class NuVs(Analyze):
 
     def cleanup(self):
         # Remove changes to sample entry in database that occurred during the failed analysis process
-        '''
         self.collection_operation("samples", "_remove_analysis", {
             "_id": self.sample_id,
             "analysis_id": self.analysis_id
         })
-        '''
-        pass
