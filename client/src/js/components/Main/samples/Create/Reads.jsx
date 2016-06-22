@@ -96,8 +96,10 @@ var ReadSelector = React.createClass({
 
     render: function () {
 
+        var loweredFilter = this.state.filter.toLowerCase();
+
         var readComponents = _.sortBy(this.state.reads, '_id').map(function (read) {
-            if (read._id.toLowerCase().indexOf(this.state.filter) > -1) {
+            if (read._id.toLowerCase().indexOf(loweredFilter) > -1) {
                 return (
                     <ReadItem
                         key={read._id}
