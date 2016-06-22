@@ -32,7 +32,7 @@ var HTTPOptions = React.createClass({
     },
 
     handleSave: function (data) {
-        this.props.settings.set(data.name, data.value);
+        dispatcher.settings.set(data.name, data.value);
     },
 
     render: function () {
