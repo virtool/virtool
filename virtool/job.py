@@ -174,7 +174,7 @@ class Job(multiprocessing.Process):
         self.log("Got a termination signal. Raising Termination exception. {} {}".format(repr(args), repr(kwargs)))
         raise Termination
 
-    def run_process(self, command, stdout_handler=None, stderr_handler=None, dont_log_stdout=True):
+    def run_process(self, command, stdout_handler=None, stderr_handler=None, dont_log_stdout=True, env=None):
         """
         Wraps :class:`subprocess.POpen`. Takes a command (list) that is run with all output be cleanly handled in
         real time. Also takes handler methods for stdout and stderr lines. These will be called anytime new output is
@@ -182,7 +182,7 @@ class Job(multiprocessing.Process):
         handled just like a Python error.
 
         """
-        self.process = Process(command)
+        self.process = Process(command, env=env)
 
         # Keep checking for output until the process is closed (all output read and process complete).
         while not self.process.closed:
@@ -260,8 +260,8 @@ class Job(multiprocessing.Process):
 
 class Process:
 
-    def __init__(self, command):
-        self.p = subprocess.Popen(command, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    def __init__(self, command, env=None):
+        self.p = subprocess.Popen(command, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=env)
 
         self.stdout = Output(self.p, self.p.stdout)
         self.stderr = Output(self.p, self.p.stderr)
