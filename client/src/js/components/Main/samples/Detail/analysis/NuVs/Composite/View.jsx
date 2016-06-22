@@ -1,56 +1,69 @@
 var d3 = require('d3');
 var React = require('react');
+var Table = require('react-bootstrap/lib/Table');
 var ListGroup = require('react-bootstrap/lib/ListGroup');
-var Diagram = require('./Diagram.jsx');
+var ListGroupItem = require('react-bootstrap/lib/ListGroupItem');
+
+var Icon = require('virtool/js/components/Base/Icon.jsx');
+
+var List = require('./List.jsx');
+var Tip = require('./Tip.jsx');
 
 var Report = React.createClass({
 
-    render: function () {
-        // Get a list of all sequence indexes found in the HMMs.
-        var indexes = _.uniq(_.map(this.props.hmms, 'index'));
+    getInitialState: function () {
+        return {
+            content: null,
+            x: null,
+            y: null
+        };
+    },
 
-        var maxSequenceLength = 0;
+    showPopover: function (d, x, y, container) {
+        if (!this.state.content) {
+            this.setState({
+                content: d,
+                x: x,
+                y: y,
+                container: container
+            });
+        }
+    },
 
-        composites = indexes.map(function (index) {
-            var entry = _.find(this.props.sequences, {index: index});
-
-            if (entry.sequence.length > maxSequenceLength) maxSequenceLength = entry.sequence.length;
-
-            entry.minE = 10;
-
-            entry.subs = _.filter(this.props.orfs, {index: index}).map(function (orf) {
-                var extra = {
-                    hmms: _.filter(this.props.hmms, {index: orf.index, orf_index: orf.orf_index})
-                };
-
-                extra.minE = _.reduce(extra.hmms, function (min, n) {
-                    return n.full_e < min ? n.full_e: min;
-                }, 10);
-
-                if (entry.minE > extra.minE) entry.minE = extra.minE;
-
-                return _.assign({}, orf, extra);
-
-            }, this);
-
-            entry.subs = _.sortBy(entry.subs, 'pos[0]');
-
-            return entry;
-
-        }, this);
-
-        composites = _.sortBy(composites, 'minE');
-
-        console.log(composites[0]);
-
-        var diagramComponents = composites.map(function (composite, index) {
-            return <Diagram key={index} {...composite} maxSequenceLength={maxSequenceLength} />;
+    hidePopover: function () {
+        this.setState({
+            content: null,
+            x: null,
+            y: null,
+            container: null
         });
+    },
+
+    render: function () {
+
+        var tooltip;
+
+        if (this.state.content) {
+            tooltip = (
+                <Tip
+                    x={this.state.x}
+                    y={this.state.y}
+                    content={this.state.content}
+                    container={this.state.container}
+                />
+            );
+        }
 
         return (
-            <ListGroup>
-                {diagramComponents}
-            </ListGroup>
+            <div>
+                <List
+                    {...this.props}
+                    content={this.state.content}
+                    showPopover={this.showPopover}
+                    hidePopover={this.hidePopover}
+                />
+                {tooltip}
+            </div>
         );
     }
 });

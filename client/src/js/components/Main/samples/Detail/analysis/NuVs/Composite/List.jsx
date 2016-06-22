@@ -1,114 +1,73 @@
 var d3 = require('d3');
 var React = require('react');
-var Table = require('react-bootstrap/lib/Table');
 var ListGroup = require('react-bootstrap/lib/ListGroup');
-var ListGroupItem = require('react-bootstrap/lib/ListGroupItem');
 
-var Icon = require('virtool/js/components/Base/Icon.jsx');
-var Tooltip = require('virtool/js/components/Base/Tooltip.jsx');
 var Diagram = require('./Diagram.jsx');
 
+var List = React.createClass({
 
-var Report = React.createClass({
-
-    getInitialState: function () {
-        return {
-            content: null,
-            x: null,
-            y: null
-        };
+    shouldComponentUpdate: function (nextProps) {
+        return (
+            !_.isEqual(nextProps.hmms, this.props.hmms) ||
+            !_.isEqual(nextProps.orfs, this.props.orfs) ||
+            !_.isEqual(nextProps.sequences, this.props.sequences)
+        )
     },
 
-    componentWillReceiveProps: function (nextProps) {
-        
-    },
+    render: function () {// Get a list of all sequence indexes found in the HMMs.
+        var indexes = _.uniq(_.map(this.props.hmms, 'index'));
 
-    showPopover: function (d, x, y) {
-        if (!this.state.content) {
-            this.setState({
-                content: d,
-                x: x,
-                y: y
-            });
-        }
-    },
+        var maxSequenceLength = 0;
 
-    hidePopover: function () {
-        this.setState({
-            content: null,
-            x: null,
-            y: null
-        });
-    },
+        composites = indexes.map(function (index) {
+            var entry = _.find(this.props.sequences, {index: index});
 
-    render: function () {
+            if (entry.sequence.length > maxSequenceLength) maxSequenceLength = entry.sequence.length;
+
+            entry.minE = 10;
+
+            entry.subs = _.filter(this.props.orfs, {index: index}).map(function (orf) {
+                var extra = {
+                    hmms: _.filter(this.props.hmms, {index: orf.index, orf_index: orf.orf_index})
+                };
+
+                extra.minE = _.reduce(extra.hmms, function (min, n) {
+                    return n.full_e < min ? n.full_e: min;
+                }, 10);
+
+                if (entry.minE > extra.minE) entry.minE = extra.minE;
+
+                return _.assign({}, orf, extra);
+
+            }, this);
+
+            entry.subs = _.sortBy(entry.subs, 'pos[0]');
+
+            return entry;
+
+        }, this);
+
+        composites = _.sortBy(composites, 'minE');
 
         var diagramComponents = composites.map(function (composite, index) {
             return (
                 <Diagram
                     key={index}
                     {...composite}
-                    showPopover={this.showPopover}
-                    hidePopover={this.hidePopover}
-                    content={this.state.content}
                     maxSequenceLength={maxSequenceLength}
+                    showPopover={this.props.showPopover}
+                    hidePopover={this.props.hidePopover}
+                    content={this.props.content}
                 />
             );
         }, this);
 
-        var popover;
-
-        if (this.state.content) {
-            var data = this.state.content;
-
-            popover = (
-                <Tooltip x={this.state.x} y={this.state.y} header={'ORF ' + data.orf_index}>
-                    <Table condensed bordered>
-                        <tbody>
-                        <tr>
-                            <td>Candidate Definition</td>
-                            <td>{data.hmms[0].definition}</td>
-                        </tr>
-                        <tr>
-                            <td>E-value</td>
-                            <td>{data.hmms[0].full_e}</td>
-                        </tr>
-                        <tr>
-                            <td>Score</td>
-                            <td>{data.hmms[0].full_score}</td>
-                        </tr>
-                        <tr>
-                            <td>Position</td>
-                            <td>{data.pos[0]} {data.strand === 1 ? '→' : '←'} {data.pos[1]}</td>
-                        </tr>
-                        <tr>
-                            <td>Strand</td>
-                            <td>
-                                <Icon
-                                    name={data.strand === 1 ? 'plus-square': 'minus-square'}
-                                    bsStyle={data.strand === 1 ? 'primary': 'danger'}
-                                />
-                            </td>
-                        </tr>
-                        <tr>
-                            <td>Frame</td>
-                            <td>{data.frame}</td>
-                        </tr>
-                        </tbody>
-                    </Table>
-                </Tooltip>
-            );
-        }
-
         return (
-            <div>
-                <ListGroup>
-                    {diagramComponents}
-                </ListGroup>
-                {popover}
-            </div>
+            <ListGroup>
+                {diagramComponents}
+            </ListGroup>
         );
     }
 });
 
-module.exports = Report;
+module.exports = List;

@@ -7,24 +7,13 @@ var ListGroupItem = require('react-bootstrap/lib/ListGroupItem');
 
 var ContigDiagram = React.createClass({
 
-    getInitialState: function () {
-        return {
-            popoverContent: null,
-            top: null,
-            left: null
-        };
-    },
-
     componentDidMount: function () {
         window.onresize = this.draw;
         this.draw();
     },
 
     shouldComponentUpdate: function (nextProps) {
-        return (
-            !_.isEqual(nextProps.subs.length !== this.props.subs.length) ||
-            !_.isEqual(nextProps.popoverContent, this.props.popoverContent)
-        );
+        return !_.isEqual(nextProps.subs.length !== this.props.subs.length);
     },
 
     componentDidUpdate: function () {
@@ -44,26 +33,14 @@ var ContigDiagram = React.createClass({
 
         window.test = element;
 
-        /*
-        console.log({
-            seqLength: this.props.sequence.length,
-            sequence: this.props.sequence,
-            nucLength: testSub.nuc.length,
-            proLength: testSub.pro.length,
-            strand: testSub.strand,
-            frame: testSub.frame,
-            pos: testSub.pos
-        });
-        */
-
         var margin = {
             top: 15,
             left: 15,
-            bottom: 15,
+            bottom: 25,
             right: 15
         };
 
-        var baseHeight = 33 + 30 * this.props.subs.length;
+        var baseHeight = 43 + 30 * this.props.subs.length;
 
         var width = element.offsetWidth - margin.left - margin.right;
         var height = baseHeight - margin.top - margin.bottom;
@@ -77,8 +54,8 @@ var ContigDiagram = React.createClass({
             'viewBox': '0 -5 10 10',
             'refX': 0,
             'refY': 0,
-            'markerWidth': 2,
-            'markerHeight': 2,
+            'markerWidth': 1.5,
+            'markerHeight': 1.5,
             'orient': 'auto'
         };
 
@@ -88,7 +65,8 @@ var ContigDiagram = React.createClass({
             .attr(markerAttributes)
             .attr({
                 id: 'marker-active',
-                stroke: '#337AB7'
+                stroke: '#337AB7',
+                fill: '#337AB7'
             })
             .append("path")
             .attr("d", 'M0,-5 L10,0 L0,5');
@@ -97,7 +75,8 @@ var ContigDiagram = React.createClass({
             .attr(markerAttributes)
             .attr({
                 id: 'marker-disabled',
-                stroke: '#adadad'
+                stroke: '#adadad',
+                fill: '#adadad'
             })
             .append("path")
             .attr("d", 'M0,-5 L10,0 L0,5');
@@ -111,10 +90,15 @@ var ContigDiagram = React.createClass({
             .range([0, width])
             .domain([0, this.props.maxSequenceLength]);
 
-        var axis = group.append('g')
-            .attr('class', 'x axis');
+        var xAxis = d3.svg.axis()
+            .scale(x)
+            .orient('bottom');
 
-        var contig = group.append('rect')
+        var axis = group.append('g')
+            .attr('class', 'x axis')
+            .attr("transform", "translate(0, " + (height) + ")");
+
+        group.append('rect')
             .attr('x', 0)
             .attr('y', height - 10)
             .attr('width', x(this.props.sequence.length))
@@ -124,26 +108,37 @@ var ContigDiagram = React.createClass({
             .data(this.props.subs);
 
         var subGroups = subs.enter().append('g')
-            .attr('class', function (d) {return 'orf-bar' + (d.hmms.length > 0 ? ' active' : '');} )
-            .style('cursor', 'pointer')
-            .on('mouseenter', function (d) {
-                var mouse = d3.mouse(ReactDOM.findDOMNode(this));
-
-                component.setState({
-                    popoverContent: d,
-                    top: mouse[1],
-                    left: mouse[0]
-                });
+            .attr('class', function (d) {return 'orf-bar' + (d.hmms.length > 0 ? ' active' : '');})
+            .on('click', function (d) {
+                if (d.hmms.length > 0) {
+                    var container = ReactDOM.findDOMNode(component);
+                    var mousePos = d3.mouse(container);
+                    component.props.showPopover(d, mousePos[0], mousePos[1], container);
+                }
+            })
+            .on('mouseleave', function (d) {
+                if (d.hmms.length > 0) {
+                    component.props.hidePopover();
+                }
             });
 
-        subGroups.append('line')
+        subGroups.append('rect')
+            .attr('class', 'orf-bar-background')
+            .attr('x', 0)
+            .attr('y', function (d, i) {return height -  40 - (i * 30);})
+            .attr('width', width)
+            .attr('height', 30);
 
+
+        subGroups.append('line')
             .attr('x1', function (d) {return x(d.pos[d.strand === 1 ? 0: 1]) + (d.strand === 1 ? -10: 0) })
             .attr('x2', function (d) {return x(d.pos[d.strand === 1 ? 1: 0]) + (d.strand === -1 ? 10: 0) })
             .attr('y1', function (d, i) {return height - 36 - (30 * i)})
             .attr('y2', function (d, i) {return height - 36 - (30 * i)})
             .attr('stroke-width', 5)
-            .attr('marker-end', function (d) {return 'url("#marker-' + (d.hmms.length > 0 ? 'active"' : 'disabled"') + ')'});
+            .attr('marker-end', function (d) {
+                return 'url("#marker-' + (d.hmms.length > 0 ? 'active"' : 'disabled"') + ')';
+            });
 
         subGroups.append('text')
             .attr('x', function (d) {
@@ -153,32 +148,18 @@ var ContigDiagram = React.createClass({
             .attr('text-anchor', function (d) {
                 return d.strand === 1 ? 'end': 'start'
             })
-            .text(function (d) { return d.hmms[0].definition });
+            .text(function (d) {
+                return d.hmms.length > 0 ? d.hmms[0].definition: 'Unannotated'
+            });
+
+        axis.call(xAxis);
 
     },
     
     render: function () {
         var divStyle = {
-            height: 33 + 30 * this.props.subs.length
+            height: 43 + 30 * this.props.subs.length
         };
-
-        var popover;
-
-        if (this.state.popoverContent) {
-            var popoverProps = {
-                id: 'sub-detail-popover',
-                title: this.state.popoverContent.hmms[0].definition,
-                positionTop: this.state.top,
-                positionLeft: this.state.left,
-                placement: 'top'
-            };
-
-            popover = (
-                <Popover {...popoverProps}>
-                    Test
-                </Popover>
-            );
-        }
 
         return (
             <ListGroupItem>
@@ -188,8 +169,6 @@ var ContigDiagram = React.createClass({
                 </h5>
                 <div ref='container' style={divStyle}>
                 </div>
-
-                {popover}
             </ListGroupItem>
         );
     }
