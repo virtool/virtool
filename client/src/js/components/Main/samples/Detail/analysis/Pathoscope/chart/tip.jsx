@@ -1,26 +1,18 @@
-var _ = require("lodash");
-var React = require("react");
-var Numeral = require("numeral");
-var Table = require("react-bootstrap/lib/Table");
+var _ = require('lodash');
+var React = require('react');
+var Numeral = require('numeral');
+var Table = require('react-bootstrap/lib/Table');
 
-var Coverage = require("./coverage.jsx");
+var Tooltip = require('virtool/js/components/Base/Tooltip.jsx');
+var Coverage = require('./coverage.jsx');
 
 var formatNumber = function (number) {
-    return Numeral(number).format("0.0000");
+    return Numeral(number).format('0.0000');
 };
 
-var Tooltip = React.createClass({
+var PathoscopeTooltip = React.createClass({
 
     render: function () {
-        var x = this.props.x;
-        var y = this.props.y;
-
-        var tooltipStyle = {
-            left: (x - 10) + "px",
-            top: (y - window.pageYOffset - 10) + "px",
-            zIndex: 10000
-        };
-
         var data = this.props.barGroupData;
 
         var definitionRow;
@@ -61,18 +53,13 @@ var Tooltip = React.createClass({
         );
 
         return (
-            <div className='tooltip' style={tooltipStyle}>
-                <div className='tooltip-header'>
-                    {header}
-                </div>
-                <div className='tooltip-body'>
-                    {table}
-                    {coverage}
-                </div>
-            </div>
+            <Tooltip x={this.props.x} y={this.props.y} header={header}>
+                {table}
+                {coverage}
+            </Tooltip>
         );
     }
 
 });
 
-module.exports = Tooltip;
+module.exports = PathoscopeTooltip;
