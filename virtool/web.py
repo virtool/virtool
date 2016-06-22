@@ -1,3 +1,4 @@
+import os
 import sys
 import ssl
 import logging
@@ -95,6 +96,10 @@ class Application:
         # Define the path where the server will look for the client HTML file. Path depends on the value of the
         # development attribute.
         static_path = "client/dist/" if self.development else "client/"
+
+        if self.development and not os.path.isfile(os.path.join("client/dist/index.html")):
+            static_path = "client/"
+
         logger.debug("Client HTML path is " + static_path)
 
         # Define the path where the server will look for the documentation files.
