@@ -559,12 +559,12 @@ ul.nav.nav-tabs li:focus {
     opacity: 1;
 }
 
-.orf-bar line, path {
+.orf-bar line, .orf-bar path {
     z-index: 10000;
     stroke: gray;
 }
 
-.orf-bar.active line, path {
+.orf-bar.active line, .orf-bar.active path {
     stroke: #337ab7;
 }
 
