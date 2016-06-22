@@ -6,10 +6,10 @@ var Tooltip = React.createClass({
 
         var tooltipStyle = {
             left: (this.props.x - 10) + 'px',
-            top: (this.props.y - 10) + 'px',
+            top: (this.props.y - window.pageYOffset - 10) + 'px',
             zIndex: 10000
         };
-        
+
         var header;
 
         if (this.props.header) {
