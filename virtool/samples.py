@@ -910,12 +910,7 @@ class ImportReads(virtool.job.Job):
 
         """
         # Delete database entry
-        self.collection_operation("samples", "_remove_sample", {"_id": self.sample_id})
-
-        try:
-            shutil.rmtree(self.sample_path)
-        except OSError:
-            pass
+        self.collection_operation("samples", "_remove_sample", [self.sample_id])
 
 
 def check_collection(db_name, data_path, address="localhost", port=27017):
