@@ -56,9 +56,7 @@ function Chart(element, props) {
         var yAxis = d3.svg.axis()
             .scale(y)
             .orient("top");
-
-        var workingHeight = this.barHeight * 1.2 * data.length + this.margin.top + this.margin.bottom;
-
+        
         this.svg.attr("height", this.barHeight * 1.2 * data.length + this.margin.top + this.margin.bottom);
 
         var bars = this.group.selectAll(".bar-group")
@@ -76,8 +74,8 @@ function Chart(element, props) {
                 select(nextLevel, d[target]);
             })
             .on("mouseenter", function (d) {
-                    props.handleEnterBarGroup(d, d3.event.pageX, d3.event.pageY);
-                })
+                props.handleEnterBarGroup(d, d3.event.pageX, d3.event.pageY);
+            })
             .on("mouseleave", function () {
                 props.handleLeaveBarGroup();
             });
