@@ -166,13 +166,13 @@ var VirusToolbar = React.createClass({
                         </div>
                     </Flex.Item>
 
-                    <Flex.Item pad>
+                    <Flex.Item shrink={0} pad>
                         <PushButton onClick={this.toggleFlaggedOnly} active={this.state.flaggedOnly}>
                             <Icon name='flag' bsStyle='warning' />
                         </PushButton>
                     </Flex.Item>
 
-                    <Flex.Item pad>
+                    <Flex.Item shrink={0} pad>
                         {menu}
                     </Flex.Item>
                 </Flex>
