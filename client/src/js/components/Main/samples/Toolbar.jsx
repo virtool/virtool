@@ -67,7 +67,7 @@ var SampleManageToolbar = React.createClass({
     render: function () {
 
         var button = this.state.canCreate ? (
-            <Flex.Item pad>
+            <Flex.Item shrink={0} pad>
                 <PushButton bsStyle='primary' onClick={this.show}>
                     <Icon name='new-entry' /> Create
                 </PushButton>
