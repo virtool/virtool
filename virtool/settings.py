@@ -101,7 +101,7 @@ class Settings:
             "add_host_mem": 4,
             "add_host_inst": 2,
 
-            "rebuild_proc": 1,
+            "rebuild_proc": 2,
             "rebuild_mem": 4,
             "rebuild_inst": 1,
 

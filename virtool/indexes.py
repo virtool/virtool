@@ -101,7 +101,7 @@ class Collection(virtool.database.Collection):
             }
 
             # Start the job.
-            yield self.dispatcher.collections["jobs"].new("rebuild", task_args, 1, 2, user["_id"])
+            yield self.dispatcher.collections["jobs"].new("rebuild", task_args, 2, 2, user["_id"])
 
             return True, None
 
@@ -245,6 +245,7 @@ class Rebuild(virtool.job.Job):
             self.mk_index_dir,
             self.write_fasta,
             self.bowtie_build,
+            self.snap_build,
             self.replace_old
         ]
 
@@ -398,6 +399,24 @@ class Rebuild(virtool.job.Job):
 
         self.run_process(command)
 
+    def snap_build(self):
+        """
+        Run a standard snap build process using the previously generated FASTA reference.
+        The root name for the new reference is 'reference'
+
+        """
+        command = [
+            "snap",
+            "index",
+            os.path.join(self.reference_path, "ref.fa"),
+            self.reference_path + "/",
+            "-t" + str(self.proc)
+        ]
+
+        print(command)
+
+        self.run_process(command)
+
     def replace_old(self):
         """
         Replaces the old index with the newly generated one.
@@ -433,7 +452,7 @@ class Rebuild(virtool.job.Job):
         fields all history items being included in the new index to be 'unbuilt'.
 
         """
-        self.collection_operation("indexes", "remove", {"_id": self.index_id})
+        self.collection_operation("indexes", "remove", [self.index_id])
 
         self.collection_operation("history", "set_index_as_unbuilt", {
             "index_id": self.index_id,
