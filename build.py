@@ -13,8 +13,6 @@ try:
 except OSError:
     pass
 
-
-
 pyinstaller_cmd = [
     "pyinstaller",
     "-F",
