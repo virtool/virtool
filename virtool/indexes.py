@@ -413,8 +413,6 @@ class Rebuild(virtool.job.Job):
             "-t" + str(self.proc)
         ]
 
-        print(command)
-
         self.run_process(command)
 
     def replace_old(self):
