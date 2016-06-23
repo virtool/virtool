@@ -59,6 +59,7 @@ class Settings:
             "server_address": "str",
             "server_ready": "bool",
             "server_id": "str",
+            "server_version": "str",
 
             "use_ssl": "bool",
             "cert_path": "str",
@@ -111,6 +112,7 @@ class Settings:
             "server_port": 9650,
             "server_address": "localhost",
             "server_ready": False,
+            "server_version": server.version,
             "server_id": virtool.utils.random_alphanumeric(12),
 
             "use_ssl": False,

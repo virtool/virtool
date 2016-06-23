@@ -2,6 +2,7 @@ import os
 import sys
 import ssl
 import logging
+import subprocess
 import importlib
 import tornado.web
 import tornado.gen
@@ -30,7 +31,15 @@ class Application:
 
     def __init__(self, development=False):
 
-        logger.info("Starting Virtool Server" + " in development mode" if development else "")
+        try:
+            self.version = subprocess.check_output(['git', 'describe']).decode().rstrip()
+        except subprocess.CalledProcessError:
+            with open("VERSION", "r") as version_file:
+                self.version = version_file.read().rstrip()
+        except FileNotFoundError:
+            logger.critical("Could not determine software version.")
+
+        logger.info("Starting Virtool " + self.version)
 
         #: Set to ``True`` when the server is running in development mode.
         self.development = development

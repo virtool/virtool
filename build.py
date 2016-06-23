@@ -13,6 +13,11 @@ try:
 except OSError:
     pass
 
+version_info = subprocess.check_output(['git', 'describe']).decode().rstrip()
+
+with open("VERSION", "w") as version_file:
+    version_file.write(version_info)
+
 pyinstaller_cmd = [
     "pyinstaller",
     "-F",
@@ -26,6 +31,7 @@ shutil.rmtree("./build")
 os.remove("run.spec")
 
 shutil.copy("install.sh", os.path.join(target, "install.sh"))
+shutil.copy("VERSION", os.path.join(target, "VERSION"))
 
 for path in ["assets", "scripts"]:
     shutil.copytree(path, os.path.join(target, path))

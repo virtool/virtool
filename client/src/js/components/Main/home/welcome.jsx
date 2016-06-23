@@ -36,14 +36,18 @@ var View = React.createClass({
                     <Panel header='Server'>
                         <Table fill bordered>
                             <tbody>
-                            <tr>
-                                <th>Address</th>
-                                <td>{this.state.settings.server_address}:{this.state.settings.server_port}</td>
-                            </tr>
-                            <tr>
-                                <th>ID</th>
-                                <td>{this.state.settings.server_id}</td>
-                            </tr>
+                                <tr>
+                                    <th>Version</th>
+                                    <td>{dispatcher.settings.get('server_version')}</td>
+                                </tr>
+                                <tr>
+                                    <th>Address</th>
+                                    <td>{this.state.settings.server_address}:{this.state.settings.server_port}</td>
+                                </tr>
+                                <tr>
+                                    <th>Server ID</th>
+                                    <td>{this.state.settings.server_id}</td>
+                                </tr>
                             </tbody>
                         </Table>
                     </Panel>
