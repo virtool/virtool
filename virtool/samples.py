@@ -720,7 +720,7 @@ class ImportReads(virtool.job.Job):
 
         command = [
             "skewer",
-            "-l", "36",
+            "-l", "50",
             "-t", str(self.settings.get("import_reads_proc")),
             "-o", os.path.join(self.sample_path, "reads"),
             input_path
