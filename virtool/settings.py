@@ -1,7 +1,6 @@
 import os
 import json
 import logging
-import tornado.ioloop
 
 import virtool.gen
 import virtool.utils
@@ -24,9 +23,13 @@ class Settings:
             "proc": "int",
             "mem": "int",
 
-            "pathoscope_proc": "int",
-            "pathoscope_mem": "int",
-            "pathoscope_inst": "int",
+            "pathoscope_bowtie_proc": "int",
+            "pathoscope_bowtie_mem": "int",
+            "pathoscope_bowtie_inst": "int",
+
+            "pathoscope_snap_proc": "int",
+            "pathoscope_snap_mem": "int",
+            "pathoscope_snap_inst": "int",
 
             "nuvs_proc": "int",
             "nuvs_mem": "int",
@@ -78,9 +81,13 @@ class Settings:
             "proc": 8,
             "mem": 16,
 
-            "pathoscope_proc": 6,
-            "pathoscope_mem": 16,
-            "pathoscope_inst": 6,
+            "pathoscope_bowtie_proc": 6,
+            "pathoscope_bowtie_mem": 24,
+            "pathoscope_bowtie_inst": 6,
+
+            "pathoscope_snap_proc": 6,
+            "pathoscope_snap_mem": 24,
+            "pathoscope_snap_inst": 6,
 
             "nuvs_proc": 6,
             "nuvs_mem": 16,

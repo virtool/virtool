@@ -31,7 +31,26 @@ var Task = React.createClass({
     render: function () {
         var readOnly = _.includes(['add_host', 'rebuild'], this.props.taskPrefix);
 
-        var displayName = this.props.taskPrefix === 'nuvs' ? 'NuVs': _.startCase(this.props.taskPrefix);
+        var displayName;
+
+        switch (this.props.taskPrefix) {
+
+            case 'nuvs':
+                displayName = 'NuVs';
+                break;
+
+            case 'pathoscope_bowtie':
+                displayName = 'PathoscopeBowtie';
+                break;
+
+            case 'pathoscope_snap':
+                displayName = 'PathoscopeSNAP';
+                break;
+
+            default:
+                displayName =_.startCase(this.props.taskPrefix);
+                break;
+        }
 
         return (
             <ListGroupItem>

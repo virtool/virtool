@@ -45,7 +45,7 @@ var AnalysisList = React.createClass({
     getInitialState: function () {
         return {
             name: '',
-            algorithm: 'pathoscope',
+            algorithm: 'pathoscope_bowtie',
 
             // True when an analysis request has been sent to the server, but the transaction has not returned.
             pending: false
@@ -121,7 +121,8 @@ var AnalysisList = React.createClass({
                             <Flex.Item grow={0.25}>
                                 <div style={paddingRight}>
                                     <Input {...selectProps}>
-                                        <option value='pathoscope'>Pathoscope</option>
+                                        <option value='pathoscope_bowtie'>PathoscopeBowtie</option>
+                                        <option value='pathoscope_snap'>PathoscopeSNAP</option>
                                         <option value='nuvs'>NuVs</option>
                                         <option value='sigma' disabled>Sigma</option>
                                     </Input>

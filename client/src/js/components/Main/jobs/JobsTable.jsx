@@ -113,7 +113,21 @@ var JobsTable = React.createClass({
         {
             key: 'task',
             size: 3,
-            render: function (document) {return _.capitalize(document.task).replace('_', ' '); }
+            render: function (document) {
+                switch (document.task) {
+                    case 'nuvs':
+                        return 'NuVs';
+
+                    case 'pathoscope_bowtie':
+                        return 'PathoscopeBowtie';
+
+                    case 'pathoscope_snap':
+                        return 'PathoscopeSNAP';
+
+                    default:
+                        return _.startCase(document.task);
+                }
+            }
         },
         {
             key: 'progress',
