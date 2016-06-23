@@ -143,7 +143,10 @@ var DynamicTable = React.createClass({
      * triggered by changes in the collection.     *
      */
     refresh: function () {
-        this.setState({documents: this.props.collection.documents});
+        this.setState({
+            documents: this.props.collection.documents,
+            selected: _.without(this.state.selected, _.map(this.props.collection.documents, '_id'))
+        });
     },
 
     render: function () {
