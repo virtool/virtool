@@ -89,6 +89,8 @@ class Application:
         # 'settings.json' file if none is found.
         self.settings = virtool.settings.Settings(self)
 
+        self.settings.data["server_version"] = self.version
+
         self.ssl = self.settings.get("use_ssl")
         self.host = self.settings.get("server_address")
         self.port = self.settings.get("server_port")
