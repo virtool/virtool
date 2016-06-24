@@ -33,7 +33,7 @@ var SampleDetail = React.createClass({
     render: function () {
 
         var data = this.props.detail;
-
+        
         var body;
         var footer;
 

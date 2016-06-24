@@ -18,7 +18,7 @@ var AnalysisReport = React.createClass({
 
     render: function () {
         
-        if (this.props.algorithm === 'pathoscope') {
+        if (this.props.algorithm.indexOf('pathoscope') > -1) {
             content = (
                 <PathoscopeReport
                     {...this.props}

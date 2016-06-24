@@ -224,10 +224,10 @@ var Report = React.createClass({
             return (
                 <Alert bsStyle='info' className='text-center'>
                     <p>
-                        <Icon className='notification' /> No virus sequences found in sample
+                        <Icon name='notification' /> No virus sequences found in sample
                     </p>
                     <Button bsSize='small' onClick={this.props.showListing}>
-                        <Icon className='arrow-back' /> Back
+                        <Icon name='arrow-back' /> Back
                     </Button>
                 </Alert>
             )
