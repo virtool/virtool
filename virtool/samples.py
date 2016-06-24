@@ -375,7 +375,7 @@ class Collection(virtool.database.Collection):
         for analysis in analyses:
             # Only included 'ready' analyses in the detail payload.
             if analysis["ready"] is True:
-                if analysis["algorithm"] == "pathoscope":
+                if "pathoscope" in analysis["algorithm"]:
                     # Holds viruses that have already been fetched from the database. If another isolate of a previously
                     # fetched virus is found, there is no need for a round-trip back to the database.
                     fetched_viruses = dict()
