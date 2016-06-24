@@ -728,9 +728,9 @@ class ImportReads(virtool.job.Job):
 
     def save_trimmed(self):
         trimmed_file_path = os.path.join(self.sample_path, "reads-trimmed.fastq")
-        keep_path = os.path.join(self.sample_path, "reads_1.fastq")
+        keep_path = os.path.join(self.sample_path, "reads.fastq")
 
-        reduce_library_size(trimmed_file_path, keep_path)
+        #reduce_library_size(trimmed_file_path, keep_path)
 
     def fastqc(self):
 
