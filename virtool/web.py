@@ -31,13 +31,16 @@ class Application:
 
     def __init__(self, development=False):
 
+
         try:
             self.version = subprocess.check_output(['git', 'describe']).decode().rstrip()
         except subprocess.CalledProcessError:
-            with open("VERSION", "r") as version_file:
-                self.version = version_file.read().rstrip()
-        except FileNotFoundError:
-            logger.critical("Could not determine software version.")
+            try:
+                with open("VERSION", "r") as version_file:
+                    self.version = version_file.read().rstrip()
+            except FileNotFoundError:
+                logger.critical("Could not determine software version.")
+                self.version = "Unknown"
 
         logger.info("Starting Virtool " + self.version)
 
