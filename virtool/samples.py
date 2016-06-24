@@ -636,6 +636,11 @@ class Collection(virtool.database.Collection):
         # Remove the samples described by id_list from the database.
         response = yield super(Collection, self).remove(id_list)
 
+        samples_path = os.path.join(self.settings.get("data_path"), "samples")
+
+        for sample_id in id_list:
+            shutil.rmtree(os.path.join(samples_path, "sample_" + sample_id))
+
         # Only make previously excluded read files available the sample(s) were removed successfully. Make them
         # available by removing them from self.excluded_files.
         if response:
@@ -727,8 +732,12 @@ class ImportReads(virtool.job.Job):
         self.run_process(command, env=env)
 
     def save_trimmed(self):
-        trimmed_file_path = os.path.join(self.sample_path, "reads-trimmed.fastq")
-        keep_path = os.path.join(self.sample_path, "reads.fastq")
+        os.remove(os.path.join(self.sample_path, "reads.fastq"))
+
+        shutil.move(
+            os.path.join(self.sample_path, "reads-trimmed.fastq"),
+            os.path.join(self.sample_path, "reads_1.fastq")
+        )
 
         #reduce_library_size(trimmed_file_path, keep_path)
 
