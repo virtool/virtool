@@ -11,7 +11,6 @@
 
 'use strict';
 
-var _ = require('lodash');
 var React = require('react');
 var Panel = require('react-bootstrap/lib/Panel');
 
@@ -23,35 +22,35 @@ var InputSave = require('virtool/js/components/Base/InputSave.jsx');
 var Limits = React.createClass({
 
     getInitialState: function () {
-        return {settings: this.props.settings.data};
+        return {settings: dispatcher.settings.data};
     },
 
     componentDidMount: function () {
-        this.props.settings.on('change', this.update);
+        dispatcher.settings.on('change', this.update);
     },
 
     componentWillUnmount: function () {
-        this.props.settings.off('change', this.update);
+        dispatcher.settings.off('change', this.update);
     },
 
     /**
      * Update the proc setting with a new value by sending a request to the server.
      *
-     * @param newValue {number} - the new value to set the proc setting to.
+     * @param saveEvent {number} - an object containing the new value to set the proc setting to.
      * @func
      */
-    handleSaveProc: function (newValue) {
-        this.props.settings.set('proc', newValue);
+    handleSaveProc: function (saveEvent) {
+        dispatcher.settings.set('proc', saveEvent.value);
     },
 
     /**
      * Update the mem setting with a new value by sending a request to the server.
      *
-     * @param newValue {number} - the new value to set the mem setting to.
+     * @param saveEvent {number} - an object containing the new value to set the mem setting to.
      * @func
      */
-    handleSaveMem: function (newValue) {
-        this.props.settings.set('mem', newValue);
+    handleSaveMem: function (saveEvent) {
+        dispatcher.settings.set('mem', saveEvent.value);
     },
 
     /**

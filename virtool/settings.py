@@ -79,11 +79,11 @@ class Settings:
             "mem": 16,
 
             "pathoscope_proc": 6,
-            "pathoscope_mem": 24,
+            "pathoscope_mem": 16,
             "pathoscope_inst": 6,
 
             "nuvs_proc": 6,
-            "nuvs_mem": 24,
+            "nuvs_mem": 16,
             "nuvs_inst": 6,
 
             "import_reads_proc": 4,
