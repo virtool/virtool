@@ -39,10 +39,10 @@ var Filter = React.createClass({
      * @func
      */
     handleChange: function (event) {
-        var re = new RegExp(event.target.value, 'i');
+        var loweredQuery = event.target.value.toLowerCase();
 
         var filterFunction = function (document) {
-            return re.test(document.name);
+            return document.name.toLowerCase().indexOf(loweredQuery) > -1;
         };
 
         this.props.onChange(filterFunction);
