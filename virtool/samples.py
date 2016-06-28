@@ -736,8 +736,6 @@ class ImportReads(virtool.job.Job):
             os.path.join(self.sample_path, "reads_1.fastq")
         )
 
-        #reduce_library_size(trimmed_file_path, keep_path)
-
     def fastqc(self):
 
         os.mkdir(self.sample_path + "/fastqc")
