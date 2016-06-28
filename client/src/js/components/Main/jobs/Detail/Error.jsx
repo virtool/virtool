@@ -30,6 +30,8 @@ var JobError = React.createClass({
     },
 
     render: function () {
+        console.log(this.props);
+
         // The content to place inside the error panel.
         var content;
 
@@ -56,7 +58,9 @@ var JobError = React.createClass({
             );
         } else {
             // An error in an external application.
-            content = <p>{this.props.error.message[0]}, {this.props.error.message[1]}</p>;
+            content = this.props.error.message.map(function (line) {
+                return <p>{line}</p>
+            });
         }
 
         return (
