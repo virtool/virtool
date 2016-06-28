@@ -4,8 +4,6 @@ import signal
 import traceback
 import multiprocessing
 import subprocess
-import threading
-import queue
 
 from setproctitle import setproctitle
 from virtool import utils
@@ -98,6 +96,8 @@ class Job(multiprocessing.Process):
                     # Get the function name and use it to tell the jobs collection that a new stage has been started.
                     self.update_status(stage=stage_method.__name__)
 
+                    print(stage_method.__name__)
+
                     # Run the command function
                     stage_method()
             except:
@@ -174,44 +174,43 @@ class Job(multiprocessing.Process):
         self.log("Got a termination signal. Raising Termination exception. {} {}".format(repr(args), repr(kwargs)))
         raise Termination
 
-    def run_process(self, command, stdout_handler=None, stderr_handler=None, dont_log_stdout=True, env=None):
+    def run_process(self, cmd, no_output_failure=False, env=None):
         """
-        Wraps :class:`subprocess.POpen`. Takes a command (list) that is run with all output be cleanly handled in
+        Wraps :class:`subprocess.Popen`. Takes a command (list) that is run with all output be cleanly handled in
         real time. Also takes handler methods for stdout and stderr lines. These will be called anytime new output is
         available and be passed the line. If the process encounters an error as identified by the return code, it is
         handled just like a Python error.
 
         """
-        self.process = Process(command, env=env)
+        stderr = None
+        output = list()
 
-        # Keep checking for output until the process is closed (all output read and process complete).
-        while not self.process.closed:
-            out, err = self.process.stdout.read(), self.process.stderr.read()
+        try:
+            with subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=env, universal_newlines=True) as process:
+                for line in process.stdout:
+                    output.append(line.rstrip())
 
-            # If there is data from stdout and/or stderr, log it and pass it to a handler if a handler is defined.
-            if out is not None:
-                if not dont_log_stdout:
-                    self.log(out["data"], out["timestamp"])
-                if stdout_handler:
-                    stdout_handler(out)
+                stderr = process.stderr.read()
 
-            if err is not None:
-                self.log(err["data"], err["timestamp"])
-                if stderr_handler:
-                    stderr_handler(err)
-
-        # When the return code is not zero, the process encountered an error. Handle this error, triggering a status
-        # update and termination of the job.
-        if self.process.returncode not in [0, None]:
+        except subprocess.CalledProcessError:
             self.error = {
                 "message": ["Returned " + str(self.process.returncode), "Check log."],
                 "context": "External Process Error"
             }
 
+        if no_output_failure and len(output) == 0:
+            self.error = {
+                "message": stderr.split("\n"),
+                "context": "External Process Error"
+            }
+
+        if self.error:
             raise JobError
 
         # Set the process attribute to None, indicating that there is no running external process.
         self.process = None
+
+        return output
 
     def update_status(self, state=None, stage=None, error=None):
         """
@@ -256,72 +255,6 @@ class Job(multiprocessing.Process):
 
     def cleanup(self):
         pass
-
-
-class Process:
-
-    def __init__(self, command, env=None):
-        self.p = subprocess.Popen(command, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=env)
-
-        self.stdout = Output(self.p, self.p.stdout)
-        self.stderr = Output(self.p, self.p.stderr)
-
-    @property
-    def closed(self):
-        """ Returns True when the process is complete and all output has been read. Exposed as a property. """
-        return self.stdout.closed and self.stderr.closed
-
-    @property
-    def returncode(self):
-        self.p.poll()
-        return self.p.returncode
-
-
-class Output:
-
-    def __init__(self, process, pipe):
-        self.process = process
-        self.pipe = pipe
-
-        # Set to False when the process producing output has a returncode.
-        self.process_is_alive = True
-
-        # Set to True when the process producing output is complete and all output has been read from the queue.
-        self.closed = False
-
-        # A queue that all output is put into until the process is complete.
-        self.output_queue = queue.Queue()
-
-        # Make a Thread object that will run the looping _check method. Start it.
-        self.check_thread = threading.Thread(target=self._check)
-        self.check_thread.start()
-
-    def _check(self):
-        """
-        This loop reads the pipe and puts each line into the output_queue. This method is intended to be run in a
-        separate thread of control as it blocks continually.
-
-        """
-        for raw in self.pipe:
-            self.output_queue.put({
-                "timestamp": str(utils.timestamp()),
-                "data": raw.rstrip().decode()
-            })
-
-        # This is set to False when the process has a returncode (ie. it is complete)
-        self.process_is_alive = False
-
-    def read(self):
-        """ Return the next item in the output_queue. If the queue is empty, return None. """
-        try:
-            line = self.output_queue.get(block=False)
-        except queue.Empty:
-            line = None
-
-        if not self.process_is_alive and self.output_queue.empty():
-            self.closed = True
-
-        return line
 
 
 def handle_exception(max_tb=50, print_message=False):
