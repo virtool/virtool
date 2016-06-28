@@ -8,9 +8,7 @@ class Parse:
         self._header = list()
         self.aligns = collections.defaultdict(dict)
 
-        for entry in sam_list:
-            line = entry["data"]
-
+        for line in sam_list:
             # Store stripped header lines
             if line[0] in ["#", "@"]:
                 self._header.append(line.rstrip())
@@ -120,7 +118,7 @@ def entry_score(line, score_cutoff):
     return score, skip
 
 
-def get_score(line):
+def get_score(line, snap=False):
     read_length = len(line[9])
     use_mapq = True
 
@@ -137,34 +135,17 @@ def get_score(line):
             break
 
     if use_mapq:
-        return None
+        if snap:
+            score = line[4]
+        else:
+            score = None
     else:
-        return score + read_length
+        score += read_length
+
+    return score
 
 
-def high_score(l):
-    use_mapq = True
-    length = len(l[9])
-
-    for i in range(11, len(l)):
-        if use_mapq and l[i].startswith('AS:i:'):
-            aScore = int(l[i][5:])
-            use_mapq = False
-        elif l[i].startswith('YS:i:'):
-            aScore1 = int(l[i][5:])
-            if (aScore1 > aScore):
-                aScore = aScore1
-                break
-
-    if use_mapq:
-        aScore = None
-    else:
-        aScore += length
-
-    return aScore
-
-
-def all_scores(sam_list):
+def all_scores(sam_list, snap=False):
     """ Returns a dictionary containing alignment scores for all read_ids in a given SAM alignment file """
     scores = {}
 
@@ -174,7 +155,7 @@ def all_scores(sam_list):
 
         l = ln.split('\t')
         read_id = l[0]
-        aScore = high_score(l)
+        aScore = get_score(l, snap=snap)
         if aScore is not None:
             score = scores.get(read_id, None)
             if score is None or score < aScore:
