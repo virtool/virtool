@@ -34,7 +34,7 @@ class Application:
 
         try:
             self.version = subprocess.check_output(['git', 'describe']).decode().rstrip()
-        except subprocess.CalledProcessError:
+        except (subprocess.CalledProcessError, FileNotFoundError):
             try:
                 with open("VERSION", "r") as version_file:
                     self.version = version_file.read().rstrip()
