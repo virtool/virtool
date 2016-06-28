@@ -726,7 +726,7 @@ class ImportReads(virtool.job.Job):
         env = dict(os.environ)
         env["LD_LIBRARY_PATH"] = "/usr/lib/x86_64-linux-gnu"
 
-        self.run_process(command, env=env)
+        self.run_process(command, dont_read_stdout=True, env=env)
 
     def save_trimmed(self):
         os.remove(os.path.join(self.sample_path, "reads.fastq"))
