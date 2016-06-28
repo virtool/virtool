@@ -1,9 +1,9 @@
 from virtool.pathoscope import sam
 
 
-def run(isolate_sam, host_sam):
+def run(isolate_sam, host_sam, snap=False):
     # Get a mapping score for every read mapped to the host genome
-    host_scores = sam.all_scores(host_sam)
+    host_scores = sam.all_scores(host_sam, snap=snap)
 
     # This list will contain the read_ids for all reads that had better mapping qualities against the host
     # genome
@@ -21,7 +21,7 @@ def run(isolate_sam, host_sam):
 
         read_id = l[0]
 
-        virus_score = sam.high_score(l)
+        virus_score = sam.get_score(l, snap=snap)
 
         # Write each line from the virus SAM to a new file if its score is better against the virus
         # than the host. Discard it if it isn't and add the read_id to the list of skipped reads
