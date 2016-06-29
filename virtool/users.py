@@ -125,6 +125,9 @@ class Collection(virtool.database.Collection):
 
         group_ids = yield self.get_field(data["user_id"], "groups")
 
+        if data["group_id"] == "administrator" and data["user_id"] == transaction.connection.user["_id"]:
+            return False, dict(message="Administrator cannot remove themselves from the administrator group.")
+
         if data["group_id"] in group_ids:
             group_ids.remove(data["group_id"])
         else:

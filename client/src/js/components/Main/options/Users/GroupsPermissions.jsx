@@ -45,14 +45,18 @@ var GroupToggle = React.createClass({
     },
 
     handleClick: function () {
-        this.setState({pending: true}, function () {
-            this.props.setGroup(this.props.userId, this.props.groupId);
-        });
+        if (!(this.props.userId === dispatcher.user.name && this.props.groupId === 'administrator')) {
+            this.setState({pending: true}, function () {
+                this.props.setGroup(this.props.userId, this.props.groupId);
+            });
+        }
     },
 
     render: function () {
+        var disabled = this.props.userId === dispatcher.user.name && this.props.groupId === 'administrator';
+        
         return (
-            <ListGroupItem key={this.props.groupId} onClick={this.handleClick}>
+            <ListGroupItem key={this.props.groupId} onClick={this.handleClick} disabled={disabled}>
                 {_.capitalize(this.props.groupId)}
                 <Checkbox checked={this.props.toggled} pending={this.state.pending} pullRight />
             </ListGroupItem>
