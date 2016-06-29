@@ -235,6 +235,7 @@ class AddHost(virtool.job.Job):
             self.mk_host_dir,
             self.stats,
             self.bowtie_build,
+            self.snap_build,
             self.update_db
         ]
 
@@ -313,6 +314,17 @@ class AddHost(virtool.job.Job):
         ]
 
         self.run_process(command)
+
+    def snap_build(self):
+        command = [
+            "snap",
+            "index",
+            self.fasta_path,
+            self.index_path,
+            "-t" + str(self.proc)
+        ]
+
+        self.run_process(command, no_output_failure=True)
 
     def update_db(self):
         """
