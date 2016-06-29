@@ -1,5 +1,7 @@
 import os
 import re
+import gzip
+import magic
 import shutil
 import subprocess
 import random
@@ -698,18 +700,34 @@ class ImportReads(virtool.job.Job):
         index = 0
 
         with open(destination_path, "w") as destination:
-            for source_path in source_paths:
-                with open(source_path, "r") as source:
-                    plus = False
+            for file_path in source_paths:
 
-                    for line in source:
-                        if line[0] == "@" and not plus:
-                            line = "@READ" + str(index) + "\n"
-                            index += 1
+                input_file = None
 
-                        plus = line[0] == "+"
+                mime = magic.from_file(file_path, mime=True).decode("utf-8")
 
-                        destination.write(line)
+                if file_path.endswith("gz") and mime.endswith("gzip"):
+                    input_file = gzip.open(file_path, "rt", encoding="utf-8")
+
+                if file_path.split(".")[-1] in ["fq", "fastq"]:
+                    input_file = open(file_path, "r")
+
+                if input_file is None or input_file.read(1) != "@":
+                    raise IOError("Sequencing data could not be found in file.")
+
+                input_file.seek(0)
+
+                plus = False
+
+                for line in input_file:
+
+                    if line[0] == "@" and not plus:
+                        line = "@READ" + str(index) + "\n"
+                        index += 1
+
+                    plus = line[0] == "+"
+
+                    destination.write(line)
 
     def trim_reads(self):
 
@@ -717,6 +735,7 @@ class ImportReads(virtool.job.Job):
 
         command = [
             "skewer",
+            "-z",
             "-l", "50",
             "-t", str(self.settings.get("import_reads_proc")),
             "-o", os.path.join(self.sample_path, "reads"),
@@ -732,8 +751,13 @@ class ImportReads(virtool.job.Job):
         os.remove(os.path.join(self.sample_path, "reads.fastq"))
 
         shutil.move(
-            os.path.join(self.sample_path, "reads-trimmed.fastq"),
-            os.path.join(self.sample_path, "reads_1.fastq")
+            os.path.join(self.sample_path, "reads-trimmed.fastq.gz"),
+            os.path.join(self.sample_path, "reads_1.fastq.gz")
+        )
+
+        shutil.move(
+            os.path.join(self.sample_path, "reads-trimmed.log"),
+            os.path.join(self.sample_path, "trim.log")
         )
 
     def fastqc(self):
@@ -746,7 +770,7 @@ class ImportReads(virtool.job.Job):
             "-o", os.path.join(self.sample_path, "fastqc"),
             "-t", "2",
             "--extract",
-            self.sample_path + "/reads_1.fastq"
+            self.sample_path + "/reads_1.fastq.gz"
         ]
 
         self.run_process(command)
@@ -806,7 +830,7 @@ class ImportReads(virtool.job.Job):
                         if flag is not None and "END_MODULE" in line:
                             flag = None
 
-                        # Total sequencest
+                        # Total sequences
                         elif "Total Sequences" in line:
                             values["count"] = int(line.split("\t")[1])
 
