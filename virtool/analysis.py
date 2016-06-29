@@ -1,4 +1,5 @@
 import os
+import gzip
 
 import virtool.job
 import virtool.vfam
@@ -56,6 +57,17 @@ class Analyze(virtool.job.Job):
 
         # The path to the directory where all analysis result files will be written.
         self.paths["analysis"] = os.path.join(self.paths["sample"], "analysis", self.analysis_id)
+
+    def calculate_read_path(self):
+        files = [self.paths["sample"] + "/reads_1.fastq"]
+
+        if self.sample["paired"]:
+            files.append(self.paths["sample"] + "/reads_2.fastq")
+
+        if os.path.isfile(files[0] + ".gz"):
+            files = [file_path + ".gz" for file_path in files]
+
+        return ",".join(files)
 
 
 class Pathoscope(Analyze):
@@ -249,12 +261,7 @@ class PathoscopeBowtie(Pathoscope):
 
     def map_viruses(self):
         """ Returns a list that defines a Bowtie2 command to map the sample reads against the virus index """
-        print("map_viruses")
-
-        files = self.paths["sample"] + "/reads_1.fastq"
-
-        if self.sample["paired"]:
-            files += ("," + self.paths["sample"] + "/reads_2.fastq")
+        files = self.calculate_read_path()
 
         command = [
             "bowtie2",
@@ -292,10 +299,8 @@ class PathoscopeBowtie(Pathoscope):
     def map_isolates(self):
         if self.intermediate["use_isolates"]:
             self.log("Mapping to isolates")
-            files = self.paths["sample"] + "/reads_1.fastq"
 
-            if self.sample["paired"]:
-                files += ("," + self.paths["sample"] + "/reads_2.fastq")
+            files = self.calculate_read_path()
 
             command = [
                 "bowtie2",
@@ -417,10 +422,7 @@ class PathoscopeSNAP(Pathoscope):
 
     def map_viruses(self):
         """ Returns a list that defines a Bowtie2 command to map the sample reads against the virus index """
-        files = self.paths["sample"] + "/reads_1.fastq"
-
-        if self.sample["paired"]:
-            files += ("," + self.paths["sample"] + "/reads_2.fastq")
+        files = self.calculate_read_path()
 
         command = [
             "snap",
@@ -456,10 +458,7 @@ class PathoscopeSNAP(Pathoscope):
         if self.intermediate["use_isolates"]:
             self.log("Mapping to isolates")
 
-            files = self.paths["sample"] + "/reads_1.fastq"
-
-            if self.sample["paired"]:
-                files += ("," + self.paths["sample"] + "/reads_2.fastq")
+            files = self.calculate_read_path()
 
             command = [
                 "snap",
@@ -507,15 +506,24 @@ class PathoscopeSNAP(Pathoscope):
     def save_mapped_reads(self):
         mapped_read_ids = {line.split("\t")[0] for line in self.intermediate["to_isolates"]}
 
-        files = [self.paths["sample"] + "/reads_1.fastq"]
+        handles = list()
 
-        if self.sample["paired"]:
-            files.append(self.paths["sample"] + "/reads_2.fastq")
+        for file_path in self.calculate_read_path().split(","):
+            print(file_path)
+
+            if file_path.endswith("gz"):
+                handle = gzip.open(file_path, "rt")
+            else:
+                handle = open(file_path, "r")
+
+            handles.append(handle)
+
+        print(handles)
 
         mapped = list()
 
-        for file in files:
-            mapped += [rec for rec in SeqIO.parse(file, "fastq") if rec.id in mapped_read_ids]
+        for handle in handles:
+            mapped += [rec for rec in SeqIO.parse(handle, "fastq") if rec.id in mapped_read_ids]
 
         with open(os.path.join(self.paths["analysis"], "mapped.fastq"), "w") as mapped_file:
             SeqIO.write(mapped, mapped_file, "fastq")
@@ -588,10 +596,7 @@ class NuVs(Analyze):
 
     def map_viruses(self):
         """ Returns a list that defines a Bowtie2 command to map the sample reads against the virus index """
-        files = self.paths["sample"] + "/reads_1.fastq"
-
-        if self.sample["paired"]:
-            files += ("," + self.paths["sample"] + "/reads_2.fastq")
+        files = self.calculate_read_path()
 
         command = [
             "bowtie2",
