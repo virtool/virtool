@@ -104,7 +104,8 @@ var SamplesImport = React.createClass({
             modalBody = (
                 <Modal.Body>
                     <Alert bsStyle='warning' className='text-center'>
-                        <Icon name='notification' /> A host genome must be added before samples can be created.
+                        <Icon name='notification' />
+                        <span> A host genome must be added to Virtool before samples can be created and analyzed.</span>
                     </Alert>
                 </Modal.Body>
             );
