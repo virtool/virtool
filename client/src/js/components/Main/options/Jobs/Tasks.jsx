@@ -15,9 +15,9 @@ var _ = require('lodash');
 var React = require('react');
 var Row = require('react-bootstrap/lib/Row');
 var Col = require('react-bootstrap/lib/Col');
+var Alert = require('react-bootstrap/lib/Alert');
 var ListGroup = require('react-bootstrap/lib/ListGroup');
 var ListGroupItem = require('react-bootstrap/lib/ListGroupItem');
-
 var Task = require('./Task.jsx');
 
 /**

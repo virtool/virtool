@@ -17,6 +17,7 @@ var Col = require('react-bootstrap/lib/Col');
 var Alert = require('react-bootstrap/lib/Alert');
 var Panel = require('react-bootstrap/lib/Panel');
 
+var Flex = require('virtool/js/components/Base/Flex.jsx');
 var Icon = require('virtool/js/components/Base/Icon.jsx');
 var Limits = require('./Jobs/Limits.jsx');
 var Tasks = require('./Jobs/Tasks.jsx');
@@ -29,9 +30,14 @@ var JobOptions = React.createClass({
     render: function () {
         // A warning about disk-binding settings.
         var taskLimitFooter = (
-            <span className='text-warning'>
-                <Icon name='warning' /> Allowing too many concurrent jobs for IO-intensive tasks can reduce performance.
-            </span>
+            <Flex className='text-danger'>
+                <Flex.Item grow={0} shrink={0}>
+                    <Icon name='warning' />
+                </Flex.Item>
+                <Flex.Item grow={1} pad>
+                     Setting task-specific limits higher than system resource limits will prevent jobs from starting.
+                </Flex.Item>
+            </Flex>
         );
 
         return (

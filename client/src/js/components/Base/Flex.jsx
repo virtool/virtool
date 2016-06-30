@@ -66,7 +66,7 @@ var Flex = React.createClass({
         style.display = 'flex';
 
         return (
-            <div style={style}>
+            <div style={style} className={this.props.className}>
                 {this.props.children}
             </div>
         );
