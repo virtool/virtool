@@ -112,10 +112,7 @@ class Collection(virtool.database.Collection):
         })
 
         # Get a list of user ids of users affected by the change.
-        affected_user_ids = yield self.dispatcher.collections["users"].find(
-            {"groups": data["_id"]},
-            {"_id": True}
-        ).distinct("_id")
+        affected_user_ids = yield self.get_member_users(data["_id"])
 
         # Make a list of affected user ids and call update_user_groups to update the user entries.
         yield self.dispatcher.collections["users"].update_user_permissions(affected_user_ids)
@@ -141,7 +138,18 @@ class Collection(virtool.database.Collection):
         if isinstance(group_id, str):
             # The administrator is not permitted to be removed.
             if group_id != "administrator":
+                affected_user_ids = yield self.get_member_users(group_id)
+
+                yield self.dispatcher.collections["users"].db.update({"_id": {"$in": affected_user_ids}}, {
+                    "$pull": {
+                        "groups": group_id
+                    }
+                })
+
+                yield self.dispatcher.collections["users"].update_user_permissions(affected_user_ids)
+
                 response = yield super(Collection, self).remove([group_id])
+
                 return True, response
 
             logger.warning("User {} attempted to remove administrator group".format(
@@ -153,3 +161,12 @@ class Collection(virtool.database.Collection):
         # Send an error message to the client in a transaction if the provided user id is not a single string.
         else:
             return False, dict(message="Only one user group can be removed per call.")
+
+    @virtool.gen.coroutine
+    def get_member_users(self, group_id):
+        member_user_ids = yield self.dispatcher.collections["users"].find(
+            {"groups": group_id},
+            {"_id": True}
+        ).distinct("_id")
+
+        return member_user_ids

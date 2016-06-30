@@ -606,9 +606,6 @@ class Collection(virtool.database.Collection):
         :param token:
         :type token: str
 
-        :param connection:
-        :type connection: :class:`.SocketHandler`
-
         :param logout: the invalidation is the result of a logout
         :type logout: bool
 
