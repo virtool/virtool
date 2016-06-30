@@ -19,6 +19,7 @@ var Modal = require('react-bootstrap/lib/Modal');
 var Panel = require('react-bootstrap/lib/Panel');
 var ListGroup = require('react-bootstrap/lib/ListGroup');
 
+var Utils = require('virtool/js/Utils');
 var Add = require('./Add.jsx');
 var Permissions = require('./Permissions.jsx');
 var Icon = require('virtool/js/components/Base/Icon.jsx');
@@ -33,14 +34,16 @@ var ListGroupItem = require('virtool/js/components/Base/PushListGroupItem.jsx');
 var Groups = React.createClass({
 
     getInitialState: function () {
+        var documents = this.getEntries();
+
         return {
-            documents: this.getEntries(),
-            activeGroupIndex: 0
+            documents: documents,
+            activeId: documents[0]._id
         };
     },
 
-    select: function (newActiveGroupIndex) {
-        this.setState({activeGroupIndex: newActiveGroupIndex});
+    select: function (groupId) {
+        this.setState({activeId: groupId});
     },
 
     getEntries: function () {
@@ -56,7 +59,12 @@ var Groups = React.createClass({
     },
 
     update: function () {
-        this.setState({documents: this.getEntries()});
+        var newDocuments = this.getEntries();
+
+        this.setState({
+            documents: newDocuments,
+            activeId: Utils.getNewActiveId(this.state.activeId, this.state.documents, newDocuments)
+        });
     },
 
     remove: function (groupName) {
@@ -67,11 +75,11 @@ var Groups = React.createClass({
 
     render: function () {
 
-        var groupItemComponents = this.state.documents.map(function (document, index) {
+        var groupItemComponents = this.state.documents.map(function (document) {
             var props = {
                 key: document._id,
-                className: this.state.activeGroupIndex == index ? 'band': null,
-                onClick: function () {this.select(index)}.bind(this)
+                className: this.state.activeId == document._id ? 'band': null,
+                onClick: function () {this.select(document._id)}.bind(this)
             };
 
             var callback = function () {
@@ -93,7 +101,7 @@ var Groups = React.createClass({
 
         }, this);
 
-        var activeGroup = this.state.documents[this.state.activeGroupIndex];
+        var activeGroup = _.find(this.state.documents, {_id: this.state.activeId});
 
         return (
             <Modal dialogClassName='modal-md' show={this.props.show} onHide={this.props.onHide}>
