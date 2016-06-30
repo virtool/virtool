@@ -13,6 +13,7 @@
 
 var React = require('react');
 var ListGroup = require('react-bootstrap/lib/ListGroup');
+var Alert = require('react-bootstrap/lib/Alert');
 var Input = require('react-bootstrap/lib/Input');
 var Panel = require('react-bootstrap/lib/Panel');
 var Label = require('react-bootstrap/lib/Label');
@@ -43,10 +44,6 @@ var SamplesImport = React.createClass({
             nameEmptyError: false,
             readError: false
         };
-    },
-
-    componentWillReceiveProps: function () {
-
     },
 
     /**
@@ -101,12 +98,18 @@ var SamplesImport = React.createClass({
 
     render: function () {
 
-        return (
-            <Modal dialogClassName='modal-lg' {...this.props} onEntered={this.handleEntered} onExit={this.handleExit}>
-                <Modal.Header {...this.props} closeButton>
-                    Create Sample
-                </Modal.Header>
+        var modalBody;
 
+        if (_.filter(dispatcher.collections.hosts.documents, {added: true}).length === 0) {
+            modalBody = (
+                <Modal.Body>
+                    <Alert bsStyle='warning' className='text-center'>
+                        <Icon name='notification' /> A host genome must be added before samples can be created.
+                    </Alert>
+                </Modal.Body>
+            );
+        } else {
+            modalBody = (
                 <form onSubmit={this.handleSubmit}>
                     <Modal.Body {...this.props}>
                         <Form
@@ -126,6 +129,18 @@ var SamplesImport = React.createClass({
                         </PushButton>
                     </Modal.Footer>
                 </form>
+            );
+        }
+
+
+
+        return (
+            <Modal dialogClassName='modal-lg' {...this.props} onEntered={this.handleEntered} onExit={this.handleExit}>
+                <Modal.Header {...this.props} closeButton>
+                    Create Sample
+                </Modal.Header>
+
+                {modalBody}
             </Modal>
         );
     }

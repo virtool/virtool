@@ -12,10 +12,12 @@
 'use strict';
 
 var React = require('react');
+var Alert = require('react-bootstrap/lib/Alert');
 var Panel = require('react-bootstrap/lib/Panel');
 var Row = require('react-bootstrap/lib/Row');
 var Col = require('react-bootstrap/lib/Col');
 
+var Icon = require('virtool/js/components/Base/Icon.jsx');
 var HostsTable = require('./Manage/Table.jsx');
 var FilesTable = require('./Manage/Files.jsx');
 
@@ -28,6 +30,16 @@ var ManageHosts = React.createClass({
     render: function () {
 
         var canAddHost = dispatcher.user.permissions.add_host;
+
+        var alert;
+
+        if (_.filter(dispatcher.collections.hosts.documents, {added: true}).length === 0) {
+            alert = (
+                <Alert>
+                    <Icon name='info' /> A host genome must be added to Virtool before samples can be created and analyzed.
+                </Alert>
+            );
+        }
 
         var filesTable;
 
@@ -43,14 +55,18 @@ var ManageHosts = React.createClass({
         }
 
         return (
-            <Row>
-                <Col md={canAddHost ? 5: 12}>
-                    <HostsTable
-                        collection={dispatcher.collections.hosts}
-                    />
-                </Col>
-                {filesTable}
-            </Row>
+            <div>
+                {alert}
+                <Row>
+
+                    <Col md={canAddHost ? 5: 12}>
+                        <HostsTable
+                            collection={dispatcher.collections.hosts}
+                        />
+                    </Col>
+                    {filesTable}
+                </Row>
+            </div>
         );
     }
 });

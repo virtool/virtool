@@ -15,6 +15,7 @@ var React = require('react');
 var Panel = require('react-bootstrap/lib/Panel');
 var Button = require('react-bootstrap/lib/Button');
 var ListGroup = require('react-bootstrap/lib/ListGroup');
+var ListGroupItem = require('react-bootstrap/lib/ListGroupItem');
 
 var Add = require('./Add.jsx');
 var Fasta = require('./Fasta.jsx');
@@ -98,26 +99,20 @@ var HostFiles = React.createClass({
             )
         }, this);
 
-        var panelContent;
-
-        if (listComponents.length > 0) {
-            panelContent = (
-                <ListGroup fill>
-                    {listComponents}
-                </ListGroup>
-            );
-        } else {
-            panelContent = (
-                <div className='text-center'>
-                    <Icon name='info' /> No files found.
-                </div>
+        if (listComponents.length === 0) {
+            listComponents = (
+                <ListGroupItem className='text-center'>
+                    <Icon name='notification' /> No files found.
+                </ListGroupItem>
             );
         }
 
         return (
             <div>
                 <Panel header='Available Files'>
-                    {panelContent}
+                    <ListGroup fill>
+                        {listComponents}
+                    </ListGroup>
                 </Panel>
                 <Add
                     onHide={this.hideModal}
