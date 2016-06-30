@@ -87,7 +87,12 @@ var ReadSelector = React.createClass({
     },
 
     update: function () {
-        this.setState({reads: dispatcher.collections.reads.documents});
+        var reads = dispatcher.collections.reads.documents;
+
+        this.setState({
+            reads: reads,
+            selected: _.intersection(this.state.selected, _.map(reads, '_id'))
+        });
     },
 
     getPanelDOMNode: function () {
@@ -148,7 +153,7 @@ var ReadSelector = React.createClass({
                         </div>
                         <div style={{flex: '0 0 auto', paddingLeft: '5px'}}>
                             <PushButton onClick={this.reset}>
-                                <Icon name='reset' />
+                                <Icon name='reset' /> Clear
                             </PushButton>
                         </div>
                     </div>
