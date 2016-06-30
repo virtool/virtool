@@ -162,6 +162,11 @@ class Collection(virtool.database.Collection):
 
         sample_id = yield self.get_new_id()
 
+        available_subtraction_hosts = yield self.dispatcher.collections["hosts"].find().distinct("_id")
+
+        if not data["subtraction"] or data["subtraction"] not in available_subtraction_hosts:
+            return False, dict(message="Could not find subtraction host or none was supplied.")
+
         self.excluded_files += data["files"]
 
         # Construct a new sample entry
