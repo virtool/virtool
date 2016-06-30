@@ -23,14 +23,6 @@ var InputSave = require('virtool/js/components/Base/InputSave.jsx');
  */
 var HTTPOptions = React.createClass({
 
-    shouldComponentUpdate: function (nextProps) {
-        return (
-            this.props.settings.server_address != nextProps.settings.server_address,
-            this.props.settings.server_port != nextProps.settings.server_port,
-            this.props.settings.server_id != nextProps.settings.server_id
-        );
-    },
-
     handleSave: function (data) {
         dispatcher.settings.set(data.name, data.value);
     },
@@ -42,19 +34,19 @@ var HTTPOptions = React.createClass({
                     name='server_address'
                     label='Address'
                     onSave={this.handleSave}
-                    initialValue={this.props.settings.server_address}
+                    initialValue={this.props.settingsData.server_address}
                 />
                 <InputSave
                     name='server_port'
                     label='Port'
                     type='number'
                     onSave={this.handleSave}
-                    initialValue={this.props.settings.server_port}
+                    initialValue={this.props.settingsData.server_port}
                 />
                 <Input
                     label='Server ID'
                     type='text'
-                    value={this.props.settings.server_id}
+                    value={this.props.settingsData.server_id}
                     disabled
                 />
             </Panel>

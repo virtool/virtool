@@ -29,7 +29,7 @@ var ServerOptions = React.createClass({
 
     getInitialState: function () {
         return {
-            settings: dispatcher.settings.data
+            settingsData: dispatcher.settings.data
         };
     },
 
@@ -60,7 +60,7 @@ var ServerOptions = React.createClass({
                         <h5><strong>HTTP Server</strong></h5>
                     </Col>
                     <Col md={6}>
-                        <HTTP settings={this.state.settings} />
+                        <HTTP settingsData={this.state.settingsData} />
                     </Col>
                     <Col md={6}>
                         <Panel footer={reloadFooter}>
@@ -76,7 +76,7 @@ var ServerOptions = React.createClass({
                         <h5><strong>SSL</strong></h5>
                     </Col>
                     <Col md={6}>
-                        <Security settings={this.state.settings} />
+                        <Security settingsData={this.state.settingsData} />
                     </Col>
                     <Col md={6}>
                         <Panel footer={reloadFooter}>
@@ -90,7 +90,7 @@ var ServerOptions = React.createClass({
                         <h5><strong>Lifecycle Controls</strong></h5>
                     </Col>
                     <Col md={6}>
-                        <Lifecycle settings={this.state.settings} />
+                        <Lifecycle settingsData={this.state.settingsData} />
                     </Col>
                     <Col md={6}>
                         <Panel>

@@ -26,7 +26,7 @@ var InputSave = require('virtool/js/components/Base/InputSave.jsx');
 var HTTPOptions = React.createClass({
 
     toggle: function () {
-        dispatcher.settings.set('use_ssl', !this.props.settings.use_ssl);
+        dispatcher.settings.set('use_ssl', !this.props.settingsData.use_ssl);
     },
 
     handleSave: function (data) {
@@ -37,23 +37,23 @@ var HTTPOptions = React.createClass({
         return (
             <Panel>
                 <p style={{cursor: 'pointer'}} onClick={this.toggle}>
-                    <Checkbox checked={this.props.settings.use_ssl} /> Use SSL
+                    <Checkbox checked={this.props.settingsData.use_ssl} /> Use SSL
                 </p>
 
                 <InputSave
                     label='Certificate Path'
                     name='cert_path'
                     onSave={this.handleSave}
-                    initialValue={this.props.settings.cert_path}
-                    disabled={!this.props.settings.use_ssl}
+                    initialValue={this.props.settingsData.cert_path}
+                    disabled={!this.props.settingsData.use_ssl}
                 />
 
                 <InputSave
                     label='Key Path'
                     name='key_path'
                     onSave={this.handleSave}
-                    initialValue={this.props.settings.key_path}
-                    disabled={!this.props.settings.use_ssl}
+                    initialValue={this.props.settingsData.key_path}
+                    disabled={!this.props.settingsData.use_ssl}
                 />
             </Panel>
         );
