@@ -1,7 +1,4 @@
-import json
 import os
-import shutil
-
 import motor
 import pymongo.errors
 import tornado.web
@@ -74,16 +71,6 @@ def save_setup(handler,data):
 
         for collection_name in collection_names:
             yield db.create_collection(collection_name)
-
-        with open("assets/prunus_persica/data.json") as data_file:
-            first_host = json.load(data_file)
-
-        yield db.hosts.insert(first_host)
-
-        host_path = os.path.join(settings["data_path"], "reference/hosts/index/prunus_persica")
-
-        yield virtool.gen.THREAD_POOL.submit(shutil.copytree, "assets/prunus_persica", host_path)
-
     try:
         yield virtool.gen.THREAD_POOL.submit(os.makedirs, settings["watch_path"])
     except FileExistsError:
