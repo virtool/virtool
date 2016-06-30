@@ -43,7 +43,8 @@ var ReadSelector = React.createClass({
         return {
             reads: dispatcher.collections.reads.documents,
             selected: [],
-            filter: ''
+            filter: '',
+            showAll: false
         };
     },
 
@@ -71,6 +72,12 @@ var ReadSelector = React.createClass({
         this.setState({
             selected: [],
             filter: ''
+        });
+    },
+
+    toggleShowAll: function () {
+        this.setState({
+            showAll: !this.state.showAll
         });
     },
 
@@ -103,7 +110,20 @@ var ReadSelector = React.createClass({
 
         var loweredFilter = this.state.filter.toLowerCase();
 
-        var readComponents = _.sortBy(this.state.reads, '_id').map(function (read) {
+        var reads = _.clone(this.state.reads);
+
+        if (!this.state.showAll) {
+            reads = _.filter(reads, function (read) {
+                return (
+                    _.endsWith(read._id, '.fastq') ||
+                    _.endsWith(read._id, '.fq') ||
+                    _.endsWith(read._id, '.fastq.gz') ||
+                    _.endsWith(read._id, '.fq.gz')
+                );
+            });
+        }
+
+        var readComponents = _.sortBy(reads, '_id').map(function (read) {
             if (read._id.toLowerCase().indexOf(loweredFilter) > -1) {
                 return (
                     <ReadItem
@@ -154,6 +174,11 @@ var ReadSelector = React.createClass({
                         <div style={{flex: '0 0 auto', paddingLeft: '5px'}}>
                             <PushButton onClick={this.reset}>
                                 <Icon name='reset' /> Clear
+                            </PushButton>
+                        </div>
+                        <div style={{flex: '0 0 auto', paddingLeft: '5px'}}>
+                            <PushButton onClick={this.toggleShowAll} active={this.state.showAll}>
+                                <Icon name='eye' /> Show All
                             </PushButton>
                         </div>
                     </div>
