@@ -20,6 +20,7 @@ var InputError = React.createClass({
 
     propTypes: {
         error: React.PropTypes.oneOfType([React.PropTypes.string, React.PropTypes.element]),
+        onHide: React.PropTypes.func,
         placement: React.PropTypes.string
     },
 

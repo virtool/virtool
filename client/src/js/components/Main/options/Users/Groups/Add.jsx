@@ -14,7 +14,7 @@
 var _ = require('lodash');
 var React = require('react');
 
-var Input = require('react-bootstrap/lib/Input');
+var Input = require('virtool/js/components/Base/InputError.jsx');
 var Icon = require('virtool/js/components/Base/Icon.jsx');
 var PushButton = require('virtool/js/components/Base/PushButton.jsx');
 
@@ -26,7 +26,8 @@ var AddGroup = React.createClass({
 
     getInitialState: function () {
         return {
-            groupName: ''
+            groupName: '',
+            error: false
         };
     },
 
@@ -34,9 +35,13 @@ var AddGroup = React.createClass({
         event.preventDefault();
 
         // Make sure the new group name has no spaces in it.
-        if (this.state.groupName.indexOf(' ') === -1) {
+        if (this.state.groupName.length > 0 && this.state.groupName.indexOf(' ') === -1) {
             dispatcher.collections.groups.request('add', {
                 _id: this.state.groupName.toLowerCase()
+            });
+        } else {
+            this.setState({
+                error: true
             });
         }
 
@@ -45,7 +50,8 @@ var AddGroup = React.createClass({
 
     handleChange: function (event) {
         this.setState({
-            groupName: event.target.value
+            groupName: event.target.value,
+            error: false
         });
     },
 
@@ -61,6 +67,7 @@ var AddGroup = React.createClass({
             <form onSubmit={this.handleSubmit}>
                 <Input
                     type="text"
+                    error={this.state.error ? 'Group names must not contain spaces and cannot be empty strings.': null}
                     buttonAfter={addonAfter}
                     placeholder='Group name'
                     value={this.state.groupName}
