@@ -130,6 +130,17 @@ var Users = React.createClass({
         var content;
 
         var activeData = _.find(this.state.documents, {_id: this.state.activeId});
+
+        var removeIcon;
+
+        // Prevent administrators from removing their own accounts.
+        if (dispatcher.user.name !== activeData._id) {
+            removeIcon = (
+                <div className='icon-group'>
+                    <Icon onClick={this.removeUser} name='remove' pullRight />
+                </div>
+            );
+        }
         
         // The header of the user detail panel. Contains a remove user icon button.
         var header = (
@@ -137,9 +148,7 @@ var Users = React.createClass({
                 <span>
                     <Icon name='user' /> {activeData._id}
                 </span>
-                <div className='icon-group'>
-                    <Icon onClick={this.removeUser} name='remove' pullRight />
-                </div>
+                {removeIcon}
             </h3>
         );
 

@@ -321,7 +321,7 @@ class Collection(virtool.database.Collection):
 
         if data["_id"] == transaction.connection.user["_id"]:
             # Otherwise send an error message to the client and log a warning.
-            logger.warning("User {} attempted to their own user account".format(user["_id"]))
+            logger.warning("User {} attempted to remove their own user account".format(user["_id"]))
             return False, dict(message="User cannot remove their own account.")
 
         response = yield super(Collection, self).remove(data["_id"])
