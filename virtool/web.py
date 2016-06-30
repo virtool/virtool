@@ -403,6 +403,7 @@ class SocketHandler(tornado.websocket.WebSocketHandler):
         connections.
 
         """
+        self.dispatcher.watcher.remove_listener(self)
         self.dispatcher.connections.remove(self)
 
 

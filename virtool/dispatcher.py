@@ -238,7 +238,7 @@ class Dispatcher:
         :rtype: tuple
 
         """
-        self.watcher.remove_listener(transaction.data["name"], transaction.connection)
+        self.watcher.remove_listener(transaction.connection, name=transaction.data["name"])
 
         return True, None
 
