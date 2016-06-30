@@ -60,7 +60,7 @@ var Groups = React.createClass({
     },
 
     remove: function (groupName) {
-        dispatcher.collections.groups.request('remove', {
+        dispatcher.collections.groups.request('remove_group', {
             _id: groupName
         });
     },
