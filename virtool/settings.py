@@ -82,11 +82,11 @@ class Settings:
             "mem": 16,
 
             "pathoscope_bowtie_proc": 6,
-            "pathoscope_bowtie_mem": 24,
+            "pathoscope_bowtie_mem": 16,
             "pathoscope_bowtie_inst": 6,
 
             "pathoscope_snap_proc": 6,
-            "pathoscope_snap_mem": 24,
+            "pathoscope_snap_mem": 16,
             "pathoscope_snap_inst": 6,
 
             "nuvs_proc": 6,
