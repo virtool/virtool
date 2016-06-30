@@ -58,6 +58,28 @@ var VTUtils = {
             .type('application/x-www-form-urlencoded; charset=UTF-8')
             .accept('json')
             .end(composedCallback);
+    },
+
+    getNewActiveId: function (currentActiveId, oldDocuments, newDocuments) {
+        // In this case a new document has been added and should become the new activeId.
+        if (newDocuments.length > oldDocuments.length) {
+            // Find the new document id.
+            return _.difference(_.map(newDocuments, '_id'), _.map(oldDocuments, '_id'))[0];
+        }
+
+        // Remove a user.
+        if (newDocuments.length < oldDocuments.length) {
+            // Find the index of the user document with the current activeId.
+            var activeIndex = _.findIndex(oldDocuments, {_id: currentActiveId});
+
+            if (activeIndex >= newDocuments.length) activeIndex -= 1;
+
+            // If the removed first user is active, set the new first user as active. Otherwise make active the user
+            // that occupies that position the old activeId did.
+            return newDocuments[activeIndex]._id;
+        }
+
+        return currentActiveId;
     }
 };
 

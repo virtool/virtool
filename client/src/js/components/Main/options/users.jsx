@@ -20,6 +20,7 @@ var Input = require('react-bootstrap/lib/Input');
 var ListGroup = require('react-bootstrap/lib/ListGroup');
 var ListGroupItem = require('react-bootstrap/lib/ListGroupItem');
 
+var Utils = require('virtool/js/Utils');
 var Icon = require('virtool/js/components/Base/Icon.jsx');
 var Toolbar = require('./Users/Toolbar.jsx');
 var Password = require('./Users/Password.jsx');
@@ -64,28 +65,15 @@ var Users = React.createClass({
      */
     update: function () {
         // Get the updated documents
-        var newState = {documents: _.sortBy(dispatcher.collections.users.documents, '_id')};
+        var newDocuments = _.sortBy(dispatcher.collections.users.documents, '_id');
+        var activeId = Utils.getNewActiveId(this.state.activeId, this.state.documents, newDocuments);
 
-        // Add a user.
-        if (newState.documents.length > this.state.documents.length) {
-            // Find the new user ids.
-            newState.activeId = _.difference(_.map(newState.documents, '_id'), _.map(this.state.documents, '_id'))[0];
-        }
+        console.log(activeId);
 
-        // Remove a user.
-        if (newState.documents.length < this.state.documents.length) {
-
-            // Find the index of the user document with the current activeId.
-            var activeIndex = _.findIndex(this.state.documents, {_id: this.state.activeId});
-
-            if (activeIndex >= newState.documents.length) activeIndex -= 1;
-
-            // If the removed first user is active, set the new first user as active. Otherwise make active the user
-            // that occupies that position the old activeId did.
-            newState.activeId =  newState.documents[activeIndex]._id;
-        }
-
-        this.setState(newState);
+        this.setState({
+            documents: newDocuments,
+            activeId: activeId
+        });
     },
 
     /**
