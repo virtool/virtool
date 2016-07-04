@@ -141,7 +141,7 @@ var AnalysisList = React.createClass({
             } else {
                 adder = (
                     <Alert bsStyle='warning'>
-                        <Icon name='info'/> A virus index must be built before analyses can be started.
+                        <Icon name='info'/> A virus index must be built before analyses can be run.
                     </Alert>
                 );
             }
@@ -170,7 +170,6 @@ var AnalysisList = React.createClass({
 
         // If no analyses are associated with the sample, show a panel saying so.
         else {
-
             listContent = (
                 <ListGroupItem className='text-center'>
                     <Icon name='info' /> No analyses found
@@ -181,7 +180,7 @@ var AnalysisList = React.createClass({
         return (
             <div>
                 {adder}
-                <ListGroup componentClass ='div'>
+                <ListGroup componentClass='div'>
                     {listContent}
                 </ListGroup>
             </div>
