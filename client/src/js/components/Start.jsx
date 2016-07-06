@@ -13,14 +13,13 @@
 
 var React = require('react');
 var Cookie = require('react-cookie');
-var Progress = require('rc-progress').Circle;
 var ProgressBar = require('react-bootstrap/lib/ProgressBar');
 
 var Dispatcher = require('virtool/js/dispatcher/main.js');
 var Utils = require('virtool/js/Utils');
 var Icon = require('virtool/js/components/Base/Icon.jsx');
-var Setup = require('virtool/js/components/Start/Setup/Setup.jsx');
-var Main = require('virtool/js/components/Main/Main.jsx');
+var Setup = require('./Setup/Setup.jsx');
+var Main = require('virtool/js/components/Main.jsx');
 var LoginDialog = require('./Login/Dialog.jsx');
 
 var Start = React.createClass({

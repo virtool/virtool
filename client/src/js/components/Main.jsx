@@ -18,11 +18,8 @@ var Nav = require('virtool/js/components/Nav/Bar.jsx');
 var Main = React.createClass({
 
     getInitialState: function () {
-        var route = dispatcher.router.current().split('/');
-
         return {
-            primaryRoute: splitRoute[0],
-            secondaryRoute: splitRoute[1]
+            route: dispatcher.router.getCurrentRoute()
         };
     },
 
@@ -43,8 +40,11 @@ var Main = React.createClass({
     },
 
     render: function () {
+
+        console.log(this.state.route);
+        
         // Get a View component based on the primary and secondary parts of the split route.
-        var View = views[this.state.primaryRoute][this.state.secondaryRoute];
+        var View = this.state.route.baseComponent;
 
         var containerStyle = {
             display: 'flex',

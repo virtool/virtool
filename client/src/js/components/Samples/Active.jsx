@@ -1,7 +1,7 @@
 
 var React = require('react');
 
-var SamplesTable = require("virtool/js/components/Main/Samples/SamplesTable.jsx");
+var SamplesTable = require("./SamplesTable.jsx");
 
 var View = React.createClass({
 
