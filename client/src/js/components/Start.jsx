@@ -44,10 +44,6 @@ var Start = React.createClass({
         this.checkSetup();
     },
 
-    componentDidUpdate: function () {
-
-    },
-
     checkSetup: function () {
         Utils.postJSON('/', {operation: 'check_ready'}, function (data) {
             this.setState({

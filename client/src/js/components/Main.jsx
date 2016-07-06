@@ -14,56 +14,11 @@
 var React = require('react');
 var Nav = require('virtool/js/components/Nav/Bar.jsx');
 
-var views = {
-
-    home: {
-        welcome: null
-    },
-
-    jobs: {
-        active: null,
-        archived: null
-    },
-
-    samples: {
-        active: null,
-        archived: null
-    },
-
-    viruses: {
-        manage: null,
-        history: null,
-        index: null
-    },
-
-    hosts: {
-        manage: null
-    },
-
-    options: {
-        general: null,
-        server: null,
-        data: null,
-        jobs: null,
-        users: null
-    }
-};
-
-for (var primaryKey in views) {
-    if (views.hasOwnProperty(primaryKey)) {
-        var secondaries = views[primaryKey];
-        for (var secondaryKey in secondaries) {
-            if (secondaries.hasOwnProperty(secondaryKey)) {
-                views[primaryKey][secondaryKey] = require('virtool/js/components/Main/' + primaryKey + '/' + secondaryKey + '.jsx');
-            }
-        }
-    }
-}
 
 var Main = React.createClass({
 
     getInitialState: function () {
-        var splitRoute = dispatcher.router.current().split('/');
+        var route = dispatcher.router.current().split('/');
 
         return {
             primaryRoute: splitRoute[0],
