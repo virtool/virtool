@@ -90,9 +90,7 @@ var DetailModal = React.createClass({
     },
 
     render: function () {
-
-        console.log('modal rendering');
-
+        
         var modalContent;
         var show = Boolean(this.props.target);
         

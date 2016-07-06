@@ -30,8 +30,7 @@ var JobError = React.createClass({
     },
 
     render: function () {
-        console.log(this.props);
-
+        
         // The content to place inside the error panel.
         var content;
 

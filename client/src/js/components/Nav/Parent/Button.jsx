@@ -27,11 +27,11 @@ var PrimaryButton = React.createClass({
     },
 
     componentDidMount: function () {
-        this.props.router.on('change', this.onRouteChange);
+        dispatcher.router.on('change', this.onRouteChange);
     },
 
     componentWillUnmount: function () {
-        this.props.router.off('change', this.onRouteChange);
+        dispatcher.router.off('change', this.onRouteChange);
     },
 
     shouldComponentUpdate: function (nextProps, nextState) {
@@ -46,8 +46,7 @@ var PrimaryButton = React.createClass({
      * @func
      */
     onRouteChange: function (route) {
-        route = route.split('/')[0];
-        this.setState({active: route === this.props.route.toLowerCase()});
+        this.setState({active: route.parent === this.parentKey});
     },
 
     /**
@@ -58,15 +57,13 @@ var PrimaryButton = React.createClass({
      */
     handleClick: function (event) {
         event.preventDefault();
-        this.props.router.primary(this.props.route.toLowerCase());
+        dispatcher.router.setParent(this.props.parentKey);
     },
 
     render: function () {
-        var routeData = this.props.router.routes[this.props.route];
-
         return (
             <NavItem onClick={this.handleClick} className='pointer' active={this.state.active}>
-                <Icon name={routeData.icon} />  {_.capitalize(this.props.route)}
+                <Icon name={this.props.iconName} />  {this.props.label || _.capitalize(this.props.parentKey)}
             </NavItem>
         );
     }

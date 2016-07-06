@@ -6,7 +6,7 @@
  * @author
  * Ian Boyes
  *
- * @exports PrimaryNavbar
+ * @exports ParentBar
  */
 
 'use strict';
@@ -18,16 +18,16 @@ var Navbar = require('react-bootstrap/lib/Navbar');
 var NavDropdown = require('react-bootstrap/lib/NavDropdown');
 var MenuItem = require('react-bootstrap/lib/MenuItem');
 
-var PrimaryButton = require('./PrimaryButton.jsx');
-var ChangePassword = require('./ChangePassword.jsx');
-var UserSettings = require('./UserSettings.jsx');
+var ParentButton = require('./Button.jsx');
+var ChangePassword = require('../ChangePassword.jsx');
+var UserSettings = require('../UserSettings.jsx');
 
 var Icon = require('virtool/js/components/Base/Icon.jsx');
 
 /**
  * The primary navbar component.
  */
-var PrimaryNavbar = React.createClass({
+var ParentBar = React.createClass({
 
     getInitialState: function () {
         return {
@@ -76,9 +76,16 @@ var PrimaryNavbar = React.createClass({
 
         // Generate a primary navItem for each primary route (home, jobs, samples, viruses, hosts, options). Only show
         // the options navItem if the user is an administrator.
-        var navItemComponents = _.keys(this.props.router.routes).map(function (route) {
-            if (route !== 'options' || (route === 'options' && dispatcher.user.permissions && dispatcher.user.permissions.modify_options)) {
-                return <PrimaryButton key={route} route={route} router={this.props.router}/>;
+        var navItemComponents = dispatcher.router.structure.map(function (parent) {
+            if (parent.key !== 'options' || dispatcher.user.permissions.modify_options) {
+                return (
+                    <ParentButton
+                        key={parent.key}
+                        parentKey={parent.key}
+                        label={parent.label}
+                        iconName={parent.icon}
+                    />
+                );
             }
         }, this);
 
@@ -152,4 +159,4 @@ var PrimaryNavbar = React.createClass({
     }
 });
 
-module.exports = PrimaryNavbar;
+module.exports = ParentBar;

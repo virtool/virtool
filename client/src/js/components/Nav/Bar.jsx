@@ -13,8 +13,8 @@
 
 var React = require('react');
 
-var PrimaryNavbar = require('./PrimaryNavbar.jsx');
-var Secondary = require('./SecondaryNavbar.jsx');
+var ParentBar = require('./Parent/Bar.jsx');
+var ChildBar = require('./Child/Bar.jsx');
 var LostConnection = require('./LostConnection.jsx');
 
 /**
@@ -41,8 +41,8 @@ var Bar = React.createClass({
     render: function () {
         return (
             <div>
-                <PrimaryNavbar router={dispatcher.router} />
-                <Secondary router={dispatcher.router} />
+                <ParentBar />
+                <ChildBar />
                 <LostConnection
                     show={this.state.closed}
                     onHide={this.showLostConnection}

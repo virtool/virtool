@@ -19,7 +19,7 @@ var Main = React.createClass({
 
     getInitialState: function () {
         return {
-            route: dispatcher.router.getCurrentRoute()
+            route: dispatcher.router.route
         };
     },
 
@@ -35,14 +35,12 @@ var Main = React.createClass({
      * Sets state to reflect the current route. Called in response to a 'change' event from the router.
      * @func
      */
-    onRouteChange: function () {
-        this.setState(this.getInitialState());
+    onRouteChange: function (route) {
+        this.setState({route: route});
     },
 
     render: function () {
 
-        console.log(this.state.route);
-        
         // Get a View component based on the primary and secondary parts of the split route.
         var View = this.state.route.baseComponent;
 

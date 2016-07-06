@@ -44,9 +44,7 @@ var Lifecycle = React.createClass({
         var domain = dispatcher.settings.get('server_address') + ':' + dispatcher.settings.get('server_port');
         var protocol = dispatcher.settings.get('use_ssl') ? 'https': 'http';
         var newLocation = protocol + "://" + domain;
-
-        console.log(newLocation);
-
+        
         location.assign(newLocation);
     },
 

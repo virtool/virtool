@@ -16,41 +16,54 @@ var Nav = require('react-bootstrap/lib/Nav');
 var Navbar = require('react-bootstrap/lib/Navbar');
 var NavItem = require('react-bootstrap/lib/NavItem');
 
-var SecondaryButton = require('./SecondaryButton.jsx');
+var ChildButton = require('./Button.jsx');
 
 /**
  * The secondary navbar which display child routes of the active primary route.
  */
-var SecondaryNavbar = React.createClass({
+var ChildBar = React.createClass({
 
     getInitialState: function () {
-        return {documents: this.props.router.children('home')};
+        return {
+            activeChild: dispatcher.router.route.child,
+            children: dispatcher.router.route.children
+        };
     },
 
     componentDidMount: function () {
-        this.props.router.on('change', this.onRouteChange);
+        dispatcher.router.on('change', this.onRouteChange);
     },
 
     componentWillUnmount: function () {
-        this.props.router.off('change', this.onRouteChange);
+        dispatcher.router.off('change', this.onRouteChange);
     },
 
     /**
-     * Changes the child route documents when the route changes. Called in respone to a change event in the router.
+     * Changes the child route documents when the route changes. Called in response to a change event in the router.
      *
      * @param route
      * @func
      */
     onRouteChange: function (route) {
-        route = route.split('/')[0];
-        var documents = this.props.router.children(route);
-        this.setState({documents: documents});
+        
+
+        this.setState({
+            activeChild: route.child,
+            children: route.children
+        });
     },
 
     render: function () {
+
         // Each button component shows up in the secondary navbar.
-        var buttonComponents = this.state.documents.map(function (document) {
-            return <SecondaryButton key={document.label} router={this.props.router} {...document} />;
+        var buttonComponents = this.state.children.map(function (child) {
+            return (
+                <ChildButton
+                    {...child}
+                    childKey={child.key}
+                    active={child.key === this.state.activeChild}
+                />
+            );
         }, this);
 
         return (
@@ -61,4 +74,4 @@ var SecondaryNavbar = React.createClass({
     }
 });
 
-module.exports = SecondaryNavbar;
+module.exports = ChildBar;

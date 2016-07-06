@@ -17,11 +17,13 @@ function Router() {
 
     this.events = new Events(['change'], this);
 
-    this.getCurrentRoute = function () {
+    this.refreshRoute = function () {
 
         var uri = URI(location);
 
         var full = uri.fragment();
+
+        console.log(full);
 
         var split = full.split("/");
 
@@ -29,13 +31,25 @@ function Router() {
 
         if (base.length === 1) base += this.childKeys(base[0])[0];
 
-        return {
+        var children = _.find(this.structure, {key: base[0]}).children;
+
+        var child = _.find(children, {key: base[1]});
+
+        var newRoute = {
             full: full,
             base: base,
-            baseComponent: _.find(_.find(this.bases, {key: base[0]}).children, {key: base[1]}).component,
             extra: split.slice(2),
-            query: uri.query()
+            query: uri.query(),
+            parent: base[0],
+            child: base[1],
+
+            children: children,
+            baseComponent: child.component
         };
+
+        this.route = newRoute;
+
+        return newRoute;
     };
 
     // Change the route when there is the URL in the address bar is changed.
@@ -43,11 +57,11 @@ function Router() {
         // Update active states
         this.clearActive();
 
-        this.emit('change', this.getCurrentRoute());
+        this.emit('change', this.refreshRoute());
     }).bind(this);
 
     // An object describing all of the routes for the application.
-    this.bases = [
+    this.structure = [
         
         {
             key: 'home',
@@ -113,7 +127,7 @@ function Router() {
 
     ];
 
-    this.bases.forEach(function (base, index) {
+    this.structure.forEach(function (base, index) {
         base.active = index === 0;
 
         base.children.forEach(function (child) {
@@ -121,30 +135,31 @@ function Router() {
         });
     });
 
-    /**
-     * Return an array of all the child routes for given major route.
-     *
-     * @param primary {string} - The primary route to return children for (eg. samples)
-     * @returns {Array} - An array of children (eg. {label: 'users', active: false})
-     */
-    this.children = function (primary) {
-        return _.find(this.bases, {key: primary}).children;
+    this.setParent = function (parentKey) {
+        var split = this.route.full.split("/");
+        split[0] = parentKey;
+        split[1] = _.find(this.structure, {key: parentKey}).children[0].key;
+        location.replace("#" + split.join("/"));
     };
 
-    this.childKeys = function (primary) {
-        return _.map(this.children(primary), 'key');
+    this.setChild = function (childKey) {
+        var split = this.route.full.split("/");
+        split[1] = childKey;
+        location.replace("#" + split.join("/"));
     };
 
     // Clear active states of all routes
     this.clearActive = function () {
-        this.bases.forEach(function (base) {
-            base.active = false;
+        this.structure.forEach(function (parent) {
+            parent.active = false;
 
-            base.children.forEach(function (child) {
+            parent.children.forEach(function (child) {
                 child.active = false;
             });
         });
     };
+
+    this.route = this.refreshRoute();
 }
 
 module.exports = Router;

@@ -67,9 +67,7 @@ var Users = React.createClass({
         // Get the updated documents
         var newDocuments = _.sortBy(dispatcher.collections.users.documents, '_id');
         var activeId = Utils.getNewActiveId(this.state.activeId, this.state.documents, newDocuments);
-
-        console.log(activeId);
-
+        
         this.setState({
             documents: newDocuments,
             activeId: activeId
