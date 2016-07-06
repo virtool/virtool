@@ -31,9 +31,24 @@ var ParentBar = React.createClass({
 
     getInitialState: function () {
         return {
+            activeParent: dispatcher.router.route.parent,
             showChangePassword: false,
             showUserSettings: false
         };
+    },
+
+    componentDidMount: function () {
+        dispatcher.router.on('change', this.onRouteChange);
+    },
+
+    componentWillUnmount: function () {
+        dispatcher.router.off('change', this.onRouteChange);
+    },
+
+    onRouteChange: function (route) {
+        this.setState({
+            activeParent: route.parent
+        });
     },
 
     /**
@@ -84,6 +99,7 @@ var ParentBar = React.createClass({
                         parentKey={parent.key}
                         label={parent.label}
                         iconName={parent.icon}
+                        active={parent.key === this.state.activeParent}
                     />
                 );
             }
