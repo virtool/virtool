@@ -51,10 +51,12 @@ var JobsTable = React.createClass({
 
     componentDidMount: function () {
         dispatcher.user.on('change', this.onUserChange);
+        dispatcher.router.on('change', this.onRouteChange);
     },
 
     componentWillMount: function () {
         dispatcher.user.off('change', this.onUserChange);
+        dispatcher.router.off('change', this.onRouteChange);
     },
 
     onUserChange: function () {
@@ -65,13 +67,20 @@ var JobsTable = React.createClass({
         });
     },
 
+    onRouteChange: function (route) {
+        console.log(route.extra);
+        var detailTarget = route.extra[0] ? _.find(dispatcher.collections.jobs.documents, {_id: route.extra[0]}): null;
+        console.log(detailTarget);
+        this.setState({detailTarget: detailTarget});
+    },
+
     /**
      * Hides the detail modal by setting state.detailTarget to null. Pass as an 'onHide' prop.
      *
      * @func
      */
     hideDetail: function () {
-        this.setState({detailTarget: null});
+        dispatcher.router.setExtra([]);
     },
 
     /**
@@ -81,7 +90,7 @@ var JobsTable = React.createClass({
      * @func
      */
     handleClick: function (target) {
-        this.setState({detailTarget: target});
+        dispatcher.router.setExtra([target._id]);
     },
 
     /**

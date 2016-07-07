@@ -8,9 +8,6 @@
  */
 
 var Events = require('./Events');
-var URI = require('urijs');
-
-window.urijs = URI;
 
 
 function Router() {
@@ -19,45 +16,35 @@ function Router() {
 
     this.refreshRoute = function () {
 
-        var uri = URI(location);
+        var fragment = location.hash.replace('#', '').split("/");
 
-        var full = uri.fragment();
-
-        console.log(full);
-
-        var split = full.split("/");
-
-        var base = split.slice(0, 2);
+        var base = fragment.slice(0, 2);
 
         if (base.length === 1) base += this.childKeys(base[0])[0];
 
         var children = _.find(this.structure, {key: base[0]}).children;
-
-        var child = _.find(children, {key: base[1]});
-
-        var newRoute = {
-            full: full,
+        
+        this.route = {
+            fragment: fragment,
             base: base,
-            extra: split.slice(2),
-            query: uri.query(),
+            extra: fragment.slice(2),
             parent: base[0],
             child: base[1],
 
             children: children,
-            baseComponent: child.component
+            baseComponent: _.find(children, {key: base[1]}).component
         };
 
-        this.route = newRoute;
+        this.emit('change', this.route);
 
-        return newRoute;
+        return this.route;
     };
 
     // Change the route when there is the URL in the address bar is changed.
     window.onhashchange = (function () {
         // Update active states
         this.clearActive();
-
-        this.emit('change', this.refreshRoute());
+        this.refreshRoute();
     }).bind(this);
 
     // An object describing all of the routes for the application.
@@ -136,16 +123,21 @@ function Router() {
     });
 
     this.setParent = function (parentKey) {
-        var split = this.route.full.split("/");
-        split[0] = parentKey;
-        split[1] = _.find(this.structure, {key: parentKey}).children[0].key;
-        location.replace("#" + split.join("/"));
+        var fragment = [parentKey, _.find(this.structure, {key: parentKey}).children[0].key];
+        location.hash = fragment.join("/");
     };
 
     this.setChild = function (childKey) {
-        var split = this.route.full.split("/");
-        split[1] = childKey;
-        location.replace("#" + split.join("/"));
+        location.hash = [this.route.parent, childKey].join("/");
+    };
+
+    this.setExtra = function (extra) {
+        var fragment = this.route.fragment.slice(0, 2).concat(extra);
+        location.hash = fragment.join("/");
+    };
+
+    this.clearExtra = function () {
+        this.setExtra([]);
     };
 
     // Clear active states of all routes

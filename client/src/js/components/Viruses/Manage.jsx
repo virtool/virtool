@@ -14,8 +14,8 @@
 var _ = require('lodash');
 var React = require('react');
 
-var Toolbar = require('./manage/Toolbar/Toolbar.jsx');
-var Detail = require('./manage/detail.jsx');
+var Toolbar = require('./Manage/Toolbar/Toolbar.jsx');
+var Detail = require('./Manage/detail.jsx');
 
 var Icon = require('virtool/js/components/Base/Icon.jsx');
 var DynamicTable = require('virtool/js/components/Base/DynamicTable/DynamicTable.jsx');
@@ -44,6 +44,8 @@ var ManageViruses = React.createClass({
      * @func
      */
     showModal: function (target) {
+        console.log(target);
+        // dispatcher.router.setExtra([target]);
         this.setState({detailTarget: target});
     },
 
