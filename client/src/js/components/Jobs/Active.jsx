@@ -24,7 +24,7 @@ var ActiveJobs = React.createClass({
     render: function () {
         return (
             <JobsTable
-                collection={dispatcher.collections.jobs}
+                route={this.props.route}
                 baseFilter={{archived: false}}
             />
         );

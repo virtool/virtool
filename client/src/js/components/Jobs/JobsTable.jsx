@@ -34,15 +34,12 @@ var JobsTable = React.createClass({
     mixins: [ConfirmManagerMixin],
 
     propTypes: {
-        collection: React.PropTypes.object.isRequired,
+        route: React.PropTypes.object.isRequired,
         baseFilter: React.PropTypes.object
     },
 
     getInitialState: function () {
         return {
-            // An object describing the document to fetch and open detail for.
-            detailTarget: null,
-
             canCancel: dispatcher.user.permissions.cancel_job,
             canArchive: dispatcher.user.permissions.archive_job,
             canRemove: dispatcher.user.permissions.remove_job
@@ -51,12 +48,11 @@ var JobsTable = React.createClass({
 
     componentDidMount: function () {
         dispatcher.user.on('change', this.onUserChange);
-        dispatcher.router.on('change', this.onRouteChange);
     },
 
-    componentWillMount: function () {
+    componentWillUnmount: function () {
         dispatcher.user.off('change', this.onUserChange);
-        dispatcher.router.off('change', this.onRouteChange);
+        dispatcher.router.clearExtra();
     },
 
     onUserChange: function () {
@@ -65,13 +61,6 @@ var JobsTable = React.createClass({
             canRemove: dispatcher.user.permissions.remove_job,
             canArchive: dispatcher.user.permissions.archive_job
         });
-    },
-
-    onRouteChange: function (route) {
-        console.log(route.extra);
-        var detailTarget = route.extra[0] ? _.find(dispatcher.collections.jobs.documents, {_id: route.extra[0]}): null;
-        console.log(detailTarget);
-        this.setState({detailTarget: detailTarget});
     },
 
     /**
@@ -224,7 +213,7 @@ var JobsTable = React.createClass({
         }.bind(this);
 
         var tableProps = {
-            collection: this.props.collection,
+            collection: dispatcher.collections.jobs,
             fields: this.fields,
             baseFilter: this.props.baseFilter,
             initialSortKey: 'progress',
@@ -235,6 +224,12 @@ var JobsTable = React.createClass({
             createActions: createActions
         };
 
+        var detailTarget = null;
+
+        if (this.props.route.extra[0]) {
+            detailTarget = _.find(dispatcher.collections.jobs.documents, {_id: this.props.route.extra[0]});
+        }
+
         return (
             <div>
                 <DynamicTable {...tableProps} />
@@ -242,10 +237,10 @@ var JobsTable = React.createClass({
                 <ConfirmModal {...this.confirmManager.getProps()} noun='job' nameKey='task' />
 
                 <DetailModal
-                    target={this.state.detailTarget}
+                    target={detailTarget}
                     onHide={this.hideDetail}
                     contentComponent={Detail}
-                    collection={this.props.collection}
+                    collection={dispatcher.collections.jobs}
                 />
             </div>
         );
