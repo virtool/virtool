@@ -16,9 +16,7 @@ var ListGroup = require('react-bootstrap/lib/ListGroup');
 var ListGroupItem = require('react-bootstrap/lib/ListGroupItem');
 var Panel = require('react-bootstrap/lib/Panel');
 
-var DetailModal = require('virtool/js/components/Base/DetailModal.jsx');
 var Icon = require('virtool/js/components/Base/Icon.jsx');
-var HostDetail = require('./Detail.jsx');
 var Entry = require('./Entry.jsx');
 
 /**
@@ -30,21 +28,17 @@ var HostsTable = React.createClass({
 
     getInitialState: function () {
         return {
-            documents: _.sortBy(this.props.collection.documents, '_id'),
+            documents: _.sortBy(dispatcher.collections.hosts.documents, '_id'),
             detailTarget: null
         }
     },
 
     componentDidMount: function () {
-        this.props.collection.on('change', this.update);
-    },
-
-    shouldComponentUpdate: function (nextProps, nextState) {
-        return nextState !== this.state;
+        dispatcher.collections.hosts.on('change', this.update);
     },
 
     componentWillUnmount: function () {
-        this.props.collection.off('change', this.update);
+        dispatcher.collections.hosts.off('change', this.update);
     },
 
     /**
@@ -55,16 +49,7 @@ var HostsTable = React.createClass({
      * @func
      */
     showModal: function (target) {
-        this.setState({detailTarget: target});
-    },
-
-    /**
-     * Hide the detail modal. Passed to Modal components as the onHide prop. Called when the modal is hiding.
-     *
-     * @func
-     */
-    hideModal: function () {
-        this.setState({detailTarget: null});
+        dispatcher.router.setExtra(["detail", target._id]);
     },
 
     /**
@@ -73,7 +58,7 @@ var HostsTable = React.createClass({
      * @func
      */
     update: function () {
-        this.setState({documents: _.sortBy(this.props.collection.documents, '_id')});
+        this.setState({documents: _.sortBy(dispatcher.collections.hosts.documents, '_id')});
     },
 
     render: function () {
@@ -106,14 +91,6 @@ var HostsTable = React.createClass({
                         {listContent}
                     </ListGroup>
                 </Panel>
-
-                <DetailModal
-                    target={this.state.detailTarget}
-                    contentComponent={HostDetail}
-                    collection={this.props.collection}
-                    onHide={this.hideModal}
-                    dialogClassName='modal-md'
-                />
             </div>
         )
     }

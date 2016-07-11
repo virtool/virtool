@@ -18,14 +18,23 @@ var Row = require('react-bootstrap/lib/Row');
 var Col = require('react-bootstrap/lib/Col');
 
 var Icon = require('virtool/js/components/Base/Icon.jsx');
+var DetailModal = require('virtool/js/components/Base/DetailModal.jsx');
+
 var HostsTable = require('./Manage/Table.jsx');
 var FilesTable = require('./Manage/Files.jsx');
+var AddModal = require('./Manage/Add.jsx');
+var HostDetail = require('./Manage/Detail.jsx');
+
 
 /**
  * A component that renders a table of imported hosts and a list of available FASTA files that could be imported as
  * hosts.
  */
 var ManageHosts = React.createClass({
+
+    hideModal: function () {
+        dispatcher.router.clearExtra();
+    },
 
     render: function () {
 
@@ -46,26 +55,47 @@ var ManageHosts = React.createClass({
         if (canAddHost) {
             filesTable = (
                 <Col md={7}>
-                    <FilesTable
-                        collection={dispatcher.collections.files}
-                        hostsCollection={dispatcher.collections.hosts}
-                    />
+                    <FilesTable route={this.props.route} />
                 </Col>
             );
+        }
+
+        var addTarget;
+
+        if (this.props.route.extra[0] === 'add') {
+            addTarget = _.find(dispatcher.collections.files.documents, {_id: this.props.route.extra[1]});
+        }
+
+        var detailTarget;
+
+        if (this.props.route.extra[0] === 'detail') {
+            detailTarget = _.find(dispatcher.collections.hosts.documents, {_id: this.props.route.extra[1]});
         }
 
         return (
             <div>
                 {alert}
-                <Row>
 
+                <Row>
                     <Col md={canAddHost ? 5: 12}>
-                        <HostsTable
-                            collection={dispatcher.collections.hosts}
-                        />
+                        <HostsTable route={this.props.route} />
                     </Col>
                     {filesTable}
                 </Row>
+
+                <AddModal
+                    onHide={this.hideModal}
+                    show={Boolean(addTarget)}
+                    target={addTarget}
+                />
+
+                <DetailModal
+                    target={detailTarget}
+                    contentComponent={HostDetail}
+                    collection={dispatcher.collections.hosts}
+                    onHide={this.hideModal}
+                    dialogClassName='modal-md'
+                />
             </div>
         );
     }

@@ -10,6 +10,8 @@
  */
 
 var React = require('react');
+var Numeral = require('numeral');
+
 var LinkedStateMixin = require('react-addons-linked-state-mixin');
 var Input = require('react-bootstrap/lib/Input');
 var Modal = require('react-bootstrap/lib/Modal');
@@ -27,7 +29,6 @@ var AddHost = React.createClass({
     propTypes: {
         show: React.PropTypes.bool.isRequired,
         onHide: React.PropTypes.func.isRequired,
-        hostsCollection: React.PropTypes.object.isRequired,
         target: React.PropTypes.object
     },
 
@@ -101,7 +102,7 @@ var AddHost = React.createClass({
 
                                 <tr>
                                     <th>Size</th>
-                                    <td>{this.props.target.size}</td>
+                                    <td>{Numeral(this.props.target.size).format('0.0 b')}</td>
                                 </tr>
                             </tbody>
                         </Table>

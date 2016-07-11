@@ -70,8 +70,6 @@ var DetailModal = React.createClass({
     },
 
     receivedDetail: function (data) {
-        window.modalData = data;
-
         this.setState({
             pending: false,
             data: data

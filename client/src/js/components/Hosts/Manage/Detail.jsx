@@ -100,7 +100,6 @@ var HostDetail = React.createClass({
                     onHide={this.props.onHide}
                     onError={this.showError}
                     error={this.state.error}
-                    collection={this.props.collection}
                     {...data}
                 />
             );

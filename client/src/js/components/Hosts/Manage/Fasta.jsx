@@ -34,7 +34,7 @@ var HostFasta = React.createClass({
      * @func
      */
     add: function () {
-        this.props.add(_.pick(this.props, ['_id', 'size']));
+        dispatcher.router.setExtra(["add", this.props._id]);
     },
 
     render: function () {
