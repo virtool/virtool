@@ -709,7 +709,12 @@ class ImportReads(virtool.job.Job):
 
                 input_file = None
 
-                mime = magic.from_file(file_path, mime=True).decode("utf-8")
+                mime = magic.from_file(file_path, mime=True)
+
+                try:
+                    mime = mime.decode("utf-8")
+                except AttributeError:
+                    pass
 
                 if file_path.endswith("gz") and mime.endswith("gzip"):
                     input_file = gzip.open(file_path, "rt", encoding="utf-8")

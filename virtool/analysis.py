@@ -366,11 +366,11 @@ class PathoscopeBowtie(Pathoscope):
         else:
             self.log("Subtracting host reads from virus-level alignment")
             target = self.intermediate["to_viruses"]
+
         self.intermediate["subtracted"], subtraction_count = virtool.pathoscope.subtract.run(
             target,
             self.intermediate["to_host"]
         )
-
 
         self.log(str(subtraction_count) + " reads eliminated as host reads")
         self.log("Kept " + str(len(self.intermediate["subtracted"])) + " SAM lines as viral reads")
