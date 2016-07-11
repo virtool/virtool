@@ -89,7 +89,7 @@ var ExportViruses = React.createClass({
         var modalProps = _.extend(this.props, {onHide: this.hide});
 
         return (
-            <Modal {...modalProps} animation={false}>
+            <Modal {...modalProps}>
 
                 <Modal.Header {...modalProps} closeButton>
                     Export Viruses

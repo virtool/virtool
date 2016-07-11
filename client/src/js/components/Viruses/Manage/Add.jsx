@@ -137,7 +137,7 @@ var AddVirus = React.createClass({
         };
 
         return (
-            <Modal {...modalProps} animation={false}>
+            <Modal {...modalProps}>
 
                 <Modal.Header {...modalProps} closeButton>
                     New Virus

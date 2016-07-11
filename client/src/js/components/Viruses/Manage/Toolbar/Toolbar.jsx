@@ -19,10 +19,6 @@ var Icon = require('virtool/js/components/Base/Icon.jsx');
 var Flex = require('virtool/js/components/Base/Flex.jsx');
 var PushButton = require('virtool/js/components/Base/PushButton.jsx');
 
-var Add = require('./Add.jsx');
-var Export = require('./Export.jsx');
-var Import = require('./Import.jsx');
-
 /**
  * A toolbar component rendered at the top of the virus manager table. Allows searching of viruses by name and
  * abbreviation. Includes a button for creating a new virus.
@@ -36,10 +32,6 @@ var VirusToolbar = React.createClass({
     getInitialState: function () {
         // The state showAdd is true when the modal should be visible.
         return {
-            showAdd: false,
-            showExport: false,
-            showImport: false,
-
             flaggedOnly: false,
 
             canAdd: dispatcher.user.permissions.add_virus,
@@ -94,15 +86,15 @@ var VirusToolbar = React.createClass({
         switch (eventKey) {
 
             case 1:
-                this.setState({showAdd: true});
+                dispatcher.router.setExtra(["add"]);
                 break;
 
             case 2:
-                this.setState({showExport: true});
+                dispatcher.router.setExtra(["export"]);
                 break;
 
             case 3:
-                this.setState({showImport: true});
+                dispatcher.router.setExtra(["import"]);
                 break;
         }
     },
@@ -111,15 +103,6 @@ var VirusToolbar = React.createClass({
         this.setState({
             flaggedOnly: !this.state.flaggedOnly
         }, this.handleChange);
-    },
-
-    /**
-     * Changes state to hide the add virus modal form. Triggered as the onHide prop for the modal.
-     */
-    hideModals: function () {
-        this.setState(this.getInitialState(), function () {
-            document.getElementById('virus-menu-dropdown').blur();
-        });
     },
 
     render: function () {
@@ -176,24 +159,6 @@ var VirusToolbar = React.createClass({
                         {menu}
                     </Flex.Item>
                 </Flex>
-
-                <Add
-                    show={this.state.showAdd}
-                    onHide={this.hideModals}
-                />
-
-                <Export
-                    show={this.state.showExport}
-                    onHide={this.hideModals}
-                />
-
-                <Import
-                    show={this.state.showImport}
-                    enableHiding={this.enableHiding}
-                    disableHiding={this.disableHiding}
-                    onHide={this.hideModals}
-                />
-
             </div>
         );
     }

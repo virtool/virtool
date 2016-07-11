@@ -202,7 +202,7 @@ var ImportViruses = React.createClass({
         }
 
         return (
-            <Modal ref='modal' {...modalProps} animation={false}>
+            <Modal ref='modal' {...modalProps}>
 
                 <Modal.Header {...modalProps} closeButton>
                     Import Viruses

@@ -15,7 +15,10 @@ var _ = require('lodash');
 var React = require('react');
 
 var Toolbar = require('./Manage/Toolbar/Toolbar.jsx');
-var Detail = require('./Manage/detail.jsx');
+var Detail = require('./Manage/Detail.jsx');
+var Export = require('./Manage/Export.jsx');
+var Import = require('./Manage/Import.jsx');
+var Add = require('./Manage/Add.jsx');
 
 var Icon = require('virtool/js/components/Base/Icon.jsx');
 var DynamicTable = require('virtool/js/components/Base/DynamicTable/DynamicTable.jsx');
@@ -33,20 +36,8 @@ var ManageViruses = React.createClass({
 
     mixins: [ConfirmManagerMixin],
 
-    getInitialState: function () {
-        return {detailTarget: null};
-    },
-
-    /**
-     * Shows a detail modal for the passed target object. Called by clicking an document row.
-     *
-     * @param target {object} - an object describing the document to fetch details for.
-     * @func
-     */
-    showModal: function (target) {
-        console.log(target);
-        // dispatcher.router.setExtra([target]);
-        this.setState({detailTarget: target});
+    openDetailModal: function (target) {
+        dispatcher.router.setExtra(["detail", target._id]);
     },
 
     /**
@@ -55,7 +46,7 @@ var ManageViruses = React.createClass({
      * @func
      */
     hideModal: function () {
-        this.setState({detailTarget: null});
+        dispatcher.router.clearExtra();
     },
 
     /**
@@ -95,11 +86,17 @@ var ManageViruses = React.createClass({
             filterComponent: Toolbar,
             fields: this.fields,
             documentsNoun: 'viruses',
-            onClick: this.showModal,
+            onClick: this.openDetailModal,
             initialSortKey: 'name',
             initialSortDescending: false,
             alwaysShowFilter: true
         };
+
+        var detailTarget;
+
+        if (this.props.route.extra[0] === 'detail') {
+            detailTarget = _.find(dispatcher.collections.viruses.documents, {_id: this.props.route.extra[1]});
+        }
 
         return (
             <div>
@@ -108,12 +105,18 @@ var ManageViruses = React.createClass({
                 <ConfirmModal {...this.confirmManager.getProps()} noun='sample' />
 
                 <DetailModal
-                    target={this.state.detailTarget}
+                    target={detailTarget}
                     onHide={this.hideModal}
                     contentComponent={Detail}
                     collection={dispatcher.collections.viruses}
                     settings={dispatcher.settings}
                 />
+
+                <Add show={this.props.route.extra[0] === "add"} onHide={this.hideModal} />
+
+                <Export show={this.props.route.extra[0] === "export"} onHide={this.hideModal} />
+
+                <Import show={this.props.route.extra[0] === "import"} onHide={this.hideModal} />
             </div>
         );
     }
