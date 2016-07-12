@@ -44,7 +44,7 @@ var AnalysisReport = React.createClass({
                         </tr>
                         <tr>
                             <th>Algorithm</th>
-                            <td>{this.props.algorithm === 'nuvs' ? 'NuVs': _.capitalize(this.props.algorithm)}</td>
+                            <td>{this.props.algorithm === 'nuvs' ? 'NuVs': _.upperFirst(_.camelCase(this.props.algorithm))}</td>
                         </tr>
                         <tr>
                             <th>Library Read Count</th>

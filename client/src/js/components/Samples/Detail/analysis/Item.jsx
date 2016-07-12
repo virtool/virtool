@@ -135,7 +135,7 @@ var AnalysisItem = React.createClass({
                         {this.props.comments || 'Unnamed Analysis'}
                     </Col>
                     <Col sm={3} >
-                        {this.props.algorithm === 'nuvs' ? 'NuVs': _.capitalize(this.props.algorithm)}
+                        {this.props.algorithm === 'nuvs' ? 'NuVs': _.upperFirst(_.camelCase(this.props.algorithm))}
                     </Col>
                     <Col md={2}>
                         Index v{this.props.index_version}
