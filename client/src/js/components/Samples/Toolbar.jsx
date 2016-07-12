@@ -22,7 +22,6 @@ var Flex = require('virtool/js/components/Base/Flex.jsx');
 var PushButton = require('virtool/js/components/Base/PushButton.jsx');
 
 var Filter = require('./Filter.jsx');
-var Create = require('./Create/Create.jsx');
 
 /**
  * Serves as a filterComponent for the SamplesTable component. The sample name is the only field that can be sorted by.
@@ -57,11 +56,7 @@ var SampleManageToolbar = React.createClass({
     },
 
     show: function () {
-        this.setState({show: this.state.canCreate});
-    },
-
-    hide: function () {
-        this.setState({show: false});
+        dispatcher.router.setExtra(["create"]);
     },
 
     render: function () {
@@ -82,8 +77,6 @@ var SampleManageToolbar = React.createClass({
                     </Flex.Item>
                     {button}
                 </Flex>
-
-                <Create show={this.state.show} onHide={this.hide} />
             </div>
         )
     }

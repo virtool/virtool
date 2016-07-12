@@ -21,9 +21,12 @@ var ConfirmManagerMixin = require('virtool/js/components/Base/Mixins/ConfirmMana
 var DetailModal = require('virtool/js/components/Base/DetailModal.jsx');
 var Icon = require('virtool/js/components/Base/Icon.jsx');
 
-var Detail = require('./Detail/body.jsx');
-var Filter = require('./Filter.jsx');
+var SampleDetail = require('./Detail/body.jsx');
+
+var Create = require('./Create/Create.jsx');
 var Toolbar = require('./Toolbar.jsx');
+var Filter = require('./Filter.jsx');
+
 
 /**
  * A checkbox-based Icon class. If the operation is a bool, the checkbox is checked to when true. The only acceptable
@@ -59,12 +62,12 @@ var SamplesTable = React.createClass({
     mixins: [ConfirmManagerMixin],
     
     propTypes: {
-        collection: React.PropTypes.object.isRequired,
+        route: React.PropTypes.object.isRequired,
         archived: React.PropTypes.bool.isRequired
     },
 
-    getInitialState: function () {
-        return {detailTarget: null};
+    showDetail: function (document) {
+        dispatcher.router.setExtra([document._id]);
     },
 
     /**
@@ -72,18 +75,8 @@ var SamplesTable = React.createClass({
      *
      * @func
      */
-    hideDetail: function () {
-        this.setState({detailTarget: null});
-    },
-
-    /**
-     * Handles a click event on an document. The document is
-     *
-     * @param target {object} - an object that targets the document that details should be fetched for.
-     * @func
-     */
-    selectSample: function (target) {
-        this.setState({detailTarget: target});
+    hideModal: function () {
+        dispatcher.router.clearExtra();
     },
 
     /**
@@ -166,7 +159,7 @@ var SamplesTable = React.createClass({
         }.bind(this);
 
         var tableProps = {
-            collection: this.props.collection,
+            collection: dispatcher.collections.samples,
             fields: this.fields,
             baseFilter: {archived: this.props.archived},
             initialSortKey: 'added',
@@ -175,9 +168,17 @@ var SamplesTable = React.createClass({
             filterComponent: this.props.archived || !dispatcher.user.permissions.add_sample ? Filter: Toolbar,
             documentsNoun: 'samples',
             selectable: true,
-            onClick: this.selectSample,
+            onClick: this.showDetail,
             createActions: createActions
         };
+
+        var detailTarget = _.find(dispatcher.collections.samples.documents, {_id: this.props.route.extra[0]});
+
+        var createModal;
+
+        if (!this.props.archived) {
+            createModal = <Create show={this.props.route.extra[0] === "create"} onHide={this.hideModal} />;
+        }
 
         return (
             <div>
@@ -186,11 +187,14 @@ var SamplesTable = React.createClass({
                 <ConfirmModal {...this.confirmManager.getProps()} noun='sample' />
 
                 <DetailModal
-                    target={this.state.detailTarget}
-                    onHide={this.hideDetail}
-                    contentComponent={Detail}
-                    collection={this.props.collection}
+                    target={detailTarget}
+                    onHide={this.hideModal}
+                    contentComponent={SampleDetail}
+                    collection={dispatcher.collections.samples}
                 />
+
+                {createModal}
+
             </div>
         );
     }

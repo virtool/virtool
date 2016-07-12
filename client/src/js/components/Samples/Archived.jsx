@@ -7,7 +7,7 @@ var View = React.createClass({
     render: function () {
         return (
             <SamplesTable
-                collection={dispatcher.collections.samples}
+                route={this.props.route}
                 archived={true}
             />
         );
