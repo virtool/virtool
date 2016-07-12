@@ -204,11 +204,11 @@ var Report = React.createClass({
                     <Table bordered>
                         <tbody>
                             <tr>
-                                <th className='col-md-3'>Viruses Hit</th>
-                                <td className='col-md-9'>{this.props.diagnosis.length}</td>
+                                <th className='col-md-3'>Reads Mapped</th>
+                                <td className='col-md-9'>{this.props.read_count}</td>
                             </tr>
                             <tr>
-                                <th>Reads Mapped</th>
+                                <th>Viruses Hit</th>
                                 <td>{this.props.diagnosis.length}</td>
                             </tr>
                         </tbody>
