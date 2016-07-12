@@ -96,8 +96,6 @@ class Job(multiprocessing.Process):
                     # Get the function name and use it to tell the jobs collection that a new stage has been started.
                     self.update_status(stage=stage_method.__name__)
 
-                    print(stage_method.__name__)
-
                     # Run the command function
                     stage_method()
             except:

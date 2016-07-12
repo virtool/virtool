@@ -438,8 +438,6 @@ class PathoscopeSNAP(Pathoscope):
 
         self.intermediate["to_viruses"] = self.run_process(command, no_output_failure=True)
 
-        print(len(self.intermediate["to_viruses"]))
-
     def build_isolate_index(self):
         if self.intermediate["use_isolates"]:
             command = [
@@ -509,16 +507,12 @@ class PathoscopeSNAP(Pathoscope):
         handles = list()
 
         for file_path in self.calculate_read_path().split(","):
-            print(file_path)
-
             if file_path.endswith("gz"):
                 handle = gzip.open(file_path, "rt")
             else:
                 handle = open(file_path, "r")
 
             handles.append(handle)
-
-        print(handles)
 
         mapped = list()
 

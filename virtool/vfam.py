@@ -1,6 +1,5 @@
 import os
 import json
-import pprint
 import random
 import collections
 
@@ -74,13 +73,6 @@ class Annotations:
             top_names = [entry[0] for entry in top_three]
             document["definition"] = ", ".join(top_names)
             self.documents[_id] = document
-
-    def print_one(self):
-        try:
-            _id = random.randrange(1, len(self.documents))
-            pprint.pprint(self.documents[_id])
-        except KeyError:
-            self.print_one()
 
     def find(self, _id):
         return self.documents[int(_id)]
