@@ -62,7 +62,7 @@ var Main = React.createClass({
                 <Nav style={navStyle} />
                 <div style={contentStyle}>
                     <div className='container-fluid' id='content-display' style={contentStyle}>
-                        <View />
+                        <View route={this.state.route} />
                     </div>
                 </div>
             </div>
