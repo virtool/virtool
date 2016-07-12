@@ -406,7 +406,8 @@ class Collection(virtool.database.Collection):
                                 "_id": virus_id,
                                 "name": virus_document["name"],
                                 "abbreviation": virus_document["abbreviation"],
-                                "isolates": dict()
+                                "isolates": dict(),
+                                "ref_length": 0
                             }
 
                         virus_document = fetched_viruses[virus_id]
@@ -427,6 +428,9 @@ class Collection(virtool.database.Collection):
                                     hit["accession"] = accession
 
                                     annotated[virus_id]["isolates"][isolate_id]["hits"].append(hit)
+                                    annotated[virus_id]["ref_length"] += len(sequence["sequence"])
+
+
 
                     analysis["diagnosis"] = [annotated[virus_id] for virus_id in annotated]
 

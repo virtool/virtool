@@ -71,6 +71,7 @@ var AnalysisPanel = React.createClass({
             content = (
                 <AnalysisReport
                     readCount={this.props.data.quality.count}
+                    maxReadLength={this.props.data.quality.length[1]}
                     onBack={this.showListing}
                     {...analysisEntry}
                 />

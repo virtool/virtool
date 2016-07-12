@@ -52,6 +52,8 @@ var Report = React.createClass({
 
     render: function () {
 
+        console.log(this.props);
+
         var names = {
             virus: null,
             isolate: null
@@ -130,8 +132,8 @@ var Report = React.createClass({
 
             if (this.state.filter) {
                 data = _.filter(data, function (document) {
-                    return document.pi * totalReadsMapped >= 1;
-                });
+                    return document.pi * totalReadsMapped >= document.ref_length * 0.8 / this.props.maxReadLength;
+                }.bind(this));
             }
 
             var disableControl = true;
