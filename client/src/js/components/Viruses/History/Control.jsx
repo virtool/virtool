@@ -31,6 +31,10 @@ var HistoryControl = React.createClass({
         this.refs.input.getInputDOMNode().focus();
     },
 
+    selectIndex: function (event) {
+        dispatcher.router.setExtra([event.target.value]);
+    },
+
     render: function () {
         // Addons to label the input components.
         var findAddon = <span><Icon name='search' /> Find</span>;
@@ -48,7 +52,7 @@ var HistoryControl = React.createClass({
         // Props to pass to the select box input component.
         var selectProps = {
             type: 'select',
-            onChange: this.props.onSelectIndex,
+            onChange: this.selectIndex,
             addonBefore: selectAddon,
             value: this.props.selectedVersion
         };
