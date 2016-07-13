@@ -174,7 +174,7 @@ class Job(multiprocessing.Process):
         self.log("Got a termination signal. Raising Termination exception. {} {}".format(repr(args), repr(kwargs)))
         raise Termination
 
-    def run_process(self, cmd, dont_read_stdout=False, no_output_failure=False, env=None):
+    def run_process(self, cmd, stdout_handler=None, dont_read_stdout=False, no_output_failure=False, env=None):
         """
         Wraps :class:`subprocess.Popen`. Takes a command (list) that is run with all output be cleanly handled in
         real time. Also takes handler methods for stdout and stderr lines. These will be called anytime new output is
@@ -184,18 +184,23 @@ class Job(multiprocessing.Process):
         """
         stderr = None
 
-        if dont_read_stdout:
-            output = None
-            stdout_handle = subprocess.DEVNULL
-        else:
-            output = list()
+        output = None
+        stdout_handle = subprocess.DEVNULL
+
+        if not dont_read_stdout:
             stdout_handle = subprocess.PIPE
+
+            if not stdout_handler:
+                output = list()
+                stdout_handler = output.append
 
         try:
             with subprocess.Popen(cmd, stdout=stdout_handle, stderr=subprocess.PIPE, env=env, universal_newlines=True) as process:
                 if not dont_read_stdout:
                     for line in process.stdout:
-                        output.append(line.rstrip())
+                        stdout_handler(line.rstrip())
+                        if output is None:
+                            output = True
 
                 stderr = process.stderr.read()
 
@@ -205,7 +210,7 @@ class Job(multiprocessing.Process):
                 "context": "External Process Error"
             }
 
-        if no_output_failure and len(output) == 0:
+        if no_output_failure and not output:
             self.error = {
                 "message": stderr.split("\n"),
                 "context": "External Process Error"

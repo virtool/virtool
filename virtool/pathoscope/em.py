@@ -80,7 +80,7 @@ def run(u, nu, genomes, verbose=False, max_iter=50, epsilon=1e-7, pi_prior=0, th
         pi = [(k + pip) / (u_total + nu_total + pip * len(pi_sum)) for k in pi_sum]
 
         if i == 0:
-            initPi = pi
+            init_pi = pi
 
         theta_p = theta_prior * priorWeight
 

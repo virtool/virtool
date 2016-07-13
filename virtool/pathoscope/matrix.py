@@ -55,7 +55,7 @@ def make(sam_lines, min_pscore=0.01):
         if int(line[1]) & 0x4 == 4:
             continue
 
-        # Get the reference ID (implemenet parsing later)
+        # Get the reference ID (implement parsing later)
         ref_id = line[2]
 
         if ref_id == "*":
@@ -109,32 +109,35 @@ def make(sam_lines, min_pscore=0.01):
     return U, NU, genomes, reads
 
 
-def rescale_score(U, NU, max_score, min_score):
+def rescale_score(u, nu, max_score, min_score):
     """ Rescaling the sam alignment score and taking exponent """
+    divisor = max_score
+
     if min_score < 0:
-        factor = 100 / (max_score - min_score)
-    else:
-        factor = 100 / max_score
+        divisor -= min_score
 
-    for read_index in U:
+    factor = 100 / divisor
+
+    for read_index in u:
         if min_score < 0:
-            U[read_index][1][0] -=  - min_score
-        U[read_index][1][0] = math.exp(U[read_index][1][0] * factor)
-        U[read_index][3] = U[read_index][1][0]
+            u[read_index][1][0] -= min_score
 
-    for read_index in NU:
-        NU[read_index][3] = 0.0
+        u[read_index][1][0] = math.exp(u[read_index][1][0] * factor)
+        u[read_index][3] = u[read_index][1][0]
 
-        for i in range(0, len(NU[read_index][1])):
+    for read_index in nu:
+        nu[read_index][3] = 0.0
+
+        for i in range(0, len(nu[read_index][1])):
             if min_score < 0:
-                NU[read_index][1][i] -= min_score
+                nu[read_index][1][i] -= min_score
 
-            NU[read_index][1][i] = math.exp(NU[read_index][1][i] * factor)
+            nu[read_index][1][i] = math.exp(nu[read_index][1][i] * factor)
 
-            if NU[read_index][1][i] > NU[read_index][3]:
-                NU[read_index][3] = NU[read_index][1][i]
+            if nu[read_index][1][i] > nu[read_index][3]:
+                nu[read_index][3] = nu[read_index][1][i]
 
-    return U, NU
+    return u, nu
 
 
 def alignment_read_percentage(sam_path):

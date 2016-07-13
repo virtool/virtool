@@ -63,6 +63,61 @@ class Parse:
                         output.write(line)
 
 
+class Minimal:
+
+    def __init__(self):
+        self._header = []
+        self._aligns = collections.defaultdict(lambda: collections.defaultdict(list))
+
+    def add(self, line):
+        # Store stripped header lines
+        if line[0] in ["#", "@"]:
+            self._header.append(line.rstrip())
+            return
+
+        split = line.rstrip().split("\t")
+
+        # Skip unmapped reads
+        if int(split[1]) & 0x4 == 4 or split[2] == "*":
+            return
+
+        p_score, skip = entry_score(split, 0.01)
+
+        if skip:
+            p_score = None
+
+        read = split[0]
+        ref = split[2]
+
+        self._aligns[read][ref].append((
+            p_score,
+            line
+        ))
+
+    def which_genomes(self, name):
+        return list(self._aligns[name].keys())
+
+    def genomes(self, ):
+        unique = set()
+
+        for read_name, refs in self._aligns.items():
+            unique.update(list(refs.keys()))
+
+        return list(unique)
+
+    def reads(self):
+        return list(self._aligns.keys())
+
+    def write_all(self, path):
+        with open(path, "w") as output:
+            for line in self._header:
+                output.write(line)
+            for read_name, per_genome in self._aligns.items():
+                for genome_name, hits in per_genome.items():
+                    for score, line in hits:
+                        output.write(line)
+
+
 def coverage(sam_lines, ref_lengths):
     align = dict()
 
