@@ -72,7 +72,6 @@ var HostsTable = React.createClass({
                         {...document}
                         key={document._id}
                         showModal={this.showModal}
-                        collection={this.props.collection}
                     />
                 )
             }, this);

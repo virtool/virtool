@@ -3,6 +3,9 @@
   "name": "virtool-client",
   "description": "a client for virtool-server",
   "devDependencies": {
+    "babel-core": "^6.10.4",
+    "babel-loader": "^6.2.4",
+    "babel-preset-es2015": "^6.9.0",
     "bluebird": "^3.3.5",
     "clean-webpack-plugin": "^0.1.8",
     "jquery": "^3.0.0",

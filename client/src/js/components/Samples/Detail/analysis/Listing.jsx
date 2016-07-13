@@ -61,7 +61,7 @@ var AnalysisList = React.createClass({
     handleSubmit: function (event) {
         event.preventDefault();
         this.setState({pending: true}, function () {
-            this.props.collection.request('analyze', {
+            dispatcher.collections.samples.request('analyze', {
                 samples: [this.props.detail._id],
                 discovery: false,
                 algorithm: this.state.algorithm,

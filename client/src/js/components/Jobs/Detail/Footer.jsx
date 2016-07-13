@@ -30,7 +30,7 @@ var JobDetailFooter = React.createClass({
      * @func
      */
     handleCancel: function () {
-        this.props.collection.request('cancel', {_id: this.props._id});
+        dispatcher.collections.jobs.request('cancel', {_id: this.props._id});
     },
 
     /**
@@ -39,7 +39,7 @@ var JobDetailFooter = React.createClass({
      * @func
      */
     handleArchive: function () {
-        this.props.collection.request('archive', {_id: this.props._id});
+        dispatcher.collections.jobs.request('archive', {_id: this.props._id});
     },
 
     /**
@@ -48,7 +48,7 @@ var JobDetailFooter = React.createClass({
      * @func
      */
     handleRemove: function () {
-        this.props.collection.request('remove_job', {_id: this.props._id});
+        dispatcher.collections.jobs.request('remove_job', {_id: this.props._id});
     },
 
     render: function () {
