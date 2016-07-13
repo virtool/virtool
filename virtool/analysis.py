@@ -8,6 +8,7 @@ import virtool.pathoscope
 
 from Bio import SeqIO
 
+
 class Analyze(virtool.job.Job):
 
     def __init__(self, *args, **kwargs):
@@ -145,8 +146,6 @@ class Pathoscope(Analyze):
                     for isolate in virus["isolates"]:
                         for sequence in isolate["sequences"]:
                             fasta_file.write(">{}\n{}\n".format(sequence["_id"], sequence["sequence"]))
-
-            self.log("Wrote isolate FASTA file")
         else:
             self.log("Not generating isolate FASTA file.")
 
