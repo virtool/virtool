@@ -558,16 +558,7 @@ class NuVs(Analyze):
             "-U", files
         ]
 
-        # Run the Bowtie2 command append all STDOUT to a list for use in later stages.
-        self.intermediate["to_viruses_count"] = 0
-        self.intermediate["to_viruses_input"] = self.read_count
-        self.intermediate["last_reported_progress"] = 0
-
-        to_viruses = virtool.pathoscope.sam.Lines()
-
-        self.run_process(command, no_output_failure=True, stdout_handler=to_viruses.add)
-
-        self.intermediate["to_viruses"] = to_viruses
+        self.run_process(command, no_output_failure=True)
 
     def map_host(self):
         self.log("Mapping to hosts")
@@ -582,13 +573,7 @@ class NuVs(Analyze):
             "-U", self.paths["analysis"] + "/unmapped_viruses.fq"
         ]
 
-        self.intermediate["to_hosts_count"] = 0
-        self.intermediate["last_reported_progress"] = 0
-
-        self.intermediate["to_host"] = self.run_process(command, no_output_failure=True)
-
-        for key in ["to_viruses_count", "to_hosts_count"]:
-            self.results[key] = self.intermediate[key]
+        self.run_process(command, no_output_failure=True)
 
     def assemble(self):
         command = [
