@@ -460,14 +460,6 @@ class PathoscopeSNAP(Pathoscope):
 
             self.run_process(command, no_output_failure=True, stdout_handler=self.intermediate["to_viruses"].add)
 
-            '''
-
-            with open(self.paths["analysis"] + "/isolates.sam", "w") as isolate_sam_file:
-                for sam_entry in self.intermediate["to_isolates"]:
-                    isolate_sam_file.write(sam_entry + "\n")
-
-            '''
-
             # Find and log the candidate genome accessions
             accessions = self.intermediate["to_viruses"].genomes()
 
