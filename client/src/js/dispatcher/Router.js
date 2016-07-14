@@ -20,24 +20,33 @@ function Router() {
 
         var base = fragment.slice(0, 2);
 
-        if (base.length === 1) base += this.childKeys(base[0])[0];
+        if (base[0] === "") {
+            location.hash = "home/welcome";
+            return;
+        }
 
         var children = _.find(this.structure, {key: base[0]}).children;
-        
-        this.route = {
-            fragment: fragment,
-            base: base,
-            extra: fragment.slice(2),
-            parent: base[0],
-            child: base[1],
 
-            children: children,
-            baseComponent: _.find(children, {key: base[1]}).component
-        };
+        if (base.length > 1) {
+            this.route = {
+                fragment: fragment,
+                base: base,
+                extra: fragment.slice(2),
+                parent: base[0],
+                child: base[1],
 
-        this.emit('change', this.route);
+                children: children,
+                baseComponent: _.find(children, {key: base[1]}).component
+            };
 
-        return this.route;
+            this.emit('change', this.route);
+
+            return this.route;
+        }
+
+
+
+        location.hash = base[0] + "/" + children[0].key;
     };
 
     // Change the route when there is the URL in the address bar is changed.
