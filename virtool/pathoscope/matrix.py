@@ -33,108 +33,90 @@ class Store:
         return name in self._lookup
 
 
-def make(sam_lines, min_pscore=0.01):
-    U = {}
-    NU = {}
+def make(sam):
+    u = dict()
+    nu = dict()
 
     genomes = Store()
     reads = Store()
 
-    maxScore = None
-    minScore = None
+    max_score = None
+    min_score = None
 
-    for line in sam_lines:
-        if line[0] in ["@", "#"]:
-            continue
+    for read_id, ref_id, pos, length, p_score, a_score in sam.entries():
 
-        line = line.split("\t")
+        if max_score is None or p_score > max_score:
+            max_score = p_score
 
-        read_id = line[0]
+        if min_score is None or p_score < min_score:
+            min_score = p_score
 
-        # Parse bitwise flag. If read is unmapped (0x4), discard it.
-        if int(line[1]) & 0x4 == 4:
-            continue
-
-        # Get the reference ID (implemenet parsing later)
-        ref_id = line[2]
-
-        if ref_id == "*":
-            continue
-
-        pScore, skip = sam.entry_score(line, min_pscore)
-
-        if skip:
-            continue
-
-        if maxScore is None or pScore > maxScore:
-            maxScore = pScore
-
-        if minScore is None or pScore < minScore:
-            minScore = pScore
-
-        gIdx = genomes.mod(ref_id)
+        genome_index = genomes.mod(ref_id)
 
         if reads.exists(read_id):
-            rIdx = reads.mod(read_id)
+            read_index = reads.mod(read_id)
 
-            if rIdx in U:
-                if gIdx in U[rIdx][0]:
+            if read_index in u:
+                if genome_index in u[read_index][0]:
                     continue
-                NU[rIdx] = U[rIdx]
-                del U[rIdx]
+                nu[read_index] = u[read_index]
+                del u[read_index]
 
-            if gIdx in NU[rIdx][0]:
+            if genome_index in nu[read_index][0]:
                 continue
 
-            NU[rIdx][0].append(gIdx)
-            NU[rIdx][1].append(pScore)
+            nu[read_index][0].append(genome_index)
+            nu[read_index][1].append(p_score)
 
-            if pScore > NU[rIdx][3]:
-                NU[rIdx][3] = pScore
+            if p_score > nu[read_index][3]:
+                nu[read_index][3] = p_score
         else:
-            rIdx = reads.mod(read_id)
-            U[rIdx] = [[gIdx], [pScore], [float(pScore)], pScore]
+            read_index = reads.mod(read_id)
+            u[read_index] = [[genome_index], [p_score], [float(p_score)], p_score]
 
-    U, NU = rescale_score(U, NU, maxScore, minScore)
+    u, nu = rescale_score(u, nu, max_score, min_score)
 
-    for read_index in U:
+    for read_index in u:
         # Keep gIdx and score only
-        U[read_index] = [U[read_index][0][0], U[read_index][1][0]]
+        u[read_index] = [u[read_index][0][0], u[read_index][1][0]]
 
-    for read_index in NU:
-        pScoreSum = sum(NU[read_index][1])
+    for read_index in nu:
+        pScoreSum = sum(nu[read_index][1])
         # Normalizing pScore
-        NU[read_index][2] = [k / pScoreSum for k in NU[read_index][1]]
+        nu[read_index][2] = [k / pScoreSum for k in nu[read_index][1]]
 
-    return U, NU, genomes, reads
+    return u, nu, genomes, reads
 
 
-def rescale_score(U, NU, max_score, min_score):
+def rescale_score(u, nu, max_score, min_score):
     """ Rescaling the sam alignment score and taking exponent """
+    divisor = max_score
+
     if min_score < 0:
-        factor = 100 / (max_score - min_score)
-    else:
-        factor = 100 / max_score
+        divisor -= min_score
 
-    for read_index in U:
+    factor = 100 / divisor
+
+    for read_index in u:
         if min_score < 0:
-            U[read_index][1][0] -=  - min_score
-        U[read_index][1][0] = math.exp(U[read_index][1][0] * factor)
-        U[read_index][3] = U[read_index][1][0]
+            u[read_index][1][0] -= min_score
 
-    for read_index in NU:
-        NU[read_index][3] = 0.0
+        u[read_index][1][0] = math.exp(u[read_index][1][0] * factor)
+        u[read_index][3] = u[read_index][1][0]
 
-        for i in range(0, len(NU[read_index][1])):
+    for read_index in nu:
+        nu[read_index][3] = 0.0
+
+        for i in range(0, len(nu[read_index][1])):
             if min_score < 0:
-                NU[read_index][1][i] -= min_score
+                nu[read_index][1][i] -= min_score
 
-            NU[read_index][1][i] = math.exp(NU[read_index][1][i] * factor)
+            nu[read_index][1][i] = math.exp(nu[read_index][1][i] * factor)
 
-            if NU[read_index][1][i] > NU[read_index][3]:
-                NU[read_index][3] = NU[read_index][1][i]
+            if nu[read_index][1][i] > nu[read_index][3]:
+                nu[read_index][3] = nu[read_index][1][i]
 
-    return U, NU
+    return u, nu
 
 
 def alignment_read_percentage(sam_path):

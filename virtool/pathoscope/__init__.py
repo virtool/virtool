@@ -5,4 +5,3 @@ from virtool.pathoscope import reassign
 from virtool.pathoscope import report
 from virtool.pathoscope import sam
 from virtool.pathoscope import subtract
-from virtool.pathoscope import promiscuous
