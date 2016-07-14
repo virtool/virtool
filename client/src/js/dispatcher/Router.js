@@ -20,13 +20,16 @@ function Router() {
 
         var base = fragment.slice(0, 2);
 
+        // Redirect to homepage if no fragment is specified after '#'.
         if (base[0] === "") {
             location.hash = "home/welcome";
             return;
         }
 
+        // If we get this far, a parent is specified in the base of the route. Get its children.
         var children = _.find(this.structure, {key: base[0]}).children;
 
+        // Update the route attribute and emit a route change event if a child is specified.
         if (base.length > 1) {
             this.route = {
                 fragment: fragment,
@@ -44,8 +47,7 @@ function Router() {
             return this.route;
         }
 
-
-
+        // Redirect to the parent's first child if no child is specified.
         location.hash = base[0] + "/" + children[0].key;
     };
 
