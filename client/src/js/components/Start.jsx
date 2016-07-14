@@ -66,6 +66,8 @@ var Start = React.createClass({
             dispatcher.on('syncing', function (data) {
                 this.setState({syncProgress: data})
             }.bind(this));
+        } else {
+            history.replaceState({}, document.title, "/");
         }
     },
 
