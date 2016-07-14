@@ -1,27 +1,58 @@
-from virtool.pathoscope import matrix
-from virtool.pathoscope import report
-from virtool.pathoscope import em
-from virtool.pathoscope import sam
+import virtool.pathoscope
+import math
 
 
-def run(sam_lines, tsv_path, reassign_path=None, intermediate=False, rewrite_sam=False, verbose=False):
-    # Parse SAM file into matrix of read mapping proportions
-    U, NU, genomes, reads = matrix.make(sam_lines)
+def run(sam, tsv_path, verbose=False):
+
+    min_pscore = 0.01
+
+    # Calculate a Pathoscope matrix from the SAM file (isolates).
+    u, nu, genomes, reads = virtool.pathoscope.matrix.make(sam)
 
     best_initial = compute_best_hit(
-        U,
-        NU,
+        u,
+        nu,
         genomes,
         reads.count
     )
 
-    init_pi, pi, NU = em.run(U, NU, genomes, verbose)
+    init_pi, pi, nu = virtool.pathoscope.em.run(u, nu, genomes, verbose)
 
-    best_final = compute_best_hit(U, NU, genomes, reads.count)
+    best_final = compute_best_hit(
+        u,
+        nu,
+        genomes,
+        reads.count
+    )
 
-    reassigned_lines = sam.rewrite_align(U, NU, genomes, reads, sam_lines, reassign_path)
+    new_sam = virtool.pathoscope.sam.Data()
 
-    results = report.write(
+    for read_id, ref_id, pos, length, p_score, a_score in sam.entries():
+        if p_score < min_pscore:
+            continue
+
+        read_index = reads.get(read_id)
+        genome_index = genomes.get(ref_id)
+
+        if read_index in u:
+            new_sam.add(read_id, ref_id, pos, length, p_score, a_score)
+            continue
+
+        if read_index in nu:
+            updated_pscore, pscore_sum = find_updated_score(nu, read_index, genome_index)
+
+            if updated_pscore < min_pscore:
+                continue
+
+            if updated_pscore >= 1.0:
+                updated_pscore = 0.999999
+
+            # mapq2 = math.log10(1 - updated_pscore)
+            # l[4] = str(int(round(-10.0 * mapq2)))
+            # line = "\t".join(l)
+            new_sam.add(read_id, ref_id, updated_pscore, a_score)
+
+    results = virtool.pathoscope.report.write(
         tsv_path,
         reads.count,
         genomes.count,
@@ -32,7 +63,7 @@ def run(sam_lines, tsv_path, reassign_path=None, intermediate=False, rewrite_sam
         best_final
     )
 
-    return results, reads.count, reassigned_lines
+    return results, reads.count, new_sam
 
 
 def find_updated_score(nu, read_index, genome_index):

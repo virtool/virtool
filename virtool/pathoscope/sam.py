@@ -2,72 +2,42 @@ import math
 import collections
 
 
-class Parse:
-
-    def __init__(self, sam_list):
-        self._header = list()
-        self.aligns = collections.defaultdict(dict)
-
-        for line in sam_list:
-            # Store stripped header lines
-            if line[0] in ["#", "@"]:
-                self._header.append(line.rstrip())
-                continue
-
-            l = line.rstrip().split("\t")
-
-            # Skip unmapped reads
-            if int(l[1]) & 0x4 == 4 or l[2] == "*":
-                continue
-
-            pScore, skip = entry_score(l, 0.01)
-
-            if skip:
-                pScore = None
-
-            read = l[0]
-            ref = l[2]
-
-            try:
-                self.aligns[read][ref].append((pScore, line))
-            except:
-                self.aligns[read][ref] = [(pScore, line)]
-
-    def which_genomes(self, name):
-        return list(self.aligns[name].keys())
-
-    def genomes(self, ):
-        unique = set()
-
-        for read_name, refs in self.aligns.items():
-            unique.update(list(refs.keys()))
-
-        return list(unique)
-
-    def reads(self):
-        return list(self.aligns.keys())
-
-    def by_read(self, name, no_line=False):
-        return self.aligns[name]
-
-    def remove_name(self, read_name):
-        del self.aligns[read_name]
-
-    def write_all(self, path):
-        with open(path, "w") as output:
-            for line in self._header:
-                output.write(line)
-            for read_name, per_genome in self.aligns.items():
-                for genome_name, hits in per_genome.items():
-                    for score, line in hits:
-                        output.write(line)
-
-
-class Minimal:
+class Base:
 
     def __init__(self):
         self._header = []
         self._aligns = collections.defaultdict(lambda: collections.defaultdict(list))
+
+    def entries(self):
+        for read_id, per_ref in self._aligns.items():
+            for ref_id, hits in per_ref.items():
+                for hit in hits:
+                    yield (read_id, ref_id, hit[0], hit[1], hit[2], hit[3])
+
+    def high_scores(self):
+        """ Returns a dictionary containing alignment scores for all read_ids """
+        return {entry[0]: entry[3] for entry in self.entries()}
+
+    def genomes(self):
+        unique = set()
+
+        for read_name, refs in self._aligns.items():
+            unique.update(list(refs.keys()))
+
+        return list(unique)
+
+    def remove(self, read_id):
+        del self._aligns[read_id]
+
+    def reads(self):
+        return list(self._aligns.keys())
+
+
+class Lines(Base):
+
+    def __init__(self, snap=False):
+        super().__init__()
+        self.snap = snap
 
     def add(self, line):
         # Store stripped header lines
@@ -77,6 +47,13 @@ class Minimal:
 
         split = line.rstrip().split("\t")
 
+        ref_id = split[2]
+
+        if ref_id == "*":
+            return
+
+        read_id = split[0]
+
         # Skip unmapped reads
         if int(split[1]) & 0x4 == 4 or split[2] == "*":
             return
@@ -84,75 +61,61 @@ class Minimal:
         p_score, skip = entry_score(split, 0.01)
 
         if skip:
-            p_score = None
+            return
 
-        read = split[0]
-        ref = split[2]
+        pos = int(split[3])
+        length = len(split[9])
 
-        self._aligns[read][ref].append((
+        a_score = get_score(split, snap=self.snap)
+
+        self._aligns[read_id][ref_id].append((
+            pos,
+            length,
             p_score,
-            line
+            a_score
         ))
 
-    def which_genomes(self, name):
-        return list(self._aligns[name].keys())
 
-    def genomes(self, ):
-        unique = set()
+class Data(Base):
 
-        for read_name, refs in self._aligns.items():
-            unique.update(list(refs.keys()))
+    def __init__(self):
+        super().__init__()
 
-        return list(unique)
+    def add(self, read_id, ref_id, pos, length, p_score, a_score):
 
-    def reads(self):
-        return list(self._aligns.keys())
-
-    def write_all(self, path):
-        with open(path, "w") as output:
-            for line in self._header:
-                output.write(line)
-            for read_name, per_genome in self._aligns.items():
-                for genome_name, hits in per_genome.items():
-                    for score, line in hits:
-                        output.write(line)
+        self._aligns[read_id][ref_id].append((
+            pos,
+            length,
+            p_score,
+            a_score
+        ))
 
 
-def coverage(sam_lines, ref_lengths):
+def coverage(sam, ref_lengths):
     align = dict()
 
-    for line in sam_lines:
-        if line[0] in ["#", "@"]:
-            continue
-
-        line = line.split("\t")
-
-        ref_id = line[2]
-
+    for read_id, ref_id, pos, length, p_score, a_score in sam.entries():
         if ref_id not in ref_lengths:
             continue
-
-        pos = int(line[3])
-        seq_length = len(line[9])
 
         if ref_id not in align:
             align[ref_id] = [0] * ref_lengths[ref_id]
 
-        for i in range(pos, pos + seq_length):
+        for i in range(pos, pos + length):
             try:
                 align[ref_id][i] += 1
             except IndexError:
                 pass
 
-    depth = {}
+    depth = dict()
 
-    for ref_id in align:
-        length = len(align[ref_id])
+    for ref_id, ref in align.items():
+        length = len(ref)
 
         depth[ref_id] = {
-            "coverage": 1 - align[ref_id].count(0) / length,
-            "depth": sum(align[ref_id]) / length,
-            "align": align[ref_id]
+            "coverage": 1 - ref.count(0) / length,
+            "depth": sum(ref) / length,
+            "align": ref
         }
 
     return depth
@@ -200,26 +163,7 @@ def get_score(line, snap=False):
     return score
 
 
-def all_scores(sam_list, snap=False):
-    """ Returns a dictionary containing alignment scores for all read_ids in a given SAM alignment file """
-    scores = {}
-
-    for ln in sam_list:
-        if (ln[0] == '@' or ln[0] == '#'):
-            continue
-
-        l = ln.split('\t')
-        read_id = l[0]
-        aScore = get_score(l, snap=snap)
-        if aScore is not None:
-            score = scores.get(read_id, None)
-            if score is None or score < aScore:
-                scores[read_id] = aScore
-
-    return scores
-
-
-def rewrite_align(U, NU, genomes, reads, sam_lines, out_path, min_pscore=0.01):
+def rewrite_align(u, nu, genomes, reads, sam_lines, out_path, min_pscore=0.01):
     new_sam_lines = list()
     valid_refs = set()
 
@@ -250,13 +194,13 @@ def rewrite_align(U, NU, genomes, reads, sam_lines, out_path, min_pscore=0.01):
             gIdx = genomes.get(refId)
             rIdx = reads.get(readId)
 
-            if rIdx in U:
+            if rIdx in u:
                 new_sam.write(line + "\n")
                 new_sam_lines.append(line)
                 continue
 
-            if rIdx in NU:
-                upPscore, pscoreSum = find_updated_score(NU, rIdx, gIdx)
+            if rIdx in nu:
+                upPscore, pscoreSum = find_updated_score(nu, rIdx, gIdx)
 
                 if upPscore < min_pscore:
                     continue
