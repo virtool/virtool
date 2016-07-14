@@ -50,7 +50,7 @@ def run(sam, tsv_path, verbose=False):
             # mapq2 = math.log10(1 - updated_pscore)
             # l[4] = str(int(round(-10.0 * mapq2)))
             # line = "\t".join(l)
-            new_sam.add(read_id, ref_id, updated_pscore, a_score)
+            new_sam.add(read_id, ref_id, pos, length, updated_pscore, a_score)
 
     results = virtool.pathoscope.report.write(
         tsv_path,
