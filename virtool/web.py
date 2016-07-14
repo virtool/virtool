@@ -170,15 +170,16 @@ class Application:
 
             sys.exit(1)
 
-        except KeyboardInterrupt:
-            self.handle_interrupt()
-
         # Create IOLoop object and start it.
         logger.debug("Starting IOLoop.")
         self.loop = tornado.ioloop.IOLoop.instance()
 
-        self.loop.start()
-        logger.debug("Started IOLoop.")
+        try:
+            logger.debug("Starting IOLoop.")
+            self.loop.start()
+        except KeyboardInterrupt:
+            self.handle_interrupt()
+
 
         # When the IOLoop.start() method returns, close the IOLoop.
         self.loop.close()
