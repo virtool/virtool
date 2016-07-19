@@ -412,7 +412,12 @@ class Collection(virtool.database.Collection):
 
                         virus_document = fetched_viruses[virus_id]
 
+                        max_ref_length = 0
+
                         for isolate in virus_document["isolates"]:
+
+                            ref_length = 0
+
                             for sequence in isolate["sequences"]:
                                 if sequence["_id"] == accession:
                                     isolate_id = isolate["isolate_id"]
@@ -428,9 +433,13 @@ class Collection(virtool.database.Collection):
                                     hit["accession"] = accession
 
                                     annotated[virus_id]["isolates"][isolate_id]["hits"].append(hit)
-                                    annotated[virus_id]["ref_length"] += len(sequence["sequence"])
 
+                                    ref_length += len(sequence["sequence"])
 
+                            if ref_length > max_ref_length:
+                                max_ref_length = ref_length
+
+                        annotated[virus_id]["ref_length"] = max_ref_length
 
                     analysis["diagnosis"] = [annotated[virus_id] for virus_id in annotated]
 

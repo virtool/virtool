@@ -52,8 +52,6 @@ var Report = React.createClass({
 
     render: function () {
 
-        console.log(this.props);
-
         var names = {
             virus: null,
             isolate: null
@@ -135,6 +133,8 @@ var Report = React.createClass({
                     return document.pi * totalReadsMapped >= document.ref_length * 0.8 / this.props.maxReadLength;
                 }.bind(this));
             }
+
+            console.table(data);
 
             var disableControl = true;
 
