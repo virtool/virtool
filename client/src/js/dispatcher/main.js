@@ -25,6 +25,7 @@ function Dispatcher(onReady) {
         jobs: new Collection('jobs'),
         samples: new Collection('samples'),
         viruses: new Collection('viruses'),
+        hmm: new Collection('hmm'),
         history: new Collection('history'),
         indexes: new Collection('indexes'),
         hosts: new Collection('hosts'),
