@@ -3,7 +3,7 @@ import re
 import pymongo
 import pymongo.errors
 import logging
-import simplejson as json
+import json
 import dictdiffer
 import subprocess
 import gzip
