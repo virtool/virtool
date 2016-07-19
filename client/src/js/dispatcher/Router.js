@@ -97,7 +97,8 @@ function Router() {
             children: [
                 {key: 'manage', component: require('virtool/js/components/Viruses/Manage.jsx')},
                 {key: 'history', component: require('virtool/js/components/Viruses/History.jsx')},
-                {key: 'index', component: require('virtool/js/components/Viruses/Index.jsx')}
+                {key: 'index', component: require('virtool/js/components/Viruses/Index.jsx')},
+                {key: 'hmm', label: 'HMM', component: require('virtool/js/components/Viruses/HMM.jsx')}
             ]
         },
 
