@@ -2,7 +2,7 @@ import os
 import gzip
 
 import virtool.job
-import virtool.vfam
+import virtool.hmm
 import virtool.utils
 import virtool.pathoscope
 
@@ -653,7 +653,7 @@ class NuVs(Analyze):
 
         self.run_process(command)
 
-        annotations = virtool.vfam.Annotations(os.path.join(self.paths["data"], "hmm/annotations"))
+        annotations = virtool.hmm.Annotations(os.path.join(self.paths["data"], "hmm/annotations"))
         annotations.guess_definitions()
 
         hit_path = os.path.join(self.paths["analysis"], "hits.tsv")

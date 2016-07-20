@@ -39,7 +39,8 @@ var User = function () {
     this.deauthorize = function (data) {
 
         dispatcher.storage.deleteDatabase(function () {
-            dispatcher.router.route('home/welcome');
+            location.hash = 'home/welcome';
+            
             this.name = null;
 
              _.forIn(dispatcher.collections, function (collection) {

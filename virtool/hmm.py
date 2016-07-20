@@ -6,14 +6,21 @@ import collections
 import virtool.gen
 import virtool.database
 
-class HMM(virtool.database.Collection):
+class Collection(virtool.database.Collection):
 
     def __init__(self, dispatcher):
         super().__init__("hmm", dispatcher)
 
+        self.sync_projector.update({field: True for field in [
+            "cluster",
+            "label",
+            "count",
+            "families"
+        ]})
+
     @virtool.gen.exposed_method([])
     def detail(self, transaction):
-        detail = self.find({"_id": transaction.data["_id"]})
+        detail = yield self.find_one({"_id": transaction.data["_id"]})
         return True, detail
 
     @virtool.gen.exposed_method(["modify_hmm"])
@@ -26,28 +33,40 @@ class HMM(virtool.database.Collection):
         # The file id to import the data from.
         file_id = transaction.data["file_id"]
 
+        inserted_count = 0
+
         # Load a list of joined virus from a the gzip-compressed JSON.
-        with gzip.open(os.path.join(self.settings.get("data_path"), "upload", file_id), "r") as input_file:
+        with gzip.open(os.path.join(self.settings.get("data_path"), "upload", file_id), "rt") as input_file:
             annotations_to_import = json.load(input_file)
 
         for annotation in annotations_to_import:
             top_three = collections.Counter([entry["name"] for entry in annotation["entries"]]).most_common(3)
             top_names = [entry[0] for entry in top_three]
 
+            new_id = yield self.get_new_id()
+
             annotation.update({
+                "_id": new_id,
                 "definition": top_names,
-                "_version": 0,
-                "nickname": None
+                "label": top_names[0],
+                "_version": 0
             })
 
-            yield self.insert(annotation, transaction.connection.user["_id"])
+            inserted_count += 1
 
-        return True, None
+            yield self.insert(annotation)
+
+        return True, {"count": inserted_count}
 
     @virtool.gen.exposed_method(["modify_hmm"])
-    def set_nickname(self, transaction):
+    def set_field(self, transaction):
+        if transaction.data["field"] != "label":
+            return False, dict(message="Not allowed to set this field.")
+
         yield self.update(transaction.data["_id"], {
-            "nickname": transaction.data["nickname"]
+            "$set": {
+                transaction.data["field"]: transaction.data["value"]
+            }
         })
 
         return True, None
@@ -67,7 +86,7 @@ def text_to_json(annotation_path):
                 data = " ".join(line.split()[1:])
 
                 if line.startswith("CLUSTER"):
-                    document["_id"] = int(data)
+                    document["cluster"] = int(data)
 
                 if line.startswith("NUM_SEQ"):
                     document["count"] = int(data)
