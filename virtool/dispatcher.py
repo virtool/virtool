@@ -22,6 +22,7 @@ COLLECTIONS = [
     "jobs",
     "samples",
     "viruses",
+    "hmm",
     "history",
     "indexes",
     "hosts",
@@ -266,7 +267,7 @@ class Dispatcher:
         permissions = transaction.connection.user["permissions"]
 
         # A list of collection names to sync with the client.
-        sync_list = list(["jobs", "samples", "hosts", "viruses", "history", "indexes"])
+        sync_list = list(["jobs", "samples", "hosts", "viruses", "hmm", "history", "indexes"])
 
         # Only sync users and groups if the user has the appropriate permissions.
         if "modify_options" in permissions:
