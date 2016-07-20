@@ -39,8 +39,7 @@ var VirusGeneral = React.createClass({
                 <InputCell
                     className='col-sm-8'
                     collection={collection}
-                    data={data}
-                    {...this.props}
+                    _id={data._id}
                     field='name'
                     value={this.props.name}
                 />
@@ -48,9 +47,8 @@ var VirusGeneral = React.createClass({
 
             abbrCell = (
                 <InputCell
-                    {...this.props}
                     collection={collection}
-                    data={data}
+                    _id={data._id}
                     field='abbreviation'
                     value={this.props.abbreviation}
 

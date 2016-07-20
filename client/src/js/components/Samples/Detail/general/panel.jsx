@@ -21,9 +21,9 @@ var General = React.createClass({
         var isolateCell;
 
         if (this.props.canModify) {
-            nameCell = <InputCell {...this.props} field="name" value={data.name} className='col-sm-8' />;
-            hostCell = <InputCell {...this.props} field="host" value={data.host} className='col-sm-8' />;
-            isolateCell = <InputCell {...this.props} field="isolate" value={data.isolate} className='col-sm-8' />;
+            nameCell = <InputCell _id={data._id} field="name" value={data.name} className='col-sm-8' />;
+            hostCell = <InputCell _id={data._id} field="host" value={data.host} className='col-sm-8' />;
+            isolateCell = <InputCell _id={data._id} field="isolate" value={data.isolate} className='col-sm-8' />;
         } else {
             nameCell = <td className='col-sm-8'>{data.name}</td>;
             hostCell = <td className='col-sm-8'>{data.host}</td>;

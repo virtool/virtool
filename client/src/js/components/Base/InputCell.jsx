@@ -173,7 +173,7 @@ var InputCell = React.createClass({
             //
             if (this.state.value !== this.props.value) {
                 this.props.collection.request('set_field', {
-                    _id: this.props.data._id,
+                    _id: this.props._id,
                     field: this.props.field,
                     value: this.state.value
                 }, null, this.onFailure);
