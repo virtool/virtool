@@ -21,6 +21,7 @@ var DetailModal = require('virtool/js/components/Base/DetailModal.jsx');
 
 var HMMDetail = require('./HMM/Detail.jsx');
 var ImportModal = require('./HMM/Import.jsx');
+var FilesModal = require('./HMM/Files.jsx');
 var Icon = require('virtool/js/components/Base/Icon.jsx');
 
 /**
@@ -100,6 +101,11 @@ var HMM = React.createClass({
 
                 <ImportModal
                     show={this.props.route.extra[0] === "import"}
+                    onHide={this.hideModal}
+                />
+
+                <FilesModal
+                    show={this.props.route.extra[0] === "files"}
                     onHide={this.hideModal}
                 />
 
