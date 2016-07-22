@@ -587,7 +587,7 @@ table.cluster-table thead th {
 table.cluster-table tbody {
     flex: 1 1 auto;
     display: block;
-    overflow-y: scroll;
+    overflow-y: auto;
     border-top: 2px solid #dddddd;
 }
 
