@@ -443,6 +443,17 @@ class Collection(virtool.database.Collection):
 
                     analysis["diagnosis"] = [annotated[virus_id] for virus_id in annotated]
 
+                if analysis["algorithm"] == "nuvs":
+                    for hmm_result in analysis["hmm"]:
+                        hmm = yield self.dispatcher.collections["hmm"].find_one({"_id": hmm_result["hit"]}, {
+                            "cluster": True,
+                            "families": True,
+                            "definition": True,
+                            "label": True
+                        })
+
+                        hmm_result.update(hmm)
+
         detail["analyses"] = analyses
 
         return detail
