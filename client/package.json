@@ -8,6 +8,7 @@
     "babel-preset-es2015": "^6.9.0",
     "bluebird": "^3.3.5",
     "clean-webpack-plugin": "^0.1.8",
+    "dexie": "^1.4.1",
     "jquery": "^3.0.0",
     "rc-progress": "^1.0.4",
     "reqwest": "^2.0.5"
