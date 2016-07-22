@@ -77,7 +77,7 @@ var ImportViruses = React.createClass({
         var taxonomy = {};
 
         var listGroupStyle = {
-            height: 210,
+            maxHeight: 210,
             overflowY: "auto"
         };
 
