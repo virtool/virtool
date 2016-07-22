@@ -74,7 +74,7 @@ var HMMErrors = React.createClass({
 
                 button = (
                     <Flex.Item grow={0} shrink={0} pad={15}>
-                        <Button disabled={this.props.reconciling} onClick={this.props.press}>
+                        <Button disabled={this.props.pressing || this.props.cleaning} onClick={this.props.press}>
                             <Icon name="hammer" pending={this.props.pressing} /> Repair
                         </Button>
                     </Flex.Item>
@@ -84,7 +84,7 @@ var HMMErrors = React.createClass({
             if (error === "not_in_database" && value) {
                 message = (
                     <span>
-                        <strong>There {makeSpecifier(value, "profiles")} in the HMM file that do not have annotations in the database.</strong>
+                        <strong>There {makeSpecifier(value.length, "profiles")} in the HMM file that do not have annotations in the database.</strong>
                         <span> Ensure the annotation database and HMM file match. This cannot be done automatically.</span>
                     </span>
                 );
@@ -95,15 +95,15 @@ var HMMErrors = React.createClass({
 
                 message = (
                     <span>
-                        <strong>There are {makeSpecifier(value, "annotation")} in the database for which no profiles exist in the HMM file.</strong>
+                        <strong>There are {makeSpecifier(value.length, "annotation")} in the database for which no profiles exist in the HMM file.</strong>
                         <span> Repairing this problem will remove extra annotations from the database.</span>
                     </span>
                 );
 
                 button = (
                     <Flex.Item grow={0} shrink={0} pad={15}>
-                        <Button disabled={this.props.reconciling} onClick={this.props.press}>
-                            <Icon name="hammer" pending={this.props.pressing} /> Repair
+                        <Button disabled={this.props.pressing || this.props.cleaning} onClick={this.props.clean}>
+                            <Icon name="hammer" pending={this.props.cleaning} /> Repair
                         </Button>
                     </Flex.Item>
                 );

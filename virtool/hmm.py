@@ -100,8 +100,8 @@ class Collection(virtool.database.Collection):
         clusters_in_database = {entry["cluster"] for entry in annotations}
 
         # Calculate which cluster ids are unique to the HMM file and/or the annotation database.
-        not_in_file = list(clusters_in_database - clusters_in_file)
-        not_in_database = list(clusters_in_file - clusters_in_database)
+        result["errors"]["not_in_file"] = list(clusters_in_database - clusters_in_file) or False
+        result["errors"]["not_in_database"] = list(clusters_in_file - clusters_in_database) or False
 
         files = yield virtool.utils.list_files(hmm_dir_path)
 
@@ -115,9 +115,14 @@ class Collection(virtool.database.Collection):
         return True, None
 
     @virtool.gen.exposed_method(["modify_hmm"])
-    def remove_annotation(self, transaction):
-        yield self.remove()
-        pass
+    def clean(self, transaction):
+        hmm_ids = yield self.find({"cluster": {
+            "$in": transaction.data["cluster_ids"]
+        }}).distinct("_id")
+
+        result = yield self.remove(hmm_ids)
+
+        return True, result
 
     @virtool.gen.synchronous
     def hmmstat(self, hmm_file_path):

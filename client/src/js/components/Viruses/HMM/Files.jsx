@@ -43,7 +43,7 @@ var HMMFiles = React.createClass({
             errors: null,
 
             pressing: false,
-            reconciling: false
+            cleaning: false
         };
     },
 
@@ -62,16 +62,22 @@ var HMMFiles = React.createClass({
 
     press: function () {
         this.setState({pressing: true}, function () {
-            dispatcher.collections.hmm.request("press", null, this.onPressed);
+            dispatcher.collections.hmm.request("press", null, this.onRepaired);
         });
     },
 
-    onPressed: function () {
-        this.setState({pressing: false}, this.checkFiles);
+    clean: function () {
+        this.setState({cleaning: true}, function () {
+            dispatcher.collections.hmm.request("clean", {cluster_ids: this.state.errors["not_in_file"]}, this.onRepaired);
+        });
     },
 
-    reset: function (callback) {
-        this.setState(this.getInitialState(), callback);
+    onRepaired: function () {
+        this.setState({pressing: false, cleaning: false}, this.checkFiles);
+    },
+
+    reset: function () {
+        this.setState(this.getInitialState());
     },
 
     render: function () {
@@ -104,6 +110,7 @@ var HMMFiles = React.createClass({
             var errors = this.state.errors.length === 0 ? null: (
                 <HMMErrors
                     {...this.state}
+                    clean={this.clean}
                     press={this.press}
                     checkFiles={this.checkFiles}
                 />
