@@ -12,6 +12,8 @@
 'use strict';
 
 var React = require('react');
+var Dropdown = require('react-bootstrap/lib/Dropdown');
+var MenuItem = require('react-bootstrap/lib/MenuItem');
 
 var Icon = require('virtool/js/components/Base/Icon.jsx');
 var Flex = require('virtool/js/components/Base/Flex.jsx');
@@ -67,27 +69,44 @@ var VirusToolbar = React.createClass({
     /**
      * Changes state to show the add or export modal form. Triggered by clicking the a menu item.
      *
+     * @param event {object} - the select event.
+     * @param eventKey {number} - the event key.
      * @func
      */
-    showImport: function () {
-        dispatcher.router.setExtra(["import"])
+    handleSelect: function (event, eventKey) {
+        switch (eventKey) {
+
+            case 1:
+                dispatcher.router.setExtra(["import"]);
+                break;
+
+            case 2:
+                dispatcher.router.setExtra(["files"]);
+                break;
+        }
     },
 
     render: function () {
 
-        var button;
-
         var mayImport = dispatcher.collections.hmm.documents.length === 0;
 
-        if (this.state.canModify) {
-            button = (
-                <Flex.Item shrink={0} pad>
-                    <PushButton bsStyle="primary" onClick={this.showImport} disabled={!mayImport}>
-                        <Icon name="new-entry" /> Import
-                    </PushButton>
-                </Flex.Item>
-            );
-        }
+        var menu = (
+            <Flex.Item shrink={0} grow={0} pad>
+                <Dropdown id='virus-menu-dropdown' pullRight onSelect={this.handleSelect}>
+                    <Dropdown.Toggle noCaret ref='menuButton'>
+                        <Icon name='menu' />
+                    </Dropdown.Toggle>
+                    <Dropdown.Menu>
+                        <MenuItem eventKey={1} disabled={!this.state.canModify || !mayImport}>
+                            <Icon name='new-entry' /> Import Annotations
+                        </MenuItem>
+                        <MenuItem eventKey={2} disabled={!this.state.canModify}>
+                            <Icon name='folder-open' /> View Files
+                        </MenuItem>
+                    </Dropdown.Menu>
+                </Dropdown>
+            </Flex.Item>
+        );
 
         return (
             <div style={{marginBottom: '15px'}}>
@@ -108,7 +127,7 @@ var VirusToolbar = React.createClass({
                         </div>
                     </Flex.Item>
 
-                    {button}
+                    {menu}
                 </Flex>
             </div>
         );
