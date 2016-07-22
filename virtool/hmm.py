@@ -2,9 +2,11 @@ import os
 import gzip
 import json
 import collections
+import subprocess
 
 import virtool.gen
 import virtool.database
+import virtool.utils
 
 class Collection(virtool.database.Collection):
 
@@ -57,6 +59,83 @@ class Collection(virtool.database.Collection):
             yield self.insert(annotation)
 
         return True, {"count": inserted_count}
+
+    @virtool.gen.exposed_method([])
+    def check_files(self, transaction):
+        hmm_dir_path = os.path.join(self.settings.get("data_path"), "hmm")
+
+        result = {
+            "files": list(),
+            "errors": {
+                "hmm_dir": False,
+                "hmm_file": False,
+                "press": False,
+                "not_in_file": False,
+                "not_in_database": False
+            }
+        }
+
+        if not os.path.isdir(hmm_dir_path):
+            result["errors"]["hmm_dir"] = True
+            return True, result
+
+        hmm_file_path = os.path.join(hmm_dir_path, "vFam.hmm")
+
+        if not os.path.isfile(hmm_file_path):
+            result["errors"]["hmm_file"] = True
+            return True, result
+
+        if not all(os.path.isfile(hmm_file_path + ".h3" + suffix) for suffix in ["f", "i", "m", "p"]):
+            result["errors"]["press"] = True
+
+        hmm_stats = yield self.hmmstat(hmm_file_path)
+
+        annotations = yield self.db.find({}, {
+            "cluster": True,
+            "count": True,
+            "length": True
+        }).to_list(None)
+
+        clusters_in_file = {entry["cluster"] for entry in hmm_stats}
+        clusters_in_database = {entry["cluster"] for entry in annotations}
+
+        # Calculate which cluster ids are unique to the HMM file and/or the annotation database.
+        not_in_file = list(clusters_in_database - clusters_in_file)
+        not_in_database = list(clusters_in_file - clusters_in_database)
+
+        files = yield virtool.utils.list_files(hmm_dir_path)
+
+        result["files"] = [file for _, file in files.items() if ".hmm" in file["_id"]]
+
+        return True, result
+
+    @virtool.gen.exposed_method([])
+    def press(self):
+        output = yield self.hmmpress()
+        return True, None
+
+    @virtool.gen.exposed_method(["modify_hmm"])
+    def remove_annotation(self, transaction):
+        yield self.remove()
+        pass
+
+    @virtool.gen.synchronous
+    def hmmstat(self, hmm_file_path):
+        output = subprocess.check_output(["hmmstat", hmm_file_path])
+
+        result = [line.split() for line in output.decode("utf-8").split("\n") if line and line[0] != "#"]
+
+        return [{
+            "cluster": int(line[1].replace("vFam_", "")),
+            "count": int(line[3]),
+            "length": int(line[5])
+        } for line in result]
+
+    @virtool.gen.synchronous
+    def hmmpress(self):
+        hmm_file_path = os.path.join(self.settings.get("data_path"), "hmm", "vFam.hmm")
+        output = subprocess.check_output(["hmmpress", "-f", hmm_file_path])
+        return output
 
     @virtool.gen.exposed_method(["modify_hmm"])
     def set_field(self, transaction):
