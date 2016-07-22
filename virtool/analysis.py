@@ -653,17 +653,10 @@ class NuVs(Analyze):
 
         self.run_process(command)
 
-        annotations = virtool.hmm.Annotations(os.path.join(self.paths["data"], "hmm/annotations"))
-        annotations.guess_definitions()
-
-        hit_path = os.path.join(self.paths["analysis"], "hits.tsv")
-
         header = [
             "index",
             "orf_index",
             "hit",
-            "definition",
-            "families",
             "full_e",
             "full_score",
             "full_bias",
@@ -671,6 +664,8 @@ class NuVs(Analyze):
             "best_bias",
             "best_score"
         ]
+
+        hit_path = os.path.join(self.paths["analysis"], "hits.tsv")
 
         with open(hmm_path, "r") as hmm_file:
             with open(hit_path, "w") as hit_file:
@@ -680,17 +675,15 @@ class NuVs(Analyze):
                     if line.startswith("vFam"):
                         line = line.split()
 
-                        annotation_id = int(line[0].split("_")[1])
-                        annotation = annotations.find(annotation_id)
+                        cluster_id = int(line[0].split("_")[1])
+                        annotation_id = self.database.hmm.find_one({"cluster": int(cluster_id)}, {"_id": True})["_id"]
 
                         compound_id = line[2].split("_")[1].split(".")
 
                         entry = {
                             "index": int(compound_id[0]),
                             "orf_index": int(compound_id[1]),
-                            "hit": line[0],
-                            "definition": annotation["definition"],
-                            "families": annotation["families"],
+                            "hit": annotation_id,
                             "full_e": float(line[4]),
                             "full_score": float(line[5]),
                             "full_bias": float(line[6]),
