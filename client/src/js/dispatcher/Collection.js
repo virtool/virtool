@@ -10,6 +10,7 @@
 'use strict';
 
 var _ = require('lodash');
+var Dexie = require('dexie');
 var Events = require('./Events.js');
 
 /**
@@ -19,10 +20,10 @@ var Events = require('./Events.js');
  *
  * @class
  */
-var Collection = function Collection(name, useLocalStorage) {
+var Collection = function Collection(name, useStorage) {
 
     this.name = name;
-    this.useLocalStorage = useLocalStorage === undefined ? true: useLocalStorage;
+    this.useStorage = useStorage === undefined ? true: useStorage;
 
     // Collection is a basis for constructing stores of documents for each data collection.
     this.events = new Events(['change', 'add', 'update', 'remove'], this);
@@ -33,10 +34,10 @@ var Collection = function Collection(name, useLocalStorage) {
     // This value is set to 'true' when the server has finished sending updates to the collection after syncing.
     this.synced = false;
 
-    // If this property is set to true, all documents in the collection will be stored in localStorage. The collection
-    // will also be restored from localStorage and updated from the server, rather than loading all of the documents
+    // If this property is set to true, all documents in the collection will be stored in indexedDB. The collection
+    // will also be restored from indexedDB and updated from the server, rather than loading all of the documents
     // from the server, every time the client application is refreshed.
-    if (this.useLocalStorage === undefined) this.useLocalStorage = true;
+    if (this.useStorage === undefined) this.useStorage = true;
 
     this.request = function (operation, data, success, failure) {
         dispatcher.send({
@@ -110,8 +111,8 @@ var Collection = function Collection(name, useLocalStorage) {
                 this.documents.push(document);
             }
 
-            // Add the updated version of the document to localStorage.
-            this.useLocalStorage ? dispatcher.storage.add(this.name, document, onSuccess): onSuccess(document);
+            // Add the updated version of the document to indexedDB.
+            this.useStorage ? dispatcher.storage.add(this.name, document, onSuccess): onSuccess(document);
 
         }.bind(this));
 
@@ -163,7 +164,7 @@ var Collection = function Collection(name, useLocalStorage) {
         // Remove the document from the documents array.
 
 
-        if (this.useLocalStorage) {
+        if (this.useStorage) {
             _.forEach(documentIds, function (documentId) {
                 dispatcher.storage.remove(this.name, documentId, onSuccess);
             }.bind(this));

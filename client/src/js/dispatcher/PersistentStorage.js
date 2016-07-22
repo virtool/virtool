@@ -14,7 +14,7 @@ function PersistentStorage(onReady, context) {
         var database = event.target.result;
 
         _.forEach(dispatcher.collections, function (collection) {
-            if (collection.useLocalStorage) database.createObjectStore(collection.name, {keyPath: '_id'});
+            if (collection.useStorage) database.createObjectStore(collection.name, {keyPath: '_id'});
         });
 
     }.bind(this);
@@ -47,13 +47,13 @@ function PersistentStorage(onReady, context) {
         var complete = {};
 
         _.forEach(dispatcher.collections, function (collection) {
-            if (collection.useLocalStorage) complete[collection.name] = false;
+            if (collection.useStorage) complete[collection.name] = false;
         });
 
         var collectionCount = _.values(complete).length;
 
         _.forIn(dispatcher.collections, function (collection) {
-            if (collection.useLocalStorage) {
+            if (collection.useStorage) {
                 var store = this.getStore(collection.name, 'readonly');
                 var cursor = store.openCursor();
 
