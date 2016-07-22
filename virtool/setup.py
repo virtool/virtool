@@ -220,6 +220,7 @@ def ensure_path(path, new_server):
         "reference/hosts/fasta",
         "download",
         "samples",
+        "hmm",
         "logs/jobs"
     ]
 
