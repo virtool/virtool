@@ -117,9 +117,7 @@ function Dispatcher(onReady) {
                 return manifests;
 
             }.bind(this)).then(function (manifests) {
-
-                console.log(manifests);
-
+                
                 dispatcher.send({
                     collectionName: 'dispatcher',
                     methodName: 'sync',
@@ -193,10 +191,6 @@ function Dispatcher(onReady) {
                         collection.insert(message.data);
                     }
                 });
-
-
-
-
 
             } else {
                 this.db[message.collection_name].removeWhere({"_id": {"$in": message.data}});
