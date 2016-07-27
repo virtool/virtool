@@ -98,15 +98,22 @@ function Dispatcher(onReady) {
 
             this.db.open().then(function () {
 
-                return _.transform(this.db.collectionNames, function (result, collectionName) {
-                    result[collectionName] = _.transform(this.db[collectionName].find(), function (manifest, document) {
-                        manifest[document._id] = document._version;
-                    }, {});
+                var manifests = {};
 
-                    return result;
-                }.bind(this), {});
+                this.db.collectionNames.forEach(function (collectionName) {
+                    manifests[collectionName] = {};
+
+                    this.db[collectionName].find().forEach(function (document) {
+                        manifests[collectionName][document._id] = document._version;
+                    });
+
+                }, this);
+
+                return manifests;
 
             }.bind(this)).then(function (manifests) {
+
+                console.log(manifests);
 
                 dispatcher.send({
                     collectionName: 'dispatcher',

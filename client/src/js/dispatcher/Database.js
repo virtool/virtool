@@ -1,5 +1,6 @@
 var _ = require('lodash');
 var Loki = require('lokijs');
+var LokiIndexedAdapter = require('lokijs/src/loki-indexed-adapter');
 
 var Collection = require("./Collection.js");
 
@@ -14,39 +15,49 @@ function Database(definitions, dispatcher) {
     this.open = function () {
         return new Promise(function (resolve, reject) {
 
+            this.lokiAdapter = new LokiIndexedAdapter("virtool-" + dispatcher.settings.get("server_id"));
+
+            window.lokiAdapter = this.lokiAdapter;
+
             this.loki = new Loki(null, {
                 env: "BROWSER",
-                autosave: true
+                autosave: true,
+                adapter: this.lokiAdapter
             });
 
-            _.forIn(definitions, function (definition, collectionName) {
-                var collection = this.loki.addCollection(definition.name, {
-                    unique: definition.unique,
-                    indices: definition.indices
-                });
-
-                collection.off = collection.removeListener;
-
-                collection.request = function (operation, data, success, failure) {
-                    dispatcher.send({
-                        methodName: operation,
-                        collectionName: collectionName,
-                        data: data
-                    }, success, failure);
-                };
-
-                this[collectionName] = collection;
-                this.collectionNames.push(collectionName);
-
-            }.bind(this));
-
-            this.loki.loadDatabase({}, function (err, data) {
+            this.loki.loadDatabase({}, function (err) {
                 if (err) {
                     reject();
                 } else {
-                    resolve(data);
+                    _.forIn(definitions, function (definition, collectionName) {
+                        var collection = this.loki.getCollection(collectionName);
+
+                        if (!collection) {
+                            collection = this.loki.addCollection(collectionName, {
+                                unique: definition.unique,
+                                indices: definition.indices
+                            });
+                        }
+
+                        collection.off = collection.removeListener;
+
+                        collection.request = function (operation, data, success, failure) {
+                            dispatcher.send({
+                                methodName: operation,
+                                collectionName: collectionName,
+                                data: data
+                            }, success, failure);
+                        };
+
+                        this[collectionName] = collection;
+
+                        this.collectionNames.push(collectionName);
+
+                    }.bind(this));
+
+                    resolve();
                 }
-            });
+            }.bind(this));
 
         }.bind(this));
     };
