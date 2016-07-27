@@ -84,7 +84,7 @@ var AnalysisList = React.createClass({
         var adder;
 
         if (this.props.canModify) {
-            if (_.some(dispatcher.db.indexes.documents, {ready: true})) {
+            if (dispatcher.db.indexes.count({ready: true}) > 0) {
                 
                 var textProps = {
                     label: 'Name',

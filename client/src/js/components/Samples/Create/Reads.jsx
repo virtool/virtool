@@ -41,7 +41,7 @@ var ReadSelector = React.createClass({
 
     getInitialState: function () {
         return {
-            reads: dispatcher.db.reads.documents,
+            reads: dispatcher.db.reads.find(),
             selected: [],
             filter: '',
             showAll: false
@@ -94,7 +94,7 @@ var ReadSelector = React.createClass({
     },
 
     update: function () {
-        var reads = dispatcher.db.reads.documents;
+        var reads = dispatcher.db.reads.find();
 
         this.setState({
             reads: reads,

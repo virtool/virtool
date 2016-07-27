@@ -78,7 +78,7 @@ var DetailModal = React.createClass({
 
     tryRefresh: function () {
 
-        var document = _.find(this.props.collection.documents, {_id: this.props.target._id});
+        var document = this.props.collection.find({_id: this.props.target._id});
 
         if (document && this.state.data._version !== document._version) {
             this.props.collection.request('detail', {_id: this.props.target._id}, this.receivedDetail);

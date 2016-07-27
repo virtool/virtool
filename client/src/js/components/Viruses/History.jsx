@@ -32,7 +32,7 @@ var VirusHistory = React.createClass({
 
     getInitialState: function () {
         return {
-            documents: dispatcher.db.history.documents,
+            documents: dispatcher.db.history.find(),
             indexVersion: 'unbuilt',
             filter: null
         };
@@ -74,7 +74,7 @@ var VirusHistory = React.createClass({
      * @func
      */
     update: function () {
-        this.setState({documents: dispatcher.db.history.documents});
+        this.setState({documents: dispatcher.db.history.find()});
     },
 
     render: function () {

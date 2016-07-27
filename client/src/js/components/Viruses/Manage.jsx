@@ -95,7 +95,7 @@ var ManageViruses = React.createClass({
         var detailTarget;
 
         if (this.props.route.extra[0] === 'detail') {
-            detailTarget = _.find(dispatcher.db.viruses.documents, {_id: this.props.route.extra[1]});
+            detailTarget = dispatcher.db.viruses.findOne({_id: this.props.route.extra[1]});
         }
 
         return (

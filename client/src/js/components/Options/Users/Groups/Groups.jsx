@@ -47,7 +47,7 @@ var Groups = React.createClass({
     },
 
     getEntries: function () {
-        return _.sortBy(dispatcher.db.groups.documents, '_id');
+        return _.sortBy(dispatcher.db.groups.find(), '_id');
     },
 
     componentDidMount: function () {

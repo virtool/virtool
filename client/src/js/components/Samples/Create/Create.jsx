@@ -100,7 +100,7 @@ var SamplesImport = React.createClass({
 
         var modalBody;
 
-        if (_.filter(dispatcher.db.hosts.documents, {added: true}).length === 0) {
+        if (dispatcher.db.hosts.count({added: true}) === 0) {
             modalBody = (
                 <Modal.Body>
                     <Alert bsStyle='warning' className='text-center'>

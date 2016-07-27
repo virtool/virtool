@@ -24,7 +24,7 @@ var Icon = require('virtool/js/components/Base/Icon.jsx');
 var HostFiles = React.createClass({
 
     getInitialState: function () {
-        return {documents: dispatcher.db.files.documents};
+        return {documents: dispatcher.db.files.find()};
     },
 
     componentDidMount: function () {

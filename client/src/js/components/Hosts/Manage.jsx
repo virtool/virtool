@@ -42,7 +42,7 @@ var ManageHosts = React.createClass({
 
         var alert;
 
-        if (_.filter(dispatcher.db.hosts.documents, {added: true}).length === 0) {
+        if (dispatcher.db.hosts.count({added: true}) === 0) {
             alert = (
                 <Alert>
                     <Icon name='info' /> A host genome must be added to Virtool before samples can be created and analyzed.
@@ -63,13 +63,13 @@ var ManageHosts = React.createClass({
         var addTarget;
 
         if (this.props.route.extra[0] === 'add') {
-            addTarget = _.find(dispatcher.db.files.documents, {_id: this.props.route.extra[1]});
+            addTarget = dispatcher.db.files.findOne({_id: this.props.route.extra[1]});
         }
 
         var detailTarget;
 
         if (this.props.route.extra[0] === 'detail') {
-            detailTarget = _.find(dispatcher.db.hosts.documents, {_id: this.props.route.extra[1]});
+            detailTarget = dispatcher.db.hosts.findOne({_id: this.props.route.extra[1]});
         }
 
         return (

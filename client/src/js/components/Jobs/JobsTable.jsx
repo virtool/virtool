@@ -227,7 +227,7 @@ var JobsTable = React.createClass({
         var detailTarget = null;
 
         if (this.props.route.extra[0]) {
-            detailTarget = _.find(dispatcher.db.jobs.documents, {_id: this.props.route.extra[0]});
+            detailTarget = dispatcher.db.jobs.findOne({_id: this.props.route.extra[0]});
         }
 
         return (

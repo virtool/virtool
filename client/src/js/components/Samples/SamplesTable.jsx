@@ -172,7 +172,7 @@ var SamplesTable = React.createClass({
             createActions: createActions
         };
 
-        var detailTarget = _.find(dispatcher.db.samples.documents, {_id: this.props.route.extra[0]});
+        var detailTarget = dispatcher.db.samples.findOne({_id: this.props.route.extra[0]});
 
         var createModal;
 

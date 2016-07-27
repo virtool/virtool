@@ -30,8 +30,8 @@ var Index = React.createClass({
 
     getInitialState: function () {
         return {
-            historyEntries: dispatcher.db.history.documents,
-            indexEntries: dispatcher.db.indexes.documents
+            historyEntries: dispatcher.db.history.find(),
+            indexEntries: dispatcher.db.indexes.find()
         }
     },
 
@@ -57,7 +57,7 @@ var Index = React.createClass({
     },
 
     render: function () {
-        if (dispatcher.db.viruses.documents.length > 0) {
+        if (dispatcher.db.viruses.count() > 0) {
             // Set to true when a ready index has been seen when mapping through the index documents. Used to mark only the
             // newest ready index with a checkmark in the index list.
             var haveSeenReady = false;

@@ -68,7 +68,7 @@ var InternalControl = React.createClass({
         var controlId = this.props.settings.get('internal_control_id');
 
         // If an internal control is being used, find its name.
-        return controlId ? _.find(this.props.viruses.documents, {_id: controlId}).name : '';
+        return controlId ? this.props.viruses.find({_id: controlId}).name : '';
     },
 
     /**

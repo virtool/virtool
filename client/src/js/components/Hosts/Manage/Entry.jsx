@@ -57,7 +57,7 @@ var HostEntry = React.createClass({
     getProgress: function () {
         if (this.props.added) return 1;
 
-        var document = _.find(dispatcher.db.jobs.documents, {_id: this.props.job});
+        var document = dispatcher.db.jobs.findOne({_id: this.props.job});
         return document ? document.progress: 0;
     },
 

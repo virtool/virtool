@@ -20,11 +20,22 @@ function Database(definitions, dispatcher) {
             });
 
             _.forIn(definitions, function (definition, collectionName) {
-                this[collectionName] = this.loki.addCollection(definition.name, {
+                var collection = this.loki.addCollection(definition.name, {
                     unique: definition.unique,
                     indices: definition.indices
                 });
 
+                collection.off = collection.removeListener;
+
+                collection.request = function (operation, data, success, failure) {
+                    dispatcher.send({
+                        methodName: operation,
+                        collectionName: collectionName,
+                        data: data
+                    }, success, failure);
+                };
+
+                this[collectionName] = collection;
                 this.collectionNames.push(collectionName);
 
             }.bind(this));

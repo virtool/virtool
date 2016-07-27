@@ -32,13 +32,7 @@ var Collection = function Collection(name, db, options) {
     // This value is set to 'true' when the server has finished sending updates to the collection after syncing.
     this.synced = false;
 
-    this.request = function (operation, data, success, failure) {
-        dispatcher.send({
-            methodName: operation,
-            collectionName: this.name,
-            data: data
-        }, success, failure);
-    };
+
 
     /**
      * Update one or more documents based on updates defined by an object or an array of objects. Each object that

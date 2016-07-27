@@ -81,7 +81,7 @@ var GroupsPermissions = React.createClass({
 
     render: function () {
 
-        var groupComponents = dispatcher.db.groups.documents.map(function (group, index) {
+        var groupComponents = dispatcher.db.groups.find().map(function (group, index) {
             return (
                 <GroupToggle
                     key={index}

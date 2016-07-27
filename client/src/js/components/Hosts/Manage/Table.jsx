@@ -28,7 +28,7 @@ var HostsTable = React.createClass({
 
     getInitialState: function () {
         return {
-            documents: _.sortBy(dispatcher.db.hosts.documents, '_id'),
+            documents: _.sortBy(dispatcher.db.hosts.find(), '_id'),
             detailTarget: null
         }
     },
@@ -58,7 +58,7 @@ var HostsTable = React.createClass({
      * @func
      */
     update: function () {
-        this.setState({documents: _.sortBy(dispatcher.db.hosts.documents, '_id')});
+        this.setState({documents: _.sortBy(dispatcher.db.hosts.find(), '_id')});
     },
 
     render: function () {

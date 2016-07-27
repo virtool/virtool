@@ -40,7 +40,7 @@ var GroupsPermissions = require('./Users/GroupsPermissions.jsx');
 var Users = React.createClass({
 
     getInitialState: function () {
-        var documents = _.sortBy(dispatcher.db.users.documents, '_id');
+        var documents = _.sortBy(dispatcher.db.users.find(), '_id');
 
         return {
             documents: documents,
@@ -65,7 +65,7 @@ var Users = React.createClass({
      */
     update: function () {
         // Get the updated documents
-        var newDocuments = _.sortBy(dispatcher.db.users.documents, '_id');
+        var newDocuments = _.sortBy(dispatcher.db.users.find(), '_id');
         var activeId = Utils.getNewActiveId(this.state.activeId, this.state.documents, newDocuments);
         
         this.setState({
@@ -81,7 +81,7 @@ var Users = React.createClass({
      * @func
      */
     onFilter: function (event) {
-        var documents = dispatcher.db.users.documents;
+        var documents = dispatcher.db.users.find();
 
         if (event && event.target.value) {
             var regEx = new RegExp('^' + event.target.value, 'i');
@@ -127,7 +127,7 @@ var Users = React.createClass({
         // The content to display in the user panel. Can be user detail and edit fields or it can be the add user form.
         var content;
 
-        var activeData = _.find(this.state.documents, {_id: this.state.activeId});
+        var activeData = _.findOne(this.state.documents, {_id: this.state.activeId});
 
         var removeIcon;
 
