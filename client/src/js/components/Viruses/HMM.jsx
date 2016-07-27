@@ -79,7 +79,7 @@ var HMM = React.createClass({
     render: function () {
 
         var tableProps = {
-            collection: dispatcher.collections.hmm,
+            collection: dispatcher.db.hmm,
             filterComponent: Toolbar,
             fields: this.fields,
             documentsNoun: 'annotations',
@@ -92,7 +92,7 @@ var HMM = React.createClass({
         var detailTarget;
 
         if (this.props.route.extra[0] === 'detail') {
-            detailTarget = _.find(dispatcher.collections.hmm.documents, {_id: this.props.route.extra[1]});
+            detailTarget = dispatcher.collections.hmm.find({_id: this.props.route.extra[1]});
         }
 
         return (
@@ -113,7 +113,7 @@ var HMM = React.createClass({
                     target={detailTarget}
                     onHide={this.hideModal}
                     contentComponent={HMMDetail}
-                    collection={dispatcher.collections.hmm}
+                    collection={dispatcher.db.hmm}
                     settings={dispatcher.settings}
                 />
             </div>

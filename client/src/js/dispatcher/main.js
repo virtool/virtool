@@ -15,7 +15,7 @@ function Dispatcher(onReady) {
     this.events = new Events(['syncing', 'synced', 'ping', 'authenticated', 'closed'], this);
 
     this.browser = _.pick(Bowser, ['name', 'version']);
-    
+
     this.runningOperationCount = 0;
 
     this.user = new User();
@@ -32,27 +32,32 @@ function Dispatcher(onReady) {
         },
         "samples": {
             unique: ["_id", "name"],
-            schema: ["added", "username", "imported", "archived", "analyzed"],
+            indices: ["added", "username", "imported", "archived", "analyzed"],
             retain: true
         },
         "viruses": {
             unique: ["_id", "name"],
-            schema: ["modified", "abbreviation", "last_indexed_version"],
+            indices: ["modified", "abbreviation", "last_indexed_version"],
+            retain: true
+        },
+        "hmm": {
+            unique: ["_id", "cluster"],
+            indices: ["label"],
             retain: true
         },
         "history": {
             unique: ["_id"],
-            schema: ["operation", "timestamp", "entry_id", "entry_version", "username", "index", "index_version"],
+            indices: ["operation", "timestamp", "entry_id", "entry_version", "username", "index", "index_version"],
             retain: true
         },
         "indexes": {
             unique: ["_id", "index_version"],
-            schema: ["timestamp", "virus_count", "ready", "has_files"],
+            indices: ["timestamp", "virus_count", "ready", "has_files"],
             retain: true
         },
         "hosts": {
             unique: ["_id", "file", "job"],
-            schema: ["added"],
+            indices: ["added"],
             retain: true
         },
         "users": {

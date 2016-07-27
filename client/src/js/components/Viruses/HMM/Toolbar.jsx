@@ -88,7 +88,7 @@ var VirusToolbar = React.createClass({
 
     render: function () {
 
-        var mayImport = dispatcher.collections.hmm.documents.length === 0;
+        var mayImport = dispatcher.db.hmm.count() === 0;
 
         var menu = (
             <Flex.Item shrink={0} grow={0} pad>
