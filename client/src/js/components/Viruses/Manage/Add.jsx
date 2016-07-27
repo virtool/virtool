@@ -71,7 +71,7 @@ var AddVirus = React.createClass({
 
         // Only send a request to the server if a new virus name is defined.
         if (this.state.name !== '') {
-            dispatcher.collections.viruses.request('add', {
+            dispatcher.db.viruses.request('add', {
                 name: this.state.name,
                 abbreviation: this.state.abbreviation
             }, this.hide, this.onFailure);

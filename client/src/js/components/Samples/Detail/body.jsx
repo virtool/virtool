@@ -27,7 +27,7 @@ var SampleDetail = React.createClass({
     },
 
     remove: function () {
-        dispatcher.collections.samples.request('remove_sample', {_id: this.props.detail._id});
+        dispatcher.db.samples.request('remove_sample', {_id: this.props.detail._id});
     },
 
     render: function () {

@@ -61,7 +61,7 @@ var AnalysisList = React.createClass({
     handleSubmit: function (event) {
         event.preventDefault();
         this.setState({pending: true}, function () {
-            dispatcher.collections.samples.request('analyze', {
+            dispatcher.db.samples.request('analyze', {
                 samples: [this.props.detail._id],
                 discovery: false,
                 algorithm: this.state.algorithm,
@@ -84,7 +84,7 @@ var AnalysisList = React.createClass({
         var adder;
 
         if (this.props.canModify) {
-            if (_.some(dispatcher.collections.indexes.documents, {ready: true})) {
+            if (dispatcher.db.indexes.count({ready: true}) > 0) {
                 
                 var textProps = {
                     label: 'Name',

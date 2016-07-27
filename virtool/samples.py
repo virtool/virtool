@@ -479,17 +479,17 @@ class Collection(virtool.database.Collection):
 
             # Get count by summing count for each side
             new["count"] = fastqc["left"]["count"]
-            if is_paired:
+            if is_paired and "right" in fastqc:
                 new["count"] += fastqc["right"]["count"]
 
             # Get average GC from the two sides
-            if is_paired:
+            if is_paired and "right" in fastqc:
                 new["gc"] = (fastqc["left"]["gc"] + fastqc["right"]["gc"]) / 200
             else:
                 new["gc"] = fastqc["left"]["gc"] / 100
 
             # Get L-R combined length range
-            if is_paired:
+            if is_paired and "right" in fastqc:
                 length_r = fastqc["right"]["length"]
                 length_l = fastqc["left"]["length"]
                 new["length"] = [max(length_r[i], length_l[i]) for i in [0, 1]]
@@ -499,7 +499,7 @@ class Collection(virtool.database.Collection):
             # Average base contents
             new["composition"] = fastqc["left"]["composition"]
 
-            if is_paired:
+            if is_paired and "right" in fastqc:
                 for i, entry in enumerate(fastqc["right"]["composition"]):
                     for base in ["a", "t", "g", "c"]:
                         new["composition"][i][base] += entry[base]
@@ -510,13 +510,13 @@ class Collection(virtool.database.Collection):
 
             sides = ["left"]
 
-            if is_paired:
+            if is_paired and "right" in fastqc:
                 sides.append("right")
 
             for side in sides:
                 sequences[side] = {i["quality"]: i["count"] for i in fastqc[side]["sequences"]}
 
-            if is_paired:
+            if is_paired and "right" in fastqc:
                 for q in sequences["right"]:
                     try:
                         sequences["left"][q] += sequences["right"][q]
@@ -529,7 +529,7 @@ class Collection(virtool.database.Collection):
             # Base-wise quality
             new["bases"] = fastqc["left"]["bases"]
 
-            if is_paired:
+            if is_paired and "right" in fastqc:
                 for i, entry in enumerate(fastqc["right"]["bases"]):
                     for key in entry.keys():
                         new["bases"][i][key] += entry[key]

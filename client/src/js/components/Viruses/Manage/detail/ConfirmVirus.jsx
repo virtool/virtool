@@ -61,7 +61,7 @@ var ConfirmVirus = React.createClass({
      */
     verify: function () {
         this.setState({pending: true}, function () {
-            dispatcher.collections.viruses.request(
+            dispatcher.db.viruses.request(
                 'verify_virus',
                 {_id: this.props.detail._id},
                 null,

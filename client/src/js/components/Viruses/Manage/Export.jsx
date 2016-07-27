@@ -37,13 +37,13 @@ var ExportViruses = React.createClass({
 
     handleClick: function () {
         this.setState({download: false, pending: true}, function () {
-            dispatcher.collections.viruses.request('export', null, this.onExportSuccess);
+            dispatcher.db.viruses.request('export', null, this.onExportSuccess);
         });
     },
 
     handleSubmit: function (event) {
         event.preventDefault();
-        dispatcher.collections.viruses.request('importData', {fileId: this.refs.text.getValue()});
+        dispatcher.db.viruses.request('importData', {fileId: this.refs.text.getValue()});
     },
 
     onExportSuccess: function (data) {

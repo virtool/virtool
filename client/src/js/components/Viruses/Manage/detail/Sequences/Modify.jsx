@@ -105,7 +105,7 @@ var ModifySequence = React.createClass({
             newEntry._id = this.state.sequenceId;
             newEntry.isolate_id = this.props.isolateId;
 
-            dispatcher.collections.viruses.request(!this.props.sequenceId ? 'add_sequence': 'update_sequence', {
+            dispatcher.db.viruses.request(!this.props.sequenceId ? 'add_sequence': 'update_sequence', {
                 _id: this.props.virusId,
                 isolate_id: this.props.isolateId,
                 new: newEntry
@@ -121,7 +121,7 @@ var ModifySequence = React.createClass({
      */
     autofill: function () {
         this.setState({pending: 'Fetching'}, function () {
-            dispatcher.collections.viruses.request('fetch_ncbi', {
+            dispatcher.db.viruses.request('fetch_ncbi', {
                 accession: this.state.sequenceId
             }, this.onAutofillSuccess, this.onAutofillFailure);
         });

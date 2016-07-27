@@ -19,6 +19,10 @@ var config = {
         alias: {virtool: path.resolve(__dirname, './src')}
     },
 
+    node: {
+        fs: "empty"
+    },
+
     output: {
         path: 'dist',
         filename: 'app.[hash].js'

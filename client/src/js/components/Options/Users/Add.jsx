@@ -72,7 +72,7 @@ var AddUser = React.createClass({
     handleSubmit: function (event) {
         event.preventDefault();
 
-        dispatcher.collections.users.request('add', {
+        dispatcher.db.users.request('add', {
             _id: this.state.username,
             password: this.state.password,
             force_reset: this.state.forceReset

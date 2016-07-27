@@ -58,7 +58,7 @@ var VirusDetail = React.createClass({
      * @func
      */
     remove: function () {
-        dispatcher.collections.viruses.request('remove_virus', {_id: this.props.detail._id});
+        dispatcher.db.viruses.request('remove_virus', {_id: this.props.detail._id});
     },
 
     render: function () {

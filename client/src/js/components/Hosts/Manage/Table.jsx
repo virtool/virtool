@@ -28,17 +28,17 @@ var HostsTable = React.createClass({
 
     getInitialState: function () {
         return {
-            documents: _.sortBy(dispatcher.collections.hosts.documents, '_id'),
+            documents: _.sortBy(dispatcher.db.hosts.find(), '_id'),
             detailTarget: null
         }
     },
 
     componentDidMount: function () {
-        dispatcher.collections.hosts.on('change', this.update);
+        dispatcher.db.hosts.on('change', this.update);
     },
 
     componentWillUnmount: function () {
-        dispatcher.collections.hosts.off('change', this.update);
+        dispatcher.db.hosts.off('change', this.update);
     },
 
     /**
@@ -58,7 +58,7 @@ var HostsTable = React.createClass({
      * @func
      */
     update: function () {
-        this.setState({documents: _.sortBy(dispatcher.collections.hosts.documents, '_id')});
+        this.setState({documents: _.sortBy(dispatcher.db.hosts.find(), '_id')});
     },
 
     render: function () {

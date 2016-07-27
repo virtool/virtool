@@ -73,7 +73,7 @@ var GroupsPermissions = React.createClass({
     },
 
     setGroup: function (userId, groupId) {
-        dispatcher.collections.users.request('set_group', {
+        dispatcher.db.users.request('set_group', {
             user_id: userId,
             group_id: groupId
         });
@@ -81,7 +81,7 @@ var GroupsPermissions = React.createClass({
 
     render: function () {
 
-        var groupComponents = dispatcher.collections.groups.documents.map(function (group, index) {
+        var groupComponents = dispatcher.db.groups.find().map(function (group, index) {
             return (
                 <GroupToggle
                     key={index}

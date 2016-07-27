@@ -45,7 +45,7 @@ var VirusHistoryList = React.createClass({
      */
     revert: function (version) {
         this.setState({reverting: version}, function () {
-            dispatcher.collections.history.request('revert', {
+            dispatcher.db.history.request('revert', {
                 entry_id: this.props.virus,
                 entry_version: version
             });
@@ -59,7 +59,7 @@ var VirusHistoryList = React.createClass({
                 <HistoryItem
                     key={historyEntry._id}
                     {...historyEntry}
-                    collection={dispatcher.collections.history}
+                    collection={dispatcher.db.history}
                     pending={this.state.reverting !== null && historyEntry.entry_version >= this.state.reverting}
                     onRevert={this.props.canModify ? this.revert: null}
                 />

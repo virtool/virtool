@@ -82,7 +82,7 @@ var ManageViruses = React.createClass({
     render: function () {
         // Props used to construct the DynamicTable.
         var tableProps = {
-            collection: dispatcher.collections.viruses,
+            collection: dispatcher.db.viruses,
             filterComponent: Toolbar,
             fields: this.fields,
             documentsNoun: 'viruses',
@@ -95,7 +95,7 @@ var ManageViruses = React.createClass({
         var detailTarget;
 
         if (this.props.route.extra[0] === 'detail') {
-            detailTarget = _.find(dispatcher.collections.viruses.documents, {_id: this.props.route.extra[1]});
+            detailTarget = dispatcher.db.viruses.findOne({_id: this.props.route.extra[1]});
         }
 
         return (
@@ -108,7 +108,7 @@ var ManageViruses = React.createClass({
                     target={detailTarget}
                     onHide={this.hideModal}
                     contentComponent={Detail}
-                    collection={dispatcher.collections.viruses}
+                    collection={dispatcher.db.viruses}
                     settings={dispatcher.settings}
                 />
 

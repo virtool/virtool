@@ -6,7 +6,7 @@ var Input = require('react-bootstrap/lib/Input');
 var SamplePermissionsDetail = React.createClass({
 
     changeGroup: function (event) {
-        dispatcher.collections.samples.request('set_group', {
+        dispatcher.db.samples.request('set_group', {
             _id: this.props.data._id,
             group_id: event.target.value
         });
@@ -19,7 +19,7 @@ var SamplePermissionsDetail = React.createClass({
             newRights[event.target.name + '_' + key] = event.target.value.includes(key[0]);
         });
 
-        dispatcher.collections.samples.request('set_rights', {
+        dispatcher.db.samples.request('set_rights', {
             _id: this.props.data._id,
             changes: newRights
         });

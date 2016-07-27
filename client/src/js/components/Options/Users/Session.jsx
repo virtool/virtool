@@ -25,7 +25,7 @@ var Session = React.createClass({
 
     remove: function () {
         this.setState({pending: true}, function () {
-            dispatcher.collections.users.request('remove_session', {
+            dispatcher.db.users.request('remove_session', {
                 token: this.props.token
             });
         });

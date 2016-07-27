@@ -42,7 +42,7 @@ var Permission = React.createClass({
         permissionUpdate[this.props.name] = !this.props.value;
 
         this.setState({pending: true}, function () {
-            dispatcher.collections.groups.request('update_permissions', {
+            dispatcher.db.groups.request('update_permissions', {
                 _id: this.props.groupName,
                 permissions: permissionUpdate
             });

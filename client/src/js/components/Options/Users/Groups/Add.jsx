@@ -36,7 +36,7 @@ var AddGroup = React.createClass({
 
         // Make sure the new group name has no spaces in it.
         if (this.state.groupName.length > 0 && this.state.groupName.indexOf(' ') === -1) {
-            dispatcher.collections.groups.request('add', {
+            dispatcher.db.groups.request('add', {
                 _id: this.state.groupName.toLowerCase()
             });
         } else {

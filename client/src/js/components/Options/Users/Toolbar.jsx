@@ -92,7 +92,7 @@ var UserToolbar = React.createClass({
                 <Add
                     show={this.state.showAddUser}
                     onHide={this.hideModal}
-                    collection={dispatcher.collections.users}
+                    collection={dispatcher.db.users}
                 />
 
                 <Groups

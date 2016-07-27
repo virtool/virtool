@@ -33,7 +33,7 @@ var VirusGeneral = React.createClass({
         var abbrCell;
 
         if (this.props.canModify) {
-            var collection = dispatcher.collections.viruses;
+            var collection = dispatcher.db.viruses;
 
             nameCell = (
                 <InputCell

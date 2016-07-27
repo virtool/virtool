@@ -4,8 +4,7 @@ var Bowser = require('bowser');
 var Events = require("./Events.js");
 var User = require("./user.js");
 var Settings = require('./Settings.js');
-var Collection = require("./Collection.js");
-var PersistentStorage = require('./PersistentStorage.js');
+var Database = require('./Database.js');
 var Router = require("./Router.js");
 var Transactions = require("./transactions.js");
 
@@ -13,39 +12,63 @@ var collectionOperations = ['add', 'update', 'remove'];
 
 function Dispatcher(onReady) {
 
-    // Makes the dispatcher capable of emitting events and being event-bound by other objects.
     this.events = new Events(['syncing', 'synced', 'ping', 'authenticated', 'closed'], this);
 
     this.browser = _.pick(Bowser, ['name', 'version']);
-
-    this.user = new User();
-    this.settings = new Settings();
-
-    this.collections = {
-        jobs: new Collection('jobs'),
-        samples: new Collection('samples'),
-        viruses: new Collection('viruses'),
-        hmm: new Collection('hmm'),
-        history: new Collection('history'),
-        indexes: new Collection('indexes'),
-        hosts: new Collection('hosts'),
-        users: new Collection('users', false),
-        groups: new Collection('groups', false),
-        reads: new Collection('reads', false),
-        files: new Collection('files', false)
-    };
     
-    this.storage = null;
-
     this.runningOperationCount = 0;
 
-    // The router object keeps track of the URL and triggers events when the URL changes. Functions of the object can be
-    // used to trigger route changes.
+    this.user = new User();
     this.router = new Router();
-
-    // When a request is sent to the server, a transaction ID (TID) can be passed with it. A message will be returned by
-    // the server when the operation completes. The message will contain the TID and a boolean value for success.
+    this.settings = new Settings();
     this.transactions = new Transactions();
+    
+    this.db = new Database({
+
+        "jobs": {
+            unique: ["_id"],
+            indices: ["username", "archived"],
+            retain: true
+        },
+        "samples": {
+            unique: ["_id", "name"],
+            schema: ["added", "username", "imported", "archived", "analyzed"],
+            retain: true
+        },
+        "viruses": {
+            unique: ["_id", "name"],
+            schema: ["modified", "abbreviation", "last_indexed_version"],
+            retain: true
+        },
+        "history": {
+            unique: ["_id"],
+            schema: ["operation", "timestamp", "entry_id", "entry_version", "username", "index", "index_version"],
+            retain: true
+        },
+        "indexes": {
+            unique: ["_id", "index_version"],
+            schema: ["timestamp", "virus_count", "ready", "has_files"],
+            retain: true
+        },
+        "hosts": {
+            unique: ["_id", "file", "job"],
+            schema: ["added"],
+            retain: true
+        },
+        "users": {
+            unique: ["_id"]
+        },
+        "groups": {
+            unique: ["_id"]
+        },
+        "reads": {
+            unique: ["_id"]
+        },
+        "files": {
+            unique: ["_id"]
+        }
+
+    }, this);
 
     /**
      * Takes a message object, stringifies it, and sends it to the server via web socket. Binds a transaction ID to the
@@ -62,25 +85,44 @@ function Dispatcher(onReady) {
     };
 
     this.sync = function () {
+
+        var dispatcher = this;
+
         this.send({
             collectionName: 'settings',
             methodName: 'download',
             data: null
         }, function (data) {
+
             this.settings.update(data);
 
-            this.storage = new PersistentStorage(function () {
-                var manifests = _.mapValues(this.collections, function (collection) {
-                    return collection.manifest();
-                });
+            this.db.open().then(function () {
 
-                this.send({
+                var manifests = {};
+
+                this.db.collectionNames.forEach(function (collectionName) {
+                    manifests[collectionName] = {};
+
+                    this.db[collectionName].find().forEach(function (document) {
+                        manifests[collectionName][document._id] = document._version;
+                    });
+
+                }, this);
+
+                return manifests;
+
+            }.bind(this)).then(function (manifests) {
+
+                console.log(manifests);
+
+                dispatcher.send({
                     collectionName: 'dispatcher',
                     methodName: 'sync',
                     data: {manifests: manifests}
-                }, this.onSync);
+                }, dispatcher.onSync);
 
-            }, this);
+            });
+
         }.bind(this));
     };
 
@@ -90,11 +132,12 @@ function Dispatcher(onReady) {
     }.bind(this);
 
     this.checkSynced = function () {
+
         var progress = this.runningOperationCount / this.syncOperationCount;
 
         if (progress < 1) {
             this.emit('syncing', progress);
-            setTimeout(this.checkSynced, 250);
+            setTimeout(this.checkSynced, 50);
         } else {
             this.emit('synced');
         }
@@ -127,7 +170,17 @@ function Dispatcher(onReady) {
         console.log(message.collection_name + '.' + message.operation);
 
         if (_.includes(collectionOperations, operation)) {
-            this.collections[message.collection_name][operation](message.data, message.sync);
+            if (message.sync) this.runningOperationCount += message.data.length;
+
+            if (operation === "update") {
+                try {
+                    this.db[message.collection_name].update(message.data);
+                } catch (err) {
+                    this.db[message.collection_name].insert(message.data);
+                }
+            } else {
+                this.db[message.collection_name].remove(message.data);
+            }
         }
 
         else {

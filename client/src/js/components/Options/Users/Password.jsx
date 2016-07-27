@@ -58,7 +58,7 @@ var Change = React.createClass({
 
         if (match && long) {
             this.setState({pendingChange: true} , function () {
-                dispatcher.collections.users.request('set_password', {
+                dispatcher.db.users.request('set_password', {
                     // The username and new password to assign for it.
                     _id: this.props._id,
                     new_password: this.state.new
@@ -153,7 +153,7 @@ var Change = React.createClass({
 var Reset = React.createClass({
 
     toggle: function () {
-        dispatcher.collections.users.request('set_force_reset', {
+        dispatcher.db.users.request('set_force_reset', {
             _id: this.props._id,
             force_reset: !this.props.force_reset
         });

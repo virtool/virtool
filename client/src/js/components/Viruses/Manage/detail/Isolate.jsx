@@ -112,7 +112,7 @@ var Isolate = React.createClass({
             // Set pendingChange so the component is disabled and a spinner icon is displayed.
             this.setState({pendingChange: true}, function () {
                 // Construct a replacement isolate object and send it to the server.
-                dispatcher.collections.viruses.request('upsert_isolate', {
+                dispatcher.db.viruses.request('upsert_isolate', {
                     _id: this.props.virusId,
                     new: {
                         isolate_id: this.props.isolateId,
@@ -143,7 +143,7 @@ var Isolate = React.createClass({
         // First set state to indicate that the isolate is pending removal. Then, send a request to remove the
         // isolate.
         if (this.props.active) this.setState({pendingRemoval: true}, function () {
-            dispatcher.collections.viruses.request('remove_isolate', {
+            dispatcher.db.viruses.request('remove_isolate', {
                 _id: this.props.virusId,
                 isolate_id: this.props.isolateId
             });
@@ -157,7 +157,7 @@ var Isolate = React.createClass({
      * @func
      */
     setAsDefault: function () {
-        dispatcher.collections.viruses.request('set_default_isolate', {
+        dispatcher.db.viruses.request('set_default_isolate', {
             _id: this.props.virusId,
             isolate_id: this.props.isolateId
         }, this.onSuccess);

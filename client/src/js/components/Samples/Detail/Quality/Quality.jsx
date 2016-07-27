@@ -41,7 +41,7 @@ var Quality = React.createClass({
             pending: true,
             download: null
         }, function () {
-            dispatcher.collections.samples.request('quality_pdf', {_id: this.props.data._id}, this.onSuccess);
+            dispatcher.db.samples.request('quality_pdf', {_id: this.props.data._id}, this.onSuccess);
         });
     },
 

@@ -47,15 +47,15 @@ var Groups = React.createClass({
     },
 
     getEntries: function () {
-        return _.sortBy(dispatcher.collections.groups.documents, '_id');
+        return _.sortBy(dispatcher.db.groups.find(), '_id');
     },
 
     componentDidMount: function () {
-        dispatcher.collections.groups.on('change', this.update);
+        dispatcher.db.groups.on('change', this.update);
     },
 
     componentWillUnmount: function () {
-        dispatcher.collections.groups.off('change', this.update);
+        dispatcher.db.groups.off('change', this.update);
     },
 
     update: function () {
@@ -68,7 +68,7 @@ var Groups = React.createClass({
     },
 
     remove: function (groupName) {
-        dispatcher.collections.groups.request('remove_group', {
+        dispatcher.db.groups.request('remove_group', {
             _id: groupName
         });
     },
@@ -111,14 +111,14 @@ var Groups = React.createClass({
                 <Modal.Body>
                     <Row>
                         <Col md={6}>
-                            <Add collection={dispatcher.collections.groups} />
+                            <Add collection={dispatcher.db.groups} />
                             {groupItemComponents}
                         </Col>
                         <Col md={6}>
                             <Permissions
                                 groupName={activeGroup._id}
                                 permissions={activeGroup.permissions}
-                                collection={dispatcher.collections.groups}
+                                collection={dispatcher.db.groups}
                             />
                         </Col>
                     </Row>
