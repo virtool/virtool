@@ -92,7 +92,7 @@ var HMM = React.createClass({
         var detailTarget;
 
         if (this.props.route.extra[0] === 'detail') {
-            detailTarget = dispatcher.collections.hmm.find({_id: this.props.route.extra[1]});
+            detailTarget = dispatcher.db.hmm.findOne({_id: this.props.route.extra[1]});
         }
 
         return (
