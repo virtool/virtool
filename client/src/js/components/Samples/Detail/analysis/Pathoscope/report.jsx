@@ -134,8 +134,6 @@ var Report = React.createClass({
                 }.bind(this));
             }
 
-            console.table(data);
-
             var disableControl = true;
 
             if (dispatcher.settings.get('use_internal_control') && internalControlId) {

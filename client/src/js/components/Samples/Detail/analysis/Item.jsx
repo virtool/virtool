@@ -34,7 +34,7 @@ var AnalysisItem = React.createClass({
     getInitialState: function () {
         return {
             pending: false,
-            progress: this.props.ready ? 0: dispatcher.db.jobs.find({_id: this.props.job}).progress
+            progress: this.props.ready ? 0: dispatcher.db.jobs.findOne({_id: this.props.job}).progress
         };
     },
     
@@ -86,9 +86,9 @@ var AnalysisItem = React.createClass({
     },
 
     onJobUpdate: function (data) {
-        if (data[0]._id === this.props.job) {
-            this.setState({progress: data[0].progress});
-        }
+        var job = dispatcher.db.jobs.findOne({_id: this.props.job});
+        console.log(job);
+        if (job.progress !== this.state.progress) this.setState({progress: job.progress});
     },
 
     render: function () {
