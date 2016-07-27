@@ -125,7 +125,7 @@ var ImportViruses = React.createClass({
                                     _id={this.props.detail._id}
                                     field="label"
                                     value={this.props.detail.label}
-                                    collection={dispatcher.collections.hmm}
+                                    collection={dispatcher.db.hmm}
                                 />
                             </tr>
 

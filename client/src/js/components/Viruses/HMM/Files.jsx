@@ -49,7 +49,7 @@ var HMMFiles = React.createClass({
 
     checkFiles: function () {
         this.setState(this.getInitialState(), function () {
-            dispatcher.collections.hmm.request("check_files", null, this.onChecked);
+            dispatcher.db.hmm.request("check_files", null, this.onChecked);
         });
     },
 
@@ -62,13 +62,13 @@ var HMMFiles = React.createClass({
 
     press: function () {
         this.setState({pressing: true}, function () {
-            dispatcher.collections.hmm.request("press", null, this.onRepaired);
+            dispatcher.db.hmm.request("press", null, this.onRepaired);
         });
     },
 
     clean: function () {
         this.setState({cleaning: true}, function () {
-            dispatcher.collections.hmm.request("clean", {cluster_ids: this.state.errors["not_in_file"]}, this.onRepaired);
+            dispatcher.db.hmm.request("clean", {cluster_ids: this.state.errors["not_in_file"]}, this.onRepaired);
         });
     },
 

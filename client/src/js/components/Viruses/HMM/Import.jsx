@@ -58,7 +58,7 @@ var ImportViruses = React.createClass({
     },
 
     importData: function () {
-        dispatcher.collections.hmm.request(
+        dispatcher.db.hmm.request(
             'import_data',
             {file_id: this.state.fileId},
             this.onSuccess,
