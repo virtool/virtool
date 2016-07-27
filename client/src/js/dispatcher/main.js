@@ -178,13 +178,28 @@ function Dispatcher(onReady) {
             if (message.sync) this.runningOperationCount += message.data.length;
 
             if (operation === "update") {
-                try {
-                    this.db[message.collection_name].update(message.data);
-                } catch (err) {
-                    this.db[message.collection_name].insert(message.data);
-                }
+                var collection = this.db[message.collection_name];
+
+                var updates = message.data.constructor === Array ? message.data: [message.data];
+
+                updates.forEach(function (update) {
+
+                    var existingDocument = collection.findOne({_id: update._id});
+
+                    if (existingDocument) {
+                        var amended = _.assign(_.pick(existingDocument, ["$loki", "meta"]), update);
+                        collection.update(amended);
+                    } else {
+                        collection.insert(message.data);
+                    }
+                });
+
+
+
+
+
             } else {
-                this.db[message.collection_name].remove(message.data);
+                this.db[message.collection_name].removeWhere({"_id": {"$in": message.data}});
             }
         }
 

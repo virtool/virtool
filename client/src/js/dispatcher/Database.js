@@ -49,6 +49,15 @@ function Database(definitions, dispatcher) {
                             }, success, failure);
                         };
 
+                        var emitChange = function (data) {
+                            collection.emit("change", data);
+                        };
+
+                        collection.events["change"] = [];
+
+                        collection.on("update", emitChange);
+                        collection.on("remove", emitChange);
+
                         this[collectionName] = collection;
 
                         this.collectionNames.push(collectionName);
