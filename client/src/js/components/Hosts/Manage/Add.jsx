@@ -61,7 +61,7 @@ var AddHost = React.createClass({
 
         // Only submit the request if the two form fields are filled.
         if (this.state.organism.length > 0 && this.state.description.length > 0) {
-            dispatcher.collections.hosts.request('add', {
+            dispatcher.db.hosts.request('add', {
                 file: this.props.target._id,
                 description: this.state.description,
                 organism: this.state.organism

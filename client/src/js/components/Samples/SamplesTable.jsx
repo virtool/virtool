@@ -90,7 +90,7 @@ var SamplesTable = React.createClass({
 
         var callback = function () {
             // Send messages to the server asking for the target _ids to be archived.
-            dispatcher.collections.samples.request('archive', {_id: _.map(targets, '_id')});
+            dispatcher.db.samples.request('archive', {_id: _.map(targets, '_id')});
         };
 
         this.confirmManager.show('archive', callback, targets);
@@ -159,7 +159,7 @@ var SamplesTable = React.createClass({
         }.bind(this);
 
         var tableProps = {
-            collection: dispatcher.collections.samples,
+            collection: dispatcher.db.samples,
             fields: this.fields,
             baseFilter: {archived: this.props.archived},
             initialSortKey: 'added',
@@ -172,7 +172,7 @@ var SamplesTable = React.createClass({
             createActions: createActions
         };
 
-        var detailTarget = _.find(dispatcher.collections.samples.documents, {_id: this.props.route.extra[0]});
+        var detailTarget = _.find(dispatcher.db.samples.documents, {_id: this.props.route.extra[0]});
 
         var createModal;
 
@@ -190,7 +190,7 @@ var SamplesTable = React.createClass({
                     target={detailTarget}
                     onHide={this.hideModal}
                     contentComponent={SampleDetail}
-                    collection={dispatcher.collections.samples}
+                    collection={dispatcher.db.samples}
                 />
 
                 {createModal}

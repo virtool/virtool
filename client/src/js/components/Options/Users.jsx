@@ -40,7 +40,7 @@ var GroupsPermissions = require('./Users/GroupsPermissions.jsx');
 var Users = React.createClass({
 
     getInitialState: function () {
-        var documents = _.sortBy(dispatcher.collections.users.documents, '_id');
+        var documents = _.sortBy(dispatcher.db.users.documents, '_id');
 
         return {
             documents: documents,
@@ -51,13 +51,13 @@ var Users = React.createClass({
     },
 
     componentDidMount: function () {
-        dispatcher.collections.users.on('change', this.update);
-        dispatcher.collections.groups.on('change', this.update);
+        dispatcher.db.users.on('change', this.update);
+        dispatcher.db.groups.on('change', this.update);
     },
 
     componentWillUnmount: function () {
-        dispatcher.collections.users.off('change', this.update);
-        dispatcher.collections.groups.off('change', this.update);
+        dispatcher.db.users.off('change', this.update);
+        dispatcher.db.groups.off('change', this.update);
     },
 
     /**
@@ -65,7 +65,7 @@ var Users = React.createClass({
      */
     update: function () {
         // Get the updated documents
-        var newDocuments = _.sortBy(dispatcher.collections.users.documents, '_id');
+        var newDocuments = _.sortBy(dispatcher.db.users.documents, '_id');
         var activeId = Utils.getNewActiveId(this.state.activeId, this.state.documents, newDocuments);
         
         this.setState({
@@ -81,7 +81,7 @@ var Users = React.createClass({
      * @func
      */
     onFilter: function (event) {
-        var documents = dispatcher.collections.users.documents;
+        var documents = dispatcher.db.users.documents;
 
         if (event && event.target.value) {
             var regEx = new RegExp('^' + event.target.value, 'i');
@@ -107,7 +107,7 @@ var Users = React.createClass({
      * @func
      */
     removeUser: function () {
-        dispatcher.collections.users.request('remove_user', {_id: this.state.activeId});
+        dispatcher.db.users.request('remove_user', {_id: this.state.activeId});
     },
 
     render: function () {

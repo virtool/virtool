@@ -56,7 +56,7 @@ var ReadOnly = React.createClass({
      * @func
      */
     remove: function () {
-        dispatcher.collections.viruses.request('remove_sequence', {
+        dispatcher.db.viruses.request('remove_sequence', {
             _id: this.props.virusId,
             isolate_id: this.props.isolateId,
             sequence_id: this.props.sequenceId

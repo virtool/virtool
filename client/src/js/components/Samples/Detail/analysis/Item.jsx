@@ -34,20 +34,20 @@ var AnalysisItem = React.createClass({
     getInitialState: function () {
         return {
             pending: false,
-            progress: this.props.ready ? 0: _.find(dispatcher.collections.jobs.documents, {_id: this.props.job}).progress
+            progress: this.props.ready ? 0: _.find(dispatcher.db.jobs.documents, {_id: this.props.job}).progress
         };
     },
     
     componentDidMount: function () {
-        if (!this.props.ready) dispatcher.collections.jobs.on('update', this.onJobUpdate);
+        if (!this.props.ready) dispatcher.db.jobs.on('update', this.onJobUpdate);
     },
 
     componentDidUpdate: function (prevProps) {
-        if (!prevProps.ready && this.props.ready) dispatcher.collections.jobs.off('update', this.onJobUpdate);
+        if (!prevProps.ready && this.props.ready) dispatcher.db.jobs.off('update', this.onJobUpdate);
     },
     
     componentWillUnmount: function () {
-        if (!this.props.ready) dispatcher.collections.jobs.off('update', this.onJobUpdate);
+        if (!this.props.ready) dispatcher.db.jobs.off('update', this.onJobUpdate);
     },
 
     /**
@@ -69,7 +69,7 @@ var AnalysisItem = React.createClass({
      */
     remove: function () {
         this.setState({pending: true}, function () {
-            dispatcher.collections.samples.request('remove_analysis', {
+            dispatcher.db.samples.request('remove_analysis', {
                 _id: this.props.sample,
                 analysis_id: this.props._id
             }, null, this.onFailure);

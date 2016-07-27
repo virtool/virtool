@@ -202,35 +202,45 @@ class Collection:
         :type connection: :class:`.virtool.web.SocketHandler`
 
         """
-        documents = yield self.find(self.sync_filter, self.sync_projector).to_list(None)
+        cursor = self.find(self.sync_filter, self.sync_projector)
 
-        documents = yield self.sync_processor(documents)
+        document_ids = set()
+
+        update_buffer = list()
 
         operation_count = 0
 
-        for document in documents:
+        while (yield cursor.fetch_next):
+            document = cursor.next_object()
+            document = yield self.sync_processor([document])
+            document = document[0]
+
+            document_ids.add(document["_id"])
+
+            # Is the document id in the manifest?
+            in_manifest = document["_id"] in manifest
+
             # The document has not been created since the client last synced, but has been changed. Send the new
             # version.
-            if document["_id"] not in manifest:
-                count = yield self.dispatch("update", document, connections=[connection], sync=True)
-                operation_count += count
-            else:
-                remove_document = False
+            if not in_manifest or (in_manifest and document["_version"] != manifest[document["_id"]]):
+                if len(update_buffer) == 10:
+                    yield self.dispatch("update", update_buffer, connections=[connection], sync=True)
+                    operation_count += 10
+                    update_buffer = list()
+                else:
+                    update_buffer.append(document)
 
-                if document["_version"] != manifest[document["_id"]]:
-                    if document is not None:
-                        count = yield self.dispatch("update", document, connections=[connection], sync=True)
-                        operation_count += count
-                    else:
-                        remove_document = True
+            document_ids.add(document["_id"])
 
-                if not remove_document:
-                    manifest.pop(document["_id"])
+        if len(update_buffer) > 0:
+            yield self.dispatch("update", update_buffer, connections=[connection], sync=True)
+            operation_count += len(update_buffer)
 
         # All remaining documents should be deleted by the client since they no longer exist on the server.
-        for _id in manifest:
-            count = yield self.dispatch("remove", [_id], connections=[connection], sync=True)
-            operation_count += count
+        for document_id in manifest:
+            if document_id not in document_ids:
+                yield self.dispatch("remove", [document_id], connections=[connection], sync=True)
+                operation_count += 1
 
         return operation_count
 

@@ -41,7 +41,7 @@ var ReadSelector = React.createClass({
 
     getInitialState: function () {
         return {
-            reads: dispatcher.collections.reads.documents,
+            reads: dispatcher.db.reads.documents,
             selected: [],
             filter: '',
             showAll: false
@@ -84,17 +84,17 @@ var ReadSelector = React.createClass({
     componentDidMount: function () {
         // Listen for changes to the reads collection
         dispatcher.listen('reads');
-        dispatcher.collections.reads.on('change', this.update);
+        dispatcher.db.reads.on('change', this.update);
     },
 
     componentWillUnmount: function () {
         // Unbind all callbacks
         dispatcher.unlisten('reads');
-        dispatcher.collections.reads.off('change', this.update);
+        dispatcher.db.reads.off('change', this.update);
     },
 
     update: function () {
-        var reads = dispatcher.collections.reads.documents;
+        var reads = dispatcher.db.reads.documents;
 
         this.setState({
             reads: reads,

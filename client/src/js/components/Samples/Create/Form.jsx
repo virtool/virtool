@@ -18,7 +18,7 @@ var ImportForm = React.createClass({
 
     getInitialState: function () {
 
-        var readyHosts = _.filter(dispatcher.collections.hosts.documents, {added: true});
+        var readyHosts = _.filter(dispatcher.db.hosts.documents, {added: true});
 
         return {
             name: '',
@@ -60,7 +60,7 @@ var ImportForm = React.createClass({
     render: function () {
 
 
-        var hostComponents = _.filter(dispatcher.collections.hosts.documents, {"added": true}).map(function (host) {
+        var hostComponents = _.filter(dispatcher.db.hosts.documents, {"added": true}).map(function (host) {
             return <option key={host._id}>{host._id}</option>;
         });
 

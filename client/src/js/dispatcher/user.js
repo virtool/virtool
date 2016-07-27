@@ -42,7 +42,7 @@ var User = function () {
             dispatcher.router.route('home/welcome');
             this.name = null;
 
-             _.forIn(dispatcher.collections, function (collection) {
+             _.forIn(dispatcher.db, function (collection) {
                 collection.documents = [];
                 collection.synced = false;
             });

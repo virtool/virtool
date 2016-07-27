@@ -81,7 +81,7 @@ var ChangePassword = React.createClass({
 
         // Only send the request if the new passwords match and the password is at least four characters in length.
         if (!this.state.tooShort && !this.state.noMatch) {
-            dispatcher.collections.users.request('change_password', {
+            dispatcher.db.users.request('change_password', {
                 _id: dispatcher.user.name,
                 old_password: this.state.old,
                 new_password: this.state.new

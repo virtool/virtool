@@ -37,7 +37,7 @@ var PrimaryGroup = React.createClass({
         var groupId = event.target.value;
 
         this.setState({pending: true}, function () {
-            dispatcher.collections.users.request('set_primary_group', {
+            dispatcher.db.users.request('set_primary_group', {
                 _id: this.props._id,
                 group_id: groupId
             }, this.onComplete, this.onComplete);

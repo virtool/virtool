@@ -71,7 +71,7 @@ var SamplesImport = React.createClass({
         } else {
             // Send the request to the server.
             this.setState(this.getInitialState(), function () {
-                dispatcher.collections.samples.request(
+                dispatcher.db.samples.request(
                     'new',
                     data,
                     this.onSubmitSuccess,
@@ -100,7 +100,7 @@ var SamplesImport = React.createClass({
 
         var modalBody;
 
-        if (_.filter(dispatcher.collections.hosts.documents, {added: true}).length === 0) {
+        if (_.filter(dispatcher.db.hosts.documents, {added: true}).length === 0) {
             modalBody = (
                 <Modal.Body>
                     <Alert bsStyle='warning' className='text-center'>

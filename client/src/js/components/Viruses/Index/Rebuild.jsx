@@ -52,7 +52,7 @@ var IndexRebuild = React.createClass({
      */
     rebuild: function () {
         this.setState({pending: true}, function () {
-            dispatcher.collections.indexes.request('rebuild', {}, this.onRebuildSuccess, this.onRebuildFailure);
+            dispatcher.db.indexes.request('rebuild', {}, this.onRebuildSuccess, this.onRebuildFailure);
         });
     },
 

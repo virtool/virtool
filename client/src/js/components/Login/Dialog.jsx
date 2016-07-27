@@ -68,7 +68,7 @@ var LoginDialog = React.createClass({
         }
 
         if (this.state.new.length >= 8 && this.state.new === this.state.confirm) {
-            dispatcher.collections.users.request('change_password', {
+            dispatcher.db.users.request('change_password', {
                 _id: this.state.username,
                 old_password: this.state.password,
                 new_password: this.state.new

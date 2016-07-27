@@ -273,10 +273,6 @@ class Dispatcher:
             sync_list.append("users")
             sync_list.append("groups")
 
-        # Count how many operations (dispatches) were required to perform the sync. This information will be sent to the
-        # client so it knows how many dispatches to expect. This helps to render a progress bar for syncing to the user.
-        total_operation_count = 0
-
         # Sync the host FASTA and read file lists.
         for name in ["reads", "files"]:
             for file_document in self.watcher.files[name].values():
@@ -286,6 +282,8 @@ class Dispatcher:
                     "data": file_document,
                     "sync": True
                 }, [transaction.connection])
+
+        total_operation_count = 0
 
         # Sync the true collection objects.
         for name in sync_list:

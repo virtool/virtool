@@ -64,7 +64,7 @@ var GeneralOptions = React.createClass({
                     <Col md={6}>
                         <InternalControl
                             settings={dispatcher.settings}
-                            viruses={dispatcher.collections.viruses}
+                            viruses={dispatcher.db.viruses}
                         />
                     </Col>
                     <Col md={6}>

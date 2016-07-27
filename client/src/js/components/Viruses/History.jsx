@@ -32,18 +32,18 @@ var VirusHistory = React.createClass({
 
     getInitialState: function () {
         return {
-            documents: dispatcher.collections.history.documents,
+            documents: dispatcher.db.history.documents,
             indexVersion: 'unbuilt',
             filter: null
         };
     },
 
     componentDidMount: function () {
-        dispatcher.collections.history.on('change', this.update);
+        dispatcher.db.history.on('change', this.update);
     },
 
     componentWillUnmount: function () {
-        dispatcher.collections.history.off('change', this.update);
+        dispatcher.db.history.off('change', this.update);
     },
 
     /**
@@ -74,7 +74,7 @@ var VirusHistory = React.createClass({
      * @func
      */
     update: function () {
-        this.setState({documents: dispatcher.collections.history.documents});
+        this.setState({documents: dispatcher.db.history.documents});
     },
 
     render: function () {

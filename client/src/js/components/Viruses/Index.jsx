@@ -30,21 +30,21 @@ var Index = React.createClass({
 
     getInitialState: function () {
         return {
-            historyEntries: dispatcher.collections.history.documents,
-            indexEntries: dispatcher.collections.indexes.documents
+            historyEntries: dispatcher.db.history.documents,
+            indexEntries: dispatcher.db.indexes.documents
         }
     },
 
     componentDidMount: function () {
-        dispatcher.collections.indexes.on('change', this.update);
-        dispatcher.collections.history.on('change', this.update);
-        dispatcher.collections.viruses.on('change', this.update);
+        dispatcher.db.indexes.on('change', this.update);
+        dispatcher.db.history.on('change', this.update);
+        dispatcher.db.viruses.on('change', this.update);
     },
 
     componentWillUnmount: function () {
-        dispatcher.collections.indexes.off('change', this.update);
-        dispatcher.collections.history.off('change', this.update);
-        dispatcher.collections.viruses.off('change', this.update);
+        dispatcher.db.indexes.off('change', this.update);
+        dispatcher.db.history.off('change', this.update);
+        dispatcher.db.viruses.off('change', this.update);
     },
 
     /**
@@ -57,7 +57,7 @@ var Index = React.createClass({
     },
 
     render: function () {
-        if (dispatcher.collections.viruses.documents.length > 0) {
+        if (dispatcher.db.viruses.documents.length > 0) {
             // Set to true when a ready index has been seen when mapping through the index documents. Used to mark only the
             // newest ready index with a checkmark in the index list.
             var haveSeenReady = false;
@@ -74,7 +74,7 @@ var Index = React.createClass({
                 <div>
                     <Rebuild
                         documents={this.state.historyEntries}
-                        collection={dispatcher.collections.viruses}
+                        collection={dispatcher.db.viruses}
                     />
                     <ListGroup condensed>
                         {indexComponents}

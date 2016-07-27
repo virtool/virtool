@@ -42,7 +42,7 @@ var UserSettings = React.createClass({
     toggleShowField: function (key) {
         var value = !this.props.user.settings[key];
 
-        dispatcher.collections.users.request('change_user_setting', {
+        dispatcher.db.users.request('change_user_setting', {
             _id: this.props.user.name,
             key: key,
             value: value

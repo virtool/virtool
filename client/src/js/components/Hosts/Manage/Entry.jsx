@@ -31,7 +31,7 @@ var HostEntry = React.createClass({
     },
 
     componentDidMount: function () {
-        if (this.state.progress !== 1) dispatcher.collections.jobs.on('update', this.onJobChange);
+        if (this.state.progress !== 1) dispatcher.db.jobs.on('update', this.onJobChange);
     },
 
     shouldComponentUpdate: function (nextProps, nextState) {
@@ -40,12 +40,12 @@ var HostEntry = React.createClass({
 
     componentDidUpdate: function (prevProps, prevState) {
         if (prevState.progress < 1 && this.state.progress === 1) {
-            dispatcher.collections.jobs.off('update', this.onJobChange);
+            dispatcher.db.jobs.off('update', this.onJobChange);
         }
     },
 
     componentWillUnmount: function () {
-        dispatcher.collections.jobs.off('update', this.onJobChange);
+        dispatcher.db.jobs.off('update', this.onJobChange);
     },
 
     onJobChange: function () {
@@ -57,7 +57,7 @@ var HostEntry = React.createClass({
     getProgress: function () {
         if (this.props.added) return 1;
 
-        var document = _.find(dispatcher.collections.jobs.documents, {_id: this.props.job});
+        var document = _.find(dispatcher.db.jobs.documents, {_id: this.props.job});
         return document ? document.progress: 0;
     },
 
