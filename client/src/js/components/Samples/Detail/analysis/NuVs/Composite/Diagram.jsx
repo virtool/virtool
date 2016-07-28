@@ -1,6 +1,6 @@
-var d3 = require('d3');
-var React = require('react');
-var ReactDOM = require('react-dom');
+var d3 = require("d3");
+var React = require("react");
+var ReactDOM = require("react-dom");
 
 var Badge = require('react-bootstrap/lib/Badge');
 var ListGroupItem = require('react-bootstrap/lib/ListGroupItem');
@@ -52,10 +52,12 @@ var ContigDiagram = React.createClass({
 
         var markerAttributes = {
             'viewBox': '0 -5 10 10',
-            'refX': 0,
+            'refX': 10,
             'refY': 0,
+            'markerUnits': 'strokeWidth',
             'markerWidth': 1.5,
             'markerHeight': 1.5,
+
             'orient': 'auto'
         };
 
@@ -129,16 +131,24 @@ var ContigDiagram = React.createClass({
             .attr('width', width)
             .attr('height', 30);
 
+        subGroups.append('path')
+            .attr('d', function (d, i) {
+                var x0 = x(Math.abs(d.pos[d.strand === 1 ? 0: 1]));
+                var x1 = x(Math.abs(d.pos[d.strand === 1 ? 1: 0]));
 
-        subGroups.append('line')
-            .attr('x1', function (d) {return x(d.pos[d.strand === 1 ? 0: 1]) + (d.strand === 1 ? -10: 0) })
-            .attr('x2', function (d) {return x(d.pos[d.strand === 1 ? 1: 0]) + (d.strand === -1 ? 10: 0) })
-            .attr('y1', function (d, i) {return height - 36 - (30 * i)})
-            .attr('y2', function (d, i) {return height - 36 - (30 * i)})
-            .attr('stroke-width', 5)
-            .attr('marker-end', function (d) {
-                return 'url("#marker-' + (d.hmms.length > 0 ? 'active"' : 'disabled"') + ')';
-            });
+                var x2 = x1 + (d.strand === 1 ? -5: 5);
+
+                var yBase = height - 36 - (30 * i);
+
+                return [
+                    "M" + x0 + "," + (yBase + 2),
+                    "L" + x2 + "," + (yBase + 2),
+                    "L" + x1 + "," + yBase,
+                    "L" + x2 + "," + (yBase - 2),
+                    "L" + x0 + "," + (yBase - 2)
+                ].join(" ");
+            })
+            .attr('stroke-width', 1);
 
         subGroups.append('text')
             .attr('x', function (d) {
@@ -149,7 +159,7 @@ var ContigDiagram = React.createClass({
                 return d.strand === 1 ? 'end': 'start'
             })
             .text(function (d) {
-                return d.hmms.length > 0 ? d.hmms[0].definition: 'Unannotated'
+                return d.hmms.length > 0 ? d.hmms[0].label: 'Unannotated'
             });
 
         axis.call(xAxis);
