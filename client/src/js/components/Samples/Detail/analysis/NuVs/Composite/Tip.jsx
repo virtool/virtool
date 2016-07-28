@@ -1,5 +1,6 @@
 var React = require('react');
 var Table = require('react-bootstrap/lib/Table');
+var Label = require('react-bootstrap/lib/Label');
 
 var Icon = require('virtool/js/components/Base/Icon.jsx');
 var Tooltip = require('virtool/js/components/Base/Tooltip.jsx');
@@ -11,6 +12,10 @@ var NuVsTooltip = React.createClass({
 
         var x = this.props.x + 75;
         var y = this.props.y + this.props.container.offsetTop + 75;
+
+        var definitions = data.hmms[0].definition.map(function (definition) {
+            return <span><Label>{definition}</Label> </span>;
+        });
         
         return (
             <Tooltip x={x} y={y} header={'ORF ' + data.orf_index}>
@@ -18,7 +23,7 @@ var NuVsTooltip = React.createClass({
                     <tbody>
                     <tr>
                         <td>Candidate Definitions</td>
-                        <td>{data.hmms[0].definition.join(", ")}</td>
+                        <td>{definitions}</td>
                     </tr>
                     <tr>
                         <td>E-value</td>
