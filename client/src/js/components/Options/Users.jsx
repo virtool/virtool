@@ -127,7 +127,7 @@ var Users = React.createClass({
         // The content to display in the user panel. Can be user detail and edit fields or it can be the add user form.
         var content;
 
-        var activeData = _.findOne(this.state.documents, {_id: this.state.activeId});
+        var activeData = _.find(this.state.documents, {_id: this.state.activeId});
 
         var removeIcon;
 
