@@ -117,7 +117,7 @@ function Dispatcher(onReady) {
                 return manifests;
 
             }.bind(this)).then(function (manifests) {
-                
+
                 dispatcher.send({
                     collectionName: 'dispatcher',
                     methodName: 'sync',
