@@ -296,6 +296,6 @@ texinfo_documents = [
 intersphinx_mapping = {
     'python': ('https://docs.python.org/3.4/', None),
     'tornado': ('http://www.tornadoweb.org/en/stable/', None),
-    'motor': ('http://motor.readthedocs.org/en/stable/', None),
-    'pymongo': ('http://api.mongodb.org/python/2.8/', None)
+    'motor': ('http://motor.readthedocs.io/en/stable/', None),
+    'pymongo': ('http://api.mongodb.com/python/2.8/', None)
 }

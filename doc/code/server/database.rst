@@ -138,8 +138,6 @@ classes used in Virtool are:
 
         .. automethod:: get_field
 
-        .. automethod:: get_all_field_values
-
 
 
 Utility Functions
