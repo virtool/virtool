@@ -12,10 +12,6 @@ var NuVsTooltip = React.createClass({
 
         var x = this.props.x + 75;
         var y = this.props.y + this.props.container.offsetTop + 75;
-
-        var definitions = data.hmms[0].definition.map(function (definition) {
-            return <span><Label>{definition}</Label> </span>;
-        });
         
         return (
             <Tooltip x={x} y={y} header={'ORF ' + data.orf_index}>
@@ -23,7 +19,7 @@ var NuVsTooltip = React.createClass({
                     <tbody>
                     <tr>
                         <td>Candidate Definitions</td>
-                        <td>{definitions}</td>
+                        <td>{data.hmms[0].definition.join(" | ")}</td>
                     </tr>
                     <tr>
                         <td>E-value</td>
