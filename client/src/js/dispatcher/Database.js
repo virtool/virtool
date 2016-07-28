@@ -55,8 +55,9 @@ function Database(definitions, dispatcher) {
 
                         collection.events["change"] = [];
 
+                        collection.on("insert", emitChange);
                         collection.on("update", emitChange);
-                        collection.on("remove", emitChange);
+                        collection.on("delete", emitChange);
 
                         this[collectionName] = collection;
 
