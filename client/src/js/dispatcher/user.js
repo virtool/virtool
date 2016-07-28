@@ -38,7 +38,7 @@ var User = function () {
 
     this.deauthorize = function (data) {
 
-        dispatcher.storage.deleteDatabase(function () {
+        dispatcher.db.loki.deleteDatabase({}, function () {
             location.hash = 'home/welcome';
             
             this.name = null;
