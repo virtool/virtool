@@ -174,8 +174,6 @@ var SamplesTable = React.createClass({
 
         var detailTarget = dispatcher.db.samples.findOne({_id: this.props.route.extra[0]});
 
-        console.log(detailTarget);
-
         var createModal;
 
         if (!this.props.archived) {

@@ -87,7 +87,6 @@ var AnalysisItem = React.createClass({
 
     onJobUpdate: function (data) {
         var job = dispatcher.db.jobs.findOne({_id: this.props.job});
-        console.log(job);
         if (job.progress !== this.state.progress) this.setState({progress: job.progress});
     },
 
