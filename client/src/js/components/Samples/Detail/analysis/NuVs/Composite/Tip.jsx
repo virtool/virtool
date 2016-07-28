@@ -17,8 +17,8 @@ var NuVsTooltip = React.createClass({
                 <Table condensed bordered>
                     <tbody>
                     <tr>
-                        <td>Candidate Definition</td>
-                        <td>{data.hmms[0].definition}</td>
+                        <td>Candidate Definitions</td>
+                        <td>{data.hmms[0].definition.join(", ")}</td>
                     </tr>
                     <tr>
                         <td>E-value</td>
