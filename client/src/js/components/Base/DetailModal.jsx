@@ -45,7 +45,7 @@ var DetailModal = React.createClass({
     },
 
     componentWillUnmount: function () {
-        this.props.collection.off('update', this.tryRefresh);
+        this.props.collection.off('change', this.tryRefresh);
     },
 
     handleEntered: function () {
