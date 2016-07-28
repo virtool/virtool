@@ -2,8 +2,6 @@ var _ = require('lodash');
 var Loki = require('lokijs');
 var LokiIndexedAdapter = require('lokijs/src/loki-indexed-adapter');
 
-var Collection = require("./Collection.js");
-
 if (!'indexedDB' in window) throw 'Cannot find indexedDB';
 
 function Database(definitions, dispatcher) {
