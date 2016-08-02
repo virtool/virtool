@@ -100,7 +100,7 @@ var Start = React.createClass({
                     token: token,
                     browser: dispatcher.browser
                 }
-            }).success(this.onCheckTokenSuccess, this).failure(this.onCheckTokenFailure, this);
+            }).success(this.onCheckTokenSuccess).failure(this.onCheckTokenFailure);
         } else {
             this.onCheckTokenFailure();
         }
