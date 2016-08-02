@@ -121,7 +121,7 @@ function Dispatcher(onReady) {
                 dispatcher.send({collectionName: 'dispatcher', methodName: 'sync', data: {manifests: manifests}})
                     .update(function (update) {
                         dispatcher.syncOperationCount = update;
-                    })
+                    });
             });
 
         }, this);
@@ -161,7 +161,7 @@ function Dispatcher(onReady) {
                     break;
 
                 case "update":
-                    this.transactions.update(message.data.tid, message.data);
+                    this.transactions.update(message.data.tid, message.data.data);
                     break;
 
                 default:

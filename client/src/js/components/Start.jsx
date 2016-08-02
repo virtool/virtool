@@ -13,14 +13,15 @@
 
 var React = require('react');
 var Cookie = require('react-cookie');
-var ProgressBar = require('react-bootstrap/lib/ProgressBar');
 
 var Dispatcher = require('virtool/js/dispatcher/main.js');
 var Utils = require('virtool/js/Utils');
+var Flex = require('virtool/js/components/Base/Flex.jsx');
 var Icon = require('virtool/js/components/Base/Icon.jsx');
 var Setup = require('./Setup/Setup.jsx');
 var Main = require('virtool/js/components/Main.jsx');
 var LoginDialog = require('./Login/Dialog.jsx');
+var ProgressLogo = require('virtool/js/components/Base/ProgressLogo.jsx');
 
 var Start = React.createClass({
 
@@ -66,6 +67,7 @@ var Start = React.createClass({
             dispatcher.on('syncing', function (data) {
                 this.setState({syncProgress: data})
             }.bind(this));
+
         } else {
             history.replaceState({}, document.title, "/");
         }
@@ -98,7 +100,7 @@ var Start = React.createClass({
                     token: token,
                     browser: dispatcher.browser
                 }
-            }, this.onCheckTokenSuccess, this.onCheckTokenFailure);
+            }).success(this.onCheckTokenSuccess, this).failure(this.onCheckTokenFailure, this);
         } else {
             this.onCheckTokenFailure();
         }
@@ -142,11 +144,11 @@ var Start = React.createClass({
 
         if (!this.state.checkedSetup || (this.state.checkedSetup && !this.state.needsSetup && !this.state.checkedToken)) {
             return (
-                <div className='page-loading'>
-                    <p className='text-center'>
-                        {logo}
-                    </p>
-                </div>
+                <Flex alignContent="center" justifyContent="center" className="page-loading">
+                    <Flex.Item grow={0} shrink={0} alignSelf="center">
+                        <ProgressLogo value={0} />
+                    </Flex.Item>
+                </Flex>
             );
         }
 
@@ -166,16 +168,11 @@ var Start = React.createClass({
 
         if (!this.state.synced) {
             return (
-                <div className='page-loading'>
-                    <div className='text-center'>
-                        {logo}
-                        <ProgressBar
-                            now={(this.state.syncProgress > 0.08 ? this.state.syncProgress: 0.02) * 100}
-                            style={{width: '300px', marginRight: '0px'}}
-                            active
-                        />
-                    </div>
-                </div>
+                <Flex alignContent="center" justifyContent="center" className="page-loading">
+                    <Flex.Item grow={0} shrink={0} alignSelf="center">
+                        <ProgressLogo value={this.state.syncProgress} />
+                    </Flex.Item>
+                </Flex>
             );
         }
 

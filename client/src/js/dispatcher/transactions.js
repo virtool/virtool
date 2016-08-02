@@ -70,11 +70,7 @@ function Transactions() {
 
     this.new = function () {
         var transaction = new Transaction(this.generateTID(), this.remove);
-
-        console.log("NEW", transaction);
-
         this.pending.push(transaction);
-
         return transaction;
     };
 
@@ -87,13 +83,11 @@ function Transactions() {
 
         // Call the appropriate success or failure callback.
         succeeded ? transaction.onSuccess(data): transaction.onFailure(data);
-
-        console.log("FULFILL", transaction);
     };
 
     this.update = function (tid, data) {
         var transactionObj = _.find(this.pending, {tid: tid});
-        transactionObj.onUpdate(data.update);
+        transactionObj.onUpdate(data);
     };
 
     this.remove = function (tid) {

@@ -23,7 +23,7 @@ var twoPi = 2 * Math.PI;
 var arcTween = function (newValue, arc) {
 
     return function (d) {
-        var interpolate = d3.interpolate(d.endAngle, newValue / 100 * twoPi);
+        var interpolate = d3.interpolate(d.endAngle, newValue * twoPi);
 
         return function (t) {
             d.endAngle = interpolate(t);
@@ -53,24 +53,24 @@ var ProgressLogo = React.createClass({
 
         var svg = d3.select(".progress-logo-container").append("svg")
             .attr("height", height)
-            .attr("width", width)
+            .attr("width", width);
 
         var meter = svg.append("g")
             .attr("transform", "translate(" + width / 2 + "," + height / 2 + ")");
 
-        var icon = svg.append("g")
+        svg.append("g")
             .attr("transform", "translate(" + 76.5 + "," + 76.5 + ")")
             .append("path")
             .attr("d", iconPath)
             .attr("fill", "black");
 
-        var background = meter.append("path")
+        meter.append("path")
             .datum({endAngle: twoPi})
             .style("fill", "#ddd")
             .attr("d", this.arc);
 
         this.foreground = meter.append("path")
-            .datum({endAngle: this.props.value / 100 * twoPi})
+            .datum({endAngle: this.props.value * twoPi})
             .style("stroke", "#337ab7")
             .style("fill", "#337ab7")
             .attr("d", this.arc);
