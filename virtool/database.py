@@ -189,24 +189,13 @@ class Collection:
         return response
 
     @virtool.gen.coroutine
-    def sync(self, manifest, connection):
-        """
-        Sync documents between the server and client. The client supplies a dictionary of document ids and their version
-        numbers. The version numbers are checked against the database and update and remove orders are sent to the
-        client accordingly.
-
-        :param manifest: a dict of document version numbers keyed by document ids telling the state of a client's store.
-        :type manifest: dict
-
-        :param connection: the connection to dispatch the sync operations to.
-        :type connection: :class:`.virtool.web.SocketHandler`
-
-        """
+    def prepare_sync(self, manifest):
         cursor = self.find(self.sync_filter, self.sync_projector)
 
         document_ids = set()
 
-        update_buffer = list()
+        updates = list()
+        removes = list()
 
         operation_count = 0
 
@@ -223,26 +212,35 @@ class Collection:
             # The document has not been created since the client last synced, but has been changed. Send the new
             # version.
             if not in_manifest or (in_manifest and document["_version"] != manifest[document["_id"]]):
-                if len(update_buffer) == 10:
-                    yield self.dispatch("update", update_buffer, connections=[connection], sync=True)
-                    operation_count += 10
-                    update_buffer = list()
-                else:
-                    update_buffer.append(document)
+                updates.append(document)
 
             document_ids.add(document["_id"])
 
-        if len(update_buffer) > 0:
-            yield self.dispatch("update", update_buffer, connections=[connection], sync=True)
-            operation_count += len(update_buffer)
+        # All remaining documents should be deleted by the client since they no longer exist on the server.
+        removes = [document_id for document_id in manifest if document_id not in document_ids]
+
+        return updates, removes
+
+    @virtool.gen.coroutine
+    def sync(self, updates, removes, connection):
+        """
+        Sync documents between the server and client. The client supplies a dictionary of document ids and their version
+        numbers. The version numbers are checked against the database and update and remove orders are sent to the
+        client accordingly.
+
+        :param manifest: a dict of document version numbers keyed by document ids telling the state of a client's store.
+        :type manifest: dict
+
+        :param connection: the connection to dispatch the sync operations to.
+        :type connection: :class:`.virtool.web.SocketHandler`
+
+        """
+        for i in range(0, len(updates), 10):
+            yield self.dispatch("update", updates[i: i + 10], connections=[connection], sync=True)
 
         # All remaining documents should be deleted by the client since they no longer exist on the server.
-        for document_id in manifest:
-            if document_id not in document_ids:
-                yield self.dispatch("remove", [document_id], connections=[connection], sync=True)
-                operation_count += 1
-
-        return operation_count
+        for i in range(0, len(removes), 10):
+            yield self.dispatch("remove", removes[i: i + 10], connections=[connection], sync=True)
 
     @virtool.gen.coroutine
     def dispatch(self, operation, data, collection_name=None, connections=None, sync=False):

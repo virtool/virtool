@@ -264,17 +264,31 @@ class Dispatcher:
             collections. These collections are not retained in browser storage.
 
         """
-        permissions = transaction.connection.user["permissions"]
-
         # A list of collection names to sync with the client.
         sync_list = list(["jobs", "samples", "hosts", "viruses", "hmm", "history", "indexes"])
 
         # Only sync users and groups if the user has the appropriate permissions.
-        if "modify_options" in permissions:
+        if "modify_options" in transaction.connection.user["permissions"]:
             sync_list.append("users")
             sync_list.append("groups")
 
-        # Sync the host FASTA and read file lists.
+        to_sync = dict()
+        total_operation_count = 0
+
+
+        # Sync the true collection objects.
+        for name in sync_list:
+            updates, removes = yield self.collections[name].prepare_sync(
+                transaction.data["manifests"][name]
+            )
+
+            total_operation_count += (len(updates) + len(removes))
+
+            to_sync[name] = (updates, removes)
+
+        transaction.update(total_operation_count)
+
+            # Sync the host FASTA and read file lists.
         for name in ["reads", "files"]:
             for file_document in self.watcher.files[name].values():
                 self.dispatch({
@@ -284,16 +298,12 @@ class Dispatcher:
                     "sync": True
                 }, [transaction.connection])
 
-        total_operation_count = 0
-
-        # Sync the true collection objects.
-        for name in sync_list:
-            operation_count = yield self.collections[name].sync(
-                transaction.data["manifests"][name],
+        for name in to_sync:
+            yield self.collections[name].sync(
+                to_sync[name][0],
+                to_sync[name][1],
                 transaction.connection
             )
-
-            total_operation_count += operation_count
 
         return True, total_operation_count
 
@@ -406,10 +416,21 @@ class Transaction:
             data = data_to_send
 
         self.dispatcher.dispatch({
-            "operation": "transaction",
+            "collection_name": "transaction",
+            "operation": "fulfill",
             "data": {
                 "tid": self.tid,
                 "success": success,
+                "data": data
+            }
+        }, [self.connection])
+
+    def update(self, data):
+        self.dispatcher.dispatch({
+            "collection_name": "transaction",
+            "operation": "update",
+            "data": {
+                "tid": self.tid,
                 "data": data
             }
         }, [self.connection])
