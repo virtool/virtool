@@ -85,7 +85,11 @@ var HMMFiles = React.createClass({
 
         var content;
 
-        if (this.state.files || this.state.errors) {
+        var hasErrors = !_.every(_.values(this.state.errors), function (value) {
+            return value === false;
+        });
+
+        if (this.state.files || hasErrors) {
 
             var files;
 
@@ -108,14 +112,14 @@ var HMMFiles = React.createClass({
                 );
             }
 
-            var errors = this.state.errors.length === 0 ? null: (
+            var errors = hasErrors ? (
                 <HMMErrors
                     {...this.state}
                     clean={this.clean}
                     press={this.press}
                     checkFiles={this.checkFiles}
                 />
-            );
+            ): null;
 
             content = (
                 <div>
