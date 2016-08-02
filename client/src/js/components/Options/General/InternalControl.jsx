@@ -143,14 +143,12 @@ var InternalControl = React.createClass({
     render: function () {
 
         var menuItemComponents;
-        var regEx = new RegExp('^' + this.state.inputValue, 'i');
 
         if (this.props.settings.get('use_internal_control')) {
-            var options = _.filter(this.props.viruses.documents, function (document) {
-                return regEx.test(document.name);
-            });
 
-            options = _.sortBy(options, 'name').slice(0, 10);
+            var predicate = this.state.inputValue ? {"name": {"$regex": ["^" + this.state.inputValue, "i"]}}: {};
+
+            var options = _.sortBy(dispatcher.db.viruses.find(predicate), 'name').slice(0, 10);
 
             menuItemComponents = options.map(function (document) {
                 var callback = function (event) {
@@ -183,13 +181,16 @@ var InternalControl = React.createClass({
 
         // If an internal control is being used, wrap the Input component in a Dropdown component that shows a list of
         // virus names to choose as an internal control.
-        if (this.props.settings.get('use_internal_control') && menuItemComponents.length > 0) {
+        if (this.props.settings.get('use_internal_control')) {
+            var dropdownStyle = {
+                width: "100%",
+                marginTop: '-15px'
+            };
+
             input = (
                 <Dropdown id='internal-control-dropdown' onToggle={this.handleToggle} open={this.state.open} block vertical>
-
                     {input}
-
-                    <DropdownMenu style={{marginTop: '-15px'}} role='menu'>
+                    <DropdownMenu role='menu' style={dropdownStyle}>
                         {menuItemComponents}
                     </DropdownMenu>
                 </Dropdown>
