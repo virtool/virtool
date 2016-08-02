@@ -176,7 +176,13 @@ var InputCell = React.createClass({
                     _id: this.props._id,
                     field: this.props.field,
                     value: this.state.value
-                }, null, this.onFailure);
+                }).failure(function () {
+                    this.setState({
+                        showError: true,
+                        editing: true,
+                        pending: false
+                    });
+                }, this);
             }
 
             // Save was clicked, but the value didn't change from the original static value. Toggle editing off but don't
@@ -186,14 +192,6 @@ var InputCell = React.createClass({
                     this.toggleEditing(null, false);
                 });
             }
-        });
-    },
-
-    onFailure: function () {
-        this.setState({
-            showError: true,
-            editing: true,
-            pending: false
         });
     },
 

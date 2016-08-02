@@ -96,7 +96,7 @@ var JobsTable = React.createClass({
         if (!(targets instanceof Array)) targets = [targets];
 
         var callback = function () {
-            dispatcher.db.jobs.request(methodName, {_id: _.map(targets, '_id')}, success, failure);
+            dispatcher.db.jobs.request(methodName, {_id: _.map(targets, '_id')}).success(succes).failure(failure);
         };
 
         this.confirmManager.show(methodName, callback, targets);
@@ -130,7 +130,13 @@ var JobsTable = React.createClass({
         {
             key: 'progress',
             size: 4,
-            render: function (document) { return <ProgressBar state={document.state} value={document.progress} />; }
+            render: function (document) {
+                return (
+                    <div style={{paddingRight: "20%"}}>
+                        <ProgressBar state={document.state} value={document.progress} />
+                    </div>
+                );
+            }
         },
         {
             key: 'added',

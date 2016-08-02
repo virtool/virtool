@@ -37,7 +37,7 @@ var HostDetailFooter = React.createClass({
      * @func
      */
     remove: function () {
-        dispatcher.db.hosts.request('remove_host', {_id: this.props._id}, null, this.props.onError);
+        dispatcher.db.hosts.request('remove_host', {_id: this.props._id}).failure(this.props.onError);
     },
 
     render: function () {

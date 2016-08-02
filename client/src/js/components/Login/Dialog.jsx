@@ -46,7 +46,7 @@ var LoginDialog = React.createClass({
                     password: this.state.new || this.state.password,
                     browser: dispatcher.browser
                 }
-            }, this.props.onLogin, this.onLoginFailure);
+            }).success(this.props.onLogin, this).failure(this.onLoginFailure, this);
 
         });
     },
@@ -72,7 +72,7 @@ var LoginDialog = React.createClass({
                 _id: this.state.username,
                 old_password: this.state.password,
                 new_password: this.state.new
-            }, this.login, this.onResetFailure);
+            }).success(this.login).failure(this.onResetFailure);
         }
 
         if (newState.warnings.length > 0) this.setState(newState);

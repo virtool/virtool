@@ -71,29 +71,18 @@ var SamplesImport = React.createClass({
         } else {
             // Send the request to the server.
             this.setState(this.getInitialState(), function () {
-                dispatcher.db.samples.request(
-                    'new',
-                    data,
-                    this.onSubmitSuccess,
-                    this.onSubmitFailure
-                );
+                dispatcher.db.samples.request('new', data).success(function () {
+                    this.refs.reads.clearSelected();
+                    this.refs.form.clear();
+                }, this).failure(function () {
+                    this.setState({nameExistsError: true});
+                }, this);
             });
         }
     },
 
     handleExit: function () {
         this.setState(this.getInitialState());
-    },
-
-    onSubmitSuccess: function () {
-        this.refs.reads.clearSelected();
-        this.refs.form.clear();
-    },
-
-    onSubmitFailure: function () {
-        this.setState({
-            nameExistsError: true
-        });
     },
 
     render: function () {

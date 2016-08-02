@@ -65,7 +65,7 @@ var AddHost = React.createClass({
                 file: this.props.target._id,
                 description: this.state.description,
                 organism: this.state.organism
-            }, this.props.onHide);
+            }).success(this.props.onHide);
         }
     },
 

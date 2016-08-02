@@ -66,17 +66,10 @@ var AnalysisList = React.createClass({
                 discovery: false,
                 algorithm: this.state.algorithm,
                 comments: this.state.nickname || null
-            }, this.onSuccess);
+            }).success(function () {
+                this.setState(this.getInitialState());
+            }, this);
         });
-    },
-
-    /**
-     * Clears the New Analysis form and removes pending state. Called when the new analysis transaction completes.
-     *
-     * @func
-     */
-    onSuccess: function () {
-        this.setState(this.getInitialState());
     },
 
     render: function () {

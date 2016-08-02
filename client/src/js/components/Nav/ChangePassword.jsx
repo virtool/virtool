@@ -85,7 +85,17 @@ var ChangePassword = React.createClass({
                 _id: dispatcher.user.name,
                 old_password: this.state.old,
                 new_password: this.state.new
-            }, this.onSuccess, this.onFailure);
+            }).success(function () {
+                this.replaceState(this.getInitialState());
+                this.props.onHide();
+            }, this).failure(function () {
+                this.setState({
+                    old: '',
+                    new: '',
+                    confirm: '',
+                    failure: true
+                });
+            }, this);
         } else {
             // Clear the fields if the new passwords are inadequate.
             _.assign(newState, {old: '', new: '', confirm: ''});
@@ -95,29 +105,6 @@ var ChangePassword = React.createClass({
         newState.submitted = true;
 
         this.setState(newState);
-    },
-
-    /**
-     * Clears the form state and hides the modal. Triggered in response to a successful password change.     *
-     * @func
-     */
-    onSuccess: function () {
-        this.replaceState(this.getInitialState());
-        this.props.onHide();
-    },
-
-    /**
-     * Sets state to show an incorrect old password was submitted. Clears the input fields. Triggered in response to a
-     * failed change password request.     *
-     * @func
-     */
-    onFailure: function () {
-        this.setState({
-            old: '',
-            new: '',
-            confirm: '',
-            failure: true
-        });
     },
 
     render: function () {

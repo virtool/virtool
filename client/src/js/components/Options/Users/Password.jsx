@@ -62,19 +62,13 @@ var Change = React.createClass({
                     // The username and new password to assign for it.
                     _id: this.props._id,
                     new_password: this.state.new
-                }, this.clear);
+                }).success(function () {
+                    this.replaceState(this.getInitialState());
+                }, this);
             });
         } else {
             this.setState({failed: true});
         }
-    },
-
-    /**
-     * Called when the clear form button is clicked. Resets the state of the form so there is no change pending and the
-     * inputs are empty.
-     */
-    clear: function () {
-        this.replaceState(this.getInitialState());
     },
 
     render: function () {

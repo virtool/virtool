@@ -49,31 +49,32 @@ var HMMFiles = React.createClass({
 
     checkFiles: function () {
         this.setState(this.getInitialState(), function () {
-            dispatcher.db.hmm.request("check_files", null, this.onChecked);
-        });
-    },
-
-    onChecked: function (data) {
-        this.setState({
-            files: data.files,
-            errors: data.errors,
+            dispatcher.db.hmm.request("check_files").success(function (data) {
+                this.setState({
+                    files: data.files,
+                    errors: data.errors,
+                });
+            }, this);
         });
     },
 
     press: function () {
         this.setState({pressing: true}, function () {
-            dispatcher.db.hmm.request("press", null, this.onRepaired);
+            dispatcher.db.hmm.request("press").success(function () {
+                this.setState({
+                    pressing: false,
+                    cleaning: false
+                }, this.checkFiles);
+            }, this);
         });
     },
 
     clean: function () {
         this.setState({cleaning: true}, function () {
-            dispatcher.db.hmm.request("clean", {cluster_ids: this.state.errors["not_in_file"]}, this.onRepaired);
+            dispatcher.db.hmm.request("clean", {
+                cluster_ids: this.state.errors["not_in_file"]
+            }).success(this.checkFiles, this);
         });
-    },
-
-    onRepaired: function () {
-        this.setState({pressing: false, cleaning: false}, this.checkFiles);
     },
 
     reset: function () {

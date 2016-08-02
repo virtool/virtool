@@ -39,12 +39,12 @@ function Database(definitions, dispatcher) {
 
                         collection.off = collection.removeListener;
 
-                        collection.request = function (operation, data, success, failure) {
-                            dispatcher.send({
+                        collection.request = function (operation, data) {
+                            return dispatcher.send({
                                 methodName: operation,
                                 collectionName: collectionName,
                                 data: data
-                            }, success, failure);
+                            });
                         };
 
                         var emitChange = function (data) {

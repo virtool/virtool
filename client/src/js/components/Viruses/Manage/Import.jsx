@@ -58,20 +58,13 @@ var ImportViruses = React.createClass({
     },
 
     importData: function () {
-        dispatcher.db.viruses.request(
-            'import_data',
-            {file_id: this.state.fileId},
-            this.onSuccess,
-            this.onFailure
-        );
-    },
-
-    onSuccess: function (data) {
-        this.setState(_.extend(this.getInitialState(), {response: data}));
-    },
-
-    onFailure: function (data) {
-        this.setState({warnings: data});
+        dispatcher.db.viruses.request('import_data', {file_id: this.state.fileId})
+            .success(function () {
+                this.setState(_.extend(this.getInitialState(), {response: data}));
+            }, this)
+            .failure(function () {
+                this.setState({warnings: data});
+            }, this);
     },
 
     acceptWarnings: function () {

@@ -51,7 +51,12 @@ var DetailModal = React.createClass({
     handleEntered: function () {
         // Request detail for the document from the server. The data will be returned in a transaction. Pass the data
         // to a callback that will update the contentComponent.
-        this.props.collection.request('detail', {_id: this.props.target._id}, this.receivedDetail);
+        this.props.collection.request('detail', {_id: this.props.target._id}).success(function (data) {
+            this.setState({
+                pending: false,
+                data: data
+            });
+        }, this);
 
         // Listen for changes to the collection that the detail belongs to. If a change occurs in the document currently
         // displayed in the detail modal, get updated detail from the server and re-render the detail component.
@@ -69,19 +74,17 @@ var DetailModal = React.createClass({
         });
     },
 
-    receivedDetail: function (data) {
-        this.setState({
-            pending: false,
-            data: data
-        });
-    },
-
     tryRefresh: function () {
 
         var document = this.props.collection.find({_id: this.props.target._id});
 
         if (document && this.state.data._version !== document._version) {
-            this.props.collection.request('detail', {_id: this.props.target._id}, this.receivedDetail);
+            this.props.collection.request('detail', {_id: this.props.target._id}).success(function (data)  {
+                this.setState({
+                    pending: false,
+                    data: data
+                });
+            }, this);
         }
 
         if (!document) this.props.onHide();

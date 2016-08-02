@@ -8,8 +8,6 @@ var Database = require('./Database.js');
 var Router = require("./Router.js");
 var Transactions = require("./transactions.js");
 
-var collectionOperations = ['add', 'update', 'remove'];
-
 function Dispatcher(onReady) {
 
     this.events = new Events(['syncing', 'synced', 'ping', 'authenticated', 'closed'], this);
@@ -17,6 +15,7 @@ function Dispatcher(onReady) {
     this.browser = _.pick(Bowser, ['name', 'version']);
 
     this.runningOperationCount = 0;
+    this.syncOperationCount = 0;
 
     this.user = new User();
     this.router = new Router();
@@ -80,13 +79,14 @@ function Dispatcher(onReady) {
      * message. When the transaction succeeds or fails, the corresponding callback functions will be called.
      *
      * @param message {object} - the message to send to the server.
-     * @param success {func} - the function to call if the transaction succeeds.
-     * @param failure {func} - the function to call if the transaction fails.
      * @func
      */
-    this.send = function (message, success, failure) {
-        message.tid = this.transactions.register(success, failure);
+    this.send = function (message) {
+        var transaction = this.transactions.new();
+        message.tid = transaction.tid;
         this.connection.send(JSON.stringify(message));
+
+        return transaction;
     };
 
     this.sync = function () {
@@ -97,7 +97,7 @@ function Dispatcher(onReady) {
             collectionName: 'settings',
             methodName: 'download',
             data: null
-        }, function (data) {
+        }).success(function (data) {
 
             this.settings.update(data);
 
@@ -118,33 +118,14 @@ function Dispatcher(onReady) {
 
             }.bind(this)).then(function (manifests) {
 
-                dispatcher.send({
-                    collectionName: 'dispatcher',
-                    methodName: 'sync',
-                    data: {manifests: manifests}
-                }, dispatcher.onSync);
-
+                dispatcher.send({collectionName: 'dispatcher', methodName: 'sync', data: {manifests: manifests}})
+                    .update(function (update) {
+                        dispatcher.syncOperationCount = update;
+                    })
             });
 
-        }.bind(this));
+        }, this);
     };
-
-    this.onSync = function (data) {
-        this.syncOperationCount = data;
-        this.checkSynced();
-    }.bind(this);
-
-    this.checkSynced = function () {
-
-        var progress = this.runningOperationCount / this.syncOperationCount;
-
-        if (progress < 1) {
-            this.emit('syncing', progress);
-            setTimeout(this.checkSynced, 50);
-        } else {
-            this.emit('synced');
-        }
-    }.bind(this);
 
     this.listen = function (name) {
         dispatcher.send({
@@ -166,14 +147,35 @@ function Dispatcher(onReady) {
     // has a property 'operation' that tells the dispatcher what to do. Illegal operation names will throw an error.
     this.handle = function (message) {
 
+        var collectionName = message.collection_name;
         var operation = message.operation;
 
         var messageDescriptor = message.collection_name + "." + message.operation;
 
         console.log(message.collection_name + '.' + message.operation);
 
-        if (_.includes(collectionOperations, operation)) {
-            if (message.sync) this.runningOperationCount += message.data.length;
+        if (collectionName === 'transaction') {
+            switch (operation) {
+                case "fulfill":
+                    this.transactions.fulfill(message.data.tid, message.data.success, message.data.data);
+                    break;
+
+                case "update":
+                    this.transactions.update(message.data.tid, message.data);
+                    break;
+
+                default:
+                    console.throw("Illegal transaction operation: " + operation);
+
+            }
+        }
+
+        else if (_.includes(this.db.collectionNames, collectionName)) {
+            if (message.sync && this.syncOperationCount > 0) {
+                this.runningOperationCount += message.data.length || 1;
+                var progress = this.runningOperationCount / this.syncOperationCount;
+                progress < 1 ? this.emit('syncing', progress): this.emit('synced');
+            }
 
             if (operation === "update") {
                 var collection = this.db[message.collection_name];
@@ -192,18 +194,17 @@ function Dispatcher(onReady) {
                     }
                 });
 
-            } else {
+            }
+
+            if (operation === "remove") {
                 this.db[message.collection_name].removeWhere({"_id": {"$in": message.data}});
             }
+
         }
 
         else {
 
             switch (operation) {
-
-                case 'transaction':
-                    this.transactions.trigger(message.data.tid, message.data.success, message.data.data);
-                    break;
 
                 case 'ping':
                     this.events.emit('ping');

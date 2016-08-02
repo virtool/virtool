@@ -90,10 +90,8 @@ var TaskField = React.createClass({
         this.setState({pending: true}, function () {
             this.props.settings.set(
                 this.props.taskPrefix + '_' + this.props.resource,
-                this.state.value === '' ? 1: this.state.value,
-                this.onComplete,
-                this.onComplete
-            );
+                this.state.value === '' ? 1: this.state.value
+            ).success(this.onComplete).failure(this.onComplete);
 
             this.refs.input.blur();
         });

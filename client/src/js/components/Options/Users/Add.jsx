@@ -76,7 +76,7 @@ var AddUser = React.createClass({
             _id: this.state.username,
             password: this.state.password,
             force_reset: this.state.forceReset
-        }, this.hide, this.showError);
+        }).success(this.hide).failure(this.showError);
     },
 
     /**

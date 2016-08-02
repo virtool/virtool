@@ -52,7 +52,7 @@ var User = function () {
             
         }.bind(this));
 
-    }.bind(this);
+    };
 
     this.logout = function () {
         dispatcher.send({
@@ -61,7 +61,7 @@ var User = function () {
             data: {
                 token: this.token
             }
-        }, this.deauthorize);
+        }).success(this.deauthorize, this);
     };
 };
 

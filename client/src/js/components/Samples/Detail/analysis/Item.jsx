@@ -72,17 +72,10 @@ var AnalysisItem = React.createClass({
             dispatcher.db.samples.request('remove_analysis', {
                 _id: this.props.sample,
                 analysis_id: this.props._id
-            }, null, this.onFailure);
+            }).failure(function () {
+                this.setState({pending: false});
+            }, this);
         });
-    },
-
-    /**
-     * Called if a remove request fails. Removes pending state.
-     *
-     * @func
-     */
-    onFailure: function () {
-        this.setState({pending: false});
     },
 
     onJobUpdate: function (data) {

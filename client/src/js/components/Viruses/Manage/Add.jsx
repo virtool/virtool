@@ -71,34 +71,20 @@ var AddVirus = React.createClass({
 
         // Only send a request to the server if a new virus name is defined.
         if (this.state.name !== '') {
-            dispatcher.db.viruses.request('add', {
-                name: this.state.name,
-                abbreviation: this.state.abbreviation
-            }, this.hide, this.onFailure);
+            dispatcher.db.viruses.request('add', {name: this.state.name, abbreviation: this.state.abbreviation})
+                .success(function () {
+                    this.replaceState(this.getInitialState());
+                    this.props.onHide();
+                }, this)
+                .failure(function () {
+                    this.setState({error: data});
+                }, this);
         }
 
         // Set state to show an error because no virus name is defined.
         else {
             this.setState({error: {name: false, abbreviation: false, unnamed: true}});
         }
-    },
-
-    /**
-     * Callback to be called when the server returns an error after submitting the new virus data. Sets error state so
-     * the component can display an appropriate error message.
-     *
-     * @param data {object}
-     */
-    onFailure: function (data) {
-        this.setState({error: data});
-    },
-
-    /**
-     * Called when the modal needs to be closed. Clears the entered forms and closes the modal.
-     */
-    hide: function () {
-        this.replaceState(this.getInitialState());
-        this.props.onHide();
     },
 
     render: function () {

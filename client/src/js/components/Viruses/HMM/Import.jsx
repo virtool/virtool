@@ -58,20 +58,11 @@ var ImportViruses = React.createClass({
     },
 
     importData: function () {
-        dispatcher.db.hmm.request(
-            'import_data',
-            {file_id: this.state.fileId},
-            this.onSuccess,
-            this.onFailure
-        );
-    },
-
-    onSuccess: function (data) {
-        this.setState(_.extend(this.getInitialState(), {added: data.message}));
-    },
-
-    onFailure: function (data) {
-        this.setState({warning: data.message});
+        dispatcher.db.hmm.request('import_data', {file_id: this.state.fileId}).success(function () {
+            this.setState(_.extend(this.getInitialState(), {added: data.message}));
+        }, this).failure(function () {
+            this.setState({warning: data.message});
+        });
     },
 
     acceptWarnings: function () {

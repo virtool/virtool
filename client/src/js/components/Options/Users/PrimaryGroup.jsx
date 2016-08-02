@@ -40,13 +40,7 @@ var PrimaryGroup = React.createClass({
             dispatcher.db.users.request('set_primary_group', {
                 _id: this.props._id,
                 group_id: groupId
-            }, this.onComplete, this.onComplete);
-        });
-    },
-
-    onComplete: function () {
-        this.setState({
-            pending: false
+            }).success(this.onComplete).failure(this.onComplete);
         });
     },
 

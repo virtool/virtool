@@ -52,33 +52,9 @@ var IndexRebuild = React.createClass({
      */
     rebuild: function () {
         this.setState({pending: true}, function () {
-            dispatcher.db.indexes.request('rebuild', {}, this.onRebuildSuccess, this.onRebuildFailure);
-        });
-    },
-
-    /**
-     * A function to call if the rebuild request fails. This occurs when some of the viruses in the database are.
-     * unverified. Sets states to show an error and stop show pending state.
-     *
-     * @func
-     */
-    onRebuildFailure: function () {
-        this.setState({
-            pending: false,
-            error: true
-        });
-    },
-
-    /**
-     * A function to call when a rebuild request succeeds. Turns off pending state to indicate to the user that the
-     * request succeeded.
-     *
-     * @func
-     */
-    onRebuildSuccess: function () {
-        this.setState({
-            pending: false,
-            error: false
+            dispatcher.db.indexes.request('rebuild')
+                .success(this.setState({pending: false, error: true}), this)
+                .failure(this.setState({pending: false, error: false}), this);
         });
     },
 

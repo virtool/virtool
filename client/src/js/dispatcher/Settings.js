@@ -33,19 +33,17 @@ var Settings = function () {
      *
      * @param key {string} The key whose corresponding value should be set.
      * @param value {*} - The new value.
-     * @param success {function} - A function to be called if the operation completes successfully.
-     * @param failure {function} - A function to be called if the operation fails.
      */
-    this.set = function (key, value, success, failure) {
+    this.set = function (key, value) {
         // Make and object to send to the server with the structure {settingKey: newValue}.
         var data = {};
         data[key] = value;
 
-        dispatcher.send({
+        return dispatcher.send({
             methodName: 'set',
             collectionName: 'settings',
             data: data
-        }, success, failure);
+        });
     };
 
     /**
