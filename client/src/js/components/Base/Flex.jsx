@@ -23,7 +23,7 @@ var Flex = React.createClass({
         justifyContent: React.PropTypes.oneOf([
             'flex-start',
             'flex-end',
-            'flex-center',
+            'center',
             'space-between',
             'space-around'
         ]),
