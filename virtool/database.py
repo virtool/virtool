@@ -190,14 +190,22 @@ class Collection:
 
     @virtool.gen.coroutine
     def prepare_sync(self, manifest):
+        """
+        Prepares to sync the collection to a client with the given manifest. Returns update objects for new or changed
+        documents and document ids for removed documents.
+
+        :param manifest: the manifest from the client requesting the sync
+        :type manifest: dict
+
+        :return: a tuple containing a list of update objects and a list of document ids to remove
+        :rtype: tuple
+
+        """
         cursor = self.find(self.sync_filter, self.sync_projector)
 
         document_ids = set()
 
         updates = list()
-        removes = list()
-
-        operation_count = 0
 
         while (yield cursor.fetch_next):
             document = cursor.next_object()
@@ -228,8 +236,11 @@ class Collection:
         numbers. The version numbers are checked against the database and update and remove orders are sent to the
         client accordingly.
 
-        :param manifest: a dict of document version numbers keyed by document ids telling the state of a client's store.
-        :type manifest: dict
+        :param updates: a list of update objects to dispatch to the client.
+        :type manifest: list
+
+        :param updates: a list of document ids to dispatch to the client, which will tell it which documents to remove.
+        :type manifest: list
 
         :param connection: the connection to dispatch the sync operations to.
         :type connection: :class:`.virtool.web.SocketHandler`
