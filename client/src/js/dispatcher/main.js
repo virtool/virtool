@@ -170,6 +170,10 @@ function Dispatcher(onReady) {
             }
         }
 
+        else if (operation === "amend") {
+            this.user.load(message.data);
+        }
+
         else if (_.includes(this.db.collectionNames, collectionName)) {
             if (message.sync && this.syncOperationCount > 0) {
                 this.runningOperationCount += message.data.length || 1;
@@ -212,10 +216,6 @@ function Dispatcher(onReady) {
 
                 case 'set':
                     this.settings.update(message.data);
-                    break;
-                
-                case 'amend':
-                    this.user.load(message.data);
                     break;
 
                 case 'deauthorize':
