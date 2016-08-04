@@ -43,35 +43,52 @@ class Collection(virtool.database.Collection):
             "all_write"
         ]})
 
+        # A list of read files that are being imported and should not be shown as available for import.
+        self.excluded_files = list()
+
+        # A synchronous connection to the Mongo database.
         db_sync = virtool.utils.get_db_client(self.settings, sync=True)
 
-        for analysis in db_sync.analyses.find({"algorithm": "nuvs"}):
+        # Make sure all NuVs analysis records reference HMMs in the database rather than storing the HMM data
+        # themselves. Only do this if HMM records are defined in the database.
+        if db_sync.hmm.count() > 0:
 
-            if "definition" in analysis["hmm"][0]:
+            for analysis in db_sync.analyses.find({"algorithm": "nuvs"}):
+                # If the definition key is defined, the record is storing the information for each HMM and must be updated.
+                if "definition" in analysis["hmm"][0]:
 
-                hits = analysis["hmm"]
+                    hits = analysis["hmm"]
 
-                for hit in hits:
-                    cluster = int(hit["hit"].split("_")[1])
-                    hmm = db_sync.hmm.find_one({"cluster": cluster}, {"_id": True})
+                    # Fix up the HMM hit entries for the analysis.
+                    for hit in hits:
+                        # Get the database id for the HMM the hit should be linked to.
+                        cluster = int(hit["hit"].split("_")[1])
+                        hmm = db_sync.hmm.find_one({"cluster": cluster}, {"_id": True})
 
-                    hit.pop("definition")
-                    hit.pop("families")
+                        # Get rid of the unnecessary fields.
+                        hit.pop("definition")
+                        hit.pop("families")
 
-                    hit["hit"] = hmm["_id"]
+                        # Change the hit field rto the id for the HMM record instead of vFam_###.
+                        hit["hit"] = hmm["_id"]
 
-                db_sync.analyses.update({"_id": analysis["_id"]}, {
-                    "$set": {
-                        "hmm": hits
-                    }
-                })
+                    # Commit the new hit entries to the database.
+                    db_sync.analyses.update({"_id": analysis["_id"]}, {
+                        "$set": {
+                            "hmm": hits
+                        }
+                    })
 
+        # If the database was made before different analysis algorithms were introduced, some analysis documents will
+        # have no 'algorithm' field. Set these to 'pathoscope_bowtie'.
         db_sync.analyses.update({"algorithm": {"$exists": False}}, {
             "$set": {
-                "algorithm": "pathoscope"
+                "algorithm": "pathoscope_bowtie"
             }
         }, multi=True)
 
+        # Remove any analysis records that are not ready. They were probably interrupted the last time Virtool was
+        # started and were not cleaned up properly.
         unready_analyses = [analysis["_id"] for analysis in db_sync.analyses.find({"ready": False}, {"_id": True})]
 
         db_sync.samples.update({}, {
@@ -81,8 +98,7 @@ class Collection(virtool.database.Collection):
 
         db_sync.analyses.remove({"_id": {"$in": unready_analyses}})
 
-        self.excluded_files = list()
-
+        # An asynchronous connection to the analyses database collection.
         self.analyses_collection = virtool.utils.get_db_client(self.settings, sync=False)["analyses"]
 
     @virtool.gen.coroutine

@@ -9,29 +9,50 @@ import virtool.pathoscope
 from Bio import SeqIO
 
 
-class Analyze(virtool.job.Job):
+class Base(virtool.job.Job):
+    """
+    A base class for all analysis job objects. Functions include:
 
+    - establishing synchronous database connection
+    - extracting task args to attributes
+    - retrieving the sample and host documents
+    - calculating the sample read count
+    - constructing paths used by all subclasses
+
+   """
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
+
+        #: The document id for the sample being analyzed. and the analysis document the results will be committed to.
         self.sample_id = self.task_args["sample_id"]
+
+        #: The document id for the analysis being run.
         self.analysis_id = self.task_args["analysis_id"]
 
-        # Get a connection to the virtool database
-        self.log("Setting up database connection")
+        #: Stores intermediate data that is reused between job stages.
+        self.intermediate = dict()
+
+        #: Stores data that is processed and stored in the analysis document.
+        self.results = dict()
+
+        #: A synchronous connection to the Virtool database.
         self.database = virtool.utils.get_db_client(self.settings, sync=True)
 
-        # Get the sample document and the subtraction host document.
+        #: The document for the sample being analyzed.
         self.sample = self.database["samples"].find_one({"_id": self.sample_id})
+
+        #: The document for the host associated with the sample being analyzed.
         self.host = self.database["hosts"].find_one({"_id": self.sample["subtraction"]})
 
-        # Get the number of reads in the library.
+        #: The number of reads in the sample library.
         self.read_count = int(self.sample["quality"]["left"]["count"])
 
         if self.sample["paired"]:
             self.read_count *= 2
 
-        # Construct path strings that will be used by the job to access relevant files.
+        #: A dictionary of path strings that will be used to access files relevant to the analysis. Paths include:
+        #: - data - test
         self.paths = dict()
 
         # The path to the general data directory
@@ -60,6 +81,15 @@ class Analyze(virtool.job.Job):
         self.paths["analysis"] = os.path.join(self.paths["sample"], "analysis", self.analysis_id)
 
     def calculate_read_path(self):
+        """
+        Returns a string containing the paths to read files to use for analysis. This string is intended to be passed to
+        a subprocess that utilizes the read files.a
+
+        :return: comma separated paths to the read files associated with the reads in this sample.
+        :rtype: str
+
+        """
+
         files = [self.paths["sample"] + "/reads_1.fastq"]
 
         if self.sample["paired"]:
@@ -71,23 +101,27 @@ class Analyze(virtool.job.Job):
         return ",".join(files)
 
 
-class Pathoscope(Analyze):
+class Pathoscope(Base):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        self.intermediate = dict()
-        self.results = dict()
-
+    @virtool.job.stage_method
     def mk_analysis_dir(self):
-        """ Make a directory for RSEM files within the sample directory """
+        """
+        Make a directory for the analysis within the sample analysis directory.
+
+        """
         os.mkdir(self.paths["analysis"])
         self.log("Made analysis directory")
 
     def identify_candidate_viruses(self):
         """
-        Identify the viruses that were found in the alignment to the default isolates Bowtie2 index. Determine if an
-        isolate-level analysis should be performed because one or more of the candidates has more than one isolate.
+        Takes the initial default virus mapping from :attr:`.intermediate` and identifies all viruses hit by reads from
+        the sample library. Determines if an isolate-level analysis should be performed because one or more of the
+        candidates has more than one isolate.
+
+        *Stage method*
 
         """
         # Get the accessions of the viral sequences that were hit.
@@ -133,7 +167,7 @@ class Pathoscope(Analyze):
 
         self.intermediate["candidates"] = None
 
-        if self.intermediate["use_isolates"] or self.task_args["algorithm"] == "sigma":
+        if self.intermediate["use_isolates"]:
             # Save all of the candidate virus information to the intermediate attribute
             self.intermediate["candidates"] = viruses
 
@@ -513,13 +547,10 @@ class PathoscopeSNAP(Pathoscope):
         })
 
 
-class NuVs(Analyze):
+class NuVs(Base):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-
-        self.intermediate = dict()
-        self.results = dict()
 
         self.stage_list += [
             self.mk_analysis_dir,
