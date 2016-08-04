@@ -45,6 +45,27 @@ class Collection(virtool.database.Collection):
 
         db_sync = virtool.utils.get_db_client(self.settings, sync=True)
 
+        for analysis in db_sync.analyses.find({"algorithm": "nuvs"}):
+
+            if "definition" in analysis["hmm"][0]:
+
+                hits = analysis["hmm"]
+
+                for hit in hits:
+                    cluster = int(hit["hit"].split("_")[1])
+                    hmm = db_sync.hmm.find_one({"cluster": cluster}, {"_id": True})
+
+                    hit.pop("definition")
+                    hit.pop("families")
+
+                    hit["hit"] = hmm["_id"]
+
+                db_sync.analyses.update({"_id": analysis["_id"]}, {
+                    "$set": {
+                        "hmm": hits
+                    }
+                })
+
         db_sync.analyses.update({"algorithm": {"$exists": False}}, {
             "$set": {
                 "algorithm": "pathoscope"
