@@ -123,7 +123,7 @@ var ModifySequence = React.createClass({
         this.setState({pending: 'Fetching'}, function () {
             dispatcher.db.viruses.request('fetch_ncbi', {
                 accession: this.state.sequenceId
-            }, this.onAutofillSuccess, this.onAutofillFailure);
+            }).success(this.onAutofillSuccess).failure(this.onAutofillFailure);
         });
     },
 
