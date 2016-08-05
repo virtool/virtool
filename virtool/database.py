@@ -239,7 +239,7 @@ class Collection:
         :param updates: a list of update objects to dispatch to the client.
         :type manifest: list
 
-        :param updates: a list of document ids to dispatch to the client, which will tell it which documents to remove.
+        :param remove: a list of document ids to dispatch to the client, which will tell it which documents to remove.
         :type manifest: list
 
         :param connection: the connection to dispatch the sync operations to.

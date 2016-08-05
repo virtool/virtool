@@ -25,7 +25,14 @@ Syncing
 -------
 
 The process for maintaining matching document sets between the server and clients is called *syncing*. It is performed
-by the :class:`virtool.database.Collection` method :meth:`~virtool.database.Collection.sync`.
+by the :class:`virtool.database.Collection` method :meth:`~virtool.database.Collection.sync`. The manifest of document
+ids and versions is passed to :meth:`.Collection.prepare_sync` which calculates a list of updates that should be applied
+by the client and a list of documents that should be removed by the client. The actual syncing is performed by the
+:class:`virtool.database.Collection` method :meth:`~virtool.database.Collection.sync`.
+
+Any new document or update that is passed to the client is a minimal document. Several measures are used to generate
+minimal documents. To understand how this works, consider that the Pymongo
+:meth:`~pymongo.collection.Collection.find` method and Mongo `find` operations in general have the following form:
 
 Sync is passed a manifest of documents possessed by the client. The manifest is a :class:`dict` of document versions
 keyed by their ids. Sync can do four different things for each document considered:
@@ -125,6 +132,8 @@ classes used in Virtool are:
             :annotation: = {"_version": True, "_id": True}
 
         .. automethod:: sync_processor
+
+        .. automethod:: prepare_sync
 
         .. automethod:: sync
 
