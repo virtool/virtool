@@ -10,7 +10,7 @@ class Collection:
 
     """
     A proxy for a MongoDB collection. Provides asynchronous access to the collection and dispatches all changes to
-    listening clients. Used as a base class to construct proxies for each Mongo collection of interest.
+    listening clients. Used as a base class to construct proxies for each Mongo collection.
 
     :param collection_name: the name of the Mongo collection to bind to.
     :type collection_name: str
@@ -61,7 +61,7 @@ class Collection:
     @virtool.gen.coroutine
     def sync_processor(self, documents):
         """
-        Processes a list of projected documents into minimal documents specified for the :class:`~.database.Collection`.
+        Processes a list of projected documents into minimal documents needed for syncing the collection with client.
         Intended to be redefined in subclasses of :class:`~.database.Collection`.
 
         :param documents: a list of documents to process into a list of valid minimal documents for the collection.
@@ -76,7 +76,7 @@ class Collection:
     @virtool.gen.coroutine
     def insert(self, document, connections=None):
         """
-        Insert a new document in the collection, dispatching the change to all clients.
+        Inserts a new document in the collection and dispatches the change to all clients.
 
         :param document: the data that will form the new document
         :type document: dict
@@ -110,7 +110,7 @@ class Collection:
     @virtool.gen.coroutine
     def update(self, query, update, increment_version=True, upsert=False, connections=None):
         """
-        Apply an update to a database document.
+        Applies an update to a database document and dispatches the change to all clients.
 
         :param query: query dictionary or single document id to be passed to MongoDB as a query.
         :type query: str or dict
@@ -162,7 +162,7 @@ class Collection:
     @virtool.gen.coroutine
     def remove(self, id_list, connections=None):
         """
-        Remove one or more documents from the collection. The provided data dict must contain the key ``_id``.
+        Removes one or more documents from the collection. The provided data dict must contain the key ``_id``.
 
         :param id_list: the data dict containing ids of documents that should be removed
         :type id_list: list or str
@@ -267,8 +267,14 @@ class Collection:
         :param collection_name: override for :attr:`.collection_name`.
         :type collection_name: str
 
-        :param connections: The connections to send the dispatch to. By default, it will be sent to all connections.
+        :param connections: the connections to send the dispatch to. By default, it will be sent to all connections.
         :type connections: list
+
+        :param sync: set to ``True`` when the dispatch is part of a sync operation.
+        :type sync: bool
+
+        :return: the size of the dispatched data
+        :rtype: int
 
         """
         # Override the dispatched collection_name if necessary.
@@ -286,7 +292,19 @@ class Collection:
 
     @virtool.gen.coroutine
     def get_new_id(self, excluded=None):
+        """
+        Returns a new, unique, id that can be used for inserting a new document. Will not return any id that is included
+        in ``excluded``.
+
+        :param excluded: document ids to exclude
+        :type excluded: list
+
+        :return: new document id
+        :rtype: str
+
+        """
         document_id = yield virtool.utils.get_new_document_id(self.db, excluded)
+
         return document_id
 
     @virtool.gen.coroutine

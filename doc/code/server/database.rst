@@ -145,6 +145,8 @@ classes used in Virtool are:
 
         .. automethod:: dispatch
 
+        .. automethod:: get_new_id
+
         .. automethod:: get_field
 
 
