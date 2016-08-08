@@ -317,6 +317,6 @@ def stage_method(func):
     :rtype: function
 
     """
-    func.is_coroutine = True
+    func.is_stage_method = True
 
     return func
