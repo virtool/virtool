@@ -9,7 +9,7 @@ genome.
 Hosts Collection
 ----------------
 
-The :class:`.Hosts.Collection` class provides `exposed methods <exposed-methods>`_ for clients to manipulate
+The :class:`.Hosts.Collection` class provides :ref:`exposed methods <exposed-methods>` for clients to manipulate
 hosts in the database.
 
 .. autoclass:: Collection

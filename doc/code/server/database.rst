@@ -2,8 +2,8 @@ Database
 ========
 
 All user interaction with the MongoDB database that backs Virtool is performed through instances of
-:class:`~.database.Collection`, which represents an interface with a single MongoDB collection. Any inserts, updates, or deletions
-performed using the interface are broadcast to all clients connected unless specifically prevented.
+:class:`~.database.Collection`, which represent interfaces with single MongoDB collections. Any inserts, updates, or
+deletions performed using the interface are broadcast to all clients connected unless specifically prevented.
 
 
 Introduction
@@ -11,28 +11,23 @@ Introduction
 
 In Virtool, most database documents are available to the user in two ways.
 
-A complete list of extant documents that are maintained in IndexedDB on the client side. All changes to the server
+A complete set of documents is maintained in IndexedDB on the client side using LokiJS. All changes to the server
 database registered on the server are sent to connected client so they can keep their information update-to-date. The
 documents maintained on the client are not complete. To maintain speed of communication and keep client storage
 requirements reasonable, the documents are pared down to *minimal documents* that contain only essential information.
 
-A client user may want to retrieve the entire document for a minimal document they have in their local collection.
-typically an :ref:`exposed method <exposed-methods>` called detail is used to return the entire document to a client
-on request.
+The :ref:`exposed method <exposed-methods>` called detail for each collection is used to return the entire document to
+a client on request.
 
 
 Syncing
 -------
 
-The process for maintaining matching document sets between the server and clients is called *syncing*. It is performed
-by the :class:`virtool.database.Collection` method :meth:`~virtool.database.Collection.sync`. The manifest of document
-ids and versions is passed to :meth:`.Collection.prepare_sync` which calculates a list of updates that should be applied
+The process for maintaining matching document sets between the server and clients is called *syncing*. Manifests of
+document ids and versions for each client-side collection are sent to the server. These are passed to
+:meth:`.Collection.prepare_sync` which calculates a list of updates that should be applied
 by the client and a list of documents that should be removed by the client. The actual syncing is performed by the
-:class:`virtool.database.Collection` method :meth:`~virtool.database.Collection.sync`.
-
-Any new document or update that is passed to the client is a minimal document. Several measures are used to generate
-minimal documents. To understand how this works, consider that the Pymongo
-:meth:`~pymongo.collection.Collection.find` method and Mongo `find` operations in general have the following form:
+:meth:`.Collection.sync`.
 
 Sync is passed a manifest of documents possessed by the client. The manifest is a :class:`dict` of document versions
 keyed by their ids. Sync can do four different things for each document considered:
@@ -43,8 +38,8 @@ keyed by their ids. Sync can do four different things for each document consider
 4. **Document versions match on server and client** - do nothing.
 
 Any new document or update that is passed to the client is a minimal document. Several measures are used to generate
-minimal documents. To understand how this works, consider that the Pymongo
-:meth:`~pymongo.collection.Collection.find` method and Mongo `find` operations in general have the following form:
+minimal documents. First, we take advantage of of the :meth:`~.pymongo.collection.Collection.find` method from Pymongo
+and Motor. Calls to this method have the following form:
 
 .. code-block:: python
 
@@ -71,34 +66,28 @@ For syncing in Virtool, the attributes :attr:`.sync_filter` and :attr:`.sync_pro
 ``fields`` arguments. This allows the collection to reliably sync minimal documents that match the :attr:`sync_filter`
 and contain only the fields specified in :attr:`.sync_projector`.
 
-Final modifications can be made to minimal documents using :meth:`~.database.Collection.sync_processor`. This method
-takes a list of minimal documents, makes final changes, and returns the processed documents to be dispatched to the
-clients. By default, :meth:`~.database.Collection.sync_processor` makes no changes to passed documents. It is intended
-to be redefined by classes extending :class:`~.database.Collection`.
+Final modifications can be made to minimal documents using :meth:`~.database.Collection.sync_processor` method. It takes
+a list of minimal documents, makes final changes, and returns the processed documents to be dispatched to the clients.
+By default, :meth:`~.database.Collection.sync_processor` makes no changes to passed documents. It is intended to be
+redefined by classes extending :class:`~.database.Collection`.
 
 
 Operations
 ----------
 
-The database is modified using insert, update, and remove operations implemented in the :class:`~.database.Collection`
-methods :meth:`~.database.Collection.insert`, :meth:`~.database.Collection.update`, and
-:meth:`~.database.Collection.remove`.
+The database is modified using the methods :meth:`~.database.Collection.insert`, :meth:`~.database.Collection.update`,
+and :meth:`~.database.Collection.remove` implemented in the :class:`~.database.Collection`.
 
-These methods are in essence wrappers for :class:`~motor.motor_tornado.MotorCollection` methods with the same names.
-These wrappers take care of dispatching changes and new minimal documents to clients and incrementing document versions
-when updates are made.
+These methods are essentially wrappers for :class:`~motor.motor_tornado.MotorCollection` methods with the same names.
+These wrappers take care of dispatching their changes to clients and incrementing document versions when updates are
+made.
 
-
-Dispatching
------------
-
-Dispatching
 
 Collections
 -----------
 
-Collection objects are interfaces modifying and viewing database records and files and for running jobs. The collection
-classes used in Virtool are:
+Collection objects are interfaces for modifying and viewing Mongo documents. They are extended in Virtool to also
+monitor and dispatch changes in files and manage running jobs.
 
 .. automodule:: virtool.database
 
@@ -148,7 +137,6 @@ classes used in Virtool are:
         .. automethod:: get_new_id
 
         .. automethod:: get_field
-
 
 
 Utility Functions

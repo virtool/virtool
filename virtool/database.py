@@ -237,10 +237,10 @@ class Collection:
         client accordingly.
 
         :param updates: a list of update objects to dispatch to the client.
-        :type manifest: list
+        :type updates: list
 
-        :param remove: a list of document ids to dispatch to the client, which will tell it which documents to remove.
-        :type manifest: list
+        :param removes: a list of document ids to dispatch to the client, which will tell it which documents to remove.
+        :type removes: list
 
         :param connection: the connection to dispatch the sync operations to.
         :type connection: :class:`.virtool.web.SocketHandler`
@@ -256,7 +256,23 @@ class Collection:
     @virtool.gen.coroutine
     def dispatch(self, operation, data, collection_name=None, connections=None, sync=False):
         """
-        Send a message to listening clients.
+        Send a message to listening clients through the :attr:`.dispatcher`. Messages tell the client what operation to
+        do on what collection contain the data to do it. They have the form:
+
+        +------------------+--------------------------------------------------------------------------------+
+        | Field            | Description                                                                    |
+        +==================+================================================================================+
+        | operation        | the operation to perform on the client collection; one of 'update' or 'remove' |
+        +------------------+--------------------------------------------------------------------------------+
+        | collection_name  | the name of collection to perform the operation on                             |
+        +------------------+--------------------------------------------------------------------------------+
+        | data             | the data describing the updates or removals to apply to the client collection  |
+        +------------------+--------------------------------------------------------------------------------+
+        | sync             | indicates whether the operation is part of a sync or not                       |
+        +------------------+--------------------------------------------------------------------------------+
+
+        The collection's :attr:`.collection_name` attribute is automatically attached to message unless it overridden by
+        the ``collection_name`` argument.
 
         :param operation: the operation that should be performed by the client on its local representation of the data.
         :type operation: str

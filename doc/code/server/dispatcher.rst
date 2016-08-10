@@ -32,6 +32,8 @@ Transactions
     .. autoinstanceattribute:: dispatcher
         :annotation:
 
+    .. automethod:: update
+
     .. automethod:: fulfill
 
 The Dispatcher
@@ -45,9 +47,6 @@ The Dispatcher
     .. autoinstanceattribute:: settings
         :annotation:
 
-    .. autoinstanceattribute:: collections
-        :annotation: = {}
-
     .. autoinstanceattribute:: connections
         :annotation: = []
 
@@ -57,10 +56,46 @@ The Dispatcher
     .. autoinstanceattribute:: watcher
         :annotation:
 
+Collections
+~~~~~~~~~~~
+
+Instances of :class:`database.Collection` are registered with the dispatcher. The
+:ref:`exposed methods <exposed-methods>` of each collection are then available to the clients communicating with the
+dispatcher and the dispatcher will send changes in the collections to listening clients.
+
+All collection names used by Virtool are listed in the global list variable :attr:`.COLLECTIONS`.
+
+.. autodata:: COLLECTIONS
+    :annotation: = []
+
+When registered, collection instances are stored in :attr:`dispatcher.collections`.
+
+.. autoinstanceattribute:: Dispatcher.collections
+    :annotation: = {}
+
 Messages
 ~~~~~~~~
 
+Messages arrive from the client as JSON object. They contain the following fields:
+
++----------------+-----------------------------------------------------------------------+
+| Key            | Description                                                           |
++================+=======================================================================+
+| tid            | the id for the transaction, which is unique on the requesting host.   |
++----------------+-----------------------------------------------------------------------+
+| methodName     | the name of the exposed method to call.                               |
++----------------+-----------------------------------------------------------------------+
+| collectionName | the name of the collection that the exposed method is a member of     |
++----------------+-----------------------------------------------------------------------+
+| data           | the data the exposed method should use to do its work                 |
++----------------+-----------------------------------------------------------------------+
+
+The JSON objects are converted to Python dicts by :meth:`.SocketHandler.on_message` and passed to
+:meth:`.Dispatcher.handle`.
+
 .. automethod:: Dispatcher.handle
+
+.. autofunction:: handle_future
 
 .. automethod:: Dispatcher.dispatch
 

@@ -58,6 +58,8 @@ decorated function **must** return a tuple containing of a :class:`bool` and a :
 these values fulfills the transaction with the client and lets it know if the request was successful and if any data was
 returned by the function call. In the example, the *record* is returned to the client.
 
+.. _protected-methods:
+
 The ``unprotected`` keyword argument can be set to ``True`` in :func:`.exposed_method` to allow unauthorized connections
 to call the decorated method. This is useful for methods involved in user authentication.
 
