@@ -38,7 +38,7 @@ class Dispatcher:
 
     """
     Handles all websocket communication with clients. New :class:`.Transaction` objects are generated from incoming
-    messages and passed to `exposed methods <exposed-methods>`_. When exposed methods return, the transactions are
+    messages and passed to :ref:`exposed methods <exposed-methods>`. When exposed methods return, the transactions are
     fulfilled and returned to the client.
 
     The dispatcher also instantiates most of Virtool's :class:`~.database.Collection` subclasses, an instance of

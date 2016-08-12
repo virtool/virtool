@@ -21,6 +21,9 @@ class Collection(virtool.database.Collection):
     A connection to the pymongo samples collection. Provides methods for viewing and modifying the
     collection.
 
+    :param dispatcher: the dispatcher object that instantiated the collection.
+    :type dispatcher: :class:`~.dispatcher.Dispatcher`
+
     """
     def __init__(self, dispatcher):
         super(Collection, self).__init__("samples", dispatcher)
@@ -43,7 +46,7 @@ class Collection(virtool.database.Collection):
             "all_write"
         ]})
 
-        # A list of read files that are being imported and should not be shown as available for import.
+        #: A list of read files that are being imported and should not be shown as available for import.
         self.excluded_files = list()
 
         # A synchronous connection to the Mongo database.
@@ -54,7 +57,8 @@ class Collection(virtool.database.Collection):
         if db_sync.hmm.count() > 0:
 
             for analysis in db_sync.analyses.find({"algorithm": "nuvs"}):
-                # If the definition key is defined, the record is storing the information for each HMM and must be updated.
+                # If the definition key is defined, the record is storing the information for each HMM and must be
+                # updated.
                 if "definition" in analysis["hmm"][0]:
 
                     hits = analysis["hmm"]
@@ -98,11 +102,22 @@ class Collection(virtool.database.Collection):
 
         db_sync.analyses.remove({"_id": {"$in": unready_analyses}})
 
-        # An asynchronous connection to the analyses database collection.
+        #: An asynchronous connection to the analyses Mongo collection.
         self.analyses_collection = virtool.utils.get_db_client(self.settings, sync=False)["analyses"]
 
     @virtool.gen.coroutine
     def sync_processor(self, documents):
+        """
+        Redefined from superclass to prevent syncing of documents for which the requesting connection doesn't have read
+        rights.
+
+        :param documents: the documents to process
+        :type documents: list
+
+        :return: the processed documents
+        :rtype: list
+
+        """
         documents = virtool.database.coerce_list(documents)
 
         to_send = list()
@@ -127,8 +142,8 @@ class Collection(virtool.database.Collection):
     @virtool.gen.coroutine
     def dispatch(self, operation, data, collection_name=None, connections=None, sync=False):
         """
-        A redefinition of :meth:`.database.Collection.dispatcher` that only dispatches messages about samples to
-        connections that are allowed to read them.
+        A redefinition of :meth:`.database.Collection.dispatch` that only dispatches sample change messages to
+        connections that have permission to read them.
 
         :param operation: the operation that should be performed by the client on its local representation of the data.
         :type operation: str
@@ -142,9 +157,13 @@ class Collection(virtool.database.Collection):
         :param connections: The connections to send the dispatch to. By default, it will be sent to all connections.
         :type connections: list
 
+        :param sync: indicates whether dispatch is part of a sync operation
+        :type connections: bool
+
         """
         if sync:
             assert len(connections) == 1
+
 
         connections = connections or self.dispatcher.connections
 
@@ -189,8 +208,20 @@ class Collection(virtool.database.Collection):
 
     @virtool.gen.exposed_method(["add_sample"])
     def new(self, transaction):
+        """
+        Creates a new sample based on the data in ``transaction`` and starts a sample import job.
+
+        Adds the imported files to the :attr:`.excluded_files` list so that they will not be imported again. Ensures
+        that a valid subtraction host was the submitted. Configures read and write permissions on the sample document
+        and assigns it a creator username based on the connection attached to the transaction.
+
+        :param transaction: the transaction associated with the request.
+        :type transaction: :class:`.Transaction`
+
+        """
         data = transaction.data
 
+        # Check if the submitted sample name is unique if unique sample names are being enforced.
         if self.settings.get('sample_unique_names'):
             name_count = yield self.find({"name": data["name"]}).count()
 
@@ -199,14 +230,17 @@ class Collection(virtool.database.Collection):
 
         sample_id = yield self.get_new_id()
 
+        # Get a list of the subtraction hosts in MongoDB that are ready for use during analysis.
         available_subtraction_hosts = yield self.dispatcher.collections["hosts"].find().distinct("_id")
 
+        # Make sure a subtraction host was submitted and it exists.
         if not data["subtraction"] or data["subtraction"] not in available_subtraction_hosts:
             return False, dict(message="Could not find subtraction host or none was supplied.")
 
+        # Add the submitted file names for import to the excluded_files list.
         self.excluded_files += data["files"]
 
-        # Construct a new sample entry
+        # Construct a new sample entry.
         data.update({
             "_id": sample_id,
             "username": transaction.connection.user["_id"]
@@ -214,15 +248,19 @@ class Collection(virtool.database.Collection):
 
         sample_group_setting = self.dispatcher.settings.get("sample_group")
 
+        # Assign the user's primary group as the sample owner group if the ``sample_group`` settings is
+        # ``users_primary_group``.
         if sample_group_setting == "users_primary_group":
             data["group"] = yield self.dispatcher.collections["users"].get_field(
                 data["username"],
                 "primary_group"
             )
 
+        # Make the owner group none if the setting is none.
         if sample_group_setting == "none":
             data["group"] = "none"
 
+        # Add the default sample right fields to the sample document.
         data.update({
             "group_read": self.dispatcher.settings.get("sample_group_read"),
             "group_write": self.dispatcher.settings.get("sample_group_write"),
@@ -258,8 +296,14 @@ class Collection(virtool.database.Collection):
     @virtool.gen.exposed_method([])
     def analyze(self, transaction):
         """
-        Start a job to analyze a sample entry. The task arguments are parsed from the form data sent by
-        the client.
+        Starts a job to analyze a sample entry. Can take a list of sample ids to analyze and start multiple analysis
+        jobs.
+
+        Adds the id of the new analysis to the sample document and creates a new analysis document in the analyses
+        collection.
+
+        :param transaction: the transaction associated with the request.
+        :type transaction: :class:`.Transaction`
 
         """
         data = transaction.data
@@ -275,6 +319,7 @@ class Collection(virtool.database.Collection):
         # A list of _ids that are reserved during the running of this method.
         used_ids = list()
 
+        # Get the current id and version of the virus index currently being used for analysis.
         index_id, index_version = yield self.dispatcher.collections["indexes"].get_current_index()
 
         # Add an analysis entry and reference and start an analysis job for each sample in samples.
@@ -300,7 +345,7 @@ class Collection(virtool.database.Collection):
 
             yield self.analyses_collection.insert(analysis_document)
 
-            # Add a reference to the analysis _id in the sample collection
+            # Add a reference to the analysis _id in the sample collection.
             yield self.update(sample_id, {
                 "$push": {"analyses": analysis_id}
             })
@@ -328,7 +373,17 @@ class Collection(virtool.database.Collection):
 
     @virtool.gen.coroutine
     def set_analysis(self, data):
-        # Get the analysis in question and update it with the new data.
+        """
+        Update the analysis document identified using ``data``, which contains the analysis id and the update. Sets the
+        analysis' ``ready`` field to ``True``. Sets the parent sample's ``analyzed`` field to ``True`` and increments
+        its version by one.
+
+        This method is called from within an analysis job.
+
+        :param data: the data used to perform the update
+        :type data: dict
+
+        """
         analysis = yield self.analyses_collection.find_one({"_id": data["analysis_id"]})
         analysis.update(data["analysis"])
         analysis["ready"] = True
@@ -340,36 +395,30 @@ class Collection(virtool.database.Collection):
             "$set": {"analyzed": True}
         })
 
-    @virtool.gen.exposed_method([])
-    def remove_analysis(self, transaction):
-        """
-        Set the 'fastqc' or 'analysis' to False, clearing it. Scope select which to field to clear. Both are cleared if
-        it is passed as None.
-
-        """
-        data = transaction.data
-
-        yield self._remove_analysis(data)
-
-        return True, None
-
     @virtool.gen.coroutine
     def _remove_analysis(self, data):
+        """
+        Removes the analysis document identified by the id in ``data``.
+
+        :param data:
+        :type data: dict
+
+        """
         # Get the sample document to check which analysis_ids are tied to the sample.
         sample_analyses = yield self.get_field(data["_id"], "analyses")
 
+        # Remove the analysis id we are removing from the list of analyses.
         sample_analyses.remove(data["analysis_id"])
 
-        minimal_analyses = yield self.analyses_collection.find(
-            {"_id": {"$in": sample_analyses}},
-            {"ready": True}
-        ).to_list(length=500)
+        #
+        ready_states = yield self.analyses_collection.find({"_id": {"$in": sample_analyses}}).distinct("ready")
 
-        analyzed = True in [document["ready"] for document in minimal_analyses]
+        analyzed = True in ready_states
 
         # Remove analysis entry from database
         yield self.analyses_collection.remove({"_id": data["analysis_id"]})
 
+        # Update the sample document with a list of analyses lacking the id for the removed sample.
         yield self.update(data["_id"], {
             "$pull": {"analyses": data["analysis_id"]},
             "$set": {"analyzed": analyzed}
@@ -384,6 +433,24 @@ class Collection(virtool.database.Collection):
             pass
 
     @virtool.gen.exposed_method([])
+    def remove_analysis(self, transaction):
+        """
+        Set the 'fastqc' or 'analysis' to False, clearing it. Scope select which to field to clear. Both are cleared if
+        it is passed as None.
+
+        :param transaction: the transaction associated with the request.
+        :type transaction: :class:`.Transaction`
+
+        """
+        data = transaction.data
+
+        yield self._remove_analysis(data)
+
+        return True, None
+
+
+
+    @virtool.gen.exposed_method([])
     def quality_pdf(self, transaction):
         detail = yield self._detail(transaction.data["_id"])
         pdf = yield virtool.plots.quality_report(detail["quality"])
@@ -391,11 +458,6 @@ class Collection(virtool.database.Collection):
         file_id = yield self.dispatcher.file_manager.register("quality.pdf", pdf, content_type="pdf", download=True)
 
         return True, {"file_id": file_id}
-
-    @virtool.gen.exposed_method([])
-    def detail(self, transaction):
-        detail = yield self._detail(transaction.data["_id"])
-        return True, detail
 
     @virtool.gen.coroutine
     def _detail(self, sample_id):
@@ -495,13 +557,10 @@ class Collection(virtool.database.Collection):
 
         return detail
 
-    @virtool.gen.synchronous
-    def parse_pathoscope(self, analysis):
-        pass
-
-    @virtool.gen.synchronous
-    def parse_nuvs(self, analysis):
-        pass
+    @virtool.gen.exposed_method([])
+    def detail(self, transaction):
+        detail = yield self._detail(transaction.data["_id"])
+        return True, detail
 
     @virtool.gen.synchronous
     def parse_detail(self, detail):
@@ -577,17 +636,23 @@ class Collection(virtool.database.Collection):
         return detail
 
     @virtool.gen.coroutine
-    def complete(self, _id):
-        """
-        Called when the import process is finished/terminated for this sample.The hold property is set to 'false' so
-        that the filename is no longer held and will reappear in the sample import list if the file still exists.
-
-        """
-        yield self.update(_id, {"$set": {"hold": False}})
-
-    @virtool.gen.coroutine
     def set_stats(self, data):
-        yield self.update(data["_id"], {"$set": {"quality": data["fastqc"], "imported": True}})
+        """
+        Populates the ``quality`` field of the document with data generated by FastQC. Data includes GC content, read
+        length ranges, and detailed quality data. Also sets the ``imported`` field to ``True``.
+
+        Called from an :class:`.ImportReads` job.
+
+        :param data: the data to be added to the sample document
+        :type data: dict
+
+        """
+        yield self.update(data["_id"], {
+            "$set": {
+                "quality": data["fastqc"],
+                "imported": True
+            }
+        })
 
         files = yield self.get_field(data["_id"], "files")
 
@@ -596,14 +661,17 @@ class Collection(virtool.database.Collection):
 
     @virtool.gen.exposed_method([])
     def set_field(self, transaction):
-        fields = [
-            "name",
-            "host",
-            "isolate",
-            ""
-        ]
+        """
+        Set the value of a specific field. Field must be one of ``name``, ``host``, ``isolate``.
 
-        if transaction.data["field"] in fields:
+        :param transaction: the transaction associated with the request.
+        :type transaction: :class:`.Transaction`
+
+        :return: a boolean indicating the success of the operation and the response from the Mongo update operation
+        :rtype: tuple
+
+        """
+        if transaction.data["field"] in ["name", "host", "isolate"]:
             response = yield self.update(transaction.data["_id"], {
                 "$set": {
                     transaction.data["field"]: transaction.data["value"]
@@ -616,38 +684,75 @@ class Collection(virtool.database.Collection):
 
     @virtool.gen.exposed_method([])
     def set_group(self, transaction):
+        """
+        Set the owner group for the sample. Fails if the passed group id does not exist.
+
+        .. note::
+
+            Only administrators or the owner of the sample can call this method on it.
+
+        :param transaction: the transaction associated with the request.
+        :type transaction: :class:`.Transaction`
+
+        :return: a boolean indicating the success of the operation and the response from the Mongo update operation
+        :rtype: tuple
+
+        """
         data = transaction.data
         user = transaction.connection.user
 
         sample_owner = yield self.get_field(data["_id"], "username")
 
-        if "administrator" in user["groups"] or user["_id"] == sample_owner:
-            response = yield self.update(data["_id"], {
-                "$set": {
-                    "group": data["group_id"]
-                }
-            })
+        if "administrator" not in user["groups"] and user["_id"] != sample_owner:
+            return False, dict(message="Must be administrator or sample owner.")
 
-            return True, response
+        existing_group_ids = yield self.dispatcher.collections["groups"].find({}, {"_id": True}).distinct("_id")
 
-        return False, dict(message="Must be administrator or sample owner.")
+        if data["group_id"] not in existing_group_ids:
+            return False, dict(message="Passed group id does not exist.")
+
+        response = yield self.update(data["_id"], {
+            "$set": {
+                "group": data["group_id"]
+            }
+        })
+
+        return True, response
 
     @virtool.gen.exposed_method([])
     def set_rights(self, transaction):
+        """
+        Changes rights setting for the specified sample document. The only acceptable rights keys are ``all_read``,
+        ``all_write``, ``group_read``, ``group_write``.
+
+        .. note::
+
+            Only administrators or the owner of the sample can call this method on it.
+
+        :param transaction: the transaction associated with the request.
+        :type transaction: :class:`.Transaction`
+
+        :return: a boolean indicating the success of the operation and the response from the Mongo update operation
+        :rtype: tuple
+
+        """
         data = transaction.data
         user = transaction.connection.user
 
+        # Get the username of the owner of the sample document.
         sample_owner = yield self.get_field(data["_id"], "username")
 
+        # Only update the document if the connected user owns the samples or is an administrator.
         if "administrator" in user["groups"] or user["_id"] == sample_owner:
-            new_rights = dict()
 
-            for key, value in data["changes"].items():
-                if key in ["all_read", "all_write", "group_read", "group_write"]:
-                    new_rights[key] = value
+            # Make a dict for updating the rights fields. Fail the transaction if there is an unknown right key.
+            for key in data["changes"]:
+                if key not in ["all_read", "all_write", "group_read", "group_write"]:
+                    return False, dict(message="Found unknown right name " + key)
 
+            # Update the sample document with the new rights.
             response = yield self.update(data["_id"], {
-                "$set": new_rights
+                "$set": data["changes"]
             })
 
             return True, response
@@ -657,7 +762,14 @@ class Collection(virtool.database.Collection):
     @virtool.gen.exposed_method([])
     def archive(self, transaction):
         """
-        Remove a sample from the database by sample_id
+        Archives the sample identified by the passed sample id. Sets the ``archived`` field in the sample document to
+        ``True``.
+
+        :param transaction: the transaction associated with the request.
+        :type transaction: :class:`.Transaction`
+
+        :return: a boolean indicating the success of the call and the response from the Mongo update operation
+        :rtype: tuple
 
         """
         id_list = virtool.database.coerce_list(transaction.data["_id"])
@@ -670,23 +782,23 @@ class Collection(virtool.database.Collection):
 
         return True, response
 
-    @virtool.gen.exposed_method([])
-    def remove_sample(self, transaction):
-        """
-        Remove one or more samples from the database given a data dict containing an id or list of ids keyed by '_id'.
-
-        :param transaction: the transaction generated by the request.
-        :return: the response from the Mongo remove operation.
-
-        """
-        response = yield self._remove_sample(transaction.data["_id"])
-
-        return True, response
-
     @virtool.gen.coroutine
-    def _remove_sample(self, id_list):
-        id_list = virtool.database.coerce_list(id_list)
+    def _remove_samples(self, id_list):
+        """
+        Complete removes the samples identified by the document ids in ``id_list``. In order, it:
 
+        - removes all analyses associated with the sample from the analyses collection
+        - removes the sample from the samples collection
+        - removes the sample directory from the file system
+        - removes files associated with the sample from :attr:`.excluded_files`.
+
+        :param id_list: a list sample ids to remove
+        :type id_list: list
+
+        :return: the response from the samples collection remove operation
+        :rtype: dict
+
+        """
         # Remove all analysis documents associated with the sample.
         yield self.analyses_collection.remove({"sample": {"$in": id_list}})
 
@@ -713,30 +825,73 @@ class Collection(virtool.database.Collection):
 
         return response
 
+    @virtool.gen.exposed_method([])
+    def remove_sample(self, transaction):
+        """
+        Remove the sample identified by the passed document id. Serves as an exposed proxy for calling
+        :meth:`._remove_samples`.
+
+        :param transaction: the transaction associated with the request.
+        :type transaction: :class:`.Transaction`
+
+        :return: a boolean indicating if the call was successful and the remove response from MongoDB
+        :rtype: tuple
+
+        """
+        response = yield self._remove_samples(transaction.data["_id"])
+
+        return True, response
+
     @virtool.gen.coroutine
     def watch(self):
         """
-        A perpetually running coroutine that dispatches to listening connections any changes to files in the watch path.
-        The patch is checked every 500 ms and self.excluded_files list will be excluded from check and dispatched list.
+        Called as a :ref:`periodic callback <periodic-callbacks>` to check if the contents of the watch path has have
+        changes. Any changes are dispatched to all listening clients. The callback is not executed if there are no
+        listeners.
+
+        File names in :attr:`.excluded_files` are excluded from the check.
+
+        :param transaction: the transaction associated with the request.
+        :type transaction: :class:`.Transaction`
 
         """
         files = yield virtool.utils.list_files(self.settings.get("watch_path"), self.excluded_files)
+
         return files
 
 
 class ImportReads(virtool.job.Job):
 
+    """
+    A subclass of :class:`~.job.Job` that creates a new sample by importing reads from the watch directory. Has the
+    stages:
+
+    1. mk_sample_dir
+    2. import_files
+    3. trim_reads
+    4. save_trimmed
+    5. fastqc
+    6. parse_fastqc
+    7. clean_watch
+
+    """
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        # Get file list
-        self.files = self.task_args["files"]
+        #: The id assigned to the new sample.
         self.sample_id = self.task_args["_id"]
-        self.paired = self.task_args["paired"]
 
-        # This is the sample root directory
+        #: The path where the files for this sample are stored.
         self.sample_path = self.settings["data_path"] + "/samples/sample_" + str(self.sample_id)
 
+        #: The names of the reads files in the watch path used to create the sample.
+        self.files = self.task_args["files"]
+
+        #: Is the sample library paired or not.
+        self.paired = self.task_args["paired"]
+
+        #: The ordered list of :ref:`stage methods <stage-methods>` that are called by the job.
         self.stage_list = [
             self.mk_sample_dir,
             self.import_files,
@@ -747,18 +902,24 @@ class ImportReads(virtool.job.Job):
             self.clean_watch
         ]
 
-        self.progress_re = re.compile(r"([0-9]*)\.")
-
+    @virtool.job.stage_method
     def mk_sample_dir(self):
+        """
+        Make a data directory for the sample. Read files, quality data from FastQC, and analysis data will be stored
+        here.
+
+        """
         try:
-            os.mkdir(self.sample_path)
-            os.mkdir(self.sample_path + "/analysis")
+            os.makedirs(os.path.join(self.sample_path, "analysis"))
         except OSError:
             shutil.rmtree(self.sample_path)
-            os.mkdir(self.sample_path)
+            os.makedirs(os.path.join(self.sample_path, "analysis"))
 
     def import_files(self):
+        """
+        Test
 
+        """
         destination_path = os.path.join(self.sample_path, "reads.fastq")
 
         source_paths = [os.path.join(self.settings["watch_path"], filename) for filename in self.files]
@@ -801,6 +962,10 @@ class ImportReads(virtool.job.Job):
                     destination.write(line)
 
     def trim_reads(self):
+        """
+        Calls the external application ``skewer`` to trim adapters and low quality regions the sample reads files.
+
+        """
 
         input_path = os.path.join(self.sample_path, "reads.fastq")
 
@@ -813,6 +978,7 @@ class ImportReads(virtool.job.Job):
             input_path
         ]
 
+        # Prevents an error from skewer when calls inside a subprocess.
         env = dict(os.environ)
         env["LD_LIBRARY_PATH"] = "/usr/lib/x86_64-linux-gnu"
 
@@ -1012,7 +1178,7 @@ class ImportReads(virtool.job.Job):
 
         """
         # Delete database entry
-        self.collection_operation("samples", "_remove_sample", [self.sample_id])
+        self.collection_operation("samples", "_remove_samples", [self.sample_id])
 
 
 def check_collection(db_name, data_path, address="localhost", port=27017):

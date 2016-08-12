@@ -18,6 +18,8 @@ The server can be run in development mode by setting the ``development`` paramet
 .. autoinstanceattribute:: Application.development
     :annotation:
 
+.. _periodic-callbacks:
+
 ------------------
 Periodic Callbacks
 ------------------

@@ -4,7 +4,7 @@ Users
 Users Collection
 ----------------
 
-All user management, excluding `permissions <user-permissions>`_, is done through :class:`.users.Collection`.
+All user management, excluding :ref:`permissions <user-permissions>`, is done through :class:`.users.Collection`.
 
 .. autoclass:: virtool.users.Collection
     :show-inheritance:

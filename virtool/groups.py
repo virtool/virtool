@@ -29,6 +29,7 @@ class Collection(virtool.database.Collection):
     An interface for the *groups* collection in MongoDB. Manages user groups and their permissions.
 
     :param dispatcher: the :class:`.Dispatcher` object that instantiated the collection.
+    :type dispatcher: :class:`.Dispatcher`
 
     """
 
