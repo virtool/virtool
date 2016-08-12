@@ -1,4 +1,6 @@
+python-magic
 motor
+
 pymongo
 tornado
 psutil
