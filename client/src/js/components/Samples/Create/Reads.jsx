@@ -42,18 +42,22 @@ var ReadSelector = React.createClass({
     getInitialState: function () {
         return {
             reads: dispatcher.db.reads.find(),
-            selected: [],
             filter: '',
             showAll: false
         };
     },
 
-    getValue: function () {
-        return this.state.selected;
-    },
+    handleSelect: function (selectedId) {
+        var selected = this.props.selected.slice(0);
 
-    clearSelected: function () {
-        this.setState({selected: []});
+        if (_.includes(selected, selectedId)) {
+            _.pull(selected, selectedId);
+        } else {
+            if (this.props.selected.length === 2) selected.shift();
+            selected.push(selectedId);
+        }
+
+        this.props.select(selected);
     },
 
     handleFilter: function (event) {
@@ -62,16 +66,9 @@ var ReadSelector = React.createClass({
         });
     },
 
-    handleSelect: function (selectedId) {
-        this.setState({
-            selected: _.xor(this.state.selected, [selectedId])
-        });
-    },
-
     reset: function () {
-        this.setState({
-            selected: [],
-            filter: ''
+        this.setState({filter: ''}, function () {
+            this.props.select([]);
         });
     },
 
@@ -96,9 +93,8 @@ var ReadSelector = React.createClass({
     update: function () {
         var reads = dispatcher.db.reads.find();
 
-        this.setState({
-            reads: reads,
-            selected: _.intersection(this.state.selected, _.map(reads, '_id'))
+        this.setState({reads: reads}, function () {
+            this.props.select(_.intersection(this.props.selected, _.map(reads, '_id')));
         });
     },
 
@@ -129,7 +125,7 @@ var ReadSelector = React.createClass({
                     <ReadItem
                         key={read._id}
                         {...read}
-                        selected={_.includes(this.state.selected, read._id)}
+                        selected={_.includes(this.props.selected, read._id)}
                         onSelect={this.handleSelect}
                     />
                 );
@@ -158,7 +154,7 @@ var ReadSelector = React.createClass({
         return (
             <div>
                 <label className='control-label'>
-                    Read Files <Label>{this.state.selected.length}/{this.state.reads.length} selected</Label>
+                    Read Files <Label>{this.props.selected.length}/{this.state.reads.length} selected</Label>
                 </label>
 
                 <Panel ref='panel'>

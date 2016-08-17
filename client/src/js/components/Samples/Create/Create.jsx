@@ -40,10 +40,19 @@ var SamplesImport = React.createClass({
 
     getInitialState: function () {
         return {
+            selected: [],
+
             nameExistsError: false,
             nameEmptyError: false,
             readError: false
         };
+    },
+
+
+    select: function (selected) {
+        this.setState({
+            selected: selected
+        });
     },
 
     /**
@@ -104,12 +113,14 @@ var SamplesImport = React.createClass({
                     <Modal.Body {...this.props}>
                         <Form
                             ref='form'
+                            paired={this.state.selected.length === 2}
                             handleSubmit={this.handleSubmit}
                             {...this.state}
                         />
                         <ReadSelector
                             ref='reads'
                             {...this.state}
+                            select={this.select}
                         />
                     </Modal.Body>
 

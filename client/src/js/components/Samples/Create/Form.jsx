@@ -16,6 +16,10 @@ var ImportForm = React.createClass({
 
     mixins: [LinkedStateMixin],
 
+    propTypes: {
+        paired: React.PropTypes.bool
+    },
+
     getInitialState: function () {
 
         var readyHosts = dispatcher.db.hosts.find({added: true});
@@ -25,7 +29,6 @@ var ImportForm = React.createClass({
             host: '',
             isolate: '',
             locale: '',
-            paired: false,
             group: dispatcher.settings.get('sample_group') == 'force_choice' ? 'none': '',
             subtraction: readyHosts.length > 0 ? readyHosts[0]._id: null,
             forceGroupChoice: this.getForceGroupChoice()
@@ -91,6 +94,8 @@ var ImportForm = React.createClass({
             error = 'The name field cannot be empty.'
         }
 
+        var pairedValue = this.props.paired ? "Paired": "Unpaired";
+
         return (
             <div>
                 <Row>
@@ -126,10 +131,7 @@ var ImportForm = React.createClass({
                     </Col>
                     {userGroup}
                     <Col md={this.state.forceGroupChoice ? 3: 4}>
-                        <Input type='select' label='Library Type' valueLink={this.linkState('paired')}>
-                            <option value={false}>Unpaired</option>
-                            <option value={true}>Paired</option>
-                        </Input>
+                        <Input type='text' label='Library Type' value={pairedValue} readOnly />
                     </Col>
                 </Row>
             </div>
