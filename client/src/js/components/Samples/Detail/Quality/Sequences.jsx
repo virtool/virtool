@@ -24,21 +24,6 @@ var Numeral = require("numeral");
  */
 var CreateSequencesChart = function (element, data, width) {
 
-    var working = [];
-
-    // Find the maximum mean read quality and the highest count of any mean read quality.
-    var maxQuality = _.max(data, function (document) { return document.quality }).quality;
-    var maxCount = _.max(data, function (document) { return document.count }).count;
-
-    // The data passed to this function is a collection of data points ONLY for mean qualities where at least one read
-    // was observed. Fill in the zero-count qualities for rendering the chart.
-    for (var i = 0; i < maxQuality; i++) {
-        var datum = _.find(data, {quality: i}) || {count: 0, quality: i};
-        working.push(datum);
-    }
-
-    data = working;
-
     // Set the base dimensions of the chart.
     var margin = {
         top: 20,
@@ -64,7 +49,7 @@ var CreateSequencesChart = function (element, data, width) {
     // Set up scales.
     var y = d3.scale.linear()
         .range([height, 0])
-        .domain([0, maxCount]);
+        .domain([0, _.max(data)]);
 
     var x = d3.scale.linear()
         .range([0, width])
@@ -82,12 +67,8 @@ var CreateSequencesChart = function (element, data, width) {
 
     // Build a d3 line function for rendering the plot line.
     var line = d3.svg.line()
-        .x(function (d) {
-            return x(d.quality);
-        })
-        .y(function (d) {
-            return y(d.count);
-        });
+        .x(function (d,i) {return x(i);})
+        .y(function (d) {return y(d);});
 
     // Build SVG canvas.
     var svg = d3.select(element).append('svg')

@@ -59,9 +59,14 @@ var CreateBasesChart = function (element, data, width) {
 
     // A function for generating the lines representing mean and median base quality.
     var line = function (data, key) {
+        var column = {
+            mean: 0,
+            median: 1
+        }[key];
+
         var generator = d3.svg.line()
             .x(function (d, i) {return x(i);})
-            .y(function (d) {return y(d[key]);});
+            .y(function (d) {return y(d[column]);});
 
         return generator(data);
     };
@@ -72,22 +77,22 @@ var CreateBasesChart = function (element, data, width) {
             name: 'upper',
             func: d3.svg.area()
                 .x(function (d, i) { return x(i);})
-                .y0(function (d) {return y(d.upper);})
-                .y1(function (d) {return y(d['90%']);})
+                .y0(function (d) {return y(d[3]);})
+                .y1(function (d) {return y(d[5]);})
         },
         {
             name: 'lower',
             func: d3.svg.area()
                 .x(function (d, i) { return x(i);})
-                .y0(function (d) {return y(d.lower);})
-                .y1(function (d) {return y(d['10%']);})
+                .y0(function (d) {return y(d[2]);})
+                .y1(function (d) {return y(d[4]);})
         },
         {
             name: 'quartile',
             func: d3.svg.area()
                 .x(function (d, i) { return x(i);})
-                .y0(function (d) {return y(d.lower);})
-                .y1(function (d) {return y(d.upper);})
+                .y0(function (d) {return y(d[2]);})
+                .y1(function (d) {return y(d[3]);})
         }
     ];
 

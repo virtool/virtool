@@ -54,13 +54,13 @@ var CreateNucleotidesChart = function (element, data, width) {
     // Create a d3 line function for generating the four lines showing nucleotide frequency.
     var line = d3.svg.line()
         .x(function (d, i) { return x(i)} )
-        .y(function (d) { return y(d.y) });
+        .y(function (d) { return y(d) });
 
     var series = [
-        {key: 'a', color: '#a94442', label: 'Adenine'},
-        {key: 't', color: '#3c763d', label: 'Thymine'},
-        {key: 'g', color: '#428bca', label: 'Guanine'},
-        {key: 'c', color: '#777', label: 'Cytosine'}
+        {column: 0, color: '#428bca', label: 'Guanine'},
+        {column: 1, color: '#a94442', label: 'Adenine'},
+        {column: 2, color: '#3c763d', label: 'Thymine'},
+        {column: 3, color: '#777', label: 'Cytosine'}
     ];
 
     // Define a scale and d3-legend function for generating a legend.
@@ -76,15 +76,15 @@ var CreateNucleotidesChart = function (element, data, width) {
     // Defines 4 data layers to render in the chart.
     var layers = series.map(function (set) {
         // Get the nucleotide frequency values for the base. (x=position, y=frequency).
-        var values = _.map(data, set.key).map(function (value, index) {
-            return {x: index, y: value};
+        var values = data.map(function (point) {
+            return point[set.column];
         });
 
         return {
-            name: set.key,
+            label: set.label,
             color: set.color,
             values: values
-        }
+        };
     });
 
     // Create stack layout for plot lines.
@@ -113,7 +113,7 @@ var CreateNucleotidesChart = function (element, data, width) {
         .attr('stroke-width', 2)
         .attr('fill', 'none')
         .attr('data-legend', function (d) {
-            return d.name;
+            return d.label;
         });
 
     // Append x-axis and label.
