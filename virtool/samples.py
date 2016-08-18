@@ -657,16 +657,14 @@ class ImportReads(virtool.job.Job):
             os.mkdir(self.sample_path)
 
     def trim_reads(self):
-        """
-
-
-        """
         input_paths = [os.path.join(self.settings["watch_path"], filename) for filename in self.files]
 
         command = [
             "skewer",
             "-m", "pe" if self.paired else "head",
             "-l", "50",
+            "-q", "20",
+            "-Q", "25",
             "-t", str(self.settings.get("import_reads_proc")),
             "-o", os.path.join(self.sample_path, "reads"),
         ] + input_paths
