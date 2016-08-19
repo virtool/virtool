@@ -25,12 +25,6 @@ class Analyze(virtool.job.Job):
         self.sample = self.database["samples"].find_one({"_id": self.sample_id})
         self.host = self.database["hosts"].find_one({"_id": self.sample["subtraction"]})
 
-        # Get the number of reads in the library.
-        self.read_count = int(self.sample["quality"]["left"]["count"])
-
-        if self.sample["paired"]:
-            self.read_count *= 2
-
         # Construct path strings that will be used by the job to access relevant files.
         self.paths = dict()
 
@@ -68,7 +62,7 @@ class Analyze(virtool.job.Job):
         if os.path.isfile(files[0] + ".gz"):
             files = [file_path + ".gz" for file_path in files]
 
-        return ",".join(files)
+        return files
 
 
 class Pathoscope(Analyze):
@@ -239,7 +233,7 @@ class PathoscopeBowtie(Pathoscope):
 
     def map_viruses(self):
         """ Returns a list that defines a Bowtie2 command to map the sample reads against the virus index """
-        files = self.calculate_read_path()
+        files = ",".join(self.calculate_read_path())
 
         command = [
             "bowtie2",
@@ -274,7 +268,7 @@ class PathoscopeBowtie(Pathoscope):
         if self.intermediate["use_isolates"]:
             self.log("Mapping to isolates")
 
-            files = self.calculate_read_path()
+            files = ",".join(self.calculate_read_path())
 
             command = [
                 "bowtie2",
@@ -381,19 +375,23 @@ class PathoscopeSNAP(Pathoscope):
 
     def map_viruses(self):
         """ Returns a list that defines a Bowtie2 command to map the sample reads against the virus index """
-        files = self.calculate_read_path()
-
         command = [
             "snap",
             "single",
-            self.paths["viruses"],
-            files,
+            self.paths["viruses"]
+        ]
+
+        command += self.calculate_read_path()
+
+        command += [
             "-t", str(self.proc - 1),
             # Aligned output only
             "-F", "a",
             # Output to STDOUT
             "-o", "-sam", "-"
         ]
+
+        print(command)
 
         to_viruses = virtool.pathoscope.sam.Lines(snap=True)
 
@@ -419,13 +417,15 @@ class PathoscopeSNAP(Pathoscope):
         if self.intermediate["use_isolates"]:
             self.log("Mapping to isolates")
 
-            files = self.calculate_read_path()
-
             command = [
                 "snap",
                 "single",
-                self.paths["analysis"],
-                files,
+                self.paths["analysis"]
+            ]
+
+            command += self.calculate_read_path()
+
+            command += [
                 "-t", str(self.proc - 1),
                 # Aligned output only
                 "-F", "a",
@@ -438,6 +438,8 @@ class PathoscopeSNAP(Pathoscope):
                 # Output to STDOUT
                 "-o", "-sam", "-",
             ]
+
+            print(command)
 
             del self.intermediate["to_viruses"]
 
@@ -460,7 +462,7 @@ class PathoscopeSNAP(Pathoscope):
 
         handles = list()
 
-        for file_path in self.calculate_read_path().split(","):
+        for file_path in self.calculate_read_path():
             if file_path.endswith("gz"):
                 handle = gzip.open(file_path, "rt")
             else:
@@ -470,10 +472,10 @@ class PathoscopeSNAP(Pathoscope):
 
         with open(os.path.join(self.paths["analysis"], "mapped.fastq"), "w") as mapped_file:
             for handle in handles:
-                for rec in SeqIO.parse(handle, "fastq"):
-                    if rec.id in mapped_read_ids:
-                        SeqIO.write(rec, mapped_file, "fastq")
-                        mapped_read_ids.remove(rec.id)
+                fastq_dict = {record.id: record for record in SeqIO.parse(handle, "fastq")}
+
+                for read_id in mapped_read_ids:
+                    SeqIO.write(fastq_dict[read_id], mapped_file, "fastq")
 
     def map_host(self):
         self.log("Mapping to hosts")
@@ -524,7 +526,13 @@ class NuVs(Analyze):
         self.stage_list += [
             self.mk_analysis_dir,
             self.map_viruses,
-            self.map_host,
+            self.map_host
+        ]
+
+        if self.sample["paired"]:
+            self.stage_list.append(self.reunite_pairs)
+
+        self.stage_list += [
             self.assemble,
             self.process_fasta,
             self.vfam,
@@ -538,7 +546,7 @@ class NuVs(Analyze):
 
     def map_viruses(self):
         """ Returns a list that defines a Bowtie2 command to map the sample reads against the virus index """
-        files = self.calculate_read_path()
+        files = ",".join(self.calculate_read_path())
 
         command = [
             "bowtie2",
@@ -567,12 +575,44 @@ class NuVs(Analyze):
 
         self.run_process(command, no_output_failure=True)
 
+    def reunite_pairs(self):
+        with open(self.paths["analysis"] + "/unmapped_hosts.fq", "rU") as handle:
+            unmapped_roots = {record.id.split(" ")[0] for record in SeqIO.parse(handle, "fastq")}
+
+        files = self.calculate_read_path()
+
+        with open(files[0], "r") as handle:
+            s_dict = {record.id.split(" ")[0]: record for record in SeqIO.parse(handle, "fastq")}
+
+            with open(self.paths["analysis"] + "/unmapped_1.fq", "w") as unmapped:
+                for root in unmapped_roots:
+                    SeqIO.write(s_dict[root], unmapped, "fastq")
+
+        with open(files[1], "r") as handle:
+            s_dict = {record.id.split(" ")[0]: record for record in SeqIO.parse(handle, "fastq")}
+
+            with open(self.paths["analysis"] + "/unmapped_2.fq", "w") as unmapped:
+                for root in unmapped_roots:
+                    SeqIO.write(s_dict[root], unmapped, "fastq")
+
     def assemble(self):
         command = [
             "spades.py",
             "-t", str(self.proc - 1),
-            "-m", str(self.mem),
-            "-s", os.path.join(self.paths["analysis"], "unmapped_hosts.fq"),
+            "-m", str(self.mem)
+        ]
+
+        if self.sample["paired"]:
+            command += [
+                "-1", self.paths["analysis"] + "/unmapped_1.fq",
+                "-2", self.paths["analysis"] + "/unmapped_2.fq",
+            ]
+        else:
+            command += [
+                "-s", os.path.join(self.paths["analysis"], "unmapped_hosts.fq"),
+            ]
+
+        command +=[
             "-o", os.path.join(self.paths["analysis"], "spades"),
             "-k", "21,33,55,75"
         ]
