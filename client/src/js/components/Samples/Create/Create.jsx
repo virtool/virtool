@@ -7,6 +7,7 @@
  * Ian Boyes
  *
  * @exports SamplesImport
+ *
  */
 
 'use strict';
@@ -68,7 +69,8 @@ var SamplesImport = React.createClass({
         var nameEmptyError = !data.name;
 
         // Get the names of the files to attach to the sample record.
-        data.files = this.refs.reads.getValue();
+        data.files = this.state.selected;
+        data.paired = this.state.selected.length == 2;
 
         var readError = data.files.length === 0;
 
@@ -81,7 +83,7 @@ var SamplesImport = React.createClass({
             // Send the request to the server.
             this.setState(this.getInitialState(), function () {
                 dispatcher.db.samples.request('new', data).success(function () {
-                    this.refs.reads.clearSelected();
+                    this.select([]);
                     this.refs.form.clear();
                 }, this).failure(function () {
                     this.setState({nameExistsError: true});

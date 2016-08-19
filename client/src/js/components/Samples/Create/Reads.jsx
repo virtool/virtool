@@ -154,7 +154,7 @@ var ReadSelector = React.createClass({
         return (
             <div>
                 <label className='control-label'>
-                    Read Files <Label>{this.props.selected.length}/{this.state.reads.length} selected</Label>
+                    Read Files <Label>{this.props.selected.length}/{readComponents.length} selected</Label>
                 </label>
 
                 <Panel ref='panel'>
