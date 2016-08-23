@@ -139,9 +139,7 @@ var Start = React.createClass({
     },
 
     render: function () {
-
-        var logo = <Icon name='vtlogo' className='vtlogo' style={{paddingBottom: '5px'}} />;
-
+        
         if (!this.state.checkedSetup || (this.state.checkedSetup && !this.state.needsSetup && !this.state.checkedToken)) {
             return (
                 <Flex alignContent="center" justifyContent="center" className="page-loading">
