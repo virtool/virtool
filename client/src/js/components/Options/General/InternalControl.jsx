@@ -66,9 +66,10 @@ var InternalControl = React.createClass({
     getInputValue: function () {
         // The id of the virus that is used as an internal control if there is one..
         var controlId = this.props.settings.get('internal_control_id');
+        var virus = this.props.viruses.by("_id", controlId);
 
-        // If an internal control is being used, find its name.
-        return controlId ? this.props.viruses.find({_id: controlId}).name : '';
+        // If an internal control is being used and exists, return its name.
+        return controlId && virus ? virus.name : '';
     },
 
     /**
