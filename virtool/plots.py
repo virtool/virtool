@@ -7,20 +7,27 @@ import virtool.gen
 
 
 def plot_composition(composition):
-    colors = {
-        "a": "#A94442",
-        "t": "#3C763D",
-        "g": "#428BCA",
-        "c": "#777777"
-    }
+    labels = [
+        "Guanine",
+        "Adenine",
+        "Thymine",
+        "Cytosine",
+    ]
 
-    for nuc in ["a", "t", "g", "c"]:
-        data = [pnt[nuc] for pnt in composition]
+    colors = [
+        "#428BCA", # Guanine
+        "#A94442", # Adenine
+        "#3C763D", # Thymine
+        "#777777", # Cytosine
+    ]
 
-        plt.plot(range(1, len(data) + 1), data, color=colors[nuc])
-        plt.plot(range(1, len(data) + 1), data, color=colors[nuc])
-        plt.plot(range(1, len(data) + 1), data, color=colors[nuc])
-        plt.plot(range(1, len(data) + 1), data, color=colors[nuc])
+    for i in range(0, 4):
+        data = [pnt[i] for pnt in composition]
+
+        plt.plot(range(1, len(data) + 1), data, color=colors[i])
+        plt.plot(range(1, len(data) + 1), data, color=colors[i])
+        plt.plot(range(1, len(data) + 1), data, color=colors[i])
+        plt.plot(range(1, len(data) + 1), data, color=colors[i])
 
     plt.title('Nucleotide Composition')
     plt.xlabel('Read Position (bp)')
@@ -29,40 +36,40 @@ def plot_composition(composition):
     plt.xlim(1, len(composition))
     plt.tight_layout()
 
-    handles = [mpatches.Patch(color=colors[nuc], label=nuc.upper()) for nuc in ["a", "t", "g", "c"]]
+    handles = [mpatches.Patch(color=colors[i], label=labels[i]) for i in range(0, 4)]
 
     plt.legend(handles=handles, prop={"size": 6})
 
 
 def plot_bases(bases):
-    colors = {
-        "mean": "#A94442",
-        "median": "#428BCA"
-    }
-
     decile_color = "#FFF475"
     quartile_color = "#3C763D"
 
     x = range(1, len(bases) + 1)
 
-    ten = [base["10%"] for base in bases]
-    ninety = [base["90%"] for base in bases]
+    ten = [base[4] for base in bases]
+    ninety = [base[5] for base in bases]
 
-    plt.plot(x, ten, color=decile_color, alpha=0.5)
-    plt.plot(x, ninety, color=decile_color, alpha=0.5)
+    for i in [4, 5]:
+        plt.plot(x, ten, color=decile_color, alpha=0.5)
 
     plt.fill_between(x, ten, ninety, color=decile_color, alpha=0.5)
 
-    lower = [base["lower"] for base in bases]
-    upper = [base["upper"] for base in bases]
+    lower = [base[2] for base in bases]
+    upper = [base[3] for base in bases]
 
     plt.plot(x, lower, color=quartile_color, alpha=0.5)
     plt.plot(x, upper, color=quartile_color, alpha=0.5)
 
     plt.fill_between(x, lower, upper, color=quartile_color, alpha=0.5)
 
-    for key in ["mean", "median"]:
-        plt.plot(range(1, len(bases) + 1), [base[key] for base in bases], color=colors[key])
+    line_colors = [
+        "#A94442",
+        "#428BCA"
+    ]
+
+    for i, color in enumerate(line_colors):
+        plt.plot(range(1, len(bases) + 1), [base[i] for base in bases], color=color)
 
     plt.title('Quality Distribution at Read Positions')
     plt.xlabel('Read Position (bp)')
@@ -71,7 +78,7 @@ def plot_bases(bases):
     plt.xlim(1, len(bases))
     plt.tight_layout()
 
-    handles = [mpatches.Patch(color=colors[key], label=key.capitalize()) for key in ["mean", "median"]]
+    handles = [mpatches.Patch(color=line_colors[i], label=label) for i, label in enumerate(["Mean", "Median"])]
 
     handles.append(mpatches.Patch(color=decile_color, label="Decile"))
     handles.append(mpatches.Patch(color=quartile_color, label="Quartile"))
@@ -80,12 +87,8 @@ def plot_bases(bases):
 
 
 def plot_sequences(sequences):
-    data = [0] * 40
 
-    for pnt in sequences:
-        data[pnt["quality"]] = pnt["count"]
-
-    plt.plot(range(1, len(data) + 1), data, color="#428BCA")
+    plt.plot(range(1, len(sequences) + 1), sequences, color="#428BCA")
 
     plt.title('Sequence quality frequency')
     plt.xlabel('Sequence Quality')
