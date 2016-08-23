@@ -45,10 +45,7 @@ class Base(virtool.job.Job):
         self.host = self.database["hosts"].find_one({"_id": self.sample["subtraction"]})
 
         #: The number of reads in the sample library.
-        self.read_count = int(self.sample["quality"]["left"]["count"])
-
-        if self.sample["paired"]:
-            self.read_count *= 2
+        self.read_count = int(self.sample["quality"]["count"])
 
         #: A dictionary of path strings that will be used to access files relevant to the analysis. Paths include:
         #: - data - test
@@ -336,7 +333,7 @@ class PathoscopeBowtie(Pathoscope):
             "-L", "15",
             "-x", self.paths["viruses"],
             "--al", self.paths["analysis"] + "/mapped.fastq",
-            "-U", files
+            "-U", ",".join(files)
         ]
 
         to_viruses = virtool.pathoscope.sam.Lines()
@@ -379,7 +376,7 @@ class PathoscopeBowtie(Pathoscope):
             "-k", "100",
             "--al", self.paths["analysis"] + "/mapped.fastq",
             "-x", self.paths["analysis"] + "/isolates",
-            "-U", files
+            "-U", ",".join(files)
         ]
 
         self.log("Clearing default virus mappings")
@@ -473,8 +470,6 @@ class PathoscopeSNAP(Pathoscope):
             "-o", "-sam", "-"
         ]
 
-        print(command)
-
         to_viruses = virtool.pathoscope.sam.Lines(snap=True)
 
         self.run_process(command, no_output_failure=True, stdout_handler=to_viruses.add)
@@ -504,13 +499,15 @@ class PathoscopeSNAP(Pathoscope):
         Using ``snap single``, map the sample reads to the index built using :meth:`.build_isolate_index`.
 
         """
-        files = self.calculate_read_path()
-
         command = [
             "snap",
             "single",
-            self.paths["analysis"],
-            files,
+            self.paths["analysis"]
+        ]
+
+        command += self.calculate_read_path()
+
+        command += [
             "-t", str(self.proc - 1),
             # Aligned output only
             "-F", "a",
@@ -596,6 +593,20 @@ class NuVs(Base):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
+        self.paths["viruses"] = os.path.join(
+            self.paths["data"],
+            "reference/viruses",
+            self.task_args["index_id"],
+            "reference"
+        )
+
+        self.paths["host"] = os.path.join(
+            self.paths["data"],
+            "reference/hosts/index",
+            self.sample["subtraction"].lower().replace(" ", "_"),
+            "reference"
+        )
+
         self.stage_list += [
             self.map_viruses,
             self.map_host
@@ -618,8 +629,6 @@ class NuVs(Base):
         ``--very-fast-local`` and retain unaligned reads to the FASTA file ``unmapped_viruses.fq``.
 
         """
-        files = self.calculate_read_path()
-
         command = [
             "bowtie2",
             "-p", str(self.proc),
@@ -627,7 +636,7 @@ class NuVs(Base):
             "--very-fast-local",
             "-x", self.paths["viruses"],
             "--un", self.paths["analysis"] + "/unmapped_viruses.fq",
-            "-U", files
+            "-U", ",".join(self.calculate_read_path())
         ]
 
         self.run_process(command, no_output_failure=True)
