@@ -46,7 +46,7 @@ var LoginDialog = React.createClass({
                     password: this.state.new || this.state.password,
                     browser: dispatcher.browser
                 }
-            }).success(this.props.onLogin, this).failure(this.onLoginFailure, this);
+            }).success(this.props.onLogin).failure(this.onLoginFailure);
 
         });
     },
@@ -68,10 +68,14 @@ var LoginDialog = React.createClass({
         }
 
         if (this.state.new.length >= 8 && this.state.new === this.state.confirm) {
-            dispatcher.db.users.request('change_password', {
-                _id: this.state.username,
-                old_password: this.state.password,
-                new_password: this.state.new
+            dispatcher.send({
+                collectionName: "users",
+                methodName: "change_password",
+                data: {
+                    _id: this.state.username,
+                    old_password: this.state.password,
+                    new_password: this.state.new
+                }
             }).success(this.login).failure(this.onResetFailure);
         }
 
