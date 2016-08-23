@@ -61,7 +61,7 @@ var User = function () {
             data: {
                 token: this.token
             }
-        }).success(this.deauthorize, this);
+        });
     };
 };
 

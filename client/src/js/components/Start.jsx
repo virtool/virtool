@@ -139,7 +139,7 @@ var Start = React.createClass({
     },
 
     render: function () {
-        
+
         if (!this.state.checkedSetup || (this.state.checkedSetup && !this.state.needsSetup && !this.state.checkedToken)) {
             return (
                 <Flex alignContent="center" justifyContent="center" className="page-loading">

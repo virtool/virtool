@@ -289,8 +289,6 @@ class Collection(virtool.database.Collection):
 
         return True, response
 
-
-
     @virtool.gen.exposed_method(["modify_options"])
     def remove_user(self, transaction):
         """
@@ -396,8 +394,9 @@ class Collection(virtool.database.Collection):
     @virtool.gen.exposed_method(["modify_options"])
     def set_force_reset(self, transaction):
         """
-        Used by users with the *modify_options* permission to Set a users password. Can take a "reset" property, which when True will force the user to reset their password
-        on next login. To be called by an connection with administrative privileges.
+        Used by users with the *modify_options* permission to Set a users password. Can take a "reset" property, which
+        when True will force the user to reset their password on next login. To be called by an connection with
+        administrative privileges.
 
         """
         response = yield self.update(transaction.data["_id"], {
@@ -626,11 +625,10 @@ class Collection(virtool.database.Collection):
         })
 
         if connections:
-            yield self.dispatch(
-                "deauthorize",
-                {"logout": logout},
-                connections=connections
-            )
+            self.dispatcher.dispatch({
+                "operation": "deauthorize",
+                "data": {"logout": logout}
+            }, connections)
 
     @virtool.gen.coroutine
     def user_exists(self, user_id):
