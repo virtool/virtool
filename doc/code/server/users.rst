@@ -4,7 +4,7 @@ Users
 Users Collection
 ----------------
 
-All user management, excluding `permissions <user-permissions>`_, is done through :class:`.users.Collection`.
+All user management, excluding :ref:`permissions <user-permissions>`, is done through :class:`.users.Collection`.
 
 .. autoclass:: virtool.users.Collection
     :show-inheritance:
@@ -28,7 +28,7 @@ Authentication
 --------------
 
 The goal of authentication is the verify the identity of the connecting user, pass them their user information, and
-authorize their connection to call protected `exposed methods <exposed-methods>`_.
+authorize their connection to call protected :ref:`exposed methods <exposed-methods>`.
 
 There are two ways to authenticate a connection. The first is by validating a username and password passed in from the
 login view. This is done by requesting the unprotected exposed method :meth:`.authorize_by_login`.

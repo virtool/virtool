@@ -303,3 +303,20 @@ def write_log(path, log_list):
     except IOError:
         os.makedirs(path)
         write_log(path, log_list)
+
+
+def stage_method(func):
+    """
+    A decorator that adds the attribute ``is_stage_method`` to the returned function so it can be recognized as a
+    job stage method when the documentation is generated.
+
+    :param func: the function to decorate.
+    :type func: function
+
+    :return: the decorated function.
+    :rtype: function
+
+    """
+    func.is_stage_method = True
+
+    return func

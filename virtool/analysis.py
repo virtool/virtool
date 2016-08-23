@@ -9,23 +9,49 @@ import virtool.pathoscope
 from Bio import SeqIO
 
 
-class Analyze(virtool.job.Job):
+class Base(virtool.job.Job):
+    """
+    A base class for all analysis job objects. Functions include:
 
+    - establishing synchronous database connection
+    - extracting task args to attributes
+    - retrieving the sample and host documents
+    - calculating the sample read count
+    - constructing paths used by all subclasses
+
+   """
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
+        #: The document id for the sample being analyzed. and the analysis document the results will be committed to.
         self.sample_id = self.task_args["sample_id"]
+
+        #: The document id for the analysis being run.
         self.analysis_id = self.task_args["analysis_id"]
 
-        # Get a connection to the virtool database
-        self.log("Setting up database connection")
+        #: Stores intermediate data that is reused between job stages.
+        self.intermediate = dict()
+
+        #: Stores data that is processed and stored in the analysis document.
+        self.results = dict()
+
+        #: A synchronous connection to the Virtool database.
         self.database = virtool.utils.get_db_client(self.settings, sync=True)
 
-        # Get the sample document and the subtraction host document.
+        #: The document for the sample being analyzed.
         self.sample = self.database["samples"].find_one({"_id": self.sample_id})
+
+        #: The document for the host associated with the sample being analyzed.
         self.host = self.database["hosts"].find_one({"_id": self.sample["subtraction"]})
 
-        # Construct path strings that will be used by the job to access relevant files.
+        #: The number of reads in the sample library.
+        self.read_count = int(self.sample["quality"]["left"]["count"])
+
+        if self.sample["paired"]:
+            self.read_count *= 2
+
+        #: A dictionary of path strings that will be used to access files relevant to the analysis. Paths include:
+        #: - data - test
         self.paths = dict()
 
         # The path to the general data directory
@@ -34,26 +60,32 @@ class Analyze(virtool.job.Job):
         # The parent folder for all data associated with the sample
         self.paths["sample"] = os.path.join(self.paths["data"], "samples/sample_" + self.sample_id)
 
-        # The path the the Bowtie2 reference for all plant viruses
-        self.paths["viruses"] = os.path.join(
-            self.paths["data"],
-            "reference/viruses",
-            self.task_args["index_id"],
-            "reference"
-        )
-
-        # The path to the index of the subtraction host for the sample.
-        self.paths["host"] = os.path.join(
-            self.paths["data"],
-            "reference/hosts/index",
-            self.sample["subtraction"].lower().replace(" ", "_"),
-            "reference"
-        )
-
         # The path to the directory where all analysis result files will be written.
         self.paths["analysis"] = os.path.join(self.paths["sample"], "analysis", self.analysis_id)
 
+        self.stage_list = [
+            self.mk_analysis_dir
+        ]
+
+    @virtool.job.stage_method
+    def mk_analysis_dir(self):
+        """
+        Make a directory for the analysis within the sample analysis directory.
+
+        """
+        os.mkdir(self.paths["analysis"])
+        self.log("Made analysis directory")
+
     def calculate_read_path(self):
+        """
+        Returns a string containing the paths to read files to use for analysis. This string is intended to be passed to
+        a subprocess that utilizes the read files.a
+
+        :return: comma separated paths to the read files associated with the reads in this sample.
+        :rtype: str
+
+        """
+
         files = [self.paths["sample"] + "/reads_1.fastq"]
 
         if self.sample["paired"]:
@@ -64,24 +96,39 @@ class Analyze(virtool.job.Job):
 
         return files
 
+    def cleanup(self):
+        """
+        Remove the analysis when the job is cancelled or it encounters an error. Calls
+        :meth:`~samples.Collection._remove_analysis`.
 
-class Pathoscope(Analyze):
+        """
+        self.collection_operation("samples", "_remove_analysis", {
+            "_id": self.sample_id,
+            "analysis_id": self.analysis_id
+        })
+
+
+class Pathoscope(Base):
+
+    """
+    A base class for all Pathoscope-based tasks. Includes common functionality for:
+
+    - identifying candidate viruses from initial mapping to default isolates
+    - writing an multi-isolate FASTA for making an isolate index
+    - running the Pathoscope algorithm
+    - importing Pathoscope and other results to the database
+
+    """
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        self.intermediate = dict()
-        self.results = dict()
-
-    def mk_analysis_dir(self):
-        """ Make a directory for RSEM files within the sample directory """
-        os.mkdir(self.paths["analysis"])
-        self.log("Made analysis directory")
-
+    @virtool.job.stage_method
     def identify_candidate_viruses(self):
         """
-        Identify the viruses that were found in the alignment to the default isolates Bowtie2 index. Determine if an
-        isolate-level analysis should be performed because one or more of the candidates has more than one isolate.
+        Takes the initial default virus mapping from :attr:`.intermediate` and identifies all viruses hit by reads from
+        the sample library. Determines if an isolate-level analysis should be performed because one or more of the
+        candidates has more than one isolate.
 
         """
         # Get the accessions of the viral sequences that were hit.
@@ -96,15 +143,20 @@ class Pathoscope(Analyze):
             }}
         ])
 
+        # Create a dict mapping isolate ids to virus ids. This will allow is to get from the hit accessions to
+        # the ids of candidate viruses.
         isolate_to_virus = {entry["_id"]: entry["virus_id"] for entry in aggregated["result"]}
 
+        # A dict of candidate viruses keyed by their document ids.
         viruses = dict()
 
+        # Get the database documents for the sequences
         for sequence_entry in self.database.sequences.find({"_id": {"$in": accessions}}):
             # Get the virus and isolate ids associated with the sequence.
             isolate_id = sequence_entry["isolate_id"]
             virus_id = isolate_to_virus[isolate_id]
 
+            # Get the document for the virus associated with the sequence unless it has already been retrieved.
             if virus_id not in viruses:
                 virus = self.database.viruses.find_one({"_id": virus_id})
 
@@ -115,35 +167,33 @@ class Pathoscope(Analyze):
 
                 viruses[virus_id] = virus
 
-        # Check if any of the viruses have more than one isolate associated with them.
-        self.intermediate["use_isolates"] = False
+        # Save the candidate virus documents for later use.
+        self.intermediate["candidates"] = [virus for virus in viruses.values()]
 
-        viruses = [virus for virus in viruses.values()]
-
-        for virus in viruses:
-            if len(virus["isolates"]) > 1:
-                self.intermediate["use_isolates"] = True
-                break
-
-        self.intermediate["candidates"] = None
-
-        if self.intermediate["use_isolates"] or self.task_args["algorithm"] == "sigma":
-            # Save all of the candidate virus information to the intermediate attribute
-            self.intermediate["candidates"] = viruses
-
+    @virtool.job.stage_method
     def generate_isolate_fasta(self):
-        if self.intermediate["use_isolates"]:
-            self.log("Generating isolate FASTA file.")
+        """
+        Writes a FASTA file containing the sequences for all isolates of the candidate viruses identified in
+        :meth:`.identify_candidate_viruses`.
 
-            with open(self.paths["analysis"] + "/isolate_index.fa", "w") as fasta_file:
-                for virus in self.intermediate["candidates"]:
-                    for isolate in virus["isolates"]:
-                        for sequence in isolate["sequences"]:
-                            fasta_file.write(">{}\n{}\n".format(sequence["_id"], sequence["sequence"]))
-        else:
-            self.log("Not generating isolate FASTA file.")
+        """
+        self.log("Generating isolate FASTA file.")
 
+        fasta_path = os.path.join(self.paths["analysis"], "isolate_index.fa")
+
+        with open(fasta_path, "w") as fasta_file:
+            for virus in self.intermediate["candidates"]:
+                for isolate in virus["isolates"]:
+                    for sequence in isolate["sequences"]:
+                        fasta_file.write(">{}\n{}\n".format(sequence["_id"], sequence["sequence"]))
+
+    @virtool.job.stage_method
     def pathoscope(self):
+        """
+        Run the Pathoscope reassignment algorithm. Tab-separated output is written to ``pathoscope.tsv``. Results are
+        also parsed and saved to :attr:`intermediate`.
+
+        """
         diagnosis, read_count, self.intermediate["reassigned"] = virtool.pathoscope.reassign.run(
             self.intermediate["to_viruses"],
             self.paths["analysis"] + "/pathoscope.tsv"
@@ -173,18 +223,29 @@ class Pathoscope(Analyze):
 
         self.results["diagnosis"] = cleaned
 
+    @virtool.job.stage_method
     def import_results(self):
+        """
+        Commits the results to the database. Data includes the output of Pathoscope, final mapped read count,
+        and viral genome coverage maps.
+
+        Once the import is complete, :meth:`cleanup_index_files` is called to remove
+        any virus indexes that may become unused when this analysis completes.
+
+        """
         genome_ids = list(self.results["diagnosis"].keys())
         minimal_sequences = self.database["sequences"].find({"_id": {"$in": genome_ids}})
 
         lengths = {entry["_id"]: len(entry["sequence"]) for entry in minimal_sequences}
 
+        # Only calculate coverage if there are some diagnostic results.
         if self.results["diagnosis"]:
             coverage = virtool.pathoscope.sam.coverage(
                 self.intermediate["reassigned"],
                 lengths
             )
 
+            # Attach the per-sequence coverage arrays to the diagnostic results.
             for ref_id in coverage:
                 for key in coverage[ref_id]:
                     try:
@@ -200,21 +261,53 @@ class Pathoscope(Analyze):
 
         self.collection_operation("indexes", "cleanup_index_files")
 
-    def cleanup(self):
-        # Remove changes to sample entry in database that occurred during the failed analysis process
-        self.collection_operation("samples", "_remove_analysis", {
-            "_id": self.sample_id,
-            "analysis_id": self.analysis_id
-        })
+    @virtool.job.stage_method
+    def subtract_virus_mapping(self):
+        """
+        Subtracts virus and host alignments stored in :attr:`.intermediate` as :class:`virtool.pathoscope.sam.Lines`
+        objects. Reads that have a higher alignment score to the host than to the virus reference are eliminated from
+        the analysis.
+
+        **Directly modifies the *to_viruses* :class:`.pathoscope.sam.Lines` object.**
+
+        """
+        subtraction_count = virtool.pathoscope.subtract.run(
+            self.intermediate["to_viruses"],
+            self.intermediate["to_host"]
+        )
+
+        del self.intermediate["to_host"]
+
+        self.log(str(subtraction_count) + " reads eliminated as host reads")
 
 
 class PathoscopeBowtie(Pathoscope):
 
+    """
+    A Pathoscope analysis job that uses Bowtie2 to map reads to viral and host references. The ad-hoc isolate index
+    is build using ``bowtie2-build``.
+
+    """
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
+        # The path the the Bowtie2 reference for all plant viruses
+        self.paths["viruses"] = os.path.join(
+            self.paths["data"],
+            "reference/viruses",
+            self.task_args["index_id"],
+            "reference"
+        )
+
+        # The path to the index of the subtraction host for the sample.
+        self.paths["host"] = os.path.join(
+            self.paths["data"],
+            "reference/hosts/index",
+            self.sample["subtraction"].lower().replace(" ", "_"),
+            "reference"
+        )
+
         self.stage_list += [
-            self.mk_analysis_dir,
             self.map_viruses,
             self.identify_candidate_viruses,
             self.generate_isolate_fasta,
@@ -226,14 +319,13 @@ class PathoscopeBowtie(Pathoscope):
             self.import_results
         ]
 
-    def mk_analysis_dir(self):
-        """ Make a directory for RSEM files within the sample directory """
-        os.mkdir(self.paths["analysis"])
-        self.log("Made analysis directory")
-
+    @virtool.job.stage_method
     def map_viruses(self):
-        """ Returns a list that defines a Bowtie2 command to map the sample reads against the virus index """
-        files = ",".join(self.calculate_read_path())
+        """
+        Using ``bowtie2``, maps reads to the main virus reference. This mapping is used to identify candidate viruses.
+
+        """
+        files = self.calculate_read_path()
 
         command = [
             "bowtie2",
@@ -253,58 +345,58 @@ class PathoscopeBowtie(Pathoscope):
 
         self.intermediate["to_viruses"] = to_viruses
 
+    @virtool.job.stage_method
     def build_isolate_index(self):
-        if self.intermediate["use_isolates"]:
-            command = [
-                "bowtie2-build",
-                self.paths["analysis"] + "/isolate_index.fa",
-                self.paths["analysis"] + "/isolates"
-            ]
-            self.run_process(command)
-        else:
-            self.log("Not generating isolate index")
+        """
+        Build an index with ``bowtie2-build`` from the FASTA file generated by
+        :meth:`Pathoscope.generate_isolate_fasta`.
 
+        """
+        command = [
+            "bowtie2-build",
+            self.paths["analysis"] + "/isolate_index.fa",
+            self.paths["analysis"] + "/isolates"
+        ]
+
+        self.run_process(command)
+
+    @virtool.job.stage_method
     def map_isolates(self):
-        if self.intermediate["use_isolates"]:
-            self.log("Mapping to isolates")
+        """
+        Using ``bowtie2``, map the sample reads to the index built using :meth:`.build_isolate_index`.
 
-            files = ",".join(self.calculate_read_path())
+        """
+        files = self.calculate_read_path()
 
-            command = [
-                "bowtie2",
-                "-p", str(self.proc - 1),
-                "--no-unal",
-                "--local",
-                "--score-min", "L,20,1.0",
-                "-N", "0",
-                "-L", "15",
-                "-k", "100",
-                "--al", self.paths["analysis"] + "/mapped.fastq",
-                "-x", self.paths["analysis"] + "/isolates",
-                "-U", files
-            ]
+        command = [
+            "bowtie2",
+            "-p", str(self.proc - 1),
+            "--no-unal",
+            "--local",
+            "--score-min", "L,20,1.0",
+            "-N", "0",
+            "-L", "15",
+            "-k", "100",
+            "--al", self.paths["analysis"] + "/mapped.fastq",
+            "-x", self.paths["analysis"] + "/isolates",
+            "-U", files
+        ]
 
-            self.log("Clearing default virus mappings")
+        self.log("Clearing default virus mappings")
 
-            self.intermediate["to_viruses"] = None
+        self.intermediate["to_viruses"] = virtool.pathoscope.sam.Lines()
 
-            # Run the Bowtie2 command append all STDOUT to a list for use in later stages.
-            to_viruses = virtool.pathoscope.sam.Lines()
+        handler = self.intermediate["to_viruses"].add
 
-            self.run_process(command, no_output_failure=True, stdout_handler=to_viruses.add)
+        self.run_process(command, no_output_failure=True, stdout_handler=handler)
 
-            self.intermediate["to_viruses"] = to_viruses
-
-            # Find and log the candidate genome accessions
-            accessions = self.intermediate["to_viruses"].genomes()
-
-            self.log("Hit " + str(len(accessions)) + "isolate references.")
-        else:
-            self.log("Not mapping to isolates")
-
+    @virtool.job.stage_method
     def map_host(self):
-        self.log("Mapping to hosts")
+        """
+        Using ``bowtie2``, map the reads that were successfully mapped in :meth:`.map_isolates` to the subtraction host
+        for the sample.
 
+        """
         command = [
             "bowtie2",
             "--local",
@@ -320,34 +412,25 @@ class PathoscopeBowtie(Pathoscope):
 
         self.intermediate["to_host"] = to_host
 
-    def subtract_virus_mapping(self):
-        subtraction_count = virtool.pathoscope.subtract.run(
-            self.intermediate["to_viruses"],
-            self.intermediate["to_host"]
-        )
-
-        self.log(str(subtraction_count) + " reads eliminated as host reads")
-
-    def cleanup(self):
-        # Remove changes to sample entry in database that occurred during the failed analysis process
-        self.collection_operation("samples", "_remove_analysis", {
-            "_id": self.sample_id,
-            "analysis_id": self.analysis_id
-        })
-
 
 class PathoscopeSNAP(Pathoscope):
 
+    """
+    A Pathoscope analysis job that uses SNAP to map reads to viral and host references. The ad-hoc isolate index
+    is build using ``snap index``.
+
+    """
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
+        # The path to the virus SNAP index.
         self.paths["viruses"] = os.path.join(
             self.paths["data"],
             "reference/viruses",
             self.task_args["index_id"]
         )
 
-        # The path to the index of the subtraction host for the sample.
+        # The path to the SNAP index for the subtraction host for the sample.
         self.paths["host"] = os.path.join(
             self.paths["data"],
             "reference/hosts/index",
@@ -355,7 +438,6 @@ class PathoscopeSNAP(Pathoscope):
         )
 
         self.stage_list += [
-            self.mk_analysis_dir,
             self.map_viruses,
             self.identify_candidate_viruses,
             self.generate_isolate_fasta,
@@ -368,13 +450,13 @@ class PathoscopeSNAP(Pathoscope):
             self.import_results
         ]
 
-    def mk_analysis_dir(self):
-        """ Make a directory for RSEM files within the sample directory """
-        os.mkdir(self.paths["analysis"])
-        self.log("Made analysis directory")
-
+    @virtool.job.stage_method
     def map_viruses(self):
-        """ Returns a list that defines a Bowtie2 command to map the sample reads against the virus index """
+        """
+        Using ``snap single``, maps reads to the main virus reference. This mapping is used to identify candidate
+        viruses.
+
+        """
         command = [
             "snap",
             "single",
@@ -399,65 +481,61 @@ class PathoscopeSNAP(Pathoscope):
 
         self.intermediate["to_viruses"] = to_viruses
 
+    @virtool.job.stage_method
     def build_isolate_index(self):
-        if self.intermediate["use_isolates"]:
-            command = [
-                "snap",
-                "index",
-                self.paths["analysis"] + "/isolate_index.fa",
-                self.paths["analysis"],
-                "-t" + str(self.proc)
-            ]
+        """
+        Uses ``snap index`` to build a SNAP index from the FASTA file generated by
+        :meth:`Pathoscope.generate_isolate_fasta`.
 
-            self.run_process(command)
-        else:
-            self.log("Not generating isolate index")
+        """
+        command = [
+            "snap",
+            "index",
+            self.paths["analysis"] + "/isolate_index.fa",
+            self.paths["analysis"],
+            "-t" + str(self.proc)
+        ]
 
+        self.run_process(command)
+
+    @virtool.job.stage_method
     def map_isolates(self):
-        if self.intermediate["use_isolates"]:
-            self.log("Mapping to isolates")
+        """
+        Using ``snap single``, map the sample reads to the index built using :meth:`.build_isolate_index`.
 
-            command = [
-                "snap",
-                "single",
-                self.paths["analysis"]
-            ]
+        """
+        files = self.calculate_read_path()
 
-            command += self.calculate_read_path()
+        command = [
+            "snap",
+            "single",
+            self.paths["analysis"],
+            files,
+            "-t", str(self.proc - 1),
+            # Aligned output only
+            "-F", "a",
+            # Max edit distance
+            "-d", "7",
+            # Output multiple alignments
+            "-om", "2",
+            # Output only 50 multi-maps per read
+            "-omax", "50",
+            # Output to STDOUT
+            "-o", "-sam", "-",
+        ]
 
-            command += [
-                "-t", str(self.proc - 1),
-                # Aligned output only
-                "-F", "a",
-                # Max edit distance
-                "-d", "7",
-                # Output multiple alignments
-                "-om", "2",
-                # Output only 50 multi-maps per read
-                "-omax", "50",
-                # Output to STDOUT
-                "-o", "-sam", "-",
-            ]
+        # Run the Bowtie2 command append all STDOUT to a list for use in later stages.
+        self.intermediate["to_viruses"] = virtool.pathoscope.sam.Lines(snap=True)
 
-            print(command)
+        self.run_process(command, no_output_failure=True, stdout_handler=self.intermediate["to_viruses"].add)
 
-            del self.intermediate["to_viruses"]
-
-            # Run the Bowtie2 command append all STDOUT to a list for use in later stages.
-            to_viruses = virtool.pathoscope.sam.Lines(snap=True)
-
-            self.run_process(command, no_output_failure=True, stdout_handler=to_viruses.add)
-
-            self.intermediate["to_viruses"] = to_viruses
-
-            # Find and log the candidate genome accessions
-            accessions = self.intermediate["to_viruses"].genomes()
-
-            self.log("Hit " + str(len(accessions)) + "isolate references.")
-        else:
-            self.log("Not mapping to isolates")
-
+    @virtool.job.stage_method
     def save_mapped_reads(self):
+        """
+        The ``snap single`` command cannot output mapped reads in FASTA format. This method extracts the mapped FASTA
+        entries from the input FASTA file based on the mapping results from :meth:`.map_isolates`.
+
+        """
         mapped_read_ids = set(self.intermediate["to_viruses"].reads())
 
         handles = list()
@@ -477,9 +555,13 @@ class PathoscopeSNAP(Pathoscope):
                 for read_id in mapped_read_ids:
                     SeqIO.write(fastq_dict[read_id], mapped_file, "fastq")
 
+    @virtool.job.stage_method
     def map_host(self):
-        self.log("Mapping to hosts")
+        """
+        Using ``snap single``, map the reads that were successfully mapped in :meth:`.map_isolates` to the subtraction
+        host for the sample.
 
+        """
         command = [
             "snap",
             "single",
@@ -491,40 +573,30 @@ class PathoscopeSNAP(Pathoscope):
             "-o", "-sam", "-"
         ]
 
-        to_host = virtool.pathoscope.sam.Lines(snap=True)
+        self.intermediate["to_host"] = virtool.pathoscope.sam.Lines(snap=True)
 
-        self.run_process(command, no_output_failure=True, stdout_handler=to_host.add)
-
-        self.intermediate["to_host"] = to_host
-
-    def subtract_virus_mapping(self):
-        subtraction_count = virtool.pathoscope.subtract.run(
-            self.intermediate["to_viruses"],
-            self.intermediate["to_host"]
-        )
-
-        del self.intermediate["to_host"]
-
-        self.log(str(subtraction_count) + " reads eliminated as host reads")
-
-    def cleanup(self):
-        # Remove changes to sample entry in database that occurred during the failed analysis process
-        self.collection_operation("samples", "_remove_analysis", {
-            "_id": self.sample_id,
-            "analysis_id": self.analysis_id
-        })
+        self.run_process(command, no_output_failure=True, stdout_handler=self.intermediate["to_host"].add)
 
 
-class NuVs(Analyze):
+class NuVs(Base):
 
+    """
+    A job class for NuVs, a custom workflow used for identifying potential viral sequences from sample libraries. The
+    workflow consists of the following steps:
+
+    1. Eliminate known viral reads by mapping the sample reads to the Virtool virus reference using ``bowtie2`` saving
+       unaligned reads.
+    2. Eliminate known host reads by mapping the reads remaining from the previous stage to the sample's subtraction
+       host using ``bowtie2`` and saving the unaligned reads.
+    3. Generate an assembly from the remaining reads using SPAdes.
+    4. Extract all significant open reading frames (ORF) from the assembled contigs.
+    5. Using HMMER/vFAM, identify possible viral domains in the ORFs.
+
+    """
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        self.intermediate = dict()
-        self.results = dict()
-
         self.stage_list += [
-            self.mk_analysis_dir,
             self.map_viruses,
             self.map_host
         ]
@@ -539,14 +611,14 @@ class NuVs(Analyze):
             self.import_results
         ]
 
-    def mk_analysis_dir(self):
-        """ Make a directory for RSEM files within the sample directory """
-        os.mkdir(self.paths["analysis"])
-        self.log("Made analysis directory")
-
+    @virtool.job.stage_method
     def map_viruses(self):
-        """ Returns a list that defines a Bowtie2 command to map the sample reads against the virus index """
-        files = ",".join(self.calculate_read_path())
+        """
+        Maps reads to the main virus reference using ``bowtie2``. Bowtie2 is set to use the search parameter
+        ``--very-fast-local`` and retain unaligned reads to the FASTA file ``unmapped_viruses.fq``.
+
+        """
+        files = self.calculate_read_path()
 
         command = [
             "bowtie2",
@@ -560,9 +632,14 @@ class NuVs(Analyze):
 
         self.run_process(command, no_output_failure=True)
 
+    @virtool.job.stage_method
     def map_host(self):
-        self.log("Mapping to hosts")
+        """
+        Maps unaligned reads from :meth:`.map_viruses` to the sample's subtraction host using ``bowtie2``. Bowtie2 is
+        set to use the search parameter ``--very-fast-local`` and retain unaligned reads to the FASTA file
+        ``unmapped_host.fq``.
 
+        """
         command = [
             "bowtie2",
             "--very-fast-local",
@@ -575,6 +652,7 @@ class NuVs(Analyze):
 
         self.run_process(command, no_output_failure=True)
 
+    @virtool.job.stage_method
     def reunite_pairs(self):
         with open(self.paths["analysis"] + "/unmapped_hosts.fq", "rU") as handle:
             unmapped_roots = {record.id.split(" ")[0] for record in SeqIO.parse(handle, "fastq")}
@@ -595,7 +673,13 @@ class NuVs(Analyze):
                 for root in unmapped_roots:
                     SeqIO.write(s_dict[root], unmapped, "fastq")
 
+    @virtool.job.stage_method
     def assemble(self):
+        """
+        Call ``spades.py`` to assemble contigs from ``unmapped_hosts.fq``. Passes ``21,33,55,75`` for the ``-k``
+        argument.
+
+        """
         command = [
             "spades.py",
             "-t", str(self.proc - 1),
@@ -619,10 +703,20 @@ class NuVs(Analyze):
 
         self.run_process(command)
 
+    @virtool.job.stage_method
     def process_fasta(self):
+        """
+        Finds ORFs in the contigs assembled by :meth:`.assemble`. Only ORFs that are 100+ amino acids long are recorded.
+        Contigs with no acceptable ORFs are discarded.
+
+        """
+        # Contigs that contain at least one acceptable ORF.
         self.results["sequences"] = list()
+
+        # Acceptable ORFs found in assembled contigs.
         self.results["orfs"] = list()
 
+        # A numeric index to identify the assembled contig. Increments by one for each FASTA entry.
         index = 0
 
         for record in SeqIO.parse(os.path.join(self.paths["analysis"], "spades", "contigs.fasta"), "fasta"):
@@ -631,13 +725,17 @@ class NuVs(Analyze):
 
             orf_count = 0
 
+            # Only look for ORFs if the contig is at least 300 nucleotides long.
             if seq_len > 300:
+                # Looks at both forward (+) and reverse (-) strands.
                 for strand, nuc in [(+1, record.seq), (-1, record.seq.reverse_complement())]:
+                    # Look in all three translation frames.
                     for frame in range(3):
                         trans = str(nuc[frame:].translate(1))
                         trans_len = len(trans)
                         aa_start = 0
 
+                        # Extract ORFs.
                         while aa_start < trans_len:
                             aa_end = trans.find("*", aa_start)
 
@@ -665,10 +763,12 @@ class NuVs(Analyze):
 
                             aa_start = aa_end + 1
 
+            # Save the contig sequence if it contains at least one acceptable ORF.
             if orf_count > 0:
                 self.results["sequences"].append(str(record.seq))
                 index += 1
 
+        # Write the ORFs to a FASTA file so that they can be analyzed using HMMER and vFAM.
         with open(os.path.join(self.paths["analysis"], "candidates.fa"), "w") as candidates:
             for entry in self.results["orfs"]:
                 candidates.write(">sequence_{}.{}\n{}\n".format(
@@ -677,9 +777,22 @@ class NuVs(Analyze):
                     entry["pro"]
                 ))
 
+    @virtool.job.stage_method
     def vfam(self):
-        self.results["hmm"] = []
+        """
+        Searches for viral motifs in ORF translations generated by :meth:`.process_fasta`. Calls ``hmmscan`` and
+        searches against ``candidates.fa`` using the profile HMMs in ``data_path/hmm/vFam.hmm``.
 
+        Saves two files:
+
+        - ``hmm.tsv`` contains the raw output of `hmmer`
+        - ``hits.tsv`` contains the `hmmer` results formatted and annotated with the annotations from the Virtool HMM
+          database collection
+
+        """
+        self.results["hmm"] = list()
+
+        # The path to output the hmmer results to.
         hmm_path = os.path.join(self.paths["analysis"], "hmm.tsv")
 
         command = [
@@ -693,6 +806,7 @@ class NuVs(Analyze):
 
         self.run_process(command)
 
+        # The column titles for the ``hits.tsv`` output file.
         header = [
             "index",
             "orf_index",
@@ -705,8 +819,10 @@ class NuVs(Analyze):
             "best_score"
         ]
 
+        # The path to write ``hits.tsv`` to.
         hit_path = os.path.join(self.paths["analysis"], "hits.tsv")
 
+        # Go through the raw HMMER results and annotate the HMM hits with data from the database.
         with open(hmm_path, "r") as hmm_file:
             with open(hit_path, "w") as hit_file:
                 hit_file.write(",".join(header))
@@ -738,7 +854,19 @@ class NuVs(Analyze):
 
                         hit_file.write(joined + "\n")
 
+    @virtool.job.stage_method
     def import_results(self):
+        """
+        Import into the analysis document in the database the following data:
+
+        - the sequences with significant ORFs in them
+        - all significant ORF sequences and metadata
+        - the annotated HMMER results from ``hits.tsv``
+
+        After the import is complete, :meth:`.indexes.Collection.cleanup_index_files` is called to remove any virus
+        indexes that are no longer being used by an active analysis job.
+
+        """
         referenced = [entry["index"] for entry in self.results["hmm"]]
 
         self.results["sequences"] = [
@@ -756,10 +884,3 @@ class NuVs(Analyze):
         })
 
         self.collection_operation("indexes", "cleanup_index_files")
-
-    def cleanup(self):
-        # Remove changes to sample entry in database that occurred during the failed analysis process
-        self.collection_operation("samples", "_remove_analysis", {
-            "_id": self.sample_id,
-            "analysis_id": self.analysis_id
-        })

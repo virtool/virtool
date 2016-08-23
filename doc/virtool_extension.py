@@ -8,6 +8,7 @@ coroutines = set()
 exposed = set()
 synchronous = set()
 unprotected = set()
+stage_methods = set()
 
 def get_signature_node(node):
     for child in node.children:
@@ -22,6 +23,8 @@ def process_nodes(app, doctree):
             signature_node = get_signature_node(node)
             name = signature_node["module"] + "." + signature_node["fullname"]
 
+            word = None
+
             if name in coroutines:
                 word = "coroutine"
 
@@ -34,6 +37,13 @@ def process_nodes(app, doctree):
                 if name in unprotected:
                     word = "unprotected"
 
+                if name in stage_methods:
+                    word = "stage method"
+
+            if name in stage_methods:
+                word = "stage method"
+
+            if word:
                 annotation = addnodes.desc_annotation(
                     word, word, classes=["coroutine"]
                 )
@@ -46,8 +56,9 @@ def get_virtool_attr(virtool_class, name, *defargs):
 
     is_coroutine = safe_getattr(attr, "is_coroutine", False)
 
+    full_name = ".".join([virtool_class.__module__, virtool_class.__name__, name])
+
     if is_coroutine:
-        full_name = ".".join([virtool_class.__module__, virtool_class.__name__, name])
         coroutines.add(full_name)
 
         if safe_getattr(attr, "is_exposed", False):
@@ -59,6 +70,8 @@ def get_virtool_attr(virtool_class, name, *defargs):
         if safe_getattr(attr, "is_unprotected", False):
             unprotected.add(full_name)
 
+    if safe_getattr(attr, "is_stage_method", False):
+        stage_methods.add(full_name)
 
     return attr
 

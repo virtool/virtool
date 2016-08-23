@@ -16,6 +16,7 @@ The server application is built around `Tornado Web Server <http://www.tornadowe
     viruses/viruses
     hosts
     samples
+    analysis
     settings
     users
 

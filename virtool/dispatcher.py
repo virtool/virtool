@@ -18,6 +18,7 @@ import virtool.groups
 import virtool.gen
 import virtool.files
 
+#: The names of all collections registered with the dispatcher.
 COLLECTIONS = [
     "jobs",
     "samples",
@@ -32,17 +33,18 @@ COLLECTIONS = [
 
 logger = logging.getLogger(__name__)
 
+
 class Dispatcher:
+
     """
     Handles all websocket communication with clients. New :class:`.Transaction` objects are generated from incoming
-    messages and passed to `exposed methods <exposed-methods>`_. When exposed methods return, the transactions are
+    messages and passed to :ref:`exposed methods <exposed-methods>`. When exposed methods return, the transactions are
     fulfilled and returned to the client.
 
     The dispatcher also instantiates most of Virtool's :class:`~.database.Collection` subclasses, an instance of
     :class:`.files.Manager`, and an instance of :class:`.files.Watcher`.
 
     """
-
     def __init__(self, server):
         #: A reference to the server that instantiated the :class:`.Dispatcher` object and is the parent object of the
         #: dispatcher.
@@ -78,25 +80,29 @@ class Dispatcher:
 
     def handle(self, message, connection):
         """
-        Handles all inbound messages from websocket clients. Messages have the form:
+        Handles all inbound messages from websocket clients.
 
-        +----------------+-----------------------------------------------------------------------+
-        | Key            | Description                                                           |
-        +================+=======================================================================+
-        | tid            | the id for the transaction, which is unique on the requesting host.   |
-        +----------------+-----------------------------------------------------------------------+
-        | methodName     | the name of the exposed method to call.                               |
-        +----------------+-----------------------------------------------------------------------+
-        | collectionName | the name of the collection that the exposed method is a member of     |
-        +----------------+-----------------------------------------------------------------------+
-        | data           | the data the exposed method should use to do its work                 |
-        +----------------+-----------------------------------------------------------------------+
+        Generates a new :class:`.Transaction` object bound to the transaction id included in the message. The
+        transaction will be assigned as attributes the collection name and exposed method name from the transaction.
+        A reference to the requesting :class:`.SocketHandler` object is also assigned to the transaction's
+        :attr:`~.Transaction.connection` attribute.
 
-        :param message: a JSON-formatted message string from a connected client.
-        :type message: str
+        An attempt is made to call the method identified by the ``collection_name`` and ``method_name`` fields from the
+        message. Warnings are logged when:
+
+        - the collection identified by ``collection_name`` does not exist
+        - the method identified by ``method_name`` does not exist
+        - the method is not :ref:`exposed <exposed-methods>`
+        - the method is :ref:`protected <protected-methods>` and the user is not authorized
+
+        :param message: a message from a connected client.
+        :type message: dict
 
         :param connection: the connection that received the message.
         :type connection: :class:`.web.SocketHandler`
+
+        :return: ``True`` if the message was handled successfully, ``False`` otherwise
+        :rtype: bool
 
         """
         # Create a transaction based on the message.
@@ -121,7 +127,7 @@ class Dispatcher:
                     connection.user["_id"],
                     transaction.collection_name
                 ))
-                return
+                return False
 
         # Get the requested method if possible, otherwise log warning and return.
         try:
@@ -141,7 +147,7 @@ class Dispatcher:
                 transaction.collection_name,
                 transaction.method_name
             ))
-            return
+            return False
 
         if not connection.authorized and not method.is_unprotected:
             logger.warning("Unauthorized connection at {} attempted to call protected method {}.{}".format(
@@ -149,17 +155,28 @@ class Dispatcher:
                 transaction.collection_name,
                 transaction.method_name
             ))
-            return
+            return False
 
         # Call the exposed method if it is unprotected or the requesting connection has been authorized.
         if connection.authorized or method.is_unprotected:
+            call_succeeded = True
+
+            result = None
+
             try:
                 result = method(transaction)
             except TypeError:
+                call_succeeded = False
+
+            if not call_succeeded:
                 result = method()
+
+            assert result
 
             if isinstance(result, tornado.concurrent.Future):
                 self.server.loop.add_future(result, handle_future)
+
+        return True
 
     def dispatch(self, message, connections=None):
         """
@@ -247,8 +264,15 @@ class Dispatcher:
     def sync(self, transaction):
         """
         This exposed method will be requested by the client soon after a its connection is authorized. The client passes
-        manifests of all the minimal documents it has stored locally for each collection. This allows the collections to
-        send update and remove operations to the client to bring its local collections in line with those on the server.
+        manifests of all the minimal documents it has stored locally for each collection. For each collection, the
+        manifest is used to calculate a list of updates and removals required to bring the client's local collection in
+        line with the one on the server. The calculation is performed by :meth:`.Collection.prepare_sync`.
+
+        The passed ``transaction`` is then updated with the number of update and remove operation that will be
+        dispatched to the client. This allows the client to display the progress of the sync operation as it receives
+        updates and removals.
+
+        The updates and removals are passed to :meth:`.Collection.sync`, which dispatches the operations to the client.
 
         Calling this method also sends a current list of all host FASTA files and read files to the client.
 
@@ -275,7 +299,6 @@ class Dispatcher:
         to_sync = dict()
         total_operation_count = 0
 
-
         # Sync the true collection objects.
         for name in sync_list:
             updates, removes = yield self.collections[name].prepare_sync(
@@ -288,7 +311,7 @@ class Dispatcher:
 
         transaction.update(total_operation_count)
 
-            # Sync the host FASTA and read file lists.
+        # Sync the host FASTA and read file lists.
         for name in ["reads", "files"]:
             for file_document in self.watcher.files[name].values():
                 self.dispatch({
@@ -308,12 +331,9 @@ class Dispatcher:
         return True, total_operation_count
 
     @virtool.gen.exposed_method(["modify_options"])
-    def reload(self, transaction):
+    def reload(self):
         """
         Reload the server by calling :meth:`.Application.reload`. See that method's documentation for more information.
-
-        :param transaction: the transaction generated by the request.
-        :type transaction: :class:`.Transaction`
 
         :return: a boolean indicating success and ``None``.
         :rtype: tuple
@@ -324,34 +344,28 @@ class Dispatcher:
         return True, None
 
     @virtool.gen.exposed_method(["modify_options"])
-    def shutdown(self, transaction):
+    def shutdown(self):
         """
         Shutdown the server by calling :func:`sys.exit` with an exit code of 0.
 
-        :param transaction: the transaction generated by the request.
-        :type transaction: :class:`.Transaction`
-
-        .. note::
-
-            The passed transaction is not fulfilled for this exposed method because :func:`sys.exit` is called before
-            the method can return.
-
         """
         yield self.server.shutdown(0)
+
 
 class Transaction:
 
     """
     Transactions represent websocket exchanges between the client and server. When a message is received,
-    :meth:`Dispatcher.handle` is called, immediately generated a new :class:`.Transaction` object. The
+    :meth:`Dispatcher.handle` is called, immediately generating a new :class:`.Transaction` object. The
     `exposed method <exposed-method>`_ requested by the client is then called and passed the transaction as the sole
     parameter.
 
-    **All exposed methods return a tuple containing a boolean indicator of success and any data that should be returned
-    to the requesting client**.
+    While the `exposed method <exposed-method>`_ is executing, it can send updates for the transaction by calling
+    :meth:`Transaction.update` with data that should be sent to the client.
 
-    The :meth:`.Transaction.fulfill` method is called when the exposed method completes to
-    send the information back to the client.
+    When the `exposed method <exposed-method>`_ completes, **it must return return a tuple containing a boolean
+    indicating whether the operation was successful and any data that should be returned to the requesting client. The
+    return value will be used to call :meth:`.Transaction.fulfill` and send the result to the requesting client.
 
     The transaction is identified by a transaction ID (TID) generated by the client. When it is fulfilled and returned
     to the client, the client can identify the transaction by its :abbr:`TID (transaction ID)` and call any functions
@@ -426,6 +440,13 @@ class Transaction:
         }, [self.connection])
 
     def update(self, data):
+        """
+        Sends an update that is tied to the transaction to the requesting client. Useful for giving progress updates.
+
+        :param data: data to send to the client
+        :type data: any
+
+        """
         self.dispatcher.dispatch({
             "collection_name": "transaction",
             "operation": "update",
@@ -437,6 +458,14 @@ class Transaction:
 
 
 def handle_future(future):
+    """
+    Handle a future by returning its result or printing any exception that occurred during its execution. Used when
+    coroutines are called outside of another coroutine and are not ``yielded``.
+
+    :param future: the future to handle
+    :type future: :class:`tornado.concurrent.future`
+
+    """
     try:
         future.result()
     except Exception:

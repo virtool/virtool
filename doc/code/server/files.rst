@@ -1,7 +1,7 @@
 File Management
 ===============
 
-There are a few cases where Virtool users directly observe or interact with files on-disk files on the server host. As a
+There are a few cases where Virtool users directly observe or interact with on-disk files on the server host. As a
 result some functionality has been included to allow transfers between the client and host and to keep file information
 in sync between the client and host.
 
