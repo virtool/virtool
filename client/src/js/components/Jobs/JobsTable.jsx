@@ -96,7 +96,7 @@ var JobsTable = React.createClass({
         if (!(targets instanceof Array)) targets = [targets];
 
         var callback = function () {
-            dispatcher.db.jobs.request(methodName, {_id: _.map(targets, '_id')}).success(succes).failure(failure);
+            dispatcher.db.jobs.request(methodName, {_id: _.map(targets, '_id')}).success(success).failure(failure);
         };
 
         this.confirmManager.show(methodName, callback, targets);
