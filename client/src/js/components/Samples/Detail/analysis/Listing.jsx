@@ -117,7 +117,6 @@ var AnalysisList = React.createClass({
                                         <option value='pathoscope_bowtie'>PathoscopeBowtie</option>
                                         <option value='pathoscope_snap'>PathoscopeSNAP</option>
                                         <option value='nuvs'>NuVs</option>
-                                        <option value='sigma' disabled>Sigma</option>
                                     </Input>
                                 </div>
                             </Flex.Item>
