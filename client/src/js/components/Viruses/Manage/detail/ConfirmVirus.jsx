@@ -63,10 +63,13 @@ var ConfirmVirus = React.createClass({
         this.setState({pending: true}, function () {
             dispatcher.db.viruses.request(
                 'verify_virus',
-                {_id: this.props.detail._id},
-                null,
-                this.onVerificationFailure
-            );
+                {_id: this.props.detail._id}
+            ).failure(function (data) {
+                this.setState({
+                    error: data,
+                    pending: false
+                });
+            }, this);
         });
     },
 
@@ -77,10 +80,7 @@ var ConfirmVirus = React.createClass({
      * @func
      */
     onVerificationFailure: function (data) {
-        this.setState({
-            error: data,
-            pending: false
-        });
+
     },
 
     render: function () {
