@@ -1,6 +1,8 @@
 import os
 import datetime
 
+import tornado.websocket
+
 import virtool.gen
 import virtool.utils
 
@@ -240,20 +242,28 @@ class Watcher:
                     for file_name, file_document in new.items():
                         if file_name not in self.files[name] or file_document != self.files[name][file_name]:
                             # Dispatch an "add" operation if the file is new.
-                            self.dispatcher.dispatch({
-                                "operation": "update",
-                                "collection_name": name,
-                                "data": file_document
-                            }, self.listeners[name])
+                            for listener in list(self.listeners[name]):
+                                try:
+                                    self.dispatcher.dispatch({
+                                        "operation": "update",
+                                        "collection_name": name,
+                                        "data": file_document
+                                    }, [listener])
+                                except tornado.websocket.WebSocketClosedError:
+                                    self.listeners[name].remove(listener)
 
                     for file_name, file_document in self.files[name].items():
                         if file_name not in new:
                             # Dispatch a "remove" operation if the file name is in the old file list but not the new
                             # one.
-                            self.dispatcher.dispatch({
-                                "operation": "remove",
-                                "collection_name": name,
-                                "data": [file_name]
-                            }, self.listeners[name])
+                            for listener in list(self.listeners[name]):
+                                try:
+                                    self.dispatcher.dispatch({
+                                        "operation": "remove",
+                                        "collection_name": name,
+                                        "data": [file_name]
+                                    }, [listener])
+                                except tornado.websocket.WebSocketClosedError:
+                                    self.listeners[name].remove(listener)
 
                     self.files[name] = new
