@@ -59,7 +59,7 @@ var RemoveSequenceMethod = React.createClass({
         })[2][0][1];
 
         // Calculate an isolate name.
-        var isolateName = Utils.formatIsolateName(annotation);
+        var isolateName = Utils.formatIsolateName(this.props.annotation);
 
         // A message shown in the HistoryItem and the detail modal that describes the change.
         var removedMessage = (
