@@ -58,6 +58,10 @@ var Isolate = React.createClass({
         };
     },
 
+    componentDidMount: function () {
+        if (!this.props.isolateId) document.addEventListener("keyup", this.handleKeyUp, true);
+    },
+
     componentWillReceiveProps: function (nextProps) {
         if (nextProps.sourceName !== this.props.sourceName || nextProps.sourceType !== this.props.sourceType) {
             this.setState({
@@ -65,6 +69,14 @@ var Isolate = React.createClass({
                 sourceName: nextProps.sourceName || ''
             });
         }
+
+        if (!this.props.isolateId && nextProps.isolateId) {
+            this.componentWillUnmount();
+        }
+    },
+
+    componentWillUnmount: function () {
+        document.removeEventListener("keyup", this.handleKeyUp, true);
     },
 
     /**
@@ -119,7 +131,7 @@ var Isolate = React.createClass({
                         source_type: this.state.sourceType,
                         source_name: this.state.sourceName
                     }
-                }, adding ? this.props.onAdd: this.toggleEditing);
+                }).success(adding ? this.props.onAdd: this.toggleEditing);
             });
         }
 
@@ -171,7 +183,22 @@ var Isolate = React.createClass({
     toggleEditing: function () {
         var newState = _.assign(this.getInitialState(), {editing: !this.state.editing});
 
-        this.setState(newState);
+        if (this.state.editing) {
+            this.setState(newState, function () {
+                document.removeEventListener("keyup", this.handleKeyUp, true);
+            });
+        } else {
+            this.setState(newState, function () {
+                document.addEventListener("keyup", this.handleKeyUp, true);
+            });
+        }
+    },
+
+    handleKeyUp: function (event) {
+        if (event.keyCode === 27) {
+            event.stopImmediatePropagation();
+            this.props.isolateId ? this.toggleEditing(): this.props.onAdd();
+        }
     },
 
     render: function () {
@@ -188,9 +215,16 @@ var Isolate = React.createClass({
             if (adding || this.state.editing) {
                 icons = (
                     <div className='icon-group'>
-                        <Icon name='floppy' bsStyle='primary' onClick={this.save}/>
-                        <Icon name='cancel-circle' bsStyle='danger'
-                              onClick={adding ? this.props.onAdd: this.toggleEditing}/>
+                        <Icon
+                            name='floppy'
+                            bsStyle='primary'
+                            onClick={this.save}
+                        />
+                        <Icon
+                            name='cancel-circle'
+                            bsStyle='danger'
+                            onClick={adding ? this.props.onAdd: this.toggleEditing}
+                        />
                     </div>
                 );
 
@@ -229,15 +263,21 @@ var Isolate = React.createClass({
             }
         }
 
+        var itemProps = {
+            onClick: this.props.active ? null: this.select,
+            disabled: this.state.pendingRemoval,
+            allowFocus: this.props.active
+        };
+
         // Classes to apply to the ListGroupItem.
-        var classes = CX({
+        itemProps.className = CX({
             band: this.props.active,
             primary: adding,
             warning: this.state.editing && !adding
         });
 
         return (
-            <ListGroupItem onClick={this.props.active ? null: this.select} className={classes} disabled={this.state.pendingRemoval} allowFocus={this.props.active}>
+            <ListGroupItem {...itemProps}>
                 <IsolateHeader sourceType={this.state.sourceType} sourceName={this.state.sourceName}>
                     {icons}
                 </IsolateHeader>
