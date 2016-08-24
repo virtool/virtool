@@ -15,13 +15,13 @@ var React = require('react');
 var Row = require('react-bootstrap/lib/Row');
 var Col = require('react-bootstrap/lib/Col');
 var Modal = require('react-bootstrap/lib/Modal');
+var Badge = require('react-bootstrap/lib/Badge');
 var Alert = require('react-bootstrap/lib/Alert');
 var ListGroup = require('react-bootstrap/lib/ListGroup');
 var ListGroupItem = require('react-bootstrap/lib/ListGroupItem');
 
 var Icon = require('virtool/js/components/Base/Icon.jsx');
 var Flex = require('virtool/js/components/Base/Flex.jsx');
-var Button = require('virtool/js/components/Base/PushButton.jsx');
 var ByteSize = require('virtool/js/components/Base/ByteSize.jsx');
 
 var HMMErrors = require("./Errors.jsx");
@@ -97,14 +97,20 @@ var HMMFiles = React.createClass({
                 var fileComponents = _.sortBy(this.state.files, "_id").map(function (file, index) {
                     return (
                         <ListGroupItem key={index}>
-                            {file._id}
+                            <Row>
+                                <Col md={6}>
+                                    <Icon name="file" /> {file._id}
+                                </Col>
+                                <Col md={6}>
+                                    <ByteSize bytes={file.size} />
+                                </Col>
+                            </Row>
                         </ListGroupItem>
                     );
                 });
 
                 files = (
                     <div>
-                        <h5><strong>HMM Files</strong></h5>
                         <ListGroup>
                             {fileComponents}
                         </ListGroup>
@@ -139,7 +145,7 @@ var HMMFiles = React.createClass({
             <Modal {...this.props} onEntered={this.checkFiles} onExited={this.reset}>
 
                 <Modal.Header {...this.props} closeButton>
-                    HMM Files
+                    HMM Files {this.state.files ? <Badge>{this.state.files.length}</Badge>: null}
                 </Modal.Header>
 
                 <Modal.Body>
