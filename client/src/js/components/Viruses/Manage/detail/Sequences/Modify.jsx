@@ -109,7 +109,7 @@ var ModifySequence = React.createClass({
                 _id: this.props.virusId,
                 isolate_id: this.props.isolateId,
                 new: newEntry
-            }, this.props.onEdit, this.onSaveFailure);
+            }).success(this.props.onEdit).failure(this.onSaveFailure);
         }
     },
 
