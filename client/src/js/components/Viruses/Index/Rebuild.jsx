@@ -53,8 +53,8 @@ var IndexRebuild = React.createClass({
     rebuild: function () {
         this.setState({pending: true}, function () {
             dispatcher.db.indexes.request('rebuild')
-                .success(this.setState({pending: false, error: true}), this)
-                .failure(this.setState({pending: false, error: false}), this);
+                .success(this.setState({pending: false, error: false}), this)
+                .failure(this.setState({pending: false, error: true}), this);
         });
     },
 
@@ -119,7 +119,7 @@ var IndexRebuild = React.createClass({
         return (
             <div>
                 <Alert bsStyle='info'>
-                    <Flex>
+                    <Flex alignItems="center">
                         <Flex.Item grow={1}>
                             {message}
                         </Flex.Item>
