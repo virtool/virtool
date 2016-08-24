@@ -69,13 +69,12 @@ var Sequence = React.createClass({
     },
 
     /**
-     * Toggle editing mode on the sequence component. Triggered by clicked the yellow pencil icon for by cancelling an
+     * Toggle editing mode on the sequence component. Triggered by clicking the yellow pencil icon for by cancelling an
      * edit.
      *
      * @func
      */
     toggleEditing: function () {
-
         if (this.state.editing) {
             this.setState({editing: false}, function () {
                 document.removeEventListener("keyup", this.handleKeyUp, true);
