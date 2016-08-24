@@ -72,9 +72,22 @@ var ModifySequence = React.createClass({
         };
     },
 
+    componentDidMount: function () {
+        document.addEventListener("keyup", this.handleKeyUp, true);
+    },
+
     componentDidUpdate: function (prevProps, prevState) {
         // If the sequenceId (accession) changes, dismiss errors displayed in popovers overlaid on the field.
         if (prevState.error && prevState.sequenceId !== this.state.sequenceId) this.dismissError();
+    },
+
+    componentWillUnmount: function () {
+        document.removeEventListener("keyup", this.handleKeyUp, true);
+    },
+
+    handleKeyUp: function (event) {
+        event.stopImmediatePropagation();
+        if (event.keyCode === 27) this.props.onEdit();
     },
 
     /**

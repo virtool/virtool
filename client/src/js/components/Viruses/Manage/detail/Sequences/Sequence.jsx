@@ -26,9 +26,7 @@ var Modify = require('./Modify.jsx');
  * @class
  */
 var Sequence = React.createClass({
-
-    initialHandler: document.onkeyup,
-
+    
     propTypes: {
         // Data describing the sequence document.
         virusId: React.PropTypes.string,
