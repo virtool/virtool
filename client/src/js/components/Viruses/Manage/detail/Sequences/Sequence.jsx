@@ -27,6 +27,8 @@ var Modify = require('./Modify.jsx');
  */
 var Sequence = React.createClass({
 
+    initialHandler: document.onkeyup,
+
     propTypes: {
         // Data describing the sequence document.
         virusId: React.PropTypes.string,
@@ -53,6 +55,10 @@ var Sequence = React.createClass({
         if ((!nextProps.active && this.props.active) && this.state.editing) this.setState({editing: false});
     },
 
+    componentWillUnmount: function () {
+        document.removeEventListener("keyup", this.handleKeyUp);
+    },
+
     /**
      * Handles a click event on the sequence. Calls the onSelect prop with the sequenceId for this component.
      *
@@ -69,7 +75,21 @@ var Sequence = React.createClass({
      * @func
      */
     toggleEditing: function () {
-        this.setState({editing: !this.state.editing});
+
+        if (this.state.editing) {
+            this.setState({editing: false}, function () {
+                document.removeEventListener("keyup", this.handleKeyUp, true);
+            });
+        } else {
+            this.setState({editing: true}, function () {
+                document.addEventListener("keyup", this.handleKeyUp, true);
+            });
+        }
+    },
+
+    handleKeyUp: function (event) {
+        event.stopImmediatePropagation();
+        if (event.keyCode === 27) this.toggleEditing();
     },
 
     render: function () {
