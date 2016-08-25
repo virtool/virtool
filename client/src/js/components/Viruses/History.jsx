@@ -32,18 +32,16 @@ var VirusHistory = React.createClass({
 
     getInitialState: function () {
         return {
-            documents: dispatcher.db.history.find(),
-            indexVersion: 'unbuilt',
-            filter: null
+            filter: ""
         };
     },
 
     componentDidMount: function () {
-        dispatcher.db.history.on('change', this.update);
+        dispatcher.db.history.on("change", this.forceUpdate);
     },
 
     componentWillUnmount: function () {
-        dispatcher.db.history.off('change', this.update);
+        dispatcher.db.history.off("change", this.forceUpdate);
     },
 
     /**
@@ -53,39 +51,18 @@ var VirusHistory = React.createClass({
      * @func
      */
     filter: function (event) {
-        this.setState({filter: event.target.value ? new RegExp(event.target.value, 'i') : null});
-    },
-
-    /**
-     * Changes state to view changes from a specific index version OR changes that are unbuilt and have no index
-     * version. Called when a new version is selected from the index drop down.
-     *
-     * @param event {object} - the select event from the dropdown
-     * @func
-     */
-    selectIndex: function (event) {
-        var indexVersion = event.target.value === 'unbuilt' ? 'unbuilt': Number(event.target.value);
-        this.setState({indexVersion: indexVersion});
-    },
-
-    /**
-     * Get the latest set of documents from the history collection. Set state so this component updates.
-     *
-     * @func
-     */
-    update: function () {
-        this.setState({documents: dispatcher.db.history.find()});
+        this.setState({filter: event.target.value || null});
     },
 
     render: function () {
 
         // Get all of the different index versions from the history documents.
-        var indexVersions = _.map(this.state.documents, 'index_version');
+        var indexVersions = _.uniq(dispatcher.db.history.extract("index_version"));
 
-        _.remove(indexVersions, function (n) {return n === 'unbuilt'});
+        _.pull(indexVersions, 'unbuilt');
 
         // Get rid of duplicate index versions, sort numerically and reverse the order.
-        indexVersions = _.uniq(indexVersions).sort(function (a,b) {
+        indexVersions = indexVersions.sort(function (a,b) {
             return a - b;
         });
 
@@ -94,17 +71,26 @@ var VirusHistory = React.createClass({
 
         indexVersions.reverse();
 
-        // Get the history documents with the selected index_version.
-        var filtered = _.filter(this.state.documents, function (document) {
-            var filterResult = true;
+        var indexVersion = this.props.route.extra[0];
 
-            if (this.state.filter) filterResult = this.state.filter.test(document.virus);
+        if (indexVersion === undefined) indexVersion = "unbuilt";
 
-            return  filterResult && document.index_version === this.state.indexVersion;
-        }.bind(this));
+        if (indexVersion !== "unbuilt") indexVersion = Number(indexVersion);
+
+        var documents = dispatcher.db.history.chain().find({index_version: indexVersion});
+
+        if (this.state.filter) {
+            documents.find({
+                virus: {
+                    "$regex": [this.state.filter, "i"]
+                }
+            });
+        }
+
+        documents = documents.data();
 
         // Group the history documents by virus_id. The history documents will be grouped into virus-specific panels.
-        var grouped = _.groupBy(filtered, function (document) {
+        var grouped = _.groupBy(documents, function (document) {
             return document.entry_id;
         });
 
@@ -129,7 +115,7 @@ var VirusHistory = React.createClass({
                     onFilter={this.filter}
                     onSelectIndex={this.selectIndex}
                     indexVersions={indexVersions}
-                    selectedVersion={this.state.indexVersion}
+                    selectedVersion={indexVersion}
                 />
 
                 <Pager documents={sorted} />

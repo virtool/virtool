@@ -27,6 +27,12 @@ var Icon = require('virtool/js/components/Base/Icon.jsx');
  */
 var HistoryControl = React.createClass({
 
+    propTypes: {
+        indexVersions: React.PropTypes.array,
+        selectedVersion: React.PropTypes.oneOfType([React.PropTypes.string, React.PropTypes.number]),
+        onFilter: React.PropTypes.func
+    },
+
     componentDidMount: function () {
         this.refs.input.getInputDOMNode().focus();
     },
