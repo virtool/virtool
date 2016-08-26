@@ -12,14 +12,14 @@ import virtool.database
 
 from virtool.hosts import AddHost
 from virtool.samples import ImportReads
-from virtool.indexes import Rebuild
+from virtool.indexes import RebuildIndex
 from virtool.analysis import PathoscopeBowtie, PathoscopeSNAP, NuVs
 
 logger = logging.getLogger(__name__)
 
-#: A dict containing keyed task names with their associated :class:`~.job.Job` subclasses as values.
+#: A dict containing :class:`~.job.Job` subclasses keyed by their task names.
 TASK_CLASSES = {
-    "rebuild": Rebuild,
+    "rebuild_index": RebuildIndex,
     "pathoscope_bowtie": PathoscopeBowtie,
     "pathoscope_snap": PathoscopeSNAP,
     "nuvs": NuVs,
@@ -30,14 +30,17 @@ TASK_CLASSES = {
 
 class Collection(virtool.database.Collection):
     """
-    A subclass of :class:`.database.Collection` used for interacting with job documents and actually active
-    :class:`~.job.Job` objects.
+    Provides functionality for managing active jobs and manipulating and reading the job documents in the MongoDB
+    collection. This object is referred to as the **job manager** in this documentation.
+
+    The job manager controls which jobs are running based on the job resource settings. Jobs that are running or are
+    waiting for resources to become available are represented by instances of the :class:`~.job.Job` subclasses
+    described in :data:`.TASK_CLASSES`. The job manager can create new active jobs and cancel existing active jobs. It
 
     Exposed methods allow clients to archive, cancel, and remove jobs. Internal methods also are provided for starting
     new jobs and interacting with separate job processes.
 
     """
-
     def __init__(self, dispatcher):
         super(Collection, self).__init__("jobs", dispatcher)
 
@@ -67,8 +70,9 @@ class Collection(virtool.database.Collection):
         #: A :class:`multiprocessing.Queue` object used to communicate with job processes.
         self.message_queue = multiprocessing.Queue()
 
-        #: A queue that accepts dicts describing updates to the jobs collection. Updates are performed in the order they
-        #: are added to the queue. Ensures that status updates are added to job documents in the correct order.
+        #: A :class:`tornado.queues.Queue` object that accepts dicts describing updates to the jobs collection. Updates
+        #: are performed in the order they are added to the queue, ensuring that status updates are added to job
+        #: documents in the correct order. This is important as job updates can be generated in quick succession.
         self._action_queue = tornado.queues.Queue()
 
         # Calls the _perform_update method which runs endlessly. Waits for updates for the jobs collection to appear in
@@ -81,9 +85,12 @@ class Collection(virtool.database.Collection):
     @virtool.gen.coroutine
     def sync_processor(self, documents):
         """
-        Redefinition of :meth:`.database.Collection.sync_processor`. Removes the *status* and *args* fields from the
-        jobs record. Adds a username field, an *added* date from the first status entry in the job document, and fields
-        describing the most state and progress for the most recent status entry for the job.
+        Overrides :meth:`.database.Collection.sync_processor`.
+
+        Removes the ``status`` and ``args`` fields from the job document.
+
+        Adds a ``username`` field, an ``added`` date taken from the first status entry in the job document, and
+        ``state`` and ``progress`` fields taken from the most recent status entry in the job document.
 
         :param documents: a list of documents to process.
         :type documents: list
@@ -106,6 +113,78 @@ class Collection(virtool.database.Collection):
             })
 
         return documents
+
+    @virtool.gen.coroutine
+    def new(self, task, task_args, proc, mem, username, job_id=None):
+        """
+        Start a new job. Inserts a new job document into the database, instantiates a new :class:`.Job` object, and
+        creates a new job dict in :attr:`.jobs_dict`. New jobs are in the waiting state.
+
+        :param task: the name of the task to spawn.
+        :type task: str
+
+        :param task_args: arguments to be passed to the new :class:`~.job.Job` object.
+        :type task_args: dict
+
+        :param proc: the number of processor cores to reserve for the job.
+        :type proc: int
+
+        :param mem: the number of GBs of memory to reserve for the job.
+        :type mem: int
+
+        :param username: the name of the user that started the job.
+        :type username: str
+
+        :param job_id: optionally provide a job id--one will be automatically generated otherwise.
+        :type job_id: str or None
+
+        :return: the response from the Mongo insert operation.
+        :rtype: dict
+
+        """
+        # Generate a new random job id.
+        if job_id is None:
+            job_id = yield self.get_new_id()
+
+        # Insert a document in the database describing the new job.
+        response = yield self.insert({
+            "_id": job_id,
+            "task": task,
+            "args": task_args,
+            "proc": proc,
+            "mem": mem,
+            "username": username,
+            "archived": False,
+            "status": [{
+                "state": "waiting",
+                "stage": None,
+                "error": None,
+                "progress": 0,
+                "date": virtool.utils.timestamp()
+            }]
+        })
+
+        # Instantiate a new job object.
+        job = TASK_CLASSES[task](
+            job_id,
+            self.settings.as_dict(),
+            self.message_queue,
+            task,
+            task_args,
+            proc,
+            mem
+        )
+
+        # Add a dict describing the new job to jobs_dict.
+        self.jobs_dict[job_id] = {
+            "obj": job,
+            "task": task,
+            "started": False,
+            "proc": proc,
+            "mem": mem
+        }
+
+        return response
 
     @virtool.gen.exposed_method([])
     def detail(self, transaction):
@@ -153,7 +232,7 @@ class Collection(virtool.database.Collection):
     @virtool.gen.exposed_method(["cancel_job"])
     def cancel(self, transaction):
         """
-        Cancel the job or jobs identified by the passed job id(s).
+        Cancel the job(s) or jobs identified by the passed job id(s) by calling :meth:`._cancel`.
 
         :param transaction: the transaction generated by the request.
         :type transaction: :class:`~.dispatcher.Transaction`
@@ -162,14 +241,23 @@ class Collection(virtool.database.Collection):
         :rtype: tuple
 
         """
-        yield self._cancel(transaction.data["_id"])
+        # Make sure the id(s) are in a list.
+        id_list = virtool.database.coerce_list(transaction.data["_id"])
+
+        # Cancel the job(s) identified in id_list.
+        yield self._cancel(id_list)
 
         return True, None
 
     @virtool.gen.coroutine
     def _cancel(self, id_list):
+        """
+        Cancel the jobs identified
 
-        id_list = virtool.database.coerce_list(id_list)
+        :param id_list:
+        :return:
+
+        """
 
         for job_id in id_list:
             job_dict = self.jobs_dict[job_id]
@@ -347,84 +435,7 @@ class Collection(virtool.database.Collection):
             # Tells the queue to move onto the next item.
             self._action_queue.task_done()
 
-    @virtool.gen.coroutine
-    def new(self, task, task_args, proc, mem, username, job_id=None):
-        """
-        Start a new job. Inserts a new job document into the jobs database collection and create an entry in
-        :attr:`.jobs_dict`. Member dicts ofr :attr:`.jobs_dict` have the form:
 
-        * obj - the :class:`~.job.Job` object.
-        * task - the name of the task.
-        * started - a :class:`bool` indicating whether the job process has been started yet.
-        * proc - the proc allotment for the job.
-        * mem - the mem allotment for the job.
-
-        :param task: the name of the task to spawn.
-        :type task: str
-
-        :param task_args: arguments to be passed to the new :class:`~.job.Job` object.
-        :type task_args: dict
-
-        :param proc: the number of processor cores to reserve for the job.
-        :type proc: int
-
-        :param mem: the number of GBs of memory to reserve for the job.
-        :type mem: int
-
-        :param username: the name of the user that started the job.
-        :type username: str
-
-        :param job_id: optionally provide a job id--one will be automatically generated otherwise.
-        :type job_id: str or None
-
-        :return: the response from the Mongo insert operation.
-        :rtype: dict
-
-        """
-        # Generate a new random job id.
-        if job_id is None:
-            job_id = yield self.get_new_id()
-
-        # Insert a document in the database describing the new job.
-        response = yield self.insert({
-            "_id": job_id,
-            "task": task,
-            "args": task_args,
-            "proc": proc,
-            "mem": mem,
-            "username": username,
-            "archived": False,
-            "status": [{
-                "state": "waiting",
-                "stage": None,
-                "error": None,
-                "progress": 0,
-                "date": virtool.utils.timestamp()
-            }]
-        })
-
-        # Make a dict describing the new job and containing the Job object.
-        job = TASK_CLASSES[task](
-            job_id,
-            self.settings.as_dict(),
-            self.message_queue,
-            task,
-            task_args,
-            proc,
-            mem
-        )
-
-        # Add the job to the _to_add dict ensures it will be added to the jobs dict in the next call to the iterate
-        # method.
-        self.jobs_dict[job_id] = {
-            "obj": job,
-            "task": task,
-            "started": False,
-            "proc": proc,
-            "mem": mem
-        }
-
-        return response
 
     @tornado.gen.coroutine
     def iterate(self):

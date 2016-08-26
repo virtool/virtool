@@ -30,20 +30,25 @@ class Job(multiprocessing.Process):
     def __init__(self, _id, settings, message_queue, task, task_args, proc, mem):
         super(Job, self).__init__()
 
-        # A dictionary of server settings.
+        #: A dictionary of server settings.
         self.settings = settings
 
-        # Used to communicate with the server.
+        #: Used to communicate with the server.
         self.queue = message_queue
 
-        # The job's database _id.
+        #: The job's database id.
         self._id = _id
 
-        # The task name.
+        #: The task name.
         self.task = task
 
+        #: The task args passed from the :meth:`.jobs.Collection.new` method.
         self.task_args = task_args
+
+        #: The number of cores the job is allowed to use.
         self.proc = proc
+
+        #: The amount of memory in GB that the job is allowed to use.
         self.mem = mem
         self.log_list = []
 

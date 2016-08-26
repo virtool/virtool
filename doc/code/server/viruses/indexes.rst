@@ -7,7 +7,7 @@ Indexes
         :members:
         :member-order: bysource
 
-    .. autoclass:: Rebuild
+    .. autoclass:: RebuildIndex
         :members:
         :member-order: bysource
 

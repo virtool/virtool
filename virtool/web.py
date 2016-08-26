@@ -283,8 +283,8 @@ class Application:
         logging.info("Shutting down")
 
         if self.dispatcher:
-            for job_id, job in self.dispatcher.collections["jobs"].jobs_dict.items():
-                yield self.dispatcher.collections["jobs"]._cancel(job_id)
+            id_list = list(self.dispatcher.collections["jobs"].jobs_dict.keys())
+            yield self.dispatcher.collections["jobs"]._cancel(id_list)
 
         timed = 0
 

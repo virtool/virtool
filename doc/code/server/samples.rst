@@ -68,8 +68,6 @@ The ImportReads Job
 
     .. automethod:: mk_sample_dir
 
-    .. automethod:: import_files
-
     .. automethod::
 
 
