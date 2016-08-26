@@ -108,10 +108,6 @@ var General = React.createClass({
                       <td className='col-sm-8'>{data.files.join(', ')}</td>
                     </tr>
                     <tr>
-                      <th>Format</th>
-                      <td>{data.format.toUpperCase()}</td>
-                    </tr>
-                    <tr>
                       <th>Encoding</th>
                       <td>{data.quality.encoding}</td>
                     </tr>
