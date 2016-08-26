@@ -80,6 +80,82 @@ class Collection(virtool.database.Collection):
                         }
                     })
 
+        quality_updates = list()
+
+        for document in db_sync.samples.find({"quality.left": {"$exists": True}}):
+            # The quality data for the left side. Should be in every sample. It is the only side in single end
+            # libraries.
+            left = document["quality"]["left"]
+
+            # The quality data for the right side. Only present for paired-end libraries.
+            right = document["quality"].get("right", None)
+
+            # We will make a quality dict describing one or both sides instead of each separately. Encoding is the same
+            # for both sides.
+            quality = {
+                "encoding": left["encoding"].rstrip(),
+                "count": left["count"],
+                "length": left["length"],
+                "gc": left["gc"]
+            }
+
+            # If a right side is present, sum the read counts and average the GC contents.
+            if right:
+                quality["count"] += right["count"]
+                quality["gc"] = (left["gc"] + right["gc"]) / 2
+
+                quality["length"] = [
+                    min(left["length"][0], right["length"][0]),
+                    max(left["length"][1], right["length"][1])
+                ]
+
+            bases_keys = ["mean", "median", "lower", "upper", "10%", "90%"]
+
+            quality["bases"] = [[base[key] for key in bases_keys] for base in left["bases"]]
+
+            if right:
+                assert(len(left["bases"]) == len(right["bases"]))
+
+                for i, base in enumerate(quality["bases"]):
+                    right_bases = [[base[key] for key in bases_keys] for base in right["bases"]]
+
+                    quality["bases"][i] = average_list(
+                        base,
+                        right_bases[i]
+                    )
+
+            composition_keys = ["g", "a", "t", "c"]
+
+            quality["composition"] = [[base[key] for key in composition_keys] for base in left["composition"]]
+
+            if right:
+                assert (len(left["composition"]) == len(right["composition"]))
+
+                for i, base in enumerate(quality["composition"]):
+                    right_composition = [[base[key] for key in composition_keys] for base in right["composition"]]
+
+                    quality["composition"][i] = average_list(
+                        base,
+                        right_composition[i]
+                    )
+
+            quality["sequences"] = [0] * 50
+
+            for side in [left, right]:
+                if side:
+                    for entry in side["sequences"]:
+                        quality["sequences"][entry["quality"]] += entry["count"]
+
+            quality_updates.append({
+                "_id": document["_id"],
+                "quality": quality
+            })
+
+        for entry in quality_updates:
+            db_sync.samples.update({"_id": entry["_id"]}, {
+                "$set": {"quality": entry["quality"]}
+            })
+
         # If the database was made before different analysis algorithms were introduced, some analysis documents will
         # have no 'algorithm' field. Set these to 'pathoscope_bowtie'.
         db_sync.analyses.update({"algorithm": {"$exists": False}}, {
@@ -92,12 +168,15 @@ class Collection(virtool.database.Collection):
         # started and were not cleaned up properly.
         unready_analyses = [analysis["_id"] for analysis in db_sync.analyses.find({"ready": False}, {"_id": True})]
 
+        db_sync.analyses.remove({"_id": {"$in": unready_analyses}})
+
+        # Remove unready analyses from samples collection, ensure "format" field is unset and increment the document
+        # version.
         db_sync.samples.update({}, {
             "$pull": {"analyses": {"$in": unready_analyses}},
+            "$unset": {"format": ""},
             "$inc": {"_version": 1}
         }, multi=True)
-
-        db_sync.analyses.remove({"_id": {"$in": unready_analyses}})
 
         #: An asynchronous connection to the analyses Mongo collection.
         self.analyses_collection = virtool.utils.get_db_client(self.settings, sync=False)["analyses"]
@@ -160,7 +239,6 @@ class Collection(virtool.database.Collection):
         """
         if sync:
             assert len(connections) == 1
-
 
         connections = connections or self.dispatcher.connections
 
@@ -444,8 +522,6 @@ class Collection(virtool.database.Collection):
         yield self._remove_analysis(data)
 
         return True, None
-
-
 
     @virtool.gen.exposed_method([])
     def quality_pdf(self, transaction):
