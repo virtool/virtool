@@ -29,7 +29,7 @@ var Task = React.createClass({
     },
 
     render: function () {
-        var readOnly = _.includes(['add_host', 'rebuild'], this.props.taskPrefix);
+        var readOnly = _.includes(['add_host', 'rebuild_index'], this.props.taskPrefix);
 
         var displayName;
 
@@ -57,13 +57,25 @@ var Task = React.createClass({
                 <h5><strong>{displayName}</strong></h5>
                 <Row>
                     <Col md={4}>
-                        <TaskField {...this.props} resource='proc' readOnly={readOnly} />
+                        <TaskField
+                            {...this.props}
+                            resource='proc'
+                            readOnly={readOnly}
+                        />
                     </Col>
                     <Col md={4}>
-                        <TaskField {...this.props} resource='mem' readOnly={readOnly} />
+                        <TaskField
+                            {...this.props}
+                            resource='mem'
+                            readOnly={readOnly}
+                        />
                     </Col>
                     <Col md={4}>
-                        <TaskField {...this.props} resource='inst' readOnly={this.props.taskPrefix === 'rebuild'} />
+                        <TaskField
+                            {...this.props}
+                            resource='inst'
+                            readOnly={this.props.taskPrefix === 'rebuild_index'}
+                        />
                     </Col>
                 </Row>
             </ListGroupItem>

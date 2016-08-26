@@ -43,9 +43,9 @@ class Settings:
             "add_host_mem": "int",
             "add_host_inst": "int",
             
-            "rebuild_proc": "int",
-            "rebuild_mem": "int",
-            "rebuild_inst": "int",
+            "rebuild_index_proc": "int",
+            "rebuild_index_mem": "int",
+            "rebuild_index_inst": "int",
 
             "sample_group": "str",
             "sample_group_read": "bool",
@@ -101,9 +101,9 @@ class Settings:
             "add_host_mem": 4,
             "add_host_inst": 2,
 
-            "rebuild_proc": 2,
-            "rebuild_mem": 4,
-            "rebuild_inst": 1,
+            "rebuild_index_proc": 2,
+            "rebuild_index_mem": 4,
+            "rebuild_index_inst": 1,
 
             "sample_group": "none",
             "sample_group_read": True,

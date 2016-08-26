@@ -38,7 +38,7 @@ class Collection(virtool.database.Collection):
         ]})
 
     @virtool.gen.exposed_method(["rebuild_index"])
-    def rebuild(self, transaction):
+    def rebuild_index(self, transaction):
         """
         Starts a job to rebuild the viruses Bowtie2 index on disk. Does a check to make sure there are no unverified
         viruses in the collection and updates virus history to show the version and id of the new index.
@@ -101,7 +101,7 @@ class Collection(virtool.database.Collection):
             }
 
             # Start the job.
-            yield self.dispatcher.collections["jobs"].new("rebuild", task_args, 2, 2, user["_id"])
+            yield self.dispatcher.collections["jobs"].new("rebuild_index", task_args, 2, 2, user["_id"])
 
             return True, None
 
@@ -227,7 +227,7 @@ class Collection(virtool.database.Collection):
                     pass
 
 
-class Rebuild(virtool.job.Job):
+class RebuildIndex(virtool.job.Job):
     """
     Job object that rebuilds the viral Bowtie2 index from the viral sequence database. Job stages are:
 
@@ -239,7 +239,7 @@ class Rebuild(virtool.job.Job):
 
     """
     def __init__(self, *args, **kwargs):
-        super(Rebuild, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
         self.stage_list = [
             self.mk_index_dir,
