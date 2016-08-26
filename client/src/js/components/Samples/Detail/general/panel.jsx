@@ -16,19 +16,32 @@ var General = React.createClass({
         var paired = 'No';
         if (data.paired) {paired = 'Yes';}
 
-        var nameCell;
-        var hostCell;
-        var isolateCell;
+        var cells = ["name", "host", "isolate"].map(function (field) {
 
-        if (this.props.canModify) {
-            nameCell = <InputCell _id={data._id} field="name" value={data.name} className='col-sm-8' />;
-            hostCell = <InputCell _id={data._id} field="host" value={data.host} className='col-sm-8' />;
-            isolateCell = <InputCell _id={data._id} field="isolate" value={data.isolate} className='col-sm-8' />;
-        } else {
-            nameCell = <td className='col-sm-8'>{data.name}</td>;
-            hostCell = <td className='col-sm-8'>{data.host}</td>;
-            isolateCell = <td className='col-sm-8'>{data.isolate}</td>;
-        }
+            var inputCell;
+
+            if (this.props.canModify) {
+                inputCell = (
+                    <InputCell
+                        _id={data._id}
+                        field={field}
+                        value={data[field]}
+                        className="col-sm-8"
+                        collection={dispatcher.db.samples}
+                    />
+                );
+            } else {
+                inputCell = <td className='col-sm-8'>{data.name}</td>;
+            }
+
+            return (
+                <tr key={field}>
+                    <th className="col-md-4">{_.capitalize(field)}</th>
+                    {inputCell}
+                </tr>
+            );
+
+        }, this);
 
         var databaseIdRow = dispatcher.user.settings.show_ids ? (
             <tr>
@@ -53,18 +66,7 @@ var General = React.createClass({
                 </h5>
                 <table className='table table-bordered'>
                   <tbody>
-                    <tr>
-                      <th className='col-sm-4'>Name</th>
-                        {nameCell}
-                    </tr>
-                    <tr>
-                      <th>Host</th>
-                        {hostCell}
-                    </tr>
-                    <tr>
-                      <th>Isolate</th>
-                        {isolateCell}
-                    </tr>
+                    {cells}
                     {databaseIdRow}
                     {databaseVersionRow}
                     <tr>
