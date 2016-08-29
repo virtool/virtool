@@ -22,6 +22,7 @@ var Button = require('react-bootstrap/lib/Button');
 var ButtonToolbar = require('react-bootstrap/lib/ButtonToolbar');
 
 var Icon = require('virtool/js/components/Base/Icon.jsx');
+var Flex = require('virtool/js/components/Base/Flex.jsx');
 
 /**
  * A form for adding a new virus, defining its name and abbreviation.
@@ -50,6 +51,10 @@ var AddVirus = React.createClass({
         }
     },
 
+    handleExited: function () {
+        this.setState(this.getInitialState());
+    },
+
     /**
      * Handles change events in input fields. Updates state based on the name and value of the event target.
      *
@@ -76,7 +81,7 @@ var AddVirus = React.createClass({
                     this.replaceState(this.getInitialState());
                     this.props.onHide();
                 }, this)
-                .failure(function () {
+                .failure(function (data) {
                     this.setState({error: data});
                 }, this);
         }
@@ -103,14 +108,25 @@ var AddVirus = React.createClass({
             // sent by the server.
             else {
                 if (this.state.error.name) message = 'Name is already in use';
+
                 if (this.state.error.abbreviation) message = 'Abbreviation is already in use';
-                if (this.state.error.name && this.state.error.abbreviation) message = 'Name and abbreviation already in use';
+
+                if (this.state.error.name && this.state.error.abbreviation) {
+                    message = 'Name and abbreviation are already in use';
+                }
             }
 
             // Construct the alert component. The component will be null if no errors are defined.
             alert = (
                 <Alert bsStyle='danger'>
-                    {message}
+                    <Flex>
+                        <Flex.Item grow={0} shrink={0}>
+                            <Icon name="warning" />
+                        </Flex.Item>
+                        <Flex.Item grow={1} shrink={0} pad>
+                            {message}
+                        </Flex.Item>
+                    </Flex>
                 </Alert>
             );
         }
@@ -123,7 +139,7 @@ var AddVirus = React.createClass({
         };
 
         return (
-            <Modal {...modalProps}>
+            <Modal {...modalProps} onExited={this.handleExited}>
 
                 <Modal.Header {...modalProps} closeButton>
                     New Virus
