@@ -252,7 +252,14 @@ class Collection(virtool.database.Collection):
     @virtool.gen.coroutine
     def _cancel(self, id_list):
         """
-        Cancel the jobs with the ids in ``id_list`.
+        Cancel the jobs with the ids in ``id_list``.
+
+        If a job is waiting to run, it is removed from the :attr:`.jobs_dict` and the job object's
+        :meth:`~.Job.cleanup` method is called. A *cancelled* status entry is added to the job document by calling
+        :meth:`.update_status`.
+
+        If the job is running, the job object's :meth:`~.Job.terminate` method is called. The job object handles the
+        SIGTERM and takes care of calling :meth:`~.Job.cleanup` and :meth:`.update_status`.
 
         :param id_list: the ids of the jobs that should be cancelled.
         :type id_list: list
