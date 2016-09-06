@@ -909,7 +909,9 @@ class Collection(virtool.database.Collection):
         :rtype: tuple
 
         """
-        response = yield self._remove_samples(transaction.data["_id"])
+        id_list = virtool.database.coerce_list(transaction.data["_id"])
+
+        response = yield self._remove_samples(id_list)
 
         return True, response
 
