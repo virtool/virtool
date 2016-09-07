@@ -58,6 +58,7 @@ var Index = React.createClass({
     },
 
     render: function () {
+
         if (dispatcher.db.viruses.count() > 0) {
             // Set to true when a ready index has been seen when mapping through the index documents. Used to mark only the
             // newest ready index with a checkmark in the index list.
@@ -82,13 +83,13 @@ var Index = React.createClass({
                     </FlipMove>
                 </div>
             );
-        } else {
-            return (
-                <Alert bsStyle='warning'>
-                    <Icon name='warning' /> At least one virus must be added to the database before an index can be built.
-                </Alert>
-            );
         }
+
+        return (
+            <Alert bsStyle='warning'>
+                <Icon name='warning' /> At least one virus must be added to the database before an index can be built.
+            </Alert>
+        );
     }
 
 });

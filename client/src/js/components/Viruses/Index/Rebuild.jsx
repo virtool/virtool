@@ -37,11 +37,9 @@ var IndexRebuild = React.createClass({
     },
 
     onUserChange: function () {
-        if (dispatcher.user.permissions.rebuild_index != this.state.canRebuild) {
-            this.setState({
-                canRebuild: dispatcher.user.permissions.rebuild_index
-            });
-        }
+        this.setState({
+            canRebuild: dispatcher.user.permissions.rebuild_index
+        });
     },
 
     /**
@@ -53,8 +51,12 @@ var IndexRebuild = React.createClass({
     rebuild: function () {
         this.setState({pending: true}, function () {
             dispatcher.db.indexes.request('rebuild_index')
-                .success(this.setState({pending: false, error: false}), this)
-                .failure(this.setState({pending: false, error: true}), this);
+                .success(function () {
+                    this.setState({pending: false, error: false});
+                }, this)
+                .failure(function () {
+                    this.setState({pending: false, error: true});
+                }, this);
         });
     },
 
