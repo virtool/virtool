@@ -75,9 +75,7 @@ var HistoryPager = React.createClass({
     },
 
     render: function () {
-
-        console.log(this.props.documents);
-
+        
         var panelStyle = {
             marginBottom: '5px'
         };
