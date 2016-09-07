@@ -31,9 +31,9 @@ var RelativeTime = require('virtool/js/components/Base/RelativeTime.jsx');
 var VirusHistory = React.createClass({
 
     getInitialState: function () {
-        var extra = this.props.route.extra[0];
+        var indexVersion = this.props.route.extra[0] || "unbuilt";
 
-        var indexVersion = extra === "unbuilt" ? extra: Number(extra);
+        if (indexVersion !== "unbuilt") indexVersion = Number(indexVersion);
 
         return {
             filter: "",
@@ -66,11 +66,9 @@ var VirusHistory = React.createClass({
     update: function (event, route) {
         route = route || this.props.route;
 
-        console.log(route);
+        var indexVersion = route.extra[0] || "unbuilt";
 
-        var indexVersion = route.extra[0] === "unbuilt" ? "unbuilt": Number(route.extra[0]);
-
-        console.log(indexVersion);
+        if (indexVersion !== "unbuilt") indexVersion = Number(route.extra[0]);
 
         this.setState({
             documents: dispatcher.db.history.chain().find({index_version: indexVersion})

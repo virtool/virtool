@@ -12,6 +12,7 @@
 'use strict';
 
 var React = require('react');
+var FlipMove = require('react-flip-move');
 var Row = require('./Row.jsx');
 
 /**
@@ -63,9 +64,9 @@ var Body = React.createClass({
         }, this);
 
         return (
-            <tbody>
+            <FlipMove typeName="tbody" leaveAnimation={false}>
                 {rowComponents}
-            </tbody>
+            </FlipMove>
         );
     }
 });
