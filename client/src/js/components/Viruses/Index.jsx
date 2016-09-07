@@ -12,6 +12,7 @@
 'use strict';
 
 var React = require('react');
+var FlipMove = require('react-flip-move');
 var Alert = require('react-bootstrap/lib/Alert');
 var Label = require('react-bootstrap/lib/Label');
 var ListGroup = require('react-bootstrap/lib/ListGroup');
@@ -76,9 +77,9 @@ var Index = React.createClass({
                         documents={this.state.historyEntries}
                         collection={dispatcher.db.viruses}
                     />
-                    <ListGroup condensed>
+                    <FlipMove typeName="div" className="list-group" condensed={true}>
                         {indexComponents}
-                    </ListGroup>
+                    </FlipMove>
                 </div>
             );
         } else {
