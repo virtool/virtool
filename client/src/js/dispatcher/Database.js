@@ -47,15 +47,7 @@ function Database(definitions, dispatcher) {
                             });
                         };
 
-                        var emitChange = function (data) {
-                            collection.emit("change", data);
-                        };
-
                         collection.events["change"] = [];
-
-                        collection.on("insert", emitChange);
-                        collection.on("update", emitChange);
-                        collection.on("delete", emitChange);
 
                         this[collectionName] = collection;
 

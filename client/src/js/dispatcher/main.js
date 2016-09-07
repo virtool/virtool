@@ -187,7 +187,6 @@ function Dispatcher(onReady) {
                 var updates = message.data.constructor === Array ? message.data: [message.data];
 
                 updates.forEach(function (update) {
-
                     var existingDocument = collection.findOne({_id: update._id});
 
                     if (existingDocument) {
@@ -198,10 +197,12 @@ function Dispatcher(onReady) {
                     }
                 });
 
+                collection.emit('change');
             }
 
             if (operation === "remove") {
                 this.db[message.collection_name].removeWhere({"_id": {"$in": message.data}});
+                this.db[message.collection_name].emit('change');
             }
 
         }
