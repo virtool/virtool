@@ -13,6 +13,7 @@
 
 var _ = require('lodash');
 var React = require('react');
+var FlipMove = require('react-flip-move');
 var Row = require('react-bootstrap/lib/Row');
 var Col = require('react-bootstrap/lib/Col');
 var Input = require('react-bootstrap/lib/Input');
@@ -74,6 +75,8 @@ var HistoryPager = React.createClass({
     },
 
     render: function () {
+
+        console.log(this.props.documents);
 
         var panelStyle = {
             marginBottom: '5px'
@@ -139,7 +142,10 @@ var HistoryPager = React.createClass({
             // Render panels with list groups of history items.
             content = (
                 <div>
-                    <PanelGroup>{virusComponents}</PanelGroup>
+                    <FlipMove typeName="div" className="panel-group" duration={200} leaveAnimation={false}>
+                        {virusComponents}
+                    </FlipMove>
+
                     {paginator}
                 </div>
             );

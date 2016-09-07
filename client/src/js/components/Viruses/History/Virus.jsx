@@ -12,6 +12,7 @@
 'use strict';
 
 var React = require('react');
+var FlipMove = require('react-flip-move');
 var ListGroup = require('react-bootstrap/lib/ListGroup');
 var HistoryItem = require('./HistoryItem.jsx');
 
@@ -67,9 +68,9 @@ var VirusHistoryList = React.createClass({
         }, this);
 
         return (
-            <ListGroup componentClass='div' fill>
+            <FlipMove typeName="div" className="list-group" fill={true}>
                 {historyComponents}
-            </ListGroup>
+            </FlipMove>
         );
     }
 });

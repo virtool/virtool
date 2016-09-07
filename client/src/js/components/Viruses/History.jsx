@@ -31,17 +31,26 @@ var RelativeTime = require('virtool/js/components/Base/RelativeTime.jsx');
 var VirusHistory = React.createClass({
 
     getInitialState: function () {
+        var extra = this.props.route.extra[0];
+
+        var indexVersion = extra === "unbuilt" ? extra: Number(extra);
+
         return {
-            filter: ""
+            filter: "",
+            documents: dispatcher.db.history.chain().find({index_version: indexVersion})
         };
     },
 
     componentDidMount: function () {
-        dispatcher.db.history.on("change", this.forceUpdate);
+        dispatcher.db.history.on("change", this.update);
+    },
+
+    componentWillReceiveProps: function (nextProps) {
+        if (!_.isEqual(this.props.route, nextProps.route)) this.update(null, nextProps.route);
     },
 
     componentWillUnmount: function () {
-        dispatcher.db.history.off("change", this.forceUpdate);
+        dispatcher.db.history.off("change", this.update);
     },
 
     /**
@@ -52,6 +61,20 @@ var VirusHistory = React.createClass({
      */
     filter: function (event) {
         this.setState({filter: event.target.value || null});
+    },
+
+    update: function (event, route) {
+        route = route || this.props.route;
+
+        console.log(route);
+
+        var indexVersion = route.extra[0] === "unbuilt" ? "unbuilt": Number(route.extra[0]);
+
+        console.log(indexVersion);
+
+        this.setState({
+            documents: dispatcher.db.history.chain().find({index_version: indexVersion})
+        })
     },
 
     render: function () {
@@ -77,7 +100,7 @@ var VirusHistory = React.createClass({
 
         if (indexVersion !== "unbuilt") indexVersion = Number(indexVersion);
 
-        var documents = dispatcher.db.history.chain().find({index_version: indexVersion});
+        var documents = this.state.documents.copy();
 
         if (this.state.filter) {
             documents.find({
