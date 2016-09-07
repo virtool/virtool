@@ -64,7 +64,6 @@ var VirusDetail = React.createClass({
     render: function () {
 
         var footer;
-        var confirmVirus;
 
         if (this.state.canRemove) {
             footer = (
@@ -77,25 +76,14 @@ var VirusDetail = React.createClass({
             );
         }
 
-        if (this.state.canModify) {
-            confirmVirus = (
-                <ConfirmVirus
-                    show={this.props.detail.modified}
-                    detail={this.props.detail}
-                />
-            );
-        }
-
         return (
             <div>
                 <Modal.Header>
                     Virus Detail
                 </Modal.Header>
-                <Modal.Body>
-                    {/* A four-row table showing the basic information about a virus record */}
+                <Modal.Body typeName="div" className="modal-body" enterAnimation={true} leaveAnimation={true}>
                     <General {...this.props.detail} canModify={this.state.canModify} />
 
-                    {/* A list showing the isolates attached to the virus record */}
                     <Isolates
                         data={this.props.detail.isolates}
                         virusId={this.props.detail._id}
@@ -103,7 +91,10 @@ var VirusDetail = React.createClass({
                         canModify={this.state.canModify}
                     />
 
-                    {confirmVirus}
+                    <ConfirmVirus
+                        show={this.props.detail.modified && this.state.canModify}
+                        detail={this.props.detail}
+                    />
                 </Modal.Body>
 
                 {footer}

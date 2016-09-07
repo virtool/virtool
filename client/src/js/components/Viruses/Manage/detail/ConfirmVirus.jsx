@@ -13,6 +13,7 @@
 
 var _ = require('lodash');
 var React = require('react');
+var FlipMove = require('react-flip-move');
 var Row = require('react-bootstrap/lib/Row');
 var Col = require('react-bootstrap/lib/Col');
 var Alert = require('react-bootstrap/lib/Alert');
@@ -71,16 +72,6 @@ var ConfirmVirus = React.createClass({
                 });
             }, this);
         });
-    },
-
-    /**
-     * Handles a verification failure. Called if the verify request fails.
-     *
-     * @param data {object} - the error data from the server.
-     * @func
-     */
-    onVerificationFailure: function (data) {
-
     },
 
     render: function () {
@@ -184,15 +175,21 @@ var ConfirmVirus = React.createClass({
             );
         }
 
+        var alert;
+
         if (this.props.show) {
-            return (
-                <Alert bsStyle={this.state.error ? 'danger': 'warning'} className='clearfix'>
+            alert = (
+                <Alert key="alert" bsStyle={this.state.error ? 'danger': 'warning'} className='clearfix'>
                     {content}
                 </Alert>
             );
         }
 
-        return <div />;
+        return (
+            <FlipMove duration={200} enterAnimation="fade" leaveAnimation={false} typeName="div">
+                {alert}
+            </FlipMove>
+        );
     }
 
 });
