@@ -1,6 +1,7 @@
 var _ = require('lodash');
 var Numeral = require('numeral');
 var React = require('react');
+var FlipMove = require('react-flip-move');
 var Label = require('react-bootstrap/lib/Label');
 var Table = require('react-bootstrap/lib/Table');
 
@@ -61,9 +62,9 @@ var AnalysisTable = React.createClass({
         return (
             <Table fill>
                 <Header {...this.state} sortTable={this.sortTable} useRelative={this.props.useRelative} />
-                <tbody>
+                <FlipMove typeName="tbody" leaveAnimation={false}>
                     {rowComponents}
-                </tbody>
+                </FlipMove>
             </Table>
         );
     }
