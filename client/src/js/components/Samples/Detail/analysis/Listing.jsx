@@ -14,6 +14,7 @@
 var _ = require('lodash');
 var React = require('react');
 var LinkedStateMixin = require('react-addons-linked-state-mixin');
+var FlipMove = require('react-flip-move');
 var Row = require('react-bootstrap/lib/Row');
 var Col = require('react-bootstrap/lib/Col');
 var Input = require('react-bootstrap/lib/Input');
@@ -172,9 +173,9 @@ var AnalysisList = React.createClass({
         return (
             <div>
                 {adder}
-                <ListGroup componentClass='div'>
+                <FlipMove typeName="ul" className="list-group">
                     {listContent}
-                </ListGroup>
+                </FlipMove>
             </div>
         );
     }
