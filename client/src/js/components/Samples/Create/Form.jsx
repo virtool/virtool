@@ -1,16 +1,6 @@
-var _ = require("lodash");
-var React = require('react');
-var LinkedStateMixin = require('react-addons-linked-state-mixin');
-var Row = require('react-bootstrap/lib/Row');
-var Col = require('react-bootstrap/lib/Col');
-var Alert = require('react-bootstrap/lib/Alert');
-var Badge = require('react-bootstrap/lib/Badge');
-var Input = require('react-bootstrap/lib/Input');
-var Button = require('react-bootstrap/lib/Button');
-var ListGroup =require('react-bootstrap/lib/ListGroup');
-var ListGroupItem =require('react-bootstrap/lib/ListGroupItem');
 
-var InputError = require('virtool/js/components/Base/InputError.jsx');
+
+
 
 var ImportForm = React.createClass({
 
