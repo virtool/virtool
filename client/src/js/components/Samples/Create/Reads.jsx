@@ -14,6 +14,7 @@
 var _ = require('lodash');
 var React = require('react');
 var ReactDOM = require('react-dom');
+var FlipMove = require('react-flip-move');
 var ListGroup = require('react-bootstrap/lib/ListGroup');
 var Overlay = require('react-bootstrap/lib/Overlay');
 var Popover = require('react-bootstrap/lib/Popover');
@@ -180,9 +181,9 @@ var ReadSelector = React.createClass({
                     </div>
 
                     <Panel style={{minHeight: '420px', maxHeight: '420px', overflowY: 'scroll'}}>
-                        <ListGroup fill>
+                        <FlipMove typeName="div" className="list-group" fill={true}>
                             {readComponents}
-                        </ListGroup>
+                        </FlipMove>
                     </Panel>
                 </Panel>
 
