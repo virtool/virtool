@@ -298,6 +298,25 @@ i.hoverable:hover {
     vertical-align: middle;
 }
 
+.modal-body-overlay {
+    text-align: center;
+    position: absolute;
+    display: flex;
+    align-items: center;
+    top: 0;
+    right: 0;
+    height: 100%;
+    width: 100%;
+    z-index: 10000;
+    background: rgba(159, 196, 228, 0.7);
+}
+
+.modal-body-overlay span {
+    flex: auto;
+    color: white;
+    font-size: 24px;
+}
+
 .path-bar-label {
     float: left;
     border-right: 1px solid #CCC;
