@@ -145,8 +145,6 @@ var DynamicTable = React.createClass({
     refresh: function () {
         var documents = this.props.collection.find();
 
-        console.log('refresh');
-
         this.setState({
             documents: documents,
             selected: _.intersection(this.state.selected, _.map(documents, '_id'))

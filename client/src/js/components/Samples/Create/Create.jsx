@@ -158,8 +158,6 @@ var SamplesImport = React.createClass({
 
     render: function () {
 
-        console.log(this.state);
-
         var modalBody;
 
         if (dispatcher.db.hosts.count({added: true}) === 0) {
