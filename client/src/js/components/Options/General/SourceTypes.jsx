@@ -12,8 +12,8 @@
 'use strict';
 
 var _ = require('lodash');
-var CX = require('classnames');
 var React = require('react');
+var FlipMove = require('react-flip-move');
 var Panel = require('react-bootstrap/lib/Panel');
 var Input = require('react-bootstrap/lib/Input');
 var Overlay = require('react-bootstrap/lib/Overlay');
@@ -170,22 +170,38 @@ var SourceTypes = React.createClass({
             );
         }, this);
 
-        return (
-            <Panel>
-                <form onSubmit={this.add}>
-                    <Input
-                        type='text'
-                        ref='input'
-                        value={this.state.value}
-                        buttonAfter={saveButton}
-                        disabled={!this.state.enabled}
-                        onChange={this.handleChange}
-                    />
-                </form>
+        var panelStyle = {
+            height: 134 + 41 * listComponents.length,
+            transition: "height 0.7s"
+        };
 
-                <ListGroup>
-                    {listComponents}
-                </ListGroup>
+        var containerStyle = {
+            height: 50 + 41 * listComponents.length,
+            transition: "height 0.7s",
+            marginBottom: "20px"
+        };
+
+        return (
+            <Panel style={panelStyle}>
+
+                <div style={containerStyle}>
+
+                    <form onSubmit={this.add}>
+                        <Input
+                            type='text'
+                            ref='input'
+                            value={this.state.value}
+                            buttonAfter={saveButton}
+                            disabled={!this.state.enabled}
+                            onChange={this.handleChange}
+                        />
+                    </form>
+
+                    <FlipMove typeName="div" className="list-group">
+                        {listComponents}
+                    </FlipMove>
+
+                </div>
 
                 <PushButton onClick={this.toggleFeature} block>
                     <Checkbox checked={this.state.enabled} /> Enable this feature
