@@ -91,6 +91,7 @@ var UserToolbar = React.createClass({
 
                 <Add
                     show={this.state.showAddUser}
+                    add={this.props.add}
                     onHide={this.hideModal}
                     collection={dispatcher.db.users}
                 />

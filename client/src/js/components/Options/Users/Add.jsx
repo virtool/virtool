@@ -38,7 +38,7 @@ var AddUser = React.createClass({
     mixins: [LinkedStateMixin],
 
     propTypes: {
-        collection: React.PropTypes.object.isRequired,
+        add: React.PropTypes.func.isRequired,
         onHide: React.PropTypes.func.isRequired,
         show: React.PropTypes.bool.isRequired
     },
@@ -53,14 +53,16 @@ var AddUser = React.createClass({
         };
     },
 
-    componentWillUpdate: function (nextProps) {
-        if (nextProps.username !== this.props.username) {
+    componentWillUpdate: function (nextProps, nextState) {
+        if (nextState.username !== this.state.username) {
             this.setState({error: false});
         }
     },
 
     componentDidUpdate: function (prevProps) {
-        if (!prevProps.show && this.props.show) this.refs.username.getInputDOMNode().focus();
+        if (!prevProps.show && this.props.show) {
+            this.refs.username.getInputDOMNode().focus();
+        }
     },
 
     /**
@@ -72,11 +74,11 @@ var AddUser = React.createClass({
     handleSubmit: function (event) {
         event.preventDefault();
 
-        dispatcher.db.users.request('add', {
+        this.props.add({
             _id: this.state.username,
             password: this.state.password,
             force_reset: this.state.forceReset
-        }).success(this.hide).failure(this.showError);
+        }, this.hide, this.showError);
     },
 
     /**
@@ -127,27 +129,26 @@ var AddUser = React.createClass({
                 </Modal.Header>
                 <form onSubmit={this.handleSubmit}>
                     <Modal.Body onHide={this.props.onHide}>
-
-                            <Row>
-                                <Col sm={12}>
-                                    <Input ref='username' type='text' label='Username' valueLink={this.linkState('username')} />
-                                </Col>
-                            </Row>
-                            <Row>
-                                <Col sm={6}>
-                                    <Input type='password' label='Password' valueLink={this.linkState('password')} />
-                                </Col>
-                                <Col sm={6}>
-                                    <Input type='password' label='Confirm' valueLink={this.linkState('confirm')} />
-                                </Col>
-                            </Row>
-                            <Row>
-                                <Col sm={12}>
-                                    <div onClick={this.toggleForceReset} className='pointer'>
-                                        <Checkbox checked={this.state.forceReset} /> Force user to reset password on login
-                                    </div>
-                                </Col>
-                            </Row>
+                        <Row>
+                            <Col sm={12}>
+                                <Input ref='username' type='text' label='Username' valueLink={this.linkState('username')} />
+                            </Col>
+                        </Row>
+                        <Row>
+                            <Col sm={6}>
+                                <Input type='password' label='Password' valueLink={this.linkState('password')} />
+                            </Col>
+                            <Col sm={6}>
+                                <Input type='password' label='Confirm' valueLink={this.linkState('confirm')} />
+                            </Col>
+                        </Row>
+                        <Row>
+                            <Col sm={12}>
+                                <div onClick={this.toggleForceReset} className='pointer'>
+                                    <Checkbox checked={this.state.forceReset} /> Force user to reset password on login
+                                </div>
+                            </Col>
+                        </Row>
                     </Modal.Body>
                     <Modal.Footer onHide={this.props.onHide}>
                         <ButtonToolbar className='pull-right'>

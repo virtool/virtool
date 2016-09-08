@@ -13,6 +13,7 @@
 
 var _ = require('lodash');
 var React = require('react');
+var FlipMove = require('react-flip-move');
 var Row = require('react-bootstrap/lib/Row');
 var Col = require('react-bootstrap/lib/Col');
 var Modal = require('react-bootstrap/lib/Modal');
@@ -42,20 +43,20 @@ var Groups = React.createClass({
         };
     },
 
-    select: function (groupId) {
-        this.setState({activeId: groupId});
-    },
-
-    getEntries: function () {
-        return _.sortBy(dispatcher.db.groups.find(), '_id');
-    },
-
     componentDidMount: function () {
         dispatcher.db.groups.on('change', this.update);
     },
 
     componentWillUnmount: function () {
         dispatcher.db.groups.off('change', this.update);
+    },
+
+    getEntries: function () {
+        return dispatcher.db.groups.chain().find().simplesort('_id').data();
+    },
+
+    select: function (groupId) {
+        this.setState({activeId: groupId});
     },
 
     update: function () {
@@ -78,7 +79,7 @@ var Groups = React.createClass({
         var groupItemComponents = this.state.documents.map(function (document) {
             var props = {
                 key: document._id,
-                className: this.state.activeId == document._id ? 'band': null,
+                active: this.state.activeId == document._id,
                 onClick: function () {this.select(document._id)}.bind(this)
             };
 
@@ -111,15 +112,20 @@ var Groups = React.createClass({
                 <Modal.Body>
                     <Row>
                         <Col md={6}>
-                            <Add collection={dispatcher.db.groups} />
-                            {groupItemComponents}
+                            <FlipMove>
+                                <Add collection={dispatcher.db.groups} />
+                                {groupItemComponents}
+                            </FlipMove>
                         </Col>
                         <Col md={6}>
-                            <Permissions
-                                groupName={activeGroup._id}
-                                permissions={activeGroup.permissions}
-                                collection={dispatcher.db.groups}
-                            />
+                            <FlipMove leaveAnimation={false} duration={200}>
+                                <Permissions
+                                    key={activeGroup._id}
+                                    groupName={activeGroup._id}
+                                    permissions={activeGroup.permissions}
+                                    collection={dispatcher.db.groups}
+                                />
+                            </FlipMove>
                         </Col>
                     </Row>
                 </Modal.Body>

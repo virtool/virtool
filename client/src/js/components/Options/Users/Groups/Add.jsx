@@ -20,10 +20,6 @@ var PushButton = require('virtool/js/components/Base/PushButton.jsx');
 
 var AddGroup = React.createClass({
 
-    propTypes: {
-        collection: React.PropTypes.object.isRequired
-    },
-
     getInitialState: function () {
         return {
             groupName: '',

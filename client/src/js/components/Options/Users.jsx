@@ -13,6 +13,7 @@
 
 var _ = require('lodash');
 var React = require('react');
+var FlipMove = require('react-flip-move');
 var Row = require('react-bootstrap/lib/Row');
 var Col = require('react-bootstrap/lib/Col');
 var Panel = require('react-bootstrap/lib/Panel');
@@ -30,6 +31,7 @@ var Sessions = require('./Users/Sessions.jsx');
 var PrimaryGroup = require('./Users/PrimaryGroup.jsx');
 var GroupsPermissions = require('./Users/GroupsPermissions.jsx');
 
+
 /**
  * A component for managing users that is accessible in the options section. Contains components for changing passwords,
  * forcing password resets, changing user roles, and removing and adding users. All of the sessions registered to each
@@ -40,13 +42,13 @@ var GroupsPermissions = require('./Users/GroupsPermissions.jsx');
 var Users = React.createClass({
 
     getInitialState: function () {
-        var documents = _.sortBy(dispatcher.db.users.find(), '_id');
+        var documents = dispatcher.db.users.chain().find().simplesort('_id');
 
         return {
+            filter: "",
             documents: documents,
-
-            // The id of the user whose panel is currently open.
-            activeId: documents[0]._id
+            activeId: documents.copy().data()[0]._id,
+            addedId: null,
         };
     },
 
@@ -60,18 +62,48 @@ var Users = React.createClass({
         dispatcher.db.groups.off('change', this.update);
     },
 
+    add: function (data, success, failure) {
+        this.setState({
+            addedId: data._id
+        }, function () {
+            dispatcher.db.users.request('add', data)
+                .failure(failure)
+                .success(function () {
+                    success();
+                }, this);
+        });
+    },
+
     /**
      * Called when the users collection changes. Updates the user documents and activeId appropriately.
      */
     update: function () {
-        // Get the updated documents
-        var newDocuments = _.sortBy(dispatcher.db.users.find(), '_id');
-        var activeId = Utils.getNewActiveId(this.state.activeId, this.state.documents, newDocuments);
-        
-        this.setState({
-            documents: newDocuments,
-            activeId: activeId
-        });
+        var newState = {
+            documents: dispatcher.db.users.chain().find().simplesort('_id')
+        };
+
+        if (this.state.addedId) {
+            // Check if the addedId is in the new set of documents. Set it as the activeId if it is in the new set.
+            var addedCount = newState.documents.copy().find({$or: [
+                {_id: {$regex: [this.state.filter, "i"]}},
+                {_id: this.state.activeId}
+            ]}, true).count();
+
+            if (addedCount) {
+                newState.activeId = this.state.addedId;
+                newState.addedId = null;
+            }
+        }
+
+        if (!newState.hasOwnProperty("activeId")) {
+            // If we are not switching focus to a newly added user, check if we have to change the activeId due to the
+            // removal of a user record.
+            if (newState.documents.copy().find({_id: this.state.activeId}, true).count() === 0) {
+                newState.activeId = newState.documents.copy().data()[0]._id;
+            }
+        }
+
+        this.setState(newState);
     },
 
     /**
@@ -80,24 +112,14 @@ var Users = React.createClass({
      * @param event {event} - the input change event.
      * @func
      */
-    onFilter: function (event) {
-        var documents = dispatcher.db.users.find();
-
-        if (event && event.target.value) {
-            var regEx = new RegExp('^' + event.target.value, 'i');
-
-            documents = _.filter(documents, function (document) {
-                return regEx.test(document._id);
-            });
-        }
-
-        this.setState({documents: _.sortBy(documents, '_id')});
+    filter: function (event) {
+        this.setState({filter: event.target.value});
     },
 
     /**
-     * Changes the selected user based on _id. This method is called in the UserEntry commponent when it is clicked.
+     * Changes the selected user based on _id. This method is called in the UserEntry component when it is clicked.
      */
-    selectUser: function (_id) {
+    setActiveId: function (_id) {
         this.setState({activeId: _id});
     },
 
@@ -112,22 +134,28 @@ var Users = React.createClass({
 
     render: function () {
 
-        var userComponents = this.state.documents.map(function (user) {
+        var documents = this.state.documents.copy().find({
+            $or: [
+                {_id: {$regex: [this.state.filter, "i"]}},
+                {_id: this.state.activeId}
+            ]
+        }).data();
+
+        var activeData = _.find(documents, {_id: this.state.activeId});
+
+        var userComponents = documents.map(function (user) {
             return (
                 <UserEntry
-                    {...user}
                     key={user._id}
-                    activeId={this.state.activeId}
-                    disabled={this.state.adding}
-                    handleSelect={this.selectUser}
+                    _id={user._id}
+                    active={activeData._id === user._id}
+                    onClick={this.setActiveId}
                 />
             );
         }, this);
         
         // The content to display in the user panel. Can be user detail and edit fields or it can be the add user form.
         var content;
-
-        var activeData = _.find(this.state.documents, {_id: this.state.activeId});
 
         var removeIcon;
 
@@ -139,7 +167,7 @@ var Users = React.createClass({
                 </div>
             );
         }
-        
+
         // The header of the user detail panel. Contains a remove user icon button.
         var header = (
             <h3>
@@ -151,7 +179,7 @@ var Users = React.createClass({
         );
 
         content = (
-            <Panel header={header}>
+            <Panel header={header} key={activeData._id}>
                 <Password {...activeData} />
                 <GroupsPermissions  {...activeData} />
                 <PrimaryGroup {...activeData} />
@@ -162,15 +190,18 @@ var Users = React.createClass({
         return (
             <Row>
                 <Col sm={4}>
-                    <Toolbar onChange={this.onFilter} />
-                    <Panel>
-                        <ListGroup fill>
-                            {userComponents}
-                        </ListGroup>
-                    </Panel>
+                    <Toolbar
+                        onChange={this.filter}
+                        add={this.add}
+                    />
+                    <FlipMove typeName="div" duration={200} className="list-group">
+                        {userComponents}
+                    </FlipMove>
                 </Col>
                 <Col sm={8}>
-                    {content}
+                    <FlipMove typeName="div" leaveAnimation={false} duration={200}>
+                        {content}
+                    </FlipMove>
                 </Col>
             </Row>
         );
