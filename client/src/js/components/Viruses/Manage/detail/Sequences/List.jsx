@@ -146,8 +146,12 @@ var VirusSequences = React.createClass({
             lastComponent = noSequencesFound
         }
 
+        var divStyle = {
+            overflowY: 'hidden'
+        };
+
         return (
-            <div>
+            <div style={divStyle}>
                 <h5>
                     <strong><Icon name='dna' /> Isolate Sequences </strong>
                     <Badge>{this.props.data.length}</Badge>
