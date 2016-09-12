@@ -10,4 +10,4 @@ __pycache__
 settings.json
 /doc/_build
 /assets/prunus_persica
-*.log
+*.log*
