@@ -55,16 +55,8 @@ tr.shadow-hover:hover td:first-child {
 }
 
 div.hoverable:hover {
-    background: #f7f7f9;
+    background: #f5f5f5;
     cursor: pointer;
-}
-
-.hidden {
-    display: none;
-}
-
-.warning-lines {
-    padding-left: 15px;
 }
 
 h4.main-header {
@@ -77,11 +69,6 @@ h4.main-header {
     width: 8px;
     text-align: center;
     display: inline-block;
-}
-
-.analysis-item:hover {
-    background-color: #f5f5f5;
-    cursor: pointer;
 }
 
 .subnav {
@@ -133,10 +120,6 @@ h4.main-header {
     margin-bottom: 20px;
 }
 
-.textarea {
-    resize: none;
-}
-
 .cell-fit {
     width: 1%;
     white-space: nowrap;
@@ -174,30 +157,6 @@ h4.main-header {
 	animation: anim-rotate 2s infinite linear;
 }
 
-.isolate-selector {
-    padding-right: 5px;
-    float: left;
-    width: 30%;
-}
-
-.isolate-sequences {
-    float: left;
-    padding-left: 5px;
-    width: 70%;
-}
-
-.input-left {
-    padding-right: 5px;
-    float: left;
-    width: 50%;
-}
-
-.input-right {
-    padding-left: 5px;
-    float: left;
-    width: 50%;
-}
-
 .icon-group {
     float: right;
 }
@@ -223,41 +182,6 @@ i.hoverable {
 
 i.hoverable:hover {
     opacity: 1;
-}
-
-.divider {
-    /*border-top: 1px solid #DDDDDD;*/
-    margin: 20px -15px 20px -15px;
-}
-
-.divider.primary {
-    border-top-color: #337ab7;
-}
-
-.divider.warning {
-    border-top-color: #f0ad4e;
-}
-
-.band {
-    box-shadow: inset 5px 0 0 0 #dddddd;
-    margin-bottom: 1px;
-}
-
-.band + .list-group-item {
-    border-top: none;
-    margin-top: -1px;
-}
-
-.band.primary {
-    box-shadow: inset 5px 0 0 0 #337ab7;
-    border-color: #337ab7;
-    background-color: #dbe9f5;
-}
-
-.band.warning {
-    box-shadow: inset 5px 0 0 0 #f0ad4e;
-    border-color: #f0ad4e;
-    background-color: #fcf8e3;
 }
 
 .path-bar {
@@ -474,23 +398,6 @@ p.sequence {
     width: 100%;
 }
 
-.virus-toolbar  {
-    width: 100%;
-    display: flex;
-    flex-direction: row;
-    margin-bottom: 15px;
-}
-
-.virus-toolbar .btn-toolbar {
-    display: flex;
-    flex-wrap: nowrap;
-}
-
-.virus-toolbar-filter {
-    flex: 1;
-    margin-right: 5px;
-}
-
 @keyframes anim-rotate {
 	0% {
 		transform: rotate(0deg);
@@ -526,26 +433,6 @@ div.page-loading {
 
 div.page-loading > * {
     margin: auto;
-}
-
-.notification-area.blue {
-    background-color: rgba(40,96,144,0.5);
-}
-
-.notification-area.blue:hover {
-    background-color: rgba(40,96,144,1.0);
-}
-
-.notification-area.red {
-    background-color: rgba(169,68,66,0.5);
-}
-
-.notification-area.red:hover {
-    background-color: rgba(169, 68, 66, 1.0);
-}
-
-.preserve-whitespace {
-    white-space: pre;
 }
 
 div.div-button {

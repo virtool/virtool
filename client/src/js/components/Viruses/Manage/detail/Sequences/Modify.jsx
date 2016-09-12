@@ -72,24 +72,6 @@ var ModifySequence = React.createClass({
         };
     },
 
-    componentDidMount: function () {
-        document.addEventListener("keyup", this.handleKeyUp, true);
-    },
-
-    componentDidUpdate: function (prevProps, prevState) {
-        // If the sequenceId (accession) changes, dismiss errors displayed in popovers overlaid on the field.
-        if (prevState.error && prevState.sequenceId !== this.state.sequenceId) this.dismissError();
-    },
-
-    componentWillUnmount: function () {
-        document.removeEventListener("keyup", this.handleKeyUp, true);
-    },
-
-    handleKeyUp: function (event) {
-        event.stopImmediatePropagation();
-        if (event.keyCode === 27) this.props.onEdit();
-    },
-
     /**
      * Dismisses and errors displayed on the accession field.
      *
@@ -204,7 +186,6 @@ var ModifySequence = React.createClass({
         var icons;
 
         if (!this.state.pending && this.props.canModify) {
-            
             // Show a save icon if there is no error for the accession field.
             var saveIcon = !this.state.error ? (
                 <Icon
@@ -222,32 +203,11 @@ var ModifySequence = React.createClass({
             );
         }
 
-        var overlay;
-
-        if (this.state.error) {
-            // Set up an overlay to display if there is an error in state.
-            var overlayProps = {
-                target: this.refs.form.getAccessionNode,
-                animation: false,
-                placement: 'top'
-            };
-
-            overlay = (
-                <Overlay {...overlayProps} show={true} onHide={this.dismissError}>
-                    <Popover id='sequence-error-popover'>
-                        {this.state.error}
-                    </Popover>
-                </Overlay>
-            );
-        }
-
         return (
             <ListGroupItem className={'band ' + (adding ? 'primary': 'warning')} allowFocus>
                 <SequenceHeader sequenceId={this.state.sequenceId} definition={this.state.definition}>
                     {icons}
                 </SequenceHeader>
-
-                <LoadingOverlay show={Boolean(this.state.pending)} text={this.state.pending} />
 
                 <SequenceForm
                     ref='form'

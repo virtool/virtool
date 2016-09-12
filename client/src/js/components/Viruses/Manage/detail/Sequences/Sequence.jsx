@@ -12,12 +12,16 @@
 'use strict';
 
 var _ = require('lodash');
+var CX = require('classnames');
 var React = require('react');
+var Collapse = require('react-bootstrap/lib/Collapse');
+
+var Flex = require('virtool/js/components/Base/Flex.jsx');
+var Icon = require('virtool/js/components/Base/Icon.jsx');
 var ListGroupItem = require('virtool/js/components/Base/PushListGroupItem.jsx');
 
 var SequenceHeader = require('./Header.jsx');
-var ReadOnly = require('./ReadOnly.jsx');
-var Modify = require('./Modify.jsx');
+var SequenceForm = require('./Form.jsx');
 
 /**
  * A ListGroupItem-based component that describes a sequence document. Used for reading sequence details, editing
@@ -44,17 +48,78 @@ var Sequence = React.createClass({
         onSelect: React.PropTypes.func
     },
 
+    getDefaultProps: function () {
+        return {
+            sequenceId: '',
+            definition: '',
+            host: '',
+            sequence: ''
+        };
+    },
+
     getInitialState: function () {
-        return {editing: false};
+        return {
+            sequenceId: this.props.sequenceId,
+            definition: this.props.definition,
+            host: this.props.host,
+            sequence: this.props.sequence,
+
+            editing: false
+        };
     },
 
     componentWillReceiveProps: function (nextProps) {
+
+        var state = this.getInitialState();
+
         // If the sequence was editing, but loses active status, disable editing in state.
-        if ((!nextProps.active && this.props.active) && this.state.editing) this.setState({editing: false});
+        if ((!nextProps.active && this.props.active) && this.state.editing) {
+            state.editing = false;
+        }
+
+        if (!_.isEqual(this.props, nextProps)) {
+            _.assign(state, nextProps, {});
+            state.editing = false;
+        }
+
+        this.setState(state);
     },
 
     componentWillUnmount: function () {
-        document.removeEventListener("keyup", this.handleKeyUp);
+        document.removeEventListener("keyup", this.handleKeyUp, true);
+    },
+
+    handleKeyUp: function (event) {
+        if (event.keyCode === 27) {
+            event.stopImmediatePropagation();
+            this.toggleEditing();
+        }
+    },
+
+    /**
+     * Send a request to the server to upsert a sequence. Triggered by clicking the save icon button (blue floppy) or
+     * by a submit event on the form.
+     *
+     * @param event {object} - the event that triggered this callback. Will be used to prevent the default action.
+     * @func
+     */
+    save: function (event) {
+        event.preventDefault();
+
+        var newEntry = _.assign(_.pick(this.state, ['definition', 'host', 'sequence']), {
+            _id: this.props.sequenceId,
+            isolate_id: this.props.isolateId
+        });
+
+        dispatcher.db.viruses.request('update_sequence', {
+            _id: this.props.virusId,
+            isolate_id: this.props.isolateId,
+            new: newEntry
+        }).failure(this.onSaveFailure);
+    },
+
+    update: function (data) {
+        this.setState(data);
     },
 
     /**
@@ -74,7 +139,7 @@ var Sequence = React.createClass({
      */
     toggleEditing: function () {
         if (this.state.editing) {
-            this.setState({editing: false}, function () {
+            this.setState(this.getInitialState(), function () {
                 document.removeEventListener("keyup", this.handleKeyUp, true);
             });
         } else {
@@ -84,39 +149,74 @@ var Sequence = React.createClass({
         }
     },
 
-    handleKeyUp: function (event) {
-        event.stopImmediatePropagation();
-        if (event.keyCode === 27) this.toggleEditing();
-    },
-
     render: function () {
+
+        var icons = [];
+
+        if (this.props.canModify && this.props.active && !this.state.editing) {
+            icons = [
+                <Icon
+                    key="edit"
+                    name='pencil'
+                    bsStyle='warning'
+                    onClick={this.toggleEditing}
+                />
+            ];
+        }
+
+        if (this.state.editing) {
+            icons = [
+                <Icon
+                    key="save"
+                    name="floppy"
+                    bsStyle="primary"
+                    onClick={this.save}
+                />,
+
+                <Icon
+                    key="cancel"
+                    name="cancel-circle"
+                    bsStyle="danger"
+                    onClick={this.toggleEditing}
+                />
+            ];
+        }
+
+        var itemClass = CX({
+            "list-group-item": true,
+            "hoverable": !this.props.active
+        });
+
+        var itemStyle = this.state.editing ? {background: "#fcf8e3"}: null;
+
         // Props picked from this component's props and passed to the content component regardless of its type.
         var contentProps = _.pick(this.props, [
+            'sequenceId',
             'virusId',
             'isolateId',
-            'definition',
-            'host',
-            'sequence',
             'canModify'
         ]);
 
-        _.assign(contentProps, {
-            onEdit: this.toggleEditing,
-            editing: this.state.editing,
-            sequenceId: this.props._id
+        // Further extend contentProps for the Sequence component.
+        _.merge(contentProps, _.pick(this.state, ['definition', 'host', 'sequence']), {
+            onSubmit: this.save,
+            update: this.update,
+            mode: this.state.editing ? "edit": "read"
         });
 
-        if (this.props.active) {
-            // Return a form component when the sequence event is active. Will be either editable or readOnly.
-            return this.state.editing ? <Modify {...contentProps} />: <ReadOnly {...contentProps} />;
-        } else {
-            // If not active, the ListGroupItem contains only the accession, sequence definition, and icon buttons.
-            return (
-                <ListGroupItem onClick={this.handleClick}>
-                    <SequenceHeader {...contentProps} />
-                </ListGroupItem>
-            );
-        }
+        // If not active, the ListGroupItem contains only the accession, sequence definition, and icon buttons.
+        return (
+            <div className={itemClass} style={itemStyle} onClick={this.props.active ? null: this.handleClick}>
+                <SequenceHeader {...contentProps}>
+                    {icons}
+                </SequenceHeader>
+                <Collapse in={this.props.active}>
+                    <div>
+                        <SequenceForm {...contentProps} />
+                    </div>
+                </Collapse>
+            </div>
+        );
     }
 });
 

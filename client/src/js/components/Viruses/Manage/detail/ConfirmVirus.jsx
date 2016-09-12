@@ -19,6 +19,7 @@ var Col = require('react-bootstrap/lib/Col');
 var Alert = require('react-bootstrap/lib/Alert');
 
 var Utils = require('virtool/js/Utils');
+var Flex = require('virtool/js/components/Base/Flex.jsx');
 var Icon = require('virtool/js/components/Base/Icon.jsx');
 var PushButton = require('virtool/js/components/Base/PushButton.jsx');
 
@@ -163,27 +164,23 @@ var ConfirmVirus = React.createClass({
             );
         } else {
             content = (
-                <Row>
-                    <Col md={9}>
+                <Flex alignItems="center">
+                    <Flex.Item grow={1}>
                         This virus was modified since the last index rebuild. Verify that it is ready to be included in
                         the next rebuild.
-                    </Col>
-                    <Col md={3}>
+                    </Flex.Item>
+                    <Flex.Item grow={0} pad={15}>
                         {verifyButton}
-                    </Col>
-                </Row>
+                    </Flex.Item>
+                </Flex>
             );
         }
 
-        var alert;
-
-        if (this.props.show) {
-            alert = (
-                <Alert key="alert" bsStyle={this.state.error ? 'danger': 'warning'} className='clearfix'>
-                    {content}
-                </Alert>
-            );
-        }
+        var alert = !this.props.show ? <div /> : (
+            <Alert key="alert" bsStyle={this.state.error ? 'danger': 'warning'} className='clearfix'>
+                {content}
+            </Alert>
+        );
 
         return (
             <FlipMove duration={200} enterAnimation="fade" leaveAnimation={false} typeName="div">

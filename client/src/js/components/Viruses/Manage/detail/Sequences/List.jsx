@@ -12,12 +12,13 @@
 'use strict';
 
 var React = require('react');
+var FlipMove = require('react-flip-move');
 var ListGroup = require('react-bootstrap/lib/ListGroup');
 var ListGroupItem = require('virtool/js/components/Base/PushListGroupItem.jsx');
 var Badge = require('react-bootstrap/lib/Badge');
 
 var Sequence = require('./Sequence.jsx');
-var ModifySequence = require('./Modify.jsx');
+var AddSequence = require('./Add.jsx');
 var Icon = require('virtool/js/components/Base/Icon.jsx');
 
 /**
@@ -102,6 +103,7 @@ var VirusSequences = React.createClass({
                 <Sequence
                     {...sequence}
                     key={sequence._id}
+                    sequenceId={sequence._id}
                     isolateId={this.props.isolateId}
                     virusId={this.props.virusId}
                     active={this.state.activeSequenceId === sequence._id}
@@ -124,27 +126,15 @@ var VirusSequences = React.createClass({
             // there is at least one isolate associated with the virus and the active isolate is not in the process of being
             // added (id === 'new').
             if (this.props.isolateId && this.props.isolateId !== 'new') {
-
-                if (this.state.activeSequenceId === 'new') {
-                    // Show a sequence-add form when the activeSequenceId is 'new'.
-                    lastComponent = (
-                        <ModifySequence
-                            virusId={this.props.virusId}
-                            isolateId={this.props.isolateId}
-                            onEdit={this.toggleAdding}
-                            canModify={this.props.canModify}
-                        />
-                    );
-                } else {
-                    // If the active isolate is ready and no sequence is being added, show the add-sequence button.
-                    lastComponent = (
-                        <ListGroupItem onClick={this.toggleAdding}>
-                            <div className='text-center'>
-                                <Icon name='plus-square' bsStyle='primary'/> Add Sequence
-                            </div>
-                        </ListGroupItem>
-                    );
-                }
+                // If the active isolate is ready and no sequence is being added, show the add-sequence button.
+                lastComponent = (
+                    <AddSequence
+                        virusId={this.props.virusId}
+                        isolateId={this.props.isolateId}
+                        toggleAdding={this.toggleAdding}
+                        active={this.state.activeSequenceId === "new"}
+                    />
+                );
             } else {
                 // Show warning when no sequences can be shown because there are no isolates associated with the virurs or
                 // the active isolate is being added (id === 'new').
@@ -162,10 +152,10 @@ var VirusSequences = React.createClass({
                     <strong><Icon name='dna' /> Isolate Sequences </strong>
                     <Badge>{this.props.data.length}</Badge>
                 </h5>
-                <ListGroup>
+                <FlipMove typeName="div" className="list-group">
                     {sequenceComponents}
                     {lastComponent}
-                </ListGroup>
+                </FlipMove>
             </div>
         );
     }

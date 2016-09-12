@@ -12,8 +12,9 @@
 'use strict';
 
 var React = require('react');
-var Row = require('react-bootstrap/lib/Row');
-var Col = require('react-bootstrap/lib/Col');
+
+var Icon = require('virtool/js/components/Base/Icon.jsx');
+var Flex = require('virtool/js/components/Base/Flex.jsx');
 
 /**
  * The header that is always shown at the top of a Sequence component. Displays the sequence accession and definition
@@ -42,17 +43,17 @@ var SequenceHeader = React.createClass({
     render: function () {
         return (
             <h5 className='disable-select'>
-                <Row>
-                    <Col md={10}>
+                <Flex>
+                    <Flex.Item grow={1} shrink={0}>
                         <strong>{this.props.sequenceId || 'Accession'}</strong>
                         <span> - {this.props.definition || 'Definition'}</span>
-                    </Col>
-                    <Col md={2}>
+                    </Flex.Item>
+                    <Flex.Item>
                         <span className='icon-group' onClick={this.stopPropagation}>
                             {this.props.children}
                         </span>
-                    </Col>
-                </Row>
+                    </Flex.Item>
+                </Flex>
             </h5>
         );
     }
