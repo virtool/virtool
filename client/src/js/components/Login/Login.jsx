@@ -1,5 +1,5 @@
 var React = require('react');
-var Input = require('react-bootstrap/lib/Input');
+var Input = require('react-bootstrap/lib/InputGroup');
 var Panel = require('react-bootstrap/lib/Panel');
 
 var Icon = require('virtool/js/components/Base/Icon.jsx');

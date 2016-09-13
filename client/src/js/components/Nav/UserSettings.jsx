@@ -13,7 +13,7 @@
 
 var _ = require('lodash');
 var React = require('react');
-var Input = require('react-bootstrap/lib/Input');
+var Input = require('react-bootstrap/lib/InputGroup');
 var Modal = require('react-bootstrap/lib/Modal');
 var ListGroup = require('react-bootstrap/lib/ListGroup');
 var PushListGroupItem = require('virtool/js/components/Base/PushListGroupItem.jsx');

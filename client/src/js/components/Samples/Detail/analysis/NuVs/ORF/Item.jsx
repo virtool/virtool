@@ -1,5 +1,5 @@
 var React = require('react');
-var Input = require('react-bootstrap/lib/Input');
+var Input = require('react-bootstrap/lib/InputGroup');
 
 var ListGroupItem = require('virtool/js/components/Base/PushListGroupItem.jsx');
 

@@ -15,6 +15,7 @@ var CX = require('classnames');
 var React = require('react');
 var Row = require('react-bootstrap/lib/Row');
 var Col = require('react-bootstrap/lib/Col');
+var Collapse = require('react-bootstrap/lib/Collapse');
 
 var Icon = require('virtool/js/components/Base/Icon.jsx');
 var Radio = require('virtool/js/components/Base/Radio.jsx');
@@ -54,6 +55,7 @@ var Isolate = React.createClass({
             sourceName: this.props.sourceName || '',
 
             pendingRemoval: false,
+            collapsed: true,
             editing: false
         };
     },
@@ -77,6 +79,18 @@ var Isolate = React.createClass({
 
     componentWillUnmount: function () {
         document.removeEventListener("keyup", this.handleKeyUp, true);
+    },
+
+    handleEntered: function () {
+        this.setState({
+            collapsed: false
+        });
+    },
+
+    handleExited: function () {
+        this.setState({
+            collapsed: true
+        });
     },
 
     /**
@@ -112,8 +126,6 @@ var Isolate = React.createClass({
     save: function (event) {
         event.preventDefault();
 
-        var adding = !this.props.isolateId;
-
         var hadChange = (
             this.state.sourceType !== this.props.sourceType ||
             this.state.sourceName !== this.props.sourceName
@@ -131,7 +143,7 @@ var Isolate = React.createClass({
                         source_type: this.state.sourceType,
                         source_name: this.state.sourceName
                     }
-                }).success(adding ? this.props.onAdd: this.toggleEditing);
+                }).success(this.toggleEditing);
             });
         }
 
@@ -197,71 +209,11 @@ var Isolate = React.createClass({
     handleKeyUp: function (event) {
         if (event.keyCode === 27) {
             event.stopImmediatePropagation();
-            this.props.isolateId ? this.toggleEditing(): this.props.onAdd();
+            this.toggleEditing();
         }
     },
 
     render: function () {
-
-        var adding = !this.props.isolateId;
-
-        var icons;
-
-        var isolateForm;
-
-        // If the Isolate component is editing or adding an isolate document, show a form and special icon buttons for
-        // saving an clearing changes.
-        if (this.props.canModify) {
-            if (adding || this.state.editing) {
-                icons = (
-                    <div className='icon-group'>
-                        <Icon
-                            name='floppy'
-                            bsStyle='primary'
-                            onClick={this.save}
-                        />
-                        <Icon
-                            name='cancel-circle'
-                            bsStyle='danger'
-                            onClick={adding ? this.props.onAdd: this.toggleEditing}
-                        />
-                    </div>
-                );
-
-                isolateForm = (
-                    <div style={{paddingTop: '10px'}}>
-                        <IsolateForm
-                            sourceType={this.state.sourceType}
-                            sourceName={this.state.sourceName}
-                            allowedSourceTypes={this.props.allowedSourceTypes}
-                            restrictSourceTypes={this.props.restrictSourceTypes}
-                            onChange={this.handleChange}
-                            onSubmit={this.save}
-                        />
-                    </div>
-                );
-            } else {
-                // Set icons to remove and edit the isolate document.
-                var removeIcon = this.props.active ? (
-                    <Icon
-                        name='remove'
-                        pending={this.state.pendingRemoval}
-                        onClick={this.remove}
-                        bsStyle='danger'
-                    />
-                ) : null;
-
-                icons = (
-                    <div className='icon-group'>
-                        {this.props.active ?
-                            <Icon name='pencil' onClick={this.toggleEditing} bsStyle='warning'/> : null}
-                        {this.props.active && !this.state.pendingRemoval ? removeIcon : null}
-                        {!this.state.pendingRemoval ?
-                            <Radio onClick={this.setAsDefault} checked={this.props.default}/> : null}
-                    </div>
-                );
-            }
-        }
 
         var itemProps = {
             onClick: this.props.active ? null: this.select,
@@ -272,16 +224,75 @@ var Isolate = React.createClass({
         // Classes to apply to the ListGroupItem.
         itemProps.className = CX({
             band: this.props.active,
-            primary: adding,
-            warning: this.state.editing && !adding
+            "active-band": this.state.editing
         });
 
+        var itemStyle = {
+            background: this.state.editing ? "#fcf8e3": null,
+            transition: '0.7s background'
+        };
+
+        var icons;
+
+        if (this.props.canModify) {
+            icons = (
+                <div className="icon-group">
+                    {this.props.active && !this.state.editing ? (
+                        <Icon
+                            name='pencil'
+                            bsStyle='warning'
+                            onClick={this.toggleEditing}
+                        />
+                    ): null}
+                    {this.props.active && !this.state.editing ? (
+                        <Icon
+                            name='remove'
+                            bsStyle='danger'
+                            pending={this.state.pendingRemoval}
+                            onClick={this.remove}
+                        />
+                    ): null}
+                    {this.state.editing ? (
+                        <Icon
+                            name='floppy'
+                            bsStyle='primary'
+                            onClick={this.save}
+                        />
+                    ): null}
+                    {this.state.editing ? (
+                        <Icon
+                            name='cancel-circle'
+                            bsStyle='danger'
+                            onClick={this.toggleEditing}
+                        />
+                    ): null}
+                    <Radio
+                        onClick={this.setAsDefault}
+                        checked={this.props.default}
+                    />
+                </div>
+            )
+
+        }
+
         return (
-            <ListGroupItem {...itemProps}>
+            <ListGroupItem id={"isolate_" + this.props.isolateId} {...itemProps} style={itemStyle}>
                 <IsolateHeader sourceType={this.state.sourceType} sourceName={this.state.sourceName}>
                     {icons}
                 </IsolateHeader>
-                {isolateForm}
+                <Collapse in={this.props.canModify && this.state.editing} onExited={this.handleExited} onEntered={this.handleEntered}>
+                    <div>
+                        <div style={{height: '15px'}} />
+                        <IsolateForm
+                            sourceType={this.state.sourceType}
+                            sourceName={this.state.sourceName}
+                            allowedSourceTypes={this.props.allowedSourceTypes}
+                            restrictSourceTypes={this.props.restrictSourceTypes}
+                            onChange={this.handleChange}
+                            onSubmit={this.save}
+                        />
+                    </div>
+                </Collapse>
             </ListGroupItem>
         );
     }

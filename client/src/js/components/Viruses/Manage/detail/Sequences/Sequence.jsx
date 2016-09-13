@@ -212,6 +212,7 @@ var Sequence = React.createClass({
                 </SequenceHeader>
                 <Collapse in={this.props.active}>
                     <div>
+                        <div style={{height: "15px"}} />
                         <SequenceForm {...contentProps} />
                     </div>
                 </Collapse>

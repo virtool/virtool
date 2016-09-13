@@ -184,6 +184,10 @@ i.hoverable:hover {
     opacity: 1;
 }
 
+.list-group-item.band {
+    box-shadow: inset 7px 0 0 0 #dddddd;
+}
+
 .path-bar {
     display: block;
     background-color: #ffffff;
@@ -312,10 +316,6 @@ i.vtlogo {
 
 .flexible {
     margin: 0 0 0 15px;
-}
-
-.list-group-item.orange-band + .list-group-item {
-    border-top: 1px solid #f4c37d;
 }
 
 td.input-cell {

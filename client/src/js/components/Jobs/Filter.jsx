@@ -15,7 +15,7 @@ var _ = require('lodash');
 var React = require('react');
 var Row = require('react-bootstrap/lib/Row');
 var Col = require('react-bootstrap/lib/Col');
-var Input = require('react-bootstrap/lib/Input');
+var InputGroup = require('react-bootstrap/lib/InputGroup');
 var Icon = require('virtool/js/components/Base/Icon.jsx');
 
 /**

@@ -76,16 +76,12 @@ var VirusDetail = React.createClass({
             );
         }
 
-        var modalStyle = {
-            overflowY: "hidden"
-        };
-
         return (
             <div>
                 <Modal.Header>
                     Virus Detail
                 </Modal.Header>
-                <Modal.Body style={modalStyle} enterAnimation={true} leaveAnimation={true}>
+                <Modal.Body>
                     <General {...this.props.detail} canModify={this.state.canModify} />
 
                     <Isolates

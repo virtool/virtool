@@ -12,7 +12,7 @@
 'use strict';
 
 var React = require('react');
-var Input = require('react-bootstrap/lib/Input');
+var Input = require('react-bootstrap/lib/InputGroup');
 var ButtonToolbar = require('react-bootstrap/lib/ButtonToolbar');
 
 var Add = require('./Add.jsx');

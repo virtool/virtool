@@ -16,6 +16,8 @@ var React = require('react');
 var Row = require('react-bootstrap/lib/Row');
 var Col = require('react-bootstrap/lib/Col');
 
+var Icon = require('virtool/js/components/Base/Icon.jsx');
+
 var SequenceList = require('./Sequences/List.jsx');
 var IsolateList = require('./IsolateList.jsx');
 
@@ -105,6 +107,7 @@ var Isolates = React.createClass({
     },
 
     render: function () {
+
         var sharedProps = {
             virusId: this.props.virusId,
             settings: this.props.settings,
@@ -125,7 +128,7 @@ var Isolates = React.createClass({
                         <IsolateList
                             {...sharedProps}
                             selectIsolate={this.selectIsolate}
-                            onAdd={this.toggleAdding}
+                            toggleAdding={this.toggleAdding}
                             data={this.props.data}
                         />
                     </Col>

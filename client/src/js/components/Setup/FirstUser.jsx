@@ -17,7 +17,7 @@ var LinkedStateMixin = require('react-addons-linked-state-mixin');
 var Row = require('react-bootstrap/lib/Row');
 var Col = require('react-bootstrap/lib/Col');
 var Alert = require('react-bootstrap/lib/Alert');
-var Input = require('react-bootstrap/lib/Input');
+var Input = require('react-bootstrap/lib/InputGroup');
 var Button = require('react-bootstrap/lib/Button');
 
 var Icon = require('virtool/js/components/Base/Icon.jsx');

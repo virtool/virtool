@@ -13,7 +13,7 @@
 
 var React = require('react');
 var ReactDOM = require('react-dom');
-var Input = require('react-bootstrap/lib/Input');
+var Input = require('./Input.jsx');
 var Button = require('react-bootstrap/lib/Button');
 var Icon = require('virtool/js/components/Base/Icon.jsx');
 

@@ -47,26 +47,21 @@ var CreateSequencesChart = function (element, data, width) {
     };
 
     // Set up scales.
-    var y = d3.scale.linear()
+    var y = d3.scaleLinear()
         .range([height, 0])
         .domain([0, _.max(data)]);
 
-    var x = d3.scale.linear()
+    var x = d3.scaleLinear()
         .range([0, width])
         .domain([0, data.length]);
 
     // Set up scales. Use formatter function to make scientific notation tick labels for y-axis.
-    var xAxis = d3.svg.axis()
-        .scale(x)
-        .orient('bottom');
+    var xAxis = d3.axisBottom(x);
 
-    var yAxis = d3.svg.axis()
-        .scale(y)
-        .orient('left')
-        .tickFormat(formatter);
+    var yAxis = d3.axisLeft(y).tickFormat(formatter);
 
     // Build a d3 line function for rendering the plot line.
-    var line = d3.svg.line()
+    var line = d3.line()
         .x(function (d,i) {return x(i);})
         .y(function (d) {return y(d);});
 

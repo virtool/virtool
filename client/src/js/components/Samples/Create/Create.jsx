@@ -20,7 +20,6 @@ var FlipMove = require("react-flip-move");
 var Row = require('react-bootstrap/lib/Row');
 var Col = require('react-bootstrap/lib/Col');
 var Alert = require('react-bootstrap/lib/Alert');
-var Input = require('react-bootstrap/lib/Input');
 var Panel = require('react-bootstrap/lib/Panel');
 var Label = require('react-bootstrap/lib/Label');
 var Modal = require('react-bootstrap/lib/Modal');
@@ -32,7 +31,7 @@ var ListGroupItem =require('react-bootstrap/lib/ListGroupItem');
 var Icon = require('virtool/js/components/Base/Icon.jsx');
 var Flex = require('virtool/js/components/Base/Flex.jsx');
 var PushButton = require('virtool/js/components/Base/PushButton.jsx');
-var InputError = require('virtool/js/components/Base/InputError.jsx');
+var Input = require('virtool/js/components/Base/Input.jsx');
 var ReadSelector = require('./Reads.jsx');
 
 /**
@@ -223,13 +222,13 @@ var SamplesImport = React.createClass({
 
                         <Row ref="nameRow">
                             <Col md={9}>
-                                <InputError
+                                <Input
                                     ref='name'
                                     type='text'
                                     error={error ? <span className='text-danger'>{error}</span> : null}
                                     valueLink={this.linkState('name')}
                                     label='Sample Name'
-                                    autoComplete='off'
+                                    autoComplete={false}
                                 />
                             </Col>
                             <Col md={3}>

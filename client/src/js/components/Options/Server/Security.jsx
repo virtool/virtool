@@ -14,7 +14,7 @@
 var _ = require('lodash');
 var React = require('react');
 var Panel = require('react-bootstrap/lib/Panel');
-var Input = require('react-bootstrap/lib/Input');
+var Input = require('react-bootstrap/lib/InputGroup');
 
 var Checkbox = require('virtool/js/components/Base/Checkbox.jsx');
 var PushButton = require('virtool/js/components/Base/PushButton.jsx');

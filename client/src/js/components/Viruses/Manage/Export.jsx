@@ -15,7 +15,7 @@
 var React = require('react');
 var Modal = require('react-bootstrap/lib/Modal');
 var Panel = require('react-bootstrap/lib/Panel');
-var Input = require('react-bootstrap/lib/Input');
+var Input = require('react-bootstrap/lib/InputGroup');
 
 var PushButton = require('virtool/js/components/Base/PushButton.jsx');
 var ByteSize = require('virtool/js/components/Base/ByteSize.jsx');

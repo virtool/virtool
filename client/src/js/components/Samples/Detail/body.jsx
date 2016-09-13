@@ -81,7 +81,7 @@ var SampleDetail = React.createClass({
             }
 
             body = (
-                <Tabs ref='tabs' activeKey={this.state.activeKey} animation={false} onSelect={this.handleSelect}>
+                <Tabs id="sample-tabs" ref='tabs' activeKey={this.state.activeKey} animation={false} onSelect={this.handleSelect}>
                     <Tab eventKey={1} title='General'>
                         <General {...tabContentProps} />
                     </Tab>
@@ -110,7 +110,7 @@ var SampleDetail = React.createClass({
                     {this.props.detail.name}
                 </Modal.Header>
 
-                <Modal.Body {...this.props}>
+                <Modal.Body>
                     {body}
                 </Modal.Body>
 

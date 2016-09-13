@@ -118,13 +118,15 @@ var DetailModal = React.createClass({
 
         var modalProps = {
             show: show,
+            bsSize: this.props.bsSize,
+            onHide: this.props.onHide,
             onEntered: this.handleEntered,
             onExit: this.handleExit,
             onExited: this.handleExited
         };
 
         return (
-            <Modal {...modalProps} {...this.props}>
+            <Modal {...modalProps}>
                 {modalContent}
             </Modal>
         );

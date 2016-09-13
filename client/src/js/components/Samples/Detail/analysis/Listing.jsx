@@ -15,9 +15,10 @@ var _ = require('lodash');
 var React = require('react');
 var LinkedStateMixin = require('react-addons-linked-state-mixin');
 var FlipMove = require('react-flip-move');
+
 var Row = require('react-bootstrap/lib/Row');
 var Col = require('react-bootstrap/lib/Col');
-var Input = require('react-bootstrap/lib/Input');
+
 var Alert = require('react-bootstrap/lib/Alert');
 var ListGroup = require('react-bootstrap/lib/ListGroup');
 var ListGroupItem = require('react-bootstrap/lib/ListGroupItem');
@@ -25,6 +26,7 @@ var ButtonToolbar = require('react-bootstrap/lib/ButtonToolbar');
 
 var Flex = require('virtool/js/components/Base/Flex.jsx');
 var Icon = require('virtool/js/components/Base/Icon.jsx');
+var Input = require('virtool/js/components/Base/Input.jsx');
 var PushButton = require('virtool/js/components/Base/PushButton.jsx');
 
 
@@ -88,38 +90,24 @@ var AnalysisList = React.createClass({
                     disabled: this.state.pending
                 };
 
-                var selectProps = {
-                    label: 'Algorithm',
-                    type: 'select',
-                    style: {marginRight: '10px'},
-                    valueLink: this.linkState('algorithm'),
-                    disabled: this.state.pending
-                };
-
-                var paddingRight = {
-                    paddingRight: '5px'
-                };
-
-                var paddingTop = {
-                    marginTop: '25px'
-                };
-
                 adder = (
                     <form onSubmit={this.handleSubmit}>
                         <Flex>
                             <Flex.Item grow={1}>
-                                <div style={paddingRight}>
+                                <Input
+                                    type="select"
+                                    label="Algorithm"
+                                    valueLink={this.linkState('algorithm')}
+                                </Input>
                                     <Input {...textProps} />
-                                </div>
                             </Flex.Item>
-                            <Flex.Item grow={0.25}>
-                                <div style={paddingRight}>
-                                    <Input {...selectProps}>
-                                        <option value='pathoscope_bowtie'>PathoscopeBowtie</option>
-                                        <option value='pathoscope_snap'>PathoscopeSNAP</option>
-                                        <option value='nuvs'>NuVs</option>
-                                    </Input>
-                                </div>
+                            <Flex.Item>
+                                    <FormGroup>
+                                        <InputGroup disabled={this.state.pending}>
+                                            <ControlLabel>Algorithm</ControlLabel>
+                                            <FormControl type="select" valueLink={this.linkState('algorithm')} />
+                                        </InputGroup>
+                                    </FormGroup>
                             </Flex.Item>
                             <Flex.Item>
                                 <div style={paddingTop}>

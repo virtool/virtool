@@ -26,7 +26,7 @@ var PushListGroupItem = React.createClass({
     getDefaultProps: function () {
         return {
             allowFocus: false
-        }
+        };
     },
 
     /**

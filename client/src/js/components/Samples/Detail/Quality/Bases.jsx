@@ -13,7 +13,7 @@
 
 var _ = require('lodash');
 var d3 = require('d3');
-var Legend = require('d3-svg-legend/no-extend');
+var Legend = require('d3-svg-legend');
 
 /**
  * A function for creating a chart showing the distribution of base quality at each position in a libraries reads.
@@ -41,21 +41,17 @@ var CreateBasesChart = function (element, data, width) {
     width = width - margin.left - margin.right;
 
     // Set up scales and axes.
-    var y = d3.scale.linear()
+    var y = d3.scaleLinear()
         .range([height, 0])
         .domain([minQuality - 5, 48]);
 
-    var x = d3.scale.linear()
+    var x = d3.scaleLinear()
         .range([0, width])
         .domain([0, data.length]);
 
-    var xAxis = d3.svg.axis()
-        .scale(x)
-        .orient('bottom');
+    var xAxis = d3.axisBottom(x);
 
-    var yAxis = d3.svg.axis()
-        .scale(y)
-        .orient('left');
+    var yAxis = d3.axisLeft(y);
 
     // A function for generating the lines representing mean and median base quality.
     var line = function (data, key) {
@@ -64,7 +60,7 @@ var CreateBasesChart = function (element, data, width) {
             median: 1
         }[key];
 
-        var generator = d3.svg.line()
+        var generator = d3.line()
             .x(function (d, i) {return x(i);})
             .y(function (d) {return y(d[column]);});
 
@@ -75,21 +71,21 @@ var CreateBasesChart = function (element, data, width) {
     var areas = [
         {
             name: 'upper',
-            func: d3.svg.area()
+            func: d3.area()
                 .x(function (d, i) { return x(i);})
                 .y0(function (d) {return y(d[3]);})
                 .y1(function (d) {return y(d[5]);})
         },
         {
             name: 'lower',
-            func: d3.svg.area()
+            func: d3.area()
                 .x(function (d, i) { return x(i);})
                 .y0(function (d) {return y(d[2]);})
                 .y1(function (d) {return y(d[4]);})
         },
         {
             name: 'quartile',
-            func: d3.svg.area()
+            func: d3.area()
                 .x(function (d, i) { return x(i);})
                 .y0(function (d) {return y(d[2]);})
                 .y1(function (d) {return y(d[3]);})
@@ -114,12 +110,12 @@ var CreateBasesChart = function (element, data, width) {
     });
 
     // Define a scale and a d3-legend for rendering a legend on the chart.
-    var legendScale = d3.scale.ordinal()
+    var legendScale = d3.scaleOrdinal()
         .domain(['Mean', 'Median', 'Quartile', 'Decile'])
         .range(['#a94442', '#428bca', '#3C763D', '#FFF475']);
 
-    var legend = Legend.color()
-        .shape('path', d3.svg.symbol().type('square').size(150)())
+    var legend = Legend.legendColor()
+        .shape('path', d3.symbol().type(d3.symbolSquare).size(150))
         .shapePadding(10)
         .scale(legendScale);
 

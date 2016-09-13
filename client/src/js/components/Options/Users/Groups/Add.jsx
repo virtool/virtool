@@ -14,7 +14,7 @@
 var _ = require('lodash');
 var React = require('react');
 
-var Input = require('virtool/js/components/Base/InputError.jsx');
+var Input = require('virtool/js/components/Base/Input.jsx');
 var Icon = require('virtool/js/components/Base/Icon.jsx');
 var PushButton = require('virtool/js/components/Base/PushButton.jsx');
 

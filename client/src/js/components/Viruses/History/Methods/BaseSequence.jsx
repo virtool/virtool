@@ -15,7 +15,7 @@ var React = require('react');
 var Col = require('react-bootstrap/lib/Col');
 var Row = require('react-bootstrap/lib/Row');
 var Badge = require('react-bootstrap/lib/Badge');
-var Input = require('react-bootstrap/lib/Input');
+var Input = require('react-bootstrap/lib/InputGroup');
 
 /**
  * A readOnly form that describes an added sequence. Used as a part of history detail modals showing sequence changes.

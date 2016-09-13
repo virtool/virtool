@@ -17,7 +17,7 @@ var FlipMove = require('react-flip-move');
 var Row = require('react-bootstrap/lib/Row');
 var Col = require('react-bootstrap/lib/Col');
 var Panel = require('react-bootstrap/lib/Panel');
-var Input = require('react-bootstrap/lib/Input');
+var Input = require('react-bootstrap/lib/InputGroup');
 var ListGroup = require('react-bootstrap/lib/ListGroup');
 var ListGroupItem = require('react-bootstrap/lib/ListGroupItem');
 

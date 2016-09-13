@@ -16,7 +16,7 @@ var LinkedStateMixin = require('react-addons-linked-state-mixin');
 
 var Alert = require('react-bootstrap/lib/Alert');
 var Panel = require('react-bootstrap/lib/Panel');
-var Input = require('react-bootstrap/lib/Input');
+var Input = require('react-bootstrap/lib/InputGroup');
 var Table = require('react-bootstrap/lib/Table');
 var ButtonToolbar = require('react-bootstrap/lib/ButtonToolbar');
 

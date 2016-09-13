@@ -13,7 +13,7 @@
 
 var React = require('react');
 var Badge = require('react-bootstrap/lib/Badge');
-var Input = require('react-bootstrap/lib/Input');
+var Input = require('react-bootstrap/lib/InputGroup');
 
 /**
  * A component that wraps a textarea input element. Used for displaying and editing genetic sequences.

@@ -12,13 +12,12 @@
 'use strict';
 
 var React = require('react');
-var Input = require('react-bootstrap/lib/Input');
 var Button = require('react-bootstrap/lib/Button');
 var Alert = require('react-bootstrap/lib/Alert');
 
 var Flex = require('virtool/js/components/Base/Flex.jsx');
 var Icon = require('virtool/js/components/Base/Icon.jsx');
-var InputError = require('virtool/js/components/Base/InputError.jsx');
+var Input = require('virtool/js/components/Base/Input.jsx');
 
 /**
  * A form used by user to change their password.
@@ -32,15 +31,11 @@ var PasswordChangeForm = React.createClass({
     },
 
     componentDidMount: function () {
-        this.focus();
+        this.refs.new.focus();
     },
 
     componentDidUpdate: function () {
-        if (this.props.warnings.length > 0) this.focus();
-    },
-
-    focus: function () {
-        this.refs.new.getInputDOMNode().focus();
+        if (this.props.warnings.length > 0) this.refs.new.focus();
     },
 
     /**
@@ -75,13 +70,14 @@ var PasswordChangeForm = React.createClass({
             <form onSubmit={this.handleSubmit}>
                 <Alert bsStyle='info'>Your password has expired. Please change it before continuing.</Alert>
 
-                <InputError
+                <Input
                     ref='new'
                     name='new'
-                    error={error}
-                    placement='bottom'
                     type='password'
+                    error={error}
+                    errorPlacement='bottom'
                     label='New password'
+
                     value={this.props.new}
                     onChange={this.props.onChange}
                 />

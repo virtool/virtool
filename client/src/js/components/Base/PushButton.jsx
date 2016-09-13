@@ -26,7 +26,7 @@ var PushButton = React.createClass({
     },
 
     /**
-     * Function to call when the button beomces focused. Immediately blurs focus.
+     * Function to call when the button becomes focused. Immediately blurs focus.
      *
      * @param event - the focus event
      */
@@ -35,7 +35,9 @@ var PushButton = React.createClass({
     },
 
     render: function () {
-        return <Button {...this.props} onFocus={this.blur} className={this.props.pullRight ? 'pull-right': null} />;
+        var props = _.omit(this.props, 'pullRight');
+
+        return <Button {...props} onFocus={this.blur} className={this.props.pullRight ? 'pull-right': null} />;
     }
 
 });

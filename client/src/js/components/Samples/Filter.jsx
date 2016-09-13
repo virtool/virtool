@@ -10,9 +10,12 @@
  */
 
 var React = require('react');
+var ReactDOM = require('react-dom');
 var Row = require('react-bootstrap/lib/Row');
 var Col = require('react-bootstrap/lib/Col');
-var Input = require('react-bootstrap/lib/Input');
+var FormGroup = require('react-bootstrap/lib/FormGroup');
+var InputGroup = require('react-bootstrap/lib/InputGroup');
+var FormControl = require('react-bootstrap/lib/FormControl');
 
 var Icon = require('virtool/js/components/Base/Icon.jsx');
 
@@ -28,7 +31,7 @@ var Filter = React.createClass({
     },
 
     componentDidMount: function () {
-        this.refs.name.getInputDOMNode().focus();
+        ReactDOM.findDOMNode(this.refs.name).focus();
     },
 
     /**
@@ -49,15 +52,20 @@ var Filter = React.createClass({
     },
 
     render: function () {
-
         return (
-            <Input
-                type='text'
-                addonBefore={<span><Icon name='search' /> Find</span>}
-                ref='name'
-                onChange={this.handleChange}
-                placeholder='Sample name'
-            />
+            <FormGroup>
+                <InputGroup>
+                    <InputGroup.Addon>
+                        <Icon name='search' /> Find
+                    </InputGroup.Addon>
+                    <FormControl
+                        type='text'
+                        ref='name'
+                        onChange={this.handleChange}
+                        placeholder='Sample name'
+                    />
+                </InputGroup>
+            </FormGroup>
         );
     }
 

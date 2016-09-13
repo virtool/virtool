@@ -46,7 +46,7 @@ var ProgressLogo = React.createClass({
         var height = 200;
         var width = 200;
 
-        this.arc = d3.svg.arc()
+        this.arc = d3.arc()
             .startAngle(0)
             .innerRadius(50)
             .outerRadius(60);

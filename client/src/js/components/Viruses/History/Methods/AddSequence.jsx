@@ -17,7 +17,7 @@ var Row = require('react-bootstrap/lib/Row');
 var React = require('react');
 var Modal = require('react-bootstrap/lib/Modal');
 var Badge = require('react-bootstrap/lib/Badge');
-var Input = require('react-bootstrap/lib/Input');
+var Input = require('react-bootstrap/lib/InputGroup');
 
 var Icon = require('virtool/js/components/Base/Icon.jsx');
 var Utils = require('virtool/js/Utils');

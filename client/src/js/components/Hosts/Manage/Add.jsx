@@ -13,7 +13,7 @@ var React = require('react');
 var Numeral = require('numeral');
 
 var LinkedStateMixin = require('react-addons-linked-state-mixin');
-var Input = require('react-bootstrap/lib/Input');
+var Input = require('react-bootstrap/lib/InputGroup');
 var Modal = require('react-bootstrap/lib/Modal');
 var Table = require('react-bootstrap/lib/Table');
 var Button = require('react-bootstrap/lib/Button');
