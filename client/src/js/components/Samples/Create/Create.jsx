@@ -14,7 +14,6 @@
 
 var _ = require("lodash");
 var React = require('react');
-var LinkedStateMixin = require('react-addons-linked-state-mixin');
 var FlipMove = require("react-flip-move");
 
 var Row = require('react-bootstrap/lib/Row');
@@ -40,8 +39,6 @@ var ReadSelector = require('./Reads.jsx');
  * @class
  */
 var SamplesImport = React.createClass({
-
-    mixins: [LinkedStateMixin],
 
     propTypes: {
         show: React.PropTypes.bool.isRequired,
@@ -80,6 +77,12 @@ var SamplesImport = React.createClass({
     handleExit: function () {
         dispatcher.settings.off('change', this.onSettingsChange);
         this.setState(this.getInitialState());
+    },
+
+    handleChange: function (event) {
+        var data = {};
+        data[event.target.value] = event.target.value;
+        this.setState(data);
     },
 
     onSettingsChange: function () {
@@ -201,7 +204,7 @@ var SamplesImport = React.createClass({
                 error = 'The name field cannot be empty.'
             }
 
-            var pairedValue = this.state.selected.length === 2;
+            var libraryType = this.state.selected.length === 2 ? "Paired": "Unpaired";
 
             var overlay;
 
@@ -224,24 +227,36 @@ var SamplesImport = React.createClass({
                             <Col md={9}>
                                 <Input
                                     ref='name'
+                                    name="name"
                                     type='text'
                                     error={error ? <span className='text-danger'>{error}</span> : null}
-                                    valueLink={this.linkState('name')}
+                                    value={this.state.name}
+                                    onChange={this.handleChange}
                                     label='Sample Name'
                                     autoComplete={false}
                                 />
                             </Col>
                             <Col md={3}>
-                                <Input type='text' label='Isolate' valueLink={this.linkState('isolate')}/>
+                                <Input
+                                    type='text'
+                                    label='Isolate'
+                                    value={this.state.isolate}
+                                    onChange={this.handleChange}
+                                />
                             </Col>
                         </Row>
 
                         <Row ref="hostSubtractionRow">
                             <Col md={6}>
-                                <Input type='text' label='True Host' valueLink={this.linkState('host')}/>
+                                <Input
+                                    type='text'
+                                    label='True Host'
+                                    value={this.state.host}
+                                    onChange={this.handleChange}
+                                />
                             </Col>
                             <Col md={6}>
-                                <Input type='select' label='Subtraction Host' valueLink={this.linkState('subtraction')}>
+                                <Input type='select' label='Subtraction Host' value={this.state.subtraction} onChange={this.handleChange}>
                                     {hostComponents}
                                 </Input>
                             </Col>
@@ -249,11 +264,21 @@ var SamplesImport = React.createClass({
 
                         <Row ref="localeLibraryRow">
                             <Col md={this.state.forceGroupChoice ? 6 : 8}>
-                                <Input type='text' label='Locale' valueLink={this.linkState('locale')}/>
+                                <Input
+                                    type='text'
+                                    label='Locale'
+                                    value={this.state.locale}
+                                    onChange={this.handleChange}
+                                />
                             </Col>
                             {userGroup}
                             <Col md={this.state.forceGroupChoice ? 3 : 4}>
-                                <Input type='text' label='Library Type' value={pairedValue} readOnly/>
+                                <Input
+                                    type='text'
+                                    label='Library Type'
+                                    value={libraryType}
+                                    readOnly={true}
+                                />
                             </Col>
                         </Row>
 
@@ -277,8 +302,8 @@ var SamplesImport = React.createClass({
         }
 
         return (
-            <Modal dialogClassName='modal-lg' {...this.props} onEntered={this.handleEntered} onExit={this.handleExit}>
-                <Modal.Header {...this.props} closeButton>
+            <Modal dialogClassName='modal-lg' show={this.props.show} onHide={this.props.onHide} onEntered={this.handleEntered} onExit={this.handleExit}>
+                <Modal.Header onHide={this.props.onHide} closeButton>
                     Create Sample
                 </Modal.Header>
 

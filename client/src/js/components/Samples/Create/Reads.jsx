@@ -18,7 +18,6 @@ var FlipMove = require('react-flip-move');
 var ListGroup = require('react-bootstrap/lib/ListGroup');
 var Overlay = require('react-bootstrap/lib/Overlay');
 var Popover = require('react-bootstrap/lib/Popover');
-var Input = require('react-bootstrap/lib/InputGroup');
 var Panel = require('react-bootstrap/lib/Panel');
 var Label = require('react-bootstrap/lib/Label');
 var Row = require('react-bootstrap/lib/Row');
@@ -27,6 +26,7 @@ var Modal = require('react-bootstrap/lib/Modal');
 
 var ReadItem = require('./Read.jsx');
 var Icon = require('virtool/js/components/Base/Icon.jsx');
+var Input = require('virtool/js/components/Base/Input.jsx');
 var PushButton = require('virtool/js/components/Base/PushButton.jsx');
 
 /**

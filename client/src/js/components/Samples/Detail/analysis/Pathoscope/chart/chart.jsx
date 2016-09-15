@@ -33,7 +33,7 @@ function Chart(element, props) {
         .attr('transform', 'translate(' + this.margin.left + ',' + this.margin.top + ')');
 
     // Set-up a y-axis that will appear at the top of the chart.
-    this.y = d3.scale.linear()
+    this.y = d3.scaleLinear()
         .range([0, this.width])
         .domain([0, 1]);
 
@@ -53,9 +53,7 @@ function Chart(element, props) {
         var nextLevel = this.props.nextLevel;
         var select = this.props.select;
 
-        var yAxis = d3.svg.axis()
-            .scale(y)
-            .orient("top");
+        var yAxis = d3.axisTop(y);
         
         this.svg.attr("height", this.barHeight * 1.2 * data.length + this.margin.top + this.margin.bottom);
 

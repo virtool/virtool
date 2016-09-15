@@ -22,7 +22,6 @@ var Col = require('react-bootstrap/lib/Col');
 var Alert = require('react-bootstrap/lib/Alert');
 var ListGroup = require('react-bootstrap/lib/ListGroup');
 var ListGroupItem = require('react-bootstrap/lib/ListGroupItem');
-var ButtonToolbar = require('react-bootstrap/lib/ButtonToolbar');
 
 var Flex = require('virtool/js/components/Base/Flex.jsx');
 var Icon = require('virtool/js/components/Base/Icon.jsx');
@@ -47,12 +46,18 @@ var AnalysisList = React.createClass({
 
     getInitialState: function () {
         return {
-            name: '',
+            nickname: '',
             algorithm: 'pathoscope_bowtie',
 
             // True when an analysis request has been sent to the server, but the transaction has not returned.
             pending: false
         }
+    },
+
+    handleChange: function (event) {
+        var data = {};
+        data[event.target.name] = event.target.value;
+        this.setState(data);
     },
 
     /**
@@ -80,37 +85,33 @@ var AnalysisList = React.createClass({
         var adder;
 
         if (this.props.canModify) {
-            if (dispatcher.db.indexes.count({ready: true}) > 0) {
-                
-                var textProps = {
-                    label: 'Name',
-                    type: 'text',
-                    style: {marginRight: '10px'},
-                    valueLink: this.linkState('nickname'),
-                    disabled: this.state.pending
-                };
 
+            var divStyle = {
+                marginBottom: "15px"
+            };
+
+            if (dispatcher.db.indexes.count({ready: true}) > 0) {
                 adder = (
                     <form onSubmit={this.handleSubmit}>
-                        <Flex>
-                            <Flex.Item grow={1}>
+                        <Flex alignItems="flex-end">
+                            <Flex.Item grow={5}>
                                 <Input
-                                    type="select"
-                                    label="Algorithm"
-                                    valueLink={this.linkState('algorithm')}
+                                    name="nickname"
+                                    label="Name"
+                                    value={this.state.nickname}
+                                    onChange={this.handleChange}
+                                    disabled={true}
+                                />
+                            </Flex.Item>
+                            <Flex.Item grow={1} pad>
+                                <Input name="algorithm" type="select" label="Algorithm" value={this.state.algorithm} onChange={this.handleChange}>
+                                    <option value='pathoscope_bowtie'>PathoscopeBowtie</option>
+                                    <option value='pathoscope_snap'>PathoscopeSNAP</option>
+                                    <option value='nuvs'>NuVs</option>
                                 </Input>
-                                    <Input {...textProps} />
                             </Flex.Item>
-                            <Flex.Item>
-                                    <FormGroup>
-                                        <InputGroup disabled={this.state.pending}>
-                                            <ControlLabel>Algorithm</ControlLabel>
-                                            <FormControl type="select" valueLink={this.linkState('algorithm')} />
-                                        </InputGroup>
-                                    </FormGroup>
-                            </Flex.Item>
-                            <Flex.Item>
-                                <div style={paddingTop}>
+                            <Flex.Item pad>
+                                <div style={divStyle}>
                                     <PushButton type='submit' bsStyle='primary'>
                                         <Icon name='new-entry' pending={this.state.pending}/> Create
                                     </PushButton>

@@ -1,7 +1,8 @@
 var _ = require('lodash');
 var React = require('react');
 var Panel = require('react-bootstrap/lib/Panel');
-var Input = require('react-bootstrap/lib/InputGroup');
+
+var Input = require('virtool/js/components/Base/Input.jsx');
 
 var SamplePermissionsDetail = React.createClass({
 

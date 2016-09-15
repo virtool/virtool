@@ -45,9 +45,7 @@ var InputSave = React.createClass({
 
     getDefaultProps: function () {
         return {
-            type: 'text',
-            initialValue: '',
-            autoComplete: 'off'
+            initialValue: ''
         };
     },
 
@@ -79,12 +77,12 @@ var InputSave = React.createClass({
     },
 
     /**
-     * Handles a change in the input element. Updates state to reflect what is being typed by the user.
+     * Handle the data from a change in the input element. Updates state to reflect what is being typed by the user.
      *
-     * @param event {object} - the change event.
+     * @param data {object} - the data from the input change.
      */
-    handleChange: function (event) {
-        this.setState({value: event.target.value});
+    handleChange: function (data) {
+        this.setState({value: data.value});
     },
 
     /**
@@ -118,7 +116,7 @@ var InputSave = React.createClass({
      */
     removeFocus: function () {
         ReactDOM.findDOMNode(this.refs.button).blur();
-        this.refs.input.getInputDOMNode().blur();
+        this.refs.input.blur();
     },
 
     render: function () {

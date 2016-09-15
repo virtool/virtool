@@ -50,7 +50,7 @@ g.tick {
 }
 
 .depth-area {
-	stroke-width: 0;
+	stroke: #428bca;
 	fill: #428bca;
 }
 

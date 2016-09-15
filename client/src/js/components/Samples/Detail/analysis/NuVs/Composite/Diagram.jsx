@@ -50,51 +50,16 @@ var ContigDiagram = React.createClass({
             .attr('width', width + margin.left + margin.right)
             .attr('height', baseHeight);
 
-        var markerAttributes = {
-            'viewBox': '0 -5 10 10',
-            'refX': 10,
-            'refY': 0,
-            'markerUnits': 'strokeWidth',
-            'markerWidth': 1.5,
-            'markerHeight': 1.5,
-
-            'orient': 'auto'
-        };
-
-        var defs = svg.append('defs');
-
-        defs.append('marker')
-            .attr(markerAttributes)
-            .attr({
-                id: 'marker-active',
-                stroke: '#337AB7',
-                fill: '#337AB7'
-            })
-            .append("path")
-            .attr("d", 'M0,-5 L10,0 L0,5');
-
-        defs.append('marker')
-            .attr(markerAttributes)
-            .attr({
-                id: 'marker-disabled',
-                stroke: '#adadad',
-                fill: '#adadad'
-            })
-            .append("path")
-            .attr("d", 'M0,-5 L10,0 L0,5');
-
         // Create a mother group that will hold all chart elements.
         var group = svg.append('g')
             .attr('transform', 'translate(' + margin.left + ',' + margin.top + ')');
 
         // Set-up a y-axis that will appear at the top of the chart.
-        var x = d3.scale.linear()
+        var x = d3.scaleLinear()
             .range([0, width])
             .domain([0, this.props.maxSequenceLength]);
 
-        var xAxis = d3.svg.axis()
-            .scale(x)
-            .orient('bottom');
+        var xAxis = d3.axisBottom(x);
 
         var axis = group.append('g')
             .attr('class', 'x axis')

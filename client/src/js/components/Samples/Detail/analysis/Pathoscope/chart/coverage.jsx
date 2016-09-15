@@ -26,28 +26,24 @@ var createChart = function (element, data) {
     var height = 200 - margin.top - margin.bottom;
     var width = element.offsetWidth - margin.left - margin.right;
 
-    var x = d3.scale.linear()
+    var x = d3.scaleLinear()
         .range([0, width])
         .domain([0, data.length]);
 
-    var y = d3.scale.linear()
+    var y = d3.scaleLinear()
         .range([height, 0])
         .domain([0, d3.max(data)]);
 
-    var xAxis = d3.svg.axis()
-        .scale(x)
-        .orient("bottom");
+    var xAxis = d3.axisBottom(x);
 
-    var yAxis = d3.svg.axis()
-        .scale(y)
-        .orient("left");
+    var yAxis = d3.axisLeft(y);
 
-    var area = d3.svg.area()
+    var area = d3.area()
         .x(function (d, i) {return x(i)})
-        .y(function (d) {return y(d)})
-        .y0(height);
+        .y0(function (d) {return y(d)})
+        .y1(height);
 
-    // Contruct the SVG canvas.
+    // Construct the SVG canvas.
     svg = d3.select(element).append('svg')
         .attr('width', width + margin.left + margin.right)
         .attr('height', height + margin.top + margin.bottom)

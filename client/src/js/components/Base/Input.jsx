@@ -27,12 +27,16 @@ var Input = React.createClass({
         name: React.PropTypes.string,
         type: React.PropTypes.string,
         value: React.PropTypes.any,
+        readOnly: React.PropTypes.bool,
+        placeholder: React.PropTypes.any,
         autoComplete: React.PropTypes.bool,
 
         error: React.PropTypes.oneOfType([React.PropTypes.string, React.PropTypes.element]),
         errorPlacement: React.PropTypes.string,
 
         onHide: React.PropTypes.func,
+        onBlur: React.PropTypes.func,
+        onFocus: React.PropTypes.func,
         onChange: React.PropTypes.func
     },
 
@@ -77,21 +81,41 @@ var Input = React.createClass({
             );
         }
 
+        var componentClass;
+
+        if (this.props.type === "select") {
+            componentClass = "select";
+        }
+
+        var label;
+
+        if (this.props.label) {
+            label = (
+                <ControlLabel>
+                    {this.props.label}
+                </ControlLabel>
+            );
+        }
+
         return (
             <div>
                 <FormGroup>
-                    <InputGroup disabled={this.state.pending}>
-                        <ControlLabel>{this.props.label}</ControlLabel>
-                        <FormControl
-                            ref="input"
-                            type={this.props.type}
-                            name={this.props.name}
-                            value={this.props.value}
-                            onHide={this.props.onHide}
-                            onChange={this.props.onChange}
-                            autoComplete={this.props.autoComplete ? "on": "off"}
-                        />
-                    </InputGroup>
+                    {label}
+                    <FormControl
+                        ref="input"
+                        type={this.props.type}
+                        name={this.props.name}
+                        value={this.props.value}
+                        onBlur={this.props.onBlur}
+                        onFocus={this.props.onFocus}
+                        onChange={this.props.onChange}
+                        readOnly={this.props.readOnly}
+                        placeholder={this.props.placeholder}
+                        autoComplete={this.props.autoComplete ? "on": "off"}
+                        componentClass={componentClass}
+                    >
+                        {this.props.children}
+                    </FormControl>
                 </FormGroup>
                 {overlay}
             </div>

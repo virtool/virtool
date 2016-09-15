@@ -59,12 +59,12 @@ var AlertModal = React.createClass({
          * @return {ReactElement} A modal element used to confirm an action with the user.
          */
         return (
-            <Modal {...this.props}>
-                <Modal.Body {...this.props}>
+            <Modal show={this.props.show} onHide={this.props.onHide}>
+                <Modal.Body>
                     {/* The warning about the action that the user is either accepting or canceling */}
                     {this.props.children}
                 </Modal.Body>
-                <Modal.Footer {...this.props}>
+                <Modal.Footer>
                     <ButtonToolbar className="pull-right">
                         {/* The cancel button which trigger this.props.onHide when clicked. */}
                         <Button onClick={this.props.onHide}>

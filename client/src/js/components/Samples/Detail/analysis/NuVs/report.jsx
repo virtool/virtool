@@ -13,14 +13,11 @@ var PushButton = require('virtool/js/components/Base/PushButton.jsx');
 
 var Control = require('./Control/bar.jsx');
 var CompositeView = require('./Composite/View.jsx');
-var HMMView = require('./HMM/View.jsx');
-var ORFView = require('./ORF/View.jsx');
 
 var Report = React.createClass({
 
     getInitialState: function () {
         return {
-            mode: 'composite',
             filterHMM: true,
             filterORF: true
         };
@@ -35,12 +32,6 @@ var Report = React.createClass({
     toggleFilterORF: function () {
         this.setState({
             filterORF: !this.state.filterORF
-        });
-    },
-
-    setMode: function (mode) {
-        this.setState({
-            mode: mode
         });
     },
 
@@ -66,29 +57,6 @@ var Report = React.createClass({
             orfs = _.filter(orfs, function (orf) {
                 return _.includes(orfsToInclude, orf.index + '.' + orf.orf_index);
             });
-        }
-
-        var view;
-
-        if (this.state.mode === 'composite') {
-            view = (
-                <CompositeView
-                    sequences={this.props.sequences}
-                    hmms={hmms}
-                    orfs={orfs}
-
-                    toggleFilterHMM={this.toggleFilterHMM}
-                    toggleFilterORF={this.toggleFilterORF}
-                />
-            );
-        }
-
-        if (this.state.mode === 'hmm') {
-            view = <HMMView hmms={hmms} />;
-        }
-
-        if (this.state.mode === 'orf') {
-            view = <ORFView {...this.props} orfs={orfs} />;
         }
 
         var control = (
@@ -121,7 +89,14 @@ var Report = React.createClass({
                 </Table>
 
                 <Panel header={control}>
-                    {view}
+                    <CompositeView
+                        sequences={this.props.sequences}
+                        hmms={hmms}
+                        orfs={orfs}
+
+                        toggleFilterHMM={this.toggleFilterHMM}
+                        toggleFilterORF={this.toggleFilterORF}
+                    />
                 </Panel>
             </div>
         );

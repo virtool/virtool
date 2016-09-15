@@ -64,7 +64,7 @@ var ControlBar = React.createClass({
         }
 
         var buttons = (
-            <ButtonToolbar block={false}>
+            <ButtonToolbar>
                 <ButtonGroup>
                     <PushButton {...buttonProps} onClick={this.handleClickTable} active={this.props.mode === 'table'}>
                         <Icon name='table' /> Table

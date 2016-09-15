@@ -1,8 +1,8 @@
 var React = require('react');
-var Input = require('react-bootstrap/lib/InputGroup');
 var Panel = require('react-bootstrap/lib/Panel');
 
 var Icon = require('virtool/js/components/Base/Icon.jsx');
+var Input = require('virtool/js/components/Base/Input.jsx');
 var PushButton = require('virtool/js/components/Base/PushButton.jsx');
 
 var Login = React.createClass({
@@ -15,15 +15,11 @@ var Login = React.createClass({
     },
 
     componentDidMount: function () {
-        this.focus();
+        this.refs.username.focus();
     },
 
     componentDidUpdate: function (prevProps) {
         if (!prevProps.loginFailed && this.props.loginFailed) this.focus();
-    },
-
-    focus: function () {
-        this.refs.username.getInputDOMNode().focus();
     },
 
     handleSubmit: function (event) {

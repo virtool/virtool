@@ -214,7 +214,7 @@ var Report = React.createClass({
                         </tbody>
                     </Table>
 
-                    <Panel header={<ControlBar {...this.state} {...controlProps} />}>
+                    <Panel header={<ControlBar {...this.state} {...controlProps} />} style={{overflowY: "hidden"}}>
                         {dataDisplay}
                     </Panel>
                 </div>
