@@ -17,11 +17,10 @@ var Row = require('react-bootstrap/lib/Row');
 var React = require('react');
 var Modal = require('react-bootstrap/lib/Modal');
 var Badge = require('react-bootstrap/lib/Badge');
-var Input = require('react-bootstrap/lib/InputGroup');
 
 var Icon = require('virtool/js/components/Base/Icon.jsx');
 var Utils = require('virtool/js/Utils');
-var BaseSequenceMethod = require('./BaseSequence.jsx');
+var SequenceForm = require('virtool/js/components/Viruses/Manage/detail/Sequences/Form.jsx');
 
 /**
  * A description of the change made by the add_sequence method. Can display a modal showing the added sequence.
@@ -87,7 +86,13 @@ var AddSequenceMethod = React.createClass({
                     </Modal.Header>
 
                     <Modal.Body>
-                        <BaseSequenceMethod sequence={sequence} />
+                        <SequenceForm
+                            sequenceId={sequence._id}
+                            definition={sequence.definition}
+                            host={sequence.host}
+                            sequence={sequence.sequence}
+                            readOnly={true}
+                        />
                     </Modal.Body>
                 </Modal>
             </span>

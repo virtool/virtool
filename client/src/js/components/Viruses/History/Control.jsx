@@ -12,9 +12,10 @@
 'use strict';
 
 var React = require('react');
-var Row = require('react-bootstrap/lib/Row');
-var Col = require('react-bootstrap/lib/Col');
-var Input = require('react-bootstrap/lib/InputGroup');
+var ReactDOM = require('react-dom');
+var FormGroup = require('react-bootstrap/lib/FormGroup');
+var InputGroup = require('react-bootstrap/lib/InputGroup');
+var FormControl = require('react-bootstrap/lib/FormControl');
 
 var Flex = require('virtool/js/components/Base/Flex.jsx');
 var Icon = require('virtool/js/components/Base/Icon.jsx');
@@ -34,7 +35,7 @@ var HistoryControl = React.createClass({
     },
 
     componentDidMount: function () {
-        this.refs.input.getInputDOMNode().focus();
+        ReactDOM.findDOMNode(this.refs.input).focus();
     },
 
     selectIndex: function (event) {
@@ -42,10 +43,6 @@ var HistoryControl = React.createClass({
     },
 
     render: function () {
-        // Addons to label the input components.
-        var findAddon = <span><Icon name='search' /> Find</span>;
-        var selectAddon = <span><Icon name='hammer' /> Index</span>;
-
         // The options to put in the select box component.
         var optionComponents = this.props.indexVersions.map(function (indexVersion) {
             return (
@@ -57,27 +54,39 @@ var HistoryControl = React.createClass({
 
         // Props to pass to the select box input component.
         var selectProps = {
-            type: 'select',
+            componentClass: 'select',
             onChange: this.selectIndex,
-            addonBefore: selectAddon,
             value: this.props.selectedVersion
         };
 
         return (
             <Flex>
                 <Flex.Item grow={1}>
-                    <Input
-                        ref='input'
-                        type='text'
-                        onChange={this.props.onFilter}
-                        addonBefore={findAddon}
-                        placeholder='Virus Name'
-                    />
+                    <FormGroup>
+                        <InputGroup>
+                            <InputGroup.Addon>
+                                <Icon name='search' /> Find
+                            </InputGroup.Addon>
+                            <FormControl
+                                ref='input'
+                                type='text'
+                                onChange={this.props.onFilter}
+                                placeholder='Virus Name'
+                            />
+                        </InputGroup>
+                    </FormGroup>
                 </Flex.Item>
                 <Flex.Item pad>
-                    <Input {...selectProps}>
-                        {optionComponents}
-                    </Input>
+                    <FormGroup>
+                        <InputGroup>
+                            <InputGroup.Addon>
+                                <Icon name='hammer' /> Index
+                            </InputGroup.Addon>
+                            <FormControl {...selectProps}>
+                                {optionComponents}
+                            </FormControl>
+                        </InputGroup>
+                    </FormGroup>
                 </Flex.Item>
             </Flex>
         );

@@ -15,9 +15,9 @@ var _ = require('lodash');
 var React = require('react');
 var Modal = require('react-bootstrap/lib/Modal');
 
+var SequenceForm = require('virtool/js/components/Viruses/Manage/detail/Sequences/Form.jsx');
 var Icon = require('virtool/js/components/Base/Icon.jsx');
 var Utils = require('virtool/js/Utils');
-var BaseSequenceMethod = require('./BaseSequence.jsx');
 
 /**
  * A text element and modal component that show the details of a sequence removed by the remove_sequence method.
@@ -80,7 +80,13 @@ var RemoveSequenceMethod = React.createClass({
                         </Modal.Title>
                     </Modal.Header>
                     <Modal.Body>
-                        <BaseSequenceMethod sequence={sequence} />
+                        <SequenceForm
+                            sequenceId={sequence._id}
+                            definition={sequence.definition}
+                            host={sequence.host}
+                            sequence={sequence.sequence}
+                            readOnly={true}
+                        />
                     </Modal.Body>
                 </Modal>
             </span>

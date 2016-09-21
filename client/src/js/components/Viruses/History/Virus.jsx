@@ -54,8 +54,9 @@ var VirusHistoryList = React.createClass({
     },
 
     render: function () {
+
         // Generate all the history components that will be shown in the history panel for the virus.
-        var historyComponents = this.props.history.map(function (historyEntry) {
+        var historyComponents = _.sortBy(this.props.history, "entry_version").reverse().map(function (historyEntry) {
             return (
                 <HistoryItem
                     key={historyEntry._id}
@@ -68,7 +69,7 @@ var VirusHistoryList = React.createClass({
         }, this);
 
         return (
-            <FlipMove typeName="div" className="list-group" fill={true}>
+            <FlipMove typeName="div" className="list-group" fill={true} leaveAnimation={false} duration={200}>
                 {historyComponents}
             </FlipMove>
         );

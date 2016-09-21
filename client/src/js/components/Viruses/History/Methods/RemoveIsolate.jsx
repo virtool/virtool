@@ -22,7 +22,7 @@ var PanelGroup = require('react-bootstrap/lib/PanelGroup');
 
 var Icon = require('virtool/js/components/Base/Icon.jsx');
 var Utils = require('virtool/js/Utils');
-var BaseSequence = require('./BaseSequence.jsx');
+var SequenceForm = require('virtool/js/components/Viruses/Manage/detail/Sequences/Form.jsx');
 
 /**
  * A modal component that details the removed isolate and all of it's sequences.
@@ -38,16 +38,19 @@ var MethodDetailModal = React.createClass({
         message: React.PropTypes.element.isRequired
     },
 
-    shouldComponentUpdate: function () {
-        return false;
-    },
-
     render: function () {
         // Each sequence is described by a readonly form, BaseSequence.
-        var sequenceComponents = this.props.isolate.sequences.map(function (document) {
+        var sequenceComponents = this.props.isolate.sequences.map(function (document, index) {
             return (
-                <Panel key={document._id} header={document._id}>
-                    <BaseSequence sequence={document} />
+                <Panel key={index} eventKey={index} header={document._id}>
+                    <SequenceForm
+                        sequenceId={document._id}
+                        definition=""
+
+                        host={document.host}
+                        sequence={document.sequence}
+
+                    />
                 </Panel>
             );
         });
@@ -80,7 +83,7 @@ var MethodDetailModal = React.createClass({
                         <Icon name='dna' /> <strong>Sequences </strong>
                         <Badge>{sequenceComponents.length}</Badge>
                     </h5>
-                    <PanelGroup expanded={false} fill accordion defaultActiveKey={null}>
+                    <PanelGroup defaultActiveKey={0} accordion>
                         {sequenceComponents}
                     </PanelGroup>
                 </Modal.Body>

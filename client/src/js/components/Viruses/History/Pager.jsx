@@ -14,11 +14,7 @@
 var _ = require('lodash');
 var React = require('react');
 var FlipMove = require('react-flip-move');
-var Row = require('react-bootstrap/lib/Row');
-var Col = require('react-bootstrap/lib/Col');
-var Input = require('react-bootstrap/lib/InputGroup');
 var Panel = require('react-bootstrap/lib/Panel');
-var PanelGroup = require('react-bootstrap/lib/PanelGroup');
 var Pagination = require('react-bootstrap/lib/Pagination');
 
 var Virus = require('./Virus.jsx');

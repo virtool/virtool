@@ -13,7 +13,6 @@ var _ = require('lodash');
 var React = require('react');
 var Row = require('react-bootstrap/lib/Row');
 var Col = require('react-bootstrap/lib/Col');
-var Input = require('react-bootstrap/lib/InputGroup');
 var Modal = require('react-bootstrap/lib/Modal');
 var Badge = require('react-bootstrap/lib/Badge');
 var ListGroup = require('react-bootstrap/lib/ListGroup');
@@ -21,6 +20,7 @@ var ListGroupItem = require('react-bootstrap/lib/ListGroupItem');
 
 var Utils = require('virtool/js/Utils');
 var Icon = require('virtool/js/components/Base/Icon.jsx');
+var Input = require('virtool/js/components/Base/Input.jsx');
 
 /**
  * Describes a change in a single field of a sequence record. Shows the value before the change, an arrow, and the
@@ -46,7 +46,6 @@ var Change = React.createClass({
         var sharedProps = {
             type: fieldName === 'Sequence' ? 'textarea': 'text',
             rows: fieldName === 'Sequence' ? 5: null,
-            className: 'sequence',
             readOnly: true
         };
 
@@ -57,9 +56,11 @@ var Change = React.createClass({
                     label={fieldName}
                     value={oldValue}
                 />
+
                 <div className='text-center' style={{marginBottom: '15px'}}>
                     <Icon name='arrow-down' />
                 </div>
+
                 <Input
                     {...sharedProps}
                     value={newValue}

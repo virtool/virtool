@@ -13,15 +13,8 @@
 
 var _ = require('lodash');
 var React = require('react');
-var Row = require('react-bootstrap/lib/Row');
-var Col = require('react-bootstrap/lib/Col');
-var Input = require('react-bootstrap/lib/InputGroup');
-var Panel = require('react-bootstrap/lib/Panel');
-var PanelGroup = require('react-bootstrap/lib/PanelGroup');
-
 var Control = require('./History/Control.jsx');
 var Pager = require('./History/Pager.jsx');
-var RelativeTime = require('virtool/js/components/Base/RelativeTime.jsx');
 
 /**
  * A component that shows the history of changes made to viruses in the database.
