@@ -82,7 +82,10 @@ var VirusDetail = React.createClass({
                     Virus Detail
                 </Modal.Header>
                 <Modal.Body>
-                    <General {...this.props.detail} canModify={this.state.canModify} />
+                    <General
+                        {...this.props.detail}
+                        canModify={this.state.canModify}
+                    />
 
                     <Isolates
                         data={this.props.detail.isolates}

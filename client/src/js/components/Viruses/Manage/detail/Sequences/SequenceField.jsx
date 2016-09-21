@@ -12,8 +12,11 @@
 'use strict';
 
 var React = require('react');
+var ReactDOM = require('react-dom');
 var Badge = require('react-bootstrap/lib/Badge');
-var Input = require('react-bootstrap/lib/InputGroup');
+var FormGroup = require('react-bootstrap/lib/FormGroup');
+var FormControl = require('react-bootstrap/lib/FormControl');
+var ControlLabel = require('react-bootstrap/lib/ControlLabel');
 
 /**
  * A component that wraps a textarea input element. Used for displaying and editing genetic sequences.
@@ -42,38 +45,26 @@ var SequenceField = React.createClass({
      * @func
      */
     getInputDOMNode: function () {
-        return this.refs.input.getInputDOMNode();
-    },
-
-    /**
-     * Calls the onChange prop function, passing the event object from the input element. Triggered in response to a
-     * change event in the input element.
-     *
-     * @param event {object} - the change event.
-     * @func
-     */
-    handleChange: function (event) {
-        this.props.onChange(event);
+        return ReactDOM.findDOMNode(this.refs.input);
     },
 
     render: function () {
-        // The label for the Input component. Includes a dynamic badge showing the sequence length.
-        var label = <span>Sequence <Badge>{this.props.sequence.length}</Badge></span>;
-
         return (
-            <div>
-                <Input
-                    type='textarea'
-                    name='sequence'
-                    ref='input'
-                    label={label}
-                    rows={5}
-                    onChange={this.handleChange}
+            <FormGroup>
+                <ControlLabel>
+                    Sequence <Badge>{this.props.sequence.length}</Badge>
+                </ControlLabel>
+                <FormControl
+                    ref="input"
+                    name="sequence"
+                    className="sequence"
+                    componentClass="textarea"
                     value={this.props.sequence}
+                    onChange={this.props.onChange}
                     readOnly={this.props.readOnly}
-                    className='sequence'
+                    rows={5}
                 />
-            </div>
+            </FormGroup>
         );
     }
 });

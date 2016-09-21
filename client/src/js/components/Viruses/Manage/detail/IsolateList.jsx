@@ -19,6 +19,7 @@ var ListGroupItem = require('virtool/js/components/Base/PushListGroupItem.jsx');
 var Badge = require('react-bootstrap/lib/Badge');
 
 var Icon = require('virtool/js/components/Base/Icon.jsx');
+var Scroll = require('virtool/js/components/Base/Scroll.jsx');
 var PushButton = require('virtool/js/components/Base/PushButton.jsx');
 
 var Isolate = require('./Isolate.jsx');
@@ -51,11 +52,13 @@ var IsolateList = React.createClass({
     },
 
     componentDidMount: function () {
-        this.props.settings.on('change', this.update)
+        this.props.settings.on('change', this.update);
+        ReactDOM.findDOMNode(this.refs.flip).addEventListener("resize", this.updateScroll);
     },
 
     componentWillUnmount: function () {
-        this.props.settings.off('change', this.update)
+        this.props.settings.off('change', this.update);
+        ReactDOM.findDOMNode(this.refs.flip).removeEventListener("resize", this.updateScroll);
     },
 
     /**
@@ -68,17 +71,16 @@ var IsolateList = React.createClass({
         this.setState(this.getInitialState());
     },
 
-    scrollTest: function () {
-        var lastId = _.last(this.props.data).isolate_id;
-        var element = document.getElementById("isolate_" + lastId);
-        element.scrollIntoView(true);
+    updateScroll: function () {
+        this.refs.scroll.update();
     },
 
     render: function () {
 
         // Render each isolate as a selectable list item
-        var isolateComponents = this.props.data.map(function (isolate, index) {
+        var isolateComponents = this.props.data.map(function (isolate) {
             var props = {
+                key: isolate.isolate_id,
                 virusId: this.props.virusId,
                 isolateId: isolate.isolate_id,
                 sourceName: isolate.source_name,
@@ -93,7 +95,6 @@ var IsolateList = React.createClass({
 
             return (
                 <Isolate
-                    key={isolate.isolate_id}
                     {...props}
                     {...this.state}
                 />
@@ -114,6 +115,7 @@ var IsolateList = React.createClass({
                     toggleAdding={this.props.toggleAdding}
                     {...this.state}
                     canModify={this.props.canModify}
+                    updateScroll={this.updateScroll}
                 />
             );
         }
@@ -128,9 +130,12 @@ var IsolateList = React.createClass({
             );
         }
 
-        var listStyle = {
-            maxHeight: '576px',
-            overflowY: 'scroll',
+        var flipProps = {
+            typeName: "div",
+            className: "list-group",
+            enterAnimation: "fade",
+            leaveAnimation: false,
+            duration: 150
         };
 
         return (
@@ -138,16 +143,12 @@ var IsolateList = React.createClass({
                 <h5 ref="header">
                     <strong><Icon name='lab' /> Isolates</strong> <Badge>{this.props.data.length}</Badge>
                 </h5>
-                <FlipMove typeName="div" className="list-group" style={listStyle}>
-                    {isolateComponents}
-                    {lastComponent}
-                </FlipMove>
-                <PushButton componentClass="div" bsStyle="primary">
-                    <Icon name="plus-square" /> Add Isolate
-                </PushButton>
-                <PushButton onClick={this.scrollTest}>
-                    Scroll Test
-                </PushButton>
+                <Scroll ref="scroll" style={{marginBottom: "15px"}}>
+                    <FlipMove ref="flip" {...flipProps} style={{marginBottom: 0, marginRight: "10px"}} onFinishAll={this.updateScroll}>
+                        {isolateComponents}
+                        {lastComponent}
+                    </FlipMove>
+                </Scroll>
             </div>
         );
     }

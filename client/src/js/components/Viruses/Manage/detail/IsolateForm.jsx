@@ -14,8 +14,8 @@
 var React = require('react');
 var Row = require('react-bootstrap/lib/Row');
 var Col = require('react-bootstrap/lib/Col');
-var Input = require('react-bootstrap/lib/InputGroup');
 
+var Input = require('virtool/js/components/Base/Input.jsx');
 var Icon = require('virtool/js/components/Base/Icon.jsx');
 
 /**
@@ -48,9 +48,16 @@ var IsolateForm = React.createClass({
         }
     },
 
+    getInitialState: function () {
+        return {
+            sourceType: this.props.sourceType,
+            sourceName: this.props.sourceName
+        };
+    },
+
     componentDidMount: function () {
         // Focus on the source type input when the component mounts.
-        this.refs.sourceType.getInputDOMNode().focus();
+        this.refs.sourceType.focus();
     },
 
     /**
@@ -59,16 +66,29 @@ var IsolateForm = React.createClass({
      *
      * @func
      */
-    handleChange: function () {
-        // Update the sourceType value.
-        var sourceType = this.refs.sourceType.getValue().toLowerCase();
+    handleChange: function (event) {
+        var name = event.target.name;
 
-        var updateObject = {
-            sourceType: sourceType,
-            sourceName: sourceType === 'unknown' ? '': this.refs.sourceName.getValue()
-        };
+        var updateObject;
+
+        if (name === "sourceType") {
+            updateObject = {
+                sourceType: event.target.value.toLowerCase(),
+                sourceName: event.target.value === 'unknown' ? '': this.props.sourceName
+            };
+        }
+
+        if (name === "sourceName") {
+            updateObject = {
+                sourceName: event.target.value
+            };
+        }
         
         this.props.onChange(updateObject);
+    },
+
+    focus: function () {
+        this.refs.sourceType.focus();
     },
 
     render: function () {
@@ -77,6 +97,7 @@ var IsolateForm = React.createClass({
 
         var sourceTypeInputProps = {
             ref: 'sourceType',
+            name: 'sourceType',
             label: 'Source Type',
             value: this.props.sourceType,
             onChange: this.handleChange
@@ -106,8 +127,8 @@ var IsolateForm = React.createClass({
                     </Col>
                     <Col md={6}>
                         <Input
-                            ref='sourceName'
                             type='text'
+                            name='sourceName'
                             label='Source Name'
                             value={this.props.sourceName}
                             onChange={this.handleChange}

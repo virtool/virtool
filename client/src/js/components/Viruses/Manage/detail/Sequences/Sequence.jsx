@@ -18,7 +18,6 @@ var Collapse = require('react-bootstrap/lib/Collapse');
 
 var Flex = require('virtool/js/components/Base/Flex.jsx');
 var Icon = require('virtool/js/components/Base/Icon.jsx');
-var ListGroupItem = require('virtool/js/components/Base/PushListGroupItem.jsx');
 
 var SequenceHeader = require('./Header.jsx');
 var SequenceForm = require('./Form.jsx');
@@ -64,6 +63,7 @@ var Sequence = React.createClass({
             host: this.props.host,
             sequence: this.props.sequence,
 
+            pendingRemove: false,
             editing: false
         };
     },
@@ -118,6 +118,18 @@ var Sequence = React.createClass({
         }).failure(this.onSaveFailure);
     },
 
+    remove: function () {
+        this.setState({
+            pendingRemove: true
+        }, function () {
+            dispatcher.db.viruses.request("remove_sequence", {
+                "_id": this.props.virusId,
+                "sequence_id": this.props.sequenceId
+            });
+        });
+
+    },
+
     update: function (data) {
         this.setState(data);
     },
@@ -160,6 +172,14 @@ var Sequence = React.createClass({
                     name='pencil'
                     bsStyle='warning'
                     onClick={this.toggleEditing}
+                />,
+
+                <Icon
+                    key="remove"
+                    name='remove'
+                    bsStyle='danger'
+                    pending={this.state.pendingRemove}
+                    onClick={this.remove}
                 />
             ];
         }
@@ -204,6 +224,8 @@ var Sequence = React.createClass({
             mode: this.state.editing ? "edit": "read"
         });
 
+        var formStyle = this.props.active ? null: {marginTop: "1px"};
+
         // If not active, the ListGroupItem contains only the accession, sequence definition, and icon buttons.
         return (
             <div className={itemClass} style={itemStyle} onClick={this.props.active ? null: this.handleClick}>
@@ -213,7 +235,9 @@ var Sequence = React.createClass({
                 <Collapse in={this.props.active}>
                     <div>
                         <div style={{height: "15px"}} />
-                        <SequenceForm {...contentProps} />
+                        <div style={formStyle}>
+                            <SequenceForm {...contentProps} />
+                        </div>
                     </div>
                 </Collapse>
             </div>

@@ -16,13 +16,13 @@ var LinkedStateMixin = require('react-addons-linked-state-mixin');
 var Row = require('react-bootstrap/lib/Row');
 var Col = require('react-bootstrap/lib/Col');
 var Modal = require('react-bootstrap/lib/Modal');
-var Input = require('react-bootstrap/lib/InputGroup');
 var Alert = require('react-bootstrap/lib/Alert');
 var Button = require('react-bootstrap/lib/Button');
 var ButtonToolbar = require('react-bootstrap/lib/ButtonToolbar');
 
 var Icon = require('virtool/js/components/Base/Icon.jsx');
 var Flex = require('virtool/js/components/Base/Flex.jsx');
+var Input = require('virtool/js/components/Base/Input.jsx');
 
 /**
  * A form for adding a new virus, defining its name and abbreviation.
@@ -51,7 +51,7 @@ var AddVirus = React.createClass({
         }
     },
 
-    handleExited: function () {
+    modalExited: function () {
         this.setState(this.getInitialState());
     },
 
@@ -77,9 +77,10 @@ var AddVirus = React.createClass({
         // Only send a request to the server if a new virus name is defined.
         if (this.state.name !== '') {
             dispatcher.db.viruses.request('add', {name: this.state.name, abbreviation: this.state.abbreviation})
-                .success(function () {
-                    this.replaceState(this.getInitialState());
-                    this.props.onHide();
+                .success(function (virusId) {
+                    this.replaceState(this.getInitialState(), function () {
+                        dispatcher.router.setExtra(["detail", virusId]);
+                    });
                 }, this)
                 .failure(function (data) {
                     this.setState({error: data});
@@ -131,23 +132,21 @@ var AddVirus = React.createClass({
             );
         }
 
-        var modalProps = _.extend(this.props, {onHide: this.hide});
-
         var inputProps = {
             type: 'text',
             onChange: this.handleChange
         };
 
         return (
-            <Modal {...modalProps} onExited={this.handleExited}>
+            <Modal show={this.props.show} onHide={this.props.onHide} onExited={this.modalExited}>
 
-                <Modal.Header {...modalProps} closeButton>
+                <Modal.Header onHide={this.props.onHide} closeButton>
                     New Virus
                 </Modal.Header>
 
                 <form onSubmit={this.handleSubmit}>
 
-                    <Modal.Body {...modalProps}>
+                    <Modal.Body>
                         <Row>
                             <Col md={9}>
                                 <Input
@@ -170,7 +169,7 @@ var AddVirus = React.createClass({
                         {alert}
                     </Modal.Body>
 
-                    <Modal.Footer {...modalProps}>
+                    <Modal.Footer>
                         <ButtonToolbar className='pull-right'>
                             <Button type='submit' bsStyle='primary'>
                                 <Icon name='floppy'/> Save

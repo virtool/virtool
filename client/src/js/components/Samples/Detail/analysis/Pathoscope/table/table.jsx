@@ -62,7 +62,7 @@ var AnalysisTable = React.createClass({
         return (
             <Table fill>
                 <Header {...this.state} sortTable={this.sortTable} useRelative={this.props.useRelative} />
-                <FlipMove typeName="tbody" leaveAnimation={false}>
+                    <FlipMove typeName="tbody" enterAnimation="accordianHorizontal" leaveAnimation={false} duration={200}>
                     {rowComponents}
                 </FlipMove>
             </Table>

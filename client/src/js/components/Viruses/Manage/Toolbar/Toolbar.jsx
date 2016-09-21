@@ -78,24 +78,25 @@ var VirusToolbar = React.createClass({
     /**
      * Changes state to show the add or export modal form. Triggered by clicking the a menu item.
      *
-     * @param event {object} - the select event.
-     * @param eventKey {number} - the event key.
+     * @param eventKey {string} - the event key.
      * @func
      */
-    handleSelect: function (event, eventKey) {
+    handleSelect: function (eventKey) {
+
         switch (eventKey) {
 
-            case 1:
+            case "add":
                 dispatcher.router.setExtra(["add"]);
                 break;
 
-            case 2:
+            case "import":
+                dispatcher.router.setExtra(["import"]);
+                break;
+
+            case "export":
                 dispatcher.router.setExtra(["export"]);
                 break;
 
-            case 3:
-                dispatcher.router.setExtra(["import"]);
-                break;
         }
     },
 
@@ -112,17 +113,17 @@ var VirusToolbar = React.createClass({
         if (this.state.canAdd || this.state.canModify) {
             menu = (
                 <Dropdown id='virus-menu-dropdown' pullRight onSelect={this.handleSelect}>
-                    <Dropdown.Toggle noCaret ref='menuButton'>
+                    <Dropdown.Toggle noCaret>
                         <Icon name='menu' />
                     </Dropdown.Toggle>
                     <Dropdown.Menu>
-                        <MenuItem eventKey={1} disabled={!this.state.canAdd}>
+                        <MenuItem eventKey="add" disabled={!this.state.canAdd}>
                             <Icon name='new-entry' /> New
                         </MenuItem>
-                        <MenuItem eventKey={2} disabled={!this.state.canModify}>
+                        <MenuItem eventKey="export" disabled={!this.state.canModify}>
                             <Icon name='export' /> Export
                         </MenuItem>
-                        <MenuItem eventKey={3} disabled={!this.state.canAdd}>
+                        <MenuItem eventKey="import" disabled={!this.state.canAdd}>
                             <Icon name='new-entry' /> Import
                         </MenuItem>
                     </Dropdown.Menu>

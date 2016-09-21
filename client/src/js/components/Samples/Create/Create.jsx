@@ -69,12 +69,12 @@ var SamplesImport = React.createClass({
         };
     },
 
-    handleEntered: function () {
+    modalEntered: function () {
         this.refs.name.getInputDOMNode().focus();
         dispatcher.settings.on('change', this.onSettingsChange);
     },
 
-    handleExit: function () {
+    modalWillExit: function () {
         dispatcher.settings.off('change', this.onSettingsChange);
         this.setState(this.getInitialState());
     },
@@ -302,7 +302,7 @@ var SamplesImport = React.createClass({
         }
 
         return (
-            <Modal dialogClassName='modal-lg' show={this.props.show} onHide={this.props.onHide} onEntered={this.handleEntered} onExit={this.handleExit}>
+            <Modal dialogClassName='modal-lg' show={this.props.show} onHide={this.props.onHide} onEntered={this.modalEntered} onExit={this.modalWillExit}>
                 <Modal.Header onHide={this.props.onHide} closeButton>
                     Create Sample
                 </Modal.Header>

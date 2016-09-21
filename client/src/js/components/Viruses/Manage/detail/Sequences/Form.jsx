@@ -16,23 +16,17 @@ var ReactDOM = require('react-dom');
 
 var Row = require('react-bootstrap/lib/Row');
 var Col = require('react-bootstrap/lib/Col');
-var Input = require('react-bootstrap/lib/InputGroup');
 var Overlay = require('react-bootstrap/lib/Overlay');
 var Popover = require('react-bootstrap/lib/Popover');
+var FormGroup = require('react-bootstrap/lib/FormGroup');
+var ControlLabel = require('react-bootstrap/lib/ControlLabel');
+var FormControl = require('react-bootstrap/lib/FormControl');
+var InputGroup = require('react-bootstrap/lib/InputGroup');
 
 var Icon = require('virtool/js/components/Base/Icon.jsx');
+var Input = require('virtool/js/components/Base/Input.jsx');
 var PushButton = require('virtool/js/components/Base/PushButton.jsx');
 var SequenceField = require('./SequenceField.jsx');
-
-
-/**
- * A regular expression object used to test if a string contains spaces. Used to make sure the there are no spaces in
- * a supplied accession.
- *
- * @type {RegExp}
- * @object
- */
-var SpaceRegEx = new RegExp(' ');
 
 
 /**
@@ -82,8 +76,8 @@ var SequenceForm = React.createClass({
 
     componentDidUpdate: function (prevProps) {
         if (!this.props.active && prevProps.active) {
-            if (this.props.mode === "edit") this.refs.host.getInputDOMNode().focus();
-            if (this.props.mode === "add") this.refs.accession.getInputDOMNode().focus();
+            if (this.props.mode === "edit") ReactDOM.findDOMNode(this.refs.host).focus();
+            if (this.props.mode === "add") ReactDOM.findDOMNode(this.refs.accession).focus();
         }
     },
 
@@ -102,20 +96,38 @@ var SequenceForm = React.createClass({
 
     onSubmit: function (event) {
         event.preventDefault();
-        console.log("submit");
     },
 
     render: function () {
-        // An addon for the accession field that allows the user to pull data for the virus accession from NCBI.
-        var autofillAddon;
-
         var overlay;
 
+        var sharedProps = {
+            spellCheck: false,
+            readOnly: this.props.mode === "read",
+            onChange: this.handleChange
+        };
+
+        var accession = (
+            <FormControl
+                {...sharedProps}
+                ref="accession"
+                type="text"
+                name="sequenceId"
+                value={this.props.sequenceId}
+                readOnly={this.props.mode !== "add"}
+            />
+        );
+
         if (this.props.mode === "add") {
-            autofillAddon = (
-                <PushButton onClick={this.props.autofill}>
-                    <Icon name='wand' />
-                </PushButton>
+            accession = (
+                <InputGroup>
+                    {accession}
+                    <InputGroup.Button>
+                        <PushButton onClick={this.props.autofill}>
+                            <Icon name='wand' />
+                        </PushButton>
+                    </InputGroup.Button>
+                </InputGroup>
             );
 
             if (this.props.error) {
@@ -135,11 +147,7 @@ var SequenceForm = React.createClass({
             }
         }
 
-        var sharedProps = {
-            spellCheck: false,
-            readOnly: this.props.mode === "read",
-            onChange: this.handleChange
-        };
+
 
         return (
             <form onSubmit={this.onSubmit}>
@@ -147,16 +155,10 @@ var SequenceForm = React.createClass({
 
                 <Row>
                     <Col md={6}>
-                        <Input
-                            ref='accession'
-                            type='text'
-                            name='sequenceId'
-                            label='Accession'
-                            value={this.props.sequenceId}
-                            buttonAfter={autofillAddon}
-                            {...sharedProps}
-                            readOnly={this.props.mode !== "add"}
-                        />
+                        <FormGroup>
+                            <ControlLabel>Accession</ControlLabel>
+                            {accession}
+                        </FormGroup>
                     </Col>
                     <Col md={6}>
                         <Input

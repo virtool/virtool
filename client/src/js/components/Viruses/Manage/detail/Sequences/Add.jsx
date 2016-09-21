@@ -77,13 +77,13 @@ var AddSequence = React.createClass({
         }
     },
 
-    handleEntered: function () {
+    collapseEntered: function () {
         this.setState({
             collapsed: false
         });
     },
 
-    handleExited: function () {
+    collapseExited: function () {
         this.setState({
             collapsed: true
         });
@@ -109,8 +109,6 @@ var AddSequence = React.createClass({
                     this.setState(state);
                 }, this)
                 .failure(function () {
-                    console.log("Failure");
-
                     this.setState({
                         pendingAutofill: false,
                         error: 'Could not find data for accession.'
@@ -138,7 +136,7 @@ var AddSequence = React.createClass({
             _id: this.props.virusId,
             isolate_id: this.props.isolateId,
             new: newEntry
-        }).failure(this.onSaveFailure);
+        }).success(this.props.toggleAdding).failure(this.onSaveFailure);
     },
 
     update: function (data) {
@@ -190,7 +188,7 @@ var AddSequence = React.createClass({
                     </div>
                 </Collapse>
 
-                <Collapse in={this.props.active} onEntered={this.handleEntered} onExited={this.handleExited}>
+                <Collapse in={this.props.active} onEntered={this.collapseEntered} onExited={this.collapseExited}>
                     <div>
                         <LoadingOverlay show={this.state.pendingAutofill} text="Fetching" />
 

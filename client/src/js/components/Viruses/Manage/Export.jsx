@@ -15,7 +15,6 @@
 var React = require('react');
 var Modal = require('react-bootstrap/lib/Modal');
 var Panel = require('react-bootstrap/lib/Panel');
-var Input = require('react-bootstrap/lib/InputGroup');
 
 var PushButton = require('virtool/js/components/Base/PushButton.jsx');
 var ByteSize = require('virtool/js/components/Base/ByteSize.jsx');
@@ -35,9 +34,13 @@ var ExportViruses = React.createClass({
         };
     },
 
+    modalExited: function () {
+        this.setState(this.getInitialState());
+    },
+
     handleClick: function () {
         this.setState({download: false, pending: true}, function () {
-            dispatcher.db.viruses.request('export').success(function () {
+            dispatcher.db.viruses.request('export').success(function (data) {
                 this.setState({
                     download: data,
                     pending: false
@@ -49,11 +52,6 @@ var ExportViruses = React.createClass({
     handleSubmit: function (event) {
         event.preventDefault();
         dispatcher.db.viruses.request('importData', {fileId: this.refs.text.getValue()});
-    },
-
-    hide: function () {
-        this.setState(this.getInitialState());
-        this.props.onHide();
     },
 
     render: function () {
@@ -84,16 +82,14 @@ var ExportViruses = React.createClass({
             );
         }
 
-        var modalProps = _.extend(this.props, {onHide: this.hide});
-
         return (
-            <Modal {...modalProps}>
+            <Modal show={this.props.show} onHide={this.props.onHide} onExited={this.modalExited}>
 
-                <Modal.Header {...modalProps} closeButton>
+                <Modal.Header onHide={this.props.onHide} closeButton>
                     Export Viruses
                 </Modal.Header>
 
-                <Modal.Body {...modalProps}>
+                <Modal.Body>
                     <Panel>
                         Export all viruses as they exist in the most recent index build. The generated JSON file can
                         be imported into a new Virtool instance. History will not be preserved.
@@ -101,7 +97,6 @@ var ExportViruses = React.createClass({
 
                     {button}
                 </Modal.Body>
-
 
             </Modal>
         );

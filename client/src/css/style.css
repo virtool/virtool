@@ -185,7 +185,7 @@ i.hoverable:hover {
 }
 
 .list-group-item.band {
-    box-shadow: inset 7px 0 0 0 #dddddd;
+    box-shadow: inset 5px 0 0 0 #dddddd;
 }
 
 .path-bar {
@@ -512,6 +512,3 @@ table.cluster-table tbody tr {
     display: table;
     table-layout: fixed;
 }
-
-
-

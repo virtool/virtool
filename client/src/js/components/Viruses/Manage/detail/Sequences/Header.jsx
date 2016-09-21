@@ -12,6 +12,7 @@
 'use strict';
 
 var React = require('react');
+var FlipMove = require('react-flip-move');
 
 var Icon = require('virtool/js/components/Base/Icon.jsx');
 var Flex = require('virtool/js/components/Base/Flex.jsx');
@@ -49,9 +50,9 @@ var SequenceHeader = React.createClass({
                         <span> - {this.props.definition || 'Definition'}</span>
                     </Flex.Item>
                     <Flex.Item>
-                        <span className='icon-group' onClick={this.stopPropagation}>
+                        <FlipMove typeName="div" className='icon-group' leaveAnimation={false} duration={150} onClick={this.stopPropagation}>
                             {this.props.children}
-                        </span>
+                        </FlipMove>
                     </Flex.Item>
                 </Flex>
             </h5>

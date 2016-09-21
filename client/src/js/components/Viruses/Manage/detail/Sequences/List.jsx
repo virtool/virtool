@@ -156,7 +156,7 @@ var VirusSequences = React.createClass({
                     <strong><Icon name='dna' /> Isolate Sequences </strong>
                     <Badge>{this.props.data.length}</Badge>
                 </h5>
-                <FlipMove typeName="div" className="list-group">
+                <FlipMove typeName="div" className="list-group" enterAnimation="fade" leaveAnimation={false}>
                     {sequenceComponents}
                     {lastComponent}
                 </FlipMove>

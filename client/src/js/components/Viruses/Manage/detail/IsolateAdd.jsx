@@ -13,6 +13,7 @@
 
 var CX = require('classnames');
 var React = require('react');
+var ReactDOM = require('react-dom');
 var Row = require('react-bootstrap/lib/Row');
 var Col = require('react-bootstrap/lib/Col');
 var Collapse = require('react-bootstrap/lib/Collapse');
@@ -74,16 +75,24 @@ var Isolate = React.createClass({
         document.removeEventListener("keyup", this.handleKeyUp, true);
     },
 
-    handleEntered: function () {
+    collapseEnter: function () {
+        this.refs.form.focus();
+    },
+
+    collapseEntered: function () {
         this.setState({
             collapsed: false
+        }, function () {
+            this.props.updateScroll();
+            this.refs.form.focus();
+            ReactDOM.findDOMNode(this).scrollIntoView({block: "end", behaviour: "smooth"});
         });
     },
 
-    handleExited: function () {
+    collapseExited: function () {
         this.setState({
             collapsed: true
-        });
+        }, this.props.updateScroll);
     },
 
     /**
@@ -150,29 +159,31 @@ var Isolate = React.createClass({
         }
 
         var itemProps = {
+            className: CX({
+                "list-group-item": true,
+                "hoverable": !this.props.active,
+                "band": this.props.active
+            }),
+
             style: {
                 background: this.props.active ? "#dbe9f5": null,
                 transition: '0.7s background'
             },
 
-            allowFocus: this.props.active,
-
-            onClick: this.state.collapsed ? this.props.toggleAdding: null,
-            onEntered: this.handleEntered,
-            onExited: this.handleExited
+            onClick: this.state.collapsed ? this.props.toggleAdding: null
         };
 
         return (
-            <ListGroupItem {...itemProps}>
+            <div {...itemProps}>
                 <Collapse in={!this.props.active}>
                     <div className='text-center'>
-                        <Icon name='plus-square' bsStyle='primary'/> Add Isolate
+                        <Icon name='plus-square' bsStyle='primary' /> Add Isolate
                     </div>
                 </Collapse>
-                <Collapse in={this.props.active} onExited={this.handleExited} onEntered={this.handleEntered}>
+                <Collapse in={this.props.active} onExited={this.collapseExited} onEnter={this.collapseEnter} onEntered={this.collapseEntered}>
                     <div>
                         <div style={{height: '15px'}} />
-                        <IsolateForm
+                        <IsolateForm ref="form"
                             sourceType={this.state.sourceType}
                             sourceName={this.state.sourceName}
                             allowedSourceTypes={this.props.allowedSourceTypes}
@@ -183,7 +194,7 @@ var Isolate = React.createClass({
                         {buttons}
                     </div>
                 </Collapse>
-            </ListGroupItem>
+            </div>
         );
     }
 });

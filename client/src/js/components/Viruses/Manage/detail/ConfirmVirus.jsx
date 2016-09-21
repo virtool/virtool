@@ -13,10 +13,10 @@
 
 var _ = require('lodash');
 var React = require('react');
-var FlipMove = require('react-flip-move');
 var Row = require('react-bootstrap/lib/Row');
 var Col = require('react-bootstrap/lib/Col');
 var Alert = require('react-bootstrap/lib/Alert');
+var Collapse = require('react-bootstrap/lib/Collapse');
 
 var Utils = require('virtool/js/Utils');
 var Flex = require('virtool/js/components/Base/Flex.jsx');
@@ -176,16 +176,12 @@ var ConfirmVirus = React.createClass({
             );
         }
 
-        var alert = !this.props.show ? <div /> : (
-            <Alert key="alert" bsStyle={this.state.error ? 'danger': 'warning'} className='clearfix'>
-                {content}
-            </Alert>
-        );
-
         return (
-            <FlipMove duration={200} enterAnimation="fade" leaveAnimation={false} typeName="div">
-                {alert}
-            </FlipMove>
+            <Collapse in={this.props.show} timeout={150}>
+                <Alert bsStyle={this.state.error ? 'danger': 'warning'} className="clearfix">
+                    {content}
+                </Alert>
+            </Collapse>
         );
     }
 

@@ -81,13 +81,13 @@ var Isolate = React.createClass({
         document.removeEventListener("keyup", this.handleKeyUp, true);
     },
 
-    handleEntered: function () {
+    modalEntered: function () {
         this.setState({
             collapsed: false
         });
     },
 
-    handleExited: function () {
+    modalExited: function () {
         this.setState({
             collapsed: true
         });
@@ -223,8 +223,7 @@ var Isolate = React.createClass({
 
         // Classes to apply to the ListGroupItem.
         itemProps.className = CX({
-            band: this.props.active,
-            "active-band": this.state.editing
+            band: this.props.active
         });
 
         var itemStyle = {
@@ -276,11 +275,11 @@ var Isolate = React.createClass({
         }
 
         return (
-            <ListGroupItem id={"isolate_" + this.props.isolateId} {...itemProps} style={itemStyle}>
+            <ListGroupItem {...itemProps} style={itemStyle}>
                 <IsolateHeader sourceType={this.state.sourceType} sourceName={this.state.sourceName}>
                     {icons}
                 </IsolateHeader>
-                <Collapse in={this.props.canModify && this.state.editing} onExited={this.handleExited} onEntered={this.handleEntered}>
+                <Collapse in={this.props.canModify && this.state.editing} onExited={this.modalExited} onEntered={this.modalEntered}>
                     <div>
                         <div style={{height: '15px'}} />
                         <IsolateForm
