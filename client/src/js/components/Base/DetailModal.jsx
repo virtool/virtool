@@ -48,7 +48,7 @@ var DetailModal = React.createClass({
         this.props.collection.off('change', this.tryRefresh);
     },
 
-    handleEntered: function () {
+    modalEntered: function () {
         // Request detail for the document from the server. The data will be returned in a transaction. Pass the data
         // to a callback that will update the contentComponent.
         this.props.collection.request('detail', {_id: this.props.target._id}).success(function (data) {
@@ -63,11 +63,11 @@ var DetailModal = React.createClass({
         this.props.collection.on('change', this.tryRefresh);
     },
 
-    handleExit: function () {
+    modalWillExit: function () {
         this.props.collection.off('change', this.tryRefresh);
     },
 
-    handleExited: function () {
+    modalExited: function () {
         this.setState({
             pending: true,
             data: null
@@ -120,9 +120,9 @@ var DetailModal = React.createClass({
             show: show,
             bsSize: this.props.bsSize,
             onHide: this.props.onHide,
-            onEntered: this.handleEntered,
-            onExit: this.handleExit,
-            onExited: this.handleExited
+            onEntered: this.modalEntered,
+            onExit: this.modalWillExit,
+            onExited: this.modalExited
         };
 
         return (

@@ -39,8 +39,21 @@ var PushListGroupItem = React.createClass({
     },
 
     render: function () {
+
+        var props = _.pick(this.props, [
+            "active",
+            "style",
+            "className",
+            "bsStyle",
+            "disabled",
+            "header",
+            "href",
+            "onClick",
+            "type"
+        ]);
+
         return (
-            <ListGroupItem {...this.props} onFocus={this.props.allowFocus ? null: this.handleFocus}>
+            <ListGroupItem {...props} onFocus={this.props.allowFocus ? null: this.handleFocus}>
                 {this.props.children}
             </ListGroupItem>
         );

@@ -45,7 +45,9 @@ var Flex = React.createClass({
             'space-around'
         ]),
 
-        className: React.PropTypes.string
+        className: React.PropTypes.string,
+
+        style: React.PropTypes.object
     },
 
     getDefaultProps: function () {
@@ -102,6 +104,10 @@ Flex.Item = React.createClass({
 
         if (this.props.pad) {
             style.marginLeft = this.props.pad === true ? '3px': this.props.pad + 'px';
+        }
+
+        if (this.props.style) {
+            _.merge(style, this.props.style)
         }
 
         _.assign(style, this.props.style);

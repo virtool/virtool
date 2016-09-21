@@ -64,7 +64,7 @@ var Body = React.createClass({
         }, this);
 
         return (
-            <FlipMove typeName="tbody" leaveAnimation={false}>
+            <FlipMove typeName="tbody" enterAnimation="accordianHorizontal" leaveAnimation={false} duration={200}>
                 {rowComponents}
             </FlipMove>
         );

@@ -23,9 +23,10 @@ var FormControl = require('react-bootstrap/lib/FormControl');
 var Input = React.createClass({
 
     propTypes: {
-        label: React.PropTypes.string,
+        label: React.PropTypes.oneOfType([React.PropTypes.string, React.PropTypes.element]),
         name: React.PropTypes.string,
         type: React.PropTypes.string,
+        rows: React.PropTypes.number,
         value: React.PropTypes.any,
         readOnly: React.PropTypes.bool,
         placeholder: React.PropTypes.any,
@@ -87,6 +88,10 @@ var Input = React.createClass({
             componentClass = "select";
         }
 
+        if (this.props.type === "textarea") {
+            componentClass = "textarea";
+        }
+
         var label;
 
         if (this.props.label) {
@@ -105,6 +110,7 @@ var Input = React.createClass({
                         ref="input"
                         type={this.props.type}
                         name={this.props.name}
+                        rows={this.props.rows}
                         value={this.props.value}
                         onBlur={this.props.onBlur}
                         onFocus={this.props.onFocus}
