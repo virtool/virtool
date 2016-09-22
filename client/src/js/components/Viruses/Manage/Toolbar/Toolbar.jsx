@@ -111,8 +111,9 @@ var VirusToolbar = React.createClass({
         var menu;
 
         if (this.state.canAdd || this.state.canModify) {
+            var title = <Icon name='menu' />;
             menu = (
-                <DropdownButton id="virus-dropdown" title={<Icon name='menu' />} noCaret onSelect={this.handleSelect}>
+                <DropdownButton id="virus-dropdown" title={title} onSelect={this.handleSelect} noCaret pullRight>
                     <MenuItem eventKey="add" disabled={!this.state.canAdd}>
                         <Icon name='new-entry' /> New
                     </MenuItem>
