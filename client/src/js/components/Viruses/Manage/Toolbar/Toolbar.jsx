@@ -12,7 +12,7 @@
 'use strict';
 
 var React = require('react');
-var Dropdown = require('react-bootstrap/lib/Dropdown');
+var DropdownButton = require('react-bootstrap/lib/DropdownButton');
 var MenuItem = require('react-bootstrap/lib/MenuItem');
 
 var Icon = require('virtool/js/components/Base/Icon.jsx');
@@ -112,22 +112,17 @@ var VirusToolbar = React.createClass({
 
         if (this.state.canAdd || this.state.canModify) {
             menu = (
-                <Dropdown id='virus-menu-dropdown' pullRight onSelect={this.handleSelect}>
-                    <Dropdown.Toggle noCaret>
-                        <Icon name='menu' />
-                    </Dropdown.Toggle>
-                    <Dropdown.Menu>
-                        <MenuItem eventKey="add" disabled={!this.state.canAdd}>
-                            <Icon name='new-entry' /> New
-                        </MenuItem>
-                        <MenuItem eventKey="export" disabled={!this.state.canModify}>
-                            <Icon name='export' /> Export
-                        </MenuItem>
-                        <MenuItem eventKey="import" disabled={!this.state.canAdd}>
-                            <Icon name='new-entry' /> Import
-                        </MenuItem>
-                    </Dropdown.Menu>
-                </Dropdown>
+                <DropdownButton id="virus-dropdown" title={<Icon name='menu' />} noCaret onSelect={this.handleSelect}>
+                    <MenuItem eventKey="add" disabled={!this.state.canAdd}>
+                        <Icon name='new-entry' /> New
+                    </MenuItem>
+                    <MenuItem eventKey="export" disabled={!this.state.canModify}>
+                        <Icon name='export' /> Export
+                    </MenuItem>
+                    <MenuItem eventKey="import" disabled={!this.state.canAdd}>
+                        <Icon name='new-entry' /> Import
+                    </MenuItem>
+                </DropdownButton>
             );
         }
 

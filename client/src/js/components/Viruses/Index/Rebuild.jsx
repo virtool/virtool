@@ -12,6 +12,7 @@
 var React = require('react');
 var Alert = require('react-bootstrap/lib/Alert');
 var Button = require('react-bootstrap/lib/Button');
+var Collapse = require('react-bootstrap/lib/Collapse');
 
 var Flex = require('virtool/js/components/Base/Flex.jsx');
 var Icon = require('virtool/js/components/Base/Icon.jsx');
@@ -75,17 +76,12 @@ var IndexRebuild = React.createClass({
         // Get history documents whose changes are unbuilt ('not included in index yet').
         var unindexed = _.filter(this.props.documents, {index_version: 'unbuilt'});
 
-        var message = (
-            <span>
-                <Icon name='info' /> No viruses have been modified since the last index build.
-            </span>
-        );
-
         var button;
-        var errorComponent;
+        var message;
 
         // Show a notification
         if (unindexed.length > 0 || this.props.documents.length === 0) {
+
             message = (
                 <span>
                     <Icon name='notification' />&nbsp;
@@ -98,24 +94,21 @@ var IndexRebuild = React.createClass({
 
             if (this.state.canRebuild) {
                 button = (
-                    <PushButton bsStyle='primary' onClick={this.rebuild} disabled={this.state.pending} pullRight>
-                        <Icon name='hammer' pending={this.state.pending}/>&nbsp;
-                        {this.state.pending ? 'Rebuilding' : 'Rebuild'}
-                    </PushButton>
+                    <Flex.Item pad={20}>
+                        <PushButton bsStyle='primary' onClick={this.rebuild} disabled={this.state.pending} pullRight>
+                            <Icon name='hammer' pending={this.state.pending}/>&nbsp;
+                            {this.state.pending ? 'Rebuilding' : 'Rebuild'}
+                        </PushButton>
+                    </Flex.Item>
                 );
             }
 
-            if (this.state.error) {
-                errorComponent = (
-                    <Alert bsStyle='danger' onDismiss={this.dismissError}>
-                        <Icon name='warning' />&nbsp;
-                        <strong>
-                            One or more viruses are in an unverified state. All virus documents must be verified before
-                            the index can be rebuilt.
-                        </strong>
-                    </Alert>
-                );
-            }
+        } else {
+            message = (
+                <span>
+                    <Icon name='info' /> No viruses have been modified since the last index build.
+                </span>
+            );
         }
 
         return (
@@ -125,13 +118,21 @@ var IndexRebuild = React.createClass({
                         <Flex.Item grow={1}>
                             {message}
                         </Flex.Item>
-                        <Flex.Item pad={20}>
-                            {button}
-                        </Flex.Item>
+                        {button}
                     </Flex>
                 </Alert>
 
-                {errorComponent}
+                <Collapse in={this.state.error}>
+                    <div>
+                        <Alert bsStyle='danger' onDismiss={this.dismissError}>
+                            <Icon name='warning' />&nbsp;
+                            <strong>
+                                One or more viruses are in an unverified state. All virus documents must be verified before
+                                the index can be rebuilt.
+                            </strong>
+                        </Alert>
+                    </div>
+                </Collapse>
             </div>
         );
     }

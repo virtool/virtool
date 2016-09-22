@@ -6,7 +6,7 @@
  * @author
  * Ian Boyes
  *
- * @exports VirusToolbar
+ * @exports HMMToolbar
  */
 
 'use strict';
@@ -23,7 +23,7 @@ var PushButton = require('virtool/js/components/Base/PushButton.jsx');
  * A toolbar component rendered at the top of the virus manager table. Allows searching of viruses by name and
  * abbreviation. Includes a button for creating a new virus.
  */
-var VirusToolbar = React.createClass({
+var HMMToolbar = React.createClass({
 
     propTypes: {
         onChange: React.PropTypes.func
@@ -69,21 +69,11 @@ var VirusToolbar = React.createClass({
     /**
      * Changes state to show the add or export modal form. Triggered by clicking the a menu item.
      *
-     * @param event {object} - the select event.
      * @param eventKey {number} - the event key.
      * @func
      */
-    handleSelect: function (event, eventKey) {
-        switch (eventKey) {
-
-            case 1:
-                dispatcher.router.setExtra(["import"]);
-                break;
-
-            case 2:
-                dispatcher.router.setExtra(["files"]);
-                break;
-        }
+    handleSelect: function (eventKey) {
+        dispatcher.router.setExtra([eventKey]);
     },
 
     render: function () {
@@ -92,15 +82,15 @@ var VirusToolbar = React.createClass({
 
         var menu = (
             <Flex.Item shrink={0} grow={0} pad>
-                <Dropdown id='virus-menu-dropdown' pullRight onSelect={this.handleSelect}>
-                    <Dropdown.Toggle noCaret ref='menuButton'>
+                <Dropdown id='hmm-dropdown' pullRight onSelect={this.handleSelect}>
+                    <Dropdown.Toggle noCaret>
                         <Icon name='menu' />
                     </Dropdown.Toggle>
                     <Dropdown.Menu>
-                        <MenuItem eventKey={1} disabled={!this.state.canModify || !mayImport}>
+                        <MenuItem eventKey="import" disabled={!this.state.canModify || !mayImport}>
                             <Icon name='new-entry' /> Import Annotations
                         </MenuItem>
-                        <MenuItem eventKey={2} disabled={!this.state.canModify}>
+                        <MenuItem eventKey="files" disabled={!this.state.canModify}>
                             <Icon name='folder-open' /> View Files
                         </MenuItem>
                     </Dropdown.Menu>
@@ -135,4 +125,4 @@ var VirusToolbar = React.createClass({
 
 });
 
-module.exports = VirusToolbar;
+module.exports = HMMToolbar;

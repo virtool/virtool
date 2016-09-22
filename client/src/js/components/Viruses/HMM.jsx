@@ -15,7 +15,7 @@ var React = require('react');
 var Label = require('react-bootstrap/lib/Label');
 
 
-var Toolbar = require('./HMM/Toolbar.jsx');
+var HMMToolbar = require('./HMM/Toolbar.jsx');
 var DynamicTable = require('virtool/js/components/Base/DynamicTable/DynamicTable.jsx');
 var DetailModal = require('virtool/js/components/Base/DetailModal.jsx');
 
@@ -80,7 +80,7 @@ var HMM = React.createClass({
 
         var tableProps = {
             collection: dispatcher.db.hmm,
-            filterComponent: Toolbar,
+            filterComponent: HMMToolbar,
             fields: this.fields,
             documentsNoun: 'annotations',
             onClick: this.showDetail,

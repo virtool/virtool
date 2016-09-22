@@ -142,9 +142,9 @@ var HMMFiles = React.createClass({
         }
 
         return (
-            <Modal {...this.props} onEntered={this.checkFiles} onExited={this.reset}>
+            <Modal show={this.props.show} onHide={this.props.onHide} onEntered={this.checkFiles} onExited={this.reset}>
 
-                <Modal.Header {...this.props} closeButton>
+                <Modal.Header onHide={this.props.onHide} closeButton>
                     HMM Files {this.state.files ? <Badge>{this.state.files.length}</Badge>: null}
                 </Modal.Header>
 

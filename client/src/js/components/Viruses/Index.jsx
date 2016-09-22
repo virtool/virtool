@@ -78,7 +78,7 @@ var Index = React.createClass({
                         documents={this.state.historyEntries}
                         collection={dispatcher.db.viruses}
                     />
-                    <FlipMove typeName="div" className="list-group" condensed={true}>
+                    <FlipMove typeName="div" className="list-group">
                         {indexComponents}
                     </FlipMove>
                 </div>

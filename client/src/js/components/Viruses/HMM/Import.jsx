@@ -41,6 +41,10 @@ var ImportViruses = React.createClass({
         };
     },
 
+    modalExited: function () {
+        this.setState(this.getInitialState());
+    },
+
     handleDrop: function (files) {
         this.setState(_.extend(this.getInitialState(), {file: files[0]}));
     },
@@ -69,15 +73,7 @@ var ImportViruses = React.createClass({
         this.setState(this.getInitialState());
     },
 
-    hide: function () {
-        this.setState(this.getInitialState(), function () {
-            this.props.onHide();
-        })
-    },
-
     render: function () {
-        
-        var modalProps = _.extend(this.props, {onHide: this.hide});
 
         var dropzoneProps = {
             onDrop: this.handleDrop,
@@ -141,13 +137,13 @@ var ImportViruses = React.createClass({
         );
 
         return (
-            <Modal ref='modal' {...modalProps}>
+            <Modal ref='modal' show={this.props.show} onHide={this.props.onHide} onExited={this.modalExited}>
 
-                <Modal.Header {...modalProps} closeButton>
+                <Modal.Header onHide={this.props.onHide} closeButton>
                     Import Viruses
                 </Modal.Header>
 
-                <Modal.Body {...modalProps}>
+                <Modal.Body>
                     <Row>
                         <Col md={12}>
                             <Panel>
