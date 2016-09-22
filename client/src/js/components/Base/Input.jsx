@@ -38,7 +38,9 @@ var Input = React.createClass({
         onHide: React.PropTypes.func,
         onBlur: React.PropTypes.func,
         onFocus: React.PropTypes.func,
-        onChange: React.PropTypes.func
+        onChange: React.PropTypes.func,
+
+        style: React.PropTypes.object
     },
 
     getDefaultProps: function () {
@@ -119,6 +121,7 @@ var Input = React.createClass({
                         placeholder={this.props.placeholder}
                         autoComplete={this.props.autoComplete ? "on": "off"}
                         componentClass={componentClass}
+                        style={this.props.style}
                     >
                         {this.props.children}
                     </FormControl>

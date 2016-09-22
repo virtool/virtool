@@ -14,10 +14,10 @@
 var _ = require('lodash');
 var React = require('react');
 var Progress = require('rc-progress').Circle;
-var ListGroupItem = require('react-bootstrap/lib/ListGroupItem');
 
 var Flex = require('virtool/js/components/Base/Flex.jsx');
 var Icon = require('virtool/js/components/Base/Icon.jsx');
+var PushListGroupItem = require('virtool/js/components/Base/PushListGroupItem.jsx');
 
 /**
  * A component that serves as an document row in the hosts table.
@@ -71,6 +71,7 @@ var HostEntry = React.createClass({
     },
 
     render: function () {
+
         var progressIcon;
 
         if (this.state.progress < 1) {
@@ -88,14 +89,14 @@ var HostEntry = React.createClass({
         }
 
         return (
-            <ListGroupItem onClick={this.handleClick} disabled={!this.props.added}>
+            <PushListGroupItem onClick={this.handleClick} disabled={!this.props.added}>
                 <Flex>
                     <Flex.Item grow={1}>
                         {this.props._id}
                     </Flex.Item>
                     {progressIcon}
                 </Flex>
-            </ListGroupItem>
+            </PushListGroupItem>
         );
     }
 });

@@ -12,19 +12,20 @@
 var React = require('react');
 var Numeral = require('numeral');
 
-var LinkedStateMixin = require('react-addons-linked-state-mixin');
-var Input = require('react-bootstrap/lib/InputGroup');
+var Row = require('react-bootstrap/lib/Row');
+var Col = require('react-bootstrap/lib/Col');
 var Modal = require('react-bootstrap/lib/Modal');
-var Table = require('react-bootstrap/lib/Table');
+var ListGroup = require('react-bootstrap/lib/ListGroup');
+var ListGroupItem = require('react-bootstrap/lib/ListGroupItem');
 var Button = require('react-bootstrap/lib/Button');
+
 var Icon = require('virtool/js/components/Base/Icon.jsx');
+var Input = require('virtool/js/components/Base/Input.jsx');
 
 /**
  * A component based on React-Bootstrap Modal that presents a form used to add a new host from a FASTA file.
  */
 var AddHost = React.createClass({
-
-    mixins: [LinkedStateMixin],
 
     propTypes: {
         show: React.PropTypes.bool.isRequired,
@@ -40,14 +41,19 @@ var AddHost = React.createClass({
         }
     },
 
-    componentWillReceiveProps: function (nextProps) {
-        // Clear state if the modal is closing.
-        if (this.props.show && !nextProps.show) this.setState(this.getInitialState())
+    modalEnter: function () {
+        this.refs.organism.focus();
     },
 
-    componentDidUpdate: function (prevProps) {
-        // Focus on the first input if the modal was just opened.
-        if (!prevProps.show && this.props.show) this.refs.firstInput.getInputDOMNode().focus();
+    modalExited: function () {
+        this.setState(this.getInitialState());
+    },
+
+    handleChange: function (event) {
+        var data = {};
+        data[event.target.name] = event.target.value;
+
+        this.setState(data);
     },
 
     /**
@@ -75,38 +81,42 @@ var AddHost = React.createClass({
 
         var content;
 
+        var organismStyle = {
+            fontStyle: "italic"
+        };
+
         if (this.props.show && this.props.target) {
             content = (
                 <form onSubmit={this.handleSubmit}>
                     <Modal.Header>
                         Add Host
                     </Modal.Header>
+
                     <Modal.Body>
-                        <Input ref='firstInput' type='text' placeholder='Organism Name' valueLink={this.linkState('organism')} />
-                        <Input type='text' placeholder='Description' valueLink={this.linkState('description')} />
-
-                        <Table bordered condensed>
-                            <tbody>
-                                <tr>
-                                    <th className='col-sm-5'>Organism Name</th>
-                                    <td className='col-sm-7'>{this.state.organism}</td>
-                                </tr>
-                                <tr>
-                                    <th>Description</th>
-                                    <td>{this.state.description}</td>
-                                </tr>
-                                <tr>
-                                    <th>File</th>
-                                    <td>{this.props.target._id}</td>
-                                </tr>
-
-                                <tr>
-                                    <th>Size</th>
-                                    <td>{Numeral(this.props.target.size).format('0.0 b')}</td>
-                                </tr>
-                            </tbody>
-                        </Table>
+                        <Input
+                            ref='organism'
+                            type='text'
+                            name="organism"
+                            label="Organism"
+                            value={this.state.organism}
+                            onChange={this.handleChange}
+                            style={organismStyle}
+                        />
+                        <Input
+                            type='text'
+                            name="description"
+                            label="Description"
+                            value={this.state.description}
+                            onChange={this.handleChange}
+                        />
+                        <Input
+                            type="text"
+                            label="File"
+                            value={this.props.target._id}
+                            readOnly
+                        />
                     </Modal.Body>
+
                     <Modal.Footer className='modal-footer'>
                         <Button onClick={this.props.onHide}>Cancel</Button>
                         <Button type='submit' onClick={this.submit} bsStyle='primary' disabled={!submittable}>
@@ -118,7 +128,7 @@ var AddHost = React.createClass({
         }
 
         return (
-            <Modal {...this.props}>
+            <Modal show={this.props.show} onHide={this.props.onHide} onEnter={this.modalEnter} onExited={this.modalExited}>
                 {content}
             </Modal>
         )
