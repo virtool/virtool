@@ -38,6 +38,7 @@
     "react-addons-css-transition-group": "^15.3.1",
     "react-addons-linked-state-mixin": "^15.3.1",
     "react-bootstrap": "^0.30.3",
+    "react-bootstrap-typeahead": "^0.9.2",
     "react-cookie": "^0.4.5",
     "react-dom": "^15.3.1",
     "react-dropzone": "^3.3.2",
