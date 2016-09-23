@@ -6,7 +6,7 @@
  * @author
  * Ian Boyes
  *
- * @exports JobsFilter
+ * @exports JobsToolbar
  */
 
 'use strict';
@@ -24,7 +24,7 @@ var Input = require('virtool/js/components/Base/Input.jsx');
  *
  * @class
  */
-var JobsFilter = React.createClass({
+var JobsToolbar = React.createClass({
 
     propTypes: {
         documents: React.PropTypes.arrayOf(React.PropTypes.object),
@@ -100,4 +100,4 @@ var JobsFilter = React.createClass({
     }
 });
 
-module.exports = JobsFilter;
+module.exports = JobsToolbar;

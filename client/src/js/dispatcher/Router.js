@@ -75,8 +75,7 @@ function Router() {
             icon: 'briefcase',
 
             children: [
-                {key: 'active', component: require('virtool/js/components/Jobs/Active.jsx')},
-                {key: 'archived', component: require('virtool/js/components/Jobs/Archived.jsx')}
+                {key: 'active', component: require('virtool/js/components/Jobs/Active.jsx')}
             ]
         },
 

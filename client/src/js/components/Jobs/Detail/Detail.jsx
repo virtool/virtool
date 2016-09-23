@@ -36,7 +36,7 @@ var JobDetail = React.createClass({
 
         return (
             <div>
-                <Modal.Body onHide={this.props.onHide}>
+                <Modal.Body>
                     <General {...data} />
                     {error ? <Error error={error} />: null}
                     <ProgressTable status={data.status} log={data.log} />

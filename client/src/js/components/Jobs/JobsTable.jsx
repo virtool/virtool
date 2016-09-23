@@ -41,7 +41,6 @@ var JobsTable = React.createClass({
     getInitialState: function () {
         return {
             canCancel: dispatcher.user.permissions.cancel_job,
-            canArchive: dispatcher.user.permissions.archive_job,
             canRemove: dispatcher.user.permissions.remove_job
         };
     },
@@ -59,7 +58,6 @@ var JobsTable = React.createClass({
         this.setState({
             canCancel: dispatcher.user.permissions.cancel_job,
             canRemove: dispatcher.user.permissions.remove_job,
-            canArchive: dispatcher.user.permissions.archive_job
         });
     },
 
@@ -84,7 +82,7 @@ var JobsTable = React.createClass({
 
     /**
      * Precipitates an operation on one or more jobs. A confirm modal is shown to make sure the user want to follow
-     * through with the operation. Valid operations are 'cancel, 'archive', and 'remove'.
+     * through with the operation. Valid operations are 'cancel' and 'remove'.
      *
      * @param methodName {string} - the name of the server method to call.
      * @param targets {object} - a single target object or list of targets to remove.
@@ -179,23 +177,6 @@ var JobsTable = React.createClass({
                     pad={true}
                     key='cancel'
                 />);
-
-                var canArchive = (
-                    !waitingOrRunning &&
-                    _.every(documents, {archived: false}) &&
-                    this.state.canArchive
-                );
-
-                var archiveIcon = <Icon
-                    name='box-add'
-                    bsStyle={canArchive ? 'info': null}
-                    onClick={canArchive ? function () {this.sendRequest('archive', documents)}.bind(this): null}
-                    style={canArchive ? null: hidden}
-                    pad={true}
-                    key='archive'
-                />;
-
-                canArchive ? icons.push(archiveIcon): icons.unshift(archiveIcon);
 
                 var canRemove = !waitingOrRunning && dispatcher.user.permissions.remove_job;
 

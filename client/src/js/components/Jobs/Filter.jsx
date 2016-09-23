@@ -13,10 +13,14 @@
 
 var _ = require('lodash');
 var React = require('react');
-var Row = require('react-bootstrap/lib/Row');
-var Col = require('react-bootstrap/lib/Col');
+var ReactDOM = require('react-dom');
 var InputGroup = require('react-bootstrap/lib/InputGroup');
+var FormGroup = require('react-bootstrap/lib/FormGroup');
+var FormControl = require('react-bootstrap/lib/FormControl');
+var ControlLabel = require('react-bootstrap/lib/ControlLabel');
+
 var Icon = require('virtool/js/components/Base/Icon.jsx');
+var Flex = require('virtool/js/components/Base/Flex.jsx');
 
 /**
  * A form-based component used to filter the documents presented in JobsTable component.
@@ -30,9 +34,16 @@ var JobsFilter = React.createClass({
         onChange: React.PropTypes.func.isRequired
     },
 
+    getInitialState: function () {
+        return {
+            task: '',
+            username: ''
+        };
+    },
+
     componentDidMount: function () {
         // Focus on the first (task) form field when the component has mounted.
-        this.refs.task.getInputDOMNode().focus();
+        ReactDOM.findDOMNode(this.refs.task).focus();
     },
 
     /**
@@ -42,13 +53,17 @@ var JobsFilter = React.createClass({
      * @func
      */
     handleChange: function (event) {
-        var re = {
-            task: new RegExp(this.refs.task.getValue(), 'i'),
-            username: new RegExp(this.refs.username.getValue(), 'i')
-        };
+        var data = _.clone(this.state);
+
+        data[event.target.name] = event.target.value;
+
+        this.setState(data);
 
         var filterFunction = function (document) {
-            return re.task.test(document.task) && re.username.test(document.username);
+            return (
+                (!data.task || document.task === data.task) &&
+                (!data.username || document.username === data.username)
+            );
         };
 
         // Pass the new filter object up to the parent component using the onChange function.
@@ -56,10 +71,6 @@ var JobsFilter = React.createClass({
     },
 
     render: function () {
-        // Nice addons for the Input components.
-        var taskAddon = <span><Icon name='briefcase' /> Task</span>;
-        var userAddon = <span><Icon name='user' /> User</span>;
-
         // Create the option components for the selected fields.
         var optionComponents = {};
 
@@ -79,22 +90,38 @@ var JobsFilter = React.createClass({
 
         var sharedProps = {
             type: 'select',
+            componentClass: 'select',
             onChange: this.handleChange
         };
 
         return (
-            <Row>
-                <Col md={6}>
-                    <Input {...sharedProps} name='task' addonBefore={taskAddon} ref='task'>
-                        {optionComponents.task}
-                    </Input>
-                </Col>
-                <Col md={6}>
-                    <Input {...sharedProps} name='username' addonBefore={userAddon} ref='username'>
-                        {optionComponents.username}
-                    </Input>
-                </Col>
-            </Row>
+            <Flex>
+                <Flex.Item grow={1}>
+                    <FormGroup>
+                        <InputGroup>
+                            <InputGroup.Addon>
+                                <Icon name='briefcase' /> Task
+                            </InputGroup.Addon>
+                            <FormControl ref="task" name="task" {...sharedProps}>
+                                {optionComponents.task}
+                            </FormControl>
+                        </InputGroup>
+                    </FormGroup>
+                </Flex.Item>
+
+                <Flex.Item grow={1} pad>
+                    <FormGroup>
+                        <InputGroup>
+                            <InputGroup.Addon>
+                                <Icon name='user' /> User
+                            </InputGroup.Addon>
+                            <FormControl ref="username" name="username" {...sharedProps}>
+                                {optionComponents.username}
+                            </FormControl>
+                        </InputGroup>
+                    </FormGroup>
+                </Flex.Item>
+            </Flex>
         );
     }
 });
