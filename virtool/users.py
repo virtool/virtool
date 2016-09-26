@@ -34,9 +34,12 @@ class Collection(virtool.database.Collection):
         # Get a synchronous connection to the users collection to do some initial setup.
         db_sync = virtool.utils.get_db_client(self.settings, sync=True)
 
-        # If any users lack the ``primary_group`` field, add it with a value of ``None``.
-        db_sync.users.update({"primary_group": {"$exists": False}}, {
-            "$set": {"primary_group": None}
+        # If any users lack the ``primary_group`` field or it is None, add it with a value of "".
+        db_sync.users.update({"$or": [
+            {"primary_group": {"$exists": False}},
+            {"primary_group": None}
+        ]}, {
+            "$set": {"primary_group": ""}
         }, multi=True)
 
         # Assign default user settings to users without defined settings.
@@ -275,7 +278,7 @@ class Collection(virtool.database.Collection):
             "salt": salt,
             "permissions": {permission: False for permission in virtool.groups.PERMISSIONS},
             "password": password,
-            "primary_group": None,
+            "primary_group": "",
             # Should the user be forced to reset their password on their next login?
             "force_reset": data["force_reset"],
             # A timestamp taken at the last password change.

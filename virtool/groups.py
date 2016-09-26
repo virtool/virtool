@@ -1,5 +1,7 @@
 import logging
 
+import pymongo.errors
+
 import virtool.database
 import virtool.gen
 import virtool.utils
@@ -76,12 +78,16 @@ class Collection(virtool.database.Collection):
         :rtype: tuple
 
         """
-        response = yield self.insert({
-            "_id": transaction.data["_id"],
-            "permissions": {permission: False for permission in PERMISSIONS}  # All permissions are initially False.
-        })
+        try:
+            response = yield self.insert({
+                "_id": transaction.data["_id"],
+                "permissions": {permission: False for permission in PERMISSIONS}  # All permissions are initially False.
+            })
 
-        return True, response
+            return True, response
+
+        except pymongo.errors.DuplicateKeyError:
+            return False, dict(message="Group name already exists.")
 
     @virtool.gen.exposed_method(["modify_options"])
     def update_permissions(self, transaction):
