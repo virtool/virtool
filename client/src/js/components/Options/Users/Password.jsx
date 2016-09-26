@@ -16,12 +16,12 @@ var LinkedStateMixin = require('react-addons-linked-state-mixin');
 
 var Alert = require('react-bootstrap/lib/Alert');
 var Panel = require('react-bootstrap/lib/Panel');
-var Input = require('react-bootstrap/lib/InputGroup');
 var Table = require('react-bootstrap/lib/Table');
 var ButtonToolbar = require('react-bootstrap/lib/ButtonToolbar');
 
 var Flex = require('virtool/js/components/Base/Flex.jsx');
 var Icon = require('virtool/js/components/Base/Icon.jsx');
+var Input = require('virtool/js/components/Base/Input.jsx');
 var Checkbox = require('virtool/js/components/Base/Checkbox.jsx');
 var PushButton = require('virtool/js/components/Base/PushButton.jsx');
 var RelativeTime = require('virtool/js/components/Base/RelativeTime.jsx');
@@ -42,6 +42,12 @@ var Change = React.createClass({
         }
     },
 
+    handleChange: function (event) {
+        var data = {};
+        data[event.target.name] = event.target.value;
+        this.setState(data);
+    },
+
     /**
      * Called when the password is submitted. Sends the new password data to the server.
      *
@@ -49,6 +55,8 @@ var Change = React.createClass({
      */
     submit: function (event) {
         event.preventDefault();
+
+        console.log(this.state);
 
         // The new and confirm fields must contain the same password.
         var match = this.state.new === this.state.confirm;
@@ -106,8 +114,9 @@ var Change = React.createClass({
                         <Flex.Item grow={1}>
                             <Input
                                 type='password'
+                                name="new"
                                 placeholder='New Password'
-                                valueLink={this.linkState('new')}
+                                onChange={this.handleChange}
                                 disabled={this.state.pendingChange}
                             />
                         </Flex.Item>
@@ -115,8 +124,9 @@ var Change = React.createClass({
                         <Flex.Item grow={1} pad>
                             <Input
                                 type='password'
+                                name="confirm"
                                 placeholder='Confirm Password'
-                                valueLink={this.linkState('confirm')}
+                                onChange={this.handleChange}
                                 disabled={this.state.pendingChange}
                             />
                         </Flex.Item>

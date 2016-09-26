@@ -12,12 +12,12 @@
 'use strict';
 
 var React = require('react');
-var Input = require('react-bootstrap/lib/InputGroup');
 var Row = require('react-bootstrap/lib/Row');
 var Col = require('react-bootstrap/lib/Col');
 
 var Icon = require('virtool/js/components/Base/Icon.jsx');
 var Help = require('virtool/js/components/Base/Help.jsx');
+var Input = require('virtool/js/components/Base/Input.jsx');
 
 /**
  * A component based on ListGroupItem
@@ -72,7 +72,7 @@ var PrimaryGroup = React.createClass({
                 <Row>
                     <Col md={12}>
                         <Input {...inputProps}>
-                            <option key='none' value='none'>None</option>
+                            <option key='none' value=''>None</option>
                             {groupOptions}
                         </Input>
                     </Col>

@@ -12,18 +12,16 @@
 'use strict';
 
 var React = require('react');
-var CX = require('classnames');
 var Row = require('react-bootstrap/lib/Row');
 var Col = require('react-bootstrap/lib/Col');
 var Panel = require('react-bootstrap/lib/Panel');
-var Input = require('react-bootstrap/lib/InputGroup');
 var Popover = require('react-bootstrap/lib/Popover');
 var Overlay = require('react-bootstrap/lib/Overlay');
 var Modal = require('react-bootstrap/lib/Modal');
 var ButtonToolbar = require('react-bootstrap/lib/ButtonToolbar');
-var LinkedStateMixin = require('react-addons-linked-state-mixin');
 
 var Icon = require('virtool/js/components/Base/Icon.jsx');
+var Input = require('virtool/js/components/Base/Input.jsx');
 var Checkbox = require('virtool/js/components/Base/Checkbox.jsx');
 var PushButton = require('virtool/js/components/Base/PushButton.jsx');
 
@@ -34,8 +32,6 @@ var PushButton = require('virtool/js/components/Base/PushButton.jsx');
  * @class
  */
 var AddUser = React.createClass({
-
-    mixins: [LinkedStateMixin],
 
     propTypes: {
         add: React.PropTypes.func.isRequired,
@@ -59,10 +55,14 @@ var AddUser = React.createClass({
         }
     },
 
-    componentDidUpdate: function (prevProps) {
-        if (!prevProps.show && this.props.show) {
-            this.refs.username.getInputDOMNode().focus();
-        }
+    modalEnter: function () {
+        this.refs.username.focus();
+    },
+
+    handleChange: function (event) {
+        var data = {};
+        data[event.target.name] = event.target.value;
+        this.setState(data);
     },
 
     /**
@@ -79,15 +79,6 @@ var AddUser = React.createClass({
             password: this.state.password,
             force_reset: this.state.forceReset
         }, this.hide, this.showError);
-    },
-
-    /**
-     * Return the DOM node of the username input element. Used to anchor popover overlays.
-     *
-     * @func
-     */
-    getUsernameNode: function () {
-        return this.refs.username.getInputDOMNode();
     },
 
     /**
@@ -123,23 +114,41 @@ var AddUser = React.createClass({
     render: function () {
 
         return (
-            <Modal show={this.props.show} onHide={this.hide}>
-                <Modal.Header>
+            <Modal show={this.props.show} onHide={this.hide} onEnter={this.modalEnter}>
+                <Modal.Header onHide={this.hide} closeButton>
                     Add User
                 </Modal.Header>
                 <form onSubmit={this.handleSubmit}>
-                    <Modal.Body onHide={this.props.onHide}>
+                    <Modal.Body>
                         <Row>
                             <Col sm={12}>
-                                <Input ref='username' type='text' label='Username' valueLink={this.linkState('username')} />
+                                <Input
+                                    type='text'
+                                    ref='username'
+                                    name="username"
+                                    label='Username'
+                                    value={this.state.username}
+                                    onChange={this.handleChange}
+                                />
                             </Col>
                         </Row>
                         <Row>
                             <Col sm={6}>
-                                <Input type='password' label='Password' valueLink={this.linkState('password')} />
+                                <Input
+                                    type='password'
+                                    name="password"
+                                    label='Password'
+                                    value={this.state.password}
+                                    onChange={this.handleChange} />
                             </Col>
                             <Col sm={6}>
-                                <Input type='password' label='Confirm' valueLink={this.linkState('confirm')} />
+                                <Input
+                                    type='password'
+                                    name="confirm"
+                                    label='Confirm'
+                                    value={this.state.confirm}
+                                    onChange={this.handleChange}
+                                />
                             </Col>
                         </Row>
                         <Row>
@@ -150,7 +159,7 @@ var AddUser = React.createClass({
                             </Col>
                         </Row>
                     </Modal.Body>
-                    <Modal.Footer onHide={this.props.onHide}>
+                    <Modal.Footer>
                         <ButtonToolbar className='pull-right'>
                             <PushButton onClick={this.hide}>
                                 Cancel

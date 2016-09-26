@@ -14,11 +14,11 @@
 var _ = require('lodash');
 var React = require('react');
 var Panel = require('react-bootstrap/lib/Panel');
-var Input = require('react-bootstrap/lib/InputGroup');
 var Overlay = require('react-bootstrap/lib/Overlay');
 var Popover = require('react-bootstrap/lib/Popover');
 
 var PushButton = require('virtool/js/components/Base/PushButton.jsx');
+var Input = require('virtool/js/components/Base/Input.jsx');
 var Icon = require('virtool/js/components/Base/Icon.jsx');
 var Help = require('virtool/js/components/Base/Help.jsx');
 

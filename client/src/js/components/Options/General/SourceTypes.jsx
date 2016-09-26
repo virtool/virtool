@@ -15,15 +15,15 @@ var _ = require('lodash');
 var React = require('react');
 var FlipMove = require('react-flip-move');
 var Panel = require('react-bootstrap/lib/Panel');
-var Input = require('react-bootstrap/lib/InputGroup');
 var Overlay = require('react-bootstrap/lib/Overlay');
 var Popover = require('react-bootstrap/lib/Popover');
 var ListGroup = require('react-bootstrap/lib/ListGroup');
 var ListGroupItem = require('react-bootstrap/lib/ListGroupItem');
 
-var PushButton = require('virtool/js/components/Base/PushButton.jsx');
 var Icon = require('virtool/js/components/Base/Icon.jsx');
+var Input = require('virtool/js/components/Base/Input.jsx');
 var Checkbox = require('virtool/js/components/Base/Checkbox.jsx');
+var PushButton = require('virtool/js/components/Base/PushButton.jsx');
 
 /**
  * A component that allows the addition and removal of allowed source types. The use of restricted source types can also

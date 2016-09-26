@@ -13,8 +13,12 @@
 
 var React = require('react');
 var ReactDOM = require('react-dom');
-var Input = require('./Input.jsx');
 var Button = require('react-bootstrap/lib/Button');
+var FormGroup = require('react-bootstrap/lib/FormGroup');
+var InputGroup = require('react-bootstrap/lib/InputGroup');
+var FormControl = require('react-bootstrap/lib/FormControl');
+var ControlLabel = require('react-bootstrap/lib/ControlLabel');
+
 var Icon = require('virtool/js/components/Base/Icon.jsx');
 
 /**
@@ -38,14 +42,15 @@ var InputSave = React.createClass({
         initialValue: React.PropTypes.any,
 
         // The autocomplete attribute to be passed to the
-        autoComplete: React.PropTypes.string,
+        autoComplete: React.PropTypes.bool,
 
         disabled: React.PropTypes.bool
     },
 
     getDefaultProps: function () {
         return {
-            initialValue: ''
+            initialValue: '',
+            autoComplete: true
         };
     },
 
@@ -69,7 +74,7 @@ var InputSave = React.createClass({
 
     /**
      * Resets the setting value to the initialValue if the form component loses focus. Clicking the saveButton does not
-     * make the form lose focus. The form is intentionally blurred once an updated initialValue is receieved in props.
+     * make the form lose focus. The form is intentionally blurred once an updated initialValue is received in props.
      */
     handleBlur: function (event) {
         var focusedOnButton = event.relatedTarget && event.relatedTarget.type !== 'submit';
@@ -79,10 +84,10 @@ var InputSave = React.createClass({
     /**
      * Handle the data from a change in the input element. Updates state to reflect what is being typed by the user.
      *
-     * @param data {object} - the data from the input change.
+     * @param event {event} - the change event from the FormControl
      */
-    handleChange: function (data) {
-        this.setState({value: data.value});
+    handleChange: function (event) {
+        this.setState({value: event.target.value});
     },
 
     /**
@@ -99,7 +104,11 @@ var InputSave = React.createClass({
             // If the new value is different to the initial one, show a spinner and call the onSave function. Show a
             // spinner to indicate the request is pending. Drop focus from the form children.
             this.setState({pending: true}, function () {
-                this.props.onSave({value: this.state.value, name: this.props.name});
+                this.props.onSave({
+                    value: this.state.value,
+                    name: this.props.name
+                });
+
                 this.removeFocus();
             });
         } else {
@@ -116,36 +125,35 @@ var InputSave = React.createClass({
      */
     removeFocus: function () {
         ReactDOM.findDOMNode(this.refs.button).blur();
-        this.refs.input.blur();
+        ReactDOM.findDOMNode(this.refs.input).blur();
     },
 
     render: function () {
-        // Show a warning if the value for autoComplete to be passed to the Input component is illegal.
-        if (['off', 'on'].indexOf(this.props.autoComplete) === -1) {
-            console.warn('Illegal value for InputSave autoComplete prop');
-        }
+        var label = this.props.label ?  <ControlLabel>{this.props.label}</ControlLabel>: null;
 
-        // The addon button to attach to the Input component.
-        var saveButton = (
-            <Button ref='button' bsStyle='primary' type='submit' disabled={this.props.disabled}>
-                <Icon name='floppy' pending={this.state.pending} />
-            </Button>
-        );
+        var disabled = this.state.pending || this.props.disabled;
 
         return (
             <form onSubmit={this.handleSubmit}>
-                <Input
-                    name={this.props.name}
-                    type={this.props.type}
-                    autoComplete={this.props.autoComplete}
-                    label={this.props.label}
-                    onChange={this.handleChange}
-                    onBlur={this.handleBlur}
-                    ref='input'
-                    buttonAfter={saveButton}
-                    value={this.state.value}
-                    disabled={this.state.pending || this.props.disabled}
-                />
+                <FormGroup>
+                    {label}
+                    <InputGroup>
+                        <FormControl
+                            ref='input'
+                            type={this.props.type}
+                            autoComplete={this.props.autoComplete ? "on": "off"}
+                            onChange={this.handleChange}
+                            onBlur={this.handleBlur}
+                            value={this.state.value}
+                            disabled={disabled}
+                        />
+                        <InputGroup.Button>
+                            <Button ref='button' bsStyle='primary' type='submit' disabled={disabled}>
+                                <Icon name='floppy' pending={this.state.pending} />
+                            </Button>
+                        </InputGroup.Button>
+                    </InputGroup>
+                </FormGroup>
             </form>
         );
     }

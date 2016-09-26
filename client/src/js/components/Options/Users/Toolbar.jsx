@@ -12,7 +12,9 @@
 'use strict';
 
 var React = require('react');
-var Input = require('react-bootstrap/lib/InputGroup');
+var FormGroup = require('react-bootstrap/lib/FormGroup');
+var InputGroup = require('react-bootstrap/lib/InputGroup');
+var FormControl = require('react-bootstrap/lib/FormControl');
 var ButtonToolbar = require('react-bootstrap/lib/ButtonToolbar');
 
 var Add = require('./Add.jsx');
@@ -63,17 +65,21 @@ var UserToolbar = React.createClass({
 
     render: function () {
 
-        var addon = <Icon name='search' />;
-
         return (
             <div>
                 <Flex>
                     <Flex.Item grow={1}>
-                        <Input
-                            type='text'
-                            addonBefore={addon}
-                            onChange={this.props.onChange}
-                        />
+                        <FormGroup>
+                            <InputGroup>
+                                <InputGroup.Addon>
+                                    <Icon name='search' />
+                                </InputGroup.Addon>
+                                <FormControl
+                                    type="text"
+                                    onChange={this.props.onChange}
+                                />
+                            </InputGroup>
+                        </FormGroup>
                     </Flex.Item>
 
                     <Flex.Item pad>

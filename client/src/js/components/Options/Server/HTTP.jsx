@@ -34,18 +34,21 @@ var HTTPOptions = React.createClass({
                     name='server_address'
                     label='Address'
                     onSave={this.handleSave}
+                    autoComplete={false}
                     initialValue={this.props.settingsData.server_address}
                 />
                 <InputSave
                     name='server_port'
                     label='Port'
                     type='number'
+                    autoComplete={false}
                     onSave={this.handleSave}
                     initialValue={this.props.settingsData.server_port}
                 />
                 <Input
                     label='Server ID'
                     type='text'
+                    autoComplete={false}
                     value={this.props.settingsData.server_id}
                     disabled
                 />
