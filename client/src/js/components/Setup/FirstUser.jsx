@@ -13,18 +13,15 @@
 
 var React = require('react');
 var ReactDOM = require('react-dom');
-var LinkedStateMixin = require('react-addons-linked-state-mixin');
 var Row = require('react-bootstrap/lib/Row');
 var Col = require('react-bootstrap/lib/Col');
 var Alert = require('react-bootstrap/lib/Alert');
-var Input = require('react-bootstrap/lib/InputGroup');
 var Button = require('react-bootstrap/lib/Button');
 
 var Icon = require('virtool/js/components/Base/Icon.jsx');
+var Input = require('virtool/js/components/Base/Input.jsx');
 
 var SetupUser = React.createClass({
-
-    mixins: [LinkedStateMixin],
 
     propTypes: {
         username: React.PropTypes.string,
@@ -41,10 +38,16 @@ var SetupUser = React.createClass({
 
     componentDidMount: function () {
         if (!this.props.hasAdmin) {
-            this.refs.username.getInputDOMNode().focus();
+            this.refs.username.focus();
         } else {
             ReactDOM.findDOMNode(this.refs.accept).focus();
         }
+    },
+
+    handleChange: function (event) {
+        var data = {};
+        data[event.target.name] = event.target.value;
+        this.setState(data);
     },
 
     handleSubmit: function (event) {
@@ -95,15 +98,34 @@ var SetupUser = React.createClass({
                 <form onSubmit={this.handleSubmit}>
                     <Row>
                         <Col md={12}>
-                            <Input ref='username' type='text' valueLink={this.linkState('username')} label='Username' />
+                            <Input
+                                type="text"
+                                ref="username"
+                                name="username"
+                                label="Username"
+                                onChange={this.handleChange}
+                                value={this.state.username}
+                            />
                         </Col>
                     </Row>
                     <Row>
                         <Col md={6}>
-                            <Input type='password' valueLink={this.linkState('password')} label='Password'/>
+                            <Input
+                                type="password"
+                                name="password"
+                                label="Password"
+                                onChange={this.handleChange}
+                                value={this.state.password}
+                            />
                         </Col>
                         <Col md={6}>
-                            <Input type='password' valueLink={this.linkState('confirm')} label='Confirm Password'/>
+                            <Input
+                                type="password"
+                                name="confirm"
+                                label="Confirm Password"
+                                onChange={this.handleChange}
+                                value={this.state.confirm}
+                            />
                         </Col>
                     </Row>
 

@@ -12,18 +12,14 @@
 'use strict';
 
 var React = require('react');
-var LinkedStateMixin = require('react-addons-linked-state-mixin');
-var Input = require('react-bootstrap/lib/InputGroup');
 var Alert = require('react-bootstrap/lib/Alert');
 var Button = require('react-bootstrap/lib/Button');
 
 var Icon = require('virtool/js/components/Base/Icon.jsx');
+var Input = require('virtool/js/components/Base/Input.jsx');
 var Utils = require('virtool/js/Utils');
 
-
 var SetupDatabase = React.createClass({
-
-    mixins: [LinkedStateMixin],
 
     getInitialState: function () {
         return {
@@ -33,7 +29,13 @@ var SetupDatabase = React.createClass({
     },
 
     componentDidMount: function () {
-        this.refs.first.getInputDOMNode().focus();
+        this.refs.first.focus();
+    },
+
+    handleChange: function (event) {
+        var data = {};
+        data[event.target.name] = event.target.value;
+        this.setState(data);
     },
 
     handleSubmit: function (event) {
@@ -77,8 +79,22 @@ var SetupDatabase = React.createClass({
             <form onSubmit={this.handleSubmit}>
                 {alert}
 
-                <Input type='text' ref='first' label='Data Path' valueLink={this.linkState('dataPath')} />
-                <Input type='text' label='Watch Path' valueLink={this.linkState('watchPath')} />
+                <Input
+                    type="text"
+                    ref="first"
+                    name="dataPath"
+                    label="Data Path"
+                    onChange={this.handleChange}
+                    value={this.state.dataPath}
+                />
+
+                <Input
+                    type='text'
+                    name="watchPath"
+                    label='Watch Path'
+                    onChange={this.handleChange}
+                    value={this.state.watchPath}
+                />
 
                 <Button bsStyle='primary' className='pull-right' type='submit'>
                     <Icon name='floppy' /> Save

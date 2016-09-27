@@ -7,21 +7,19 @@
  * Ian Boyes
  *
  * @exports SetupWatchPath
+ *
  */
 
 'use strict';
 
 var React = require('react');
-var LinkedStateMixin = require('react-addons-linked-state-mixin');
-var Input = require('react-bootstrap/lib/InputGroup');
 var Alert = require('react-bootstrap/lib/Alert');
 var Button = require('react-bootstrap/lib/Button');
 
 var Icon = require('virtool/js/components/Base/Icon.jsx');
+var Input = require('virtool/js/components/Base/Input.jsx');
 
 var SetupWatchPath = React.createClass({
-
-    mixins: [LinkedStateMixin],
 
     getInitialState: function () {
         return {
@@ -30,7 +28,13 @@ var SetupWatchPath = React.createClass({
     },
 
     componentDidMount: function () {
-        this.refs.input.getInputDOMNode().focus();
+        this.refs.input.focus();
+    },
+
+    handleChange: function (event) {
+        var data = {};
+        data[event.target.name] = event.target.value;
+        this.setState(data);
     },
 
     handleSubmit: function (event) {
@@ -48,7 +52,14 @@ var SetupWatchPath = React.createClass({
                     Sequence files in this path will be visible and importable in Virtool.
                 </Alert>
 
-                <Input ref='input' type='text' label='Path' valueLink={this.linkState('watchPath')} />
+                <Input
+                    ref='input'
+                    type='text'
+                    name="watchPath"
+                    label='Path'
+                    onChange={this.handleChange}
+                    value={this.state.watchPath}
+                />
 
                 <Button bsStyle='primary' className='pull-right' type='submit'>
                     <Icon name='floppy' /> Save

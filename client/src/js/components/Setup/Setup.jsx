@@ -13,6 +13,7 @@
 
 var _ = require('lodash');
 var React = require('react');
+var Grid = require('react-bootstrap/lib/Grid');
 var Row = require('react-bootstrap/lib/Row');
 var Col = require('react-bootstrap/lib/Col');
 var Nav = require('react-bootstrap/lib/Nav');
@@ -213,19 +214,19 @@ var Setup = React.createClass({
         }, this);
 
         return (
-            <Row>
-                <Col md={10} mdOffset={1}>
-                    <Navbar>
-                        <Navbar.Header>
-                            <Navbar.Brand>
-                                <Icon name='vtlogo' className='vtlogo'/>
-                            </Navbar.Brand>
-                            <Nav>
-                                <Navbar.Text>Setup</Navbar.Text>
-                            </Nav>
-                        </Navbar.Header>
-                    </Navbar>
+            <div>
+                <Navbar>
+                    <Navbar.Header>
+                        <Navbar.Brand>
+                            <Icon name='vtlogo' className='vtlogo'/>
+                        </Navbar.Brand>
+                        <Navbar.Text>
+                            Setup
+                        </Navbar.Text>
+                    </Navbar.Header>
+                </Navbar>
 
+                <Grid>
                     <Row>
                         <Col md={3}>
                             <ListGroup>
@@ -240,8 +241,8 @@ var Setup = React.createClass({
                             </Panel>
                         </Col>
                     </Row>
-                </Col>
-            </Row>
+                </Grid>
+            </div>
         );
     }
 

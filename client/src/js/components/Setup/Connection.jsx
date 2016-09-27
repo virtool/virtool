@@ -16,11 +16,11 @@ var React = require('react');
 var Row = require('react-bootstrap/lib/Row');
 var Col = require('react-bootstrap/lib/Col');
 var Alert = require('react-bootstrap/lib/Alert');
-var Input = require('react-bootstrap/lib/InputGroup');
 var Button = require('react-bootstrap/lib/Button');
 var ButtonToolbar = require('react-bootstrap/lib/ButtonToolbar');
 
 var Icon = require('virtool/js/components/Base/Icon.jsx');
+var Input = require('virtool/js/components/Base/Input.jsx');
 var Utils = require('virtool/js/Utils');
 
 var SetupConnection = React.createClass({
@@ -43,12 +43,12 @@ var SetupConnection = React.createClass({
     },
 
     componentDidMount: function () {
-        this.refs.host.getInputDOMNode().focus();
+        this.refs.host.focus();
     },
 
     componentDidUpdate: function (prevProps) {
         // If the connection was lost, put focus on the host input box again.
-        if (!this.props.connected && prevProps.connected) this.refs.host.getInputDOMNode().focus();
+        if (!this.props.connected && prevProps.connected) this.refs.host.focus();
     },
 
     handleChange: function (event) {
@@ -70,6 +70,8 @@ var SetupConnection = React.createClass({
             var args = _.assign({operation: 'connect'}, this.state);
             
             var callback = function (data) {
+                console.log(data);
+
                 this.setState({attempted: true, pending: false}, function () {
                     if (data.names) {
                         this.props.gotConnection({
@@ -147,7 +149,6 @@ var SetupConnection = React.createClass({
                     <Col md={3}>
                         <Input
                             type='number'
-                            name='port'
                             name='port'
                             label='Port'
                             value={this.state.port}

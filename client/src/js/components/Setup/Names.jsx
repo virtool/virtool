@@ -15,12 +15,12 @@ var _ = require('lodash');
 var React = require('react');
 var Row = require('react-bootstrap/lib/Row');
 var Col = require('react-bootstrap/lib/Col');
-var Input = require('react-bootstrap/lib/InputGroup');
 var Button = require('react-bootstrap/lib/Button');
 var ButtonToolbar = require('react-bootstrap/lib/ButtonToolbar');
 var ListGroup = require('react-bootstrap/lib/ListGroup');
 var ListGroupItem = require('react-bootstrap/lib/ListGroupItem');
 
+var Input = require('virtool/js/components/Base/Input.jsx');
 var Icon = require('virtool/js/components/Base/Icon.jsx');
 var Utils = require('virtool/js/Utils');
 
@@ -65,7 +65,7 @@ var SetupDatabaseName = React.createClass({
     },
 
     componentDidMount: function () {
-        this.refs.text.getInputDOMNode().focus();
+        this.refs.text.focus();
     },
 
     updateName: function (name) {
@@ -73,7 +73,7 @@ var SetupDatabaseName = React.createClass({
     },
 
     handleRadioFocus: function () {
-        this.refs.text.getInputDOMNode().focus();
+        this.refs.text.focus();
     },
 
     handleChange: function (event) {
