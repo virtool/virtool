@@ -49,11 +49,6 @@ var ExportViruses = React.createClass({
         });
     },
 
-    handleSubmit: function (event) {
-        event.preventDefault();
-        dispatcher.db.viruses.request('importData', {fileId: this.refs.text.getValue()});
-    },
-
     render: function () {
 
         var button;

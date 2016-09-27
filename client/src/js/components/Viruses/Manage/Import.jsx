@@ -77,8 +77,6 @@ var ImportViruses = React.createClass({
 
     render: function () {
 
-        var modalProps = _.extend(this.props, {onHide: this.hide});
-
         var dropzoneProps = {
             onDrop: this.handleDrop,
             multiple: false,

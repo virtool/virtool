@@ -25,13 +25,11 @@ var LostConnection = React.createClass({
 
     render: function () {
         return (
-            <div>
-                <Modal {...this.props} animation={false} bsSize='small'>
-                    <Modal.Body {...this.props} className='text-center'>
-                        <h5><Icon name='warning' bsStyle='danger' /> Lost Connection</h5>
-                    </Modal.Body>
-                </Modal>
-            </div>
+            <Modal show={this.props.show} animation={false} bsSize='small'>
+                <Modal.Body className='text-center'>
+                    <h5><Icon name='warning' bsStyle='danger' /> Lost Connection</h5>
+                </Modal.Body>
+            </Modal>
         );
     }
 
