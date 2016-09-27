@@ -12,19 +12,18 @@
 'use strict';
 
 var React = require('react');
-var LinkedStateMixin = require('react-addons-linked-state-mixin');
-var Input = require('react-bootstrap/lib/InputGroup');
 var Modal = require('react-bootstrap/lib/Modal');
 var ButtonToolbar = require('react-bootstrap/lib/ButtonToolbar');
 
-var PushButton = require('virtool/js/components/Base/PushButton.jsx');
 var Icon = require('virtool/js/components/Base/Icon.jsx');
+var Input = require('virtool/js/components/Base/Input.jsx');
+var PushButton = require('virtool/js/components/Base/PushButton.jsx');
+
 
 var ChangePassword = React.createClass({
 
-    mixins: [LinkedStateMixin],
-
     propTypes: {
+        show: React.PropTypes.bool.isRequired,
         onHide: React.PropTypes.func.isRequired
     },
 
@@ -48,6 +47,8 @@ var ChangePassword = React.createClass({
             this.refs.old.getInputDOMNode().focus();
         }
     },
+
+
 
     /**
      * Handles changes in input fields. Sets state based on the new values in the field.
@@ -125,48 +126,67 @@ var ChangePassword = React.createClass({
             }
 
             if (this.state.tooShort) {
-                warnings.push('New password must be at least four characters long');
-                newStyle = 'error';
+                warnings.push("New password must be at least four characters long");
+                newStyle = "error";
             }
         }
 
         // Lines containing password failure messages.
         var warningComponents = warnings.map(function (warning, index) {
             return (
-                <p key={'warning-' + index} className='text-danger'>
-                    <Icon name='warning' /> {warning}
+                <p key={"warning-" + index} className="text-danger">
+                    <Icon name="warning" /> {warning}
                 </p>
             )
         });
 
         // Props shared by all Input components.
         var inputProps = {
-            type: 'password',
+            type: "password",
             onChange: this.handleChange
         };
 
         return (
-            <Modal bsSize='small' {...this.props}>
-                <Modal.Header>
+            <Modal bsSize='small' show={this.props.show} onHide={this.props.onHide}>
+                <Modal.Header onHide={this.props.onHide} closeButton>
                     Change Password
                 </Modal.Header>
 
                 <form onSubmit={this.handleSubmit}>
                     <Modal.Body>
-                        <Input {...inputProps} ref='old' value={this.state.old} name='old' label='Old Password' bsStyle={oldStyle} />
-                        <Input {...inputProps} value={this.state.new} name='new' label='New Password' bsStyle={newStyle} />
-                        <Input {...inputProps} value={this.state.confirm} name='confirm' label='Confirm' bsStyle={newStyle} />
+                        <Input
+                            ref="old"
+                            name="old"
+                            label="Old Password"
+                            value={this.state.old}
+                            bsStyle={oldStyle}
+                            {...inputProps}
+                        />
+                        <Input
+                            name="new"
+                            label="New Password"
+                            value={this.state.new}
+                            bsStyle={newStyle}
+                            {...inputProps}
+                        />
+                        <Input
+                            name="confirm"
+                            label="Confirm"
+                            value={this.state.confirm}
+                            bsStyle={newStyle}
+                            {...inputProps}
+                        />
 
                         {warningComponents.length > 0 ? <div>{warningComponents}</div>: null}
                     </Modal.Body>
 
                     <Modal.Footer>
-                        <ButtonToolbar className='pull-right'>
+                        <ButtonToolbar className="pull-right">
                             <PushButton onClick={this.props.onHide}>
-                                <Icon name='cancel' /> Cancel
+                                <Icon name="cancel" /> Cancel
                             </PushButton>
-                            <PushButton bsStyle='primary' type='submit'>
-                                <Icon name='floppy' /> Save
+                            <PushButton bsStyle="primary" type="submit">
+                                <Icon name="floppy" /> Save
                             </PushButton>
                         </ButtonToolbar>
                     </Modal.Footer>

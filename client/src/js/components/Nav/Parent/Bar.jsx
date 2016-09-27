@@ -32,7 +32,7 @@ var ParentBar = React.createClass({
     getInitialState: function () {
         return {
             activeParent: dispatcher.router.route.parent,
-            showChangePassword: false,
+            modalMode: null,
             showUserSettings: false
         };
     },
@@ -51,39 +51,19 @@ var ParentBar = React.createClass({
         });
     },
 
-    /**
-     * Toggles the 'changePassword' state. Called when the user menu password button is clicked or the ChangePassword
-     * modal is closed (onHide function).
-     *
-     * @func
-     */
-    toggleChangePassword: function () {
-        this.setState({showChangePassword: !this.state.showChangePassword});
+    hideModal: function () {
+        this.setState({modalMode: null});
     },
 
-    /**
-     * Toggles the 'changePassword' state. Called when the user menu password button is clicked or the ChangePassword
-     * modal is closed (onHide function).
-     *
-     * @func
-     */
-    toggleUserSettings: function () {
-        this.setState({showUserSettings: !this.state.showUserSettings});
-    },
+    handleDropdownSelect: function (eventKey) {
+        if (eventKey === "password" || eventKey === "settings") {
+            this.setState({
+                modalMode: eventKey
+            });
+        }
 
-    handleDropdownSelect: function (event, eventKey) {
-        switch (eventKey) {
-            case 1:
-                this.toggleChangePassword();
-                break;
-
-            case 2:
-                this.toggleUserSettings();
-                break;
-
-            case 3:
-                dispatcher.user.logout();
-                break;
+        if (eventKey === "logout") {
+            dispatcher.user.logout();
         }
     },
 
@@ -119,13 +99,13 @@ var ParentBar = React.createClass({
 
             dropDown = (
                 <NavDropdown title={userTitle} onSelect={this.handleDropdownSelect} id='user-dropdown'>
-                    <MenuItem eventKey={1}>
+                    <MenuItem eventKey="password">
                         <Icon name='lock' /> Password
                     </MenuItem>
-                    <MenuItem eventKey={2}>
+                    <MenuItem eventKey="settings">
                         <Icon name='settings' /> Settings
                     </MenuItem>
-                    <MenuItem  eventKey={3}>
+                    <MenuItem  eventKey="logout">
                         <Icon name='exit' /> Logout
                     </MenuItem>
                 </NavDropdown>
@@ -137,21 +117,22 @@ var ParentBar = React.createClass({
         if (dispatcher.user.name) {
             userSettings = (
                 <UserSettings
-                    {...this.props}
                     user={dispatcher.user}
-                    show={this.state.showUserSettings}
-                    onHide={this.toggleUserSettings}
+                    show={this.state.modalMode === "settings"}
+                    onHide={this.hideModal}
                 />
             );
         }
 
         return (
             <Navbar fixedTop fluid>
+
                 <Navbar.Header>
                     <Navbar.Brand>
                         <Icon name='vtlogo' className='vtlogo' />
                     </Navbar.Brand>
                 </Navbar.Header>
+
                 <Navbar.Collapse>
                     <Nav>
                         {navItemComponents}
@@ -164,8 +145,8 @@ var ParentBar = React.createClass({
                 <ChangePassword
                     {...this.props}
                     user={dispatcher.user}
-                    show={this.state.showChangePassword}
-                    onHide={this.toggleChangePassword}
+                    show={this.state.modalMode === "password"}
+                    onHide={this.hideModal}
                 />
 
                 {userSettings}

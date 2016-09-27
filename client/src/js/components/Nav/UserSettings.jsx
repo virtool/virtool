@@ -13,13 +13,15 @@
 
 var _ = require('lodash');
 var React = require('react');
-var Input = require('react-bootstrap/lib/InputGroup');
+var Row = require('react-bootstrap/lib/Row');
+var Col = require('react-bootstrap/lib/Col');
 var Modal = require('react-bootstrap/lib/Modal');
-var ListGroup = require('react-bootstrap/lib/ListGroup');
-var PushListGroupItem = require('virtool/js/components/Base/PushListGroupItem.jsx');
+var Toggle = require('react-bootstrap-toggle').default;
 
-var PushButton = require('virtool/js/components/Base/PushButton.jsx');
+var Flex = require('virtool/js/components/Base/Flex.jsx');
 var Checkbox = require('virtool/js/components/Base/Checkbox.jsx');
+var PushButton = require('virtool/js/components/Base/PushButton.jsx');
+
 
 var UserSettings = React.createClass({
 
@@ -63,21 +65,38 @@ var UserSettings = React.createClass({
 
     render: function () {
 
+        var flexStyle = {
+            marginBottom: "10px"
+        };
+
         return (
-            <Modal bsSize='small' {...this.props}>
-                <Modal.Header>
+            <Modal bsSize='small' show={this.props.show} onHide={this.props.onHide}>
+                <Modal.Header onHide={this.props.onHide} closeButton>
                     User Settings
                 </Modal.Header>
                 <Modal.Body>
-                    <ListGroup>
-                        <PushListGroupItem onClick={this.toggleShowIds}>
-                            <Checkbox checked={this.props.user.settings.show_ids} /> Show database IDs
-                        </PushListGroupItem>
-                        <PushListGroupItem onClick={this.toggleShowVersions}>
-                            <Checkbox checked={this.props.user.settings.show_versions} /> Show database versions
-                        </PushListGroupItem>
-                    </ListGroup>
-
+                    <Flex alignItems="center" style={flexStyle}>
+                        <Flex.Item>
+                            <Toggle
+                                active={this.props.user.settings.show_ids}
+                                onChange={this.toggleShowIds}
+                            />
+                        </Flex.Item>
+                        <Flex.Item pad={10}>
+                            Show database IDs
+                        </Flex.Item>
+                    </Flex>
+                    <Flex alignItems="center" style={flexStyle}>
+                        <Flex.Item>
+                            <Toggle
+                                active={this.props.user.settings.show_versions}
+                                onChange={this.toggleShowVersions}
+                            />
+                        </Flex.Item>
+                        <Flex.Item pad={10}>
+                            Show database versions
+                        </Flex.Item>
+                    </Flex>
                 </Modal.Body>
             </Modal>
         );
