@@ -101,13 +101,13 @@ var AddGroup = React.createClass({
                         <FormControl
                             ref="input"
                             type="text"
-                            placeholder='Group name'
+                            placeholder='New group name'
                             value={this.state.groupName}
                             onChange={this.handleChange}
                         />
                         <InputGroup.Button>
                             <PushButton type='submit' bsStyle='primary'>
-                                <Icon name='plus-square' /> Add
+                                <Icon name='plus-square' />
                             </PushButton>
                         </InputGroup.Button>
                     </InputGroup>

@@ -46,44 +46,10 @@ var ServerOptions = React.createClass({
     },
 
     render: function () {
-
-        var reloadFooter = (
-            <small className='text-warning'>
-                <Icon name='warning' /> Changes to these settings will only take effect when the server is reloaded.
-            </small>
-        );
-
         return (
             <div>
-                <Row>
-                    <Col md={12}>
-                        <h5><strong>HTTP Server</strong></h5>
-                    </Col>
-                    <Col md={6}>
-                        <HTTP settingsData={this.state.settingsData} />
-                    </Col>
-                    <Col md={6}>
-                        <Panel footer={reloadFooter}>
-                            Change the address and port the the Virtool HTTP server listens on. The server ID uniquely
-                            identifies the server to workstations that are connecting to multiple instances of Virtool
-                            server.
-                        </Panel>
-                    </Col>
-                </Row>
-
-                <Row>
-                    <Col md={12}>
-                        <h5><strong>SSL</strong></h5>
-                    </Col>
-                    <Col md={6}>
-                        <Security settingsData={this.state.settingsData} />
-                    </Col>
-                    <Col md={6}>
-                        <Panel footer={reloadFooter}>
-                            Configure the server to use SSL.
-                        </Panel>
-                    </Col>
-                </Row>
+                <HTTP settingsData={this.state.settingsData} />
+                <Security settingsData={this.state.settingsData} />
 
                 <Row>
                     <Col md={12}>
