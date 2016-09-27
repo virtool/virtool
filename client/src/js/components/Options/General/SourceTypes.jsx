@@ -13,16 +13,22 @@
 
 var _ = require('lodash');
 var React = require('react');
+var ReactDOM = require('react-dom');
 var FlipMove = require('react-flip-move');
+var Toggle = require('react-bootstrap-toggle').default;
+var Row = require('react-bootstrap/lib/Row');
+var Col = require('react-bootstrap/lib/Col');
 var Panel = require('react-bootstrap/lib/Panel');
 var Overlay = require('react-bootstrap/lib/Overlay');
 var Popover = require('react-bootstrap/lib/Popover');
+var FormGroup = require('react-bootstrap/lib/FormGroup');
+var InputGroup = require('react-bootstrap/lib/InputGroup');
+var FormControl = require('react-bootstrap/lib/FormControl');
 var ListGroup = require('react-bootstrap/lib/ListGroup');
 var ListGroupItem = require('react-bootstrap/lib/ListGroupItem');
 
+var Flex = require('virtool/js/components/Base/Flex.jsx');
 var Icon = require('virtool/js/components/Base/Icon.jsx');
-var Input = require('virtool/js/components/Base/Input.jsx');
-var Checkbox = require('virtool/js/components/Base/Checkbox.jsx');
 var PushButton = require('virtool/js/components/Base/PushButton.jsx');
 
 /**
@@ -41,7 +47,7 @@ var SourceTypes = React.createClass({
     },
 
     componentDidMount: function () {
-        this.refs.input.getInputDOMNode().focus();
+        this.getInputDOMNode().focus();
         this.props.settings.on('change', this.update);
     },
 
@@ -58,8 +64,8 @@ var SourceTypes = React.createClass({
      *
      * @func
      */
-    getInputNode: function () {
-        return this.refs.input.getInputDOMNode();
+    getInputDOMNode: function () {
+        return ReactDOM.findDOMNode(this.refs.input);
     },
 
     /**
@@ -75,10 +81,10 @@ var SourceTypes = React.createClass({
      * Adds a source type to the list of allowed source types, resulting in a settings update being sent to the server.
      * Triggered by a click on the add button.
      *
-     * @param event {object} - the click event.
+     * @param event {object} - the form submit event.
      * @func
      */
-    add: function (event) {
+    handleSubmit: function (event) {
         event.preventDefault();
 
         // Convert source type to lowercase. All source types are single words stored in lowercase. They are capitalized
@@ -145,13 +151,6 @@ var SourceTypes = React.createClass({
 
     render: function () {
 
-        // This a buttonAddon for the text Input used to add a new sourceType.
-        var saveButton = (
-            <PushButton bsStyle='primary' type='submit' disabled={!this.state.enabled}>
-                <Icon name='plus-square' /> Add
-            </PushButton>
-        );
-
         var listComponents = this.state.sourceTypes.map(function (sourceType) {
             var removeButton;
 
@@ -170,49 +169,70 @@ var SourceTypes = React.createClass({
             );
         }, this);
 
-        var panelStyle = {
-            height: 134 + 41 * listComponents.length,
-            transition: "height 0.7s"
-        };
-
-        var containerStyle = {
-            height: 50 + 41 * listComponents.length,
-            transition: "height 0.7s",
-            marginBottom: "20px"
-        };
-
         return (
-            <Panel style={panelStyle}>
+            <div>
+                <Row>
+                    <Col md={6}>
+                        <Flex alignItems="center" style={{marginBottom: "10px"}}>
+                            <Flex.Item grow={1} >
+                                <strong>Source Types</strong>
+                            </Flex.Item>
+                            <Flex.Item>
+                                <Toggle
+                                    on="ON"
+                                    off="OFF"
+                                    size="small"
+                                    active={this.state.enabled}
+                                    onChange={this.toggleFeature}
+                                />
+                            </Flex.Item>
+                        </Flex>
+                    </Col>
 
-                <div style={containerStyle}>
+                    <Col md={6} />
+                </Row>
+                <Row>
+                    <Col md={6}>
+                        <Panel>
+                            <form onSubmit={this.handleSubmit}>
+                                <FormGroup>
+                                    <InputGroup>
+                                        <FormControl
+                                            ref='input'
+                                            type='text'
+                                            value={this.state.value}
+                                            onChange={this.handleChange}
+                                            disabled={!this.state.enabled}
+                                        />
+                                        <InputGroup.Button>
+                                            <PushButton type="submit" bsStyle="primary" disabled={!this.state.enabled}>
+                                                <Icon name="plus-square" />
+                                            </PushButton>
+                                        </InputGroup.Button>
+                                    </InputGroup>
+                                </FormGroup>
+                            </form>
 
-                    <form onSubmit={this.add}>
-                        <Input
-                            type='text'
-                            ref='input'
-                            value={this.state.value}
-                            buttonAfter={saveButton}
-                            disabled={!this.state.enabled}
-                            onChange={this.handleChange}
-                        />
-                    </form>
+                            <FlipMove typeName="div" className="list-group" leaveAnimation={false}>
+                                {listComponents}
+                            </FlipMove>
 
-                    <FlipMove typeName="div" className="list-group">
-                        {listComponents}
-                    </FlipMove>
-
-                </div>
-
-                <PushButton onClick={this.toggleFeature} block>
-                    <Checkbox checked={this.state.enabled} /> Enable this feature
-                </PushButton>
-
-                <Overlay target={this.getInputNode} show={Boolean(this.state.warning)} placement='top' animation={false}>
-                    <Popover id='source-type-warning-popover'>
-                        {this.state.warning}
-                    </Popover>
-                </Overlay>
-            </Panel>
+                            <Overlay target={this.getInputNode} show={Boolean(this.state.warning)} placement='top' animation={false}>
+                                <Popover id='source-type-warning-popover'>
+                                    {this.state.warning}
+                                </Popover>
+                            </Overlay>
+                        </Panel>
+                    </Col>
+                    <Col md={6}>
+                        <Panel>
+                            Configure a list of allowable source types. When a user creates a new isolate they will
+                            only be able to select a source type from this list. If this feature is disabled, users will be
+                            able to enter any string as a source type.
+                        </Panel>
+                    </Col>
+                </Row>
+            </div>
         );
     }
 

@@ -42,38 +42,13 @@ var GeneralOptions = React.createClass({
 
         return (
             <div>
-                <Row>
-                    <Col md={12}>
-                        <h5><strong>Source Types</strong></h5>
-                    </Col>
-                    <Col md={6}>
-                        <SourceTypes settings={dispatcher.settings} />
-                    </Col>
-                    <Col md={6}>
-                        <Panel>
-                            Configure a list of allowable source types. When a user creates a new isolate they will
-                            only be able to select a source type from this list. If this feature is disabled, users will be
-                            able to enter any string as a source type.
-                        </Panel>
-                    </Col>
-                </Row>
-                <Row>
-                    <Col md={12}>
-                        <h5><strong>Internal Control</strong></h5>
-                    </Col>
-                    <Col md={6}>
-                        <InternalControl
-                            settings={dispatcher.settings}
-                            viruses={dispatcher.db.viruses}
-                        />
-                    </Col>
-                    <Col md={6}>
-                        <Panel>
-                            Set a virus that is spiked into samples to be used as a positive control. Viral abundances
-                            in a sample can be calculated as proportions relative to the control.
-                        </Panel>
-                    </Col>
-                </Row>
+                <SourceTypes settings={dispatcher.settings} />
+
+                <InternalControl
+                    settings={dispatcher.settings}
+                    viruses={dispatcher.db.viruses}
+                />
+
                 <Row>
                     <Col md={12}>
                         <h5><strong>Unique Sample Names</strong></h5>

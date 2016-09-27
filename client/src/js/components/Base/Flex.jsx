@@ -67,6 +67,10 @@ var Flex = React.createClass({
         style.flexFlow = _.join([this.props.direction, this.props.wrap], ' ');
         style.display = 'flex';
 
+        if (this.props.style) {
+            _.merge(style, this.props.style);
+        }
+
         return (
             <div style={style} className={this.props.className}>
                 {this.props.children}

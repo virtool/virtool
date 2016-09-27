@@ -14,17 +14,19 @@
 var _ = require('lodash');
 var React = require('react');
 var TypeAhead = require('react-bootstrap-typeahead').default;
-var Panel = require('react-bootstrap/lib/Panel');
+var Toggle = require('react-bootstrap-toggle').default;
 
+var Row = require('react-bootstrap/lib/Row');
+var Col = require('react-bootstrap/lib/Col');
+var Panel = require('react-bootstrap/lib/Panel');
 var Dropdown = require('react-bootstrap/lib/Dropdown');
 var MenuItem = require('react-bootstrap/lib/MenuItem');
 var Button = require('react-bootstrap/lib/Button');
 var ListGroup = require('react-bootstrap/lib/ListGroup');
 var ListGroupItem = require('react-bootstrap/lib/ListGroupItem');
 
+var Flex = require('virtool/js/components/Base/Flex.jsx');
 var Input = require('virtool/js/components/Base/Input.jsx');
-var Checkbox = require('virtool/js/components/Base/Checkbox.jsx');
-var PushButton = require('virtool/js/components/Base/PushButton.jsx');
 
 /**
  * A form component for setting whether an internal control should be used and which virus to use as a control.
@@ -118,19 +120,45 @@ var InternalControl = React.createClass({
         }, this);
 
         return (
-            <Panel>
-                <div style={{marginBottom: "15px"}}>
-                    <TypeAhead
-                        options={options}
-                        selected={this.state.selected}
-                        onChange={this.handleChange}
-                        disabled={!this.props.settings.get('use_internal_control')} />
-                </div>
-
-                <PushButton onClick={this.toggle} block>
-                    <Checkbox checked={this.props.settings.get('use_internal_control')} /> Enable this feature
-                </PushButton>
-            </Panel>
+            <div>
+                <Row>
+                    <Col md={6}>
+                        <Flex alignItems="center" style={{marginBottom: "10px"}}>
+                            <Flex.Item grow={1} >
+                                <strong>Internal Control</strong>
+                            </Flex.Item>
+                            <Flex.Item grow={0} shrink={0}>
+                                <Toggle
+                                    on="ON"
+                                    off="OFF"
+                                    size="small"
+                                    active={this.props.settings.get('use_internal_control')}
+                                    onChange={this.toggle}
+                                />
+                            </Flex.Item>
+                        </Flex>
+                    </Col>
+                    <Col md={6} />
+                </Row>
+                <Row>
+                    <Col md={6}>
+                        <Panel>
+                            <TypeAhead
+                                options={options}
+                                selected={this.state.selected}
+                                onChange={this.handleChange}
+                                disabled={!this.props.settings.get('use_internal_control')}
+                            />
+                        </Panel>
+                    </Col>
+                    <Col md={6}>
+                        <Panel>
+                            Set a virus that is spiked into samples to be used as a positive control. Viral abundances
+                            in a sample can be calculated as proportions relative to the control.
+                        </Panel>
+                    </Col>
+                </Row>
+            </div>
         );
     }
 

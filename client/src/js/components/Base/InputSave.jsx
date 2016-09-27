@@ -61,6 +61,10 @@ var InputSave = React.createClass({
         };
     },
 
+    getInputDOMNode: function () {
+        return ReactDOM.findDOMNode(this.refs.input);
+    },
+
     componentWillReceiveProps: function (nextProps) {
         // If the initialValue has changed. Remove the pending state on the component. This will remove the spinner on
         // the save button and enable the Input component again.
@@ -109,21 +113,25 @@ var InputSave = React.createClass({
                     name: this.props.name
                 });
 
-                this.removeFocus();
+                this.blur();
             });
         } else {
             // Drop focus from the form children even though no information has been sent to the server or passed to the
             // parent component.
-            this.removeFocus();
+            this.blur();
         }
     },
 
+    focus: function () {
+        this.getInputDOMNode().focus();
+    },
+
     /**
-     * Blur all focusable elements in the component.
+     * Blur all focus-sensitive elements in the component.
      *
      * @func
      */
-    removeFocus: function () {
+    blur: function () {
         ReactDOM.findDOMNode(this.refs.button).blur();
         ReactDOM.findDOMNode(this.refs.input).blur();
     },
