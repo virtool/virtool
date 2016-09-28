@@ -667,7 +667,7 @@ class Collection(virtool.database.Collection):
         file_id = transaction.data["file_id"]
 
         # Load a list of joined virus from a the gzip-compressed JSON.
-        with gzip.open(os.path.join(self.settings.get("data_path"), "upload", file_id), "r") as input_file:
+        with gzip.open(os.path.join(self.settings.get("data_path"), "upload", file_id), "rt") as input_file:
             viruses_to_import = json.load(input_file)
 
         used_virus_fields = yield self.get_used_virus_fields()

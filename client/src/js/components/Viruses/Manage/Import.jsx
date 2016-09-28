@@ -63,16 +63,12 @@ var ImportViruses = React.createClass({
 
     importData: function () {
         dispatcher.db.viruses.request('import_data', {file_id: this.state.fileId})
-            .success(function () {
+            .success(function (data) {
                 this.setState(_.extend(this.getInitialState(), {response: data}));
             }, this)
             .failure(function () {
                 this.setState({warnings: data});
             }, this);
-    },
-
-    acceptWarnings: function () {
-        this.setState(this.getInitialState());
     },
 
     render: function () {
@@ -120,7 +116,7 @@ var ImportViruses = React.createClass({
 
             var footer = (
                 <div className='clearfix'>
-                    <Button onClick={this.acceptWarnings} className='pull-right'>
+                    <Button onClick={this.props.onHide} className='pull-right'>
                         <Icon name='checkmark' /> Accept
                     </Button>
                 </div>
