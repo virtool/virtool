@@ -12,7 +12,6 @@
 'use strict';
 
 var React = require('react');
-var LinkedStateMixin = require('react-addons-linked-state-mixin');
 var Row = require('react-bootstrap/lib/Row');
 var Col = require('react-bootstrap/lib/Col');
 var Modal = require('react-bootstrap/lib/Modal');
@@ -28,8 +27,6 @@ var Input = require('virtool/js/components/Base/Input.jsx');
  * A form for adding a new virus, defining its name and abbreviation.
  */
 var AddVirus = React.createClass({
-
-    mixins: [LinkedStateMixin],
 
     propTypes: {
         show: React.PropTypes.bool.isRequired,

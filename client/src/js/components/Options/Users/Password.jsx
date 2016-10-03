@@ -12,8 +12,6 @@
 'use strict';
 
 var React = require('react');
-var LinkedStateMixin = require('react-addons-linked-state-mixin');
-
 var Alert = require('react-bootstrap/lib/Alert');
 var Panel = require('react-bootstrap/lib/Panel');
 var Table = require('react-bootstrap/lib/Table');
@@ -30,8 +28,6 @@ var RelativeTime = require('virtool/js/components/Base/RelativeTime.jsx');
  * The password change form subcomponent of the component exported by the module.
  */
 var Change = React.createClass({
-
-    mixins: [LinkedStateMixin],
 
     getInitialState: function () {
         return {
@@ -55,8 +51,6 @@ var Change = React.createClass({
      */
     submit: function (event) {
         event.preventDefault();
-
-        console.log(this.state);
 
         // The new and confirm fields must contain the same password.
         var match = this.state.new === this.state.confirm;

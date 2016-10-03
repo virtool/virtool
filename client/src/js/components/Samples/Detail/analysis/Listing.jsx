@@ -13,7 +13,6 @@
 
 var _ = require('lodash');
 var React = require('react');
-var LinkedStateMixin = require('react-addons-linked-state-mixin');
 var FlipMove = require('react-flip-move');
 
 var Row = require('react-bootstrap/lib/Row');
@@ -37,8 +36,6 @@ var AnalysisItem = require('./Item.jsx');
  * @class
  */
 var AnalysisList = React.createClass({
-
-    mixins: [LinkedStateMixin],
 
     propTypes: {
         canModify: React.PropTypes.bool

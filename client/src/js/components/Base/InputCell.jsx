@@ -13,7 +13,6 @@
 
 var React = require('react');
 var ReactDOM = require('react-dom');
-var LinkedStateMixin = require('react-addons-linked-state-mixin');
 var Overlay = require('react-bootstrap/lib/Overlay');
 var Popover = require('react-bootstrap/lib/Popover');
 
@@ -75,8 +74,6 @@ var InputCellField = React.createClass({
  * @class
  */
 var InputCell = React.createClass({
-
-    mixins: [LinkedStateMixin],
 
     propTypes: {
         field: React.PropTypes.string,

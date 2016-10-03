@@ -70,8 +70,11 @@ var SamplesImport = React.createClass({
     },
 
     modalEntered: function () {
-        this.refs.name.getInputDOMNode().focus();
         dispatcher.settings.on('change', this.onSettingsChange);
+
+        if (dispatcher.db.hosts.count({added: true}) > 0) {
+            this.refs.name.focus();
+        }
     },
 
     modalWillExit: function () {
@@ -81,7 +84,7 @@ var SamplesImport = React.createClass({
 
     handleChange: function (event) {
         var data = {};
-        data[event.target.value] = event.target.value;
+        data[event.target.name] = event.target.value;
         this.setState(data);
     },
 
