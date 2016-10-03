@@ -39,6 +39,8 @@ function Database(definitions, dispatcher) {
 
                         collection.off = collection.removeListener;
 
+                        collection.retain = definition.retain;
+
                         collection.request = function (operation, data) {
                             return dispatcher.send({
                                 methodName: operation,
@@ -55,26 +57,23 @@ function Database(definitions, dispatcher) {
 
                     }.bind(this));
 
+                    window.onbeforeunload = function () {
+                        dispatcher.db.collectionNames.forEach(function (collectionName) {
+                            var collection = dispatcher.db[collectionName];
+
+                            if (!collection.retain) {
+                                collection.clear();
+                                console.log("clear");
+                            }
+                        });
+                    };
+
                     resolve();
                 }
             }.bind(this));
 
         }.bind(this));
     };
-
-    this.update = function (collectionName, documents, callback, context) {
-        if (!document.hasOwnProperty('_id')) throw 'Attempted to update a document without an _id field.';
-
-        this.dexie[collectionName].bulkPut(documents).then(function () {
-            callback.bind(context)();
-        });
-    };
-
-    this.remove = function (collectionName, documentId, callback, context) {
-        this.dexie[collectionName].delete(documentId).then(function () {
-            callback.bind(context)();
-        });
-    };
-};
+}
 
 module.exports = Database;

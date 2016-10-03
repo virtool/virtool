@@ -26,7 +26,7 @@ function Dispatcher(onReady) {
 
         "jobs": {
             unique: ["_id"],
-            indices: ["username", "archived"],
+            indices: ["username"],
             retain: true
         },
         "samples": {
