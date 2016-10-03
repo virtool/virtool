@@ -14,6 +14,8 @@
 var _ = require('lodash');
 var React = require('react');
 var NavItem = require('react-bootstrap/lib/NavItem');
+
+var Flex = require('virtool/js/components/Base/Flex.jsx');
 var Icon = require('virtool/js/components/Base/Icon.jsx');
 
 /**
@@ -39,7 +41,14 @@ var PrimaryButton = React.createClass({
     render: function () {
         return (
             <NavItem onClick={this.handleClick} className='pointer' active={this.props.active}>
-                <Icon name={this.props.iconName} />  {this.props.label || _.capitalize(this.props.parentKey)}
+                <Flex>
+                    <Flex.Item>
+                        <Icon name={this.props.iconName} />
+                    </Flex.Item>
+                    <Flex.Item pad={5}>
+                        {this.props.label || _.capitalize(this.props.parentKey)}
+                    </Flex.Item>
+                </Flex>
             </NavItem>
         );
     }
