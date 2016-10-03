@@ -234,7 +234,8 @@ class RebuildIndex(virtool.job.Job):
     1. mk_index_dir
     2. write_fasta
     3. bowtie_build
-    4. replace_old
+    4. snap_build
+    5. replace_old
 
 
     """

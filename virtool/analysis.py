@@ -609,13 +609,8 @@ class NuVs(Base):
 
         self.stage_list += [
             self.map_viruses,
-            self.map_host
-        ]
-
-        if self.sample["paired"]:
-            self.stage_list.append(self.reunite_pairs)
-
-        self.stage_list += [
+            self.map_host,
+            self.reunite_pairs,
             self.assemble,
             self.process_fasta,
             self.vfam,
@@ -663,24 +658,25 @@ class NuVs(Base):
 
     @virtool.job.stage_method
     def reunite_pairs(self):
-        with open(self.paths["analysis"] + "/unmapped_hosts.fq", "rU") as handle:
-            unmapped_roots = {record.id.split(" ")[0] for record in SeqIO.parse(handle, "fastq")}
+        if self.sample["paired"]:
+            with open(self.paths["analysis"] + "/unmapped_hosts.fq", "rU") as handle:
+                unmapped_roots = {record.id.split(" ")[0] for record in SeqIO.parse(handle, "fastq")}
 
-        files = self.calculate_read_path()
+            files = self.calculate_read_path()
 
-        with open(files[0], "r") as handle:
-            s_dict = {record.id.split(" ")[0]: record for record in SeqIO.parse(handle, "fastq")}
+            with open(files[0], "r") as handle:
+                s_dict = {record.id.split(" ")[0]: record for record in SeqIO.parse(handle, "fastq")}
 
-            with open(self.paths["analysis"] + "/unmapped_1.fq", "w") as unmapped:
-                for root in unmapped_roots:
-                    SeqIO.write(s_dict[root], unmapped, "fastq")
+                with open(self.paths["analysis"] + "/unmapped_1.fq", "w") as unmapped:
+                    for root in unmapped_roots:
+                        SeqIO.write(s_dict[root], unmapped, "fastq")
 
-        with open(files[1], "r") as handle:
-            s_dict = {record.id.split(" ")[0]: record for record in SeqIO.parse(handle, "fastq")}
+            with open(files[1], "r") as handle:
+                s_dict = {record.id.split(" ")[0]: record for record in SeqIO.parse(handle, "fastq")}
 
-            with open(self.paths["analysis"] + "/unmapped_2.fq", "w") as unmapped:
-                for root in unmapped_roots:
-                    SeqIO.write(s_dict[root], unmapped, "fastq")
+                with open(self.paths["analysis"] + "/unmapped_2.fq", "w") as unmapped:
+                    for root in unmapped_roots:
+                        SeqIO.write(s_dict[root], unmapped, "fastq")
 
     @virtool.job.stage_method
     def assemble(self):
