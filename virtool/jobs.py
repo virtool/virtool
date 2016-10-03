@@ -112,8 +112,11 @@ class Collection(virtool.database.Collection):
             status = document.pop("status")
             args = document.pop("args")
 
+            last_update = status[-1]
+
             document.update({
-                "state": status[-1]["state"],
+                "state": last_update["state"],
+                "stage": last_update["stage"],
                 "added": str(status[0]["date"]),
                 "progress": status[-1]["progress"],
                 "username": args["username"]
