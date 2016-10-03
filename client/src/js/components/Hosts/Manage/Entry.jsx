@@ -82,6 +82,7 @@ var HostEntry = React.createClass({
                             percent={this.state.progress * 100}
                             strokeWidth={14}
                             strokeColor="#337ab7"
+                            trailColor="#000000"
                         />
                     </div>
                 </Flex.Item>

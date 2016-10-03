@@ -30,14 +30,14 @@ var HostFiles = React.createClass({
     componentDidMount: function () {
         // Listen for updates to the host files collection. Also tell the server to listen for changes in the files
         // directory and update the collection with any changes.
-        dispatcher.db.hosts.on('change', this.update);
+        dispatcher.db.files.on('change', this.update);
         dispatcher.listen('files');
     },
 
     componentWillUnmount: function () {
         // Stop listening for changes to the collection and tell the server that we don't want to watch for changes to
         // the host files anymore.
-        dispatcher.db.hosts.off('change', this.update);
+        dispatcher.db.files.off('change', this.update);
         dispatcher.unlisten('files');
     },
 
