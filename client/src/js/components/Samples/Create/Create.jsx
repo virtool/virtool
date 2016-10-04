@@ -189,7 +189,7 @@ var SamplesImport = React.createClass({
 
                 userGroup = (
                     <Col md={3}>
-                        <Input type='select' label='User Group' valueLink={this.linkState('group')}>
+                        <Input type='select' label='User Group' value={this.state.group}>
                             <option key='none' value='none'>None</option>
                             {userGroupComponents}
                         </Input>
@@ -242,6 +242,7 @@ var SamplesImport = React.createClass({
                             <Col md={3}>
                                 <Input
                                     type='text'
+                                    name="isolate"
                                     label='Isolate'
                                     value={this.state.isolate}
                                     onChange={this.handleChange}
@@ -253,13 +254,14 @@ var SamplesImport = React.createClass({
                             <Col md={6}>
                                 <Input
                                     type='text'
+                                    name="host"
                                     label='True Host'
                                     value={this.state.host}
                                     onChange={this.handleChange}
                                 />
                             </Col>
                             <Col md={6}>
-                                <Input type='select' label='Subtraction Host' value={this.state.subtraction} onChange={this.handleChange}>
+                                <Input name="subtraction" type='select' label='Subtraction Host' value={this.state.subtraction} onChange={this.handleChange}>
                                     {hostComponents}
                                 </Input>
                             </Col>
@@ -269,6 +271,7 @@ var SamplesImport = React.createClass({
                             <Col md={this.state.forceGroupChoice ? 6 : 8}>
                                 <Input
                                     type='text'
+                                    name="locale"
                                     label='Locale'
                                     value={this.state.locale}
                                     onChange={this.handleChange}
