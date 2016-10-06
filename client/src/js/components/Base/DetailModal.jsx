@@ -91,6 +91,20 @@ var DetailModal = React.createClass({
     },
 
     render: function () {
+
+        var documentHeight = Math.max(
+            document.body.scrollHeight,
+            document.body.offsetHeight,
+            document.documentElement.clientHeight,
+            document.documentElement.scrollHeight,
+            document.documentElement.offsetHeight
+        );
+
+        console.log(window.innerHeight, documentHeight);
+
+        if (window.innerHeight > documentHeight) {
+            console.log("TEST");
+        }
         
         var modalContent;
         var show = Boolean(this.props.target);

@@ -130,12 +130,12 @@ h4.main-header {
     white-space: nowrap;
 }
 
-.list-group-item.job {
+.list-group-item.spaced {
     margin-bottom: 10px;
-    box-shadow: 2px 3px 3px 0 #d5d5d5;
+    box-shadow: 2px 2px 2px 0 #d5d5d5;
 }
 
-.list-group-item.job > .progress {
+.list-group-item.spaced > .progress {
     height: 10px;
     margin: -10px -15px 0 -15px;
 }
@@ -163,6 +163,20 @@ h4.main-header {
 
 .split-dropdown > * {
     flex: auto;
+}
+
+.pathoscope-isolate-header {
+    padding-bottom: 2px;
+    padding-top: 15px;
+    margin-bottom: 4px;
+    border-bottom: 1px solid #d5d5d5;
+}
+
+button.btn.fused {
+    margin: 10px -15px -10px;
+    border-right: none;
+    border-left: none;
+    border-bottom: none;
 }
 
 #job-clear-dropdown + .dropdown-menu {

@@ -85,7 +85,7 @@ var JobEntry = React.createClass({
 
         // Create the option components for the selected fields.
         return (
-            <ListGroupItem className="job" onClick={this.showDetail}>
+            <ListGroupItem className="spaced job" onClick={this.showDetail}>
 
                 <ProgressBar now={progressValue} bsStyle={progressStyle} />
 

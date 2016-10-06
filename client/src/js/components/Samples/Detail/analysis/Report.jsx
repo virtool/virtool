@@ -11,8 +11,8 @@ var Icon = require('virtool/js/components/Base/Icon.jsx');
 var PushButton = require('virtool/js/components/Base/PushButton.jsx');
 var RelativeTime = require('virtool/js/components/Base/RelativeTime.jsx');
 
-var PathoscopeReport = require('./Pathoscope/report.jsx');
-var NuVsReport = require('./NuVs/report.jsx');
+var PathoscopeViewer = require('./Pathoscope/Viewer.jsx');
+var NuVsViewer = require('./NuVs/Viewer.jsx');
 
 var AnalysisReport = React.createClass({
 
@@ -20,7 +20,7 @@ var AnalysisReport = React.createClass({
         
         if (this.props.algorithm.indexOf('pathoscope') > -1) {
             content = (
-                <PathoscopeReport
+                <PathoscopeViewer
                     {...this.props}
                 />
             );
@@ -28,7 +28,7 @@ var AnalysisReport = React.createClass({
 
         if (this.props.algorithm === 'nuvs') {
             content = (
-                <NuVsReport
+                <NuVsViewer
                     {...this.props}
                 />
             )

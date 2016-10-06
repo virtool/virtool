@@ -3,14 +3,13 @@ var React = require("react");
 var ReactDOM = require("react-dom");
 var ChartContainer = require("virtool/js/components/Base/ChartContainer.jsx");
 
-var createChart = function (element, data) {
+var createChart = function (element, data, yMax, xMin, showYAxis) {
 
     var svg = d3.select(element).append('svg');
 
-    var maxLabel = d3.max(data).toString();
     var maxWidth = 0;
 
-    svg.append("text").text(maxLabel)
+    svg.append("text").text(yMax.toString())
         .each(function () {maxWidth = this.getBBox().width})
         .remove();
 
@@ -18,13 +17,17 @@ var createChart = function (element, data) {
 
     var margin = {
         top: 10,
-        left: maxWidth + 15,
+        left: maxWidth + (showYAxis ? 15: 0),
         bottom: 50,
         right: 10
     };
 
     var height = 200 - margin.top - margin.bottom;
-    var width = element.offsetWidth - margin.left - margin.right;
+    var width = data.length / 8;
+
+    if (width < xMin) width = xMin;
+
+    width -= (margin.left + margin.right);
 
     var x = d3.scaleLinear()
         .range([0, width])
@@ -32,11 +35,9 @@ var createChart = function (element, data) {
 
     var y = d3.scaleLinear()
         .range([height, 0])
-        .domain([0, d3.max(data)]);
+        .domain([0, yMax]);
 
     var xAxis = d3.axisBottom(x);
-
-    var yAxis = d3.axisLeft(y);
 
     var area = d3.area()
         .x(function (d, i) {return x(i)})
@@ -66,30 +67,45 @@ var createChart = function (element, data) {
             .attr("dy", "0.15em")
             .attr("transform", "rotate(-65)");
 
-    svg.append('g')
+    if (showYAxis) {
+        var yAxis = d3.axisLeft(y);
+
+        svg.append('g')
         .attr('class', 'y axis')
         .call(yAxis);
+    }
 };
 
 
 var CoverageChart = React.createClass({
 
+    propTypes: {
+        yMax: React.PropTypes.number
+    },
+
     componentDidMount: function () {
-        window.onresize = this.renderChart;
+        window.addEventListener("resize", this.renderChart);
         this.renderChart();
     },
 
-    componentWillUnmount: function() {
-        // Remove the d3 chart.
-        window.removeEventListener('resize', this.renderChart);
+    componentWillUnmount: function () {
+        window.removeEventListener("resize", this.renderChart);
     },
 
     renderChart: function () {
-        createChart(ReactDOM.findDOMNode(this), this.props.data);
+        var node = ReactDOM.findDOMNode(this);
+
+        while (node.firstChild) {
+            node.removeChild(node.firstChild);
+        }
+
+        var xMin = ReactDOM.findDOMNode(this.props.isolateComponent).offsetWidth;
+
+        createChart(node, this.props.data, this.props.yMax, xMin, this.props.showYAxis);
     },
 
     render: function () {
-        return <div className="coverage-chart"></div>;
+        return <span className="coverage-chart"></span>;
     }
 
 });
