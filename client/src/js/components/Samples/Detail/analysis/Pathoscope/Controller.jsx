@@ -103,6 +103,8 @@ var PathoscopeController = React.createClass({
 
     render: function () {
 
+        console.log(this.props);
+
         var data = _.sortBy(this.props.data, this.state.sortKey);
 
         if (this.state.filterViruses) {
@@ -122,11 +124,13 @@ var PathoscopeController = React.createClass({
             data = data.map(function (virus) {
                 var minIsolateWeight = 0.03 * virus.pi;
 
-                virus.isolates = _.filter(virus.isolates, function (isolate) {
+                var filteredVirus = _.clone(virus);
+
+                filteredVirus.isolates = _.filter(filteredVirus.isolates, function (isolate) {
                     return isolate.pi >= minIsolateWeight;
                 });
 
-                return virus;
+                return filteredVirus;
             });
         }
 

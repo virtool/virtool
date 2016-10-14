@@ -9,6 +9,7 @@ var Start = require('./components/Start.jsx');
 document.write(require('../css/bootstrap.css'));
 document.write(require('../css/bootstrap-toggle.css'));
 document.write(require('../css/font.css'));
+document.write(require('../css/roboto.css'));
 document.write(require('../css/perfect-scrollbar.css'));
 document.write(require('../css/typeahead.css'));
 document.write(require('../css/graphics.css'));
