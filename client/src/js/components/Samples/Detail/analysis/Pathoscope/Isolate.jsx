@@ -1,5 +1,5 @@
-var CX = require("classnames");
 var React = require('react');
+var ReactDOM = require("react-dom");
 var Row = require('react-bootstrap/lib/Row');
 var Col = require('react-bootstrap/lib/Col');
 var Badge = require('react-bootstrap/lib/Badge');
@@ -16,6 +16,22 @@ var Coverage = require('./coverage.jsx');
 var Utils = require('virtool/js/Utils');
 
 var PathoscopeIsolate = React.createClass({
+
+    componentDidMount: function () {
+        ReactDOM.findDOMNode(this.refs.chart).addEventListener("scroll", this.handleScroll);
+    },
+
+    componentWillUnmount: function () {
+        ReactDOM.findDOMNode(this.refs.chart).removeEventListener("scroll", this.handleScroll);
+    },
+
+    scrollTo: function (scrollLeft) {
+        ReactDOM.findDOMNode(this.refs.chart).scrollLeft = scrollLeft;
+    },
+
+    handleScroll: function (event) {
+        this.props.setScroll(this.props.virusId, event.target.scrollLeft);
+    },
 
     render: function () {
 
@@ -53,13 +69,18 @@ var PathoscopeIsolate = React.createClass({
                             </strong>
                         </Flex.Item>
                         <Flex.Item pad={5}>
+                            <strong className="small text-danger">
+                                {Utils.toScientificNotation(this.props.best)}
+                            </strong>
+                        </Flex.Item>
+                        <Flex.Item pad={5}>
                             <strong className="small text-primary">
                                 {Utils.toScientificNotation(this.props.coverage)}
                             </strong>
                         </Flex.Item>
                     </Flex>
                 </div>
-                <div style={chartContainerStyle}>
+                <div ref="chart" style={chartContainerStyle}>
                     {hitComponents}
                 </div>
             </div>

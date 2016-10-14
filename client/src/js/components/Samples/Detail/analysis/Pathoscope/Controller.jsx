@@ -1,14 +1,20 @@
 var React = require('react');
+var Toggle = require('react-bootstrap-toggle').default;
 var Row = require('react-bootstrap/lib/Row');
 var Col = require('react-bootstrap/lib/Col');
 var Grid = require('react-bootstrap/lib/Grid');
+var Dropdown = require('react-bootstrap/lib/Dropdown');
+var MenuItem = require('react-bootstrap/lib/MenuItem');
+var FormGroup = require('react-bootstrap/lib/FormGroup');
+var InputGroup = require('react-bootstrap/lib/InputGroup');
+var FormControl = require('react-bootstrap/lib/FormControl');
 var ButtonGroup = require('react-bootstrap/lib/ButtonGroup');
 var ButtonToolbar = require('react-bootstrap/lib/ButtonToolbar');
 
 var Icon = require('virtool/js/components/Base/Icon.jsx');
 var Flex = require('virtool/js/components/Base/Flex.jsx');
-var Input = require('virtool/js/components/Base/Input.jsx');
 var Button = require('virtool/js/components/Base/PushButton.jsx');
+var Checkbox = require('virtool/js/components/Base/Checkbox.jsx');
 
 var PathoscopeList = require('./List.jsx');
 
@@ -16,15 +22,27 @@ var PathoscopeController = React.createClass({
 
     getInitialState: function () {
         return {
-            filter: true,
+            filterViruses: true,
+            filterIsolates: true,
 
             findTerm: "",
 
             sortKey: "coverage",
             sortDescending: true,
 
+            proportion: true,
             expanded: []
         };
+    },
+
+    handleSelect: function (eventKey) {
+        switch (eventKey) {
+
+            case "filterIsolates":
+                this.setState({filterIsolates: !this.state.filterIsolates});
+                break;
+
+        }
     },
 
     collapseAll: function () {
@@ -39,26 +57,77 @@ var PathoscopeController = React.createClass({
         });
     },
 
+    toggleProportion: function () {
+        this.setState({proportion: !this.state.proportion});
+    },
+
     setFindTerm: function (event) {
         this.setState({findTerm: event.target.value});
     },
 
-    toggleFilter: function () {
+    setSortKey: function (event) {
+        this.setState({sortKey: event.target.value});
+    },
+
+    toggleSortDescending: function () {
+        this.setState({sortDescending: !this.state.sortDescending});
+    },
+
+    filter: function (eventKey) {
+
+        switch (eventKey) {
+
+            case "viruses":
+                this.setState({filterViruses: !this.state.filterViruses});
+                break;
+
+            case "isolates":
+                this.setState({filterIsolates: !this.state.filterIsolates});
+                break;
+
+            default:
+                var bool = !(this.state.filterViruses || this.state.filterIsolates);
+
+                this.setState({
+                    filterViruses: bool,
+                    filterIsolates: bool
+                });
+        }
+    },
+
+    clear: function () {
         this.setState({
-            filter: !this.state.filter
+            findTerm: ""
         });
     },
 
     render: function () {
 
-        var data = _.sortBy(this.props.data, "coverage");
+        var data = _.sortBy(this.props.data, this.state.sortKey);
 
-        if (this.state.filter) {
+        if (this.state.filterViruses) {
             var totalReadsMapped = _.sum(_.map(data, "reads"));
 
+            var re = this.state.findTerm ? new RegExp(this.state.findTerm, "i"): null;
+
             data = _.filter(data, function (virus) {
-                return virus.pi * totalReadsMapped >= virus.ref_length * 0.8 / this.props.maxReadLength;
+                return (
+                    (virus.pi * totalReadsMapped >= virus.ref_length * 0.8 / this.props.maxReadLength) &&
+                    (!re || (re.test(virus.abbreviation) || re.test(virus.name)))
+                );
             }.bind(this));
+        }
+
+        if (this.state.filterIsolates) {
+            data = data.map(function (virus) {
+                var minIsolateWeight = 0.03 * virus.pi;
+
+                virus.isolates = _.filter(virus.isolates, function (isolate) {
+                    return isolate.pi >= minIsolateWeight;
+                });
+
+                return virus;
+            });
         }
 
         if (this.state.sortDescending) {
@@ -69,20 +138,79 @@ var PathoscopeController = React.createClass({
             <div>
                 <div>
                     <Flex>
-                        <Flex.Item grow={1}>
-                            <Input type="text" value={this.state.findTerm} onChange={this.setFindTerm} />
+                        <Flex.Item grow={4}>
+                            <FormGroup>
+                                <InputGroup>
+                                    <InputGroup.Addon>
+                                        <Icon name="search" /> Find
+                                    </InputGroup.Addon>
+                                    <FormControl value={this.state.findTerm} onChange={this.setFindTerm} />
+                                </InputGroup>
+                            </FormGroup>
                         </Flex.Item>
 
                         <Flex.Item pad>
-                            <Button active={this.state.filter} onClick={this.toggleFilter}>
-                                <Icon name='filter' /> Filter
+                            <FormGroup>
+                                <InputGroup>
+                                    <InputGroup.Addon>
+                                        <Icon name="sort" /> Sort
+                                    </InputGroup.Addon>
+                                    <FormControl componentClass="select" value={this.state.sortKey} onChange={this.setSortKey}>
+                                        <option className="text-primary" value="coverage">Coverage</option>
+                                        <option className="text-success" value="pi">Weight</option>
+                                        <option className="text-danger" value="best">Best Hit</option>
+                                    </FormControl>
+                                    <InputGroup.Button>
+                                        <Button title="Sort Direction" onClick={this.toggleSortDescending}>
+                                            <Icon name={this.state.sortDescending ? "sort-desc": "sort-asc"} />
+                                        </Button>
+                                    </InputGroup.Button>
+                                </InputGroup>
+                            </FormGroup>
+                        </Flex.Item>
+
+                        <Flex.Item pad>
+                            <Button title="Collapse" onClick={this.collapseAll} disabled={this.state.expanded.length === 0}>
+                                <Icon name='shrink' />
                             </Button>
                         </Flex.Item>
 
                         <Flex.Item pad>
-                            <Button onClick={this.collapseAll}>
-                                <Icon name='shrink' /> Collapse
+                            <Button title="Use Weight" active={this.state.proportion} onClick={this.toggleProportion}>
+                                <Icon name='pie' />
                             </Button>
+
+                        </Flex.Item>
+
+                        <Flex.Item pad>
+                            <Dropdown id="job-clear-dropdown" onSelect={this.handleSelect} className="split-dropdown" pullRight>
+                                <Button title="Filter" onClick={this.filter} active={this.state.filterViruses || this.state.filterIsolates}>
+                                    <Icon name="filter" />
+                                </Button>
+                                <Dropdown.Toggle />
+                                <Dropdown.Menu onSelect={this.filter}>
+                                    <MenuItem eventKey="viruses">
+                                        <Flex>
+                                            <Flex.Item>
+                                                <Checkbox checked={this.state.filterViruses} />
+                                            </Flex.Item>
+                                            <Flex.Item pad={5}>
+                                                Viruses
+                                            </Flex.Item>
+                                        </Flex>
+                                    </MenuItem>
+                                    <MenuItem eventKey="isolates">
+                                        <Flex>
+                                            <Flex.Item>
+                                                <Checkbox checked={this.state.filterIsolates} />
+                                            </Flex.Item>
+                                            <Flex.Item pad={5}>
+                                                Isolates
+                                            </Flex.Item>
+                                        </Flex>
+                                    </MenuItem>
+                                </Dropdown.Menu>
+                            </Dropdown>
                         </Flex.Item>
                     </Flex>
                 </div>

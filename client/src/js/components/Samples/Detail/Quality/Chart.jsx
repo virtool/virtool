@@ -23,7 +23,7 @@ var QualityChart = React.createClass({
 
     componentDidMount: function () {
         this.update();
-        window.onresize = this.update;
+        window.addEventListener("resize", this.update);
     },
 
     componentWillUnmount: function () {

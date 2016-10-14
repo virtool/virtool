@@ -12,8 +12,6 @@ var Flex = require('virtool/js/components/Base/Flex.jsx');
 var PushButton = require('virtool/js/components/Base/PushButton.jsx');
 var Utils = require('virtool/js/Utils');
 
-var PathoscopeIsolate = require("./Isolate.jsx");
-
 var PathoscopeEntry = React.createClass({
 
     shouldComponentUpdate: function (nextProps) {
@@ -34,32 +32,17 @@ var PathoscopeEntry = React.createClass({
 
         var closeButton;
 
-        var isolateComponents;
-
         if (this.props.in) {
             closeButton = (
                 <button type="button" className="close" onClick={this.toggleIn}>
                     <span>×</span>
                 </button>
             );
-
-            isolateComponents = _.sortBy(this.props.isolates, "pi").reverse().map(function (isolate) {
-                return (
-                    <PathoscopeIsolate
-                        key={isolate.isolate_id}
-                        maxDepth={this.props.maxDepth}
-                        maxGenomeLength={this.props.maxGenomeLength}
-                        {...isolate}
-                    />
-                );
-            }, this);
-
-            isolateComponents = (
-                <div style={{marginTop: "15px"}}>
-                    {isolateComponents}
-                </div>
-            )
         }
+
+        var flexStyle = {
+            height: "21px"
+        };
 
         return (
             <div className={className} onClick={this.props.in ? null: this.toggleIn}>
@@ -79,7 +62,7 @@ var PathoscopeEntry = React.createClass({
                         </Flex>
                     </Col>
                     <Col md={2}>
-                        <Flex alignItems="center">
+                        <Flex alignItems="center" style={flexStyle}>
                             <Flex.Item>
                                 <Label>Weight</Label>
                             </Flex.Item>
@@ -91,9 +74,9 @@ var PathoscopeEntry = React.createClass({
                         </Flex>
                     </Col>
                     <Col md={2}>
-                        <Flex alignItems="center">
+                        <Flex alignItems="center" style={flexStyle}>
                             <Flex.Item>
-                                <Label>Best</Label>
+                                <Label>Best Hit</Label>
                             </Flex.Item>
                             <Flex.Item pad={5}>
                                 <strong className="text-danger">
@@ -103,7 +86,7 @@ var PathoscopeEntry = React.createClass({
                         </Flex>
                     </Col>
                     <Col md={2}>
-                        <Flex alignItems="center">
+                        <Flex alignItems="center" style={flexStyle}>
                             <Flex.Item>
                                 <Label>Coverage</Label>
                             </Flex.Item>
@@ -118,7 +101,6 @@ var PathoscopeEntry = React.createClass({
                         </Flex>
                     </Col>
                 </Row>
-                {isolateComponents}
             </div>
         );
 

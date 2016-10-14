@@ -1,5 +1,6 @@
 var _ = require('lodash');
 var React = require("react");
+var ResizeDetector = require("react-resize-detector").default;
 var Alert = require('react-bootstrap/lib/Alert');
 var Modal = require('react-bootstrap/lib/Modal');
 var Button = require('react-bootstrap/lib/Button');
@@ -24,6 +25,11 @@ var SampleDetail = React.createClass({
 
     handleSelect: function (eventKey) {
         this.setState({activeKey: eventKey});
+    },
+
+    handleResize: function () {
+        console.log("resize");
+        this.props.updateStyle();
     },
 
     remove: function () {
@@ -106,6 +112,8 @@ var SampleDetail = React.createClass({
 
         return (
             <div>
+                <ResizeDetector handleHeight handleWidth onResize={this.handleResize} />
+
                 <Modal.Header>
                     {this.props.detail.name}
                 </Modal.Header>
