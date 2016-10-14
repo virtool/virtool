@@ -37,7 +37,7 @@ var JobError = React.createClass({
         if (this.props.error.context.indexOf('External') === -1) {
             // Traceback from a Python exception.
             var tracebackLines = this.props.error.message.traceback.map(function (line) {
-                return <span className='block-display traceback-line'>{line}</span>;
+                return <div className='traceback-line'>{line}</div>;
             });
 
             // Only show a colon and exception detail after the exception name if there is detail present.
@@ -50,9 +50,9 @@ var JobError = React.createClass({
             // Content replicates format of Python exceptions shown in Python console.
             content = (
                 <div>
-                    <span className='block-display'>Traceback (most recent call last):</span>
+                    <div>Traceback (most recent call last):</div>
                     {tracebackLines}
-                    <p className='block-display'>{this.props.error.message.type}{details}</p>
+                    <p>{this.props.error.message.type}{details}</p>
                 </div>
             );
         } else {

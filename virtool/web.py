@@ -379,6 +379,9 @@ class SocketHandler(tornado.websocket.WebSocketHandler):
         #: Set to ``True`` when the connection is authorized.
         self.authorized = False
 
+    def check_origin(self, origin):
+        return True
+
     def open(self):
         """
         Called when the websocket connection is opened, adding the :class:`.SocketHandler` object to the dispatcher's
