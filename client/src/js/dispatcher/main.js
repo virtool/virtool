@@ -21,7 +21,7 @@ function Dispatcher(onReady) {
     this.router = new Router();
     this.settings = new Settings();
     this.transactions = new Transactions();
-    
+
     this.db = new Database({
 
         "jobs": {
@@ -99,29 +99,35 @@ function Dispatcher(onReady) {
             data: null
         }).success(function (data) {
 
-            this.settings.update(data);
+            dispatcher.settings.update(data);
 
-            this.db.open().then(function () {
+            dispatcher.db.open()
+                .then(function () {
 
-                var manifests = {};
+                    var manifests = {};
 
-                this.db.collectionNames.forEach(function (collectionName) {
-                    manifests[collectionName] = {};
+                    dispatcher.db.collectionNames.forEach(function (collectionName) {
+                        manifests[collectionName] = {};
 
-                    this.db[collectionName].find().forEach(function (document) {
-                        manifests[collectionName][document._id] = document._version;
-                    });
+                        dispatcher.db[collectionName].find().forEach(function (document) {
+                            manifests[collectionName][document._id] = document._version;
+                        });
 
-                }, this);
+                    }, this);
 
-                return manifests;
+                    return manifests;
 
-            }.bind(this)).then(function (manifests) {
+                })
 
-                dispatcher.send({collectionName: 'dispatcher', methodName: 'sync', data: {manifests: manifests}})
-                    .update(function (update) {
-                        dispatcher.syncOperationCount = update;
-                    });
+                .then(function (manifests) {
+                    dispatcher.send({collectionName: 'dispatcher', methodName: 'sync', data: {manifests: manifests}})
+                        .update(function (update) {
+                            dispatcher.syncOperationCount = update;
+
+                            if (update === 0) {
+                                dispatcher.emit('synced');
+                            }
+                        });
             });
 
         }, this);

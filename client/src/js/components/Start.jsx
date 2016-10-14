@@ -55,6 +55,7 @@ var Start = React.createClass({
 
     establishConnection: function () {
         if (!this.state.needsSetup) {
+
             window.dispatcher = new Dispatcher(this.onDispatcherReady);
 
             dispatcher.on('synced', function () {
