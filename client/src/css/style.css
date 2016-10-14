@@ -1,34 +1,12 @@
 @import 'https://fonts.googleapis.com/css?family=Roboto';
 @import 'https://fonts.googleapis.com/css?family=Roboto+Mono';
 
-html {
-    height: 100%;
-}
-
 body {
-    min-height: 100%;
     font-family: 'Roboto', sans-serif;
-
 }
 
 .pointer {
     cursor: pointer;
-}
-
-.waiting-text {
-    font-size: 12px;
-    text-align: center;
-    line-height: 20px;
-    display: block;
-    color: #555;
-}
-
-.block-display {
-    display: block;
-}
-
-.traceback-line {
-    margin-left: 10px;
 }
 
 td.hoverable {
@@ -64,12 +42,6 @@ div.hoverable:hover {
     cursor: pointer;
 }
 
-h4.main-header {
-    /* border-bottom: 1px #808080 solid; */
-    background-color: #e7e7e7;
-    padding-bottom: 7px;
-    margin-bottom: 15px;
-}
 .fixed-width {
     width: 8px;
     text-align: center;
@@ -104,15 +76,15 @@ h4.main-header {
 }
 
 .modal-lg {
-    width: 95%;
+    width: 1000px;
 }
 
 .modal-md {
-    width: 50% !important;
+    width: 500px !important;
 }
 
 .modal-rg {
-    width: 75% !important;
+    width: 750px !important;
 }
 
 .tab-panel {
@@ -170,6 +142,11 @@ h4.main-header {
     padding-top: 15px;
     margin-bottom: 4px;
     border-bottom: 1px solid #d5d5d5;
+}
+
+.pathoscope-virus-detail {
+    margin-top: -11px;
+    border-top: none;
 }
 
 button.btn.fused {
@@ -241,22 +218,6 @@ i.hoverable:hover {
     box-shadow: inset 5px 0 0 0 #dddddd;
 }
 
-.path-bar {
-    display: block;
-    background-color: #ffffff;
-    font-size: 12px;
-    height: 30px;
-    border: solid #CCC 1px;
-    padding: 0;
-}
-
-.path-bar > * {
-    height: 100%;
-    margin: 0;
-    display: inline;
-    padding: 5px 10px;
-}
-
 .list-item-overlay {
     text-align: center;
     line-height: 77px;
@@ -303,21 +264,6 @@ i.hoverable:hover {
     border-right: 1px solid #CCC;
 }
 
-.path-bar-content {
-    float: left;
-}
-
-.path-bar-up {
-    cursor: pointer;
-    float: right;
-    padding-top: 6px;
-    border-left: 1px solid #CCC;
-}
-
-.path-bar-up:hover {
-    background-color: #e6e6e6;
-}
-
 div.tooltip {
     background-color: white;
     width: 400px;
@@ -343,14 +289,6 @@ i.vtlogo {
     font-size: 30px;
 }
 
-.multiselect-bar {
-    background: #f5f5f5;
-    border: 1px solid #e3e3e3;
-    box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.05);
-    padding: 8px;
-    margin-bottom: 10px;
-}
-
 .disable-select {
     -moz-user-select: none;
     -webkit-user-select: none;
@@ -365,10 +303,6 @@ i.vtlogo {
     margin-bottom: -15px;
     border-top: 1px solid #dddddd;
     background: white;
-}
-
-.flexible {
-    margin: 0 0 0 15px;
 }
 
 td.input-cell {
