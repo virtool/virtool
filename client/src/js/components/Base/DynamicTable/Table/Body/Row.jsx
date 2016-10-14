@@ -13,7 +13,6 @@
 
 var CX = require('classnames');
 var React = require('react');
-var ReactCSSTransitionGroup = require('react-addons-css-transition-group');
 var Checkbox = require('virtool/js/components/Base/Checkbox.jsx');
 
 /**
@@ -39,7 +38,7 @@ var Row = React.createClass({
 
     render: function () {
 
-        var selectedRow = CX({
+        var className = CX({
             active: this.props.selected,
             'shadow-hover': true
         });
@@ -56,10 +55,10 @@ var Row = React.createClass({
         }
 
         return (
-            <ReactCSSTransitionGroup transitionName='tableRow' transitionEnterTimeout={300} transitionLeaveTimeout={300} component='tr' className={selectedRow}>
+            <tr className={className}>
                 {selector}
                 {this.props.children}
-            </ReactCSSTransitionGroup>
+            </tr>
         );
     }
 });
