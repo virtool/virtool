@@ -74,6 +74,10 @@ var DetailModal = React.createClass({
         });
     },
 
+    handleResize: function () {
+        this.refs.modal.updateStyle();
+    },
+
     tryRefresh: function () {
 
         var document = this.props.collection.find({_id: this.props.target._id});
@@ -91,27 +95,21 @@ var DetailModal = React.createClass({
     },
 
     render: function () {
-
-        var documentHeight = Math.max(
-            document.body.scrollHeight,
-            document.body.offsetHeight,
-            document.documentElement.clientHeight,
-            document.documentElement.scrollHeight,
-            document.documentElement.offsetHeight
-        );
-
-        console.log(window.innerHeight, documentHeight);
-
-        if (window.innerHeight > documentHeight) {
-            console.log("TEST");
-        }
         
         var modalContent;
         var show = Boolean(this.props.target);
         
         if (!this.state.pending) {
             var ContentComponent = this.props.contentComponent;
-            modalContent = <ContentComponent key='main' detail={_.cloneDeep(this.state.data)} {...this.props} />;
+
+            modalContent = (
+                <ContentComponent
+                    key='main'
+                    detail={_.cloneDeep(this.state.data)}
+                    updateStyle={this.handleResize}
+                    {...this.props}
+                />
+            );
         } else {
             var loadingStyle = {
                 marginTop: '35px',
@@ -140,7 +138,7 @@ var DetailModal = React.createClass({
         };
 
         return (
-            <Modal {...modalProps}>
+            <Modal ref="modal" {...modalProps}>
                 {modalContent}
             </Modal>
         );
