@@ -1,5 +1,6 @@
 var _ = require("lodash");
 var React = require('react');
+var ReactDOM = require('react-dom');
 var FlipMove = require('react-flip-move');
 var Row = require('react-bootstrap/lib/Row');
 var Col = require('react-bootstrap/lib/Col');
@@ -75,10 +76,19 @@ var PathoscopeList = React.createClass({
 
         rows = _.flatten(rows);
 
+        var flipMoveProps = {
+            typeName: "div",
+            className: "list-group",
+            enterAnimation: "accordianVertical",
+            leaveAnimation: false
+        };
+
         return (
-            <FlipMove typeName="div" className="list-group" style={{overflowY: "hidden"}} enterAnimation="accordianVertical" leaveAnimation="accordianVertical">
-                {rows}
-            </FlipMove>
+            <div style={{overflowY: "hidden"}}>
+                <FlipMove ref="flipMove" {...flipMoveProps}>
+                    {rows}
+                </FlipMove>
+            </div>
         );
     }
 
