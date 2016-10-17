@@ -3,7 +3,9 @@ var React = require("react");
 var ReactDOM = require("react-dom");
 var ChartContainer = require("virtool/js/components/Base/ChartContainer.jsx");
 
-var createChart = function (element, data, yMax, xMin, showYAxis) {
+var createChart = function (element, data, meta, yMax, xMin, showYAxis) {
+
+    console.log(meta);
 
     var svg = d3.select(element).append('svg');
 
@@ -74,6 +76,11 @@ var createChart = function (element, data, yMax, xMin, showYAxis) {
         .attr('class', 'y axis')
         .call(yAxis);
     }
+
+    svg.append('text')
+        .attr('class', 'coverage-label small')
+        .attr("transform", "translate(4,10)")
+        .text(meta.accession + ' - ' + meta.definition);
 };
 
 
@@ -93,7 +100,7 @@ var CoverageChart = React.createClass({
     },
 
     renderChart: function () {
-        var node = ReactDOM.findDOMNode(this);
+        var node = ReactDOM.findDOMNode(this.refs.chart);
 
         while (node.firstChild) {
             node.removeChild(node.firstChild);
@@ -101,11 +108,18 @@ var CoverageChart = React.createClass({
 
         var xMin = ReactDOM.findDOMNode(this.props.isolateComponent).offsetWidth;
 
-        createChart(node, this.props.data, this.props.yMax, xMin, this.props.showYAxis);
+        var meta = _.pick(this.props, ["accession", "definition"]);
+
+        createChart(node, this.props.data, meta, this.props.yMax, xMin, this.props.showYAxis);
     },
 
     render: function () {
-        return <span className="coverage-chart"></span>;
+        return (
+            <span style={{marginTop: "5px"}} className="coverage-chart">
+                <div>{this.props.title}</div>
+                <div ref="chart" />
+            </span>
+        )
     }
 
 });

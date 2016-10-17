@@ -103,8 +103,6 @@ var PathoscopeController = React.createClass({
 
     render: function () {
 
-        console.log(this.props);
-
         var data = _.sortBy(this.props.data, this.state.sortKey);
 
         if (this.state.filterViruses) {

@@ -12,7 +12,7 @@ var Flex = require('virtool/js/components/Base/Flex.jsx');
 var Scroll = require('virtool/js/components/Base/Scroll.jsx');
 var PushButton = require('virtool/js/components/Base/PushButton.jsx');
 
-var Coverage = require('./coverage.jsx');
+var Coverage = require('./Coverage.jsx');
 var Utils = require('virtool/js/Utils');
 
 var PathoscopeIsolate = React.createClass({
@@ -49,8 +49,10 @@ var PathoscopeIsolate = React.createClass({
                 <Coverage
                     key={hit.accession}
                     data={hit.align}
+                    accession={hit.accession}
+                    definition={hit.definition}
                     yMax={this.props.maxDepth}
-                    showYAxis={index === 0}
+                    showYAxis={index === sorted.length - 1}
                     isolateComponent={this}
                 />
             );
