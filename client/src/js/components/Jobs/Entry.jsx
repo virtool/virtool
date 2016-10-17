@@ -59,12 +59,43 @@ var JobEntry = React.createClass({
 
     render: function () {
 
+        var iconArea = (
+            <strong className="pull-right">
+                {_.capitalize(this.props.state)}
+            </strong>
+        );
+
         var icon;
 
-        if (this.props.state === "waiting" || this.props.state === "running") {
-            icon = <Icon bsStyle="danger" name="cancel-circle" onClick={this.cancel} />;
-        } else {
-            icon = <Icon bsStyle="danger" name="remove" onClick={this.remove} />;
+        if ((this.props.state === "waiting" || this.props.state === "running") && this.props.canCancel) {
+            icon = (
+                <Icon
+                    bsStyle="danger"
+                    name="cancel-circle"
+                    onClick={this.cancel}
+                />
+            );
+        } else if (this.props.canRemove) {
+            icon = (
+                <Icon
+                    bsStyle="danger"
+                    name="remove"
+                    onClick={this.remove}
+                />
+            );
+        }
+
+        if (icon) {
+            iconArea = (
+                <div>
+                    <div className="job-state-overlay">
+                        {iconArea}
+                    </div>
+                    <div className="job-icons pull-right">
+                        {icon}
+                    </div>
+                </div>
+            );
         }
 
         var progressStyle;
@@ -98,14 +129,7 @@ var JobEntry = React.createClass({
                              Started <RelativeTime time={this.props.added} /> by {this.props.username}
                          </Col>
                         <Col md={3}>
-                            <div className="job-state-overlay">
-                                <strong className="pull-right">
-                                    {_.capitalize(this.props.state)}
-                                </strong>
-                            </div>
-                            <div className="job-icons pull-right">
-                                {icon}
-                            </div>
+                            {iconArea}
                         </Col>
                     </Row>
                 </h5>

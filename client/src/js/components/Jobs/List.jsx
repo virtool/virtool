@@ -53,8 +53,15 @@ var JobList = React.createClass({
 
         if (this.props.documents && this.props.documents.length > 0) {
             jobComponents = this.props.documents.map(function (document) {
-                return <JobEntry key={document._id} {...document} />
-            });
+                return (
+                    <JobEntry
+                        key={document._id}
+                        canCancel={this.props.canCancel}
+                        canRemove={this.props.canRemove}
+                        {...document}
+                    />
+                );
+            }, this);
         } else {
             jobComponents = (
                 <ListGroupItem className="text-center">

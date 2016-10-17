@@ -78,16 +78,21 @@ var ManageJobs = React.createClass({
             documents: dispatcher.db.jobs.chain(),
             findTerm: "",
             sortTerm: "progress",
-            sortDescending: false
+            sortDescending: false,
+
+            canCancel: dispatcher.user.permissions.cancel_job,
+            canRemove: dispatcher.user.permissions.remove_job
         };
     },
 
     componentDidMount: function () {
         dispatcher.db.jobs.on("change", this.update);
+        dispatcher.user.on("change", this.update);
     },
 
     componentWillUnmount: function () {
         dispatcher.db.jobs.off("change", this.update);
+        dispatcher.user.off("change", this.update);
     },
 
     setFindTerm: function (event) {
@@ -110,7 +115,10 @@ var ManageJobs = React.createClass({
 
     update: function () {
         this.setState({
-            documents: dispatcher.db.jobs.chain()
+            documents: dispatcher.db.jobs.chain(),
+
+            canCancel: dispatcher.user.permissions.cancel_job,
+            canRemove: dispatcher.user.permissions.remove_job
         });
     },
 
@@ -149,11 +157,16 @@ var ManageJobs = React.createClass({
                     setFindTerm={this.setFindTerm}
                     setSortTerm={this.setSortTerm}
                     changeDirection={this.changeDirection}
+
+                    canRemove={this.state.canRemove}
                 />
 
                 <JobList
                     route={this.props.route}
                     documents={documents}
+
+                    canCancel={this.state.canCancel}
+                    canRemove={this.state.canRemove}
                 />
             </div>
         );

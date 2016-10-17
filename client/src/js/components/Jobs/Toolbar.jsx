@@ -92,6 +92,25 @@ var JobsToolbar = React.createClass({
 
     render: function () {
 
+        var removalDropdown;
+
+        if (this.props.canRemove) {
+            removalDropdown = (
+                <Flex.Item pad>
+                    <Dropdown id="job-clear-dropdown" onSelect={this.handleSelect} className="split-dropdown" pullRight>
+                        <PushButton onClick={this.clear}>
+                            <Icon name="remove" pending={this.state.pendingRemove} /> Clear
+                        </PushButton>
+                        <Dropdown.Toggle />
+                        <Dropdown.Menu>
+                            <MenuItem eventKey="removeFailed">Failed</MenuItem>
+                            <MenuItem eventKey="removeComplete">Complete</MenuItem>
+                        </Dropdown.Menu>
+                    </Dropdown>
+                </Flex.Item>
+            );
+        }
+
         return (
             <Flex>
                 <Flex.Item grow={1}>
@@ -116,18 +135,7 @@ var JobsToolbar = React.createClass({
                     </PushButton>
                 </Flex.Item>
 
-                <Flex.Item pad>
-                    <Dropdown id="job-clear-dropdown" onSelect={this.handleSelect} className="split-dropdown" pullRight>
-                        <PushButton onClick={this.clear}>
-                            <Icon name="remove" pending={this.state.pendingRemove} /> Clear
-                        </PushButton>
-                        <Dropdown.Toggle />
-                        <Dropdown.Menu>
-                            <MenuItem eventKey="removeFailed">Failed</MenuItem>
-                            <MenuItem eventKey="removeComplete">Complete</MenuItem>
-                        </Dropdown.Menu>
-                    </Dropdown>
-                </Flex.Item>
+                {removalDropdown}
             </Flex>
         );
     }
