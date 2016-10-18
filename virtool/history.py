@@ -80,7 +80,7 @@ class Collection(virtool.database.Collection):
 
             removes = list(manifest_ids - database_ids)
         else:
-            updates = updates = yield self.find({}, self.sync_projector).to_list(None)
+            updates = yield self.find({}, self.sync_projector).to_list(None)
             updates = yield self.sync_processor(updates)
             removes = list()
 
