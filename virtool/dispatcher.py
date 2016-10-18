@@ -240,6 +240,14 @@ class Dispatcher:
         :rtype: tuple
 
         """
+        for file_document in self.watcher.files[transaction.data["name"]].values():
+            self.dispatch({
+                "operation": "update",
+                "collection_name": transaction.data["name"],
+                "data": file_document,
+                "sync": True
+            }, [transaction.connection])
+
         self.watcher.add_listener(transaction.data["name"], transaction.connection)
 
         return True, None
@@ -259,76 +267,6 @@ class Dispatcher:
         self.watcher.remove_listener(transaction.connection, name=transaction.data["name"])
 
         return True, None
-
-    @virtool.gen.exposed_method([])
-    def sync(self, transaction):
-        """
-        This exposed method will be requested by the client soon after a its connection is authorized. The client passes
-        manifests of all the minimal documents it has stored locally for each collection. For each collection, the
-        manifest is used to calculate a list of updates and removals required to bring the client's local collection in
-        line with the one on the server. The calculation is performed by :meth:`.Collection.prepare_sync`.
-
-        The passed ``transaction`` is then updated with the number of update and remove operation that will be
-        dispatched to the client. This allows the client to display the progress of the sync operation as it receives
-        updates and removals.
-
-        The updates and removals are passed to :meth:`.Collection.sync`, which dispatches the operations to the client.
-
-        Calling this method also sends a current list of all host FASTA files and read files to the client.
-
-        :param transaction: the transaction generated from the request.
-        :type transaction: :class:`.Transaction`
-
-        :return: a boolean indicating success and the total number of operations performed.
-        :rtype: tuple
-
-        .. note::
-
-            Only users with the appropriate permissions will receive syncing dispatches from the users and groups
-            collections. These collections are not retained in browser storage.
-
-        """
-        # A list of collection names to sync with the client.
-        sync_list = list(["jobs", "samples", "hosts", "viruses", "hmm", "history", "indexes"])
-
-        # Only sync users and groups if the user has the appropriate permissions.
-        if "modify_options" in transaction.connection.user["permissions"]:
-            sync_list.append("users")
-            sync_list.append("groups")
-
-        to_sync = dict()
-        total_operation_count = 0
-
-        # Sync the true collection objects.
-        for name in sync_list:
-            updates, removes = yield self.collections[name].prepare_sync(
-                transaction.data["manifests"][name]
-            )
-
-            total_operation_count += (len(updates) + len(removes))
-
-            to_sync[name] = (updates, removes)
-
-        transaction.update(total_operation_count)
-
-        # Sync the host FASTA and read file lists.
-        for name in ["reads", "files"]:
-            for file_document in self.watcher.files[name].values():
-                self.dispatch({
-                    "operation": "update",
-                    "collection_name": name,
-                    "data": file_document,
-                    "sync": True
-                }, [transaction.connection])
-
-        for name in to_sync:
-            yield self.collections[name].sync(
-                to_sync[name][0],
-                to_sync[name][1],
-                transaction.connection
-            )
-
-        return True, total_operation_count
 
     @virtool.gen.exposed_method(["modify_options"])
     def reload(self):

@@ -51,6 +51,11 @@ function Database(definitions, dispatcher) {
 
                         collection.events["change"] = [];
 
+                        collection.observedSyncCount = 0;
+                        collection.expectedSyncCount = 0;
+
+                        collection.synced = false;
+
                         this[collectionName] = collection;
 
                         this.collectionNames.push(collectionName);

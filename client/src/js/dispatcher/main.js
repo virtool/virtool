@@ -14,13 +14,13 @@ function Dispatcher(onReady) {
 
     this.browser = _.pick(Bowser, ['name', 'version']);
 
-    this.runningOperationCount = 0;
-    this.syncOperationCount = 0;
-
     this.user = new User();
     this.router = new Router();
     this.settings = new Settings();
     this.transactions = new Transactions();
+
+    this.syncProgress = 0;
+    this.syncProgressStep = 0;
 
     this.db = new Database({
 
@@ -104,33 +104,60 @@ function Dispatcher(onReady) {
             dispatcher.db.open()
                 .then(function () {
 
-                    var manifests = {};
+                    var collectionNames = _.without(dispatcher.db.collectionNames, "reads", "files");
 
-                    dispatcher.db.collectionNames.forEach(function (collectionName) {
-                        manifests[collectionName] = {};
+                    dispatcher.syncProgressStep = 1 / (collectionNames.length + 1);
 
-                        dispatcher.db[collectionName].find().forEach(function (document) {
-                            manifests[collectionName][document._id] = document._version;
-                        });
+                    collectionNames.forEach(function (collectionName) {
 
-                    }, this);
+                        var collection = dispatcher.db[collectionName];
 
-                    return manifests;
+                        var manifest = collection.mapReduce(
+                            function (document) {
+                                return {_id: document._id, _version: document._version};
+                            },
 
-                })
-
-                .then(function (manifests) {
-                    dispatcher.send({collectionName: 'dispatcher', methodName: 'sync', data: {manifests: manifests}})
-                        .update(function (update) {
-                            dispatcher.syncOperationCount = update;
-
-                            if (update === 0) {
-                                dispatcher.emit('synced');
+                            function (documents) {
+                                return _.transform(documents, function (result, document) {
+                                    result[document._id] = document._version;
+                                }, {});
                             }
-                        });
-            });
+                        );
 
-        }, this);
+                        collection.request("sync", manifest)
+                            .update(function (update) {
+                                collection.expectedSyncCount = update;
+
+                                if (collection.expectedSyncCount === 0) {
+                                    dispatcher.syncProgress += dispatcher.syncProgressStep;
+                                    dispatcher.emit("syncing", dispatcher.syncProgress);
+
+                                    collection.synced = true;
+                                    dispatcher.checkSynced();
+                                }
+                            });
+
+                        dispatcher.syncProgress += dispatcher.syncProgressStep * (1 / collectionNames.length);
+
+                        dispatcher.emit("syncing", dispatcher.syncProgress);
+
+                    });
+
+                });
+
+        });
+    };
+
+    this.checkSynced = function () {
+        var collectionNames = _.without(dispatcher.db.collectionNames, "reads", "files");
+
+        var allSynced = _.every(collectionNames, function (collectionName) {
+            return dispatcher.db[collectionName].synced;
+        });
+
+        if (allSynced) {
+            this.emit("synced");
+        }
     };
 
     this.listen = function (name) {
@@ -156,9 +183,7 @@ function Dispatcher(onReady) {
         var collectionName = message.collection_name;
         var operation = message.operation;
 
-        var messageDescriptor = message.collection_name + "." + message.operation;
-
-        console.log(message.collection_name + '.' + message.operation);
+        console.log(message.collection_name + "." + message.operation);
 
         if (collectionName === 'transaction') {
             switch (operation) {
@@ -181,14 +206,26 @@ function Dispatcher(onReady) {
         }
 
         else if (_.includes(this.db.collectionNames, collectionName)) {
-            if (message.sync && this.syncOperationCount > 0) {
-                this.runningOperationCount += message.data.length || 1;
-                var progress = this.runningOperationCount / this.syncOperationCount;
-                progress < 1 ? this.emit('syncing', progress): this.emit('synced');
+
+            var collection = this.db[message.collection_name];
+
+            if (message.sync) {
+                var count = message.data.length || 1;
+
+                collection.observedSyncCount += count;
+
+                this.syncProgress += this.syncProgressStep * count / collection.expectedSyncCount;
+
+                this.emit("syncing", this.syncProgress);
+
+                if (collection.observedSyncCount === collection.expectedSyncCount) {
+                    collection.synced = true;
+                    this.checkSynced();
+                }
             }
 
             if (operation === "update") {
-                var collection = this.db[message.collection_name];
+
 
                 var updates = message.data.constructor === Array ? message.data: [message.data];
 
@@ -230,7 +267,10 @@ function Dispatcher(onReady) {
                     break;
 
                 default:
-                    console.warn('Received unknown web socket operation in message: ' + messageDescriptor);
+                    console.warn(
+                        'Received unknown web socket operation in message: ' +
+                        (message.collection_name + "." + message.operation)
+                    );
             }
         }
     };
@@ -239,7 +279,6 @@ function Dispatcher(onReady) {
 
         var dispatcher = this;
 
-        // Setup the Websocket connection.
         var protocol = location.protocol === 'https:' ? 'wss': 'ws';
 
         dispatcher.connection = new WebSocket(protocol + '://' + location.host + '/ws');

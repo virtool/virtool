@@ -58,6 +58,8 @@ var Start = React.createClass({
 
             window.dispatcher = new Dispatcher(this.onDispatcherReady);
 
+            var collectionsToSync = _.without(dispatcher.db.collectionNames, "reads", "files");
+
             dispatcher.on('synced', function () {
                 this.setState({
                     synced: true,
@@ -66,7 +68,7 @@ var Start = React.createClass({
             }.bind(this));
 
             dispatcher.on('syncing', function (data) {
-                this.setState({syncProgress: data})
+                this.setState({syncProgress: data});
             }.bind(this));
 
         } else {
