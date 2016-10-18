@@ -5,8 +5,6 @@ var ChartContainer = require("virtool/js/components/Base/ChartContainer.jsx");
 
 var createChart = function (element, data, meta, yMax, xMin, showYAxis) {
 
-    console.log(meta);
-
     var svg = d3.select(element).append('svg');
 
     var maxWidth = 0;

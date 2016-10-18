@@ -28,7 +28,6 @@ var SampleDetail = React.createClass({
     },
 
     handleResize: function () {
-        console.log("resize");
         this.props.updateStyle();
     },
 

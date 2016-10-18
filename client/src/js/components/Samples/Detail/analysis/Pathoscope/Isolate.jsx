@@ -58,6 +58,8 @@ var PathoscopeIsolate = React.createClass({
             );
         }, this);
 
+        var piValue = this.props.showReads ? this.props.reads: Utils.toScientificNotation(this.props.pi);
+
         return (
             <div>
                 <div className="pathoscope-isolate-header">
@@ -67,7 +69,7 @@ var PathoscopeIsolate = React.createClass({
                         </Flex.Item>
                         <Flex.Item pad={5}>
                             <strong className="small text-success">
-                                {Utils.toScientificNotation(this.props.pi)}
+                                {piValue}
                             </strong>
                         </Flex.Item>
                         <Flex.Item pad={5}>

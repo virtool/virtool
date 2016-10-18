@@ -43,6 +43,7 @@ var PathoscopeList = React.createClass({
                     key={item._id}
                     {...item}
                     toggleIn={this.props.toggleIn}
+                    showReads={this.props.showReads}
                     in={expanded}
                 />
             ];
@@ -59,6 +60,7 @@ var PathoscopeList = React.createClass({
                             maxGenomeLength={item.maxGenomeLength}
                             {...isolate}
                             setScroll={this.setScroll}
+                            showReads={this.props.showReads}
                         />
                     );
                 }, this);

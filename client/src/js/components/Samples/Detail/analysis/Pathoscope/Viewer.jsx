@@ -19,6 +19,8 @@ var Report = React.createClass({
 
         if (this.props.diagnosis.length > 0) {
 
+            var mappedReadCount = this.props.read_count;
+
             var data = this.props.diagnosis.map(function (virus) {
 
                 _.merge(virus, {
@@ -51,6 +53,8 @@ var Report = React.createClass({
                     // Go through each hit/sequence owned by the isolate and composite its values into the overall isolate
                     // values of weight, best-hit, read count, and coverage.
                     _.forEach(isolate.hits, function (hit) {
+                        hit.reads = Math.round(hit.pi * mappedReadCount);
+
                         // Add the following three values to the totals for the isolate.
                         isolate.pi += hit.pi;
                         isolate.best += hit.best;

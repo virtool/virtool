@@ -1,5 +1,4 @@
 var React = require('react');
-var Toggle = require('react-bootstrap-toggle').default;
 var Row = require('react-bootstrap/lib/Row');
 var Col = require('react-bootstrap/lib/Col');
 var Grid = require('react-bootstrap/lib/Grid');
@@ -30,19 +29,9 @@ var PathoscopeController = React.createClass({
             sortKey: "coverage",
             sortDescending: true,
 
-            proportion: true,
+            showReads: false,
             expanded: []
         };
-    },
-
-    handleSelect: function (eventKey) {
-        switch (eventKey) {
-
-            case "filterIsolates":
-                this.setState({filterIsolates: !this.state.filterIsolates});
-                break;
-
-        }
     },
 
     collapseAll: function () {
@@ -57,8 +46,8 @@ var PathoscopeController = React.createClass({
         });
     },
 
-    toggleProportion: function () {
-        this.setState({proportion: !this.state.proportion});
+    toggleShowReads: function () {
+        this.setState({showReads: !this.state.showReads});
     },
 
     setFindTerm: function (event) {
@@ -93,12 +82,6 @@ var PathoscopeController = React.createClass({
                     filterIsolates: bool
                 });
         }
-    },
-
-    clear: function () {
-        this.setState({
-            findTerm: ""
-        });
     },
 
     render: function () {
@@ -178,7 +161,7 @@ var PathoscopeController = React.createClass({
                         </Flex.Item>
 
                         <Flex.Item pad>
-                            <Button title="Use Weight" active={this.state.proportion} onClick={this.toggleProportion}>
+                            <Button title="Change Weight Format" active={!this.state.showReads} onClick={this.toggleShowReads}>
                                 <Icon name='pie' />
                             </Button>
 
@@ -221,6 +204,7 @@ var PathoscopeController = React.createClass({
                     data={data}
                     expanded={this.state.expanded}
                     toggleIn={this.toggleIn}
+                    showReads={this.state.showReads}
                 />
             </div>
         );

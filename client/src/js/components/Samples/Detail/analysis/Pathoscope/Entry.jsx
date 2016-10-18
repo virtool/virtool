@@ -1,4 +1,5 @@
 var CX = require("classnames");
+var Numeral = require("numeral");
 var React = require('react');
 var Row = require('react-bootstrap/lib/Row');
 var Col = require('react-bootstrap/lib/Col');
@@ -15,7 +16,7 @@ var Utils = require('virtool/js/Utils');
 var PathoscopeEntry = React.createClass({
 
     shouldComponentUpdate: function (nextProps) {
-        return this.props.in !== nextProps.in;
+        return this.props.in !== nextProps.in || this.props.showReads !== nextProps.showReads;
     },
 
     toggleIn: function () {
@@ -44,6 +45,8 @@ var PathoscopeEntry = React.createClass({
             height: "21px"
         };
 
+        var piValue = this.props.showReads ? this.props.reads: Utils.toScientificNotation(this.props.pi);
+
         return (
             <div className={className} onClick={this.props.in ? null: this.toggleIn}>
                 <Row>
@@ -64,11 +67,11 @@ var PathoscopeEntry = React.createClass({
                     <Col md={2}>
                         <Flex alignItems="center" style={flexStyle}>
                             <Flex.Item>
-                                <Label>Weight</Label>
+                                <Label>{this.props.showReads ? "Reads": "Weight"}</Label>
                             </Flex.Item>
                             <Flex.Item pad={5}>
                                 <strong className="text-success">
-                                    {Utils.toScientificNotation(this.props.pi)}
+                                    {piValue}
                                 </strong>
                             </Flex.Item>
                         </Flex>
