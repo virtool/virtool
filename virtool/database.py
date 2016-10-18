@@ -226,8 +226,6 @@ class Collection:
 
         while (yield cursor.fetch_next):
             document = cursor.next_object()
-            document = yield self.sync_processor([document])
-            document = document[0]
 
             document_ids.add(document["_id"])
 
@@ -237,6 +235,8 @@ class Collection:
             # The document has not been created since the client last synced, but has been changed. Send the new
             # version.
             if not in_manifest or (in_manifest and document["_version"] != manifest[document["_id"]]):
+                document = yield self.sync_processor([document])
+                document = document[0]
                 updates.append(document)
 
             document_ids.add(document["_id"])

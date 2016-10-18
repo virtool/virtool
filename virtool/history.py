@@ -40,6 +40,63 @@ class Collection(virtool.database.Collection):
 
         return documents
 
+    @virtool.gen.exposed_method([])
+    def sync(self, transaction):
+        """
+        Syncs documents between the server and client. This exposed method will be requested by the client soon after
+        its connection is authorized. The client supplies a dictionary of document ids and their version
+        numbers. This manifest is used to calculate a list of updates and removals required to bring the client's local
+        collection in sync with the one on the server. The calculation is performed by :meth:`.Collection.prepare_sync`.
+
+        The passed ``transaction`` is then updated with the number of update and remove operation that will be
+        dispatched to the client. This allows the client to display the progress of the sync operation as it receives
+        updates and removals.
+
+        :param transaction: the transaction generated from the request.
+        :type transaction: :class:`.Transaction`
+
+        :return: a boolean indicating success and the total number of operations performed.
+        :rtype: tuple
+
+        """
+        manifest = transaction.data
+
+        if manifest:
+            database_ids = yield self.db.distinct("_id")
+            database_ids = set(database_ids)
+
+            manifest_ids = set(manifest.keys())
+
+            to_update = list(database_ids - manifest_ids)
+
+            updates = list()
+
+            if len(to_update) > 0:
+                updates = yield self.find({"_id": {
+                    "$in": to_update
+                }}, self.sync_projector).to_list(None)
+
+                updates = yield self.sync_processor(updates)
+
+            removes = list(manifest_ids - database_ids)
+        else:
+            updates = updates = yield self.find({}, self.sync_projector).to_list(None)
+            updates = yield self.sync_processor(updates)
+            removes = list()
+
+        expected_operation_count = len(updates) + len(removes)
+
+        transaction.update(expected_operation_count)
+
+        for i in range(0, len(updates), 10):
+            yield self.dispatch("update", updates[i: i + 10], connections=[transaction.connection], sync=True)
+
+        # All remaining documents should be deleted by the client since they no longer exist on the server.
+        for i in range(0, len(removes), 10):
+            yield self.dispatch("remove", removes[i: i + 10], connections=[transaction.connection], sync=True)
+
+        return True, None
+
     @virtool.gen.coroutine
     def add(self, operation, method_name, old, new, username):
         # Construct and _id for the change entry. It is composed of the _id of the changed entry and the new version
