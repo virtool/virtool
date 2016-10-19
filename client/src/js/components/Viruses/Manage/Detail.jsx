@@ -22,9 +22,9 @@ var Label= require('react-bootstrap/lib/Label');
 var ConfirmFooter = require('virtool/js/components/Base/ConfirmFooter.jsx');
 var Icon = require('virtool/js/components/Base/Icon.jsx');
 
-var ConfirmVirus = require('./detail/ConfirmVirus.jsx');
-var Isolates = require('./detail/Isolates.jsx');
-var General = require('./detail/General.jsx');
+var ConfirmVirus = require('./Detail/ConfirmVirus.jsx');
+var Isolates = require('./Detail/Isolates.jsx');
+var General = require('./Detail/General.jsx');
 
 /**
  * A modal component for editing and viewing virus details.
@@ -90,7 +90,6 @@ var VirusDetail = React.createClass({
                     <Isolates
                         data={this.props.detail.isolates}
                         virusId={this.props.detail._id}
-                        settings={this.props.settings}
                         canModify={this.state.canModify}
                     />
 

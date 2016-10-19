@@ -32,7 +32,6 @@ var Isolates = React.createClass({
     propTypes: {
         virusId: React.PropTypes.string.isRequired,
         data: React.PropTypes.array.isRequired,
-        settings: React.PropTypes.object.isRequired,
         canModify: React.PropTypes.bool
     },
 
@@ -110,7 +109,6 @@ var Isolates = React.createClass({
 
         var sharedProps = {
             virusId: this.props.virusId,
-            settings: this.props.settings,
             activeIsolateId: this.state.activeIsolateId,
             canModify: this.props.canModify
         };

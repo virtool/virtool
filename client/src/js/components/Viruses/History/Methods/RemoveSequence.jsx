@@ -15,7 +15,7 @@ var _ = require('lodash');
 var React = require('react');
 var Modal = require('react-bootstrap/lib/Modal');
 
-var SequenceForm = require('virtool/js/components/Viruses/Manage/detail/Sequences/Form.jsx');
+var SequenceForm = require('virtool/js/components/Viruses/Manage/Detail/Sequences/Form.jsx');
 var Icon = require('virtool/js/components/Base/Icon.jsx');
 var Utils = require('virtool/js/Utils');
 

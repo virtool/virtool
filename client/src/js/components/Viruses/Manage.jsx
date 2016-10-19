@@ -14,16 +14,15 @@
 var _ = require('lodash');
 var React = require('react');
 
-var Toolbar = require('./Manage/Toolbar/Toolbar.jsx');
+var Add = require('./Manage/Add.jsx');
 var Detail = require('./Manage/Detail.jsx');
 var Export = require('./Manage/Export.jsx');
 var Import = require('./Manage/Import.jsx');
-var Add = require('./Manage/Add.jsx');
+var Toolbar = require('./Manage/Toolbar.jsx');
 
 var Icon = require('virtool/js/components/Base/Icon.jsx');
-var DynamicTable = require('virtool/js/components/Base/DynamicTable/DynamicTable.jsx');
-var ConfirmModal = require('virtool/js/components/Base/ConfirmModal.jsx');
-var ConfirmManagerMixin = require('virtool/js/components/Base/Mixins/ConfirmManagerMixin.js');
+var VirusList = require("./Manage/List.jsx");
+var VirusToolbar = require("./Manage/Toolbar.jsx");
 var DetailModal = require('virtool/js/components/Base/DetailModal.jsx');
 
 /**
@@ -34,10 +33,48 @@ var DetailModal = require('virtool/js/components/Base/DetailModal.jsx');
  */
 var ManageViruses = React.createClass({
 
-    mixins: [ConfirmManagerMixin],
+    getInitialState: function () {
+        return {
+            documents: dispatcher.db.viruses.chain(),
 
-    openDetailModal: function (target) {
-        dispatcher.router.setExtra(["detail", target._id]);
+            findTerm: "",
+            modifiedOnly: false,
+            sortTerm: "name",
+            sortDescending: false
+        };
+    },
+
+    componentDidMount: function () {
+        dispatcher.db.viruses.on("change", this.update);
+    },
+
+    componentWillUnmount: function () {
+        dispatcher.db.viruses.off("change", this.update);
+    },
+
+    setFindTerm: function (event) {
+        this.setState({
+            findTerm: event.target.value || ""
+        });
+    },
+
+    setSortTerm: function (term) {
+        this.setState({
+            sortTerm: term,
+            sortDescending: this.state.sortTerm
+        });
+    },
+
+    toggleModifiedOnly: function () {
+        this.setState({
+            modifiedOnly: !this.state.modifiedOnly
+        });
+    },
+
+    update: function () {
+        this.setState({
+            documents: dispatcher.db.viruses.chain()
+        });
     },
 
     /**
@@ -49,67 +86,39 @@ var ManageViruses = React.createClass({
         dispatcher.router.clearExtra();
     },
 
-    /**
-     * An object describing the fields that should be rendered in the DynamicTable component.
-     *
-     * @object
-     */
-    fields: [
-        {
-            key: 'name',
-            label: 'Virus Name',
-            size: 5
-        },
-        {
-            key: 'abbreviation',
-            size: 3
-        },
-        {
-            key: 'isolates',
-            size: 2
-        },
-        {
-            key: 'modified',
-            size: 'fit',
-            label: <Icon name='pencil' />,
-            render: function (document) {
-                return document.modified ? <div className='text-center'><Icon name='flag' bsStyle='warning' /></div>: null;
-            }
-        }
-
-    ],
-
     render: function () {
-        // Props used to construct the DynamicTable.
-        var tableProps = {
-            collection: dispatcher.db.viruses,
-            filterComponent: Toolbar,
-            fields: this.fields,
-            documentsNoun: 'viruses',
-            onClick: this.openDetailModal,
-            initialSortKey: 'name',
-            initialSortDescending: false,
-            alwaysShowFilter: true
-        };
 
-        var detailTarget;
+        var documents = this.state.documents.branch();
 
-        if (this.props.route.extra[0] === 'detail') {
-            detailTarget = dispatcher.db.viruses.findOne({_id: this.props.route.extra[1]});
+        var query = {};
+
+        if (this.state.findTerm) {
+            var test = {$regex: [this.state.findTerm, "i"]};
+
+            query = {$or: [
+                {name: test},
+                {abbreviation: test}
+            ]};
         }
+
+        if (this.state.modifiedOnly) {
+            query.modified = true;
+        }
+
+        documents = documents.find(query).simplesort(this.state.sortTerm).data();
 
         return (
             <div>
-                <DynamicTable {...tableProps} />
+                <VirusToolbar
+                    onChange={this.setFindTerm}
+                    modifiedOnly={this.state.modifiedOnly}
+                    toggleModifiedOnly={this.toggleModifiedOnly}
+                />
 
-                <ConfirmModal {...this.confirmManager.getProps()} noun='sample' />
-
-                <DetailModal
-                    target={detailTarget}
-                    onHide={this.hideModal}
-                    contentComponent={Detail}
-                    collection={dispatcher.db.viruses}
-                    settings={dispatcher.settings}
+                <VirusList
+                    route={this.props.route}
+                    documents={documents}
+                    canArchive={this.state.canArchive}
                 />
 
                 <Add show={this.props.route.extra[0] === "add"} onHide={this.hideModal} />

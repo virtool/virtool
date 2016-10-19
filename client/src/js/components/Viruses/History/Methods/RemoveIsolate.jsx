@@ -22,7 +22,7 @@ var PanelGroup = require('react-bootstrap/lib/PanelGroup');
 
 var Icon = require('virtool/js/components/Base/Icon.jsx');
 var Utils = require('virtool/js/Utils');
-var SequenceForm = require('virtool/js/components/Viruses/Manage/detail/Sequences/Form.jsx');
+var SequenceForm = require('virtool/js/components/Viruses/Manage/Detail/Sequences/Form.jsx');
 
 /**
  * A modal component that details the removed isolate and all of it's sequences.

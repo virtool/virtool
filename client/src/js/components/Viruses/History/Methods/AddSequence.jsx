@@ -20,7 +20,7 @@ var Badge = require('react-bootstrap/lib/Badge');
 
 var Icon = require('virtool/js/components/Base/Icon.jsx');
 var Utils = require('virtool/js/Utils');
-var SequenceForm = require('virtool/js/components/Viruses/Manage/detail/Sequences/Form.jsx');
+var SequenceForm = require('virtool/js/components/Viruses/Manage/Detail/Sequences/Form.jsx');
 
 /**
  * A description of the change made by the add_sequence method. Can display a modal showing the added sequence.

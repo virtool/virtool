@@ -33,10 +33,8 @@ class Collection(virtool.database.Collection):
         # Set what is sent to the client when syncing.
         self.sync_projector.update({field: True for field in [
             "name",
-            "isolates",
             "modified",
             "abbreviation",
-            "last_indexed_version"
         ]})
 
         # Contains documents describing viral sequences associated with viruses in the viruses collection. Changes to
@@ -46,26 +44,6 @@ class Collection(virtool.database.Collection):
         # Perform updates on the viruses collection to bring it up to the latest spec.
         db_sync = virtool.utils.get_db_client(self.settings, sync=True)
         db_sync.viruses.update({}, {"$unset": {"segments": ""}}, multi=True)
-
-    @virtool.gen.coroutine
-    def sync_processor(self, documents):
-        """
-        Converts the isolates field in passed virus documents from a list of isolates to the isolate count.
-
-        :param documents: the documents to process.
-        :type documents: dict or list
-
-        :return: a list of processed documents.
-        :rtype: list
-
-        """
-        # Coerce a single document into a list.
-        documents = virtool.database.coerce_list(documents)
-
-        for document in documents:
-            document["isolates"] = len(document["isolates"])
-
-        return documents
 
     @virtool.gen.exposed_method(["add_virus"])
     def add(self, transaction):

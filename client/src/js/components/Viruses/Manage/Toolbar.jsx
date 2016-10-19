@@ -26,7 +26,8 @@ var PushButton = require('virtool/js/components/Base/PushButton.jsx');
 var VirusToolbar = React.createClass({
 
     propTypes: {
-        onChange: React.PropTypes.func
+        onChange: React.PropTypes.func,
+        modifiedOnly: React.PropTypes.bool
     },
 
     getInitialState: function () {
@@ -42,7 +43,6 @@ var VirusToolbar = React.createClass({
     componentDidMount: function () {
         // Focus on the input field when the component is ready.
         this.refs.input.focus();
-
         dispatcher.user.on('change', this.onUserChange);
     },
 
@@ -55,24 +55,6 @@ var VirusToolbar = React.createClass({
             canAdd: dispatcher.user.permissions.add_virus,
             canModify: dispatcher.user.permissions.modify_virus
         });
-    },
-
-    /**
-     * Updates the function used to filter virus documents. Triggered by a change in the search input field.
-     *
-     * @func
-     */
-    handleChange: function () {
-        var re = new RegExp(this.refs.input.value, 'i');
-
-        var filterFunction = function (document) {
-            return (
-                (re.test(document.name) || re.test(document.abbreviation)) &&
-                (!this.state.flaggedOnly || (this.state.flaggedOnly && document.modified))
-            );
-        }.bind(this);
-
-        this.props.onChange(filterFunction);
     },
 
     /**
@@ -140,14 +122,14 @@ var VirusToolbar = React.createClass({
                                 aria-describedby='find-addon'
                                 className='form-control'
                                 type='text'
-                                placeholder='Name or Abbreviation'
-                                onChange={this.handleChange}
+                                placeholder='Name or abbreviation'
+                                onChange={this.props.onChange}
                             />
                         </div>
                     </Flex.Item>
 
                     <Flex.Item shrink={0} pad>
-                        <PushButton onClick={this.toggleFlaggedOnly} active={this.state.flaggedOnly}>
+                        <PushButton onClick={this.props.toggleModifiedOnly} active={this.props.modifiedOnly}>
                             <Icon name='flag' bsStyle='warning' />
                         </PushButton>
                     </Flex.Item>

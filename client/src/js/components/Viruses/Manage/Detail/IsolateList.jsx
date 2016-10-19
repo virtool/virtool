@@ -46,18 +46,18 @@ var IsolateList = React.createClass({
 
     getInitialState: function () {
         return {
-            restrictSourceTypes: this.props.settings.get('restrict_source_types'),
-            allowedSourceTypes: this.props.settings.get('allowed_source_types')
+            restrictSourceTypes: dispatcher.settings.get('restrict_source_types'),
+            allowedSourceTypes: dispatcher.settings.get('allowed_source_types')
         };
     },
 
     componentDidMount: function () {
-        this.props.settings.on('change', this.update);
+        dispatcher.settings.on('change', this.update);
         ReactDOM.findDOMNode(this.refs.flip).addEventListener("resize", this.updateScroll);
     },
 
     componentWillUnmount: function () {
-        this.props.settings.off('change', this.update);
+        dispatcher.settings.off('change', this.update);
         ReactDOM.findDOMNode(this.refs.flip).removeEventListener("resize", this.updateScroll);
     },
 

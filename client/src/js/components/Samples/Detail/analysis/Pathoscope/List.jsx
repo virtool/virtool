@@ -1,12 +1,10 @@
 var _ = require("lodash");
 var React = require('react');
-var ReactDOM = require('react-dom');
 var FlipMove = require('react-flip-move');
 var Row = require('react-bootstrap/lib/Row');
 var Col = require('react-bootstrap/lib/Col');
 var Grid = require('react-bootstrap/lib/Grid');
 var Panel = require('react-bootstrap/lib/Panel');
-var Alert = require('react-bootstrap/lib/Button');
 var Button = require('react-bootstrap/lib/Button');
 var ListGroup = require('react-bootstrap/lib/ListGroup');
 var ListGroupItem = require('react-bootstrap/lib/ListGroupItem');
@@ -87,7 +85,7 @@ var PathoscopeList = React.createClass({
 
         return (
             <div style={{overflowY: "hidden"}}>
-                <FlipMove ref="flipMove" {...flipMoveProps}>
+                <FlipMove {...flipMoveProps}>
                     {rows}
                 </FlipMove>
             </div>
