@@ -1,13 +1,11 @@
-
 var React = require('react');
+var SampleController = require("./Controller.jsx");
 
-var SamplesTable = require("./SamplesTable.jsx");
-
-var View = React.createClass({
+var ActiveSamples = React.createClass({
 
     render: function () {
         return (
-            <SamplesTable
+            <SampleController
                 route={this.props.route}
                 archived={false}
             />
@@ -15,4 +13,4 @@ var View = React.createClass({
     }
 });
 
-module.exports = View;
+module.exports = ActiveSamples;

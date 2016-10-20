@@ -102,7 +102,7 @@ var General = React.createClass({
                   </tbody>
                 </table>
 
-                <h5><Icon name='cabinet' /> <strong>Files</strong></h5>
+                <h5><Icon name='file' /> <strong>Files</strong></h5>
                 <table className='table table-condensed table-bordered'>
                   <tbody>
                     <tr>

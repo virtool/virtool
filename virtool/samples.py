@@ -30,9 +30,11 @@ class Collection(virtool.database.Collection):
         # Extend sync_projector. These fields will be passed to the client to populate sample tables.
         self.sync_projector.update({field: True for field in [
             "name",
+            "analyses",
+            "import_job",
+            "analysis_job",
             "added",
             "username",
-            "analyses",
             "imported",
             "archived",
             "analyzed",
