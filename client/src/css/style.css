@@ -261,27 +261,6 @@ i.hoverable:hover {
     border-right: 1px solid #CCC;
 }
 
-div.tooltip {
-    background-color: white;
-    width: 400px;
-    border: 1px solid rgba(0, 0, 0, 0.2);
-    position: fixed;
-    opacity: 1;
-    box-shadow: 0 5px 10px rgba(0, 0, 0, 0.2);
-    background-clip: padding-box;
-
-}
-
-div.tooltip-header {
-    padding: 5px 3px;
-    background-color: #f5f5f5;
-    border-bottom: 1px solid #e5e5e5;
-}
-
-div.tooltip-body {
-    padding: 5px 3px;
-}
-
 i.vtlogo {
     font-size: 30px;
 }
@@ -495,4 +474,50 @@ table.cluster-table thead,
 table.cluster-table tbody tr {
     display: table;
     table-layout: fixed;
+}
+
+.sample-label {
+    font-size: 11px;
+    font-weight: bold;
+    padding: 2px 4px;
+    border-radius: 2px;
+}
+
+.spinner {
+  width: 11px;
+  height: 11px;
+}
+
+.double-bounce1, .double-bounce2 {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background-color: white;
+  opacity: 0.6;
+  position: absolute;
+  top: 0;
+  left: 0;
+
+  -webkit-animation: sk-bounce 2.0s infinite ease-in-out;
+  animation: sk-bounce 2.0s infinite ease-in-out;
+}
+
+.double-bounce2 {
+  -webkit-animation-delay: -1.0s;
+  animation-delay: -1.0s;
+}
+
+@-webkit-keyframes sk-bounce {
+  0%, 100% { -webkit-transform: scale(0.0) }
+  50% { -webkit-transform: scale(1.0) }
+}
+
+@keyframes sk-bounce {
+  0%, 100% {
+    transform: scale(0.0);
+    -webkit-transform: scale(0.0);
+  } 50% {
+    transform: scale(1.0);
+    -webkit-transform: scale(1.0);
+  }
 }
