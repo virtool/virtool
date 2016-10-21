@@ -12,6 +12,7 @@
 'use strict';
 
 var React = require('react');
+var FlipMove = require("react-flip-move");
 var Alert = require('react-bootstrap/lib/Alert');
 var ListGroup = require('react-bootstrap/lib/ListGroup');
 
@@ -22,10 +23,6 @@ var Icon = require('virtool/js/components/Base/Icon.jsx');
 var SampleEntry = require("./Entry.jsx");
 var SampleDetail = require('./Detail/body.jsx');
 
-var Create = require('./Create/Create.jsx');
-var Toolbar = require('./Toolbar.jsx');
-var Filter = require('./Filter.jsx');
-
 /**
  * A component based on DynamicTable that displays sample documents and allows them to be removed, archived, and viewed in
  * detail in a modal.
@@ -35,8 +32,7 @@ var Filter = require('./Filter.jsx');
 var SamplesList = React.createClass({
     
     propTypes: {
-        route: React.PropTypes.object.isRequired,
-        archived: React.PropTypes.bool.isRequired
+        route: React.PropTypes.object.isRequired
     },
 
     hideModal: function () {
@@ -68,9 +64,9 @@ var SamplesList = React.createClass({
 
         return (
             <div>
-                <ListGroup>
+                <FlipMove typeName="div" className="list-group" leaveAnimation={false}>
                     {sampleComponents}
-                </ListGroup>
+                </FlipMove>
 
                 <DetailModal
                     target={detailTarget}

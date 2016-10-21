@@ -23,6 +23,19 @@ var Checkbox = require('virtool/js/components/Base/Checkbox.jsx');
 var RelativeTime = require('virtool/js/components/Base/RelativeTime.jsx');
 var ListGroupItem = require('virtool/js/components/Base/PushListGroupItem.jsx');
 
+var Pulse = React.createClass({
+
+    render: function () {
+        return (
+            <div className="spinner" style={{marginBottom: "-1px"}}>
+                <div className="double-bounce1"></div>
+                <div className="double-bounce2"></div>
+            </div>
+        );
+    }
+
+});
+
 /**
  * A form-based component used to filter the documents presented in JobsTable component.
  *
@@ -47,18 +60,39 @@ var SampleEntry = React.createClass({
 
     render: function () {
 
-        console.log(this.props);
-
         var analysisLabel;
 
         if (this.props.analyzed) {
             analysisLabel = (
-                <Flex.Item pad>
-                    <Label bsStyle={this.props.analyzed === true ? "primary": null}>
-                        <Icon name="checkmark" pending={this.props.analyzed === "ip"} /> Analysis
-                    </Label>
+                <Flex.Item className="bg-primary sample-label" pad>
+                    {this.props.analyzed === "ip" ? <Pulse />: <Icon name="checkmark" />} Analysis
                 </Flex.Item>
             );
+        }
+
+        var actionIcon;
+
+        if (this.props.analyzed) {
+            actionIcon = (
+                <Icon
+                    name='box-add'
+                    bsStyle='info'
+                    onClick={this.archive}
+                />
+            );
+
+        } else {
+            actionIcon = (
+                <Icon
+                    name='bars'
+                    bsStyle='success'
+                    onClick={this.quickAnalyze}
+                />
+            );
+        }
+
+        if (!this.props.archived) {
+
         }
 
         return (
@@ -74,12 +108,10 @@ var SampleEntry = React.createClass({
                             </Flex.Item>
                         </Flex>
                     </Col>
-                    <Col md={2}>
+                    <Col md={3}>
                         <Flex>
-                            <Flex.Item>
-                                <Label bsStyle={this.props.imported === true ? "primary": null}>
-                                    <Icon name="checkmark" pending={this.props.imported === "ip"} /> Import
-                                </Label>
+                            <Flex.Item className="bg-primary sample-label">
+                                    {this.props.imported === true ? <Icon name="checkmark" />: <Pulse />} Import
                             </Flex.Item>
                             {analysisLabel}
                         </Flex>
@@ -87,13 +119,10 @@ var SampleEntry = React.createClass({
                     <Col md={3}>
                         Added <RelativeTime time={this.props.added} /> by {this.props.username}
                     </Col>
-                    <Col md={1}>
-                        <Icon
-                            name='box-add'
-                            bsStyle='info'
-                            onClick={this.archive}
-                            pullRight
-                        />
+                    <Col md={2}>
+                        <div className="pull-right">
+                            {actionIcon}
+                        </div>
                     </Col>
                 </Row>
             </ListGroupItem>

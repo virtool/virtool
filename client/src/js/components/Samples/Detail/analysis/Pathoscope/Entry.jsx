@@ -77,7 +77,7 @@ var PathoscopeEntry = React.createClass({
                         </Flex>
                     </Col>
                     <Col md={2}>
-                        <Flex alignItems="center" style={flexStyle}>
+                        <Flex alignItems="center" alignContent="center" style={flexStyle}>
                             <Flex.Item>
                                 <Label>Best Hit</Label>
                             </Flex.Item>
