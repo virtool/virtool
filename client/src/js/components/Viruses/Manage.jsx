@@ -90,22 +90,20 @@ var ManageViruses = React.createClass({
 
         var documents = this.state.documents.branch();
 
-        var query = {};
+        if (this.state.modifiedOnly) {
+            documents = documents.find({modified: true});
+        }
 
         if (this.state.findTerm) {
             var test = {$regex: [this.state.findTerm, "i"]};
 
-            query = {$or: [
+            documents = documents.find({$or: [
                 {name: test},
                 {abbreviation: test}
-            ]};
+            ]});
         }
 
-        if (this.state.modifiedOnly) {
-            query.modified = true;
-        }
-
-        documents = documents.find(query).simplesort(this.state.sortTerm).data();
+        documents = documents.simplesort(this.state.sortTerm).data();
 
         return (
             <div>

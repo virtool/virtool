@@ -129,7 +129,7 @@ var VirusToolbar = React.createClass({
                     </Flex.Item>
 
                     <Flex.Item shrink={0} pad>
-                        <PushButton onClick={this.props.toggleModifiedOnly} active={this.props.modifiedOnly}>
+                        <PushButton onClick={this.props.toggleModifiedOnly} active={this.props.modifiedOnly} tip="Modified Only">
                             <Icon name='flag' bsStyle='warning' />
                         </PushButton>
                     </Flex.Item>

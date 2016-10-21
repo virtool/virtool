@@ -98,10 +98,10 @@ var JobsToolbar = React.createClass({
             removalDropdown = (
                 <Flex.Item pad>
                     <Dropdown id="job-clear-dropdown" onSelect={this.handleSelect} className="split-dropdown" pullRight>
-                        <PushButton onClick={this.clear}>
-                            <Icon name="remove" pending={this.state.pendingRemove} /> Clear
+                        <PushButton bsStyle="danger" onClick={this.clear} tip="Clear Finished">
+                            <Icon name="remove" pending={this.state.pendingRemove} />
                         </PushButton>
-                        <Dropdown.Toggle />
+                        <Dropdown.Toggle bsStyle="danger" />
                         <Dropdown.Menu>
                             <MenuItem eventKey="removeFailed">Failed</MenuItem>
                             <MenuItem eventKey="removeComplete">Complete</MenuItem>
@@ -130,7 +130,7 @@ var JobsToolbar = React.createClass({
                 </Flex.Item>
 
                 <Flex.Item pad>
-                    <PushButton onClick={this.props.changeDirection}>
+                    <PushButton onClick={this.props.changeDirection} tip="Sort Direction">
                         <Icon name={this.props.sortDescending ? "sort-desc": "sort-asc"} />
                     </PushButton>
                 </Flex.Item>
