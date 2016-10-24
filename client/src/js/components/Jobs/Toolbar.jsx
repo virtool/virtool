@@ -98,10 +98,10 @@ var JobsToolbar = React.createClass({
             removalDropdown = (
                 <Flex.Item pad>
                     <Dropdown id="job-clear-dropdown" onSelect={this.handleSelect} className="split-dropdown" pullRight>
-                        <PushButton bsStyle="danger" onClick={this.clear} tip="Clear Finished">
+                        <PushButton onClick={this.clear} tip="Clear Finished">
                             <Icon name="remove" pending={this.state.pendingRemove} />
                         </PushButton>
-                        <Dropdown.Toggle bsStyle="danger" />
+                        <Dropdown.Toggle />
                         <Dropdown.Menu>
                             <MenuItem eventKey="removeFailed">Failed</MenuItem>
                             <MenuItem eventKey="removeComplete">Complete</MenuItem>
