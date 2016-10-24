@@ -12,11 +12,11 @@
 'use strict';
 
 var React = require("react");
-var Modal = require("react-bootstrap/lib/Modal");
 var Button = require("react-bootstrap/lib/Button");
 var ButtonToolbar = require("react-bootstrap/lib/ButtonToolbar");
 
 var Icon = require('virtool/js/components/Base/Icon.jsx');
+var Modal = require('virtool/js/components/Base/Modal.jsx');
 
 /**
  * A base modal that displays detailed information for a collection document. Virtool displays documents in tables in a
