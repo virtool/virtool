@@ -68,26 +68,26 @@ var QuickAnalyze = React.createClass({
             algorithm: this.state.algorithm,
             comments: this.state.nickname || null
         }).success(function () {
-                if (this.state.useAsDefault) {
-                    dispatcher.db.users.request('change_user_setting', {
-                        _id: dispatcher.user.name,
-                        key: "quick_analyze_algorithm",
-                        value: this.state.algorithm
-                    });
-                }
 
-                if (this.state.skipQuickAnalyzeDialog) {
-                    dispatcher.db.users.request('change_user_setting', {
-                        _id: dispatcher.user.name,
-                        key: "skip_quick_analyze_dialog",
-                        value: true
-                    });
-                }
+            if (this.state.useAsDefault) {
+                dispatcher.db.users.request('change_user_setting', {
+                    _id: dispatcher.user.name,
+                    key: "quick_analyze_algorithm",
+                    value: this.state.algorithm
+                });
+            }
 
-                this.props.onHide();
+            if (this.state.skipQuickAnalyzeDialog) {
+                dispatcher.db.users.request('change_user_setting', {
+                    _id: dispatcher.user.name,
+                    key: "skip_quick_analyze_dialog",
+                    value: true
+                });
+            }
 
-            }, this);
-        });
+            this.props.onHide();
+
+        }, this);});
     },
 
     toggleUseAsDefault: function () {

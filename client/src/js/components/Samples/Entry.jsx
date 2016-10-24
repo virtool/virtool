@@ -19,22 +19,10 @@ var ProgressBar = require('react-bootstrap/lib/ProgressBar');
 
 var Icon = require('virtool/js/components/Base/Icon.jsx');
 var Flex = require('virtool/js/components/Base/Flex.jsx');
+var Pulse = require('virtool/js/components/Base/Pulse.jsx');
 var Checkbox = require('virtool/js/components/Base/Checkbox.jsx');
 var RelativeTime = require('virtool/js/components/Base/RelativeTime.jsx');
 var ListGroupItem = require('virtool/js/components/Base/PushListGroupItem.jsx');
-
-var Pulse = React.createClass({
-
-    render: function () {
-        return (
-            <div className="spinner" style={{marginBottom: "-1px"}}>
-                <div className="double-bounce1"></div>
-                <div className="double-bounce2"></div>
-            </div>
-        );
-    }
-
-});
 
 /**
  * A form-based component used to filter the documents presented in JobsTable component.
