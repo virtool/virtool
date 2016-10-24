@@ -14,14 +14,12 @@
 
 var _ = require("lodash");
 var React = require('react');
-var FlipMove = require("react-flip-move");
 
 var Row = require('react-bootstrap/lib/Row');
 var Col = require('react-bootstrap/lib/Col');
 var Alert = require('react-bootstrap/lib/Alert');
 var Panel = require('react-bootstrap/lib/Panel');
 var Label = require('react-bootstrap/lib/Label');
-var Modal = require('react-bootstrap/lib/Modal');
 var Badge = require('react-bootstrap/lib/Badge');
 var Button = require('react-bootstrap/lib/Button');
 var ListGroup = require('react-bootstrap/lib/ListGroup');
@@ -29,8 +27,10 @@ var ListGroupItem =require('react-bootstrap/lib/ListGroupItem');
 
 var Icon = require('virtool/js/components/Base/Icon.jsx');
 var Flex = require('virtool/js/components/Base/Flex.jsx');
-var PushButton = require('virtool/js/components/Base/PushButton.jsx');
+var Modal = require('virtool/js/components/Base/Modal.jsx');
 var Input = require('virtool/js/components/Base/Input.jsx');
+var PushButton = require('virtool/js/components/Base/PushButton.jsx');
+
 var ReadSelector = require('./Reads.jsx');
 
 /**
@@ -64,8 +64,7 @@ var SamplesImport = React.createClass({
             nameEmptyError: false,
             readError: false,
 
-            pending: false,
-            showCheck: false
+            pending: false
         };
     },
 
@@ -144,9 +143,7 @@ var SamplesImport = React.createClass({
             // Send the request to the server.
             this.setState({pending: true}, function () {
                 dispatcher.db.samples.request('new', data).success(function () {
-                    this.setState(_.extend(this.getInitialState(), {showCheck: true}), function () {
-                        setTimeout(this.hideCheck, 400);
-                    });
+                    this.setState(this.getInitialState());
                 }, this).failure(function () {
                     this.setState({
                         nameExistsError: true,
@@ -155,10 +152,6 @@ var SamplesImport = React.createClass({
                 }, this);
             });
         }
-    },
-
-    hideCheck: function () {
-        this.setState({showCheck: false});
     },
 
     render: function () {
@@ -209,101 +202,88 @@ var SamplesImport = React.createClass({
 
             var libraryType = this.state.selected.length === 2 ? "Paired": "Unpaired";
 
-            var overlay;
-
-            if (this.state.pending || this.state.showCheck) {
-                overlay = (
-                    <div ref="overlay" className="modal-body-overlay">
-                        <span>
-                            <Icon name="checkmark" pending={this.state.pending} />
-                        </span>
-                    </div>
-                );
-            }
-
             modalBody = (
-                <form onSubmit={this.handleSubmit}>
+                <div>
+                    <Modal.Progress active={this.state.pending} />
 
-                    <FlipMove enterAnimation="fade" leaveAnimation="fade" typeName="div" className="modal-body">
+                    <form onSubmit={this.handleSubmit}>
+                        <Modal.Body>
+                            <Row ref="nameRow">
+                                <Col md={9}>
+                                    <Input
+                                        ref='name'
+                                        name="name"
+                                        type='text'
+                                        error={error ? <span className='text-danger'>{error}</span> : null}
+                                        value={this.state.name}
+                                        onChange={this.handleChange}
+                                        label='Sample Name'
+                                        autoComplete={false}
+                                    />
+                                </Col>
+                                <Col md={3}>
+                                    <Input
+                                        type='text'
+                                        name="isolate"
+                                        label='Isolate'
+                                        value={this.state.isolate}
+                                        onChange={this.handleChange}
+                                    />
+                                </Col>
+                            </Row>
 
-                        <Row ref="nameRow">
-                            <Col md={9}>
-                                <Input
-                                    ref='name'
-                                    name="name"
-                                    type='text'
-                                    error={error ? <span className='text-danger'>{error}</span> : null}
-                                    value={this.state.name}
-                                    onChange={this.handleChange}
-                                    label='Sample Name'
-                                    autoComplete={false}
-                                />
-                            </Col>
-                            <Col md={3}>
-                                <Input
-                                    type='text'
-                                    name="isolate"
-                                    label='Isolate'
-                                    value={this.state.isolate}
-                                    onChange={this.handleChange}
-                                />
-                            </Col>
-                        </Row>
+                            <Row ref="hostSubtractionRow">
+                                <Col md={6}>
+                                    <Input
+                                        type='text'
+                                        name="host"
+                                        label='True Host'
+                                        value={this.state.host}
+                                        onChange={this.handleChange}
+                                    />
+                                </Col>
+                                <Col md={6}>
+                                    <Input name="subtraction" type='select' label='Subtraction Host' value={this.state.subtraction} onChange={this.handleChange}>
+                                        {hostComponents}
+                                    </Input>
+                                </Col>
+                            </Row>
 
-                        <Row ref="hostSubtractionRow">
-                            <Col md={6}>
-                                <Input
-                                    type='text'
-                                    name="host"
-                                    label='True Host'
-                                    value={this.state.host}
-                                    onChange={this.handleChange}
-                                />
-                            </Col>
-                            <Col md={6}>
-                                <Input name="subtraction" type='select' label='Subtraction Host' value={this.state.subtraction} onChange={this.handleChange}>
-                                    {hostComponents}
-                                </Input>
-                            </Col>
-                        </Row>
+                            <Row ref="localeLibraryRow">
+                                <Col md={this.state.forceGroupChoice ? 6 : 8}>
+                                    <Input
+                                        type='text'
+                                        name="locale"
+                                        label='Locale'
+                                        value={this.state.locale}
+                                        onChange={this.handleChange}
+                                    />
+                                </Col>
+                                {userGroup}
+                                <Col md={this.state.forceGroupChoice ? 3 : 4}>
+                                    <Input
+                                        type='text'
+                                        label='Library Type'
+                                        value={libraryType}
+                                        readOnly={true}
+                                    />
+                                </Col>
+                            </Row>
 
-                        <Row ref="localeLibraryRow">
-                            <Col md={this.state.forceGroupChoice ? 6 : 8}>
-                                <Input
-                                    type='text'
-                                    name="locale"
-                                    label='Locale'
-                                    value={this.state.locale}
-                                    onChange={this.handleChange}
-                                />
-                            </Col>
-                            {userGroup}
-                            <Col md={this.state.forceGroupChoice ? 3 : 4}>
-                                <Input
-                                    type='text'
-                                    label='Library Type'
-                                    value={libraryType}
-                                    readOnly={true}
-                                />
-                            </Col>
-                        </Row>
+                            <ReadSelector
+                                ref='reads'
+                                {...this.state}
+                                select={this.select}
+                            />
+                        </Modal.Body>
 
-                        <ReadSelector
-                            ref='reads'
-                            {...this.state}
-                            select={this.select}
-                        />
-
-                        {overlay}
-
-                    </FlipMove>
-
-                    <Modal.Footer>
-                        <PushButton type='submit' bsStyle='primary'>
-                            <Icon name='floppy' /> Save
-                        </PushButton>
-                    </Modal.Footer>
-                </form>
+                        <Modal.Footer>
+                            <PushButton type='submit' bsStyle='primary'>
+                                <Icon name='floppy' /> Save
+                            </PushButton>
+                        </Modal.Footer>
+                    </form>
+                </div>
             );
         }
 
