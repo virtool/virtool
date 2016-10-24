@@ -15,13 +15,12 @@ var React = require('react');
 var FlipMove = require("react-flip-move");
 var Alert = require('react-bootstrap/lib/Alert');
 var ListGroup = require('react-bootstrap/lib/ListGroup');
+var ListGroupItem = require('react-bootstrap/lib/ListGroupItem');
 
-var RelativeTime = require('virtool/js/components/Base/RelativeTime.jsx');
-var DetailModal = require('virtool/js/components/Base/DetailModal.jsx');
 var Icon = require('virtool/js/components/Base/Icon.jsx');
+var RelativeTime = require('virtool/js/components/Base/RelativeTime.jsx');
 
 var SampleEntry = require("./Entry.jsx");
-var SampleDetail = require('./Detail/body.jsx');
 
 /**
  * A component based on DynamicTable that displays sample documents and allows them to be removed, archived, and viewed in
@@ -30,14 +29,6 @@ var SampleDetail = require('./Detail/body.jsx');
  * @class
  */
 var SamplesList = React.createClass({
-    
-    propTypes: {
-        route: React.PropTypes.object.isRequired
-    },
-
-    hideModal: function () {
-        dispatcher.router.clearExtra();
-    },
 
     /**
      * Send a request to the server to archive the passed target(s).
@@ -56,25 +47,23 @@ var SamplesList = React.createClass({
                 <SampleEntry
                     key={document._id}
                     {...document}
+                    quickAnalyze={this.props.quickAnalyze}
                 />
             );
-        });
+        }, this);
 
-        var detailTarget = dispatcher.db.samples.findOne({_id: this.props.route.extra[1]});
+        if (sampleComponents.length === 0) {
+            sampleComponents = (
+                <ListGroupItem className="text-center">
+                    <Icon name="info" /> No samples found.
+                </ListGroupItem>
+            );
+        }
 
         return (
-            <div>
-                <FlipMove typeName="div" className="list-group" leaveAnimation={false}>
-                    {sampleComponents}
-                </FlipMove>
-
-                <DetailModal
-                    target={detailTarget}
-                    onHide={this.hideModal}
-                    contentComponent={SampleDetail}
-                    collection={dispatcher.db.samples}
-                />
-            </div>
+            <FlipMove typeName="div" className="list-group" leaveAnimation={false}>
+                {sampleComponents}
+            </FlipMove>
         );
     }
 });

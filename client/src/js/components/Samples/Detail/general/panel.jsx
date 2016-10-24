@@ -93,7 +93,7 @@ var General = React.createClass({
                     </tr>
                     <tr>
                       <th>GC Content</th>
-                      <td>{Numeral(data.quality.gc).format('0.0 %')}</td>
+                      <td>{Numeral(data.quality.gc / 100).format('0.0 %')}</td>
                     </tr>
                     <tr>
                       <th>Paired</th>

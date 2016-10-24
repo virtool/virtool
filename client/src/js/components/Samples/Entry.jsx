@@ -45,12 +45,39 @@ var SampleEntry = React.createClass({
 
     getInitialState: function () {
         return {
-            in: false
+            in: false,
+            pendingQuickAnalyze: false
         };
     },
 
     showDetail: function () {
         dispatcher.router.setExtra(["detail", this.props._id]);
+    },
+
+    quickAnalyze: function (event) {
+        event.stopPropagation();
+
+        if (dispatcher.user.settings.skip_quick_analyze_dialog) {
+            this.setState({pendingQuickAnalyze: true}, function () {
+                dispatcher.db.samples.request('analyze', {
+                    samples: [this.props._id],
+                    algorithm: dispatcher.user.settings.quick_analyze_algorithm,
+                    comments: null
+                })
+                .success(function () {
+                    this.setState({
+                        pendingQuickAnalyze: false
+                    })
+                }, this)
+                .failure(function () {
+                    this.setState({
+                        pendingQuickAnalyze: false
+                    })
+                }, this)
+            });
+        } else {
+            dispatcher.router.setExtra(["quick-analyze", this.props._id]);
+        }
     },
 
     archive: function (event) {
@@ -70,28 +97,20 @@ var SampleEntry = React.createClass({
             );
         }
 
-        var actionIcon;
+        var archiveIcon;
 
-        if (this.props.analyzed) {
-            actionIcon = (
-                <Icon
-                    name='box-add'
-                    bsStyle='info'
-                    onClick={this.archive}
-                />
+        if (this.props.analyzed && !this.props.archived) {
+            archiveIcon = (
+                <Flex.Item pad={5}>
+                    <Icon
+                        name='box-add'
+                        tip="Archive"
+                        tipPlacement="top"
+                        bsStyle='info'
+                        onClick={this.archive}
+                    />
+                </Flex.Item>
             );
-
-        } else {
-            actionIcon = (
-                <Icon
-                    name='bars'
-                    bsStyle='success'
-                    onClick={this.quickAnalyze}
-                />
-            );
-        }
-
-        if (!this.props.archived) {
 
         }
 
@@ -111,7 +130,7 @@ var SampleEntry = React.createClass({
                     <Col md={3}>
                         <Flex>
                             <Flex.Item className="bg-primary sample-label">
-                                    {this.props.imported === true ? <Icon name="checkmark" />: <Pulse />} Import
+                                {this.props.imported === true ? <Icon name="checkmark" />: <Pulse />} Import
                             </Flex.Item>
                             {analysisLabel}
                         </Flex>
@@ -120,9 +139,19 @@ var SampleEntry = React.createClass({
                         Added <RelativeTime time={this.props.added} /> by {this.props.username}
                     </Col>
                     <Col md={2}>
-                        <div className="pull-right">
-                            {actionIcon}
-                        </div>
+                        <Flex className="pull-right">
+                            <Flex.Item>
+                                <Icon
+                                    name="bars"
+                                    tip="Quick Analyze"
+                                    tipPlacement="left"
+                                    bsStyle="success"
+                                    pending={this.state.pendingQuickAnalyze}
+                                    onClick={this.quickAnalyze}
+                                />
+                            </Flex.Item>
+                            {archiveIcon}
+                        </Flex>
                     </Col>
                 </Row>
             </ListGroupItem>
