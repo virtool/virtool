@@ -521,3 +521,17 @@ table.cluster-table tbody tr {
     -webkit-transform: scale(1.0);
   }
 }
+
+.text-strong {
+    font-weight: bold;
+}
+
+.modal-progress {
+    height: 4px;
+    box-shadow: none;
+    background: none;
+    margin-bottom: 0;
+    -webkit-transition: width 0.1s linear;
+    -o-transition: width 0.1s linear;
+    transition: width 0.1s linear;
+}
