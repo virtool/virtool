@@ -31,8 +31,6 @@ class Collection(virtool.database.Collection):
         self.sync_projector.update({field: True for field in [
             "name",
             "analyses",
-            "import_job",
-            "analysis_job",
             "added",
             "username",
             "imported",
@@ -999,8 +997,6 @@ class ImportReads(virtool.job.Job):
             "-o", os.path.join(self.sample_path, "reads"),
         ] + input_paths
 
-        print(command)
-
         # Prevents an error from skewer when calls inside a subprocess.
         env = dict(os.environ)
         env["LD_LIBRARY_PATH"] = "/usr/lib/x86_64-linux-gnu"
@@ -1170,8 +1166,6 @@ class ImportReads(virtool.job.Job):
             except IOError:
                 pass
 
-        print(fastqc)
-
         self.collection_operation("samples", "set_stats", {
             "_id": self.sample_id,
             "fastqc": fastqc
@@ -1291,7 +1285,6 @@ def average_list(list1, list2):
     try:
         assert len(list1) == len(list2)
     except AssertionError:
-        print(list1, list2)
         raise
 
     return [(value + list2[i]) / 2 for i, value in enumerate(list1)]
