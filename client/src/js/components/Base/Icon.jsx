@@ -13,6 +13,8 @@
 
 var CX = require('classnames');
 var React = require('react');
+var Tooltip = require('react-bootstrap/lib/Tooltip');
+var OverlayTrigger = require('react-bootstrap/lib/OverlayTrigger');
 
 /**
  * Wrapper an IcoMoon icon in an easy React interface.
@@ -23,6 +25,8 @@ var Icon = React.createClass({
 
     propTypes: {
         name: React.PropTypes.string.isRequired,
+        tip: React.PropTypes.oneOfType([React.PropTypes.string, React.PropTypes.element]),
+        tipPlacement: React.PropTypes.oneOf(["top", "right", "bottom", "left"]),
         onClick: React.PropTypes.func,
         pending: React.PropTypes.bool,
         bsStyle: React.PropTypes.string,
@@ -58,26 +62,45 @@ var Icon = React.createClass({
             'fixed-width': this.props.fixedWidth
         };
 
-        var style = {};
-
-        if (this.props.pad) style.marginLeft = '3px';
-
-        _.assign(style, this.props.style);
+        var style = _.assign(this.props.pad ? {marginLeft: '3px'}: {}, this.props.style);
 
         // Should the icon be a spinner icon or the icon name passed in props?
         classDefinition[this.props.pending ? 'i-spinner spinner': ('i-' + this.props.name)] = true;
 
         // Does the icon need a Bootstrap text style?
-        if (this.props.bsStyle && !this.props.pending) classDefinition['text-' + this.props.bsStyle] = true;
+        if (this.props.bsStyle && !this.props.pending) {
+            classDefinition['text-' + this.props.bsStyle] = true;
+        }
 
         // If the icon calls a function onClick, it should be hoverable.
-        if (this.props.onClick) classDefinition['hoverable pointer'] = true;
+        if (this.props.onClick) {
+            classDefinition['hoverable pointer'] = true;
+        }
 
         var className = CX(classDefinition);
 
-        if (this.props.className) className += ' ' + this.props.className;
+        if (this.props.className) {
+            className += ' ' + this.props.className;
+        }
 
-        return <i className={className} onClick={this.props.onClick ? this.handleClick: null} style={style} />;
+        var icon = <i className={className} onClick={this.props.onClick ? this.handleClick: null} style={style} />;
+
+        if (this.props.tip) {
+
+            var tooltip = (
+                <Tooltip id={this.props.tip}>
+                    {this.props.tip}
+                </Tooltip>
+            );
+
+            return (
+                <OverlayTrigger placement={this.props.tipPlacement || "top"} overlay={tooltip}>
+                    {icon}
+                </OverlayTrigger>
+            )
+        }
+
+        return icon;
     }
 });
 
