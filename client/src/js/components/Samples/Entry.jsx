@@ -95,11 +95,11 @@ var SampleEntry = React.createClass({
 
         if (!this.props.selected) {
             analyzeIcon = (
-                <Flex.Item>
+                <Flex.Item pad={5}>
                     <Icon
                         name="bars"
                         tip="Quick Analyze"
-                        tipPlacement="left"
+                        tipPlacement="top"
                         bsStyle="success"
                         pending={this.state.pendingQuickAnalyze}
                         onClick={this.quickAnalyze}
@@ -109,11 +109,11 @@ var SampleEntry = React.createClass({
 
             if (this.props.analyzed === true && !this.props.archived) {
                 archiveIcon = (
-                    <Flex.Item pad={5}>
+                    <Flex.Item>
                         <Icon
                             name='box-add'
                             tip="Archive"
-                            tipPlacement="top"
+                            tipPlacement="left"
                             bsStyle='info'
                             onClick={this.archive}
                         />
@@ -149,8 +149,8 @@ var SampleEntry = React.createClass({
                     </Col>
                     <Col md={2}>
                         <Flex className="pull-right">
-                            {analyzeIcon}
                             {archiveIcon}
+                            {analyzeIcon}
                         </Flex>
                     </Col>
                 </Row>
