@@ -18,6 +18,7 @@ var ListGroup = require('react-bootstrap/lib/ListGroup');
 var ListGroupItem = require('react-bootstrap/lib/ListGroupItem');
 
 var Icon = require('virtool/js/components/Base/Icon.jsx');
+var Paginator = require('virtool/js/components/Base/Paginator.jsx');
 var RelativeTime = require('virtool/js/components/Base/RelativeTime.jsx');
 
 var SampleEntry = require("./Entry.jsx");
@@ -29,6 +30,18 @@ var SampleEntry = require("./Entry.jsx");
  * @class
  */
 var SamplesList = React.createClass({
+
+    getInitialState: function () {
+        return {
+            page: 1
+        };
+    },
+
+    setPage: function (page) {
+        this.setState({
+            page: page
+        });
+    },
 
     /**
      * Send a request to the server to archive the passed target(s).
@@ -42,7 +55,9 @@ var SamplesList = React.createClass({
 
     render: function () {
 
-        var sampleComponents = this.props.documents.slice(0, 15).map(function (document) {
+        var pages = Paginator.calculatePages(this.props.documents, this.state.page, 18);
+
+        var sampleComponents = pages.documents.map(function (document) {
             return (
                 <SampleEntry
                     key={document._id}
@@ -64,10 +79,26 @@ var SamplesList = React.createClass({
             );
         }
 
+        var paginator;
+
+        if (pages.count > 1) {
+            paginator = (
+                <Paginator
+                    page={this.state.page}
+                    count={pages.count}
+                    onChange={this.setPage}
+                />
+            );
+        }
+
         return (
-            <FlipMove typeName="div" className="list-group" duration={150} leaveAnimation={false}>
-                {sampleComponents}
-            </FlipMove>
+            <div>
+                <FlipMove typeName="div" className="list-group" staggerDurationBy={20} leaveAnimation={false}>
+                    {sampleComponents}
+                </FlipMove>
+
+                {paginator}
+            </div>
         );
     }
 });

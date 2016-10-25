@@ -74,7 +74,7 @@ var JobList = React.createClass({
 
         return (
             <div>
-                <FlipMove typeName="div" className="list-group">
+                <FlipMove typeName="div" className="list-group" staggerDurationBy={10} leaveAnimation={false}>
                     {jobComponents}
                 </FlipMove>
 
