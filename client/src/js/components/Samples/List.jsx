@@ -42,11 +42,15 @@ var SamplesList = React.createClass({
 
     render: function () {
 
-        var sampleComponents = this.props.documents.data().slice(0, 15).map(function (document) {
+        var sampleComponents = this.props.documents.slice(0, 15).map(function (document) {
             return (
                 <SampleEntry
                     key={document._id}
                     {...document}
+
+                    selecting={this.props.selecting}
+                    toggleSelect={this.props.toggleSelect}
+
                     quickAnalyze={this.props.quickAnalyze}
                 />
             );
@@ -61,7 +65,7 @@ var SamplesList = React.createClass({
         }
 
         return (
-            <FlipMove typeName="div" className="list-group" leaveAnimation={false}>
+            <FlipMove typeName="div" className="list-group" duration={150} leaveAnimation={false}>
                 {sampleComponents}
             </FlipMove>
         );

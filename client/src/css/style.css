@@ -535,3 +535,7 @@ table.cluster-table tbody tr {
     -o-transition: width 0.1s linear;
     transition: width 0.1s linear;
 }
+
+.no-margin {
+    margin: 0;
+}

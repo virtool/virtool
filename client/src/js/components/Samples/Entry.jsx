@@ -68,6 +68,11 @@ var SampleEntry = React.createClass({
         }
     },
 
+    toggleSelect: function (event) {
+        event.stopPropagation();
+        this.props.toggleSelect(this.props._id);
+    },
+
     archive: function (event) {
         event.stopPropagation();
         dispatcher.db.samples.request("archive", {_id: this.props._id});
@@ -80,35 +85,51 @@ var SampleEntry = React.createClass({
         if (this.props.analyzed) {
             analysisLabel = (
                 <Flex.Item className="bg-primary sample-label" pad>
-                    {this.props.analyzed === "ip" ? <Pulse />: <Icon name="checkmark" />} Analysis
+                    {this.props.analyzed === "ip" ? <Pulse />: <Icon name="bars" />} Analysis
                 </Flex.Item>
             );
         }
 
+        var analyzeIcon;
         var archiveIcon;
 
-        if (this.props.analyzed && !this.props.archived) {
-            archiveIcon = (
-                <Flex.Item pad={5}>
+        if (!this.props.selected) {
+            analyzeIcon = (
+                <Flex.Item>
                     <Icon
-                        name='box-add'
-                        tip="Archive"
-                        tipPlacement="top"
-                        bsStyle='info'
-                        onClick={this.archive}
+                        name="bars"
+                        tip="Quick Analyze"
+                        tipPlacement="left"
+                        bsStyle="success"
+                        pending={this.state.pendingQuickAnalyze}
+                        onClick={this.quickAnalyze}
                     />
                 </Flex.Item>
             );
 
+            if (this.props.analyzed === true && !this.props.archived) {
+                archiveIcon = (
+                    <Flex.Item pad={5}>
+                        <Icon
+                            name='box-add'
+                            tip="Archive"
+                            tipPlacement="top"
+                            bsStyle='info'
+                            onClick={this.archive}
+                        />
+                    </Flex.Item>
+                );
+
+            }
         }
 
         return (
-            <ListGroupItem className="spaced" onClick={this.showDetail}>
+            <ListGroupItem className="spaced" onClick={this.props.selecting ? this.toggleSelect: this.showDetail}>
                 <Row>
                     <Col md={4}>
                         <Flex>
                             <Flex.Item>
-                                <Checkbox />
+                                <Checkbox checked={this.props.selected} onClick={this.toggleSelect} />
                             </Flex.Item>
                             <Flex.Item grow={1} pad={10}>
                                 <strong>{this.props.name}</strong>
@@ -118,7 +139,7 @@ var SampleEntry = React.createClass({
                     <Col md={3}>
                         <Flex>
                             <Flex.Item className="bg-primary sample-label">
-                                {this.props.imported === true ? <Icon name="checkmark" />: <Pulse />} Import
+                                {this.props.imported === true ? <Icon name="filing" />: <Pulse />} Import
                             </Flex.Item>
                             {analysisLabel}
                         </Flex>
@@ -128,16 +149,7 @@ var SampleEntry = React.createClass({
                     </Col>
                     <Col md={2}>
                         <Flex className="pull-right">
-                            <Flex.Item>
-                                <Icon
-                                    name="bars"
-                                    tip="Quick Analyze"
-                                    tipPlacement="left"
-                                    bsStyle="success"
-                                    pending={this.state.pendingQuickAnalyze}
-                                    onClick={this.quickAnalyze}
-                                />
-                            </Flex.Item>
+                            {analyzeIcon}
                             {archiveIcon}
                         </Flex>
                     </Col>

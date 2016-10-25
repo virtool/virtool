@@ -13,7 +13,6 @@
 
 var CX = require("classnames");
 var React = require("react");
-var Icon = require('virtool/js/components/Base/Icon.jsx');
 
 /**
  * A checkbox component based on the Icomoon checkbox icons. Has three possible states: checked, unchecked, and partial.
@@ -52,8 +51,8 @@ var Checkbox = React.createClass({
         }
 
         return (
-            <span className={this.props.pullRight ? 'pull-right': null}>
-                <Icon onClick={this.props.onClick} name={'checkbox-' + name} pending={this.props.pending} />
+            <span className={this.props.pullRight ? 'pull-right': null} onClick={this.props.onClick}>
+                <i className={'pointer i-checkbox-' + name} />
             </span>
         );
     }
