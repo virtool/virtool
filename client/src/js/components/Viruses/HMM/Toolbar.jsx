@@ -12,8 +12,12 @@
 'use strict';
 
 var React = require('react');
+var ReactDOM = require('react-dom');
 var Dropdown = require('react-bootstrap/lib/Dropdown');
 var MenuItem = require('react-bootstrap/lib/MenuItem');
+var FormGroup = require('react-bootstrap/lib/FormGroup');
+var InputGroup = require('react-bootstrap/lib/InputGroup');
+var FormControl = require('react-bootstrap/lib/FormControl');
 
 var Icon = require('virtool/js/components/Base/Icon.jsx');
 var Flex = require('virtool/js/components/Base/Flex.jsx');
@@ -26,7 +30,7 @@ var PushButton = require('virtool/js/components/Base/PushButton.jsx');
 var HMMToolbar = React.createClass({
 
     propTypes: {
-        onChange: React.PropTypes.func
+        setFindTerm: React.PropTypes.func.isRequired
     },
 
     getInitialState: function () {
@@ -37,7 +41,7 @@ var HMMToolbar = React.createClass({
     },
 
     componentDidMount: function () {
-        this.refs.input.focus();
+        ReactDOM.findDOMNode(this.refs.input).focus();
         dispatcher.user.on('change', this.onUserChange);
     },
 
@@ -56,14 +60,8 @@ var HMMToolbar = React.createClass({
      *
      * @func
      */
-    handleChange: function () {
-        var re = new RegExp(this.refs.input.value, 'i');
-
-        var filterFunction = function (document) {
-            return re.test(document.label) || re.test(document.cluster);
-        };
-
-        this.props.onChange(filterFunction);
+    handleChange: function (event) {
+        this.props.setFindTerm(event.target.value);
     },
 
     /**
@@ -101,20 +99,21 @@ var HMMToolbar = React.createClass({
         return (
             <div style={{marginBottom: '15px'}}>
                 <Flex>
-                    <Flex.Item grow={2}>
-                        <div className='input-group'>
-                            <span id='find-addon' className='input-group-addon'>
-                                <Icon name='search' /> Find
-                            </span>
-                            <input
-                                ref='input'
-                                aria-describedby='find-addon'
-                                className='form-control'
-                                type='text'
-                                placeholder='Definition or cluster'
-                                onChange={this.handleChange}
-                            />
-                        </div>
+                    <Flex.Item grow={1}>
+                        <FormGroup>
+                            <InputGroup>
+                                <InputGroup.Addon>
+                                    <Icon name='search' /> Find
+                                </InputGroup.Addon>
+                                <FormControl
+                                    ref="input"
+                                    type="text"
+                                    placeholder="Definition, cluster, family"
+                                    onChange={this.handleChange}
+                                    value={this.props.findTerm}
+                                />
+                            </InputGroup>
+                        </FormGroup>
                     </Flex.Item>
 
                     {menu}
