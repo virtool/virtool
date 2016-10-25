@@ -17,10 +17,18 @@ var Pulse = React.createClass({
 
     render: function () {
 
+        var style;
+
+        if (this.props.color) {
+            style = {
+                backgroundColor: "#337ab7"
+            }
+        }
+
         return (
-            <div className="spinner" style={{marginBottom: "-1px"}}>
-                <div className="double-bounce1"></div>
-                <div className="double-bounce2"></div>
+            <div className="spinner">
+                <div className="double-bounce1" style={style}></div>
+                <div className="double-bounce2" style={style}></div>
             </div>
         );
     }

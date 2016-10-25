@@ -101,7 +101,7 @@ var HMMErrors = React.createClass({
                 );
 
                 button = (
-                    <Flex.Item grow={0} shrink={0} pad={15}>
+                    <Flex.Item grow={0} shrink={0} pad={30}>
                         <Button disabled={this.props.pressing || this.props.cleaning} onClick={this.props.clean}>
                             <Icon name="hammer" pending={this.props.cleaning} /> Repair
                         </Button>
@@ -111,7 +111,7 @@ var HMMErrors = React.createClass({
 
             if (message) {
                 errorComponents.push(
-                    <Alert key={error} bsStyle={alertStyle}>
+                    <Alert key={error} bsStyle={alertStyle} className={error === "hmm_file" || error === "hmm_dir" ? "no-margin": null}>
                         <Flex alignItems="center">
                             <Flex.Item grow={1} shrink={1}>
                                 {message}

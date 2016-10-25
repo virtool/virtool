@@ -70,7 +70,7 @@ var HMM = React.createClass({
 
             query = {
                 $or: [
-                    {cluster: test},
+                    {cluster: Number(this.state.findTerm)},
                     {label: test}
                 ]
             };

@@ -16,6 +16,7 @@ var Button = require("react-bootstrap/lib/Button");
 var ButtonToolbar = require("react-bootstrap/lib/ButtonToolbar");
 
 var Icon = require('virtool/js/components/Base/Icon.jsx');
+var Pulse = require('virtool/js/components/Base/Pulse.jsx');
 var Modal = require('virtool/js/components/Base/Modal.jsx');
 
 /**
@@ -119,10 +120,7 @@ var DetailModal = React.createClass({
             modalContent = (
                 <Modal.Body key='loading' style={loadingStyle}>
                     <div className="text-center">
-                        <p>Loading</p>
-                        <div className="spinning">
-                            <Icon name='spinner' pending={true} />
-                        </div>
+                        <Pulse bsStyle="primary" />
                     </div>
                 </Modal.Body>
             );
@@ -139,6 +137,7 @@ var DetailModal = React.createClass({
 
         return (
             <Modal ref="modal" {...modalProps}>
+                <Pulse bsStyle="primary" />
                 {modalContent}
             </Modal>
         );

@@ -22,6 +22,7 @@ var ListGroupItem = require('react-bootstrap/lib/ListGroupItem');
 
 var Icon = require('virtool/js/components/Base/Icon.jsx');
 var Flex = require('virtool/js/components/Base/Flex.jsx');
+var Pulse = require('virtool/js/components/Base/Pulse.jsx');
 var ByteSize = require('virtool/js/components/Base/ByteSize.jsx');
 
 var HMMErrors = require("./Errors.jsx");
@@ -135,9 +136,11 @@ var HMMFiles = React.createClass({
             );
         } else {
             content = (
-                <div className="text-center">
-                    <Icon name="spinner" pending /> Loading
-                </div>
+                <Flex justifyContent="center">
+                    <Flex.Item>
+                        <Pulse color="#337ab7" size="50px" />
+                    </Flex.Item>
+                </Flex>
             );
         }
 
