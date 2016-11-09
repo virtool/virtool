@@ -16,7 +16,7 @@ Documentation
 -------------
 
 .. toctree::
-    :includehidden:
+    :hidden:
 
     server/server
     client/client

@@ -68,7 +68,7 @@ All collection names used by Virtool are listed in the global list variable :att
 .. autodata:: COLLECTIONS
     :annotation: = []
 
-When registered, collection instances are stored in :attr:`dispatcher.collections`.
+Once registered, collection instances are stored in :attr:`dispatcher.collections`.
 
 .. autoinstanceattribute:: Dispatcher.collections
     :annotation: = {}
@@ -107,17 +107,6 @@ message is sent to each connection every ten seconds.
 
 .. automethod:: Dispatcher.ping
 
-Syncing Connections
-~~~~~~~~~~~~~~~~~~~
-
-Virtool can produce a large amount of data. It is untenable to send this data to clients every time they load the
-application. Instead, the client retains most of the data locally using IndexedDB. When the client loads the
-application, a manifest of the local data is sent to the server. If the server data has changed since the last time the
-client was loaded, all necessary updates are dispatched to the client to make the client's local data match that on the
-server.
-
-.. automethod:: Dispatcher.sync
-
 Listening for File Changes
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -134,8 +123,6 @@ listening for changes.
 
 Lifecycle Methods
 ~~~~~~~~~~~~~~~~~
-
-
 
 .. automethod:: Dispatcher.reload
 

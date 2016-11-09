@@ -301,7 +301,7 @@ class Transaction:
     While the `exposed method <exposed-method>`_ is executing, it can send updates for the transaction by calling
     :meth:`Transaction.update` with data that should be sent to the client.
 
-    When the `exposed method <exposed-method>`_ completes, **it must return return a tuple containing a boolean
+    When the `exposed method <exposed-method>`_ completes, it **must** return return a tuple containing a boolean
     indicating whether the operation was successful and any data that should be returned to the requesting client. The
     return value will be used to call :meth:`.Transaction.fulfill` and send the result to the requesting client.
 

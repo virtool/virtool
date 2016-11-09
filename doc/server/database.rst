@@ -122,8 +122,6 @@ monitor and dispatch changes in files and manage running jobs.
 
         .. automethod:: sync_processor
 
-        .. automethod:: prepare_sync
-
         .. automethod:: sync
 
         .. automethod:: insert
