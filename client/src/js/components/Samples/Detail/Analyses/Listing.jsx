@@ -84,7 +84,7 @@ var AnalysisList = React.createClass({
             .failure(function () {
                 this.props.setProgress(false);
                 this.setState(this.getInitialState());
-            })
+            }, this)
         });
     },
 

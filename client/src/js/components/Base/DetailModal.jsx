@@ -137,7 +137,6 @@ var DetailModal = React.createClass({
 
         return (
             <Modal ref="modal" {...modalProps}>
-                <Pulse bsStyle="primary" />
                 {modalContent}
             </Modal>
         );

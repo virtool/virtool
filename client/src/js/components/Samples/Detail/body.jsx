@@ -2,7 +2,6 @@ var _ = require('lodash');
 var React = require("react");
 var ResizeDetector = require("react-resize-detector").default;
 var Alert = require('react-bootstrap/lib/Alert');
-var Modal = require('react-bootstrap/lib/Modal');
 var Button = require('react-bootstrap/lib/Button');
 var Tab = require('react-bootstrap/lib/Tab');
 var Tabs = require('react-bootstrap/lib/Tabs');
@@ -13,6 +12,7 @@ var SampleDetailAnalyses = require("./Analyses/Analyses.jsx");
 var SampleDetailRights = require("./Rights/Rights.jsx");
 
 var Icon = require("virtool/js/components/Base/Icon.jsx");
+var Modal = require("virtool/js/components/Base/Modal.jsx");
 var ConfirmFooter = require("virtool/js/components/Base/ConfirmFooter.jsx");
 
 var SampleDetail = React.createClass({
