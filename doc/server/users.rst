@@ -105,7 +105,7 @@ and access permissions during creation. These settings can also be modified afte
 Setting Group Membership
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
-Group membership can be set for a single user using the :meth:`.set_group` method.
+Group membership can be set for a single user using the :meth:`~users.Collection.set_group` method.
 
 .. automethod:: virtool.users.Collection.set_group
 
