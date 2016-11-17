@@ -5,6 +5,7 @@ import random
 import pymongo
 
 import virtool.utils
+import virtool.blast
 import virtool.files
 import virtool.plots
 import virtool.gen
@@ -349,6 +350,68 @@ class Collection(virtool.database.SyncingCollection):
             analysis_ids.append(analysis_id)
 
         return True, dict(analysis_ids=analysis_ids)
+
+    @virtool.gen.coroutine
+    def set_analysis(self, data):
+        """
+        Update the analysis document identified using ``data``, which contains the analysis id and the update. Sets the
+        analysis' ``ready`` field to ``True``. Sets the parent sample's ``analyzed`` field to ``True`` and increments
+        its version by one.
+
+        This method is called from within an analysis job.
+
+        :param data: the data used to perform the update
+        :type data: dict
+
+        """
+        analysis = yield self.analyses_collection.find_one({"_id": data["analysis_id"]})
+        analysis.update(data["analysis"])
+        analysis["ready"] = True
+
+        yield self.analyses_collection.update({"_id": data["analysis_id"]}, {"$set": analysis})
+
+        yield self.update(data["_id"], {
+            "$inc": {"_version": 1},
+            "$set": {"analyzed": True}
+        })
+
+    @virtool.gen.exposed_method([])
+    def blast_nuvs_sequence(self, transaction):
+        """
+        BLAST a contig sequence that is part of a NuVs result record. The resulting BLAST data will be attached to that
+        sequence.
+
+        :param transaction: the transaction associated with the request.
+        :type transaction: :class:`.Transaction`
+
+        """
+        analysis_id = transaction.data["analysis_id"]
+        sequence_index = transaction.data["sequence_index"]
+
+        minimal_analysis = yield self.analyses_collection.find_one({"_id": analysis_id}, {
+            "sample": True,
+            "sequences": True
+        })
+
+        sequences = [sequence for sequence in minimal_analysis["sequences"] if sequence["index"] == int(sequence_index)]
+
+        assert len(sequences) == 1
+
+        nuc = sequences[0]["sequence"]
+
+        result = yield blast_on_ncbi(nuc)
+
+        response = yield self.analyses_collection.update({"_id": analysis_id, "sequences.index": sequence_index}, {
+            "$set": {
+                "sequences.$.blast": result
+            }
+        })
+
+        yield self.update({"_id": minimal_analysis["sample"]}, {
+            "$inc": {"version": 1}
+        }, increment_version=False)
+
+        return True, response
 
     @virtool.gen.exposed_method([])
     def quality_pdf(self, transaction):
@@ -956,3 +1019,8 @@ def average_list(list1, list2):
         raise
 
     return [(value + list2[i]) / 2 for i, value in enumerate(list1)]
+
+
+@virtool.gen.synchronous
+def blast_on_ncbi(sequence):
+    return virtool.blast.blast(sequence)
