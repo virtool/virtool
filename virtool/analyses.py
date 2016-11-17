@@ -86,6 +86,23 @@ class Collection(virtool.database.Collection):
         db_sync.analyses.remove({"ready": False})
 
     @virtool.gen.coroutine
+    def update(self, query, update, increment_version=True, upsert=False, connections=None):
+        # Which samples have analyses affected by the update operation.
+        affected_sample_ids = yield self.find(query).distinct("sample_id")
+
+        # Perform the update on the database collection.
+        response = yield self._perform_update(query, update, increment_version, upsert)
+
+        # Don't just dispatch the ids of the changed analysis documents. We need to dispatch the changed sample ids so
+        # the clients can use the information.
+        self.dispatch("update", {
+            "_id": response["_ids"],
+            "sample_ids": virtool.database.coerce_list(affected_sample_ids)
+        }, connections=connections)
+
+        return response
+
+    @virtool.gen.coroutine
     def new(self, sample_id, name, username, algorithm):
         """
         Creates a new analysis based on the data in ``transaction`` and starts a sample import job.
