@@ -9,6 +9,7 @@ import tornado.ioloop
 import virtool.gen
 import virtool.jobs
 import virtool.samples
+import virtool.analyses
 import virtool.viruses
 import virtool.history
 import virtool.indexes
@@ -22,6 +23,7 @@ import virtool.files
 COLLECTIONS = [
     "jobs",
     "samples",
+    "analyses",
     "viruses",
     "hmm",
     "history",

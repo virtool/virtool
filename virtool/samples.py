@@ -30,7 +30,6 @@ class Collection(virtool.database.SyncingCollection):
         # Extend sync_projector. These fields will be passed to the client to populate sample tables.
         self.sync_projector.update({field: True for field in [
             "name",
-            "analyses",
             "added",
             "username",
             "imported",
@@ -48,37 +47,6 @@ class Collection(virtool.database.SyncingCollection):
 
         # A synchronous connection to the Mongo database.
         db_sync = virtool.utils.get_db_client(self.settings, sync=True)
-
-        # Make sure all NuVs analysis records reference HMMs in the database rather than storing the HMM data
-        # themselves. Only do this if HMM records are defined in the database.
-        if db_sync.hmm.count() > 0:
-
-            for analysis in db_sync.analyses.find({"algorithm": "nuvs"}):
-                # If the definition key is defined, the record is storing the information for each HMM and must be
-                # updated.
-                if "definition" in analysis["hmm"][0]:
-
-                    hits = analysis["hmm"]
-
-                    # Fix up the HMM hit entries for the analysis.
-                    for hit in hits:
-                        # Get the database id for the HMM the hit should be linked to.
-                        cluster = int(hit["hit"].split("_")[1])
-                        hmm = db_sync.hmm.find_one({"cluster": cluster}, {"_id": True})
-
-                        # Get rid of the unnecessary fields.
-                        hit.pop("definition")
-                        hit.pop("families")
-
-                        # Change the hit field rto the id for the HMM record instead of vFam_###.
-                        hit["hit"] = hmm["_id"]
-
-                    # Commit the new hit entries to the database.
-                    db_sync.analyses.update({"_id": analysis["_id"]}, {
-                        "$set": {
-                            "hmm": hits
-                        }
-                    })
 
         quality_updates = list()
 
@@ -156,30 +124,10 @@ class Collection(virtool.database.SyncingCollection):
                 "$set": {"quality": entry["quality"]}
             })
 
-        # If the database was made before different analysis algorithms were introduced, some analysis documents will
-        # have no 'algorithm' field. Set these to 'pathoscope_bowtie'.
-        db_sync.analyses.update({"algorithm": {"$exists": False}}, {
-            "$set": {
-                "algorithm": "pathoscope_bowtie"
-            }
-        }, multi=True)
-
-        # Remove any analysis records that are not ready. They were probably interrupted the last time Virtool was
-        # started and were not cleaned up properly.
-        unready_analyses = [analysis["_id"] for analysis in db_sync.analyses.find({"ready": False}, {"_id": True})]
-
-        db_sync.analyses.remove({"_id": {"$in": unready_analyses}})
-
-        # Remove unready analyses from samples collection, ensure "format" field is unset and increment the document
-        # version.
         db_sync.samples.update({}, {
-            "$pull": {"analyses": {"$in": unready_analyses}},
-            "$unset": {"format": ""},
+            "$unset": {"format": "", "analyses": ""},
             "$inc": {"_version": 1}
         }, multi=True)
-
-        #: An asynchronous connection to the analyses Mongo collection.
-        self.analyses_collection = virtool.utils.get_db_client(self.settings, sync=False)["analyses"]
 
     @virtool.gen.coroutine
     def sync_processor(self, documents):
@@ -208,8 +156,11 @@ class Collection(virtool.database.SyncingCollection):
             )
 
             if send:
-                analyses = document.pop("analyses")
-                if not document["analyzed"] and len(analyses) > 0:
+                analysis_count = yield self.dispatcher.collections["analyses"].find({
+                    "sample_id": document["_id"]
+                }).count()
+
+                if not document["analyzed"] and analysis_count > 0:
                     document["analyzed"] = "ip"
                 to_send.append(document)
 
@@ -353,7 +304,6 @@ class Collection(virtool.database.SyncingCollection):
             "quality": None,
 
             "analyzed": False,
-            "analyses": [],
 
             "hold": True,
             "archived": False
@@ -372,156 +322,33 @@ class Collection(virtool.database.SyncingCollection):
     def analyze(self, transaction):
         """
         Starts a job to analyze a sample entry. Can take a list of sample ids to analyze and start multiple analysis
-        jobs.
-
-        Adds the id of the new analysis to the sample document and creates a new analysis document in the analyses
-        collection.
+        jobs. Creates a new analysis document in the analyses collection.
 
         :param transaction: the transaction associated with the request.
         :type transaction: :class:`.Transaction`
 
         """
         data = transaction.data
-
         username = transaction.connection.user["_id"]
 
         # Get list of samples from task_args and start a job for each one
         samples = data.pop("samples")
 
-        # Update the data dictionary with the username of the job submitter.
-        data["username"] = username
-
-        # A list of _ids that are reserved during the running of this method.
-        used_ids = list()
-
-        # Get the current id and version of the virus index currently being used for analysis.
-        index_id, index_version = yield self.dispatcher.collections["indexes"].get_current_index()
+        analysis_ids = list()
 
         # Add an analysis entry and reference and start an analysis job for each sample in samples.
         for sample_id in samples:
             # Generate a unique _id for the analysis entry
-            analysis_id = yield virtool.utils.get_new_document_id(self.analyses_collection, excluded=used_ids)
-            used_ids.append(analysis_id)
-
-            # Insert the new analysis entry in the analysis database collection.
-            analysis_document = dict(data)
-
-            job_id = yield self.dispatcher.collections["jobs"].get_new_id()
-
-            analysis_document.update({
-                "_id": analysis_id,
-                "ready": False,
-                "job": job_id,
-                "index_id": index_id,
-                "index_version": index_version,
-                "sample": sample_id,
-                "timestamp": virtool.utils.timestamp()
-            })
-
-            yield self.analyses_collection.insert(analysis_document)
-
-            # Add a reference to the analysis _id in the sample collection.
-            yield self.update(sample_id, {
-                "$push": {"analyses": analysis_id}
-            })
-
-            # Clone the arguments passed from the client and amend the resulting dictionary with the analysis entry
-            # _id. This dictionary will be passed the the new analysis job.
-            task_args = dict(data)
-
-            task_args.update({
-                "index_id": index_id,
-                "analysis_id": analysis_id,
-                "sample_id": sample_id
-            })
-
-            yield self.dispatcher.collections["jobs"].new(
-                data["algorithm"],
-                task_args,
-                self.settings.get(data["algorithm"] + "_proc"),
-                self.settings.get(data["algorithm"] + "_mem"),
+            analysis_id = yield self.dispatcher.collections["analyses"].new(
+                sample_id,
+                data["name"],
                 username,
-                job_id=job_id
+                data["algorithm"]
             )
 
-        return True, None
+            analysis_ids.append(analysis_id)
 
-    @virtool.gen.coroutine
-    def set_analysis(self, data):
-        """
-        Update the analysis document identified using ``data``, which contains the analysis id and the update. Sets the
-        analysis' ``ready`` field to ``True``. Sets the parent sample's ``analyzed`` field to ``True`` and increments
-        its version by one.
-
-        This method is called from within an analysis job.
-
-        :param data: the data used to perform the update
-        :type data: dict
-
-        """
-        analysis = yield self.analyses_collection.find_one({"_id": data["analysis_id"]})
-        analysis.update(data["analysis"])
-        analysis["ready"] = True
-
-        yield self.analyses_collection.update({"_id": data["analysis_id"]}, {"$set": analysis})
-
-        yield self.update(data["_id"], {
-            "$inc": {"_version": 1},
-            "$set": {"analyzed": True}
-        })
-
-    @virtool.gen.coroutine
-    def _remove_analysis(self, data):
-        """
-        Removes the analysis document identified by the id in ``data``.
-
-        :param data:
-        :type data: dict
-
-        """
-        # Get the sample document to check which analysis_ids are tied to the sample.
-        sample_analyses = yield self.get_field(data["_id"], "analyses")
-
-        # Remove the analysis id we are removing from the list of analyses.
-        sample_analyses.remove(data["analysis_id"])
-
-        #
-        ready_states = yield self.analyses_collection.find({"_id": {"$in": sample_analyses}}).distinct("ready")
-
-        analyzed = True in ready_states
-
-        # Remove analysis entry from database
-        yield self.analyses_collection.remove({"_id": data["analysis_id"]})
-
-        # Update the sample document with a list of analyses lacking the id for the removed sample.
-        yield self.update(data["_id"], {
-            "$pull": {"analyses": data["analysis_id"]},
-            "$set": {"analyzed": analyzed}
-        })
-
-        # Remove the analysis directory
-        path = self.settings.get("data_path") + "/samples/sample_" + data["_id"] + "/analysis/" + data["analysis_id"]
-
-        try:
-            yield virtool.utils.rm(path, recursive=True)
-        except FileNotFoundError:
-            pass
-
-    @virtool.gen.exposed_method([])
-    def remove_analysis(self, transaction):
-        """
-        Set the 'fastqc' or 'analysis' to False, clearing it. Scope select which to field to clear. Both are cleared if
-        it is passed as None.
-
-        :param transaction: the transaction associated with the request.
-        :type transaction: :class:`.Transaction`
-
-        """
-        data = transaction.data
-
-        yield self._remove_analysis(data)
-
-        return True, None
+        return True, dict(analysis_ids=analysis_ids)
 
     @virtool.gen.exposed_method([])
     def quality_pdf(self, transaction):
@@ -535,96 +362,13 @@ class Collection(virtool.database.SyncingCollection):
     @virtool.gen.coroutine
     def _detail(self, sample_id):
         """
-        View the complete details for and sample record including FASTQC and RSEM data.
+        View the complete details for and sample record including FASTQC and analysis data.
 
         """
         # Get the entire entry for the virus.
         detail = yield self.find_one({"_id": sample_id})
 
-        analyses = yield self.analyses_collection.find({"_id": {"$in": detail["analyses"]}}).to_list(None)
-
-        isolate_fields = ["isolate_id", "default", "source_name", "source_type"]
-        sequence_fields = ["host", "definition"]
-
-        for analysis in analyses:
-            # Only included 'ready' analyses in the detail payload.
-            if analysis["ready"] is True:
-                if "pathoscope" in analysis["algorithm"]:
-                    # Holds viruses that have already been fetched from the database. If another isolate of a previously
-                    # fetched virus is found, there is no need for a round-trip back to the database.
-                    fetched_viruses = dict()
-
-                    found_isolates = list()
-
-                    annotated = dict()
-
-                    for accession, hit_document in analysis["diagnosis"].items():
-
-                        virus_id = hit_document["virus_id"]
-                        virus_version = hit_document["virus_version"]
-
-                        if virus_id not in fetched_viruses:
-                            # Get the virus entry (patched to correct version).
-                            _, virus_document, _ = yield self.dispatcher.collections["history"].get_versioned_document(
-                                virus_id,
-                                virus_version + 1
-                            )
-
-                            fetched_viruses[virus_id] = virus_document
-
-                            annotated[virus_id] = {
-                                "_id": virus_id,
-                                "name": virus_document["name"],
-                                "abbreviation": virus_document["abbreviation"],
-                                "isolates": dict(),
-                                "ref_length": 0
-                            }
-
-                        virus_document = fetched_viruses[virus_id]
-
-                        max_ref_length = 0
-
-                        for isolate in virus_document["isolates"]:
-
-                            ref_length = 0
-
-                            for sequence in isolate["sequences"]:
-                                if sequence["_id"] == accession:
-                                    isolate_id = isolate["isolate_id"]
-
-                                    if isolate_id not in found_isolates:
-                                        reduced_isolate = {key: isolate[key] for key in isolate_fields}
-                                        reduced_isolate["hits"] = list()
-                                        annotated[virus_id]["isolates"][isolate_id] = reduced_isolate
-                                        found_isolates.append(isolate["isolate_id"])
-
-                                    hit = dict(hit_document)
-                                    hit.update({key: sequence[key] for key in sequence_fields})
-                                    hit["accession"] = accession
-
-                                    annotated[virus_id]["isolates"][isolate_id]["hits"].append(hit)
-
-                                    ref_length += len(sequence["sequence"])
-
-                            if ref_length > max_ref_length:
-                                max_ref_length = ref_length
-
-                        annotated[virus_id]["ref_length"] = max_ref_length
-
-                    analysis["diagnosis"] = [annotated[virus_id] for virus_id in annotated]
-
-                if analysis["algorithm"] == "nuvs":
-                    for hmm_result in analysis["hmm"]:
-                        hmm = yield self.dispatcher.collections["hmm"].find_one({"_id": hmm_result["hit"]}, {
-                            "cluster": True,
-                            "families": True,
-                            "definition": True,
-                            "label": True
-                        })
-
-                        hmm_result.update(hmm)
-
-        detail["analyses"] = analyses
+        detail["analyses"] = yield self.dispatcher.collections["analyses"].get_by_sample_id(sample_id)
 
         return detail
 
@@ -632,79 +376,6 @@ class Collection(virtool.database.SyncingCollection):
     def detail(self, transaction):
         detail = yield self._detail(transaction.data["_id"])
         return True, detail
-
-    @virtool.gen.synchronous
-    def parse_detail(self, detail):
-        is_paired = detail["paired"]
-
-        if detail["quality"] and not detail["imported"] == "ip":
-            fastqc = detail["quality"]
-            new = dict()
-
-            # Get encoding assuming encoding is same for left and right
-            new["encoding"] = fastqc["left"]["encoding"]
-
-            # Get count by summing count for each side
-            new["count"] = fastqc["left"]["count"]
-            if is_paired and "right" in fastqc:
-                new["count"] += fastqc["right"]["count"]
-
-            # Get average GC from the two sides
-            if is_paired and "right" in fastqc:
-                new["gc"] = (fastqc["left"]["gc"] + fastqc["right"]["gc"]) / 200
-            else:
-                new["gc"] = fastqc["left"]["gc"] / 100
-
-            # Get L-R combined length range
-            if is_paired and "right" in fastqc:
-                length_r = fastqc["right"]["length"]
-                length_l = fastqc["left"]["length"]
-                new["length"] = [max(length_r[i], length_l[i]) for i in [0, 1]]
-            else:
-                new["length"] = fastqc["left"]["length"]
-
-            # Average base contents
-            new["composition"] = fastqc["left"]["composition"]
-
-            if is_paired and "right" in fastqc:
-                for i, entry in enumerate(fastqc["right"]["composition"]):
-                    for base in ["a", "t", "g", "c"]:
-                        new["composition"][i][base] += entry[base]
-                        new["composition"][i][base] /= 2
-
-            # Sequence quality
-            sequences = dict()
-
-            sides = ["left"]
-
-            if is_paired and "right" in fastqc:
-                sides.append("right")
-
-            for side in sides:
-                sequences[side] = {i["quality"]: i["count"] for i in fastqc[side]["sequences"]}
-
-            if is_paired and "right" in fastqc:
-                for q in sequences["right"]:
-                    try:
-                        sequences["left"][q] += sequences["right"][q]
-                    except KeyError:
-                        sequences["left"][q] = sequences["right"][q]
-
-            sequences["left"] = {i["quality"]: i["count"] for i in fastqc["left"]["sequences"]}
-            new["sequences"] = [{"quality": q, "count": sequences["left"][q]} for q in sequences["left"]]
-
-            # Base-wise quality
-            new["bases"] = fastqc["left"]["bases"]
-
-            if is_paired and "right" in fastqc:
-                for i, entry in enumerate(fastqc["right"]["bases"]):
-                    for key in entry.keys():
-                        new["bases"][i][key] += entry[key]
-                        new["bases"][i][key] /= 2
-
-            detail["quality"] = new
-
-        return detail
 
     @virtool.gen.coroutine
     def set_stats(self, data):
@@ -871,7 +542,7 @@ class Collection(virtool.database.SyncingCollection):
 
         """
         # Remove all analysis documents associated with the sample.
-        yield self.analyses_collection.remove({"sample": {"$in": id_list}})
+        yield self.dispatcher.collections["analyses"].remove_by_sample_id(id_list)
 
         # Make a list of read files that will no longer be hidden in the watch directory.
         files_to_reinclude = list()
