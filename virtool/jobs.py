@@ -28,7 +28,7 @@ TASK_CLASSES = {
 }
 
 
-class Collection(virtool.database.Collection):
+class Collection(virtool.database.SyncingCollection):
     """
     Provides functionality for managing active jobs and manipulating and reading the job documents in the MongoDB
     collection. This object is referred to as the **job manager** in this documentation.
@@ -42,7 +42,7 @@ class Collection(virtool.database.Collection):
 
     """
     def __init__(self, dispatcher):
-        super(Collection, self).__init__("jobs", dispatcher)
+        super().__init__("jobs", dispatcher)
 
         # Database-specific attributes
         self.sync_projector.update({key: True for key in [
@@ -279,7 +279,7 @@ class Collection(virtool.database.Collection):
         data = transaction.data
 
         # Removed the documents associated with the job ids from the database.
-        response = yield super(Collection, self).remove(data["_id"])
+        response = yield super().remove(data["_id"])
 
         # Remove the logs associated with the jobs that were removed.
         for job_id in virtool.database.coerce_list(data["_id"]):
@@ -383,7 +383,7 @@ class Collection(virtool.database.Collection):
 
             # Perform the update using the parent class' update method.
             if action == "update":
-                yield super(Collection, self).update(
+                yield super().update(
                     data["query"],
                     data["update"],
                     increment_version=data["increment_version"]
@@ -403,14 +403,14 @@ class Collection(virtool.database.Collection):
                 if last_status["state"] == state and last_status["stage"] == stage and last_status["error"] == error:
                     status[-1]["progress"] = progress
 
-                    yield super(Collection, self).update(job_id, {
+                    yield super().update(job_id, {
                         "$set": {
                             "status": status
                         }
                     })
 
                 else:
-                    yield super(Collection, self).update(job_id, {
+                    yield super().update(job_id, {
                         "$push": {
                             "status": {
                                 "state": state,

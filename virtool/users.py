@@ -9,7 +9,7 @@ import virtool.groups
 logger = logging.getLogger(__name__)
 
 
-class Collection(virtool.database.Collection):
+class Collection(virtool.database.SyncingCollection):
     """
     Provides an interface to the users MongoDB collection. During initialisation of the object, permissions are
     reconciled for all users and all user documents are updated to contain required fields if they are missing.
@@ -19,7 +19,7 @@ class Collection(virtool.database.Collection):
 
     """
     def __init__(self, dispatcher):
-        super(Collection, self).__init__("users", dispatcher)
+        super().__init__("users", dispatcher)
 
         self.sync_projector.update({
             "groups": True,
@@ -86,7 +86,7 @@ class Collection(virtool.database.Collection):
         :rtype: dict
 
         """
-        response = yield super(Collection, self).update(query, update, increment_version, upsert)
+        response = yield super().update(query, update, increment_version, upsert)
 
         for connection in self.dispatcher.connections:
             if connection.user["_id"] in response["_ids"]:
@@ -325,7 +325,7 @@ class Collection(virtool.database.Collection):
             logger.warning("User {} attempted to remove their own user account".format(user["_id"]))
             return False, dict(message="User cannot remove their own account.")
 
-        response = yield super(Collection, self).remove(data["_id"])
+        response = yield super().remove(data["_id"])
 
         return True, response
 

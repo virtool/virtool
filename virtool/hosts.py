@@ -12,7 +12,7 @@ import virtool.database
 logger = logging.getLogger(__name__)
 
 
-class Collection(virtool.database.Collection):
+class Collection(virtool.database.SyncingCollection):
 
     """
     The hosts collection class. Provides exposed methods for clients to interact with the hosts database collection.
@@ -24,7 +24,7 @@ class Collection(virtool.database.Collection):
 
     def __init__(self, dispatcher):
 
-        super(Collection, self).__init__("hosts", dispatcher)
+        super().__init__("hosts", dispatcher)
 
         self.sync_projector.update({key: True for key in [
             "description",
@@ -147,7 +147,7 @@ class Collection(virtool.database.Collection):
             yield virtool.utils.rm(path, recursive=True)
 
             # Remove the database entry.
-            response = yield super(Collection, self).remove(host_id)
+            response = yield super().remove(host_id)
 
         return response
 

@@ -18,7 +18,7 @@ import virtool.database
 logger = logging.getLogger(__name__)
 
 
-class Collection(virtool.database.Collection):
+class Collection(virtool.database.SyncingCollection):
 
     """
     Viruses collection
@@ -28,7 +28,7 @@ class Collection(virtool.database.Collection):
 
     """
     def __init__(self, dispatcher):
-        super(Collection, self).__init__("viruses", dispatcher)
+        super().__init__("viruses", dispatcher)
 
         # Set what is sent to the client when syncing.
         self.sync_projector.update({field: True for field in [
@@ -122,7 +122,7 @@ class Collection(virtool.database.Collection):
                 yield self.sequences_collection.remove({"isolate_id": {"$in": isolate_ids}})
 
                 # Remove the virus document itself.
-                response = yield super(Collection, self).remove(virus_id)
+                response = yield super().remove(virus_id)
 
                 # Put an entry in the history collection saying the virus was removed.
                 yield self.dispatcher.collections["history"].add(
@@ -800,7 +800,7 @@ class Collection(virtool.database.Collection):
         if return_change:
             old_doc = yield self.join(virus_id)
 
-        yield super(Collection, self).update(virus_id, update, increment_version=increment_version)
+        yield super().update(virus_id, update, increment_version=increment_version)
 
         # Get the new entry.
         if return_change:

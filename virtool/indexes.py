@@ -12,7 +12,7 @@ import virtool.viruses
 logger = logging.getLogger(__name__)
 
 
-class Collection(virtool.database.Collection):
+class Collection(virtool.database.SyncingCollection):
 
     """
     An :class:`.virtool.database.Collection` interface for the *indexes* MongoDB collection. Allows interaction of virus
@@ -24,7 +24,7 @@ class Collection(virtool.database.Collection):
 
     """
     def __init__(self, dispatcher):
-        super(Collection, self).__init__("indexes", dispatcher)
+        super().__init__("indexes", dispatcher)
 
         self.sync_projector.update({key: True for key in [
             "timestamp",

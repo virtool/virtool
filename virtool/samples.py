@@ -13,7 +13,7 @@ import virtool.job
 import virtool.pathoscope
 
 
-class Collection(virtool.database.Collection):
+class Collection(virtool.database.SyncingCollection):
     """
     A connection to the pymongo samples collection. Provides methods for viewing and modifying the
     collection.
@@ -23,7 +23,7 @@ class Collection(virtool.database.Collection):
 
     """
     def __init__(self, dispatcher):
-        super(Collection, self).__init__("samples", dispatcher)
+        super().__init__("samples", dispatcher)
 
         dispatcher.watcher.register("reads", self.watch)
 
@@ -262,7 +262,7 @@ class Collection(virtool.database.Collection):
             send_count = len(to_send)
 
             if send_count > 0:
-                yield super(Collection, self).dispatch(
+                yield super().dispatch(
                     operation,
                     to_send,
                     collection_name,
@@ -271,7 +271,7 @@ class Collection(virtool.database.Collection):
                 )
 
             if len(to_remove) > 0:
-                yield super(Collection, self).dispatch(
+                yield super().dispatch(
                     "remove",
                     to_remove,
                     collection_name,
@@ -882,7 +882,7 @@ class Collection(virtool.database.Collection):
             files_to_reinclude += samples_cursor.next_object()["files"]
 
         # Remove the samples described by id_list from the database.
-        response = yield super(Collection, self).remove(id_list)
+        response = yield super().remove(id_list)
 
         samples_path = os.path.join(self.settings.get("data_path"), "samples")
 

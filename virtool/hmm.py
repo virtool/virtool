@@ -8,7 +8,7 @@ import virtool.gen
 import virtool.database
 import virtool.utils
 
-class Collection(virtool.database.Collection):
+class Collection(virtool.database.SyncingCollection):
 
     def __init__(self, dispatcher):
         super().__init__("hmm", dispatcher)

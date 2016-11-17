@@ -25,7 +25,7 @@ PERMISSIONS = [
 ]
 
 
-class Collection(virtool.database.Collection):
+class Collection(virtool.database.SyncingCollection):
 
     """
     An interface for the *groups* collection in MongoDB. Manages user groups and their permissions.
@@ -37,7 +37,7 @@ class Collection(virtool.database.Collection):
 
     def __init__(self, dispatcher):
 
-        super(Collection, self).__init__("groups", dispatcher)
+        super().__init__("groups", dispatcher)
 
         # Get the group id and permissions for sync. Permissions is the only field in the group document.
         self.sync_projector.update({
@@ -156,7 +156,7 @@ class Collection(virtool.database.Collection):
 
                 yield self.dispatcher.collections["users"].update_user_permissions(affected_user_ids)
 
-                response = yield super(Collection, self).remove([group_id])
+                response = yield super().remove([group_id])
 
                 return True, response
 

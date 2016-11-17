@@ -7,10 +7,10 @@ import virtool.database
 import virtool.viruses
 
 
-class Collection(virtool.database.Collection):
+class Collection(virtool.database.SyncingCollection):
 
     def __init__(self, dispatcher):
-        super(Collection, self).__init__("history", dispatcher)
+        super().__init__("history", dispatcher)
 
         self.sync_projector.update({key: True for key in [
             "operation",
