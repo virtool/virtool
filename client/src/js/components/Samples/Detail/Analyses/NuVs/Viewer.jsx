@@ -1,107 +1,75 @@
 var _ = require('lodash');
 var React = require('react');
-var Table = require('react-bootstrap/lib/Table');
-var Panel = require('react-bootstrap/lib/Panel');
-var ListGroup = require('react-bootstrap/lib/ListGroup');
-var ListGroupItem = require('react-bootstrap/lib/ListGroupItem');
-var Label = require('react-bootstrap/lib/Label');
-var Button = require('react-bootstrap/lib/Button');
+var Alert = require('react-bootstrap/lib/Alert');
 
-var Flex = require('virtool/js/components/Base/Flex.jsx');
 var Icon = require('virtool/js/components/Base/Icon.jsx');
-var PushButton = require('virtool/js/components/Base/PushButton.jsx');
 
-var Control = require('./Control/bar.jsx');
-var CompositeView = require('./Composite/View.jsx');
+var NuVsController = require('./Controller.jsx');
 
-var Report = React.createClass({
-
-    getInitialState: function () {
-        return {
-            filterHMM: true,
-            filterORF: true
-        };
-    },
-
-    toggleFilterHMM: function () {
-        this.setState({
-            filterHMM: !this.state.filterHMM
-        });
-    },
-
-    toggleFilterORF: function () {
-        this.setState({
-            filterORF: !this.state.filterORF
-        });
-    },
+var NuVsViewer = React.createClass({
 
     render: function () {
+        // The length of the longest sequence will be stored here.
+        var maxSequenceLength = 0;
 
-        var hmms = this.props.hmm;
+        var significantHmms = _.filter(this.props.hmm, function (hmm) {
+            return hmm.full_e < 1e-10;
+        });
 
-        if (this.state.filterHMM) {
-            hmms = _.filter(hmms, function (hmm) {
-                return hmm.full_e < 10e-15;
+        var data = this.props.sequences.map(function (sequence) {
+
+            if (sequence.sequence.length > maxSequenceLength) {
+                maxSequenceLength = sequence.sequence.length;
+            }
+
+            var sequenceEntry = _.clone(sequence);
+
+            var minE = 10;
+
+            var sequenceHmms = _.filter(significantHmms, {index: sequence.index});
+
+            sequenceEntry.orfs = _.filter(this.props.orfs, {index: sequence.index}).map(function (orf) {
+                // The significant HMM hits associated with this ORF;
+                var orfHmms = _.filter(sequenceHmms, {orf_index: orf.orf_index});
+
+                // The lowest e-value for HMMs associated with this ORF.
+                var orfMinE = _.reduce(orfHmms, function (min, hmm) {
+                    return hmm.full_e < min ? hmm.full_e: min;
+                }, 10);
+
+                // Update the sequence minimum HMM e-value if the one for this ORF is lower.
+                if (minE > orfMinE) {
+                    minE = orfMinE;
+                }
+
+                return _.assign({
+                    hmms: orfHmms,
+                    hasHmm: orfHmms.length > 0,
+                    minE: orfMinE
+                }, orf);
             });
-        }
 
-        hmms = _.sortBy(hmms, 'full_e');
-
-        var orfs = this.props.orfs;
-
-        if (this.state.filterORF) {
-            var orfsToInclude = hmms.map(function (hmm) {
-                return hmm.index + '.' + hmm.orf_index;
+            _.assign(sequenceEntry, {
+                minE: minE,
+                hasSignificantOrf: _.some(sequenceEntry.orfs, {hasHmm: true}),
+                orfs: _.sortBy(sequenceEntry.orfs, 'pos[0]')
             });
 
-            orfs = _.filter(orfs, function (orf) {
-                return _.includes(orfsToInclude, orf.index + '.' + orf.orf_index);
-            });
-        }
+            return sequenceEntry;
 
-        var control = (
-            <Control
-                {...this.state}
-                toggleFilterHMM={this.toggleFilterHMM}
-                toggleFilterORF={this.toggleFilterORF}
-                setMode={this.setMode}
+        }, this);
 
-            />
-        );
+        data = _.sortBy(data, 'minE');
 
         return (
-            <div>
-                <Table bordered>
-                    <tbody>
-                        <tr>
-                            <th className='col-md-3'>Contig Count</th>
-                            <td className='col-md-9'>{this.props.sequences.length}</td>
-                        </tr>
-                        <tr>
-                            <th className='col-md-3'><abbr title='Open reading frame'>ORF</abbr> Count</th>
-                            <td className='col-md-9'>{this.props.orfs.length}</td>
-                        </tr>
-                        <tr>
-                            <th className='col-md-3'>Significant Predictions</th>
-                            <td className='col-md-9'>{hmms.length}</td>
-                        </tr>
-                    </tbody>
-                </Table>
-
-                <Panel header={control}>
-                    <CompositeView
-                        sequences={this.props.sequences}
-                        hmms={hmms}
-                        orfs={orfs}
-
-                        toggleFilterHMM={this.toggleFilterHMM}
-                        toggleFilterORF={this.toggleFilterORF}
-                    />
-                </Panel>
-            </div>
+            <NuVsController
+                data={data}
+                analysisId={this.props._id}
+                maxSequenceLength={maxSequenceLength}
+            />
         );
     }
 
 });
 
-module.exports = Report;
+module.exports = NuVsViewer;

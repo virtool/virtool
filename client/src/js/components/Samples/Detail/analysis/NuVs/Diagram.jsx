@@ -2,20 +2,14 @@ var d3 = require("d3");
 var React = require("react");
 var ReactDOM = require("react-dom");
 
-var Badge = require('react-bootstrap/lib/Badge');
-var ListGroupItem = require('react-bootstrap/lib/ListGroupItem');
+var Diagram = {};
 
-var ContigDiagram = React.createClass({
+Diagram.Sequence = React.createClass({
 
     componentDidMount: function () {
         window.onresize = this.draw;
         this.draw();
     },
-
-    shouldComponentUpdate: function (nextProps) {
-        return !_.isEqual(nextProps.subs.length !== this.props.subs.length);
-    },
-
     componentDidUpdate: function () {
         this.draw();
     },
@@ -25,7 +19,6 @@ var ContigDiagram = React.createClass({
     },
 
     draw: function () {
-        var component = this;
 
         var element = ReactDOM.findDOMNode(this.refs.container);
 
@@ -40,7 +33,7 @@ var ContigDiagram = React.createClass({
             right: 15
         };
 
-        var baseHeight = 43 + 30 * this.props.subs.length;
+        var baseHeight = 43 + 30 * this.props.orfs.length;
 
         var width = element.offsetWidth - margin.left - margin.right;
         var height = baseHeight - margin.top - margin.bottom;
@@ -71,23 +64,11 @@ var ContigDiagram = React.createClass({
             .attr('width', x(this.props.sequence.length))
             .attr('height', 8);
 
-        var subs = group.selectAll('.orf-bar')
-            .data(this.props.subs);
+        var orfs = group.selectAll('.orf-bar')
+            .data(this.props.orfs);
 
-        var subGroups = subs.enter().append('g')
+        var subGroups = orfs.enter().append('g')
             .attr('class', function (d) {return 'orf-bar' + (d.hmms.length > 0 ? ' active' : '');})
-            .on('click', function (d) {
-                if (d.hmms.length > 0) {
-                    var container = ReactDOM.findDOMNode(component);
-                    var mousePos = d3.mouse(container);
-                    component.props.showPopover(d, mousePos[0], mousePos[1], container);
-                }
-            })
-            .on('mouseleave', function (d) {
-                if (d.hmms.length > 0) {
-                    component.props.hidePopover();
-                }
-            });
 
         subGroups.append('rect')
             .attr('class', 'orf-bar-background')
@@ -133,23 +114,16 @@ var ContigDiagram = React.createClass({
     
     render: function () {
         var divStyle = {
-            height: 43 + 30 * this.props.subs.length
+            height: 43 + 30 * this.props.orfs.length
         };
 
         return (
-            <ListGroupItem>
-                <h5>
-                    <strong>Sequence {this.props.index} </strong>
-                    <Badge>{this.props.sequence.length}</Badge>
-                </h5>
-                <div ref='container' style={divStyle}>
-                </div>
-            </ListGroupItem>
+            <div ref='container' style={divStyle} />
         );
     }
 
 });
 
-module.exports = ContigDiagram;
+module.exports = Diagram;
 
 
