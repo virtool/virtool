@@ -39,8 +39,8 @@ var AnalysisReport = React.createClass({
                 <Table bordered>
                     <tbody>
                         <tr>
-                            <th className='col-md-3'>Nickname</th>
-                            <td className='col-md-9'>{this.props.comments || 'Unnamed Analysis'}</td>
+                            <th className='col-md-3'>Name</th>
+                            <td className='col-md-9'>{this.props.name || 'Unnamed Analysis'}</td>
                         </tr>
                         <tr>
                             <th>Algorithm</th>

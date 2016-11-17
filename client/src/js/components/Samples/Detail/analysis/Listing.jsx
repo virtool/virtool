@@ -43,7 +43,7 @@ var AnalysisList = React.createClass({
 
     getInitialState: function () {
         return {
-            nickname: '',
+            name: '',
             algorithm: 'pathoscope_bowtie',
 
             // True when an analysis request has been sent to the server, but the transaction has not returned.
@@ -70,7 +70,7 @@ var AnalysisList = React.createClass({
                 samples: [this.props.detail._id],
                 discovery: false,
                 algorithm: this.state.algorithm,
-                comments: this.state.nickname || null
+                name: this.state.name || null
             }).success(function () {
                 this.setState(this.getInitialState());
             }, this);
@@ -93,9 +93,9 @@ var AnalysisList = React.createClass({
                         <Flex alignItems="flex-end">
                             <Flex.Item grow={5}>
                                 <Input
-                                    name="nickname"
+                                    name="name"
                                     label="Name"
-                                    value={this.state.nickname}
+                                    value={this.state.name}
                                     onChange={this.handleChange}
                                     disabled={true}
                                 />

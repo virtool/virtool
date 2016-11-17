@@ -50,7 +50,7 @@ var SampleEntry = React.createClass({
                 dispatcher.db.samples.request('analyze', {
                     samples: [this.props._id],
                     algorithm: dispatcher.user.settings.quick_analyze_algorithm,
-                    comments: null
+                    name: null
                 })
                 .success(function () {
                     this.setState({

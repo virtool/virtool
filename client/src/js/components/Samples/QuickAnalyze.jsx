@@ -35,7 +35,7 @@ var QuickAnalyze = React.createClass({
 
     getInitialState: function () {
         return {
-            nickname: "",
+            name: "",
             algorithm: dispatcher.user.settings.quick_analyze_algorithm || "pathoscope_bowtie",
 
             useAsDefault: false,
@@ -46,7 +46,7 @@ var QuickAnalyze = React.createClass({
     },
 
     modalWillEnter: function () {
-        this.refs.nickname.focus();
+        this.refs.name.focus();
     },
 
     modalExited: function () {
@@ -66,7 +66,7 @@ var QuickAnalyze = React.createClass({
             dispatcher.db.samples.request('analyze', {
             samples: [dispatcher.router.route.extra[1]],
             algorithm: this.state.algorithm,
-            comments: this.state.nickname || null
+            name: this.state.name || null
         }).success(function () {
 
             if (this.state.useAsDefault) {
@@ -134,10 +134,10 @@ var QuickAnalyze = React.createClass({
                             />
 
                             <Input
-                                ref="nickname"
-                                name="nickname"
+                                ref="name"
+                                name="name"
                                 label="Analysis Name"
-                                value={this.state.nickname}
+                                value={this.state.name}
                                 onChange={this.handleChange}
                                 disabled={true}
                             />

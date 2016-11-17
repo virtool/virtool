@@ -69,8 +69,8 @@ var AnalysisItem = React.createClass({
      */
     remove: function () {
         this.setState({pending: true}, function () {
-            dispatcher.db.samples.request('remove_analysis', {
-                _id: this.props.sample,
+            dispatcher.db.analyses.request('remove_analysis', {
+                _id: this.props.sample_id,
                 analysis_id: this.props._id
             }).failure(function () {
                 this.setState({pending: false});
@@ -125,7 +125,7 @@ var AnalysisItem = React.createClass({
             <div className={itemClass} onClick={this.handleClick}>
                 <Row>
                     <Col sm={3} >
-                        {this.props.comments || 'Unnamed Analysis'}
+                        {this.props.name || 'Unnamed Analysis'}
                     </Col>
                     <Col sm={3} >
                         {this.props.algorithm === 'nuvs' ? 'NuVs': _.upperFirst(_.camelCase(this.props.algorithm))}

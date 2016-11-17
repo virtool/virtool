@@ -64,7 +64,7 @@ var SampleSelector = React.createClass({
             dispatcher.db.samples.request('analyze', {
                 samples: _.map(this.props.selected, "_id"),
                 algorithm: this.state.algorithm,
-                comments: null
+                name: null
             }).success(function () {
                 this.setState({
                     pending: false
