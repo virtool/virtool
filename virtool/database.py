@@ -99,19 +99,28 @@ class Collection:
         :rtype: dict
 
         """
-        query, multi = coerce_query(query)
+        response = yield self._perform_update(query, update, increment_version, upsert)
 
-        ids_to_update = yield self.find(query, {"_id"}).distinct("_id")
+        yield self.dispatch("update", {"_id": response["_ids"]}, connections=connections)
+
+        logger.debug("Updated one or more entries in collection " + self.collection_name)
+
+        return response
+
+    @virtool.gen.coroutine
+    def _perform_update(self, query, update, increment_version=True, upsert=False):
+        query, multi = coerce_query(query)
 
         if increment_version:
             update["$inc"] = {"_version": 1}
 
         # Perform the update on the database, saving the response.
-        response = yield self.db.update(query, update, multi=multi, upsert=upsert)
-
-        yield self.dispatch("update", {"_id": response["_ids"]}, connections=connections)
-
-        logger.debug("Updated one or more entries in collection " + self.collection_name)
+        response = yield self.db.update(
+            query,
+            update,
+            multi=multi,
+            upsert=upsert
+        )
 
         return response
 
