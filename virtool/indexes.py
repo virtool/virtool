@@ -187,7 +187,7 @@ class Collection(virtool.database.SyncingCollection):
         analyses.
 
         """
-        aggregation_cursor = self.dispatcher.collections["samples"].analyses_collection.aggregate([
+        aggregation_cursor = self.dispatcher.collections["analyses"].aggregate([
             {"$match": {"ready": False}},
             {"$group": {"_id": "$index_id"}}
         ])

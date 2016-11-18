@@ -99,9 +99,8 @@ class Base(virtool.job.Job):
         :meth:`~samples.Collection._remove_analysis`.
 
         """
-        self.collection_operation("samples", "_remove_analysis", {
-            "_id": self.sample_id,
-            "analysis_id": self.analysis_id
+        self.collection_operation("analyses", "remove_from_job", {
+            "_id": self.sample_id
         })
 
 
@@ -250,8 +249,7 @@ class Pathoscope(Base):
                     except KeyError:
                         pass
 
-        self.collection_operation("samples", "set_analysis", {
-            "_id": self.sample_id,
+        self.collection_operation("analyses", "set_analysis", {
             "analysis_id": self.analysis_id,
             "analysis": self.results
         })
@@ -882,8 +880,7 @@ class NuVs(Base):
 
         self.results["orfs"] = [orf for orf in self.results["orfs"] if orf["index"] in retained]
 
-        self.collection_operation("samples", "set_analysis", {
-            "_id": self.sample_id,
+        self.collection_operation("analyses", "set_analysis", {
             "analysis_id": self.analysis_id,
             "analysis": self.results
         })

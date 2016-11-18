@@ -61,16 +61,22 @@ class Collection:
         :rtype: dict
 
         """
+        response = yield self._perform_insert(document)
+
+        # Dispatch the update to all connected clients.
+        yield self.dispatch("update", {"_ids": [response]}, connections=connections)
+
+        logger.debug("Inserted new document in collection " + self.collection_name)
+
+        return response
+
+    @virtool.gen.coroutine
+    def _perform_insert(self, document):
         if "_version" not in document:
             document["_version"] = 0
 
         # Perform the actual database insert operation, retaining the response.
         response = yield self.db.insert(document)
-
-        # Dispatch the update to all connected clients.
-        yield self.dispatch("update", {"_ids": response["_ids"]}, connections=connections)
-
-        logger.debug("Inserted new document in collection " + self.collection_name)
 
         return response
 

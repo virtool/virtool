@@ -1,3 +1,6 @@
+import os
+import shutil
+
 import virtool.utils
 import virtool.files
 import virtool.plots
@@ -96,7 +99,7 @@ class Collection(virtool.database.Collection):
         # Don't just dispatch the ids of the changed analysis documents. We need to dispatch the changed sample ids so
         # the clients can use the information.
         self.dispatch("update", {
-            "_id": response["_ids"],
+            "_id": response,
             "sample_ids": virtool.database.coerce_list(affected_sample_ids)
         }, connections=connections)
 
@@ -123,7 +126,7 @@ class Collection(virtool.database.Collection):
             "index_id": index_id
         }
 
-        analysis_id = self.get_new_id()
+        analysis_id = yield self.get_new_id()
 
         job_id = yield self.dispatcher.collections["jobs"].get_new_id()
 
@@ -167,47 +170,45 @@ class Collection(virtool.database.Collection):
         :type data: dict
 
         """
-        analysis = yield self.find_one({"_id": data["analysis_id"]})
-        analysis.update(data["analysis"])
-        analysis["ready"] = True
+        data["analysis"]["ready"] = True
 
-        yield self.update({"_id": data["analysis_id"]}, {"$set": analysis})
-
-        yield self.update(data["_id"], {
-            "$inc": {"_version": 1},
-            "$set": {"analyzed": True}
+        yield self.update({"_id": data["analysis_id"]}, {
+            "$set": data["analysis"]
         })
 
     @virtool.gen.exposed_method([])
-    def remove_by_id(self, data):
+    def remove_analysis(self, transaction):
+        id_list = virtool.database.coerce_list(transaction.data["_id"])
+
+        for _id in id_list:
+            yield self.remove_by_id(_id)
+
+        return True, None
+
+    @virtool.gen.coroutine
+    def remove_from_job(self, data):
+        yield self.remove_by_id(data["_id"])
+
+    @virtool.gen.coroutine
+    def remove_by_id(self, analysis_id):
         """
         Removes the analysis document identified by the id in ``data``.
 
-        :param data:
-        :type data: dict
+        :param transaction:
+        :type transaction: dict
 
         """
-        # Get the sample document to check which analysis_ids are tied to the sample.
-        sample_analyses = yield self.get_field(data["_id"], "analyses")
-
-        # Remove the analysis id we are removing from the list of analyses.
-        sample_analyses.remove(data["analysis_id"])
-
-        ready_states = yield self.find({"_id": {"$in": sample_analyses}}).distinct("ready")
-
-        analyzed = True in ready_states
+        # Get the sample id for the analysis
+        minimal_analysis = yield self.find_one({"_id": analysis_id}, {"sample_id": True})
+        sample_id = minimal_analysis["sample_id"]
 
         # Remove analysis entry from database
-        yield self.remove_analysis({"_id": data["analysis_id"]})
-
-        # Update the sample document with a list of analyses lacking the id for the removed sample.
-        yield self.update(data["_id"], {
-            "$pull": {"analyses": data["analysis_id"]},
-            "$set": {"analyzed": analyzed}
-        })
+        yield self.remove(analysis_id)
 
         # Remove the analysis directory
-        path = self.settings.get("data_path") + "/samples/sample_" + data["_id"] + "/analysis/" + data["analysis_id"]
+        path = os.path.join(self.settings.get("data_path"), "samples/sample_" + sample_id, "analysis", analysis_id)
+
+        shutil.rmtree(path)
 
         try:
             yield virtool.utils.rm(path, recursive=True)
