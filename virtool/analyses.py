@@ -178,6 +178,16 @@ class Collection(virtool.database.Collection):
 
     @virtool.gen.exposed_method([])
     def remove_analysis(self, transaction):
+        """
+        An exposed method that wraps :meth:`.remove_by_id`.
+
+        :param transaction: the transaction associated with the request.
+        :type transaction: :class:`.Transaction`
+
+        :return: a boolean indicating the success of the operation and the response from the Mongo remove operation.
+        :rtype: tuple
+
+        """
         id_list = virtool.database.coerce_list(transaction.data["_id"])
 
         for _id in id_list:
@@ -186,16 +196,12 @@ class Collection(virtool.database.Collection):
         return True, None
 
     @virtool.gen.coroutine
-    def remove_from_job(self, data):
-        yield self.remove_by_id(data["_id"])
-
-    @virtool.gen.coroutine
     def remove_by_id(self, analysis_id):
         """
         Removes the analysis document identified by the id in ``data``.
 
-        :param transaction:
-        :type transaction: dict
+        :param analysis_id: the id of the analysis document to remove.
+        :type analysis_id: str
 
         """
         # Get the sample id for the analysis
@@ -203,7 +209,7 @@ class Collection(virtool.database.Collection):
         sample_id = minimal_analysis["sample_id"]
 
         # Remove analysis entry from database
-        yield self.remove(analysis_id)
+        response = yield self.remove(analysis_id)
 
         # Remove the analysis directory
         path = os.path.join(self.settings.get("data_path"), "samples/sample_" + sample_id, "analysis", analysis_id)
@@ -214,6 +220,8 @@ class Collection(virtool.database.Collection):
             yield virtool.utils.rm(path, recursive=True)
         except FileNotFoundError:
             pass
+
+        return response
 
     @virtool.gen.coroutine
     def remove_by_sample_id(self, id_list):
@@ -352,13 +360,3 @@ class Collection(virtool.database.Collection):
                         hmm_result.update(hmm)
 
         return analyses
-
-    @virtool.gen.coroutine
-    def retrieve(self, id_list):
-        virtool.database.coerce_list(id_list)
-
-        analyses = yield self.dispatcher.collections["analyses"].find({
-            "_id": {
-                "$in": id_list
-            }
-        }).to_list(None)
