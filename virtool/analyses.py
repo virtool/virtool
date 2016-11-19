@@ -1,5 +1,6 @@
 import os
 import shutil
+import logging
 
 import virtool.utils
 import virtool.files
@@ -9,8 +10,10 @@ import virtool.database
 import virtool.job
 import virtool.pathoscope
 
+logger = logging.getLogger(__name__)
 
-class Collection(virtool.database.Collection):
+
+class Collection(virtool.database.SyncingCollection):
     """
     A connection to the pymongo analyses collection. Provides methods for viewing and modifying the
     collection.
@@ -21,6 +24,15 @@ class Collection(virtool.database.Collection):
     """
     def __init__(self, dispatcher):
         super().__init__("analyses", dispatcher)
+
+        self.sync_projector.update({key: True for key in [
+            "name",
+            "algorithm",
+            "sample",
+            "index_version",
+            "username",
+            "timestamp"
+        ]})
 
         # A synchronous connection to the Mongo database.
         db_sync = virtool.utils.get_db_client(self.settings, sync=True)
@@ -87,23 +99,6 @@ class Collection(virtool.database.Collection):
         }, multi=True)
 
         db_sync.analyses.remove({"ready": False})
-
-    @virtool.gen.coroutine
-    def update(self, query, update, increment_version=True, upsert=False, connections=None):
-        # Which samples have analyses affected by the update operation.
-        affected_sample_ids = yield self.find(query).distinct("sample_id")
-
-        # Perform the update on the database collection.
-        response = yield self._perform_update(query, update, increment_version, upsert)
-
-        # Don't just dispatch the ids of the changed analysis documents. We need to dispatch the changed sample ids so
-        # the clients can use the information.
-        self.dispatch("update", {
-            "_id": response,
-            "sample_ids": virtool.database.coerce_list(affected_sample_ids)
-        }, connections=connections)
-
-        return response
 
     @virtool.gen.coroutine
     def new(self, sample_id, name, username, algorithm):
@@ -245,22 +240,18 @@ class Collection(virtool.database.Collection):
 
     @virtool.gen.exposed_method([])
     def detail(self, transaction):
-        detail = yield self.get_by_id([transaction.data["_id"]])
+        detail = yield self.get_by_id(transaction.data["_id"])
 
         return True, detail
 
     @virtool.gen.coroutine
-    def get_by_id(self, _id):
-        analysis = yield self.find_one({"_id": _id})
+    def get_by_id(self, id_list):
+        virtool.database.coerce_list(id_list)
 
-        analyses = yield self.format([analysis])
-
-        return analyses[0]
-
-    @virtool.gen.coroutine
-    def get_by_sample_id(self, sample_id):
         analyses = yield self.find({
-            "sample_id": sample_id
+            "_id": {
+                "$in": id_list
+            }
         }).to_list(None)
 
         analyses = yield self.format(analyses)

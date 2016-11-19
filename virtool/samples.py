@@ -367,9 +367,6 @@ class Collection(virtool.database.SyncingCollection):
         """
         # Get the entire entry for the virus.
         detail = yield self.find_one({"_id": sample_id})
-
-        detail["analyses"] = yield self.dispatcher.collections["analyses"].get_by_sample_id(sample_id)
-
         return detail
 
     @virtool.gen.exposed_method([])
