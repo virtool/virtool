@@ -34,6 +34,11 @@ function Dispatcher(onReady) {
             indices: ["added", "username", "imported", "archived", "analyzed"],
             retain: true
         },
+        "analyses": {
+            unique: ["_id"],
+            indices: ["sample_id", "username"],
+            retain: true
+        },
         "viruses": {
             unique: ["_id", "name"],
             indices: ["modified", "abbreviation", "last_indexed_version"],

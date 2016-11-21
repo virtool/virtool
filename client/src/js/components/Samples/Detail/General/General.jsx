@@ -7,14 +7,21 @@ var Numeral = require('numeral');
 var Icon = require('virtool/js/components/Base/Icon.jsx');
 var InputCell = require('virtool/js/components/Base/InputCell.jsx');
 
-var General = React.createClass({
+var SampleDetailGeneral = React.createClass({
+
+    propTypes: {
+        _id: React.PropTypes.string.isRequired,
+        _version: React.PropTypes.number.isRequired,
+        name: React.PropTypes.string,
+        host: React.PropTypes.string,
+        isolate: React.PropTypes.string,
+        paired: React.PropTypes.bool.isRequired,
+        username: React.PropTypes.string.isRequired,
+        added: React.PropTypes.string.isRequired,
+        quality: React.PropTypes.object.isRequired
+    },
 
     render: function () {
-
-        var data = this.props.data;
-
-        var paired = 'No';
-        if (data.paired) {paired = 'Yes';}
 
         var cells = ["name", "host", "isolate"].map(function (field) {
 
@@ -23,15 +30,15 @@ var General = React.createClass({
             if (this.props.canModify) {
                 inputCell = (
                     <InputCell
-                        _id={data._id}
+                        _id={this.props._id}
                         field={field}
-                        value={data[field]}
+                        value={this.props[field]}
                         className="col-sm-8"
                         collection={dispatcher.db.samples}
                     />
                 );
             } else {
-                inputCell = <td className='col-sm-8'>{data.name}</td>;
+                inputCell = <td className='col-sm-8'>{this.props[field]}</td>;
             }
 
             return (
@@ -46,14 +53,14 @@ var General = React.createClass({
         var databaseIdRow = dispatcher.user.settings.show_ids ? (
             <tr>
                 <th>Database ID</th>
-                <td>{data._id}</td>
+                <td>{this.props._id}</td>
             </tr>
         ): null;
 
         var databaseVersionRow = dispatcher.user.settings.show_versions ? (
             <tr>
                 <th>Database Version</th>
-                <td>{data._version}</td>
+                <td>{this.props._version}</td>
             </tr>
         ): null;
 
@@ -71,11 +78,11 @@ var General = React.createClass({
                     {databaseVersionRow}
                     <tr>
                       <th>Added</th>
-                      <td>{Moment(data.added).calendar()}</td>
+                      <td>{Moment(this.props.added).calendar()}</td>
                     </tr>
                     <tr>
                       <th>Added By</th>
-                      <td>{data.username}</td>
+                      <td>{this.props.username}</td>
                     </tr>
                   </tbody>
                 </table>
@@ -85,19 +92,19 @@ var General = React.createClass({
                   <tbody>
                     <tr>
                       <th className='col-sm-4'>Read Count</th>
-                      <td className='col-sm-8'>{Numeral(data.quality.count).format('0.0 a')}</td>
+                      <td className='col-sm-8'>{Numeral(this.props.quality.count).format('0.0 a')}</td>
                     </tr>
                     <tr>
                       <th>Length Range</th>
-                      <td>{data.quality.length.join(' - ')}</td>
+                      <td>{this.props.quality.length.join(' - ')}</td>
                     </tr>
                     <tr>
                       <th>GC Content</th>
-                      <td>{Numeral(data.quality.gc / 100).format('0.0 %')}</td>
+                      <td>{Numeral(this.props.quality.gc / 100).format('0.0 %')}</td>
                     </tr>
                     <tr>
                       <th>Paired</th>
-                      <td>{paired}</td>
+                      <td>{this.props.paired ? "Yes": "No"}</td>
                     </tr>
                   </tbody>
                 </table>
@@ -107,11 +114,11 @@ var General = React.createClass({
                   <tbody>
                     <tr>
                       <th className='col-sm-4'>Original Files</th>
-                      <td className='col-sm-8'>{data.files.join(', ')}</td>
+                      <td className='col-sm-8'>{this.props.files.join(', ')}</td>
                     </tr>
                     <tr>
                       <th>Encoding</th>
-                      <td>{data.quality.encoding}</td>
+                      <td>{this.props.quality.encoding}</td>
                     </tr>
                   </tbody>
                 </table>
@@ -121,4 +128,4 @@ var General = React.createClass({
 
 });
 
-module.exports = General;
+module.exports = SampleDetailGeneral;

@@ -4,7 +4,7 @@ var Panel = require('react-bootstrap/lib/Panel');
 
 var Input = require('virtool/js/components/Base/Input.jsx');
 
-var SamplePermissionsDetail = React.createClass({
+var SampleDetailRights = React.createClass({
 
     changeGroup: function (event) {
         dispatcher.db.samples.request('set_group', {
@@ -32,8 +32,8 @@ var SamplePermissionsDetail = React.createClass({
             type: 'select'
         };
 
-        var groupRights = (this.props.data.group_read ? 'r': '') + (this.props.data.group_write ? 'w': '');
-        var allRights = (this.props.data.all_read ? 'r': '') + (this.props.data.all_write ? 'w': '');
+        var groupRights = (this.props.group_read ? 'r': '') + (this.props.group_write ? 'w': '');
+        var allRights = (this.props.all_read ? 'r': '') + (this.props.all_write ? 'w': '');
 
         var nameOptionComponents = dispatcher.user.groups.map(function (groupId) {
             return <option key={groupId} value={groupId}>{_.capitalize(groupId)}</option>
@@ -41,7 +41,7 @@ var SamplePermissionsDetail = React.createClass({
 
         return (
             <Panel className='tab-panel'>
-                <Input type='select' label='Group' value={this.props.data.group} onChange={this.changeGroup}>
+                <Input type='select' label='Group' value={this.props.group} onChange={this.changeGroup}>
                     <option value='none'>None</option>
                     {nameOptionComponents}
                 </Input>
@@ -63,4 +63,4 @@ var SamplePermissionsDetail = React.createClass({
 
 });
 
-module.exports = SamplePermissionsDetail;
+module.exports = SampleDetailRights;

@@ -28,7 +28,7 @@ class Collection(virtool.database.SyncingCollection):
         self.sync_projector.update({key: True for key in [
             "name",
             "algorithm",
-            "sample",
+            "sample_id",
             "index_version",
             "username",
             "timestamp"

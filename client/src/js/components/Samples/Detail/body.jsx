@@ -7,10 +7,10 @@ var Button = require('react-bootstrap/lib/Button');
 var Tab = require('react-bootstrap/lib/Tab');
 var Tabs = require('react-bootstrap/lib/Tabs');
 
-var General = require("./general/panel.jsx");
-var Quality = require("./Quality/Quality.jsx");
-var Analysis = require("./analysis/Panel.jsx");
-var Rights = require("./Rights/Panel.jsx");
+var SampleDetailGeneral = require("./General/General.jsx");
+var SampleDetailQuality = require("./Quality/Quality.jsx");
+var SampleDetailAnalyses = require("./Analyses/Analyses.jsx");
+var SampleDetailRights = require("./Rights/Rights.jsx");
 
 var Icon = require("virtool/js/components/Base/Icon.jsx");
 var ConfirmFooter = require("virtool/js/components/Base/ConfirmFooter.jsx");
@@ -19,8 +19,55 @@ var SampleDetail = React.createClass({
 
     getInitialState: function () {
         return {
-            activeKey: 1
+            activeKey: "general",
+            analyses: null
         };
+    },
+
+    componentDidMount: function () {
+        var analysisIds = _.map(dispatcher.db.analyses.find({sample_id: this.props.detail._id}), "_id");
+
+        this.retrieveAnalyses(analysisIds);
+
+        dispatcher.db.analyses.on("change", this.onAnalysesChange);
+    },
+
+    componentWillUnmount: function () {
+        dispatcher.db.analyses.off("change", this.onAnalysesChange);
+    },
+
+    retrieveAnalyses: function (analysisIds, mergeIn) {
+        dispatcher.db.analyses.request("detail", {_id: analysisIds})
+            .success(function (data) {
+                if (mergeIn) {
+                    data = data.concat(mergeIn);
+                }
+
+                this.setState({
+                    analyses: data
+                });
+            }, this);
+    },
+
+    onAnalysesChange: function () {
+
+        var nextAnalyses = dispatcher.db.analyses.find({sample_id: this.props.detail._id});
+
+        var toRetain = _.intersectionWith(this.state.analyses, nextAnalyses, function (arrValue, othValue) {
+            return arrValue._id === othValue._id && arrValue._version === othValue._version;
+        });
+
+        var toRetrieve = _.difference(_.map(nextAnalyses, "_id"), _.map(toRetain, "_id"));
+
+        if (toRetrieve.length > 0) {
+            this.retrieveAnalyses(toRetrieve, toRetain);
+        }
+
+        if (toRetrieve.length === 0 && toRetain.length !== nextAnalyses.length) {
+            this.setState({
+                analyses: toRetain
+            });
+        }
     },
 
     handleSelect: function (eventKey) {
@@ -44,7 +91,7 @@ var SampleDetail = React.createClass({
 
         if (data.imported === true) {
 
-            var isOwner = dispatcher.user.name === data.username;
+            var isOwner = dispatcher.user.name === this.props.detail.username;
 
             var canModify = (
                 data.all_write ||
@@ -58,22 +105,6 @@ var SampleDetail = React.createClass({
                 </span>
             );
 
-            var tabContentProps = _.assign({
-                data: data,
-                canModify: canModify,
-                activeKey: this.state.activeKey
-            }, this.props);
-
-            var rightsTab;
-
-            if (isOwner || dispatcher.user.groups.indexOf('administrator') > -1) {
-                rightsTab = (
-                    <Tab eventKey={4} title={<Icon name='key' />}>
-                        <Rights {...tabContentProps} />
-                    </Tab>
-                );
-            }
-
             if (canModify) {
                 footer = (
                     <ConfirmFooter
@@ -85,19 +116,61 @@ var SampleDetail = React.createClass({
                 );
             }
 
-            body = (
-                <Tabs id="sample-tabs" ref='tabs' activeKey={this.state.activeKey} animation={false} onSelect={this.handleSelect}>
-                    <Tab eventKey={1} title='General'>
-                        <General {...tabContentProps} />
-                    </Tab>
-                    <Tab eventKey={2} title='Quality'>
-                        <Quality {...tabContentProps} />
-                    </Tab>
-                    <Tab eventKey={3} title='Analysis'>
-                        <Analysis {...tabContentProps} />
-                    </Tab>
+            var tabContent;
 
+            switch (this.state.activeKey) {
+
+                case "general":
+                    tabContent = (
+                        <SampleDetailGeneral
+                            {...this.props.detail}
+                            canModify={canModify}
+                        />
+                    );
+                    break;
+
+                case "quality":
+                    tabContent = <SampleDetailQuality {...this.props.detail} />;
+                    break;
+
+                case "analyses":
+                    tabContent = (
+                        <SampleDetailAnalyses
+                            {...this.props.detail}
+                            analyses={this.state.analyses}
+                            canModify={canModify}
+                        />
+                    );
+                    break;
+
+                case "rights":
+                    tabContent = <SampleDetailRights {...this.props.detail} />
+                    break;
+
+            }
+
+            var tabsProps = {
+                id: "sample-detail-tabs",
+                activeKey: this.state.activeKey,
+                onSelect: this.handleSelect
+            };
+
+            var rightsTab;
+
+            if (isOwner || dispatcher.user.groups.indexOf('administrator') > -1) {
+                <Tab eventKey="rights" title={<Icon name='key' />} />
+            }
+
+            body = (
+                <Tabs {...tabsProps}>
+                    <Tab eventKey="general" title='General' />
+                    <Tab eventKey="quality" title='Quality' />
+                    <Tab eventKey="analyses" title='Analyses' />
                     {rightsTab}
+
+                    <Tab.Content>
+                        {tabContent}
+                    </Tab.Content>
                 </Tabs>
             );
         } else {

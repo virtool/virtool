@@ -38,6 +38,8 @@ var AnalysisItem = require('./Item.jsx');
 var AnalysisList = React.createClass({
 
     propTypes: {
+        sampleId: React.PropTypes.string.isRequired,
+        analyses: React.PropTypes.arrayOf(React.PropTypes.object),
         canModify: React.PropTypes.bool
     },
 
@@ -67,7 +69,7 @@ var AnalysisList = React.createClass({
         event.preventDefault();
         this.setState({pending: true}, function () {
             dispatcher.db.samples.request('analyze', {
-                samples: [this.props.detail._id],
+                samples: [this.props.sampleId],
                 discovery: false,
                 algorithm: this.state.algorithm,
                 name: this.state.name || null
@@ -130,10 +132,10 @@ var AnalysisList = React.createClass({
         var listContent;
 
         // Show a list of analyses if there are any.
-        if (this.props.data.analyses.length > 0) {
+        if (this.props.analyses.length > 0) {
 
             // Sort by timestamp so the newest analyses are at the top.
-            var sorted = _.sortBy(this.props.data.analyses, 'timestamp').reverse();
+            var sorted = _.sortBy(this.props.analyses, 'timestamp').reverse();
 
             // The components that detail individual analyses.
             listContent = sorted.map(function (document) {
@@ -141,7 +143,7 @@ var AnalysisList = React.createClass({
                     <AnalysisItem
                         key={document._id}
                         {...document}
-                        {...this.props}
+
                     />
                 );
             }, this);

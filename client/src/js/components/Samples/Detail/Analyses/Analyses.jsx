@@ -58,7 +58,9 @@ var AnalysisPanel = React.createClass({
             // Show the analysis listing if no activeAnalysisId is defined.
             content = (
                 <Listing
-                    {...this.props}
+                    sampleId={this.props._id}
+                    analyses={this.props.analyses}
+                    canModify={this.props.canModify}
                     selectAnalysis={this.selectAnalysis}
                 />
             );
@@ -66,7 +68,7 @@ var AnalysisPanel = React.createClass({
 
         else {
             // Get the analysis document that corresponds to the activeAnalysisId.
-            var analysisEntry = _.find(this.props.data.analyses, {_id: this.state.activeAnalysisId});
+            var analysisEntry = _.find(this.props.analyses, {_id: this.state.activeAnalysisId});
 
             content = (
                 <AnalysisReport

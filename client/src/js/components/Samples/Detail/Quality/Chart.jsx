@@ -30,9 +30,7 @@ var QualityChart = React.createClass({
         window.removeEventListener('resize', this.update);
     },
 
-    shouldComponentUpdate: function (nextProps) {
-        if (nextProps.active && !this.props.active) this.update();
-        
+    shouldComponentUpdate: function () {
         // Don't ever render the component. All changes are done via d3.
         return false;
     },

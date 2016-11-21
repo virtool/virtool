@@ -27,7 +27,12 @@ var PushButton = require('virtool/js/components/Base/PushButton.jsx');
  *
  * @class
  */
-var Quality = React.createClass({
+var SampleDetailQuality = React.createClass({
+
+    propTypes: {
+        _id: React.PropTypes.string.isRequired,
+        quality: React.PropTypes.object.isRequired
+    },
 
     getInitialState: function () {
         return {
@@ -52,54 +57,43 @@ var Quality = React.createClass({
 
     render: function () {
 
-        var data = this.props.data;
-        var active = this.props.activeKey === 2;
+        var buttonProps = {
+            onClick: this.state.download ? null : this.pdf,
+            bsStyle: this.state.download ? 'primary' : 'default',
+            href: this.state.download ? 'download/' + this.state.download : null,
+            download: this.state.download ? 'quality_' + this.props._id + '.pdf' : null
+        };
 
-        if (active) {
+        return (
+            <Panel className="tab-panel">
+                <div ref='container' className='printable-quality'>
+                    <h5>
+                        <strong>Quality Distribution at Read Positions</strong>
+                        <PushButton bsSize='xsmall' {...buttonProps} pullRight>
+                            <Icon name='file-pdf' pending={this.state.pending}/> PDF
+                        </PushButton>
+                    </h5>
+                    <Chart
+                        createChart={Bases}
+                        data={this.props.quality.bases}
+                    />
 
-            var buttonProps = {
-                onClick: this.state.download ? null : this.pdf,
-                bsStyle: this.state.download ? 'primary' : 'default',
-                href: this.state.download ? 'download/' + this.state.download : null,
-                download: this.state.download ? 'quality_' + this.props.data._id + '.pdf' : null
-            };
+                    <h5><strong>Nucleotide Composition at Read Positions</strong></h5>
+                    <Chart
+                        createChart={Nucleotides}
+                        data={this.props.quality.composition}
+                    />
 
-            return (
-                <Panel className="tab-panel">
-                    <div ref='container' className='printable-quality'>
-                        <h5>
-                            <strong>Quality Distribution at Read Positions</strong>
-                            <PushButton bsSize='xsmall' {...buttonProps} pullRight>
-                                <Icon name='file-pdf' pending={this.state.pending}/> PDF
-                            </PushButton>
-                        </h5>
-                        <Chart
-                            createChart={Bases}
-                            data={data.quality.bases}
-                            active={active}
-                        />
+                    <h5><strong>Read-wise Quality Occurrence</strong></h5>
+                    <Chart
+                        createChart={Sequences}
+                        data={this.props.quality.sequences}
+                    />
 
-                        <h5><strong>Nucleotide Composition at Read Positions</strong></h5>
-                        <Chart
-                            createChart={Nucleotides}
-                            data={data.quality.composition}
-                            active={active}
-                        />
-
-                        <h5><strong>Read-wise Quality Occurrence</strong></h5>
-                        <Chart
-                            createChart={Sequences}
-                            data={data.quality.sequences}
-                            active={active}
-                        />
-
-                    </div>
-                </Panel>
-            );
-        } else {
-            return <div />;
-        }
+                </div>
+            </Panel>
+        );
     }
 });
 
-module.exports = Quality;
+module.exports = SampleDetailQuality;
