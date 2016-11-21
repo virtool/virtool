@@ -99,7 +99,7 @@ class Base(virtool.job.Job):
         :meth:`~samples.Collection._remove_analysis`.
 
         """
-        self.collection_operation("analyses", "remove_by_sample_id", self.sample_id)
+        self.collection_operation("analyses", "remove_by_id", self.analysis_id)
 
 
 class Pathoscope(Base):
