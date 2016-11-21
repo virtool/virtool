@@ -67,15 +67,24 @@ var AnalysisList = React.createClass({
      */
     handleSubmit: function (event) {
         event.preventDefault();
+
+        this.props.setProgress(true);
+
         this.setState({pending: true}, function () {
             dispatcher.db.samples.request('analyze', {
                 samples: [this.props.sampleId],
                 discovery: false,
                 algorithm: this.state.algorithm,
                 name: this.state.name || null
-            }).success(function () {
+            })
+            .success(function () {
+                this.props.setProgress(false);
                 this.setState(this.getInitialState());
-            }, this);
+            }, this)
+            .failure(function () {
+                this.props.setProgress(false);
+                this.setState(this.getInitialState());
+            })
         });
     },
 
@@ -111,8 +120,8 @@ var AnalysisList = React.createClass({
                             </Flex.Item>
                             <Flex.Item pad>
                                 <div style={divStyle}>
-                                    <PushButton type='submit' bsStyle='primary'>
-                                        <Icon name='new-entry' pending={this.state.pending}/> Create
+                                    <PushButton type='submit' bsStyle='primary' disabled={this.state.pending}>
+                                        <Icon name='new-entry' /> Create
                                     </PushButton>
                                 </div>
                             </Flex.Item>
@@ -132,7 +141,7 @@ var AnalysisList = React.createClass({
         var listContent;
 
         // Show a list of analyses if there are any.
-        if (this.props.analyses.length > 0) {
+        if (this.props.analyses) {
 
             // Sort by timestamp so the newest analyses are at the top.
             var sorted = _.sortBy(this.props.analyses, 'timestamp').reverse();
@@ -143,7 +152,8 @@ var AnalysisList = React.createClass({
                     <AnalysisItem
                         key={document._id}
                         {...document}
-
+                        canModify={this.props.canModify}
+                        setProgress={this.props.setProgress}
                     />
                 );
             }, this);

@@ -19,6 +19,7 @@ var SampleDetail = React.createClass({
 
     getInitialState: function () {
         return {
+            showProgress: false,
             activeKey: "general",
             analyses: null
         };
@@ -78,11 +79,19 @@ var SampleDetail = React.createClass({
         this.props.updateStyle();
     },
 
+    setProgress: function (value) {
+        this.setState({
+            showProgress: value
+        });
+    },
+
     remove: function () {
         dispatcher.db.samples.request('remove_sample', {_id: this.props.detail._id});
     },
 
     render: function () {
+
+        console.log(this.state);
 
         var data = this.props.detail;
         
@@ -139,12 +148,13 @@ var SampleDetail = React.createClass({
                             {...this.props.detail}
                             analyses={this.state.analyses}
                             canModify={canModify}
+                            setProgress={this.setProgress}
                         />
                     );
                     break;
 
                 case "rights":
-                    tabContent = <SampleDetailRights {...this.props.detail} />
+                    tabContent = <SampleDetailRights {...this.props.detail} />;
                     break;
 
             }
@@ -158,7 +168,7 @@ var SampleDetail = React.createClass({
             var rightsTab;
 
             if (isOwner || dispatcher.user.groups.indexOf('administrator') > -1) {
-                <Tab eventKey="rights" title={<Icon name='key' />} />
+                rightsTab = <Tab eventKey="rights" title={<Icon name='key' />} />;
             }
 
             body = (
@@ -189,6 +199,8 @@ var SampleDetail = React.createClass({
                 <Modal.Header>
                     {this.props.detail.name}
                 </Modal.Header>
+
+                <Modal.Progress active={this.state.showProgress} />
 
                 <Modal.Body>
                     {body}

@@ -62,6 +62,7 @@ var AnalysisPanel = React.createClass({
                     analyses={this.props.analyses}
                     canModify={this.props.canModify}
                     selectAnalysis={this.selectAnalysis}
+                    setProgress={this.props.setProgress}
                 />
             );
         }

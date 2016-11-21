@@ -31,6 +31,24 @@ var RelativeTime = require('virtool/js/components/Base/RelativeTime.jsx');
  */
 var AnalysisItem = React.createClass({
 
+    propTypes: {
+        _id: React.PropTypes.string.isRequired,
+        name: React.PropTypes.string,
+        job: React.PropTypes.string.isRequired,
+        algorithm: React.PropTypes.string.isRequired,
+        index_version: React.PropTypes.number.isRequired,
+        timestamp: React.PropTypes.string.isRequired,
+        username: React.PropTypes.string.isRequired,
+        ready: React.PropTypes.bool
+    },
+
+    getDefaultProps: function () {
+        return {
+            name: "Unnamed Analysis",
+            ready: false
+        };
+    },
+
     getInitialState: function () {
         return {
             pending: false,
@@ -69,16 +87,19 @@ var AnalysisItem = React.createClass({
      */
     remove: function () {
         this.setState({pending: true}, function () {
-            dispatcher.db.analyses.request('remove_analysis', {
-                _id: this.props.sample_id,
-                analysis_id: this.props._id
-            }).failure(function () {
-                this.setState({pending: false});
-            }, this);
+            this.props.setProgress(true);
+
+            dispatcher.db.analyses.request('remove_analysis', {_id: this.props._id})
+                .success(function () {
+                    this.props.setProgress(false);
+                }, this)
+                .failure(function () {
+                    this.props.setProgress(false);
+                }, this);
         });
     },
 
-    onJobUpdate: function (data) {
+    onJobUpdate: function () {
         var job = dispatcher.db.jobs.findOne({_id: this.props.job});
         if (job.progress !== this.state.progress) this.setState({progress: job.progress});
     },
