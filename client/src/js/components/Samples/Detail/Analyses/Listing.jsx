@@ -94,7 +94,7 @@ var AnalysisList = React.createClass({
 
         if (this.props.canModify) {
 
-            var divStyle = {
+            var buttonStyle = {
                 marginBottom: "15px"
             };
 
@@ -119,11 +119,9 @@ var AnalysisList = React.createClass({
                                 </Input>
                             </Flex.Item>
                             <Flex.Item pad>
-                                <div style={divStyle}>
-                                    <PushButton type='submit' bsStyle='primary' disabled={this.state.pending}>
-                                        <Icon name='new-entry' /> Create
-                                    </PushButton>
-                                </div>
+                                <PushButton type='submit' style={buttonStyle} bsStyle='primary' disabled={this.state.pending}>
+                                    <Icon name='new-entry' /> Create
+                                </PushButton>
                             </Flex.Item>
                         </Flex>
                     </form>
@@ -154,6 +152,7 @@ var AnalysisList = React.createClass({
                         {...document}
                         canModify={this.props.canModify}
                         setProgress={this.props.setProgress}
+                        selectAnalysis={this.props.selectAnalysis}
                     />
                 );
             }, this);

@@ -104,9 +104,14 @@ div.hoverable:hover {
     box-shadow: 2px 2px 2px 0 #d5d5d5;
 }
 
-.list-group-item.spaced > .progress {
+.list-group-item > .progress {
     height: 10px;
     margin: -10px -15px 0 -15px;
+}
+
+.list-group-item > .progress.progress-small {
+    height: 3px;
+    margin-bottom: 7px;
 }
 
 .list-group-item.job .job-state-overlay {

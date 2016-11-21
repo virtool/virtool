@@ -64,11 +64,9 @@ var SampleDetail = React.createClass({
             this.retrieveAnalyses(toRetrieve, toRetain);
         }
 
-        if (toRetrieve.length === 0 && toRetain.length !== nextAnalyses.length) {
-            this.setState({
-                analyses: toRetain
-            });
-        }
+        this.setState({
+            analyses: toRetain.length === 0 ? null: toRetain
+        });
     },
 
     handleSelect: function (eventKey) {
@@ -90,8 +88,6 @@ var SampleDetail = React.createClass({
     },
 
     render: function () {
-
-        console.log(this.state);
 
         var data = this.props.detail;
         

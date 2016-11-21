@@ -14,9 +14,9 @@
 var _ = require('lodash');
 var CX = require('classnames');
 var React = require('react');
-var Progress = require('rc-progress').Circle;
 var Row = require('react-bootstrap/lib/Row');
 var Col = require('react-bootstrap/lib/Col');
+var ProgressBar = require('react-bootstrap/lib/ProgressBar');
 
 var Icon = require('virtool/js/components/Base/Icon.jsx');
 var Flex = require('virtool/js/components/Base/Flex.jsx');
@@ -42,16 +42,9 @@ var AnalysisItem = React.createClass({
         ready: React.PropTypes.bool
     },
 
-    getDefaultProps: function () {
-        return {
-            name: "Unnamed Analysis",
-            ready: false
-        };
-    },
-
     getInitialState: function () {
         return {
-            pending: false,
+            disabled: false,
             progress: this.props.ready ? 0: dispatcher.db.jobs.findOne({_id: this.props.job}).progress
         };
     },
@@ -87,7 +80,10 @@ var AnalysisItem = React.createClass({
      */
     remove: function () {
         this.setState({pending: true}, function () {
-            this.props.setProgress(true);
+
+            this.setState({
+                disabled: true
+            }, this.props.setProgress(true));
 
             dispatcher.db.analyses.request('remove_analysis', {_id: this.props._id})
                 .success(function () {
@@ -101,52 +97,51 @@ var AnalysisItem = React.createClass({
 
     onJobUpdate: function () {
         var job = dispatcher.db.jobs.findOne({_id: this.props.job});
-        if (job.progress !== this.state.progress) this.setState({progress: job.progress});
+
+        if (job.progress !== this.state.progress) {
+            this.setState({progress: job.progress});
+        }
     },
 
     render: function () {
         
-        var rightIcon;
+        var removeIcon;
 
-        var hidden = {
-            visibility: 'hidden'
-        };
+        if (this.props.canModify && this.props.ready && !this.state.disabled) {
+            removeIcon = <Icon
+                name='remove'
+                bsStyle='danger'
+                onClick={this.remove}
+                pullRight
+            />
+        }
 
-        if (this.props.ready) {
-            rightIcon = (
-                <Icon
-                    name='remove'
-                    bsStyle={this.props.canModify ? 'danger': null}
-                    pending={!this.props.ready || this.state.pending}
-                    onClick={this.props.canModify ? this.remove: null}
-                    style={this.props.canModify ? null: hidden}
-                    pullRight
+        var progressBar;
+
+        if (!this.props.ready) {
+            progressBar = (
+                <ProgressBar
+                    className="progress-small"
+                    bsStyle={this.props.ready ? "primary": "success"}
+                    now={this.props.ready ? 100: this.state.progress * 100}
                 />
-            );
-        } else {
-            rightIcon = (
-                <div className='pull-right' style={{height: '14px', width: '14px'}}>
-                    <Progress
-                        percent={this.state.progress * 100}
-                        strokeWidth={14}
-                        strokeColor="#337ab7"
-                        trailColor="#000000"
-                    />
-                </div>
             );
         }
 
         var itemClass = CX({
             'list-group-item': true,
-            'disabled': this.props.disabled || !this.props.ready,
-            'hoverable': !this.props.disabled && this.props.ready
+            'disabled': this.state.disabled || !this.props.ready,
+            'hoverable': !this.state.disabled && this.props.ready
         });
 
         return (
             <div className={itemClass} onClick={this.handleClick}>
+
+                {progressBar}
+
                 <Row>
-                    <Col sm={3} >
-                        {this.props.name || 'Unnamed Analysis'}
+                    <Col sm={3}>
+                        {this.props.name || "Unnamed Analysis"}
                     </Col>
                     <Col sm={3} >
                         {this.props.algorithm === 'nuvs' ? 'NuVs': _.upperFirst(_.camelCase(this.props.algorithm))}
@@ -156,7 +151,7 @@ var AnalysisItem = React.createClass({
                     </Col>
                     <Col md={4}>
                         Created <RelativeTime time={this.props.timestamp} /> by {this.props.username}
-                        {rightIcon}
+                        {removeIcon}
                     </Col>
                 </Row>
             </div>

@@ -28,7 +28,9 @@ var AnalysisPanel = React.createClass({
     },
 
     getInitialState: function () {
-        return {activeAnalysisId: null};
+        return {
+            activeAnalysisId: null
+        };
     },
 
     /**
@@ -73,9 +75,11 @@ var AnalysisPanel = React.createClass({
 
             content = (
                 <AnalysisReport
-                    readCount={this.props.data.quality.count}
-                    maxReadLength={this.props.data.quality.length[1]}
+                    readCount={this.props.quality.count}
+                    maxReadLength={this.props.quality.length[1]}
+
                     onBack={this.showListing}
+
                     {...analysisEntry}
                 />
             );
