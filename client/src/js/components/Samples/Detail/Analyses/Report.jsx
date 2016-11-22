@@ -5,7 +5,6 @@ var Row = require('react-bootstrap/lib/Row');
 var Col = require('react-bootstrap/lib/Col');
 var Panel = require('react-bootstrap/lib/Panel');
 var Table = require('react-bootstrap/lib/Table');
-var Input = require('react-bootstrap/lib/InputGroup');
 
 var Icon = require('virtool/js/components/Base/Icon.jsx');
 var PushButton = require('virtool/js/components/Base/PushButton.jsx');

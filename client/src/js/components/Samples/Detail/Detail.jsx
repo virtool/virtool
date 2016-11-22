@@ -1,10 +1,11 @@
-var _ = require('lodash');
+var _ = require("lodash");
 var React = require("react");
 var ResizeDetector = require("react-resize-detector").default;
-var Alert = require('react-bootstrap/lib/Alert');
-var Button = require('react-bootstrap/lib/Button');
-var Tab = require('react-bootstrap/lib/Tab');
-var Tabs = require('react-bootstrap/lib/Tabs');
+
+var Tab = require("react-bootstrap/lib/Tab");
+var Tabs = require("react-bootstrap/lib/Tabs");
+var Alert = require("react-bootstrap/lib/Alert");
+var Button = require("react-bootstrap/lib/Button");
 
 var SampleDetailGeneral = require("./General/General.jsx");
 var SampleDetailQuality = require("./Quality/Quality.jsx");
@@ -84,7 +85,7 @@ var SampleDetail = React.createClass({
     },
 
     remove: function () {
-        dispatcher.db.samples.request('remove_sample', {_id: this.props.detail._id});
+        dispatcher.db.samples.request("remove_sample", {_id: this.props.detail._id});
     },
 
     render: function () {
@@ -106,7 +107,7 @@ var SampleDetail = React.createClass({
 
             var buttonContent = (
                 <span>
-                    <Icon name='remove'/> Remove
+                    <Icon name="remove"/> Remove
                 </span>
             );
 
@@ -116,7 +117,7 @@ var SampleDetail = React.createClass({
                         onHide={this.props.onHide}
                         buttonContent={buttonContent}
                         callback={this.remove}
-                        message='Are you sure you want to delete this sample?'
+                        message="Are you sure you want to delete this sample?"
                     />
                 );
             }
@@ -163,15 +164,15 @@ var SampleDetail = React.createClass({
 
             var rightsTab;
 
-            if (isOwner || dispatcher.user.groups.indexOf('administrator') > -1) {
-                rightsTab = <Tab eventKey="rights" title={<Icon name='key' />} />;
+            if (isOwner || dispatcher.user.groups.indexOf("administrator") > -1) {
+                rightsTab = <Tab eventKey="rights" title={<Icon name="key" />} />;
             }
 
             body = (
                 <Tabs {...tabsProps}>
-                    <Tab eventKey="general" title='General' />
-                    <Tab eventKey="quality" title='Quality' />
-                    <Tab eventKey="analyses" title='Analyses' />
+                    <Tab eventKey="general" title="General" />
+                    <Tab eventKey="quality" title="Quality" />
+                    <Tab eventKey="analyses" title="Analyses" />
                     {rightsTab}
 
                     <Tab.Content>
@@ -181,9 +182,9 @@ var SampleDetail = React.createClass({
             );
         } else {
             body = (
-                <div className='text-center'>
+                <div className="text-center">
                     <p>Sample is being imported...</p>
-                    <p><Icon name='spinner' pending={true} /></p>
+                    <p><Icon name="spinner" pending={true} /></p>
                 </div>
             );
         }

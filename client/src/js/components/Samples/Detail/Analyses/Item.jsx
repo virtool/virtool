@@ -1,14 +1,3 @@
-/**
- * @license
- * The MIT License (MIT)
- * Copyright 2015 Government of Canada
- *
- * @author
- * Ian Boyes
- *
- * @exports AnalysisItem
- */
-
 'use strict';
 
 var _ = require('lodash');
@@ -24,11 +13,6 @@ var Flex = require('virtool/js/components/Base/Flex.jsx');
 var PushButton = require('virtool/js/components/Base/PushButton.jsx');
 var RelativeTime = require('virtool/js/components/Base/RelativeTime.jsx');
 
-/**
- * A ListGroupItem-based component the represents an analysis document. A child component of AnalysisList.
- *
- * @class
- */
 var AnalysisItem = React.createClass({
 
     getInitialState: function () {
@@ -39,79 +23,67 @@ var AnalysisItem = React.createClass({
     },
     
     componentDidMount: function () {
-        if (!this.props.ready) dispatcher.db.jobs.on('update', this.onJobUpdate);
+        if (!this.props.ready) {
+            dispatcher.db.jobs.on('update', this.onJobUpdate);
+        }
     },
 
     componentDidUpdate: function (prevProps) {
-        if (!prevProps.ready && this.props.ready) dispatcher.db.jobs.off('update', this.onJobUpdate);
+        if (!prevProps.ready && this.props.ready) {
+            dispatcher.db.jobs.off('update', this.onJobUpdate);
+        }
     },
     
     componentWillUnmount: function () {
-        if (!this.props.ready) dispatcher.db.jobs.off('update', this.onJobUpdate);
+        if (!this.props.ready) {
+            dispatcher.db.jobs.off('update', this.onJobUpdate)
+        }
     },
 
-    /**
-     * Makes detailed information for this analysis document visible. Triggered by clicking this component.
-     *
-     * @func
-     */
     handleClick: function () {
         if (!this.disabled && this.props.ready) {
             this.props.selectAnalysis(this.props._id);
         }
     },
 
-    /**
-     * Remove an analysis record by sending a request to the server. Triggered by a click event on the red trashcan
-     * icon.
-     *
-     * @func
-     */
     remove: function () {
+        this.props.setProgress(true);
+
         this.setState({pending: true}, function () {
-            dispatcher.db.samples.request('remove_analysis', {
-                _id: this.props.sample,
-                analysis_id: this.props._id
-            }).failure(function () {
+            dispatcher.db.analyses.request('remove_analysis', {
+                _id: this.props._id
+            })
+            .success(function () {
+                this.props.setProgress(false);
+                this.setState({pending: false});
+            }, this)
+            .failure(function () {
+                this.props.setProgress(false);
                 this.setState({pending: false});
             }, this);
         });
     },
 
-    onJobUpdate: function (data) {
+    onJobUpdate: function () {
         var job = dispatcher.db.jobs.findOne({_id: this.props.job});
-        if (job.progress !== this.state.progress) this.setState({progress: job.progress});
+
+        if (job.progress !== this.state.progress) {
+            this.setState({progress: job.progress});
+        }
     },
 
     render: function () {
         
-        var rightIcon;
+        var removeIcon;
 
-        var hidden = {
-            visibility: 'hidden'
-        };
-
-        if (this.props.ready) {
-            rightIcon = (
+        if (this.props.ready && !this.state.pending && this.props.canModify) {
+            removeIcon = (
                 <Icon
                     name='remove'
-                    bsStyle={this.props.canModify ? 'danger': null}
-                    pending={!this.props.ready || this.state.pending}
-                    onClick={this.props.canModify ? this.remove: null}
-                    style={this.props.canModify ? null: hidden}
+                    bsStyle='danger'
+                    onClick={this.remove}
                     pullRight
                 />
-            );
-        } else {
-            rightIcon = (
-                <div className='pull-right' style={{height: '14px', width: '14px'}}>
-                    <Progress
-                        percent={this.state.progress * 100}
-                        strokeWidth={14}
-                        strokeColor="#337ab7"
-                        trailColor="#000000"
-                    />
-                </div>
             );
         }
 
@@ -125,7 +97,7 @@ var AnalysisItem = React.createClass({
             <div className={itemClass} onClick={this.handleClick}>
                 <Row>
                     <Col sm={3} >
-                        {this.props.comments || 'Unnamed Analysis'}
+                        {this.props.name || 'Unnamed Analysis'}
                     </Col>
                     <Col sm={3} >
                         {this.props.algorithm === 'nuvs' ? 'NuVs': _.upperFirst(_.camelCase(this.props.algorithm))}
@@ -135,7 +107,7 @@ var AnalysisItem = React.createClass({
                     </Col>
                     <Col md={4}>
                         Created <RelativeTime time={this.props.timestamp} /> by {this.props.username}
-                        {rightIcon}
+                        {removeIcon}
                     </Col>
                 </Row>
             </div>

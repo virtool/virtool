@@ -66,15 +66,20 @@ var AnalysisList = React.createClass({
     handleSubmit: function (event) {
         event.preventDefault();
 
-        this.props.togglePending();
+        this.props.setProgress(true);
 
         dispatcher.db.samples.request('analyze', {
-            samples: [this.props.detail._id],
-            discovery: false,
+            samples: [this._id],
             algorithm: this.state.algorithm,
-            comments: this.state.nickname || null
-        }).success(function () {
-            this.setState(this.getInitialState(), this.props.togglePending);
+            name: this.state.name || null
+        })
+        .success(function () {
+            this.props.setProgress(false);
+            this.setState(this.getInitialState());
+        }, this)
+        .failure(function () {
+            this.props.setProgress(false);
+            this.setState(this.getInitialState());
         }, this);
     },
 
@@ -131,10 +136,10 @@ var AnalysisList = React.createClass({
         var listContent;
 
         // Show a list of analyses if there are any.
-        if (this.props.data.analyses.length > 0) {
+        if (this.props.analyses.length > 0) {
 
             // Sort by timestamp so the newest analyses are at the top.
-            var sorted = _.sortBy(this.props.data.analyses, 'timestamp').reverse();
+            var sorted = _.sortBy(this.props.analyses, 'timestamp').reverse();
 
             // The components that detail individual analyses.
             listContent = sorted.map(function (document) {

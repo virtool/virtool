@@ -8,7 +8,7 @@ var ButtonGroup = require('react-bootstrap/lib/ButtonGroup');
 
 var SampleList = require("./List.jsx");
 var SampleSelector = require('./Selector.jsx');
-var SampleDetail = require('./Detail/body.jsx');
+var SampleDetail = require('./Detail/Detail.jsx');
 var CreateSample = require('./Create/Create.jsx');
 var QuickAnalyze = require('./QuickAnalyze.jsx');
 
