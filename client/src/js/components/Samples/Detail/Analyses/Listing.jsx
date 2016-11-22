@@ -38,14 +38,12 @@ var AnalysisItem = require('./Item.jsx');
 var AnalysisList = React.createClass({
 
     propTypes: {
-        sampleId: React.PropTypes.string.isRequired,
-        analyses: React.PropTypes.arrayOf(React.PropTypes.object),
         canModify: React.PropTypes.bool
     },
 
     getInitialState: function () {
         return {
-            name: '',
+            nickname: '',
             algorithm: 'pathoscope_bowtie',
 
             // True when an analysis request has been sent to the server, but the transaction has not returned.
@@ -68,24 +66,16 @@ var AnalysisList = React.createClass({
     handleSubmit: function (event) {
         event.preventDefault();
 
-        this.props.setProgress(true);
+        this.props.togglePending();
 
-        this.setState({pending: true}, function () {
-            dispatcher.db.samples.request('analyze', {
-                samples: [this.props.sampleId],
-                discovery: false,
-                algorithm: this.state.algorithm,
-                name: this.state.name || null
-            })
-            .success(function () {
-                this.props.setProgress(false);
-                this.setState(this.getInitialState());
-            }, this)
-            .failure(function () {
-                this.props.setProgress(false);
-                this.setState(this.getInitialState());
-            }, this)
-        });
+        dispatcher.db.samples.request('analyze', {
+            samples: [this.props.detail._id],
+            discovery: false,
+            algorithm: this.state.algorithm,
+            comments: this.state.nickname || null
+        }).success(function () {
+            this.setState(this.getInitialState(), this.props.togglePending);
+        }, this);
     },
 
     render: function () {
@@ -94,7 +84,7 @@ var AnalysisList = React.createClass({
 
         if (this.props.canModify) {
 
-            var buttonStyle = {
+            var divStyle = {
                 marginBottom: "15px"
             };
 
@@ -104,9 +94,9 @@ var AnalysisList = React.createClass({
                         <Flex alignItems="flex-end">
                             <Flex.Item grow={5}>
                                 <Input
-                                    name="name"
+                                    name="nickname"
                                     label="Name"
-                                    value={this.state.name}
+                                    value={this.state.nickname}
                                     onChange={this.handleChange}
                                     disabled={true}
                                 />
@@ -119,9 +109,11 @@ var AnalysisList = React.createClass({
                                 </Input>
                             </Flex.Item>
                             <Flex.Item pad>
-                                <PushButton type='submit' style={buttonStyle} bsStyle='primary' disabled={this.state.pending}>
-                                    <Icon name='new-entry' /> Create
-                                </PushButton>
+                                <div style={divStyle}>
+                                    <PushButton type='submit' bsStyle='primary'>
+                                        <Icon name='new-entry' pending={this.state.pending}/> Create
+                                    </PushButton>
+                                </div>
                             </Flex.Item>
                         </Flex>
                     </form>
@@ -139,10 +131,10 @@ var AnalysisList = React.createClass({
         var listContent;
 
         // Show a list of analyses if there are any.
-        if (this.props.analyses) {
+        if (this.props.data.analyses.length > 0) {
 
             // Sort by timestamp so the newest analyses are at the top.
-            var sorted = _.sortBy(this.props.analyses, 'timestamp').reverse();
+            var sorted = _.sortBy(this.props.data.analyses, 'timestamp').reverse();
 
             // The components that detail individual analyses.
             listContent = sorted.map(function (document) {
@@ -150,9 +142,7 @@ var AnalysisList = React.createClass({
                     <AnalysisItem
                         key={document._id}
                         {...document}
-                        canModify={this.props.canModify}
-                        setProgress={this.props.setProgress}
-                        selectAnalysis={this.props.selectAnalysis}
+                        {...this.props}
                     />
                 );
             }, this);

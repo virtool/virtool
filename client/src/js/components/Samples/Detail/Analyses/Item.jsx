@@ -14,9 +14,9 @@
 var _ = require('lodash');
 var CX = require('classnames');
 var React = require('react');
+var Progress = require('rc-progress').Circle;
 var Row = require('react-bootstrap/lib/Row');
 var Col = require('react-bootstrap/lib/Col');
-var ProgressBar = require('react-bootstrap/lib/ProgressBar');
 
 var Icon = require('virtool/js/components/Base/Icon.jsx');
 var Flex = require('virtool/js/components/Base/Flex.jsx');
@@ -31,20 +31,9 @@ var RelativeTime = require('virtool/js/components/Base/RelativeTime.jsx');
  */
 var AnalysisItem = React.createClass({
 
-    propTypes: {
-        _id: React.PropTypes.string.isRequired,
-        name: React.PropTypes.string,
-        job: React.PropTypes.string.isRequired,
-        algorithm: React.PropTypes.string.isRequired,
-        index_version: React.PropTypes.number.isRequired,
-        timestamp: React.PropTypes.string.isRequired,
-        username: React.PropTypes.string.isRequired,
-        ready: React.PropTypes.bool
-    },
-
     getInitialState: function () {
         return {
-            disabled: false,
+            pending: false,
             progress: this.props.ready ? 0: dispatcher.db.jobs.findOne({_id: this.props.job}).progress
         };
     },
@@ -80,68 +69,63 @@ var AnalysisItem = React.createClass({
      */
     remove: function () {
         this.setState({pending: true}, function () {
-
-            this.setState({
-                disabled: true
-            }, this.props.setProgress(true));
-
-            dispatcher.db.analyses.request('remove_analysis', {_id: this.props._id})
-                .success(function () {
-                    this.props.setProgress(false);
-                }, this)
-                .failure(function () {
-                    this.props.setProgress(false);
-                }, this);
+            dispatcher.db.samples.request('remove_analysis', {
+                _id: this.props.sample,
+                analysis_id: this.props._id
+            }).failure(function () {
+                this.setState({pending: false});
+            }, this);
         });
     },
 
-    onJobUpdate: function () {
+    onJobUpdate: function (data) {
         var job = dispatcher.db.jobs.findOne({_id: this.props.job});
-
-        if (job.progress !== this.state.progress) {
-            this.setState({progress: job.progress});
-        }
+        if (job.progress !== this.state.progress) this.setState({progress: job.progress});
     },
 
     render: function () {
         
-        var removeIcon;
+        var rightIcon;
 
-        if (this.props.canModify && this.props.ready && !this.state.disabled) {
-            removeIcon = <Icon
-                name='remove'
-                bsStyle='danger'
-                onClick={this.remove}
-                pullRight
-            />
-        }
+        var hidden = {
+            visibility: 'hidden'
+        };
 
-        var progressBar;
-
-        if (!this.props.ready) {
-            progressBar = (
-                <ProgressBar
-                    className="progress-small"
-                    bsStyle={this.props.ready ? "primary": "success"}
-                    now={this.props.ready ? 100: this.state.progress * 100}
+        if (this.props.ready) {
+            rightIcon = (
+                <Icon
+                    name='remove'
+                    bsStyle={this.props.canModify ? 'danger': null}
+                    pending={!this.props.ready || this.state.pending}
+                    onClick={this.props.canModify ? this.remove: null}
+                    style={this.props.canModify ? null: hidden}
+                    pullRight
                 />
+            );
+        } else {
+            rightIcon = (
+                <div className='pull-right' style={{height: '14px', width: '14px'}}>
+                    <Progress
+                        percent={this.state.progress * 100}
+                        strokeWidth={14}
+                        strokeColor="#337ab7"
+                        trailColor="#000000"
+                    />
+                </div>
             );
         }
 
         var itemClass = CX({
             'list-group-item': true,
-            'disabled': this.state.disabled || !this.props.ready,
-            'hoverable': !this.state.disabled && this.props.ready
+            'disabled': this.props.disabled || !this.props.ready,
+            'hoverable': !this.props.disabled && this.props.ready
         });
 
         return (
             <div className={itemClass} onClick={this.handleClick}>
-
-                {progressBar}
-
                 <Row>
-                    <Col sm={3}>
-                        {this.props.name || "Unnamed Analysis"}
+                    <Col sm={3} >
+                        {this.props.comments || 'Unnamed Analysis'}
                     </Col>
                     <Col sm={3} >
                         {this.props.algorithm === 'nuvs' ? 'NuVs': _.upperFirst(_.camelCase(this.props.algorithm))}
@@ -151,7 +135,7 @@ var AnalysisItem = React.createClass({
                     </Col>
                     <Col md={4}>
                         Created <RelativeTime time={this.props.timestamp} /> by {this.props.username}
-                        {removeIcon}
+                        {rightIcon}
                     </Col>
                 </Row>
             </div>
