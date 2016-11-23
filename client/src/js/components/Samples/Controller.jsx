@@ -80,8 +80,6 @@ var SampleController = React.createClass({
     },
 
     selectNone: function () {
-        console.log("select none");
-
         this.setState({
             selected: []
         });

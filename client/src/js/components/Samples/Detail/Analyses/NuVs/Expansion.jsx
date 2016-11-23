@@ -61,8 +61,6 @@ var NuVsExpansion = React.createClass({
 
     render: function () {
 
-        console.log(this.props);
-
         var orfComponents = this.props.orfs.map(function (orf, index) {
             return (
                 <NuVsORF

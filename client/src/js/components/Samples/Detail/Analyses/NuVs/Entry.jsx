@@ -10,6 +10,10 @@ var Flex = require('virtool/js/components/Base/Flex.jsx');
 
 var NuVsEntry = React.createClass({
 
+    shouldComponentUpdate: function (nextProps) {
+        return nextProps.in !== this.props.in;
+    },
+
     toggleIn: function () {
         this.props.toggleIn(this.props.index);
     },

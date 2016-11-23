@@ -1,11 +1,11 @@
+"use strict";
+
 var _ = require("lodash");
 var React = require("react");
 var ResizeDetector = require("react-resize-detector").default;
 
 var Tab = require("react-bootstrap/lib/Tab");
 var Tabs = require("react-bootstrap/lib/Tabs");
-var Alert = require("react-bootstrap/lib/Alert");
-var Button = require("react-bootstrap/lib/Button");
 
 var SampleDetailGeneral = require("./General/General.jsx");
 var SampleDetailQuality = require("./Quality/Quality.jsx");
@@ -91,7 +91,7 @@ var SampleDetail = React.createClass({
     render: function () {
 
         var data = this.props.detail;
-        
+
         var body;
         var footer;
 

@@ -1,26 +1,11 @@
-/**
- * @license
- * The MIT License (MIT)
- * Copyright 2015 Government of Canada
- *
- * @author
- * Ian Boyes
- *
- * @exports AnalysisPanel
- */
+"use strict";
 
-var _ = require('lodash');
-var React = require('react');
-var Panel = require('react-bootstrap/lib/Panel');
-var AnalysisReport = require('./Report.jsx');
-var Listing = require('./Listing.jsx');
+var _ = require("lodash");
+var React = require("react");
+var Panel = require("react-bootstrap/lib/Panel");
+var AnalysisReport = require("./Report.jsx");
+var AnalysesList = require("./List.jsx");
 
-/**
- * The panel that is shown when the analysis tab is selected in the sample detail modal. Allows detailed viewing of
- * all analyses associated with a sample and for starting new analyses.
- *
- * @class
- */
 var AnalysisPanel = React.createClass({
 
     propTypes: {
@@ -33,21 +18,10 @@ var AnalysisPanel = React.createClass({
         };
     },
 
-    /**
-     * Shows a detailed view of the analysis identified by the passed analysisId.
-     *
-     * @param analysisId {string} - the id of the analysis document to open detail for.
-     * @func
-     */
     selectAnalysis: function (analysisId) {
         this.setState({activeAnalysisId: analysisId});
     },
 
-    /**
-     * Shows the AnalysisList component if analysis details are being shown.
-     *
-     * @func
-     */
     showListing: function () {
         this.setState({activeAnalysisId: null});
     },
@@ -59,7 +33,7 @@ var AnalysisPanel = React.createClass({
         if (!this.state.activeAnalysisId) {
             // Show the analysis listing if no activeAnalysisId is defined.
             content = (
-                <Listing
+                <AnalysesList
                     {...this.props}
                     selectAnalysis={this.selectAnalysis}
                 />
@@ -68,14 +42,14 @@ var AnalysisPanel = React.createClass({
 
         else {
             // Get the analysis document that corresponds to the activeAnalysisId.
-            var analysisEntry = _.find(this.state.analyses, {_id: this.state.activeAnalysisId});
+            var analysisEntry = _.find(this.props.analyses, {_id: this.state.activeAnalysisId});
 
             content = (
                 <AnalysisReport
+                    {...analysisEntry}
                     readCount={this.props.quality.count}
                     maxReadLength={this.props.quality.length[1]}
                     onBack={this.showListing}
-                    {...analysisEntry}
                 />
             );
         }
@@ -85,8 +59,6 @@ var AnalysisPanel = React.createClass({
                 {content}
             </Panel>
         );
-
-
     }
 });
 

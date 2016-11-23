@@ -201,6 +201,7 @@ class Collection(virtool.database.SyncingCollection):
         """
         # Get the sample id for the analysis
         minimal_analysis = yield self.find_one({"_id": analysis_id}, {"sample_id": True})
+
         sample_id = minimal_analysis["sample_id"]
 
         # Remove analysis entry from database

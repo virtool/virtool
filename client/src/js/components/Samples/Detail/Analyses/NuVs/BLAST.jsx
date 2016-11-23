@@ -23,7 +23,6 @@ var NuVsBLAST = React.createClass({
     render: function () {
 
         if (this.props.blast) {
-            console.log(this.props.blast);
 
             var hitComponents = this.props.blast.hits.map(function (hit, index) {
 

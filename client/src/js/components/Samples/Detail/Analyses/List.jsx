@@ -1,14 +1,3 @@
-/**
- * @license
- * The MIT License (MIT)
- * Copyright 2015 Government of Canada
- *
- * @author
- * Ian Boyes
- *
- * @exports AnalysisList
- */
-
 'use strict';
 
 var _ = require('lodash');
@@ -27,14 +16,9 @@ var Icon = require('virtool/js/components/Base/Icon.jsx');
 var Input = require('virtool/js/components/Base/Input.jsx');
 var PushButton = require('virtool/js/components/Base/PushButton.jsx');
 
-
+var AnalysisAdder = require('./Adder.jsx');
 var AnalysisItem = require('./Item.jsx');
 
-/**
- * A component that lists the analyses associated with a sample and contains a form to add new analyses.
- *
- * @class
- */
 var AnalysisList = React.createClass({
 
     propTypes: {
@@ -57,12 +41,6 @@ var AnalysisList = React.createClass({
         this.setState(data);
     },
 
-    /**
-     * Handle submission of the new analysis form. Sends a request to the server.
-     *
-     * @param event {object} - the form submit event.
-     * @func
-     */
     handleSubmit: function (event) {
         event.preventDefault();
 
@@ -88,47 +66,15 @@ var AnalysisList = React.createClass({
         var adder;
 
         if (this.props.canModify) {
-
-            var divStyle = {
-                marginBottom: "15px"
-            };
-
-            if (dispatcher.db.indexes.count({ready: true}) > 0) {
-                adder = (
-                    <form onSubmit={this.handleSubmit}>
-                        <Flex alignItems="flex-end">
-                            <Flex.Item grow={5}>
-                                <Input
-                                    name="nickname"
-                                    label="Name"
-                                    value={this.state.nickname}
-                                    onChange={this.handleChange}
-                                    disabled={true}
-                                />
-                            </Flex.Item>
-                            <Flex.Item grow={1} pad>
-                                <Input name="algorithm" type="select" label="Algorithm" value={this.state.algorithm} onChange={this.handleChange}>
-                                    <option value='pathoscope_bowtie'>PathoscopeBowtie</option>
-                                    <option value='pathoscope_snap'>PathoscopeSNAP</option>
-                                    <option value='nuvs'>NuVs</option>
-                                </Input>
-                            </Flex.Item>
-                            <Flex.Item pad>
-                                <div style={divStyle}>
-                                    <PushButton type='submit' bsStyle='primary'>
-                                        <Icon name='new-entry' pending={this.state.pending}/> Create
-                                    </PushButton>
-                                </div>
-                            </Flex.Item>
-                        </Flex>
-                    </form>
-                );
-            } else {
+            if (dispatcher.db.indexes.count({ready: true}) === 0) {
                 adder = (
                     <Alert bsStyle='warning'>
                         <Icon name='info'/> A virus index must be built before analyses can be run.
                     </Alert>
                 );
+
+            } else {
+                adder = <AnalysisAdder setProgress={this.props.setProgress} />;
             }
         }
 
@@ -147,7 +93,9 @@ var AnalysisList = React.createClass({
                     <AnalysisItem
                         key={document._id}
                         {...document}
-                        {...this.props}
+                        canModify={this.props.canModify}
+                        setProgress={this.props.setProgress}
+                        selectAnalysis={this.props.selectAnalysis}
                     />
                 );
             }, this);
