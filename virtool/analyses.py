@@ -172,6 +172,40 @@ class Collection(virtool.database.SyncingCollection):
         })
 
     @virtool.gen.exposed_method([])
+    def blast_nuvs_sequence(self, transaction):
+        """
+        BLAST a contig sequence that is part of a NuVs result record. The resulting BLAST data will be attached to that
+        sequence.
+
+        :param transaction: the transaction associated with the request.
+        :type transaction: :class:`.Transaction`
+
+        """
+        analysis_id = transaction.data["_id"]
+        sequence_index = transaction.data["sequence_index"]
+
+        minimal_analysis = yield self.find_one({"_id": analysis_id}, {
+            "sample": True,
+            "sequences": True
+        })
+
+        sequences = [sequence for sequence in minimal_analysis["sequences"] if sequence["index"] == int(sequence_index)]
+
+        assert len(sequences) == 1
+
+        nuc = sequences[0]["sequence"]
+
+        result = yield blast_on_ncbi(nuc)
+
+        response = yield self.update({"_id": analysis_id, "sequences.index": sequence_index}, {
+            "$set": {
+                "sequences.$.blast": result
+            }
+        })
+
+        return True, response
+
+    @virtool.gen.exposed_method([])
     def remove_analysis(self, transaction):
         """
         An exposed method that wraps :meth:`.remove_by_id`.
@@ -352,3 +386,8 @@ class Collection(virtool.database.SyncingCollection):
                         hmm_result.update(hmm)
 
         return analyses
+
+
+@virtool.gen.synchronous
+def blast_on_ncbi(sequence):
+    return virtool.blast.blast(sequence)
