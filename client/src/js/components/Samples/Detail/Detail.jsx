@@ -90,8 +90,6 @@ var SampleDetail = React.createClass({
 
     render: function () {
 
-        console.log(this.state.analyses);
-
         var data = this.props.detail;
 
         var body;

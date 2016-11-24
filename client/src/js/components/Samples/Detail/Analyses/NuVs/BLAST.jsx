@@ -14,49 +14,64 @@ var Button = require('virtool/js/components/Base/PushButton.jsx');
 var NuVsBLAST = React.createClass({
 
     blast: function () {
-        dispatcher.db.samples.request("blast_nuvs_sequence", {
-            analysis_id: this.props.analysisId,
+        dispatcher.db.analyses.request("blast_nuvs_sequence", {
+            _id: this.props.analysisId,
             sequence_index: this.props.sequenceIndex
         })
     },
 
     render: function () {
 
+        console.log(this.props);
+
         if (this.props.blast) {
 
-            var hitComponents = this.props.blast.hits.map(function (hit, index) {
+            if (this.props.blast.ready) {
+                var hitComponents = this.props.blast.hits.map(function (hit, index) {
 
-                var href = "https://www.ncbi.nlm.nih.gov/nuccore/" + hit.accession;
+                    var href = "https://www.ncbi.nlm.nih.gov/nuccore/" + hit.accession;
+
+                    return (
+                        <tr key={index}>
+                            <td><a target="_blank" href={href}>{hit.accession}</a></td>
+                            <td>{hit.name}</td>
+                            <td>{hit.evalue}</td>
+                            <td>{hit.score}</td>
+                            <td>{Numeral(hit.identity / hit.align_len).format("0.00")}</td>
+                        </tr>
+                    )
+                });
 
                 return (
-                    <tr key={index}>
-                        <td><a target="_blank" href={href}>{hit.accession}</a></td>
-                        <td>{hit.name}</td>
-                        <td>{hit.evalue}</td>
-                        <td>{hit.score}</td>
-                        <td>{Numeral(hit.identity / hit.align_len).format("0.00")}</td>
-                    </tr>
-                )
-            });
+                    <Panel header="NCBI BLAST">
+                        <Table fill condensed>
+                            <thead>
+                                <tr>
+                                    <th>Accession</th>
+                                    <th>Name</th>
+                                    <th>E-value</th>
+                                    <th>Score</th>
+                                    <th>Identity</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {hitComponents}
+                            </tbody>
+                        </Table>
+                    </Panel>
+                );
+            }
+
+            var ridHref = "https://blast.ncbi.nlm.nih.gov/Blast.cgi?CMD=Web&PAGE_TYPE=BlastFormatting&OLD_BLAST=false&GET_RID_INFO=on&RID=";
+
+            ridHref += this.props.blast.rid;
 
             return (
-                <Panel header="NCBI BLAST">
-                    <Table fill condensed>
-                        <thead>
-                            <tr>
-                                <th>Accession</th>
-                                <th>Name</th>
-                                <th>E-value</th>
-                                <th>Score</th>
-                                <th>Identity</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {hitComponents}
-                        </tbody>
-                    </Table>
-                </Panel>
-            )
+                <Alert bsStyle="info">
+                    <span>BLAST in progress with RID </span>
+                    <a target="_blank" href={ridHref}>{this.props.blast.rid} <sup><Icon name="new-tab" /></sup></a>
+                </Alert>
+            );
         }
 
         return (
