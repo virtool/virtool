@@ -25,42 +25,6 @@ var AnalysisList = React.createClass({
         canModify: React.PropTypes.bool
     },
 
-    getInitialState: function () {
-        return {
-            nickname: '',
-            algorithm: 'pathoscope_bowtie',
-
-            // True when an analysis request has been sent to the server, but the transaction has not returned.
-            pending: false
-        }
-    },
-
-    handleChange: function (event) {
-        var data = {};
-        data[event.target.name] = event.target.value;
-        this.setState(data);
-    },
-
-    handleSubmit: function (event) {
-        event.preventDefault();
-
-        this.props.setProgress(true);
-
-        dispatcher.db.samples.request('analyze', {
-            samples: [this._id],
-            algorithm: this.state.algorithm,
-            name: this.state.name || null
-        })
-        .success(function () {
-            this.props.setProgress(false);
-            this.setState(this.getInitialState());
-        }, this)
-        .failure(function () {
-            this.props.setProgress(false);
-            this.setState(this.getInitialState());
-        }, this);
-    },
-
     render: function () {
 
         var adder;
@@ -74,7 +38,12 @@ var AnalysisList = React.createClass({
                 );
 
             } else {
-                adder = <AnalysisAdder setProgress={this.props.setProgress} />;
+                adder = (
+                    <AnalysisAdder
+                        sampleId={this.props._id}
+                        setProgress={this.props.setProgress}
+                    />
+                );
             }
         }
 
@@ -82,7 +51,7 @@ var AnalysisList = React.createClass({
         var listContent;
 
         // Show a list of analyses if there are any.
-        if (this.props.analyses.length > 0) {
+        if (this.props.analyses) {
 
             // Sort by timestamp so the newest analyses are at the top.
             var sorted = _.sortBy(this.props.analyses, 'timestamp').reverse();

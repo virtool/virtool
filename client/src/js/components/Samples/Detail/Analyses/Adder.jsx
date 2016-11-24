@@ -10,6 +10,7 @@ var Button = require("virtool/js/components/Base/PushButton.jsx");
 var AnalysisAdder = React.createClass({
 
     propTypes: {
+        sampleId: React.PropTypes.string.isRequired,
         setProgress: React.PropTypes.func
     },
 
@@ -37,7 +38,7 @@ var AnalysisAdder = React.createClass({
         this.props.setProgress(true);
 
         dispatcher.db.samples.request("analyze", {
-            samples: [this._id],
+            samples: [this.props.sampleId],
             algorithm: this.state.algorithm,
             name: this.state.name || null
         })

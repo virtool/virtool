@@ -42,7 +42,7 @@ var SampleDetail = React.createClass({
         dispatcher.db.analyses.request("detail", {_id: analysisIds})
             .success(function (data) {
                 if (mergeIn) {
-                    data = data.concat(mergeIn);
+                    data = _.unionBy(mergeIn, data, "_id");
                 }
 
                 this.setState({
@@ -63,11 +63,11 @@ var SampleDetail = React.createClass({
 
         if (toRetrieve.length > 0) {
             this.retrieveAnalyses(toRetrieve, toRetain);
+        } else {
+            this.setState({
+                analyses: toRetain.length === 0 ? null: toRetain
+            });
         }
-
-        this.setState({
-            analyses: toRetain.length === 0 ? null: toRetain
-        });
     },
 
     handleSelect: function (eventKey) {
@@ -89,6 +89,8 @@ var SampleDetail = React.createClass({
     },
 
     render: function () {
+
+        console.log(this.state.analyses);
 
         var data = this.props.detail;
 
