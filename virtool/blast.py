@@ -106,7 +106,11 @@ def parse_content(response, rid):
 
     result = result["results"]["search"]
 
-    output["masking"] = result["query_masking"]
+    try:
+        output["masking"] = result["query_masking"]
+    except KeyError:
+        output["masking"] = None
+
     output["stat"] = result["stat"]
 
     output["hits"] = list()

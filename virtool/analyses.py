@@ -1,13 +1,15 @@
 import os
 import shutil
 import logging
+import tornado.gen
 
+import virtool.gen
+import virtool.job
 import virtool.utils
 import virtool.files
 import virtool.plots
-import virtool.gen
+import virtool.blast
 import virtool.database
-import virtool.job
 import virtool.pathoscope
 
 logger = logging.getLogger(__name__)
@@ -195,7 +197,41 @@ class Collection(virtool.database.SyncingCollection):
 
         nuc = sequences[0]["sequence"]
 
-        result = yield blast_on_ncbi(nuc)
+        rid, _ = yield initialize_blast(nuc)
+
+        ready = False
+        checked = False
+        interval = 3
+
+        while not ready:
+
+            yield self.update({"_id": analysis_id, "sequences.index": sequence_index}, {
+                "$set": {
+                    "sequences.$.blast": {
+                        "rid": rid,
+                        "ready": ready,
+                        "checked": checked,
+                        "interval": interval
+                    }
+                }
+            })
+
+            yield tornado.gen.sleep(interval)
+
+            ready = yield check_rid(rid)
+
+            interval += 3
+
+        result = yield retrieve_blast_result(rid)
+
+        result.update({
+            "rid": rid,
+            "ready": ready,
+            "checked": checked,
+            "interval": interval
+        })
+
+        print(result)
 
         response = yield self.update({"_id": analysis_id, "sequences.index": sequence_index}, {
             "$set": {
@@ -389,5 +425,18 @@ class Collection(virtool.database.SyncingCollection):
 
 
 @virtool.gen.synchronous
-def blast_on_ncbi(sequence):
-    return virtool.blast.blast(sequence)
+def initialize_blast(sequence):
+    rid, rtoe = virtool.blast.initialize(sequence)
+
+    return rid, rtoe
+
+
+@virtool.gen.synchronous
+def retrieve_blast_result(rid):
+    return virtool.blast.retrieve_result(rid)
+
+
+@virtool.gen.synchronous
+def check_rid(rid):
+    return virtool.blast.check_rid(rid)
+
