@@ -54,14 +54,6 @@ class Collection(virtool.database.SyncingCollection):
             "args"
         ]})
 
-        db_sync = virtool.utils.get_db_client(self.settings, True)
-
-        db_sync.jobs.update({}, {
-            "$unset": {
-                "archived": ""
-            }
-        })
-
         #: A :class:`dict` containing dicts describing each running or waiting job.
         self.jobs_dict = {}
 

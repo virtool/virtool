@@ -41,10 +41,6 @@ class Collection(virtool.database.SyncingCollection):
         # sequence documents only occur by calling methods in this Collection object.
         self.sequences_collection = motor.MotorClient()[self.settings.get("db_name")]["sequences"]
 
-        # Perform updates on the viruses collection to bring it up to the latest spec.
-        db_sync = virtool.utils.get_db_client(self.settings, sync=True)
-        db_sync.viruses.update({}, {"$unset": {"segments": ""}}, multi=True)
-
     @virtool.gen.exposed_method(["add_virus"])
     def add(self, transaction):
         """

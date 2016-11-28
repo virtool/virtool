@@ -45,90 +45,6 @@ class Collection(virtool.database.SyncingCollection):
         #: A list of read files that are being imported and should not be shown as available for import.
         self.excluded_files = list()
 
-        # A synchronous connection to the Mongo database.
-        db_sync = virtool.utils.get_db_client(self.settings, sync=True)
-
-        quality_updates = list()
-
-        for document in db_sync.samples.find({"quality.left": {"$exists": True}}):
-            # The quality data for the left side. Should be in every sample. It is the only side in single end
-            # libraries.
-            left = document["quality"]["left"]
-
-            # The quality data for the right side. Only present for paired-end libraries.
-            right = document["quality"].get("right", None)
-
-            # We will make a quality dict describing one or both sides instead of each separately. Encoding is the same
-            # for both sides.
-            quality = {
-                "encoding": left["encoding"].rstrip(),
-                "count": left["count"],
-                "length": left["length"],
-                "gc": left["gc"]
-            }
-
-            # If a right side is present, sum the read counts and average the GC contents.
-            if right:
-                quality["count"] += right["count"]
-                quality["gc"] = (left["gc"] + right["gc"]) / 2
-
-                quality["length"] = [
-                    min(left["length"][0], right["length"][0]),
-                    max(left["length"][1], right["length"][1])
-                ]
-
-            bases_keys = ["mean", "median", "lower", "upper", "10%", "90%"]
-
-            quality["bases"] = [[base[key] for key in bases_keys] for base in left["bases"]]
-
-            if right:
-                assert(len(left["bases"]) == len(right["bases"]))
-
-                for i, base in enumerate(quality["bases"]):
-                    right_bases = [[base[key] for key in bases_keys] for base in right["bases"]]
-
-                    quality["bases"][i] = average_list(
-                        base,
-                        right_bases[i]
-                    )
-
-            composition_keys = ["g", "a", "t", "c"]
-
-            quality["composition"] = [[base[key] for key in composition_keys] for base in left["composition"]]
-
-            if right:
-                assert (len(left["composition"]) == len(right["composition"]))
-
-                for i, base in enumerate(quality["composition"]):
-                    right_composition = [[base[key] for key in composition_keys] for base in right["composition"]]
-
-                    quality["composition"][i] = average_list(
-                        base,
-                        right_composition[i]
-                    )
-
-            quality["sequences"] = [0] * 50
-
-            for side in [left, right]:
-                if side:
-                    for entry in side["sequences"]:
-                        quality["sequences"][entry["quality"]] += entry["count"]
-
-            quality_updates.append({
-                "_id": document["_id"],
-                "quality": quality
-            })
-
-        for entry in quality_updates:
-            db_sync.samples.update({"_id": entry["_id"]}, {
-                "$set": {"quality": entry["quality"]}
-            })
-
-        db_sync.samples.update({}, {
-            "$unset": {"format": "", "analyses": ""},
-            "$inc": {"_version": 1}
-        }, multi=True)
-
     @virtool.gen.coroutine
     def sync_processor(self, documents):
         """
@@ -821,7 +737,7 @@ class ImportReads(virtool.job.Job):
                                     fastqc[flag][i - 1] = values
                             else:
                                 for i in pos:
-                                    fastqc[flag][i - 1] = average_list(fastqc[flag][i - 1], values)
+                                    fastqc[flag][i - 1] = virtool.utils.average_list(fastqc[flag][i - 1], values)
 
                         elif flag == "sequences" and "#" not in line:
                             line = line.rstrip().split()
@@ -947,12 +863,3 @@ def reduce_library_size(input_path, output_path):
 
 def can_read(user, document):
     return document["all_read"] or (document["group_read"] and document["group"] in user["groups"])
-
-
-def average_list(list1, list2):
-    try:
-        assert len(list1) == len(list2)
-    except AssertionError:
-        raise
-
-    return [(value + list2[i]) / 2 for i, value in enumerate(list1)]

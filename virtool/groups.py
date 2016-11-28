@@ -1,28 +1,12 @@
 import logging
-
 import pymongo.errors
 
-import virtool.database
 import virtool.gen
 import virtool.utils
+import virtool.database
+from virtool.permissions import PERMISSIONS
 
 logger = logging.getLogger(__name__)
-
-#: A list of the permission strings used by Virtool.
-PERMISSIONS = [
-    "add_virus",
-    "modify_virus",
-    "remove_virus",
-    "modify_hmm",
-    "add_sample",
-    "add_host",
-    "remove_host",
-    "cancel_job",
-    "remove_job",
-    "archive_job",
-    "rebuild_index",
-    "modify_options"
-]
 
 
 class Collection(virtool.database.SyncingCollection):
@@ -43,26 +27,6 @@ class Collection(virtool.database.SyncingCollection):
         self.sync_projector.update({
             "permissions": True
         })
-
-        # Make sure the groups' permissions fields match the PERMISSIONS module variable.
-        db_sync = virtool.utils.get_db_client(self.settings, sync=True)
-
-        for group in db_sync.groups.find():
-            default_setting = True if group["_id"] == "administrator" else False
-
-            permissions = {perm: default_setting for perm in PERMISSIONS}
-
-            for perm in permissions:
-                try:
-                    permissions[perm] = group["permissions"][perm]
-                except KeyError:
-                    pass
-
-            db_sync.groups.update({"_id": group["_id"]}, {
-                "$set": {
-                    "permissions": permissions
-                }
-            })
 
     @virtool.gen.exposed_method(["modify_options"])
     def add(self, transaction):

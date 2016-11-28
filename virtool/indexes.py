@@ -116,11 +116,11 @@ class Collection(virtool.database.SyncingCollection):
         :rtype: int
 
         """
+        # Make sure only one index is in the 'ready' state.
         index_count = yield self.find({"ready": True}).count()
-
         assert index_count > -1
 
-        # Index versions start at 0. Return -1 if no indexes exist.
+        # Index versions start at 0. Returns -1 if no indexes exist.
         return index_count - 1
 
     @virtool.gen.coroutine

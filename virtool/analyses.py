@@ -34,72 +34,6 @@ class Collection(virtool.database.SyncingCollection):
             "timestamp"
         ]})
 
-        # A synchronous connection to the Mongo database.
-        db_sync = virtool.utils.get_db_client(self.settings, sync=True)
-
-        # Make sure all NuVs analysis records reference HMMs in the database rather than storing the HMM data
-        # themselves. Only do this if HMM records are defined in the database.
-        if db_sync.hmm.count() > 0:
-
-            for analysis in db_sync.analyses.find({"algorithm": "nuvs"}):
-                # If the definition key is defined, the record is storing the information for each HMM and must be
-                # updated.
-                if "definition" in analysis["hmm"][0]:
-
-                    hits = analysis["hmm"]
-
-                    # Fix up the HMM hit entries for the analysis.
-                    for hit in hits:
-                        # Get the database id for the HMM the hit should be linked to.
-                        cluster = int(hit["hit"].split("_")[1])
-                        hmm = db_sync.hmm.find_one({"cluster": cluster}, {"_id": True})
-
-                        # Get rid of the unnecessary fields.
-                        hit.pop("definition")
-                        hit.pop("families")
-
-                        # Change the hit field rto the id for the HMM record instead of vFam_###.
-                        hit["hit"] = hmm["_id"]
-
-                    # Commit the new hit entries to the database.
-                    db_sync.analyses.update({"_id": analysis["_id"]}, {
-                        "$set": {
-                            "hmm": hits
-                        }
-                    })
-
-        db_sync.analyses.update({"comments": {"$exists": True}}, {
-            "$rename": {
-                "comments": "name"
-            }
-        }, multi=True)
-
-        db_sync.analyses.update({"discovery": {"$exists": True}}, {
-            "$unset": {
-                "discovery": ""
-            }
-        }, multi=True)
-
-        db_sync.analyses.update({"_version": {"$exists": False}}, {
-            "$set": {
-                "_version": 0
-            }
-        }, multi=True)
-
-        db_sync.analyses.update({"sample": {"$exists": True}}, {
-            "$rename": {
-                "sample": "sample_id"
-            }
-        })
-
-        db_sync.analyses.update({"algorithm": {"$exists": False}}, {
-            "$set": {
-                "algorithm": "pathoscope_bowtie"
-            }
-        }, multi=True)
-
-        db_sync.analyses.remove({"ready": False})
-
     @virtool.gen.coroutine
     def new(self, sample_id, name, username, algorithm):
         """
@@ -114,10 +48,10 @@ class Collection(virtool.database.SyncingCollection):
         index_id, index_version = yield self.dispatcher.collections["indexes"].get_current_index()
 
         data = {
+            "sample_id": sample_id,
             "name": name,
             "username": username,
             "algorithm": algorithm,
-            "sample_id": sample_id,
             "index_id": index_id
         }
 
@@ -201,6 +135,7 @@ class Collection(virtool.database.SyncingCollection):
         """
         # Get the sample id for the analysis
         minimal_analysis = yield self.find_one({"_id": analysis_id}, {"sample_id": True})
+
         sample_id = minimal_analysis["sample_id"]
 
         # Remove analysis entry from database
