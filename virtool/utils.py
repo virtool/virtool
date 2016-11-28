@@ -113,6 +113,7 @@ def random_alphanumeric(length=6, exclude_list=None):
 
     return random_alphanumeric(length, exclude_list)
 
+
 @virtool.gen.coroutine
 def get_new_document_id(motor_collection, excluded=None):
     """
@@ -121,8 +122,8 @@ def get_new_document_id(motor_collection, excluded=None):
     :param motor_collection: the collection to generate a new unique id for.
     :type motor_collection: :class:`motor.motor_tornado.MotorCollection`
 
-    :param exclude: a list of ids to exclude in addition to the extant ids in the collection
-    :type exclude: list
+    :param excluded: a list of ids to exclude in addition to the extant ids in the collection
+    :type excluded: list
 
     :return: a random 8-character alphanumeric document id.
     :rtype: str
@@ -133,29 +134,6 @@ def get_new_document_id(motor_collection, excluded=None):
     exclude = (excluded or list()) + existing_ids
 
     return random_alphanumeric(length=8, exclude_list=exclude)
-
-
-def get_db_client(settings, sync=False):
-    """
-    Returns a Mongo client connection given a :class:`.virtool.settings.Settings` object. Returns a
-    `MotorClient <http://motor.readthedocs.org/en/stable/api/motor_client.html>`_ object if sync is ``True`` and a
-    `MongoClient <https://api.mongodb.org/python/current/api/pymongo/mongo_client.html>`_ object if sync is ``False``.
-
-    :param settings: a settings object from the Virtool server.
-    :type settings: :class:`.virtool.settings.Settings`
-    :param sync: should the connection use pymongo instead or motor?
-    :type sync: bool
-    :return: a client object.
-
-    """
-    db_host = settings.get("db_host")
-    db_port = settings.get("db_port")
-    db_name = settings.get("db_name")
-
-    if sync:
-        return pymongo.MongoClient(db_host, db_port)[db_name]
-
-    return motor.MotorClient(db_host, db_port)[db_name]
 
 
 def where(subject, predicate):
@@ -174,3 +152,12 @@ def where(subject, predicate):
     """
     assert callable(predicate)
     return list(filter(predicate, subject))[0]
+
+
+def average_list(list1, list2):
+    try:
+        assert len(list1) == len(list2)
+    except AssertionError:
+        raise
+
+    return [(value + list2[i]) / 2 for i, value in enumerate(list1)]
