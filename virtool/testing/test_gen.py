@@ -48,6 +48,15 @@ class TestExposed(TestCoroutine):
         cr = wrapper(test_func)
         assert hasattr(cr, "is_exposed")
 
+    def test_exposed_permissions(self):
+        with pytest.raises(TypeError):
+            wrapper = virtool.gen.exposed_method()
+
+
+
+
+
+
 
 
 

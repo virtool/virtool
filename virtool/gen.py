@@ -1,3 +1,4 @@
+import inspect
 import logging
 import functools
 import tornado.gen
@@ -22,11 +23,17 @@ def coroutine(func):
 
     :param func: the function to decorate.
     :type func: function
+
     :return: the decorated function.
     :rtype: function
 
     """
-    # THe tornado.gen.coroutine decorator already implemented functools.wraps.
+    # Make sure ``func`` is a user-defined function.
+    if not inspect.isfunction(func):
+        var_type = type(func)
+        raise TypeError("Invalid type {} for func argument. Must be user-defined function".format(repr(var_type)))
+
+    # The tornado.gen.coroutine decorator already implemented functools.wraps.
     wrapped = tornado.gen.coroutine(func)
     wrapped.is_coroutine = True
 
@@ -41,6 +48,7 @@ def synchronous(func):
 
     :param func: the function to decorate.
     :type func: function
+
     :return: the decorated function.
     :rtype: function
 
@@ -126,8 +134,6 @@ def exposed_method(required_permissions, unprotected=False):
                             raise TypeError("Exposed method did not return a tuple")
                         elif err.args[0]:
                             success, result = yield func(self)
-
-
 
                 # Log a warning if the user was not permitted to call the function. This indicates the user is making
                 # requests outside of the graphical UI.
