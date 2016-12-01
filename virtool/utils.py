@@ -123,7 +123,7 @@ def timestamp(time=None, time_getter=datetime.datetime.now):
     raise TypeError("Couldn't calculate timestamp from time or time_getter")
 
 
-def random_alphanumeric(length=6, excluded=None, randomizer=None):
+def random_alphanumeric(length=6, excluded=[], randomizer=None):
     """
     Generates a random string composed of letters and numbers.
 
@@ -146,14 +146,16 @@ def random_alphanumeric(length=6, excluded=None, randomizer=None):
 
     candidate = randomizer()
 
-    if not excluded or candidate not in excluded:
+    print(candidate, excluded)
+
+    if candidate not in excluded:
         return candidate
 
-    return random_alphanumeric(length, excluded)
+    return random_alphanumeric(length, excluded, randomizer)
 
 
 @virtool.gen.coroutine
-def get_new_document_id(motor_collection, excluded=None):
+def get_new_document_id(motor_collection, excluded=[], randomizer=None):
     """
     Get a unique 8-character alphanumeric id for the given Motor collection.
 
@@ -169,9 +171,11 @@ def get_new_document_id(motor_collection, excluded=None):
     """
     existing_ids = yield motor_collection.find({}, {"_id": True}).distinct("_id")
 
-    excluded = (excluded or list()) + existing_ids
+    excluded += existing_ids
 
-    return random_alphanumeric(length=8, excluded=excluded)
+    excluded = set(excluded)
+
+    return random_alphanumeric(length=8, excluded=excluded, randomizer=randomizer)
 
 
 def where(subject, predicate):
