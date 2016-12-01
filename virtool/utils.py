@@ -2,9 +2,6 @@ import os
 import shutil
 import binascii
 import datetime
-import pymongo
-import motor
-
 import virtool.gen
 
 
@@ -32,6 +29,30 @@ def rm(path, recursive=False):
             return True
 
         raise
+
+
+@virtool.gen.synchronous
+def write_file(path, body, is_bytes=False):
+    """
+    Writes the data in ``body`` to a file at ``path``. Write in bytes mode if ``is_bytes`` is ``True``.
+
+    :param path: path to write the file to.
+    :type path: string
+
+    :param body: the content to write to the file.
+    :type body: string
+
+    :param is_bytes: whether the write in bytes mode.
+    :type is_bytes: bool
+
+    """
+    mode = "w"
+
+    if is_bytes:
+        mode += "b"
+
+    with open(path, mode) as handle:
+        handle.write(body)
 
 
 @virtool.gen.synchronous
@@ -75,43 +96,60 @@ def list_files(directory, excluded=None):
     return available
 
 
-def timestamp(time=None):
+def timestamp(time=None, time_getter=datetime.datetime.now):
     """
     Returns and ISO format timestamp. Generates one for the current time if no ``time`` argument is passed.
 
-    :param time: the date/time to generate a timestamp for.
-    :type time: datetime.datetime or str or int
+    :param time: the datetime to generate a timestamp for.
+    :type time: :class:`datetime.datetime` or str
+
+    :param time_getter: a function that return a :class:"datetime.datetime" object.
+    :type time_getter: func
 
     :return: a timestamp
     :rtype: str
 
     """
     if time is None:
-        return datetime.datetime.now().isoformat()
+        time = time_getter()
 
-    return datetime.datetime.fromtimestamp(time).isoformat()
+    if isinstance(time, datetime.datetime):
+        return time.isoformat()
+
+    # Probably a POSIX timestamp.
+    if isinstance(time, float):
+        return datetime.datetime.fromtimestamp(time).isoformat()
+
+    raise TypeError("Couldn't calculate timestamp from time or time_getter")
 
 
-def random_alphanumeric(length=6, exclude_list=None):
+def random_alphanumeric(length=6, excluded=None, randomizer=None):
     """
     Generates a random string composed of letters and numbers.
 
     :param length: the length of the string.
     :type length: int
 
-    :param exclude_list: strings that may not be returned.
-    :type exclude_list: list
+    :param excluded: strings that may not be returned.
+    :type excluded: list
+
+    :param randomizer: a custom function for return the random string.
+    :type randomizer: func
 
     :return: a random alphanumeric string.
     :rtype: string
 
     """
-    candidate = binascii.hexlify(os.urandom(length * 3)).decode()[0:length]
+    if randomizer is None:
+        def randomizer():
+            return binascii.hexlify(os.urandom(length * 3)).decode()[0:length]
 
-    if not exclude_list or candidate not in exclude_list:
+    candidate = randomizer()
+
+    if not excluded or candidate not in excluded:
         return candidate
 
-    return random_alphanumeric(length, exclude_list)
+    return random_alphanumeric(length, excluded)
 
 
 @virtool.gen.coroutine
@@ -131,9 +169,9 @@ def get_new_document_id(motor_collection, excluded=None):
     """
     existing_ids = yield motor_collection.find({}, {"_id": True}).distinct("_id")
 
-    exclude = (excluded or list()) + existing_ids
+    excluded = (excluded or list()) + existing_ids
 
-    return random_alphanumeric(length=8, exclude_list=exclude)
+    return random_alphanumeric(length=8, excluded=excluded)
 
 
 def where(subject, predicate):
@@ -143,21 +181,37 @@ def where(subject, predicate):
     :param subject: a list of objects.
     :type subject: list
 
-    :param predicate: a function to test object in the ``subject`` list.
-    :type predicate: callable
+    :param predicate: a function or dict to test items in the ``subject`` list.
+    :type predicate: func or dict
 
     :return: the matched object or None.
     :rtype: any
 
     """
-    assert callable(predicate)
-    return list(filter(predicate, subject))[0]
+    if isinstance(predicate, dict):
+        clone = dict(predicate)
+
+        def predicate(entry):
+            return all([(key in entry and entry[key] == value) for key, value in clone.items()])
+
+    if callable(predicate):
+        filtered = list(filter(predicate, subject))
+
+        if len(filtered) > 0:
+            return filtered[0]
+
+        return None
+
+    raise TypeError("Predicate must be callable or dict")
 
 
 def average_list(list1, list2):
+    if not isinstance(list1, list) or not isinstance(list2, list):
+        raise TypeError("Both arguments must be lists")
+
     try:
         assert len(list1) == len(list2)
     except AssertionError:
-        raise
+        raise TypeError("Both arguments must be lists of the same length")
 
     return [(value + list2[i]) / 2 for i, value in enumerate(list1)]
