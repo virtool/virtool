@@ -1,6 +1,8 @@
 import os
 import pytest
 
+from virtool.testing.mock_mongo import session_mongo
+
 
 @pytest.fixture(scope="session")
 def static_time():
@@ -38,3 +40,12 @@ def called_tester():
         return Func()
 
     return create
+
+
+@pytest.fixture(scope="function")
+def temp_mongo(session_mongo, io_loop):
+    import motor
+
+    yield motor.MotorClient(io_loop=io_loop)[session_mongo.name]
+
+    session_mongo.clean()
