@@ -12,3 +12,4 @@ settings.json
 /assets/prunus_persica
 *.log*
 /.cache
+*/.cache
