@@ -2,7 +2,7 @@ import os
 import pytest
 import virtool.utils
 
-from virtool.testing.fixtures import static_time
+from virtool.testing.fixtures import static_time, temp_mongo
 from virtool.testing.mock_mongo import session_mongo
 
 
@@ -48,15 +48,6 @@ def collection():
             "name": "stuart"
         },
     ]
-
-
-@pytest.fixture(scope="function")
-def temp_mongo(session_mongo, io_loop):
-    import motor
-
-    yield motor.MotorClient(io_loop=io_loop)[session_mongo.name]
-
-    session_mongo.clean()
 
 
 class TestRm:
@@ -236,7 +227,8 @@ class TestGetDocumentId:
         assert all([l in alphanumeric for l in thing])
 
     @pytest.mark.gen_test
-    def test_excluded(self, temp_mongo, session_mongo, randomizer):
+    def test_excluded(self, temp_mongo, randomizer):
+
         result = yield temp_mongo.files.find().distinct("_id")
 
         assert len(result) == 0

@@ -146,8 +146,6 @@ def random_alphanumeric(length=6, excluded=[], randomizer=None):
 
     candidate = randomizer()
 
-    print(candidate, excluded)
-
     if candidate not in excluded:
         return candidate
 
