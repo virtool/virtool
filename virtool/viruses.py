@@ -967,7 +967,7 @@ class Collection(virtool.database.SyncingCollection):
         if not used_isolate_ids:
             used_isolate_ids = yield self.get_used_isolate_ids()
 
-        return virtool.utils.random_alphanumeric(8, exclude_list=used_isolate_ids)
+        return virtool.utils.random_alphanumeric(8, excluded=used_isolate_ids)
 
     @virtool.gen.coroutine
     def get_used_isolate_ids(self):

@@ -31,16 +31,7 @@ class Application:
 
     def __init__(self, development=False):
 
-
-        try:
-            self.version = subprocess.check_output(['git', 'describe']).decode().rstrip()
-        except (subprocess.CalledProcessError, FileNotFoundError):
-            try:
-                with open("VERSION", "r") as version_file:
-                    self.version = version_file.read().rstrip()
-            except FileNotFoundError:
-                logger.critical("Could not determine software version.")
-                self.version = "Unknown"
+        self.version = find_server_version()
 
         logger.info("Starting Virtool " + self.version)
 
@@ -442,3 +433,20 @@ class UploadHandler(tornado.web.RequestHandler):
         # Write the generated file id to the HTTP response and finish the request.
         self.write(file_id)
         self.flush()
+
+
+def find_server_version(install_path="."):
+    try:
+        return subprocess.check_output(['git', 'describe']).decode().rstrip()
+    except (subprocess.CalledProcessError, FileNotFoundError):
+
+        try:
+            version_file_path = os.path.join(install_path, "VERSION")
+
+            with open(version_file_path, "r") as version_file:
+                return version_file.read().rstrip()
+
+        except FileNotFoundError:
+            logger.critical("Could not determine software version.")
+            return "Unknown"
+

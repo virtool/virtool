@@ -5,6 +5,7 @@ import tornado.websocket
 
 import virtool.gen
 import virtool.utils
+import virtool.database
 
 
 class Manager:
@@ -23,56 +24,21 @@ class Manager:
 
     * **download** - boolean indicating whether the file is a download (False when the file is an upload)
 
-    :param server: the server object that created the :any:`Manager` object.
+    :param add_periodic_callback: takes a function and adds it to the IOLoop to be called periodically.
+    :type add_periodic_callback: func
 
     """
+    def __init__(self, db, data_path, add_periodic_callback):
 
-    def __init__(self, server):
-        self.settings = server.settings
+        self.db = db
 
-        if self.settings.get("server_ready"):
-            # Create dict containing paths for uploads and downloads keyed by 'upload' and 'download'.
-            self.paths = {suffix: os.path.join(self.settings.get("data_path"), suffix) for suffix in [
-                'upload', 'download'
-            ]}
-
-        #: A MotorCollection object.
-        self.db = virtool.utils.get_db_client(self.settings)
+        # Create dict containing paths for uploads and downloads keyed by 'upload' and 'download'.
+        self.paths = {suffix: os.path.join(data_path, suffix) for suffix in [
+            "upload", "download"
+        ]}
 
         # Check the registered files every thirty seconds.
-        server.add_periodic_callback(self.iterate, 20000)
-
-    @virtool.gen.coroutine
-    def register(self, name, body, content_type=None, download=True):
-        """
-        Registers a file in the file manager. A unique ``file_id`` is generated for the file. Using :meth:`.write_file`
-        , the data in the ``content`` parameter is written to a file of name ``file_id`` in the appropriate download or
-        upload directory. The passed ``name`` and ``content_type`` are stored in the database.
-
-        :param name: the name of an uploaded file or the name for the file should it be downloaded.
-        :type name: str
-        :param body: the content to store in the file.
-        :type body: str
-        :param content_type: what type of content is in the file (eg. JSON).
-        :type content_type: str
-        :param download: indicates if the file is a download (``True``) or upload (``False``).
-        :type download: bool
-        :return: a unique file id.
-        :rtype: str
-
-        """
-        file_id = yield self.db.files.insert({
-            "name": name,
-            "content_type": content_type,
-            "download": download,
-            "expires": datetime.datetime.now() + datetime.timedelta(minutes=20)
-        })
-
-        file_id = str(file_id)
-
-        yield self.write_file(file_id, body, download)
-
-        return file_id
+        add_periodic_callback(self.iterate, 20000)
 
     @virtool.gen.coroutine
     def iterate(self):
@@ -87,58 +53,78 @@ class Manager:
         to_remove = list()
 
         while (yield cursor.fetch_next):
-
             document = cursor.next_object()
 
             if document["expires"] < datetime.datetime.now():
-                yield self.remove_file(document["_id"], document["download"])
-                to_remove.append(document["_id"])
+                to_remove.append(document)
 
-        yield self.db.files.remove({"_id": {"$in": to_remove}})
+        yield self.remove(to_remove)
 
-    @virtool.gen.synchronous
-    def write_file(self, file_id, body, download):
+    @virtool.gen.coroutine
+    def register(self, name, body, now=datetime.datetime.now(), expiry=1200, content_type=None, download=True):
         """
-        Writes a file to the upload or download directory.
+        Registers a file in the file manager. A unique ``file_id`` is generated for the file. Using :meth:`.write_file`
+        , the data in the ``content`` parameter is written to a file of name ``file_id`` in the appropriate download or
+        upload directory. The passed ``name`` and ``content_type`` are stored in the database.
 
-        :param file_id: unique id for the file.
-        :type file_id: string
+        :param name: the name of an uploaded file or the name for the file should it be downloaded.
+        :type name: str
 
-        :param body: the content to write to the file.
-        :type body: any
+        :param body: the content to store in the file.
+        :type body: str
 
-        :param download: whether the file is a download or upload.
+        :param now: a datetime object to attach to the database document.
+        :type now: func
+
+        :param expiry: the number of seconds the file should be kept before it is automatically deleted
+        :type expiry: int
+
+        :param content_type: what type of content is in the file (eg. JSON).
+        :type content_type: str
+
+        :param download: indicates if the file is a download (``True``) or upload (``False``).
         :type download: bool
 
+        :return: a unique file id.
+        :rtype: str
+
         """
-        # Determine the path to which the file should be written.
+        file_id = yield virtool.utils.get_new_document_id(self.db.files)
+
+        yield self.db.files.insert({
+            "_id": file_id,
+            "name": name,
+            "content_type": content_type,
+            "download": download,
+            "expires": now + datetime.timedelta(seconds=expiry)
+        })
+
+        file_id = str(file_id)
+
         path = os.path.join(self.paths["download" if download else "upload"], file_id)
 
-        with open(path, "wb") as handle:
-            handle.write(body)
+        yield virtool.utils.write_file(path, body, is_bytes=True)
+
+        return file_id
 
     @virtool.gen.synchronous
-    def remove_file(self, file_id, download):
+    def remove(self, to_remove):
         """
         Removes a file from the database collection and from the appropriate directory.
 
-        :param file_id: the id of the file to remove.
-        :type file_id: str
-
-        :param download: boolean indicating if file is a download (False if upload).
-        :type download: bool
-
-        :return: boolean indicating whether a file was removed or not.
-        :rtype: bool
-
         """
-        try:
-            path = os.path.join(self.paths["download" if download else "upload"], str(file_id))
-            yield virtool.utils.rm(path)
-        except FileNotFoundError:
-            return False
+        virtool.database.coerce_list(to_remove)
 
-        return True
+        for document in to_remove:
+            path = os.path.join(self.paths["download" if document["download"] else "upload"], document["_id"])
+
+            yield virtool.utils.rm(path)
+
+            yield self.db.files.remove({
+                "_id": {
+                    "$in": [document["_id"] for document in to_remove]
+                }
+            })
 
 
 class Watcher:
@@ -148,12 +134,16 @@ class Watcher:
     identified by a *name* string. Changes in the file list are sent to listening connections
     (:class:`.web.SocketHandler` objects) in the list in :attr:`~.Watcher.listeners`
 
-    :param dispatcher: the dispatcher that instantiated the watcher object.
-    :type dispatcher: :class:`~.dispatcher.Dispatcher`
+    :param dispatch: dispatches a message via the dispatcher.
+    :type dispatch: func
+
+    :param add_periodic_callback: takes a function and adds it to the IOLoop to be called periodically.
+    :type add_periodic_callback: func
 
     """
-    def __init__(self, dispatcher):
-        self.dispatcher = dispatcher
+    def __init__(self, dispatch, add_periodic_callback):
+
+        self.dispatch = dispatch
 
         #: A :class:`dict`. Keys are *names*. Values are functions that return lists generated by
         #: :func:`.utils.list_files.
@@ -164,10 +154,10 @@ class Watcher:
         #: function. Keys are *names*.
         self.listeners = dict()
 
-        #: A :class:`dict` containing lists keyed by a watcher *name*. \
+        #: A :class:`dict` containing lists keyed by a watcher *name*.
         self.files = dict()
 
-        self.dispatcher.server.add_periodic_callback(self.run)
+        add_periodic_callback(self.run)
 
     def register(self, name, func):
         """
@@ -244,7 +234,7 @@ class Watcher:
                             # Dispatch an "add" operation if the file is new.
                             for listener in list(self.listeners[name]):
                                 try:
-                                    self.dispatcher.dispatch({
+                                    self.dispatch({
                                         "operation": "update",
                                         "collection_name": name,
                                         "data": file_document
@@ -258,7 +248,7 @@ class Watcher:
                             # one.
                             for listener in list(self.listeners[name]):
                                 try:
-                                    self.dispatcher.dispatch({
+                                    self.dispatch({
                                         "operation": "remove",
                                         "collection_name": name,
                                         "data": [file_name]

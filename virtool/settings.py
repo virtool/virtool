@@ -1,6 +1,8 @@
 import os
 import json
+import motor
 import logging
+import pymongo
 
 import virtool.gen
 import virtool.utils
@@ -11,9 +13,9 @@ logger = logging.getLogger(__name__)
 
 class Settings:
 
-    def __init__(self, server):
+    def __init__(self, dispatch, version, settings_dict=None, settings_path=None):
         #: A reference to the server that instantiated the :class:`.Dispatcher` object.
-        self.server = server
+        self.dispatch = dispatch
 
         #: Contains valid settings names and their value types.
         self.valid = {
@@ -119,7 +121,7 @@ class Settings:
             "server_port": 9650,
             "server_address": "localhost",
             "server_ready": False,
-            "server_version": server.version,
+            "server_version": version,
             "server_id": virtool.utils.random_alphanumeric(12),
 
             "use_ssl": False,
@@ -144,7 +146,7 @@ class Settings:
 
         new_settings = yield self.sync_set(transaction.data)
 
-        self.server.dispatcher.dispatch({
+        self.dispatch({
             "operation": "set",
             "collection_name": "settings",
             "data": new_settings
@@ -199,7 +201,7 @@ class Settings:
                 }
             }
 
-            self.server.dispatcher.dispatch(message, connections=[connection])
+            self.dispatch(message, connections=[connection])
 
         transaction.fulfill()
 
@@ -248,6 +250,26 @@ class Settings:
             if not os.path.exists(path):
                 os.makedirs(path)
 
+    def get_db_client(self, sync=False):
+        """
+        Returns a Mongo client connection based on the database settings for the Virtool instance. Returns a
+        `MotorClient <http://motor.readthedocs.org/en/stable/api/motor_client.html>`_ object if sync is ``True`` and a
+        `MongoClient <https://api.mongodb.org/python/current/api/pymongo/mongo_client.html>`_ object if sync is
+        ``False``.
+
+        :param sync: should the connection use pymongo instead or motor?
+        :type sync: bool
+
+        :return: a client object.
+
+        """
+        return create_db_client(
+            self.get("host"),
+            self.get("port"),
+            self.get("name"),
+            sync=sync
+        )
+
     def as_dict(self):
         return dict(self.data)
 
@@ -256,3 +278,10 @@ class Settings:
         with open("settings.json", "w") as settings_file:
             string = json.dumps(self.data)
             settings_file.write(string)
+
+
+def create_db_client(host, port, name, sync=False):
+    if sync:
+        return pymongo.MongoClient(host, port)[name]
+
+    return motor.MotorClient(host, port)[name]

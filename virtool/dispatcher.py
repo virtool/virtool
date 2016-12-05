@@ -19,19 +19,7 @@ import virtool.groups
 import virtool.gen
 import virtool.files
 
-#: The names of all collections registered with the dispatcher.
-COLLECTIONS = [
-    "jobs",
-    "samples",
-    "analyses",
-    "viruses",
-    "hmm",
-    "history",
-    "indexes",
-    "hosts",
-    "groups",
-    "users"
-]
+from virtool.collections import COLLECTIONS
 
 logger = logging.getLogger(__name__)
 
@@ -47,38 +35,50 @@ class Dispatcher:
     :class:`.files.Manager`, and an instance of :class:`.files.Watcher`.
 
     """
-    def __init__(self, server):
-        #: A reference to the server that instantiated the :class:`.Dispatcher` object and is the parent object of the
-        #: dispatcher.
-        self.server = server
+    def __init__(self, add_periodic_callback, add_future, reload, shutdown, settings, db=None):
+
+        self.add_periodic_callback = add_periodic_callback
+        self.add_future = add_future
+        self.reload = reload
+        self.shutdown = shutdown
 
         #: The shared :class:`~.virtool.settings.Settings` object created by the server. Passed to all collections.
-        self.settings = server.settings
+        self.settings = settings
 
         #: A :class:`~.virtool.files.Watcher` object that keeps track of what files are in the watch folder and host
         #: FASTA folder and sends changes to listening clients.
-        self.watcher = virtool.files.Watcher(self)
+        self.watcher = virtool.files.Watcher(self.dispatch, add_periodic_callback)
 
         #: An instance of :class:`virtool.files.Manager`. Used for managing uploads and downloads.
-        self.file_manager = virtool.files.Manager(self.server)
-
-        #: A dict containing all :class:`~.database.Collection` objects available on the server, with their
-        #: ``collection_name`` attributes as keys.
-        self.collections = {module: getattr(virtool, module).Collection for module in COLLECTIONS}
-
-        # Instantiate all the Collection objects.
-        if self.settings.get("server_ready"):
-            for collection_name in COLLECTIONS:
-                self.collections[collection_name] = self.collections[collection_name](self)
+        self.file_manager = virtool.files.Manager(
+            db or self.settings.get_db_client(),
+            self.settings.get("data_path"),
+            add_periodic_callback
+        )
 
         # Add self.settings to the collections dict so its methods can be exposed through the dispatcher.
-        self.collections["settings"] = self.settings
+        self.collections = {
+            "settings": self.settings
+        }
 
         #: A list of all active connections (:class:`.SocketHandler` objects).
         self.connections = list()
 
         # Calls the ping method on the next IOLoop iteration.
-        self.server.add_periodic_callback(self.ping, 10000)
+        add_periodic_callback(self.ping, 10000)
+
+    def bind_collections(self, collections_dict=None):
+        if not collections_dict:
+            collections_dict = {module: getattr(virtool, module).Collection for module in COLLECTIONS}
+
+        #: A dict containing all :class:`~.database.Collection` objects available on the server, with their
+        #: ``collection_name`` attributes as keys.
+        self.collections.update(collections_dict)
+
+        # Instantiate all the Collection objects.
+        if self.settings.get("server_ready"):
+            for collection_name in COLLECTIONS:
+                self.collections[collection_name] = self.collections[collection_name](self)
 
     def handle(self, message, connection):
         """
@@ -176,7 +176,7 @@ class Dispatcher:
             assert result
 
             if isinstance(result, tornado.concurrent.Future):
-                self.server.loop.add_future(result, handle_future)
+                self.add_future(result, handle_future)
 
         return True
 
@@ -279,7 +279,7 @@ class Dispatcher:
         :rtype: tuple
 
         """
-        yield self.server.reload()
+        yield self.reload()
 
         return True, None
 
@@ -289,7 +289,7 @@ class Dispatcher:
         Shutdown the server by calling :func:`sys.exit` with an exit code of 0.
 
         """
-        yield self.server.shutdown(0)
+        yield self.shutdown(0)
 
 
 class Transaction:
