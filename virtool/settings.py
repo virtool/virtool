@@ -1,8 +1,5 @@
-import os
 import json
-import motor
 import logging
-import pymongo
 
 import virtool.gen
 import virtool.utils
@@ -11,244 +8,184 @@ import virtool.database
 logger = logging.getLogger(__name__)
 
 
-class Settings:
+DEFAULTS = [
 
-    def __init__(self, dispatch, version, settings_dict=None, settings_path=None):
-        #: A reference to the server that instantiated the :class:`.Dispatcher` object.
-        self.dispatch = dispatch
+    ("data_path", "data"),
+    ("watch_path", "watch"),
 
-        #: Contains valid settings names and their value types.
-        self.valid = {
-            "data_path": "str",
-            "watch_path": "str",
+    ("proc", 8),
+    ("mem", 16),
 
-            "proc": "int",
-            "mem": "int",
+    ("pathoscope_bowtie_proc", 6),
+    ("pathoscope_bowtie_mem", 16),
+    ("pathoscope_bowtie_inst", 6),
 
-            "pathoscope_bowtie_proc": "int",
-            "pathoscope_bowtie_mem": "int",
-            "pathoscope_bowtie_inst": "int",
+    ("pathoscope_snap_proc", 6),
+    ("pathoscope_snap_mem", 16),
+    ("pathoscope_snap_inst", 6),
 
-            "pathoscope_snap_proc": "int",
-            "pathoscope_snap_mem": "int",
-            "pathoscope_snap_inst": "int",
+    ("nuvs_proc", 6),
+    ("nuvs_mem", 16),
+    ("nuvs_inst", 6),
 
-            "nuvs_proc": "int",
-            "nuvs_mem": "int",
-            "nuvs_inst": "int",
-            
-            "import_reads_proc": "int",
-            "import_reads_mem": "int",
-            "import_reads_inst": "int",
-            
-            "add_host_proc": "int",
-            "add_host_mem": "int",
-            "add_host_inst": "int",
-            
-            "rebuild_index_proc": "int",
-            "rebuild_index_mem": "int",
-            "rebuild_index_inst": "int",
+    ("import_reads_proc", 4),
+    ("import_reads_mem", 4),
+    ("import_reads_inst", 3),
 
-            "sample_group": "str",
-            "sample_group_read": "bool",
-            "sample_group_write": "bool",
-            "sample_all_read": "bool",
-            "sample_all_write": "bool",
-            "sample_unique_names": "bool",
+    ("add_host_proc", 2),
+    ("add_host_mem", 4),
+    ("add_host_inst", 2),
 
-            "db_name": "str",
-            "db_host": "str",
-            "db_port": "int",
+    ("rebuild_index_proc", 2),
+    ("rebuild_index_mem", 4),
+    ("rebuild_index_inst", 1),
 
-            "server_port": "int",
-            "server_address": "str",
-            "server_ready": "bool",
-            "server_id": "str",
-            "server_version": "str",
+    ("sample_group", "none"),
+    ("sample_group_read", True),
+    ("sample_group_write", False),
+    ("sample_all_read", True),
+    ("sample_all_write", False),
+    ("sample_unique_names", True),
 
-            "use_ssl": "bool",
-            "cert_path": "str",
-            "key_path": "str",
+    ("db_name", "virtool"),
+    ("db_host", "localhost"),
+    ("db_port", 27017),
 
-            "restrict_source_types": "bool",
-            "allowed_source_types": "list",
-            "use_internal_control": "bool",
-            "internal_control_id": "str"
-        }
+    ("server_port", 9650),
+    ("server_address", "localhost"),
+    ("server_ready", False),
+    ("server_version", "Unknown"),
+    ("server_id", virtool.utils.random_alphanumeric(12)),
 
-        self.defaults = {
-            "data_path": "data",
-            "watch_path": "watch",
+    ("use_ssl", False),
+    ("cert_path", ""),
+    ("key_path", ""),
 
-            "proc": 8,
-            "mem": 16,
+    ("restrict_source_types", True),
+    ("allowed_source_types", ["isolate", "genotype"]),
+    ("use_internal_control", False),
+    ("internal_control_id", "")
+]
 
-            "pathoscope_bowtie_proc": 6,
-            "pathoscope_bowtie_mem": 16,
-            "pathoscope_bowtie_inst": 6,
+VALID_TYPES = {
 
-            "pathoscope_snap_proc": 6,
-            "pathoscope_snap_mem": 16,
-            "pathoscope_snap_inst": 6,
+    "data_path": str,
+    "watch_path": str,
 
-            "nuvs_proc": 6,
-            "nuvs_mem": 16,
-            "nuvs_inst": 6,
+    "proc": int,
+    "mem": int,
 
-            "import_reads_proc": 4,
-            "import_reads_mem": 4,
-            "import_reads_inst": 3,
+    "pathoscope_bowtie_proc": int,
+    "pathoscope_bowtie_mem": int,
+    "pathoscope_bowtie_inst": int,
 
-            "add_host_proc": 2,
-            "add_host_mem": 4,
-            "add_host_inst": 2,
+    "pathoscope_snap_proc": int,
+    "pathoscope_snap_mem": int,
+    "pathoscope_snap_inst": int,
 
-            "rebuild_index_proc": 2,
-            "rebuild_index_mem": 4,
-            "rebuild_index_inst": 1,
+    "nuvs_proc": int,
+    "nuvs_mem": int,
+    "nuvs_inst": int,
 
-            "sample_group": "none",
-            "sample_group_read": True,
-            "sample_group_write": False,
-            "sample_all_read": True,
-            "sample_all_write": False,
-            "sample_unique_names": True,
+    "import_reads_proc": int,
+    "import_reads_mem": int,
+    "import_reads_inst": int,
 
-            "db_name": "virtool",
-            "db_host": "localhost",
-            "db_port": 27017,
+    "add_host_proc": int,
+    "add_host_mem": int,
+    "add_host_inst": int,
 
-            "server_port": 9650,
-            "server_address": "localhost",
-            "server_ready": False,
-            "server_version": version,
-            "server_id": virtool.utils.random_alphanumeric(12),
+    "rebuild_index_proc": int,
+    "rebuild_index_mem": int,
+    "rebuild_index_inst": int,
 
-            "use_ssl": False,
-            "cert_path": "",
-            "key_path": "",
+    "sample_group": str,
+    "sample_group_read": bool,
+    "sample_group_write": bool,
+    "sample_all_read": bool,
+    "sample_all_write": bool,
+    "sample_unique_names": bool,
 
-            "restrict_source_types": True,
-            "allowed_source_types": ["isolate", "genotype"],
-            "use_internal_control": False,
-            "internal_control_id": ""
-        }
+    "db_name": str,
+    "db_host": str,
+    "db_port": int,
 
-        # Load JSON configuration file to dictionary
-        self.data = dict(self.defaults)
+    "server_port": int,
+    "server_address": str,
+    "server_ready": bool,
+    "server_id": str,
+    "server_version": str,
 
-        self._load()
+    "use_ssl": bool,
+    "cert_path": str,
+    "key_path": str,
 
-        logger.debug("Successfully imported settings")
+    "restrict_source_types": bool,
+    "allowed_source_types": list,
+    "use_internal_control": bool,
+    "internal_control_id": str
+}
 
-    @virtool.gen.exposed_method(["modify_options"])
-    def set(self, transaction):
 
-        new_settings = yield self.sync_set(transaction.data)
+class Simple:
 
-        self.dispatch({
-            "operation": "set",
-            "collection_name": "settings",
-            "data": new_settings
-        })
+    def __init__(self, version=None, settings_path="./settings.json"):
+        self.path = settings_path
+        self.data = dict(DEFAULTS)
+        self.load_from_file()
 
-        return True, new_settings
-
-    @virtool.gen.exposed_method([])
-    def download(self):
-        return True, self.as_dict()
-
-    @virtool.gen.synchronous
-    def sync_set(self, data):
-        """ Update application settings (self.data) from a passed dictionary."""
-        keys = list()
-
-        for key, value in data.items():
-            # Validate key by checking it against the list of valid keys
-            try:
-                # Get type of setting value
-                force_type = self.valid[key]
-
-                if force_type == "int":
-                    value = int(value)
-                elif force_type == "float":
-                    value = float(value)
-
-                self.data[key] = value
-                keys.append(key)
-            except KeyError:
-                pass
-
-        self.write()
-
-        return {key: self.data[key] for key in keys}
+        if version:
+            self.data["server_version"] = version
+            self.write_to_file()
 
     def get(self, key):
         return self.data[key]
 
-    @virtool.gen.coroutine
-    def send(self, connection, transaction):
-        # Reload the settings data to make sure it is current
-        yield self.load()
+    def update(self, data):
+        """ Update application settings (self.data) from a passed dictionary."""
+        for key, value in data.items():
+            try:
+                # Get type of setting value
+                forced_type = VALID_TYPES[key]
+            except KeyError:
+                logger.warning("Settings update was called with the unknown key {}".format(key))
+                continue
 
-        for key, value in self.data.items():
-            message = {
-                "operation": "add",
-                "collection_name": "settings",
-                "data": {
-                    "_id": key,
-                    "value": value
-                }
-            }
+            value = forced_type(value)
 
-            self.dispatch(message, connections=[connection])
+            self.data[key] = value
 
-        transaction.fulfill()
+        self.write_to_file()
 
-    @virtool.gen.synchronous
-    def load(self):
-        self._load()
+        return dict(self.data)
 
-    def _load(self):
+    def load_from_file(self):
         """ Load a JSON settings file. If the path cannot be found, generate a new settings file. """
         try:
             # Open file and parse JSON into dictionary.
-            with open("settings.json", "r") as settings_file:
+            with open(self.path, "r") as settings_file:
                 string = settings_file.read()
                 content = json.loads(string)
 
             # Check each key in dictionary to make sure it is a valid settings key. Store the key-value pair
             # in self.data for later access
             for key in content:
-                if key in self.valid:
-                    self.data[key] = content[key]
+                if key in VALID_TYPES:
+                    self.data[key] = VALID_TYPES[key](content[key])
 
-            self.write()
+            self.write_to_file()
 
         except IOError:
             # In case there is no settings files, assign self.data a default option dictionary. Then,
             # print self.data to a new settings file.
-            self.data = self.defaults
-            self.write()
+            self.data = dict(DEFAULTS)
+            self.write_to_file()
 
-    def ensure_dirs(self):
-        data_path = self.get("data_path")
-
-        paths = [
-            data_path,
-            data_path + "/samples",
-            data_path + "/logs/jobs",
-            data_path + "/sessions",
-            data_path + "/reference/hosts/fasta",
-            data_path + "/reference/hosts/index",
-            data_path + "/reference/viruses/temp",
-
-            self.get("watch_path")
-        ]
-
-        for path in paths:
-            if not os.path.exists(path):
-                os.makedirs(path)
+    def write_to_file(self):
+        """ Write self.data dictionary to a formatted JSON file """
+        with open(self.path, "w") as settings_file:
+            string = json.dumps(self.data)
+            settings_file.write(string)
 
     def get_db_client(self, sync=False):
         """
@@ -263,25 +200,44 @@ class Settings:
         :return: a client object.
 
         """
-        return create_db_client(
-            self.get("host"),
-            self.get("port"),
-            self.get("name"),
+        return virtool.utils.create_db_client(
+            self.get("db_host"),
+            self.get("db_port"),
+            self.get("db_name"),
             sync=sync
         )
 
     def as_dict(self):
         return dict(self.data)
 
-    def write(self):
-        """ Write self.data dictionary to a formatted JSON file """
-        with open("settings.json", "w") as settings_file:
-            string = json.dumps(self.data)
-            settings_file.write(string)
 
+class Collection(Simple):
 
-def create_db_client(host, port, name, sync=False):
-    if sync:
-        return pymongo.MongoClient(host, port)[name]
+    def __init__(self, dispatch, version, settings_path=None):
+        super().__init__(version, settings_path)
 
-    return motor.MotorClient(host, port)[name]
+        #: A reference to the server that instantiated the :class:`.Dispatcher` object.
+        self.dispatch = dispatch
+
+        logger.debug("Successfully imported settings")
+
+    @virtool.gen.exposed_method(["modify_options"])
+    def set(self, transaction):
+
+        new_settings = yield virtool.gen.THREAD_POOL.submit(self.update, transaction.data)
+
+        self.dispatch({
+            "operation": "set",
+            "collection_name": "settings",
+            "data": new_settings
+        })
+
+        return True, new_settings
+
+    @virtool.gen.exposed_method([])
+    def download(self):
+        return True, self.as_dict()
+
+    @virtool.gen.synchronous
+    def load(self):
+        self.load_from_file()
