@@ -1,5 +1,8 @@
 import os
+import motor
 import pytest
+import pymongo
+
 import virtool.utils
 
 from virtool.testing.fixtures import static_time, temp_mongo
@@ -332,3 +335,34 @@ class TestAverageList:
     def test_wrong_arg_type(self):
         with pytest.raises(TypeError):
             virtool.utils.average_list([2, 5, 6], "a")
+
+
+class TestCreateDBClient:
+
+    def test_sync(self):
+        db = virtool.utils.create_db_client("localhost", 27017, "client-test-sync", sync=True)
+
+        assert db.name == "client-test-sync"
+        assert isinstance(db, pymongo.database.Database)
+
+        assert db.client.address == ("localhost", 27017)
+
+    def test_invalid_sync(self):
+        db = virtool.utils.create_db_client("10.23.12.3", 27017, "client-test-sync", sync=True)
+
+        with pytest.raises(pymongo.errors.ServerSelectionTimeoutError):
+            assert db.client.address == ("10.23.12.3", 27017)
+
+    @pytest.mark.gen_test
+    def test_async(self):
+        db = virtool.utils.create_db_client("localhost", 27017, "client-test-async", sync=False)
+
+        assert db.name == "client-test-async"
+        assert isinstance(db, motor.motor_tornado.MotorDatabase)
+
+        assert db.client.HOST == "localhost"
+        assert db.client.PORT == 27017
+
+    def test_invalid_async(self):
+        virtool.utils.create_db_client("10.23.12.3", 27017, "client-test-async", sync=False)
+
