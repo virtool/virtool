@@ -12,6 +12,8 @@ class TestInit:
 
     def test_paths(self, called_tester):
 
+        add_periodic_callback = called_tester()
+
         manager = Manager(None, "test_data", add_periodic_callback)
 
         assert manager.paths["upload"] == "test_data/upload" and manager.paths["download"] == "test_data/download"
