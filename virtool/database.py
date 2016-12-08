@@ -333,7 +333,7 @@ class SyncingCollection(Collection):
         """
         query, multi = coerce_query(query)
 
-        ids_to_update = yield self.find(query, {"_id"}).distinct("_id")
+        ids_to_update = yield self.find(query).distinct("_id")
 
         if increment_version:
             update["$inc"] = {"_version": 1}
