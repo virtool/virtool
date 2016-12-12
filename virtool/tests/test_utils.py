@@ -5,9 +5,6 @@ import pymongo
 
 import virtool.utils
 
-from virtool.testing.fixtures import static_time, temp_mongo
-from virtool.testing.mock_mongo import session_mongo
-
 
 @pytest.fixture
 def fake_dir(tmpdir):
@@ -189,14 +186,14 @@ class TestRandomAlphanumeric:
         for i in range(0, 10):
             an = virtool.utils.random_alphanumeric()
             assert len(an) == 6
-            assert all([l in alphanumeric for l in an])
+            assert all(l in alphanumeric for l in an)
 
     @pytest.mark.gen_test
     def test_length(self, alphanumeric):
         for length in [7, 10, 25, 12, 4, 22, 17, 30, 8, 14, 19]:
             an = virtool.utils.random_alphanumeric(length)
             assert len(an) == length
-            assert all([l in alphanumeric for l in an])
+            assert all(l in alphanumeric for l in an)
 
     @pytest.mark.gen_test
     def test_randomizer(self, alphanumeric, randomizer):
@@ -205,7 +202,7 @@ class TestRandomAlphanumeric:
         for i in range(0, 6):
             an = virtool.utils.random_alphanumeric(randomizer=randomizer)
             assert len(an) == 6
-            assert all([l in alphanumeric for l in an])
+            assert all(l in alphanumeric for l in an)
             results.add(an)
 
         assert results == {"abc123", "jkl932", "90r2ja", "87e9wa", "skk342", "skl1qq"}
@@ -216,7 +213,7 @@ class TestRandomAlphanumeric:
             an = virtool.utils.random_alphanumeric(excluded=["87e9wa"], randomizer=randomizer)
             assert an != "87e9wa"
             assert len(an) == 6
-            assert all([l in alphanumeric for l in an])
+            assert all(l in alphanumeric for l in an)
 
 
 class TestGetDocumentId:
@@ -224,10 +221,10 @@ class TestGetDocumentId:
     @pytest.mark.gen_test
     def test_basic(self, temp_mongo, alphanumeric):
 
-        thing = yield virtool.utils.get_new_document_id(temp_mongo.files)
+        new_id = yield virtool.utils.get_new_document_id(temp_mongo.files)
 
-        assert len(thing) == 8
-        assert all([l in alphanumeric for l in thing])
+        assert len(new_id) == 8
+        assert all(l in alphanumeric for l in new_id)
 
     @pytest.mark.gen_test
     def test_excluded(self, temp_mongo, randomizer):

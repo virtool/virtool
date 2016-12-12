@@ -1,7 +1,5 @@
 import pytest
 
-from virtool.testing.fixtures import called_tester
-
 
 class TestReload:
 

@@ -3,11 +3,6 @@ import inspect
 
 from virtool.dispatcher import Dispatcher
 
-from virtool.testing.fixtures import called_tester, temp_mongo
-from virtool.testing.mock_settings import settings
-from virtool.testing.mock_mongo import session_mongo
-from virtool.testing.mock_connection import connection
-
 
 @pytest.fixture(scope="function")
 def temp_settings(settings):

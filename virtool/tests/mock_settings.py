@@ -1,11 +1,3 @@
-import pytest
-
-
-@pytest.fixture(scope="session")
-def settings():
-    return MockSettings()
-
-
 class MockSettings:
 
     def __init__(self):

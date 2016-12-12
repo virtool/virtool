@@ -107,7 +107,7 @@ def save_setup(handler,data):
             "invalidate_sessions": False
         })
 
-    handler.settings["server"].settings.sync_set(settings)
+    handler.settings["server"].settings.update(settings)
 
     response = yield handler.settings["server"].reload()
 

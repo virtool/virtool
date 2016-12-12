@@ -4,9 +4,6 @@ import datetime
 
 from virtool.files import Manager
 
-from virtool.testing.mock_mongo import session_mongo
-from virtool.testing.fixtures import static_time, called_tester, data_dir, temp_mongo
-
 
 class TestInit:
 

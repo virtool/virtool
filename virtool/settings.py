@@ -143,6 +143,8 @@ class Simple:
 
     def update(self, data):
         """ Update application settings (self.data) from a passed dictionary."""
+        old_data = dict(self.data)
+
         for key, value in data.items():
             try:
                 # Get type of setting value
@@ -155,9 +157,11 @@ class Simple:
 
             self.data[key] = value
 
-        self.write_to_file()
+        if self.data != old_data:
+            self.write_to_file()
+            return dict(self.data)
 
-        return dict(self.data)
+        return None
 
     def load_from_file(self):
         """ Load a JSON settings file. If the path cannot be found, generate a new settings file. """
@@ -176,9 +180,11 @@ class Simple:
             self.write_to_file()
 
         except IOError:
-            # In case there is no settings files, assign self.data a default option dictionary. Then,
-            # print self.data to a new settings file.
-            self.data = dict(DEFAULTS)
+            # In case there is no settings file, print self.data to a new settings file. Load default settings value if
+            # self.data is not populated (probably the case).
+            if not self.data:
+                self.data = dict(DEFAULTS)
+
             self.write_to_file()
 
     def write_to_file(self):
@@ -213,7 +219,7 @@ class Simple:
 
 class Collection(Simple):
 
-    def __init__(self, dispatch, version, settings_path=None):
+    def __init__(self, dispatch, version=None, settings_path=None):
         super().__init__(version, settings_path)
 
         #: A reference to the server that instantiated the :class:`.Dispatcher` object.
@@ -226,13 +232,16 @@ class Collection(Simple):
 
         new_settings = yield virtool.gen.THREAD_POOL.submit(self.update, transaction.data)
 
-        self.dispatch({
-            "operation": "set",
-            "collection_name": "settings",
-            "data": new_settings
-        })
+        if new_settings is not None:
+            self.dispatch({
+                "operation": "set",
+                "collection_name": "settings",
+                "data": new_settings
+            })
 
-        return True, new_settings
+            return True, new_settings
+
+        return False, dict(message="No changes resulted from applying update object")
 
     @virtool.gen.exposed_method([])
     def download(self):

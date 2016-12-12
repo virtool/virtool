@@ -47,10 +47,6 @@ class Application:
         #: The global :class:`.Dispatcher` object used to communicate with clients.
         self.dispatcher = None
 
-        #: The global :class:`.Settings` object used to read and write the settings file and send and receive settings
-        #: changes to and from clients.
-        self.settings = None
-
         #: A list of :class:`~tornado.ioloop.PeriodicCallback` objects. The list is populated by calling
         #: :meth:`.add_periodic_callback`. Keeping references to these periodic callbacks allows them to be stopped if
         #: necessary.
@@ -79,21 +75,26 @@ class Application:
         See
 
         """
+        self.loop = tornado.ioloop.IOLoop.instance()
+
         # Create a Settings object because it is required whether the server has been setup or not. Will write a default
         # 'settings.json' file if none is found.
-        self.settings = virtool.settings.Settings(self)
+        settings = virtool.settings.Settings(self.version)
 
-        self.settings.data["server_version"] = self.version
+        self.ssl = settings.get("use_ssl")
+        self.host = settings.get("server_address")
+        self.port = settings.get("server_port")
 
-        self.ssl = self.settings.get("use_ssl")
-        self.host = self.settings.get("server_address")
-        self.port = self.settings.get("server_port")
-
-
-        if self.settings.get("server_ready"):
+        if settings.get("server_ready"):
             # Create a dispatcher object only if the server has been setup and the 'server_ready' settings has been set
             # to True.
-            self.dispatcher = virtool.dispatcher.Dispatcher(self)
+            self.dispatcher = virtool.dispatcher.Dispatcher(
+                self.add_periodic_callback,
+                self.loop.add_future,
+                self.reload,
+                self.shutdown
+            )
+
             logger.debug("Instantiated dispatcher")
         else:
             logger.info("Server has not been setup.")
@@ -116,7 +117,7 @@ class Application:
             (r"/", HTTPHandler),
             (r"/ws", SocketHandler),
             (r"/upload", UploadHandler),
-            (r"/download/(.*)", tornado.web.StaticFileHandler, {"path": self.settings.get("data_path") + "/download/"}),
+            (r"/download/(.*)", tornado.web.StaticFileHandler, {"path": settings.get("data_path") + "/download/"}),
             (r"/doc/(.*)", tornado.web.StaticFileHandler, {"path": doc_path}),
             (r"/(app.*js$|favicon.ico)", tornado.web.StaticFileHandler, {"path": static_path})
         ]
@@ -126,51 +127,50 @@ class Application:
         self.app = tornado.web.Application(
             handlers,
             compress_response=True,
-            server=self
+            handle_message=self.dispatcher.handle,
+            add_connection=self.dispatcher.add_connection,
+            remove_connection=self.dispatcher.remove_connection,
+            register_file=self.dispatcher.file_manager.register
         )
 
         try:
             ssl_ctx = None
 
-            ssl_cert_path = self.settings.get("cert_path")
-            ssl_key_path = self.settings.get("key_path")
+            ssl_cert_path = settings.get("cert_path")
+            ssl_key_path = settings.get("key_path")
 
             # Setup SSL if necessary.
-            if self.settings.get("use_ssl") and ssl_cert_path and ssl_key_path:
+            if settings.get("use_ssl") and ssl_cert_path and ssl_key_path:
                 ssl_ctx = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
                 ssl_ctx.load_cert_chain(ssl_cert_path, ssl_key_path)
 
             # Try to start the application. If the set address and port cannot be bound, an error is logged and the
             # program exits with an return code of 1. X-headers are enabled for future implementation of SSL.
             self.server_object = self.app.listen(
-                self.settings.get("server_port"),
-                self.settings.get("server_address"),
+                settings.get("server_port"),
+                settings.get("server_address"),
                 xheaders=bool(ssl_ctx),
                 ssl_options=ssl_ctx
             )
 
             # Log a message if the server binds successfully.
             logger.info("Listening on {}:{}".format(
-                self.settings.get("server_address"), str(self.settings.get("server_port"))
+                self.settings.get("server_address"), str(settings.get("server_port"))
             ))
         except PermissionError:
             logger.critical("Could not bind address {}:{}".format(
-                self.settings.get("server_address"),
-                self.settings.get("server_port")
+                settings.get("server_address"),
+                settings.get("server_port")
             ))
 
             sys.exit(1)
 
         # Create IOLoop object and start it.
-        logger.debug("Starting IOLoop.")
-        self.loop = tornado.ioloop.IOLoop.instance()
-
         try:
             logger.debug("Starting IOLoop.")
             self.loop.start()
         except KeyboardInterrupt:
             self.handle_interrupt()
-
 
         # When the IOLoop.start() method returns, close the IOLoop.
         self.loop.close()
@@ -219,41 +219,40 @@ class Application:
         for module in [virtool.setup, virtool.settings, virtool.dispatcher]:
             importlib.reload(module)
 
-
         logger.debug("Reloading settings")
-        self.settings = virtool.settings.Settings(self)
+        settings = virtool.settings.Settings(self.version)
 
         # Re-instantiate the dispatcher if the "server_ready" setting is ``True``.
-        if self.settings.get("server_ready"):
+        if settings.get("server_ready"):
             logger.debug("Instantiating dispatcher")
             self.dispatcher = virtool.dispatcher.Dispatcher(self)
 
         # Listen on a new address if the "server_port" or "server_address" settings were changed since the last start.
-        if (self.host != self.settings.get("server_address") or
-            self.port != self.settings.get("server_port") or
-            self.ssl != self.settings.get("use_ssl")):
+        if (self.host != settings.get("server_address") or
+            self.port != settings.get("server_port") or
+            self.ssl != settings.get("use_ssl")):
 
             self.server_object.stop()
 
-            self.ssl = self.settings.get("use_ssl")
-            self.host = self.settings.get("server_address")
-            self.port = self.settings.get("server_port")
+            self.ssl = settings.get("use_ssl")
+            self.host = settings.get("server_address")
+            self.port = settings.get("server_port")
 
             ssl_ctx = None
 
-            ssl_cert_path = self.settings.get("cert_path")
-            ssl_key_path = self.settings.get("key_path")
+            ssl_cert_path = settings.get("cert_path")
+            ssl_key_path = settings.get("key_path")
 
             # Setup SSL if necessary.
-            if self.settings.get("use_ssl") and ssl_cert_path and ssl_key_path:
+            if settings.get("use_ssl") and ssl_cert_path and ssl_key_path:
                 ssl_ctx = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
                 ssl_ctx.load_cert_chain(ssl_cert_path, ssl_key_path)
 
             # Try to start the application. If the set address and port cannot be bound, an error is logged and the
             # program exits with an return code of 1. X-headers are enabled for future implementation of SSL.
             self.server_object = self.app.listen(
-                self.settings.get("server_port"),
-                self.settings.get("server_address"),
+                settings.get("server_port"),
+                settings.get("server_address"),
                 xheaders=bool(ssl_ctx),
                 ssl_options=ssl_ctx
             )
@@ -365,7 +364,9 @@ class SocketHandler(tornado.websocket.WebSocketHandler):
 
         #: A dict describing the user associated with the websocket connection. If the connection is not authorized,
         #: the attribute is assigned ``{"_id": None}``.
-        self.user = {"_id": None}
+        self.user = {
+            "_id": None
+        }
 
         #: Set to ``True`` when the connection is authorized.
         self.authorized = False
@@ -379,7 +380,7 @@ class SocketHandler(tornado.websocket.WebSocketHandler):
         list of active connections.
 
         """
-        self.dispatcher.connections.append(self)
+        self.settings["add_connection"](self)
 
     def on_message(self, message):
         """
@@ -390,7 +391,7 @@ class SocketHandler(tornado.websocket.WebSocketHandler):
         :type message: str
 
         """
-        self.dispatcher.handle(message, self)
+        self.settings["handle_message"](message, self)
 
     def on_close(self):
         """
@@ -398,8 +399,7 @@ class SocketHandler(tornado.websocket.WebSocketHandler):
         connections.
 
         """
-        self.dispatcher.watcher.remove_listener(self)
-        self.dispatcher.connections.remove(self)
+        self.settings["remove_connection"](self)
 
 
 class UploadHandler(tornado.web.RequestHandler):
@@ -423,7 +423,7 @@ class UploadHandler(tornado.web.RequestHandler):
         file = self.request.files[filename][0]
 
         # Pass the file to the file manager and generate a unique internal id for it.
-        file_id = yield self.settings["server"].dispatcher.file_manager.register(
+        file_id = yield self.settings["register_file"](
             filename,
             file.body,
             file.content_type,

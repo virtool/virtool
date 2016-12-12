@@ -4,14 +4,7 @@ import pymongo
 from virtool.utils import random_alphanumeric
 
 
-@pytest.fixture(scope="session")
-def session_mongo():
-    mock = Mongo()
-    yield mock
-    mock.delete()
-
-
-class Mongo:
+class MockMongo:
 
     def __init__(self, async=True):
         # A temporary database.

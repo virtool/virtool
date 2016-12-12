@@ -10,6 +10,7 @@ import virtool.gen
 import virtool.jobs
 import virtool.samples
 import virtool.analyses
+import virtool.settings
 import virtool.viruses
 import virtool.history
 import virtool.indexes
@@ -35,7 +36,7 @@ class Dispatcher:
     :class:`.files.Manager`, and an instance of :class:`.files.Watcher`.
 
     """
-    def __init__(self, add_periodic_callback, add_future, reload, shutdown, settings, db=None):
+    def __init__(self, add_periodic_callback, add_future, reload, shutdown, db=None):
 
         self.add_periodic_callback = add_periodic_callback
         self.add_future = add_future
@@ -43,7 +44,7 @@ class Dispatcher:
         self.shutdown = shutdown
 
         #: The shared :class:`~.virtool.settings.Settings` object created by the server. Passed to all collections.
-        self.settings = settings
+        self.settings = virtool.settings.Settings()
 
         #: A :class:`~.virtool.files.Watcher` object that keeps track of what files are in the watch folder and host
         #: FASTA folder and sends changes to listening clients.
@@ -79,6 +80,16 @@ class Dispatcher:
         if self.settings.get("server_ready"):
             for collection_name in COLLECTIONS:
                 self.collections[collection_name] = self.collections[collection_name](self)
+
+    def bind_interface(self, name, methods):
+
+
+    def add_connection(self, connection):
+        self.connections.append(connection)
+
+    def remove_connection(self, connection):
+        self.connections.remove(connection)
+        self.watcher.remove_listener(self)
 
     def handle(self, message, connection):
         """
