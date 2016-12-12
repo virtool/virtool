@@ -1,4 +1,3 @@
-import pytest
 import pymongo
 
 from virtool.utils import random_alphanumeric
@@ -6,7 +5,7 @@ from virtool.utils import random_alphanumeric
 
 class MockMongo:
 
-    def __init__(self, async=True):
+    def __init__(self):
         # A temporary database.
         self.name = "vt-test-" + random_alphanumeric(12)
 

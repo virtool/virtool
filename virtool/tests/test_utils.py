@@ -243,7 +243,7 @@ class TestGetDocumentId:
             assert new_id != "skk342"
 
     @pytest.mark.gen_test
-    def test_existing_id(self, temp_mongo, session_mongo, randomizer):
+    def test_existing_id(self, temp_mongo, mock_mongo, randomizer):
 
         result = yield temp_mongo.files.find().distinct("_id")
 
@@ -255,7 +255,7 @@ class TestGetDocumentId:
             "name": "skl1qq"
         }
 
-        session_mongo.files.insert(document)
+        mock_mongo.files.insert(document)
 
         result = yield temp_mongo.files.find_one()
 

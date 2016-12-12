@@ -45,6 +45,15 @@ def mock_mongo():
     mock.delete()
 
 
+@pytest.fixture(scope="function")
+def temp_mongo(mock_mongo, io_loop):
+    import motor
+
+    yield motor.MotorClient(io_loop=io_loop)[mock_mongo.name]
+
+    mock_mongo.clean()
+
+
 @pytest.fixture
 def mock_transaction(mock_connection):
     def create(message, username="test", permissions=None, administrator=False, authorized=True):
@@ -90,15 +99,6 @@ def called_tester():
         return Func()
 
     return create
-
-
-@pytest.fixture(scope="function")
-def temp_mongo(session_mongo, io_loop):
-    import motor
-
-    yield motor.MotorClient(io_loop=io_loop)[session_mongo.name]
-
-    session_mongo.clean()
 
 
 @pytest.fixture(scope="session")
