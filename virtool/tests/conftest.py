@@ -6,6 +6,7 @@ from virtool.permissions import PERMISSIONS
 from .mock_mongo import MockMongo
 from .mock_socket import MockSocket
 from .mock_settings import MockSettings
+from .mock_interface import EmptyInterface, MockInterface
 from .mock_connection import MockConnection
 from .mock_transaction import MockTransaction
 
@@ -27,6 +28,23 @@ def blind_socket(called_tester):
 @pytest.fixture(scope="session")
 def settings():
     return MockSettings()
+
+
+@pytest.fixture()
+def empty_interface(called_tester):
+    collections = dict()
+    return EmptyInterface(called_tester(), collections)
+
+
+@pytest.fixture()
+def mock_interface(called_tester):
+    collections = dict()
+    return MockInterface(called_tester(), collections)
+
+
+@pytest.fixture(scope="function")
+def mock_socket():
+    return lambda settings: MockSocket(settings)
 
 
 @pytest.fixture
