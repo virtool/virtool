@@ -244,7 +244,7 @@ class Collection(Simple):
         return False, dict(message="No changes resulted from applying update object")
 
     @virtool.gen.exposed_method([])
-    def download(self):
+    def download(self, transaction):
         return True, self.as_dict()
 
     @virtool.gen.synchronous
