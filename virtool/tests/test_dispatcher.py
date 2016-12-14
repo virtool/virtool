@@ -54,11 +54,11 @@ class TestInterfaces:
         # Double check that ONE warning was raised.
         assert len(recwarn) == 1
 
-    def test_add_existing(self, recwarn, dispatcher, mock_interface, mock_settings):
+    def test_add_existing(self, dispatcher, mock_interface, mock_settings):
         with pytest.raises(ValueError) as inst:
             dispatcher.add_interface("test", mock_interface, mock_settings)
 
-    def test_collection(self, recwarn, dispatcher, mock_interface, mock_settings):
+    def test_collection(self, dispatcher, mock_interface, mock_settings):
         assert "test" not in dispatcher.collections
 
         dispatcher.add_interface("coll", mock_interface, mock_settings, is_collection=True)
