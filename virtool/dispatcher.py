@@ -1,66 +1,25 @@
 import json
-import traceback
 import logging
+import warnings
+import traceback
 import tornado.concurrent
 import tornado.websocket
-import tornado.gen
-import tornado.ioloop
 
 import virtool.gen
-import virtool.jobs
-import virtool.samples
-import virtool.analyses
-import virtool.settings
-import virtool.viruses
-import virtool.history
-import virtool.indexes
-import virtool.hosts
-import virtool.users
-import virtool.groups
-import virtool.gen
-import virtool.files
 
-from virtool.collections import COLLECTIONS
 
 logger = logging.getLogger(__name__)
 
 
 class Dispatcher:
 
-    """
-    Handles all websocket communication with clients. New :class:`.Transaction` objects are generated from incoming
-    messages and passed to :ref:`exposed methods <exposed-methods>`. When exposed methods return, the transactions are
-    fulfilled and returned to the client.
-
-    The dispatcher also instantiates most of Virtool's :class:`~.database.Collection` subclasses, an instance of
-    :class:`.files.Manager`, and an instance of :class:`.files.Watcher`.
-
-    """
-    def __init__(self, add_periodic_callback, add_future, reload, shutdown, db=None):
+    def __init__(self, add_periodic_callback):
 
         self.add_periodic_callback = add_periodic_callback
-        self.add_future = add_future
-        self.reload = reload
-        self.shutdown = shutdown
 
-        #: The shared :class:`~.virtool.settings.Settings` object created by the server. Passed to all collections.
-        self.settings = virtool.settings.Settings()
 
-        #: A :class:`~.virtool.files.Watcher` object that keeps track of what files are in the watch folder and host
-        #: FASTA folder and sends changes to listening clients.
-        self.watcher = virtool.files.Watcher(self.dispatch, add_periodic_callback)
-
-        #: An instance of :class:`virtool.files.Manager`. Used for managing uploads and downloads.
-        self.file_manager = virtool.files.Manager(
-            db or self.settings.get_db_client(),
-            self.settings.get("data_path"),
-            add_periodic_callback
-        )
-
-        # Add self.settings to the collections dict so its methods can be exposed through the dispatcher.
-        self.collections = {
-            "settings": self.settings
-        }
+        self.interfaces = dict()
+        self.collections = dict()
 
         #: A list of all active connections (:class:`.SocketHandler` objects).
         self.connections = list()
@@ -68,29 +27,80 @@ class Dispatcher:
         # Calls the ping method on the next IOLoop iteration.
         add_periodic_callback(self.ping, 10000)
 
-    def bind_collections(self, collections_dict=None):
-        if not collections_dict:
-            collections_dict = {module: getattr(virtool, module).Collection for module in COLLECTIONS}
+    def add_interface(self, name, interface_class, settings, is_collection=False):
+        """
+        Add an interface to the dispatcher. It will be available in ``self.interfaces`` with the key ``name``. If the
+        interface is a collection, it will also be referenced in ``self.collections``.
 
-        #: A dict containing all :class:`~.database.Collection` objects available on the server, with their
-        #: ``collection_name`` attributes as keys.
-        self.collections.update(collections_dict)
+        Raises and exception if an interface has already been added with the passed name.
 
-        # Instantiate all the Collection objects.
-        if self.settings.get("server_ready"):
-            for collection_name in COLLECTIONS:
-                self.collections[collection_name] = self.collections[collection_name](self)
+        Issues a warning if the passed ``obj`` has no exposed methods.
 
-    def bind_interface(self, name, methods):
+        :param name: the name to store the interface under.
+        :type name: str
 
+        :param interface_class: the class that will be used to create the interface object
+        :type interface_class: class
+
+        :param settings: the settings object the collection should use
+        :type settings: :class:`.settings.Settings`
+
+        :param is_collection: a flag indicating whether the interface is a collection
+        :type is_collection: bool
+
+        """
+        if name in self.interfaces:
+            raise ValueError("Dispatcher already has interface with name '{}'".format(name))
+
+        attr_list = [getattr(interface_class, attr) for attr in dir(interface_class)]
+
+        if not any(hasattr(attr, "is_exposed") for attr in attr_list):
+            warnings.warn(Warning("Passed interface '{}' has no exposed methods".format(name)))
+
+        interface = interface_class(self.dispatch, self.collections, settings)
+
+        self.interfaces[name] = interface
+
+        if is_collection:
+            self.collections[name] = interface
 
     def add_connection(self, connection):
+        """
+        Add a connection to the dispatcher so interfaces can write messages to it.
+
+        :param connection: the connection to add.
+        :type connection: :class:`.SocketHandler`
+
+        """
+        for method_name in ["open", "on_message", "on_close", "write_message"]:
+            try:
+                # Make sure the passed connection has the methods necessary for it to function properly.
+                method = getattr(connection, method_name)
+                assert callable(method)
+            except (AttributeError, AssertionError):
+                raise AttributeError("Connection must have method '{}'".format(method_name))
+
         self.connections.append(connection)
 
     def remove_connection(self, connection):
-        self.connections.remove(connection)
-        self.watcher.remove_listener(self)
+        """
+        Remove a connection from the dispatcher. Make sure it is closed first.
 
+        :param connection: the connection to remove
+        :type connection: :class:`.SocketHandler`
+
+        """
+        try:
+            connection.close()
+        except tornado.websocket.WebSocketClosedError:
+            pass
+
+        try:
+            self.connections.remove(connection)
+        except ValueError:
+            pass
+
+    @virtool.gen.coroutine
     def handle(self, message, connection):
         """
         Handles all inbound messages from websocket clients.
@@ -100,11 +110,11 @@ class Dispatcher:
         A reference to the requesting :class:`.SocketHandler` object is also assigned to the transaction's
         :attr:`~.Transaction.connection` attribute.
 
-        An attempt is made to call the method identified by the ``collection_name`` and ``method_name`` fields from the
-        message. Warnings are logged when:
+        An attempt is made to call the method identified by the ``interface`` and ``method`` fields from the message.
+        Warnings are logged when:
 
-        - the collection identified by ``collection_name`` does not exist
-        - the method identified by ``method_name`` does not exist
+        - the interface identified by ``interface`` does not exist
+        - the method identified by ``method`` does not exist
         - the method is not :ref:`exposed <exposed-methods>`
         - the method is :ref:`protected <protected-methods>` and the user is not authorized
 
@@ -119,75 +129,69 @@ class Dispatcher:
 
         """
         # Create a transaction based on the message.
-        transaction = Transaction(self, connection, message)
+        transaction = Transaction(self.dispatch, message, connection)
 
-        # Log a string of the format '<username> (<ip>) request <collection>:<method>' to describe the request.
+        # Log a string of the format '<username> (<ip>) request <interface>:<method>' to describe the request.
         logger.info('{} ({}) requested {}.{}'.format(
             connection.user["_id"],
             connection.ip,
-            transaction.collection_name,
-            transaction.method_name
+            transaction.interface,
+            transaction.method
         ))
 
-        # Get the requested collection if possible, otherwise log warning and return.
+        # Get the requested interface object if possible, otherwise log warning and return.
         try:
-            collection = self.collections[transaction.collection_name]
+            interface = self.interfaces[transaction.interface]
         except KeyError:
-            if transaction.collection_name == "dispatcher":
-                collection = self
-            else:
-                logger.warning("User {} specified unknown collection {}".format(
-                    connection.user["_id"],
-                    transaction.collection_name
-                ))
-                return False
+            logger.warning("User '{}' requested unknown interface {}".format(
+                connection.user["_id"],
+                transaction.interface
+            ))
+            return False
 
         # Get the requested method if possible, otherwise log warning and return.
         try:
-            method = getattr(collection, transaction.method_name)
+            method = getattr(interface, transaction.method)
         except AttributeError:
-            logger.warning("User {} attempted unknown request {}.{}".format(
+            logger.warning("User '{}' requested unknown interface method {}.{}".format(
                 connection.user["_id"],
-                transaction.collection_name,
-                transaction.method_name
+                transaction.interface,
+                transaction.method
             ))
             return False
 
         # Log warning and return if method is not exposed.
         if not hasattr(method, "is_exposed") or not method.is_exposed:
-            logger.warning("User {} attempted to call unexposed method {}.{}".format(
+            logger.warning("User '{}' attempted to call unexposed method {}.{}".format(
                 connection.user["_id"],
-                transaction.collection_name,
-                transaction.method_name
+                transaction.interface,
+                transaction.method
             ))
             return False
 
-        if not connection.authorized and not method.is_unprotected:
+        is_unprotected = hasattr(method, "is_unprotected")
+
+        if not connection.authorized and not is_unprotected:
             logger.warning("Unauthorized connection at {} attempted to call protected method {}.{}".format(
                 connection.ip,
-                transaction.collection_name,
-                transaction.method_name
+                transaction.interface,
+                transaction.method
             ))
             return False
 
         # Call the exposed method if it is unprotected or the requesting connection has been authorized.
-        if connection.authorized or method.is_unprotected:
-            call_succeeded = True
-
-            result = None
-
+        if connection.authorized or is_unprotected:
             try:
-                result = method(transaction)
-            except TypeError:
-                call_succeeded = False
+                # Exposed methods most commonly take the transaction as the sole argument (positional).
+                yield method(transaction)
+            except TypeError as inst:
+                if "takes 1 positional argument but" in inst.args[0]:
+                    print(method.__name__)
+                    raise TypeError("Exposed method '{}' must take a transaction as its single argument".format(
+                        getattr(method, "__name__")
+                    ))
 
-            if not call_succeeded:
-                result = method()
-
-            assert result
-
-            if isinstance(result, tornado.concurrent.Future):
-                self.add_future(result, handle_future)
+                raise
 
         return True
 
@@ -241,67 +245,6 @@ class Dispatcher:
             "data": None
         })
 
-    @virtool.gen.exposed_method([])
-    def listen(self, transaction):
-        """
-        Listen to file updates associated with the watcher name passed in the transaction.
-
-        :param transaction: the transaction generated by the request.
-        :type transaction: :class:`.Transaction`
-
-        :return: a boolean indicating success and ``None``.
-        :rtype: tuple
-
-        """
-        for file_document in self.watcher.files[transaction.data["name"]].values():
-            self.dispatch({
-                "operation": "update",
-                "collection_name": transaction.data["name"],
-                "data": file_document,
-                "sync": True
-            }, [transaction.connection])
-
-        self.watcher.add_listener(transaction.data["name"], transaction.connection)
-
-        return True, None
-
-    @virtool.gen.exposed_method([])
-    def unlisten(self, transaction):
-        """
-        Stop listening to file updates associated with the watcher name passed in the transaction.
-
-        :param transaction: the transaction generated by the request.
-        :type transaction: :class:`.Transaction`
-
-        :return: a boolean indicating success and ``None``.
-        :rtype: tuple
-
-        """
-        self.watcher.remove_listener(transaction.connection, name=transaction.data["name"])
-
-        return True, None
-
-    @virtool.gen.exposed_method(["modify_options"])
-    def reload(self):
-        """
-        Reload the server by calling :meth:`.Application.reload`. See that method's documentation for more information.
-
-        :return: a boolean indicating success and ``None``.
-        :rtype: tuple
-
-        """
-        yield self.reload()
-
-        return True, None
-
-    @virtool.gen.exposed_method(["modify_options"])
-    def shutdown(self):
-        """
-        Shutdown the server by calling :func:`sys.exit` with an exit code of 0.
-
-        """
-        yield self.shutdown(0)
-
 
 class Transaction:
 
@@ -323,7 +266,7 @@ class Transaction:
     bound to success or failure of the request.
 
     """
-    def __init__(self, dispatcher, connection, message):
+    def __init__(self, dispatch, message, connection):
 
         #: The raw message from the client converted to dict from JSON.
         self.message = json.loads(message)
@@ -332,24 +275,18 @@ class Transaction:
         #: broadcast.
         self.connection = connection
 
-        #: The dispatcher that spawned the transaction. Referred to for broadcasting a result to all registered
-        #: connections
-        self.dispatcher = dispatcher
+        self.dispatch = dispatch
 
         #: The :abbr:`TID (transaction ID)` generated for the transaction by the requesting client.
         self.tid = self.message["tid"]
 
-        try:
-            #: The name of the exposed method to call.
-            self.method_name = self.message["methodName"]
-        except KeyError:
-            raise KeyError("Message dict used to create Transaction must contain methodName key.")
+        self.method = self.message.get("method", None)
 
-        #: The name of the collection or object containing the exposed method to call.
-        self.collection_name = self.message["collectionName"] if "collectionName" in self.message else None
+        #: The name of the interface or object containing the exposed method to call.
+        self.interface = self.message.get("interface", None)
 
         #: The data to be used for calling the exposed method.
-        self.data = self.message["data"] if "data" in self.message else None
+        self.data = self.message.get("data", None)
 
         #: An attribute that can be reassigned to send data to the client when the transaction is fulfilled without
         #: passing data directly to :meth:`.fulfill`.
@@ -357,7 +294,7 @@ class Transaction:
 
     def fulfill(self, success=True, data=None):
         """
-        Called when the exposed method specified by :attr:`.method_name` returns. Sends a message to the client telling
+        Called when the exposed method specified by :attr:`.method` returns. Sends a message to the client telling
         it whether the transaction was successful and sending any data returned by the exposed method.
 
         :param success: indicates whether the transaction succeeded.
@@ -380,7 +317,7 @@ class Transaction:
 
             data = data_to_send
 
-        self.dispatcher.dispatch({
+        self.dispatch({
             "collection_name": "transaction",
             "operation": "fulfill",
             "data": {
@@ -398,7 +335,7 @@ class Transaction:
         :type data: any
 
         """
-        self.dispatcher.dispatch({
+        self.dispatch({
             "collection_name": "transaction",
             "operation": "update",
             "data": {
