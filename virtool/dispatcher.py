@@ -184,6 +184,11 @@ class Dispatcher:
             try:
                 # Exposed methods most commonly take the transaction as the sole argument (positional).
                 yield method(transaction)
+
+            except virtool.gen.RequiredPermissionError as inst:
+                logger.warning(str(inst.args[0]))
+                return False
+
             except TypeError as inst:
                 if "takes 1 positional argument but" in inst.args[0]:
                     print(method.__name__)

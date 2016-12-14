@@ -4,7 +4,6 @@ import pytest
 from virtool.permissions import PERMISSIONS
 
 from .mock_mongo import MockMongo
-from .mock_socket import MockSocket
 from .mock_settings import MockSettings
 from .mock_interface import EmptyInterface, MockInterface
 from .mock_connection import MockConnection
@@ -26,32 +25,36 @@ def blind_socket(called_tester):
 
 
 @pytest.fixture(scope="session")
-def settings():
+def mock_settings():
     return MockSettings()
 
 
 @pytest.fixture()
 def empty_interface(called_tester):
-    collections = dict()
-    return EmptyInterface(called_tester(), collections)
+    return EmptyInterface
 
 
 @pytest.fixture()
-def mock_interface(called_tester):
-    collections = dict()
-    return MockInterface(called_tester(), collections)
+def mock_interface():
+    return MockInterface
 
 
-@pytest.fixture(scope="function")
-def mock_socket():
-    return lambda settings: MockSocket(settings)
+@pytest.fixture()
+def mock_connection(user, called_tester):
+    def create(source=None, username="test", permissions="all", administrator=False, authorized=True):
 
+        method_keys = ["add_connection", "remove_connection", "handle"]
 
-@pytest.fixture
-def mock_connection(user):
-    def create(name="test", permissions=None, administrator=False, authorized=True):
-        bound_user = user(name, permissions, administrator)
-        return MockConnection(bound_user, authorized)
+        if isinstance(source, dict):
+            web_settings = {key: source[key] for key in method_keys}
+        elif source is None:
+            web_settings = {key: called_tester for key in method_keys}
+        else:
+            web_settings = {key: getattr(source, key) for key in method_keys}
+
+        new_user = user(username, permissions, administrator)
+
+        return MockConnection(web_settings, new_user, authorized)
 
     return create
 
@@ -75,8 +78,9 @@ def temp_mongo(mock_mongo, io_loop):
 @pytest.fixture
 def mock_transaction(mock_connection):
     def create(message, username="test", permissions=None, administrator=False, authorized=True):
-        connection = mock_connection(username, permissions, administrator, authorized)
-        return MockTransaction(message, connection)
+        connection = mock_connection(None, username, permissions, administrator, authorized)
+        transaction = MockTransaction(message, connection)
+        return transaction
 
     return create
 
@@ -137,7 +141,7 @@ def user():
             groups.append("administrator")
 
         return {
-            "name": name,
+            "_id": name,
             "permissions": permissions,
             "groups": groups
         }
