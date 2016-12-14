@@ -1,7 +1,6 @@
 import json
 import logging
 import warnings
-import traceback
 import tornado.concurrent
 import tornado.websocket
 
@@ -16,7 +15,6 @@ class Dispatcher:
     def __init__(self, add_periodic_callback):
 
         self.add_periodic_callback = add_periodic_callback
-
 
         self.interfaces = dict()
         self.collections = dict()
@@ -283,7 +281,10 @@ class Transaction:
         self.dispatch = dispatch
 
         #: The :abbr:`TID (transaction ID)` generated for the transaction by the requesting client.
-        self.tid = self.message["tid"]
+        try:
+            self.tid = self.message["tid"]
+        except KeyError:
+            raise KeyError("Received message has no TID")
 
         self.method = self.message.get("method", None)
 
@@ -311,16 +312,10 @@ class Transaction:
         """
         data = data or self.response
 
-        if not success:
-            data_to_send = {
-                "warning": True,
+        if not success and not data:
+            data = {
                 "message": "Error"
             }
-
-            if data:
-                data_to_send.update(data)
-
-            data = data_to_send
 
         self.dispatch({
             "collection_name": "transaction",
@@ -348,18 +343,3 @@ class Transaction:
                 "data": data
             }
         }, [self.connection])
-
-
-def handle_future(future):
-    """
-    Handle a future by returning its result or printing any exception that occurred during its execution. Used when
-    coroutines are called outside of another coroutine and are not ``yielded``.
-
-    :param future: the future to handle
-    :type future: :class:`tornado.concurrent.future`
-
-    """
-    try:
-        future.result()
-    except Exception:
-        print(traceback.format_exc())
