@@ -28,6 +28,18 @@ class MockInterface(EmptyInterface):
         return True, data
 
     @virtool.gen.exposed_method([])
+    def test_name_error_method(self, transaction):
+        print(non_existent_variable)
+
+        return False, dict(message="Will never see this")
+
+    @virtool.gen.exposed_method([])
+    def test_type_error_method(self, transaction):
+        print(1 + "5")
+
+        return False, dict(message="Will never see this")
+
+    @virtool.gen.exposed_method([])
     def test_no_transaction_method(self):
         self.dispatch({
             "operation": "update",

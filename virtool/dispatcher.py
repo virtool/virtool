@@ -244,9 +244,11 @@ class Dispatcher:
         """
         self.dispatch({
             "operation": "ping",
-            "collection": None,
+            "interface": None,
             "data": None
         })
+
+        return "test"
 
 
 class Transaction:
@@ -283,8 +285,11 @@ class Transaction:
         #: The :abbr:`TID (transaction ID)` generated for the transaction by the requesting client.
         try:
             self.tid = self.message["tid"]
+            assert isinstance(self.tid, int)
         except KeyError:
             raise KeyError("Received message has no TID")
+        except AssertionError:
+            raise TypeError("TID must be an instance of int")
 
         self.method = self.message.get("method", None)
 

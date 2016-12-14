@@ -18,7 +18,7 @@ def fake_message():
 
 @pytest.fixture(scope="function")
 def expected_dispatch(fake_message):
-    def create(success=True, message="Hello world"):
+    def create_expected(success=True, message="Hello world"):
         return {
             "collection_name": "transaction",
             "operation": "fulfill",
@@ -29,7 +29,7 @@ def expected_dispatch(fake_message):
             }
         }
 
-    return create
+    return create_expected
 
 
 @pytest.fixture(scope="function")
@@ -69,6 +69,21 @@ class TestInit:
         key, message = optional_json
         trans = Transaction(called_tester(), message, "THIS IS A FAKE CONNECTION")
         assert getattr(trans, key) is None
+
+    def test_no_tid(self, fake_message, called_tester):
+        del fake_message["tid"]
+        with pytest.raises(KeyError) as excinfo:
+            Transaction(called_tester(), json.dumps(fake_message), "THIS IS A FAKE CONNECTION")
+
+        assert "Received message has no TID" in str(excinfo.value)
+
+    def test_invalid_tid(self, fake_message, called_tester):
+        fake_message["tid"] = "2131245125"
+
+        with pytest.raises(TypeError) as excinfo:
+            Transaction(called_tester(), json.dumps(fake_message), "THIS IS A FAKE CONNECTION")
+
+        assert "TID must be an instance of int" in str(excinfo.value)
 
 
 class TestFulfill:

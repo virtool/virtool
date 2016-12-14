@@ -10,20 +10,6 @@ from .mock_connection import MockConnection
 from .mock_transaction import MockTransaction
 
 
-@pytest.fixture
-def socket():
-    return lambda settings: MockSocket(settings)
-
-
-@pytest.fixture
-def blind_socket(called_tester):
-    return MockConnection({
-        "add_connection": called_tester(),
-        "remove_connection": called_tester(),
-        "handle_message": called_tester()
-    })
-
-
 @pytest.fixture(scope="session")
 def mock_settings():
     return MockSettings()
@@ -39,24 +25,73 @@ def mock_interface():
     return MockInterface
 
 
-@pytest.fixture()
+@pytest.fixture(scope="session")
+def user():
+    def create_user(name="test", permissions=None, administrator=False):
+        if isinstance(permissions, list):
+            pass
+        elif permissions == "all" or administrator:
+            permissions = list(PERMISSIONS)
+        else:
+            permissions = list()
+
+        permissions = {key: key in permissions for key in PERMISSIONS}
+
+        groups = list()
+
+        if administrator:
+            groups.append("administrator")
+
+        return {
+            "_id": name,
+            "permissions": permissions,
+            "groups": groups
+        }
+
+    return create_user
+
+
+@pytest.fixture(scope="function")
 def mock_connection(user, called_tester):
-    def create(source=None, username="test", permissions="all", administrator=False, authorized=True):
+    def create_connection(source=None, username="test", permissions="all", administrator=False, authorized=True, auto=True):
 
         method_keys = ["add_connection", "remove_connection", "handle"]
 
         if isinstance(source, dict):
             web_settings = {key: source[key] for key in method_keys}
         elif source is None:
-            web_settings = {key: called_tester for key in method_keys}
+            web_settings = {key: called_tester() for key in method_keys}
         else:
             web_settings = {key: getattr(source, key) for key in method_keys}
 
-        new_user = user(username, permissions, administrator)
+        new_user = user(
+            name=username,
+            permissions=permissions,
+            administrator=administrator
+        )
 
-        return MockConnection(web_settings, new_user, authorized)
+        conn = MockConnection(web_settings, new_user, authorized)
 
-    return create
+        if auto:
+            conn.open()
+
+        return conn
+
+    return create_connection
+
+
+@pytest.fixture
+def mock_transaction(mock_connection):
+    def create_transaction(message, username="test", permissions=None, administrator=False, authorized=True):
+        connection = mock_connection(
+            username=username,
+            permissions=permissions,
+            administrator=administrator,
+            authorized=authorized
+        )
+        return MockTransaction(message, connection)
+
+    return create_transaction
 
 
 @pytest.fixture(scope="session")
@@ -73,16 +108,6 @@ def temp_mongo(mock_mongo, io_loop):
     yield motor.MotorClient(io_loop=io_loop)[mock_mongo.name]
 
     mock_mongo.clean()
-
-
-@pytest.fixture
-def mock_transaction(mock_connection):
-    def create(message, username="test", permissions=None, administrator=False, authorized=True):
-        connection = mock_connection(None, username, permissions, administrator, authorized)
-        transaction = MockTransaction(message, connection)
-        return transaction
-
-    return create
 
 
 @pytest.fixture(scope="session")
@@ -117,33 +142,5 @@ def called_tester():
             self.with_args = args
             self.with_kwargs = kwargs
 
-    def create():
-        return Func()
+    return Func
 
-    return create
-
-
-@pytest.fixture(scope="session")
-def user():
-    def create(name="test", permissions=None, administrator=False):
-        if isinstance(permissions, list):
-            pass
-        elif permissions == "all" or administrator:
-            permissions = list(PERMISSIONS)
-        else:
-            permissions = list()
-
-        permissions = {key: key in permissions for key in PERMISSIONS}
-
-        groups = list()
-
-        if administrator:
-            groups.append("administrator")
-
-        return {
-            "_id": name,
-            "permissions": permissions,
-            "groups": groups
-        }
-
-    return create

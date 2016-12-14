@@ -18,7 +18,7 @@ def dispatcher(empty_dispatcher, mock_interface, mock_settings):
 @pytest.fixture(params=["open", "on_message", "on_close", "write_message"])
 def bad_connection(request, mock_connection):
     def create(settings):
-        socket = mock_connection(settings)
+        socket = mock_connection(settings, auto=False)
         setattr(socket, request.param, None)
 
         return socket
@@ -70,7 +70,7 @@ class TestConnections:
 
     def test_add_connection(self, dispatcher, mock_connection):
 
-        conn = mock_connection(dispatcher)
+        conn = mock_connection(dispatcher, auto=False)
 
         assert dispatcher.connections == []
 
@@ -91,8 +91,6 @@ class TestConnections:
 
         conn = mock_connection(dispatcher)
 
-        conn.open()
-
         assert dispatcher.connections == [conn]
 
         dispatcher.remove_connection(conn)
@@ -102,8 +100,6 @@ class TestConnections:
     def test_close_connection(self, dispatcher, mock_connection):
 
         conn = mock_connection(dispatcher)
-
-        conn.open()
 
         assert dispatcher.connections == [conn]
 
@@ -122,9 +118,6 @@ class TestDispatch:
         """
         conn1 = mock_connection(dispatcher)
         conn2 = mock_connection(dispatcher)
-
-        conn1.open()
-        conn2.open()
 
         message = {
             "operation": "test",
@@ -165,9 +158,6 @@ class TestDispatch:
         """
         conn1 = mock_connection(dispatcher, authorized=False)
         conn2 = mock_connection(dispatcher, authorized=True)
-
-        conn1.open()
-        conn2.open()
 
         message = {
             "operation": "test",
@@ -212,7 +202,7 @@ class TestHandle:
         Test that a warning is logged when an unknown dispatcher interface is requested.
 
         """
-        conn = mock_connection(permissions="all")
+        conn = mock_connection(dispatcher, permissions="all")
 
         code = yield dispatcher.handle(json.dumps({
             "tid": 9029401982,
@@ -407,3 +397,56 @@ class TestHandle:
                     "value": "foobar"
                 }
             }), conn)
+
+    @pytest.mark.gen_test
+    def test_unhandled_name_error(self, dispatcher, mock_connection):
+        """
+        Test that all the exception handling going on in ``handle`` does not prevent unexpected exceptions from being
+        raised.
+
+        """
+        conn = mock_connection(dispatcher, authorized=True)
+
+        with pytest.raises(NameError):
+            yield dispatcher.handle(json.dumps({
+                "tid": 9029401983,
+                "interface": "test",
+                "method": "test_name_error_method",
+                "data": {
+                    "value": "foobar"
+                }
+            }), conn)
+
+    @pytest.mark.gen_test
+    def test_unhandled_type_error(self, dispatcher, mock_connection):
+        """
+        Test that all the exception handling going on in ``handle`` does not prevent unexpected exceptions from being
+        raised.
+
+        """
+        conn = mock_connection(dispatcher, authorized=True)
+
+        with pytest.raises(TypeError):
+            yield dispatcher.handle(json.dumps({
+                "tid": 9029401983,
+                "interface": "test",
+                "method": "test_type_error_method",
+                "data": {
+                    "value": "foobar"
+                }
+            }), conn)
+
+
+class TestPing:
+
+    @pytest.mark.gen_test
+    def test_ping(self, dispatcher, mock_connection):
+        conn1 = mock_connection(dispatcher, authorized=True)
+        conn2 = mock_connection(dispatcher, authorized=False)
+
+        yield dispatcher.ping()
+
+        print(conn1.messages)
+
+        assert conn1.messages[0]["operation"] == "ping"
+        assert conn2.messages == []

@@ -14,7 +14,7 @@ class Harness:
         self.settings_json = settings_json
         self.settings_class = settings_class
 
-    def create(self, version="1.0.12"):
+    def spawn(self, version="1.0.12"):
         if self.dispatch_func is None:
             return self.settings_class(version, self.settings_json)
         else:
@@ -66,7 +66,7 @@ def collection_harness(tmpdir, called_tester):
 class TestShared:
 
     def test_init(self, settings_harness):
-        settings = settings_harness.create()
+        settings = settings_harness.spawn()
 
         assert os.path.isfile(settings_harness.settings_json)
         assert len(settings.data) == len(virtool.settings.DEFAULTS)
@@ -77,7 +77,7 @@ class TestShared:
         setting.
 
         """
-        settings = settings_harness.create(version="1.0.12")
+        settings = settings_harness.spawn(version="1.0.12")
 
         # Verify that the version is set in the settings.data dict.
         assert settings.data["server_version"] == "1.0.12"
@@ -101,7 +101,7 @@ class TestShared:
         assert settings_harness.json_has({"server_port": 23217})
 
         # Create a settings object using the test settings.json file.
-        settings = settings_harness.create()
+        settings = settings_harness.spawn()
 
         # Make sure the 23217 port number was loaded from the JSON file instead of assigning the default 9650.
         assert settings.data["server_port"] == 23217
@@ -128,7 +128,7 @@ class TestShared:
             assert all(key not in content for key in removed_keys)
 
         # Initialize a settings object.
-        settings = settings_harness.create()
+        settings = settings_harness.spawn()
 
         # Verify that a complete settings dict was created in the settings object.
         assert settings.get("db_host") == "localhost"
@@ -165,7 +165,7 @@ class TestShared:
         })
 
         # Make a settings object from the previously written settings.json file.
-        settings = settings_harness.create()
+        settings = settings_harness.spawn()
 
         # Verify that the setting types were corrected in the settings.data dict.
         assert settings.get("db_port") == 23791
@@ -183,7 +183,7 @@ class TestShared:
 
         """
         # Make a new settings object with no pre-existing settings.json file.
-        settings = settings_harness.create()
+        settings = settings_harness.spawn()
 
         # Verify that the ``server_port`` is set to the default, 9650.
         assert settings.get("server_port") == 9650
@@ -211,7 +211,7 @@ class TestShared:
 
         """
         # Initialize a settings object and verify that ``server_port`` is set to the default 9650.
-        settings = settings_harness.create()
+        settings = settings_harness.spawn()
 
         assert settings.get("server_port") == 9650
 
@@ -239,7 +239,7 @@ class TestShared:
         ``True``.
 
         """
-        settings = settings_harness.create()
+        settings = settings_harness.spawn()
 
         settings.update({
             "db_name": "settings-test-sync"
@@ -258,7 +258,7 @@ class TestShared:
         set to ``False``.
 
         """
-        settings = settings_harness.create()
+        settings = settings_harness.spawn()
 
         settings.update({
             "db_name": "settings-test-async"
@@ -278,7 +278,7 @@ class TestShared:
         object.
 
         """
-        settings = settings_harness.create()
+        settings = settings_harness.spawn()
 
         test_dict = dict(virtool.settings.DEFAULTS)
         test_dict["db_port"] = 28902
@@ -295,13 +295,13 @@ class TestShared:
 class TestCollection:
 
     def test_init(self, collection_harness):
-        collection = collection_harness.create()
+        collection = collection_harness.spawn()
 
         assert collection.dispatch == collection_harness.dispatch_func
 
     @pytest.mark.gen_test
     def test_set(self, mock_transaction, collection_harness):
-        collection = collection_harness.create()
+        collection = collection_harness.spawn()
 
         message = {
             "collection_name": "settings",
@@ -338,7 +338,7 @@ class TestCollection:
         to the settings.json file, dispatches to clients, or successfully fulfill the transaction.
 
         """
-        collection = collection_harness.create()
+        collection = collection_harness.spawn()
 
         message = {
             "collection_name": "settings",
@@ -367,7 +367,7 @@ class TestCollection:
 
     @pytest.mark.gen_test
     def test_download(self, mock_transaction, collection_harness):
-        collection = collection_harness.create()
+        collection = collection_harness.spawn()
 
         message = {
             "collection_name": "settings",
@@ -397,7 +397,7 @@ class TestCollection:
 
     @pytest.mark.gen_test
     def test_load_with_data_and_file(self, collection_harness):
-        collection = collection_harness.create()
+        collection = collection_harness.spawn()
 
         test_dict = dict(virtool.settings.DEFAULTS)
         test_dict["server_port"] = 23217
@@ -419,7 +419,7 @@ class TestCollection:
         """
 
         """
-        collection = collection_harness.create()
+        collection = collection_harness.spawn()
 
         collection.update({"server_port": 38921})
 
@@ -436,7 +436,7 @@ class TestCollection:
     @pytest.mark.gen_test
     def test_load_no_data_no_file(self, collection_harness):
 
-        collection = collection_harness.create()
+        collection = collection_harness.spawn()
 
         with open(collection_harness.settings_json, "r") as handle:
             assert collection.data == json.load(handle)
