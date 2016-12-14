@@ -103,49 +103,52 @@ def exposed_method(required_permissions, unprotected=False):
         @functools.wraps(func)
         @coroutine
         def wrapper(self, transaction):
-            if unprotected:
-                try:
-                    success, result = yield func(self, transaction)
-                except TypeError:
-                    success, result = yield func(self)
-            else:
+            # Set to True if the requesting connection is allowed to call the exposed method.
+            is_allowed = True
+
+            if not unprotected:
                 user = transaction.connection.user
 
-                # Set to True if the function was called successfully.
-                success = False
-
-                # The results returned by the called function.
-                result = None
-
-                permitted = True
-
                 if required_permissions:
-                    possessed_permissions = [perm for perm in required_permissions if user["permissions"][perm]]
+                    # A set of permissions the user has.
+                    possessed_permissions = {perm for perm in required_permissions if user["permissions"][perm]}
 
                     # True if the required_permissions are included in the user's *permissions* field.
-                    permitted = possessed_permissions == required_permissions
-
-                # Only call the function if the requesting user has adequate permissions.
-                if permitted:
-                    try:
-                        success, result = yield func(self, transaction)
-                    except TypeError as err:
-                        if err.args[0] == "'NoneType' object is not iterable":
-                            raise TypeError("Exposed method did not return a tuple")
-                        elif err.args[0]:
-                            success, result = yield func(self)
+                    is_allowed = possessed_permissions == set(required_permissions)
 
                 # Log a warning if the user was not permitted to call the function. This indicates the user is making
                 # requests outside of the graphical UI.
-                else:
-                    logger.warning("User {} attempted to call method {}.{} without permission".format(
-                        transaction.connection.user["_id"] if transaction else "unknown",
-                        self.collection_name,
-                        func.__name__
-                    ))
+                if not is_allowed:
+                    message = "User {} attempted to call exposed method {}.{} without the required permissions".format(
+                        transaction.connection.user["_id"],
+                        transaction.interface,
+                        transaction.method
+                    )
 
-            transaction.fulfill(success, result)
+                    raise RequiredPermissionError(message)
+
+            result = yield func(self, transaction)
+
+            try:
+                # Try to unpack a two-member tuple into the success and data value. If this fails, the exposed method
+                # is invalid because it does not return a two-member tuple.
+                success, data = result
+                assert isinstance(success, bool)
+
+            except (TypeError, AssertionError) as inst:
+                arg = inst.args[0]
+
+                if "object is not iterable" in arg or "too many value to unpack" in arg or type(inst) is AssertionError:
+                    raise TypeError("Exposed method must return a tuple of with 2 items")
+
+                raise
+
+            transaction.fulfill(success, data)
 
         return wrapper
 
     return decorator
+
+
+class RequiredPermissionError(Exception):
+    pass
