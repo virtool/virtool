@@ -86,7 +86,7 @@ def exposed_method(required_permissions, unprotected=False):
     """
     if not isinstance(required_permissions, list):
         raise TypeError(
-            "A list of required permissions (may be empty) must be passed with the exposed_method decorator"
+            "Required permissions for an exposed method must be passed as a list (may be empty) to the decorator"
         )
 
     # This is the 'actual decorator' that returns the wrapper function.
@@ -133,15 +133,25 @@ def exposed_method(required_permissions, unprotected=False):
                 # Try to unpack a two-member tuple into the success and data value. If this fails, the exposed method
                 # is invalid because it does not return a two-member tuple.
                 success, data = result
-                assert isinstance(success, bool)
 
-            except (TypeError, AssertionError) as inst:
-                arg = inst.args[0]
+            except ValueError as err:
+                arg = err.args[0]
 
-                if "object is not iterable" in arg or "too many value to unpack" in arg or type(inst) is AssertionError:
-                    raise TypeError("Exposed method must return a tuple of with 2 items")
+                if "too many values to unpack" in arg or "not enough values to unpack" in arg:
+                    raise TypeError("Exposed method must return a tuple of 2 items with the first being a bool")
 
                 raise
+
+            except TypeError as err:
+                arg = err.args[0]
+
+                if "object is not iterable" in arg:
+                    raise TypeError("Exposed method must return a tuple of 2 items with the first being a bool")
+
+                raise
+
+            if not isinstance(success, bool):
+                raise TypeError("Exposed method must return a tuple of 2 items with the first being a bool")
 
             transaction.fulfill(success, data)
 
