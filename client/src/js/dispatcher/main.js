@@ -185,10 +185,10 @@ function Dispatcher(onReady) {
     // has a property 'operation' that tells the dispatcher what to do. Illegal operation names will throw an error.
     this.handle = function (message) {
 
-        var collectionName = message.collection_name;
+        var collectionName = message.interface;
         var operation = message.operation;
 
-        console.log(message.collection_name + "." + message.operation);
+        console.log(message.interface + "." + message.operation);
 
         if (collectionName === 'transaction') {
             switch (operation) {
@@ -212,7 +212,7 @@ function Dispatcher(onReady) {
 
         else if (_.includes(this.db.collectionNames, collectionName)) {
 
-            var collection = this.db[message.collection_name];
+            var collection = this.db[message.interface];
 
             if (message.sync) {
                 var count = message.data.length || 1;
@@ -249,8 +249,8 @@ function Dispatcher(onReady) {
             }
 
             if (operation === "remove") {
-                this.db[message.collection_name].removeWhere({"_id": {"$in": message.data}});
-                this.db[message.collection_name].emit('change');
+                this.db[message.interface].removeWhere({"_id": {"$in": message.data}});
+                this.db[message.interface].emit('change');
             }
 
         }
@@ -274,7 +274,7 @@ function Dispatcher(onReady) {
                 default:
                     console.warn(
                         'Received unknown web socket operation in message: ' +
-                        (message.collection_name + "." + message.operation)
+                        (message.interface + "." + message.operation)
                     );
             }
         }
