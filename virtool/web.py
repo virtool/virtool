@@ -11,10 +11,24 @@ import tornado.escape
 import tornado.websocket
 import tornado.httpserver
 
+# Main Virtool modules
 import virtool.setup
 import virtool.settings
 import virtool.dispatcher
+import virtool.collections
 import virtool.gen
+
+# Collection modules
+import virtool.analyses
+import virtool.files
+import virtool.groups
+import virtool.history
+import virtool.hosts
+import virtool.indexes
+import virtool.jobs
+import virtool.samples
+import virtool.users
+import virtool.viruses
 
 logger = logging.getLogger(__name__)
 
@@ -33,6 +47,8 @@ class Application:
 
         self.version = find_server_version()
 
+        self.settings = virtool.settings.Simple(self.version)
+
         logger.info("Starting Virtool " + self.version)
 
         #: Set to ``True`` when the server is running in development mode.
@@ -44,13 +60,13 @@ class Application:
         #: The server :class:`tornado.web.Application` object.
         self.app = None
 
-        #: The global :class:`.Dispatcher` object used to communicate with clients.
-        self.dispatcher = None
-
         #: A list of :class:`~tornado.ioloop.PeriodicCallback` objects. The list is populated by calling
         #: :meth:`.add_periodic_callback`. Keeping references to these periodic callbacks allows them to be stopped if
         #: necessary.
         self.periodic_callbacks = list()
+
+        #: The global :class:`.Dispatcher` object used to communicate with clients.
+        self.dispatcher = virtool.dispatcher.Dispatcher(self.add_periodic_callback)
 
         self.ssl = None
         self.host = None
@@ -59,45 +75,37 @@ class Application:
         self.server_object = None
 
     def run(self):
-        """
-        Start the server application. This method must be called before the server can respond to client requests. In
-        order, this method:
 
-        1. Creates a :class:`.Settings` object. This will write a new 'settings.json' if none is present.
-        2. Creates a :class:`.Dispatcher` object if the server has been setup and the ``server_ready`` setting is
-           ``True``.
-        3. Determines the path to the client files based on the value of the :attr:`.development` attribute.
-        4. Populates a list of request handlers.
-        5. Instantiates the :class:`~tornado.web.Application` object with the handlers defined earlier.
-        6. Starts listening at the set address, using SSL if enabled.
-        7. Creates and starts a :class:`tornado.ioloop.IOLoop`.
-
-        See
-
-        """
         self.loop = tornado.ioloop.IOLoop.instance()
 
         # Create a Settings object because it is required whether the server has been setup or not. Will write a default
         # 'settings.json' file if none is found.
-        settings = virtool.settings.Settings(self.version)
+        self.ssl = self.settings.get("use_ssl")
+        self.host = self.settings.get("server_host")
+        self.port = self.settings.get("server_port")
 
-        self.ssl = settings.get("use_ssl")
-        self.host = settings.get("server_address")
-        self.port = settings.get("server_port")
+        if self.settings.get("server_ready"):
 
-        if settings.get("server_ready"):
-            # Create a dispatcher object only if the server has been setup and the 'server_ready' settings has been set
-            # to True.
-            self.dispatcher = virtool.dispatcher.Dispatcher(
-                self.add_periodic_callback,
-                self.loop.add_future,
-                self.reload,
-                self.shutdown
+            #: The shared :class:`~.virtool.settings.Settings` object created by the server. Passed to all collections.
+            self.dispatcher.add_interface("settings", self.settings.to_collection, None)
+
+            add_collections(self.dispatcher)
+
+            #: An instance of :class:`virtool.files.Manager`. Used for managing uploads and downloads.
+            '''
+            file_manager = virtool.files.Manager(
+                self.settings.get_db_client(),
+                self.settings.get("data_path"),
+                self.add_periodic_callback
             )
 
+            self.add_interface("file_manager", file_manager)
+            '''
             logger.debug("Instantiated dispatcher")
         else:
             logger.info("Server has not been setup.")
+
+        print(self.dispatcher.interfaces["settings"])
 
         # Define the path where the server will look for the client HTML file. Path depends on the value of the
         # development attribute.
@@ -117,7 +125,7 @@ class Application:
             (r"/", HTTPHandler),
             (r"/ws", SocketHandler),
             (r"/upload", UploadHandler),
-            (r"/download/(.*)", tornado.web.StaticFileHandler, {"path": settings.get("data_path") + "/download/"}),
+            (r"/download/(.*)", tornado.web.StaticFileHandler, {"path": self.settings.get("data_path") + "/download/"}),
             (r"/doc/(.*)", tornado.web.StaticFileHandler, {"path": doc_path}),
             (r"/(app.*js$|favicon.ico)", tornado.web.StaticFileHandler, {"path": static_path})
         ]
@@ -127,40 +135,44 @@ class Application:
         self.app = tornado.web.Application(
             handlers,
             compress_response=True,
-            handle_message=self.dispatcher.handle,
+            handle=self.dispatcher.handle,
             add_connection=self.dispatcher.add_connection,
             remove_connection=self.dispatcher.remove_connection,
-            register_file=self.dispatcher.file_manager.register
+            server_ready=self.settings.get("server_ready"),
+            register_file=None
         )
 
         try:
             ssl_ctx = None
 
-            ssl_cert_path = settings.get("cert_path")
-            ssl_key_path = settings.get("key_path")
+            ssl_cert_path = self.settings.get("cert_path")
+            ssl_key_path = self.settings.get("key_path")
 
             # Setup SSL if necessary.
-            if settings.get("use_ssl") and ssl_cert_path and ssl_key_path:
+            if self.settings.get("use_ssl") and ssl_cert_path and ssl_key_path:
                 ssl_ctx = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
                 ssl_ctx.load_cert_chain(ssl_cert_path, ssl_key_path)
 
-            # Try to start the application. If the set address and port cannot be bound, an error is logged and the
+            # Try to start the application. If the set host and port cannot be bound, an error is logged and the
             # program exits with an return code of 1. X-headers are enabled for future implementation of SSL.
+            host = self.settings.get("server_host")
+            port = self.settings.get("server_port")
+
             self.server_object = self.app.listen(
-                settings.get("server_port"),
-                settings.get("server_address"),
+                port,
+                host,
                 xheaders=bool(ssl_ctx),
                 ssl_options=ssl_ctx
             )
 
             # Log a message if the server binds successfully.
             logger.info("Listening on {}:{}".format(
-                self.settings.get("server_address"), str(settings.get("server_port"))
+                self.settings.get("server_host"), str(self.settings.get("server_port"))
             ))
         except PermissionError:
             logger.critical("Could not bind address {}:{}".format(
-                settings.get("server_address"),
-                settings.get("server_port")
+                self.settings.get("server_host"),
+                self.settings.get("server_port")
             ))
 
             sys.exit(1)
@@ -198,7 +210,7 @@ class Application:
 
         periodic_callback.start()
 
-    @virtool.gen.coroutine
+    @virtool.gen.exposed_method(["modify_options"])
     def reload(self):
         """
         Reloads the server by:
@@ -219,6 +231,10 @@ class Application:
         for module in [virtool.setup, virtool.settings, virtool.dispatcher]:
             importlib.reload(module)
 
+        for module_name in virtool.collections.COLLECTIONS:
+            module = getattr(virtool, module_name)
+            importlib.reload(module)
+
         logger.debug("Reloading settings")
         settings = virtool.settings.Settings(self.version)
 
@@ -227,15 +243,16 @@ class Application:
             logger.debug("Instantiating dispatcher")
             self.dispatcher = virtool.dispatcher.Dispatcher(self)
 
-        # Listen on a new address if the "server_port" or "server_address" settings were changed since the last start.
-        if (self.host != settings.get("server_address") or
+        # Listen on a new host if the "server_port" or "server_address" settings were changed since the last start.
+        if (self.host != settings.get("server_host") or
             self.port != settings.get("server_port") or
-            self.ssl != settings.get("use_ssl")):
+            self.ssl != settings.get("use_ssl")
+            ):
 
             self.server_object.stop()
 
             self.ssl = settings.get("use_ssl")
-            self.host = settings.get("server_address")
+            self.host = settings.get("server_host")
             self.port = settings.get("server_port")
 
             ssl_ctx = None
@@ -248,21 +265,27 @@ class Application:
                 ssl_ctx = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
                 ssl_ctx.load_cert_chain(ssl_cert_path, ssl_key_path)
 
-            # Try to start the application. If the set address and port cannot be bound, an error is logged and the
+            # Try to start the application. If the set host and port cannot be bound, an error is logged and the
             # program exits with an return code of 1. X-headers are enabled for future implementation of SSL.
             self.server_object = self.app.listen(
                 settings.get("server_port"),
-                settings.get("server_address"),
+                settings.get("server_host"),
                 xheaders=bool(ssl_ctx),
                 ssl_options=ssl_ctx
             )
 
-    def handle_interrupt(self, *args):
-        future = self.shutdown(130)
-        self.loop.add_future(future, virtool.dispatcher.handle_future)
+        return True, None
+
+    @virtool.gen.exposed_method(["modify_options"])
+    def shutdown(self):
+        """
+        Shutdown the server by calling :func:`sys.exit` with an exit code of 0.
+
+        """
+        yield self._shutdown(0)
 
     @tornado.gen.coroutine
-    def shutdown(self, exit_code=0):
+    def _shutdown(self, exit_code=0):
         """
         Shutdown the server by cancelling all jobs and calling :func:`sys.exit`.
 
@@ -289,6 +312,10 @@ class Application:
         logging.info("Exiting")
 
         sys.exit(exit_code)
+
+    def handle_interrupt(self, *args):
+        future = self._shutdown(130)
+        self.loop.add_future(future)
 
 
 class HTTPHandler(tornado.web.RequestHandler):
@@ -356,10 +383,7 @@ class SocketHandler(tornado.websocket.WebSocketHandler):
     def __init__(self, *args, **kwargs):
         super(SocketHandler, self).__init__(*args, **kwargs)
 
-        #: A reference to the shared instance of :class:`.Dispatcher`.
-        self.dispatcher = self.settings["server"].dispatcher
-
-        #: The IP address of the remote connection.
+        #: The IP of the remote connection.
         self.ip = self.request.remote_ip
 
         #: A dict describing the user associated with the websocket connection. If the connection is not authorized,
@@ -391,11 +415,11 @@ class SocketHandler(tornado.websocket.WebSocketHandler):
         :type message: str
 
         """
-        self.settings["handle_message"](message, self)
+        tornado.ioloop.IOLoop.current().spawn_callback(self.settings["handle"], message, self)
 
     def on_close(self):
         """
-        Called the websocket connection closes. The connection is removed from the dispatchers list of active
+        Called if the websocket connection closes. The connection is removed from the dispatcher's list of active
         connections.
 
         """
@@ -439,7 +463,6 @@ def find_server_version(install_path="."):
     try:
         return subprocess.check_output(['git', 'describe']).decode().rstrip()
     except (subprocess.CalledProcessError, FileNotFoundError):
-
         try:
             version_file_path = os.path.join(install_path, "VERSION")
 
@@ -449,4 +472,11 @@ def find_server_version(install_path="."):
         except FileNotFoundError:
             logger.critical("Could not determine software version.")
             return "Unknown"
+
+
+def add_collections(dispatcher):
+    for module_name in virtool.collections.COLLECTIONS:
+        module = getattr(virtool, module_name)
+        dispatcher.add_interface(module_name, getattr(module, "Collection"), dispatcher.interfaces["settings"], True)
+
 
