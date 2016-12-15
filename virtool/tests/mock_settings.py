@@ -45,7 +45,7 @@ class MockSettings:
             "db_port": int,
 
             "server_port": int,
-            "server_address": str,
+            "server_host": str,
             "server_ready": bool,
             "server_id": str,
             "server_version": str,
@@ -103,7 +103,7 @@ class MockSettings:
             "db_port": 27017,
 
             "server_port": 9650,
-            "server_address": "localhost",
+            "server_host": "localhost",
             "server_ready": False,
             "server_version": 0,
             "server_id": "test_settings",

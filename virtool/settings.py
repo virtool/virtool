@@ -51,8 +51,8 @@ DEFAULTS = [
     ("db_host", "localhost"),
     ("db_port", 27017),
 
+    ("server_host", "localhost"),
     ("server_port", 9650),
-    ("server_address", "localhost"),
     ("server_ready", False),
     ("server_version", "Unknown"),
     ("server_id", virtool.utils.random_alphanumeric(12)),
@@ -110,8 +110,8 @@ VALID_TYPES = {
     "db_host": str,
     "db_port": int,
 
+    "server_host": str,
     "server_port": int,
-    "server_address": str,
     "server_ready": bool,
     "server_id": str,
     "server_version": str,
@@ -215,6 +215,9 @@ class Simple:
 
     def as_dict(self):
         return dict(self.data)
+
+    def to_collection(self, dispatch, collections=None, settings=None, add_periodic_callback=None):
+        return Collection(dispatch, self.get("server_version"), self.path)
 
 
 class Collection(Simple):
