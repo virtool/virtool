@@ -27,8 +27,8 @@ class Collection(virtool.database.SyncingCollection):
     :type dispatcher: :class:`~.dispatcher.Dispatcher`
 
     """
-    def __init__(self, dispatcher):
-        super().__init__("viruses", dispatcher)
+    def __init__(self, dispatch, collections, settings, add_periodic_callback):
+        super().__init__("viruses", dispatch, collections, settings, add_periodic_callback)
 
         # Set what is sent to the client when syncing.
         self.sync_projector.update({field: True for field in [
@@ -1237,18 +1237,18 @@ def get_from_ncbi(accession):
         return None
 
 
-def check_collection(db_name, data_path, address="localhost", port=27017):
+def check_collection(db_name, data_path, host="localhost", port=27017):
     """
     Checks the entire collection and any for problems.
 
     :param db_name:
     :param data_path:
-    :param address:
+    :param host:
     :param port:
     :return:
 
     """
-    db = pymongo.MongoClient(address, port)[db_name]
+    db = pymongo.MongoClient(host, port)[db_name]
 
     indexes_path = os.path.join(data_path, "reference/viruses/")
 

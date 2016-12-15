@@ -22,8 +22,8 @@ class Collection(virtool.database.SyncingCollection):
     :type dispatcher: :class:`~.dispatcher.Dispatcher`
 
     """
-    def __init__(self, dispatcher):
-        super().__init__("analyses", dispatcher)
+    def __init__(self, dispatch, collections, settings, add_periodic_callback):
+        super().__init__("analyses", dispatch, collections, settings, add_periodic_callback)
 
         self.sync_projector.update({key: True for key in [
             "name",

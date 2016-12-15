@@ -24,6 +24,8 @@ class TestInit:
         assert add_periodic_callback.with_args[0].__name__ == "iterate"
         assert add_periodic_callback.with_args[1] == 20000
 
+'''
+
 
 class TestRegister:
 
@@ -96,7 +98,7 @@ class TestRegister:
             content = handle.read().decode()
             assert content == "hello_world"
 
-'''
+
 class TestRemove:
 
     @pytest.mark.gen_test

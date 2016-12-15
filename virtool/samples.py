@@ -22,10 +22,8 @@ class Collection(virtool.database.SyncingCollection):
     :type dispatcher: :class:`~.dispatcher.Dispatcher`
 
     """
-    def __init__(self, dispatcher):
-        super().__init__("samples", dispatcher)
-
-        dispatcher.watcher.register("reads", self.watch)
+    def __init__(self, dispatch, collections, settings, add_periodic_callback):
+        super().__init__("samples", dispatch, collections, settings, add_periodic_callback)
 
         # Extend sync_projector. These fields will be passed to the client to populate sample tables.
         self.sync_projector.update({field: True for field in [
@@ -83,7 +81,7 @@ class Collection(virtool.database.SyncingCollection):
         return to_send
 
     @virtool.gen.coroutine
-    def dispatch(self, operation, data, collection_name=None, connections=None, sync=False):
+    def dispatch(self, operation, data, interface=None, connections=None, sync=False):
         """
         A redefinition of :meth:`.database.Collection.dispatch` that only dispatches sample change messages to
         connections that have permission to read them.
@@ -94,8 +92,8 @@ class Collection(virtool.database.SyncingCollection):
         :param data: the data payload associated with the operation
         :type data: dict or list
 
-        :param collection_name: override for :attr:`collection_name`.
-        :type collection_name: str
+        :param interface: overrides :attr:`collection_name` as the dispatched interface.
+        :type interface: str
 
         :param connections: The connections to send the dispatch to. By default, it will be sent to all connections.
         :type connections: list
@@ -132,7 +130,7 @@ class Collection(virtool.database.SyncingCollection):
                 yield super().dispatch(
                     operation,
                     to_send,
-                    collection_name,
+                    interface,
                     [connection],
                     sync
                 )
@@ -141,7 +139,7 @@ class Collection(virtool.database.SyncingCollection):
                 yield super().dispatch(
                     "remove",
                     to_remove,
-                    collection_name,
+                    interface,
                     [connection],
                     sync
                 )
@@ -770,8 +768,8 @@ class ImportReads(virtool.job.Job):
         self.collection_operation("samples", "_remove_samples", [self.sample_id])
 
 
-def check_collection(db_name, data_path, address="localhost", port=27017):
-    db = pymongo.MongoClient(address, port)[db_name]
+def check_collection(db_name, data_path, host="localhost", port=27017):
+    db = pymongo.MongoClient(host, port)[db_name]
 
     response = {
         "orphaned_analyses": list(),

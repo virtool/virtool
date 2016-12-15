@@ -19,9 +19,9 @@ class Collection(virtool.database.SyncingCollection):
 
     """
 
-    def __init__(self, dispatcher):
+    def __init__(self, dispatch, collections, settings, add_periodic_callback):
 
-        super().__init__("groups", dispatcher)
+        super().__init__("groups", dispatch, collections, settings, add_periodic_callback)
 
         # Get the group id and permissions for sync. Permissions is the only field in the group document.
         self.sync_projector.update({

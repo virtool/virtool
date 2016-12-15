@@ -55,7 +55,7 @@ class Dispatcher:
         if not any(hasattr(attr, "is_exposed") for attr in attr_list):
             warnings.warn(Warning("Passed interface '{}' has no exposed methods".format(name)))
 
-        interface = interface_class(self.dispatch, self.collections, settings)
+        interface = interface_class(self.dispatch, self.collections, settings, self.add_periodic_callback)
 
         self.interfaces[name] = interface
 

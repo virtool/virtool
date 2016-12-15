@@ -1,6 +1,7 @@
 import virtool.utils
 
 from virtool.permissions import PERMISSIONS
+from virtool.users import reconcile_permissions
 
 
 def organize_analyses(database):
@@ -76,6 +77,40 @@ def organize_viruses(database):
         }
     }, multi=True)
 
+
+def organize_hosts(database):
+    database.hosts.update({"job": {"$exists": False}}, {
+        "$set": {
+            "job": None
+        }
+    }, multi=True)
+
+
+def organize_users(database):
+    # If any users lack the ``primary_group`` field or it is None, add it with a value of "".
+    database.users.update({"$or": [
+        {"primary_group": {"$exists": False}},
+        {"primary_group": None}
+    ]}, {
+        "$set": {"primary_group": ""}
+    }, multi=True)
+
+    # Assign default user settings to users without defined settings.
+    database.users.update({"settings": {}}, {
+        "$set": {"settings": {"show_ids": False, "show_versions": False}}
+    }, multi=True)
+
+    # Make sure permissions are reconciled for all users.
+    for user in database.users.find():
+        groups = database.groups.find({"_id": {
+            "$in": user["groups"]
+        }})
+
+        database.users.update({"_id": user["_id"]}, {
+            "$set": {
+                "permissions": reconcile_permissions(list(groups))
+            }
+        })
 
 def organize_groups(database):
 

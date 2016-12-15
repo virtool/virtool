@@ -1,8 +1,9 @@
 import os
 import gzip
 import json
-import collections
 import subprocess
+
+from collections import Counter
 
 import virtool.gen
 import virtool.database
@@ -11,8 +12,8 @@ import virtool.utils
 
 class Collection(virtool.database.SyncingCollection):
 
-    def __init__(self, dispatcher):
-        super().__init__("hmm", dispatcher)
+    def __init__(self, dispatch, collections, settings, add_periodic_callback):
+        super().__init__("hmm", dispatch, collections, settings, add_periodic_callback)
 
         self.sync_projector.update({field: True for field in [
             "cluster",
@@ -43,7 +44,7 @@ class Collection(virtool.database.SyncingCollection):
             annotations_to_import = json.load(input_file)
 
         for annotation in annotations_to_import:
-            top_three = collections.Counter([entry["name"] for entry in annotation["entries"]]).most_common(3)
+            top_three = Counter([entry["name"] for entry in annotation["entries"]]).most_common(3)
             top_names = [entry[0] for entry in top_three]
 
             new_id = yield self.get_new_id()

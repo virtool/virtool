@@ -32,7 +32,7 @@ def handle_request(handler, data):
 
 @virtool.gen.coroutine
 def check_ready(handler, data):
-    return {"serverReady": handler.settings["server"].settings.get("server_ready")}
+    return {"serverReady": handler.settings["server_ready"]}
 
 
 @virtool.gen.coroutine

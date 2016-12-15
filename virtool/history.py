@@ -9,8 +9,8 @@ import virtool.viruses
 
 class Collection(virtool.database.SyncingCollection):
 
-    def __init__(self, dispatcher):
-        super().__init__("history", dispatcher)
+    def __init__(self, dispatch, collections, settings, add_periodic_callback):
+        super().__init__("history", dispatch, collections, settings, add_periodic_callback)
 
         self.sync_projector.update({key: True for key in [
             "operation",

@@ -22,9 +22,9 @@ class Collection(virtool.database.SyncingCollection):
 
     """
 
-    def __init__(self, dispatcher):
+    def __init__(self, dispatch, collections, settings, add_periodic_callback):
 
-        super().__init__("hosts", dispatcher)
+        super().__init__("hosts", dispatch, collections, settings, add_periodic_callback)
 
         self.sync_projector.update({key: True for key in [
             "description",
@@ -33,18 +33,8 @@ class Collection(virtool.database.SyncingCollection):
             "job"
         ]})
 
-        db_sync = virtool.utils.get_db_client(self.settings, sync=True)
-
-        db_sync.hosts.update({"job": {"$exists": False}}, {
-            "$set": {
-                "job": None
-            }
-        }, multi=True)
-
         #: The path from which host FASTA files are imported.
         self.fasta_path = os.path.join(self.settings.get("data_path"), "reference/hosts/fasta")
-
-        dispatcher.watcher.register("files", self.watch)
 
     @virtool.gen.exposed_method(["add_host"])
     def add(self, transaction):
@@ -362,8 +352,8 @@ def get_bowtie2_index_names(index_path):
     return inspect_list
 
 
-def check_collection(db_name, data_path, address="localhost", port=27017):
-    db = pymongo.MongoClient(address, port)[db_name]
+def check_collection(db_name, data_path, host="localhost", port=27017):
+    db = pymongo.MongoClient(host, port)[db_name]
 
     response = {
         "orphaned": list(),

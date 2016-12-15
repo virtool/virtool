@@ -41,8 +41,8 @@ class Collection(virtool.database.SyncingCollection):
     new jobs and interacting with separate job processes.
 
     """
-    def __init__(self, dispatcher):
-        super().__init__("jobs", dispatcher)
+    def __init__(self, dispatch, collections, settings, add_periodic_callback):
+        super().__init__("jobs", dispatch, collections, settings, add_periodic_callback)
 
         # Database-specific attributes
         self.sync_projector.update({key: True for key in [
@@ -79,7 +79,7 @@ class Collection(virtool.database.SyncingCollection):
         tornado.ioloop.IOLoop.current().spawn_callback(self._perform_action)
 
         # Iterate through the jobs dict every 300 ms.
-        self.dispatcher.server.add_periodic_callback(self.iterate, 300)
+        self.add_periodic_callback(self.iterate, 300)
 
     @virtool.gen.coroutine
     def sync_processor(self, documents):

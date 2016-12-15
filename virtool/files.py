@@ -300,3 +300,8 @@ class Watcher:
                                     self.listeners[name].remove(listener)
 
                     self.files[name] = new
+
+
+def crap():
+    dispatcher.watcher.register("reads", self.watch)
+    dispatcher.watcher.register("files", self.watch)

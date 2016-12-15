@@ -18,8 +18,8 @@ class Collection(virtool.database.SyncingCollection):
     :type dispatcher: :class:`.Dispatcher`
 
     """
-    def __init__(self, dispatcher):
-        super().__init__("users", dispatcher)
+    def __init__(self, dispatch, collections, settings, add_periodic_callback):
+        super().__init__("users", dispatch, collections, settings, add_periodic_callback)
 
         self.sync_projector.update({
             "groups": True,
@@ -30,34 +30,6 @@ class Collection(virtool.database.SyncingCollection):
             "settings": True,
             "primary_group": True
         })
-
-        # Get a synchronous connection to the users collection to do some initial setup.
-        db_sync = virtool.utils.get_db_client(self.settings, sync=True)
-
-        # If any users lack the ``primary_group`` field or it is None, add it with a value of "".
-        db_sync.users.update({"$or": [
-            {"primary_group": {"$exists": False}},
-            {"primary_group": None}
-        ]}, {
-            "$set": {"primary_group": ""}
-        }, multi=True)
-
-        # Assign default user settings to users without defined settings.
-        db_sync.users.update({"settings": {}}, {
-            "$set": {"settings": {"show_ids": False, "show_versions": False}}
-        }, multi=True)
-
-        # Make sure permissions are reconciled for all users.
-        for user in db_sync.users.find():
-            groups = db_sync.groups.find({"_id": {
-                "$in": user["groups"]
-            }})
-
-            db_sync.users.update({"_id": user["_id"]}, {
-                "$set": {
-                    "permissions": reconcile_permissions(list(groups))
-                }
-            })
 
     @virtool.gen.coroutine
     def update(self, query, update, increment_version=True, upsert=False, connections=None):

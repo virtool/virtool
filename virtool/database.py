@@ -8,32 +8,23 @@ logger = logging.getLogger(__name__)
 
 class Collection:
 
-    """
-    A proxy for a MongoDB collection. Provides asynchronous access to the collection and dispatches all changes to
-    listening clients. Used as a base class to construct proxies for each Mongo collection.
-
-    :param collection_name: the name of the Mongo collection to bind to.
-    :type collection_name: str
-
-    :param dispatcher: the dispatcher that instantiated the :class:`~database.Collection` object.
-    :type dispatcher: :class:`.Dispatcher`
-
-    """
-    def __init__(self, collection_name, dispatcher):
+    def __init__(self, collection_name, dispatch, collections, settings, add_periodic_callback):
 
         #: The name of the MongoDB collection that the the :class:`~database.Collection` object is bound to.
         self.collection_name = collection_name
 
-        #: A reference to the dispatcher that instantiated the :class:`~database.Collection` object and will be used to
-        #: communicate with clients.
-        self.dispatcher = dispatcher
+        self._dispatch = dispatch
+
+        self.collections = collections
 
         #: The shared settings object from the :class:`virtool.web.Application` instance.
-        self.settings = dispatcher.settings
+        self.settings = settings
+
+        self.add_periodic_callback = add_periodic_callback
 
         #: A :class:`~motor.motor_tornado.MotorCollection` object bound the the
         #: collection specified by :attr:`.collection_name`.
-        self.db = virtool.utils.get_db_client(self.settings)[self.collection_name]
+        self.db = self.settings.get_db_client()[self.collection_name]
 
         #: A reference to the :meth:`~motor.motor_tornado.MotorCollection.find` method of :attr:`.db`.
         self.find = self.db.find
@@ -160,7 +151,7 @@ class Collection:
         return response
 
     @virtool.gen.coroutine
-    def dispatch(self, operation, data, collection_name=None, connections=None, sync=False):
+    def dispatch(self, operation, data, interface=None, connections=None, sync=False):
         """
         Send a message to listening clients through the :attr:`.dispatcher`. Messages tell the client what operation to
         do on what collection contain the data to do it. They have the form:
@@ -170,7 +161,7 @@ class Collection:
         +==================+================================================================================+
         | operation        | the operation to perform on the client collection; one of 'update' or 'remove' |
         +------------------+--------------------------------------------------------------------------------+
-        | collection_name  | the name of collection to perform the operation on                             |
+        | interface        | the name of interface to perform the operation on                              |
         +------------------+--------------------------------------------------------------------------------+
         | data             | the data describing the updates or removals to apply to the client collection  |
         +------------------+--------------------------------------------------------------------------------+
@@ -200,12 +191,12 @@ class Collection:
 
         """
         # Override the dispatched collection_name if necessary.
-        collection_name = collection_name or self.collection_name
+        interface = interface or self.collection_name
 
         # Dispatch the message via the dispatcher.
-        self.dispatcher.dispatch({
+        self._dispatch({
             "operation": operation,
-            "collection_name": collection_name,
+            "interface": interface,
             "data": data,
             "sync": sync
         }, connections)
