@@ -219,7 +219,7 @@ class Simple:
 
 class Collection(Simple):
 
-    def __init__(self, dispatch, version=None, settings_path=None):
+    def __init__(self, dispatch, version=None, settings_path="./settings.json"):
         super().__init__(version, settings_path)
 
         #: A reference to the server that instantiated the :class:`.Dispatcher` object.
