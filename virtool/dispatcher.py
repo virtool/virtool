@@ -242,8 +242,6 @@ class Dispatcher:
 
             connections = [conn for conn in connections if conn_filter(conn)]
 
-        print("filtered", message["interface"], list(connections))
-
         # Modify connections if conn_modifier is defined.
         if conn_modifier:
             if not callable(conn_modifier):
@@ -251,8 +249,6 @@ class Dispatcher:
 
             for connection in connections:
                 conn_modifier(connection)
-
-        print("modified", message["interface"], list(connections))
 
         # Send the message to all appropriate websocket clients.
         for connection in connections:
