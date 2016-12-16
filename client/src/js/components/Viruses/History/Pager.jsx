@@ -92,7 +92,7 @@ var HistoryPager = React.createClass({
         var content;
 
         var virusComponents = documents.map(function (virusGroup, index) {
-            var header = <h5>{virusGroup.virusName} <small> {virusGroup.virusId}</small></h5>;
+            var header = <h5 className="pointer">{virusGroup.virusName} <small> {virusGroup.virusId}</small></h5>;
 
             return (
                 <Panel key={virusGroup.virusId} eventKey={index} header={header} style={panelStyle} collapsible>

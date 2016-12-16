@@ -33,8 +33,8 @@ var Lifecycle = React.createClass({
     reload: function () {
         this.setState({pendingReload: true}, function () {
             dispatcher.send({
-                collectionName: 'dispatcher',
-                methodName: 'reload',
+                interface: 'dispatcher',
+                method: 'reload',
                 message: {}
             }).success(this.onReloaded);
         });
@@ -52,8 +52,8 @@ var Lifecycle = React.createClass({
         location.hash = '#home/welcome';
         
         dispatcher.send({
-            collectionName: 'dispatcher',
-            methodName: 'shutdown',
+            interface: 'dispatcher',
+            method: 'shutdown',
             message: {}
         });
     },

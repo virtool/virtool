@@ -56,8 +56,8 @@ var User = function () {
 
     this.logout = function () {
         dispatcher.send({
-            collectionName: 'users',
-            methodName: 'logout',
+            interface: 'users',
+            method: 'logout',
             data: {
                 token: this.token
             }

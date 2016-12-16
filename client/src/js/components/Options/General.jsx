@@ -32,8 +32,8 @@ var GeneralOptions = React.createClass({
 
     handleClick: function () {
         dispatcher.send({
-            methodName: 'reload',
-            collectionName: 'dispatcher',
+            interface: 'dispatcher',
+            method: 'reload',
             data: null
         }, this.onReloaded);
     },

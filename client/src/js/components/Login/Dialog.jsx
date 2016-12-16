@@ -39,8 +39,8 @@ var LoginDialog = React.createClass({
         this.setState({pending: true}, function () {
 
             dispatcher.send({
-                collectionName: 'users',
-                methodName: 'authorize_by_login',
+                interface: 'users',
+                method: 'authorize_by_login',
                 data: {
                     username: this.state.username,
                     password: this.state.new || this.state.password,
@@ -69,8 +69,8 @@ var LoginDialog = React.createClass({
 
         if (this.state.new.length >= 8 && this.state.new === this.state.confirm) {
             dispatcher.send({
-                collectionName: "users",
-                methodName: "change_password",
+                interface: "users",
+                method: "change_password",
                 data: {
                     _id: this.state.username,
                     old_password: this.state.password,

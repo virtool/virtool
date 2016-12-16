@@ -40,8 +40,8 @@ var Settings = function () {
         data[key] = value;
 
         return dispatcher.send({
-            methodName: 'set',
-            collectionName: 'settings',
+            interface: 'settings',
+            method: 'set',
             data: data
         });
     };

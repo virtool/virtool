@@ -41,10 +41,10 @@ function Database(definitions, dispatcher) {
 
                         collection.retain = definition.retain;
 
-                        collection.request = function (operation, data) {
+                        collection.request = function (method, data) {
                             return dispatcher.send({
-                                methodName: operation,
-                                collectionName: collectionName,
+                                interface: collectionName,
+                                method: method,
                                 data: data
                             });
                         };

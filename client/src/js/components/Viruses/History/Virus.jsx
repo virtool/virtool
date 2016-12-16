@@ -11,6 +11,7 @@
 
 'use strict';
 
+var _ = require('lodash');
 var React = require('react');
 var FlipMove = require('react-flip-move');
 var ListGroup = require('react-bootstrap/lib/ListGroup');

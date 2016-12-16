@@ -97,8 +97,8 @@ var Start = React.createClass({
 
         if (token) {
             dispatcher.send({
-                collectionName: 'users',
-                methodName: 'authorize_by_token',
+                interface: 'users',
+                method: 'authorize_by_token',
                 data: {
                     token: token,
                     browser: dispatcher.browser

@@ -99,8 +99,8 @@ function Dispatcher(onReady) {
         var dispatcher = this;
 
         this.send({
-            collectionName: 'settings',
-            methodName: 'download',
+            interface: 'settings',
+            method: 'download',
             data: null
         }).success(function (data) {
 
@@ -167,16 +167,16 @@ function Dispatcher(onReady) {
 
     this.listen = function (name) {
         dispatcher.send({
-            collectionName: 'dispatcher',
-            methodName: 'listen',
+            interface: 'dispatcher',
+            method: 'listen',
             data: {'name': name}
         });
     };
 
     this.unlisten = function (name) {
         dispatcher.send({
-            collectionName: 'dispatcher',
-            methodName: 'unlisten',
+            interface: 'dispatcher',
+            method: 'unlisten',
             data: {'name': name}
         });
     };
@@ -185,12 +185,12 @@ function Dispatcher(onReady) {
     // has a property 'operation' that tells the dispatcher what to do. Illegal operation names will throw an error.
     this.handle = function (message) {
 
-        var collectionName = message.interface;
+        var interface = message.interface;
         var operation = message.operation;
 
-        console.log(message.interface + "." + message.operation);
+        console.log(interface + "." + message.operation);
 
-        if (collectionName === 'transaction') {
+        if (interface === 'transaction') {
             switch (operation) {
                 case "fulfill":
                     this.transactions.fulfill(message.data.tid, message.data.success, message.data.data);
@@ -210,7 +210,7 @@ function Dispatcher(onReady) {
             this.user.load(message.data);
         }
 
-        else if (_.includes(this.db.collectionNames, collectionName)) {
+        else if (_.includes(this.db.collectionNames, interface)) {
 
             var collection = this.db[message.interface];
 
