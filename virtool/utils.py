@@ -155,30 +155,6 @@ def random_alphanumeric(length=6, excluded=[], randomizer=None):
     return random_alphanumeric(length, excluded, randomizer)
 
 
-@virtool.gen.coroutine
-def get_new_document_id(motor_collection, excluded=[], randomizer=None):
-    """
-    Get a unique 8-character alphanumeric id for the given Motor collection.
-
-    :param motor_collection: the collection to generate a new unique id for.
-    :type motor_collection: :class:`motor.motor_tornado.MotorCollection`
-
-    :param excluded: a list of ids to exclude in addition to the extant ids in the collection
-    :type excluded: list
-
-    :return: a random 8-character alphanumeric document id.
-    :rtype: str
-
-    """
-    existing_ids = yield motor_collection.find({}, {"_id": True}).distinct("_id")
-
-    excluded += existing_ids
-
-    excluded = set(excluded)
-
-    return random_alphanumeric(length=8, excluded=excluded, randomizer=randomizer)
-
-
 def where(subject, predicate):
     """
     Returns the first object in ``subject`` that return True for the given ``predicate``.

@@ -26,7 +26,7 @@ class Collection(virtool.database.SyncingCollection):
         super().__init__("samples", dispatch, collections, settings, add_periodic_callback)
 
         # Extend sync_projector. These fields will be passed to the client to populate sample tables.
-        self.sync_projector.update({field: True for field in [
+        self.sync_projector += [
             "name",
             "added",
             "username",
@@ -38,7 +38,7 @@ class Collection(virtool.database.SyncingCollection):
             "group_write",
             "all_read",
             "all_write"
-        ]})
+        ]
 
         #: A list of read files that are being imported and should not be shown as available for import.
         self.excluded_files = list()
@@ -70,7 +70,7 @@ class Collection(virtool.database.SyncingCollection):
             )
 
             if send:
-                analysis_count = yield self.dispatcher.collections["analyses"].find({
+                analysis_count = yield self.collections["analyses"].find({
                     "sample_id": document["_id"]
                 }).count()
 
@@ -171,7 +171,7 @@ class Collection(virtool.database.SyncingCollection):
         sample_id = yield self.get_new_id()
 
         # Get a list of the subtraction hosts in MongoDB that are ready for use during analysis.
-        available_subtraction_hosts = yield self.dispatcher.collections["hosts"].find().distinct("_id")
+        available_subtraction_hosts = yield self.collections["hosts"].find().distinct("_id")
 
         # Make sure a subtraction host was submitted and it exists.
         if not data["subtraction"] or data["subtraction"] not in available_subtraction_hosts:
@@ -186,12 +186,12 @@ class Collection(virtool.database.SyncingCollection):
             "username": transaction.connection.user["_id"]
         })
 
-        sample_group_setting = self.dispatcher.settings.get("sample_group")
+        sample_group_setting = self.settings.get("sample_group")
 
         # Assign the user's primary group as the sample owner group if the ``sample_group`` settings is
         # ``users_primary_group``.
         if sample_group_setting == "users_primary_group":
-            data["group"] = yield self.dispatcher.collections["users"].get_field(
+            data["group"] = yield self.collections["users"].get_field(
                 data["username"],
                 "primary_group"
             )
@@ -202,10 +202,10 @@ class Collection(virtool.database.SyncingCollection):
 
         # Add the default sample right fields to the sample document.
         data.update({
-            "group_read": self.dispatcher.settings.get("sample_group_read"),
-            "group_write": self.dispatcher.settings.get("sample_group_write"),
-            "all_read": self.dispatcher.settings.get("sample_all_read"),
-            "all_write": self.dispatcher.settings.get("sample_all_write")
+            "group_read": self.settings.get("sample_group_read"),
+            "group_write": self.settings.get("sample_group_write"),
+            "all_read": self.settings.get("sample_all_read"),
+            "all_write": self.settings.get("sample_all_write")
         })
 
         task_args = dict(data)
@@ -228,7 +228,7 @@ class Collection(virtool.database.SyncingCollection):
         # Start the import job
         proc, mem = 2, 6
 
-        self.dispatcher.collections["jobs"].new("import_reads", task_args, proc, mem, data["username"])
+        self.collections["jobs"].new("import_reads", task_args, proc, mem, data["username"])
 
         return True, response
 
@@ -253,7 +253,7 @@ class Collection(virtool.database.SyncingCollection):
         # Add an analysis entry and reference and start an analysis job for each sample in samples.
         for sample_id in samples:
             # Generate a unique _id for the analysis entry
-            analysis_id = yield self.dispatcher.collections["analyses"].new(
+            analysis_id = yield self.collections["analyses"].new(
                 sample_id,
                 data["name"],
                 username,
@@ -359,7 +359,7 @@ class Collection(virtool.database.SyncingCollection):
         if "administrator" not in user["groups"] and user["_id"] != sample_owner:
             return False, dict(message="Must be administrator or sample owner.")
 
-        existing_group_ids = yield self.dispatcher.collections["groups"].find({}, {"_id": True}).distinct("_id")
+        existing_group_ids = yield self.collections["groups"].find({}, {"_id": True}).distinct("_id")
 
         if data["group_id"] not in existing_group_ids:
             return False, dict(message="Passed group id does not exist.")
@@ -453,7 +453,7 @@ class Collection(virtool.database.SyncingCollection):
 
         """
         # Remove all analysis documents associated with the sample.
-        yield self.dispatcher.collections["analyses"].remove_by_sample_id(id_list)
+        yield self.collections["analyses"].remove_by_sample_id(id_list)
 
         # Make a list of read files that will no longer be hidden in the watch directory.
         files_to_reinclude = list()

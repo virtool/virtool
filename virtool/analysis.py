@@ -4,6 +4,7 @@ import gzip
 import virtool.job
 import virtool.hmm
 import virtool.utils
+import virtool.settings
 import virtool.pathoscope
 
 from Bio import SeqIO
@@ -23,6 +24,8 @@ class Base(virtool.job.Job):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
+        self.settings = virtool.settings.Simple()
+
         #: The document id for the sample being analyzed. and the analysis document the results will be committed to.
         self.sample_id = self.task_args["sample_id"]
 
@@ -36,7 +39,7 @@ class Base(virtool.job.Job):
         self.results = dict()
 
         #: A synchronous connection to the Virtool database.
-        self.database = virtool.utils.get_db_client(self.settings, sync=True)
+        self.database = self.settings.get_db_client(self.settings, sync=True)
 
         #: The document for the sample being analyzed.
         self.sample = self.database["samples"].find_one({"_id": self.sample_id})

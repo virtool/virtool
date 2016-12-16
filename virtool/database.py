@@ -151,7 +151,8 @@ class Collection:
         return response
 
     @virtool.gen.coroutine
-    def dispatch(self, operation, data, interface=None, connections=None, sync=False):
+    def dispatch(self, operation, data, interface=None, connections=None, conn_filter=None, conn_modifier=None,
+                 sync=False):
         """
         Send a message to listening clients through the :attr:`.dispatcher`. Messages tell the client what operation to
         do on what collection contain the data to do it. They have the form:
@@ -177,8 +178,8 @@ class Collection:
         :param data: the data payload associated with the operation
         :type data: dict or list
 
-        :param collection_name: override for :attr:`.collection_name`.
-        :type collection_name: str
+        :param interface: override for :attr:`.collection_name`.
+        :type interface: str
 
         :param connections: the connections to send the dispatch to. By default, it will be sent to all connections.
         :type connections: list
@@ -199,12 +200,12 @@ class Collection:
             "interface": interface,
             "data": data,
             "sync": sync
-        }, connections)
+        }, connections, conn_filter=conn_filter, conn_modifier=conn_modifier)
 
         return len(coerce_list(data))
 
     @virtool.gen.coroutine
-    def get_new_id(self, excluded=None):
+    def get_new_id(self, excluded=None, randomizer=None):
         """
         Returns a new, unique, id that can be used for inserting a new document. Will not return any id that is included
         in ``excluded``.
@@ -212,11 +213,22 @@ class Collection:
         :param excluded: document ids to exclude
         :type excluded: list
 
-        :return: new document id
+        :param randomizer: a function to return random strings
+        :type randomizer: callable
+
+        :return: a random 8-character alphanumeric document id.
         :rtype: str
 
         """
-        document_id = yield virtool.utils.get_new_document_id(self.db, excluded)
+        excluded = excluded or list()
+
+        existing_ids = yield self.find({}, ["_id"]).distinct("_id")
+
+        excluded += existing_ids
+
+        excluded = set(excluded)
+
+        return virtool.utils.random_alphanumeric(length=8, excluded=excluded, randomizer=randomizer)
 
         return document_id
 
@@ -261,7 +273,7 @@ class SyncingCollection(Collection):
         #: :meth:`~motor.motor_tornado.MotorCollection.find` call. By default only the ``_id`` and ``_version`` fields
         #: from each document returned by :meth:`~motor.motor_tornado.MotorCollection.find` will be
         #: returned. The subclass must define a full sync_projector of its own.
-        self.sync_projector = {"_version": True, "_id": True}
+        self.sync_projector = ["_version", "_id"]
 
     @virtool.gen.coroutine
     def insert(self, document, connections=None):
@@ -284,7 +296,7 @@ class SyncingCollection(Collection):
         # Perform the actual database insert operation, retaining the response.
         response = yield self.db.insert(document)
 
-        # Pare down the new document using the sync_projector dict.
+        # Pare down the new document using the sync_projector list.
         to_dispatch = {key: document[key] for key in self.sync_projector}
 
         # Run the new document through the collection's sync_processor if it has been defined.
@@ -324,7 +336,7 @@ class SyncingCollection(Collection):
         """
         query, multi = coerce_query(query)
 
-        ids_to_update = yield self.find(query, {"_id"}).distinct("_id")
+        ids_to_update = yield self.find(query, ["_id"]).distinct("_id")
 
         if increment_version:
             update["$inc"] = {"_version": 1}

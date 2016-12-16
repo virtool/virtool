@@ -12,7 +12,7 @@ class Collection(virtool.database.SyncingCollection):
     def __init__(self, dispatch, collections, settings, add_periodic_callback):
         super().__init__("history", dispatch, collections, settings, add_periodic_callback)
 
-        self.sync_projector.update({key: True for key in [
+        self.sync_projector += [
             "operation",
             "method_name",
             "changes",
@@ -23,7 +23,7 @@ class Collection(virtool.database.SyncingCollection):
             "annotation",
             "index",
             "index_version"
-        ]})
+        ]
 
         self.sequences_collection = motor.MotorClient()[self.settings.get("db_name")]["sequences"]
 
@@ -229,15 +229,15 @@ class Collection(virtool.database.SyncingCollection):
                 isolate["sequence_count"] = len(isolate.pop("sequences"))
 
             if document:
-                yield self.dispatcher.collections["viruses"].update(
+                yield self.collections["viruses"].update(
                     document["_id"],
                     {"$set": patched},
                     increment_version=False
                 )
             else:
-                yield self.dispatcher.collections["viruses"].insert(patched)
+                yield self.collections["viruses"].insert(patched)
         else:
-            yield self.dispatcher.collections["viruses"].remove(document["_id"])
+            yield self.collections["viruses"].remove(document["_id"])
 
         yield self.remove(history_to_delete)
 
@@ -245,7 +245,7 @@ class Collection(virtool.database.SyncingCollection):
 
     @virtool.gen.coroutine
     def get_versioned_document(self, virus_id, virus_version):
-        current = yield self.dispatcher.collections["viruses"].join(virus_id)
+        current = yield self.collections["viruses"].join(virus_id)
 
         versioned = yield self.patch_virus_to_version(current or {"_id": virus_id}, virus_version)
 

@@ -26,7 +26,7 @@ class Collection(virtool.database.SyncingCollection):
     def __init__(self, dispatch, collections, settings, add_periodic_callback):
         super().__init__("indexes", dispatch, collections, settings, add_periodic_callback)
 
-        self.sync_projector.update({key: True for key in [
+        self.sync_projector += [
             "timestamp",
             "virus_count",
             "modification_count",
@@ -35,7 +35,7 @@ class Collection(virtool.database.SyncingCollection):
             "index_version",
             "ready",
             "has_files"
-        ]})
+        ]
 
     @virtool.gen.exposed_method(["rebuild_index"])
     def rebuild_index(self, transaction):
@@ -51,7 +51,7 @@ class Collection(virtool.database.SyncingCollection):
 
         """
         # Check if any viruses are unverified.
-        unverified_virus_count = yield self.dispatcher.collections["viruses"].find({"modified": True}).count()
+        unverified_virus_count = yield self.collections["viruses"].find({"modified": True}).count()
 
         user = transaction.connection.user
 
@@ -76,7 +76,7 @@ class Collection(virtool.database.SyncingCollection):
             })
 
             # Update all history entries with no index_version to the new index version.
-            yield self.dispatcher.collections["history"].update({"index": "unbuilt"}, {
+            yield self.collections["history"].update({"index": "unbuilt"}, {
                 "$set": {
                     "index": index_id,
                     "index_version": index_version
@@ -86,7 +86,7 @@ class Collection(virtool.database.SyncingCollection):
             # Generate a dict of virus document version numbers keyed by the document id.
             virus_manifest = dict()
 
-            virus_cursor = self.dispatcher.collections["viruses"].find()
+            virus_cursor = self.collections["viruses"].find()
 
             while (yield virus_cursor.fetch_next):
                 virus = virus_cursor.next_object()
@@ -101,7 +101,7 @@ class Collection(virtool.database.SyncingCollection):
             }
 
             # Start the job.
-            yield self.dispatcher.collections["jobs"].new("rebuild_index", task_args, 2, 2, user["_id"])
+            yield self.collections["jobs"].new("rebuild_index", task_args, 2, 2, user["_id"])
 
             return True, None
 
@@ -187,7 +187,7 @@ class Collection(virtool.database.SyncingCollection):
         analyses.
 
         """
-        aggregation_cursor = self.dispatcher.collections["analyses"].aggregate([
+        aggregation_cursor = self.collections["analyses"].aggregate([
             {"$match": {"ready": False}},
             {"$group": {"_id": "$index_id"}}
         ])

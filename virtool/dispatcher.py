@@ -130,9 +130,8 @@ class Dispatcher:
         transaction = Transaction(self.dispatch, message, connection)
 
         # Log a string of the format '<username> (<ip>) request <interface>:<method>' to describe the request.
-        logger.info('{} ({}) requested {}.{}'.format(
-            connection.user["_id"],
-            connection.ip,
+        logger.info('{} requested {}.{}'.format(
+            gen_log_prefix(connection),
             transaction.interface,
             transaction.method
         ))
@@ -141,8 +140,8 @@ class Dispatcher:
         try:
             interface = self.interfaces[transaction.interface]
         except KeyError:
-            logger.warning("User '{}' requested unknown interface {}".format(
-                connection.user["_id"],
+            logger.warning("{} requested unknown interface {}".format(
+                gen_log_prefix(connection),
                 transaction.interface
             ))
             return False
@@ -151,8 +150,8 @@ class Dispatcher:
         try:
             method = getattr(interface, transaction.method)
         except AttributeError:
-            logger.warning("User '{}' requested unknown interface method {}.{}".format(
-                connection.user["_id"],
+            logger.warning("{} requested unknown interface method {}.{}".format(
+                gen_log_prefix(connection),
                 transaction.interface,
                 transaction.method
             ))
@@ -160,8 +159,8 @@ class Dispatcher:
 
         # Log warning and return if method is not exposed.
         if not hasattr(method, "is_exposed") or not method.is_exposed:
-            logger.warning("User '{}' attempted to call unexposed method {}.{}".format(
-                connection.user["_id"],
+            logger.danger("{} attempted to call unexposed method {}.{}".format(
+                gen_log_prefix(connection),
                 transaction.interface,
                 transaction.method
             ))
@@ -170,7 +169,7 @@ class Dispatcher:
         is_unprotected = hasattr(method, "is_unprotected")
 
         if not connection.authorized and not is_unprotected:
-            logger.warning("Unauthorized connection at {} attempted to call protected method {}.{}".format(
+            logger.danger("Unauthorized connection at {} attempted to call protected method {}.{}".format(
                 connection.ip,
                 transaction.interface,
                 transaction.method
@@ -189,7 +188,6 @@ class Dispatcher:
 
             except TypeError as inst:
                 if "takes 1 positional argument but" in inst.args[0]:
-                    print(method.__name__)
                     raise TypeError("Exposed method '{}' must take a transaction as its single argument".format(
                         getattr(method, "__name__")
                     ))
@@ -198,7 +196,7 @@ class Dispatcher:
 
         return True
 
-    def dispatch(self, message, connections=None):
+    def dispatch(self, message, connections=None, conn_filter=None, conn_modifier=None):
         """
         Dispatch a ``message`` with a conserved format to a selection of active ``connections``
         (:class:`.SocketHandler` objects). Messages are dicts with the scheme:
@@ -208,7 +206,7 @@ class Dispatcher:
         +================+=======================================================================+
         | operation      | a word used to tell the client what to do in response to the message. |
         +----------------+-----------------------------------------------------------------------+
-        | collectionName | the name of the collection the client should perform the operation on |
+        | interface      | the name of the interface the client should perform the operation on  |
         +----------------+-----------------------------------------------------------------------+
         | data           | test                                                                  |
         +----------------+-----------------------------------------------------------------------+
@@ -219,10 +217,16 @@ class Dispatcher:
         :param connections: the connection(s) (:class:`.SocketHandler` objects) to dispatch the message to.
         :type connections: list
 
+        :param conn_filter: a callable that will be used to filter the connections to dispatch to
+        :type conn_filter: callable
+
+        :param conn_modifier: a callable that will be used to modify the dispatcher's connection objects
+        :type conn_modifier: callable
+
         """
         base_message = {
             "operation": None,
-            "collection_name": None,
+            "interface": None,
             "data": None
         }
 
@@ -230,6 +234,14 @@ class Dispatcher:
 
         # If the connections parameter was not set, dispatch the message to all authorized connections.
         connections = connections or filter(lambda conn: conn.authorized, self.connections)
+
+        # Filter connections using conn_filter.
+        if conn_filter and callable(conn_filter):
+            connections = filter(conn_filter, connections)
+
+        # Modify connections if conn_modifier is defined.
+        if conn_modifier:
+            map(conn_modifier, connections)
 
         # Send the message to all appropriate websocket clients.
         for connection in connections:
@@ -323,7 +335,7 @@ class Transaction:
             }
 
         self.dispatch({
-            "collection_name": "transaction",
+            "interface": "transaction",
             "operation": "fulfill",
             "data": {
                 "tid": self.tid,
@@ -341,10 +353,17 @@ class Transaction:
 
         """
         self.dispatch({
-            "collection_name": "transaction",
+            "interface": "transaction",
             "operation": "update",
             "data": {
                 "tid": self.tid,
                 "data": data
             }
         }, [self.connection])
+
+
+def gen_log_prefix(connection):
+    return "{} ({})".format(
+        connection.user["_id"] or "<unknown>",
+        connection.ip
+    )

@@ -105,8 +105,6 @@ class Application:
         else:
             logger.info("Server has not been setup.")
 
-        print(self.dispatcher.interfaces["settings"])
-
         # Define the path where the server will look for the client HTML file. Path depends on the value of the
         # development attribute.
         static_path = "client/dist/" if self.development else "client/"

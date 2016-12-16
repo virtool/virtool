@@ -31,11 +31,7 @@ class Collection(virtool.database.SyncingCollection):
         super().__init__("viruses", dispatch, collections, settings, add_periodic_callback)
 
         # Set what is sent to the client when syncing.
-        self.sync_projector.update({field: True for field in [
-            "name",
-            "modified",
-            "abbreviation",
-        ]})
+        self.sync_projector += ["name", "modified", "abbreviation"]
 
         # Contains documents describing viral sequences associated with viruses in the viruses collection. Changes to
         # sequence documents only occur by calling methods in this Collection object.
@@ -121,7 +117,7 @@ class Collection(virtool.database.SyncingCollection):
                 response = yield super().remove(virus_id)
 
                 # Put an entry in the history collection saying the virus was removed.
-                yield self.dispatcher.collections["history"].add(
+                yield self.collections["history"].add(
                     "remove",
                     "remove",
                     virus,
@@ -193,7 +189,7 @@ class Collection(virtool.database.SyncingCollection):
                 }, return_change=True)
 
                 # Add a history record describing the change.
-                yield self.dispatcher.collections["history"].add(
+                yield self.collections["history"].add(
                     "update",
                     "set_field",
                     old,
@@ -292,7 +288,7 @@ class Collection(virtool.database.SyncingCollection):
         new = yield self.join(data["_id"])
 
         # Use the old and new entry to add a new history document for the change.
-        yield self.dispatcher.collections["history"].add(
+        yield self.collections["history"].add(
             "update",
             "upsert_isolate",
             old,
@@ -349,7 +345,7 @@ class Collection(virtool.database.SyncingCollection):
         yield self.sequences_collection.remove({"isolate_id": data["isolate_id"]})
         new = yield self.join(data["_id"])
 
-        yield self.dispatcher.collections["history"].add(
+        yield self.collections["history"].add(
             "update",
             "remove_isolate",
             old,
@@ -401,7 +397,7 @@ class Collection(virtool.database.SyncingCollection):
             }
         }, return_change=True)
 
-        yield self.dispatcher.collections["history"].add(
+        yield self.collections["history"].add(
             "update",
             "set_default_isolate",
             old,
@@ -449,7 +445,7 @@ class Collection(virtool.database.SyncingCollection):
                 }
             }, return_change=True)
 
-            yield self.dispatcher.collections["history"].add(
+            yield self.collections["history"].add(
                 "update",
                 "verify_virus",
                 old,
@@ -568,7 +564,7 @@ class Collection(virtool.database.SyncingCollection):
 
         new = yield self.join(transaction.data["_id"])
 
-        yield self.dispatcher.collections["history"].add(
+        yield self.collections["history"].add(
             "update",
             "remove_sequence",
             old,
@@ -602,7 +598,7 @@ class Collection(virtool.database.SyncingCollection):
 
                 # If the virus has been changed since the last index rebuild, patch it to its last indexed version.
                 if virus["_version"] != virus["last_indexed_version"]:
-                    _, joined, _ = yield self.dispatcher.collections["history"].patch_virus_to_version(
+                    _, joined, _ = yield self.collections["history"].patch_virus_to_version(
                         joined,
                         virus["last_indexed_version"]
                     )
@@ -618,7 +614,7 @@ class Collection(virtool.database.SyncingCollection):
         # Register the file content with the file manager. The file manager will write the content to a file and make
         # it available for download. It returns a file_id that will be passed back to the client so it can send in a
         # request to download the file.
-        file_id = yield self.dispatcher.file_manager.register("viruses.json.gz", body, "json")
+        file_id = yield self.collections["files"].register("viruses.json.gz", body, "json")
 
         return True, {
             "filename": file_id,
@@ -819,7 +815,7 @@ class Collection(virtool.database.SyncingCollection):
         # Join the virus entry in order to insert the first history record for the virus.
         joined = yield self.join(virus["_id"])
 
-        yield self.dispatcher.collections["history"].add(
+        yield self.collections["history"].add(
             "insert",
             "add",
             None,  # there is no old document
@@ -902,7 +898,7 @@ class Collection(virtool.database.SyncingCollection):
         # Get the new joined
         new_document = yield self.join(old_document["_id"])
 
-        yield self.dispatcher.collections["history"].add(
+        yield self.collections["history"].add(
             "update",
             "add_sequence" if add else "update_sequence",
             old_document,
@@ -926,7 +922,7 @@ class Collection(virtool.database.SyncingCollection):
         if used_virus_fields:
             excluded = used_virus_fields["_id"]
 
-        virus_id = yield virtool.utils.get_new_document_id(self.db, excluded)
+        virus_id = yield self.get_new_id(excluded)
 
         return virus_id
 

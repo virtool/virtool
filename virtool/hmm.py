@@ -15,12 +15,12 @@ class Collection(virtool.database.SyncingCollection):
     def __init__(self, dispatch, collections, settings, add_periodic_callback):
         super().__init__("hmm", dispatch, collections, settings, add_periodic_callback)
 
-        self.sync_projector.update({field: True for field in [
+        self.sync_projector += [
             "cluster",
             "label",
             "count",
             "families"
-        ]})
+        ]
 
     @virtool.gen.exposed_method([])
     def detail(self, transaction):

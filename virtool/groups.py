@@ -24,9 +24,7 @@ class Collection(virtool.database.SyncingCollection):
         super().__init__("groups", dispatch, collections, settings, add_periodic_callback)
 
         # Get the group id and permissions for sync. Permissions is the only field in the group document.
-        self.sync_projector.update({
-            "permissions": True
-        })
+        self.sync_projector.append("permissions")
 
     @virtool.gen.exposed_method(["modify_options"])
     def add(self, transaction):
@@ -87,7 +85,7 @@ class Collection(virtool.database.SyncingCollection):
         affected_user_ids = yield self.get_member_users(data["_id"])
 
         # Make a list of affected user ids and call update_user_groups to update the user entries.
-        yield self.dispatcher.collections["users"].update_user_permissions(affected_user_ids)
+        yield self.collections["users"].update_user_permissions(affected_user_ids)
 
         return True, response
 
@@ -112,13 +110,13 @@ class Collection(virtool.database.SyncingCollection):
             if group_id != "administrator":
                 affected_user_ids = yield self.get_member_users(group_id)
 
-                yield self.dispatcher.collections["users"].db.update({"_id": {"$in": affected_user_ids}}, {
+                yield self.collections["users"].db.update({"_id": {"$in": affected_user_ids}}, {
                     "$pull": {
                         "groups": group_id
                     }
                 })
 
-                yield self.dispatcher.collections["users"].update_user_permissions(affected_user_ids)
+                yield self.collections["users"].update_user_permissions(affected_user_ids)
 
                 response = yield super().remove([group_id])
 
@@ -136,7 +134,7 @@ class Collection(virtool.database.SyncingCollection):
 
     @virtool.gen.coroutine
     def get_member_users(self, group_id):
-        member_user_ids = yield self.dispatcher.collections["users"].find(
+        member_user_ids = yield self.collections["users"].find(
             {"groups": group_id},
             {"_id": True}
         ).distinct("_id")

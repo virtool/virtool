@@ -14,22 +14,19 @@ class Collection(virtool.database.SyncingCollection):
     Provides an interface to the users MongoDB collection. During initialisation of the object, permissions are
     reconciled for all users and all user documents are updated to contain required fields if they are missing.
 
-    :param dispatcher: the dispatcher that instantiated the collection.
-    :type dispatcher: :class:`.Dispatcher`
-
     """
     def __init__(self, dispatch, collections, settings, add_periodic_callback):
         super().__init__("users", dispatch, collections, settings, add_periodic_callback)
 
-        self.sync_projector.update({
-            "groups": True,
-            "sessions": True,
-            "force_reset": True,
-            "last_password_change": True,
-            "permissions": True,
-            "settings": True,
-            "primary_group": True
-        })
+        self.sync_projector += [
+            "groups",
+            "sessions",
+            "force_reset",
+            "last_password_change",
+            "permissions",
+            "settings",
+            "primary_group"
+        ]
 
     @virtool.gen.coroutine
     def update(self, query, update, increment_version=True, upsert=False, connections=None):
@@ -60,27 +57,27 @@ class Collection(virtool.database.SyncingCollection):
         """
         response = yield super().update(query, update, increment_version, upsert)
 
-        for connection in self.dispatcher.connections:
-            if connection.user["_id"] in response["_ids"]:
-                user = yield self.find_one({"_id": connection.user["_id"]})
+        projection = [
+            "_id",
+            "groups",
+            "last_password_change",
+            "primary_group",
+            "permissions",
+            "settings",
+        ]
 
-                connection.user.update(user)
+        users = yield self.find({"_id": {
+            "$in": response["_ids"]
+        }}, projection).to_list(None)
 
-                to_dispatch = {key: connection.user[key] for key in [
-                    "_id",
-                    "groups",
-                    "last_password_change",
-                    "primary_group",
-                    "permissions",
-                    "settings",
-                    "token"
-                ]}
-
-                yield self.dispatch(
-                    "amend",
-                    to_dispatch,
-                    connections=[connection]
-                )
+        for user in users:
+            yield self.dispatch(
+                "amend",
+                user,
+                interface="user",
+                conn_filter=lambda conn: conn.user["_id"] == user["_id"],
+                conn_modifier=lambda conn: conn.user.update(user)
+            )
 
         return response
 
@@ -158,7 +155,7 @@ class Collection(virtool.database.SyncingCollection):
         groups = None
 
         if group_ids is not None:
-            groups = yield self.dispatcher.collections["groups"].find({
+            groups = yield self.collections["groups"].find({
                 "_id": {
                     "$in": virtool.database.coerce_list(group_ids)
                 }
@@ -172,7 +169,7 @@ class Collection(virtool.database.SyncingCollection):
             try:
                 own_groups = list(groups)
             except TypeError:
-                own_groups = yield self.dispatcher.collections["groups"].find({
+                own_groups = yield self.collections["groups"].find({
                     "_id": {
                         "$in": user["groups"]
                     }
@@ -587,10 +584,6 @@ class Collection(virtool.database.SyncingCollection):
         :rtype: bool
 
         """
-        connections = [connection for connection in self.dispatcher.connections if connection.user["token"] == token]
-
-        assert len(connections) <= 1
-
         yield self.update({"sessions.0.token": token}, {
             "$pull": {
                 "sessions": {
@@ -599,11 +592,12 @@ class Collection(virtool.database.SyncingCollection):
             }
         })
 
-        if connections:
-            self.dispatcher.dispatch({
-                "operation": "deauthorize",
-                "data": {"logout": logout}
-            }, connections)
+        self._dispatch({
+            "operation": "deauthorize",
+            "data": {
+                "logout": logout
+            }
+        }, conn_filter=lambda conn: conn.user["token"] == token)
 
     @virtool.gen.coroutine
     def user_exists(self, user_id):

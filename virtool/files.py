@@ -132,7 +132,8 @@ class Manager:
         :rtype: str
 
         """
-        file_id = yield virtool.utils.get_new_document_id(self.db.files)
+        # THIS NEEDS TO BE CHANGED
+        # file_id = yield virtool.utils.get_new_document_id(self.db.files)
 
         yield self.db.files.insert({
             "_id": file_id,

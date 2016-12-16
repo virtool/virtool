@@ -26,12 +26,12 @@ class Collection(virtool.database.SyncingCollection):
 
         super().__init__("hosts", dispatch, collections, settings, add_periodic_callback)
 
-        self.sync_projector.update({key: True for key in [
+        self.sync_projector += [
             "description",
             "file",
             "added",
             "job"
-        ]})
+        ]
 
         #: The path from which host FASTA files are imported.
         self.fasta_path = os.path.join(self.settings.get("data_path"), "reference/hosts/fasta")
@@ -60,7 +60,7 @@ class Collection(virtool.database.SyncingCollection):
 
         response = yield self.insert(data)
 
-        yield self.dispatcher.collections["jobs"].new(
+        yield self.collections["jobs"].new(
             "add_host",
             data,
             1,
@@ -120,7 +120,7 @@ class Collection(virtool.database.SyncingCollection):
 
         """
         # Check how many times the host id is referenced in the samples collection.
-        reference_count = yield self.dispatcher.collections["samples"].find({"subtraction": host_id}).count()
+        reference_count = yield self.collections["samples"].find({"subtraction": host_id}).count()
 
         response = None
 

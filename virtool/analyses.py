@@ -25,14 +25,14 @@ class Collection(virtool.database.SyncingCollection):
     def __init__(self, dispatch, collections, settings, add_periodic_callback):
         super().__init__("analyses", dispatch, collections, settings, add_periodic_callback)
 
-        self.sync_projector.update({key: True for key in [
+        self.sync_projector += [
             "name",
             "algorithm",
             "sample_id",
             "index_version",
             "username",
             "timestamp"
-        ]})
+        ]
 
     @virtool.gen.coroutine
     def new(self, sample_id, name, username, algorithm):
@@ -45,7 +45,7 @@ class Collection(virtool.database.SyncingCollection):
 
         """
         # Get the current id and version of the virus index currently being used for analysis.
-        index_id, index_version = yield self.dispatcher.collections["indexes"].get_current_index()
+        index_id, index_version = yield self.collections["indexes"].get_current_index()
 
         data = {
             "sample_id": sample_id,
@@ -57,7 +57,7 @@ class Collection(virtool.database.SyncingCollection):
 
         analysis_id = yield self.get_new_id()
 
-        job_id = yield self.dispatcher.collections["jobs"].get_new_id()
+        job_id = yield self.collections["jobs"].get_new_id()
 
         document = dict(data)
 
@@ -77,7 +77,7 @@ class Collection(virtool.database.SyncingCollection):
 
         # Clone the arguments passed from the client and amend the resulting dictionary with the analysis entry
         # _id. This dictionary will be passed the the new analysis job.
-        yield self.dispatcher.collections["jobs"].new(
+        yield self.collections["jobs"].new(
             data["algorithm"],
             task_args,
             self.settings.get(data["algorithm"] + "_proc"),
@@ -226,7 +226,7 @@ class Collection(virtool.database.SyncingCollection):
 
                         if virus_id not in fetched_viruses:
                             # Get the virus entry (patched to correct version).
-                            _, virus_document, _ = yield self.dispatcher.collections["history"].get_versioned_document(
+                            _, virus_document, _ = yield self.collections["history"].get_versioned_document(
                                 virus_id,
                                 virus_version + 1
                             )
@@ -276,7 +276,7 @@ class Collection(virtool.database.SyncingCollection):
 
                 if analysis["algorithm"] == "nuvs":
                     for hmm_result in analysis["hmm"]:
-                        hmm = yield self.dispatcher.collections["hmm"].find_one({"_id": hmm_result["hit"]}, {
+                        hmm = yield self.collections["hmm"].find_one({"_id": hmm_result["hit"]}, {
                             "cluster": True,
                             "families": True,
                             "definition": True,

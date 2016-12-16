@@ -45,14 +45,14 @@ class Collection(virtool.database.SyncingCollection):
         super().__init__("jobs", dispatch, collections, settings, add_periodic_callback)
 
         # Database-specific attributes
-        self.sync_projector.update({key: True for key in [
+        self.sync_projector += [
             "task",
             "status",
             "proc",
             "mem",
             "username",
             "args"
-        ]})
+        ]
 
         #: A :class:`dict` containing dicts describing each running or waiting job.
         self.jobs_dict = {}
@@ -417,8 +417,6 @@ class Collection(virtool.database.SyncingCollection):
             # Tells the queue to move onto the next item.
             self._action_queue.task_done()
 
-
-
     @tornado.gen.coroutine
     def iterate(self):
         """
@@ -448,7 +446,7 @@ class Collection(virtool.database.SyncingCollection):
                 )
 
             else:
-                method = getattr(self.dispatcher.collections[message["collection_name"]], message["operation"])
+                method = getattr(self.collections[message["collection_name"]], message["operation"])
 
                 try:
                     yield method(message["data"])
