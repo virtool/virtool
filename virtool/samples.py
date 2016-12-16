@@ -131,8 +131,8 @@ class Collection(virtool.database.SyncingCollection):
                     operation,
                     to_send,
                     interface,
-                    [connection],
-                    sync
+                    connections=[connection],
+                    sync=sync
                 )
 
             if len(to_remove) > 0:
@@ -140,8 +140,8 @@ class Collection(virtool.database.SyncingCollection):
                     "remove",
                     to_remove,
                     interface,
-                    [connection],
-                    sync
+                    connections=[connection],
+                    sync=sync
                 )
 
         return send_count
@@ -535,7 +535,7 @@ class ImportReads(virtool.job.Job):
         self.sample_id = self.task_args["_id"]
 
         #: The path where the files for this sample are stored.
-        self.sample_path = self.settings["data_path"] + "/samples/sample_" + str(self.sample_id)
+        self.sample_path = self.settings.get("data_path") + "/samples/sample_" + str(self.sample_id)
 
         #: The names of the reads files in the watch path used to create the sample.
         self.files = self.task_args["files"]
@@ -567,7 +567,7 @@ class ImportReads(virtool.job.Job):
             os.makedirs(os.path.join(self.sample_path, "analysis"))
 
     def trim_reads(self):
-        input_paths = [os.path.join(self.settings["watch_path"], filename) for filename in self.files]
+        input_paths = [os.path.join(self.settings.get("watch_path"), filename) for filename in self.files]
 
         command = [
             "skewer",
@@ -756,7 +756,7 @@ class ImportReads(virtool.job.Job):
     def clean_watch(self):
         """ Try to remove the original read files from the watch directory """
         for read_file in self.files:
-            os.remove(os.path.join(self.settings["watch_path"], read_file))
+            os.remove(os.path.join(self.settings.get("watch_path"), read_file))
 
     def cleanup(self):
         """

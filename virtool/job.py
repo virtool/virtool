@@ -168,7 +168,7 @@ class Job(multiprocessing.Process):
             self.cleanup()
 
         # Write the job log to file and clear the log data from the database to save memory.
-        write_log(self.settings["data_path"] + "/logs/jobs/" + self._id + ".log", self.log_list)
+        write_log(self.settings.get("data_path") + "/logs/jobs/" + self._id + ".log", self.log_list)
 
         if was_cancelled:
             self.update_status(state="cancelled")

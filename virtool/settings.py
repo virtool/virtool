@@ -230,6 +230,9 @@ class Simple(ReadOnly):
     def as_dict(self):
         return dict(self.data)
 
+    def to_read_only(self):
+        return ReadOnly(self.path)
+
     def to_collection(self, dispatch, collections=None, settings=None, add_periodic_callback=None):
         return Collection(dispatch, self.get("server_version"), self.path)
 
@@ -246,7 +249,6 @@ class Collection(Simple):
 
     @virtool.gen.exposed_method(["modify_options"])
     def set(self, transaction):
-
         new_settings = yield virtool.gen.THREAD_POOL.submit(self.update, transaction.data)
 
         if new_settings is not None:

@@ -1,7 +1,8 @@
 import os
 import dictdiffer
-import collections
 import logging
+
+from collections import defaultdict
 
 import virtool.gen
 import virtool.database
@@ -18,9 +19,6 @@ class Collection(virtool.database.SyncingCollection):
     An :class:`.virtool.database.Collection` interface for the *indexes* MongoDB collection. Allows interaction of virus
     reference index versions. There are no *exposed methods* in this class. Some methods from
     :class:`.virtool.viruses.Collection` should probably be moved to this class.
-
-    :param dispatcher: the dispatcher that instantiated the :class:`.indexes.Collection` object.
-    :type dispatcher: :class:`.Dispatcher`
 
     """
     def __init__(self, dispatch, collections, settings, add_periodic_callback):
@@ -252,9 +250,9 @@ class RebuildIndex(virtool.job.Job):
 
         self.index_id = self.task_args["index_id"]
 
-        self.reference_path = os.path.join(self.settings["data_path"], "reference/viruses", self.index_id)
+        self.reference_path = os.path.join(self.settings.get("data_path"), "reference/viruses", self.index_id)
 
-        self.database = virtool.utils.get_db_client(self.settings, sync=True)
+        self.database = self.settings.get_db_client(sync=True)
 
     def get_joined_virus(self, virus_id):
         """
@@ -432,7 +430,7 @@ class RebuildIndex(virtool.job.Job):
             "ready": True
         })
 
-        by_version = collections.defaultdict(list)
+        by_version = defaultdict(list)
 
         for virus_id, virus_version in self.task_args["virus_manifest"].items():
             by_version[virus_version].append(virus_id)

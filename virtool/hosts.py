@@ -211,11 +211,11 @@ class AddHost(virtool.job.Job):
         self.host_id = self.task_args["_id"]
 
         #: The path to the FASTA file being added as a host reference.
-        self.fasta_path = os.path.join(self.settings["data_path"], "reference/hosts/fasta", self.task_args["file"])
+        self.fasta_path = os.path.join(self.settings.get("data_path"), "reference/hosts/fasta", self.task_args["file"])
 
         #: The path to the directory the Bowtie2 index will be written to.
         self.index_path = os.path.join(
-            self.settings["data_path"],
+            self.settings.get("data_path"),
             "reference/hosts/index",
             self.host_id.lower().replace(" ", "_")
         )

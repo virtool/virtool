@@ -168,7 +168,7 @@ class Collection(virtool.database.SyncingCollection):
         # Instantiate a new job object.
         job = TASK_CLASSES[task](
             job_id,
-            self.settings.as_dict(),
+            self.settings.to_read_only(),
             self.message_queue,
             task,
             task_args,

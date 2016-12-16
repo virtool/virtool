@@ -55,7 +55,7 @@ class Base(virtool.job.Job):
         self.paths = dict()
 
         # The path to the general data directory
-        self.paths["data"] = self.settings["data_path"]
+        self.paths["data"] = self.settings.get("data_path")
 
         # The parent folder for all data associated with the sample
         self.paths["sample"] = os.path.join(self.paths["data"], "samples/sample_" + self.sample_id)
