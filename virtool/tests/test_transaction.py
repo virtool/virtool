@@ -20,7 +20,7 @@ def fake_message():
 def expected_dispatch(fake_message):
     def create_expected(success=True, message="Hello world"):
         return {
-            "collection_name": "transaction",
+            "interface": "transaction",
             "operation": "fulfill",
             "data": {
                 "tid": fake_message["tid"],
@@ -129,7 +129,7 @@ def test_update(transaction, expected_dispatch):
     transaction.update({"value": "Foo bar"})
 
     assert transaction.dispatch.with_args[0] == {
-        "collection_name": "transaction",
+        "interface": "transaction",
         "operation": "update",
         "data": {
             "tid": 9029401982,

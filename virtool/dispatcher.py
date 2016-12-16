@@ -159,7 +159,7 @@ class Dispatcher:
 
         # Log warning and return if method is not exposed.
         if not hasattr(method, "is_exposed") or not method.is_exposed:
-            logger.danger("{} attempted to call unexposed method {}.{}".format(
+            logger.warning("{} attempted to call unexposed method {}.{}".format(
                 gen_log_prefix(connection),
                 transaction.interface,
                 transaction.method
@@ -169,7 +169,7 @@ class Dispatcher:
         is_unprotected = hasattr(method, "is_unprotected")
 
         if not connection.authorized and not is_unprotected:
-            logger.danger("Unauthorized connection at {} attempted to call protected method {}.{}".format(
+            logger.warning("Unauthorized connection at {} attempted to call protected method {}.{}".format(
                 connection.ip,
                 transaction.interface,
                 transaction.method
@@ -233,15 +233,26 @@ class Dispatcher:
         base_message.update(message)
 
         # If the connections parameter was not set, dispatch the message to all authorized connections.
-        connections = connections or filter(lambda conn: conn.authorized, self.connections)
+        connections = connections or [conn for conn in self.connections if conn.authorized]
 
         # Filter connections using conn_filter.
-        if conn_filter and callable(conn_filter):
-            connections = filter(conn_filter, connections)
+        if conn_filter:
+            if not callable(conn_filter):
+                raise TypeError("conn_filter must be callable")
+
+            connections = [conn for conn in connections if conn_filter(conn)]
+
+        print("filtered", message["interface"], list(connections))
 
         # Modify connections if conn_modifier is defined.
         if conn_modifier:
-            map(conn_modifier, connections)
+            if not callable(conn_modifier):
+                raise TypeError("conn_modifier must be callable")
+
+            for connection in connections:
+                conn_modifier(connection)
+
+        print("modified", message["interface"], list(connections))
 
         # Send the message to all appropriate websocket clients.
         for connection in connections:
@@ -364,6 +375,6 @@ class Transaction:
 
 def gen_log_prefix(connection):
     return "{} ({})".format(
-        connection.user["_id"] or "<unknown>",
+        connection.user["_id"] or "<unauthorized>",
         connection.ip
     )

@@ -196,10 +196,3 @@ def average_list(list1, list2):
         raise TypeError("Both arguments must be lists of the same length")
 
     return [(value + list2[i]) / 2 for i, value in enumerate(list1)]
-
-
-def create_db_client(host, port, name, sync=False):
-    if sync:
-        return pymongo.MongoClient(host, port, serverSelectionTimeoutMS=2000, appname="Virtool")[name]
-
-    return motor.MotorClient(host, port, connectTimeoutMS=2000, appname="Virtool")[name]

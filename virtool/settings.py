@@ -1,4 +1,6 @@
 import json
+import motor
+import pymongo
 import logging
 
 import virtool.gen
@@ -170,12 +172,14 @@ class ReadOnly:
         :return: a client object.
 
         """
-        return virtool.utils.create_db_client(
-            self.get("db_host"),
-            self.get("db_port"),
-            self.get("db_name"),
-            sync=sync
-        )
+        host = self.get("db_host")
+        port = self.get("db_port")
+        name = self.get("db_name")
+
+        if sync:
+            return pymongo.MongoClient(host, port, serverSelectionTimeoutMS=2000, appname="Virtool")[name]
+
+        return motor.MotorClient(host, port, connectTimeoutMS=2000, appname="Virtool")[name]
 
     def as_dict(self):
         return dict(self.data)
@@ -222,26 +226,6 @@ class Simple(ReadOnly):
         with open(self.path, "w") as settings_file:
             string = json.dumps(self.data)
             settings_file.write(string)
-
-    def get_db_client(self, sync=False):
-        """
-        Returns a Mongo client connection based on the database settings for the Virtool instance. Returns a
-        `MotorClient <http://motor.readthedocs.org/en/stable/api/motor_client.html>`_ object if sync is ``True`` and a
-        `MongoClient <https://api.mongodb.org/python/current/api/pymongo/mongo_client.html>`_ object if sync is
-        ``False``.
-
-        :param sync: should the connection use pymongo instead or motor?
-        :type sync: bool
-
-        :return: a client object.
-
-        """
-        return virtool.utils.create_db_client(
-            self.get("db_host"),
-            self.get("db_port"),
-            self.get("db_name"),
-            sync=sync
-        )
 
     def as_dict(self):
         return dict(self.data)

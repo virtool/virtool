@@ -1,7 +1,7 @@
 import json
 import pytest
 
-from virtool.dispatcher import Dispatcher
+from virtool.dispatcher import Dispatcher, gen_log_prefix
 
 
 @pytest.fixture(scope="function")
@@ -121,7 +121,7 @@ class TestDispatch:
 
         message = {
             "operation": "test",
-            "collection_name": "test",
+            "interface": "test",
             "data": dict(message="This is a test")
         }
 
@@ -143,7 +143,7 @@ class TestDispatch:
 
         dispatcher.dispatch({
             "operation": "test",
-            "collection_name": "test",
+            "interface": "test",
             "data": dict(message="This is a test")
         })
 
@@ -161,7 +161,7 @@ class TestDispatch:
 
         message = {
             "operation": "test",
-            "collection_name": "test",
+            "interface": "test",
             "data": dict(message="Only connection 2 should see this")
         }
 
@@ -184,7 +184,7 @@ class TestDispatch:
 
         message = {
             "operation": "test",
-            "collection_name": "test",
+            "interface": "test",
             "data": dict(message="This is a test")
         }
 
@@ -192,6 +192,111 @@ class TestDispatch:
 
         assert conn1.messages == []
         assert conn2.messages[0] == message
+
+    def test_callable_filter(self, dispatcher, mock_connection):
+        """
+        Test that the conn_filter keyword argument properly filters connections and dispatches to them.
+
+        """
+        conn1 = mock_connection(dispatcher, username="winston")
+        conn2 = mock_connection(dispatcher, username="wallace")
+
+        message = {
+            "operation": "test",
+            "interface": "test",
+            "data": dict(message="This is a test")
+        }
+
+        dispatcher.dispatch(message, conn_filter=lambda conn: conn.user["_id"] == "winston")
+
+        assert len(conn1.messages) == 1
+        assert len(conn2.messages) == 0
+
+    def test_not_callable_filter(self, dispatcher, mock_connection):
+        """
+        Test that that passing a non-callable conn_filter keyword argument raises a specific TypeError.
+
+        """
+        message = {
+            "operation": "test",
+            "interface": "test",
+            "data": dict(message="This is a test")
+        }
+
+        with pytest.raises(TypeError) as err:
+            dispatcher.dispatch(message, conn_filter="abc")
+
+        assert "conn_filter must be callable" in str(err.value)
+
+    def test_callable_modifier(self, dispatcher, mock_connection):
+        """
+        Test that the conn_modifier keyword argument properly modifies connection objects.
+
+        """
+        conn1 = mock_connection(dispatcher, username="winston")
+        conn2 = mock_connection(dispatcher, username="wallace")
+
+        message = {
+            "operation": "test",
+            "interface": "test",
+            "data": dict(message="This is a test")
+        }
+
+        def apply_animal(conn):
+            conn.user["animal"] = True
+
+        dispatcher.dispatch(message, conn_modifier=apply_animal)
+
+        assert conn1.user["animal"]
+        assert conn2.user["animal"]
+
+        assert len(conn1.messages) == 1
+        assert len(conn2.messages) == 1
+
+    def test_not_callable_modifier(self, dispatcher, mock_connection):
+        """
+        Test that an non-callable conn_modifier raises a specific TypeError.
+
+        """
+        message = {
+            "operation": "test",
+            "interface": "test",
+            "data": dict(message="This is a test")
+        }
+
+        with pytest.raises(TypeError) as err:
+            dispatcher.dispatch(message, conn_modifier="abc")
+
+        assert "conn_modifier must be callable" in str(err.value)
+
+    def test_modifier_filter(self, dispatcher, mock_connection):
+        """
+        Test that the conn_modifier keyword argument only modifies connection objects that pass conn_filter.
+
+        """
+        conn1 = mock_connection(dispatcher, username="winston")
+        conn2 = mock_connection(dispatcher, username="wallace")
+
+        message = {
+            "operation": "test",
+            "interface": "test",
+            "data": dict(message="This is a test")
+        }
+
+        def apply_animal(conn):
+            conn.user["animal"] = "monkey"
+
+        dispatcher.dispatch(message, conn_filter=lambda conn: conn.user["_id"] == "wallace", conn_modifier=apply_animal)
+
+        # Only conn2 (wallace) should write messages.
+        assert len(conn1.messages) == 0
+        assert len(conn2.messages) == 1
+
+        # conn1 (winston) should not have 'animal' key.
+        assert "animal" not in conn1.user
+
+        # conn2 (wallace) should have 'animal' key set to 'monkey'.
+        assert conn2.user["animal"] == "monkey"
 
 
 class TestHandle:
@@ -217,7 +322,7 @@ class TestHandle:
 
         last_message = list(caplog.records)[-1].message
 
-        assert last_message == "User 'test' requested unknown interface foo"
+        assert last_message == "test (8.8.8.8) requested unknown interface foo"
 
     @pytest.mark.gen_test
     def test_unknown_method(self, caplog, dispatcher, mock_connection):
@@ -240,7 +345,7 @@ class TestHandle:
 
         last_message = list(caplog.records)[-1].message
 
-        assert last_message == "User 'test' requested unknown interface method test.non_existent_method"
+        assert last_message == "test (8.8.8.8) requested unknown interface method test.non_existent_method"
 
     @pytest.mark.gen_test
     def test_unexposed_method(self, caplog, dispatcher, mock_connection):
@@ -263,7 +368,7 @@ class TestHandle:
 
         last_message = list(caplog.records)[-1].message
 
-        assert last_message == "User 'test' attempted to call unexposed method test.test_unexposed_method"
+        assert last_message == "test (8.8.8.8) attempted to call unexposed method test.test_unexposed_method"
 
     @pytest.mark.gen_test
     def test_unauthorized(self, caplog, dispatcher, mock_connection):
@@ -308,7 +413,7 @@ class TestHandle:
 
         assert code
 
-        message_interfaces = [message["collection_name"] for message in conn.messages]
+        message_interfaces = [message["interface"] for message in conn.messages]
 
         assert "transaction" in message_interfaces
         assert "test" not in message_interfaces
@@ -316,7 +421,7 @@ class TestHandle:
     @pytest.mark.gen_test
     def test_authorized(self, dispatcher, mock_connection):
         """
-        Test that unauthorized connections can successfully call unprotected methods.
+        Test that authorized connections can successfully call protected methods with no required permissions.
 
         """
         conn = mock_connection(dispatcher, authorized=True)
@@ -332,15 +437,15 @@ class TestHandle:
 
         assert code
 
-        message_interfaces = [message["collection_name"] for message in conn.messages]
+        message_interfaces = [message["interface"] for message in conn.messages]
 
         assert "transaction" in message_interfaces
-        assert "test" not in message_interfaces
+        assert "test" in message_interfaces
 
     @pytest.mark.gen_test
     def test_not_permitted(self, caplog, dispatcher, mock_connection):
         """
-        Test that unauthorized connections can successfully call unprotected methods.
+        Test that authorized connections with cannot exposed methods for which they don't have the required permissions.
 
         """
         conn = mock_connection(dispatcher, permissions=[], authorized=True)
@@ -364,7 +469,8 @@ class TestHandle:
     @pytest.mark.gen_test
     def test_is_permitted(self, dispatcher, mock_connection):
         """
-        Test that unauthorized connections can successfully call unprotected methods.
+        Test that authorized connections with sufficient permissions can successfully call exposed methods with
+        permission requirements.
 
         """
         conn = mock_connection(dispatcher, permissions=["modify_options"], authorized=True)
@@ -388,7 +494,7 @@ class TestHandle:
         """
         conn = mock_connection(dispatcher, authorized=True)
 
-        with pytest.raises(TypeError) as inst:
+        with pytest.raises(TypeError):
             yield dispatcher.handle(json.dumps({
                 "tid": 9029401983,
                 "interface": "test",
@@ -401,8 +507,8 @@ class TestHandle:
     @pytest.mark.gen_test
     def test_unhandled_name_error(self, dispatcher, mock_connection):
         """
-        Test that all the exception handling going on in ``handle`` does not prevent unexpected exceptions from being
-        raised.
+        Test that all the exception handling going on in ``handle`` does not prevent unexpected non-TypeError exceptions
+        from being raised.
 
         """
         conn = mock_connection(dispatcher, authorized=True)
@@ -420,8 +526,8 @@ class TestHandle:
     @pytest.mark.gen_test
     def test_unhandled_type_error(self, dispatcher, mock_connection):
         """
-        Test that all the exception handling going on in ``handle`` does not prevent unexpected exceptions from being
-        raised.
+        Test that all the TypeError handling going on in ``handle`` does not prevent unexpected TypeErro exceptions from
+        being raised.
 
         """
         conn = mock_connection(dispatcher, authorized=True)
@@ -446,7 +552,10 @@ class TestPing:
 
         yield dispatcher.ping()
 
-        print(conn1.messages)
-
         assert conn1.messages[0]["operation"] == "ping"
         assert conn2.messages == []
+
+
+def test_gen_log_prefix(mock_connection):
+    conn = mock_connection()
+    assert gen_log_prefix(conn) == "test (8.8.8.8)"

@@ -3,10 +3,11 @@ import virtool.gen
 
 class EmptyInterface:
 
-    def __init__(self, dispatch, collections, settings):
+    def __init__(self, dispatch, collections, settings, add_periodic_callback):
         self.dispatch = dispatch
         self.collection = collections
         self.settings = settings
+        self.add_periodic_callback = add_periodic_callback
 
 
 class MockInterface(EmptyInterface):
@@ -30,13 +31,11 @@ class MockInterface(EmptyInterface):
     @virtool.gen.exposed_method([])
     def test_name_error_method(self, transaction):
         print(non_existent_variable)
-
         return False, dict(message="Will never see this")
 
     @virtool.gen.exposed_method([])
     def test_type_error_method(self, transaction):
         print(1 + "5")
-
         return False, dict(message="Will never see this")
 
     @virtool.gen.exposed_method([])
