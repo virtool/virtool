@@ -33,6 +33,8 @@ args = parser.parse_args()
 
 logging_level = logging.INFO
 
+logging.captureWarnings(True)
+
 if args.development:
     logging_level = logging.DEBUG
 
