@@ -18,9 +18,6 @@ class Collection(virtool.database.SyncingCollection):
     A connection to the pymongo samples collection. Provides methods for viewing and modifying the
     collection.
 
-    :param dispatcher: the dispatcher object that instantiated the collection.
-    :type dispatcher: :class:`~.dispatcher.Dispatcher`
-
     """
     def __init__(self, dispatch, collections, settings, add_periodic_callback):
         super().__init__("samples", dispatch, collections, settings, add_periodic_callback)
@@ -102,47 +99,18 @@ class Collection(virtool.database.SyncingCollection):
         :type connections: bool
 
         """
-        if sync:
-            assert len(connections) == 1
-
-        connections = connections or self.dispatcher.connections
-
         data = virtool.database.coerce_list(data)
 
-        if operation == "remove":
-            data = [{"_id": item} for item in data]
+        yield super().dispatch(
+            "remove",
+            data,
+            interface,
+            connections=connections,
+            sync=sync,
+            transformer=transform
+        )
 
         send_count = 0
-
-        for connection in connections:
-            to_send = list()
-            to_remove = list()
-
-            for item in data:
-                if operation in ["add", "update"] and can_read(connection.user, item):
-                    to_send.append(item)
-                else:
-                    to_remove.append(item["_id"])
-
-            send_count = len(to_send)
-
-            if send_count > 0:
-                yield super().dispatch(
-                    operation,
-                    to_send,
-                    interface,
-                    connections=[connection],
-                    sync=sync
-                )
-
-            if len(to_remove) > 0:
-                yield super().dispatch(
-                    "remove",
-                    to_remove,
-                    interface,
-                    connections=[connection],
-                    sync=sync
-                )
 
         return send_count
 
@@ -859,5 +827,26 @@ def reduce_library_size(input_path, output_path):
         os.rename(input_path, output_path)
 
 
-def can_read(user, document):
-    return document["all_read"] or (document["group_read"] and document["group"] in user["groups"])
+def can_read(document, user_groups):
+    return document["all_read"] or (document["group_read"] and document["group"] in user_groups)
+
+
+def transform(connection, message):
+
+    user_groups = connection.user["groups"]
+
+    data = message["data"]
+
+    if message["operation"] in ["add", "update"]:
+        message["data"] = [d for d in data if can_read(d, user_groups)]
+
+    elif message["operation"] == "remove":
+        message["data"] = [d["_id"] for d in data if can_read(d, user_groups)]
+
+    else:
+        raise ValueError("Sample transform only take message with operations: add, update, remove")
+
+    if len(message["data"]):
+        return message
+
+    return None

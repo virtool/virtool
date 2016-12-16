@@ -196,7 +196,7 @@ class Dispatcher:
 
         return True
 
-    def dispatch(self, message, connections=None, conn_filter=None, conn_modifier=None):
+    def dispatch(self, message, connections=None, conn_filter=None, conn_modifier=None, transformer=None):
         """
         Dispatch a ``message`` with a conserved format to a selection of active ``connections``
         (:class:`.SocketHandler` objects). Messages are dicts with the scheme:
@@ -217,32 +217,33 @@ class Dispatcher:
         :param connections: the connection(s) (:class:`.SocketHandler` objects) to dispatch the message to.
         :type connections: list
 
-        :param conn_filter: a callable that will be used to filter the connections to dispatch to
+        :param conn_filter: filters the connections to which messages are written.
         :type conn_filter: callable
 
-        :param conn_modifier: a callable that will be used to modify the dispatcher's connection objects
+        :param conn_modifier: modifies the connection objects to which messages are written.
         :type conn_modifier: callable
 
+        :param conn_transform: modifies the written message based on the connection.
+        :type conn_transform: callable
+
         """
-        base_message = {
+        to_send = {
             "operation": None,
             "interface": None,
             "data": None
         }
 
-        base_message.update(message)
+        to_send.update(message)
 
         # If the connections parameter was not set, dispatch the message to all authorized connections.
         connections = connections or [conn for conn in self.connections if conn.authorized]
 
-        # Filter connections using conn_filter.
         if conn_filter:
             if not callable(conn_filter):
                 raise TypeError("conn_filter must be callable")
 
             connections = [conn for conn in connections if conn_filter(conn)]
 
-        # Modify connections if conn_modifier is defined.
         if conn_modifier:
             if not callable(conn_modifier):
                 raise TypeError("conn_modifier must be callable")
@@ -250,9 +251,19 @@ class Dispatcher:
             for connection in connections:
                 conn_modifier(connection)
 
-        # Send the message to all appropriate websocket clients.
+        if transformer:
+            if not callable(transformer):
+                raise TypeError("transformer must be callable")
+
+            for connection in connections:
+                transformed = transformer(connection, dict(to_send))
+                if transformed:
+                    connection.write_message(transformed)
+
+            return None
+
         for connection in connections:
-            connection.write_message(base_message)
+            connection.write_message(message)
 
     @virtool.gen.coroutine
     def ping(self):

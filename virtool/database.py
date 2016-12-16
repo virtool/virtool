@@ -152,7 +152,7 @@ class Collection:
 
     @virtool.gen.coroutine
     def dispatch(self, operation, data, interface=None, connections=None, conn_filter=None, conn_modifier=None,
-                 sync=False):
+                 transformer=None, sync=False):
         """
         Send a message to listening clients through the :attr:`.dispatcher`. Messages tell the client what operation to
         do on what collection contain the data to do it. They have the form:
@@ -200,7 +200,7 @@ class Collection:
             "interface": interface,
             "data": data,
             "sync": sync
-        }, connections, conn_filter=conn_filter, conn_modifier=conn_modifier)
+        }, connections=connections, conn_filter=conn_filter, conn_modifier=conn_modifier, transformer=transformer)
 
         return len(coerce_list(data))
 

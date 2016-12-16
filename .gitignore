@@ -13,4 +13,4 @@ settings.json
 *.log*
 /.cache
 */.cache
-.coverage
+.coverage.cog*
