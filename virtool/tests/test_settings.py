@@ -4,7 +4,7 @@ import motor
 import pymongo
 import pytest
 
-import virtool.settings
+from virtool.settings import ReadOnly, Simple, Collection, DEFAULTS
 
 
 class Harness:
@@ -15,9 +15,14 @@ class Harness:
         self.settings_class = settings_class
 
     def spawn(self, version="1.0.12"):
-        if self.dispatch_func is None:
+
+        if self.settings_class.__name__ == "ReadOnly":
+            return self.settings_class(self.settings_json)
+
+        if self.settings_class.__name__ == "Simple":
             return self.settings_class(version, self.settings_json)
-        else:
+
+        if self.settings_class.__name__ == "Collection":
             return self.settings_class(self.dispatch_func, version, self.settings_json)
 
     def json_has(self, match_dict):
@@ -30,89 +35,75 @@ class Harness:
             json.dump(settings_dict, handle)
 
 
-@pytest.fixture(scope="function", params=["simple", "collection"])
-def settings_harness(request, tmpdir, called_tester):
+@pytest.fixture(scope="function", params=[ReadOnly, Simple, Collection])
+def readonly_harness(request, tmpdir, called_tester):
+    """
+    A harness that applies a test to all three settings classes.
 
+    """
     settings_json = os.path.join(str(tmpdir), "settings.json")
+    yield Harness(called_tester(), settings_json, request.param)
 
-    if request.param == "collection":
-        yield Harness(called_tester(), settings_json, virtool.settings.Collection)
-    else:
-        yield Harness(None, settings_json, virtool.settings.Simple)
+    if not request.param == ReadOnly:
+        os.remove(settings_json)
 
+
+@pytest.fixture(scope="function", params=[Simple, Collection])
+def simple_harness(request, tmpdir, called_tester):
+    """
+    A harness that applies tests to only the Simple and Collection settings classes.
+
+    """
+    settings_json = os.path.join(str(tmpdir), "settings.json")
+    yield Harness(called_tester(), settings_json, request.param)
     os.remove(settings_json)
-
-
-@pytest.fixture(scope="function")
-def simple_fixture():
-    test = "thingy"
-
-    yield test
-
-    test = "other"
-
-    print(test)
 
 
 @pytest.fixture(scope="function")
 def collection_harness(tmpdir, called_tester):
+    """
+    A harness that applies a test only to settings.Collection.
+
+    """
     settings_json = os.path.join(str(tmpdir), "settings.json")
-
-    yield Harness(called_tester(), settings_json, virtool.settings.Collection)
-
+    yield Harness(called_tester(), settings_json, Collection)
     os.remove(settings_json)
 
 
-class TestShared:
+class TestReadOnly:
 
-    def test_init(self, settings_harness):
-        settings = settings_harness.spawn()
+    def test_init(self, readonly_harness):
+        settings = readonly_harness.spawn()
+        assert len(settings.data) == len(DEFAULTS)
 
-        assert os.path.isfile(settings_harness.settings_json)
-        assert len(settings.data) == len(virtool.settings.DEFAULTS)
-
-    def test_version(self, settings_harness):
-        """
-        Test the ``version`` number passed to the settings constructor is set as the value for the ``server_version``
-        setting.
-
-        """
-        settings = settings_harness.spawn(version="1.0.12")
-
-        # Verify that the version is set in the settings.data dict.
-        assert settings.data["server_version"] == "1.0.12"
-
-        # Verify that the version was written to the settings.json file.
-        assert settings_harness.json_has({"server_version": "1.0.12"})
-
-    def test_load_precedence(self, settings_harness):
+    def test_load_precedence(self, readonly_harness):
         """
         Test that setting values from settings.json take precedence over those in the DEFAULTS dict.
 
         """
         # Make a dict with the default settings values in it, then set "server_port" to non-default 23217.
-        test_dict = dict(virtool.settings.DEFAULTS)
+        test_dict = dict(DEFAULTS)
         test_dict["server_port"] = 23217
 
         # Write the test dict to settings.json.
-        settings_harness.dump_json(test_dict)
+        readonly_harness.dump_json(test_dict)
 
         # Verify that server port is 23217 in settings.json.
-        assert settings_harness.json_has({"server_port": 23217})
+        assert readonly_harness.json_has({"server_port": 23217})
 
         # Create a settings object using the test settings.json file.
-        settings = settings_harness.spawn()
+        settings = readonly_harness.spawn()
 
         # Make sure the 23217 port number was loaded from the JSON file instead of assigning the default 9650.
         assert settings.data["server_port"] == 23217
 
-    def test_restore_file(self, settings_harness):
+    def test_restore_file(self, readonly_harness):
         """
         Test that a complete settings object and settings.json file can be built from an incomplete settings.json file.
 
         """
         # Build a test settings dict with some keys missing.
-        test_dict = dict(virtool.settings.DEFAULTS)
+        test_dict = dict(DEFAULTS)
 
         removed_keys = ["db_host", "db_port", "allowed_source_types"]
 
@@ -120,76 +111,210 @@ class TestShared:
             del test_dict[key]
 
         # Dump the test_dict to a settings.json file.
-        settings_harness.dump_json(test_dict)
+        readonly_harness.dump_json(test_dict)
 
         # Make sure the deleted keys are missing from the settings.json file.
-        with open(settings_harness.settings_json, "r") as handle:
+        with open(readonly_harness.settings_json, "r") as handle:
             content = json.load(handle)
             assert all(key not in content for key in removed_keys)
 
         # Initialize a settings object.
-        settings = settings_harness.spawn()
+        settings = readonly_harness.spawn()
 
         # Verify that a complete settings dict was created in the settings object.
         assert settings.get("db_host") == "localhost"
         assert settings.get("db_port") == 27017
         assert settings.get("allowed_source_types") == ["isolate", "genotype"]
 
-        # Verify that the settings.json file was repaired to include all settings keys.
-        with open(settings_harness.settings_json, "r") as handle:
-            content = json.load(handle)
-            assert content["db_host"] == "localhost"
-            assert content["db_port"] == 27017
-            assert content["allowed_source_types"] == ["isolate", "genotype"]
-
-    def test_restore_types(self, settings_harness):
+    def test_restore_types(self, readonly_harness):
         """
         Test that incorrect types a settings.json file used to build a settings object are properly converted to the
         correct types. Test the the newly typed values are written correctly to a new settings.json file.
 
         """
         # Make a test settings dict with some incorrect types and write it to a settings.json file.
-        test_dict = dict(virtool.settings.DEFAULTS)
+        test_dict = dict(DEFAULTS)
 
         test_dict.update({
             "db_port": "23791",
             "db_name": 801
         })
 
-        settings_harness.dump_json(test_dict)
+        readonly_harness.dump_json(test_dict)
 
         # Make sure the incorrect types are in the settings.json file.
-        settings_harness.json_has({
+        readonly_harness.json_has({
             "db_port": "23791",
             "db_name": 801
         })
 
         # Make a settings object from the previously written settings.json file.
-        settings = settings_harness.spawn()
+        settings = readonly_harness.spawn()
 
         # Verify that the setting types were corrected in the settings.data dict.
         assert settings.get("db_port") == 23791
         assert settings.get("db_name") == "801"
 
         # Verify that a corrected settings.json file was written.
-        settings_harness.json_has({
+        readonly_harness.json_has({
             "db_port": 23791,
             "db_name": "801"
         })
 
-    def test_easy_update(self, settings_harness):
+    def test_db_client_sync(self, readonly_harness):
+        """
+        Test that the method returns a valid :class:`pymongo.database.Database` object when called with ``sync`` set to
+        ``True``.
+
+        """
+        test_dict = dict(DEFAULTS)
+
+        test_dict.update({
+            "db_name": "settings-test-sync"
+        })
+
+        readonly_harness.dump_json(test_dict)
+
+        settings = readonly_harness.spawn()
+
+        db = settings.get_db_client(sync=True)
+
+        assert db.name == "settings-test-sync"
+        assert isinstance(db, pymongo.database.Database)
+
+        assert db.client.address == ("localhost", 27017)
+
+    def test_db_client_async(self, readonly_harness):
+        """
+        Test that the method returns a valid :class:`motor.motor_tornado.MotorDatabase` object when called with ``sync``
+        set to ``False``.
+
+        """
+        test_dict = dict(DEFAULTS)
+
+        test_dict.update({
+            "db_name": "settings-test-async"
+        })
+
+        readonly_harness.dump_json(test_dict)
+
+        settings = readonly_harness.spawn()
+
+        db = settings.get_db_client(sync=False)
+
+        assert db.name == "settings-test-async"
+        assert isinstance(db, motor.motor_tornado.MotorDatabase)
+
+        assert db.client.HOST == "localhost"
+        assert db.client.PORT == 27017
+
+    def test_as_dict(self, readonly_harness):
+        """
+        Test the the method returns a dict that is identical to the object's internal settings dict, but is not the same
+        object.
+
+        """
+        test_dict = dict(DEFAULTS)
+
+        test_dict.update({
+            "db_port": 28902
+        })
+
+        readonly_harness.dump_json(test_dict)
+
+        settings = readonly_harness.spawn()
+
+        generated_dict = settings.as_dict()
+
+        assert id(generated_dict) != id(settings.data)
+
+        assert generated_dict == settings.data
+
+
+class TestSimple:
+
+    def test_init(self, simple_harness):
+        settings = simple_harness.spawn()
+
+        assert os.path.isfile(simple_harness.settings_json)
+        assert len(settings.data) == len(DEFAULTS)
+
+    def test_version(self, simple_harness):
+        """
+        Test the ``version`` number passed to the settings constructor is set as the value for the ``server_version``
+        setting.
+
+        """
+        settings = simple_harness.spawn(version="1.0.12")
+
+        # Verify that the version is set in the settings.data dict.
+        assert settings.data["server_version"] == "1.0.12"
+
+        # Verify that the version was written to the settings.json file.
+        assert simple_harness.json_has({"server_version": "1.0.12"})
+
+    def test_restore_file(self, simple_harness):
+        """
+        Test that a complete settings object and settings.json file can be built from an incomplete settings.json file.
+
+        """
+        TestReadOnly.test_restore_file(self, simple_harness)
+
+        # Verify that the settings.json file was repaired to include all settings keys.
+        with open(simple_harness.settings_json, "r") as handle:
+            content = json.load(handle)
+            assert content["db_host"] == "localhost"
+            assert content["db_port"] == 27017
+            assert content["allowed_source_types"] == ["isolate", "genotype"]
+
+    def test_restore_types(self, simple_harness):
+        """
+        Test that incorrect types a settings.json file used to build a settings object are properly converted to the
+        correct types. Test the the newly typed values are written correctly to a new settings.json file.
+
+        """
+        # Make a test settings dict with some incorrect types and write it to a settings.json file.
+        test_dict = dict(DEFAULTS)
+
+        test_dict.update({
+            "db_port": "23791",
+            "db_name": 801
+        })
+
+        simple_harness.dump_json(test_dict)
+
+        # Make sure the incorrect types are in the settings.json file.
+        simple_harness.json_has({
+            "db_port": "23791",
+            "db_name": 801
+        })
+
+        # Make a settings object from the previously written settings.json file.
+        settings = simple_harness.spawn()
+
+        # Verify that the setting types were corrected in the settings.data dict.
+        assert settings.get("db_port") == 23791
+        assert settings.get("db_name") == "801"
+
+        # Verify that a corrected settings.json file was written.
+        simple_harness.json_has({
+            "db_port": 23791,
+            "db_name": "801"
+        })
+
+    def test_easy_update(self, simple_harness):
         """
         Test the settings.update method with passed data where no type corrections are required.
 
         """
         # Make a new settings object with no pre-existing settings.json file.
-        settings = settings_harness.spawn()
+        settings = simple_harness.spawn()
 
         # Verify that the ``server_port`` is set to the default, 9650.
         assert settings.get("server_port") == 9650
 
         # Verify the the ``server_port`` value written to settings.json is the default value.
-        assert settings_harness.json_has({
+        assert simple_harness.json_has({
             "server_port": 9650
         })
 
@@ -201,22 +326,22 @@ class TestShared:
         # Verify that ``server_port`` was changed in the settings.data dict and in the settings.json file.
         assert settings.get("server_port") == 8888
 
-        assert settings_harness.json_has({
+        assert simple_harness.json_has({
             "server_port": 8888
         })
 
-    def test_difficult_update(self, settings_harness):
+    def test_difficult_update(self, simple_harness):
         """
         Test the settings.update method with passed data where type corrections are required.
 
         """
         # Initialize a settings object and verify that ``server_port`` is set to the default 9650.
-        settings = settings_harness.spawn()
+        settings = simple_harness.spawn()
 
         assert settings.get("server_port") == 9650
 
         # Verify that settings.json contains the correctly typed default value.
-        assert settings_harness.json_has({
+        assert simple_harness.json_has({
             "server_port": 9650
         })
 
@@ -229,17 +354,17 @@ class TestShared:
         assert settings.get("server_port") == 8888
 
         # Verify that the value was changed and corrected in settings.json.
-        assert settings_harness.json_has({
+        assert simple_harness.json_has({
             "server_port": 8888
         })
 
-    def test_db_client_sync(self, settings_harness):
+    def test_db_client_sync(self, simple_harness):
         """
         Test that the method returns a valid :class:`pymongo.database.Database` object when called with ``sync`` set to
         ``True``.
 
         """
-        settings = settings_harness.spawn()
+        settings = simple_harness.spawn()
 
         settings.update({
             "db_name": "settings-test-sync"
@@ -252,13 +377,13 @@ class TestShared:
 
         assert db.client.address == ("localhost", 27017)
 
-    def test_db_client_async(self, settings_harness):
+    def test_db_client_async(self, simple_harness):
         """
         Test that the method returns a valid :class:`motor.motor_tornado.MotorDatabase` object when called with ``sync``
         set to ``False``.
 
         """
-        settings = settings_harness.spawn()
+        settings = simple_harness.spawn()
 
         settings.update({
             "db_name": "settings-test-async"
@@ -272,15 +397,15 @@ class TestShared:
         assert db.client.HOST == "localhost"
         assert db.client.PORT == 27017
 
-    def test_as_dict(self, settings_harness):
+    def test_as_dict(self, simple_harness):
         """
         Test the the method returns a dict that is identical to the object's internal settings dict, but is not the same
         object.
 
         """
-        settings = settings_harness.spawn()
+        settings = simple_harness.spawn()
 
-        test_dict = dict(virtool.settings.DEFAULTS)
+        test_dict = dict(DEFAULTS)
         test_dict["db_port"] = 28902
 
         settings.update({"db_port": 28902})
@@ -399,7 +524,7 @@ class TestCollection:
     def test_load_with_data_and_file(self, collection_harness):
         collection = collection_harness.spawn()
 
-        test_dict = dict(virtool.settings.DEFAULTS)
+        test_dict = dict(DEFAULTS)
         test_dict["server_port"] = 23217
 
         collection_harness.dump_json(test_dict)

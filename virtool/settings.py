@@ -127,19 +127,68 @@ VALID_TYPES = {
 }
 
 
-class Simple:
+class ReadOnly:
 
-    def __init__(self, version=None, settings_path="./settings.json"):
+    def __init__(self, settings_path="./settings.json"):
         self.path = settings_path
         self.data = dict(DEFAULTS)
         self.load_from_file()
 
+    def get(self, key):
+        return self.data[key]
+
+    def load_from_file(self):
+        """ Load a JSON settings file. If the path cannot be found, generate a new settings file. """
+        try:
+            # Open file and parse JSON into dictionary.
+            with open(self.path, "r") as settings_file:
+                string = settings_file.read()
+                content = json.loads(string)
+
+            # Check each key in dictionary to make sure it is a valid settings key. Store the key-value pair
+            # in self.data for later access
+            for key in content:
+                if key in VALID_TYPES:
+                    self.data[key] = VALID_TYPES[key](content[key])
+
+        except IOError:
+            # In case there is no settings file, print self.data to a new settings file. Load default settings value if
+            # self.data is not populated (probably the case).
+            if not self.data:
+                self.data = dict(DEFAULTS)
+
+    def get_db_client(self, sync=False):
+        """
+        Returns a Mongo client connection based on the database settings for the Virtool instance. Returns a
+        `MotorClient <http://motor.readthedocs.org/en/stable/api/motor_client.html>`_ object if sync is ``True`` and a
+        `MongoClient <https://api.mongodb.org/python/current/api/pymongo/mongo_client.html>`_ object if sync is
+        ``False``.
+
+        :param sync: should the connection use pymongo instead or motor?
+        :type sync: bool
+
+        :return: a client object.
+
+        """
+        return virtool.utils.create_db_client(
+            self.get("db_host"),
+            self.get("db_port"),
+            self.get("db_name"),
+            sync=sync
+        )
+
+    def as_dict(self):
+        return dict(self.data)
+
+
+class Simple(ReadOnly):
+
+    def __init__(self, version=None, settings_path="./settings.json"):
+        super().__init__(settings_path)
+
         if version:
             self.data["server_version"] = version
             self.write_to_file()
-
-    def get(self, key):
-        return self.data[key]
 
     def update(self, data):
         """ Update application settings (self.data) from a passed dictionary."""
@@ -165,27 +214,8 @@ class Simple:
 
     def load_from_file(self):
         """ Load a JSON settings file. If the path cannot be found, generate a new settings file. """
-        try:
-            # Open file and parse JSON into dictionary.
-            with open(self.path, "r") as settings_file:
-                string = settings_file.read()
-                content = json.loads(string)
-
-            # Check each key in dictionary to make sure it is a valid settings key. Store the key-value pair
-            # in self.data for later access
-            for key in content:
-                if key in VALID_TYPES:
-                    self.data[key] = VALID_TYPES[key](content[key])
-
-            self.write_to_file()
-
-        except IOError:
-            # In case there is no settings file, print self.data to a new settings file. Load default settings value if
-            # self.data is not populated (probably the case).
-            if not self.data:
-                self.data = dict(DEFAULTS)
-
-            self.write_to_file()
+        super().load_from_file()
+        self.write_to_file()
 
     def write_to_file(self):
         """ Write self.data dictionary to a formatted JSON file """
