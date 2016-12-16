@@ -1,6 +1,7 @@
 import os
 import sys
 import logging.handlers
+import coloredlogs
 import argparse
 import virtool.web
 
@@ -35,11 +36,11 @@ logging_level = logging.INFO
 if args.development:
     logging_level = logging.DEBUG
 
-log_format = "%(asctime)s %(module)s %(message)s"
+log_format = "%(asctime)-20s %(module)-11s %(levelname)-8s %(message)s"
 
-logging.basicConfig(
-    format=log_format,
-    level=logging_level
+coloredlogs.install(
+    level=logging_level,
+    fmt=log_format
 )
 
 logger = logging.getLogger('virtool')
