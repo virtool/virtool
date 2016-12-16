@@ -1,0 +1,11 @@
+[run]
+branch = False
+source = virtool
+concurrency = multiprocessing
+
+omit =
+    virtool/tests/*
+    */__init__.py
+
+[report]
+show_missing = True
