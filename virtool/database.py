@@ -17,6 +17,17 @@ class Collection:
 
         self.collections = collections
 
+        #: This is passed as the search argument for a Mongo find call when getting data for syncing. For instance if to
+        #: only sync records with active=True, sync_filter would be set to {"active": True}. By default all records will
+        #: be returned.
+        self.sync_filter = {}
+
+        #: This projection is used to pare down the output of the result of a call to
+        #: :meth:`~motor.motor_tornado.MotorCollection.find` call. By default only the ``_id`` and ``_version`` fields
+        #: from each document returned by :meth:`~motor.motor_tornado.MotorCollection.find` will be
+        #: returned. The subclass must define a full sync_projector of its own.
+        self.sync_projector = ["_version", "_id"]
+
         #: The shared settings object from the :class:`virtool.web.Application` instance.
         self.settings = settings
 
@@ -38,6 +49,90 @@ class Collection:
         logger.debug("Initialized collection " + self.collection_name)
 
     @virtool.gen.coroutine
+    def sync_processor(self, documents):
+        """
+        Processes a list of projected documents into minimal documents needed for syncing the collection with client.
+        Intended to be redefined in subclasses of :class:`~.database.Collection`.
+
+        :param documents: a list of documents to process into a list of valid minimal documents for the collection.
+        :type documents: list
+
+        :return: valid minimal documents.
+        :rtype: list
+
+        """
+        return documents
+
+    @virtool.gen.exposed_method([])
+    def sync(self, transaction):
+        """
+        Syncs documents between the server and client. This exposed method will be requested by the client soon after
+        its connection is authorized. The client supplies a dictionary of document ids and their version
+        numbers. This manifest is used to calculate a list of updates and removals required to bring the client's local
+        collection in sync with the one on the server. The calculation is performed by :meth:`.Collection.prepare_sync`.
+
+        The passed ``transaction`` is then updated with the number of update and remove operation that will be
+        dispatched to the client. This allows the client to display the progress of the sync operation as it receives
+        updates and removals.
+
+        :param transaction: the transaction generated from the request.
+        :type transaction: :class:`.Transaction`
+
+        :return: a boolean indicating success and the total number of operations performed.
+        :rtype: tuple
+
+
+
+        """
+
+        '''
+        if "modify_options" in transaction.connection.user["permissions"]:
+            sync_list.append("users")
+            sync_list.append("groups")
+        '''
+
+        manifest = transaction.data
+
+        cursor = self.find(self.sync_filter, self.sync_projector)
+
+        document_ids = set()
+
+        updates = list()
+
+        while (yield cursor.fetch_next):
+            document = cursor.next_object()
+
+            document_ids.add(document["_id"])
+
+            # Is the document id in the manifest?
+            in_manifest = document["_id"] in manifest
+
+            # The document has not been created since the client last synced, but has been changed. Send the new
+            # version.
+            if not in_manifest or (in_manifest and document["_version"] != manifest[document["_id"]]):
+                document = yield self.sync_processor([document])
+                document = document[0]
+                updates.append(document)
+
+            document_ids.add(document["_id"])
+
+        # All remaining documents should be deleted by the client since they no longer exist on the server.
+        removes = [document_id for document_id in manifest if document_id not in document_ids]
+
+        expected_operation_count = len(updates) + len(removes)
+
+        transaction.update(expected_operation_count)
+
+        for i in range(0, len(updates), 10):
+            yield self.dispatch("update", updates[i: i + 10], connections=[transaction.connection], sync=True)
+
+        # All remaining documents should be deleted by the client since they no longer exist on the server.
+        for i in range(0, len(removes), 10):
+            yield self.dispatch("remove", removes[i: i + 10], connections=[transaction.connection], sync=True)
+
+        return True, None
+
+    @virtool.gen.coroutine
     def insert(self, document, connections=None):
         """
         Inserts a new document in the collection and dispatches the change to all clients.
@@ -52,10 +147,20 @@ class Collection:
         :rtype: dict
 
         """
-        response = yield self._perform_insert(document)
+        if "_version" not in document:
+            document["_version"] = 0
+
+        # Perform the actual database insert operation, retaining the response.
+        response = yield self.db.insert(document)
+
+        # Pare down the new document using the sync_projector list.
+        to_dispatch = {key: document[key] for key in self.sync_projector}
+
+        # Run the new document through the collection's sync_processor if it has been defined.
+        to_dispatch = yield self.sync_processor([to_dispatch])
 
         # Dispatch the update to all connected clients.
-        yield self.dispatch("update", {"_ids": [response]}, connections=connections)
+        yield self.dispatch("update", to_dispatch, connections=connections)
 
         logger.debug("Inserted new document in collection " + self.collection_name)
 
@@ -96,9 +201,28 @@ class Collection:
         :rtype: dict
 
         """
-        response = yield self._perform_update(query, update, increment_version, upsert)
+        query, multi = coerce_query(query)
 
-        yield self.dispatch("update", {"_id": response["_ids"]}, connections=connections)
+        ids_to_update = yield self.find(query, ["_id"]).distinct("_id")
+
+        if increment_version:
+            update["$inc"] = {"_version": 1}
+
+        # Perform the update on the database, saving the response.
+        response = yield self.db.update(query, update, multi=multi, upsert=upsert)
+
+        # Attach a list of the updated entry_ids to the response. This will be returned by the method.
+        response["_ids"] = ids_to_update
+
+        # Get the pared down versions of the updated documents that should be sent to listening clients to update there
+        # collections.
+        to_dispatch = yield self.find({"_id": {"$in": ids_to_update}}, self.sync_projector).to_list(None)
+
+        # Pass the retrieved documents through the collection's sync_processor if there is one.
+        if self.sync_processor:
+            to_dispatch = yield self.sync_processor(to_dispatch)
+
+        yield self.dispatch("update", to_dispatch, connections=connections)
 
         logger.debug("Updated one or more entries in collection " + self.collection_name)
 
@@ -257,223 +381,6 @@ class Collection:
             raise KeyError("Could not find field in entry")
         except TypeError:
             raise ValueError("Could not find entry with given _id")
-
-
-class SyncingCollection(Collection):
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
-        #: This is passed as the search argument for a Mongo find call when getting data for syncing. For instance if to
-        #: only sync records with active=True, sync_filter would be set to {"active": True}. By default all records will
-        #: be returned.
-        self.sync_filter = {}
-
-        #: This projection is used to pare down the output of the result of a call to
-        #: :meth:`~motor.motor_tornado.MotorCollection.find` call. By default only the ``_id`` and ``_version`` fields
-        #: from each document returned by :meth:`~motor.motor_tornado.MotorCollection.find` will be
-        #: returned. The subclass must define a full sync_projector of its own.
-        self.sync_projector = ["_version", "_id"]
-
-    @virtool.gen.coroutine
-    def insert(self, document, connections=None):
-        """
-        Inserts a new document in the collection and dispatches the change to all clients.
-
-        :param document: the data that will form the new document
-        :type document: dict
-
-        :param connections: a list of connections to dispatch the message to (None if all)
-        :type connections: list
-
-        :return: the response object from MongoDB
-        :rtype: dict
-
-        """
-        if "_version" not in document:
-            document["_version"] = 0
-
-        # Perform the actual database insert operation, retaining the response.
-        response = yield self.db.insert(document)
-
-        # Pare down the new document using the sync_projector list.
-        to_dispatch = {key: document[key] for key in self.sync_projector}
-
-        # Run the new document through the collection's sync_processor if it has been defined.
-        to_dispatch = yield self.sync_processor([to_dispatch])
-
-        # Dispatch the update to all connected clients.
-        yield self.dispatch("update", to_dispatch, connections=connections)
-
-        logger.debug("Inserted new document in collection " + self.collection_name)
-
-        return response
-
-    @virtool.gen.coroutine
-    def update(self, query, update, increment_version=True, upsert=False, connections=None):
-        """
-        Applies an update to a database document and dispatches the change to all clients.
-
-        :param query: query dictionary or single document id to be passed to MongoDB as a query.
-        :type query: str or dict
-
-        :param update: the update that will be passed to MongoDB.
-        :type update: dict
-
-        :param increment_version: when ``True``, the _version field is incremented by 1.
-        :type increment_version: bool
-
-        :param upsert: perform an upsert when set to True.
-        :type upsert: bool
-
-        :param connections: a list of :class:`~.web.SocketHandler` objects to dispatch the update to. If no list is
-                            supplied, the update with be dispatched to all connected clients.
-        :type connections: list or None
-
-        :return: the MongoDB response object amended with the modified document ids.
-        :rtype: dict
-
-        """
-        query, multi = coerce_query(query)
-
-        ids_to_update = yield self.find(query, ["_id"]).distinct("_id")
-
-        if increment_version:
-            update["$inc"] = {"_version": 1}
-
-        # Perform the update on the database, saving the response.
-        response = yield self.db.update(query, update, multi=multi, upsert=upsert)
-
-        # Attach a list of the updated entry_ids to the response. This will be returned by the method.
-        response["_ids"] = ids_to_update
-
-        # Get the pared down versions of the updated documents that should be sent to listening clients to update there
-        # collections.
-        to_dispatch = yield self.find({"_id": {"$in": ids_to_update}}, self.sync_projector).to_list(None)
-
-        # Pass the retrieved documents through the collection's sync_processor if there is one.
-        if self.sync_processor:
-            to_dispatch = yield self.sync_processor(to_dispatch)
-
-        yield self.dispatch("update", to_dispatch, connections=connections)
-
-        logger.debug("Updated one or more entries in collection " + self.collection_name)
-
-        return response
-
-    @virtool.gen.coroutine
-    def remove(self, id_list, connections=None):
-        """
-        Removes one or more documents from the collection. The provided data dict must contain the key ``_id``.
-
-        :param id_list: the data dict containing ids of documents that should be removed
-        :type id_list: list or str
-
-        :param connections: a list of :class:`~.web.SocketHandler` objects to dispatch the removal to. If no list is
-                            supplied, the change with be dispatched to all connected clients.
-        :type connections: list or None
-
-        :return: the response from MongoDB.
-        :rtype: dict
-
-        """
-        id_list = coerce_list(id_list)
-
-        # Perform remove operation on database.
-        response = yield self.db.remove({"_id": {"$in": id_list}})
-
-        # Dispatch removal notification to all connections.
-        yield self.dispatch("remove", id_list, connections=connections)
-
-        # Add a list of removed ids to the response dict and return it.
-        response["id_list"] = id_list
-
-        return response
-
-    @virtool.gen.coroutine
-    def sync_processor(self, documents):
-        """
-        Processes a list of projected documents into minimal documents needed for syncing the collection with client.
-        Intended to be redefined in subclasses of :class:`~.database.Collection`.
-
-        :param documents: a list of documents to process into a list of valid minimal documents for the collection.
-        :type documents: list
-
-        :return: valid minimal documents.
-        :rtype: list
-
-        """
-        return documents
-
-    @virtool.gen.exposed_method([])
-    def sync(self, transaction):
-        """
-        Syncs documents between the server and client. This exposed method will be requested by the client soon after
-        its connection is authorized. The client supplies a dictionary of document ids and their version
-        numbers. This manifest is used to calculate a list of updates and removals required to bring the client's local
-        collection in sync with the one on the server. The calculation is performed by :meth:`.Collection.prepare_sync`.
-
-        The passed ``transaction`` is then updated with the number of update and remove operation that will be
-        dispatched to the client. This allows the client to display the progress of the sync operation as it receives
-        updates and removals.
-
-        :param transaction: the transaction generated from the request.
-        :type transaction: :class:`.Transaction`
-
-        :return: a boolean indicating success and the total number of operations performed.
-        :rtype: tuple
-
-
-
-        """
-
-        '''
-        if "modify_options" in transaction.connection.user["permissions"]:
-            sync_list.append("users")
-            sync_list.append("groups")
-        '''
-
-        manifest = transaction.data
-
-        cursor = self.find(self.sync_filter, self.sync_projector)
-
-        document_ids = set()
-
-        updates = list()
-
-        while (yield cursor.fetch_next):
-            document = cursor.next_object()
-
-            document_ids.add(document["_id"])
-
-            # Is the document id in the manifest?
-            in_manifest = document["_id"] in manifest
-
-            # The document has not been created since the client last synced, but has been changed. Send the new
-            # version.
-            if not in_manifest or (in_manifest and document["_version"] != manifest[document["_id"]]):
-                document = yield self.sync_processor([document])
-                document = document[0]
-                updates.append(document)
-
-            document_ids.add(document["_id"])
-
-        # All remaining documents should be deleted by the client since they no longer exist on the server.
-        removes = [document_id for document_id in manifest if document_id not in document_ids]
-
-        expected_operation_count = len(updates) + len(removes)
-
-        transaction.update(expected_operation_count)
-
-        for i in range(0, len(updates), 10):
-            yield self.dispatch("update", updates[i: i + 10], connections=[transaction.connection], sync=True)
-
-        # All remaining documents should be deleted by the client since they no longer exist on the server.
-        for i in range(0, len(removes), 10):
-            yield self.dispatch("remove", removes[i: i + 10], connections=[transaction.connection], sync=True)
-
-        return True, None
-
 
 
 def coerce_query(query):

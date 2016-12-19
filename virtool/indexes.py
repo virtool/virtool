@@ -13,7 +13,7 @@ import virtool.viruses
 logger = logging.getLogger(__name__)
 
 
-class Collection(virtool.database.SyncingCollection):
+class Collection(virtool.database.Collection):
 
     """
     An :class:`.virtool.database.Collection` interface for the *indexes* MongoDB collection. Allows interaction of virus

@@ -7,7 +7,7 @@ import virtool.database
 import virtool.viruses
 
 
-class Collection(virtool.database.SyncingCollection):
+class Collection(virtool.database.Collection):
 
     def __init__(self, dispatch, collections, settings, add_periodic_callback):
         super().__init__("history", dispatch, collections, settings, add_periodic_callback)

@@ -10,7 +10,7 @@ import virtool.database
 import virtool.utils
 
 
-class Collection(virtool.database.SyncingCollection):
+class Collection(virtool.database.Collection):
 
     def __init__(self, dispatch, collections, settings, add_periodic_callback):
         super().__init__("hmm", dispatch, collections, settings, add_periodic_callback)

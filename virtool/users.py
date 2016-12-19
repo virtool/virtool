@@ -9,7 +9,7 @@ import virtool.groups
 logger = logging.getLogger(__name__)
 
 
-class Collection(virtool.database.SyncingCollection):
+class Collection(virtool.database.Collection):
     """
     Provides an interface to the users MongoDB collection. During initialisation of the object, permissions are
     reconciled for all users and all user documents are updated to contain required fields if they are missing.

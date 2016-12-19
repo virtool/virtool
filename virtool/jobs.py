@@ -28,7 +28,7 @@ TASK_CLASSES = {
 }
 
 
-class Collection(virtool.database.SyncingCollection):
+class Collection(virtool.database.Collection):
     """
     Provides functionality for managing active jobs and manipulating and reading the job documents in the MongoDB
     collection. This object is referred to as the **job manager** in this documentation.

@@ -9,7 +9,7 @@ from virtool.permissions import PERMISSIONS
 logger = logging.getLogger(__name__)
 
 
-class Collection(virtool.database.SyncingCollection):
+class Collection(virtool.database.Collection):
 
     """
     An interface for the *groups* collection in MongoDB. Manages user groups and their permissions.

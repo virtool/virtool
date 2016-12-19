@@ -13,7 +13,7 @@ import virtool.job
 import virtool.pathoscope
 
 
-class Collection(virtool.database.SyncingCollection):
+class Collection(virtool.database.Collection):
     """
     A connection to the pymongo samples collection. Provides methods for viewing and modifying the
     collection.

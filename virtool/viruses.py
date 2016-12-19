@@ -18,7 +18,7 @@ import virtool.database
 logger = logging.getLogger(__name__)
 
 
-class Collection(virtool.database.SyncingCollection):
+class Collection(virtool.database.Collection):
 
     """
     Viruses collection
