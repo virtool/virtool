@@ -249,44 +249,22 @@ class TestDispatch:
         # conn2 (wallace) should have 'animal' key set to 'monkey'.
         assert conn2.user["animal"] == "monkey"
 
-    def test_transformer(self, dispatcher, mock_connection, fake_message):
+    def test_writer(self, dispatcher, mock_connection, fake_message):
         """
-        Test that a transformer can properly modify a message based on the connection being written to.
+        Test that a writer can properly modify and write a message to the passed connection.
 
         """
-        def fake_transformer(connection, message):
+        def fake_writer(connection, message):
             message["data"] = dict(message="Hello " + connection.user["_id"])
-            return message
+            connection.write_message(message)
 
         conn1 = mock_connection(dispatcher, username="Fred")
         conn2 = mock_connection(dispatcher, username="John")
 
-        dispatcher.dispatch(fake_message, transformer=fake_transformer)
+        dispatcher.dispatch(fake_message, writer=fake_writer)
 
         assert conn1.messages[0]["data"]["message"] == "Hello Fred"
         assert conn2.messages[0]["data"]["message"] == "Hello John"
-
-    def test_transformer_none(self, dispatcher, mock_connection, fake_message):
-        """
-        Test that no message is sent when the transformer returns ``None`` for a given connection and message.
-
-        """
-        def fake_transformer(connection, message):
-            if connection.user["_id"] == "Fred":
-                message["data"] = dict(message="Hello there Fred")
-                return message
-
-            return None
-
-        conn1 = mock_connection(dispatcher, username="Fred")
-        conn2 = mock_connection(dispatcher, username="John")
-
-        dispatcher.dispatch(fake_message, transformer=fake_transformer)
-
-        assert conn1.messages[0]["data"]["message"] == "Hello there Fred"
-        assert len(conn2.messages) == 0
-
-
 
 
 class TestHandle:

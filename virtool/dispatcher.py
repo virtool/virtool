@@ -196,7 +196,7 @@ class Dispatcher:
 
         return True
 
-    def dispatch(self, message, connections=None, conn_filter=None, conn_modifier=None, transformer=None):
+    def dispatch(self, message, connections=None, conn_filter=None, conn_modifier=None, writer=None):
         """
         Dispatch a ``message`` with a conserved format to a selection of active ``connections``
         (:class:`.SocketHandler` objects). Messages are dicts with the scheme:
@@ -251,14 +251,12 @@ class Dispatcher:
             for connection in connections:
                 conn_modifier(connection)
 
-        if transformer:
-            if not callable(transformer):
-                raise TypeError("transformer must be callable")
+        if writer:
+            if not callable(writer):
+                raise TypeError("writer must be callable")
 
             for connection in connections:
-                transformed = transformer(connection, dict(to_send))
-                if transformed:
-                    connection.write_message(transformed)
+                writer(connection, dict(to_send))
 
             return None
 

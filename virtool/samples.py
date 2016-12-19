@@ -102,12 +102,12 @@ class Collection(virtool.database.SyncingCollection):
         data = virtool.database.coerce_list(data)
 
         yield super().dispatch(
-            "remove",
+            operation,
             data,
             interface,
             connections=connections,
             sync=sync,
-            transformer=transform
+            writer=writer
         )
 
         send_count = 0
@@ -831,22 +831,31 @@ def can_read(document, user_groups):
     return document["all_read"] or (document["group_read"] and document["group"] in user_groups)
 
 
-def transform(connection, message):
+def writer(connection, message):
 
+    if message["operation"] not in ["add", "update", "remove"]:
+        raise ValueError("samples.writer only takes messages with operations: add, update, remove")
+
+    # A list of groups the connection's user belongs to.
     user_groups = connection.user["groups"]
 
     data = message["data"]
 
     if message["operation"] in ["add", "update"]:
-        message["data"] = [d for d in data if can_read(d, user_groups)]
+        to_send = dict(message)
+        to_send["data"] = [d for d in data if can_read(d, user_groups)]
 
-    elif message["operation"] == "remove":
-        message["data"] = [d["_id"] for d in data if can_read(d, user_groups)]
+        send_count = len(to_send["data"])
 
-    else:
-        raise ValueError("Sample transform only take message with operations: add, update, remove")
+        if send_count:
+            connection.write_message(to_send)
 
-    if len(message["data"]):
-        return message
+        if send_count < len(message["data"]):
+            message["data"] = list({d["_id"] for d in data} - set(to_send["data"]))
+            connection.write_message(message)
 
-    return None
+        return
+
+    if message["operation"] == "remove":
+        message["data"] = [d["_id"] for d in data]
+        connection.write_message(message)
