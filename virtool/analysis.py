@@ -38,17 +38,15 @@ class Base(virtool.job.Job):
         #: Stores data that is processed and stored in the analysis document.
         self.results = dict()
 
-        #: A synchronous connection to the Virtool database.
-        self.database = self.settings.get_db_client(self.settings, sync=True)
+        #: The document for the sample being analyzed. Assigned after database connection is made.
+        self.sample = None
 
-        #: The document for the sample being analyzed.
-        self.sample = self.database["samples"].find_one({"_id": self.sample_id})
+        #: The document for the host associated with the sample being analyzed. Assigned after database connection is
+        # made.
+        self.host = None
 
-        #: The document for the host associated with the sample being analyzed.
-        self.host = self.database["hosts"].find_one({"_id": self.sample["subtraction"]})
-
-        #: The number of reads in the sample library.
-        self.read_count = int(self.sample["quality"]["count"])
+        #: The number of reads in the sample library. Assigned after database connection is made.
+        self.read_count = None
 
         #: A dictionary of path strings that will be used to access files relevant to the analysis. Paths include:
         #: - data - test
@@ -66,6 +64,16 @@ class Base(virtool.job.Job):
         self.stage_list = [
             self.mk_analysis_dir
         ]
+
+    def on_db(self):
+        #: The document for the sample being analyzed. Assigned after database connection is made.
+        self.sample = self.db.samples.find_one({"_id": self.sample_id})
+
+        #: The document for the host associated with the sample being analyzed.
+        self.host = self.db.hosts.find_one({"_id": self.sample["subtraction"]})
+
+        #: The number of reads in the sample library.
+        self.read_count = int(self.sample["quality"]["count"])
 
     @virtool.job.stage_method
     def mk_analysis_dir(self):
@@ -132,7 +140,7 @@ class Pathoscope(Base):
         accessions = self.intermediate["to_viruses"].genomes()
 
         # Create a dict mapping isolate ids to the ids of their parent viruses
-        aggregated = self.database.viruses.aggregate([
+        aggregated = self.db.viruses.aggregate([
             {"$unwind": "$isolates"},
             {"$project": {
                 "_id": "$isolates.isolate_id",
@@ -142,23 +150,23 @@ class Pathoscope(Base):
 
         # Create a dict mapping isolate ids to virus ids. This will allow is to get from the hit accessions to
         # the ids of candidate viruses.
-        isolate_to_virus = {entry["_id"]: entry["virus_id"] for entry in aggregated["result"]}
+        isolate_to_virus = {entry["_id"]: entry["virus_id"] for entry in aggregated}
 
         # A dict of candidate viruses keyed by their document ids.
         viruses = dict()
 
         # Get the database documents for the sequences
-        for sequence_entry in self.database.sequences.find({"_id": {"$in": accessions}}):
+        for sequence_entry in self.db.sequences.find({"_id": {"$in": accessions}}):
             # Get the virus and isolate ids associated with the sequence.
             isolate_id = sequence_entry["isolate_id"]
             virus_id = isolate_to_virus[isolate_id]
 
             # Get the document for the virus associated with the sequence unless it has already been retrieved.
             if virus_id not in viruses:
-                virus = self.database.viruses.find_one({"_id": virus_id})
+                virus = self.db.viruses.find_one({"_id": virus_id})
 
                 for isolate in virus["isolates"]:
-                    isolate_sequences = self.database.sequences.find({"isolate_id": isolate["isolate_id"]})
+                    isolate_sequences = self.db.sequences.find({"isolate_id": isolate["isolate_id"]})
                     isolate["sequences"] = list(isolate_sequences)
                     isolate.pop("sequence_count")
 
@@ -204,9 +212,9 @@ class Pathoscope(Base):
             genome_id = entry["genome"]
             final = entry["final"]
 
-            sequence_entry = self.database["sequences"].find_one({"_id": genome_id}, {"isolate_id": True})
+            sequence_entry = self.db.sequences.find_one({"_id": genome_id}, {"isolate_id": True})
 
-            minimal_virus = self.database["viruses"].find_one(
+            minimal_virus = self.db.viruses.find_one(
                 {"isolates.isolate_id": sequence_entry["isolate_id"]},
                 {"_id": True, "_version": True}
             )
@@ -231,7 +239,7 @@ class Pathoscope(Base):
 
         """
         genome_ids = list(self.results["diagnosis"].keys())
-        minimal_sequences = self.database["sequences"].find({"_id": {"$in": genome_ids}})
+        minimal_sequences = self.db.sequences.find({"_id": {"$in": genome_ids}})
 
         lengths = {entry["_id"]: len(entry["sequence"]) for entry in minimal_sequences}
 
@@ -295,14 +303,6 @@ class PathoscopeBowtie(Pathoscope):
             "reference"
         )
 
-        # The path to the index of the subtraction host for the sample.
-        self.paths["host"] = os.path.join(
-            self.paths["data"],
-            "reference/hosts/index",
-            self.sample["subtraction"].lower().replace(" ", "_"),
-            "reference"
-        )
-
         self.stage_list += [
             self.map_viruses,
             self.identify_candidate_viruses,
@@ -314,6 +314,17 @@ class PathoscopeBowtie(Pathoscope):
             self.pathoscope,
             self.import_results
         ]
+
+    def on_db(self):
+        super().on_db()
+
+        # The path to the index of the subtraction host for the sample.
+        self.paths["host"] = os.path.join(
+            self.paths["data"],
+            "reference/hosts/index",
+            self.sample["subtraction"].lower().replace(" ", "_"),
+            "reference"
+        )
 
     @virtool.job.stage_method
     def map_viruses(self):
@@ -426,13 +437,6 @@ class PathoscopeSNAP(Pathoscope):
             self.task_args["index_id"]
         )
 
-        # The path to the SNAP index for the subtraction host for the sample.
-        self.paths["host"] = os.path.join(
-            self.paths["data"],
-            "reference/hosts/index",
-            self.sample["subtraction"].lower().replace(" ", "_")
-        )
-
         self.stage_list += [
             self.map_viruses,
             self.identify_candidate_viruses,
@@ -445,6 +449,16 @@ class PathoscopeSNAP(Pathoscope):
             self.pathoscope,
             self.import_results
         ]
+
+    def on_db(self):
+        super().on_db()
+
+        # The path to the SNAP index for the subtraction host for the sample.
+        self.paths["host"] = os.path.join(
+            self.paths["data"],
+            "reference/hosts/index",
+            self.sample["subtraction"].lower().replace(" ", "_")
+        )
 
     @virtool.job.stage_method
     def map_viruses(self):
@@ -599,13 +613,6 @@ class NuVs(Base):
             "reference"
         )
 
-        self.paths["host"] = os.path.join(
-            self.paths["data"],
-            "reference/hosts/index",
-            self.sample["subtraction"].lower().replace(" ", "_"),
-            "reference"
-        )
-
         self.stage_list += [
             self.map_viruses,
             self.map_host,
@@ -615,6 +622,16 @@ class NuVs(Base):
             self.vfam,
             self.import_results
         ]
+
+    def on_db(self):
+        super().on_db()
+
+        self.paths["host"] = os.path.join(
+            self.paths["data"],
+            "reference/hosts/index",
+            self.sample["subtraction"].lower().replace(" ", "_"),
+            "reference"
+        )
 
     @virtool.job.stage_method
     def map_viruses(self):
@@ -836,7 +853,7 @@ class NuVs(Base):
                         line = line.split()
 
                         cluster_id = int(line[0].split("_")[1])
-                        annotation_id = self.database.hmm.find_one({"cluster": int(cluster_id)}, {"_id": True})["_id"]
+                        annotation_id = self.db.hmm.find_one({"cluster": int(cluster_id)}, {"_id": True})["_id"]
 
                         compound_id = line[2].split("_")[1].split(".")
 

@@ -751,7 +751,7 @@ def check_collection(db_name, data_path, host="localhost", port=27017):
     aggregated = db.samples.aggregate([
         {"$project": {"analyses": True}},
         {"$unwind": {"path": "$analyses"}}
-    ])["result"]
+    ])
 
     linked_analyses = [result["analyses"] for result in aggregated]
 

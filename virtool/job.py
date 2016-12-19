@@ -28,10 +28,13 @@ class JobError(Exception):
 class Job(multiprocessing.Process):
 
     def __init__(self, _id, settings, message_queue, task, task_args, proc, mem):
-        super(Job, self).__init__()
+        super().__init__()
 
         #: A dictionary of server settings.
         self.settings = settings
+
+        #: A instance of MongoClient for Virtool's database. Assigned after forking.
+        self.db = None
 
         #: Used to communicate with the server.
         self.queue = message_queue
@@ -73,6 +76,9 @@ class Job(multiprocessing.Process):
 
         self.log_list.append(timestamp + "\t" + str(line))
 
+    def on_db(self):
+        pass
+
     def run(self):
         # Set the process title so that it is easily identifiable as a virtool job process.
         setproctitle("virtool-" + self._id)
@@ -82,6 +88,11 @@ class Job(multiprocessing.Process):
 
         # When the manager terminates jobs, run the get_term method.
         signal.signal(signal.SIGTERM, self.handle_sigterm)
+
+        #: A synchronous connection to the Virtool database.
+        self.db = self.settings.get_db_client(sync=True)
+
+        self.on_db()
 
         was_cancelled = False
         had_error = False

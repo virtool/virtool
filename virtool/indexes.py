@@ -252,8 +252,6 @@ class RebuildIndex(virtool.job.Job):
 
         self.reference_path = os.path.join(self.settings.get("data_path"), "reference/viruses", self.index_id)
 
-        self.database = self.settings.get_db_client(sync=True)
-
     def get_joined_virus(self, virus_id):
         """
         Retrieve from the database the virus document associated with the passed virus_id. Then, join the virus with its
@@ -265,7 +263,7 @@ class RebuildIndex(virtool.job.Job):
         :rtype: tuple
 
         """
-        virus = self.database.viruses.find_one({"_id": virus_id})
+        virus = self.db.viruses.find_one({"_id": virus_id})
 
         if virus is None:
             return None
@@ -274,7 +272,7 @@ class RebuildIndex(virtool.job.Job):
         isolate_ids = [isolate["isolate_id"] for isolate in virus["isolates"]]
 
         # Get the sequence entries associated with the isolate ids.
-        sequences = list(self.database.sequences.find({"isolate_id": {"$in": isolate_ids}}))
+        sequences = list(self.db.sequences.find({"isolate_id": {"$in": isolate_ids}}))
 
         # Merge the sequence entries into the virus entry.
         joined = virtool.viruses.merge_virus(virus, sequences)
@@ -293,7 +291,7 @@ class RebuildIndex(virtool.job.Job):
         :rtype: dict
 
         """
-        virus_history = self.database.history.find({"entry_id": current_joined["_id"]})
+        virus_history = self.db.history.find({"entry_id": current_joined["_id"]})
 
         # Sort the changes be descending entry version.
         history_documents = sorted(virus_history, key=lambda x: x["timestamp"], reverse=True)
@@ -340,7 +338,7 @@ class RebuildIndex(virtool.job.Job):
 
         total_found_sequences = 0
 
-        modification_count = self.database.history.find({"index": self.index_id}).count()
+        modification_count = self.db.history.find({"index": self.index_id}).count()
 
         for virus_id, virus_version in self.task_args["virus_manifest"].items():
             current, sequences = self.get_joined_virus(virus_id) or dict()
