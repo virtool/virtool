@@ -8,7 +8,7 @@ var SampleDetailRights = React.createClass({
 
     changeGroup: function (event) {
         dispatcher.db.samples.request('set_group', {
-            _id: this.props.data._id,
+            _id: this.props._id,
             group_id: event.target.value
         });
     },
@@ -21,7 +21,7 @@ var SampleDetailRights = React.createClass({
         });
 
         dispatcher.db.samples.request('set_rights', {
-            _id: this.props.data._id,
+            _id: this.props._id,
             changes: newRights
         });
     },
