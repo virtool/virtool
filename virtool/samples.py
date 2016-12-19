@@ -852,6 +852,7 @@ def writer(connection, message):
 
         if send_count < len(message["data"]):
             message["data"] = list({d["_id"] for d in data} - set(to_send["data"]))
+            message["operation"] = "remove"
             connection.write_message(message)
 
         return
