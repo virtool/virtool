@@ -94,9 +94,6 @@ var Change = React.createClass({
         // Boolean to set whether the submit button is disabled or not.
         var submitDisabled = (!(match && long) && this.state.failed) || this.state.pendingChange;
 
-        // Show a spinner while a password change is pending.
-        var saveIconClass = this.state.pendingChange ? 'i-spinner spinning': 'i-floppy';
-
         return (
             <div>
                 <p>
@@ -110,6 +107,7 @@ var Change = React.createClass({
                                 type='password'
                                 name="new"
                                 placeholder='New Password'
+                                value={this.state.new}
                                 onChange={this.handleChange}
                                 disabled={this.state.pendingChange}
                             />
@@ -120,6 +118,7 @@ var Change = React.createClass({
                                 type='password'
                                 name="confirm"
                                 placeholder='Confirm Password'
+                                value={this.state.confirm}
                                 onChange={this.handleChange}
                                 disabled={this.state.pendingChange}
                             />
