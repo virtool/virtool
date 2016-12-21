@@ -14,4 +14,3 @@ settings.json
 /.cache
 */.cache
 .coverage.cog*
-/client/yarn.lock

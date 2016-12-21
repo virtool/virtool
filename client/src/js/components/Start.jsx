@@ -12,7 +12,7 @@
 'use strict';
 
 var React = require('react');
-var Cookie = require('react-cookie');
+var Cookie = require('js-cookie');
 
 var Dispatcher = require('virtool/js/dispatcher/main.js');
 var Utils = require('virtool/js/Utils');
@@ -93,7 +93,7 @@ var Start = React.createClass({
     },
 
     onDispatcherReady: function () {
-        var token = Cookie.load('token');
+        var token = Cookie.get('token');
 
         if (token) {
             dispatcher.send({

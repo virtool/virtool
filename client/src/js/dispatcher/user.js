@@ -7,7 +7,7 @@
  * @providesModule User
  */
 
-var Cookie = require('react-cookie');
+var Cookie = require('js-cookie');
 var Events = require('./Events');
 
 /**
@@ -26,7 +26,7 @@ var User = function () {
          _.assign(this, _.omit(data, '_id'));
 
         this.name = data._id;
-        Cookie.save('token', data.token);
+        Cookie.set('token', data.token, { expires: 7 });
 
         this.emit('change');
     };
