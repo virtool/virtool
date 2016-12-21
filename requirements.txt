@@ -1,12 +1,15 @@
 alabaster==0.7.8
 Babel==2.3.4
 biopython==1.68
+coloredlogs==5.2
 coverage==4.2
 cycler==0.10.0
 dictdiffer==0.6.0
 docutils==0.12
 greenlet==0.4.10
+humanfriendly==2.2
 imagesize==0.7.1
+inotify==0.2.8
 Jinja2==2.8
 MarkupSafe==0.23
 matplotlib==1.5.1
