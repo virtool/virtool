@@ -84,7 +84,8 @@ function Router() {
             icon: 'filing',
 
             children: [
-                {key: 'manage', component: require('virtool/js/components/Samples/Manage.jsx')}
+                {key: 'manage', component: require('virtool/js/components/Samples/Manage.jsx')},
+                {key: 'files', component: require('virtool/js/components/Samples/Files.jsx')}
             ]
         },
 

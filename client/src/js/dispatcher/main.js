@@ -29,51 +29,60 @@ function Dispatcher(onReady) {
             indices: ["username"],
             retain: true
         },
+
+        "files": {
+            unique: ["_id"],
+            indices: ["name", "ready"],
+            retain: true
+        },
+
         "samples": {
             unique: ["_id", "name"],
             indices: ["added", "username", "imported", "archived", "analyzed"],
             retain: true
         },
+
         "analyses": {
             unique: ["_id"],
             indices: ["sample_id", "username"],
             retain: true
         },
+
         "viruses": {
             unique: ["_id", "name"],
             indices: ["modified", "abbreviation", "last_indexed_version"],
             retain: true
         },
+
         "hmm": {
             unique: ["_id", "cluster"],
             indices: ["label"],
             retain: true
         },
+
         "history": {
             unique: ["_id"],
             indices: ["operation", "timestamp", "entry_id", "entry_version", "username", "index", "index_version"],
             retain: true
         },
+
         "indexes": {
             unique: ["_id", "index_version"],
             indices: ["timestamp", "virus_count", "ready", "has_files"],
             retain: true
         },
+
         "hosts": {
             unique: ["_id", "file", "job"],
             indices: ["added"],
             retain: true
         },
+
         "users": {
             unique: ["_id"]
         },
+
         "groups": {
-            unique: ["_id"]
-        },
-        "reads": {
-            unique: ["_id"]
-        },
-        "files": {
             unique: ["_id"]
         }
 
@@ -109,11 +118,11 @@ function Dispatcher(onReady) {
             dispatcher.db.open()
                 .then(function () {
 
-                    var collectionNames = _.without(dispatcher.db.collectionNames, "reads", "files");
+                    var collectionCount = dispatcher.db.collectionNames.length
 
-                    dispatcher.syncProgressStep = 1 / (collectionNames.length + 1);
+                    dispatcher.syncProgressStep = 1 / (collectionCount + 1);
 
-                    collectionNames.forEach(function (collectionName) {
+                    dispatcher.db.collectionNames.forEach(function (collectionName) {
 
                         var collection = dispatcher.db[collectionName];
 
@@ -142,7 +151,7 @@ function Dispatcher(onReady) {
                                 }
                             });
 
-                        dispatcher.syncProgress += dispatcher.syncProgressStep * (1 / collectionNames.length);
+                        dispatcher.syncProgress += dispatcher.syncProgressStep * (1 / collectionCount);
 
                         dispatcher.emit("syncing", dispatcher.syncProgress);
 
@@ -163,22 +172,6 @@ function Dispatcher(onReady) {
         if (allSynced) {
             this.emit("synced");
         }
-    };
-
-    this.listen = function (name) {
-        dispatcher.send({
-            interface: 'dispatcher',
-            method: 'listen',
-            data: {'name': name}
-        });
-    };
-
-    this.unlisten = function (name) {
-        dispatcher.send({
-            interface: 'dispatcher',
-            method: 'unlisten',
-            data: {'name': name}
-        });
     };
 
     // When a websocket message is received, this method is called with the message as the sole argument. Every message
