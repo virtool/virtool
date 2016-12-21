@@ -7,7 +7,7 @@
  * @providesModule Collection *
  */
 
-var Events = require('./Events');
+import Events from './Events';
 
 
 function Router() {

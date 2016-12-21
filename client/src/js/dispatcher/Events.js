@@ -9,7 +9,7 @@
 
 'use strict';
 
-var _ = require('lodash');
+import _ from 'lodash';
 
 /**
  * A simple event managing object that can be bound into other objects to make them capable of managing callback and
@@ -19,13 +19,24 @@ var _ = require('lodash');
  * @param parent {object} - A parent object to forward the on, off, and emit functions to.
  * @class
  */
-function Events(eventTypes, parent) {
+class Events {
 
-    // Add a property to this.bound for each event type. The key is the eventType and the value is a list that will
-    // all bound callbacks for that eventType.
-    this.bound = _.transform(eventTypes, function (result, eventType) {
-        result[eventType] = [];
-    }, {});
+    constructor (eventTypes, parent) {
+
+        // Add a property to this.bound for each event type. The key is the eventType and the value is a list that will
+        // all bound callbacks for that eventType.
+        this.bound = _.transform(eventTypes, function (result, eventType) {
+            result[eventType] = [];
+        }, {});
+
+        // Bind the following function to a passed parent object to make it directly able to emit events and bind callbacks.
+        // Bind the methods to the Events object.
+        if (parent) {
+            parent.on = this.on.bind(this);
+            parent.off = this.off.bind(this);
+            parent.emit = this.emit.bind(this);
+        }
+    }
 
     /**
      * Bind a callback to an event.
@@ -34,7 +45,7 @@ function Events(eventTypes, parent) {
      * @param callback {function} - The function to call when the event is emitted.
      * @func
      */
-    this.on = function (event, callback) {
+    on (event, callback) {
         if (this.bound.hasOwnProperty(event)) {
             this.bound[event].push(callback);
         } else {
@@ -49,7 +60,7 @@ function Events(eventTypes, parent) {
      * @param callback {function} - The callback that should be unbound.
      * @func
      */
-    this.off = function (event, callback) {
+    off (event, callback) {
         _.remove(this.bound[event], function (candidateCallback) {
             return callback === candidateCallback;
         });
@@ -63,7 +74,7 @@ function Events(eventTypes, parent) {
      * @param data {object} a data object that can be passed to the bound callbacks when they are called.
      * @func
      */
-    this.emit = function (events, data) {
+    emit (events, data) {
         events = events instanceof Array ? events: [events];
 
         _.each(events, function (event) {
@@ -73,13 +84,6 @@ function Events(eventTypes, parent) {
         }.bind(this));
     };
 
-    // Bind the following function to a passed parent object to make it directly able to emit events and bind callbacks.
-    // Bind the methods to the Events object.
-    if (parent) {
-        parent.on = this.on.bind(this);
-        parent.off = this.off.bind(this);
-        parent.emit = this.emit.bind(this);
-    }
 }
 
-module.exports = Events;
+export default Events;

@@ -7,15 +7,18 @@
  * @providesModule User
  */
 
-var Cookie = require('js-cookie');
-var Events = require('./Events');
+import { assign, omit, forIn } from 'lodash';
+import Cookie from 'js-cookie';
+import Events from './Events';
+
+console.log(Events);
 
 /**
  * An object that manages all user authentication and the user profile.
  *
  * @constructor
  */
-var User = function () {
+function User() {
 
     this.name = null;
     
@@ -23,7 +26,7 @@ var User = function () {
 
     this.load = function (data) {
         // Update the username, token, and reset properties with the authorized values.
-         _.assign(this, _.omit(data, '_id'));
+         assign(this, omit(data, '_id'));
 
         this.name = data._id;
         Cookie.set('token', data.token, { expires: 7 });
@@ -38,19 +41,20 @@ var User = function () {
 
     this.deauthorize = function (data) {
 
-        dispatcher.db.loki.deleteDatabase({}, function () {
+        dispatcher.db.loki.deleteDatabase({}, () => {
+
             location.hash = 'home/welcome';
             
             this.name = null;
 
-             _.forIn(dispatcher.db, function (collection) {
+             forIn(dispatcher.db, collection => {
                 collection.documents = [];
                 collection.synced = false;
             });
 
             this.emit('logout', data);
             
-        }.bind(this));
+        });
 
     };
 
@@ -65,4 +69,4 @@ var User = function () {
     };
 };
 
-module.exports = User;
+export default User;

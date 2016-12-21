@@ -7,11 +7,11 @@
  * @providesModule Settings *
  */
 
-var Events = require("./Events");
+import Events from "./Events";
 
 var Settings = function () {
 
-    this.events = new Events(['change'], this);
+    this.events = new Events(["change"], this);
 
     // This object stores settings as key value pairs.
     this.data = {};
@@ -24,7 +24,7 @@ var Settings = function () {
      */
     this.update = function (data) {
         _.assign(this.data, data);
-        this.emit('change');
+        this.emit("change");
     }.bind(this);
 
     /**
@@ -40,8 +40,8 @@ var Settings = function () {
         data[key] = value;
 
         return dispatcher.send({
-            interface: 'settings',
-            method: 'set',
+            interface: "settings",
+            method: "set",
             data: data
         });
     };
@@ -58,7 +58,7 @@ var Settings = function () {
             return this.data[key];
         } else {
             // Log a warning if the key is not found.
-            console.warn('Tried to get setting with unknown key "' + key + '"');
+            console.warn("Tried to get setting with unknown key '" + key + "'");
             return null;
         }
     };

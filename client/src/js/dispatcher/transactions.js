@@ -58,7 +58,7 @@ function Transactions() {
 
         // If the transactionId doesn't already exist, return it. Otherwise, keep generating until a unique number is
         // found
-        tid = Math.ceil(Math.random() * 100000);
+        let tid = Math.ceil(Math.random() * 100000);
 
         while (this.pending.hasOwnProperty(tid)) {
             console.warn('Unavailable TID, generating another one.');

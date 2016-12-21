@@ -1,8 +1,9 @@
 var _ = require('lodash');
 var Bowser = require('bowser');
 
-var Events = require("./Events.js");
-var User = require("./user.js");
+import Events from './Events.js';
+import User from './user.js';
+
 var Settings = require('./Settings.js');
 var Database = require('./Database.js');
 var Router = require("./Router.js");
@@ -178,12 +179,12 @@ function Dispatcher(onReady) {
     // has a property 'operation' that tells the dispatcher what to do. Illegal operation names will throw an error.
     this.handle = function (message) {
 
-        var interface = message.interface;
+        var iface = message.interface;
         var operation = message.operation;
 
-        console.log(interface + "." + message.operation);
+        console.log(iface + "." + message.operation);
 
-        if (interface === 'transaction') {
+        if (iface === 'transaction') {
             switch (operation) {
                 case "fulfill":
                     this.transactions.fulfill(message.data.tid, message.data.success, message.data.data);
@@ -203,7 +204,7 @@ function Dispatcher(onReady) {
             this.user.load(message.data);
         }
 
-        else if (_.includes(this.db.collectionNames, interface)) {
+        else if (_.includes(this.db.collectionNames, iface)) {
 
             var collection = this.db[message.interface];
 
