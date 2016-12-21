@@ -1,8 +1,5 @@
 var React = require('react');
-var Request = require('superagent');
-var Dropzone = require('react-dropzone');
 var Panel = require('react-bootstrap/lib/Panel');
-var Alert = require('react-bootstrap/lib/Alert');
 var Table = require('react-bootstrap/lib/Table');
 
 var View = React.createClass({
@@ -23,31 +20,6 @@ var View = React.createClass({
 
     update: function () {
         this.setState({settings: dispatcher.settings.data});
-    },
-
-    onDrop: function (files) {
-
-        files.forEach(function (file) {
-            dispatcher.db.samples.request("authorize_upload", {
-                name: file.name,
-                size: file.size
-            }).success(function (data) {
-
-                Request.post('/upload/' + data.file_id)
-                    .send(file)
-                    .end(function () {
-                        console.log("done");
-                    });
-            });
-        });
-    },
-
-    upload: function (event) {
-        event.preventDefault();
-        // var request = Request.post('/upload');
-        // request.attach(this.state.file.name, this.state.file);
-
-        console.log(event.target.value);
     },
 
     render: function () {
@@ -77,11 +49,6 @@ var View = React.createClass({
                                 </tr>
                             </tbody>
                         </Table>
-                    </Panel>
-                    <Panel header="Upload Test">
-                        <Dropzone onDrop={this.onDrop}>
-                            Drag here, or click to upload
-                        </Dropzone>
                     </Panel>
                 </div>
             );

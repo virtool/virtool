@@ -1,53 +1,47 @@
-import React from 'react';
-import Dropzone from 'react-dropzone';
+import React from "react";
+import FlipMove from "react-flip-move";
+import { sortBy } from "lodash";
+import { Panel, ListGroupItem } from "react-bootstrap";
 
-var Flex = require('virtool/js/components/Base/Flex.jsx');
-var Icon = require('virtool/js/components/Base/Icon.jsx');
-var Button = require('virtool/js/components/Base/PushButton.jsx');
+import Icon from "virtool/js/components/Base/Icon.jsx";
+import ReadFile from "./ReadFile";
 
 export default class ReadFileList extends React.Component {
 
     static propTypes = {
+        header: React.PropTypes.element,
         files: React.PropTypes.arrayOf(React.PropTypes.object)
     }
 
     render () {
 
-        const fileComponents = this.props.files.map((file) => {
-            return <p>{file.name}</p>
-        });
+        let fileComponents;
 
-        const dropZoneStyle = {
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
+        if (this.props.files.length > 0) {
+            fileComponents = sortBy(this.props.files, "timestamp").reverse().map(file => {
+                return <ReadFile key={file._id} {...file} />
+            });
+        } else {
+            fileComponents = (
+                <ListGroupItem>
+                    <Icon name="info" /> No uploads in progress
+                </ListGroupItem>
+            );
+        }
 
-            height: "34px",
-            width: "100%",
-            border: "1px solid #cccccc"
-        };
+        const style = {
+            marginTop: "15px"
+        }
 
         return (
-            <div>
-                <Flex>
-                    <Flex.Item grow={1}>
-                        <Dropzone style={dropZoneStyle}>
-                            <Flex justifyContent="center" alignItems="center">
-                                <Flex.Item>
-                                    Drag here to upload
-                                </Flex.Item>
-                            </Flex>
-                        </Dropzone>
-                    </Flex.Item>
+            <div style={style}>
+                <h5>
+                    {this.props.header}
+                </h5>
 
-                    <Flex.Item grow={0} pad={5}>
-                        <Button>
-                            <Icon name="folder-open" />
-                        </Button>
-                    </Flex.Item>
-                </Flex>
-
-                {fileComponents}
+                <FlipMove typeName="div" className="list-group">
+                    {fileComponents}
+                </FlipMove>
             </div>
         );
     }

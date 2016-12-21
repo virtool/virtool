@@ -1,8 +1,14 @@
-var React = require('react');
-var Dropzone = require('react-dropzone');
-var SampleController = require("./Controller.jsx");
+import React from 'react';
+import { Badge } from 'react-bootstrap';
 
-var ManageSamples = React.createClass({
+import ReadFileList from "./Files/ReadFileList";
+import ReadUploader from "./Files/ReadUploader";
+
+var Flex = require('virtool/js/components/Base/Flex.jsx');
+var Icon = require('virtool/js/components/Base/Icon.jsx');
+var Button = require('virtool/js/components/Base/PushButton.jsx');
+
+var ReadFiles = React.createClass({
 
     propTypes: {
         route: React.PropTypes.object
@@ -10,7 +16,7 @@ var ManageSamples = React.createClass({
 
     getInitialState: function () {
         return {
-            documents: dispatcher.db.files.chain()
+            documents: dispatcher.db.files.chain().find({file_type: "reads"})
         };
     },
 
@@ -28,15 +34,39 @@ var ManageSamples = React.createClass({
 
     render: function () {
 
-        console.log(this.state.documents.branch().find({file_type: "reads"}).data())
+        const readyFiles = this.state.documents.branch().find({ready: true}).data();
+
+        const readyHeader = (
+            <span>
+                <Icon name="checkmark" /> <strong>Ready</strong>
+            </span>
+        );
+
+        const uploadingFiles = this.state.documents.branch().find({ready: false}).data();
+
+        let uploadingList;
+
+        console.log(uploadingFiles);
+
+        if (uploadingFiles.length > 0) {
+            const uploadingHeader = (
+                <span>
+                    <Icon name="meter" /> <strong>In Progress</strong>
+                </span>
+            );
+
+            uploadingList = <ReadFileList header={uploadingHeader} files={uploadingFiles} />;
+        }
 
         return (
             <div>
-                Test
+                <ReadUploader />
+                {uploadingList}
+                <ReadFileList header={readyHeader} files={readyFiles} />
             </div>
         );
     }
 
 });
 
-module.exports = ManageSamples;
+module.exports = ReadFiles;

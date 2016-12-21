@@ -1,4 +1,4 @@
-var _ = require("lodash");
+import { find, findIndex, remove } from "lodash";
 
 function Transaction(tid, remove) {
 
@@ -76,7 +76,7 @@ function Transactions() {
 
     this.fulfill = function (tid, succeeded, data) {
         // Find the index of the transaction.
-        var transactionIndex = _.findIndex(this.pending, {tid: tid});
+        var transactionIndex = findIndex(this.pending, {tid: tid});
 
         // Get the transaction object.
         var transaction = this.pending[transactionIndex];
@@ -86,12 +86,12 @@ function Transactions() {
     };
 
     this.update = function (tid, data) {
-        var transactionObj = _.find(this.pending, {tid: tid});
+        var transactionObj = find(this.pending, {tid: tid});
         transactionObj.onUpdate(data);
     };
 
     this.remove = function (tid) {
-        _.remove(this.pending, {tid: tid});
+        remove(this.pending, {tid: tid});
     };
 }
 

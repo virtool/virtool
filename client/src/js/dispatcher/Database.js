@@ -68,7 +68,6 @@ function Database(definitions, dispatcher) {
 
                             if (!collection.retain) {
                                 collection.clear();
-                                console.log("clear");
                             }
                         });
                     };

@@ -1,5 +1,5 @@
 var React = require('react');
-var SampleController = require("./Controller.jsx");
+var SampleController = require("./Manage/Controller.jsx");
 
 var ManageSamples = React.createClass({
 

@@ -1,63 +1,48 @@
-import React from 'react';
-import Dropzone from 'react-dropzone';
+import React from "react";
+import Numeral from "numeral";
+import { Row, Col, ProgressBar, ListGroupItem } from "react-bootstrap";
 
-var Flex = require('virtool/js/components/Base/Flex.jsx');
-var Icon = require('virtool/js/components/Base/Icon.jsx');
-var Button = require('virtool/js/components/Base/PushButton.jsx');
+import Icon from "virtool/js/components/Base/Icon.jsx";
+import ByteSize from "virtool/js/components/Base/ByteSize.jsx";
+import RelativeTime from "virtool/js/components/Base/RelativeTime.jsx";
 
-var ReadFiles = React.createClass({
 
-    propTypes: {
-        files: React.PropTypes.arrayOf(React.PropTypes.object)
-    },
+export default class ReadFile extends React.Component {
 
-    getDefaultProps: function () {
-        return {
-            ready: true
-        }
-    },
+    static propTypes = {
+        _id: React.PropTypes.string.isRequired,
+        name: React.PropTypes.string.isRequired,
+        size_now: React.PropTypes.number.isRequired,
+        size_end: React.PropTypes.number.isRequired
+    }
 
-    render: function () {
+    shouldComponentUpdate () {
+        return !this.props.ready;
+    }
 
-        const fileComponents = this.props.files.map((file) => {
-            return <p>{file.name}</p>
-        });
-
-        const dropZoneStyle = {
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-
-            height: "34px",
-            width: "100%",
-            border: "1px solid #cccccc"
-        };
-
+    render () {
         return (
-            <div>
-                <Flex>
-                    <Flex.Item grow={1}>
-                        <Dropzone style={dropZoneStyle}>
-                            <Flex justifyContent="center" alignItems="center">
-                                <Flex.Item>
-                                    Drag here to upload
-                                </Flex.Item>
-                            </Flex>
-                        </Dropzone>
-                    </Flex.Item>
-
-                    <Flex.Item grow={0} pad={5}>
-                        <Button>
-                            <Icon name="folder-open" />
-                        </Button>
-                    </Flex.Item>
-                </Flex>
-
-                {fileComponents}
-            </div>
+            <ListGroupItem className="spaced">
+                <ProgressBar
+                    className="progress-small"
+                    bsStyle={this.props.ready ? null: "success"}
+                    now={this.props.created ? this.props.size_now / this.props.size_end * 100: 0}
+                />
+                <Row>
+                    <Col md={5}>
+                        <Icon name="file" /> {this.props.name}
+                    </Col>
+                    <Col md={5}>
+                        Added <RelativeTime time={this.props.timestamp} />
+                    </Col>
+                    <Col md={2}>
+                        <span className="pull-right">
+                            {Numeral(this.props.size_now).format("0.0 b")}
+                        </span>
+                    </Col>
+                </Row>
+            </ListGroupItem>
         );
     }
 
-});
-
-module.exports = ReadFiles;
+}
