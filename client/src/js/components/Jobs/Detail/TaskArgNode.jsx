@@ -11,9 +11,11 @@
 
 'use strict';
 
-var React = require('react');
-var Badge = require('react-bootstrap/lib/Badge');
-var Icon = require('virtool/js/components/Base/Icon.jsx');
+
+import React from "react";
+import { transform, size } from "lodash";
+
+import Icon from 'virtool/js/components/Base/Icon.jsx';
 
 /**
  * A task arg node displaying a string or number (not expandable). Renders with a bullet point, key, and value.
@@ -69,7 +71,7 @@ var ExpandableNode = React.createClass({
                     return <li key={index}><span className='fixed-width'>•</span> {point}</li>;
                 });
             } else {
-                nodeComponents = _.transform(this.props.nodeData, function (result, value, key) {
+                nodeComponents = transform(this.props.nodeData, function (result, value, key) {
                     result.push(<TaskArgNode key={key + '-' + value} nodeKey={key} nodeData={value} />);
                 }, []);
             }
@@ -88,7 +90,7 @@ var ExpandableNode = React.createClass({
 
         return (
             <li className='pointer' onClick={this.handleClick}>
-                {caret} {this.props.nodeKey} <small>({_.size(this.props.nodeData)})</small>
+                {caret} {this.props.nodeKey} <small>({size(this.props.nodeData)})</small>
                 {expandedContent}
             </li>
         );

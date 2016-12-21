@@ -46,8 +46,6 @@ var ReadFiles = React.createClass({
 
         let uploadingList;
 
-        console.log(uploadingFiles);
-
         if (uploadingFiles.length > 0) {
             const uploadingHeader = (
                 <span>

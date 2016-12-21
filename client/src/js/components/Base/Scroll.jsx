@@ -11,11 +11,11 @@
 
 'use strict';
 
-var _ = require('lodash');
-var Ps = require('perfect-scrollbar');
-var React = require('react');
+import React from "react";
+import ReactDOM from "react-dom";
+import { pick, merge } from "lodash";
 
-var ReactDOM = require('react-dom');
+var Ps = require('perfect-scrollbar');
 
 var Scroll = React.createClass({
 
@@ -37,7 +37,7 @@ var Scroll = React.createClass({
     },
 
     componentDidMount: function () {
-        Ps.initialize(ReactDOM.findDOMNode(this.refs.container), _.pick(this.props, [
+        Ps.initialize(ReactDOM.findDOMNode(this.refs.container), pick(this.props, [
             "wheelSpeed",
             "wheelPropagation",
             "minScrollbarLength"
@@ -60,7 +60,7 @@ var Scroll = React.createClass({
         };
 
         if (this.props.style) {
-            _.merge(style, this.props.style);
+            merge(style, this.props.style);
         }
 
         return (

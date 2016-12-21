@@ -9,13 +9,12 @@
  * @exports Modal
  */
 
-'use strict';
+"use strict";
 
-var _ = require("lodash");
-var React = require('react');
-var ReactDOM = require('react-dom');
-var Modal = require('react-bootstrap/lib/Modal');
-var ProgressBar = require('react-bootstrap/lib/ProgressBar');
+import React from "react";
+import ReactDOM from "react-dom";
+import { round } from "lodash";
+import { Modal, ProgressBar } from "react-bootstrap";
 
 /**
  * A react-bootstrap button that does not retain focus when clicked.
@@ -86,7 +85,7 @@ Modal.Progress = React.createClass({
     },
 
     move: function () {
-        var fill = this.state.fill += _.round(this.props.step * Math.random());
+        var fill = this.state.fill += round(this.props.step * Math.random());
 
         if (fill >= 0.8) {
             this.stop();

@@ -9,16 +9,17 @@
  * @exports JobDetail
  */
 
-'use strict';
+"use strict";
 
-var React = require('react');
-var Modal = require('react-bootstrap/lib/Modal');
+import React from "react";
+import { last } from "lodash";
+import { Modal } from "react-bootstrap";
 
-var ProgressTable = require('./ProgressTable.jsx');
-var JobLog = require('./Log.jsx');
-var General = require('./General.jsx');
-var Error = require('./Error.jsx');
-var Footer = require('./Footer.jsx');
+import ProgressTable from "./ProgressTable.jsx";
+import JobLog from "./Log.jsx";
+import General from "./General.jsx";
+import Error from "./Error.jsx";
+import Footer from "./Footer.jsx";
 
 /**
  * A component that contains modal content that describes a Virtool job. It contains general information, a status log,
@@ -32,7 +33,7 @@ var JobDetail = React.createClass({
 
         // The error will be included in the last status update of a failed job. If undefined, no error message will be
         // displayed.
-        var error = _.last(data.status).error;
+        var error = last(data.status).error;
 
         return (
             <div>

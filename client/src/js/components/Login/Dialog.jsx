@@ -1,12 +1,13 @@
-var React = require('react');
-var Alert = require('react-bootstrap/lib/Alert');
+import React from "react";
+import { assign } from "lodash";
+import { Alert } from "react-bootstrap";
 
-var LoginForm = require('./Login.jsx');
-var ChangeForm = require('./Change.jsx');
+import LoginForm from './Login.jsx';
+import ChangeForm from './Change.jsx';
 
-var Icon = require('virtool/js/components/Base/Icon.jsx');
-var Flex = require('virtool/js/components/Base/Flex.jsx');
-var PushButton = require('virtool/js/components/Base/PushButton.jsx')
+import Icon from 'virtool/js/components/Base/Icon.jsx';
+import Flex from 'virtool/js/components/Base/Flex.jsx';
+import PushButton from 'virtool/js/components/Base/PushButton.jsx'
 
 var LoginDialog = React.createClass({
 
@@ -96,13 +97,13 @@ var LoginDialog = React.createClass({
                 needsReset: true
             });
         } else {
-            this.replaceState(_.assign(this.getInitialState(), {loginFailed: true}));
+            this.replaceState(assign(this.getInitialState(), {loginFailed: true}));
         }
     },
 
     render: function () {
 
-        var sharedProps = _.assign({
+        var sharedProps = assign({
             login: this.login,
             reset: this.reset,
             onChange: this.handleChange

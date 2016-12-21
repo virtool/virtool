@@ -11,13 +11,12 @@
 
 'use strict';
 
-var _ = require('lodash');
-var React = require('react');
+import React from "react";
+import { sortBy } from "lodash";
 var Progress = require('rc-progress').Circle;
 
-var Flex = require('virtool/js/components/Base/Flex.jsx');
-var Icon = require('virtool/js/components/Base/Icon.jsx');
-var PushListGroupItem = require('virtool/js/components/Base/PushListGroupItem.jsx');
+import Flex from 'virtool/js/components/Base/Flex.jsx';
+import ListGroupItem from 'virtool/js/components/Base/PushListGroupItem.jsx';
 
 /**
  * A component that serves as an document row in the hosts table.
@@ -67,7 +66,7 @@ var HostEntry = React.createClass({
      * @func
      */
     handleClick: function () {
-        this.props.showModal(_.pick(this.props, ['_id']));
+        this.props.showModal(pick(this.props, ['_id']));
     },
 
     render: function () {
@@ -90,14 +89,14 @@ var HostEntry = React.createClass({
         }
 
         return (
-            <PushListGroupItem onClick={this.handleClick} disabled={!this.props.added}>
+            <ListGroupItem onClick={this.handleClick} disabled={!this.props.added}>
                 <Flex>
                     <Flex.Item grow={1}>
                         {this.props._id}
                     </Flex.Item>
                     {progressIcon}
                 </Flex>
-            </PushListGroupItem>
+            </ListGroupItem>
         );
     }
 });

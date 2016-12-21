@@ -11,13 +11,11 @@
 
 'use strict';
 
-var React = require('react');
-var ListGroup = require('react-bootstrap/lib/ListGroup');
-var ListGroupItem = require('react-bootstrap/lib/ListGroupItem');
-var Panel = require('react-bootstrap/lib/Panel');
-
-var Icon = require('virtool/js/components/Base/Icon.jsx');
-var Entry = require('./Entry.jsx');
+import React from "react";
+import { pick, sortBy } from "lodash";
+import { Panel, ListGroup, ListGroupItem } from "react-bootstrap";
+import Icon from 'virtool/js/components/Base/Icon.jsx';
+import Entry from './Entry.jsx';
 
 /**
  * A table describing all available and importing host references.
@@ -28,7 +26,7 @@ var HostsTable = React.createClass({
 
     getInitialState: function () {
         return {
-            documents: _.sortBy(dispatcher.db.hosts.find(), '_id'),
+            documents: sortBy(dispatcher.db.hosts.find(), '_id'),
             detailTarget: null
         }
     },
@@ -58,7 +56,7 @@ var HostsTable = React.createClass({
      * @func
      */
     update: function () {
-        this.setState({documents: _.sortBy(dispatcher.db.hosts.find(), '_id')});
+        this.setState({documents: sortBy(dispatcher.db.hosts.find(), '_id')});
     },
 
     render: function () {

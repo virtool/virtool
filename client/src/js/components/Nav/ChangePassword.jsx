@@ -11,9 +11,9 @@
 
 'use strict';
 
-var React = require('react');
-var Modal = require('react-bootstrap/lib/Modal');
-var ButtonToolbar = require('react-bootstrap/lib/ButtonToolbar');
+import React from "react";
+import { cloneDeep, assign } from "lodash";
+import { Modal, ButtonToolbar } from 'react-bootstrap';
 
 var Icon = require('virtool/js/components/Base/Icon.jsx');
 var Input = require('virtool/js/components/Base/Input.jsx');

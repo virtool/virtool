@@ -9,20 +9,16 @@
  * @exports JobsToolbar
  */
 
-'use strict';
+"use strict";
 
-var _ = require('lodash');
-var React = require('react');
-var ReactDOM = require('react-dom');
-var InputGroup = require('react-bootstrap/lib/InputGroup');
-var FormGroup = require('react-bootstrap/lib/FormGroup');
-var FormControl = require('react-bootstrap/lib/FormControl');
-var Dropdown = require('react-bootstrap/lib/Dropdown');
-var MenuItem = require('react-bootstrap/lib/MenuItem');
+import React from "react";
+import ReactDOM from "react-dom";
+import { map } from "lodash";
+import { InputGroup, FormGroup, FormControl, Dropdown, MenuItem } from "react-bootstrap";
 
-var Icon = require('virtool/js/components/Base/Icon.jsx');
-var Flex = require('virtool/js/components/Base/Flex.jsx');
-var PushButton = require('virtool/js/components/Base/PushButton.jsx');
+import Icon from "virtool/js/components/Base/Icon.jsx";
+import Flex from "virtool/js/components/Base/Flex.jsx";
+import PushButton from "virtool/js/components/Base/PushButton.jsx";
 
 /**
  * A form-based component used to filter the documents presented in JobsTable component.
@@ -33,8 +29,8 @@ var JobsToolbar = React.createClass({
 
     getInitialState: function () {
         return {
-            task: '',
-            username: '',
+            task: "",
+            username: "",
             pendingRemove: false
         };
     },
@@ -49,13 +45,13 @@ var JobsToolbar = React.createClass({
         var toRemove;
 
         if (eventKey === "removeComplete") {
-            toRemove = _.map(dispatcher.db.jobs.find({
+            toRemove = map(dispatcher.db.jobs.find({
                 state: "complete"
             }), "_id");
         }
 
         if (eventKey === "removeFailed") {
-            toRemove = _.map(dispatcher.db.jobs.find({$or: [
+            toRemove = map(dispatcher.db.jobs.find({$or: [
                 {state: "error"},
                 {state: "cancelled"}
             ]}), "_id");
@@ -67,7 +63,7 @@ var JobsToolbar = React.createClass({
     },
 
     clear: function () {
-        var toRemove = _.map(dispatcher.db.jobs.find({$or: [
+        var toRemove = map(dispatcher.db.jobs.find({$or: [
             {state: "complete"},
             {state: "error"},
             {state: "cancelled"}

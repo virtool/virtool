@@ -9,18 +9,10 @@
  * @exports AddHost
  */
 
-var React = require('react');
-var Numeral = require('numeral');
-
-var Row = require('react-bootstrap/lib/Row');
-var Col = require('react-bootstrap/lib/Col');
-var Modal = require('react-bootstrap/lib/Modal');
-var ListGroup = require('react-bootstrap/lib/ListGroup');
-var ListGroupItem = require('react-bootstrap/lib/ListGroupItem');
-var Button = require('react-bootstrap/lib/Button');
-
-var Icon = require('virtool/js/components/Base/Icon.jsx');
-var Input = require('virtool/js/components/Base/Input.jsx');
+import React from 'react';
+import { Modal, Button } from "react-bootstrap";
+import Icon from 'virtool/js/components/Base/Icon.jsx';
+import Input from 'virtool/js/components/Base/Input.jsx';
 
 /**
  * A component based on React-Bootstrap Modal that presents a form used to add a new host from a FASTA file.

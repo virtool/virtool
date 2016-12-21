@@ -11,10 +11,10 @@
 
 'use strict';
 
-var CX = require('classnames');
-var React = require('react');
-var Tooltip = require('react-bootstrap/lib/Tooltip');
-var OverlayTrigger = require('react-bootstrap/lib/OverlayTrigger');
+import CX from "classnames";
+import React from "react";
+import { assign } from "lodash";
+import { Tooltip, OverlayTrigger } from "react-bootstrap";
 
 /**
  * Wrapper an IcoMoon icon in an easy React interface.
@@ -62,7 +62,7 @@ var Icon = React.createClass({
             'fixed-width': this.props.fixedWidth
         };
 
-        var style = _.assign(this.props.pad ? {marginLeft: '3px'}: {}, this.props.style);
+        var style = assign(this.props.pad ? {marginLeft: '3px'}: {}, this.props.style);
 
         // Should the icon be a spinner icon or the icon name passed in props?
         classDefinition[this.props.pending ? 'i-spinner spinner': ('i-' + this.props.name)] = true;

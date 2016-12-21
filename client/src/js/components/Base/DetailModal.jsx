@@ -11,11 +11,9 @@
 
 'use strict';
 
-var React = require("react");
-var Button = require("react-bootstrap/lib/Button");
-var ButtonToolbar = require("react-bootstrap/lib/ButtonToolbar");
+import React from "react";
+import { cloneDeep } from "lodash";
 
-var Icon = require('virtool/js/components/Base/Icon.jsx');
 var Pulse = require('virtool/js/components/Base/Pulse.jsx');
 var Modal = require('virtool/js/components/Base/Modal.jsx');
 
@@ -106,7 +104,7 @@ var DetailModal = React.createClass({
             modalContent = (
                 <ContentComponent
                     key='main'
-                    detail={_.cloneDeep(this.state.data)}
+                    detail={cloneDeep(this.state.data)}
                     updateStyle={this.handleResize}
                     {...this.props}
                 />

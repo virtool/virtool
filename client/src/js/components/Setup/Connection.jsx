@@ -70,8 +70,6 @@ var SetupConnection = React.createClass({
             var args = _.assign({operation: 'connect'}, this.state);
             
             var callback = function (data) {
-                console.log(data);
-
                 this.setState({attempted: true, pending: false}, function () {
                     if (data.names) {
                         this.props.gotConnection({

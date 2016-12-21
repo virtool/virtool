@@ -11,8 +11,9 @@
 
 'use strict';
 
-var React = require('react');
-var ListGroupItem = require('react-bootstrap/lib/ListGroupItem');
+import React from "react";
+import { pick } from "lodash";
+import { ListGroupItem } from "react-bootstrap";
 
 /**
  * An extension of the React-Bootstrap ListGroupItem component, except it doesn't gain focus when clicked.
@@ -40,7 +41,7 @@ var PushListGroupItem = React.createClass({
 
     render: function () {
 
-        var props = _.pick(this.props, [
+        var props = pick(this.props, [
             "active",
             "style",
             "className",

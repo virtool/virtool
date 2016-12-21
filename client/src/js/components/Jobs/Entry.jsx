@@ -11,16 +11,13 @@
 
 'use strict';
 
-var _ = require('lodash');
-var React = require('react');
-var Row = require('react-bootstrap/lib/Row');
-var Col = require('react-bootstrap/lib/Col');
-var ProgressBar = require('react-bootstrap/lib/ProgressBar');
+import React from "react";
+import { capitalize, startCase } from "lodash";
+import { Row, Col, ProgressBar } from "react-bootstrap";
 
-var Icon = require('virtool/js/components/Base/Icon.jsx');
-var Flex = require('virtool/js/components/Base/Flex.jsx');
-var RelativeTime = require('virtool/js/components/Base/RelativeTime.jsx');
-var ListGroupItem = require('virtool/js/components/Base/PushListGroupItem.jsx');
+import Icon from 'virtool/js/components/Base/Icon.jsx';
+import RelativeTime from 'virtool/js/components/Base/RelativeTime.jsx';
+import ListGroupItem from 'virtool/js/components/Base/PushListGroupItem.jsx';
 
 /**
  * A form-based component used to filter the documents presented in JobsTable component.
@@ -61,7 +58,7 @@ var JobEntry = React.createClass({
 
         var iconArea = (
             <strong className="pull-right">
-                {_.capitalize(this.props.state)}
+                {capitalize(this.props.state)}
             </strong>
         );
 
@@ -123,7 +120,7 @@ var JobEntry = React.createClass({
                 <h5 style={{marginTop: "15px", marginBottom: "5px"}}>
                     <Row>
                         <Col md={4}>
-                            <strong>{_.startCase(this.props.task)}</strong>
+                            <strong>{startCase(this.props.task)}</strong>
                         </Col>
                         <Col md={5}>
                              Started <RelativeTime time={this.props.added} /> by {this.props.username}

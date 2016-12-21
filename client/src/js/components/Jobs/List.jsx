@@ -11,16 +11,16 @@
 
 'use strict';
 
-var _ = require("lodash");
-var React = require('react');
-var FlipMove = require('react-flip-move');
-var ListGroupItem = require('react-bootstrap/lib/ListGroupItem');
+import React from "react";
+import { isEqual } from "lodash";
+import { ListGroupItem } from "react-bootstrap";
+import FlipMove from 'react-flip-move';
 
-var JobEntry = require('./Entry.jsx');
-var JobDetail = require('./Detail/Detail.jsx');
+import JobEntry from './Entry.jsx';
+import JobDetail from './Detail/Detail.jsx';
 
-var Icon = require('virtool/js/components/Base/Icon.jsx');
-var DetailModal = require('virtool/js/components/Base/DetailModal.jsx');
+import Icon from 'virtool/js/components/Base/Icon.jsx';
+import DetailModal from 'virtool/js/components/Base/DetailModal.jsx';
 
 /**
  * A React component that is a simple composition of JobsTable. Applies a baseFilter that includes only active jobs.
@@ -36,7 +36,7 @@ var JobList = React.createClass({
     },
 
     shouldComponentUpdate: function (nextProps) {
-        return !_.isEqual(this.props.documents, nextProps.documents) || this.props.route !== nextProps.route;
+        return !isEqual(this.props.documents, nextProps.documents) || this.props.route !== nextProps.route;
     },
 
     componentWillUnmount: function () {

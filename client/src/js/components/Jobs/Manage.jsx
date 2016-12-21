@@ -11,12 +11,9 @@
 
 'use strict';
 
-var React = require('react');
-
-var JobList = require("./List.jsx");
-var JobToolbar = require('./Toolbar.jsx');
-
-var Icon = require('virtool/js/components/Base/Icon.jsx');
+import React from 'react';
+import JobList from "./List.jsx";
+import JobToolbar from './Toolbar.jsx';
 
 var progressSortFunction = function (a, b) {
 

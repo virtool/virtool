@@ -9,15 +9,15 @@
  * @exports TaskArgs
  */
 
-'use strict';
+"use strict";
 
-var _ = require('lodash');
-var React = require('react');
+import React from "react";
+import { transform } from "lodash";
 
-var TaskArgNode = require('./TaskArgNode.jsx');
+import TaskArgNode from "./TaskArgNode.jsx";
 
 /**
- * A component that renders a job's task args as a human-readable nested list.
+ * A component that renders a job"s task args as a human-readable nested list.
  */
 var TaskArgs = React.createClass({
 
@@ -31,13 +31,13 @@ var TaskArgs = React.createClass({
 
     render: function () {
         // Render the first level nodes of the task args object.
-        var nodeComponents = _.transform(this.props.taskArgs, function (result, value, key) {
-            result.push(<TaskArgNode key={value + '-' + key} nodeKey={key} nodeData={value} />);
+        var nodeComponents = transform(this.props.taskArgs, function (result, value, key) {
+            result.push(<TaskArgNode key={value + "-" + key} nodeKey={key} nodeData={value} />);
         }, []);
 
         // The first level of the list should have no left margin (vs. default 40px) and no bullets.
         var listStyle = {
-            listStyleType: 'none',
+            listStyleType: "none",
             paddingLeft: 0
         };
 

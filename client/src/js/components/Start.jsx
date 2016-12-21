@@ -14,6 +14,8 @@
 var React = require('react');
 var Cookie = require('js-cookie');
 
+import { without, assign } from "lodash";
+
 var Dispatcher = require('virtool/js/dispatcher/main.js');
 var Utils = require('virtool/js/Utils');
 var Flex = require('virtool/js/components/Base/Flex.jsx');
@@ -58,7 +60,7 @@ var Start = React.createClass({
 
             window.dispatcher = new Dispatcher(this.onDispatcherReady);
 
-            var collectionsToSync = _.without(dispatcher.db.collectionNames, "reads", "files");
+            var collectionsToSync = without(dispatcher.db.collectionNames, "reads", "files");
 
             dispatcher.on('synced', function () {
                 this.setState({
@@ -128,7 +130,7 @@ var Start = React.createClass({
     },
 
     onLogout: function (data) {
-        var newState = _.assign(this.getInitialState(), {
+        var newState = assign(this.getInitialState(), {
             checkedSetup: true,
             checkedToken: true,
             needsLogin: true,

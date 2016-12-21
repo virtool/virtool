@@ -42,14 +42,14 @@ var ReadSelector = React.createClass({
 
     getInitialState: function () {
         return {
-            reads: dispatcher.db.reads.find(),
+            files: dispatcher.db.files.find({file_type: "reads", "ready": true}),
             filter: '',
             showAll: false
         };
     },
 
     handleSelect: function (selectedId) {
-        var selected = this.props.selected.slice(0);
+        let selected = this.props.selected.slice(0);
 
         if (_.includes(selected, selectedId)) {
             _.pull(selected, selectedId);
@@ -81,21 +81,19 @@ var ReadSelector = React.createClass({
 
     componentDidMount: function () {
         // Listen for changes to the reads collection
-        dispatcher.listen('reads');
-        dispatcher.db.reads.on('change', this.update);
+        dispatcher.db.files.on('change', this.update);
     },
 
     componentWillUnmount: function () {
         // Unbind all callbacks
-        dispatcher.unlisten('reads');
-        dispatcher.db.reads.off('change', this.update);
+        dispatcher.db.files.off('change', this.update);
     },
 
     update: function () {
-        var reads = dispatcher.db.reads.find();
+        var files = dispatcher.db.files.find({file_type: "reads", "ready": true});
 
-        this.setState({reads: reads}, function () {
-            this.props.select(_.intersection(this.props.selected, _.map(reads, '_id')));
+        this.setState({files: files}, function () {
+            this.props.select(_.intersection(this.props.selected, _.map(files, '_id')));
         });
     },
 
@@ -105,39 +103,41 @@ var ReadSelector = React.createClass({
 
     render: function () {
 
-        var loweredFilter = this.state.filter.toLowerCase();
+        console.log(this.state.files);
 
-        var reads = _.clone(this.state.reads);
+        const loweredFilter = this.state.filter.toLowerCase();
+
+        let files = _.clone(this.state.files);
 
         if (!this.state.showAll) {
-            reads = _.filter(reads, function (read) {
+            files = _.filter(files, file => {
                 return (
-                    _.endsWith(read._id, '.fastq') ||
-                    _.endsWith(read._id, '.fq') ||
-                    _.endsWith(read._id, '.fastq.gz') ||
-                    _.endsWith(read._id, '.fq.gz')
+                    _.endsWith(file.name, '.fastq') ||
+                    _.endsWith(file.name, '.fq') ||
+                    _.endsWith(file.name, '.fastq.gz') ||
+                    _.endsWith(file.name, '.fq.gz')
                 );
             });
         }
 
-        var readComponents = _.sortBy(reads, '_id').map(function (read) {
-            if (read._id.toLowerCase().indexOf(loweredFilter) > -1) {
+        const fileComponents = _.sortBy(files, 'timestamp').reverse().map((file) => {
+            if (file.name.toLowerCase().indexOf(loweredFilter) > -1) {
                 return (
                     <ReadItem
-                        key={read._id}
-                        {...read}
-                        selected={_.includes(this.props.selected, read._id)}
+                        key={file._id}
+                        {...file}
+                        selected={_.includes(this.props.selected, file._id)}
                         onSelect={this.handleSelect}
                     />
                 );
             }
-        }, this);
+        });
 
-        var overlay;
+        let overlay;
 
         if (this.props.readError) {
             // Set up an overlay to display if there is an error in state.
-            var overlayProps = {
+            const overlayProps = {
                 target: this.getPanelDOMNode,
                 animation: false,
                 placement: 'top'
@@ -155,7 +155,7 @@ var ReadSelector = React.createClass({
         return (
             <div>
                 <label className='control-label'>
-                    Read Files <Label>{this.props.selected.length}/{readComponents.length} selected</Label>
+                    Read Files <Label>{this.props.selected.length}/{fileComponents.length} selected</Label>
                 </label>
 
                 <Panel ref='panel'>
@@ -182,7 +182,7 @@ var ReadSelector = React.createClass({
 
                     <Panel style={{minHeight: '420px', maxHeight: '420px', overflowY: 'scroll'}}>
                         <FlipMove typeName="div" className="list-group" fill={true}>
-                            {readComponents}
+                            {fileComponents}
                         </FlipMove>
                     </Panel>
                 </Panel>

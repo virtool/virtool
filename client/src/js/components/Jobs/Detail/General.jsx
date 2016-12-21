@@ -11,11 +11,12 @@
 
 'use strict';
 
-var _ = require('lodash');
-var React = require('react');
-var Table = require('react-bootstrap/lib/Table');
-var Icon = require('virtool/js/components/Base/Icon.jsx');
-var TaskArgs = require('./TaskArgs.jsx');
+import React from "react";
+import { startCase } from "lodash";
+import { Table } from "react-bootstrap";
+
+import TaskArgs from'./TaskArgs.jsx';
+import Icon from 'virtool/js/components/Base/Icon.jsx';
 
 /**
  * A render-only table that presents the general information about a job.
@@ -51,7 +52,7 @@ var JobDetailGeneral = React.createClass({
                     <tbody>
                         <tr>
                             <td className='col-md-4'><b>Task</b></td>
-                            <td className='col-md-8'>{_.startCase(this.props.task)}</td>
+                            <td className='col-md-8'>{startCase(this.props.task)}</td>
                         </tr>
                         {jobIdRow}
                         {jobVersionRow}

@@ -10,7 +10,8 @@ var ReadItem = React.createClass({
 
     propTypes: {
         _id: React.PropTypes.string.isRequired,
-        size: React.PropTypes.number.isRequired,
+        name: React.PropTypes.string.isRequired,
+        size_end: React.PropTypes.number.isRequired,
         onSelect: React.PropTypes.func.isRequired,
         selected: React.PropTypes.bool
     },
@@ -30,10 +31,10 @@ var ReadItem = React.createClass({
             <ListGroupItem onClick={this.handleSelect} active={this.props.selected}>
                 <Row>
                     <Col md={8}>
-                        <Icon name='file' /> {this.props._id}
+                        <Icon name='file' /> {this.props.name}
                     </Col>
                     <Col md={4}>
-                        {Numeral(this.props.size).format(' 0.0 b')}
+                        {Numeral(this.props.size_end).format(' 0.0 b')}
                     </Col>
                 </Row>
             </ListGroupItem>

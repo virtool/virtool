@@ -9,34 +9,35 @@
  * @exports ProgressEntry
  */
 
-'use strict';
+"use strict";
 
-var _ = require('lodash');
-var React = require('react');
-var Moment = require('moment');
-var Progress = require('rc-progress').Circle;
+import React from "react";
+import Moment from "moment";
+import { capitalize } from "lodash";
+
+var Progress = require("rc-progress").Circle;
 
 var ProgressEntry = React.createClass({
 
     render: function () {
-        var progress = this.props.state === 'complete' ? 100: 100 * this.props.progress;
+        var progress = this.props.state === "complete" ? 100: 100 * this.props.progress;
 
         return (
             <tr>
                 <td>
                     <span>
-                        {Moment(this.props.date).format('MMM Do YYYY - hh:mm:ss')}
+                        {Moment(this.props.date).format("MMM Do YYYY - hh:mm:ss")}
                     </span>
                 </td>
                 <td>
                     <span>
-                        {_.capitalize(this.props.state)}
+                        {capitalize(this.props.state)}
                     </span>
                 </td>
                 <td>
                     <span>
                         {this.props.stage}
-                        <div className='pull-right' style={{height: '16px', width: '16px'}}>
+                        <div className="pull-right" style={{height: "16px", width: "16px"}}>
                             <Progress
                                 percent={progress}
                                 strokeWidth={12}

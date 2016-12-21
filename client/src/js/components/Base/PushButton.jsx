@@ -11,10 +11,9 @@
 
 'use strict';
 
-var React = require('react');
-var Button = require('react-bootstrap/lib/Button');
-var Tooltip = require('react-bootstrap/lib/Tooltip');
-var OverlayTrigger = require('react-bootstrap/lib/OverlayTrigger');
+import React from "react";
+import { omit } from "lodash";
+import { Button, Tooltip, OverlayTrigger } from "react-bootstrap";
 
 /**
  * A react-bootstrap button that does not retain focus when clicked.
@@ -42,7 +41,7 @@ var PushButton = React.createClass({
     },
 
     render: function () {
-        var props = _.omit(this.props, "pullRight", "tip", "tipPlacement");
+        var props = omit(this.props, "pullRight", "tip", "tipPlacement");
 
         var button = (
             <Button

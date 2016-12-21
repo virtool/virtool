@@ -11,13 +11,12 @@
 
 'use strict';
 
-var _ = require('lodash');
-var React = require('react');
-var ButtonToolbar = require('react-bootstrap/lib/ButtonToolbar');
 
-var Icon = require('virtool/js/components/Base/Icon.jsx');
-var ConfirmFooter = require('virtool/js/components/Base/ConfirmFooter.jsx');
-var PushButton = require('virtool/js/components/Base/PushButton.jsx');
+import React from "react";
+import { last, includes, capitalize } from "lodash";
+
+import Icon from 'virtool/js/components/Base/Icon.jsx';
+import ConfirmFooter from 'virtool/js/components/Base/ConfirmFooter.jsx';
 
 /**
  * A composition of the ConfirmFooter component for the JobDetail modal.
@@ -53,7 +52,7 @@ var JobDetailFooter = React.createClass({
 
     render: function () {
 
-        var lastStatus = _.last(this.props.status);
+        var lastStatus = last(this.props.status);
 
         // True if the job's last status update has the 'complete' state.
         var isComplete = ['complete', 'error', 'cancelled'].indexOf(lastStatus.state) > -1;
@@ -74,20 +73,20 @@ var JobDetailFooter = React.createClass({
             action = 'cancel';
         }
 
-        if (isComplete && !this.props.archived && _.includes(dispatcher.user.permissions, 'archive_job')) {
+        if (isComplete && !this.props.archived && includes(dispatcher.user.permissions, 'archive_job')) {
             footerProps.buttonContent = <span><Icon name='box-add'/> Archive</span>;
             footerProps.style = 'info';
             action = 'archive';
         }
 
-        if (isComplete && this.props.archived && _.includes(dispatcher.user.permissions, 'remove_job')) {
+        if (isComplete && this.props.archived && includes(dispatcher.user.permissions, 'remove_job')) {
             footerProps.buttonContent = <span><Icon name='remove' /> Remove</span>;
             footerProps.closeOnConfirm = true;
             action = 'remove';
         }
 
         // Choose one of the three 'handle' callbacks to pass to the ConfirmFooter as a prop.
-        footerProps.callback = this['handle' + _.capitalize(action)];
+        footerProps.callback = this['handle' + capitalize(action)];
 
         // Define a message to display in the ConfirmFooter.
         footerProps.message = 'Are you sure you want to ' + action + ' this job?';

@@ -16,9 +16,7 @@ export default class ReadUploader extends React.Component {
             }).success(data => {
                 Request.post("/upload/" + data.file_id)
                     .send(file)
-                    .end(function () {
-                        console.log("done");
-                    });
+                    .end();
             });
         });
     }
