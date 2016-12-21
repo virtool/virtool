@@ -19,7 +19,6 @@ var Col = require('react-bootstrap/lib/Col');
 
 var ListGroupItem = require('virtool/js/components/Base/PushListGroupItem.jsx');
 var PushButton = require('virtool/js/components/Base/PushButton.jsx');
-var RelativeTime = require('virtool/js/components/Base/RelativeTime.jsx');
 var Icon = require('virtool/js/components/Base/Icon.jsx');
 
 /**
@@ -41,15 +40,10 @@ var HostFasta = React.createClass({
         return (
             <ListGroupItem className='disable-select' onClick={this.add}>
                 <Row>
-                    <Col sm={4}>
-                        <Icon name='file'/> {this.props._id}
+                    <Col sm={8}>
+                        <Icon name='file'/> {this.props.name}
                     </Col>
-                    <Col sm={2}>{Numeral(this.props.size).format('0.0 b')}</Col>
-                    <Col sm={6}>
-                        <span className='pull-right'>
-                            Last modified <RelativeTime time={this.props.modify} />
-                        </span>
-                    </Col>
+                    <Col sm={4}>{Numeral(this.props.size).format('0.0 b')}</Col>
                 </Row>
             </ListGroupItem>
         );

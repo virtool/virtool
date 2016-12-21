@@ -24,21 +24,19 @@ var Icon = require('virtool/js/components/Base/Icon.jsx');
 var HostFiles = React.createClass({
 
     getInitialState: function () {
-        return {documents: dispatcher.db.files.find()};
+        return {documents: dispatcher.db.files.chain().find({"file_type": "host_fasta"}).branch()};
     },
 
     componentDidMount: function () {
         // Listen for updates to the host files collection. Also tell the server to listen for changes in the files
         // directory and update the collection with any changes.
         dispatcher.db.files.on('change', this.update);
-        dispatcher.listen('files');
     },
 
     componentWillUnmount: function () {
         // Stop listening for changes to the collection and tell the server that we don't want to watch for changes to
         // the host files anymore.
         dispatcher.db.files.off('change', this.update);
-        dispatcher.unlisten('files');
     },
 
     /**
@@ -53,7 +51,7 @@ var HostFiles = React.createClass({
     render: function () {
         
         // The files documents.
-        var listComponents = this.state.documents.map(function (file) {
+        var listComponents = this.state.documents.data().map(function (file) {
             return (
                 <Fasta
                     key={file._id}
