@@ -12,7 +12,7 @@
 "use strict";
 
 import React from "react";
-import { pick, join, merge, assign } from "lodash";
+import {pick, join, merge, assign} from "lodash";
 
 var Flex = React.createClass({
 

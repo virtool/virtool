@@ -13,8 +13,8 @@
 
 import React from "react";
 import ReactDOM from "react-dom";
-import { round } from "lodash";
-import { Modal, ProgressBar } from "react-bootstrap";
+import {round} from "lodash";
+import {Modal, ProgressBar} from "react-bootstrap";
 
 /**
  * A react-bootstrap button that does not retain focus when clicked.

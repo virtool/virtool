@@ -13,8 +13,8 @@
 
 import CX from "classnames";
 import React from "react";
-import { assign } from "lodash";
-import { Tooltip, OverlayTrigger } from "react-bootstrap";
+import {assign} from "lodash";
+import {Tooltip, OverlayTrigger} from "react-bootstrap";
 
 /**
  * Wrapper an IcoMoon icon in an easy React interface.

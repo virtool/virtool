@@ -13,7 +13,7 @@
 
 import React from "react";
 import ReactDOM from "react-dom";
-import { pick, merge } from "lodash";
+import {pick, merge} from "lodash";
 
 var Ps = require('perfect-scrollbar');
 

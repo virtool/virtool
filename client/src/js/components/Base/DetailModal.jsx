@@ -12,7 +12,7 @@
 'use strict';
 
 import React from "react";
-import { cloneDeep } from "lodash";
+import {cloneDeep} from "lodash";
 
 var Pulse = require('virtool/js/components/Base/Pulse.jsx');
 var Modal = require('virtool/js/components/Base/Modal.jsx');

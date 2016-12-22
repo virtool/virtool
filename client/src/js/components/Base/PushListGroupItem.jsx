@@ -12,8 +12,8 @@
 'use strict';
 
 import React from "react";
-import { pick } from "lodash";
-import { ListGroupItem } from "react-bootstrap";
+import {pick} from "lodash";
+import {ListGroupItem} from "react-bootstrap";
 
 /**
  * An extension of the React-Bootstrap ListGroupItem component, except it doesn't gain focus when clicked.

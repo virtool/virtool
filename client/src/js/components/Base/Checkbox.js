@@ -9,10 +9,9 @@
  * @exports Checkbox
  */
 
-'use strict';
+"use strict";
 
-var CX = require("classnames");
-var React = require("react");
+import React from "react";
 
 /**
  * A checkbox component based on the Icomoon checkbox icons. Has three possible states: checked, unchecked, and partial.
@@ -22,41 +21,41 @@ var React = require("react");
  * @class
  *
  */
-var Checkbox = React.createClass({
+export default class Checkbox extends React.Component {
 
-    propTypes: {
+    constructor (props) {
+        super(props);
+    }
+
+    static propTypes = {
         checked: React.PropTypes.bool,
         partial: React.PropTypes.bool,
         onClick: React.PropTypes.func,
         pending: React.PropTypes.bool,
         pullRight: React.PropTypes.bool
-    },
+    }
 
-    getDefaultProps: function () {
-        return {
-            checked: false,
-            partial: false,
-            pullRight: false
-        };
-    },
+    static defaultProps = {
+        checked: false,
+        partial: false,
+        pullRight: false
+    }
 
-    render: function () {
+    render () {
 
-        var name = 'unchecked';
+        let name = "unchecked";
 
         if (this.props.checked) {
-            name = 'checked';
+            name = "checked";
         } else {
-            if (this.props.partial) name = 'partial';
+            if (this.props.partial) name = "partial";
         }
 
         return (
-            <span className={this.props.pullRight ? 'pull-right': null} onClick={this.props.onClick}>
-                <i className={'pointer i-checkbox-' + name} />
+            <span className={this.props.pullRight ? "pull-right": null} onClick={this.props.onClick}>
+                <i className={"pointer i-checkbox-" + name} />
             </span>
         );
     }
 
-});
-
-module.exports = Checkbox;
+}
