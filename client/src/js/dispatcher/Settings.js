@@ -6,7 +6,6 @@
  *
  * @providesModule Settings *
  */
-
 import Events from "./Events";
 
 var Settings = function () {

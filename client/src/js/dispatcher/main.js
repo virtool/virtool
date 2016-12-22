@@ -1,8 +1,8 @@
 var _ = require('lodash');
 var Bowser = require('bowser');
 
-import Events from './Events.js';
-import User from './user.js';
+import Events from "./Events.js";
+import User from "./user.js";
 
 var Settings = require('./Settings.js');
 var Database = require('./Database.js');

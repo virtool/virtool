@@ -6,8 +6,9 @@
  *
  * @providesModule Collection *
  */
+import Events from "./Events";
 
-import Events from './Events';
+import ManageSamples from 'virtool/js/components/Samples/Manage';
 
 
 function Router() {
@@ -84,7 +85,7 @@ function Router() {
             icon: 'filing',
 
             children: [
-                {key: 'manage', component: require('virtool/js/components/Samples/Manage.jsx')},
+                {key: 'manage', component: ManageSamples},
                 {key: 'files', component: require('virtool/js/components/Samples/Files.jsx')}
             ]
         },

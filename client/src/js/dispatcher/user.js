@@ -6,10 +6,9 @@
  *
  * @providesModule User
  */
-
-import { assign, omit, forIn } from 'lodash';
-import Cookie from 'js-cookie';
-import Events from './Events';
+import {assign, omit, forIn} from "lodash";
+import Cookie from "js-cookie";
+import Events from "./Events";
 
 /**
  * An object that manages all user authentication and the user profile.

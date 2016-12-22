@@ -1,4 +1,4 @@
-import { find, findIndex, remove } from "lodash";
+import {find, findIndex, remove} from "lodash";
 
 function Transaction(tid, remove) {
 
