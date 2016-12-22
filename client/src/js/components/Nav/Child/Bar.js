@@ -9,34 +9,33 @@
  * @exports SecondaryNavbar
  */
 
-'use strict';
+"use strict";
 
-var React = require('react');
-var Nav = require('react-bootstrap/lib/Nav');
-var Navbar = require('react-bootstrap/lib/Navbar');
-var NavItem = require('react-bootstrap/lib/NavItem');
-
-var ChildButton = require('./Button.jsx');
+import React from "react";
+import {isEqual} from "lodash";
+import ChildButton from "./Button";
 
 /**
  * The secondary navbar which display child routes of the active primary route.
  */
-var ChildBar = React.createClass({
+export default class ChildBar extends React.Component {
 
-    getInitialState: function () {
-        return {
+    constructor (props) {
+        super(props);
+
+        this.state = {
             activeChild: dispatcher.router.route.child,
             children: dispatcher.router.route.children
-        };
-    },
+        }
+    }
 
-    componentDidMount: function () {
-        dispatcher.router.on('change', this.onRouteChange);
-    },
+    componentDidMount () {
+        dispatcher.router.on("change", this.onRouteChange);
+    }
 
-    componentWillUnmount: function () {
-        dispatcher.router.off('change', this.onRouteChange);
-    },
+    componentWillUnmount () {
+        dispatcher.router.off("change", this.onRouteChange);
+    }
 
     /**
      * Changes the child route documents when the route changes. Called in response to a change event in the router.
@@ -44,19 +43,17 @@ var ChildBar = React.createClass({
      * @param route
      * @func
      */
-    onRouteChange: function (route) {
-        
-
+    onRouteChange = (route) => {
         this.setState({
             activeChild: route.child,
             children: route.children
         });
-    },
+    }
 
-    render: function () {
+    render () {
 
         // Each button component shows up in the secondary navbar.
-        var buttonComponents = this.state.children.map(function (child) {
+        const buttonComponents = this.state.children.map((child) => {
             return (
                 <ChildButton
                     {...child}
@@ -64,14 +61,12 @@ var ChildBar = React.createClass({
                     active={child.key === this.state.activeChild}
                 />
             );
-        }, this);
+        });
 
         return (
-            <ol className='subnav'>
+            <ol className="subnav">
                 {buttonComponents}
             </ol>
         );
     }
-});
-
-module.exports = ChildBar;
+}

@@ -9,13 +9,12 @@
  * @exports Bar
  */
 
-'use strict';
+"use strict";
 
-var React = require('react');
-
-var ParentBar = require('./Parent/Bar.jsx');
-var ChildBar = require('./Child/Bar.jsx');
-var LostConnection = require('./LostConnection.jsx');
+import React from "react";
+import ChildBar from "./Child/Bar";
+import ParentBar from "./Parent/Bar";
+import LostConnection from "./LostConnection.jsx";
 
 /**
  * A container component that renders the primary and secondary navigation bars.
@@ -27,11 +26,11 @@ var Bar = React.createClass({
     },
 
     componentDidMount: function () {
-        dispatcher.on('closed', this.showLostConnection);
+        dispatcher.on("closed", this.showLostConnection);
     },
 
     componentWillUnmount: function () {
-        dispatcher.off('closed', this.showLostConnection);
+        dispatcher.off("closed", this.showLostConnection);
     },
 
     showLostConnection: function () {

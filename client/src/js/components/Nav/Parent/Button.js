@@ -9,23 +9,22 @@
  * @exports PrimaryButton
  */
 
-'use strict';
+"use strict";
 
-var _ = require('lodash');
-var React = require('react');
-var NavItem = require('react-bootstrap/lib/NavItem');
-
-var Flex = require('virtool/js/components/Base/Flex.jsx');
-var Icon = require('virtool/js/components/Base/Icon.jsx');
+import React from "react";
+import {capitalize} from "lodash";
+import {NavItem} from "react-bootstrap";
+import Flex from "virtool/js/components/Base/Flex.jsx";
+import Icon from "virtool/js/components/Base/Icon.jsx";
 
 /**
  * A component that renders to a primary link in the primary navbar.
  */
-var PrimaryButton = React.createClass({
+export default class ParentButton extends React.Component {
 
-    shouldComponentUpdate: function (nextProps) {
+    shouldComponentUpdate (nextProps) {
         return nextProps.active !== this.props.active;
-    },
+    }
 
     /**
      * Callback triggered by clicking on the primary button. Changes the primary route in the router to that
@@ -33,25 +32,24 @@ var PrimaryButton = React.createClass({
      *
      * @param event {object} - the click event.
      */
-    handleClick: function (event) {
+    handleClick = (event) => {
         event.preventDefault();
         dispatcher.router.setParent(this.props.parentKey);
-    },
+    }
 
-    render: function () {
+    render () {
         return (
-            <NavItem onClick={this.handleClick} className='pointer' active={this.props.active}>
+            <NavItem onClick={this.handleClick} className="pointer" active={this.props.active}>
                 <Flex>
                     <Flex.Item>
                         <Icon name={this.props.iconName} />
                     </Flex.Item>
                     <Flex.Item pad={5}>
-                        {this.props.label || _.capitalize(this.props.parentKey)}
+                        {this.props.label || capitalize(this.props.parentKey)}
                     </Flex.Item>
                 </Flex>
             </NavItem>
         );
     }
-});
+}
 
-module.exports = PrimaryButton;

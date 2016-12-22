@@ -11,51 +11,47 @@
 
 'use strict';
 
-var React = require('react');
-
-var Nav = require('react-bootstrap/lib/Nav');
-var Navbar = require('react-bootstrap/lib/Navbar');
-var NavDropdown = require('react-bootstrap/lib/NavDropdown');
-var MenuItem = require('react-bootstrap/lib/MenuItem');
-
-var ParentButton = require('./Button.jsx');
-var ChangePassword = require('../ChangePassword.jsx');
-var UserSettings = require('../UserSettings.jsx');
-
-var Icon = require('virtool/js/components/Base/Icon.jsx');
+import React from "react";
+import ParentButton from "./Button";
+import {Nav, Navbar, NavDropdown, MenuItem} from "react-bootstrap";
+import ChangePassword from "../ChangePassword.jsx";
+import UserSettings from "../UserSettings.jsx";
+import Icon from "virtool/js/components/Base/Icon.jsx";
 
 /**
  * The primary navbar component.
  */
-var ParentBar = React.createClass({
+export default class ParentBar extends React.Component {
 
-    getInitialState: function () {
-        return {
+    constructor (props) {
+        super(props);
+
+        this.state = {
             activeParent: dispatcher.router.route.parent,
             modalMode: null,
             showUserSettings: false
         };
-    },
+    }
 
-    componentDidMount: function () {
+    componentDidMount () {
         dispatcher.router.on('change', this.onRouteChange);
-    },
+    }
 
-    componentWillUnmount: function () {
+    componentWillUnmount () {
         dispatcher.router.off('change', this.onRouteChange);
-    },
+    }
 
-    onRouteChange: function (route) {
+    onRouteChange = (route) => {
         this.setState({
             activeParent: route.parent
         });
-    },
+    }
 
-    hideModal: function () {
+    hideModal = () => {
         this.setState({modalMode: null});
-    },
+    }
 
-    handleDropdownSelect: function (eventKey) {
+    handleDropdownSelect = (eventKey) => {
         if (eventKey === "password" || eventKey === "settings") {
             this.setState({
                 modalMode: eventKey
@@ -65,13 +61,13 @@ var ParentBar = React.createClass({
         if (eventKey === "logout") {
             dispatcher.user.logout();
         }
-    },
+    }
 
-    render: function () {
+    render () {
 
         // Generate a primary navItem for each primary route (home, jobs, samples, viruses, hosts, options). Only show
         // the options navItem if the user is an administrator.
-        var navItemComponents = dispatcher.router.structure.map(function (parent) {
+        const navItemComponents = dispatcher.router.structure.map((parent) => {
             if (parent.key !== 'options' || dispatcher.user.permissions.modify_options) {
                 return (
                     <ParentButton
@@ -83,15 +79,14 @@ var ParentBar = React.createClass({
                     />
                 );
             }
-        }, this);
+        });
 
-        var dropDown;
+        let dropDown;
 
         // If the user has logged in, show the user menu dropdown.
         if (dispatcher.user.name) {
-
             // The title component for the user drop down menu.
-            var userTitle = (
+            const userTitle = (
                 <span>
                     <Icon name='user' /> {dispatcher.user.name}
                 </span>
@@ -112,7 +107,7 @@ var ParentBar = React.createClass({
             );
         }
 
-        var userSettings;
+        let userSettings;
 
         if (dispatcher.user.name) {
             userSettings = (
@@ -154,6 +149,4 @@ var ParentBar = React.createClass({
             </Navbar>
         );
     }
-});
-
-module.exports = ParentBar;
+}
