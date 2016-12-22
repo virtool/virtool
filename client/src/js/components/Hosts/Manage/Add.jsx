@@ -8,16 +8,15 @@
  *
  * @exports AddHost
  */
-
-import React from 'react';
-import { Modal, Button } from "react-bootstrap";
-import Icon from 'virtool/js/components/Base/Icon.jsx';
-import Input from 'virtool/js/components/Base/Input.jsx';
+import React from "react";
+import {Modal, Button} from "react-bootstrap";
+import Icon from "virtool/js/components/Base/Icon.jsx";
+import Input from "virtool/js/components/Base/Input.jsx";
 
 /**
  * A component based on React-Bootstrap Modal that presents a form used to add a new host from a FASTA file.
  */
-var AddHost = React.createClass({
+export const AddHost = React.createClass({
 
     propTypes: {
         show: React.PropTypes.bool.isRequired,
@@ -112,7 +111,7 @@ var AddHost = React.createClass({
                     <Modal.Footer className='modal-footer'>
                         <Button onClick={this.props.onHide}>Cancel</Button>
                         <Button type='submit' onClick={this.submit} bsStyle='primary' disabled={!submittable}>
-                            <Icon name='plus-square' /> Add
+                            <Icon name='plus-square'/> Add
                         </Button>
                     </Modal.Footer>
                 </form>
@@ -120,7 +119,8 @@ var AddHost = React.createClass({
         }
 
         return (
-            <Modal show={this.props.show} onHide={this.props.onHide} onEnter={this.modalEnter} onExited={this.modalExited}>
+            <Modal show={this.props.show} onHide={this.props.onHide} onEnter={this.modalEnter}
+                   onExited={this.modalExited}>
                 {content}
             </Modal>
         )

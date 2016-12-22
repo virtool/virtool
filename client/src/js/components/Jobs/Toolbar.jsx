@@ -13,9 +13,8 @@
 
 import React from "react";
 import ReactDOM from "react-dom";
-import { map } from "lodash";
-import { InputGroup, FormGroup, FormControl, Dropdown, MenuItem } from "react-bootstrap";
-
+import {map} from "lodash";
+import {InputGroup, FormGroup, FormControl, Dropdown, MenuItem} from "react-bootstrap";
 import Icon from "virtool/js/components/Base/Icon.jsx";
 import Flex from "virtool/js/components/Base/Flex.jsx";
 import PushButton from "virtool/js/components/Base/PushButton.jsx";

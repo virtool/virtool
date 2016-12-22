@@ -12,15 +12,13 @@
 'use strict';
 
 import React from "react";
-import { isEqual } from "lodash";
-import { ListGroupItem } from "react-bootstrap";
-import FlipMove from 'react-flip-move';
-
-import JobEntry from './Entry.jsx';
-import JobDetail from './Detail/Detail.jsx';
-
-import Icon from 'virtool/js/components/Base/Icon.jsx';
-import DetailModal from 'virtool/js/components/Base/DetailModal.jsx';
+import {isEqual} from "lodash";
+import {ListGroupItem} from "react-bootstrap";
+import FlipMove from "react-flip-move";
+import JobEntry from "./Entry.jsx";
+import JobDetail from "./Detail/Detail.jsx";
+import Icon from "virtool/js/components/Base/Icon.jsx";
+import DetailModal from "virtool/js/components/Base/DetailModal.jsx";
 
 /**
  * A React component that is a simple composition of JobsTable. Applies a baseFilter that includes only active jobs.

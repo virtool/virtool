@@ -12,9 +12,8 @@
 "use strict";
 
 import React from "react";
-import { last } from "lodash";
-import { Modal } from "react-bootstrap";
-
+import {last} from "lodash";
+import {Modal} from "react-bootstrap";
 import ProgressTable from "./ProgressTable.jsx";
 import JobLog from "./Log.jsx";
 import General from "./General.jsx";

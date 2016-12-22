@@ -13,9 +13,8 @@
 
 
 import React from "react";
-import { transform, size } from "lodash";
-
-import Icon from 'virtool/js/components/Base/Icon.jsx';
+import {transform, size} from "lodash";
+import Icon from "virtool/js/components/Base/Icon.jsx";
 
 /**
  * A task arg node displaying a string or number (not expandable). Renders with a bullet point, key, and value.

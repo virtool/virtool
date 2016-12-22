@@ -12,8 +12,7 @@
 "use strict";
 
 import React from "react";
-import { transform } from "lodash";
-
+import {transform} from "lodash";
 import TaskArgNode from "./TaskArgNode.jsx";
 
 /**

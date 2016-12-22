@@ -13,10 +13,9 @@
 
 
 import React from "react";
-import { last, includes, capitalize } from "lodash";
-
-import Icon from 'virtool/js/components/Base/Icon.jsx';
-import ConfirmFooter from 'virtool/js/components/Base/ConfirmFooter.jsx';
+import {last, includes, capitalize} from "lodash";
+import Icon from "virtool/js/components/Base/Icon.jsx";
+import ConfirmFooter from "virtool/js/components/Base/ConfirmFooter.jsx";
 
 /**
  * A composition of the ConfirmFooter component for the JobDetail modal.

@@ -57,7 +57,7 @@ var SamplesList = React.createClass({
 
         var pages = Paginator.calculatePages(this.props.documents, this.state.page, 18);
 
-        var sampleComponents = pages.documents.map(function (document) {
+        var sampleComponents = pages.documents.map((document) => {
             return (
                 <SampleEntry
                     key={document._id}
@@ -69,7 +69,7 @@ var SamplesList = React.createClass({
                     quickAnalyze={this.props.quickAnalyze}
                 />
             );
-        }, this);
+        });
 
         if (sampleComponents.length === 0) {
             sampleComponents = (

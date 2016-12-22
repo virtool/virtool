@@ -12,10 +12,10 @@
 'use strict';
 
 import React from "react";
-import { pick, sortBy } from "lodash";
-import { Panel, ListGroup, ListGroupItem } from "react-bootstrap";
-import Icon from 'virtool/js/components/Base/Icon.jsx';
-import Entry from './Entry.jsx';
+import {pick, sortBy} from "lodash";
+import {Panel, ListGroup, ListGroupItem} from "react-bootstrap";
+import Icon from "virtool/js/components/Base/Icon.jsx";
+import Entry from "./Entry.jsx";
 
 /**
  * A table describing all available and importing host references.

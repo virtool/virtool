@@ -1,32 +1,36 @@
-var Numeral = require('numeral');
-var React = require('react');
-var Row = require('react-bootstrap/lib/Row');
-var Col = require('react-bootstrap/lib/Col');
-var ListGroupItem = require('virtool/js/components/Base/PushListGroupItem.jsx');
+import React from "react";
+import Numeral from "numeral";
+import {Row, Col} from "react-bootstrap";
+import Icon from "virtool/js/components/Base/Icon.jsx";
+import ListGroupItem from "virtool/js/components/Base/PushListGroupItem.jsx";
 
-var Icon = require('virtool/js/components/Base/Icon.jsx');
+export default class ReadItem extends React.Component {
 
-var ReadItem = React.createClass({
+    constructor (props) {
+        super(props);
+    }
 
-    propTypes: {
+    static defaultProps = {
+        selected: false
+    }
+
+    static propTypes = {
         _id: React.PropTypes.string.isRequired,
         name: React.PropTypes.string.isRequired,
         size_end: React.PropTypes.number.isRequired,
         onSelect: React.PropTypes.func.isRequired,
         selected: React.PropTypes.bool
-    },
+    }
 
-    getDefaultProps: function () {
-        return {
-            selected: false
-        };
-    },
+    shouldComponentUpdate (nextProps) {
+        return nextProps.selected != this.props.selected;
+    }
 
-    handleSelect: function () {
+    handleSelect = () => {
         this.props.onSelect(this.props._id);
-    },
+    }
 
-    render: function () {
+    render () {
         return (
             <ListGroupItem onClick={this.handleSelect} active={this.props.selected}>
                 <Row>
@@ -41,6 +45,4 @@ var ReadItem = React.createClass({
         );
     }
 
-});
-
-module.exports = ReadItem;
+}

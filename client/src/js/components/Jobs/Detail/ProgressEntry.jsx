@@ -13,7 +13,7 @@
 
 import React from "react";
 import Moment from "moment";
-import { capitalize } from "lodash";
+import {capitalize} from "lodash";
 
 var Progress = require("rc-progress").Circle;
 

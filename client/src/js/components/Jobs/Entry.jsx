@@ -12,12 +12,11 @@
 'use strict';
 
 import React from "react";
-import { capitalize, startCase } from "lodash";
-import { Row, Col, ProgressBar } from "react-bootstrap";
-
-import Icon from 'virtool/js/components/Base/Icon.jsx';
-import RelativeTime from 'virtool/js/components/Base/RelativeTime.jsx';
-import ListGroupItem from 'virtool/js/components/Base/PushListGroupItem.jsx';
+import {capitalize, startCase} from "lodash";
+import {Row, Col, ProgressBar} from "react-bootstrap";
+import Icon from "virtool/js/components/Base/Icon.jsx";
+import RelativeTime from "virtool/js/components/Base/RelativeTime.jsx";
+import ListGroupItem from "virtool/js/components/Base/PushListGroupItem.jsx";
 
 /**
  * A form-based component used to filter the documents presented in JobsTable component.

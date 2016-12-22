@@ -1,9 +1,7 @@
 import React from "react";
 import Numeral from "numeral";
-import { Row, Col, ProgressBar, ListGroupItem } from "react-bootstrap";
-
+import {Row, Col, ProgressBar, ListGroupItem} from "react-bootstrap";
 import Icon from "virtool/js/components/Base/Icon.jsx";
-import ByteSize from "virtool/js/components/Base/ByteSize.jsx";
 import RelativeTime from "virtool/js/components/Base/RelativeTime.jsx";
 
 
@@ -17,7 +15,13 @@ export default class ReadFile extends React.Component {
     }
 
     shouldComponentUpdate () {
-        return !this.props.ready;
+        return !this.props.ready || this.props.size_now != this.props.size_end;
+    }
+
+    remove = () => {
+        dispatcher.db.files.request("remove_file", {
+            "file_id": this.props._id
+        });
     }
 
     render () {
@@ -32,13 +36,16 @@ export default class ReadFile extends React.Component {
                     <Col md={5}>
                         <Icon name="file" /> {this.props.name}
                     </Col>
-                    <Col md={5}>
+                    <Col md={3}>
                         Added <RelativeTime time={this.props.timestamp} />
                     </Col>
                     <Col md={2}>
                         <span className="pull-right">
                             {Numeral(this.props.size_now).format("0.0 b")}
                         </span>
+                    </Col>
+                    <Col md={2}>
+                        <Icon className="pull-right" name="remove" bsStyle="danger" onClick={this.remove} />
                     </Col>
                 </Row>
             </ListGroupItem>

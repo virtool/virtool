@@ -12,11 +12,10 @@
 'use strict';
 
 import React from "react";
-import { startCase } from "lodash";
-import { Table } from "react-bootstrap";
-
-import TaskArgs from'./TaskArgs.jsx';
-import Icon from 'virtool/js/components/Base/Icon.jsx';
+import {startCase} from "lodash";
+import {Table} from "react-bootstrap";
+import TaskArgs from "./TaskArgs.jsx";
+import Icon from "virtool/js/components/Base/Icon.jsx";
 
 /**
  * A render-only table that presents the general information about a job.

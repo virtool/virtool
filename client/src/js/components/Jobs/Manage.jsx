@@ -11,9 +11,9 @@
 
 'use strict';
 
-import React from 'react';
+import React from "react";
 import JobList from "./List.jsx";
-import JobToolbar from './Toolbar.jsx';
+import JobToolbar from "./Toolbar.jsx";
 
 var progressSortFunction = function (a, b) {
 

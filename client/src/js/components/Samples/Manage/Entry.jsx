@@ -17,11 +17,8 @@ var Col = require('react-bootstrap/lib/Col');
 var Label = require('react-bootstrap/lib/Label');
 var ProgressBar = require('react-bootstrap/lib/ProgressBar');
 
-var Icon = require('virtool/js/components/Base/Icon.jsx');
-var Flex = require('virtool/js/components/Base/Flex.jsx');
-var Pulse = require('virtool/js/components/Base/Pulse.jsx');
-var Checkbox = require('virtool/js/components/Base/Checkbox.jsx');
-var RelativeTime = require('virtool/js/components/Base/RelativeTime.jsx');
+import { Icon, Flex, Pulse, Checkbox, RelativeTime } from 'virtool/js/components/Base'
+
 var ListGroupItem = require('virtool/js/components/Base/PushListGroupItem.jsx');
 
 /**

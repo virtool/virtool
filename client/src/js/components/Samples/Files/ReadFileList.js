@@ -1,8 +1,7 @@
 import React from "react";
 import FlipMove from "react-flip-move";
-import { sortBy } from "lodash";
-import { Panel, ListGroupItem } from "react-bootstrap";
-
+import {sortBy} from "lodash";
+import {ListGroupItem} from "react-bootstrap";
 import Icon from "virtool/js/components/Base/Icon.jsx";
 import ReadFile from "./ReadFile";
 

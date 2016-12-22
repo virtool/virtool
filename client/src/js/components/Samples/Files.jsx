@@ -1,6 +1,4 @@
-import React from 'react';
-import { Badge } from 'react-bootstrap';
-
+import React from "react";
 import ReadFileList from "./Files/ReadFileList";
 import ReadUploader from "./Files/ReadUploader";
 

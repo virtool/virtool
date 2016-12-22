@@ -24,7 +24,7 @@ var Row = require('react-bootstrap/lib/Row');
 var Col = require('react-bootstrap/lib/Col');
 var Modal = require('react-bootstrap/lib/Modal');
 
-var ReadItem = require('./Read.jsx');
+import ReadItem from "./ReadItem";
 var Icon = require('virtool/js/components/Base/Icon.jsx');
 var Input = require('virtool/js/components/Base/Input.jsx');
 var PushButton = require('virtool/js/components/Base/PushButton.jsx');
@@ -46,6 +46,10 @@ var ReadSelector = React.createClass({
             filter: '',
             showAll: false
         };
+    },
+
+    shouldComponentUpdate: function (nextProps) {
+        return !_.isEqual(nextProps.selected, this.props.selected) || nextProps.readError != this.props.readError;
     },
 
     handleSelect: function (selectedId) {

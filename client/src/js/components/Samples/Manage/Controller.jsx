@@ -1,15 +1,13 @@
-var React = require('react');
-var ReactDOM = require('react-dom');
-var FlipMove = require('react-flip-move');
-var FormGroup = require('react-bootstrap/lib/FormGroup');
-var InputGroup = require('react-bootstrap/lib/InputGroup');
-var FormControl = require('react-bootstrap/lib/FormControl');
-var ButtonGroup = require('react-bootstrap/lib/ButtonGroup');
+import React from "react";
+import ReactDOM from "react-dom";
+import FlipMove from "react-flip-move";
+import {FormGroup, InputGroup, FormControl, ButtonGroup} from "react-bootstrap";
+import CreateSample from "./Create/Create";
 
 var SampleList = require("./List.jsx");
 var SampleSelector = require('./Selector.jsx');
 var SampleDetail = require('./Detail/body.jsx');
-var CreateSample = require('./Create/Create.jsx');
+
 var QuickAnalyze = require('./QuickAnalyze.jsx');
 
 var Icon = require('virtool/js/components/Base/Icon.jsx');

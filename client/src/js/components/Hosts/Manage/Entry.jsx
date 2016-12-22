@@ -12,11 +12,10 @@
 'use strict';
 
 import React from "react";
-import { sortBy } from "lodash";
+import {sortBy} from "lodash";
+import Flex from "virtool/js/components/Base/Flex.jsx";
+import ListGroupItem from "virtool/js/components/Base/PushListGroupItem.jsx";
 var Progress = require('rc-progress').Circle;
-
-import Flex from 'virtool/js/components/Base/Flex.jsx';
-import ListGroupItem from 'virtool/js/components/Base/PushListGroupItem.jsx';
 
 /**
  * A component that serves as an document row in the hosts table.

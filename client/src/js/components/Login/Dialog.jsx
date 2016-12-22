@@ -1,13 +1,11 @@
 import React from "react";
-import { assign } from "lodash";
-import { Alert } from "react-bootstrap";
-
-import LoginForm from './Login.jsx';
-import ChangeForm from './Change.jsx';
-
-import Icon from 'virtool/js/components/Base/Icon.jsx';
-import Flex from 'virtool/js/components/Base/Flex.jsx';
-import PushButton from 'virtool/js/components/Base/PushButton.jsx'
+import {assign} from "lodash";
+import {Alert} from "react-bootstrap";
+import LoginForm from "./Login.jsx";
+import ChangeForm from "./Change.jsx";
+import Icon from "virtool/js/components/Base/Icon.jsx";
+import Flex from "virtool/js/components/Base/Flex.jsx";
+import PushButton from "virtool/js/components/Base/PushButton.jsx";
 
 var LoginDialog = React.createClass({
 

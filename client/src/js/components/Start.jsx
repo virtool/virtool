@@ -14,7 +14,7 @@
 var React = require('react');
 var Cookie = require('js-cookie');
 
-import { without, assign } from "lodash";
+import {without, assign} from "lodash";
 
 var Dispatcher = require('virtool/js/dispatcher/main.js');
 var Utils = require('virtool/js/Utils');
