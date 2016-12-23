@@ -1,0 +1,18 @@
+{
+  "parser": "babel-eslint",
+
+  "extends": [
+    "eslint:recommended",
+    "plugin:react/recommended"
+  ],
+
+  "plugins": [
+    "react"
+  ],
+
+  "rules": {
+    "max-len": [1, 120, 2]
+  }
+
+
+}

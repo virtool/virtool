@@ -10,9 +10,9 @@ var config = {
     module: {
         loaders: [
             {
-                test: /(\.jsx|\.js)$/,
-                exclude: /(node_modules)/,
-                loader: 'babel-loader'
+                test: /\.js$/,
+                exclude: /node_modules/,
+                loaders: ['babel-loader', 'eslint-loader']
             },
 
             {test: /\.css$/, loader: 'style!css'},
@@ -31,6 +31,10 @@ var config = {
     output: {
         path: 'dist',
         filename: 'app.[hash].js'
+    },
+
+    eslint: {
+        configFile: "./.eslintrc"
     },
 
     plugins: [
