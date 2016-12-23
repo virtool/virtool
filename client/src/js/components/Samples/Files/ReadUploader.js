@@ -1,9 +1,7 @@
 import React from "react";
 import Dropzone from "react-dropzone";
 import Request from "superagent";
-import Flex from "virtool/js/components/Base/Flex.jsx";
-import Icon from "virtool/js/components/Base/Icon.jsx";
-import Button from "virtool/js/components/Base/PushButton.jsx";
+import { Flex, Icon, Button } from "virtool/js/components/Base";
 
 export default class ReadUploader extends React.Component {
 

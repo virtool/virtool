@@ -67,7 +67,7 @@ function Router() {
             icon: 'home',
 
             children: [
-                {key: 'welcome', component: require('virtool/js/components/Home/Welcome.jsx')}
+                {key: 'welcome', component: require('virtool/js/components/Home/Welcome')}
             ]
         },
 
@@ -76,7 +76,7 @@ function Router() {
             icon: 'briefcase',
 
             children: [
-                {key: 'manage', component: require('virtool/js/components/Jobs/Manage.jsx')}
+                {key: 'manage', component: require('virtool/js/components/Jobs/Manage')}
             ]
         },
 
@@ -86,7 +86,7 @@ function Router() {
 
             children: [
                 {key: 'manage', component: ManageSamples},
-                {key: 'files', component: require('virtool/js/components/Samples/Files.jsx')}
+                {key: 'files', component: require('virtool/js/components/Samples/Files')}
             ]
         },
 
@@ -95,10 +95,10 @@ function Router() {
             icon: 'search',
 
             children: [
-                {key: 'manage', component: require('virtool/js/components/Viruses/Manage.jsx')},
-                {key: 'history', component: require('virtool/js/components/Viruses/History.jsx')},
-                {key: 'index', component: require('virtool/js/components/Viruses/Index.jsx')},
-                {key: 'hmm', label: 'HMM', component: require('virtool/js/components/Viruses/HMM.jsx')}
+                {key: 'manage', component: require('virtool/js/components/Viruses/Manage')},
+                {key: 'history', component: require('virtool/js/components/Viruses/History')},
+                {key: 'index', component: require('virtool/js/components/Viruses/Index')},
+                {key: 'hmm', label: 'HMM', component: require('virtool/js/components/Viruses/HMM')}
             ]
         },
 
@@ -107,7 +107,7 @@ function Router() {
             icon: 'leaf',
 
             children: [
-                {key: 'manage', component: require('virtool/js/components/Hosts/Manage.jsx')}
+                {key: 'manage', component: require('virtool/js/components/Hosts/Manage')}
             ]
         },
 
@@ -116,11 +116,11 @@ function Router() {
             icon: 'wrench',
 
             children: [
-                {key: 'general', component: require('virtool/js/components/Options/General.jsx')},
-                {key: 'server', component: require('virtool/js/components/Options/Server.jsx')},
-                {key: 'data', component: require('virtool/js/components/Options/Data.jsx')},
-                {key: 'jobs', component: require('virtool/js/components/Options/Jobs.jsx')},
-                {key: 'users', component: require('virtool/js/components/Options/Users.jsx')}
+                {key: 'general', component: require('virtool/js/components/Options/General')},
+                {key: 'server', component: require('virtool/js/components/Options/Server')},
+                {key: 'data', component: require('virtool/js/components/Options/Data')},
+                {key: 'jobs', component: require('virtool/js/components/Options/Jobs')},
+                {key: 'users', component: require('virtool/js/components/Options/Users')}
             ]
         }
 

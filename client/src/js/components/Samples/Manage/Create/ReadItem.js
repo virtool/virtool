@@ -1,8 +1,8 @@
 import React from "react";
 import Numeral from "numeral";
 import {Row, Col} from "react-bootstrap";
-import Icon from "virtool/js/components/Base/Icon.jsx";
-import ListGroupItem from "virtool/js/components/Base/PushListGroupItem.jsx";
+import Icon from "virtool/js/components/Base/Icon";
+import ListGroupItem from "virtool/js/components/Base/PushListGroupItem";
 
 export default class ReadItem extends React.Component {
 

@@ -1,5 +1,5 @@
 import React from 'react';
-import SampleController from "./Manage/Controller.jsx";
+import SampleController from "./Manage/Controller";
 
 export default class ManageSamples extends React.Component {
 

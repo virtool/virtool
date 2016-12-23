@@ -14,9 +14,9 @@
 import React from "react";
 import ParentButton from "./Button";
 import {Nav, Navbar, NavDropdown, MenuItem} from "react-bootstrap";
-import ChangePassword from "../ChangePassword.jsx";
-import UserSettings from "../UserSettings.jsx";
-import Icon from "virtool/js/components/Base/Icon.jsx";
+import ChangePassword from "../ChangePassword";
+import UserSettings from "../UserSettings";
+import Icon from "virtool/js/components/Base/Icon";
 
 /**
  * The primary navbar component.

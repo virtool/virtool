@@ -2,7 +2,7 @@ import React from "react";
 import FlipMove from "react-flip-move";
 import {sortBy} from "lodash";
 import {ListGroupItem} from "react-bootstrap";
-import Icon from "virtool/js/components/Base/Icon.jsx";
+import Icon from "virtool/js/components/Base/Icon";
 import ReadFile from "./ReadFile";
 
 export default class ReadFileList extends React.Component {

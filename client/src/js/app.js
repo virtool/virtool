@@ -2,9 +2,9 @@
  * Created by igboyes on 03/03/15.
  */
 
-var React = require('react');
-var ReactDOM = require('react-dom');
-var Start = require('./components/Start.jsx');
+import React from "react";
+import ReactDOM from "react-dom";
+import Start from './components/Start';
 
 document.write(require('../css/bootstrap.css'));
 document.write(require('../css/bootstrap-toggle.css'));

@@ -1,8 +1,8 @@
 import React from "react";
 import Numeral from "numeral";
 import {Row, Col, ProgressBar, ListGroupItem} from "react-bootstrap";
-import Icon from "virtool/js/components/Base/Icon.jsx";
-import RelativeTime from "virtool/js/components/Base/RelativeTime.jsx";
+import Icon from "virtool/js/components/Base/Icon";
+import RelativeTime from "virtool/js/components/Base/RelativeTime";
 
 
 export default class ReadFile extends React.Component {

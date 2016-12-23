@@ -15,11 +15,8 @@
 import React from "react";
 import {pick, assign, capitalize} from "lodash";
 import {Row, Col, Alert} from "react-bootstrap";
-import Icon from "virtool/js/components/Base/Icon.jsx";
-import Modal from "virtool/js/components/Base/Modal.jsx";
-import Input from "virtool/js/components/Base/Input.jsx";
-import Button from "virtool/js/components/Base/PushButton.jsx";
-import ReadSelector from "./ReadSelector.jsx";
+import { Icon, Modal, Input, Button } from "virtool/js/components/Base";
+import ReadSelector from "./ReadSelector";
 
 function getInitialState () {
 

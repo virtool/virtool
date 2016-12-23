@@ -12,10 +12,9 @@
 "use strict";
 
 import React from "react";
-import {capitalize} from "lodash";
-import {NavItem} from "react-bootstrap";
-import Flex from "virtool/js/components/Base/Flex.jsx";
-import Icon from "virtool/js/components/Base/Icon.jsx";
+import { capitalize } from "lodash";
+import { NavItem } from "react-bootstrap";
+import { Flex, FlexItem, Icon } from "virtool/js/components";
 
 /**
  * A component that renders to a primary link in the primary navbar.
@@ -41,12 +40,12 @@ export default class ParentButton extends React.Component {
         return (
             <NavItem onClick={this.handleClick} className="pointer" active={this.props.active}>
                 <Flex>
-                    <Flex.Item>
+                    <FlexItem>
                         <Icon name={this.props.iconName} />
-                    </Flex.Item>
-                    <Flex.Item pad={5}>
+                    </FlexItem>
+                    <FlexItem pad={5}>
                         {this.props.label || capitalize(this.props.parentKey)}
-                    </Flex.Item>
+                    </FlexItem>
                 </Flex>
             </NavItem>
         );
