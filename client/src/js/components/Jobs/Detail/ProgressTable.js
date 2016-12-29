@@ -9,41 +9,31 @@
  * @exports ProgressTable
  */
 
-import { Icon } from "virtool/js/components/Base";
-
 import React from "react";
-var Table = require('react-bootstrap/lib/Table');
-var Panel = require('react-bootstrap/lib/Panel');
-
-var ProgressEntry = require('./ProgressEntry');
-
-'use strict';
+import { Table, Panel } from "react-bootstrap";
+import { Icon } from "virtool/js/components/Base";
+import ProgressEntry from "./ProgressEntry";
 
 /**
  * A table the shows the status update for a VT job.
  */
-var ProgressTable = React.createClass({
+export default class ProgressTable extends React.PureComponent {
 
-    shouldComponentUpdate: function (nextProps) {
-        return this.props.status !== nextProps.status;
-    },
+    static propTypes = {
+        status: React.PropTypes.array
+    };
 
-    render: function () {
+    render () {
 
-        var statusComponents = this.props.status.map(function (document, index) {
-            return <ProgressEntry key={index} {...document} />;
-        });
-
-        // This is necessary for showing the mini-ProgressBar overlay.
-        var tableStyle = {
-            position: 'relative'
-        };
+        const statusComponents = this.props.status.map((document, index) =>
+            <ProgressEntry key={index} {...document} />
+        );
 
         return (
             <div>
-                <h5><strong><Icon name='cog' /> Progress Log</strong></h5>
+                <h5><strong><Icon name="cog" /> Progress Log</strong></h5>
                 <Panel>
-                    <Table style={tableStyle} fill>
+                    <Table style={{position: "relative"}} fill>
                         <thead>
                             <tr>
                                 <th className="col-sm-4">Timestamp</th>
@@ -60,6 +50,4 @@ var ProgressTable = React.createClass({
         );
     }
 
-});
-
-module.exports = ProgressTable;
+}

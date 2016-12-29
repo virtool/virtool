@@ -9,18 +9,23 @@
  * @exports ProgressEntry
  */
 
-"use strict";
-
 import React from "react";
 import Moment from "moment";
-import {capitalize} from "lodash";
+import { Circle } from "rc-progress";
+import { capitalize } from "lodash-es";
 
-var Progress = require("rc-progress").Circle;
+export default class ProgressEntry extends React.Component {
 
-var ProgressEntry = React.createClass({
+    static propTypes = {
+        state: React.PropTypes.string,
+        stage: React.PropTypes.string,
+        progress: React.PropTypes.number,
+        date: React.PropTypes.string
+    };
 
-    render: function () {
-        var progress = this.props.state === "complete" ? 100: 100 * this.props.progress;
+    render () {
+
+        const progress = this.props.state === "complete" ? 100: 100 * this.props.progress;
 
         return (
             <tr>
@@ -38,7 +43,7 @@ var ProgressEntry = React.createClass({
                     <span>
                         {this.props.stage}
                         <div className="pull-right" style={{height: "16px", width: "16px"}}>
-                            <Progress
+                            <Circle
                                 percent={progress}
                                 strokeWidth={12}
                                 strokeColor="#337ab7"
@@ -50,6 +55,4 @@ var ProgressEntry = React.createClass({
         );
     }
 
-});
-
-module.exports = ProgressEntry;
+}

@@ -9,33 +9,37 @@
  * @exports JobDetailGeneral
  */
 
-'use strict';
-
 import React from "react";
-import {startCase} from "lodash";
-import {Table} from "react-bootstrap";
+import { startCase } from "lodash-es";
+import { Table } from "react-bootstrap";
+import { Icon } from "virtool/js/components/Base";
+
 import TaskArgs from "./TaskArgs";
-import Icon from "virtool/js/components/Base/Icon";
 
 /**
  * A render-only table that presents the general information about a job.
  */
-var JobDetailGeneral = React.createClass({
+export default class JobDetailGeneral extends React.PureComponent {
 
-    shouldComponentUpdate: function () {
-        return false;
-    },
+    static propTypes = {
+        _id: React.PropTypes.string,
+        _version: React.PropTypes.number,
+        task: React.PropTypes.string,
+        args: React.PropTypes.object,
+        proc: React.PropTypes.number,
+        mem: React.PropTypes.number
+    };
 
-    render: function () {
+    render () {
 
-        var jobIdRow = dispatcher.user.settings.show_ids ? (
+        const jobIdRow = dispatcher.user.settings.show_ids ? (
             <tr>
                 <td><b>Database ID</b></td>
                 <td>{this.props._id}</td>
             </tr>
         ): null;
 
-        var jobVersionRow = dispatcher.user.settings.show_versions ? (
+        const jobVersionRow = dispatcher.user.settings.show_versions ? (
             <tr>
                 <td><b>Database Version</b></td>
                 <td>{this.props._version}</td>
@@ -45,13 +49,13 @@ var JobDetailGeneral = React.createClass({
 
         return (
             <div>
-                <h5><strong><Icon name='tag' /> General </strong></h5>
+                <h5><strong><Icon name="tag" /> General </strong></h5>
 
                 <Table bordered>
                     <tbody>
                         <tr>
-                            <td className='col-md-4'><b>Task</b></td>
-                            <td className='col-md-8'>{startCase(this.props.task)}</td>
+                            <td className="col-md-4"><b>Task</b></td>
+                            <td className="col-md-8">{startCase(this.props.task)}</td>
                         </tr>
                         {jobIdRow}
                         {jobVersionRow}
@@ -71,6 +75,4 @@ var JobDetailGeneral = React.createClass({
         );
     }
 
-});
-
-module.exports = JobDetailGeneral;
+}

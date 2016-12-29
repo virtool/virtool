@@ -9,39 +9,31 @@
  * @exports JobError
  */
 
-'use strict';
-
-var _ = require('lodash');
 import React from "react";
-var Panel = require('react-bootstrap/lib/Panel');
-var Alert = require('react-bootstrap/lib/Alert');
+import { Alert } from "react-bootstrap";
 
 /**
  * A render-only panel that displays the error information for a failed job.
  */
-var JobError = React.createClass({
+export default class JobError extends React.PureComponent {
 
-    propTypes: {
+    static propTypes = {
         error: React.PropTypes.object.isRequired
-    },
+    };
 
-    shouldComponentUpdate: function () {
-        return false;
-    },
-
-    render: function () {
+    render () {
         
         // The content to place inside the error panel.
-        var content;
+        let content;
 
-        if (this.props.error.context.indexOf('External') === -1) {
+        if (this.props.error.context.indexOf("External") === -1) {
             // Traceback from a Python exception.
-            var tracebackLines = this.props.error.message.traceback.map(function (line) {
-                return <div className='traceback-line'>{line}</div>;
+            const tracebackLines = this.props.error.message.traceback.map(line => {
+                return <div className="traceback-line">{line}</div>;
             });
 
             // Only show a colon and exception detail after the exception name if there is detail present.
-            var details;
+            let details;
 
             if (this.props.error.message.details.length > 0) {
                 details = <span>: {this.props.error.message.details}</span>
@@ -63,12 +55,10 @@ var JobError = React.createClass({
         }
 
         return (
-            <Alert bsStyle='danger'>
+            <Alert bsStyle="danger">
                 <h5><strong>{this.props.error.context}</strong></h5>
                 {content}
             </Alert>
         );
     }
-});
-
-module.exports = JobError;
+}

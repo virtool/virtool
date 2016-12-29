@@ -9,39 +9,29 @@
  * @exports TaskArgs
  */
 
-"use strict";
-
 import React from "react";
-import {transform} from "lodash";
+import { transform } from "lodash-es";
 import TaskArgNode from "./TaskArgNode";
 
 /**
  * A component that renders a job"s task args as a human-readable nested list.
  */
-var TaskArgs = React.createClass({
+export default class TaskArgs extends React.PureComponent {
 
-    propTypes: {
+    static propTypes = {
         taskArgs: React.PropTypes.object.isRequired
-    },
+    };
 
-    shouldComponentUpdate: function () {
-        return false;
-    },
-
-    render: function () {
+    render () {
         // Render the first level nodes of the task args object.
-        var nodeComponents = transform(this.props.taskArgs, function (result, value, key) {
-            result.push(<TaskArgNode key={value + "-" + key} nodeKey={key} nodeData={value} />);
+        const nodeComponents = transform(this.props.taskArgs, (result, value, key) => {
+            result.push(<TaskArgNode key={value + "-" + key} nodeKey={key} nodeData={value}/>);
         }, []);
 
-        // The first level of the list should have no left margin (vs. default 40px) and no bullets.
-        var listStyle = {
-            listStyleType: "none",
-            paddingLeft: 0
-        };
-
-        return <ul style={listStyle}>{nodeComponents}</ul>;
+        return (
+            <ul style={{ listStyleType: "none", paddingLeft: 0 }}>
+                {nodeComponents}
+            </ul>
+        );
     }
-});
-
-module.exports = TaskArgs;
+}

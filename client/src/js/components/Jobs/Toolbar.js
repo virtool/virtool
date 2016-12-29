@@ -9,83 +9,84 @@
  * @exports JobsToolbar
  */
 
-"use strict";
-
 import React from "react";
-import ReactDOM from "react-dom";
-import {map} from "lodash";
 import {InputGroup, FormGroup, FormControl, Dropdown, MenuItem} from "react-bootstrap";
 import { Icon, Flex, FlexItem, Button } from "virtool/js/components/Base";
 
-/**
- * A form-based component used to filter the documents presented in JobsTable component.
- *
- * @class
- */
-var JobsToolbar = React.createClass({
+export default class JobsToolbar extends React.Component {
 
-    getInitialState: function () {
-        return {
+    constructor (props) {
+        super(props);
+
+        this.state = {
             task: "",
             username: "",
             pendingRemove: false
         };
-    },
+    }
 
-    componentDidMount: function () {
-        // Focus on the first (task) form field when the component has mounted.
-        ReactDOM.findDOMNode(this.refs.find).focus();
-    },
+    static propTypes = {
+        findTerm: React.PropTypes.string,
+        setFindTerm: React.PropTypes.func,
 
-    handleSelect: function (eventKey) {
+        sortDescending: React.PropTypes.bool,
+        changeDirection: React.PropTypes.func,
 
-        var toRemove;
+        canModify: React.PropTypes.bool,
+        canRemove: React.PropTypes.bool
+    };
+
+    componentDidMount () {
+        this.findNode.focus();
+    }
+
+    handleSelect = (eventKey) => {
+
+        let toRemove;
 
         if (eventKey === "removeComplete") {
-            toRemove = map(dispatcher.db.jobs.find({
-                state: "complete"
-            }), "_id");
+            toRemove = dispatcher.db.jobs.find({ state: "complete" }).map(d => d["_id"]);
         }
 
         if (eventKey === "removeFailed") {
-            toRemove = map(dispatcher.db.jobs.find({$or: [
+            toRemove = dispatcher.db.jobs.find({$or: [
                 {state: "error"},
                 {state: "cancelled"}
-            ]}), "_id");
+            ]}).map(d => d["_id"]);
         }
 
         if (toRemove) {
             this.clearRemove(toRemove);
         }
-    },
+    };
 
-    clear: function () {
-        var toRemove = map(dispatcher.db.jobs.find({$or: [
+    clear = () => {
+        const toRemove = dispatcher.db.jobs.find({$or: [
             {state: "complete"},
             {state: "error"},
             {state: "cancelled"}
-        ]}), "_id");
+        ]}).map(d => d["_id"]);
 
         this.clearRemove(toRemove);
-    },
+    };
 
-    clearRemove: function (toRemove) {
+    clearRemove = (toRemove) => {
         if (toRemove.length > 0) {
             this.setState({pendingRemove: true}, function () {
                 dispatcher.db.jobs.request("remove_job", {_id: toRemove})
-                    .success(function () {
+                    .success(() => {
                         this.setState({pendingRemove: false});
-                    }, this)
-                    .failure(function () {
+                    })
+                    .failure(() => {
                         this.setState({pendingRemove: false});
-                    }, this)
+                    })
             });
         }
-    },
+    };
 
-    render: function () {
+    render () {
 
-        var removalDropdown;
+        let removalDropdown;
 
         if (this.props.canRemove) {
             removalDropdown = (
@@ -113,7 +114,7 @@ var JobsToolbar = React.createClass({
                                 <Icon name="search" /> Find
                             </InputGroup.Addon>
                             <FormControl
-                                ref="find"
+                                ref={this.findNode}
                                 name="find"
                                 onChange={this.props.setFindTerm}
                                 value={this.props.findTerm}
@@ -132,6 +133,4 @@ var JobsToolbar = React.createClass({
             </Flex>
         );
     }
-});
-
-module.exports = JobsToolbar;
+}

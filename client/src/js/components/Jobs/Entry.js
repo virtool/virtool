@@ -9,59 +9,56 @@
  * @exports JobEntry
  */
 
-'use strict';
-
 import React from "react";
-import {capitalize, startCase} from "lodash";
-import {Row, Col, ProgressBar} from "react-bootstrap";
-import Icon from "virtool/js/components/Base/Icon";
-import RelativeTime from "virtool/js/components/Base/RelativeTime";
-import ListGroupItem from "virtool/js/components/Base/PushListGroupItem";
+import { capitalize, startCase } from "lodash-es";
+import { Row, Col } from "react-bootstrap";
+import { Icon, RelativeTime, ListGroupItem, ProgressBar } from "virtool/js/components/Base";
 
-/**
- * A form-based component used to filter the documents presented in JobsTable component.
- *
- * @class
- */
-var JobEntry = React.createClass({
+export default class JobEntry extends React.Component {
 
-    propTypes: {
-        _id: React.PropTypes.string.isRequired,
-        task: React.PropTypes.string.isRequired,
-        progress: React.PropTypes.number.isRequired,
-        added: React.PropTypes.string.isRequired,
-        username: React.PropTypes.string.isRequired
-    },
+    constructor (props) {
+        super(props);
 
-    getInitialState: function () {
-        return {
+        this.state = {
             in: false
         };
-    },
+    }
 
-    showDetail: function () {
+    static propTypes = {
+        _id: React.PropTypes.string.isRequired,
+        task: React.PropTypes.string.isRequired,
+        state: React.PropTypes.string.isRequired,
+        progress: React.PropTypes.number.isRequired,
+        added: React.PropTypes.string.isRequired,
+        username: React.PropTypes.string.isRequired,
+
+        canCancel: React.PropTypes.bool,
+        canRemove: React.PropTypes.bool
+    };
+
+    showDetail = () => {
         dispatcher.router.setExtra(["detail", this.props._id]);
-    },
+    };
 
-    remove: function (event) {
+    remove = (event) => {
         event.stopPropagation();
         dispatcher.db.jobs.request("remove_job", {_id: this.props._id});
-    },
+    };
 
-    cancel: function (event) {
+    cancel = (event) => {
         event.stopPropagation();
         dispatcher.db.jobs.request("cancel", {_id: this.props._id});
-    },
+    };
 
-    render: function () {
+    render () {
 
-        var iconArea = (
+        let iconArea = (
             <strong className="pull-right">
                 {capitalize(this.props.state)}
             </strong>
         );
 
-        var icon;
+        let icon;
 
         if ((this.props.state === "waiting" || this.props.state === "running") && this.props.canCancel) {
             icon = (
@@ -94,8 +91,8 @@ var JobEntry = React.createClass({
             );
         }
 
-        var progressStyle;
-        var progressValue = this.props.progress * 100;
+        let progressStyle;
+        let progressValue = this.props.progress * 100;
 
         if (this.props.state === "complete") {
             progressValue = 100;
@@ -132,6 +129,4 @@ var JobEntry = React.createClass({
             </ListGroupItem>
         );
     }
-});
-
-module.exports = JobEntry;
+}

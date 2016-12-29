@@ -9,13 +9,11 @@
  * @exports ManageJobs
  */
 
-'use strict';
-
 import React from "react";
 import JobList from "./List";
-import JobToolbar from "./Toolbar";
+import JobsToolbar from "./Toolbar";
 
-var progressSortFunction = function (a, b) {
+function progressSortFunction (a, b) {
 
     if (a.state === "running") {
         // Always place before waiting jobs.
@@ -61,17 +59,15 @@ var progressSortFunction = function (a, b) {
     }
 
     return 0;
-};
 
-/**
- * A React component that is a simple composition of JobsTable. Applies a baseFilter that includes only active jobs.
- *
- * @class
- */
-var ManageJobs = React.createClass({
+}
 
-    getInitialState: function () {
-        return {
+export default class ManageJobs extends React.Component {
+
+    constructor (props) {
+        super(props);
+
+        this.state = {
             documents: dispatcher.db.jobs.chain(),
             findTerm: "",
             sortTerm: "progress",
@@ -79,56 +75,60 @@ var ManageJobs = React.createClass({
 
             canCancel: dispatcher.user.permissions.cancel_job,
             canRemove: dispatcher.user.permissions.remove_job
-        };
-    },
+        }
+    }
 
-    componentDidMount: function () {
+    static propTypes = {
+        route: React.PropTypes.any
+    };
+
+    componentDidMount () {
         dispatcher.db.jobs.on("change", this.update);
         dispatcher.user.on("change", this.update);
-    },
+    }
 
-    componentWillUnmount: function () {
+    componentWillUnmount () {
         dispatcher.db.jobs.off("change", this.update);
         dispatcher.user.off("change", this.update);
-    },
+    }
 
-    setFindTerm: function (event) {
+    setFindTerm = (event) => {
         this.setState({
             findTerm: event.target.value || ""
         });
-    },
+    };
 
-    setSortTerm: function (term) {
+    setSortTerm = (term) => {
         this.setState({
             sortTerm: term
         });
-    },
+    };
 
-    changeDirection: function () {
+    changeDirection = () => {
         this.setState({
             sortDescending: !this.state.sortDescending
         });
-    },
+    };
 
-    update: function () {
+    update = () => {
         this.setState({
             documents: dispatcher.db.jobs.chain(),
 
             canCancel: dispatcher.user.permissions.cancel_job,
             canRemove: dispatcher.user.permissions.remove_job
         });
-    },
+    };
 
-    render: function () {
+    render () {
 
-        var documents;
+        let documents;
 
         if (this.state.documents.count() > 0) {
 
-            var query = {};
+            let query = {};
 
             if (this.state.findTerm) {
-                var test = {$regex: [this.state.findTerm, "i"]};
+                const test = {$regex: [this.state.findTerm, "i"]};
 
                 query = {$or: [
                     {task: test},
@@ -146,7 +146,7 @@ var ManageJobs = React.createClass({
 
         return (
             <div>
-                <JobToolbar
+                <JobsToolbar
                     findTerm={this.state.findTerm}
                     sortTerm={this.state.sortTerm}
                     sortDescending={this.state.sortDescending}
@@ -168,6 +168,4 @@ var ManageJobs = React.createClass({
             </div>
         );
     }
-});
-
-module.exports = ManageJobs;
+}
