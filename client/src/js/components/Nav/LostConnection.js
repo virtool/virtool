@@ -9,28 +9,24 @@
  * @exports LostConnection
  */
 
-'use strict';
-
 import React from "react";
-var Modal = require('react-bootstrap/lib/Modal');
-var Icon = require('virtool/js/components/Base/Icon');
+import { Modal } from "react-bootstrap";
+import { Icon } from "virtool/js/components/Base";
 
-var LostConnection = React.createClass({
+export default class LostConnection extends React.Component {
 
-    propTypes: {
+    static propTypes = {
         show: React.PropTypes.bool.isRequired
-    },
+    };
 
-    render: function () {
+    render () {
         return (
-            <Modal show={this.props.show} animation={false} bsSize='small'>
-                <Modal.Body className='text-center'>
-                    <h5><Icon name='warning' bsStyle='danger' /> Lost Connection</h5>
+            <Modal show={this.props.show} animation={false} bsSize="small">
+                <Modal.Body className="text-center">
+                    <h5><Icon name="warning" bsStyle="danger" /> Lost Connection</h5>
                 </Modal.Body>
             </Modal>
         );
     }
 
-});
-
-module.exports = LostConnection;
+}

@@ -9,10 +9,8 @@
  * @exports PrimaryButton
  */
 
-"use strict";
-
 import React from "react";
-import { capitalize } from "lodash";
+import { capitalize } from "lodash-es";
 import { NavItem } from "react-bootstrap";
 import { Flex, FlexItem, Icon } from "virtool/js/components";
 

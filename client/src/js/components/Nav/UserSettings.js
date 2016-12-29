@@ -9,72 +9,74 @@
  * @exports UserSettings
  */
 
-'use strict';
+import React from "react";
+import { assign } from "lodash-es";
+import { Panel, FormGroup, FormControl, ControlLabel } from "react-bootstrap";
+import { Flex, FlexItem, Modal, Checkbox } from "virtool/js/components/Base";
 
-import React from 'react';
-import { assign } from "lodash";
-import { Panel, FormGroup, FormControl, ControlLabel } from 'react-bootstrap';
-import { Flex, FlexItem, Modal, Checkbox } from 'virtool/js/components/Base';
+export default class UserSettings extends React.Component {
 
-var UserSettings = React.createClass({
+    constructor (props) {
+        super(props);
 
-    propTypes: {
+        this.state = assign({pending: false}, dispatcher.user.settings);
+    }
+
+    static propTypes = {
+        user: React.PropTypes.object,
+        show: React.PropTypes.bool.isRequired,
         onHide: React.PropTypes.func.isRequired
-    },
+    };
 
-    getInitialState: function () {
-        return assign({pending: false}, dispatcher.user.settings);
-    },
+    componentDidMount () {
+        dispatcher.user.on("change", this.update);
+    }
 
-    componentDidMount: function () {
-        dispatcher.user.on('change', this.update);
-    },
+    componentWillUnmount () {
+        dispatcher.user.off("change", this.update);
+    }
 
-    componentWillUnmount: function () {
-        dispatcher.user.off('change', this.update);
-    },
-
-    requestSet: function (key, value) {
-        this.setState({pending: true}, function () {
-            dispatcher.db.users.request('change_user_setting', {
+    requestSet = (key, value) => {
+        this.setState({ pending: true }, function () {
+            dispatcher.db.users.request("change_user_setting", {
                 _id: this.props.user.name,
                 key: key,
                 value: value
-            }).success(function () {
+            }).success(() => {
                 this.setState({
                     pending: false
                 });
-            }, this);
+            });
         });
-    },
+    };
 
-    toggleSetting: function (key) {
+    toggleSetting = (key) => {
         this.requestSet(key, !this.props.user.settings[key]);
-    },
+    };
 
-    update: function () {
-        this.setState(this.getInitialState());
-    },
+    update = () => {
+        this.setState(assign({pending: false}, dispatcher.user.settings));
+    };
 
-    toggleShowIds: function () {
-        this.toggleSetting('show_ids')
-    },
+    toggleShowIds = () => {
+        this.toggleSetting("show_ids")
+    };
 
-    toggleShowVersions: function () {
-        this.toggleSetting('show_versions')
-    },
+    toggleShowVersions = () => {
+        this.toggleSetting("show_versions")
+    };
 
-    toggleSkipQuickAnalyzeDialog: function () {
-        this.toggleSetting('skip_quick_analyze_dialog');
-    },
+    toggleSkipQuickAnalyzeDialog = () => {
+        this.toggleSetting("skip_quick_analyze_dialog");
+    };
 
-    setQuickAnalyzeAlgorithm: function (event) {
+    setQuickAnalyzeAlgorithm = (event) => {
         this.requestSet("quick_analyze_algorithm", event.target.value);
-    },
+    };
 
-    render: function () {
+    render () {
 
-        var checkboxProps = {
+        const checkboxProps = {
             style: {
                 marginBottom: "10px"
             },
@@ -83,7 +85,7 @@ var UserSettings = React.createClass({
         };
 
         return (
-            <Modal bsSize='small' show={this.props.show} onHide={this.props.onHide}>
+            <Modal bsSize="small" show={this.props.show} onHide={this.props.onHide}>
                 <Modal.Header onHide={this.props.onHide} closeButton>
                     User Settings
                 </Modal.Header>
@@ -131,7 +133,11 @@ var UserSettings = React.createClass({
                             <ControlLabel>
                                 <small>Default Algorithm</small>
                             </ControlLabel>
-                            <FormControl componentClass="select" onChange={this.setQuickAnalyzeAlgorithm} value={this.props.user.settings.quick_analyze_algorithm}>
+                            <FormControl
+                                componentClass="select"
+                                onChange={this.setQuickAnalyzeAlgorithm}
+                                value={this.props.user.settings.quick_analyze_algorithm}
+                            >
                                 <option value="pathoscope_bowtie">PathoscopeBowtie</option>
                                 <option value="pathoscope_snap">PathoscopeSNAP</option>
                                 <option value="nuvs">NuVs</option>
@@ -142,6 +148,4 @@ var UserSettings = React.createClass({
             </Modal>
         );
     }
-});
-
-module.exports = UserSettings;
+}

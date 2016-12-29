@@ -9,97 +9,94 @@
  * @exports HMMFiles
  */
 
-'use strict';
-
 import React from "react";
-import { Row, Col, Modal, Badge, Alert, ListGroup, ListGroupItem } from "react-bootstrap";
+import { sortBy, every, values } from "lodash-es";
+import { Row, Col, Modal, Badge, ListGroup, ListGroupItem } from "react-bootstrap";
 import { Icon, Flex, Pulse } from "virtool/js/components/Base";
-import { byteSize } from 'virtool/js/utils';
+import { byteSize } from "virtool/js/utils";
 
-var HMMErrors = require("./Errors");
+import HMMErrors from "./Errors";
 
-/**
- * A component the contains child components that modify certain general options. A small explanation of each
- * subcomponent is also rendered.
- */
-var HMMFiles = React.createClass({
+function getInitialState () {
+    return {
+        files: null,
+        errors: null,
+        pressing: false,
+        cleaning: false
+    };
+}
 
-    propTypes: {
+export default class HMMFiles extends React.Component {
+
+    constructor (props) {
+        super(props);
+        this.state = getInitialState();
+    }
+
+    static propTypes = {
         show: React.PropTypes.bool.isRequired,
         onHide: React.PropTypes.func.isRequired
-    },
+    };
 
-    getInitialState: function () {
-        return {
-            files: null,
-            errors: null,
-
-            pressing: false,
-            cleaning: false
-        };
-    },
-
-    checkFiles: function () {
-        this.setState(this.getInitialState(), function () {
-            dispatcher.db.hmm.request("check_files").success(function (data) {
+    checkFiles = () => {
+        this.setState(getInitialState(), () => {
+            dispatcher.db.hmm.request("check_files").success((data) => {
                 this.setState({
                     files: data.files,
                     errors: data.errors,
                 });
-            }, this);
+            });
         });
-    },
+    };
 
-    press: function () {
-        this.setState({pressing: true}, function () {
-            dispatcher.db.hmm.request("press").success(function () {
+    press = () => {
+        this.setState({ pressing: true }, () => {
+            dispatcher.db.hmm.request("press").success(() => {
                 this.setState({
                     pressing: false,
                     cleaning: false
                 }, this.checkFiles);
-            }, this);
+            });
         });
-    },
+    };
 
-    clean: function () {
-        this.setState({cleaning: true}, function () {
+    clean = () => function () {
+        this.setState({ cleaning: true }, () => {
             dispatcher.db.hmm.request("clean", {
                 cluster_ids: this.state.errors["not_in_file"]
             }).success(this.checkFiles, this);
         });
-    },
+    };
 
-    reset: function () {
-        this.setState(this.getInitialState());
-    },
+    reset = () => {
+        this.setState(getInitialState());
+    };
 
-    render: function () {
+    render () {
 
-        var content;
+        let content;
 
-        var hasErrors = !_.every(_.values(this.state.errors), function (value) {
+        const hasErrors = !every(values(this.state.errors), function (value) {
             return value === false;
         });
 
         if (this.state.files || hasErrors) {
 
-            var files;
+            let files;
 
             if (this.state.files.length > 0) {
-                var fileComponents = _.sortBy(this.state.files, "_id").map(function (file, index) {
-                    return (
-                        <ListGroupItem key={index}>
-                            <Row>
-                                <Col md={6}>
-                                    <Icon name="file" /> {file._id}
-                                </Col>
-                                <Col md={6}>
-                                    {byteSize(file.size)} />
-                                </Col>
-                            </Row>
-                        </ListGroupItem>
-                    );
-                });
+                const fileComponents = sortBy(this.state.files, "_id").map((file, index) => (
+                    <ListGroupItem key={index}>
+                        <Row>
+                            <Col md={6}>
+                                <Icon name="file" /> {file._id}
+                            </Col>
+                            <Col md={6}>
+                                {byteSize(file.size)} />
+                            </Col>
+                        </Row>
+                    </ListGroupItem>
+                ));
 
                 files = (
                     <div>
@@ -110,7 +107,7 @@ var HMMFiles = React.createClass({
                 );
             }
 
-            var errors = hasErrors ? (
+            const errors = hasErrors ? (
                 <HMMErrors
                     {...this.state}
                     clean={this.clean}
@@ -137,21 +134,13 @@ var HMMFiles = React.createClass({
 
         return (
             <Modal show={this.props.show} onHide={this.props.onHide} onEntered={this.checkFiles} onExited={this.reset}>
-
                 <Modal.Header onHide={this.props.onHide} closeButton>
                     HMM Files {this.state.files ? <Badge>{this.state.files.length}</Badge>: null}
                 </Modal.Header>
-
                 <Modal.Body>
                     {content}
                 </Modal.Body>
-
             </Modal>
         );
-
-
-
     }
-});
-
-module.exports = HMMFiles;
+}

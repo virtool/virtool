@@ -9,17 +9,20 @@
  * @exports ChildButton
  */
 
-"use strict";
-
-
 import React from "react";
 import CX from "classnames";
-import {capitalize} from "lodash";
+import { capitalize } from "lodash-es";
 
 /**
  * The button for a secondary navbar which renders a single child route of a primary route.
  */
 export default class ChildButton extends React.Component {
+
+    static propTypes = {
+        label: React.PropTypes.string,
+        childKey: React.PropTypes.string,
+        active: React.PropTypes.active
+    };
 
     /**
      * Change the secondary route in the router in response to a click event on the button.
@@ -27,7 +30,7 @@ export default class ChildButton extends React.Component {
      */
     handleClick = () => {
         dispatcher.router.setChild(this.props.childKey);
-    }
+    };
 
     render () {
 

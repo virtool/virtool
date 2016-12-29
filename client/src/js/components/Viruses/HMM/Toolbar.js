@@ -9,94 +9,64 @@
  * @exports HMMToolbar
  */
 
-'use strict';
-
 import React from "react";
-import ReactDOM from "react-dom";
 import { Dropdown, MenuItem, FormGroup, InputGroup, FormControl } from "react-bootstrap";
-import { Icon, Flex } from 'virtool/js/components/Base';
+import { Icon, Flex } from "virtool/js/components/Base";
 
 /**
  * A toolbar component rendered at the top of the virus manager table. Allows searching of viruses by name and
  * abbreviation. Includes a button for creating a new virus.
  */
-var HMMToolbar = React.createClass({
+export default class HMMToolbar extends React.Component {
 
-    propTypes: {
-        setFindTerm: React.PropTypes.func.isRequired
-    },
+    constructor (props) {
+        super(props);
 
-    getInitialState: function () {
-        // The state showAdd is true when the modal should be visible.
-        return {
+        this.state = {
             canModify: dispatcher.user.permissions.modify_hmm
         };
-    },
+    }
 
-    componentDidMount: function () {
-        ReactDOM.findDOMNode(this.refs.input).focus();
-        dispatcher.user.on('change', this.onUserChange);
-    },
+    static propTypes = {
+        findTerm: React.PropTypes.string,
+        setFindTerm: React.PropTypes.func.isRequired
+    };
 
-    componentWillUnmount: function () {
-        dispatcher.user.off('change', this.onUserChange);
-    },
+    componentDidMount () {
+        this.refs.input.focus();
+        dispatcher.user.on("change", this.onUserChange);
+    }
 
-    onUserChange: function () {
+    componentWillUnmount () {
+        dispatcher.user.off("change", this.onUserChange);
+    }
+
+    onUserChange = () => {
         this.setState({
             canModify: dispatcher.user.permissions.modify_hmm
         });
-    },
+    };
 
-    /**
-     * Updates the function used to filter virus documents. Triggered by a change in the search input field.
-     *
-     * @func
-     */
-    handleChange: function (event) {
+    handleChange = (event) => {
         this.props.setFindTerm(event.target.value);
-    },
+    };
 
-    /**
-     * Changes state to show the add or export modal form. Triggered by clicking the a menu item.
-     *
-     * @param eventKey {number} - the event key.
-     * @func
-     */
-    handleSelect: function (eventKey) {
+    handleSelect = (eventKey) => {
         dispatcher.router.setExtra([eventKey]);
-    },
+    };
 
-    render: function () {
+    render () {
 
-        var mayImport = dispatcher.db.hmm.count() === 0;
-
-        var menu = (
-            <Flex.Item shrink={0} grow={0} pad>
-                <Dropdown id='hmm-dropdown' pullRight onSelect={this.handleSelect}>
-                    <Dropdown.Toggle noCaret>
-                        <Icon name='menu' />
-                    </Dropdown.Toggle>
-                    <Dropdown.Menu>
-                        <MenuItem eventKey="import" disabled={!this.state.canModify || !mayImport}>
-                            <Icon name='new-entry' /> Import Annotations
-                        </MenuItem>
-                        <MenuItem eventKey="files" disabled={!this.state.canModify}>
-                            <Icon name='folder-open' /> View Files
-                        </MenuItem>
-                    </Dropdown.Menu>
-                </Dropdown>
-            </Flex.Item>
-        );
+        const mayImport = dispatcher.db.hmm.count() === 0;
 
         return (
-            <div style={{marginBottom: '15px'}}>
+            <div style={{ marginBottom: "15px" }}>
                 <Flex>
                     <Flex.Item grow={1}>
                         <FormGroup>
                             <InputGroup>
                                 <InputGroup.Addon>
-                                    <Icon name='search' /> Find
+                                    <Icon name="search" /> Find
                                 </InputGroup.Addon>
                                 <FormControl
                                     ref="input"
@@ -109,12 +79,24 @@ var HMMToolbar = React.createClass({
                         </FormGroup>
                     </Flex.Item>
 
-                    {menu}
+                    <Flex.Item shrink={0} grow={0} pad>
+                        <Dropdown id="hmm-dropdown" pullRight onSelect={this.handleSelect}>
+                            <Dropdown.Toggle noCaret>
+                                <Icon name="menu" />
+                            </Dropdown.Toggle>
+                            <Dropdown.Menu>
+                                <MenuItem eventKey="import" disabled={!this.state.canModify || !mayImport}>
+                                    <Icon name="new-entry" /> Import Annotations
+                                </MenuItem>
+                                <MenuItem eventKey="files" disabled={!this.state.canModify}>
+                                    <Icon name="folder-open" /> View Files
+                                </MenuItem>
+                            </Dropdown.Menu>
+                        </Dropdown>
+                    </Flex.Item>
                 </Flex>
             </div>
         );
     }
 
-});
-
-module.exports = HMMToolbar;
+}

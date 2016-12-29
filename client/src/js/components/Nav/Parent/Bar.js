@@ -9,14 +9,13 @@
  * @exports ParentBar
  */
 
-'use strict';
-
 import React from "react";
 import ParentButton from "./Button";
-import {Nav, Navbar, NavDropdown, MenuItem} from "react-bootstrap";
+import { Nav, Navbar, NavDropdown, MenuItem } from "react-bootstrap";
+import { Icon } from "virtool/js/components/Base";
+
 import ChangePassword from "../ChangePassword";
 import UserSettings from "../UserSettings";
-import Icon from "virtool/js/components/Base/Icon";
 
 /**
  * The primary navbar component.
@@ -34,22 +33,22 @@ export default class ParentBar extends React.Component {
     }
 
     componentDidMount () {
-        dispatcher.router.on('change', this.onRouteChange);
+        dispatcher.router.on("change", this.onRouteChange);
     }
 
     componentWillUnmount () {
-        dispatcher.router.off('change', this.onRouteChange);
+        dispatcher.router.off("change", this.onRouteChange);
     }
 
     onRouteChange = (route) => {
         this.setState({
             activeParent: route.parent
         });
-    }
+    };
 
     hideModal = () => {
         this.setState({modalMode: null});
-    }
+    };
 
     handleDropdownSelect = (eventKey) => {
         if (eventKey === "password" || eventKey === "settings") {
@@ -61,14 +60,14 @@ export default class ParentBar extends React.Component {
         if (eventKey === "logout") {
             dispatcher.user.logout();
         }
-    }
+    };
 
     render () {
 
         // Generate a primary navItem for each primary route (home, jobs, samples, viruses, hosts, options). Only show
         // the options navItem if the user is an administrator.
         const navItemComponents = dispatcher.router.structure.map((parent) => {
-            if (parent.key !== 'options' || dispatcher.user.permissions.modify_options) {
+            if (parent.key !== "options" || dispatcher.user.permissions.modify_options) {
                 return (
                     <ParentButton
                         key={parent.key}
@@ -88,20 +87,20 @@ export default class ParentBar extends React.Component {
             // The title component for the user drop down menu.
             const userTitle = (
                 <span>
-                    <Icon name='user' /> {dispatcher.user.name}
+                    <Icon name="user" /> {dispatcher.user.name}
                 </span>
             );
 
             dropDown = (
-                <NavDropdown title={userTitle} onSelect={this.handleDropdownSelect} id='user-dropdown'>
+                <NavDropdown title={userTitle} onSelect={this.handleDropdownSelect} id="user-dropdown">
                     <MenuItem eventKey="password">
-                        <Icon name='lock' /> Password
+                        <Icon name="lock" /> Password
                     </MenuItem>
                     <MenuItem eventKey="settings">
-                        <Icon name='settings' /> Settings
+                        <Icon name="settings" /> Settings
                     </MenuItem>
                     <MenuItem  eventKey="logout">
-                        <Icon name='exit' /> Logout
+                        <Icon name="exit" /> Logout
                     </MenuItem>
                 </NavDropdown>
             );
@@ -124,7 +123,7 @@ export default class ParentBar extends React.Component {
 
                 <Navbar.Header>
                     <Navbar.Brand>
-                        <Icon name='vtlogo' className='vtlogo' />
+                        <Icon name="vtlogo" className="vtlogo" />
                     </Navbar.Brand>
                 </Navbar.Header>
 

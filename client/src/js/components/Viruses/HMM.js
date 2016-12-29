@@ -9,87 +9,80 @@
  * @exports HMM
  */
 
-'use strict';
-
 import React from "react";
-var Label = require('react-bootstrap/lib/Label');
+import { DetailModal } from "virtool/js/components/Base"
 
-var HMMTable = require('./HMM/Table');
-var HMMDetail = require('./HMM/Detail');
-var HMMToolbar = require('./HMM/Toolbar');
-var ImportModal = require('./HMM/Import');
-var FilesModal = require('./HMM/Files');
-
-var Icon = require('virtool/js/components/Base/Icon');
-var DetailModal = require('virtool/js/components/Base/DetailModal');
+import HMMTable from "./HMM/Table";
+import HMMDetail from "./HMM/Detail";
+import HMMToolbar from "./HMM/Toolbar"
+import ImportModal from "./HMM/Import";
+import FilesModal from "./HMM/Files";
 
 /**
  * A main component that shows a history of all index builds and the changes that comprised them.
  *
  * @class
  */
-var HMM = React.createClass({
+export default class HMM extends React.Component {
 
-    getInitialState: function () {
-        return {
+    constructor (props) {
+        super(props);
+
+        this.state = {
             findTerm: "",
 
             sortKey: "cluster",
             sortDescending: false
-        }
-    },
+        };
+    }
 
-    setFindTerm: function (value) {
+    static propTypes = {
+        route: React.PropTypes.object
+    };
+
+    setFindTerm = (value) => {
         this.setState({
             findTerm: value
         });
-    },
+    };
 
-    sort: function (key) {
+    sort = (key) => {
         this.setState({
             sortKey: key,
             sortDescending: this.state.sortKey === key ? !this.state.sortDescending: false
         });
-    },
+    };
 
-    /**
-     * Hides the virus detail modal. Triggered by called the onHide prop function within the modal.
-     *
-     * @func
-     */
-    hideModal: function () {
+    hideModal = () => {
         dispatcher.router.clearExtra();
-    },
+    };
 
-    render: function () {
+    render () {
 
-        var query;
+        let query;
 
         if (this.state.findTerm) {
-            var test = {$regex: [this.state.findTerm, "i"]};
-
             query = {
                 $or: [
                     {cluster: Number(this.state.findTerm)},
-                    {label: test}
+                    {label: {
+                        $regex: [this.state.findTerm, "i"]
+                    }}
                 ]
             };
         }
 
-        var documents = dispatcher.db.hmm.chain().find(query).simplesort(this.state.sortKey).data();
+        let documents = dispatcher.db.hmm.chain().find(query).simplesort(this.state.sortKey).data();
 
         if (this.state.sortDescending) {
             documents = documents.reverse();
         }
 
-        var detailTarget;
+        let detailTarget;
 
-        if (this.props.route.extra[0] === 'detail') {
+        if (this.props.route.extra[0] === "detail") {
             detailTarget = dispatcher.db.hmm.findOne({_id: this.props.route.extra[1]});
         }
-
-
-
 
         return (
             <div>
@@ -127,6 +120,4 @@ var HMM = React.createClass({
         );
     }
 
-});
-
-module.exports = HMM;
+}

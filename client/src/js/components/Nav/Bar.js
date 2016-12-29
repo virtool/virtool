@@ -9,8 +9,6 @@
  * @exports Bar
  */
 
-"use strict";
-
 import React from "react";
 import ChildBar from "./Child/Bar";
 import ParentBar from "./Parent/Bar";
@@ -19,25 +17,31 @@ import LostConnection from "./LostConnection";
 /**
  * A container component that renders the primary and secondary navigation bars.
  */
-var Bar = React.createClass({
+export default class Bar extends React.Component {
 
-    getInitialState: function () {
-        return {closed: false}
-    },
+    constructor (props) {
+        super(props);
 
-    componentDidMount: function () {
+        this.state = {
+            closed: false
+        };
+    }
+
+    componentDidMount () {
         dispatcher.on("closed", this.showLostConnection);
-    },
+    }
 
-    componentWillUnmount: function () {
+    componentWillUnmount () {
         dispatcher.off("closed", this.showLostConnection);
-    },
+    }
 
-    showLostConnection: function () {
-        this.setState({closed: true});
-    },
+    showLostConnection = () => {
+        this.setState({
+            closed: true
+        });
+    };
 
-    render: function () {
+    render () {
         return (
             <div>
                 <ParentBar />
@@ -49,6 +53,4 @@ var Bar = React.createClass({
             </div>
         )
     }
-});
-
-module.exports = Bar;
+}

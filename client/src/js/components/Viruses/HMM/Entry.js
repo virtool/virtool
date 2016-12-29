@@ -10,42 +10,42 @@
  *
  */
 
-'use strict';
-
 import React from "react";
-var Label = require('react-bootstrap/lib/Label');
-
-var Flex = require('virtool/js/components/Base/Flex');
+import { keys } from "lodash-es";
+import { Label } from "react-bootstrap";
 
 /**
  * A form-based component used to filter the documents presented in JobsTable component.
  *
  * @class
  */
-var HMMEntry = React.createClass({
+export default class HMMEntry extends React.Component {
 
-    showDetail: function () {
+    static propTypes = {
+        _id: React.PropTypes.string,
+        label: React.PropTypes.string,
+        cluster: React.PropTypes.number,
+        families: React.PropTypes.object
+    };
+
+    showDetail = () => {
         dispatcher.router.setExtra(["detail", this.props._id]);
-    },
+    };
 
-    render: function () {
+    render () {
 
-        var families = Object.keys(this.props.families);
+        const families = keys(this.props.families);
 
-        var ellipse = families.length > 3 ? "...": null;
-
-        var labelComponents = families.slice(0, 3).map(function (family, index) {
-            return <span key={index}><Label>{family}</Label> </span>
-        });
+        const labelComponents = families.slice(0, 3).map((family, index) => (
+            <span key={index}><Label>{family}</Label> </span>
+        ));
 
         return (
             <tr className="pointer" onClick={this.showDetail}>
                 <td>{this.props.cluster}</td>
                 <td>{this.props.label}</td>
-                <td>{labelComponents} {ellipse}</td>
+                <td>{labelComponents} {families.length > 3 ? "...": null}</td>
             </tr>
         );
     }
-});
-
-module.exports = HMMEntry;
+}

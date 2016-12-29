@@ -9,10 +9,7 @@
  * @exports SecondaryNavbar
  */
 
-"use strict";
-
 import React from "react";
-import {isEqual} from "lodash";
 import ChildButton from "./Button";
 
 /**
@@ -48,7 +45,7 @@ export default class ChildBar extends React.Component {
             activeChild: route.child,
             children: route.children
         });
-    }
+    };
 
     render () {
 

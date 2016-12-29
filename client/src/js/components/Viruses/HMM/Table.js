@@ -9,48 +9,35 @@
  * @exports HMMTable
  */
 
-'use strict';
-
-var _ = require('lodash');
+import { capitalize } from "lodash-es";
 import React from "react";
 import FlipMove from "react-flip-move"
-var Label = require('react-bootstrap/lib/Label');
-var Table = require('react-bootstrap/lib/Table');
+import { Table } from "react-bootstrap";
+import { Icon, Flex, Paginator } from "virtool/js/components/Base";
 
-var HMMEntry = require('./Entry');
-var Icon = require('virtool/js/components/Base/Icon');
-var Flex = require('virtool/js/components/Base/Flex');
-var Paginator = require('virtool/js/components/Base/Paginator');
-var DetailModal = require('virtool/js/components/Base/DetailModal');
+import HMMEntry from "./Entry";
 
+export class CaretHeader extends React.Component {
 
-var CaretHeader = React.createClass({
-
-    propTypes: {
+    static propTypes = {
         name: React.PropTypes.string,
         onClick: React.PropTypes.func,
         showCaret: React.PropTypes.bool,
         descending: React.PropTypes.bool
-    },
+    };
 
-    /**
-     * Calls the onSort prop function and passed the fieldKey associated with this component. Triggered by clicking the
-     * column header.
-     *
-     * @func
-     */
-    sort: function () {
+    sort = () => {
         this.props.onClick(this.props.name);
-    },
+    };
 
-    render: function () {
+    render () {
 
-        var caret;
+        let caret;
 
         if (this.props.showCaret) {
             caret = (
                 <Flex.Item pad={5}>
-                    <Icon name={'caret-' + (this.props.descending ? 'up': 'down')} />
+                    <Icon name={"caret-" + (this.props.descending ? "up": "down")} />1
                 </Flex.Item>
             );
         }
@@ -59,61 +46,62 @@ var CaretHeader = React.createClass({
             <div className="pointer" onClick={this.sort}>
                 <Flex>
                     <Flex.Item>
-                        {_.capitalize(this.props.name)}
+                        {capitalize(this.props.name)}
                     </Flex.Item>
                     {caret}
                 </Flex>
             </div>
         );
     }
-
-});
+}
 
 /**
  * A main component that shows a history of all index builds and the changes that comprised them.
  *
  * @class
  */
-var HMMTable = React.createClass({
+export default class HMMTable extends React.Component {
 
-    getInitialState: function () {
-        return {
+    constructor (props) {
+        super(props);
+
+        this.state = {
             page: 1
         };
-    },
+    }
 
-    setPage: function (page) {
+    static propTypes = {
+        documents: React.PropTypes.arrayOf(React.PropTypes.object),
+        sort: React.PropTypes.func,
+        sortKey: React.PropTypes.string,
+        sortDescending: React.PropTypes.bool
+    };
+
+    setPage = (page) => {
         this.setState({
             page: page
         });
-    },
+    };
 
-    /**
-     * Hides the virus detail modal. Triggered by called the onHide prop function within the modal.
-     *
-     * @func
-     */
-    hideModal: function () {
+    hideModal = () => {
         dispatcher.router.clearExtra();
-    },
+    };
 
-    render: function () {
+    render () {
 
-        var pages = Paginator.calculatePages(this.props.documents, this.state.page);
+        const pages = Paginator.calculatePages(this.props.documents, this.state.page);
 
-        var rowComponents = pages.documents.map(function (document) {
-            return (
-                <HMMEntry
-                    key={document._id}
-                    _id={document._id}
-                    cluster={document.cluster}
-                    label={document.label}
-                    families={document.families}
-                />
-            );
-        });
+        const rowComponents = pages.documents.map(document => (
+            <HMMEntry
+                key={document._id}
+                _id={document._id}
+                cluster={document.cluster}
+                label={document.label}
+                families={document.families}
+            />
+        ));
 
-        var caretProps = {
+        const caretProps = {
             onClick: this.props.sort,
             descending: this.props.sortDescending
         };
@@ -147,7 +135,12 @@ var HMMTable = React.createClass({
                         </tr>
                     </thead>
 
-                    <FlipMove typeName="tbody" enterAnimation="accordianHorizontal" leaveAnimation={false} duration={150}>
+                    <FlipMove
+                        typeName="tbody"
+                        enterAnimation="accordianHorizontal"
+                        leaveAnimation={false}
+                        duration={150}
+                    >
                         {rowComponents}
                     </FlipMove>
                 </Table>
@@ -160,7 +153,4 @@ var HMMTable = React.createClass({
             </div>
         );
     }
-
-});
-
-module.exports = HMMTable;
+}
