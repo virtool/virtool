@@ -9,13 +9,9 @@
  * @exports ConfirmFooter
  */
 
-"use strict";
-
-import { Button } from "virtool/js/components/Base";
-
 import React from "react";
 import { Row, Col, Modal, ButtonToolbar } from "react-bootstrap";
-import Icon from "./Icon";
+import { Icon, Button } from "virtool/js/components/Base";
 
 /**
  * A special Modal.Footer component that contains an action button customized by the user, and a cancel button. When the
@@ -26,7 +22,9 @@ export default class ConfirmFooter extends React.Component {
     constructor (props) {
         super(props);
 
-        this.state = { confirming: false };
+        this.state = {
+            confirming: false
+        };
     }
 
     static propTypes = {
@@ -47,17 +45,14 @@ export default class ConfirmFooter extends React.Component {
 
         // Close the modal when the confirm button is clicked.
         closeOnConfirm: React.PropTypes.bool
-    }
+    };
 
     static defaultProps = {
         buttonContent: <span><Icon name="checkmark-circle"/> Submit</span>,
         style: "danger",
-        callback: () => {
-            console.warn("Action was confirmed. No callback supplied in props.");
-        },
         message: "Are you sure?",
         closeOnConfirm: true
-    }
+    };
 
     /**
      * Switch the footer to confirm mode. The footer gains a red background, confirmation message, and altered buttons.
@@ -66,7 +61,7 @@ export default class ConfirmFooter extends React.Component {
         this.setState({
             confirming: true
         });
-    }
+    };
 
     /**
      * Function that is called when the confirm button is clicked. Calls the callback function prop, then
@@ -81,7 +76,7 @@ export default class ConfirmFooter extends React.Component {
         if (this.props.closeOnConfirm) {
             this.props.onHide();
         }
-    }
+    };
 
     /**
      * Function that is called to set the footer back to its normal appearance. Triggered by clicking the cancel button.
@@ -90,7 +85,7 @@ export default class ConfirmFooter extends React.Component {
         this.setState({
             confirming: false
         });
-    }
+    };
 
     render () {
         const buttons = (

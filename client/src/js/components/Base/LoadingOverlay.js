@@ -9,32 +9,28 @@
  * @exports LoadingOverlay
  */
 
-'use strict';
-
 import React from "react";
-var Icon = require('virtool/js/components/Base/Icon');
+import Icon from "./";
 
-var LoadingOverlay = React.createClass({
+export default class LoadingOverlay extends React.Component {
 
-    propTypes: {
-        // Show is set to true when the overlay should appear in its parent.
+    propTypes = {
         show: React.PropTypes.bool.isRequired,
         text: React.PropTypes.string
-    },
+    };
 
-    getDefaultProps: function () {
-        // By default the loading is text is simply 'Loading'.
-        return {text: 'Loading'}
-    },
+    defaultProps = {
+        text: "Loading"
+    };
 
-    render: function () {
+    render () {
         if (this.props.show) {
             // The overlay element. Centered text and a centered spinning icon immediately below it.
             return (
-                <div className='loading-overlay'>
+                <div className="loading-overlay">
                     <div>
                         <p>{this.props.text}</p>
-                        <Icon name='spinner' pending={true} />
+                        <Icon name="spinner" pending={true} />
                     </div>
                 </div>
             )
@@ -43,6 +39,4 @@ var LoadingOverlay = React.createClass({
         return <div/>;
     }
 
-});
-
-module.exports = LoadingOverlay;
+}

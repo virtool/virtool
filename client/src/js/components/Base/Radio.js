@@ -9,30 +9,26 @@
  * @exports Radio
  */
 
-'use strict';
-
 import React from "react";
-var Icon = require('./Icon');
+import { Icon } from "./";
 
 /**
- * A component that displays a icon-based radio button. The fill of the radio button depends on the 'checked' prop.
+ * A component that displays a icon-based radio button. The fill of the radio button depends on the "checked" prop.
  */
-var Radio = React.createClass({
+export default class Radio extends React.Component {
 
-    propTypes: {
+    static propTypes = {
         checked: React.PropTypes.bool.isRequired,
         onClick: React.PropTypes.func
-    },
+    };
 
-    getDefaultProps: function () {
-        return {onClick: function () {}};
-    },
+    defaultProps = {
+        onClick: () => {}
+    };
 
-    render: function () {
-        // Set the icon class to 'i-radio-checked' if checked is true, otherwise set it to 'i-radio-unchecked'
-        return <Icon onClick={this.props.onClick} name={'radio-' + (this.props.checked ? 'checked': 'unchecked')} />;
+    render () {
+        // Set the icon class to "i-radio-checked" if checked is true, otherwise set it to "i-radio-unchecked"
+        return <Icon onClick={this.props.onClick} name={"radio-" + (this.props.checked ? "checked": "unchecked")} />;
     }
 
-});
-
-module.exports = Radio;
+}

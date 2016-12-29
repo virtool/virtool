@@ -9,8 +9,6 @@
  * @exports Checkbox
  */
 
-"use strict";
-
 import React from "react";
 
 /**
@@ -33,13 +31,13 @@ export default class Checkbox extends React.Component {
         onClick: React.PropTypes.func,
         pending: React.PropTypes.bool,
         pullRight: React.PropTypes.bool
-    }
+    };
 
     static defaultProps = {
         checked: false,
         partial: false,
         pullRight: false
-    }
+    };
 
     render () {
 

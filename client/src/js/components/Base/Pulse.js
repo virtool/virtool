@@ -9,15 +9,17 @@
  * @exports Pulse
  */
 
-'use strict';
+import React, { PropTypes } from "react";
 
-import React from "react";
+export default class Pulse extends React.Component {
 
-var Pulse = React.createClass({
+    static propTypes = {
+        color: PropTypes.string
+    };
 
-    render: function () {
+    render () {
 
-        var style;
+        let style;
 
         if (this.props.color) {
             style = {
@@ -33,6 +35,4 @@ var Pulse = React.createClass({
         );
     }
 
-});
-
-module.exports = Pulse;
+}

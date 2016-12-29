@@ -9,10 +9,8 @@
  * @exports Button
  */
 
-"use strict";
-
 import React from "react";
-import { omit } from "lodash";
+import { omit } from "lodash-es";
 import { Button as BsButton, Tooltip, OverlayTrigger } from "react-bootstrap";
 
 /**
@@ -22,12 +20,13 @@ export default class Button extends React.Component {
 
     static propTypes = {
         tip: React.PropTypes.oneOfType([React.PropTypes.string, React.PropTypes.element]),
-        tipPlacement: React.PropTypes.oneOf(["top", "right", "bottom", "left"])
-    }
+        tipPlacement: React.PropTypes.oneOf(["top", "right", "bottom", "left"]),
+        pullRight: React.PropTypes.bool
+    };
 
     static defaultProps = {
         pullRight: false
-    }
+    };
 
     /**
      * Function to call when the button becomes focused. Immediately blurs focus.
@@ -36,7 +35,7 @@ export default class Button extends React.Component {
      */
     blur = (event) =>  {
         event.target.blur();
-    }
+    };
 
     render () {
 

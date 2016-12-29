@@ -9,10 +9,8 @@
  * @exports ByteSize
  */
 
-"use strict";
-
-import React from "react";
-import { pick, join, merge, assign } from "lodash";
+import React, { PropTypes } from "react";
+import { pick, join, merge, assign } from "lodash-es";
 
 export class Flex extends React.Component {
 
@@ -21,10 +19,10 @@ export class Flex extends React.Component {
     }
 
     static propTypes = {
-        direction: React.PropTypes.oneOf(["row", "row-reverse", "column", "column-reverse"]),
-        wrap: React.PropTypes.oneOf(["nowrap", "wrap", "wrap-reverse"]),
+        direction: PropTypes.oneOf(["row", "row-reverse", "column", "column-reverse"]),
+        wrap: PropTypes.oneOf(["nowrap", "wrap", "wrap-reverse"]),
 
-        justifyContent: React.PropTypes.oneOf([
+        justifyContent: PropTypes.oneOf([
             "flex-start",
             "flex-end",
             "center",
@@ -32,7 +30,7 @@ export class Flex extends React.Component {
             "space-around"
         ]),
 
-        alignItems: React.PropTypes.oneOf([
+        alignItems: PropTypes.oneOf([
             "flex-start",
             "flex-end",
             "center",
@@ -40,7 +38,7 @@ export class Flex extends React.Component {
             "baseline"
         ]),
 
-        alignContent: React.PropTypes.oneOf([
+        alignContent: PropTypes.oneOf([
             "flex-start",
             "flex-end",
             "center",
@@ -49,10 +47,14 @@ export class Flex extends React.Component {
             "space-around"
         ]),
 
-        className: React.PropTypes.string,
+        children: PropTypes.oneOf([
+            PropTypes.element,
+            PropTypes.arrayOf(PropTypes.element)
+        ]).isRequired,
 
-        style: React.PropTypes.object
-    }
+        className: PropTypes.string,
+        style: PropTypes.object
+    };
 
     static defaultProps = {
         direction: "row",
@@ -60,7 +62,7 @@ export class Flex extends React.Component {
         justifyContent: "flex-start",
         alignItems: "stretch",
         alignContent: "stretch"
-    }
+    };
 
     render () {
 
@@ -88,20 +90,25 @@ export class FlexItem extends React.Component {
     }
 
     static propTypes = {
-        grow: React.PropTypes.number,
-        shrink: React.PropTypes.number,
-        basis: React.PropTypes.oneOfType([React.PropTypes.string, React.PropTypes.number]),
-        alignSelf: React.PropTypes.oneOf(["auto", "flex-start", "flex-end", "center", "baseline", "stretch"]),
-        pad: React.PropTypes.oneOfType([React.PropTypes.bool, React.PropTypes.number]),
-        style: React.PropTypes.object
-    }
+        grow: PropTypes.number,
+        shrink: PropTypes.number,
+        basis: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+        alignSelf: PropTypes.oneOf(["auto", "flex-start", "flex-end", "center", "baseline", "stretch"]),
+        pad: PropTypes.oneOfType([PropTypes.bool, PropTypes.number]),
+        style: PropTypes.object,
+        className: PropTypes.string,
+        children: PropTypes.oneOf([
+            PropTypes.element,
+            PropTypes.arrayOf(PropTypes.element)
+        ]).isRequired,
+    };
 
     static defaultProps = {
         grow: 0,
         shrink: 1,
         basis: "auto",
         alignSelf: null
-    }
+    };
 
     render () {
 

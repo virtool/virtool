@@ -9,82 +9,75 @@
  * @exports Input
  */
 
-'use strict';
+import React, { PropTypes } from "react";
+import { ControlLabel, FormControl, FormGroup, Overlay, Popover } from "react-bootstrap";
 
-import React from "react";
-import ReactDOM from "react-dom";
-var Overlay = require('react-bootstrap/lib/Overlay');
-var Popover = require('react-bootstrap/lib/Popover');
-var FormGroup = require('react-bootstrap/lib/FormGroup');
-var InputGroup = require('react-bootstrap/lib/InputGroup');
-var ControlLabel = require('react-bootstrap/lib/ControlLabel');
-var FormControl = require('react-bootstrap/lib/FormControl');
+export class Input extends React.Component {
 
-var Input = React.createClass({
+    constructor (props) {
+        super(props);
 
-    propTypes: {
-        label: React.PropTypes.oneOfType([React.PropTypes.string, React.PropTypes.element]),
-        name: React.PropTypes.string,
-        type: React.PropTypes.string,
-        rows: React.PropTypes.number,
-        value: React.PropTypes.any,
-        readOnly: React.PropTypes.bool,
-        placeholder: React.PropTypes.any,
-        autoComplete: React.PropTypes.bool,
+    }
 
-        error: React.PropTypes.oneOfType([React.PropTypes.string, React.PropTypes.element]),
-        errorPlacement: React.PropTypes.string,
+    static propTypes = {
+        label: PropTypes.oneOfType([PropTypes.string, PropTypes.element]),
+        name: PropTypes.string,
+        type: PropTypes.string,
+        rows: PropTypes.number,
+        value: PropTypes.any,
+        readOnly: PropTypes.bool,
+        placeholder: PropTypes.any,
+        autoComplete: PropTypes.bool,
 
-        onHide: React.PropTypes.func,
-        onBlur: React.PropTypes.func,
-        onFocus: React.PropTypes.func,
-        onChange: React.PropTypes.func,
+        error: PropTypes.oneOfType([PropTypes.string, PropTypes.element]),
+        errorPlacement: PropTypes.string,
 
-        style: React.PropTypes.object
-    },
+        onHide: PropTypes.func,
+        onBlur: PropTypes.func,
+        onFocus: PropTypes.func,
+        onChange: PropTypes.func,
 
-    getDefaultProps: function () {
-        return {
-            type: 'text',
-            autoComplete: true,
-            errorPlacement: 'top'
-        };
-    },
+        style: PropTypes.object,
 
-    getInputDOMNode: function () {
-        return ReactDOM.findDOMNode(this.refs.input);
-    },
+        children: PropTypes.arrayOf(PropTypes.element)
+    };
 
-    focus: function () {
-        this.getInputDOMNode().focus();
-    },
+    static defaultProps = {
+        type: "text",
+        autoComplete: true,
+        errorPlacement: "top"
+    };
 
-    blur: function () {
-        this.getInputDOMNode().blur();
-    },
+    focus = () => {
+        this.inputNode.focus();
+    };
 
-    render: function () {
+    blur = () => {
+        this.inputNode.blur();
+    };
 
-        var overlay;
+    render () {
+
+        let overlay;
 
         if (this.props.error) {
             // Set up an overlay to display if there is an error in state.
-            var overlayProps = {
-                target: this.getInputDOMNode,
+            const overlayProps = {
+                target: this.inputNode,
                 animation: true,
                 placement: this.props.errorPlacement
             };
 
             overlay = (
                 <Overlay {...overlayProps} show={true}>
-                    <Popover id='input-error-popover'>
+                    <Popover id="input-error-popover">
                         {this.props.error}
                     </Popover>
                 </Overlay>
             );
         }
 
-        var componentClass;
+        let componentClass;
 
         if (this.props.type === "select") {
             componentClass = "select";
@@ -94,7 +87,7 @@ var Input = React.createClass({
             componentClass = "textarea";
         }
 
-        var label;
+        let label;
 
         if (this.props.label) {
             label = (
@@ -109,7 +102,7 @@ var Input = React.createClass({
                 <FormGroup>
                     {label}
                     <FormControl
-                        ref="input"
+                        ref={this.inputNode}
                         type={this.props.type}
                         name={this.props.name}
                         rows={this.props.rows}
@@ -130,6 +123,4 @@ var Input = React.createClass({
             </div>
         );
     }
-});
-
-module.exports = Input;
+}

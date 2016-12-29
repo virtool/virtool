@@ -9,11 +9,9 @@
  * @exports Icon
  */
 
-"use strict";
-
 import CX from "classnames";
 import React from "react";
-import { assign } from "lodash";
+import { assign } from "lodash-es";
 import { Tooltip, OverlayTrigger } from "react-bootstrap";
 
 /**
@@ -35,57 +33,39 @@ export default class Icon extends React.Component {
         fixedWidth: React.PropTypes.bool,
         style: React.PropTypes.object,
         pad: React.PropTypes.bool
-    }
+    };
 
     static defaultProps = {
         pending: false,
         pullRight: false,
         fixedWidth: false
-    }
+    };
 
-    /**
-     * Handles click event by stopping propagation of the click event and calling the onClick prop function.
-     *
-     * @param event {object} - the click event.
-     * @func
-     */
     handleClick = (event) => {
         event.stopPropagation();
         this.props.onClick(event);
-    }
+    };
 
     render () {
-        const classDefinition = {
-            "pull-right": this.props.pullRight,
-            "fixed-width": this.props.fixedWidth
-        };
+        const className = CX(
+            this.props.className,
+            this.props.pending ? "i-spinner spinner": ("i-" + this.props.name),
+            this.props.bsStyle && !this.props.pending ? "text-" + this.props.bsStyle: false,
 
-        var style = assign(this.props.pad ? {marginLeft: "3px"}: {}, this.props.style);
+            {
+                "pull-right": this.props.pullRight,
+                "fixed-width": this.props.fixedWidth,
+                "hoverable pointer": this.props.onClick,
+            }
+        );
 
-        // Should the icon be a spinner icon or the icon name passed in props?
-        classDefinition[this.props.pending ? "i-spinner spinner": ("i-" + this.props.name)] = true;
+        const style = assign(this.props.pad ? {marginLeft: "3px"}: {}, this.props.style);
 
-        // Does the icon need a Bootstrap text style?
-        if (this.props.bsStyle && !this.props.pending) {
-            classDefinition["text-" + this.props.bsStyle] = true;
-        }
-
-        // If the icon calls a function onClick, it should be hoverable.
-        if (this.props.onClick) {
-            classDefinition["hoverable pointer"] = true;
-        }
-
-        var className = CX(classDefinition);
-
-        if (this.props.className) {
-            className += " " + this.props.className;
-        }
-
-        var icon = <i className={className} onClick={this.props.onClick ? this.handleClick: null} style={style} />;
+        const icon = <i className={className} style={style} onClick={this.props.onClick ? this.handleClick: null} />;
 
         if (this.props.tip) {
 
-            var tooltip = (
+            const tooltip = (
                 <Tooltip id={this.props.tip}>
                     {this.props.tip}
                 </Tooltip>

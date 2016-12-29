@@ -9,66 +9,56 @@
  * @exports Scroll
  */
 
-'use strict';
-
 import React from "react";
-import ReactDOM from "react-dom";
-import {pick, merge} from "lodash";
+import { pick, merge } from "lodash-es";
+import Ps from "perfect-scrollbar";
 
-var Ps = require('perfect-scrollbar');
+export default class Scroll extends React.Component {
 
-var Scroll = React.createClass({
-
-    propTypes: {
+    static propTypes = {
         style: React.PropTypes.object,
         height: React.PropTypes.string,
         wheelSpeed: React.PropTypes.number,
         wheelPropagation: React.PropTypes.bool,
-        minScrollbarLength: React.PropTypes.number
-    },
+        minScrollbarLength: React.PropTypes.number,
+        children: React.PropTypes.element
+    };
 
-    getDefaultProps: function () {
-        return {
-            height: "400px",
-            wheelSpeed: 2,
-            wheelPropagation: true,
-            minScrollbarLength: 20
-        };
-    },
+    static defaultProps = {
+        style: {},
+        height: "400px",
+        wheelSpeed: 2,
+        wheelPropagation: true,
+        minScrollbarLength: 20
+    };
 
-    componentDidMount: function () {
-        Ps.initialize(ReactDOM.findDOMNode(this.refs.container), pick(this.props, [
+    componentDidMount () {
+        Ps.initialize(this.containerNode, pick(this.props, [
             "wheelSpeed",
             "wheelPropagation",
             "minScrollbarLength"
         ]));
-    },
+    }
 
-    componentWillUnmount: function () {
-        Ps.destroy(ReactDOM.findDOMNode(this.refs.container));
-    },
+    componentWillUnmount () {
+        Ps.destroy(this.containerNode);
+    }
 
-    update: function () {
-        Ps.update(ReactDOM.findDOMNode(this.refs.container));
-    },
+    update = () => {
+        Ps.update(this.containerNode);
+    };
 
-    render: function () {
+    render () {
 
-        var style = {
+        let style = merge({
             height: this.props.height,
             position: "relative"
-        };
-
-        if (this.props.style) {
-            merge(style, this.props.style);
-        }
+        }, this.props.style);
 
         return (
-            <div ref="container" style={style}>
+            <div ref={this.containerNode} style={style}>
                 {this.props.children}
             </div>
         )
     }
-});
-
-module.exports = Scroll;
+}

@@ -9,24 +9,24 @@
  * @exports Paginator
  */
 
-'use strict';
+import React from "react";
+import { Pagination } from "react-bootstrap";
 
-var _ = require("lodash");
-var React = require("react");
-var Pagination = require('react-bootstrap/lib/Pagination');
+class Paginator extends React.Component {
 
-var Paginator = React.createClass({
+    constructor (props) {
+        super(props);
+    }
 
-    propTypes: {
+    static propTypes = {
         page: React.PropTypes.number.isRequired, // The active page number.
         count: React.PropTypes.number.isRequired, // The total number of pages.
         onChange: React.PropTypes.func.isRequired // Callback to trigger when a new page number is clicked.
-    },
+    };
 
-    render: function () {
-
+    render () {
         return (
-            <div className='text-center'>
+            <div className="text-center">
                 <Pagination
                     prev
                     next
@@ -42,7 +42,7 @@ var Paginator = React.createClass({
         );
     }
 
-});
+}
 
 Paginator.calculatePages = function (documents, page, perPage) {
 
@@ -50,10 +50,10 @@ Paginator.calculatePages = function (documents, page, perPage) {
     perPage = perPage || 20;
 
     // Get a rough number of pages.
-    var roughPageCount = documents.length / perPage;
+    const roughPageCount = documents.length / perPage;
 
     // Determine the indexes of the slice of documents that should be taken to generate the page.
-    var endIndex = page * perPage;
+    const endIndex = page * perPage;
 
     return {
         count: roughPageCount >= 1 ? Math.ceil(roughPageCount): 1,
@@ -61,4 +61,4 @@ Paginator.calculatePages = function (documents, page, perPage) {
     }
 };
 
-module.exports = Paginator;
+export default Paginator;
