@@ -2,6 +2,10 @@ body {
     font-family: 'Roboto', sans-serif;
 }
 
+.text-em {
+    font-style: italic;
+}
+
 .pointer {
     cursor: pointer;
 }
