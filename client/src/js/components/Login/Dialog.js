@@ -1,30 +1,51 @@
+/**
+ * @license
+ * The MIT License (MIT)
+ * Copyright 2015 Government of Canada
+ *
+ * @author
+ * Ian Boyes
+ *
+ * @exports LoginDialog
+ */
+
 import React from "react";
-import { assign } from "lodash";
+import { assign } from "lodash-es";
 import { Alert } from "react-bootstrap";
-
 import { Icon, Flex, FlexItem, Button } from "virtool/js/components/Base";
+
 import LoginForm from "./Login";
-import ChangeForm from "./Change";
+import PasswordChangeForm from "./Change";
 
+function getInitialState () {
+    return {
+        username: "",
+        password: "",
+        loginPending: false,
+        loginFailed: false,
 
-var LoginDialog = React.createClass({
+        needsReset: false,
+        new: "",
+        confirm: "",
+        warnings: []
+    };
+}
 
-    getInitialState: function () {
-        return {
-            username: '',
-            password: '',
-            loginPending: false,
-            loginFailed: false,
+export default class LoginDialog extends React.Component {
 
-            needsReset: false,
-            new: '',
-            confirm: '',
-            warnings: []
-        };
-    },
+    constructor (props) {
+        super(props);
+        this.state = getInitialState();
+    }
 
-    handleChange: function (event) {
-        var state = {
+    static propTypes = {
+        onLogin: React.PropTypes.func,
+        clearForcedLogout: React.PropTypes.func,
+        forcedLogout: React.PropTypes.bool
+    };
+
+    handleChange = (event) => {
+        let state = {
             loginFailed: false,
             warnings: []
         };
@@ -32,38 +53,38 @@ var LoginDialog = React.createClass({
         state[event.target.name] = event.target.value;
 
         this.setState(state);
-    },
+    };
 
-    login: function () {
+    login = () => {
         this.setState({pending: true}, function () {
-
             dispatcher.send({
-                interface: 'users',
-                method: 'authorize_by_login',
+                interface: "users",
+                method: "authorize_by_login",
                 data: {
                     username: this.state.username,
                     password: this.state.new || this.state.password,
                     browser: dispatcher.browser
                 }
-            }).success(this.props.onLogin).failure(this.onLoginFailure);
-
+            })
+            .success(this.props.onLogin)
+            .failure(this.onLoginFailure);
         });
-    },
+    };
 
-    reset: function () {
+    reset = () => {
 
-        var newState = {
+        let newState = {
             warnings: []
         };
 
         if (this.state.new.length < 8) {
-            newState.warnings.push('Passwords must be at least 8 characters long.');
-            newState.new = '';
-            newState.confirm = '';
+            newState.warnings.push("Passwords must be at least 8 characters long.");
+            newState.new = "";
+            newState.confirm = "";
         }
 
         if (this.state.new != this.state.confirm) {
-            newState.warnings.push('Passwords do not match');
+            newState.warnings.push("Passwords do not match");
         }
 
         if (this.state.new.length >= 8 && this.state.new === this.state.confirm) {
@@ -75,71 +96,75 @@ var LoginDialog = React.createClass({
                     old_password: this.state.password,
                     new_password: this.state.new
                 }
-            }).success(this.login).failure(this.onResetFailure);
+            })
+            .success(this.login)
+            .failure(this.onResetFailure);
         }
 
-        if (newState.warnings.length > 0) this.setState(newState);
-    },
+        if (newState.warnings.length > 0) {
+            this.setState(newState);
+        }
+    };
 
-    onResetFailure: function () {
+    onResetFailure = () => {
         this.setState({
-            new: '',
-            confirm: '',
-            warnings: ['Server error. Contact administrator.']
+            new: "",
+            confirm: "",
+            warnings: ["Server error. Contact administrator."]
         });
-    },
+    };
 
-    onLoginFailure: function (data) {
+    onLoginFailure = (data) => {
         if (data.force_reset) {
             this.setState({
                 needsReset: true
             });
         } else {
-            this.replaceState(assign(this.getInitialState(), {loginFailed: true}));
+            this.setState(assign(getInitialState(), { loginFailed: true }));
         }
-    },
+    };
 
-    render: function () {
+    render () {
 
-        var sharedProps = assign({
+        const sharedProps = assign({
             login: this.login,
             reset: this.reset,
             onChange: this.handleChange
         }, this.state);
 
-        var containerStyle = {
-            width: '300px',
-            paddingBottom: '200px'
+        const containerStyle = {
+            width: "300px",
+            paddingBottom: "200px"
         };
 
-        var panelBodyStyle = {
-            boxShadow: 'rgba(0, 0, 0, 0.498039) 0px 5px 15px 0px'
+        const panelBodyStyle = {
+            boxShadow: "rgba(0, 0, 0, 0.498039) 0px 5px 15px 0px"
         };
 
-        var content;
+        let content;
 
         if (this.props.forcedLogout) {
             content = (
                 <div>
-                    <Alert bsStyle='danger'>
+                    <Alert bsStyle="danger">
                         <Flex>
                             <FlexItem>
-                                <Icon name='warning' />
+                                <Icon name="warning" />
                             </FlexItem>
                             <FlexItem pad={5}>
                                 Your session was stopped by an administrator.
                             </FlexItem>
                         </Flex>
                     </Alert>
-                    <Button bsStyle='primary' onClick={this.props.clearForcedLogout} block>
-                        <Icon name='checkmark' /> OK
+                    <Button bsStyle="primary" onClick={this.props.clearForcedLogout} block>
+                        <Icon name="checkmark" /> OK
                     </Button>
                 </div>
             );
         }
 
         else if (this.state.needsReset) {
-            content = <ChangeForm {...sharedProps} />;
+            content = <PasswordChangeForm {...sharedProps} />;
         }
 
         else {
@@ -147,10 +172,10 @@ var LoginDialog = React.createClass({
         }
 
         return (
-            <div className='page-loading'>
+            <div className="page-loading">
                 <div style={containerStyle}>
-                    <div className='panel panel-default'>
-                        <div className='panel-body' style={panelBodyStyle}>
+                    <div className="panel panel-default">
+                        <div className="panel-body" style={panelBodyStyle}>
                             {content}
                         </div>
                     </div>
@@ -158,6 +183,4 @@ var LoginDialog = React.createClass({
             </div>
         );
     }
-});
-
-module.exports = LoginDialog;
+}

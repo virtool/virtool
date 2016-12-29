@@ -9,8 +9,6 @@
  * @exports PasswordChangeForm
  */
 
-'use strict';
-
 import React from "react";
 import { Button, Alert } from "react-bootstrap";
 import { Input } from "virtool/js/components/Base";
@@ -18,80 +16,79 @@ import { Input } from "virtool/js/components/Base";
 /**
  * A form used by user to change their password.
  */
-var PasswordChangeForm = React.createClass({
+export default class PasswordChangeForm extends React.Component {
 
-    propTypes: {
-        new: React.PropTypes.string,
+    static propTypes = {
+        password: React.PropTypes.string,
         confirm: React.PropTypes.string,
-        warnings: React.PropTypes.array
-    },
+        warnings: React.PropTypes.array,
 
-    componentDidMount: function () {
-        this.refs.new.focus();
-    },
+        reset: React.PropTypes.func,
+        onChange: React.PropTypes.func
+    };
 
-    componentDidUpdate: function () {
-        if (this.props.warnings.length > 0) this.refs.new.focus();
-    },
+    componentDidMount () {
+        this.passwordNode.focus();
+    }
+
+    componentDidUpdate () {
+        if (this.props.warnings.length > 0) {
+            this.passwordNode.focus();
+        }
+    }
 
     /**
-     * Triggered when the change password form is submitted. Sends a request to the server to change the user's
+     * Triggered when the change password form is submitted. Sends a request to the server to change the user"s
      * password. Check
      *
      * @param event - the submit event from the form.
      */
-    handleSubmit: function (event) {
+    handleSubmit = (event) => {
         event.preventDefault();
         this.props.reset();
-    },
+    };
 
-    render: function () {
+    render () {
         
-        var error;
+        let error;
 
         // Code for rendering warnings for failed passwords.
         if (this.props.warnings.length > 0) {
-            var warningComponents = this.props.warnings.map(function (warning, index) {
-                return <p key={index} className='text-danger'>{warning}</p>;
-            });
+            const warningComponents = this.props.warnings.map((warning, index) => (
+                <p key={index} className="text-danger">{warning}</p>
+            ));
 
-            error = (
-                <div>
-                    {warningComponents}
-                </div>
-            );
+            error = <div>{warningComponents}</div>;
         }
 
         return (
             <form onSubmit={this.handleSubmit}>
-                <Alert bsStyle='info'>Your password has expired. Please change it before continuing.</Alert>
+                <Alert bsStyle="info">Your password has expired. Please change it before continuing.</Alert>
 
                 <Input
-                    ref='new'
-                    name='new'
-                    type='password'
+                    ref={this.passwordNode}
+                    name="password"
+                    type="password"
                     error={error}
-                    errorPlacement='bottom'
-                    label='New password'
+                    errorPlacement="bottom"
+                    label="New password"
 
-                    value={this.props.new}
+                    value={this.props.password}
                     onChange={this.props.onChange}
                 />
 
                 <Input
-                    type='password'
-                    name='confirm'
-                    label='Confirm'
+                    type="password"
+                    name="confirm"
+                    label="Confirm"
                     value={this.props.confirm}
                     onChange={this.props.onChange}
                 />
 
-                <Button type='submit' bsStyle='primary' block>
+                <Button type="submit" bsStyle="primary" block>
                     Submit
                 </Button>
             </form>
         );
     }
-});
-
-module.exports = PasswordChangeForm;
+}

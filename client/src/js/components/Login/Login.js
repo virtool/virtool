@@ -1,63 +1,75 @@
-"use strict";
+/**
+ * @license
+ * The MIT License (MIT)
+ * Copyright 2015 Government of Canada
+ *
+ * @author
+ * Ian Boyes
+ *
+ * @exports LoginForm
+ */
 
 import React from "react";
-import { Icon, Input, Button } from 'virtool/js/components/Base'
+import { Icon, Input, Button } from "virtool/js/components/Base"
 
-var Login = React.createClass({
+export default class LoginForm extends React.Component {
 
-    propTypes: {
+    static propTypes = {
         username: React.PropTypes.string,
         password: React.PropTypes.string,
-        pending: React.PropTypes.bool,
+        onChange: React.PropTypes.func,
+
+        login: React.PropTypes.func,
+        loginPending: React.PropTypes.bool,
         loginFailed: React.PropTypes.bool
-    },
+    };
 
-    componentDidMount: function () {
-        this.refs.username.focus();
-    },
+    componentDidMount () {
+        this.usernameNode.focus();
+    }
 
-    componentDidUpdate: function (prevProps) {
-        if (!prevProps.loginFailed && this.props.loginFailed) this.focus();
-    },
+    componentDidUpdate(prevProps) {
+        if (!prevProps.loginFailed && this.props.loginFailed) {
+            this.usernameNode.focus();
+        }
+    }
 
-    handleSubmit: function (event) {
+    handleSubmit = (event) => {
         event.preventDefault();
         this.props.login();
-    },
+    };
 
-    render: function () {
+    render () {
 
-        var alertStyle = this.props.loginFailed ? null: {color: 'white'};
+        const alertStyle = this.props.loginFailed ? null: { color: "white" };
 
         return (
             <form onSubmit={this.handleSubmit}>
                 <Input
-                    ref='username'
-                    type='text'
-                    label='Username'
-                    name='username'
+                    ref="username"
+                    type="text"
+                    label="Username"
+                    name="username"
                     value={this.props.username}
                     onChange={this.props.onChange}
                 />
 
                 <Input
-                    type='password'
-                    label='Password'
-                    name='password'
+                    type="password"
+                    label="Password"
+                    name="password"
                     value={this.props.password}
                     onChange={this.props.onChange}
                 />
 
-                <p className='text-danger' style={alertStyle}>
-                    <Icon name='warning' /> Invalid username or password
+                <p className="text-danger" style={alertStyle}>
+                    <Icon name="warning" /> Invalid username or password
                 </p>
 
-                <Button type='submit' bsStyle='primary' block disabled={this.props.loginPending}>
-                    <Icon name='key' pending={this.props.loginPending} /> Login
+                <Button type="submit" bsStyle="primary" block disabled={this.props.loginPending}>
+                    <Icon name="key" pending={this.props.loginPending} /> Login
                 </Button>
             </form>
         );
     }
-});
-
-module.exports = Login;
+}
