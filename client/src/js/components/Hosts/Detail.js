@@ -9,20 +9,18 @@
  * @exports HostDetail
  */
 
-"use strict";
-
 import React from "react";
 import Numeral from "numeral";
 import { toScientificNotation } from "virtool/js/utils";
-import { Table, Alert } from "react-bootstrap";
+import { Modal, Table, Alert } from "react-bootstrap";
 import { Icon, ConfirmFooter } from "virtool/js/components/Base";
 
-/**
- * The ConfirmFooter component for the host detail modal.
- *
- * @class
- */
-var HostDetailFooter = React.createClass({
+export class HostDetailFooter extends React.Component {
+
+    static propTypes = {
+        _id: React.PropTypes.string.isRequired,
+        onError: React.PropTypes.func
+    };
 
     /**
      * Remove the host associated with the host id. Triggered by clicking the confirm button in the active
@@ -30,13 +28,14 @@ var HostDetailFooter = React.createClass({
      *
      * @func
      */
-    remove: function () {
-        dispatcher.db.hosts.request("remove_host", {_id: this.props._id}).failure(this.props.onError);
-    },
+    remove = () => {
+        dispatcher.db.hosts.request("remove_host", {_id: this.props._id})
+            .failure(this.props.onError);
+    };
 
-    render: function () {
+    render () {
 
-        var buttonContent = (
+        const buttonContent = (
             <span>
                 <Icon name="remove"/> Remove
             </span>
@@ -52,33 +51,37 @@ var HostDetailFooter = React.createClass({
             />
         );
     }
-});
+}
 
-/**
- * A modal component for showing the details for a host document. Has a ConfirmFooter for removing the host.
- *
- * @class
- */
-var HostDetail = React.createClass({
+export default class HostDetail extends React.Component {
 
-    getInitialState: function () {
-        return {
+    constructor (props) {
+        super(props);
+
+        this.state = {
             error: false
         };
-    },
+    }
 
-    showError: function () {
-        this.setState({error: true});
-    },
+    static propTypes = {
+        detail: React.PropTypes.object,
+        onHide: React.PropTypes.func
+    };
 
-    render: function () {
+    showError = () => {
+        this.setState({
+            error: true
+        });
+    };
 
-        var data = this.props.detail;
-        var nucs = data.nucleotides;
-        var gc = Numeral(1 - nucs.a - nucs.t - nucs.n).format("0.000");
+    render () {
 
-        var alert;
-        var footer;
+        const data = this.props.detail;
+        const nucs = data.nucleotides;
+        const gc = Numeral(1 - nucs.a - nucs.t - nucs.n).format("0.000");
+
+        let alert;
+        let footer;
 
         if (this.state.error) {
             alert = (
@@ -163,6 +166,4 @@ var HostDetail = React.createClass({
         )
     }
 
-});
-
-module.exports = HostDetail;
+}

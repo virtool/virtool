@@ -1,43 +1,58 @@
+/**
+ * @license
+ * The MIT License (MIT)
+ * Copyright 2015 Government of Canada
+ *
+ * @author
+ * Ian Boyes
+ *
+ * @exports Welcome
+ */
+
 import React from "react";
-var Panel = require('react-bootstrap/lib/Panel');
-var Table = require('react-bootstrap/lib/Table');
+import { Panel, Table } from "react-bootstrap";
 
-var View = React.createClass({
+export default class Welcome extends React.Component {
 
-    getInitialState: function () {
-        return {
+    constructor (props) {
+        super(props);
+
+        this.state = {
             settings: dispatcher.settings.data || null
-        }
-    },
+        };
+    }
 
-    componentDidMount: function () {
-        dispatcher.settings.on('change', this.update);
-    },
+    componentDidMount () {
+        dispatcher.settings.on("change", this.update);
+    }
 
-    componentWillUnmount: function () {
-        dispatcher.settings.off('change', this.update);
-    },
+    componentWillUnmount () {
+        dispatcher.settings.off("change", this.update);
+    }
 
-    update: function () {
-        this.setState({settings: dispatcher.settings.data});
-    },
+    update = () => {
+        this.setState({
+            settings: dispatcher.settings.data
+        });
+    };
 
-    render: function () {
-        var content;
+    render () {
+
+        let content;
 
         if (this.state.settings) {
 
             content = (
                 <div>
-                    <Panel header='Virtool'>
+                    <Panel header="Virtool">
                         <a href="/doc/index.html?v=2" target="_blank">Documentation</a> (incomplete)
                     </Panel>
-                    <Panel header='Server'>
+                    <Panel header="Server">
                         <Table fill bordered>
                             <tbody>
                                 <tr>
                                     <th>Version</th>
-                                    <td>{dispatcher.settings.get('server_version')}</td>
+                                    <td>{dispatcher.settings.get("server_version")}</td>
                                 </tr>
                                 <tr>
                                     <th>Address</th>
@@ -56,6 +71,4 @@ var View = React.createClass({
 
         return <div>{content}</div>;
     }
-});
-
-module.exports = View;
+}

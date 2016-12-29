@@ -8,44 +8,48 @@
  *
  * @exports AddHost
  */
+
 import React from "react";
-import {Modal, Button} from "react-bootstrap";
-import Icon from "virtool/js/components/Base/Icon";
-import Input from "virtool/js/components/Base/Input";
+import { Modal, Button } from "react-bootstrap";
+import { Icon, Input } from "virtool/js/components/Base";
 
 /**
  * A component based on React-Bootstrap Modal that presents a form used to add a new host from a FASTA file.
  */
-export const AddHost = React.createClass({
+export default class AddHost extends React.Component {
 
-    propTypes: {
+    constructor (props) {
+        super(props);
+
+        this.state = {
+            organism: "",
+            description: ""
+        };
+    }
+
+    static propTypes = {
         show: React.PropTypes.bool.isRequired,
         onHide: React.PropTypes.func.isRequired,
         target: React.PropTypes.object
-    },
+    };
 
-    getInitialState: function () {
-        // The only state is the form input field content.
-        return {
-            organism: '',
-            description: ''
-        }
-    },
+    modalEnter = () => {
+        this.organismNode.focus();
+    };
 
-    modalEnter: function () {
-        this.refs.organism.focus();
-    },
+    modalExited = () => {
+        this.setState({
+            organism: "",
+            description: ""
+        });
+    };
 
-    modalExited: function () {
-        this.setState(this.getInitialState());
-    },
-
-    handleChange: function (event) {
-        var data = {};
+    handleChange = (event) => {
+        let data = {};
         data[event.target.name] = event.target.value;
 
         this.setState(data);
-    },
+    };
 
     /**
      * Callback triggered by the form submit event. Sends a request to the server requesting a new job for adding a new
@@ -53,28 +57,24 @@ export const AddHost = React.createClass({
      *
      * @param event {object} - the submit event; used only to prevent the default behaviour
      */
-    handleSubmit: function (event) {
+    handleSubmit = (event) => {
         event.preventDefault();
 
         // Only submit the request if the two form fields are filled.
         if (this.state.organism.length > 0 && this.state.description.length > 0) {
-            dispatcher.db.hosts.request('add', {
+            dispatcher.db.hosts.request("add", {
                 file: this.props.target._id,
                 description: this.state.description,
                 organism: this.state.organism
             }).success(this.props.onHide);
         }
-    },
+    };
 
-    render: function () {
+    render () {
         // The form is submittable if both fields are filled.
-        var submittable = this.state.organism.length > 0 && this.state.description.length > 0;
+        const submittable = this.state.organism.length > 0 && this.state.description.length > 0;
 
-        var content;
-
-        var organismStyle = {
-            fontStyle: "italic"
-        };
+        let content;
 
         if (this.props.show && this.props.target) {
             content = (
@@ -85,16 +85,16 @@ export const AddHost = React.createClass({
 
                     <Modal.Body>
                         <Input
-                            ref='organism'
-                            type='text'
+                            ref={this.organismNode}
+                            type="text"
+                            className="text-em"
                             name="organism"
                             label="Organism"
                             value={this.state.organism}
                             onChange={this.handleChange}
-                            style={organismStyle}
                         />
                         <Input
-                            type='text'
+                            type="text"
                             name="description"
                             label="Description"
                             value={this.state.description}
@@ -108,10 +108,10 @@ export const AddHost = React.createClass({
                         />
                     </Modal.Body>
 
-                    <Modal.Footer className='modal-footer'>
+                    <Modal.Footer className="modal-footer">
                         <Button onClick={this.props.onHide}>Cancel</Button>
-                        <Button type='submit' onClick={this.submit} bsStyle='primary' disabled={!submittable}>
-                            <Icon name='plus-square'/> Add
+                        <Button type="submit" onClick={this.submit} bsStyle="primary" disabled={!submittable}>
+                            <Icon name="plus-square"/> Add
                         </Button>
                     </Modal.Footer>
                 </form>
@@ -126,6 +126,4 @@ export const AddHost = React.createClass({
         )
     }
 
-});
-
-module.exports = AddHost;
+}
