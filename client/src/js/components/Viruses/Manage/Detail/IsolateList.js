@@ -9,8 +9,6 @@
  * exports IsolateList
  */
 
-"use strict";
-
 import React from "react";
 import ReactDOM from "react-dom";
 import FlipMove from "react-flip-move"
@@ -18,87 +16,79 @@ import { Badge } from "react-bootstrap";
 import { Icon, ListGroupItem, Scroll } from "virtool/js/components/Base";
 
 
-var Isolate = require("./Isolate");
-var IsolateAdd = require("./IsolateAdd");
+import Isolate from "./Isolate";
+import IsolateAdd from "./IsolateAdd";
+
+const getInitialState = () => ({
+    restrictSourceTypes: dispatcher.settings.get("restrict_source_types"),
+    allowedSourceTypes: dispatcher.settings.get("allowed_source_types")
+});
 
 /**
  * A component that lists the isolates associated with a virus as Isolate components.
  *
  * @class
  */
-var IsolateList = React.createClass({
+export default class IsolateList extends React.Component {
 
-    propTypes: {
-        // An array of isolates documents.
+    constructor (props) {
+        super(props);
+        this.state = getInitialState();
+    }
+
+    static propTypes = {
         data: React.PropTypes.array.isRequired,
 
+        virusId: React.PropTypes.string,
         activeIsolateId: React.PropTypes.string,
         restrictSourceTypes: React.PropTypes.bool,
         allowedSourceTypes: React.PropTypes.array,
+        canModify: React.PropTypes.bool,
 
-        // Function to call when the add button is clicked or the add form is dismissed.
-        toggleAdding: React.PropTypes.func
-    },
+        toggleAdding: React.PropTypes.func,
+        selectIsolate: React.PropTypes.func
+    };
 
-    getInitialState: function () {
-        return {
-            restrictSourceTypes: dispatcher.settings.get("restrict_source_types"),
-            allowedSourceTypes: dispatcher.settings.get("allowed_source_types")
-        };
-    },
-
-    componentDidMount: function () {
+    componentDidMount () {
         dispatcher.settings.on("change", this.update);
         ReactDOM.findDOMNode(this.refs.flip).addEventListener("resize", this.updateScroll);
-    },
+    }
 
-    componentWillUnmount: function () {
+    componentWillUnmount () {
         dispatcher.settings.off("change", this.update);
         ReactDOM.findDOMNode(this.refs.flip).removeEventListener("resize", this.updateScroll);
-    },
+    }
 
-    /**
-     * Update the component with new restricted source type settings. Triggered by an update event from the settings
-     * object.
-     *
-     * @func
-     */
-    update: function () {
-        this.setState(this.getInitialState());
-    },
-
-    updateScroll: function () {
+    updateScroll = () => {
         this.refs.scroll.update();
-    },
+    };
 
-    render: function () {
+    update = () => {
+        this.setState(getInitialState());
+    };
+
+    render () {
 
         // Render each isolate as a selectable list item
-        var isolateComponents = this.props.data.map(function (isolate) {
-            var props = {
-                key: isolate.isolate_id,
-                virusId: this.props.virusId,
-                isolateId: isolate.isolate_id,
-                sourceName: isolate.source_name,
-                sourceType: isolate.source_type,
-                default: isolate.default,
-
-                active: isolate.isolate_id === this.props.activeIsolateId,
-                selectIsolate: this.props.selectIsolate,
-
-                canModify: this.props.canModify
-            };
-
+        const isolateComponents = this.props.data.map((isolate) => {
             return (
                 <Isolate
-                    {...props}
+                    key={isolate.isolate_id}
+                    virusId={this.props.virusId}
+                    isolateI={isolate.isolate_id}
+                    sourceName={isolate.source_name}
+                    sourceType={isolate.source_name}
+                    default={isolate.default}
+                    active={isolate.isolate_id === this.props.activeIsolateId}
+                    selectIsolate={this.props.selectIsolate}
+                    canModify={this.props.canModify}
                     {...this.state}
                 />
             );
-        }, this);
+        });
 
         // The final list item can display either an "New Isolate" button or a form for adding a new isolate
-        var lastComponent;
+        let lastComponent;
 
         // If the "addingIsolate" prop is true, render the form. Otherwise display a button to open the form.
         if (this.props.canModify) {
@@ -126,7 +116,7 @@ var IsolateList = React.createClass({
             );
         }
 
-        var flipProps = {
+        const flipProps = {
             typeName: "div",
             className: "list-group",
             enterAnimation: "fade",
@@ -140,7 +130,12 @@ var IsolateList = React.createClass({
                     <strong><Icon name="lab" /> Isolates</strong> <Badge>{this.props.data.length}</Badge>
                 </h5>
                 <Scroll ref="scroll" style={{marginBottom: "15px"}}>
-                    <FlipMove ref="flip" {...flipProps} style={{marginBottom: 0, marginRight: "10px"}} onFinishAll={this.updateScroll}>
+                    <FlipMove
+                        ref="flip"
+                        {...flipProps}
+                        style={{marginBottom: 0, marginRight: "10px"}}
+                        onFinishAll={this.updateScroll}
+                    >
                         {isolateComponents}
                         {lastComponent}
                     </FlipMove>
@@ -149,6 +144,4 @@ var IsolateList = React.createClass({
         );
     }
 
-});
-
-module.exports = IsolateList;
+}

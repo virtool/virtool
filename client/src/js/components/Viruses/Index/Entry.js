@@ -9,42 +9,45 @@
  * @exports IndexEntry
  */
 
-'use strict';
 
 import React from "react";
-var Row = require('react-bootstrap/lib/Row');
-var Col = require('react-bootstrap/lib/Col');
-var Label = require('react-bootstrap/lib/Label');
-var ListGroupItem = require('react-bootstrap/lib/ListGroupItem');
+import { Row, Col, Label } from "react-bootstrap";
+import { Icon, RelativeTime, ListGroupItem } from "virtool/js/components/Base";
 
-var Icon = require('virtool/js/components/Base/Icon');
-var RelativeTime = require('virtool/js/components/Base/RelativeTime');
+export default class IndexEntry extends React.PureComponent {
+    
+    static propTypes = {
+        ready: React.PropTypes.bool,
+        showReady: React.PropTypes.bool,
+        timestamp: React.PropTypes.string,
+        index_version: React.PropTypes.oneOfType([React.PropTypes.number, React.PropTypes.string]),
+        modification_count: React.PropTypes.number,
+        modified_virus_count: React.PropTypes.number
+    };
 
-var IndexEntry = React.createClass({
+    render () {
 
-    render: function () {
+        let ready;
 
-        var ready;
-
-        // Decide what icon/text should be shown at the right end of the index document. If the index is building a spinner
-        // with 'Building' is shown, if the index is the active index a green check is shown. Otherwise, no content is
-        // shown at the right.
+        // Decide what icon/text should be shown at the right end of the index document. If the index is building a
+        // spinner with "Building" is shown, if the index is the active index a green check is shown. Otherwise, no
+        // content is shown at the right.
         if (this.props.showReady) {
             ready = (
-                <span className='pull-right'>
-                    <Icon name='checkmark' bsStyle='success' pending={!this.props.ready} />
-                    <span> {this.props.ready ? 'Active': 'Building'}</span>
+                <span className="pull-right">
+                    <Icon name="checkmark" bsStyle="success" pending={!this.props.ready} />
+                    <span> {this.props.ready ? "Active": "Building"}</span>
                 </span>
             );
         }
 
         // The description of
-        var changeDescription;
+        let changeDescription;
 
         if (this.props.modification_count !== null) {
-            // Text to show if no changes occured since the last index build. Technically, should never be shown because
-            // the rebuild button is not shown if no changes have been made.
-            changeDescription = 'No changes';
+            // Text to show if no changes occurred since the last index build. Technically, should never be shown
+            // because the rebuild button is not shown if no changes have been made.
+            changeDescription = "No changes";
 
             // This should always test true in practice. Shows the number of changes and the number of viruses
             // affected.
@@ -69,6 +72,4 @@ var IndexEntry = React.createClass({
         );
     }
 
-});
-
-module.exports = IndexEntry;
+}

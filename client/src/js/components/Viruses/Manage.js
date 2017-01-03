@@ -9,21 +9,15 @@
  * @exports ManageViruses
  */
 
-'use strict';
-
-var _ = require('lodash');
 import React from "react";
 
-var Add = require('./Manage/Add');
-var Detail = require('./Manage/Detail');
-var Export = require('./Manage/Export');
-var Import = require('./Manage/Import');
-var Toolbar = require('./Manage/Toolbar');
+import Add from "./Manage/Add";
+import Export from "./Manage/Export";
+import Import from "./Manage/Import";
+import VirusList from "./Manage/List";
+import VirusToolbar from "./Manage/Toolbar";
 
-var Icon = require('virtool/js/components/Base/Icon');
-var VirusList = require("./Manage/List");
-var VirusToolbar = require("./Manage/Toolbar");
-var DetailModal = require('virtool/js/components/Base/DetailModal');
+const findTermTest = {$regex: [this.state.findTerm, "i"]};
 
 /**
  * A main window component used for viewing all viruses in the reference database and adding new viruses via a modal
@@ -31,10 +25,12 @@ var DetailModal = require('virtool/js/components/Base/DetailModal');
  *
  * @class
  */
-var ManageViruses = React.createClass({
+export default class ManageViruses extends React.Component {
 
-    getInitialState: function () {
-        return {
+    constructor (props) {
+        super(props);
+
+        this.state = {
             documents: dispatcher.db.viruses.chain(),
 
             findTerm: "",
@@ -42,64 +38,62 @@ var ManageViruses = React.createClass({
             sortTerm: "name",
             sortDescending: false
         };
-    },
+    }
 
-    componentDidMount: function () {
+    static propTypes = {
+        route: React.PropTypes.object
+    };
+
+    componentDidMount () {
         dispatcher.db.viruses.on("change", this.update);
-    },
+    }
 
-    componentWillUnmount: function () {
+    componentWillUnmount () {
         dispatcher.db.viruses.off("change", this.update);
-    },
+    }
 
-    setFindTerm: function (event) {
+    setFindTerm = (event) => {
         this.setState({
             findTerm: event.target.value || ""
         });
-    },
+    };
 
-    setSortTerm: function (term) {
-        this.setState({
-            sortTerm: term,
-            sortDescending: this.state.sortTerm
-        });
-    },
-
-    toggleModifiedOnly: function () {
+    toggleModifiedOnly = () => {
         this.setState({
             modifiedOnly: !this.state.modifiedOnly
         });
-    },
+    };
 
-    update: function () {
+    update = () => {
         this.setState({
             documents: dispatcher.db.viruses.chain()
         });
-    },
+    };
 
     /**
      * Hides the virus detail modal. Triggered by called the onHide prop function within the modal.
      *
      * @func
      */
-    hideModal: function () {
+    hideModal = () => {
         dispatcher.router.clearExtra();
-    },
+    };
 
-    render: function () {
+    render () {
 
-        var documents = this.state.documents.branch();
+        let documents = this.state.documents.branch();
 
         if (this.state.modifiedOnly) {
             documents = documents.find({modified: true});
         }
 
         if (this.state.findTerm) {
-            var test = {$regex: [this.state.findTerm, "i"]};
+
+
 
             documents = documents.find({$or: [
-                {name: test},
-                {abbreviation: test}
+                {name: findTermTest},
+                {abbreviation: findTermTest}
             ]});
         }
 
@@ -127,6 +121,4 @@ var ManageViruses = React.createClass({
             </div>
         );
     }
-});
-
-module.exports = ManageViruses;
+}

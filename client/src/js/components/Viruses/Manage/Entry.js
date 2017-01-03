@@ -9,42 +9,47 @@
  * @exports VirusEntry
  */
 
-'use strict';
-
-var _ = require('lodash');
 import React from "react";
-var Row = require('react-bootstrap/lib/Row');
-var Col = require('react-bootstrap/lib/Col');
-var ProgressBar = require('react-bootstrap/lib/ProgressBar');
-
-var Icon = require('virtool/js/components/Base/Icon');
-var Flex = require('virtool/js/components/Base/Flex');
-var RelativeTime = require('virtool/js/components/Base/RelativeTime');
-var ListGroupItem = require('virtool/js/components/Base/PushListGroupItem');
+import { Row, Col } from "react-bootstrap";
+import { Icon, ListGroupItem } from "virtool/js/components/Base";
 
 /**
  * A form-based component used to filter the documents presented in JobsTable component.
  *
  * @class
  */
-var VirusEntry = React.createClass({
+export default class VirusEntry extends React.Component {
 
-    getInitialState: function () {
-        return {
+    constructor (props) {
+        super(props);
+        this.state = {
             in: false
         };
-    },
+    }
 
-    showDetail: function () {
+    static propTypes = {
+        _id: React.PropTypes.string,
+        name: React.PropTypes.string,
+        abbreviation: React.PropTypes.string,
+        modified: React.PropTypes.bool,
+    };
+
+    showDetail = () => {
         dispatcher.router.setExtra(["detail", this.props._id]);
-    },
+    };
 
-    archive: function (event) {
+    archive = (event) => {
         event.stopPropagation();
         dispatcher.db.jobs.request("remove_job", {_id: this.props._id});
-    },
+    };
 
-    render: function () {
+    render () {
+
+        let icon;
+
+        if (this.props.modified) {
+            icon = <Icon bsStyle="warning" style={{marginTop: "3px"}} name="flag" pullRight />;
+        }
 
         return (
             <ListGroupItem bsStyle={this.props.modified ? "warning": null} className="spaced" onClick={this.showDetail}>
@@ -54,12 +59,10 @@ var VirusEntry = React.createClass({
                     </Col>
                     <Col md={6}>
                         {this.props.abbreviation}
-                        {this.props.modified ? <Icon bsStyle="warning" style={{marginTop: "3px"}} name="flag" pullRight /> : null}
+                        {icon}
                     </Col>
                 </Row>
             </ListGroupItem>
         );
     }
-});
-
-module.exports = VirusEntry;
+}

@@ -9,61 +9,61 @@
  * @exports ExportViruses
  */
 
-"use strict";
-
 import React from "react";
 import { Modal, Panel } from "react-bootstrap";
 import { Icon, Button } from "virtool/js/components/Base";
 import { byteSize } from "virtool/js/utils";
 
+const getInitialState = () => ({
+    filename: "viruses.json",
+    download: null,
+    pending: false
+});
 
 /**
  * A component the contains child components that modify certain general options. A small explanation of each
  * subcomponent is also rendered.
  */
-var ExportViruses = React.createClass({
+export default class ExportViruses extends React.Component {
 
-    getInitialState: function () {
-        return {
-            filename: "viruses.json",
-            download: null,
-            pending: false
-        };
-    },
+    constructor (props) {
+        super(props);
+        this.state = getInitialState();
+    }
 
-    modalExited: function () {
-        this.setState(this.getInitialState());
-    },
+    static propTypes = {
+        show: React.PropTypes.bool,
+        onHide: React.PropTypes.func.isRequired
+    };
 
-    handleClick: function () {
-        this.setState({download: false, pending: true}, function () {
-            dispatcher.db.viruses.request("export").success(function (data) {
+    modalExited = () => {
+        this.setState(getInitialState());
+    };
+
+    handleClick = () => {
+        this.setState({download: false, pending: true}, () => {
+            dispatcher.db.viruses.request("export").success((data) => {
                 this.setState({
                     download: data,
                     pending: false
                 });
-            }, this);
+            });
         });
-    },
+    };
 
-    render: function () {
+    render () {
 
-        var button;
+        let button;
 
-        var buttonProps = {
+        const buttonProps = {
             block: true,
             bsStyle: "primary"
         };
 
         if (this.state.download) {
-            var props = {
-                href: "download/" + this.state.download.filename,
-                download: "viruses.json.gz"
-            };
-
             button = (
-                <Button {...props} {...buttonProps}>
-                    <Icon name="arrow-down" /> Download (<ByteSize bytes={this.state.download.size} />)
+                <Button href="download/${this.state.download.filename}" download="viruses.json.gz" {...buttonProps}>
+                    <Icon name="arrow-down" /> Download ({byteSize(this.state.download.size)})
                 </Button>
             );
         } else {
@@ -96,6 +96,4 @@ var ExportViruses = React.createClass({
 
 
     }
-});
-
-module.exports = ExportViruses;
+}

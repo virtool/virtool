@@ -9,42 +9,51 @@
  * @exports VirusHistory
  */
 
-'use strict';
-
-var _ = require('lodash');
 import React from "react";
-var Control = require('./History/Control');
-var Pager = require('./History/Pager');
+import { isEqual, uniq, pull, groupBy, transform, sortBy } from "lodash-es";
+
+import HistoryControl from "./History/Control";
+import HistoryPager from "./History/Pager";
 
 /**
  * A component that shows the history of changes made to viruses in the database.
  *
  * @class
  */
-var VirusHistory = React.createClass({
+export default class VirusHistory extends React.Component {
 
-    getInitialState: function () {
-        var indexVersion = this.props.route.extra[0] || "unbuilt";
+    constructor (props) {
+        super(props);
 
-        if (indexVersion !== "unbuilt") indexVersion = Number(indexVersion);
+        let indexVersion = this.props.route.extra[0] || "unbuilt";
 
-        return {
+        if (indexVersion !== "unbuilt") {
+            indexVersion = Number(indexVersion);
+        }
+
+        this.state = {
             filter: "",
             documents: dispatcher.db.history.chain().find({index_version: indexVersion})
         };
-    },
+    }
 
-    componentDidMount: function () {
+    static propTypes = {
+        route: React.PropTypes.object
+    };
+
+    componentDidMount () {
         dispatcher.db.history.on("change", this.update);
-    },
+    }
 
-    componentWillReceiveProps: function (nextProps) {
-        if (!_.isEqual(this.props.route, nextProps.route)) this.update(null, nextProps.route);
-    },
+    componentWillReceiveProps (nextProps) {
+        if (!isEqual(this.props.route, nextProps.route)) {
+            this.update(null, nextProps.route);
+        }
+    }
 
-    componentWillUnmount: function () {
+    componentWillUnmount () {
         dispatcher.db.history.off("change", this.update);
-    },
+    }
 
     /**
      * Apply a virus name filter to the history documents. Called when the value of the filter input element changes.
@@ -52,46 +61,51 @@ var VirusHistory = React.createClass({
      * @param event {object} - the change event use to get the new input value.
      * @func
      */
-    filter: function (event) {
-        this.setState({filter: event.target.value || null});
-    },
+    filter = (event) => {
+        this.setState({
+            filter: event.target.value || null
+        });
+    };
 
-    update: function (event, route) {
-        route = route || this.props.route;
+    update = (event, route = this.props.route) => {
 
-        var indexVersion = route.extra[0] || "unbuilt";
+        let indexVersion = route.extra[0] || "unbuilt";
 
-        if (indexVersion !== "unbuilt") indexVersion = Number(route.extra[0]);
+        if (indexVersion !== "unbuilt") {
+            indexVersion = Number(route.extra[0]);
+        }
 
         this.setState({
             documents: dispatcher.db.history.chain().find({index_version: indexVersion})
         })
-    },
+    };
 
-    render: function () {
+    render () {
 
         // Get all of the different index versions from the history documents.
-        var indexVersions = _.uniq(dispatcher.db.history.extract("index_version"));
+        let indexVersions = uniq(dispatcher.db.history.extract("index_version"));
 
-        _.pull(indexVersions, 'unbuilt');
+        pull(indexVersions, "unbuilt");
 
         // Get rid of duplicate index versions, sort numerically and reverse the order.
-        indexVersions = indexVersions.sort(function (a,b) {
-            return a - b;
-        });
+        indexVersions = indexVersions.sort((a, b) => a - b);
 
-        // Add the 'unbuilt' version number which will show unbuilt changes when selected.
-        indexVersions.push('unbuilt');
+        // Add the "unbuilt" version number which will show unbuilt changes when selected.
+        indexVersions.push("unbuilt");
 
         indexVersions.reverse();
 
-        var indexVersion = this.props.route.extra[0];
+        let indexVersion = this.props.route.extra[0];
 
-        if (indexVersion === undefined) indexVersion = "unbuilt";
+        if (indexVersion === undefined) {
+            indexVersion = "unbuilt";
+        }
 
-        if (indexVersion !== "unbuilt") indexVersion = Number(indexVersion);
+        if (indexVersion !== "unbuilt") {
+            indexVersion = Number(indexVersion);
+        }
 
-        var documents = this.state.documents.copy();
+        let documents = this.state.documents.copy();
 
         if (this.state.filter) {
             documents.find({
@@ -104,14 +118,12 @@ var VirusHistory = React.createClass({
         documents = documents.data();
 
         // Group the history documents by virus_id. The history documents will be grouped into virus-specific panels.
-        var grouped = _.groupBy(documents, function (document) {
-            return document.entry_id;
-        });
+        const grouped = groupBy(documents, document => document.entry_id);
 
         // Sort the grouped history by ascending virus name.
-        var sorted = _.transform(grouped, function (result, history, virusId) {
+        let sorted = transform(grouped, (result, history, virusId) => {
 
-            var sortedHistory = _.sortBy(history, 'document_version').reverse();
+            const sortedHistory = sortBy(history, "document_version").reverse();
 
             result.push({
                 virusId: virusId,
@@ -121,21 +133,19 @@ var VirusHistory = React.createClass({
 
         }, []);
 
-        sorted = _.sortBy(sorted, 'virusName');
+        sorted = sortBy(sorted, "virusName");
 
         return (
             <div>
-                <Control
+                <HistoryControl
                     onFilter={this.filter}
                     onSelectIndex={this.selectIndex}
                     indexVersions={indexVersions}
                     selectedVersion={indexVersion}
                 />
 
-                <Pager documents={sorted} />
+                <HistoryPager documents={sorted} />
             </div>
         )
     }
-});
-
-module.exports = VirusHistory;
+}

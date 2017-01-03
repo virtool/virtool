@@ -9,13 +9,16 @@
  * @exports ConfirmVirus
  */
 
-'use strict';
-
 import React from "react";
-import { find } from "lodash";
+import { find } from "lodash-es";
 import { Alert, Collapse } from "react-bootstrap";
 import { formatIsolateName } from "virtool/js/utils";
-import { Flex, Icon, Button } from 'virtool/js/components/Base';
+import { Flex, Icon, Button } from "virtool/js/components/Base";
+
+const getInitialState = () => ({
+    error: false,
+    pending: false
+});
 
 /**
  * A component used for verifying a modified virus. Contains a button for verifying the virus and can display warnings
@@ -23,30 +26,32 @@ import { Flex, Icon, Button } from 'virtool/js/components/Base';
  *
  * @class
  */
-var ConfirmVirus = React.createClass({
+export default class ConfirmVirus extends React.PureComponent {
 
-    propTypes: {
-        // Should the component be shown. Will be true if the virus has been modified and not verified.
+    constructor (props) {
+        super(props);
+        this.state = getInitialState();
+    }
+
+    static propTypes = {
+        _id: React.PropTypes.string,
         show: React.PropTypes.bool.isRequired,
-        detail: React.PropTypes.object.isRequired
-    },
+        isolates: React.PropTypes.arrayOf(React.PropTypes.object)
+    };
 
-    getInitialState: function () {
-        return {
-            error: false,
-            pending: false
-        };
-    },
-
-    componentWillReceiveProps: function (nextProps) {
+    componentWillReceiveProps (nextProps) {
         // Get rid of the error display if the virus detail changes. The verification is no longer valid.
-        if (this.detail != nextProps.detail) this.setState({error: false});
-    },
+        if (this.detail != nextProps.detail) {
+            this.setState({error: false});
+        }
+    }
 
-    componentDidUpdate: function (prevProps) {
+    componentDidUpdate (prevProps) {
         // Only update the component is its visibility is being toggled.
-        if (prevProps.show && !this.props.show) this.setState(this.getInitialState());
-    },
+        if (prevProps.show && !this.props.show) {
+            this.setState(getInitialState());
+        }
+    }
 
     /**
      * Send a request to the server to verify a virus. If the verification succeeds, the detail modal will update and
@@ -55,36 +60,37 @@ var ConfirmVirus = React.createClass({
      *
      * @func
      */
-    verify: function () {
-        this.setState({pending: true}, function () {
+    verify = () => {
+        this.setState({pending: true}, () => {
             dispatcher.db.viruses.request(
-                'verify_virus',
-                {_id: this.props.detail._id}
-            ).failure(function (data) {
+                "verify_virus",
+                {_id: this.props._id}
+            ).failure((data) => {
                 this.setState({
                     error: data,
                     pending: false
                 });
-            }, this);
+            });
         });
-    },
+    };
 
-    render: function () {
-        var content;
+    render () {
 
-        var verifyButton = (
+        let content;
+
+        const verifyButton = (
             <Button onClick={this.verify} disabled={this.state.pending} pullRight>
-                <Icon name='checkmark' pending={this.state.pending} /> Verify
+                <Icon name="checkmark" pending={this.state.pending} /> Verify
             </Button>
         );
 
         if (this.state.error) {
-            var errors = [];
+            let errors = [];
 
             // The virus has no isolates associated with it.
             if (this.state.error.empty_virus) {
                 errors.push(
-                    <li key='emptyVirus'>
+                    <li key="emptyVirus">
                         There are no isolates associated with this virus
                     </li>
                 );
@@ -93,7 +99,7 @@ var ConfirmVirus = React.createClass({
             // The virus has an inconsistent number of sequences between isolates.
             if (this.state.error.isolate_inconsistency) {
                 errors.push(
-                    <li key='isolateInconsistency'>
+                    <li key="isolateInconsistency">
                         Some isolates have different numbers of sequences than other isolates
                     </li>
                 );
@@ -102,19 +108,19 @@ var ConfirmVirus = React.createClass({
             // One or more isolates have no sequences associated with them.
             if (this.state.error.empty_isolate) {
                 // The empty_isolate property is an array of isolate_ids of empty isolates.
-                var emptyIsolates = this.state.error.empty_isolate.map(function (isolate_id, index) {
+                const emptyIsolates = this.state.error.empty_isolate.map((isolate_id, index) => {
                     // Get the entire isolate identified by isolate_id from the detail data.
-                    var isolate = _.find(this.props.detail.isolates, {isolate_id: isolate_id});
+                    const isolate = find(this.props.isolates, {isolate_id: isolate_id});
 
                     return (
                         <li key={index}>
                             {formatIsolateName(isolate)} <em>({isolate_id})</em>
                         </li>
                     );
-                }, this);
+                });
 
                 errors.push(
-                    <li key='emptyIsolate'>
+                    <li key="emptyIsolate">
                         There are no sequences associated with the following isolates:
                         <ul>{emptyIsolates}</ul>
                     </li>
@@ -124,20 +130,20 @@ var ConfirmVirus = React.createClass({
             // One or more sequence documents have no sequence field.
             if (this.state.error.empty_sequence) {
                 // Make a list of sequences that have no defined sequence field.
-                var emptySequences = this.state.error.empty_sequence.map(function (errorObject, index) {
+                const emptySequences = this.state.error.empty_sequence.map((errorObject, index) => {
                     // Get the entire isolate object identified by the isolate_id.
-                    var isolate = _.find(this.props.detail.isolates, {isolate_id: errorObject.isolate_id});
+                    const isolate = find(this.props.isolates, {isolate_id: errorObject.isolate_id});
 
                     return (
                         <li key={index}>
                             <span>sequence accession </span>
-                            <span>'{errorObject.sequence_id}' in isolate '{formatIsolateName(isolate)}'</span>
+                            <span>"{errorObject.sequence_id}" in isolate "{formatIsolateName(isolate)}"</span>
                         </li>
                     );
-                }, this);
+                });
 
                 errors.push(
-                    <li key='emptySequence'>
+                    <li key="emptySequence">
                         There sequence records have undefined sequence fields:
                         <ul>{emptySequences}</ul>
                     </li>
@@ -172,13 +178,11 @@ var ConfirmVirus = React.createClass({
 
         return (
             <Collapse in={this.props.show} timeout={150}>
-                <Alert bsStyle={this.state.error ? 'danger': 'warning'} className="clearfix">
+                <Alert bsStyle={this.state.error ? "danger": "warning"} className="clearfix">
                     {content}
                 </Alert>
             </Collapse>
         );
     }
 
-});
-
-module.exports = ConfirmVirus;
+}

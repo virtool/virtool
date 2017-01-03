@@ -9,67 +9,65 @@
  * @exports Index
  */
 
-'use strict';
-
 import React from "react";
 import FlipMove from "react-flip-move"
-var Alert = require('react-bootstrap/lib/Alert');
-var Label = require('react-bootstrap/lib/Label');
-var ListGroup = require('react-bootstrap/lib/ListGroup');
+import { sortBy } from "lodash-es";
+import { Alert } from "react-bootstrap";
+import { Icon } from "virtool/js/components/Base";
 
-var Entry = require('./Index/Entry');
-var Rebuild = require('./Index/Rebuild');
+import Entry from "./Index/Entry";
+import Rebuild from "./Index/Rebuild";
 
-var Icon = require('virtool/js/components/Base/Icon');
+const getInitialState = () => ({
+    historyEntries: dispatcher.db.history.find(),
+    indexEntries: dispatcher.db.indexes.find()
+});
 
 /**
  * A main component that shows a history of all index builds and the changes that comprised them.
  *
  * @class
  */
-var Index = React.createClass({
+export default class Index extends React.Component {
 
-    getInitialState: function () {
-        return {
-            historyEntries: dispatcher.db.history.find(),
-            indexEntries: dispatcher.db.indexes.find()
-        }
-    },
+    constructor (props) {
+        super(props);
+        this.state = getInitialState();
+    }
 
-    componentDidMount: function () {
-        dispatcher.db.indexes.on('change', this.update);
-        dispatcher.db.history.on('change', this.update);
-        dispatcher.db.viruses.on('change', this.update);
-    },
+    componentDidMount () {
+        dispatcher.db.indexes.on("change", this.update);
+        dispatcher.db.history.on("change", this.update);
+        dispatcher.db.viruses.on("change", this.update);
+    }
 
-    componentWillUnmount: function () {
-        dispatcher.db.indexes.off('change', this.update);
-        dispatcher.db.history.off('change', this.update);
-        dispatcher.db.viruses.off('change', this.update);
-    },
+    componentWillUnmount () {
+        dispatcher.db.indexes.off("change", this.update);
+        dispatcher.db.history.off("change", this.update);
+        dispatcher.db.viruses.off("change", this.update);
+    }
 
     /**
-     * Refresh state when the index or history collection changes. Triggered by a collection 'update' event.
+     * Refresh state when the index or history collection changes. Triggered by a collection "update" event.
      *
      * @func
      */
-    update: function () {
-        this.setState(this.getInitialState());
-    },
+    update = () => {
+        this.setState(getInitialState());
+    };
 
-    render: function () {
+    render () {
 
         if (dispatcher.db.viruses.count() > 0) {
-            // Set to true when a ready index has been seen when mapping through the index documents. Used to mark only the
-            // newest ready index with a checkmark in the index list.
-            var haveSeenReady = false;
+            // Set to true when a ready index has been seen when mapping through the index documents. Used to mark only
+            // the newest ready index with a checkmark in the index list.
+            let haveSeenReady = false;
 
             // Render a ListGroupItem for each index version. Mark the first ready index with a checkmark by setting the
             // showReady prop to true.
-            var indexComponents = _.sortBy(this.state.indexEntries, 'index_version').reverse().map(function (document) {
-                var showReady = !document.ready || !haveSeenReady;
+            const indexComponents = sortBy(this.state.indexEntries, "index_version").reverse().map((document) => {
                 haveSeenReady = document.ready;
-                return <Entry key={document._id} showReady={showReady} {...document}/>;
+                return <Entry key={document._id} showReady={!document.ready || !haveSeenReady} {...document} />;
             });
 
             return (
@@ -86,12 +84,10 @@ var Index = React.createClass({
         }
 
         return (
-            <Alert bsStyle='warning'>
-                <Icon name='warning' /> At least one virus must be added to the database before an index can be built.
+            <Alert bsStyle="warning">
+                <Icon name="warning" /> At least one virus must be added to the database before an index can be built.
             </Alert>
         );
     }
 
-});
-
-module.exports = Index;
+}

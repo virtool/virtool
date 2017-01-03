@@ -9,61 +9,61 @@
  * @exports VirusDetail
  */
 
-'use strict';
-
 import React from "react";
-import { Button, ConfirmFooter, Icon, Modal } from "virtool/js/components/Base";
+import { ConfirmFooter, Icon, Modal } from "virtool/js/components/Base";
 
-var ConfirmVirus = require('./Detail/ConfirmVirus');
-var Isolates = require('./Detail/Isolates');
-var General = require('./Detail/General');
+import ConfirmVirus from "./Detail/ConfirmVirus";
+import Isolates from "./Detail/Isolates";
+import General from "./Detail/General";
+
+const getInitialState = () => ({
+    canModify: dispatcher.user.permissions.modify_virus,
+    canRemove: dispatcher.user.permissions.remove_virus
+});
 
 /**
  * A modal component for editing and viewing virus details.
  *
  * @class
  */
-var VirusDetail = React.createClass({
+export default class VirusDetail extends React.Component {
 
-    getInitialState: function () {
-        return {
-            canModify: dispatcher.user.permissions.modify_virus,
-            canRemove: dispatcher.user.permissions.remove_virus
-        };
-    },
+    constructor (props) {
+        super(props);
+        this.state = getInitialState();
+    }
 
-    componentDidMount: function () {
-        dispatcher.user.on('change', this.update);
-    },
+    static propTypes = {
+        detail: React.PropTypes.object
+    };
 
-    componentWillUnmount: function () {
-        dispatcher.user.off('change', this.update);
-    },
+    componentDidMount () {
+        dispatcher.user.on("change", this.update);
+    }
 
-    update: function () {
-        this.setState(this.getInitialState());
-    },
+    componentWillUnmount () {
+        dispatcher.user.off("change", this.update);
+    }
 
-    /**
-     * Remove a virus from the collection by sending a request to the server.
-     *
-     * @func
-     */
-    remove: function () {
-        dispatcher.db.viruses.request('remove_virus', {_id: this.props.detail._id});
-    },
+    update = () => {
+        this.setState(getInitialState());
+    };
 
-    render: function () {
+    remove = () => {
+        dispatcher.db.viruses.request("remove_virus", {_id: this.props.detail._id});
+    };
 
-        var footer;
+    render () {
+
+        let footer;
 
         if (this.state.canRemove) {
             footer = (
                 <ConfirmFooter
                     {...this.props}
-                    buttonContent={<span><Icon name='remove' /> Remove</span>}
+                    buttonContent={<span><Icon name="remove" /> Remove</span>}
                     callback={this.remove}
-                    message='Are you sure you want to remove this virus?'
+                    message="Are you sure you want to remove this virus?"
                 />
             );
         }
@@ -86,8 +86,9 @@ var VirusDetail = React.createClass({
                     />
 
                     <ConfirmVirus
+                        _id={this.props.detail._id}
                         show={this.props.detail.modified && this.state.canModify}
-                        detail={this.props.detail}
+                        isolates={this.props.detail.isolates}
                     />
                 </Modal.Body>
 
@@ -95,6 +96,4 @@ var VirusDetail = React.createClass({
             </div>
         );
     }
-});
-
-module.exports = VirusDetail;
+}

@@ -9,67 +9,59 @@
  * @exports VirusList
  */
 
-'use strict';
-
-var _ = require("lodash");
 import React from "react";
 import FlipMove from "react-flip-move"
-var ListGroupItem = require('react-bootstrap/lib/ListGroupItem');
+import { Icon, Paginator, DetailModal, ListGroupItem } from "virtool/js/components/Base";
 
-var VirusEntry = require('./Entry');
-var VirusDetail = require('./Detail');
-
-var Icon = require('virtool/js/components/Base/Icon');
-var Paginator = require('virtool/js/components/Base/Paginator');
-var DetailModal = require('virtool/js/components/Base/DetailModal');
+import VirusEntry from "./Entry";
+import VirusDetail from "./Detail";
 
 /**
  * A React component that is a simple composition of JobsTable. Applies a baseFilter that includes only active jobs.
  *
  * @class
  */
-var VirusList = React.createClass({
+export default class VirusList extends React.Component {
 
-    propTypes: {
-        route: React.PropTypes.object.isRequired,
-        documents: React.PropTypes.arrayOf(React.PropTypes.object)
-    },
-
-    getInitialState: function () {
-        return {
+    constructor (props) {
+        super(props);
+        this.state = {
             page: 1
         };
-    },
+    }
 
-    componentWillUnmount: function () {
+    static propTypes = {
+        route: React.PropTypes.object.isRequired,
+        documents: React.PropTypes.arrayOf(React.PropTypes.object)
+    };
+
+    componentWillUnmount () {
         this.hideModal();
-    },
+    }
 
-    setPage: function (page) {
+    setPage = (page) => {
         this.setState({
             page: page
         });
-    },
+    };
 
-    hideModal: function () {
+    hideModal = () => {
         dispatcher.router.clearExtra();
-    },
+    };
 
-    render: function () {
+    render () {
 
-        var pages = Paginator.calculatePages(this.props.documents, this.state.page, 18);
+        const pages = Paginator.calculatePages(this.props.documents, this.state.page, 18);
 
-        var virusComponents;
+        let virusComponents;
 
         if (pages.documents && pages.documents.length > 0) {
-            virusComponents = pages.documents.map(function (document) {
-                return (
-                    <VirusEntry
-                        key={document._id}
-                        {...document}
-                    />
-                );
-            }, this);
+            virusComponents = pages.documents.map(document =>
+                <VirusEntry
+                    key={document._id}
+                    {...document}
+                />
+            );
         } else {
             virusComponents = (
                 <ListGroupItem className="text-center">
@@ -78,7 +70,7 @@ var VirusList = React.createClass({
             );
         }
 
-        var paginator;
+        let paginator;
 
         if (pages.count > 1) {
             paginator = (
@@ -90,9 +82,9 @@ var VirusList = React.createClass({
             );
         }
 
-        var detailTarget;
+        let detailTarget;
 
-        if (this.props.route.extra[0] === 'detail') {
+        if (this.props.route.extra[0] === "detail") {
             detailTarget = dispatcher.db.viruses.findOne({_id: this.props.route.extra[1]});
         }
 
@@ -113,6 +105,4 @@ var VirusList = React.createClass({
             </div>
         );
     }
-});
-
-module.exports = VirusList;
+}

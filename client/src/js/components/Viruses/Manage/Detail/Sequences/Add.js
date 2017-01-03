@@ -9,48 +9,47 @@
  * @exports Sequence
  */
 
-'use strict';
-
 import React from "react";
-import CX from 'classnames';
-import { isEqual, pick, omit, merge } from 'lodash';
-import { Collapse, ButtonToolbar } from 'react-bootstrap';
-import { Flex, Icon, Button, LoadingOverlay } from 'virtool/js/components/Base';
+import CX from "classnames";
+import { assign, isEqual, pick, omit, merge } from "lodash-es";
+import { Collapse } from "react-bootstrap";
+import { Flex, Icon, Button, LoadingOverlay } from "virtool/js/components/Base";
 
-var SequenceForm = require('./Form');
+import SequenceForm from "./Form";
 
-var AddSequence = React.createClass({
+const getInitialState = () => ({
+    sequenceId: "",
+    definition: "",
+    host: "",
+    sequence: "",
+    collapsed: true,
+    pendingAutofill: false,
+    error: null
+});
 
-    propTypes: {
+
+export default class AddSequence extends React.Component {
+
+    constructor (props) {
+        super(props);
+        this.state = getInitialState();
+    }
+
+    static propTypes = {
         active: React.PropTypes.bool,
         virusId: React.PropTypes.string.isRequired,
-        isolateId: React.PropTypes.string.isRequired
-    },
+        isolateId: React.PropTypes.string.isRequired,
+        toggleAdding: React.PropTypes.func.isRequired
+    };
 
-    getDefaultProps: function () {
-        return {
-            active: false
-        };
-    },
+    static defaultProps = {
+        active: false
+    };
 
-    getInitialState: function () {
-        return {
-            sequenceId: '',
-            definition: '',
-            host: '',
-            sequence: '',
-
-            collapsed: true,
-
-            pendingAutofill: false,
-            error: null
-        };
-    },
-
-    componentWillReceiveProps: function (nextProps) {
+    componentWillReceiveProps = (nextProps) => {
         // If the sequence was editing, but loses active status, disable editing in state.
         if (this.props.active && !nextProps.active) {
-            this.setState(this.getInitialState(), function () {
+            this.setState(getInitialState(), () => {
                 document.removeEventListener("keyup", this.handleKeyUp, true);
             });
         }
@@ -58,30 +57,30 @@ var AddSequence = React.createClass({
         if (!isEqual(this.props, nextProps)) {
             document.addEventListener("keyup", this.handleKeyUp, true);
         }
-    },
+    };
 
-    componentWillUnmount: function () {
+    componentWillUnmount () {
         document.removeEventListener("keyup", this.handleKeyUp, true);
-    },
+    }
 
-    handleKeyUp: function (event) {
+    handleKeyUp = (event) => {
         if (event.keyCode === 27) {
             event.stopImmediatePropagation();
-            this.setState(this.getInitialState(), this.props.toggleAdding);
+            this.setState(getInitialState(), this.props.toggleAdding);
         }
-    },
+    };
 
-    collapseEntered: function () {
+    collapseEntered = () => {
         this.setState({
             collapsed: false
         });
-    },
+    };
 
-    collapseExited: function () {
+    collapseExited = () => {
         this.setState({
             collapsed: true
         });
-    },
+    };
 
     /**
      * Sends a request to the server to get NCBI data for the current accession (sequenceId) entered in the accession
@@ -89,27 +88,28 @@ var AddSequence = React.createClass({
      *
      * @func
      */
-    autofill: function () {
-        this.setState({pendingAutofill: true}, function () {
-            dispatcher.db.viruses.request('fetch_ncbi', {accession: this.state.sequenceId})
-                .success(function (data) {
-                    // Remove the accession from the data as this is already entered in the form and we don't want it to change.
-                    var state = omit(data, "accession");
+    autofill = () => {
+        this.setState({pendingAutofill: true}, () => {
+            dispatcher.db.viruses.request("fetch_ncbi", {accession: this.state.sequenceId})
+                .success((data) => {
+                    // Remove the accession from the data as this is already entered in the form and we don"t want it to
+                    // change.
+                    let state = omit(data, "accession");
 
-                    // Get rid of the pendingAutofill state that causes a 'Fetching' message to be overlaid on the
+                    // Get rid of the pendingAutofill state that causes a "Fetching" message to be overlaid on the
                     // sequence item.
                     state.pendingAutofill = false;
 
-                    this.setState(state);
-                }, this)
-                .failure(function () {
+                    this.setState();
+                })
+                .failure(() => {
                     this.setState({
                         pendingAutofill: false,
-                        error: 'Could not find data for accession.'
+                        error: "Could not find data for accession."
                     });
-                }, this);
+                });
         });
-    },
+    };
 
     /**
      * Send a request to the server to upsert a sequence. Triggered by clicking the save icon button (blue floppy) or
@@ -118,58 +118,52 @@ var AddSequence = React.createClass({
      * @param event {object} - the event that triggered this callback. Will be used to prevent the default action.
      * @func
      */
-    save: function (event) {
+    save = (event) => {
         event.preventDefault();
 
-        var newEntry = merge(pick(this.state, ['definition', 'host', 'sequence']), {
+        const newEntry = merge(pick(this.state, ["definition", "host", "sequence"]), {
             _id: this.state.sequenceId,
             isolate_id: this.props.isolateId
         });
 
-        dispatcher.db.viruses.request('add_sequence', {
+        dispatcher.db.viruses.request("add_sequence", {
             _id: this.props.virusId,
             isolate_id: this.props.isolateId,
             new: newEntry
         }).success(this.props.toggleAdding).failure(this.onSaveFailure);
-    },
+    };
 
-    update: function (data) {
-        data.error = null;
-        this.setState(data);
-    },
+    update = (data) => {
+        this.setState(assign({}, data, {error: null}));
+    };
 
-    /**
-     * Handles a click event on the sequence. Calls the onSelect prop with the sequenceId for this component.
-     *
-     * @func
-     */
-    handleClick: function () {
+    handleClick = () => {
         this.props.toggleAdding();
-    },
+    };
 
-    render: function () {
+    render () {
 
-        var itemStyle = this.props.active || !this.state.collapsed ? {background:  "#dbe9f5"}: null;
+        const itemStyle = this.props.active || !this.state.collapsed ? {background:  "#dbe9f5"}: null;
 
-        // Props picked from this component's props and passed to the content component regardless of its type.
-        var contentProps = pick(this.state, [
-            'sequenceId',
-            'definition',
-            'host',
-            'sequence',
-            'pendingAutofill',
-            'error'
+        // Props picked from this component"s props and passed to the content component regardless of its type.
+        const contentProps = pick(this.state, [
+            "sequenceId",
+            "definition",
+            "host",
+            "sequence",
+            "pendingAutofill",
+            "error"
         ]);
 
         // Further extend contentProps for the Sequence component.
-        merge(contentProps, pick(this.props, ['virusId', 'isolateId', 'canModify']), {
+        merge(contentProps, pick(this.props, ["virusId", "isolateId", "canModify"]), {
             onSubmit: this.save,
             autofill: this.autofill,
             update: this.update,
             mode: "add"
         });
 
-        var classes = CX({
+        const classes = CX({
             "list-group-item": true,
             "hoverable": !this.props.active,
         });
@@ -206,6 +200,4 @@ var AddSequence = React.createClass({
         );
 
     }
-});
-
-module.exports = AddSequence;
+}

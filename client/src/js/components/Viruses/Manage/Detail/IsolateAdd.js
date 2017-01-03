@@ -6,31 +6,34 @@
  * @author
  * Ian Boyes
  *
- * @exports Isolate
+ * @exports IsolateAdd
  */
-
-"use strict";
 
 import CX from "classnames";
 import React from "react";
-import ReactDOM from "react-dom";
 import { Collapse } from "react-bootstrap";
+import { Icon, Flex, Button } from "virtool/js/components/Base";
 
-import { Icon, Flex, Radio, Button } from "virtool/js/components/Base";
+import IsolateForm from "./IsolateForm";
 
-var IsolateForm = require("./IsolateForm");
-var IsolateHeader = require("./IsolateHeader");
+const getInitialState = (props) => ({
+    // If no source type is available, "unknown" will be used if restricted source types are enabled otherwise
+    // an empty string will be used.
+    sourceType: props.restrictSourceTypes ? "unknown": "",
+    sourceName: "",
 
-/**
- * An isolate document that is a list item in a list of isolates. Displays the isolate name. Has icon buttons for editing
- * and removing the isolate and setting it as the default isolate for the virus. Can be selected by clicking, which
- * displays the sequences owned by the isolate in a neighbouring panel.
- *
- * @class
- */
-var Isolate = React.createClass({
+    collapsed: true,
+    pending: false
+});
 
-    propTypes: {
+export default class IsolateAdd extends React.Component {
+
+    constructor (props) {
+        super(props);
+        this.state = getInitialState(this.props);
+    }
+
+    static propTypes = {
         virusId: React.PropTypes.string.isRequired,
         isolateId: React.PropTypes.string,
 
@@ -38,56 +41,46 @@ var Isolate = React.createClass({
         allowedSourceTypes: React.PropTypes.array,
         restrictSourceTypes: React.PropTypes.bool,
 
+        updateScroll: React.PropTypes.func,
         toggleAdding: React.PropTypes.func
-    },
+    };
 
-    getInitialState: function () {
-        return {
-            // If no source type is available, "unknown" will be used if restricted source types are enabled otherwise
-            // an empty string will be used.
-            sourceType: this.props.restrictSourceTypes ? "unknown": "",
-            sourceName: "",
-
-            collapsed: true,
-            pending: false
-        };
-    },
-
-    componentWillReceiveProps: function (nextProps) {
+    componentWillReceiveProps = (nextProps) => {
         if (!this.props.active && nextProps.active) {
             document.addEventListener("keyup", this.handleKeyUp, true);
         }
 
         if (this.props.active && !nextProps.active) {
-            this.setState(this.getInitialState(), function () {
+            this.setState(getInitialState(this.props), () => {
                 document.removeEventListener("keyup", this.handleKeyUp, true);
             });
         }
-    },
+    };
 
-    componentWillUnmount: function () {
+    componentWillUnmount () {
         document.removeEventListener("keyup", this.handleKeyUp, true);
-    },
+    }
 
-    collapseEnter: function () {
+    collapseEnter = () => {
         this.refs.form.focus();
-    },
+    };
 
-    collapseEntered: function () {
-        this.setState({
-            collapsed: false
-        }, function () {
+    collapseEntered = () => {
+        this.setState({collapsed: false}, () => {
             this.props.updateScroll();
             this.refs.form.focus();
-            ReactDOM.findDOMNode(this).scrollIntoView({block: "end", behaviour: "smooth"});
+            this.scrollIntoView({
+                block: "end",
+                behaviour: "smooth"
+            });
         });
-    },
+    };
 
-    collapseExited: function () {
+    collapseExited = () => {
         this.setState({
             collapsed: true
         }, this.props.updateScroll);
-    },
+    };
 
     /**
      * Handle a change from the isolate form. Updates state to reflect the current input values.
@@ -95,9 +88,9 @@ var Isolate = React.createClass({
      * @param changeObject {object} - an object of field values keyed by field names.
      * @func
      */
-    handleChange: function (changeObject) {
+    handleChange = (changeObject) => {
         this.setState(changeObject);
-    },
+    };
 
     /**
      * Called when the form is submitted or the saveIcon is clicked. If the sourceName or sourceType have changed, the
@@ -107,7 +100,7 @@ var Isolate = React.createClass({
      * @param event {object} - The passed event. Used for preventing the default action.
      * @func
      */
-    save: function (event) {
+    save = (event) => {
         event.preventDefault();
 
         // Set pendingChange so the component is disabled and a spinner icon is displayed.
@@ -122,18 +115,18 @@ var Isolate = React.createClass({
                 }
             }).success(this.props.toggleAdding);
         });
-    },
+    };
 
-    handleKeyUp: function (event) {
+    handleKeyUp = (event) => {
         if (event.keyCode === 27) {
             event.stopImmediatePropagation();
             this.props.toggleAdding();
         }
-    },
+    };
 
-    render: function () {
+    render () {
 
-        var buttons;
+        let buttons;
 
         if (this.props.active) {
             buttons = (
@@ -152,7 +145,7 @@ var Isolate = React.createClass({
             );
         }
 
-        var itemProps = {
+        const itemProps = {
             className: CX({
                 "list-group-item": true,
                 "hoverable": !this.props.active,
@@ -174,7 +167,12 @@ var Isolate = React.createClass({
                         <Icon name="plus-square" bsStyle="primary" /> Add Isolate
                     </div>
                 </Collapse>
-                <Collapse in={this.props.active} onExited={this.collapseExited} onEnter={this.collapseEnter} onEntered={this.collapseEntered}>
+                <Collapse
+                    in={this.props.active}
+                    onExited={this.collapseExited}
+                    onEnter={this.collapseEnter}
+                    onEntered={this.collapseEntered}
+                >
                     <div>
                         <div style={{height: "15px"}} />
                         <IsolateForm ref="form"
@@ -191,6 +189,4 @@ var Isolate = React.createClass({
             </div>
         );
     }
-});
-
-module.exports = Isolate;
+}

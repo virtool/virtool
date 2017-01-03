@@ -9,13 +9,10 @@
  * @exports VirusGeneral
  */
 
-'use strict';
 
 import React from "react";
-var Table = require('react-bootstrap/lib/Table');
-
-var Icon = require('virtool/js/components/Base/Icon');
-var InputCell = require('virtool/js/components/Base/InputCell');
+import { Table } from "react-bootstrap";
+import { Icon, InputCell } from "virtool/js/components/Base";
 
 /**
  * Displays general information about the virus whose detail is displayed. Also provided some InputCell components to
@@ -23,78 +20,81 @@ var InputCell = require('virtool/js/components/Base/InputCell');
  *
  * @class
  */
-var VirusGeneral = React.createClass({
+const VirusGeneral = (props) => {
 
-    render: function () {
+    const data = {
+        _id: props._id
+    };
 
-        var data = {_id: this.props._id};
+    let nameCell;
+    let abbrCell;
 
-        var nameCell;
-        var abbrCell;
+    if (this.props.canModify) {
+        nameCell = (
+            <InputCell
+                className="col-sm-8"
+                collection={dispatcher.db.viruses}
+                _id={data._id}
+                field="name"
+                value={props.name}
+            />
+        );
 
-        if (this.props.canModify) {
-            var collection = dispatcher.db.viruses;
+        abbrCell = (
+            <InputCell
+                collection={dispatcher.db.viruses}
+                _id={data._id}
+                field="abbreviation"
+                value={props.abbreviation}
 
-            nameCell = (
-                <InputCell
-                    className='col-sm-8'
-                    collection={collection}
-                    _id={data._id}
-                    field='name'
-                    value={this.props.name}
-                />
-            );
-
-            abbrCell = (
-                <InputCell
-                    collection={collection}
-                    _id={data._id}
-                    field='abbreviation'
-                    value={this.props.abbreviation}
-
-                />
-            );
-        } else {
-            nameCell = <td className='col-sm-8'>{this.props.name}</td>;
-            abbrCell = <td>{this.props.abbreviation}</td>;
-        }
-        
-        var databaseIdRow = dispatcher.user.settings.show_ids ? (
-            <tr>
-                <th>Database ID</th>
-                <td>{data._id}</td>
-            </tr>
-        ): null;
-
-        var databaseVersionRow = dispatcher.user.settings.show_versions ? (
-            <tr>
-                <th>Database Version</th>
-                <td>{this.props._version}</td>
-            </tr>
-        ): null;
-
-        return (
-            <div>
-                <h5>
-                    <Icon name='file' /> <strong>General Information</strong>
-                </h5>
-                <Table bordered>
-                    <tbody>
-                        <tr>
-                            <th className='col-sm-4'>Name</th>
-                            {nameCell}
-                        </tr>
-                        <tr>
-                            <th>Abbreviation</th>
-                            {abbrCell}
-                        </tr>
-                        {databaseIdRow}
-                        {databaseVersionRow}
-                    </tbody>
-                </Table>
-            </div>
-        )
+            />
+        );
+    } else {
+        nameCell = <td className="col-sm-8">{props.name}</td>;
+        abbrCell = <td>{props.abbreviation}</td>;
     }
-});
 
-module.exports = VirusGeneral;
+    const databaseIdRow = dispatcher.user.settings.show_ids ? (
+        <tr>
+            <th>Database ID</th>
+            <td>{data._id}</td>
+        </tr>
+    ): null;
+
+    const databaseVersionRow = dispatcher.user.settings.show_versions ? (
+        <tr>
+            <th>Database Version</th>
+            <td>{this.props._version}</td>
+        </tr>
+    ): null;
+
+    return (
+        <div>
+            <h5>
+                <Icon name="file" /> <strong>General Information</strong>
+            </h5>
+            <Table bordered>
+                <tbody>
+                    <tr>
+                        <th className="col-sm-4">Name</th>
+                        {nameCell}
+                    </tr>
+                    <tr>
+                        <th>Abbreviation</th>
+                        {abbrCell}
+                    </tr>
+                    {databaseIdRow}
+                    {databaseVersionRow}
+                </tbody>
+            </Table>
+        </div>
+    )
+};
+
+VirusGeneral.propTypes = {
+    _id: React.PropTypes.string.isRequired,
+    name: React.PropTypes.string.isRequired,
+    abbreviation: React.PropTypes.string
+};
+
+export default VirusGeneral;

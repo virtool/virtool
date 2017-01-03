@@ -9,8 +9,6 @@
  * @exports SequenceForm
  */
 
-'use strict';
-
 import React from "react";
 import ReactDOM from "react-dom";
 import { Row, Col, Overlay, Popover, FormGroup, ControlLabel, FormControl, InputGroup } from "react-bootstrap";
@@ -22,11 +20,19 @@ import { Icon, Input, Button, SequenceField } from "virtool/js/components/Base";
  *
  * @class
  */
-var SequenceForm = React.createClass({
+export default class SequenceForm extends React.Component {
 
-    propTypes: {
-        // Data from the sequence document that is used to populate the form. These props will be undefined when the form
-        // is being used to add a new sequence.
+    constructor (props) {
+        super(props);
+        this.state = {
+            pendingAutofill: false,
+            pendingSave: false
+        };
+    }
+
+    static propTypes = {
+        // Data from the sequence document that is used to populate the form. These props will be undefined when the
+        // form is being used to add a new sequence.
         sequenceId: React.PropTypes.string,
         definition: React.PropTypes.string,
         host: React.PropTypes.string,
@@ -37,36 +43,33 @@ var SequenceForm = React.createClass({
         onSubmit: React.PropTypes.func,
         autofill: React.PropTypes.func,
 
+        active: React.PropTypes.bool,
         mode: React.PropTypes.string,
 
         // Error message to display on the accession field.
         error: React.PropTypes.string
-    },
+    };
 
-    getDefaultProps: function () {
+    static defaultProps = () => {
         return {
-            sequenceId: '',
-            definition: '',
-            host: '',
-            sequence: '',
-
+            sequenceId: "",
+            definition: "",
+            host: "",
+            sequence: "",
             mode: "read"
         };
-    },
+    };
 
-    getInitialState: function () {
-        return {
-            pendingAutofill: false,
-            pendingSave: false
-        };
-    },
-
-    componentDidUpdate: function (prevProps) {
+    componentDidUpdate (prevProps) {
         if (!this.props.active && prevProps.active) {
-            if (this.props.mode === "edit") ReactDOM.findDOMNode(this.refs.host).focus();
-            if (this.props.mode === "add") ReactDOM.findDOMNode(this.refs.accession).focus();
+            if (this.props.mode === "edit") {
+                ReactDOM.findDOMNode(this.refs.host).focus();
+            }
+            if (this.props.mode === "add") {
+                ReactDOM.findDOMNode(this.refs.accession).focus();
+            }
         }
-    },
+    }
 
     /**
      * Calls the onChange prop function with the input change object. Triggered by a change event in any of the form
@@ -75,26 +78,26 @@ var SequenceForm = React.createClass({
      * @param event {object} - the input change event.
      * @func
      */
-    handleChange: function (event) {
-        var data = {};
+    handleChange = (event) => {
+        let data = {};
         data[event.target.name] = event.target.value;
         this.props.update(data);
-    },
+    };
 
-    onSubmit: function (event) {
+    onSubmit = (event) => {
         event.preventDefault();
-    },
+    };
 
-    render: function () {
-        var overlay;
+    render () {
+        let overlay;
 
-        var sharedProps = {
+        const sharedProps = {
             spellCheck: false,
             readOnly: this.props.mode === "read",
             onChange: this.handleChange
         };
 
-        var accession = (
+        let accession = (
             <FormControl
                 {...sharedProps}
                 ref="accession"
@@ -111,7 +114,7 @@ var SequenceForm = React.createClass({
                     {accession}
                     <InputGroup.Button>
                         <Button onClick={this.props.autofill}>
-                            <Icon name='wand' />
+                            <Icon name="wand" />
                         </Button>
                     </InputGroup.Button>
                 </InputGroup>
@@ -119,22 +122,20 @@ var SequenceForm = React.createClass({
 
             if (this.props.error) {
                 // Set up an overlay to display if there is an error in state.
-                var overlayProps = {
+                const overlayProps = {
                     target: function () {return this.refs.accession.getInputDOMNode()}.bind(this),
-                    placement: 'top'
+                    placement: "top"
                 };
 
                 overlay = (
                     <Overlay {...overlayProps} show={true} onHide={this.dismissError}>
-                        <Popover id='sequence-error-popover'>
+                        <Popover id="sequence-error-popover">
                             {this.props.error}
                         </Popover>
                     </Overlay>
                 );
             }
         }
-
-
 
         return (
             <form onSubmit={this.onSubmit}>
@@ -149,10 +150,10 @@ var SequenceForm = React.createClass({
                     </Col>
                     <Col md={6}>
                         <Input
-                            type='text'
-                            name='host'
-                            label='Host'
-                            ref='host'
+                            type="text"
+                            name="host"
+                            label="Host"
+                            ref="host"
                             value={this.props.host}
                             placeholder={this.props.mode === "edit" ? "eg. Ageratum conyzoides": ""}
                             {...sharedProps}
@@ -162,12 +163,12 @@ var SequenceForm = React.createClass({
                 <Row>
                     <Col md={12}>
                         <Input
-                            type='text'
-                            name='definition'
-                            ref='definition'
-                            label='Definition'
+                            type="text"
+                            name="definition"
+                            ref="definition"
+                            label="Definition"
                             value={this.props.definition}
-                            placeholder='eg. Ageratum enation virus, complete genome'
+                            placeholder="eg. Ageratum enation virus, complete genome"
                             {...sharedProps}
                         />
                     </Col>
@@ -175,7 +176,7 @@ var SequenceForm = React.createClass({
                 <Row>
                     <Col md={12}>
                         <SequenceField
-                            ref='sequence'
+                            ref="sequence"
                             sequence={this.props.sequence}
                             {...sharedProps}
                         />
@@ -184,6 +185,4 @@ var SequenceForm = React.createClass({
             </form>
         );
     }
-});
-
-module.exports = SequenceForm;
+}

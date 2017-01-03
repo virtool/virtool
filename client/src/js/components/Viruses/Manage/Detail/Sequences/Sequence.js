@@ -9,18 +9,23 @@
  * @exports Sequence
  */
 
-'use strict';
-
-var _ = require('lodash');
-var CX = require('classnames');
+import CX from "classnames";
 import React from "react";
-var Collapse = require('react-bootstrap/lib/Collapse');
+import { isEqual, assign, pick } from "lodash-es";
+import { Collapse } from "react-bootstrap";
+import { Icon } from "virtool/js/components/Base";
 
-var Flex = require('virtool/js/components/Base/Flex');
-var Icon = require('virtool/js/components/Base/Icon');
+import SequenceHeader from "./Header";
+import SequenceForm from "./Form";
 
-var SequenceHeader = require('./Header');
-var SequenceForm = require('./Form');
+const getInitialState = (props) => ({
+    sequenceId: props.sequenceId,
+    definition: props.definition,
+    host: props.host,
+    sequence: props.sequence,
+    pendingRemove: false,
+    editing: false
+});
 
 /**
  * A ListGroupItem-based component that describes a sequence document. Used for reading sequence details, editing
@@ -28,10 +33,16 @@ var SequenceForm = require('./Form');
  *
  * @class
  */
-var Sequence = React.createClass({
+export default class Sequence extends React.Component {
+
+    constructor (props) {
+        super(props);
+        this.state = getInitialState(this.props);
+    }
     
-    propTypes: {
+    static propTypes = {
         // Data describing the sequence document.
+        _id: React.PropTypes.string,
         virusId: React.PropTypes.string,
         isolateId: React.PropTypes.string,
         sequenceId: React.PropTypes.string,
@@ -45,56 +56,42 @@ var Sequence = React.createClass({
 
         // Function to call when the component is clicked. Makes this component the new active sequence.
         onSelect: React.PropTypes.func
-    },
+    };
 
-    getDefaultProps: function () {
-        return {
-            sequenceId: '',
-            definition: '',
-            host: '',
-            sequence: ''
-        };
-    },
+    static defaultProps = {
+        sequenceId: "",
+        definition: "",
+        host: "",
+        sequence: ""
+    };
 
-    getInitialState: function () {
-        return {
-            sequenceId: this.props.sequenceId,
-            definition: this.props.definition,
-            host: this.props.host,
-            sequence: this.props.sequence,
+    componentWillReceiveProps = (nextProps) => {
 
-            pendingRemove: false,
-            editing: false
-        };
-    },
-
-    componentWillReceiveProps: function (nextProps) {
-
-        var state = this.getInitialState();
+        let state = getInitialState();
 
         // If the sequence was editing, but loses active status, disable editing in state.
         if ((!nextProps.active && this.props.active) && this.state.editing) {
             state.editing = false;
         }
 
-        if (!_.isEqual(this.props, nextProps)) {
-            _.assign(state, nextProps, {});
+        if (!isEqual(this.props, nextProps)) {
+            assign(state, nextProps, {});
             state.editing = false;
         }
 
         this.setState(state);
-    },
+    };
 
-    componentWillUnmount: function () {
+    componentWillUnmount () {
         document.removeEventListener("keyup", this.handleKeyUp, true);
-    },
+    }
 
-    handleKeyUp: function (event) {
+    handleKeyUp = (event) => {
         if (event.keyCode === 27) {
             event.stopImmediatePropagation();
             this.toggleEditing();
         }
-    },
+    };
 
     /**
      * Send a request to the server to upsert a sequence. Triggered by clicking the save icon button (blue floppy) or
@@ -103,45 +100,42 @@ var Sequence = React.createClass({
      * @param event {object} - the event that triggered this callback. Will be used to prevent the default action.
      * @func
      */
-    save: function (event) {
+    save = (event) => {
         event.preventDefault();
 
-        var newEntry = _.assign(_.pick(this.state, ['definition', 'host', 'sequence']), {
+        const newEntry = assign(pick(this.state, ["definition", "host", "sequence"]), {
             _id: this.props.sequenceId,
             isolate_id: this.props.isolateId
         });
 
-        dispatcher.db.viruses.request('update_sequence', {
+        dispatcher.db.viruses.request("update_sequence", {
             _id: this.props.virusId,
             isolate_id: this.props.isolateId,
             new: newEntry
-        }).failure(this.onSaveFailure);
-    },
+        });
+    };
 
-    remove: function () {
-        this.setState({
-            pendingRemove: true
-        }, function () {
+    remove = () => {
+        this.setState({pendingRemove: true}, () => {
             dispatcher.db.viruses.request("remove_sequence", {
                 "_id": this.props.virusId,
                 "sequence_id": this.props.sequenceId
             });
         });
+    };
 
-    },
-
-    update: function (data) {
+    update = (data) => {
         this.setState(data);
-    },
+    };
 
     /**
      * Handles a click event on the sequence. Calls the onSelect prop with the sequenceId for this component.
      *
      * @func
      */
-    handleClick: function () {
+    handleClick = () => {
         this.props.onSelect(this.props._id);
-    },
+    };
 
     /**
      * Toggle editing mode on the sequence component. Triggered by clicking the yellow pencil icon for by cancelling an
@@ -149,35 +143,35 @@ var Sequence = React.createClass({
      *
      * @func
      */
-    toggleEditing: function () {
+    toggleEditing = () => {
         if (this.state.editing) {
-            this.setState(this.getInitialState(), function () {
+            this.setState(getInitialState(this.props), () => {
                 document.removeEventListener("keyup", this.handleKeyUp, true);
             });
         } else {
-            this.setState({editing: true}, function () {
+            this.setState({editing: true}, () => {
                 document.addEventListener("keyup", this.handleKeyUp, true);
             });
         }
-    },
+    };
 
-    render: function () {
+    render () {
 
-        var icons = [];
+        let icons = [];
 
         if (this.props.canModify && this.props.active && !this.state.editing) {
             icons = [
                 <Icon
                     key="edit"
-                    name='pencil'
-                    bsStyle='warning'
+                    name="pencil"
+                    bsStyle="warning"
                     onClick={this.toggleEditing}
                 />,
 
                 <Icon
                     key="remove"
-                    name='remove'
-                    bsStyle='danger'
+                    name="remove"
+                    bsStyle="danger"
                     pending={this.state.pendingRemove}
                     onClick={this.remove}
                 />
@@ -202,29 +196,29 @@ var Sequence = React.createClass({
             ];
         }
 
-        var itemClass = CX({
+        const itemClass = CX({
             "list-group-item": true,
             "hoverable": !this.props.active
         });
 
-        var itemStyle = this.state.editing ? {background: "#fcf8e3"}: null;
+        const itemStyle = this.state.editing ? {background: "#fcf8e3"}: null;
 
-        // Props picked from this component's props and passed to the content component regardless of its type.
-        var contentProps = _.pick(this.props, [
-            'sequenceId',
-            'virusId',
-            'isolateId',
-            'canModify'
+        // Props picked from this component"s props and passed to the content component regardless of its type.
+        const contentProps = pick(this.props, [
+            "sequenceId",
+            "virusId",
+            "isolateId",
+            "canModify"
         ]);
 
         // Further extend contentProps for the Sequence component.
-        _.merge(contentProps, _.pick(this.state, ['definition', 'host', 'sequence']), {
+        assign(contentProps, pick(this.state, ["definition", "host", "sequence"]), {
             onSubmit: this.save,
             update: this.update,
             mode: this.state.editing ? "edit": "read"
         });
 
-        var formStyle = this.props.active ? null: {marginTop: "1px"};
+        const formStyle = this.props.active ? null: {marginTop: "1px"};
 
         // If not active, the ListGroupItem contains only the accession, sequence definition, and icon buttons.
         return (
@@ -243,6 +237,4 @@ var Sequence = React.createClass({
             </div>
         );
     }
-});
-
-module.exports = Sequence;
+}

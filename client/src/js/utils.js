@@ -1,44 +1,41 @@
-"use strict";
-
-import {capitalize, map, sum, difference, findIndex} from "lodash";
-import Request from "superagent";
 import Numeral from "numeral";
-
+import Request from "superagent";
+import { capitalize } from "lodash-es";
 
 export function toScientificNotation (number) {
 
     if (number < 0.01 || number > 1000) {
-        const split = number.toExponential().split('e');
-        const exponent = split[1].replace('+', '');
-        return Numeral(split[0]).format('0.00') + 'e' + exponent;
+        const split = number.toExponential().split("e");
+        const exponent = split[1].replace("+", "");
+        return Numeral(split[0]).format("0.00") + "e" + exponent;
     } else {
-        return Numeral(number).format('0.000');
+        return Numeral(number).format("0.000");
     }
 }
 
 export function byteSize (bytes) {
-    return Numeral(this.props.bytes).format('0.0 b')
+    return Numeral(bytes).format("0.0 b")
 }
 
 export function formatIsolateName (isolate) {
     if (
-        isolate.source_type && isolate.source_type !== 'unknown' ||
-        isolate.sourceType && isolate.sourceType !== 'unknown'
+        isolate.source_type && isolate.source_type !== "unknown" ||
+        isolate.sourceType && isolate.sourceType !== "unknown"
     ) {
         return (
-            capitalize(isolate.source_type || isolate.sourceType) + ' '
+            capitalize(isolate.source_type || isolate.sourceType) + " "
             + (isolate.source_name || isolate.sourceName)
         );
     }
 
-    return 'Unnamed';
+    return "Unnamed";
 }
 
 export function postJSON (uri, data, callback) {
     Request.post(uri)
         .send(data)
-        .type('application/x-www-form-urlencoded; charset=UTF-8')
-        .accept('json')
+        .type("application/x-www-form-urlencoded; charset=UTF-8")
+        .accept("json")
         .end((err, response) => {
             callback(response.body)
         });

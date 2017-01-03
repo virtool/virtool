@@ -10,33 +10,40 @@
  */
 
 import React from "react";
+import { filter } from "lodash-es";
 import { Alert, Collapse } from "react-bootstrap";
 import { Flex, Icon, Button } from "virtool/js/components/Base";
 
-var IndexRebuild = React.createClass({
+export default class IndexRebuild extends React.PureComponent {
 
-    getInitialState: function () {
-        return {
+    constructor (props) {
+        super(props);
+
+        this.state = {
             verified: false,
             pending: false,
             error: false,
             canRebuild: dispatcher.user.permissions.rebuild_index
-        }
-    },
+        };
+    }
 
-    componentDidMount: function () {
-        dispatcher.user.on('change', this.onUserChange);
-    },
+    static propTypes = {
+        documents: React.PropTypes.arrayOf(React.PropTypes.object)
+    };
 
-    componentWillUnmount: function () {
-        dispatcher.user.off('change', this.onUserChange);
-    },
+    componentDidMount () {
+        dispatcher.user.on("change", this.onUserChange);
+    }
 
-    onUserChange: function () {
+    componentWillUnmount () {
+        dispatcher.user.off("change", this.onUserChange);
+    }
+
+    onUserChange = () => {
         this.setState({
             canRebuild: dispatcher.user.permissions.rebuild_index
         });
-    },
+    };
 
     /**
      * Sends a request to the server to rebuild the index. Changes state to indicate a pending server operation.
@@ -44,17 +51,23 @@ var IndexRebuild = React.createClass({
      *
      * @func
      */
-    rebuild: function () {
-        this.setState({pending: true}, function () {
-            dispatcher.db.indexes.request('rebuild_index')
-                .success(function () {
-                    this.setState({pending: false, error: false});
-                }, this)
-                .failure(function () {
-                    this.setState({pending: false, error: true});
-                }, this);
+    rebuild = () => {
+        this.setState({pending: true}, () => {
+            dispatcher.db.indexes.request("rebuild_index")
+                .success(() => {
+                    this.setState({
+                        pending: false,
+                        error: false
+                    });
+                })
+                .failure(() => {
+                    this.setState({
+                        pending: false,
+                        error: true
+                    });
+                });
         });
-    },
+    };
 
     /**
      * Dismiss the red error alert by setting state.error to false. Called by clicking the close button in the error
@@ -62,27 +75,26 @@ var IndexRebuild = React.createClass({
      *
      * @func
      */
-    dismissError: function () {
-        this.setState({error: false});
-    },
+    dismissError = () => {
+        this.setState({ error: false });
+    };
 
-    render: function () {
+    render () {
 
-        // Get history documents whose changes are unbuilt ('not included in index yet').
-        var unindexed = _.filter(this.props.documents, {index_version: 'unbuilt'});
+        // Get history documents whose changes are unbuilt ("not included in index yet").
+        const unindexed = filter(this.props.documents, {index_version: "unbuilt"});
 
-        var button;
-        var message;
+        let button;
+        let message;
 
         // Show a notification
         if (unindexed.length > 0 || this.props.documents.length === 0) {
-
             message = (
                 <span>
-                    <Icon name='notification' />&nbsp;
+                    <Icon name="notification" />&nbsp;
                     <span>
-                        The virus reference database has changed and the index must be rebuilt before the new information
-                        will be included in future analyses.
+                        The virus reference database has changed and the index must be rebuilt before the new
+                        information will be included in future analyses.
                     </span>
                 </span>
             );
@@ -90,9 +102,9 @@ var IndexRebuild = React.createClass({
             if (this.state.canRebuild) {
                 button = (
                     <Flex.Item pad={20}>
-                        <Button bsStyle='primary' onClick={this.rebuild} disabled={this.state.pending} pullRight>
-                            <Icon name='hammer' pending={this.state.pending}/>&nbsp;
-                            {this.state.pending ? 'Rebuilding' : 'Rebuild'}
+                        <Button bsStyle="primary" onClick={this.rebuild} disabled={this.state.pending} pullRight>
+                            <Icon name="hammer" pending={this.state.pending}/>&nbsp;
+                            {this.state.pending ? "Rebuilding" : "Rebuild"}
                         </Button>
                     </Flex.Item>
                 );
@@ -101,14 +113,14 @@ var IndexRebuild = React.createClass({
         } else {
             message = (
                 <span>
-                    <Icon name='info' /> No viruses have been modified since the last index build.
+                    <Icon name="info" /> No viruses have been modified since the last index build.
                 </span>
             );
         }
 
         return (
             <div>
-                <Alert bsStyle='info'>
+                <Alert bsStyle="info">
                     <Flex alignItems="center">
                         <Flex.Item grow={1}>
                             {message}
@@ -119,11 +131,11 @@ var IndexRebuild = React.createClass({
 
                 <Collapse in={this.state.error}>
                     <div>
-                        <Alert bsStyle='danger' onDismiss={this.dismissError}>
-                            <Icon name='warning' />&nbsp;
+                        <Alert bsStyle="danger" onDismiss={this.dismissError}>
+                            <Icon name="warning" />&nbsp;
                             <strong>
-                                One or more viruses are in an unverified state. All virus documents must be verified before
-                                the index can be rebuilt.
+                                One or more viruses are in an unverified state. All virus documents must be verified
+                                before the index can be rebuilt.
                             </strong>
                         </Alert>
                     </div>
@@ -132,6 +144,4 @@ var IndexRebuild = React.createClass({
         );
     }
 
-});
-
-module.exports = IndexRebuild;
+}

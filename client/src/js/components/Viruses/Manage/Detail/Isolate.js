@@ -9,31 +9,61 @@
  * @exports Isolate
  */
 
-'use strict';
-
-var CX = require('classnames');
+import CX from "classnames";
 import React from "react";
-var Row = require('react-bootstrap/lib/Row');
-var Col = require('react-bootstrap/lib/Col');
-var Collapse = require('react-bootstrap/lib/Collapse');
+import { assign } from "lodash-es";
+import { Row, Col, Collapse } from "react-bootstrap";
+import { Icon, Radio, ListGroupItem } from "virtool/js/components/Base";
+import { formatIsolateName } from "virtool/js/utils";
 
-var Icon = require('virtool/js/components/Base/Icon');
-var Radio = require('virtool/js/components/Base/Radio');
-var ListGroupItem = require('virtool/js/components/Base/PushListGroupItem');
+import IsolateForm from "./IsolateForm";
 
-var IsolateForm = require('./IsolateForm');
-var IsolateHeader = require('./IsolateHeader');
+const IsolateHeader = (props) => (
+    <h5>
+        <Row>
+            <Col md={9}>
+                {formatIsolateName(props)}
+            </Col>
+            <Col md={3}>
+                {props.children}
+            </Col>
+        </Row>
+    </h5>
+);
+
+IsolateHeader.propTypes = {
+    sourceType: React.PropTypes.string,
+    sourceName: React.PropTypes.string,
+    children: React.PropTypes.oneOfType([React.PropTypes.element, React.PropTypes.arrayOf(React.PropTypes.element)])
+};
+
+
+const getInitialState = (props) => ({
+    // If no source type is available, "unknown" will be used if restricted source types are enabled otherwise
+    // an empty string will be used.
+    sourceType: props.sourceType || (props.restrictSourceTypes ? "unknown": ""),
+    sourceName: props.sourceName || "",
+
+    pendingRemoval: false,
+    collapsed: true,
+    editing: false
+});
 
 /**
- * An isolate document that is a list item in a list of isolates. Displays the isolate name. Has icon buttons for editing
- * and removing the isolate and setting it as the default isolate for the virus. Can be selected by clicking, which
- * displays the sequences owned by the isolate in a neighbouring panel.
+ * An isolate document that is a list item in a list of isolates. Displays the isolate name. Has icon buttons for
+ * editing and removing the isolate and setting it as the default isolate for the virus. Can be selected by clicking,
+ * which displays the sequences owned by the isolate in a neighbouring panel.
  *
  * @class
  */
-var Isolate = React.createClass({
+export default class Isolate extends React.Component {
 
-    propTypes: {
+    constructor (props) {
+        super(props);
+        this.state = getInitialState(this.props);
+    }
+
+    static propTypes = {
         virusId: React.PropTypes.string.isRequired,
         isolateId: React.PropTypes.string,
         sourceType: React.PropTypes.string,
@@ -45,53 +75,42 @@ var Isolate = React.createClass({
         restrictSourceTypes: React.PropTypes.bool,
         selectIsolate: React.PropTypes.func,
         canModify: React.PropTypes.bool
-    },
+    };
 
-    getInitialState: function () {
-        return {
-            // If no source type is available, 'unknown' will be used if restricted source types are enabled otherwise
-            // an empty string will be used.
-            sourceType: this.props.sourceType || (this.props.restrictSourceTypes ? 'unknown': ''),
-            sourceName: this.props.sourceName || '',
+    componentDidMount () {
+        if (!this.props.isolateId) {
+            document.addEventListener("keyup", this.handleKeyUp, true);
+        }
+    }
 
-            pendingRemoval: false,
-            collapsed: true,
-            editing: false
-        };
-    },
-
-    componentDidMount: function () {
-        if (!this.props.isolateId) document.addEventListener("keyup", this.handleKeyUp, true);
-    },
-
-    componentWillReceiveProps: function (nextProps) {
+    componentWillReceiveProps = (nextProps) => {
         if (nextProps.sourceName !== this.props.sourceName || nextProps.sourceType !== this.props.sourceType) {
             this.setState({
-                sourceType: nextProps.sourceType || (this.props.restrictSourceTypes ? 'unknown' : ''),
-                sourceName: nextProps.sourceName || ''
+                sourceType: nextProps.sourceType || (this.props.restrictSourceTypes ? "unknown" : ""),
+                sourceName: nextProps.sourceName || ""
             });
         }
 
         if (!this.props.isolateId && nextProps.isolateId) {
             this.componentWillUnmount();
         }
-    },
+    };
 
-    componentWillUnmount: function () {
+    componentWillUnmount () {
         document.removeEventListener("keyup", this.handleKeyUp, true);
-    },
+    }
 
-    modalEntered: function () {
+    modalEntered = () => {
         this.setState({
             collapsed: false
         });
-    },
+    };
 
-    modalExited: function () {
+    modalExited = () => {
         this.setState({
             collapsed: true
         });
-    },
+    };
 
     /**
      * Select the isolate as long as it is not disabled and not already the active isolate. The selection is handled by
@@ -100,10 +119,12 @@ var Isolate = React.createClass({
      * @param event {object} - The passed event used to prevent the default action.
      * @func
      */
-    select: function (event) {
+    select = (event) => {
         event.preventDefault();
-        if (!this.props.active) this.props.selectIsolate(this.props.isolateId);
-    },
+        if (!this.props.active) {
+            this.props.selectIsolate(this.props.isolateId);
+        }
+    };
 
     /**
      * Handle a change from the isolate form. Updates state to reflect the current input values.
@@ -111,9 +132,9 @@ var Isolate = React.createClass({
      * @param changeObject {object} - an object of field values keyed by field names.
      * @func
      */
-    handleChange: function (changeObject) {
+    handleChange = (changeObject) => {
         this.setState(changeObject);
-    },
+    };
 
     /**
      * Called when the form is submitted or the saveIcon is clicked. If the sourceName or sourceType have changed, the
@@ -123,10 +144,10 @@ var Isolate = React.createClass({
      * @param event {object} - The passed event. Used for preventing the default action.
      * @func
      */
-    save: function (event) {
+    save = (event) => {
         event.preventDefault();
 
-        var hadChange = (
+        const hadChange = (
             this.state.sourceType !== this.props.sourceType ||
             this.state.sourceName !== this.props.sourceName
         );
@@ -134,9 +155,9 @@ var Isolate = React.createClass({
         // Only send an update to the server if there has been a change in the sourceType or sourceName.
         if (hadChange) {
             // Set pendingChange so the component is disabled and a spinner icon is displayed.
-            this.setState({pendingChange: true}, function () {
+            this.setState({pendingChange: true}, () => {
                 // Construct a replacement isolate object and send it to the server.
-                dispatcher.db.viruses.request('upsert_isolate', {
+                dispatcher.db.viruses.request("upsert_isolate", {
                     _id: this.props.virusId,
                     new: {
                         isolate_id: this.props.isolateId,
@@ -147,32 +168,34 @@ var Isolate = React.createClass({
             });
         }
 
-        // If the data didn't change, just close the form and save sending it to the server.
+        // If the data did not change, just close the form and save sending it to the server.
         else {
             this.toggleEditing();
         }
-    },
+    };
 
     /**
-     * Remove the isolate as long as it's not disabled. The removal button is only shown if the isolate is the active
+     * Remove the isolate as long as it"s not disabled. The removal button is only shown if the isolate is the active
      * isolate, so this method can only successfully be called if props.active is true. The removal is handled by the
      * parent Isolate component.
      *
      * @param event {object} - The passed event used to prevent the default action.
      * @func
      */
-    remove: function (event) {
+    remove = (event) => {
         event.preventDefault();
 
         // First set state to indicate that the isolate is pending removal. Then, send a request to remove the
         // isolate.
-        if (this.props.active) this.setState({pendingRemoval: true}, function () {
-            dispatcher.db.viruses.request('remove_isolate', {
-                _id: this.props.virusId,
-                isolate_id: this.props.isolateId
+        if (this.props.active) {
+            this.setState({pendingRemoval: true}, () => {
+                dispatcher.db.viruses.request("remove_isolate", {
+                    _id: this.props.virusId,
+                    isolate_id: this.props.isolateId
+                });
             });
-        });
-    },
+        }
+    };
 
     /**
      * Set the isolate as the default isolate. This method can be called by any Isolate component, not just the active
@@ -180,88 +203,87 @@ var Isolate = React.createClass({
      *
      * @func
      */
-    setAsDefault: function () {
-        dispatcher.db.viruses.request('set_default_isolate', {
+    setAsDefault = () => {
+        dispatcher.db.viruses.request("set_default_isolate", {
             _id: this.props.virusId,
             isolate_id: this.props.isolateId
-        }, this.onSuccess);
-    },
+        });
+    };
 
     /**
      * Toggles whether the isolate is being edited. Triggered by clicking the edit or cancel icon buttons.
      *
      * @func
      */
-    toggleEditing: function () {
-        var newState = _.assign(this.getInitialState(), {editing: !this.state.editing});
+    toggleEditing = () => {
+        const newState = assign(this.getInitialState(), {editing: !this.state.editing});
 
         if (this.state.editing) {
-            this.setState(newState, function () {
+            this.setState(newState, () => {
                 document.removeEventListener("keyup", this.handleKeyUp, true);
             });
         } else {
-            this.setState(newState, function () {
+            this.setState(newState, () => {
                 document.addEventListener("keyup", this.handleKeyUp, true);
             });
         }
-    },
+    };
 
-    handleKeyUp: function (event) {
+    handleKeyUp = (event) => {
         if (event.keyCode === 27) {
             event.stopImmediatePropagation();
             this.toggleEditing();
         }
-    },
+    };
 
-    render: function () {
+    render () {
 
-        var itemProps = {
+        const itemProps = {
             onClick: this.props.active ? null: this.select,
             disabled: this.state.pendingRemoval,
-            allowFocus: this.props.active
+            allowFocus: this.props.active,
+
+            className: CX({
+                band: this.props.active
+            })
         };
 
-        // Classes to apply to the ListGroupItem.
-        itemProps.className = CX({
-            band: this.props.active
-        });
-
-        var itemStyle = {
+        const itemStyle = {
             background: this.state.editing ? "#fcf8e3": null,
-            transition: '0.7s background'
+            transition: "0.7s background"
         };
 
-        var icons;
+        let icons;
 
         if (this.props.canModify) {
             icons = (
                 <div className="icon-group">
                     {this.props.active && !this.state.editing ? (
                         <Icon
-                            name='pencil'
-                            bsStyle='warning'
+                            name="pencil"
+                            bsStyle="warning"
                             onClick={this.toggleEditing}
                         />
                     ): null}
                     {this.props.active && !this.state.editing ? (
                         <Icon
-                            name='remove'
-                            bsStyle='danger'
+                            name="remove"
+                            bsStyle="danger"
                             pending={this.state.pendingRemoval}
                             onClick={this.remove}
                         />
                     ): null}
                     {this.state.editing ? (
                         <Icon
-                            name='floppy'
-                            bsStyle='primary'
+                            name="floppy"
+                            bsStyle="primary"
                             onClick={this.save}
                         />
                     ): null}
                     {this.state.editing ? (
                         <Icon
-                            name='cancel-circle'
-                            bsStyle='danger'
+                            name="cancel-circle"
+                            bsStyle="danger"
                             onClick={this.toggleEditing}
                         />
                     ): null}
@@ -279,9 +301,13 @@ var Isolate = React.createClass({
                 <IsolateHeader sourceType={this.state.sourceType} sourceName={this.state.sourceName}>
                     {icons}
                 </IsolateHeader>
-                <Collapse in={this.props.canModify && this.state.editing} onExited={this.modalExited} onEntered={this.modalEntered}>
+                <Collapse
+                    in={this.props.canModify && this.state.editing}
+                    onExited={this.modalExited}
+                    onEntered={this.modalEntered}
+                >
                     <div>
-                        <div style={{height: '15px'}} />
+                        <div style={{height: "15px"}} />
                         <IsolateForm
                             sourceType={this.state.sourceType}
                             sourceName={this.state.sourceName}
@@ -295,6 +321,4 @@ var Isolate = React.createClass({
             </ListGroupItem>
         );
     }
-});
-
-module.exports = Isolate;
+}

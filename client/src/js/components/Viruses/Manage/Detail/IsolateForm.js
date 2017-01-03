@@ -9,25 +9,29 @@
  * @exports IsolateForm
  */
 
-'use strict';
-
 import React from "react";
-var Row = require('react-bootstrap/lib/Row');
-var Col = require('react-bootstrap/lib/Col');
-
-var Input = require('virtool/js/components/Base/Input');
-var Icon = require('virtool/js/components/Base/Icon');
+import { capitalize } from "lodash-es";
+import { Row, Col } from "react-bootstrap";
+import { Input } from "virtool/js/components/Base";
 
 /**
  * A form component used to edit and add isolates.
  *
  * @class
  */
-var IsolateForm = React.createClass({
+export default class IsolateForm extends React.Component {
 
-    propTypes: {
+    constructor (props) {
+        super(props);
+        this.state = {
+            sourceType: this.props.sourceType,
+            sourceName: this.props.sourceName
+        };
+    }
+
+    static propTypes = {
         // These props inform initial state. If the form was mounted in order to edit an existing isolate, these props
-        // should be defined. Otherwise the will be set to the default 'unamed isolate' values.
+        // should be defined. Otherwise the will be set to the default "unamed isolate" values.
         sourceType: React.PropTypes.string,
         sourceName: React.PropTypes.string,
 
@@ -37,86 +41,71 @@ var IsolateForm = React.createClass({
 
         onChange: React.PropTypes.func.isRequired,
         onSubmit: React.PropTypes.func.isRequired
-    },
+    };
 
-    getDefaultProps: function () {
-        return {
-            sourceType: 'unknown',
-            sourceName: '',
-            edit: true,
-            restrictSourceTypes: false
-        }
-    },
+    static defaultProps = {
+        sourceType: "unknown",
+        sourceName: "",
+        edit: true,
+        restrictSourceTypes: false
+    };
 
-    getInitialState: function () {
-        return {
-            sourceType: this.props.sourceType,
-            sourceName: this.props.sourceName
-        };
-    },
-
-    componentDidMount: function () {
+    componentDidMount () {
         // Focus on the source type input when the component mounts.
         this.refs.sourceType.focus();
-    },
+    }
 
     /**
      * Called when a change occurs in the sourceType input. Updates the sourceType state value. If the new value is
-     * 'unknown', the sourceName is forced to an empty string.
+     * "unknown", the sourceName is forced to an empty string.
      *
      * @func
      */
-    handleChange: function (event) {
-        var name = event.target.name;
-
-        var updateObject;
-
-        if (name === "sourceType") {
-            updateObject = {
+    handleChange = (event) => {
+        if (event.target.name === "sourceType") {
+            this.props.onChange({
                 sourceType: event.target.value.toLowerCase(),
-                sourceName: event.target.value === 'unknown' ? '': this.props.sourceName
-            };
+                sourceName: event.target.value === "unknown" ? "": this.props.sourceName
+            });
         }
 
-        if (name === "sourceName") {
-            updateObject = {
+        if (event.target.name === "sourceName") {
+            this.props.onChange({
                 sourceName: event.target.value
-            };
+            });
         }
-        
-        this.props.onChange(updateObject);
-    },
+    };
 
-    focus: function () {
+    focus = () => {
         this.refs.sourceType.focus();
-    },
+    };
 
-    render: function () {
+    render () {
 
-        var sourceTypeInput;
+        let sourceTypeInput;
 
-        var sourceTypeInputProps = {
-            ref: 'sourceType',
-            name: 'sourceType',
-            label: 'Source Type',
+        const sourceTypeInputProps = {
+            ref: "sourceType",
+            name: "sourceType",
+            label: "Source Type",
             value: this.props.sourceType,
             onChange: this.handleChange
         };
 
         // If the is a restricted list of sourceTypes to choose from display a select field with the choices.
-        if (dispatcher.settings.get('restrict_source_types')) {
-            var optionComponents = dispatcher.settings.get('allowed_source_types').map(function (sourceType, index) {
-                return <option key={index} value={sourceType}>{_.capitalize(sourceType)}</option>
-            });
+        if (dispatcher.settings.get("restrict_source_types")) {
+            const optionComponents = dispatcher.settings.get("allowed_source_types").map((sourceType, index) =>
+                <option key={index} value={sourceType}>{capitalize(sourceType)}</option>
+            );
 
             sourceTypeInput = (
-                <Input type='select' {...sourceTypeInputProps}>
-                    <option key='default' value='unknown'>Unknown</option>
+                <Input type="select" {...sourceTypeInputProps}>
+                    <option key="default" value="unknown">Unknown</option>
                     {optionComponents}
                 </Input>
             );
         } else {
-            sourceTypeInput = <Input type='text' {...sourceTypeInputProps} />;
+            sourceTypeInput = <Input type="text" {...sourceTypeInputProps} />;
         }
 
         return (
@@ -127,19 +116,17 @@ var IsolateForm = React.createClass({
                     </Col>
                     <Col md={6}>
                         <Input
-                            type='text'
-                            name='sourceName'
-                            label='Source Name'
+                            type="text"
+                            name="sourceName"
+                            label="Source Name"
                             value={this.props.sourceName}
                             onChange={this.handleChange}
-                            disabled={this.props.sourceType === 'unknown'}
-                            spellCheck='off'
+                            disabled={this.props.sourceType === "unknown"}
+                            spellCheck="off"
                         />
                     </Col>
                 </Row>
             </form>
         );
     }
-});
-
-module.exports = IsolateForm;
+}

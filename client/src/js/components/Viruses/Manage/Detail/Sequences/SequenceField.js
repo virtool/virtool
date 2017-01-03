@@ -9,64 +9,44 @@
  * @exports SequenceField
  */
 
-'use strict';
 
 import React from "react";
-import ReactDOM from "react-dom";
-var Badge = require('react-bootstrap/lib/Badge');
-var FormGroup = require('react-bootstrap/lib/FormGroup');
-var FormControl = require('react-bootstrap/lib/FormControl');
-var ControlLabel = require('react-bootstrap/lib/ControlLabel');
+import { Badge, FormGroup, FormControl, ControlLabel } from "react-bootstrap";
 
 /**
  * A component that wraps a textarea input element. Used for displaying and editing genetic sequences.
  *
  * @class
  */
-var SequenceField = React.createClass({
+const SequenceField = (props) => {
+    return (
+        <FormGroup>
+            <ControlLabel>
+                Sequence <Badge>{props.sequence.length}</Badge>
+            </ControlLabel>
+            <FormControl
+                ref={this.inputNode}
+                name="sequence"
+                className="sequence"
+                componentClass="textarea"
+                value={props.sequence}
+                onChange={props.onChange}
+                readOnly={props.readOnly}
+                rows={5}
+            />
+        </FormGroup>
+    );
+};
 
-    propTypes: {
-        sequence: React.PropTypes.string,
-        readOnly: React.PropTypes.bool,
-        onChange: React.PropTypes.func
-    },
+SequenceField.propTypes = {
+    sequence: React.PropTypes.string,
+    readOnly: React.PropTypes.bool,
+    onChange: React.PropTypes.func
+};
 
-    getDefaultProps: function () {
-        return {
-            sequence: '',
-            readOnly: false
-        };
-    },
+SequenceField.defaultProps = {
+    sequence: "",
+    readOnly: false
+};
 
-    /**
-     * Returns the input element DOM node.
-     *
-     * @returns {object} - the DOM node.
-     * @func
-     */
-    getInputDOMNode: function () {
-        return ReactDOM.findDOMNode(this.refs.input);
-    },
-
-    render: function () {
-        return (
-            <FormGroup>
-                <ControlLabel>
-                    Sequence <Badge>{this.props.sequence.length}</Badge>
-                </ControlLabel>
-                <FormControl
-                    ref="input"
-                    name="sequence"
-                    className="sequence"
-                    componentClass="textarea"
-                    value={this.props.sequence}
-                    onChange={this.props.onChange}
-                    readOnly={this.props.readOnly}
-                    rows={5}
-                />
-            </FormGroup>
-        );
-    }
-});
-
-module.exports = SequenceField;
+export default SequenceField;
