@@ -18,7 +18,7 @@ import { Pulse, Modal } from "./";
  * reduced form. When the application needs more detailed information for an document, a request is sent to the serve
  * and the returned detail object can be rendered into the modal component returned by this module.
  */
-export default class DetailModal extends React.Component {
+export class DetailModal extends React.Component {
 
     constructor (props) {
         super(props);

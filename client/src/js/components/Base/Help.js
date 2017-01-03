@@ -14,31 +14,33 @@ import CX from "classnames";
 import { Popover, OverlayTrigger } from "react-bootstrap";
 import { Icon } from "virtool/js/components/Base";
 
-export default class Help extends React.Component {
+export const Help = (props) => {
 
-    static propTypes = {
-        title: React.PropTypes.string,
-        pullRight: React.PropTypes.bool
-    };
+    const popover = (
+        <Popover title={props.title} id="help-popover">
+            {props.children}
+        </Popover>
+    );
 
-    render () {
-        const popover = (
-            <Popover title={this.props.title} id="help-popover">
-                {this.props.children}
-            </Popover>
-        );
+    const classes = CX("pointer", {
+        "pull-right": props.pullRight
+    });
 
-        const classes = CX("pointer", {
-            "pull-right": this.props.pullRight
-        });
+    return (
+        <OverlayTrigger trigger="click" placement="top" overlay={popover} rootClose>
+            <span className={classes}>
+                <Icon name="question" />
+            </span>
+        </OverlayTrigger>
+    );
+};
 
-        return (
-            <OverlayTrigger trigger="click" placement="top" overlay={popover} rootClose>
-                <span className={classes}>
-                    <Icon name="question" />
-                </span>
-            </OverlayTrigger>
-        );
-    }
-
-}
+Help.propTypes = {
+    title: React.PropTypes.string,
+    pullRight: React.PropTypes.bool,
+    children: React.PropTypes.oneOfType([
+        React.PropTypes.string,
+        React.PropTypes.element,
+        React.PropTypes.arrayOf(React.PropTypes.element)
+    ])
+};

@@ -19,7 +19,7 @@ import { Tooltip, OverlayTrigger } from "react-bootstrap";
  *
  * @class
  */
-export default class Icon extends React.Component {
+export class Icon extends React.Component {
 
     static propTypes = {
         name: React.PropTypes.string.isRequired,

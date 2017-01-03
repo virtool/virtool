@@ -17,7 +17,7 @@ import Moment from "moment";
  * displayed time every second. This allows the relative time to be constantly accurate if the component is mounted
  * for a longer span of time.
  */
-export default class RelativeTime extends React.Component {
+export class RelativeTime extends React.Component {
 
     constructor (props) {
         super(props);

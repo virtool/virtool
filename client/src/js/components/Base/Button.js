@@ -16,7 +16,7 @@ import { Button as BsButton, Tooltip, OverlayTrigger } from "react-bootstrap";
 /**
  * A react-bootstrap button that does not retain focus when clicked.
  */
-export default class Button extends React.Component {
+export class Button extends React.Component {
 
     static propTypes = {
         tip: React.PropTypes.oneOfType([React.PropTypes.string, React.PropTypes.element]),

@@ -16,7 +16,7 @@ import { Icon } from "./";
 /**
  * A single input form component with a submit addon button that behaves well for updated VT settings.
  */
-export default class InputSave extends React.Component {
+export class InputSave extends React.Component {
 
     constructor (props) {
         super(props);

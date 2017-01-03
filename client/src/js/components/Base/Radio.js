@@ -15,20 +15,12 @@ import { Icon } from "./";
 /**
  * A component that displays a icon-based radio button. The fill of the radio button depends on the "checked" prop.
  */
-export default class Radio extends React.Component {
+export const Radio = (props) => (
+    // Set the icon class to "i-radio-checked" if checked is true, otherwise set it to "i-radio-unchecked"
+    <Icon onClick={props.onClick} name={"radio-" + (props.checked ? "checked": "unchecked")} />
+);
 
-    static propTypes = {
-        checked: React.PropTypes.bool.isRequired,
-        onClick: React.PropTypes.func
-    };
-
-    defaultProps = {
-        onClick: () => {}
-    };
-
-    render () {
-        // Set the icon class to "i-radio-checked" if checked is true, otherwise set it to "i-radio-unchecked"
-        return <Icon onClick={this.props.onClick} name={"radio-" + (this.props.checked ? "checked": "unchecked")} />;
-    }
-
-}
+Radio.propTypes = {
+    checked: React.PropTypes.bool.isRequired,
+    onClick: React.PropTypes.func
+};

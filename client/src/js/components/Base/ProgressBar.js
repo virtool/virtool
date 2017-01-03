@@ -89,7 +89,7 @@ export class AutoProgressBar extends React.Component {
 }
 
 
-export default class ProgressBar extends React.PureComponent {
+export class ProgressBar extends React.PureComponent {
 
     constructor (props) {
         super(props);

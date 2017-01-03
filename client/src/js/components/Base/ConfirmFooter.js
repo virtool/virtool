@@ -17,7 +17,7 @@ import { Icon, Button } from "virtool/js/components/Base";
  * A special Modal.Footer component that contains an action button customized by the user, and a cancel button. When the
  * action button is clicked, the user is prompted to confirm they are sure of their action.
  */
-export default class ConfirmFooter extends React.Component {
+export class ConfirmFooter extends React.Component {
 
     constructor (props) {
         super(props);

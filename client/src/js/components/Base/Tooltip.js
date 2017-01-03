@@ -1,45 +1,41 @@
 import React from "react";
 
-export default class Tooltip extends React.Component {
+export const Tooltip = (props) => {
 
-    static propTypes = {
-        x: React.PropTypes.number,
-        y: React.PropTypes.number,
-
-        header: React.PropTypes.oneOfType([
-            React.PropTypes.string,
-            React.PropTypes.element
-        ]),
-
-        children: React.PropTypes.element
+    const tooltipStyle = {
+        left: (props.x - 10) + "px",
+        top: (props.y - window.pageYOffset - 10) + "px",
+        zIndex: 10000
     };
 
-    render () {
+    let header;
 
-        const tooltipStyle = {
-            left: (this.props.x - 10) + "px",
-            top: (this.props.y - window.pageYOffset - 10) + "px",
-            zIndex: 10000
-        };
-
-        let header;
-
-        if (this.props.header) {
-            header = (
-                <div className="tooltip-header">
-                    {this.props.header}
-                </div>
-            );
-        }
-
-        return (
-            <div className="tooltip" style={tooltipStyle}>
-                {header}
-                <div className="tooltip-body">
-                    {this.props.children}
-                </div>
+    if (props.header) {
+        header = (
+            <div className="tooltip-header">
+                {props.header}
             </div>
         );
     }
 
-}
+    return (
+        <div className="tooltip" style={tooltipStyle}>
+            {header}
+            <div className="tooltip-body">
+                {props.children}
+            </div>
+        </div>
+    );
+};
+
+Tooltip.propTypes = {
+    x: React.PropTypes.number,
+    y: React.PropTypes.number,
+
+    header: React.PropTypes.oneOfType([
+        React.PropTypes.string,
+        React.PropTypes.element
+    ]),
+
+    children: React.PropTypes.element
+};

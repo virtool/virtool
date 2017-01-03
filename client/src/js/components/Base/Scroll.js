@@ -13,7 +13,7 @@ import React from "react";
 import { pick, merge } from "lodash-es";
 import Ps from "perfect-scrollbar";
 
-export default class Scroll extends React.Component {
+export class Scroll extends React.Component {
 
     static propTypes = {
         style: React.PropTypes.object,

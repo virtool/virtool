@@ -95,7 +95,7 @@ function getInitialInputCellState () {
  *
  * @class
  */
-export default class InputCell extends React.Component {
+export class InputCell extends React.Component {
 
     constructor (props) {
         super(props);
@@ -283,5 +283,4 @@ export default class InputCell extends React.Component {
             </td>
         );
     }
-
 }
