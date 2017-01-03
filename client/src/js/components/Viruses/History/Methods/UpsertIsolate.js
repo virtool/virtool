@@ -9,112 +9,76 @@
  * @exports UpsertIsolateMethod
  */
 
-'use strict';
-
-import { formatIsolateName } from "virtool/js/utils";
-
-var _ = require('lodash');
 import React from "react";
-var Icon = require('virtool/js/components/Base/Icon');
+import { find, filter, clone, forEach } from "lodash-es";
+import { Icon } from "virtool/js/components/Base";
+import { formatIsolateName } from "virtool/js/utils";
+import { changesPropTypes, bothPropTypes } from "./Base";
 
-/**
- * A text component for a HistoryItem describing the addition of a new isolate.
- *
- * @class
- */
-var IsolateAddition = React.createClass({
+export const IsolateAddition = ({changes}) => {
 
-    propTypes: {
-        changes: React.PropTypes.oneOfType([React.PropTypes.array, React.PropTypes.object]).isRequired
-    },
+    const isolate = find(changes, change => change[1] == "isolates" || change[1][0] == "isolates")[2][0][1];
 
-    shouldComponentUpdate: function () {
-        return false;
-    },
+    return (
+        <span>
+            <Icon name="lab" bsStyle="primary" />
+            <span> Added isolate <em>{formatIsolateName(isolate)} ({isolate.isolate_id})</em></span>
+        </span>
+    );
+};
 
-    render: function () {
-        var isolateAdd = _.find(this.props.changes, function (change) {
-            return change[1] == 'isolates' || change[1][0] == 'isolates';
-        });
+IsolateAddition.propTypes = changesPropTypes;
 
-        var isolate = isolateAdd[2][0][1];
 
-        return (
-            <span>
-                <Icon name='lab' bsStyle='primary' />
-                <span> Added isolate <em>{formatIsolateName(isolate)} ({isolate.isolate_id})</em></span>
-            </span>
-        );
-    }
+export const IsolateRename = (props) => {
 
-});
+    // The old isolate object is stored in the history document annotation.
+    const oldIsolateName = formatIsolateName(props.annotation);
 
-/**
- * A text component for a History Item describing changes in an isolate name resulting from isolate_upsert.
- *
- * @class
- */
-var IsolateRename = React.createClass({
+    // Get the changes that were applied to the isolate.
+    const isolateChanges = filter(props.changes, change => change[1][0] == "isolates");
 
-    propTypes: {
-        changes: React.PropTypes.oneOfType([React.PropTypes.array, React.PropTypes.object]).isRequired,
-        annotation: React.PropTypes.any.isRequired
-    },
+    // Clone the old isolate object to use as a basis for constructing the new one from the changes.
+    const newIsolate = clone(props.annotation);
 
-    shouldComponentUpdate: function () {
-        return false;
-    },
+    // Change the newIsolate object using the changes array.
+    forEach(isolateChanges, change => {
+        if (change[1][2] === "source_type") {
+            newIsolate.source_type = change[2][1];
+        }
+        if (change[1][2] === "source_name") {
+            newIsolate.source_name = change[2][1];
+        }
+    });
 
-    render: function () {
-        // The old isolate object is stored in the history document annotation.
-        var oldIsolateName = formatIsolateName(this.props.annotation);
+    return (
+        <span>
+            <Icon name="lab" bsStyle="warning" />
+            <span> Renamed <em>{oldIsolateName}</em> to </span>
+            <em>
+                {formatIsolateName(newIsolate)} ({props.annotation.isolate_id})
+            </em>
+        </span>
+    );
+};
 
-        // Get the changes that were applied to the isolate.
-        var isolateChanges = _.filter(this.props.changes, function (change) {
-            return change[1][0] == 'isolates';
-        });
+IsolateRename.propTypes = bothPropTypes;
 
-        // Clone the old isolate object to use as a basis for constructing the new one from the changes.
-        var newIsolate = _.clone(this.props.annotation);
-
-        // Change the newIsolate object using the changes array.
-        _.forEach(isolateChanges, function (change) {
-            if (change[1][2] === 'source_type') newIsolate.source_type = change[2][1];
-            if (change[1][2] === 'source_name') newIsolate.source_name = change[2][1];
-        }, this);
-
-        return (
-            <span>
-                <Icon name='lab' bsStyle='warning' />
-                <span> Renamed <em>{oldIsolateName}</em> to </span>
-                <em>
-                    {formatIsolateName(newIsolate)} ({this.props.annotation.isolate_id})
-                </em>
-            </span>
-        );
-
-    }
-
-});
 
 /**
  * A component that renders either IsolateRename or IsolateAddition as a subcomponent.
  *
  * @class
  */
-var UpsertIsolateMethod = React.createClass({
-
-    shouldComponentUpdate: function () {
-        return false;
-    },
-
-    render: function () {
-        if (this.props.annotation) {
-            return <IsolateRename changes={this.props.changes} annotation={this.props.annotation} />;
-        } else {
-            return <IsolateAddition changes={this.props.changes} />;
-        }
+export const UpsertIsolateMethod = (props) => {
+    if (props.annotation) {
+        return <IsolateRename changes={props.changes} annotation={props.annotation} />;
     }
-});
 
-module.exports = UpsertIsolateMethod;
+    return <IsolateAddition changes={props.changes} />;
+};
+
+UpsertIsolateMethod.propTypes = {
+    changes: React.PropTypes.array,
+    annotation: React.PropTypes.object
+};

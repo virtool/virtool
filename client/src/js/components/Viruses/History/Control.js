@@ -9,16 +9,9 @@
  * @exports HistoryControl
  */
 
-'use strict';
-
 import React from "react";
-import ReactDOM from "react-dom";
-var FormGroup = require('react-bootstrap/lib/FormGroup');
-var InputGroup = require('react-bootstrap/lib/InputGroup');
-var FormControl = require('react-bootstrap/lib/FormControl');
-
-var Flex = require('virtool/js/components/Base/Flex');
-var Icon = require('virtool/js/components/Base/Icon');
+import { FormGroup, InputGroup, FormControl } from "react-bootstrap";
+import { Flex, Icon } from "virtool/js/components/Base";
 
 /**
  * A control bar that is shown above the history documents. Allows searching for changes in a particular virus and for
@@ -26,38 +19,29 @@ var Icon = require('virtool/js/components/Base/Icon');
  *
  * @class
  */
-var HistoryControl = React.createClass({
+export default class HistoryControl extends React.Component {
 
-    propTypes: {
+    static propTypes = {
         indexVersions: React.PropTypes.array,
         selectedVersion: React.PropTypes.oneOfType([React.PropTypes.string, React.PropTypes.number]),
         onFilter: React.PropTypes.func
-    },
+    };
 
-    componentDidMount: function () {
-        ReactDOM.findDOMNode(this.refs.input).focus();
-    },
+    componentDidMount () {
+        this.inputNode.focus();
+    }
 
-    selectIndex: function (event) {
+    selectIndex = (event) => {
         dispatcher.router.setExtra([event.target.value]);
-    },
+    };
 
-    render: function () {
-        // The options to put in the select box component.
-        var optionComponents = this.props.indexVersions.map(function (indexVersion) {
-            return (
-                <option key={indexVersion} value={indexVersion}>
-                    {indexVersion === 'unbuilt' ? 'Unbuilt Changes': 'Version ' + indexVersion}
-                </option>
-            );
-        });
+    render () {
 
-        // Props to pass to the select box input component.
-        var selectProps = {
-            componentClass: 'select',
-            onChange: this.selectIndex,
-            value: this.props.selectedVersion
-        };
+        const optionComponents = this.props.indexVersions.map(indexVersion => (
+            <option key={indexVersion} value={indexVersion}>
+                {indexVersion === "unbuilt" ? "Unbuilt Changes": "Version " + indexVersion}
+            </option>
+        ));
 
         return (
             <Flex>
@@ -65,13 +49,13 @@ var HistoryControl = React.createClass({
                     <FormGroup>
                         <InputGroup>
                             <InputGroup.Addon>
-                                <Icon name='search' /> Find
+                                <Icon name="search" /> Find
                             </InputGroup.Addon>
                             <FormControl
-                                ref='input'
-                                type='text'
+                                ref={this.inputNode}
+                                type="text"
                                 onChange={this.props.onFilter}
-                                placeholder='Virus Name'
+                                placeholder="Virus Name"
                             />
                         </InputGroup>
                     </FormGroup>
@@ -80,9 +64,13 @@ var HistoryControl = React.createClass({
                     <FormGroup>
                         <InputGroup>
                             <InputGroup.Addon>
-                                <Icon name='hammer' /> Index
+                                <Icon name="hammer" /> Index
                             </InputGroup.Addon>
-                            <FormControl {...selectProps}>
+                            <FormControl
+                                componentClass="select"
+                                onChange={this.selectIndex}
+                                value={this.props.selectedVersion}
+                            >
                                 {optionComponents}
                             </FormControl>
                         </InputGroup>
@@ -91,8 +79,4 @@ var HistoryControl = React.createClass({
             </Flex>
         );
     }
-
-});
-
-module.exports = HistoryControl;
-
+}

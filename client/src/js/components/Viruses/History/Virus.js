@@ -9,65 +9,68 @@
  * @exports VirusHistoryList
  */
 
-'use strict';
 
-var _ = require('lodash');
 import React from "react";
 import FlipMove from "react-flip-move"
-var ListGroup = require('react-bootstrap/lib/ListGroup');
-var HistoryItem = require('./HistoryItem');
+import { sortBy } from "lodash-es";
+import HistoryItem from "./HistoryItem";
 
-var RelativeTime = require('virtool/js/components/Base/RelativeTime');
+const getInitialState = () => ({
+    reverting: null
+});
 
 /**
  * A list of HistoryItems associated with a single virusId.
  *
  * @class
  */
-var VirusHistoryList = React.createClass({
+export default class VirusHistoryList extends React.Component {
 
-    propTypes: {
+    constructor (props) {
+        super(props);
+        this.state = getInitialState();
+    }
+
+    static propTypes = {
+        virus: React.PropTypes.string,
+        history: React.PropTypes.array,
         canModify: React.PropTypes.bool
-    },
+    };
 
-    getInitialState: function () {
-        return {reverting: null};
-    },
-
-    componentWillReceiveProps: function (nextProps) {
-        if (nextProps.history.length < this.props.history.length) this.setState(this.getInitialState());
-    },
+    componentWillReceiveProps (nextProps) {
+        if (nextProps.history.length < this.props.history.length) {
+            this.setState(getInitialState());
+        }
+    }
 
     /**
-     * Revert up to and including the passed version of the virus document. All history documents being reverted will become
-     * disabled and display a spinner until they are removed from the collection.
+     * Revert up to and including the passed version of the virus document. All history documents being reverted will
+     * become disabled and display a spinner until they are removed from the collection.
      *
      * @param version {number} - the document version to revert past.
      * @func
      */
-    revert: function (version) {
-        this.setState({reverting: version}, function () {
-            dispatcher.db.history.request('revert', {
+    revert = (version) => {
+        this.setState({reverting: version}, () => {
+            dispatcher.db.history.request("revert", {
                 entry_id: this.props.virus,
                 entry_version: version
             });
         });
-    },
+    };
 
-    render: function () {
+    render () {
 
         // Generate all the history components that will be shown in the history panel for the virus.
-        var historyComponents = _.sortBy(this.props.history, "entry_version").reverse().map(function (historyEntry) {
-            return (
-                <HistoryItem
-                    key={historyEntry._id}
-                    {...historyEntry}
-                    collection={dispatcher.db.history}
-                    pending={this.state.reverting !== null && historyEntry.entry_version >= this.state.reverting}
-                    onRevert={this.props.canModify ? this.revert: null}
-                />
-            );
-        }, this);
+        const historyComponents = sortBy(this.props.history, "entry_version").reverse().map((historyEntry) => (
+            <HistoryItem
+                key={historyEntry._id}
+                {...historyEntry}
+                collection={dispatcher.db.history}
+                pending={this.state.reverting !== null && historyEntry.entry_version >= this.state.reverting}
+                onRevert={this.props.canModify ? this.revert: null}
+            />
+        ));
 
         return (
             <FlipMove typeName="div" className="list-group" fill={true} leaveAnimation={false} duration={200}>
@@ -75,6 +78,4 @@ var VirusHistoryList = React.createClass({
             </FlipMove>
         );
     }
-});
-
-module.exports = VirusHistoryList;
+}
