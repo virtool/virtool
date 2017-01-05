@@ -91,16 +91,6 @@ class Application:
 
             add_collections(self.dispatcher)
 
-            #: An instance of :class:`virtool.files.Manager`. Used for managing uploads and downloads.
-            '''
-            file_manager = virtool.files.Manager(
-                self.settings.get_db_client(),
-                self.settings.get("data_path"),
-                self.add_periodic_callback
-            )
-
-            self.add_interface("file_manager", file_manager)
-            '''
             logger.debug("Instantiated dispatcher")
         else:
             logger.info("Server has not been setup.")
@@ -121,8 +111,17 @@ class Application:
         # Setup static handlers and handler classes defined in this module.
         handlers = [
             (r"/", HTTPHandler),
-            (r"/ws", SocketHandler),
-            (r"/upload", UploadHandler),
+
+            (r"/ws", SocketHandler, {
+                "handle": self.dispatcher.handle,
+                "add_connection": self.dispatcher.add_connection,
+                "remove_connection": self.dispatcher.remove_connection
+            }),
+
+            (r"/upload/([a-zA-Z0-9]+)", UploadHandler, {
+                "collections": self.dispatcher.collections
+            }),
+
             (r"/download/(.*)", tornado.web.StaticFileHandler, {"path": self.settings.get("data_path") + "/download/"}),
             (r"/doc/(.*)", tornado.web.StaticFileHandler, {"path": doc_path}),
             (r"/(app.*js$|favicon.ico)", tornado.web.StaticFileHandler, {"path": static_path})
@@ -393,6 +392,11 @@ class SocketHandler(tornado.websocket.WebSocketHandler):
         #: Set to ``True`` when the connection is authorized.
         self.authorized = False
 
+    def initialize(self, handle, add_connection, remove_connection):
+        self.handle = handle
+        self.add_connection = add_connection
+        self.remove_connection = remove_connection
+
     def check_origin(self, origin):
         return True
 
@@ -402,7 +406,7 @@ class SocketHandler(tornado.websocket.WebSocketHandler):
         list of active connections.
 
         """
-        self.settings["add_connection"](self)
+        self.add_connection(self)
 
     def on_message(self, message):
         """
@@ -413,7 +417,7 @@ class SocketHandler(tornado.websocket.WebSocketHandler):
         :type message: str
 
         """
-        tornado.ioloop.IOLoop.current().spawn_callback(self.settings["handle"], message, self)
+        tornado.ioloop.IOLoop.current().spawn_callback(self.handle, message, self)
 
     def on_close(self):
         """
@@ -421,9 +425,10 @@ class SocketHandler(tornado.websocket.WebSocketHandler):
         connections.
 
         """
-        self.settings["remove_connection"](self)
+        self.remove_connection(self)
 
 
+@tornado.web.stream_request_body
 class UploadHandler(tornado.web.RequestHandler):
 
     """
@@ -431,29 +436,29 @@ class UploadHandler(tornado.web.RequestHandler):
     :class:`.files.Manager` for handling.
 
     """
+    def initialize(self, collections):
+        self.handle = None
+        self.collections = collections
+
     @virtool.gen.coroutine
-    def post(self):
+    def prepare(self):
+        file_id = self.path_args[0]
+        file_document = yield self.collections["files"].find_one({"_id": file_id})
+        self.handle = open(os.path.join("data/files", file_id), "wb")
+        self.request.connection.set_max_body_size(file_document["size_end"] + 1000)
+
+    def data_received(self, chunk):
+        self.handle.write(chunk)
+
+    def post(self, file_id):
         """
         Handles file upload POST operations from the client by passing them to the shared instance of
         :class:`.files.Manager` owned by the dispatcher. The resultant internal id generated for the file in the HTTP
         response.
 
         """
-        filename = list(self.request.files.keys())[0]
-
-        # Get the name of the file used by the client in the request.
-        file = self.request.files[filename][0]
-
-        # Pass the file to the file manager and generate a unique internal id for it.
-        file_id = yield self.settings["register_file"](
-            filename,
-            file.body,
-            file.content_type,
-            download=False
-        )
-
-        # Write the generated file id to the HTTP response and finish the request.
-        self.write(file_id)
+        self.handle.close()
+        self.handle = None
         self.flush()
 
 

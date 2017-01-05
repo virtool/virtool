@@ -80,23 +80,20 @@ def list_files(directory, excluded=None):
     """
     file_list = os.listdir(directory)
 
-    # This list will contain a dictionary of the detail for each file that was not excluded
-    available = dict()
+    if excluded:
+        return {name: file_stats(os.path.join(directory, name)) for name in file_list if name not in excluded}
 
-    for name in file_list:
-        if excluded is None or name not in excluded:
-            # Get detailed information for file by name
-            file_stats = os.stat(directory + "/" + name)
+    return {name: file_stats(os.path.join(directory, name)) for name in file_list}
 
-            # Append file entry to reply list
-            available[name] = {
-                "_id": name,
-                "size": file_stats.st_size,
-                "access": timestamp(file_stats.st_atime),
-                "modify": timestamp(file_stats.st_mtime)
-            }
 
-    return available
+def file_stats(path):
+    stats = os.stat(path)
+
+    # Append file entry to reply list
+    return {
+        "size": stats.st_size,
+        "modify": timestamp(stats.st_mtime)
+    }
 
 
 def timestamp(time=None, time_getter=datetime.datetime.now):

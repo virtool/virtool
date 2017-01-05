@@ -465,19 +465,16 @@ class Collection(virtool.database.Collection):
 
         return True, response
 
-    @virtool.gen.coroutine
-    def watch(self):
-        """
-        Called as a :ref:`periodic callback <periodic-callbacks>` to check if the contents of the watch path has have
-        changes. Any changes are dispatched to all listening clients. The callback is not executed if there are no
-        listeners.
+    @virtool.gen.exposed_method(["add_sample"])
+    def authorize_upload(self, transaction):
+        file_id = yield self.collections["files"].register(
+            name=transaction.data["name"],
+            size=transaction.data["size"],
+            file_type="reads",
+            expires=None
+        )
 
-        File names in :attr:`.excluded_files` are excluded from the check.
-
-        """
-        files = yield virtool.utils.list_files(self.settings.get("watch_path"), self.excluded_files)
-
-        return files
+        return True, dict(file_id=file_id)
 
 
 class ImportReads(virtool.job.Job):

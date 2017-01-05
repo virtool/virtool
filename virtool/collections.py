@@ -1,6 +1,7 @@
 #: The names of all collections registered with the dispatcher.
 COLLECTIONS = [
     "jobs",
+    "files",
     "samples",
     "analyses",
     "viruses",
