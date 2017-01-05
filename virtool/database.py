@@ -354,8 +354,6 @@ class Collection:
 
         return virtool.utils.random_alphanumeric(length=8, excluded=excluded, randomizer=randomizer)
 
-        return document_id
-
     @virtool.gen.coroutine
     def get_field(self, query, key):
         """

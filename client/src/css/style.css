@@ -151,7 +151,7 @@ div.hoverable:hover {
 }
 
 .pathoscope-virus-detail {
-    margin-top: -11px;
+    margin-top: -12px;
     border-top: none;
 }
 
@@ -555,4 +555,22 @@ table.cluster-table tbody tr {
 
 .no-padding {
     margin: 0;
+}
+
+.nuvs-layout {
+    border: 1px solid #ddd;
+    margin-bottom: 10px;
+}
+
+.nuvs-item-header {
+    padding: 10px 15px 0;
+}
+
+.nuvs-sequence {
+    margin-top: 10px;
+    margin-bottom: 10px
+}
+
+.nuvs-orfs > div:nth-child(odd) {
+    background-color: #f5f5f5;
 }

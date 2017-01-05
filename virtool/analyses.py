@@ -1,13 +1,15 @@
 import os
 import shutil
 import logging
+import tornado.gen
 
+import virtool.gen
+import virtool.job
 import virtool.utils
 import virtool.files
 import virtool.plots
-import virtool.gen
+import virtool.blast
 import virtool.database
-import virtool.job
 import virtool.pathoscope
 
 logger = logging.getLogger(__name__)
@@ -104,6 +106,74 @@ class Collection(virtool.database.Collection):
         yield self.update({"_id": data["analysis_id"]}, {
             "$set": data["analysis"]
         })
+
+    @virtool.gen.exposed_method([])
+    def blast_nuvs_sequence(self, transaction):
+        """
+        BLAST a contig sequence that is part of a NuVs result record. The resulting BLAST data will be attached to that
+        sequence.
+
+        :param transaction: the transaction associated with the request.
+        :type transaction: :class:`.Transaction`
+
+        """
+        analysis_id = transaction.data["_id"]
+        sequence_index = transaction.data["sequence_index"]
+
+        minimal_analysis = yield self.find_one({"_id": analysis_id}, {
+            "sample": True,
+            "sequences": True
+        })
+
+        sequences = [sequence for sequence in minimal_analysis["sequences"] if sequence["index"] == int(sequence_index)]
+
+        assert len(sequences) == 1
+
+        nuc = sequences[0]["sequence"]
+
+        rid, _ = yield initialize_blast(nuc)
+
+        ready = False
+        checked = False
+        interval = 3
+
+        while not ready:
+
+            yield self.update({"_id": analysis_id, "sequences.index": sequence_index}, {
+                "$set": {
+                    "sequences.$.blast": {
+                        "rid": rid,
+                        "ready": ready,
+                        "checked": checked,
+                        "interval": interval
+                    }
+                }
+            })
+
+            yield tornado.gen.sleep(interval)
+
+            ready = yield check_rid(rid)
+
+            interval += 3
+
+        result = yield retrieve_blast_result(rid)
+
+        result.update({
+            "rid": rid,
+            "ready": ready,
+            "checked": checked,
+            "interval": interval
+        })
+
+        print(result)
+
+        response = yield self.update({"_id": analysis_id, "sequences.index": sequence_index}, {
+            "$set": {
+                "sequences.$.blast": result
+            }
+        })
+
+        return True, response
 
     @virtool.gen.exposed_method([])
     def remove_analysis(self, transaction):
@@ -286,3 +356,21 @@ class Collection(virtool.database.Collection):
                         hmm_result.update(hmm)
 
         return analyses
+
+
+@virtool.gen.synchronous
+def initialize_blast(sequence):
+    rid, rtoe = virtool.blast.initialize(sequence)
+
+    return rid, rtoe
+
+
+@virtool.gen.synchronous
+def retrieve_blast_result(rid):
+    return virtool.blast.retrieve_result(rid)
+
+
+@virtool.gen.synchronous
+def check_rid(rid):
+    return virtool.blast.check_rid(rid)
+

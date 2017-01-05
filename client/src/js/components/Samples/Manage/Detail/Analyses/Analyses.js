@@ -1,20 +1,10 @@
-/**
- * @license
- * The MIT License (MIT)
- * Copyright 2015 Government of Canada
- *
- * @author
- * Ian Boyes
- *
- * @exports AnalysisPanel
- */
-
+"use strict";
 
 import React from "react";
 import { find } from "lodash-es";
 import { Panel } from "react-bootstrap";
 
-import Listing from "./Listing";
+import AnalysisList from "./Listing";
 import AnalysisReport from "./Report";
 
 /**
@@ -51,12 +41,9 @@ export default class AnalysisPanel extends React.Component {
         if (!this.state.activeAnalysisId) {
             // Show the analysis listing if no activeAnalysisId is defined.
             content = (
-                <Listing
-                    sampleId={this.props._id}
-                    analyses={this.props.analyses}
-                    canModify={this.props.canModify}
+                <AnalysisList
+                    {...this.props}
                     selectAnalysis={this.selectAnalysis}
-                    setProgress={this.props.setProgress}
                 />
             );
         } else {
@@ -65,12 +52,10 @@ export default class AnalysisPanel extends React.Component {
 
             content = (
                 <AnalysisReport
+                    {...analysisEntry}
                     readCount={this.props.quality.count}
                     maxReadLength={this.props.quality.length[1]}
-
                     onBack={this.showListing}
-
-                    {...analysisEntry}
                 />
             );
         }
@@ -80,7 +65,5 @@ export default class AnalysisPanel extends React.Component {
                 {content}
             </Panel>
         );
-
-
     }
 }

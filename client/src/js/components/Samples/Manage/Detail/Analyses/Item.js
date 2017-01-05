@@ -16,7 +16,6 @@ import { Row, Col, ProgressBar } from "react-bootstrap";
 import { Icon, RelativeTime } from "virtool/js/components/Base";
 
 export default class AnalysisItem extends React.Component {
-
     constructor (props) {
         super(props);
         this.state = {
@@ -76,7 +75,6 @@ export default class AnalysisItem extends React.Component {
      */
     remove = () => {
         this.setState({pending: true}, () => {
-
             this.setState({
                 disabled: true
             }, this.props.setProgress(true));

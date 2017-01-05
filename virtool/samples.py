@@ -232,6 +232,30 @@ class Collection(virtool.database.Collection):
 
         return True, dict(analysis_ids=analysis_ids)
 
+    @virtool.gen.coroutine
+    def set_analysis(self, data):
+        """
+        Update the analysis document identified using ``data``, which contains the analysis id and the update. Sets the
+        analysis' ``ready`` field to ``True``. Sets the parent sample's ``analyzed`` field to ``True`` and increments
+        its version by one.
+
+        This method is called from within an analysis job.
+
+        :param data: the data used to perform the update
+        :type data: dict
+
+        """
+        analysis = yield self.analyses_collection.find_one({"_id": data["analysis_id"]})
+        analysis.update(data["analysis"])
+        analysis["ready"] = True
+
+        yield self.analyses_collection.update({"_id": data["analysis_id"]}, {"$set": analysis})
+
+        yield self.update(data["_id"], {
+            "$inc": {"_version": 1},
+            "$set": {"analyzed": True}
+        })
+
     @virtool.gen.exposed_method([])
     def quality_pdf(self, transaction):
         detail = yield self._detail(transaction.data["_id"])
@@ -853,7 +877,3 @@ def writer(connection, message):
             connection.write_message(message)
 
         return
-
-    if message["operation"] == "remove":
-        message["data"] = [d["_id"] for d in data]
-        connection.write_message(message)
