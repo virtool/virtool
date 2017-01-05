@@ -10,7 +10,6 @@
  */
 
 import React from "react";
-import ReactDOM from "react-dom";
 import FlipMove from "react-flip-move"
 import { Badge } from "react-bootstrap";
 import { Icon, ListGroupItem, Scroll } from "virtool/js/components/Base";
@@ -51,12 +50,12 @@ export default class IsolateList extends React.Component {
 
     componentDidMount () {
         dispatcher.settings.on("change", this.update);
-        ReactDOM.findDOMNode(this.refs.flip).addEventListener("resize", this.updateScroll);
+        this.flipMoveNode.addEventListener("resize", this.updateScroll);
     }
 
     componentWillUnmount () {
         dispatcher.settings.off("change", this.update);
-        ReactDOM.findDOMNode(this.refs.flip).removeEventListener("resize", this.updateScroll);
+        this.flipMoveNode.removeEventListener("resize", this.updateScroll);
     }
 
     updateScroll = () => {
@@ -131,7 +130,7 @@ export default class IsolateList extends React.Component {
                 </h5>
                 <Scroll ref="scroll" style={{marginBottom: "15px"}}>
                     <FlipMove
-                        ref="flip"
+                        ref={this.flipMoveNode}
                         {...flipProps}
                         style={{marginBottom: 0, marginRight: "10px"}}
                         onFinishAll={this.updateScroll}

@@ -2,6 +2,7 @@
 
   "globals": {
     "window": true,
+    "document": true,
     "dispatcher": true,
     "console": true
   },
@@ -18,11 +19,37 @@
   ],
 
   "rules": {
-    "max-len": [1, 120, 2],
-    "quotes": [1, "double"],
-    "jsx-quotes": [1, "prefer-double"],
-    "no-extra-bind": [1],
-    "eol-last": [1, "always"],
-    "no-console": [1, { "allow": ["warn", "error"]}]
+    "max-len": [
+      1,
+      120,
+      2
+    ],
+    "quotes": [
+      1,
+      "double"
+    ],
+    "jsx-quotes": [
+      1,
+      "prefer-double"
+    ],
+    "no-extra-bind": [
+      1
+    ],
+    "eol-last": [
+      1,
+      "always"
+    ],
+    "no-console": [
+      1,
+      {
+        "allow": [
+          "warn",
+          "error"
+        ]
+      }
+    ],
+    "space-before-function-paren": [
+      1
+    ]
   }
 }

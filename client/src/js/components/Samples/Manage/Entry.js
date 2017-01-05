@@ -9,84 +9,101 @@
  * @exports SampleEntry
  */
 
-'use strict';
 
 import React from "react";
 import { Row, Col } from "react-bootstrap";
-import { ListGroupItem, Icon, Flex, Pulse, Checkbox, RelativeTime } from 'virtool/js/components/Base'
+import { ListGroupItem, Icon, Flex, FlexItem, Pulse, Checkbox, RelativeTime } from "virtool/js/components/Base";
+import { stringOrBool } from "virtool/js/propTypes";
 
 /**
  * A form-based component used to filter the documents presented in JobsTable component.
  *
  * @class
  */
-var SampleEntry = React.createClass({
+export default class SampleEntry extends React.Component {
 
-    getInitialState: function () {
-        return {
-            in: false,
+    constructor (props) {
+        super(props);
+        this.state = {
             pendingQuickAnalyze: false
         };
-    },
+    }
 
-    showDetail: function () {
+    static propTypes = {
+        _id: React.PropTypes.string.isRequired,
+        name: React.PropTypes.string.isRequired,
+        added: React.PropTypes.string.isRequired,
+        username: React.PropTypes.string.isRequired,
+        imported: stringOrBool,
+        analyzed: stringOrBool,
+        archived: React.PropTypes.bool.isRequired,
+        selected: React.PropTypes.bool,
+        selecting: React.PropTypes.bool,
+        toggleSelect: React.PropTypes.func
+    };
+
+    static defaultProps = {
+        imported: false,
+        analyzed: false,
+        archived: false,
+        selected: false,
+        selecting: false
+    };
+
+    showDetail = () => {
         dispatcher.router.setExtra(["detail", this.props._id]);
-    },
+    };
 
-    quickAnalyze: function (event) {
+    quickAnalyze = (event) => {
         event.stopPropagation();
 
         if (dispatcher.user.settings.skip_quick_analyze_dialog) {
-            this.setState({pendingQuickAnalyze: true}, function () {
-                dispatcher.db.samples.request('analyze', {
+            this.setState({pendingQuickAnalyze: true}, () => {
+                dispatcher.db.samples.request("analyze", {
                     samples: [this.props._id],
                     algorithm: dispatcher.user.settings.quick_analyze_algorithm,
                     name: null
                 })
-                .success(function () {
-                    this.setState({
-                        pendingQuickAnalyze: false
-                    })
-                }, this)
-                .failure(function () {
-                    this.setState({
-                        pendingQuickAnalyze: false
-                    })
-                }, this)
+                .success(() => {
+                    this.setState({pendingQuickAnalyze: false})
+                })
+                .failure(() => {
+                    this.setState({pendingQuickAnalyze: false})
+                })
             });
         } else {
             dispatcher.router.setExtra(["quick-analyze", this.props._id]);
         }
-    },
+    };
 
-    toggleSelect: function (event) {
+    toggleSelect = (event) => {
         event.stopPropagation();
         this.props.toggleSelect(this.props._id);
-    },
+    };
 
-    archive: function (event) {
+    archive = (event) => {
         event.stopPropagation();
         dispatcher.db.samples.request("archive", {_id: this.props._id});
-    },
+    };
 
-    render: function () {
+    render () {
 
-        var analysisLabel;
+        let analysisLabel;
 
         if (this.props.analyzed) {
             analysisLabel = (
-                <Flex.Item className="bg-primary sample-label" pad>
+                <FlexItem className="bg-primary sample-label" pad>
                     {this.props.analyzed === "ip" ? <Pulse />: <Icon name="bars" />} Analysis
-                </Flex.Item>
+                </FlexItem>
             );
         }
 
-        var analyzeIcon;
-        var archiveIcon;
+        let analyzeIcon;
+        let archiveIcon;
 
         if (!this.props.selected) {
             analyzeIcon = (
-                <Flex.Item>
+                <FlexItem>
                     <Icon
                         name="bars"
                         tip="Quick Analyze"
@@ -94,20 +111,20 @@ var SampleEntry = React.createClass({
                         bsStyle="success"
                         onClick={this.quickAnalyze}
                     />
-                </Flex.Item>
+                </FlexItem>
             );
 
             if (this.props.analyzed === true && !this.props.archived) {
                 archiveIcon = (
-                    <Flex.Item pad={5}>
+                    <FlexItem pad={5}>
                         <Icon
-                            name='box-add'
+                            name="box-add"
                             tip="Archive"
                             tipPlacement="top"
-                            bsStyle='info'
+                            bsStyle="info"
                             onClick={this.archive}
                         />
-                    </Flex.Item>
+                    </FlexItem>
                 );
 
             }
@@ -118,19 +135,19 @@ var SampleEntry = React.createClass({
                 <Row>
                     <Col md={4}>
                         <Flex>
-                            <Flex.Item>
+                            <FlexItem>
                                 <Checkbox checked={this.props.selected} onClick={this.toggleSelect} />
-                            </Flex.Item>
-                            <Flex.Item grow={1} pad={10}>
+                            </FlexItem>
+                            <FlexItem grow={1} pad={10}>
                                 <strong>{this.props.name}</strong>
-                            </Flex.Item>
+                            </FlexItem>
                         </Flex>
                     </Col>
                     <Col md={3}>
                         <Flex>
-                            <Flex.Item className="bg-primary sample-label">
+                            <FlexItem className="bg-primary sample-label">
                                 {this.props.imported === true ? <Icon name="filing" />: <Pulse />} Import
-                            </Flex.Item>
+                            </FlexItem>
                             {analysisLabel}
                         </Flex>
                     </Col>
@@ -147,6 +164,4 @@ var SampleEntry = React.createClass({
             </ListGroupItem>
         );
     }
-});
-
-module.exports = SampleEntry;
+}

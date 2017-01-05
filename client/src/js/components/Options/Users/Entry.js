@@ -9,29 +9,27 @@
  * @exports UserEntry
  */
 
-'use strict';
-
-import React from 'react';
-import { Icon, ListGroupItem } from 'virtool/js/components/Base';
+import React from "react";
+import { ListGroupItem } from "virtool/js/components/Base";
 
 /**
  * A component based on ListGroupItem
  */
-export default class UserEntry extends React.Component {
+const UserEntry = (props) => (
+    <ListGroupItem active={props.active} onClick={() => props.onClick(props._id)}>
+        {props._id}
+    </ListGroupItem>
+);
 
-    /**
-     * Called when the component is clicked. Selects the component's user in the parent component.
-     */
-    handleClick = () => {
-        this.props.onClick(this.props._id);
-    }
+UserEntry.propTypes = {
+    _id: React.PropTypes.string.isRequired,
+    active: React.PropTypes.bool,
+    onClick: React.PropTypes.func.isRequired
+};
 
-    render () {
-        return (
-            <ListGroupItem key={this.props._id} active={this.props.active} onClick={this.handleClick}>
-                {this.props._id}
-            </ListGroupItem>
-        );
-    }
-}
+UserEntry.defaultProps = {
+    active: false
+};
+
+export default UserEntry;
 

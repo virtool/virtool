@@ -9,81 +9,41 @@
  * @exports SamplePermissions
  */
 
-'use strict';
-
-var _ = require('lodash');
 import React from "react";
-var Panel = require('react-bootstrap/lib/Panel');
-var Overlay = require('react-bootstrap/lib/Overlay');
-var Popover = require('react-bootstrap/lib/Popover');
-
-var Input = require('virtool/js/components/Base/Input');
-var Icon = require('virtool/js/components/Base/Icon');
-var Help = require('virtool/js/components/Base/Help');
+import { Panel } from "react-bootstrap"
+import { Help, Input } from "virtool/js/components/Base"
 
 /**
  * A component that allows the addition and removal of allowed source types. The use of restricted source types can also
  * be toggled.
  */
-var SamplePermissions = React.createClass({
+export default class SamplePermissions extends React.Component {
 
-    getInitialState: function () {
-        return {
-            sampleGroup: dispatcher.settings.get('sample_group'),
-            sampleGroupRead: dispatcher.settings.get('sample_group_read'),
-            sampleGroupWrite: dispatcher.settings.get('sample_group_write'),
-            sampleAllRead: dispatcher.settings.get('sample_all_read'),
-            sampleAllWrite: dispatcher.settings.get('sample_all_write')
-        };
-    },
+    static propTypes = {
+        set: React.PropTypes.func,
+        settings: React.PropTypes.object
+    };
 
-    componentDidMount: function () {
-        dispatcher.settings.on('change', this.update);
-    },
-
-    componentWillUnmount: function () {
-        dispatcher.settings.off('change', this.update);
-    },
-
-    shouldComponentUpdate: function (nextProps, nextState) {
-        return this.state !== nextState;
-    },
-
-    changePrimaryGroup: function (event) {
-        dispatcher.settings.set('sample_group', event.target.value);
-    },
-
-    changeRights: function (event) {
-        var prefix = 'sample_' + event.target.name + '_';
-
-        ['read', 'write'].forEach(function (op) {
-            dispatcher.settings.set(prefix + op, event.target.value.indexOf(op[0]) > -1)
+    changeRights = (right, value) => {
+        ["read", "write"].forEach((op) => {
+            this.props.set(`sample_${right}_${op}`, value.indexOf(op[0]) > -1);
         });
-    },
+    };
 
-    /**
-     * Updates the sourceTypes and enabled state when the settings object emits and update event.
-     *
-     * @func
-     */
-    update: function () {
-        this.setState(this.getInitialState());
-    },
+    render () {
 
-    render: function () {
+        const groupRights = (this.state.sampleGroupRead ? "r": "") + (this.state.sampleGroupWrite ? "w": "");
+        const allRights = (this.state.sampleAllRead ? "r": "") + (this.state.sampleAllWrite ? "w": "");
 
-        var groupRights = (this.state.sampleGroupRead ? 'r': '') + (this.state.sampleGroupWrite ? 'w': '');
-        var allRights = (this.state.sampleAllRead ? 'r': '') + (this.state.sampleAllWrite ? 'w': '');
-
-        var rightProps = {
+        const rightProps = {
             onChange: this.changeRights,
-            type: 'select'
+            type: "select"
         };
 
         return (
             <Panel>
                 <form onSubmit={this.add}>
-                    <label className='control-label' style={{width: '100%'}}>
+                    <label className="control-label" style={{width: "100%"}}>
                         <span>Sample Group</span>
                         <Help pullRight>
                             <p>
@@ -99,29 +59,42 @@ var SamplePermissions = React.createClass({
                             </p>
                         </Help>
                     </label>
-                    <Input type='select' ref='first' value={this.state.sampleGroup} onChange={this.changePrimaryGroup}>
-                        <option value='none'>None</option>
-                        <option value='force_choice'>Force choice</option>
-                        <option value='users_primary_group'>User's primary group</option>
+
+                    <Input
+                        type="select"
+                        ref="first"
+                        value={this.state.sampleGroup}
+                        onChange={(event) => this.props.set("sample_group", event.target.value)}
+                    >
+                        <option value="none">None</option>
+                        <option value="force_choice">Force choice</option>
+                        <option value="users_primary_group">User's primary group</option>
                     </Input>
 
-                    <Input name='group' {...rightProps} label='Group Rights' value={groupRights}>
-                        <option value=''>None</option>
-                        <option value='r'>Read</option>
-                        <option value='rw'>Read & write</option>
+                    <Input
+                        {...rightProps}
+                        label="Group Rights"
+                        value={groupRights}
+                        onChange={(event) => this.changeRights("group", event.target.value)}
+                    >
+                        <option value="">None</option>
+                        <option value="r">Read</option>
+                        <option value="rw">Read & write</option>
                     </Input>
 
-                    <Input name='all' {...rightProps} label="All Users' Rights" value={allRights}>
-                        <option value=''>None</option>
-                        <option value='r'>Read</option>
-                        <option value='rw'>Read & write</option>
+                    <Input
+                        name="all"
+                        {...rightProps}
+                        label="All Users' Rights"
+                        value={allRights}
+                        onChange={(event) => this.changeRights("all", event.target.value)}
+                    >
+                        <option value="">None</option>
+                        <option value="r">Read</option>
+                        <option value="rw">Read & write</option>
                     </Input>
                 </form>
             </Panel>
         );
     }
-
-});
-
-module.exports = SamplePermissions;
-
+}

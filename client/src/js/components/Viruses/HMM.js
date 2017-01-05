@@ -23,7 +23,7 @@ import FilesModal from "./HMM/Files";
  *
  * @class
  */
-export default class HMM extends React.Component {
+export default class ManageHMM extends React.Component {
 
     constructor (props) {
         super(props);

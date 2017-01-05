@@ -1,13 +1,15 @@
 import React from "react";
-import { Icon, Flex, Button, Checkbox } from "virtool/js/components/Base";
+import { assign, xor, sortBy, sum, map, filter } from "lodash-es";
+import { Icon, Flex, FlexItem, Button, Checkbox } from "virtool/js/components/Base";
 import { Dropdown, MenuItem, FormGroup, InputGroup, FormControl } from "react-bootstrap";
 
-var PathoscopeList = require('./List');
+import PathoscopeList from "./List";
 
-var PathoscopeController = React.createClass({
+export default class PathoscopeController extends React.Component {
 
-    getInitialState: function () {
-        return {
+    constructor (props) {
+        super(props);
+        this.state = {
             filterViruses: true,
             filterIsolates: true,
 
@@ -19,37 +21,26 @@ var PathoscopeController = React.createClass({
             showReads: false,
             expanded: []
         };
-    },
+    }
 
-    collapseAll: function () {
-        this.setState({
-            expanded: []
-        });
-    },
+    static propTypes = {
+        data: React.PropTypes.array,
+        maxReadLength: React.PropTypes.number
+    };
 
-    toggleIn: function (virusId) {
-        this.setState({
-            expanded: _.xor(this.state.expanded, [virusId])
-        });
-    },
+    collapseAll = () => this.setState({expanded: []});
 
-    toggleShowReads: function () {
-        this.setState({showReads: !this.state.showReads});
-    },
+    toggleIn = (virusId) => this.setState({expanded: xor(this.state.expanded, [virusId])});
 
-    setFindTerm: function (event) {
-        this.setState({findTerm: event.target.value});
-    },
+    toggleShowReads = () => this.setState({showReads: !this.state.showReads});
 
-    setSortKey: function (event) {
-        this.setState({sortKey: event.target.value});
-    },
+    setFindTerm = (event) => this.setState({findTerm: event.target.value});
 
-    toggleSortDescending: function () {
-        this.setState({sortDescending: !this.state.sortDescending});
-    },
+    setSortKey = (event) => this.setState({sortKey: event.target.value});
 
-    filter: function (eventKey) {
+    toggleSortDescending = () =>this.setState({sortDescending: !this.state.sortDescending});
+
+    filter = (eventKey) => {
 
         switch (eventKey) {
 
@@ -62,43 +53,32 @@ var PathoscopeController = React.createClass({
                 break;
 
             default:
-                var bool = !(this.state.filterViruses || this.state.filterIsolates);
-
                 this.setState({
-                    filterViruses: bool,
-                    filterIsolates: bool
+                    filterViruses: false,
+                    filterIsolates: false
                 });
         }
-    },
+    };
 
-    render: function () {
+    render () {
 
-        var data = _.sortBy(this.props.data, this.state.sortKey);
+        let data = sortBy(this.props.data, this.state.sortKey);
 
         if (this.state.filterViruses) {
-            var totalReadsMapped = _.sum(_.map(data, "reads"));
+            const totalReadsMapped = sum(map(data, "reads"));
 
-            var re = this.state.findTerm ? new RegExp(this.state.findTerm, "i"): null;
+            const re = this.state.findTerm ? new RegExp(this.state.findTerm, "i"): null;
 
-            data = _.filter(data, function (virus) {
-                return (
-                    (virus.pi * totalReadsMapped >= virus.ref_length * 0.8 / this.props.maxReadLength) &&
-                    (!re || (re.test(virus.abbreviation) || re.test(virus.name)))
-                );
-            }.bind(this));
+            data = filter(data, (virus) => (
+                (virus.pi * totalReadsMapped >= virus.ref_length * 0.8 / this.props.maxReadLength) &&
+                (!re || (re.test(virus.abbreviation) || re.test(virus.name)))
+            ));
         }
 
         if (this.state.filterIsolates) {
-            data = data.map(function (virus) {
-                var minIsolateWeight = 0.03 * virus.pi;
-
-                var filteredVirus = _.clone(virus);
-
-                filteredVirus.isolates = _.filter(filteredVirus.isolates, function (isolate) {
-                    return isolate.pi >= minIsolateWeight;
-                });
-
-                return filteredVirus;
+            data = data.map((virus) => {
+                const minIsolateWeight = 0.03 * virus.pi;
+                return assign({}, virus, filter(virus.isolates, isolate => isolate.pi >= minIsolateWeight));
             });
         }
 
@@ -110,7 +90,7 @@ var PathoscopeController = React.createClass({
             <div>
                 <div>
                     <Flex>
-                        <Flex.Item grow={4}>
+                        <FlexItem grow={4}>
                             <FormGroup>
                                 <InputGroup>
                                     <InputGroup.Addon>
@@ -119,15 +99,19 @@ var PathoscopeController = React.createClass({
                                     <FormControl value={this.state.findTerm} onChange={this.setFindTerm} />
                                 </InputGroup>
                             </FormGroup>
-                        </Flex.Item>
+                        </FlexItem>
 
-                        <Flex.Item pad>
+                        <FlexItem pad>
                             <FormGroup>
                                 <InputGroup>
                                     <InputGroup.Addon>
                                         <Icon name="sort" /> Sort
                                     </InputGroup.Addon>
-                                    <FormControl componentClass="select" value={this.state.sortKey} onChange={this.setSortKey}>
+                                    <FormControl
+                                        componentClass="select"
+                                        value={this.state.sortKey}
+                                        onChange={this.setSortKey}
+                                    >
                                         <option className="text-primary" value="coverage">Coverage</option>
                                         <option className="text-success" value="pi">Weight</option>
                                         <option className="text-danger" value="best">Best Hit</option>
@@ -139,51 +123,68 @@ var PathoscopeController = React.createClass({
                                     </InputGroup.Button>
                                 </InputGroup>
                             </FormGroup>
-                        </Flex.Item>
+                        </FlexItem>
 
-                        <Flex.Item pad>
-                            <Button title="Collapse" onClick={this.collapseAll} disabled={this.state.expanded.length === 0}>
-                                <Icon name='shrink' />
+                        <FlexItem pad>
+                            <Button
+                                title="Collapse"
+                                onClick={this.collapseAll}
+                                disabled={this.state.expanded.length === 0}
+                            >
+                                <Icon name="shrink" />
                             </Button>
-                        </Flex.Item>
+                        </FlexItem>
 
-                        <Flex.Item pad>
-                            <Button title="Change Weight Format" active={!this.state.showReads} onClick={this.toggleShowReads}>
-                                <Icon name='pie' />
+                        <FlexItem pad>
+                            <Button
+                                title="Change Weight Format"
+                                active={!this.state.showReads}
+                                onClick={this.toggleShowReads}
+                            >
+                                <Icon name="pie" />
                             </Button>
 
-                        </Flex.Item>
+                        </FlexItem>
 
-                        <Flex.Item pad>
-                            <Dropdown id="job-clear-dropdown" onSelect={this.handleSelect} className="split-dropdown" pullRight>
-                                <Button title="Filter" onClick={this.filter} active={this.state.filterViruses || this.state.filterIsolates}>
+                        <FlexItem pad>
+                            <Dropdown
+                                id="job-clear-dropdown"
+                                onSelect={this.handleSelect}
+                                className="split-dropdown"
+                                pullRight
+                            >
+                                <Button
+                                    title="Filter"
+                                    onClick={this.filter}
+                                    active={this.state.filterViruses || this.state.filterIsolates}
+                                >
                                     <Icon name="filter" />
                                 </Button>
                                 <Dropdown.Toggle />
                                 <Dropdown.Menu onSelect={this.filter}>
                                     <MenuItem eventKey="viruses">
                                         <Flex>
-                                            <Flex.Item>
+                                            <FlexItem>
                                                 <Checkbox checked={this.state.filterViruses} />
-                                            </Flex.Item>
-                                            <Flex.Item pad={5}>
+                                            </FlexItem>
+                                            <FlexItem pad={5}>
                                                 Viruses
-                                            </Flex.Item>
+                                            </FlexItem>
                                         </Flex>
                                     </MenuItem>
                                     <MenuItem eventKey="isolates">
                                         <Flex>
-                                            <Flex.Item>
+                                            <FlexItem>
                                                 <Checkbox checked={this.state.filterIsolates} />
-                                            </Flex.Item>
-                                            <Flex.Item pad={5}>
+                                            </FlexItem>
+                                            <FlexItem pad={5}>
                                                 Isolates
-                                            </Flex.Item>
+                                            </FlexItem>
                                         </Flex>
                                     </MenuItem>
                                 </Dropdown.Menu>
                             </Dropdown>
-                        </Flex.Item>
+                        </FlexItem>
                     </Flex>
                 </div>
 
@@ -197,6 +198,4 @@ var PathoscopeController = React.createClass({
         );
     }
 
-});
-
-module.exports = PathoscopeController;
+}

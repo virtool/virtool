@@ -9,80 +9,78 @@
  * @exports SetupUser
  */
 
-'use strict';
-
 import React from "react";
-import ReactDOM from "react-dom";
-var Row = require('react-bootstrap/lib/Row');
-var Col = require('react-bootstrap/lib/Col');
-var Alert = require('react-bootstrap/lib/Alert');
-var Button = require('react-bootstrap/lib/Button');
+import { pick } from "lodash-es";
+import { Row, Col, Alert } from "react-bootstrap";
+import { Icon, Input, Button } from "virtool/js/components/Base";
 
-var Icon = require('virtool/js/components/Base/Icon');
-var Input = require('virtool/js/components/Base/Input');
+export default class SetupUser extends React.Component {
 
-var SetupUser = React.createClass({
-
-    propTypes: {
-        username: React.PropTypes.string,
-        password: React.PropTypes.string
-    },
-
-    getInitialState: function () {
-        return {
+    constructor (props) {
+        super(props);
+        this.state = {
             username: this.props.username,
             password: this.props.password,
-            confirm: this.props.password
+            confirm: this.props.password,
         };
-    },
+    }
 
-    componentDidMount: function () {
+    static propTypes = {
+        username: React.PropTypes.string,
+        password: React.PropTypes.string,
+        hasAdmin: React.PropTypes.bool,
+        accepted: React.PropTypes.bool,
+        acceptedAdmin: React.PropTypes.func,
+        updateSetup: React.PropTypes.func,
+        nextStep: React.PropTypes.func
+    };
+
+    componentDidMount () {
         if (!this.props.hasAdmin) {
-            this.refs.username.focus();
+            this.usernameNode.focus();
         } else {
-            ReactDOM.findDOMNode(this.refs.accept).focus();
+            this.acceptNode.focus();
         }
-    },
+    }
 
-    handleChange: function (event) {
-        var data = {};
+    handleChange = (event) => {
+        let data = {};
         data[event.target.name] = event.target.value;
         this.setState(data);
-    },
+    };
 
-    handleSubmit: function (event) {
+    handleSubmit = (event) => {
         event.preventDefault();
 
         if (!this.props.hasAdmin && this.state.password === this.state.confirm) {
-            this.props.updateSetup(_.pick(this.state, ['username', 'password']))
+            this.props.updateSetup(pick(this.state, ["username", "password"]))
             this.props.nextStep();
         }
-    },
+    };
 
-    handleClick: function () {
+    handleClick = () => {
         this.props.acceptedAdmin();
-    },
+    };
 
-    render: function () {
+    render () {
 
         if (this.props.hasAdmin) {
 
-            var footer;
+            let footer;
 
             if (this.props.accepted) {
-                var divStyle = {marginTop: '-20px'};
-                footer = <div style={divStyle} />;
+                footer = <div style={{marginTop: "-20px"}} />;
             } else {
                 footer = (
-                    <Button bsStyle='primary' onClick={this.handleClick} className='pull-right' ref='accept'>
-                        <Icon name='checkmark' /> Accept
+                    <Button bsStyle="primary" onClick={this.handleClick} className="pull-right" ref={this.acceptNode}>
+                        <Icon name="checkmark" /> Accept
                     </Button>
                 );
             }
 
             return (
                 <div>
-                    <Alert bsStyle='warning'>
+                    <Alert bsStyle="warning">
                         The chosen database is an existing Virtool database with one or more administrative
                         users. For security reasons, no new administrators can be added during setup. New
                         administrators can be added after setup by logging into a valid administrator account.
@@ -100,7 +98,7 @@ var SetupUser = React.createClass({
                         <Col md={12}>
                             <Input
                                 type="text"
-                                ref="username"
+                                ref={this.usernameNode}
                                 name="username"
                                 label="Username"
                                 onChange={this.handleChange}
@@ -129,14 +127,12 @@ var SetupUser = React.createClass({
                         </Col>
                     </Row>
 
-                    <Button bsStyle='primary' type='submit' className='pull-right'>
-                        <Icon name='floppy' /> Save
+                    <Button bsStyle="primary" type="submit" className="pull-right">
+                        <Icon name="floppy" /> Save
                     </Button>
                 </form>
             );
         }
     }
 
-});
-
-module.exports = SetupUser;
+}

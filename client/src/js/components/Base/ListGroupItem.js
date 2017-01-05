@@ -59,5 +59,4 @@ export class ListGroupItem extends React.Component {
             </BsListGroupItem>
         );
     }
-
 }

@@ -1,102 +1,98 @@
 import React from "react";
-import ReactDOM from "react-dom";
 import FlipMove from "react-flip-move";
-import {FormGroup, InputGroup, FormControl, ButtonGroup} from "react-bootstrap";
-import { Icon, Flex, Button, DetailModal } from "virtool/js/components/Base";
-
-
+import { intersection, map, xor, includes, assign } from "lodash-es";
+import { FormGroup, InputGroup, FormControl, ButtonGroup } from "react-bootstrap";
+import { Icon, Flex, FlexItem, Button, DetailModal } from "virtool/js/components/Base";
 import CreateSample from "./Create/Create";
 
-var SampleList = require("./List");
-var SampleSelector = require('./Selector');
-var SampleDetail = require('./Detail/body');
-var QuickAnalyze = require('./QuickAnalyze');
+import SampleList from "./List";
+import SampleSelector from "./Selector";
+import SampleDetail from "./Detail/Body";
+import QuickAnalyze from "./QuickAnalyze";
 
-var SampleController = React.createClass({
+export default class SampleController extends React.Component {
 
-    propTypes: {
-        route: React.PropTypes.object,
-        documents: React.PropTypes.object
-    },
-
-    getInitialState: function () {
-        return {
+    constructor (props) {
+        super(props);
+        this.state = {
             findTerm: "",
-
             selected: [],
-
             imported: false,
             analyzed: false,
             archived: false,
-
             canCreate: dispatcher.user.permissions.add_sample
         };
-    },
+    }
 
-    componentDidMount: function () {
-        dispatcher.user.on('change', this.onUserChange);
-        ReactDOM.findDOMNode(this.refs.name).focus();
-    },
+    static propTypes = {
+        route: React.PropTypes.object,
+        documents: React.PropTypes.object
+    };
 
-    componentWillReceiveProps: function (nextProps) {
+    componentDidMount () {
+        dispatcher.user.on("change", this.onUserChange);
+        this.nameNode.focus();
+    }
+
+    componentWillReceiveProps (nextProps) {
         if (this.state.selected.length > 0) {
             this.setState({
-                selected: _.intersection(this.state.selected, _.map(nextProps.documents, "_id"))
+                selected: intersection(this.state.selected, map(nextProps.documents, "_id"))
             });
         }
-    },
+    }
 
-    componentWillUnmount: function () {
-        dispatcher.user.off('change', this.onUserChange);
-    },
+    componentWillUnmount () {
+        dispatcher.user.off("change", this.onUserChange);
+    }
 
-    setFindTerm: function (event) {
+    setFindTerm = (event) => {
         this.setState({
             findTerm: event.target.value
         });
-    },
+    };
 
-    toggleFlag: function (name) {
-        var state = {};
-        state[name] = !this.state[name]
+    toggleFlag = (name) => {
+        let state = {};
+        state[name] = !this.state[name];
         this.setState(state);
-    },
+    };
 
-    select: function (sampleIds) {
+    select = (sampleIds) => {
         this.setState({
             selected: sampleIds
         });
-    },
+    };
 
-    toggleSelect: function (sampleIds) {
+    toggleSelect = (sampleIds) => {
         this.setState({
-            selected: _.xor(sampleIds.constructor === Array ? sampleIds: [sampleIds], this.state.selected)
+            selected: xor(sampleIds.constructor === Array ? sampleIds: [sampleIds], this.state.selected)
         });
-    },
+    };
 
-    selectNone: function () {
+    selectNone = () => {
         this.setState({
             selected: []
         });
-    },
+    };
 
-    create: function () {
+    create = () => {
         dispatcher.router.setExtra(["create"]);
-    },
+    };
 
-    hideModal: function () {
+    hideModal = () => {
         dispatcher.router.clearExtra();
-    },
+    };
 
-    onUserChange: function () {
+    onUserChange = () => {
         this.setState({
             canCreate: dispatcher.user.permissions.add_sample
         });
-    },
+    };
 
-    render: function () {
+    render () {
 
-        var documents = this.props.documents.branch().find({
+        let documents = this.props.documents.branch().find({
             archived: this.state.archived
         });
 
@@ -109,7 +105,7 @@ var SampleController = React.createClass({
         }
 
         if (this.state.findTerm) {
-            var test = {$regex: [this.state.findTerm, "i"]};
+            const test = {$regex: [this.state.findTerm, "i"]};
 
             documents = documents.find({$or: [
                 {name: test},
@@ -119,83 +115,103 @@ var SampleController = React.createClass({
 
         documents = documents.simplesort("name").data();
 
-        var toolbar;
-        var selector;
-        var selectedDocuments = [];
+        let toolbar;
+        let selector;
+        let selectedDocuments = [];
 
         if (this.state.selected.length === 0) {
 
             toolbar = (
                 <div key="toolbar">
                     <Flex>
-                        <Flex.Item grow={1}>
+                        <FlexItem grow={1}>
                             <FormGroup>
                                 <InputGroup>
                                     <InputGroup.Addon>
-                                        <Icon name='search' /> Find
+                                        <Icon name="search" /> Find
                                     </InputGroup.Addon>
                                     <FormControl
-                                        type='text'
-                                        ref='name'
+                                        type="text"
+                                        ref={this.nameNode}
                                         onChange={this.setFindTerm}
-                                        placeholder='Sample name'
+                                        placeholder="Sample name"
                                     />
                                 </InputGroup>
                             </FormGroup>
-                        </Flex.Item>
+                        </FlexItem>
 
-                        <Flex.Item shrink={0} pad>
+                        <FlexItem shrink={0} pad>
                             <ButtonGroup>
-                                <Button active={!this.state.archived} onClick={this.state.archived ? function () {this.toggleFlag("archived")}.bind(this): null} tip="Show Active">
+                                <Button
+                                    tip="Show Active"
+                                    active={!this.state.archived}
+                                    onClick={this.state.archived ? () => this.toggleFlag("archived"): null}
+                                >
                                     <Icon name="play" />
                                 </Button>
-                                <Button active={this.state.archived} onClick={this.state.archived ? null: function () {this.toggleFlag("archived")}.bind(this)} tip="Show Archived">
+
+                                <Button
+                                    tip="Show Archived"
+                                    active={this.state.archived}
+                                    onClick={this.state.archived ? null: () => this.toggleFlag("archived")}
+                                >
                                     <Icon name="box-add" />
                                 </Button>
                             </ButtonGroup>
-                        </Flex.Item>
+                        </FlexItem>
 
-                        <Flex.Item pad>
-                            <Button active={this.state.imported} onClick={function () {this.toggleFlag("imported")}.bind(this)} tip="Show Imported" disabled={this.state.archived}>
+                        <FlexItem pad>
+                            <Button
+                                tip="Show Imported"
+                                active={this.state.imported}
+                                disabled={this.state.archived}
+                                onClick={() => this.toggleFlag("imported")}
+                            >
                                 <Icon name="filing" />
                             </Button>
-                        </Flex.Item>
-                        <Flex.Item pad>
-                            <Button active={this.state.analyzed} onClick={function () {this.toggleFlag("analyzed")}.bind(this)} tip="Show Analyzed" disabled={this.state.archived}>
+                        </FlexItem>
+                        <FlexItem pad>
+                            <Button
+                                tip="Show Analyzed"
+                                active={this.state.analyzed}
+                                disabled={this.state.archived}
+                                onClick={() => this.toggleFlag("analyzed")}
+                            >
                                 <Icon name="bars" />
                             </Button>
-                        </Flex.Item>
+                        </FlexItem>
 
-                        <Flex.Item key="create" shrink={0} pad>
-                            <Button bsStyle='primary' onClick={this.create} disabled={this.state.archived}>
-                                <Icon name='new-entry'/> Create
+                        <FlexItem key="create" shrink={0} pad>
+                            <Button bsStyle="primary" onClick={this.create} disabled={this.state.archived}>
+                                <Icon name="new-entry"/> Create
                             </Button>
-                        </Flex.Item>
+                        </FlexItem>
                     </Flex>
                 </div>
             );
         } else {
 
-            documents = documents.map(function (document) {
-                var isSelected = _.includes(this.state.selected, document._id);
+            documents = documents.map((document) => {
+                const isSelected = includes(this.state.selected, document._id);
 
-                isSelected ? selectedDocuments.push(document): allSelected = false;
+                if (isSelected) {
+                    selectedDocuments.push(document)
+                }
 
-                return _.merge({selected: isSelected}, document);
-            }.bind(this));
+                return assign({selected: isSelected}, document);
+            });
 
             selector = (
                 <SampleSelector
                     key="selector"
                     archived={this.state.archived}
-
                     selected={selectedDocuments}
                     selectNone={this.selectNone}
                 />
             );
         }
 
-        var detailTarget;
+        let detailTarget;
 
         if (this.props.route.extra[0] === "detail") {
             detailTarget = dispatcher.db.samples.findOne({_id: this.props.route.extra[1]});
@@ -205,7 +221,6 @@ var SampleController = React.createClass({
             <div>
                 <FlipMove typeName="div" duration={150} enterAnimation="fade" leaveAnimation="fade">
                     {toolbar}
-
                     {selector}
 
                     <div key="list">
@@ -240,6 +255,4 @@ var SampleController = React.createClass({
             </div>
         );
     }
-});
-
-module.exports = SampleController;
+}

@@ -9,50 +9,50 @@
  * @exports PrimaryGroup
  */
 
-'use strict';
-
 import React from "react";
-var Row = require('react-bootstrap/lib/Row');
-var Col = require('react-bootstrap/lib/Col');
-
-var Icon = require('virtool/js/components/Base/Icon');
-var Help = require('virtool/js/components/Base/Help');
-var Input = require('virtool/js/components/Base/Input');
+import { capitalize } from "lodash-es";
+import { Row, Col } from "react-bootstrap";
+import { Icon, Help, Input } from "virtool/js/components/Base/Icon";
 
 /**
  * A component based on ListGroupItem
  */
-var PrimaryGroup = React.createClass({
+export default class PrimaryGroup extends React.Component {
 
-    getInitialState: function () {
-        return {
+    constructor (props) {
+        super(props);
+        this.state = {
             pending: false
         };
-    },
+    }
+
+    static propTypes = {
+        _id: React.PropTypes.string,
+        primaryGroup: React.PropTypes.string,
+        groups: React.PropTypes.arrayOf(React.PropTypes.string)
+    };
 
     /**
-     * Called when the component is clicked. Selects the component's user in the parent component.
+     * Called when the component is clicked. Selects the component"s user in the parent component.
      */
-    handleChange: function (event) {
-        var groupId = event.target.value;
-
+    handleChange = (event) => {
         this.setState({pending: true}, function () {
-            dispatcher.db.users.request('set_primary_group', {
+            dispatcher.db.users.request("set_primary_group", {
                 _id: this.props._id,
-                group_id: groupId
-            }).success(this.onComplete).failure(this.onComplete);
+                group_id: event.target.value
+            });
         });
-    },
+    };
 
-    render: function () {
+    render () {
 
-        var groupOptions = this.props.groups.map(function (groupId) {
-            return <option key={groupId} value={groupId}>{_.capitalize(groupId)}</option>;
-        });
+        const groupOptions = this.props.groups.map(groupId =>
+            <option key={groupId} value={groupId}>{capitalize(groupId)}</option>
+        );
 
-        var inputProps = {
-            type: 'select',
-            value: this.props.primary_group,
+        const inputProps = {
+            type: "select",
+            value: this.props.primaryGroup,
             onChange: this.handleChange,
             disabled: this.state.pending
         };
@@ -62,7 +62,7 @@ var PrimaryGroup = React.createClass({
                 <Row>
                     <Col md={12}>
                         <h5>
-                            <Icon name='checkmark' /> <strong>Primary Group</strong>
+                            <Icon name="checkmark" /> <strong>Primary Group</strong>
                             <Help pullRight>
                                 This group will be assigned to any samples created by the user.
                             </Help>
@@ -72,7 +72,7 @@ var PrimaryGroup = React.createClass({
                 <Row>
                     <Col md={12}>
                         <Input {...inputProps}>
-                            <option key='none' value=''>None</option>
+                            <option key="none" value="">None</option>
                             {groupOptions}
                         </Input>
                     </Col>
@@ -80,7 +80,4 @@ var PrimaryGroup = React.createClass({
             </div>
         );
     }
-});
-
-module.exports = PrimaryGroup;
-
+}

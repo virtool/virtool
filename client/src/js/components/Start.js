@@ -9,143 +9,137 @@
  * @exports Start
  */
 
-'use strict';
+import React from "react";
+import Cookie from "js-cookie";
 
-import React from 'react';
-import Cookie from 'js-cookie';
-
-import { without, assign } from "lodash";
+import { assign } from "lodash-es";
 import { postJSON } from "virtool/js/utils";
 
-import { Flex, FlexItem, Icon, ProgressLogo } from 'virtool/js/components/Base';
+import { Flex, FlexItem, ProgressLogo } from "virtool/js/components/Base";
 
-var Dispatcher = require('virtool/js/dispatcher/main.js');
-var Setup = require('./Setup/Setup');
-var Main = require('virtool/js/components/Main');
-var LoginDialog = require('./Login/Dialog');
+import  Dispatcher from "virtool/js/dispatcher/main";
+import Setup from "./Setup/Setup";
+import Main from "virtool/js/components/Main";
+import LoginDialog from "./Login/Dialog";
 
+const getInitialState = () => ({
+    checkedSetup: false,
+    needsSetup: false,
 
-var Start = React.createClass({
+    checkedToken: false,
+    needsLogin: false,
 
-    getInitialState: function () {
-        return {
-            checkedSetup: false,
-            needsSetup: false,
+    synced: false,
+    syncProgress: 0,
 
-            checkedToken: false,
-            needsLogin: false,
+    forcedLogout: false
+});
 
-            synced: false,
-            syncProgress: 0,
+export default class Start extends React.Component {
 
-            forcedLogout: false
-        };
-    },
+    constructor (props) {
+        super(props);
+        this.state = getInitialState();
+    }
 
-    componentDidMount: function () {
+    componentDidMount () {
         this.checkSetup();
-    },
+    }
 
-    checkSetup: function () {
-        postJSON('/', {operation: 'check_ready'}, function (data) {
+    checkSetup = () => {
+        postJSON("/", {operation: "check_ready"}, (data) => {
             this.setState({
                 checkedSetup: true,
                 needsSetup: !data.serverReady
             }, this.establishConnection);
-        }.bind(this));
-    },
+        });
+    };
 
-    establishConnection: function () {
+    establishConnection = () => {
         if (!this.state.needsSetup) {
 
             window.dispatcher = new Dispatcher(this.onDispatcherReady);
 
-            var collectionsToSync = without(dispatcher.db.collectionNames, "reads", "files");
-
-            dispatcher.on('synced', function () {
+            dispatcher.on("synced", () => {
                 this.setState({
                     synced: true,
                     syncProgress: 1
                 });
-            }.bind(this));
+            });
 
-            dispatcher.on('syncing', function (data) {
+            dispatcher.on("syncing", (data) => {
                 this.setState({syncProgress: data});
-            }.bind(this));
-
+            });
         } else {
-            history.replaceState({}, document.title, "/");
+            window.history.replaceState({}, document.title, "/");
         }
-    },
+    };
 
-    clearForcedLogout: function () {
-        this.setState({
-            forcedLogout: false
-        });
-    },
+    clearForcedLogout = () => this.setState({forcedLogout: false});
 
-    handleLogin: function (user) {
+    handleLogin = (user) => {
         dispatcher.user.authorize(user);
 
         this.setState({
             needsLogin: false
         });
 
-        dispatcher.user.on('logout', this.onLogout);
-    },
+        dispatcher.user.on("logout", this.onLogout);
+    };
 
-    onDispatcherReady: function () {
-        var token = Cookie.get('token');
+    onDispatcherReady = () => {
+        const token = Cookie.get("token");
 
         if (token) {
             dispatcher.send({
-                interface: 'users',
-                method: 'authorize_by_token',
+                interface: "users",
+                method: "authorize_by_token",
                 data: {
                     token: token,
                     browser: dispatcher.browser
                 }
-            }).success(this.onCheckTokenSuccess).failure(this.onCheckTokenFailure);
+            })
+            .failure(this.onCheckTokenFailure)
+            .success((user) => {
+                dispatcher.user.authorize(user);
+
+                this.setState({
+                    checkedToken: true,
+                    needsLogin: false
+                });
+
+                dispatcher.user.on("logout", this.onLogout);
+            });
+
         } else {
             this.onCheckTokenFailure();
         }
-    },
+    };
 
-    onCheckTokenSuccess: function (user) {
-        dispatcher.user.authorize(user);
-
-        this.setState({
-            checkedToken: true,
-            needsLogin: false
-        });
-
-        dispatcher.user.on('logout', this.onLogout);
-    },
-
-    onCheckTokenFailure: function () {
+    onCheckTokenFailure = () => {
         this.setState({
             checkedToken: true,
             needsLogin: true
         });
-    },
+    };
 
-    onLogout: function (data) {
-        var newState = assign(this.getInitialState(), {
+    onLogout = (data) => {
+        dispatcher.runningOperationCount = 0;
+        dispatcher.syncOperationCount = 0;
+
+        this.setState(assign(getInitialState(), {
             checkedSetup: true,
             checkedToken: true,
             needsLogin: true,
             forcedLogout: !data.logout
-        });
+        }));
+    };
 
-        dispatcher.runningOperationCount = 0;
-        dispatcher.syncOperationCount = 0;
+    render () {
 
-        this.setState(newState);
-    },
-
-    render: function () {
-
-        if (!this.state.checkedSetup || (this.state.checkedSetup && !this.state.needsSetup && !this.state.checkedToken)) {
+        if (!this.state.checkedSetup ||
+            (this.state.checkedSetup && !this.state.needsSetup && !this.state.checkedToken)
+        ) {
             return (
                 <Flex alignContent="center" justifyContent="center" className="page-loading">
                     <FlexItem grow={0} shrink={0} alignSelf="center">
@@ -182,6 +176,4 @@ var Start = React.createClass({
         return <Main />;
     }
 
-});
-
-module.exports = Start;
+}

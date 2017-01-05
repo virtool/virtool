@@ -9,56 +9,55 @@
  * @exports QualityChart
  */
 
-'use strict';
 
 import React from "react";
-import ReactDOM from "react-dom";
 
 /**
  * A React component that renders a d3 chart object.
  *
  * @class
  */
-var QualityChart = React.createClass({
+export default class QualityChart extends React.Component {
 
-    componentDidMount: function () {
+    static propTypes = {
+        data: React.PropTypes.array,
+        createChart: React.PropTypes.func
+    };
+
+    componentDidMount () {
         this.update();
         window.addEventListener("resize", this.update);
-    },
+    }
 
-    componentWillUnmount: function () {
-        window.removeEventListener('resize', this.update);
-    },
+    componentWillUnmount () {
+        window.removeEventListener("resize", this.update);
+    }
 
-    shouldComponentUpdate: function () {
-        // Don't ever render the component. All changes are done via d3.
+    static shouldComponentUpdate () {
+        // Don"t ever render the component. All changes are done via d3.
         return false;
-    },
+    }
 
     /**
      * Re-renders the d3 chart using jQuery and d3.
      *
      * @func
      */
-    update: function () {
+    update = () => {
         // Find the chart DOM node and get its width.
-        var element = ReactDOM.findDOMNode(this);
-        var width = element.offsetWidth;
+
+        const width = this.chartNode.offsetWidth;
 
         // Make sure the DOM node is empty before rendering the d3 chart.
-        element.innerHTML = '';
+        this.chartNode.innerHTML = "";
 
         // Create the updated/new chart.
-        this.props.createChart(element, this.props.data, width);
-    },
+        this.props.createChart(this.chartNode, this.props.data, width);
+    };
 
-    render: function () {
+    render () {
         // This is the div the chart will be rendered in.
-        return (
-            <div></div>
-        );
+        return <div ref={this.chartNode} />;
     }
 
-});
-
-module.exports = QualityChart;
+}

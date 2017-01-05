@@ -9,81 +9,80 @@
  * @exports AdminChangePassword
  */
 
-'use strict';
-
 import React from "react";
-import { Alert, Panel } from 'react-bootstrap';
+import { Alert, Panel } from "react-bootstrap";
 import { Flex, FlexItem, Icon, Input, Checkbox, Button, RelativeTime } from "virtool/js/components/Base";
+
+const getChangeState = () => ({
+    password: "",
+    confirm: "",
+    failed: false,
+    pendingChange: false
+});
 
 /**
  * The password change form subcomponent of the component exported by the module.
  */
-var Change = React.createClass({
+class Change extends React.PureComponent {
 
-    getInitialState: function () {
-        return {
-            new: '',
-            confirm: '',
-            failed: false,
-            pendingChange: false
-        }
-    },
+    constructor (props) {
+        super(props);
+        this.state = getChangeState();
+    }
 
-    handleChange: function (event) {
-        var data = {};
+    static propTypes = {
+        _id: React.PropTypes.string,
+        last_password_change: React.PropTypes.string
+    };
+
+    handleChange = (event) => {
+        let data = {};
         data[event.target.name] = event.target.value;
         this.setState(data);
-    },
+    };
+
+    isMatch = () => this.state.password === this.state.confirm;
+    isLong = () => this.state.password.length >= 4;
 
     /**
      * Called when the password is submitted. Sends the new password data to the server.
      *
      * @param event - the submit event, used purely to prevent the default submit action
      */
-    submit: function (event) {
+    submit = (event) => {
         event.preventDefault();
 
-        // The new and confirm fields must contain the same password.
-        var match = this.state.new === this.state.confirm;
-
-        // The password must have a minimum length (current defaulted to 4).
-        var long = this.state.new.length >= 4;
-
-        if (match && long) {
-            this.setState({pendingChange: true} , function () {
-                dispatcher.db.users.request('set_password', {
-                    // The username and new password to assign for it.
-                    _id: this.props._id,
-                    new_password: this.state.new
-                }).success(function () {
-                    this.replaceState(this.getInitialState());
-                }, this);
+        if (this.isMatch() && this.isLong()) {
+            this.setState({pendingChange: true} , () => {
+                dispatcher.db.users.request("set_password", {_id: this.props._id, new_password: this.state.password})
+                    .success(() => {
+                        this.setState(getChangeState());
+                    });
             });
         } else {
             this.setState({failed: true});
         }
-    },
+    };
 
-    render: function () {
+    render () {
 
-        // Check that the passwords pass the following tests.
-        var match = this.state.new === this.state.confirm;
-        var long = this.state.new.length >= 4;
+        let alert;
 
-        var alert;
+        const match = this.isMatch();
+        const long = this.isLong();
 
-        // Show and alert with warnings if the password failed the prerequest checks.
+        // Show and alert with warnings if the password failed the pre-request checks.
         if (!(match && long) && this.state.failed) {
             alert = (
-                <Alert bsStyle='danger' className=''>
+                <Alert bsStyle="danger" className="">
                     {long ? null: <li>passwords are not at least 4 characters long</li>}
-                    {match ? null: <li>passwords don't match</li>}
+                    {match ? null: <li>passwords don"t match</li>}
                 </Alert>
             );
         }
 
         // Boolean to set whether the submit button is disabled or not.
-        var submitDisabled = (!(match && long) && this.state.failed) || this.state.pendingChange;
+        const submitDisabled = (!(match && long) && this.state.failed) || this.state.pendingChange;
 
         return (
             <div>
@@ -95,10 +94,10 @@ var Change = React.createClass({
                     <Flex>
                         <FlexItem grow={1}>
                             <Input
-                                type='password'
-                                name="new"
-                                placeholder='New Password'
-                                value={this.state.new}
+                                type="password"
+                                name="password"
+                                placeholder="New Password"
+                                value={this.state.password}
                                 onChange={this.handleChange}
                                 disabled={this.state.pendingChange}
                             />
@@ -106,9 +105,9 @@ var Change = React.createClass({
 
                         <FlexItem grow={1} pad>
                             <Input
-                                type='password'
+                                type="password"
                                 name="confirm"
-                                placeholder='Confirm Password'
+                                placeholder="Confirm Password"
                                 value={this.state.confirm}
                                 onChange={this.handleChange}
                                 disabled={this.state.pendingChange}
@@ -122,8 +121,8 @@ var Change = React.createClass({
                         </FlexItem>
 
                         <FlexItem pad>
-                            <Button type='submit' bsStyle='primary' disabled={submitDisabled}>
-                                <Icon name='floppy' pending={this.state.pendingChange} /> Save
+                            <Button type="submit" bsStyle="primary" disabled={submitDisabled}>
+                                <Icon name="floppy" pending={this.state.pendingChange} /> Save
                             </Button>
                         </FlexItem>
                     </Flex>
@@ -132,50 +131,52 @@ var Change = React.createClass({
             </div>
         );
     }
-});
+}
 
 /**
- * An subcomponent of the password change form that allows the force reset status of the user to be toggled. Consists only of
- * a label checkbox.
+ * An subcomponent of the password change form that allows the force reset status of the user to be toggled. Consists
+ * only of a label checkbox.
  */
-var Reset = React.createClass({
+class Reset extends React.PureComponent {
 
-    toggle: function () {
-        dispatcher.db.users.request('set_force_reset', {
+    static propTypes = {
+        _id: React.PropTypes.string,
+        forceReset: React.PropTypes.bool
+    };
+
+    toggle = () => {
+        dispatcher.db.users.request("set_force_reset", {
             _id: this.props._id,
-            force_reset: !this.props.force_reset
+            force_reset: !this.props.forceReset
         });
-    },
+    };
 
-    render: function () {
-        return (
-            <div className='panel-section'>
-                <Checkbox checked={this.props.force_reset} onClick={this.toggle} />
-                <span> Force user to reset password on next login.</span>
-            </div>
-        );
-    }
+    render = () => (
+        <div className="panel-section">
+            <Checkbox checked={this.props.forceReset} onClick={this.toggle} />
+            <span> Force user to reset password on next login.</span>
+        </div>
+    );
 
-});
+}
 
 /**
  * A parent component to wrap the password change form and reset checkbox with a headed panel.
  */
-var AdminChangePassword = React.createClass({
+const AdminChangePassword = (props) => (
+    <div>
+        <h5><Icon name="lock" /> <strong>Password</strong></h5>
 
-    render: function () {
+        <Panel>
+            <Change {...props} />
+            <Reset _id={props._id} forceReset={props.force_reset} />
+        </Panel>
+    </div>
+);
 
-        return (
-            <div>
-                <h5><Icon name='lock' /> <strong>Password</strong></h5>
+AdminChangePassword.propTypes = {
+    _id: React.PropTypes.string,
+    force_reset: React.PropTypes.bool
+};
 
-                <Panel>
-                    <Change {...this.props} />
-                    <Reset {...this.props} />
-                </Panel>
-            </div>
-        );
-    }
-});
-
-module.exports = AdminChangePassword;
+export default AdminChangePassword;

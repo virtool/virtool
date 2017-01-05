@@ -1,4 +1,4 @@
-import React from 'react';
+import React from "react";
 import SampleController from "./Manage/Controller";
 
 export default class ManageSamples extends React.Component {
@@ -13,7 +13,7 @@ export default class ManageSamples extends React.Component {
 
     static propTypes = {
         route: React.PropTypes.object
-    }
+    };
 
     componentDidMount () {
         dispatcher.db.samples.on("change", this.update);
@@ -27,7 +27,7 @@ export default class ManageSamples extends React.Component {
         this.setState({
             documents: dispatcher.db.samples.chain()
         });
-    }
+    };
 
     render () {
         return (

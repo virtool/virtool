@@ -9,13 +9,10 @@
  * @exports SourceTypes
  */
 
-"use strict";
-
 import React from "react";
-import ReactDOM from "react-dom";
 import FlipMove from "react-flip-move";
 import Toggle from "react-bootstrap-toggle";
-import { clone, remove, capitalize } from "lodash";
+import { remove, capitalize } from "lodash-es";
 import { Row, Col, Panel, Overlay, Popover, FormGroup, InputGroup, FormControl } from "react-bootstrap";
 import { Flex, FlexItem, Icon, Button, ListGroupItem } from "virtool/js/components/Base";
 
@@ -23,61 +20,32 @@ import { Flex, FlexItem, Icon, Button, ListGroupItem } from "virtool/js/componen
  * A component that allows the addition and removal of allowed source types. The use of restricted source types can also
  * be toggled.
  */
-var SourceTypes = React.createClass({
+export default class SourceTypes extends React.PureComponent {
 
-    getInitialState: function () {
-        return {
-            sourceTypes: this.props.settings.get("allowed_source_types"),
-            enabled: this.props.settings.get("restrict_source_types"),
-            warning: null,
-            value: ""
-        };
-    },
+    constructor (props) {
+        super(props);
+        this.state = {
+            value: "",
+            warning: null
+        }
+    }
 
-    componentDidMount: function () {
-        this.getInputDOMNode().focus();
-        this.props.settings.on("change", this.update);
-    },
+    static propTypes = {
+        set: React.PropTypes.func,
+        settings: React.PropTypes.object
+    };
 
-    componentWillUnmount: function () {
-        this.props.settings.off("change", this.update);
-    },
+    componentDidMount () {
+        this.inputNode.focus();
+    }
 
-    shouldComponentUpdate: function (nextProps, nextState) {
-        return this.state !== nextState;
-    },
+    handleSubmit = (event) => {
 
-    /**
-     * Returns a reference to the input field DOM node. Used for placing the warning overlay.
-     *
-     * @func
-     */
-    getInputDOMNode: function () {
-        return ReactDOM.findDOMNode(this.refs.input);
-    },
-
-    /**
-     * Updates the sourceTypes and enabled state when the settings object emits and update event.
-     *
-     * @func
-     */
-    update: function () {
-        this.setState(this.getInitialState());
-    },
-
-    /**
-     * Adds a source type to the list of allowed source types, resulting in a settings update being sent to the server.
-     * Triggered by a click on the add button.
-     *
-     * @param event {object} - the form submit event.
-     * @func
-     */
-    handleSubmit: function (event) {
         event.preventDefault();
 
         // Convert source type to lowercase. All source types are single words stored in lowercase. They are capitalized
         // when rendered in the application.
-        var newSourceType = this.state.value.toLowerCase();
+        const newSourceType = this.state.value.toLowerCase();
         
         // The source type cannot be an empty string...
         if (newSourceType !== "") {
@@ -94,50 +62,29 @@ var SourceTypes = React.createClass({
             // If the string is acceptable add it to the existing source types list and replace the one in the
             // settings with the new one.
             else {
-                var sourceTypes = _.clone(this.state.sourceTypes);
-                sourceTypes.push(newSourceType);
-                this.props.settings.set("allowed_source_types", sourceTypes);
+                this.props.set("allowed_source_types", this.state.sourceTypes.concat(newSourceType));
                 this.setState({
-                    value: ""
+                    value: "",
+                    warning: null
                 });
             }
         }
-    },
+    };
 
-    /**
-     * Removes any warning popovers being shown. Triggered when the input field changes (fixing invalid value).
-     *
-     * @func
-     */
-    handleChange: function (event) {
+    handleChange = (event) => {
         this.setState({
             value: event.target.value,
             warning: null
         });
-    },
+    };
 
-    /**
-     * Remove a source type from the allowed source types list. Called when the remove icon button is clicked.
-     *
-     * @param sourceType {string} - the source type to remove.
-     */
-    remove: function (sourceType) {
-        var newSourceTypes = _.remove(this.state.sourceTypes, function (n) {
-            return n !== sourceType;
-        });
-
-        this.props.settings.set("allowed_source_types", newSourceTypes);
-    },
-
-    /**
-     * Toggles the restriction of source types. Triggered by clicking on the "enable this feature" button.
-     */
-    toggleFeature: function () {
-        this.props.settings.set("restrict_source_types", !this.state.enabled);
-    },
+    removeSourceType = (sourceType) => {
+        const newSourceTypes = remove(this.state.sourceTypes, n => n !== sourceType);
+        this.props.set("allowed_source_types", newSourceTypes);
+    };
 
 
-    render: function () {
+    render () {
 
         var listComponents = this.state.sourceTypes.map(function (sourceType) {
             var removeButton;
@@ -145,17 +92,19 @@ var SourceTypes = React.createClass({
             // Only show remove button is the sourceTypes feature is enabled.
             if (this.state.enabled) {
                 removeButton = (
-                    <Icon name="remove" onClick={function () {this.remove(sourceType)}.bind(this)} pullRight />
+                    <Icon name="remove" onClick={() => this.removeSourceType(sourceType)} pullRight />
                 );
             }
 
             return (
                 <ListGroupItem key={sourceType} disabled={!this.state.enabled}>
-                    {_.capitalize(sourceType)}
+                    {capitalize(sourceType)}
                     {removeButton}
                 </ListGroupItem>
             );
         }, this);
+
+        const restrictSourceTypes = this.props.settings.restrict_source_types;
 
         return (
             <div>
@@ -171,7 +120,7 @@ var SourceTypes = React.createClass({
                                     off="OFF"
                                     size="small"
                                     active={this.state.enabled}
-                                    onChange={this.toggleFeature}
+                                    onChange={() => this.props.set("restrict_source_types", !restrictSourceTypes)}
                                 />
                             </FlexItem>
                         </Flex>
@@ -186,7 +135,7 @@ var SourceTypes = React.createClass({
                                 <FormGroup>
                                     <InputGroup>
                                         <FormControl
-                                            ref="input"
+                                            ref={this.inputNode}
                                             type="text"
                                             value={this.state.value}
                                             onChange={this.handleChange}
@@ -205,7 +154,13 @@ var SourceTypes = React.createClass({
                                 {listComponents}
                             </FlipMove>
 
-                            <Overlay target={this.getInputNode} show={Boolean(this.state.warning)} placement="top" animation={false}>
+                            <Overlay
+                                target={this.getInputNode}
+                                container={this}
+                                show={Boolean(this.state.warning)}
+                                placement="top"
+                                animation={false}
+                            >
                                 <Popover id="source-type-warning-popover">
                                     {this.state.warning}
                                 </Popover>
@@ -215,16 +170,12 @@ var SourceTypes = React.createClass({
                     <Col md={6}>
                         <Panel>
                             Configure a list of allowable source types. When a user creates a new isolate they will
-                            only be able to select a source type from this list. If this feature is disabled, users will be
-                            able to enter any string as a source type.
+                            only be able to select a source type from this list. If this feature is disabled, users
+                            will be able to enter any string as a source type.
                         </Panel>
                     </Col>
                 </Row>
             </div>
         );
     }
-
-});
-
-module.exports = SourceTypes;
-
+}

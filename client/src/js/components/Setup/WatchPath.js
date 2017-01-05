@@ -10,64 +10,57 @@
  *
  */
 
-'use strict';
-
 import React from "react";
-var Alert = require('react-bootstrap/lib/Alert');
-var Button = require('react-bootstrap/lib/Button');
+import { Alert } from "react-bootstrap";
+import { Button, Icon, Input } from "virtool/js/components/Base";
 
-var Icon = require('virtool/js/components/Base/Icon');
-var Input = require('virtool/js/components/Base/Input');
+export default class SetupWatchPath extends React.Component {
 
-var SetupWatchPath = React.createClass({
+    constructor (props) {
+        super(props);
+        this.state = {
+            watchPath: this.props.watchPath || "watch"
+        }
+    }
+    
+    static propTypes = {
+        watchPath: React.PropTypes.string,
+        updateSetup: React.PropTypes.func,
+        nextStep: React.PropTypes.func
+    };
 
-    getInitialState: function () {
-        return {
-            watchPath: this.props.watchPath || 'watch'
-        };
-    },
+    componentDidMount () {
+        this.inputNode.focus();
+    }
 
-    componentDidMount: function () {
-        this.refs.input.focus();
-    },
-
-    handleChange: function (event) {
-        var data = {};
-        data[event.target.name] = event.target.value;
-        this.setState(data);
-    },
-
-    handleSubmit: function (event) {
+    handleSubmit = (event) => {
         event.preventDefault();
 
         this.props.updateSetup({
             watchPath: this.state.watchPath
         }, this.props.nextStep);
-    },
+    };
 
-    render: function () {
+    render () {
         return (
             <form onSubmit={this.handleSubmit}>
-                <Alert bsStyle='info'>
+                <Alert bsStyle="info">
                     Sequence files in this path will be visible and importable in Virtool.
                 </Alert>
 
                 <Input
-                    ref='input'
-                    type='text'
-                    name="watchPath"
-                    label='Path'
-                    onChange={this.handleChange}
+                    ref="input"
+                    type="text"
+                    label="Path"
+                    onChange={(event) => this.setState({watchPath: event.target.value})}
                     value={this.state.watchPath}
                 />
 
-                <Button bsStyle='primary' className='pull-right' type='submit'>
-                    <Icon name='floppy' /> Save
+                <Button bsStyle="primary" className="pull-right" type="submit">
+                    <Icon name="floppy" /> Save
                 </Button>
             </form>
         );
     }
 
-});
-
-module.exports = SetupWatchPath;
+}

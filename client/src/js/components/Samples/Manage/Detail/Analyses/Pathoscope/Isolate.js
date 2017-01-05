@@ -1,60 +1,64 @@
-import { formatIsolateName } from "virtool/js/utils";
-
 import React from "react";
-var ReactDOM = require("react-dom");
-var Col = require('react-bootstrap/lib/Col');
-var Badge = require('react-bootstrap/lib/Badge');
-var Label = require('react-bootstrap/lib/Label');
-var ListGroupItem = require('react-bootstrap/lib/ListGroupItem');
+import { Flex } from "virtool/js/components/Base";
+import { toScientificNotation } from "virtool/js/utils";
+import Coverage from "./Coverage";
 
-var Flex = require('virtool/js/components/Base/Flex');
+export default class PathoscopeIsolate extends React.Component {
 
-var Coverage = require('./Coverage');
+    static propTypes = {
+        virusId: React.PropTypes.string,
+        name: React.PropTypes.string,
 
-var PathoscopeIsolate = React.createClass({
+        pi: React.PropTypes.number,
+        best: React.PropTypes.number,
+        coverage: React.PropTypes.number,
+        maxDepth: React.PropTypes.number,
+        reads: React.PropTypes.number,
 
-    componentDidMount: function () {
-        ReactDOM.findDOMNode(this.refs.chart).addEventListener("scroll", this.handleScroll);
-    },
+        hits: React.PropTypes.arrayOf(React.PropTypes.object),
 
-    componentWillUnmount: function () {
-        ReactDOM.findDOMNode(this.refs.chart).removeEventListener("scroll", this.handleScroll);
-    },
+        setScroll: React.PropTypes.func,
+        showReads: React.PropTypes.bool
+    };
 
-    scrollTo: function (scrollLeft) {
-        ReactDOM.findDOMNode(this.refs.chart).scrollLeft = scrollLeft;
-    },
+    componentDidMount () {
+        this.refs.chartNode.addEventListener("scroll", this.handleScroll);
+    }
 
-    handleScroll: function (event) {
+    componentWillUnmount () {
+        this.refs.chartNode.removeEventListener("scroll", this.handleScroll);
+    }
+
+    scrollTo = (scrollLeft) => {
+        this.refs.chartNode.scrollLeft = scrollLeft;
+    };
+
+    handleScroll = (event) => {
         this.props.setScroll(this.props.virusId, event.target.scrollLeft);
-    },
+    };
 
-    render: function () {
+    render () {
 
-        var chartContainerStyle = {
+        const chartContainerStyle = {
             overflowX: "scroll",
             whiteSpace: "nowrap"
         };
 
-        var sorted = this.props.hits.sort(function (hit) {
-            return hit.align.length;
-        });
+        const sorted = this.props.hits.sort(hit => hit.align.length);
 
-        var hitComponents = sorted.map(function (hit, index) {
-            return (
-                <Coverage
-                    key={hit.accession}
-                    data={hit.align}
-                    accession={hit.accession}
-                    definition={hit.definition}
-                    yMax={this.props.maxDepth}
-                    showYAxis={index === sorted.length - 1}
-                    isolateComponent={this}
-                />
-            );
-        }, this);
+        const hitComponents = sorted.map((hit, index) => (
+            <Coverage
+                key={hit.accession}
+                data={hit.align}
+                accession={hit.accession}
+                definition={hit.definition}
+                yMax={this.props.maxDepth}
+                showYAxis={index === hitComponents.length - 1}
+                isolateComponent={this}
+            />
+        ));
 
-        var piValue = this.props.showReads ? this.props.reads: toScientificNotation(this.props.pi);
+        const piValue = this.props.showReads ? this.props.reads: toScientificNotation(this.props.pi);
 
         return (
             <div>
@@ -80,15 +84,10 @@ var PathoscopeIsolate = React.createClass({
                         </Flex.Item>
                     </Flex>
                 </div>
-                <div ref="chart" style={chartContainerStyle}>
+                <div ref={this.chartNode} style={chartContainerStyle}>
                     {hitComponents}
                 </div>
             </div>
         );
-
     }
-
-});
-
-module.exports = PathoscopeIsolate;
-
+}

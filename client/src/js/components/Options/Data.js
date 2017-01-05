@@ -9,80 +9,67 @@
  * @exports DataOptions
  */
 
-'use strict';
-
 import React from "react";
-var Row = require('react-bootstrap/lib/Row');
-var Col = require('react-bootstrap/lib/Col');
-var Panel = require('react-bootstrap/lib/Panel');
+import { Row, Col, Panel } from "react-bootstrap";
+import { Icon } from "virtool/js/components/Base";
 
-var Icon = require('virtool/js/components/Base/Icon');
-var Database = require('./Data/Database');
-var Paths = require('./Data/Paths');
+import SettingsProvider from "./SettingsProvider";
+import DatabaseOptions from "./Data/Database";
+import PathsOptions from "./Data/Paths";
 
 /**
  * A component the contains child components that modify certain general options. A small explanation of each
  * subcomponent is also rendered.
  */
-var DataOptions = React.createClass({
+const DataOptionsInner = (props) => {
 
-    getInitialState: function () {
-        return {
-            settings: dispatcher.settings.data
-        };
-    },
+    const warningFooter = (
+        <small className="text-danger">
+            <Icon name="warning" /> Changing these settings can make Virtool non-functional
+        </small>
+    );
 
-    componentDidMount: function () {
-        dispatcher.settings.on('change', this.update);
-    },
+    return (
+        <div>
+            <Row>
+                <Col md={12}>
+                    <h5><strong>Database</strong></h5>
+                </Col>
+                <Col md={6}>
+                    <DatabaseOptions {...props} />
+                </Col>
+                <Col md={6}>
+                    <Panel footer={warningFooter}>
+                        Change the parameters for connecting to MongoDB.
+                    </Panel>
+                </Col>
+            </Row>
+            <Row>
+                <Col md={12}>
+                    <h5><strong>Paths</strong></h5>
+                </Col>
+                <Col md={6}>
+                    <PathsOptions {...props} />
+                </Col>
+                <Col md={6}>
+                    <Panel footer={warningFooter}>
+                        Set the paths where Virtool looks for its data files and for FASTQ files to import.
+                    </Panel>
+                </Col>
+            </Row>
+        </div>
+    )
+};
 
-    componentWillUnmount: function () {
-        dispatcher.settings.off('change', this.update);
-    },
+DataOptionsInner.propsTypes = {
+    set: React.PropTypes.func,
+    settings: React.PropTypes.object
+};
 
-    update: function () {
-        this.setState(this.getInitialState());
-    },
+const DataOptions = () => (
+    <SettingsProvider>
+        <DataOptionsInner />
+    </SettingsProvider>
+);
 
-    render: function () {
-
-        var warningFooter = (
-            <small className='text-danger'>
-                <Icon name='warning' /> Changing these settings can make Virtool non-functional
-            </small>
-        );
-
-        return (
-            <div>
-                <Row>
-                    <Col md={12}>
-                        <h5><strong>Database</strong></h5>
-                    </Col>
-                    <Col md={6}>
-                        <Database settings={this.state.settings} />
-                    </Col>
-                    <Col md={6}>
-                        <Panel footer={warningFooter}>
-                            Change the parameters for connecting to MongoDB.
-                        </Panel>
-                    </Col>
-                </Row>
-                <Row>
-                    <Col md={12}>
-                        <h5><strong>Paths</strong></h5>
-                    </Col>
-                    <Col md={6}>
-                        <Paths settings={this.state.settings} />
-                    </Col>
-                    <Col md={6}>
-                        <Panel footer={warningFooter}>
-                            Set the paths where Virtool looks for its data files and for FASTQ files to import.
-                        </Panel>
-                    </Col>
-                </Row>
-            </div>
-        )
-    }
-});
-
-module.exports = DataOptions;
+export default DataOptions;

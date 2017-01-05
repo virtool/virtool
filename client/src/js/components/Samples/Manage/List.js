@@ -9,77 +9,71 @@
  * @exports SamplesList
  */
 
-'use strict';
-
 import React from "react";
 import FlipMove from "react-flip-move"
-var Alert = require('react-bootstrap/lib/Alert');
-var ListGroup = require('react-bootstrap/lib/ListGroup');
-var ListGroupItem = require('react-bootstrap/lib/ListGroupItem');
+import { Icon, Paginator, ListGroupItem } from "virtool/js/components/Base";
 
-var Icon = require('virtool/js/components/Base/Icon');
-var Paginator = require('virtool/js/components/Base/Paginator');
-var RelativeTime = require('virtool/js/components/Base/RelativeTime');
+import SampleEntry from "./Entry";
 
-var SampleEntry = require("./Entry");
+const NoSamples = () => (
+    <ListGroupItem className="text-center">
+        <Icon name="info" /> No samples found.
+    </ListGroupItem>
+);
 
 /**
- * A component based on DynamicTable that displays sample documents and allows them to be removed, archived, and viewed in
- * detail in a modal.
+ * A component based on DynamicTable that displays sample documents and allows them to be removed, archived, and viewed
+ * in detail in a modal.
  *
  * @class
  */
-var SamplesList = React.createClass({
+export default class SamplesList extends React.Component {
 
-    getInitialState: function () {
-        return {
+    constructor (props) {
+        super(props);
+        this.state = {
             page: 1
         };
-    },
+    }
 
-    setPage: function (page) {
+    static propTypes = {
+        documents: React.PropTypes.arrayOf(React.PropTypes.object),
+        selecting: React.PropTypes.bool,
+        toggleSelect: React.PropTypes.func,
+        quickAnalyze: React.PropTypes.func
+    };
+
+    setPage = (page) => {
         this.setState({
             page: page
         });
-    },
+    };
 
-    /**
-     * Send a request to the server to archive the passed target(s).
-     *
-     * @param targets {array,object} - one or more targets to request and archive for.
-     * @func
-     */
-    archive: function (targets) {
-        dispatcher.db.samples.request('archive', {_id: _.map(targets, '_id')});
-    },
+    archive = (targets) => {
+        dispatcher.db.samples.request("archive", {_id: targets.map(target => target["_id"])});
+    };
 
-    render: function () {
+    render () {
 
-        var pages = Paginator.calculatePages(this.props.documents, this.state.page, 18);
+        const pages = Paginator.calculatePages(this.props.documents, this.state.page, 18);
 
-        var sampleComponents = pages.documents.map((document) => {
-            return (
+        let sampleComponents;
+
+        if (pages.documents.length === 0) {
+            sampleComponents = <NoSamples />;
+        } else {
+            sampleComponents = pages.documents.map((document) =>
                 <SampleEntry
                     key={document._id}
                     {...document}
-
                     selecting={this.props.selecting}
                     toggleSelect={this.props.toggleSelect}
-
                     quickAnalyze={this.props.quickAnalyze}
                 />
             );
-        });
-
-        if (sampleComponents.length === 0) {
-            sampleComponents = (
-                <ListGroupItem className="text-center">
-                    <Icon name="info" /> No samples found.
-                </ListGroupItem>
-            );
         }
 
-        var paginator;
+        let paginator;
 
         if (pages.count > 1) {
             paginator = (
@@ -101,6 +95,4 @@ var SamplesList = React.createClass({
             </div>
         );
     }
-});
-
-module.exports = SamplesList;
+}

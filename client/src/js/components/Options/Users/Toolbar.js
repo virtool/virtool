@@ -9,101 +9,95 @@
  * @exports UserToolbar
  */
 
-'use strict';
-
 import React from "react";
-import { FormGroup, InputGroup, FormControl, ButtonToolbar } from "react-bootstrap";
-import { Flex, FlexItem, Icon, Button } from 'virtool/js/components/Base';
+import { FormGroup, InputGroup, FormControl } from "react-bootstrap";
+import { Flex, FlexItem, Icon, Button } from "virtool/js/components/Base";
 
-var Add = require('./Add');
-var Groups = require('./Groups/Groups');
+import Add from "./Add";
+import Groups from "./Groups/Groups";
 
 /**
  * A toolbar used to filter the user list, add new users, and modify groups.
  *
  * @class
  */
-var UserToolbar = React.createClass({
+export default class UserToolbar extends React.PureComponent {
 
-    propTypes: {
-        onChange: React.PropTypes.func.isRequired
-    },
-
-    getInitialState: function () {
-        return {
+    constructor (props) {
+        super(props);
+        this.state = {
             showAddUser: false,
             showGroups: false
-        }
-    },
+        };
+    }
 
-    showAddUserModal: function () {
+    static propTypes = {
+        add: React.PropTypes.func.isRequired,
+        onChange: React.PropTypes.func.isRequired
+    };
+
+    showAddUserModal = () => {
         this.setState({
             showAddUser: true,
             showGroups: false
         });
-    },
+    };
 
-    showGroupsModal: function () {
+    showGroupsModal = () => {
         this.setState({
             showAddUser: false,
             showGroups: true
         });
-    },
+    };
 
-    hideModal: function () {
+    hideModal = () => {
         this.setState({
             showAddUser: false,
             showGroups: false
         });
-    },
+    };
 
-    render: function () {
+    render = () => (
+        <div>
+            <Flex>
+                <FlexItem grow={1}>
+                    <FormGroup>
+                        <InputGroup>
+                            <InputGroup.Addon>
+                                <Icon name="search"/>
+                            </InputGroup.Addon>
+                            <FormControl
+                                type="text"
+                                onChange={this.props.onChange}
+                            />
+                        </InputGroup>
+                    </FormGroup>
+                </FlexItem>
 
-        return (
-            <div>
-                <Flex>
-                    <FlexItem grow={1}>
-                        <FormGroup>
-                            <InputGroup>
-                                <InputGroup.Addon>
-                                    <Icon name='search' />
-                                </InputGroup.Addon>
-                                <FormControl
-                                    type="text"
-                                    onChange={this.props.onChange}
-                                />
-                            </InputGroup>
-                        </FormGroup>
-                    </FlexItem>
+                <FlexItem pad>
+                    <Button bsStyle="primary" onClick={this.showGroupsModal}>
+                        <Icon name="users"/>
+                    </Button>
+                </FlexItem>
 
-                    <FlexItem pad>
-                        <Button bsStyle='primary' onClick={this.showGroupsModal}>
-                            <Icon name='users' />
-                        </Button>
-                    </FlexItem>
+                <FlexItem pad>
+                    <Button bsStyle="primary" onClick={this.showAddUserModal}>
+                        <Icon name="plus-square"/>
+                    </Button>
+                </FlexItem>
+            </Flex>
 
-                    <FlexItem pad>
-                        <Button bsStyle='primary' onClick={this.showAddUserModal}>
-                            <Icon name='plus-square' />
-                        </Button>
-                    </FlexItem>
-                </Flex>
+            <Add
+                show={this.state.showAddUser}
+                add={this.props.add}
+                onHide={this.hideModal}
+                collection={dispatcher.db.users}
+            />
 
-                <Add
-                    show={this.state.showAddUser}
-                    add={this.props.add}
-                    onHide={this.hideModal}
-                    collection={dispatcher.db.users}
-                />
-
-                <Groups
-                    show={this.state.showGroups}
-                    onHide={this.hideModal}
-                />
-            </div>
-        );
-    }
-});
-
-module.exports = UserToolbar;
-
+            <Groups
+                show={this.state.showGroups}
+                onHide={this.hideModal}
+            />
+        </div>
+    );
+}

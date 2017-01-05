@@ -9,80 +9,67 @@
  * @exports HTTPOptions
  */
 
-'use strict';
-
 import React from "react";
-var Row = require('react-bootstrap/lib/Row');
-var Col = require('react-bootstrap/lib/Col');
-var Panel = require('react-bootstrap/lib/Panel');
-var Input = require('react-bootstrap/lib/InputGroup');
+import { Row, Col, Panel } from "react-bootstrap";
+import { Icon, Input, InputSave } from "virtool/js/components/Base";
 
-var Icon = require('virtool/js/components/Base/Icon');
-var InputSave = require('virtool/js/components/Base/InputSave');
+const HTTPOptions = (props) => {
 
-/**
- * A form component for setting whether an internal control should be used and which virus to use as a control.
- */
-var HTTPOptions = React.createClass({
+    const footer = (
+        <small className="text-warning">
+            <Icon name="warning" /> Changes to these settings will only take effect when the server is reloaded.
+        </small>
+    );
 
-    handleSave: function (data) {
-        dispatcher.settings.set(data.name, data.value);
-    },
+    return (
+        <div>
+            <Row>
+                <Col md={12}>
+                    <h5><strong>HTTP Server</strong></h5>
+                </Col>
+            </Row>
+            <Row>
+                <Col md={6}>
+                    <Panel>
+                        <InputSave
+                            name="server_address"
+                            label="Address"
+                            autoComplete={false}
+                            onSave={event => props.set("server_host", event.value)}
+                            initialValue={props.settings.server_address}
+                        />
+                        <InputSave
+                            name="server_port"
+                            label="Port"
+                            type="number"
+                            autoComplete={false}
+                            onSave={event => props.set("server_port", event.value)}
+                            initialValue={props.settings.server_port}
+                        />
+                        <Input
+                            label="Server ID"
+                            type="text"
+                            autoComplete={false}
+                            value={props.settings.server_id}
+                            disabled
+                        />
+                    </Panel>
+                </Col>
+                <Col md={6}>
+                    <Panel footer={footer}>
+                        Change the address and port the the Virtool HTTP server listens on. The server ID uniquely
+                        identifies the server to workstations that are connecting to multiple instances of Virtool
+                        server.
+                    </Panel>
+                </Col>
+            </Row>
+        </div>
+    );
+};
 
-    render: function () {
+HTTPOptions.propTypes = {
+    set: React.PropTypes.func,
+    settings: React.PropTypes.object,
+};
 
-        var footer = (
-            <small className='text-warning'>
-                <Icon name='warning' /> Changes to these settings will only take effect when the server is reloaded.
-            </small>
-        );
-
-        return (
-            <div>
-                <Row>
-                    <Col md={12}>
-                        <h5><strong>HTTP Server</strong></h5>
-                    </Col>
-                </Row>
-                <Row>
-                    <Col md={6}>
-                        <Panel>
-                            <InputSave
-                                name='server_address'
-                                label='Address'
-                                onSave={this.handleSave}
-                                autoComplete={false}
-                                initialValue={this.props.settingsData.server_address}
-                            />
-                            <InputSave
-                                name='server_port'
-                                label='Port'
-                                type='number'
-                                autoComplete={false}
-                                onSave={this.handleSave}
-                                initialValue={this.props.settingsData.server_port}
-                            />
-                            <Input
-                                label='Server ID'
-                                type='text'
-                                autoComplete={false}
-                                value={this.props.settingsData.server_id}
-                                disabled
-                            />
-                        </Panel>
-                    </Col>
-                    <Col md={6}>
-                        <Panel footer={footer}>
-                            Change the address and port the the Virtool HTTP server listens on. The server ID uniquely
-                            identifies the server to workstations that are connecting to multiple instances of Virtool
-                            server.
-                        </Panel>
-                    </Col>
-                </Row>
-            </div>
-        );
-    }
-
-});
-
-module.exports = HTTPOptions;
+export default HTTPOptions;

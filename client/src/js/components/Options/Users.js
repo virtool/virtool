@@ -9,26 +9,20 @@
  * @exports Users
  */
 
-'use strict';
-
-var _ = require('lodash');
 import React from "react";
 import FlipMove from "react-flip-move"
-var Row = require('react-bootstrap/lib/Row');
-var Col = require('react-bootstrap/lib/Col');
-var Panel = require('react-bootstrap/lib/Panel');
-var ListGroup = require('react-bootstrap/lib/ListGroup');
-var ListGroupItem = require('react-bootstrap/lib/ListGroupItem');
+import { find } from "lodash-es";
+import { Row, Col, Panel } from "react-bootstrap";
+import { Icon } from "virtool/js/components/Base";
 
-var Icon = require('virtool/js/components/Base/Icon');
-var Toolbar = require('./Users/Toolbar');
-var Password = require('./Users/Password');
-var Add = require('./Users/Add');
-var UserEntry = require('./Users/Entry');
-var Sessions = require('./Users/Sessions');
-var PrimaryGroup = require('./Users/PrimaryGroup');
-var GroupsPermissions = require('./Users/GroupsPermissions');
+import Toolbar from "./Users/Toolbar";
+import Password from "./Users/Password";
+import UserEntry from "./Users/Entry";
+import Sessions from "./Users/Sessions";
+import PrimaryGroup from "./Users/PrimaryGroup";
+import GroupsPermissions from "./Users/GroupsPermissions";
 
+const getUsers = () => dispatcher.db.users.chain().find().simplesort("_id");
 
 /**
  * A component for managing users that is accessible in the options section. Contains components for changing passwords,
@@ -37,52 +31,50 @@ var GroupsPermissions = require('./Users/GroupsPermissions');
  *
  * @class
  */
-var Users = React.createClass({
+export default class ManageUsers extends React.Component {
 
-    getInitialState: function () {
-        var documents = dispatcher.db.users.chain().find().simplesort('_id');
+    constructor (props) {
+        super(props);
 
-        return {
+        const documents = getUsers();
+
+        this.state = {
             filter: "",
             documents: documents,
             activeId: documents.copy().data()[0]._id,
             addedId: null,
         };
-    },
+    }
 
-    componentDidMount: function () {
-        dispatcher.db.users.on('change', this.update);
-        dispatcher.db.groups.on('change', this.update);
-    },
+    componentDidMount () {
+        dispatcher.db.users.on("change", this.update);
+        dispatcher.db.groups.on("change", this.update);
+    }
 
-    componentWillUnmount: function () {
-        dispatcher.db.users.off('change', this.update);
-        dispatcher.db.groups.off('change', this.update);
-    },
+    componentWillUnmount () {
+        dispatcher.db.users.off("change", this.update);
+        dispatcher.db.groups.off("change", this.update);
+    }
 
-    add: function (data, success, failure) {
-        this.setState({
-            addedId: data._id
-        }, function () {
-            dispatcher.db.users.request('add', data)
-                .failure(failure)
-                .success(function () {
-                    success();
-                }, this);
+    add = (data, success, failure) => {
+        this.setState({addedId: data._id}, () => {
+            dispatcher.db.users.request("add", data)
+                .failure(() => failure())
+                .success(() => success());
         });
-    },
+    };
 
     /**
      * Called when the users collection changes. Updates the user documents and activeId appropriately.
      */
-    update: function () {
-        var newState = {
-            documents: dispatcher.db.users.chain().find().simplesort('_id')
+    update = () => {
+        let newState = {
+            documents: getUsers()
         };
 
         if (this.state.addedId) {
             // Check if the addedId is in the new set of documents. Set it as the activeId if it is in the new set.
-            var addedCount = newState.documents.copy().find({$or: [
+            const addedCount = newState.documents.copy().find({$or: [
                 {_id: {$regex: [this.state.filter, "i"]}},
                 {_id: this.state.activeId}
             ]}, true).count();
@@ -102,7 +94,7 @@ var Users = React.createClass({
         }
 
         this.setState(newState);
-    },
+    };
 
     /**
      * Update the text used to filter the list of users. Triggered by changing the value of the filter field.
@@ -110,67 +102,63 @@ var Users = React.createClass({
      * @param event {event} - the input change event.
      * @func
      */
-    filter: function (event) {
+    filter = (event) => {
         this.setState({filter: event.target.value});
-    },
+    };
 
     /**
      * Changes the selected user based on _id. This method is called in the UserEntry component when it is clicked.
      */
-    setActiveId: function (_id) {
+    setActiveId = (_id) => {
         this.setState({activeId: _id});
-    },
+    };
 
     /**
      * Remove the selected user (activeId). Called when the remove icon in the main panel header is clicked.
      *
      * @func
      */
-    removeUser: function () {
-        dispatcher.db.users.request('remove_user', {_id: this.state.activeId});
-    },
+    removeUser = () => {
+        dispatcher.db.users.request("remove_user", {_id: this.state.activeId});
+    };
 
-    render: function () {
+    render () {
 
-        var documents = this.state.documents.copy().find({
+        const documents = this.state.documents.copy().find({
             $or: [
                 {_id: {$regex: [this.state.filter, "i"]}},
                 {_id: this.state.activeId}
             ]
         }).data();
 
-        var activeData = _.find(documents, {_id: this.state.activeId});
+        const activeData = find(documents, {_id: this.state.activeId});
 
-        var userComponents = documents.map(function (user) {
-            return (
-                <UserEntry
-                    key={user._id}
-                    _id={user._id}
-                    active={activeData._id === user._id}
-                    onClick={this.setActiveId}
-                />
-            );
-        }, this);
-        
-        // The content to display in the user panel. Can be user detail and edit fields or it can be the add user form.
-        var content;
+        const userComponents = documents.map((user) =>
+            <UserEntry
+                key={user._id}
+                _id={user._id}
+                active={activeData._id === user._id}
+                onClick={this.setActiveId}
+            />
+        );
 
-        var removeIcon;
+        let content;
+        let removeIcon;
 
         // Prevent administrators from removing their own accounts.
         if (dispatcher.user.name !== activeData._id) {
             removeIcon = (
-                <div className='icon-group'>
-                    <Icon onClick={this.removeUser} name='remove' pullRight />
+                <div className="icon-group">
+                    <Icon onClick={this.removeUser} name="remove" pullRight />
                 </div>
             );
         }
 
         // The header of the user detail panel. Contains a remove user icon button.
-        var header = (
+        const header = (
             <h3>
                 <span>
-                    <Icon name='user' /> {activeData._id}
+                    <Icon name="user" /> {activeData._id}
                 </span>
                 {removeIcon}
             </h3>
@@ -204,6 +192,4 @@ var Users = React.createClass({
             </Row>
         );
     }
-});
-
-module.exports = Users;
+}

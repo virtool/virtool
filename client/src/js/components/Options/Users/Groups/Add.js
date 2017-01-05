@@ -9,10 +9,7 @@
  * @exports AddGroup
  */
 
-"use strict";
-
 import React from "react";
-import ReactDOM from "react-dom";
 import { Overlay, Popover, FormGroup, InputGroup, FormControl } from "react-bootstrap";
 import { Icon, Button } from "virtool/js/components/Base";
 
@@ -26,44 +23,40 @@ export default class AddGroup extends React.Component {
         };
     }
 
-    getInputDOMNode = () => {
-        return ReactDOM.findDOMNode(this.refs.input);
-    }
-
     handleSubmit = (event) => {
         event.preventDefault();
 
-        var groupName = this.state.groupName.toLowerCase();
+        const groupName = this.state.groupName.toLowerCase();
 
         // Make sure the new group name has no spaces in it.
         if (groupName.length > 0 && groupName.indexOf(" ") === -1) {
-            this.setState({pending: true}, function () {
-                dispatcher.db.groups.request("add", {
-                    _id: groupName.toLowerCase()
-                })
-                .success(function () {
-                    this.setState(this.getInitialState());
-                }, this)
-                .failure(function (data) {
-                    this.setState({
-                        pending: false,
-                        error: data.message
-                    })
-                }, this);
+            dispatcher.db.groups.request("add", {
+                _id: groupName.toLowerCase()
+            })
+            .success(() => {
+                this.setState({
+                    groupName: "",
+                    error: null
+                });
+            })
+            .failure((data) => {
+                this.setState({
+                    error: data.message
+                });
             });
         } else {
             this.setState({
                 error: "Group names must not contain spaces and cannot be empty strings."
             });
         }
-    }
+    };
 
     handleChange = (event) => {
         this.setState({
             groupName: event.target.value,
             error: false
         });
-    }
+    };
 
     render () {
 
@@ -71,7 +64,7 @@ export default class AddGroup extends React.Component {
 
         if (this.state.error) {
             const overlayProps = {
-                target: this.getInputDOMNode,
+                target: this.inputNode,
                 animation: true,
                 placement: "top"
             };
@@ -92,7 +85,7 @@ export default class AddGroup extends React.Component {
                 <FormGroup>
                     <InputGroup>
                         <FormControl
-                            ref="input"
+                            ref={this.inputNode}
                             type="text"
                             placeholder="New group name"
                             value={this.state.groupName}

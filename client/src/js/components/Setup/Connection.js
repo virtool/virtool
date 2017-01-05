@@ -9,61 +9,70 @@
  * @exports SetupConnection
  */
 
-'use strict';
-
-import React from 'react';
+import React from "react";
+import { assign } from "lodash-es";
 import { Row, Col, Alert, ButtonToolbar } from "react-bootstrap";
 import { Button, Icon, Input } from "virtool/js/components/Base"
-import { postJSON } from 'virtool/js/utils';
+import { postJSON } from "virtool/js/utils";
 
-var SetupConnection = React.createClass({
+export default class SetupConnection extends React.Component {
 
-    propTypes: {
-        host: React.PropTypes.string,
-        port: React.PropTypes.number,
-        names: React.PropTypes.arrayOf(React.PropTypes.string),
-        gotConnection: React.PropTypes.func.isRequired,
-        reset: React.PropTypes.func.isRequired
-    },
-
-    getInitialState: function () {
-        return {
+    constructor (props) {
+        super(props);
+        this.state = {
             host: this.props.host,
             port: this.props.port,
             attempted: false,
             pending: false
         };
-    },
+    }
 
-    componentDidMount: function () {
+    static propTypes = {
+        host: React.PropTypes.string,
+        port: React.PropTypes.number,
+        names: React.PropTypes.arrayOf(React.PropTypes.string),
+        connected: React.PropTypes.bool,
+        gotConnection: React.PropTypes.func.isRequired,
+        reset: React.PropTypes.func.isRequired
+    };
+
+    componentDidMount () {
         this.refs.host.focus();
-    },
+    }
 
-    componentDidUpdate: function (prevProps) {
+    componentDidUpdate (prevProps) {
         // If the connection was lost, put focus on the host input box again.
         if (!this.props.connected && prevProps.connected) this.refs.host.focus();
-    },
+    }
 
-    handleChange: function (event) {
-        if (this.props.names) this.props.reset();
+    handleChange = (event) => {
+        if (this.props.names) {
+            this.props.reset();
+        }
 
         // Make a new object describing the new state.
-        var newState = _.set({attempted: false}, event.target.name, event.target.value);
+        let newState = {attempted: false};
+
+        newState[event.target.name] = event.target.value;
 
         // Force the changed value to lowercase if it is the Mongo host host.
-        if (event.target.name === 'host') newState.host = newState.host.toLowerCase();
-        if (event.target.name === 'port') newState.port = Number(newState.port);
+        if (event.target.name === "host") {
+            newState.host = newState.host.toLowerCase();
+        }
+
+        if (event.target.name === "port") {
+            newState.port = Number(newState.port);
+        }
 
         this.setState(newState);
-    },
+    };
 
-    connect: function () {
-        this.setState({pending: true}, function () {
+    connect = () => {
+        this.setState({pending: true}, () => {
+            const args = assign({operation: "connect"}, this.state);
 
-            var args = _.assign({operation: 'connect'}, this.state);
-            
-            var callback = function (data) {
-                this.setState({attempted: true, pending: false}, function () {
+            postJSON("/", args, (data) => {
+                this.setState({attempted: true, pending: false}, () => {
                     if (data.names) {
                         this.props.gotConnection({
                             host: this.state.host,
@@ -72,27 +81,27 @@ var SetupConnection = React.createClass({
                         });
                     }
                 });
-            }.bind(this);
-
-            postJSON('/', args, callback);
+            });
         });
 
-    },
+    };
 
-    handleSubmit: function (event) {
+    handleSubmit = (event) => {
         event.preventDefault();
-        if (!this.props.names) this.connect();
-    },
+        if (!this.props.names) {
+            this.connect();
+        }
+    };
 
-    render: function () {
+    render () {
         
-        var footer;
+        let footer;
 
         if (!this.props.names) {
             if (this.state.attempted) {
                 footer = (
-                    <Alert bsStyle='danger'>
-                        <p><strong><Icon name='warning' /> Could not connect to MongoDB.</strong></p>
+                    <Alert bsStyle="danger">
+                        <p><strong><Icon name="warning" /> Could not connect to MongoDB.</strong></p>
                         <ul>
                             <li>Make sure MongoDB is installed and mongod is running.</li>
                             <li>Make sure the host and port values are correct.</li>
@@ -101,9 +110,9 @@ var SetupConnection = React.createClass({
                 );
             } else {
                 footer = (
-                    <ButtonToolbar className='pull-right'>
-                        <Button bsStyle='primary' type='submit'>
-                            <Icon name='power-cord' pending={this.state.pending} /> Connect
+                    <ButtonToolbar className="pull-right">
+                        <Button bsStyle="primary" type="submit">
+                            <Icon name="power-cord" pending={this.state.pending} /> Connect
                         </Button>
                     </ButtonToolbar>
                 );
@@ -112,14 +121,14 @@ var SetupConnection = React.createClass({
 
         if (this.props.names) {
             footer = (
-                <Alert bsStyle='success'>
-                    <Icon name='checkmark-circle' /> Connected to MongoDB.
+                <Alert bsStyle="success">
+                    <Icon name="checkmark-circle" /> Connected to MongoDB.
                 </Alert>
             )
         }
 
-        var sharedProps = {
-            bsStyle: !this.props.names && this.state.attempted ? 'error': null,
+        const sharedProps = {
+            bsStyle: !this.props.names && this.state.attempted ? "error": null,
             onChange: this.handleChange,
             spellCheck: false
         };
@@ -129,19 +138,19 @@ var SetupConnection = React.createClass({
                 <Row>
                     <Col md={9}>
                         <Input
-                            type='text'
-                            ref='host'
-                            name='host'
-                            label='Host'
+                            type="text"
+                            ref="host"
+                            name="host"
+                            label="Host"
                             value={this.state.host}
                             {...sharedProps}
                         />
                     </Col>
                     <Col md={3}>
                         <Input
-                            type='number'
-                            name='port'
-                            label='Port'
+                            type="number"
+                            name="port"
+                            label="Port"
                             value={this.state.port}
                             {...sharedProps}
                         />
@@ -153,7 +162,4 @@ var SetupConnection = React.createClass({
             </form>
         );
     }
-
-});
-
-module.exports = SetupConnection;
+}

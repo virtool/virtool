@@ -1,34 +1,39 @@
 import React from "react";
-import { Icon, Button } from "'virtool/js/components/Base";
+import { Icon } from "virtool/js/components/Base";
 
 import ReadFileList from "./Files/ReadFileList";
 import ReadUploader from "./Files/ReadUploader";
 
-var ReadFiles = React.createClass({
+const getFiles = () => dispatcher.db.files.chain().find({file_type: "reads"});
 
-    propTypes: {
-        route: React.PropTypes.object
-    },
+export default class ReadFiles extends React.Component {
 
-    getInitialState: function () {
-        return {
-            documents: dispatcher.db.files.chain().find({file_type: "reads"})
+    constructor (props) {
+        super(props);
+        this.state = {
+            files: getFiles()
         };
-    },
+    }
 
-    componentDidMount: function () {
+    static propTypes = {
+        route: React.PropTypes.object
+    };
+
+    componentDidMount () {
         dispatcher.db.files.on("change", this.update);
-    },
+    }
 
-    componentWillUnmount: function () {
+    componentWillUnmount () {
         dispatcher.db.files.off("change", this.update);
-    },
+    }
 
-    update: function () {
-        this.setState(this.getInitialState());
-    },
+    update () {
+        this.setState({
+            files: getFiles()
+        });
+    }
 
-    render: function () {
+    render () {
 
         const readyFiles = this.state.documents.branch().find({ready: true}).data();
 
@@ -61,6 +66,4 @@ var ReadFiles = React.createClass({
         );
     }
 
-});
-
-module.exports = ReadFiles;
+}

@@ -1,19 +1,20 @@
-var _ = require('lodash');
-var Loki = require('lokijs');
-var LokiIndexedAdapter = require('lokijs/src/loki-indexed-adapter');
+import { assign, forIn } from "lodash-es";
+import Promise from "bluebird";
+import Loki from "lokijs";
+import LokiIndexedAdapter from "lokijs/src/loki-indexed-adapter";
 
-if (!'indexedDB' in window) throw 'Cannot find indexedDB';
+if (!("indexedDB" in window)) {
+    throw "Cannot find indexedDB";
+}
 
-function Database(definitions, dispatcher) {
-
-    this.definitions = definitions;
+function Database (definitions, dispatcher) {
 
     this.collectionNames = [];
 
-    this.open = function () {
-        return new Promise(function (resolve, reject) {
+    this.open = () => {
+        return new Promise((resolve, reject) => {
 
-            this.lokiAdapter = new LokiIndexedAdapter("virtool-" + dispatcher.settings.get("server_id"));
+            this.lokiAdapter = new LokiIndexedAdapter(`virtool-${dispatcher.settings.get("server_id")}`);
 
             window.lokiAdapter = this.lokiAdapter;
 
@@ -27,8 +28,8 @@ function Database(definitions, dispatcher) {
                 if (err) {
                     reject();
                 } else {
-                    _.forIn(definitions, function (definition, collectionName) {
-                        var collection = this.loki.getCollection(collectionName);
+                    forIn(definitions, function (definition, collectionName) {
+                        let collection = this.loki.getCollection(collectionName);
 
                         if (!collection) {
                             collection = this.loki.addCollection(collectionName, {
@@ -37,11 +38,7 @@ function Database(definitions, dispatcher) {
                             });
                         }
 
-                        collection.off = collection.removeListener;
-
-                        collection.retain = definition.retain;
-
-                        collection.request = function (method, data) {
+                        collection.request = (method, data) => {
                             return dispatcher.send({
                                 interface: collectionName,
                                 method: method,
@@ -51,10 +48,13 @@ function Database(definitions, dispatcher) {
 
                         collection.events["change"] = [];
 
-                        collection.observedSyncCount = 0;
-                        collection.expectedSyncCount = 0;
-
-                        collection.synced = false;
+                        assign(collection, {
+                            off: collection.removeListener,
+                            retain: definition.retain,
+                            observedSyncCount: 0,
+                            expectedSyncCount: 0,
+                            synced: false
+                        });
 
                         this[collectionName] = collection;
 
@@ -62,9 +62,9 @@ function Database(definitions, dispatcher) {
 
                     }.bind(this));
 
-                    window.onbeforeunload = function () {
-                        dispatcher.db.collectionNames.forEach(function (collectionName) {
-                            var collection = dispatcher.db[collectionName];
+                    window.onbeforeunload = () => {
+                        dispatcher.db.collectionNames.forEach((collectionName) => {
+                            const collection = dispatcher.db[collectionName];
 
                             if (!collection.retain) {
                                 collection.clear();
@@ -74,10 +74,9 @@ function Database(definitions, dispatcher) {
 
                     resolve();
                 }
-            }.bind(this));
-
-        }.bind(this));
+            });
+        });
     };
 }
 
-module.exports = Database;
+export default Database;

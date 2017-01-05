@@ -10,12 +10,11 @@
  *
  */
 
-"use strict";
-
 import React from "react";
-import {pick, assign, capitalize} from "lodash";
 import {Row, Col, Alert} from "react-bootstrap";
+import { capitalize, pick, assign } from "lodash-es";
 import { Icon, Modal, Input, Button } from "virtool/js/components/Base";
+
 import ReadSelector from "./ReadSelector";
 
 function getInitialState () {
@@ -57,7 +56,7 @@ export default class CreateSample extends React.Component {
     constructor (props) {
         super(props);
         this.state = getInitialState();
-    };
+    }
 
     static propTypes = {
         show: React.PropTypes.bool.isRequired,
@@ -162,7 +161,7 @@ export default class CreateSample extends React.Component {
             if (this.state.forceGroupChoice) {
 
                 const userGroupComponents = dispatcher.user.groups.map(groupId => {
-                    return <option key={groupId} value={groupId}>{_.capitalize(groupId)}</option>
+                    return <option key={groupId} value={groupId}>{capitalize(groupId)}</option>
                 });
 
                 userGroup = (
@@ -228,7 +227,13 @@ export default class CreateSample extends React.Component {
                                     />
                                 </Col>
                                 <Col md={6}>
-                                    <Input name="subtraction" type="select" label="Subtraction Host" value={this.state.subtraction} onChange={this.handleChange}>
+                                    <Input
+                                        name="subtraction"
+                                        type="select"
+                                        label="Subtraction Host"
+                                        value={this.state.subtraction}
+                                        onChange={this.handleChange}
+                                    >
                                         {hostComponents}
                                     </Input>
                                 </Col>
@@ -273,7 +278,13 @@ export default class CreateSample extends React.Component {
         }
 
         return (
-            <Modal dialogClassName="modal-lg" show={this.props.show} onHide={this.props.onHide} onEntered={this.modalEntered} onExit={this.modalWillExit}>
+            <Modal
+                dialogClassName="modal-lg"
+                show={this.props.show}
+                onHide={this.props.onHide}
+                onEntered={this.modalEntered}
+                onExit={this.modalWillExit}
+            >
                 <Modal.Header onHide={this.props.onHide} closeButton>
                     Create Sample
                 </Modal.Header>

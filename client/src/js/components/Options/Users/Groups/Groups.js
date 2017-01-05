@@ -9,39 +9,23 @@
  * @exports Groups
  */
 
-'use strict';
-
 import React from "react";
 import FlipMove from "react-flip-move"
-import { capitalize, find } from 'lodash';
+import { capitalize, find } from "lodash-es";
 import { Row, Col } from "react-bootstrap";
-import { Modal, Icon, ListGroupItem } from 'virtool/js/components/Base';
+import { Modal, Icon, ListGroupItem } from "virtool/js/components/Base";
 
-var Add = require('./Add');
-var Permissions = require('./Permissions');
+import Add from "./Add";
+import Permissions from "./Permissions";
 
+const getState = () => {
+    const documents = this.getEntries();
 
-function getNewActiveId (currentActiveId, oldDocuments, newDocuments) {
-    // In this case a new document has been added and should become the new activeId.
-    if (newDocuments.length > oldDocuments.length) {
-        // Find the new document id.
-        return difference(map(newDocuments, '_id'), map(oldDocuments, '_id'))[0];
-    }
-
-    // Remove a user.
-    if (newDocuments.length < oldDocuments.length) {
-        // Find the index of the user document with the current activeId.
-        var activeIndex = findIndex(oldDocuments, {_id: currentActiveId});
-
-        if (activeIndex >= newDocuments.length) activeIndex -= 1;
-
-        // If the removed first user is active, set the new first user as active. Otherwise make active the user
-        // that occupies that position the old activeId did.
-        return newDocuments[activeIndex]._id;
-    }
-
-    return currentActiveId;
-}
+    return {
+        documents: documents,
+        activeId: documents[0]._id
+    };
+};
 
 /**
  * Renders either a table describing the sessions associated with the user or a panel with a message indicating no
@@ -49,80 +33,70 @@ function getNewActiveId (currentActiveId, oldDocuments, newDocuments) {
  *
  * @class
  */
-var Groups = React.createClass({
+export default class Groups extends React.Component {
 
-    getInitialState: function () {
-        var documents = this.getEntries();
+    constructor (props) {
+        super(props);
+        this.state = getState();
+    }
 
-        return {
-            documents: documents,
-            activeId: documents[0]._id
-        };
-    },
+    static propTypes = {
+        show: React.PropTypes.bool,
+        onHide: React.PropTypes.func
+    };
 
-    componentDidMount: function () {
-        dispatcher.db.groups.on('change', this.update);
-    },
+    componentDidMount () {
+        dispatcher.db.groups.on("change", this.update);
+    }
 
-    componentWillUnmount: function () {
-        dispatcher.db.groups.off('change', this.update);
-    },
+    componentWillUnmount () {
+        dispatcher.db.groups.off("change", this.update);
+    }
 
-    getEntries: function () {
-        return dispatcher.db.groups.chain().find().simplesort('_id').data();
-    },
+    getEntries = () => dispatcher.db.groups.chain().find().simplesort("_id").data();
 
-    select: function (groupId) {
+    select = (groupId) => {
         this.setState({activeId: groupId});
-    },
+    };
 
-    update: function () {
-        var newDocuments = this.getEntries();
+    update = () => {
+        this.setState(getState());
+    };
 
-        this.setState({
-            documents: newDocuments,
-            activeId: getNewActiveId(this.state.activeId, this.state.documents, newDocuments)
-        });
-    },
-
-    remove: function (groupName) {
-        dispatcher.db.groups.request('remove_group', {
+    remove = (groupName) => {
+        dispatcher.db.groups.request("remove_group", {
             _id: groupName
         });
-    },
+    };
 
-    render: function () {
+    render () {
 
-        var groupItemComponents = this.state.documents.map(function (document) {
-            var props = {
+        const groupItemComponents = this.state.documents.map((document) => {
+            const props = {
                 key: document._id,
                 active: this.state.activeId == document._id,
                 onClick: function () {this.select(document._id)}.bind(this)
             };
 
-            var callback = function () {
-                this.remove(document._id);
-            }.bind(this);
+            let removeIcon;
 
-            var removeIcon;
-
-            if (document._id !== 'limited' && document._id !== 'administrator') {
-                removeIcon = <Icon name='remove' className='pull-right' onClick={callback} />;
+            if (document._id !== "limited" && document._id !== "administrator") {
+                removeIcon = <Icon name="remove" className="pull-right" onClick={() => this.remove(document._id)} />;
             }
 
             return (
                 <ListGroupItem {...props}>
-                    {_.capitalize(document._id)}
+                    {capitalize(document._id)}
                     {removeIcon}
                 </ListGroupItem>
             );
 
-        }, this);
+        });
 
-        var activeGroup = _.find(this.state.documents, {_id: this.state.activeId});
+        const activeGroup = find(this.state.documents, {_id: this.state.activeId});
 
         return (
-            <Modal dialogClassName='modal-md' show={this.props.show} onHide={this.props.onHide}>
+            <Modal dialogClassName="modal-md" show={this.props.show} onHide={this.props.onHide}>
                 <Modal.Header>
                     User Groups
                 </Modal.Header>
@@ -149,6 +123,4 @@ var Groups = React.createClass({
             </Modal>
         );
     }
-});
-
-module.exports = Groups;
+}

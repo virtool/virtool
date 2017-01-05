@@ -9,48 +9,39 @@
  * @exports Tasks
  */
 
-'use strict';
-
-var _ = require('lodash');
 import React from "react";
-var Row = require('react-bootstrap/lib/Row');
-var Col = require('react-bootstrap/lib/Col');
-var Alert = require('react-bootstrap/lib/Alert');
-var ListGroup = require('react-bootstrap/lib/ListGroup');
-var ListGroupItem = require('react-bootstrap/lib/ListGroupItem');
-var Task = require('./Task');
+import { Row, Col, ListGroup } from "react-bootstrap";
+import { ListGroupItem } from "virtool/js/components/Base";
+
+import Task from "./Task";
+
+const taskNames = ["import_reads", "rebuild_index", "add_host", "pathoscope_bowtie", "pathoscope_snap", "nuvs"];
 
 /**
  * A list of items that contain form fields for modifying resource limits on specific tasks.
  */
-var Tasks = React.createClass({
+const Tasks = (props) => {
+    
+    const taskComponents = taskNames.map((taskPrefix) =>
+        <Task key={taskPrefix} taskPrefix={taskPrefix} {...props} />
+    );
 
-    render: function () {
+    const title = (
+        <ListGroupItem key="title">
+            <Row>
+                <Col md={4}>CPU</Col>
+                <Col md={4}>Memory (GB)</Col>
+                <Col md={4}>Concurrent Jobs</Col>
+            </Row>
+        </ListGroupItem>
+    );
 
-        var taskNames = ['import_reads', 'rebuild_index', 'add_host', 'pathoscope_bowtie', 'pathoscope_snap', 'nuvs'];
+    return (
+        <ListGroup>
+            {title}
+            {taskComponents}
+        </ListGroup>
+    );
+};
 
-        var taskComponents = taskNames.map(function (taskPrefix) {
-            return <Task key={taskPrefix} taskPrefix={taskPrefix} {...this.props} />;
-        }, this);
-
-        var title = (
-            <ListGroupItem key='title'>
-                <Row>
-                    <Col md={4}>CPU</Col>
-                    <Col md={4}>Memory (GB)</Col>
-                    <Col md={4}>Concurrent Jobs</Col>
-                </Row>
-            </ListGroupItem>
-        );
-
-        return (
-            <ListGroup>
-                {title}
-                {taskComponents}
-            </ListGroup>
-        );
-    }
-
-});
-
-module.exports = Tasks;
+export default Tasks

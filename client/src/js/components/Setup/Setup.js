@@ -9,21 +9,26 @@
  * @exports Setup
  */
 
-'use strict';
-
 import React from "react";
-import { omit, includes, assign } from "lodash";
-import { Grid, Row, Col, NavBar, Panel, ListGroup } from 'react-bootstrap';
-import { Icon } from 'virtool/js/components/Base';
-import { postJSON } from 'virtool/js/utils';
+import { omit, includes, assign } from "lodash-es";
+import { Navbar, Grid, Row, Col, Panel, ListGroup } from "react-bootstrap";
+import { Icon } from "virtool/js/components/Base";
+import { postJSON } from "virtool/js/utils";
 
-var SetupStep = require('./Step');
+import SetupConnection from "./Connection";
+import SetupDataPath from "./DataPath";
+import SetupWatchPath from "./WatchPath";
+import SetupFirstUser from "./FirstUser";
+import SetupNames from "./Names";
+import SetupReload from "./Reload";
 
-var steps = [
+import SetupStep from "./Step";
+
+const steps = [
     {
-        key: 'connection',
-        label: 'Connect to MongoDB',
-        component: require('./Connection'),
+        key: "connection",
+        label: "Connect to MongoDB",
+        component: SetupConnection,
 
         shouldBeDisabled: function () {
             return false;
@@ -34,9 +39,9 @@ var steps = [
         }
     },
     {
-        key: 'database',
-        label: 'Choose database',
-        component: require('./Names'),
+        key: "database",
+        label: "Choose database",
+        component: SetupNames,
 
         shouldBeDisabled: function (state) {
             return !state.names;
@@ -47,12 +52,12 @@ var steps = [
         }
     },
     {
-        key: 'user',
-        label: 'Add first user',
-        component: require('./FirstUser'),
+        key: "user",
+        label: "Add first user",
+        component: SetupFirstUser,
 
         shouldBeDisabled: function (state) {
-            return !Boolean(state.name);
+            return !(state.name);
         },
 
         shouldBeReady: function (state) {
@@ -60,12 +65,12 @@ var steps = [
         }
     },
     {
-        key: 'data',
-        label: 'Data location',
-        component: require('./DataPath'),
+        key: "data",
+        label: "Data location",
+        component: SetupDataPath,
 
         shouldBeDisabled: function (state) {
-            return !Boolean(state.name);
+            return !(state.name);
         },
 
         shouldBeReady: function (state) {
@@ -73,9 +78,9 @@ var steps = [
         }
     },
     {
-        key: 'watch',
-        label: 'Import directory',
-        component: require('./WatchPath'),
+        key: "watch",
+        label: "Import directory",
+        component: SetupWatchPath,
 
         shouldBeDisabled: function () {
             return false;
@@ -86,9 +91,9 @@ var steps = [
         }
     },
     {
-        key: 'reload',
-        label: 'Reload server',
-        component: require('./Reload'),
+        key: "reload",
+        label: "Reload server",
+        component: SetupReload,
 
         shouldBeDisabled: function () {
             return true;
@@ -100,7 +105,7 @@ var steps = [
     }
 ];
 
-var Setup = React.createClass({
+const Setup = React.createClass({
 
     getInitialState: function () {
         return {
@@ -108,13 +113,13 @@ var Setup = React.createClass({
 
             names: null,
 
-            host: 'localhost',
+            host: "localhost",
             port: 27017,
             attempted: false,
-            name: '',
+            name: "",
 
-            username: '',
-            password: '',
+            username: "",
+            password: "",
             hasAdmin: false,
             accepted: false,
 
@@ -157,30 +162,30 @@ var Setup = React.createClass({
     },
 
     saveAndReload: function () {
-        var args = _.omit(this.state, [
-            'activeStepIndex',
-            'names',
-            'attempted',
-            'hasAdmin',
-            'accepted',
-            'hasCollections'
+        const args = omit(this.state, [
+            "activeStepIndex",
+            "names",
+            "attempted",
+            "hasAdmin",
+            "accepted",
+            "hasCollections"
         ]);
 
-        args.new_server = !_.includes(this.state.names, this.state.name);
-        args.operation = 'save_setup';
+        args.new_server = !includes(this.state.names, this.state.name);
+        args.operation = "save_setup";
 
-        var callback = function () {
+        const callback = function () {
             window.location.reload();
         };
 
-        postJSON('/', args, callback);
+        postJSON("/", args, callback);
     },
 
     render: function () {
 
-        var ContentComponent = steps[this.state.activeStepIndex].component;
+        const ContentComponent = steps[this.state.activeStepIndex].component;
 
-        var contentProps = _.assign({
+        const contentProps = assign({
             gotConnection: this.gotConnection,
             checkedName: this.checkedName,
             acceptedAdmin: this.acceptedAdmin,
@@ -191,7 +196,7 @@ var Setup = React.createClass({
             reset: this.reset
         }, this.state);
 
-        var stepComponents = steps.map(function(step, index) {
+        const stepComponents = steps.map(function (step, index) {
             return (
                 <SetupStep
                     key={index}
@@ -210,7 +215,7 @@ var Setup = React.createClass({
                 <Navbar>
                     <Navbar.Header>
                         <Navbar.Brand>
-                            <Icon name='vtlogo' className='vtlogo'/>
+                            <Icon name="vtlogo" className="vtlogo"/>
                         </Navbar.Brand>
                         <Navbar.Text>
                             Setup
@@ -240,4 +245,4 @@ var Setup = React.createClass({
 
 });
 
-module.exports = Setup;
+export default Setup;

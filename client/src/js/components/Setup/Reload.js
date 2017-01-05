@@ -9,40 +9,36 @@
  * @exports SetupReload
  */
 
-'use strict';
-
 import React from "react";
-import ReactDOM from "react-dom";
-var Alert = require('react-bootstrap/lib/Alert');
-var Button = require('react-bootstrap/lib/Button');
+import { Alert } from "react-bootstrap";
+import { Icon, Button } from "virtool/js/components/Base";
 
-var Icon = require('virtool/js/components/Base/Icon');
+export default class SetupReload extends React.Component {
 
-var SetupReload = React.createClass({
+    propTypes = {
+        saveAndReload: React.PropTypes.func
+    };
 
-    componentDidMount: function () {
-        ReactDOM.findDOMNode(this.refs.button).focus();
-    },
+    componentDidMount () {
+        this.buttonNode.focus();
+    }
 
-    handleClick: function () {
-        this.props.saveAndReload();
-    },
-
-    render: function () {
+    render () {
 
         return (
             <div>
-                <Alert bsStyle='info'>
+                <Alert bsStyle="info">
                     Virtool is configured and must be reloaded before it can be used.
                 </Alert>
 
-                <Button ref='button' bsStyle='primary' onClick={this.handleClick} className='pull-right'>
-                    <Icon name='reset' /> Accept
+                <Button
+                    ref={this.buttonNode}
+                    bsStyle="primary"
+                    onClick={() => this.props.saveAndReload()}
+                    className="pull-right">
+                    <Icon name="reset" /> Accept
                 </Button>
             </div>
         );
     }
-
-});
-
-module.exports = SetupReload;
+}

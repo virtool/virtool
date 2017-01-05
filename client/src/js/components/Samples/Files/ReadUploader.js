@@ -7,22 +7,20 @@ export default class ReadUploader extends React.Component {
 
     onDrop = (files) => {
         files.forEach(file => {
-            dispatcher.db.samples.request("authorize_upload", {
-                name: file.name,
-                size: file.size
-            }).success(data => {
-                Request.post("/upload/" + data.file_id)
-                    .send(file)
-                    .end();
-            });
+            dispatcher.db.samples.request("authorize_upload", {name: file.name, size: file.size })
+                .success(data => {
+                    Request.post("/upload/" + data.file_id)
+                        .send(file)
+                        .end();
+                });
         });
-    }
+    };
 
     handleClick = () => {
         this.refs.dropzone.open();
-    }
+    };
 
-    render() {
+    render () {
 
         const dropZoneStyle = {
             display: "flex",

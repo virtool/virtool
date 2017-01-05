@@ -61,8 +61,10 @@ export default class ExportViruses extends React.Component {
         };
 
         if (this.state.download) {
+            const link = `download/${this.state.download.filename}`;
+
             button = (
-                <Button href="download/${this.state.download.filename}" download="viruses.json.gz" {...buttonProps}>
+                <Button href={link} download="viruses.json.gz" {...buttonProps}>
                     <Icon name="arrow-down" /> Download ({byteSize(this.state.download.size)})
                 </Button>
             );

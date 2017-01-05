@@ -9,53 +9,34 @@
  * @exports SetupStep
  */
 
-'use strict';
-
 import React from "react";
-var ListGroupItem = require('virtool/js/components/Base/PushListGroupItem');
+import { Icon, ListGroupItem } from "virtool/js/components/Base";
 
-var Icon = require('virtool/js/components/Base/Icon');
+const SetupStep = (props) => (
+    <ListGroupItem
+        disabled={props.disabled}
+        onClick={() => props.setActiveStepIndex(props.index)}
+        active={props.active}
+    >
+        {props.index + 1}. {props.label}
+        <span style={{marginTop: "1px", marginBottom: "-1px"}} className="pull-right">
+            {this.props.ready ? <Icon name="checkmark" />: null}
+        </span>
+    </ListGroupItem>
+);
 
-var SetupStep = React.createClass({
+SetupStep.propTypes = {
+    index: React.PropTypes.number.isRequired,
+    label: React.PropTypes.string.isRequired,
+    setActiveStepIndex: React.PropTypes.func.isRequired,
+    ready: React.PropTypes.bool,
+    active: React.PropTypes.active,
+    disabled: React.PropTypes.bool
+};
 
-    propTypes: {
-        index: React.PropTypes.number.isRequired,
-        label: React.PropTypes.string.isRequired,
-        setActiveStepIndex: React.PropTypes.func.isRequired,
-        ready: React.PropTypes.bool,
-        disabled: React.PropTypes.bool
-    },
+SetupStep.defaultProps = {
+    ready: false,
+    disabled: false
+};
 
-    getDefaultProps: function () {
-        return {
-            ready: false,
-            disabled: false
-        };
-    },
-
-    handleClick: function () {
-        this.props.setActiveStepIndex(this.props.index);
-    },
-
-    render: function () {
-
-        var iconStyle = {
-            marginTop: '1px',
-            marginBottom: '-1px'
-        };
-
-        var icon = this.props.ready ? <Icon name='checkmark' />: null;
-
-        return (
-            <ListGroupItem disabled={this.props.disabled} onClick={this.handleClick} active={this.props.active}>
-                {this.props.index + 1}. {this.props.label}
-                <span style={iconStyle} className='pull-right'>
-                    {icon}
-                </span>
-            </ListGroupItem>
-        );
-    }
-
-});
-
-module.exports = SetupStep;
+export default SetupStep;

@@ -9,65 +9,36 @@
  * @exports Main
  */
 
-'use strict';
-
 import React from "react";
-var Nav = require('virtool/js/components/Nav/Bar');
+import Nav from "./Nav/Bar";
 
+export default class Main extends React.Component {
 
-var Main = React.createClass({
-
-    getInitialState: function () {
-        return {
+    constructor (props) {
+        super(props);
+        this.state = {
             route: dispatcher.router.route
-        };
-    },
+        }
+    }
 
-    componentDidMount: function () {
-        dispatcher.router.on('change', this.onRouteChange);
-    },
+    componentDidMount () {
+        dispatcher.router.on("change", this.onRouteChange);
+    }
 
-    componentWillUnmount: function () {
-        dispatcher.router.off('change', this.onRouteChange);
-    },
+    componentWillUnmount () {
+        dispatcher.router.off("change", this.onRouteChange);
+    }
 
-    /**
-     * Sets state to reflect the current route. Called in response to a 'change' event from the router.
-     * @func
-     */
-    onRouteChange: function (route) {
-        this.setState({route: route});
-    },
+    onRouteChange = (route) => this.setState({route: route});
 
-    render: function () {
-
-        // Get a View component based on the primary and secondary parts of the split route.
-        var View = this.state.route.baseComponent;
-
-        var containerStyle = {
-            display: 'flex',
-            flexFlow: 'column nowrap'
-        };
-
-        var navStyle = {
-            flex: '0 0 auto'
-        };
-
-        var contentStyle = {
-            flex: '1 0 auto'
-        };
-
-        return (
-            <div id='app' style={containerStyle}>
-                <Nav style={navStyle} />
-                <div style={contentStyle}>
-                    <div className='container-fluid' id='content-display' style={contentStyle}>
-                        <View route={this.state.route} />
-                    </div>
+    render = () => (
+        <div id="app" style={{display: "flex", flexFlow: "column nowrap"}}>
+            <Nav style={{flex: "0 0 auto"}} />
+            <div style={{flex: "1 0 auto"}}>
+                <div className="container-fluid" id="content-display" style={{flex: "1 0 auto"}}>
+                    <this.state.route.baseComponent route={this.state.route} />
                 </div>
             </div>
-        );
-    }
-});
-
-module.exports = Main;
+        </div>
+    );
+}

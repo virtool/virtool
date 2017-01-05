@@ -9,69 +9,58 @@
  * @exports Groups
  */
 
-'use strict';
-
-var _ = require('lodash');
 import React from "react";
-var Panel = require('react-bootstrap/lib/Panel');
-var ListGroup = require('react-bootstrap/lib/ListGroup');
+import { transform, sortBy } from "lodash-es";
+import { Panel, ListGroup } from "react-bootstrap";
 
-var Permission = require('./Permission');
+import Permission from "./Permission";
 
-var Permissions = React.createClass({
+const Permissions = (props) => {
 
-    propTypes: {
-        collection: React.PropTypes.object,
-        permissions: React.PropTypes.object,
-        groupName: React.PropTypes.string
-    },
+    if (props.permissions) {
 
-    render: function () {
+        const permissions = transform(props.permissions, (result, value, name) => {
+            result.push({
+                name: name,
+                value: value
+            });
+        }, []);
 
-        var content;
+        const disabled = props.groupName === "administrator" || props.groupName === "limited";
 
-        if (this.props.permissions) {
+        const permissionComponents = sortBy(permissions, "name").map(permission =>
+            <Permission
+                key={permission.name}
+                {...permission}
+                groupName={props.groupName}
+                disabled={disabled}
+                collection={props.collection}
+            />
+        );
 
-            var permissions = _.transform(this.props.permissions, function (result, value, name) {
-                result.push({
-                    name: name,
-                    value: value
-                });
-            }, []);
-
-            var disabled = this.props.groupName === 'administrator' || this.props.groupName === 'limited';
-
-            var permissionComponents = _.sortBy(permissions, 'name').map(function (permission) {
-                return (
-                    <Permission
-                        key={permission.name}
-                        {...permission}
-                        groupName={this.props.groupName}
-                        disabled={disabled}
-                        collection={this.props.collection}
-                    />
-                );
-            }, this);
-
-            content = (
-                <ListGroup fill={this.props.groupName && this.props.collection}>
-                    {permissionComponents}
-                </ListGroup>
-            );
-        } else {
-            content = <Panel>Nothing to see here</Panel>;
-        }
+        const listGroup = (
+            <ListGroup fill={props.groupName && props.collection}>
+                {permissionComponents}
+            </ListGroup>
+        );
 
         if (this.props.groupName && this.props.collection) {
             return (
-                <Panel header='Permissions'>
-                    {content}
+                <Panel header="Permissions">
+                    {listGroup}
                 </Panel>
             );
         }
 
-        return content;
-    }
-});
+        return listGroup;
 
-module.exports = Permissions;
+    }
+
+    return <Panel>Nothing to see here</Panel>;
+};
+
+Permissions.propTypes = {
+    collection: React.PropTypes.object,
+    permissions: React.PropTypes.object,
+    groupName: React.PropTypes.string
+};

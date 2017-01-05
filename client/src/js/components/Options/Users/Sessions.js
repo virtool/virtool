@@ -9,46 +9,53 @@
  * @exports Sessions
  */
 
-'use strict';
-
-var _ = require('lodash');
 import React from "react";
-var Table = require('react-bootstrap/lib/Table');
-var Panel = require('react-bootstrap/lib/Panel');
+import { isEqual } from "lodash-es";
+import { Table, Panel } from "react-bootstrap";
+import { Icon } from "virtool/js/components/Base";
 
-var Icon = require('virtool/js/components/Base/Icon');
-var Session = require('./Session');
+import Session from "./Session";
 
 /**
  * Renders either a table describing the sessions associated with the user or a panel with a message indicating no
  * sessions are associated with that user.
  */
-var Sessions = React.createClass({
+export default class Sessions extends React.Component {
 
-    shouldComponentUpdate: function (nextProps) {
-        return !_.isEqual(nextProps.sessions, this.props.sessions);
-    },
+    static propTypes = {
+        sessions: React.PropTypes.arrayOf(React.PropTypes.object)
+    };
 
-    render: function () {
+    shouldComponentUpdate (nextProps) {
+        return !isEqual(nextProps.sessions, this.props.sessions);
+    }
 
-        var content;
+    render () {
+
+        let content;
 
         if (this.props.sessions.length > 0) {
             // Render the session rows containing an icon indicating the browser, the session token, and the time the
             // session was initialized.
-            var sessionRows = this.props.sessions.map(function (session) {
-                return <Session key={session.token} {...session} />;
-            });
+            const sessionRows = this.props.sessions.map(session =>
+                <Session
+                    key={session.token}
+                    ip={session.ip}
+                    token={session.token}
+                    timestamp={session.timestamp}
+                    browserName={session.browser.name}
+                />
+            );
 
             content = (
                 <Panel>
                     <Table fill>
                         <thead>
                             <tr>
-                                <th className='col-sm-3'>Client</th>
-                                <th className='col-sm-5'>Session Token</th>
-                                <th className='col-sm-3'>Created</th>
-                                <th className='col-sm-1'></th>
+                                <th className="col-sm-3">Client</th>
+                                <th className="col-sm-5">Session Token</th>
+                                <th className="col-sm-3">Created</th>
+                                <th className="col-sm-1"></th>
                             </tr>
                         </thead>
                         <tbody>
@@ -59,21 +66,17 @@ var Sessions = React.createClass({
             );
         } else {
             content = (
-                <Panel className='text-center'>
-                    <Icon name='notification' /> No sessions
+                <Panel className="text-center">
+                    <Icon name="notification" /> No sessions
                 </Panel>
             );
         }
 
         return (
             <div>
-                <h5><Icon name='pushpin' /> <strong>Sessions</strong></h5>
+                <h5><Icon name="pushpin" /> <strong>Sessions</strong></h5>
                 {content}
             </div>
         )
-
-
     }
-});
-
-module.exports = Sessions;
+}

@@ -28,7 +28,7 @@ const getInitialState = () => ({
  *
  * @class
  */
-export default class Index extends React.Component {
+export default class ManageIndexes extends React.Component {
 
     constructor (props) {
         super(props);

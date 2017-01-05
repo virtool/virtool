@@ -1,19 +1,18 @@
-var _ = require('lodash');
-var Bowser = require('bowser');
+import { pick, transform, without, includes, assign, every } from "lodash-es";
+import Bowser from "bowser";
 
-import Events from "./Events.js";
 import User from "./user.js";
+import Events from "./events.js";
+import Router from "./router.js";
+import Settings from "./settings.js";
+import Database from "./database.js";
+import Transactions from "./transactions.js";
 
-var Settings = require('./Settings.js');
-var Database = require('./Database.js');
-var Router = require("./Router.js");
-var Transactions = require("./transactions.js");
+function Dispatcher (onReady) {
 
-function Dispatcher(onReady) {
+    this.events = new Events(["syncing", "synced", "ping", "authenticated", "closed"], this);
 
-    this.events = new Events(['syncing', 'synced', 'ping', 'authenticated', 'closed'], this);
-
-    this.browser = _.pick(Bowser, ['name', 'version']);
+    this.browser = pick(Bowser, ["name", "version"]);
 
     this.user = new User();
     this.router = new Router();
@@ -108,65 +107,59 @@ function Dispatcher(onReady) {
 
         var dispatcher = this;
 
-        this.send({
-            interface: 'settings',
-            method: 'download',
-            data: null
-        }).success(function (data) {
+        this.send({interface: "settings", method: "download", data: null})
+            .success((data) => {
 
-            dispatcher.settings.update(data);
+                dispatcher.settings.update(data);
 
-            dispatcher.db.open()
-                .then(function () {
+                dispatcher.db.open()
+                    .then(function () {
 
-                    var collectionCount = dispatcher.db.collectionNames.length
+                        var collectionCount = dispatcher.db.collectionNames.length
 
-                    dispatcher.syncProgressStep = 1 / (collectionCount + 1);
+                        dispatcher.syncProgressStep = 1 / (collectionCount + 1);
 
-                    dispatcher.db.collectionNames.forEach(function (collectionName) {
+                        dispatcher.db.collectionNames.forEach(function (collectionName) {
 
-                        var collection = dispatcher.db[collectionName];
+                            var collection = dispatcher.db[collectionName];
 
-                        var manifest = collection.mapReduce(
-                            function (document) {
-                                return {_id: document._id, _version: document._version};
-                            },
+                            var manifest = collection.mapReduce(
+                                function (document) {
+                                    return {_id: document._id, _version: document._version};
+                                },
 
-                            function (documents) {
-                                return _.transform(documents, function (result, document) {
-                                    result[document._id] = document._version;
-                                }, {});
-                            }
-                        );
-
-                        collection.request("sync", manifest)
-                            .update(function (update) {
-                                collection.expectedSyncCount = update;
-
-                                if (collection.expectedSyncCount === 0) {
-                                    dispatcher.syncProgress += dispatcher.syncProgressStep;
-                                    dispatcher.emit("syncing", dispatcher.syncProgress);
-
-                                    collection.synced = true;
-                                    dispatcher.checkSynced();
+                                function (documents) {
+                                    return transform(documents, function (result, document) {
+                                        result[document._id] = document._version;
+                                    }, {});
                                 }
-                            });
+                            );
 
-                        dispatcher.syncProgress += dispatcher.syncProgressStep * (1 / collectionCount);
+                            collection.request("sync", manifest)
+                                .update(function (update) {
+                                    collection.expectedSyncCount = update;
 
-                        dispatcher.emit("syncing", dispatcher.syncProgress);
+                                    if (collection.expectedSyncCount === 0) {
+                                        dispatcher.syncProgress += dispatcher.syncProgressStep;
+                                        dispatcher.emit("syncing", dispatcher.syncProgress);
 
+                                        collection.synced = true;
+                                        dispatcher.checkSynced();
+                                    }
+                                });
+
+                            dispatcher.syncProgress += dispatcher.syncProgressStep * (1 / collectionCount);
+
+                            dispatcher.emit("syncing", dispatcher.syncProgress);
+                        });
                     });
-
-                });
-
-        });
+            });
     };
 
     this.checkSynced = function () {
-        var collectionNames = _.without(dispatcher.db.collectionNames, "reads", "files");
+        var collectionNames = without(dispatcher.db.collectionNames, "reads", "files");
 
-        var allSynced = _.every(collectionNames, function (collectionName) {
+        var allSynced = every(collectionNames, function (collectionName) {
             return dispatcher.db[collectionName].synced;
         });
 
@@ -176,15 +169,13 @@ function Dispatcher(onReady) {
     };
 
     // When a websocket message is received, this method is called with the message as the sole argument. Every message
-    // has a property 'operation' that tells the dispatcher what to do. Illegal operation names will throw an error.
+    // has a property "operation" that tells the dispatcher what to do. Illegal operation names will throw an error.
     this.handle = function (message) {
 
         var iface = message.interface;
         var operation = message.operation;
 
-        console.log(iface + "." + message.operation);
-
-        if (iface === 'transaction') {
+        if (iface === "transaction") {
             switch (operation) {
                 case "fulfill":
                     this.transactions.fulfill(message.data.tid, message.data.success, message.data.data);
@@ -195,7 +186,7 @@ function Dispatcher(onReady) {
                     break;
 
                 default:
-                    console.throw("Illegal transaction operation: " + operation);
+                    throw("Illegal transaction operation: " + operation);
 
             }
         }
@@ -204,7 +195,7 @@ function Dispatcher(onReady) {
             this.user.load(message.data);
         }
 
-        else if (_.includes(this.db.collectionNames, iface)) {
+        else if (includes(this.db.collectionNames, iface)) {
 
             var collection = this.db[message.interface];
 
@@ -226,25 +217,25 @@ function Dispatcher(onReady) {
             if (operation === "update") {
 
 
-                var updates = message.data.constructor === Array ? message.data: [message.data];
+                var updates = message.data.constructor === Array ? message.data : [message.data];
 
                 updates.forEach(function (update) {
                     var existingDocument = collection.findOne({_id: update._id});
 
                     if (existingDocument) {
-                        var amended = _.assign(_.pick(existingDocument, ["$loki", "meta"]), update);
+                        var amended = assign(pick(existingDocument, ["$loki", "meta"]), update);
                         collection.update(amended);
                     } else {
                         collection.insert(message.data);
                     }
                 });
 
-                collection.emit('change');
+                collection.emit("change");
             }
 
             if (operation === "remove") {
                 this.db[message.interface].removeWhere({"_id": {"$in": message.data}});
-                this.db[message.interface].emit('change');
+                this.db[message.interface].emit("change");
             }
 
         }
@@ -253,23 +244,20 @@ function Dispatcher(onReady) {
 
             switch (operation) {
 
-                case 'ping':
-                    this.events.emit('ping');
+                case "ping":
+                    this.events.emit("ping");
                     break;
 
-                case 'set':
+                case "set":
                     this.settings.update(message.data);
                     break;
 
-                case 'deauthorize':
+                case "deauthorize":
                     this.user.deauthorize(message.data);
                     break;
 
                 default:
-                    console.warn(
-                        'Received unknown web socket operation in message: ' +
-                        (message.interface + "." + message.operation)
-                    );
+                    throw(`Received unknown web socket operation in message ${message.interface}.${message.operation}`);
             }
         }
     };
@@ -278,25 +266,24 @@ function Dispatcher(onReady) {
 
         var dispatcher = this;
 
-        var protocol = location.protocol === 'https:' ? 'wss': 'ws';
+        var protocol = window.location.protocol === "https:" ? "wss" : "ws";
 
-        dispatcher.connection = new WebSocket(protocol + '://' + location.host + '/ws');
+        dispatcher.connection = new window.WebSocket(`${protocol}://${window.location.host}/ws`);
 
-        dispatcher.connection.onopen = function () {
-            console.log('Established WebSocket connection.');
+        dispatcher.connection.onopen = () => {
             callback();
         };
 
-        dispatcher.connection.onmessage = function (event) {
+        dispatcher.connection.onmessage = (event) => {
             dispatcher.handle(JSON.parse(event.data));
         };
 
-        dispatcher.connection.onclose = function () {
-            dispatcher.emit('closed');
+        dispatcher.connection.onclose = () => {
+            dispatcher.emit("closed");
         };
     };
 
     this.establishConnection(onReady);
 }
 
-module.exports = Dispatcher;
+export default Dispatcher;

@@ -9,38 +9,39 @@
  * @exports Session
  */
 
-'use strict';
-
 import React from "react";
-var Icon = require('virtool/js/components/Base/Icon');
-var RelativeTime = require('virtool/js/components/Base/RelativeTime');
+import { Icon, RelativeTime } from "virtool/js/components/Base";
 
-var Session = React.createClass({
+export default class Session extends React.PureComponent {
 
-    getInitialState: function () {
-        return {
+    constructor (props) {
+        super(props);
+        this.state = {
             pending: false
         };
-    },
+    }
 
-    remove: function () {
-        this.setState({pending: true}, function () {
-            dispatcher.db.users.request('remove_session', {
+    static propTypes = {
+        ip: React.PropTypes.string,
+        token: React.PropTypes.string,
+        timestamp: React.PropTypes.string,
+        browserName: React.PropTypes.string
+    };
+
+    remove = () => {
+        this.setState({pending: true}, () => {
+            dispatcher.db.users.request("remove_session", {
                 token: this.props.token
             });
         });
-    },
+    };
 
-    render: function () {
-        return (
-            <tr disabled={this.state.pending}>
-                <td><Icon name={this.props.browser.name.toLowerCase()}/> {this.props.ip}</td>
-                <td>{this.props.token}</td>
-                <td><RelativeTime time={this.props.timestamp}/></td>
-                <td><Icon name='remove' bsStyle='danger' onClick={this.remove} pullRight/></td>
-            </tr>
-        );
-    }
-});
-
-module.exports = Session;
+    render = () => (
+        <tr disabled={this.state.pending}>
+            <td><Icon name={this.props.browserName.toLowerCase()}/> {this.props.ip}</td>
+            <td>{this.props.token}</td>
+            <td><RelativeTime time={this.props.timestamp}/></td>
+            <td><Icon name="remove" bsStyle="danger" onClick={this.remove} pullRight/></td>
+        </tr>
+    );
+}

@@ -9,11 +9,13 @@
  * @exports AnalysisPanel
  */
 
-var _ = require('lodash');
+
 import React from "react";
-var Panel = require('react-bootstrap/lib/Panel');
-var AnalysisReport = require('./Report');
-var Listing = require('./Listing');
+import { find } from "lodash-es";
+import { Panel } from "react-bootstrap";
+
+import Listing from "./Listing";
+import AnalysisReport from "./Report";
 
 /**
  * The panel that is shown when the analysis tab is selected in the sample detail modal. Allows detailed viewing of
@@ -21,40 +23,30 @@ var Listing = require('./Listing');
  *
  * @class
  */
-var AnalysisPanel = React.createClass({
+export default class AnalysisPanel extends React.Component {
 
-    propTypes: {
-        canModify: React.PropTypes.bool
-    },
-
-    getInitialState: function () {
-        return {
+    constructor (props) {
+        super(props);
+        this.state = {
             activeAnalysisId: null
         };
-    },
+    }
 
-    /**
-     * Shows a detailed view of the analysis identified by the passed analysisId.
-     *
-     * @param analysisId {string} - the id of the analysis document to open detail for.
-     * @func
-     */
-    selectAnalysis: function (analysisId) {
-        this.setState({activeAnalysisId: analysisId});
-    },
+    static propTypes = {
+        _id: React.PropTypes.string,
+        analyses: React.PropTypes.array,
+        canModify: React.PropTypes.bool,
+        setProgress: React.PropTypes.func,
+        quality: React.PropTypes.object
+    };
 
-    /**
-     * Shows the AnalysisList component if analysis details are being shown.
-     *
-     * @func
-     */
-    showListing: function () {
-        this.setState({activeAnalysisId: null});
-    },
+    selectAnalysis = (analysisId) => this.setState({activeAnalysisId: analysisId});
 
-    render: function () {
+    showListing = () => this.setState({activeAnalysisId: null});
 
-        var content;
+    render () {
+
+        let content;
 
         if (!this.state.activeAnalysisId) {
             // Show the analysis listing if no activeAnalysisId is defined.
@@ -67,11 +59,9 @@ var AnalysisPanel = React.createClass({
                     setProgress={this.props.setProgress}
                 />
             );
-        }
-
-        else {
+        } else {
             // Get the analysis document that corresponds to the activeAnalysisId.
-            var analysisEntry = _.find(this.props.analyses, {_id: this.state.activeAnalysisId});
+            const analysisEntry = find(this.props.analyses, {_id: this.state.activeAnalysisId});
 
             content = (
                 <AnalysisReport
@@ -93,6 +83,4 @@ var AnalysisPanel = React.createClass({
 
 
     }
-});
-
-module.exports = AnalysisPanel;
+}

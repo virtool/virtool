@@ -1,32 +1,34 @@
 import React from "react";
 import FlipMove from "react-flip-move"
-import { forIn, includes, sortBy, flatten } from "lodash";
-import { Button } from 'virtool/js/components/Base';
+import { forIn, includes, sortBy, flatten } from "lodash-es";
 
-var PathoscopeEntry = require("./Entry");
-var PathoscopeIsolate = require("./Isolate");
+import PathoscopeEntry from "./Entry";
+import PathoscopeIsolate from "./Isolate";
 
-var PathoscopeList = React.createClass({
+export default class PathoscopeList extends React.Component {
 
-    propTypes: {
+    static propTypes = {
+        expanded: React.PropTypes.bool,
+        showReads: React.PropTypes.bool,
+        toggleIn: React.PropTypes.func,
         data: React.PropTypes.arrayOf(React.PropTypes.object).isRequired
-    },
+    };
 
-    setScroll: function (virusId, scrollLeft) {
-        _.forIn(this.refs, function (ref, key) {
+    setScroll = (virusId, scrollLeft) => {
+        forIn(this.refs, (ref, key) => {
             if (key.split("-")[0] === virusId) {
                 ref.scrollTo(scrollLeft);
             }
         });
-    },
+    };
 
-    render: function () {
+    render () {
 
-        var rows = this.props.data.map(function (item, index) {
+        let rows = this.props.data.map((item, index) => {
 
-            var expanded = _.includes(this.props.expanded, item._id);
+            const expanded = includes(this.props.expanded, item._id);
 
-            var components = [
+            const components = [
                 <PathoscopeEntry
                     key={item._id}
                     {...item}
@@ -38,20 +40,18 @@ var PathoscopeList = React.createClass({
 
             if (expanded) {
 
-                var isolateComponents = _.sortBy(item.isolates, "pi").reverse().map(function (isolate) {
-                    return (
-                        <PathoscopeIsolate
-                            ref={item._id + "-" + isolate.isolate_id}
-                            key={isolate.isolate_id}
-                            virusId={item._id}
-                            maxDepth={item.maxDepth}
-                            maxGenomeLength={item.maxGenomeLength}
-                            {...isolate}
-                            setScroll={this.setScroll}
-                            showReads={this.props.showReads}
-                        />
-                    );
-                }, this);
+                const isolateComponents = sortBy(item.isolates, "pi").reverse().map((isolate) =>
+                    <PathoscopeIsolate
+                        ref={item._id + "-" + isolate.isolate_id}
+                        key={isolate.isolate_id}
+                        virusId={item._id}
+                        maxDepth={item.maxDepth}
+                        maxGenomeLength={item.maxGenomeLength}
+                        {...isolate}
+                        setScroll={this.setScroll}
+                        showReads={this.props.showReads}
+                    />
+                );
 
                 return components.concat(
                     <div key={index} className="list-group-item pathoscope-virus-detail spaced">
@@ -62,26 +62,22 @@ var PathoscopeList = React.createClass({
 
             return components;
 
-        }, this);
+        });
 
-        rows = _.flatten(rows);
-
-        var flipMoveProps = {
-            typeName: "div",
-            className: "list-group",
-            enterAnimation: "accordianVertical",
-            leaveAnimation: false
-        };
+        rows = flatten(rows);
 
         return (
             <div style={{overflowY: "hidden"}}>
-                <FlipMove {...flipMoveProps}>
+                <FlipMove
+                    typeName="div"
+                    className="list-group"
+                    enterAnimation="accordianVertical"
+                    leaveAnimation={false}
+                >
                     {rows}
                 </FlipMove>
             </div>
         );
     }
 
-});
-
-module.exports = PathoscopeList;
+}

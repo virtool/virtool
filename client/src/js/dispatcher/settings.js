@@ -6,14 +6,18 @@
  *
  * @providesModule Settings *
  */
-import Events from "./Events";
 
-var Settings = function () {
+import { assign } from "lodash-es";
+import Events from "./events";
 
-    this.events = new Events(["change"], this);
+export default class Settings {
 
-    // This object stores settings as key value pairs.
-    this.data = {};
+    constructor () {
+        this.events = new Events(["change"], this);
+
+        // This object stores settings as key value pairs.
+        this.data = {};
+    }
 
     /**
      * Called from the dispatcher when an update to the settings is received from the server. Updates any changed values
@@ -21,10 +25,10 @@ var Settings = function () {
      *
      * @param data
      */
-    this.update = function (data) {
-        _.assign(this.data, data);
+    update = (data) => {
+        assign(this.data, data);
         this.emit("change");
-    }.bind(this);
+    };
 
     /**
      * Sets a single setting key with a new value. The change is sent to the server and passed callbacks are called
@@ -33,9 +37,9 @@ var Settings = function () {
      * @param key {string} The key whose corresponding value should be set.
      * @param value {*} - The new value.
      */
-    this.set = function (key, value) {
+    set = (key, value) => {
         // Make and object to send to the server with the structure {settingKey: newValue}.
-        var data = {};
+        let data = {};
         data[key] = value;
 
         return dispatcher.send({
@@ -51,16 +55,10 @@ var Settings = function () {
      * @param key {string} - The settings key (eg. 'hostname').
      * @returns {*} - Returns the value labelled by the passed key.
      */
-    this.get = function (key) {
+    get = (key) => {
         if (this.data.hasOwnProperty(key)) {
             // Return the setting value if the key exists in the settings object.
             return this.data[key];
-        } else {
-            // Log a warning if the key is not found.
-            console.warn("Tried to get setting with unknown key '" + key + "'");
-            return null;
         }
     };
-};
-
-module.exports = Settings;
+}

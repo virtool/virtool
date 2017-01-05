@@ -10,39 +10,50 @@
  *
  */
 
-'use strict';
-
 import React from "react";
-import { includes } from 'lodash';
+import { includes } from "lodash-es";
 import { Alert } from "react-bootstrap";
 
 import { Icon, Input, Button } from "virtool/js/components/Base";
 import { postJSON } from "virtool/js/utils";
 
-var SetupDataPath = React.createClass({
+export default class SetupDataPath extends React.Component {
 
-    getInitialState: function () {
-        return {
-            dataPath: this.props.dataPath || 'data',
+    constructor (props) {
+        super(props);
+        this.state = {
+            dataPath: this.props.dataPath || "data",
             feedback: null
         };
-    },
+    }
 
-    componentDidMount: function () {
+    static propTypes = {
+        name: React.PropTypes.string,
+        names: React.PropTypes.arrayOf(React.PropTypes.string),
+        host: React.PropTypes.string,
+        port: React.PropTypes.number,
+        dataPath: React.PropTypes.string,
+        hasCollections: React.PropTypes.bool,
+
+        updateSetup: React.PropTypes.func,
+        nextStep: React.PropTypes.func
+    };
+
+    componentDidMount () {
         this.refs.input.focus();
-    },
+    }
 
-    handleChange: function () {
+    handleChange = (event) => {
         let data = {};
         data[event.target.name] = event.target.value;
         this.setState(data);
-    },
+    };
 
-    handleSubmit: function (event) {
+    handleSubmit = (event) => {
         event.preventDefault();
 
         const args = {
-            operation: 'set_data_path',
+            operation: "set_data_path",
             host: this.props.host,
             port: this.props.port,
             name: this.props.name,
@@ -51,12 +62,12 @@ var SetupDataPath = React.createClass({
         };
 
         this.setState({pending: true, feedback: false}, function () {
-            postJSON('/', args, this.onComplete);
+            postJSON("/", args, this.onComplete);
         });
-    },
+    };
 
-    onComplete: function (data) {
-        this.setState({pending: false}, function () {
+    onComplete = (data) => {
+        this.setState({pending: false}, () => {
             if (data.failed) {
                 this.setState({
                     feedback: data
@@ -67,18 +78,17 @@ var SetupDataPath = React.createClass({
                 }, this.props.nextStep);
             }
         });
-    },
+    };
 
-    dismissError: function () {
-        this.setState({errors: null});
-    },
+    dismissError = () => this.setState({errors: null});
 
-    render: function () {
-        var warning;
+    render () {
+
+        let warning;
 
         if (this.props.hasCollections) {
             warning = (
-                <Alert bsStyle='danger'>
+                <Alert bsStyle="danger">
                     <span>
                         The chosen database already exists and contains Virtool data collections. These collections
                         require matching files in the filesystem data path to work properly. Virtool will attempt to
@@ -88,11 +98,11 @@ var SetupDataPath = React.createClass({
             );
         }
 
-        var error;
+        let error;
 
         if (this.state.feedback) {
             error = (
-                <Alert bsStyle='danger' onDismiss={this.dismissError}>
+                <Alert bsStyle="danger" onDismiss={this.dismissError}>
                     {this.state.feedback.message}
                 </Alert>
             );
@@ -100,9 +110,10 @@ var SetupDataPath = React.createClass({
 
         return (
             <form onSubmit={this.handleSubmit}>
-                <Alert bsStyle='info'>
+                <Alert bsStyle="info">
                     Virtool will use this path to store and read data including sample reads, viral and host references,
-                    and logs. The path is relative to Virtool's working directory unless prepended with <strong>/</strong>.
+                    and logs. The path is relative to Virtool"s working directory unless prepended with
+                    <strong>/</strong>.
                 </Alert>
 
                 {warning}
@@ -118,13 +129,11 @@ var SetupDataPath = React.createClass({
 
                 {error}
 
-                <Button bsStyle='primary' className='pull-right' type='submit'>
-                    <Icon name='floppy' /> Save
+                <Button bsStyle="primary" className="pull-right" type="submit">
+                    <Icon name="floppy" /> Save
                 </Button>
             </form>
         );
     }
 
-});
-
-module.exports = SetupDataPath;
+}

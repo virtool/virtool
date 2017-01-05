@@ -1,98 +1,99 @@
-import {find, findIndex, remove} from "lodash";
+import { find, findIndex, remove } from "lodash-es";
 
-function Transaction(tid, remove) {
+export class Transaction {
 
-    this.tid = tid;
-    this.remove = remove;
+    constructor (tid, remove) {
+        this.tid = tid;
+        this.remove = remove;
 
-    this.onSuccess = function () {this.succeeded = true;};
-    this.onFailure = function () {this.failed = true;};
-    this.onUpdate = function () {console.warn("Unhandled transaction update.");};
+        this.succeeded = false;
+        this.failed = false;
+        this.data = null;
+    }
 
-    this.succeeded = false;
-    this.failed = false;
-    this.data = null;
+    onSuccess = () => this.succeeded = true;
+    onFailure = () => this.failed = true;
+    onUpdate = () => console.warn("Unhandled transaction update.");
 
-    this.success = function (callback, context) {
-        this.onSuccess = function (data) {
-            this.finish(callback, data, context);
-        };
+    success (callback, context) {
+        this.onSuccess = (data) => this.finish(callback, data, context);
 
-        if (this.succeeded) this.onSuccess(this.data);
-
-        return this;
-    };
-
-    this.failure = function (callback, context) {
-        this.onFailure = function (data) {
-            this.finish(callback, data, context);
-        };
-
-        if (this.failed) this.onFailure(this.data);
+        if (this.succeeded) {
+            this.onSuccess(this.data);
+        }
 
         return this;
-    };
+    }
 
-    this.update = function (callback, context) {
+    failure (callback, context) {
+        this.onFailure = (data) => this.finish(callback, data, context);
+
+        if (this.failed) {
+            this.onFailure(this.data);
+        }
+
+        return this;
+    }
+
+    update (callback, context) {
         this.onUpdate = context ? callback.bind(context): callback;
         return this;
-    };
+    }
 
-    this.finish = function (callback, data, context) {
+    finish (callback, data, context) {
         if (callback) {
             callback = context ? callback.bind(context) : callback;
             callback(data);
         }
 
         this.remove(this.tid);
-    };
+    }
 
 }
 
-function Transactions() {
+export default class Transactions {
 
-    this.pending = [];
+    constructor () {
+        this.pending = [];
+    }
 
-    this.generateTID = function () {
+    generateTID () {
         // Make a six-digit number as a transactionId
 
-        // If the transactionId doesn't already exist, return it. Otherwise, keep generating until a unique number is
+        // If the transactionId doesn"t already exist, return it. Otherwise, keep generating until a unique number is
         // found
         let tid = Math.ceil(Math.random() * 100000);
 
         while (this.pending.hasOwnProperty(tid)) {
-            console.warn('Unavailable TID, generating another one.');
+            console.warn("Unavailable TID, generating another one.");
             tid = Math.ceil(Math.random() * 100000);
         }
 
         return tid;
-    };
+    }
 
-    this.new = function () {
-        var transaction = new Transaction(this.generateTID(), this.remove);
+    register () {
+        const transaction = new Transaction(this.generateTID(), this.remove);
         this.pending.push(transaction);
         return transaction;
-    };
+    }
 
-    this.fulfill = function (tid, succeeded, data) {
+    fulfill (tid, succeeded, data) {
         // Find the index of the transaction.
-        var transactionIndex = findIndex(this.pending, {tid: tid});
+        const transactionIndex = findIndex(this.pending, {tid: tid});
 
         // Get the transaction object.
-        var transaction = this.pending[transactionIndex];
+        const transaction = this.pending[transactionIndex];
 
         // Call the appropriate success or failure callback.
         succeeded ? transaction.onSuccess(data): transaction.onFailure(data);
-    };
+    }
 
-    this.update = function (tid, data) {
-        var transactionObj = find(this.pending, {tid: tid});
-        transactionObj.onUpdate(data);
-    };
+    update (tid, data) {
+        find(this.pending, {tid: tid}).onUpdate(data);
+    }
 
-    this.remove = function (tid) {
+    remove (tid) {
         remove(this.pending, {tid: tid});
-    };
+    }
 }
-
-module.exports = Transactions;

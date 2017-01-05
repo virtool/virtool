@@ -1,48 +1,43 @@
 import React from "react";
 import FlipMove from "react-flip-move";
-import {sortBy} from "lodash";
-import {ListGroupItem} from "react-bootstrap";
-import Icon from "virtool/js/components/Base/Icon";
+import { sortBy } from "lodash-es";
+import { Icon, ListGroupItem } from "virtool/js/components/Base";
 import ReadFile from "./ReadFile";
 
-export default class ReadFileList extends React.Component {
+const NoReadFiles = () => (
+    <ListGroupItem>
+        <Icon name="info" /> No uploads in progress
+    </ListGroupItem>
+);
 
-    static propTypes = {
-        header: React.PropTypes.element,
-        files: React.PropTypes.arrayOf(React.PropTypes.object)
-    }
+const ReadFileList = (props) => {
 
-    render () {
+    let fileComponents;
 
-        let fileComponents;
-
-        if (this.props.files.length > 0) {
-            fileComponents = sortBy(this.props.files, "timestamp").reverse().map(file => {
-                return <ReadFile key={file._id} {...file} />
-            });
-        } else {
-            fileComponents = (
-                <ListGroupItem>
-                    <Icon name="info" /> No uploads in progress
-                </ListGroupItem>
-            );
-        }
-
-        const style = {
-            marginTop: "15px"
-        }
-
-        return (
-            <div style={style}>
-                <h5>
-                    {this.props.header}
-                </h5>
-
-                <FlipMove typeName="div" className="list-group">
-                    {fileComponents}
-                </FlipMove>
-            </div>
+    if (this.props.files.length > 0) {
+        fileComponents = sortBy(props.files, "timestamp").reverse().map(file =>
+            <ReadFile key={file._id} {...file} />
         );
+    } else {
+        fileComponents = <NoReadFiles />
     }
 
-}
+    return (
+        <div style={{marginTop: "15px"}}>
+            <h5>
+                {props.header}
+            </h5>
+
+            <FlipMove typeName="div" className="list-group">
+                {fileComponents}
+            </FlipMove>
+        </div>
+    );
+};
+
+ReadFileList.propTypes = {
+    header: React.PropTypes.element,
+    files: React.PropTypes.arrayOf(React.PropTypes.object)
+};
+
+export default ReadFileList;

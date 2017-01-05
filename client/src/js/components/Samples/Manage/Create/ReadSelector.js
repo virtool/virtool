@@ -9,40 +9,55 @@
  * @exports ReadSelector
  */
 
-"use strict";
-
-import { isEqual, includes, pull, intersection, clone, filter, endsWith, sortBy } from "lodash";
 import React from "react";
-import ReactDOM from "react-dom";
 import FlipMove from "react-flip-move"
+import { some, isEqual, includes, pull, intersection, clone, filter, endsWith, sortBy } from "lodash-es";
 import { Overlay, Popover, Panel, Label } from "react-bootstrap";
-import { Modal, Icon, Input, Button } from "virtool/js/components/Base";
+import { Icon, Input, Button } from "virtool/js/components/Base";
+
 import ReadItem from "./ReadItem";
+
+const suffixes = [".fastq", ".fq", ".fastq.gz", ".fq.gz"];
+
+const getReadyFiles = () => dispatcher.db.files.find({file_type: "reads", "ready": true});
 
 /**
  * A main view for importing samples from FASTQ files. Importing starts an import job on the server.
  *
  * @class
  */
-var ReadSelector = React.createClass({
+export default class ReadSelector extends React.Component {
 
-    propTypes: {
-        selected: React.PropTypes.arrayOf(React.PropTypes.string)
-    },
-
-    getInitialState: function () {
-        return {
-            files: dispatcher.db.files.find({file_type: "reads", "ready": true}),
+    constructor (props) {
+        super(props);
+        this.state = {
+            files: getReadyFiles(),
             filter: "",
             showAll: false
         };
-    },
+    }
 
-    shouldComponentUpdate: function (nextProps) {
+    static propTypes = {
+        select: React.PropTypes.func,
+        selected: React.PropTypes.arrayOf(React.PropTypes.string),
+        readError: React.PropTypes.string
+    };
+
+    componentDidMount () {
+        // Listen for changes to the reads collection
+        dispatcher.db.files.on("change", this.update);
+    }
+
+    shouldComponentUpdate (nextProps) {
         return !isEqual(nextProps.selected, this.props.selected) || nextProps.readError != this.props.readError;
-    },
+    }
 
-    handleSelect: function (selectedId) {
+    componentWillUnmount () {
+        // Unbind all callbacks
+        dispatcher.db.files.off("change", this.update);
+    }
+
+    handleSelect = (selectedId) => {
         let selected = this.props.selected.slice(0);
 
         if (includes(selected, selectedId)) {
@@ -53,65 +68,40 @@ var ReadSelector = React.createClass({
         }
 
         this.props.select(selected);
-    },
+    };
 
-    handleFilter: function (event) {
+    handleFilter = (event) => {
         this.setState({
             filter: event.target.value
         });
-    },
+    };
 
-    reset: function () {
-        this.setState({filter: ""}, function () {
-            this.props.select([]);
-        });
-    },
+    reset = () => {
+        this.setState({filter: ""}, () => this.props.select([]));
+    };
 
-    toggleShowAll: function () {
+    toggleShowAll = () => {
         this.setState({
             showAll: !this.state.showAll
         });
-    },
+    };
 
-    componentDidMount: function () {
-        // Listen for changes to the reads collection
-        dispatcher.db.files.on("change", this.update);
-    },
+    update = () => {
+        const files = getReadyFiles();
 
-    componentWillUnmount: function () {
-        // Unbind all callbacks
-        dispatcher.db.files.off("change", this.update);
-    },
-
-    update: function () {
-        var files = dispatcher.db.files.find({file_type: "reads", "ready": true});
-
-        this.setState({files: files}, function () {
+        this.setState({files: files}, () => {
             this.props.select(intersection(this.props.selected, files.map(f => f["_id"])));
         });
-    },
+    };
 
-    getPanelDOMNode: function () {
-        return ReactDOM.findDOMNode(this.refs.panel);
-    },
-
-    render: function () {
-
-        console.log(this.state.files);
+    render () {
 
         const loweredFilter = this.state.filter.toLowerCase();
 
         let files = clone(this.state.files);
 
         if (!this.state.showAll) {
-            files = filter(files, file => {
-                return (
-                    endsWith(file.name, ".fastq") ||
-                    endsWith(file.name, ".fq") ||
-                    endsWith(file.name, ".fastq.gz") ||
-                    endsWith(file.name, ".fq.gz")
-                );
-            });
+            files = filter(files, file => some(suffixes.map(suffix => endsWith(file.name, suffix))));
         }
 
         const fileComponents = sortBy(files, "timestamp").reverse().map((file) => {
@@ -130,15 +120,8 @@ var ReadSelector = React.createClass({
         let overlay;
 
         if (this.props.readError) {
-            // Set up an overlay to display if there is an error in state.
-            const overlayProps = {
-                target: this.getPanelDOMNode,
-                animation: false,
-                placement: "top"
-            };
-
             overlay = (
-                <Overlay {...overlayProps} show={true}>
+                <Overlay target={this.panelNode} container={this} placement="top" show={true}>
                     <Popover id="read-error-popover">
                         <span className="text-danger">At least one read file must be attached to the sample</span>
                     </Popover>
@@ -152,7 +135,7 @@ var ReadSelector = React.createClass({
                     Read Files <Label>{this.props.selected.length}/{fileComponents.length} selected</Label>
                 </label>
 
-                <Panel ref="panel">
+                <Panel ref={this.panelNode}>
                     <div style={{display: "flex"}}>
                         <div style={{flex: "1 1 auto"}}>
                             <Input
@@ -185,6 +168,4 @@ var ReadSelector = React.createClass({
             </div>
         );
     }
-});
-
-module.exports = ReadSelector;
+}

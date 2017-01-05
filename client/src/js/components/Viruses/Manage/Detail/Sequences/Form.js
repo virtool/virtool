@@ -10,7 +10,6 @@
  */
 
 import React from "react";
-import ReactDOM from "react-dom";
 import { Row, Col, Overlay, Popover, FormGroup, ControlLabel, FormControl, InputGroup } from "react-bootstrap";
 import { Icon, Input, Button, SequenceField } from "virtool/js/components/Base";
 
@@ -63,10 +62,10 @@ export default class SequenceForm extends React.Component {
     componentDidUpdate (prevProps) {
         if (!this.props.active && prevProps.active) {
             if (this.props.mode === "edit") {
-                ReactDOM.findDOMNode(this.refs.host).focus();
+                this.hostNode.focus();
             }
             if (this.props.mode === "add") {
-                ReactDOM.findDOMNode(this.refs.accession).focus();
+                this.accessionNode.focus();
             }
         }
     }
@@ -100,7 +99,7 @@ export default class SequenceForm extends React.Component {
         let accession = (
             <FormControl
                 {...sharedProps}
-                ref="accession"
+                ref={this.accessionNode}
                 type="text"
                 name="sequenceId"
                 value={this.props.sequenceId}
@@ -153,7 +152,7 @@ export default class SequenceForm extends React.Component {
                             type="text"
                             name="host"
                             label="Host"
-                            ref="host"
+                            ref={this.hostNode}
                             value={this.props.host}
                             placeholder={this.props.mode === "edit" ? "eg. Ageratum conyzoides": ""}
                             {...sharedProps}
@@ -165,7 +164,6 @@ export default class SequenceForm extends React.Component {
                         <Input
                             type="text"
                             name="definition"
-                            ref="definition"
                             label="Definition"
                             value={this.props.definition}
                             placeholder="eg. Ageratum enation virus, complete genome"
@@ -176,7 +174,6 @@ export default class SequenceForm extends React.Component {
                 <Row>
                     <Col md={12}>
                         <SequenceField
-                            ref="sequence"
                             sequence={this.props.sequence}
                             {...sharedProps}
                         />

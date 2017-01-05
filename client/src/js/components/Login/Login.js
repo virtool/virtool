@@ -28,7 +28,7 @@ export default class LoginForm extends React.Component {
         this.usernameNode.focus();
     }
 
-    componentDidUpdate(prevProps) {
+    componentDidUpdate (prevProps) {
         if (!prevProps.loginFailed && this.props.loginFailed) {
             this.usernameNode.focus();
         }

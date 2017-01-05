@@ -9,57 +9,45 @@
  * @exports DatabaseOptions
  */
 
-'use strict';
-
-var _ = require('lodash');
 import React from "react";
-var Panel = require('react-bootstrap/lib/Panel');
-
-var InputSave = require('virtool/js/components/Base/InputSave');
+import { Panel } from "react-bootstrap";
+import { InputSave } from "virtool/js/components/Base";
 
 /**
  * A form component for changing settings for connection to the VT MongoDB database.
  */
-var DatabaseOptions = React.createClass({
+export default class DatabaseOptions extends React.PureComponent {
 
-    shouldComponentUpdate: function (nextProps) {
-        return (
-            this.props.settings.db_name != nextProps.settings.db_name ||
-            this.props.settings.db_host != nextProps.settings.db_host ||
-            this.props.settings.db_port != nextProps.settings.db_port
-        );
-    },
+    static propTypes = {
+        settings: React.PropTypes.object,
+        set: React.PropTypes.func
+    };
 
-    handleSave: function (data) {
-        dispatcher.settings.set(data.name, data.value);
-    },
+    handleSave = (data) => {
+        this.props.set(data.name, data.value);
+    };
 
-    render: function () {
-        return (
-            <Panel>
-                <InputSave
-                    label='Database Name'
-                    name='db_name'
-                    onSave={this.handleSave}
-                    initialValue={this.props.settings.db_name}
-                />
-                <InputSave
-                    label='MongoDB Host'
-                    name='db_host'
-                    onSave={this.handleSave}
-                    initialValue={this.props.settings.db_host}
-                />
-                <InputSave
-                    label='MongoDB Port'
-                    name='db_port'
-                    type='number'
-                    onSave={this.handleSave}
-                    initialValue={this.props.settings.db_port}
-                />
-            </Panel>
-        );
-    }
-
-});
-
-module.exports = DatabaseOptions;
+    render = () => (
+        <Panel>
+            <InputSave
+                label="Database Name"
+                name="db_name"
+                onSave={this.handleSave}
+                initialValue={this.props.settings.db_name}
+            />
+            <InputSave
+                label="MongoDB Host"
+                name="db_host"
+                onSave={this.handleSave}
+                initialValue={this.props.settings.db_host}
+            />
+            <InputSave
+                label="MongoDB Port"
+                name="db_port"
+                type="number"
+                onSave={this.handleSave}
+                initialValue={this.props.settings.db_port}
+            />
+        </Panel>
+    )
+}

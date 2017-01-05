@@ -9,76 +9,66 @@
  * @exports GeneralOptions
  */
 
-'use strict';
-
 import React from "react";
-var Row = require('react-bootstrap/lib/Row');
-var Col = require('react-bootstrap/lib/Col');
-var Alert = require('react-bootstrap/lib/Alert');
-var Panel = require('react-bootstrap/lib/Panel');
-var Button = require('react-bootstrap/lib/Button');
+import { Row, Col, Panel } from "react-bootstrap";
 
-var SourceTypes = require('./General/SourceTypes');
-var InternalControl = require('./General/InternalControl');
-var UniqueNames = require('./General/UniqueNames');
-var SamplePermissions = require('./General/SamplePermissions');
-
+import SettingsProvider from "./SettingsProvider";
+import SourceTypes from "./General/SourceTypes";
+import InternalControl from "./General/InternalControl";
+import UniqueNames from "./General/UniqueNames";
+import SamplePermissions from "./General/SamplePermissions";
 
 /**
  * A component the contains child components that modify certain general options. A small explanation of each
  * subcomponent is also rendered.
  */
-var GeneralOptions = React.createClass({
+const GeneralOptionsInner = (props) => (
+    <div>
+        <SourceTypes {...props} />
 
-    handleClick: function () {
-        dispatcher.send({
-            interface: 'dispatcher',
-            method: 'reload',
-            data: null
-        }, this.onReloaded);
-    },
+        <InternalControl
+            {...props}
+        />
 
-    render: function () {
+        <Row>
+            <Col md={12}>
+                <h5><strong>Unique Sample Names</strong></h5>
+            </Col>
+            <Col md={6}>
+                <UniqueNames {...props} />
+            </Col>
+            <Col md={6}>
+                <Panel>
+                    Enable this feature to ensure that every created sample has a unique name. If a user
+                    attempts to assign an existing name to a new sample an error will be displayed.
+                </Panel>
+            </Col>
+        </Row>
+        <Row>
+            <Col md={12}>
+                <h5><strong>Default Sample Permissions</strong></h5>
+            </Col>
+            <Col md={6}>
+                <SamplePermissions {...props} />
+            </Col>
+            <Col md={6}>
+                <Panel>
+                    Set the method used to assign groups to new samples and the default rights.
+                </Panel>
+            </Col>
+        </Row>
+    </div>
+);
 
-        return (
-            <div>
-                <SourceTypes settings={dispatcher.settings} />
+GeneralOptionsInner.propsTypes = {
+    set: React.PropTypes.func,
+    settings: React.PropTypes.object
+};
 
-                <InternalControl
-                    settings={dispatcher.settings}
-                    viruses={dispatcher.db.viruses}
-                />
+const GeneralOptions = () => (
+    <SettingsProvider>
+        <GeneralOptionsInner />
+    </SettingsProvider>
+);
 
-                <Row>
-                    <Col md={12}>
-                        <h5><strong>Unique Sample Names</strong></h5>
-                    </Col>
-                    <Col md={6}>
-                        <UniqueNames />
-                    </Col>
-                    <Col md={6}>
-                        <Panel>
-                            Enable this feature to ensure that every created sample has a unique name. If a user
-                            attempts to assign an existing name to a new sample an error will be displayed.
-                        </Panel>
-                    </Col>
-                </Row>
-                <Row>
-                    <Col md={12}>
-                        <h5><strong>Default Sample Permissions</strong></h5>
-                    </Col>
-                    <Col md={6}>
-                        <SamplePermissions />
-                    </Col>
-                    <Col md={6}>
-                        <Panel>
-                            Set the method used to assign groups to new samples and the default rights.
-                        </Panel>
-                    </Col>
-                </Row>
-            </div>
-        )
-    }
-});
-
-module.exports = GeneralOptions;
+export default GeneralOptions;

@@ -6,30 +6,42 @@
  * @author
  * Ian Boyes
  *
- * @exports InternalControl
+ * @exports InternalControlOptions
  */
 
-'use strict';
-
-var _ = require('lodash');
 import React from "react";
-import Toggle from 'react-bootstrap-toggle';
-import TypeAhead from 'react-bootstrap-typeahead';
+import Toggle from "react-bootstrap-toggle";
+import TypeAhead from "react-bootstrap-typeahead";
 import { Row, Col, Panel } from "react-bootstrap";
-import { Flex, FlexItem, Input, Button, ListGroupItem } from "virtool/js/components/Base";
+import { Flex, FlexItem } from "virtool/js/components/Base";
 
 /**
  * A form component for setting whether an internal control should be used and which virus to use as a control.
  */
-var InternalControl = React.createClass({
+export default class InternalControlOptions extends React.Component {
 
-    getInitialState: function () {
-        return {
+    constructor (props) {
+        super(props);
+        this.state = {
             // Set true when the input field has focus.
             focused: false,
             selected: this.getSelected()
         };
-    },
+    }
+
+    static propTypes = {
+        set: React.PropTypes.func,
+        settings: React.PropTypes.object,
+        viruses: React
+    };
+
+    componentDidMount () {
+        dispatcher.db.viruses.on("change", this.update);
+    }
+
+    componentWillUnmount () {
+        dispatcher.db.viruses.off("change", this.update);
+    }
 
     /**
      * Calculates the inputValue (virus name) from the virus id of the current control (controlId). Returns an empty
@@ -37,17 +49,17 @@ var InternalControl = React.createClass({
      *
      * @func
      */
-    getSelected: function () {
+    getSelected = () => {
         // The id of the virus that is used as an internal control if there is one..
-        var controlId = this.props.settings.get('internal_control_id');
+        const controlId = this.props.settings.internal_control_id;
 
-        var virus;
+        let virus;
 
         if (controlId) {
             virus = dispatcher.db.viruses.by("_id", controlId);
         }
 
-        var selected = [];
+        let selected = [];
 
         if (virus) {
             selected.push({
@@ -57,57 +69,24 @@ var InternalControl = React.createClass({
         }
 
         return selected;
-    },
-
-    componentDidMount: function () {
-        this.props.settings.on('change', this.update);
-        this.props.viruses.on('change', this.update);
-    },
-
-    componentWillUnmount: function () {
-        this.props.settings.off('change', this.update);
-        this.props.viruses.off('change', this.update);
-    },
+    };
 
     /**
-     * Toggles use of an internal control. Updates the 'use_internal_control' setting value. Triggered by a click event
-     * on the 'enable this feature' button.
+     * Toggles use of an internal control. Updates the "use_internal_control" setting value. Triggered by a click event
+     * on the "enable this feature" button.
      *
      * @func
      */
-    toggle: function () {
-        this.props.settings.set('use_internal_control', !this.props.settings.get('use_internal_control'));
-    },
+    toggle = () => {
+        this.props.set("use_internal_control", !this.props.settings.get("use_internal_control"));
+    };
 
-    /**
-     * Refreshes the component state from the dispatcher settings object. Triggered when the settings object emits an
-     * update event.
-     *
-     * @func
-     */
-    update: function () {
-        this.setState({selected: this.getSelected()});
-    },
+    render () {
 
-    /**
-     * Handles a change in the text input field. The new value is used to filter the virus names that appear in the
-     * dropdown menu.
-     *
-     * @param selected {object} - the new selection from TypeAhead
-     * @func
-     */
-    handleChange: function (selected) {
-        this.props.settings.set('internal_control_id', selected[0].id);
-    },
-
-    render: function () {
-
-        var options = dispatcher.db.viruses.chain().find().simplesort('name').data().map(function (document) {
-            return {
-                label: document.name,
-                id: document._id
-            };
-        }, this);
+        const options = dispatcher.db.viruses.chain().find().simplesort("name").data().map(document => ({
+            label: document.name,
+            id: document._id
+        }));
 
         return (
             <div>
@@ -122,7 +101,7 @@ var InternalControl = React.createClass({
                                     on="ON"
                                     off="OFF"
                                     size="small"
-                                    active={this.props.settings.get('use_internal_control')}
+                                    active={this.props.settings.get("use_internal_control")}
                                     onChange={this.toggle}
                                 />
                             </FlexItem>
@@ -136,8 +115,8 @@ var InternalControl = React.createClass({
                             <TypeAhead
                                 options={options}
                                 selected={this.state.selected}
-                                onChange={this.handleChange}
-                                disabled={!this.props.settings.get('use_internal_control')}
+                                onChange={(selected) => this.props.set("internal_control_id", selected[0].id)}
+                                disabled={!this.props.settings.get("use_internal_control")}
                             />
                         </Panel>
                     </Col>
@@ -151,8 +130,4 @@ var InternalControl = React.createClass({
             </div>
         );
     }
-
-});
-
-module.exports = InternalControl;
-
+}

@@ -1,39 +1,46 @@
 import React from "react";
 import ResizeDetector from "react-resize-detector";
-import { intersectionWith, difference } from "lodash";
+import { intersectionWith, difference } from "lodash-es";
 import { Tab, Tabs } from "react-bootstrap";
-import { Icon, Button, Modal, ConfirmFooter } from "virtool/js/components/Base";
+import { Icon, Modal, ConfirmFooter } from "virtool/js/components/Base";
 
-var SampleDetailGeneral = require("./General/General");
-var SampleDetailQuality = require("./Quality/Quality");
-var SampleDetailAnalyses = require("./Analyses/Analyses");
-var SampleDetailRights = require("./Rights/Rights");
+import SampleDetailGeneral from "./General";
+import SampleDetailQuality from "./Quality/Quality";
+import SampleDetailAnalyses from "./Analyses/Analyses";
+import SampleDetailRights from "./Rights";
 
-var SampleDetail = React.createClass({
+export default class SampleDetail extends React.Component {
 
-    getInitialState: function () {
-        return {
+    constructor (props) {
+        super(props);
+        this.state = {
             showProgress: false,
             activeKey: "general",
             analyses: null
         };
-    },
+    }
 
-    componentDidMount: function () {
-        var analysisIds = dispatcher.db.analyses.find({sample_id: this.props.detail._id}.map(a => a["_id"]);
+    static propTypes = {
+        detail: React.PropTypes.object,
+        updateStyle: React.PropTypes.func,
+        onHide: React.PropTypes.func
+    };
+
+    componentDidMount () {
+        const analysisIds = dispatcher.db.analyses.find({sample_id: this.props.detail._id}.map(a => a["_id"]));
 
         this.retrieveAnalyses(analysisIds);
 
         dispatcher.db.analyses.on("change", this.onAnalysesChange);
-    },
+    }
 
-    componentWillUnmount: function () {
+    componentWillUnmount () {
         dispatcher.db.analyses.off("change", this.onAnalysesChange);
-    },
+    }
 
-    retrieveAnalyses: function (analysisIds, mergeIn) {
+    retrieveAnalyses = (analysisIds, mergeIn) => {
         dispatcher.db.analyses.request("detail", {_id: analysisIds})
-            .success(function (data) {
+            .success((data) => {
                 if (mergeIn) {
                     data = data.concat(mergeIn);
                 }
@@ -41,18 +48,18 @@ var SampleDetail = React.createClass({
                 this.setState({
                     analyses: data
                 });
-            }, this);
-    },
+            });
+    };
 
-    onAnalysesChange: function () {
+    onAnalysesChange = () => {
 
-        var nextAnalyses = dispatcher.db.analyses.find({sample_id: this.props.detail._id});
+        const nextAnalyses = dispatcher.db.analyses.find({sample_id: this.props.detail._id});
 
-        var toRetain = intersectionWith(this.state.analyses, nextAnalyses, function (arrValue, othValue) {
-            return arrValue._id === othValue._id && arrValue._version === othValue._version;
-        });
+        const toRetain = intersectionWith(this.state.analyses, nextAnalyses, (arrValue, othValue) =>
+            arrValue._id === othValue._id && arrValue._version === othValue._version
+        );
 
-        var toRetrieve = difference(
+        const toRetrieve = difference(
             nextAnalyses.map(a => a["_id"]),
             toRetain.map(a => a["_id"])
         );
@@ -64,46 +71,36 @@ var SampleDetail = React.createClass({
         this.setState({
             analyses: toRetain.length === 0 ? null: toRetain
         });
-    },
+    };
 
-    handleSelect: function (eventKey) {
-        this.setState({activeKey: eventKey});
-    },
+    handleSelect = (eventKey) => this.setState({activeKey: eventKey});
 
-    handleResize: function () {
-        this.props.updateStyle();
-    },
+    handleResize = () => this.props.updateStyle();
 
-    setProgress: function (value) {
-        this.setState({
-            showProgress: value
-        });
-    },
+    setProgress = (value) => this.setState({showProgress: value});
 
-    remove: function () {
-        dispatcher.db.samples.request('remove_sample', {_id: this.props.detail._id});
-    },
+    remove = () => dispatcher.db.samples.request("remove_sample", {_id: this.props.detail._id});
 
-    render: function () {
+    render () {
 
-        var data = this.props.detail;
+        const data = this.props.detail;
         
-        var body;
-        var footer;
+        let body;
+        let footer;
 
         if (data.imported === true) {
 
-            var isOwner = dispatcher.user.name === this.props.detail.username;
+            const isOwner = dispatcher.user.name === this.props.detail.username;
 
-            var canModify = (
+            const canModify = (
                 data.all_write ||
                 (data.group_write && dispatcher.user.groups.indexOf(data.group) > -1) ||
                 isOwner
             );
 
-            var buttonContent = (
+            const buttonContent = (
                 <span>
-                    <Icon name='remove'/> Remove
+                    <Icon name="remove"/> Remove
                 </span>
             );
 
@@ -113,12 +110,12 @@ var SampleDetail = React.createClass({
                         onHide={this.props.onHide}
                         buttonContent={buttonContent}
                         callback={this.remove}
-                        message='Are you sure you want to delete this sample?'
+                        message="Are you sure you want to delete this sample?"
                     />
                 );
             }
 
-            var tabContent;
+            let tabContent;
 
             switch (this.state.activeKey) {
 
@@ -152,23 +149,21 @@ var SampleDetail = React.createClass({
 
             }
 
-            var tabsProps = {
-                id: "sample-detail-tabs",
-                activeKey: this.state.activeKey,
-                onSelect: this.handleSelect
-            };
+            let rightsTab;
 
-            var rightsTab;
-
-            if (isOwner || dispatcher.user.groups.indexOf('administrator') > -1) {
-                rightsTab = <Tab eventKey="rights" title={<Icon name='key' />} />;
+            if (isOwner || dispatcher.user.groups.indexOf("administrator") > -1) {
+                rightsTab = <Tab eventKey="rights" title={<Icon name="key" />} />;
             }
 
             body = (
-                <Tabs {...tabsProps}>
-                    <Tab eventKey="general" title='General' />
-                    <Tab eventKey="quality" title='Quality' />
-                    <Tab eventKey="analyses" title='Analyses' />
+                <Tabs
+                    id="sample-detail-tabs"
+                    activeKey={this.state.activeKey}
+                    onSelect={this.handleSelect}
+                >
+                    <Tab eventKey="general" title="General" />
+                    <Tab eventKey="quality" title="Quality" />
+                    <Tab eventKey="analyses" title="Analyses" />
                     {rightsTab}
 
                     <Tab.Content>
@@ -178,9 +173,9 @@ var SampleDetail = React.createClass({
             );
         } else {
             body = (
-                <div className='text-center'>
+                <div className="text-center">
                     <p>Sample is being imported...</p>
-                    <p><Icon name='spinner' pending={true} /></p>
+                    <p><Icon name="spinner" pending={true} /></p>
                 </div>
             );
         }
@@ -203,6 +198,4 @@ var SampleDetail = React.createClass({
             </div>
         )
     }
-});
-
-module.exports = SampleDetail;
+}
