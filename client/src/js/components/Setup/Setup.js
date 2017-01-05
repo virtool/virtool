@@ -10,7 +10,7 @@
  */
 
 import React from "react";
-import { omit, includes, assign } from "lodash-es";
+import { omit, includes, assign } from "lodash";
 import { Navbar, Grid, Row, Col, Panel, ListGroup } from "react-bootstrap";
 import { Icon } from "virtool/js/components/Base";
 import { postJSON } from "virtool/js/utils";

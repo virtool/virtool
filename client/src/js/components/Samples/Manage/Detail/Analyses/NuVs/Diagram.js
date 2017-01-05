@@ -1,6 +1,6 @@
 import * as d3 from "d3";
 import React from "react";
-import { min, max } from "lodash-es";
+import { min, max } from "lodash";
 
 const margin = {
     top: 15,

@@ -12,7 +12,7 @@
 import React from "react";
 import FlipMove from "react-flip-move";
 import Toggle from "react-bootstrap-toggle";
-import { remove, capitalize } from "lodash-es";
+import { remove, capitalize } from "lodash";
 import { Row, Col, Panel, Overlay, Popover, FormGroup, InputGroup, FormControl } from "react-bootstrap";
 import { Flex, FlexItem, Icon, Button, ListGroupItem } from "virtool/js/components/Base";
 

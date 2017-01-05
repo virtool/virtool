@@ -1,7 +1,7 @@
 import React from "react";
 import Moment from "moment";
 import Numeral from "numeral";
-import { capitalize } from "lodash-es";
+import { capitalize } from "lodash";
 import { Panel } from "react-bootstrap";
 import { Icon, InputCell } from "virtool/js/components/Base";
 

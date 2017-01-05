@@ -10,7 +10,7 @@
  */
 
 import React from "react";
-import { pick, merge } from "lodash-es";
+import { pick, merge } from "lodash";
 import Ps from "perfect-scrollbar";
 
 export class Scroll extends React.Component {

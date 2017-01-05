@@ -12,7 +12,7 @@
 
 import React from "react";
 import FlipMove from "react-flip-move"
-import { sortBy } from "lodash-es";
+import { sortBy } from "lodash";
 import HistoryItem from "./HistoryItem";
 
 const getInitialState = () => ({

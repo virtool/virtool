@@ -9,11 +9,11 @@
  * @exports HMMTable
  */
 
-import { capitalize } from "lodash-es";
+import { capitalize } from "lodash";
 import React from "react";
 import FlipMove from "react-flip-move"
 import { Table } from "react-bootstrap";
-import { Icon, Flex, Paginator } from "virtool/js/components/Base";
+import { Icon, Flex, FlexItem, Paginator } from "virtool/js/components/Base";
 
 import HMMEntry from "./Entry";
 
@@ -36,18 +36,18 @@ export class CaretHeader extends React.Component {
 
         if (this.props.showCaret) {
             caret = (
-                <Flex.Item pad={5}>
+                <FlexItem pad={5}>
                     <Icon name={"caret-" + (this.props.descending ? "up": "down")} />1
-                </Flex.Item>
+                </FlexItem>
             );
         }
 
         return (
             <div className="pointer" onClick={this.sort}>
                 <Flex>
-                    <Flex.Item>
+                    <FlexItem>
                         {capitalize(this.props.name)}
-                    </Flex.Item>
+                    </FlexItem>
                     {caret}
                 </Flex>
             </div>

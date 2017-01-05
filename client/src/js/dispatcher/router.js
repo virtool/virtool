@@ -7,7 +7,7 @@
  * @providesModule Collection *
  */
 
-import { assign, find } from "lodash-es";
+import { assign, find } from "lodash";
 import Events from "./events";
 
 import WelcomeView from "virtool/js/components/Home/Welcome";
@@ -67,7 +67,7 @@ const routerStructure = [
             {key: "manage", component: ManageViruses},
             {key: "history", component: VirusHistory},
             {key: "index", component: ManageIndexes},
-            {key: "hmm", label: "HMM", ManageHMM}
+            {key: "hmm", label: "HMM", component: ManageHMM}
         ]
     },
 
@@ -108,7 +108,7 @@ export default class Router {
         this.structure = routerStructure.map((base, index) =>
             assign({}, base, {
                 active: index === 0,
-                children: base.children.map((child, i) => assign({}, {active: i === 0}))
+                children: base.children.map((child, i) => assign({}, child, {active: i === 0}))
             })
         );
 

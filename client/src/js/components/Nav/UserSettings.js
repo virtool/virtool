@@ -10,7 +10,7 @@
  */
 
 import React from "react";
-import { assign } from "lodash-es";
+import { assign } from "lodash";
 import { Panel, FormGroup, FormControl, ControlLabel } from "react-bootstrap";
 import { Flex, FlexItem, Modal, Checkbox } from "virtool/js/components/Base";
 

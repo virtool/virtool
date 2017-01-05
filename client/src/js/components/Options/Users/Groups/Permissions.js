@@ -10,7 +10,7 @@
  */
 
 import React from "react";
-import { transform, sortBy } from "lodash-es";
+import { transform, sortBy } from "lodash";
 import { Panel, ListGroup } from "react-bootstrap";
 
 import Permission from "./Permission";

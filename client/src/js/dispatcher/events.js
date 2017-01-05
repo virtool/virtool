@@ -7,7 +7,7 @@
  * @providesModule Events *
  */
 
-import { transform, remove, each } from "lodash-es";
+import { transform, remove, each } from "lodash";
 
 /**
  * A simple event managing object that can be bound into other objects to make them capable of managing callback and

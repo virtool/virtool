@@ -11,7 +11,7 @@
 
 import React from "react";
 import FlipMove from "react-flip-move"
-import { find } from "lodash-es";
+import { find } from "lodash";
 import { Row, Col, Panel } from "react-bootstrap";
 import { Icon } from "virtool/js/components/Base";
 

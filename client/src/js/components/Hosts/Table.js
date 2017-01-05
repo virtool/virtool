@@ -10,7 +10,7 @@
  */
 
 import React from "react";
-import { sortBy } from "lodash-es";
+import { sortBy } from "lodash";
 import { Panel, ListGroup, ListGroupItem } from "react-bootstrap";
 import { Icon } from "virtool/js/components/Base";
 

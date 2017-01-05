@@ -12,7 +12,7 @@
 import React from "react";
 import Request from "superagent";
 import Dropzone from "react-dropzone";
-import { assign, includes } from "lodash-es";
+import { assign, includes } from "lodash";
 import { Row, Col, Modal, Panel } from "react-bootstrap";
 import { Icon, Button } from "virtool/js/components/Base/Icon";
 import { byteSize } from "virtool/js/utils";

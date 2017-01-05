@@ -12,7 +12,7 @@
 
 import React from "react";
 import {Row, Col, Alert} from "react-bootstrap";
-import { capitalize, pick, assign } from "lodash-es";
+import { capitalize, pick, assign } from "lodash";
 import { Icon, Modal, Input, Button } from "virtool/js/components/Base";
 
 import ReadSelector from "./ReadSelector";

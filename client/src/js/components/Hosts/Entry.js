@@ -10,7 +10,7 @@
  */
 
 import React from "react";
-import { pick } from "lodash-es";
+import { pick } from "lodash";
 import { Flex, FlexItem, ListGroupItem, ProgressBar }from "virtool/js/components/Base";
 
 /**

@@ -11,7 +11,7 @@
 
 import React from "react";
 import FlipMove from "react-flip-move"
-import { capitalize, find } from "lodash-es";
+import { capitalize, find } from "lodash";
 import { Row, Col } from "react-bootstrap";
 import { Modal, Icon, ListGroupItem } from "virtool/js/components/Base";
 

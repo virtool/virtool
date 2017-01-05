@@ -11,7 +11,7 @@
  */
 
 import React from "react";
-import { keys } from "lodash-es";
+import { keys } from "lodash";
 import { Label } from "react-bootstrap";
 
 /**

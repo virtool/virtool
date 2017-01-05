@@ -10,7 +10,7 @@
  */
 
 import React from "react";
-import { capitalize } from "lodash-es";
+import { capitalize } from "lodash";
 import { Row, Col } from "react-bootstrap";
 import { Input } from "virtool/js/components/Base";
 

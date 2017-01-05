@@ -1,5 +1,5 @@
 import React from "react";
-import { Flex } from "virtool/js/components/Base";
+import { Flex, FlexItem } from "virtool/js/components/Base";
 import { toScientificNotation } from "virtool/js/utils";
 import Coverage from "./Coverage";
 
@@ -64,24 +64,24 @@ export default class PathoscopeIsolate extends React.Component {
             <div>
                 <div className="pathoscope-isolate-header">
                     <Flex>
-                        <Flex.Item>
+                        <FlexItem>
                             {this.props.name}
-                        </Flex.Item>
-                        <Flex.Item pad={5}>
+                        </FlexItem>
+                        <FlexItem pad={5}>
                             <strong className="small text-success">
                                 {piValue}
                             </strong>
-                        </Flex.Item>
-                        <Flex.Item pad={5}>
+                        </FlexItem>
+                        <FlexItem pad={5}>
                             <strong className="small text-danger">
                                 {toScientificNotation(this.props.best)}
                             </strong>
-                        </Flex.Item>
-                        <Flex.Item pad={5}>
+                        </FlexItem>
+                        <FlexItem pad={5}>
                             <strong className="small text-primary">
                                 {toScientificNotation(this.props.coverage)}
                             </strong>
-                        </Flex.Item>
+                        </FlexItem>
                     </Flex>
                 </div>
                 <div ref={this.chartNode} style={chartContainerStyle}>

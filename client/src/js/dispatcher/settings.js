@@ -7,7 +7,7 @@
  * @providesModule Settings *
  */
 
-import { assign } from "lodash-es";
+import { assign } from "lodash";
 import Events from "./events";
 
 export default class Settings {

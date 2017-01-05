@@ -10,7 +10,7 @@
  */
 
 import React from "react";
-import { transform } from "lodash-es";
+import { transform } from "lodash";
 import TaskArgNode from "./TaskArgNode";
 
 /**

@@ -17,8 +17,6 @@ import Import from "./Manage/Import";
 import VirusList from "./Manage/List";
 import VirusToolbar from "./Manage/Toolbar";
 
-const findTermTest = {$regex: [this.state.findTerm, "i"]};
-
 /**
  * A main window component used for viewing all viruses in the reference database and adding new viruses via a modal
  * form.
@@ -89,7 +87,7 @@ export default class ManageViruses extends React.Component {
 
         if (this.state.findTerm) {
 
-
+            const findTermTest = {$regex: [this.state.findTerm, "i"]};
 
             documents = documents.find({$or: [
                 {name: findTermTest},

@@ -10,7 +10,7 @@
  */
 
 import React from "react";
-import { includes } from "lodash-es";
+import { includes } from "lodash";
 import { Row, Col } from "react-bootstrap";
 import { ListGroupItem } from "virtool/js/components/Base";
 import { getTaskDisplayName } from "virtool/js/utils";

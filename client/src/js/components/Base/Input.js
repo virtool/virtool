@@ -102,7 +102,7 @@ export class Input extends React.Component {
                 <FormGroup>
                     {label}
                     <FormControl
-                        ref={this.inputNode}
+                        inputRef={ref => this.inputNode = ref}
                         type={this.props.type}
                         name={this.props.name}
                         rows={this.props.rows}

@@ -10,9 +10,9 @@
  */
 
 import React from "react";
-import { sortBy, every, values } from "lodash-es";
+import { sortBy, every, values } from "lodash";
 import { Row, Col, Modal, Badge, ListGroup, ListGroupItem } from "react-bootstrap";
-import { Icon, Flex, Pulse } from "virtool/js/components/Base";
+import { Icon, Flex, FlexItem, Pulse } from "virtool/js/components/Base";
 import { byteSize } from "virtool/js/utils";
 
 import HMMErrors from "./Errors";
@@ -125,9 +125,9 @@ export default class HMMFiles extends React.Component {
         } else {
             content = (
                 <Flex justifyContent="center">
-                    <Flex.Item>
+                    <FlexItem>
                         <Pulse color="#337ab7" size="50px" />
-                    </Flex.Item>
+                    </FlexItem>
                 </Flex>
             );
         }

@@ -10,7 +10,7 @@
  */
 
 import React from "react";
-import { capitalize, includes} from "lodash-es";
+import { capitalize, includes} from "lodash";
 import { Row, Col, Panel, ListGroup } from "react-bootstrap";
 import { ListGroupItem, Checkbox, Icon, Help } from "virtool/js/components/Base";
 

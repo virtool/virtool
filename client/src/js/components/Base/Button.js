@@ -10,7 +10,7 @@
  */
 
 import React from "react";
-import { omit } from "lodash-es";
+import { omit } from "lodash";
 import { Button as BsButton, Tooltip, OverlayTrigger } from "react-bootstrap";
 
 /**

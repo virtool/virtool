@@ -10,7 +10,7 @@
  */
 
 import * as d3 from "d3";
-import { max } from "lodash-es";
+import { max } from "lodash";
 import Numeral from "numeral";
 
 const margin = {

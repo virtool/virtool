@@ -1,6 +1,6 @@
 import React from "react";
 import FlipMove from "react-flip-move"
-import { forIn, includes, sortBy, flatten } from "lodash-es";
+import { forIn, includes, sortBy, flatten } from "lodash";
 
 import PathoscopeEntry from "./Entry";
 import PathoscopeIsolate from "./Isolate";

@@ -41,16 +41,14 @@ export default class Bar extends React.Component {
         });
     };
 
-    render () {
-        return (
-            <div>
-                <ParentBar />
-                <ChildBar />
-                <LostConnection
-                    show={this.state.closed}
-                    onHide={this.showLostConnection}
-                />
-            </div>
-        )
-    }
+    render = () => (
+        <div>
+            <ParentBar />
+            <ChildBar />
+            <LostConnection
+                show={this.state.closed}
+                onHide={this.showLostConnection}
+            />
+        </div>
+    );
 }

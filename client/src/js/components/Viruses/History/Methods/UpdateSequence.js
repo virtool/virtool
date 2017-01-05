@@ -10,7 +10,7 @@
  */
 
 import React from "react";
-import { capitalize, filter } from "lodash-es";
+import { capitalize, filter } from "lodash";
 import { ListGroup } from "react-bootstrap";
 import { ListGroupItem, Icon, Input } from "virtool/js/components/Base"
 import { formatIsolateName } from "virtool/js/utils";

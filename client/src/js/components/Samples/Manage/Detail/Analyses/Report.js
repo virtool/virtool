@@ -1,5 +1,5 @@
 import React from "react";
-import { includes, upperFirst, camelCase } from "lodash-es";
+import { includes, upperFirst, camelCase } from "lodash";
 import Numeral from "numeral";
 import { Table } from "react-bootstrap";
 import { Icon, Button, RelativeTime } from "virtool/js/components/Base";

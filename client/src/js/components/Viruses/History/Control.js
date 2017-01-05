@@ -11,7 +11,7 @@
 
 import React from "react";
 import { FormGroup, InputGroup, FormControl } from "react-bootstrap";
-import { Flex, Icon } from "virtool/js/components/Base";
+import { Flex, FlexItem, Icon } from "virtool/js/components/Base";
 
 /**
  * A control bar that is shown above the history documents. Allows searching for changes in a particular virus and for
@@ -45,7 +45,7 @@ export default class HistoryControl extends React.Component {
 
         return (
             <Flex>
-                <Flex.Item grow={1}>
+                <FlexItem grow={1}>
                     <FormGroup>
                         <InputGroup>
                             <InputGroup.Addon>
@@ -59,8 +59,8 @@ export default class HistoryControl extends React.Component {
                             />
                         </InputGroup>
                     </FormGroup>
-                </Flex.Item>
-                <Flex.Item pad>
+                </FlexItem>
+                <FlexItem pad>
                     <FormGroup>
                         <InputGroup>
                             <InputGroup.Addon>
@@ -75,7 +75,7 @@ export default class HistoryControl extends React.Component {
                             </FormControl>
                         </InputGroup>
                     </FormGroup>
-                </Flex.Item>
+                </FlexItem>
             </Flex>
         );
     }

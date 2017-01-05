@@ -10,7 +10,7 @@
  */
 
 import * as d3 from "d3";
-import { min, values } from "lodash-es";
+import { min, values } from "lodash";
 import * as Legend from "d3-svg-legend";
 
 /**

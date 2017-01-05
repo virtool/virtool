@@ -1,4 +1,4 @@
-import { pick, transform, without, includes, assign, every } from "lodash-es";
+import { pick, transform, without, includes, assign, every } from "lodash";
 import Bowser from "bowser";
 
 import User from "./user.js";
@@ -96,7 +96,7 @@ function Dispatcher (onReady) {
      * @func
      */
     this.send = function (message) {
-        var transaction = this.transactions.new();
+        var transaction = this.transactions.register();
         message.tid = transaction.tid;
         this.connection.send(JSON.stringify(message));
 

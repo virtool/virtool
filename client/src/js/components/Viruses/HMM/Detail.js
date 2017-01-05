@@ -10,7 +10,7 @@
  */
 
 import React from "react";
-import { sortBy, transform } from "lodash-es";
+import { sortBy, transform } from "lodash";
 import { Row, Col, Modal, Table, Badge, Label, Panel, ListGroup } from "react-bootstrap";
 import { InputCell, ListGroupItem } from "virtool/js/components/Base";
 

@@ -2,7 +2,7 @@
 import React from "react";
 import { Alert } from "react-bootstrap";
 import { Icon, Button } from "virtool/js/components/Base";
-import { assign, forEach, sortBy, max } from "lodash-es";
+import { assign, forEach, sortBy, max } from "lodash";
 import { formatIsolateName } from "virtool/js/utils";
 
 import PathoscopeController from "./Controller";

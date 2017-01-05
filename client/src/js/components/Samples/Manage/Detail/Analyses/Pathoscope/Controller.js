@@ -1,5 +1,5 @@
 import React from "react";
-import { assign, xor, sortBy, sum, map, filter } from "lodash-es";
+import { assign, xor, sortBy, sum, map, filter } from "lodash";
 import { Icon, Flex, FlexItem, Button, Checkbox } from "virtool/js/components/Base";
 import { Dropdown, MenuItem, FormGroup, InputGroup, FormControl } from "react-bootstrap";
 

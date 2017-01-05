@@ -88,6 +88,7 @@ export class ConfirmFooter extends React.Component {
     };
 
     render () {
+
         const buttons = (
             <ButtonToolbar className="pull-right">
                 <Button onClick={this.state.confirming ? this.cancel: this.props.onHide}>
@@ -101,7 +102,7 @@ export class ConfirmFooter extends React.Component {
         );
 
         return (
-            <Modal.Footer className={this.state.confirming ? ("bg-" + this.props.style): ""}>
+            <Modal.Footer className={this.state.confirming ? (`"bg-${this.props.style}`): ""}>
                 <Row>
                     <Col sm={6}>
                         {<span className="pull-left">{this.state.confirming ?  this.props.message: ""}</span>}
@@ -113,5 +114,4 @@ export class ConfirmFooter extends React.Component {
             </Modal.Footer>
         )
     }
-
 }

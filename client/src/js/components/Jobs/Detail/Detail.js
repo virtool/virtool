@@ -10,7 +10,7 @@
  */
 
 import React from "react";
-import { last } from "lodash-es";
+import { last } from "lodash";
 import { Modal } from "react-bootstrap";
 
 import ProgressTable from "./ProgressTable";

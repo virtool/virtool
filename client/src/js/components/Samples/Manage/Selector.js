@@ -11,9 +11,9 @@
  */
 
 import React from "react";
-import { filter, map, some } from "lodash-es";
+import { filter, map, some } from "lodash";
 import { FormGroup, InputGroup, FormControl } from "react-bootstrap";
-import { Icon, Flex, Button } from "virtool/js/components/Base";
+import { Icon, Flex, FlexItem, Button } from "virtool/js/components/Base";
 import { stringOrBool } from "virtool/js/propTypes";
 
 /**
@@ -75,24 +75,24 @@ export default class SampleSelector extends React.Component {
 
         if (!this.props.archived && some(this.props.selected, {analyzed: true})) {
             archiveButton = (
-                <Flex.Item pad={5}>
+                <FlexItem pad={5}>
                     <Button tip="Archive Samples" bsStyle="info" onClick={this.archive}>
                         <Icon name="box-add" />
                     </Button>
-                </Flex.Item>
+                </FlexItem>
             );
         }
 
         return (
             <div>
                 <Flex style={{marginBottom: "15px"}} alignItems="stretch">
-                    <Flex.Item shrink={0}>
+                    <FlexItem shrink={0}>
                         <Button onClick={this.props.selectNone} style={{padding: "6px 15px"}}>
                             Selected {selectedCount}
                         </Button>
-                    </Flex.Item>
+                    </FlexItem>
 
-                    <Flex.Item grow={1} pad={5}>
+                    <FlexItem grow={1} pad={5}>
                         <form onSubmit={this.handleSubmit}>
                             <FormGroup bsClass="form-group no-margin">
                                 <InputGroup>
@@ -116,7 +116,7 @@ export default class SampleSelector extends React.Component {
                                 </InputGroup>
                             </FormGroup>
                         </form>
-                    </Flex.Item>
+                    </FlexItem>
 
                     {archiveButton}
                 </Flex>

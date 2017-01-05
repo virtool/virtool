@@ -1,4 +1,4 @@
-import { find, findIndex, remove } from "lodash-es";
+import { find, findIndex, remove } from "lodash";
 
 export class Transaction {
 

@@ -10,7 +10,7 @@
  */
 
 import React from "react";
-import { isEqual } from "lodash-es";
+import { isEqual } from "lodash";
 import { Table, Panel } from "react-bootstrap";
 import { Icon } from "virtool/js/components/Base";
 

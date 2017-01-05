@@ -11,7 +11,7 @@
 
 import CX from "classnames";
 import React from "react";
-import { assign } from "lodash-es";
+import { assign } from "lodash";
 import { Row, Col, Collapse } from "react-bootstrap";
 import { Icon, Radio, ListGroupItem } from "virtool/js/components/Base";
 import { formatIsolateName } from "virtool/js/utils";

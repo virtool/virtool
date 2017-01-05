@@ -1,10 +1,10 @@
 "use strict";
 
 import React from "react";
-import { find } from "lodash-es";
+import { find } from "lodash";
 import { Panel } from "react-bootstrap";
 
-import AnalysisList from "./Listing";
+import AnalysisList from "./List";
 import AnalysisReport from "./Report";
 
 /**

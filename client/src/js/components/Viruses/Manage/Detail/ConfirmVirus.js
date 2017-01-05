@@ -10,10 +10,10 @@
  */
 
 import React from "react";
-import { find } from "lodash-es";
+import { find } from "lodash";
 import { Alert, Collapse } from "react-bootstrap";
 import { formatIsolateName } from "virtool/js/utils";
-import { Flex, Icon, Button } from "virtool/js/components/Base";
+import { Flex, FlexItem, Icon, Button } from "virtool/js/components/Base";
 
 const getInitialState = () => ({
     error: false,
@@ -165,13 +165,13 @@ export default class ConfirmVirus extends React.PureComponent {
         } else {
             content = (
                 <Flex alignItems="center">
-                    <Flex.Item grow={1}>
+                    <FlexItem grow={1}>
                         This virus was modified since the last index rebuild. Verify that it is ready to be included in
                         the next rebuild.
-                    </Flex.Item>
-                    <Flex.Item grow={0} pad={15}>
+                    </FlexItem>
+                    <FlexItem grow={0} pad={15}>
                         {verifyButton}
-                    </Flex.Item>
+                    </FlexItem>
                 </Flex>
             );
         }

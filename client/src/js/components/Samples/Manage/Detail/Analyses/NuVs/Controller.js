@@ -1,9 +1,9 @@
 import React from "react";
-import { assign, filter } from "lodash-es";
+import { assign, filter } from "lodash";
 import { Table, FormGroup, InputGroup, FormControl, Dropdown, MenuItem } from "react-bootstrap";
 import { Flex, FlexItem, Icon, Button, Checkbox } from "virtool/js/components/Base";
 
-import NuVsList from "./List.jsx";
+import NuVsList from "./List";
 
 export default class NuVsController extends React.PureComponent {
 

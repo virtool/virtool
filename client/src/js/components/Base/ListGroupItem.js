@@ -10,7 +10,7 @@
  */
 
 import React from "react";
-import { pick } from "lodash-es";
+import { pick } from "lodash";
 import { ListGroupItem as BsListGroupItem } from "react-bootstrap";
 
 /**

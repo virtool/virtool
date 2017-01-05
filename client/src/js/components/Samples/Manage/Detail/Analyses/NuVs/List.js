@@ -1,4 +1,4 @@
-import { assign, flatten, filter, includes, xor } from "lodash-es";
+import { assign, flatten, filter, includes, xor } from "lodash";
 import React from "react";
 import FlipMove from "react-flip-move";
 

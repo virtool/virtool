@@ -46,7 +46,7 @@ export default class LoginForm extends React.Component {
         return (
             <form onSubmit={this.handleSubmit}>
                 <Input
-                    ref="username"
+                    ref={(input) => this.usernameNode = input}
                     type="text"
                     label="Username"
                     name="username"

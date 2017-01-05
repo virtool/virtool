@@ -10,10 +10,10 @@
  */
 
 import React from "react";
-import { forIn } from "lodash-es";
+import { forIn } from "lodash";
 import { Alert } from "react-bootstrap";
 import { numberToWord } from "virtool/js/utils"
-import { Icon, Flex, Button } from "virtool/js/components/Base";
+import { Icon, Flex, FlexItem, Button } from "virtool/js/components/Base";
 
 function makeSpecifier (value, noun) {
     return [(value === 1 ? "is": "are"), numberToWord(value), noun + (value === 1 ? "": "s")].join(" ")
@@ -61,11 +61,11 @@ function HMMErrors (props) {
             );
 
             button = (
-                <Flex.Item grow={0} shrink={0} pad={15}>
+                <FlexItem grow={0} shrink={0} pad={15}>
                     <Button disabled={props.pressing || props.cleaning} onClick={props.press}>
                         <Icon name="hammer" pending={props.pressing} /> Repair
                     </Button>
-                </Flex.Item>
+                </FlexItem>
             );
         }
 
@@ -99,11 +99,11 @@ function HMMErrors (props) {
             );
 
             button = (
-                <Flex.Item grow={0} shrink={0} pad={30}>
+                <FlexItem grow={0} shrink={0} pad={30}>
                     <Button disabled={props.pressing || props.cleaning} onClick={props.clean}>
                         <Icon name="hammer" pending={props.cleaning} /> Repair
                     </Button>
-                </Flex.Item>
+                </FlexItem>
             );
         }
 
@@ -115,9 +115,9 @@ function HMMErrors (props) {
                     className={error === "hmm_file" || error === "hmm_dir" ? "no-margin": null}
                 >
                     <Flex alignItems="center">
-                        <Flex.Item grow={1} shrink={1}>
+                        <FlexItem grow={1} shrink={1}>
                             {message}
-                        </Flex.Item>
+                        </FlexItem>
 
                         {button}
                     </Flex>

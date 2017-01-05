@@ -10,7 +10,7 @@
  */
 
 import * as d3 from "d3";
-import { map, unzip } from "lodash-es";
+import { map, unzip } from "lodash";
 import * as Legend from "d3-svg-legend";
 
 const margin = {

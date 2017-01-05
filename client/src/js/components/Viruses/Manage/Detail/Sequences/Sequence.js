@@ -11,7 +11,7 @@
 
 import CX from "classnames";
 import React from "react";
-import { isEqual, assign, pick } from "lodash-es";
+import { isEqual, assign, pick } from "lodash";
 import { Collapse } from "react-bootstrap";
 import { Icon } from "virtool/js/components/Base";
 

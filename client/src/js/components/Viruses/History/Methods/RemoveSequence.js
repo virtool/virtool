@@ -10,7 +10,7 @@
  */
 
 import React from "react";
-import { find } from "lodash-es";
+import { find } from "lodash";
 import { Icon } from "virtool/js/components/Base/Icon";
 import { formatIsolateName } from "virtool/js/utils";
 import { MethodWithModal, SequenceReader, bothPropTypes } from "./Base";

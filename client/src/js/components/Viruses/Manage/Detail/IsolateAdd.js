@@ -12,7 +12,7 @@
 import CX from "classnames";
 import React from "react";
 import { Collapse } from "react-bootstrap";
-import { Icon, Flex, Button } from "virtool/js/components/Base";
+import { Icon, Flex, FlexItem, Button } from "virtool/js/components/Base";
 
 import IsolateForm from "./IsolateForm";
 
@@ -131,16 +131,16 @@ export default class IsolateAdd extends React.Component {
         if (this.props.active) {
             buttons = (
                 <Flex justifyContent="flex-end">
-                    <Flex.Item>
+                    <FlexItem>
                         <Button onClick={this.props.toggleAdding}>
                             Cancel
                         </Button>
-                    </Flex.Item>
-                    <Flex.Item pad>
+                    </FlexItem>
+                    <FlexItem pad>
                         <Button bsStyle="primary" onClick={this.save}>
                             <Icon name="floppy" /> Save
                         </Button>
-                    </Flex.Item>
+                    </FlexItem>
                 </Flex>
             );
         }

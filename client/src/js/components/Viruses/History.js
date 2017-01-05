@@ -10,7 +10,7 @@
  */
 
 import React from "react";
-import { isEqual, uniq, pull, groupBy, transform, sortBy } from "lodash-es";
+import { isEqual, uniq, pull, groupBy, transform, sortBy } from "lodash";
 
 import HistoryControl from "./History/Control";
 import HistoryPager from "./History/Pager";

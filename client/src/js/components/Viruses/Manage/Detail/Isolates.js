@@ -10,7 +10,7 @@
  */
 
 import React from "react";
-import { map, difference, findIndex, find } from "lodash-es";
+import { map, difference, findIndex, find } from "lodash";
 import { Row, Col } from "react-bootstrap";
 
 import SequenceList from "./Sequences/List";

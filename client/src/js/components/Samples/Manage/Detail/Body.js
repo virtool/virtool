@@ -1,6 +1,6 @@
 import React from "react";
 import ResizeDetector from "react-resize-detector";
-import { intersectionWith, difference } from "lodash-es";
+import { intersectionWith, difference } from "lodash";
 import { Tab, Tabs } from "react-bootstrap";
 import { Icon, Modal, ConfirmFooter } from "virtool/js/components/Base";
 

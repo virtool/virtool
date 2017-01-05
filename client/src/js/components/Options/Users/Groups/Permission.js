@@ -10,7 +10,7 @@
  */
 
 import React from "react";
-import { startCase } from "lodash-es";
+import { startCase } from "lodash";
 import { Checkbox, ListGroupItem } from "virtool/js/components/Base";
 
 export default class Permission extends React.Component {

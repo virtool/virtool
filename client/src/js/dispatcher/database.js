@@ -1,4 +1,4 @@
-import { assign, forIn } from "lodash-es";
+import { assign, forIn } from "lodash";
 import Promise from "bluebird";
 import Loki from "lokijs";
 import LokiIndexedAdapter from "lokijs/src/loki-indexed-adapter";

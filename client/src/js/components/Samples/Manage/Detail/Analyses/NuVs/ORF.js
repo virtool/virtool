@@ -1,6 +1,6 @@
 import * as d3 from "d3";
 import React from "react";
-import { capitalize } from "lodash-es";
+import { capitalize } from "lodash";
 import { Flex, FlexItem } from "virtool/js/components/Base";
 
 const DEFAULT_HMM = {

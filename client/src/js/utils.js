@@ -1,6 +1,6 @@
 import Numeral from "numeral";
 import Request from "superagent";
-import { get, startCase, capitalize } from "lodash-es";
+import { get, startCase, capitalize } from "lodash";
 
 export const taskDisplayNames = {
     nuvs: "NuVs",

@@ -7,7 +7,7 @@
  * @providesModule User
  */
 
-import { assign, omit, forIn } from "lodash-es";
+import { assign, omit, forIn } from "lodash";
 import Cookie from "js-cookie";
 import Events from "./events";
 

@@ -10,7 +10,7 @@
  */
 
 import React from "react";
-import { capitalize, startCase } from "lodash-es";
+import { capitalize, startCase } from "lodash";
 import { Row, Col } from "react-bootstrap";
 import { Icon, RelativeTime, ListGroupItem, ProgressBar } from "virtool/js/components/Base";
 

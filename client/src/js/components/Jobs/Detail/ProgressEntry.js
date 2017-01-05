@@ -12,7 +12,7 @@
 import React from "react";
 import Moment from "moment";
 import { Circle } from "rc-progress";
-import { capitalize } from "lodash-es";
+import { capitalize } from "lodash";
 
 export default class ProgressEntry extends React.Component {
 

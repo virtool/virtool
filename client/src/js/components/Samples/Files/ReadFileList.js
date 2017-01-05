@@ -1,6 +1,6 @@
 import React from "react";
 import FlipMove from "react-flip-move";
-import { sortBy } from "lodash-es";
+import { sortBy } from "lodash";
 import { Icon, ListGroupItem } from "virtool/js/components/Base";
 import ReadFile from "./ReadFile";
 

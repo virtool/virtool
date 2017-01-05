@@ -1,5 +1,5 @@
 import React from "react";
-import { assign } from "lodash-es";
+import { assign } from "lodash";
 import { Modal } from "react-bootstrap";
 import { Icon } from "virtool/js/components/Base";
 import SequenceForm from "virtool/js/components/Viruses/Manage/Detail/Sequences/Form";

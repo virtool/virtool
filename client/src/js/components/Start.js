@@ -12,12 +12,12 @@
 import React from "react";
 import Cookie from "js-cookie";
 
-import { assign } from "lodash-es";
+import { assign } from "lodash";
 import { postJSON } from "virtool/js/utils";
 
 import { Flex, FlexItem, ProgressLogo } from "virtool/js/components/Base";
 
-import  Dispatcher from "virtool/js/dispatcher/main";
+import Dispatcher from "virtool/js/dispatcher/main";
 import Setup from "./Setup/Setup";
 import Main from "virtool/js/components/Main";
 import LoginDialog from "./Login/Dialog";

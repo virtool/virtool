@@ -12,7 +12,7 @@
 
 import React from "react";
 import { Row, Col, Modal, Alert, ButtonToolbar } from "react-bootstrap";
-import { Icon, Flex, Input, Button } from "virtool/js/components/Base";
+import { Icon, Flex, FlexItem, Input, Button } from "virtool/js/components/Base";
 
 const getInitialState = () => ({
     name: "",
@@ -122,12 +122,12 @@ export default class AddVirus extends React.Component {
             alert = (
                 <Alert bsStyle="danger">
                     <Flex>
-                        <Flex.Item grow={0} shrink={0}>
+                        <FlexItem grow={0} shrink={0}>
                             <Icon name="warning" />
-                        </Flex.Item>
-                        <Flex.Item grow={1} shrink={0} pad>
+                        </FlexItem>
+                        <FlexItem grow={1} shrink={0} pad>
                             {message}
-                        </Flex.Item>
+                        </FlexItem>
                     </Flex>
                 </Alert>
             );

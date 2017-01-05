@@ -12,7 +12,7 @@
 
 import React from "react";
 import CX from "classnames";
-import { round } from "lodash-es";
+import { round } from "lodash";
 
 export class AutoProgressBar extends React.Component {
 

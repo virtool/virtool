@@ -1,5 +1,5 @@
 import React from "react";
-import { pick } from "lodash-es";
+import { pick } from "lodash";
 import * as d3 from "d3";
 
 const createChart = (element, data, meta, yMax, xMin, showYAxis) => {

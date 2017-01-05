@@ -10,7 +10,7 @@
  */
 
 import React from "react";
-import { startCase } from "lodash-es";
+import { startCase } from "lodash";
 import { Table } from "react-bootstrap";
 import { Icon } from "virtool/js/components/Base";
 

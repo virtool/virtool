@@ -1,6 +1,6 @@
 import React from "react";
 import FlipMove from "react-flip-move";
-import { intersection, map, xor, includes, assign } from "lodash-es";
+import { intersection, map, xor, includes, assign } from "lodash";
 import { FormGroup, InputGroup, FormControl, ButtonGroup } from "react-bootstrap";
 import { Icon, Flex, FlexItem, Button, DetailModal } from "virtool/js/components/Base";
 import CreateSample from "./Create/Create";

@@ -11,9 +11,9 @@
 
 import React from "react";
 import CX from "classnames";
-import { assign, isEqual, pick, omit, merge } from "lodash-es";
+import { assign, isEqual, pick, omit, merge } from "lodash";
 import { Collapse } from "react-bootstrap";
-import { Flex, Icon, Button, LoadingOverlay } from "virtool/js/components/Base";
+import { Flex, FlexItem, Icon, Button, LoadingOverlay } from "virtool/js/components/Base";
 
 import SequenceForm from "./Form";
 
@@ -183,16 +183,16 @@ export default class AddSequence extends React.Component {
                         <SequenceForm {...contentProps} />
 
                         <Flex justifyContent="flex-end">
-                            <Flex.Item>
+                            <FlexItem>
                                 <Button onClick={this.props.toggleAdding}>
                                     Cancel
                                 </Button>
-                            </Flex.Item>
-                            <Flex.Item pad>
+                            </FlexItem>
+                            <FlexItem pad>
                                 <Button bsStyle="primary" onClick={this.save}>
                                     <Icon name="floppy" /> Save
                                 </Button>
-                            </Flex.Item>
+                            </FlexItem>
                         </Flex>
                     </div>
                 </Collapse>

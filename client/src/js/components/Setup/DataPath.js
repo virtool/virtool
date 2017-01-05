@@ -11,7 +11,7 @@
  */
 
 import React from "react";
-import { includes } from "lodash-es";
+import { includes } from "lodash";
 import { Alert } from "react-bootstrap";
 
 import { Icon, Input, Button } from "virtool/js/components/Base";

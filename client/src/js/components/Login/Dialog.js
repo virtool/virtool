@@ -10,7 +10,7 @@
  */
 
 import React from "react";
-import { assign } from "lodash-es";
+import { assign } from "lodash";
 import { Alert } from "react-bootstrap";
 import { Icon, Flex, FlexItem, Button } from "virtool/js/components/Base";
 

@@ -11,7 +11,7 @@
 
 import React from "react";
 import { Dropdown, MenuItem, FormGroup, InputGroup, FormControl } from "react-bootstrap";
-import { Icon, Flex } from "virtool/js/components/Base";
+import { Icon, Flex, FlexItem } from "virtool/js/components/Base";
 
 /**
  * A toolbar component rendered at the top of the virus manager table. Allows searching of viruses by name and
@@ -62,7 +62,7 @@ export default class HMMToolbar extends React.Component {
         return (
             <div style={{ marginBottom: "15px" }}>
                 <Flex>
-                    <Flex.Item grow={1}>
+                    <FlexItem grow={1}>
                         <FormGroup>
                             <InputGroup>
                                 <InputGroup.Addon>
@@ -77,9 +77,9 @@ export default class HMMToolbar extends React.Component {
                                 />
                             </InputGroup>
                         </FormGroup>
-                    </Flex.Item>
+                    </FlexItem>
 
-                    <Flex.Item shrink={0} grow={0} pad>
+                    <FlexItem shrink={0} grow={0} pad>
                         <Dropdown id="hmm-dropdown" pullRight onSelect={this.handleSelect}>
                             <Dropdown.Toggle noCaret>
                                 <Icon name="menu" />
@@ -93,7 +93,7 @@ export default class HMMToolbar extends React.Component {
                                 </MenuItem>
                             </Dropdown.Menu>
                         </Dropdown>
-                    </Flex.Item>
+                    </FlexItem>
                 </Flex>
             </div>
         );

@@ -10,7 +10,7 @@
  */
 
 import React from "react";
-import { transform, size } from "lodash-es";
+import { transform, size } from "lodash";
 import { Icon } from "virtool/js/components/Base";
 
 /**

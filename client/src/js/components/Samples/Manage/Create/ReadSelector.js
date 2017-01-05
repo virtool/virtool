@@ -11,7 +11,7 @@
 
 import React from "react";
 import FlipMove from "react-flip-move"
-import { some, isEqual, includes, pull, intersection, clone, filter, endsWith, sortBy } from "lodash-es";
+import { some, isEqual, includes, pull, intersection, clone, filter, endsWith, sortBy } from "lodash";
 import { Overlay, Popover, Panel, Label } from "react-bootstrap";
 import { Icon, Input, Button } from "virtool/js/components/Base";
 

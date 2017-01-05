@@ -11,7 +11,7 @@
 
 import React from "react";
 import CX from "classnames";
-import { upperFirst, camelCase } from "lodash-es";
+import { upperFirst, camelCase } from "lodash";
 import { Row, Col, ProgressBar } from "react-bootstrap";
 import { Icon, RelativeTime } from "virtool/js/components/Base";
 

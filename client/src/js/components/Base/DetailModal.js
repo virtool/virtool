@@ -10,7 +10,7 @@
  */
 
 import React from "react";
-import { cloneDeep } from "lodash-es";
+import { cloneDeep } from "lodash";
 import { Pulse, Modal } from "./";
 
 /**

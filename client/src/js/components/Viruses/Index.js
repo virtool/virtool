@@ -11,7 +11,7 @@
 
 import React from "react";
 import FlipMove from "react-flip-move"
-import { sortBy } from "lodash-es";
+import { sortBy } from "lodash";
 import { Alert } from "react-bootstrap";
 import { Icon } from "virtool/js/components/Base";
 

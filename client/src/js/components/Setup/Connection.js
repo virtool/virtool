@@ -10,7 +10,7 @@
  */
 
 import React from "react";
-import { assign } from "lodash-es";
+import { assign } from "lodash";
 import { Row, Col, Alert, ButtonToolbar } from "react-bootstrap";
 import { Button, Icon, Input } from "virtool/js/components/Base"
 import { postJSON } from "virtool/js/utils";

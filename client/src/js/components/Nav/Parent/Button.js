@@ -10,7 +10,7 @@
  */
 
 import React from "react";
-import { capitalize } from "lodash-es";
+import { capitalize } from "lodash";
 import { NavItem } from "react-bootstrap";
 import { Flex, FlexItem, Icon } from "virtool/js/components/Base";
 

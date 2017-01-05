@@ -10,9 +10,9 @@
  */
 
 import React from "react";
-import { filter } from "lodash-es";
+import { filter } from "lodash";
 import { Alert, Collapse } from "react-bootstrap";
-import { Flex, Icon, Button } from "virtool/js/components/Base";
+import { Flex, FlexItem, Icon, Button } from "virtool/js/components/Base";
 
 export default class IndexRebuild extends React.PureComponent {
 
@@ -101,12 +101,12 @@ export default class IndexRebuild extends React.PureComponent {
 
             if (this.state.canRebuild) {
                 button = (
-                    <Flex.Item pad={20}>
+                    <FlexItem pad={20}>
                         <Button bsStyle="primary" onClick={this.rebuild} disabled={this.state.pending} pullRight>
                             <Icon name="hammer" pending={this.state.pending}/>&nbsp;
                             {this.state.pending ? "Rebuilding" : "Rebuild"}
                         </Button>
-                    </Flex.Item>
+                    </FlexItem>
                 );
             }
 
@@ -122,9 +122,9 @@ export default class IndexRebuild extends React.PureComponent {
             <div>
                 <Alert bsStyle="info">
                     <Flex alignItems="center">
-                        <Flex.Item grow={1}>
+                        <FlexItem grow={1}>
                             {message}
-                        </Flex.Item>
+                        </FlexItem>
                         {button}
                     </Flex>
                 </Alert>

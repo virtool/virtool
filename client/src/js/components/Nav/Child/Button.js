@@ -11,7 +11,7 @@
 
 import React from "react";
 import CX from "classnames";
-import { capitalize } from "lodash-es";
+import { capitalize } from "lodash";
 
 /**
  * The button for a secondary navbar which renders a single child route of a primary route.

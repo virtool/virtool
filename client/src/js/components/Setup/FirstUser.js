@@ -10,7 +10,7 @@
  */
 
 import React from "react";
-import { pick } from "lodash-es";
+import { pick } from "lodash";
 import { Row, Col, Alert } from "react-bootstrap";
 import { Icon, Input, Button } from "virtool/js/components/Base";
 

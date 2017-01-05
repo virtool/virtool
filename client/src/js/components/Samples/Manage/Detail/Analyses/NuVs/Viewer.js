@@ -1,5 +1,5 @@
 import React from "react";
-import { sortBy, some, assign, filter, reduce } from "lodash-es";
+import { sortBy, some, assign, filter, reduce } from "lodash";
 
 import NuVsController from "./Controller";
 

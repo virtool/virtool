@@ -10,7 +10,7 @@
  */
 
 import React from "react";
-import { clone, assign } from "lodash-es";
+import { clone, assign } from "lodash";
 import { Alert } from "react-bootstrap";
 import { Input } from "virtool/js/components/Base";
 

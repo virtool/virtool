@@ -10,7 +10,7 @@
  */
 
 import React from "react";
-import { find, filter, clone, forEach } from "lodash-es";
+import { find, filter, clone, forEach } from "lodash";
 import { Icon } from "virtool/js/components/Base";
 import { formatIsolateName } from "virtool/js/utils";
 import { changesPropTypes, bothPropTypes } from "./Base";

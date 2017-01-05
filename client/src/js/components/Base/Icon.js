@@ -11,7 +11,7 @@
 
 import CX from "classnames";
 import React from "react";
-import { assign } from "lodash-es";
+import { assign } from "lodash";
 import { Tooltip, OverlayTrigger } from "react-bootstrap";
 
 /**
