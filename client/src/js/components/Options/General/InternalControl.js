@@ -10,10 +10,9 @@
  */
 
 import React from "react";
-import Toggle from "react-bootstrap-toggle";
-import TypeAhead from "react-bootstrap-typeahead";
+import { Typeahead } from "react-bootstrap-typeahead";
 import { Row, Col, Panel } from "react-bootstrap";
-import { Flex, FlexItem } from "virtool/js/components/Base";
+import { Flex, FlexItem, Checkbox } from "virtool/js/components/Base";
 
 /**
  * A form component for setting whether an internal control should be used and which virus to use as a control.
@@ -31,8 +30,7 @@ export default class InternalControlOptions extends React.Component {
 
     static propTypes = {
         set: React.PropTypes.func,
-        settings: React.PropTypes.object,
-        viruses: React
+        settings: React.PropTypes.object
     };
 
     componentDidMount () {
@@ -78,7 +76,7 @@ export default class InternalControlOptions extends React.Component {
      * @func
      */
     toggle = () => {
-        this.props.set("use_internal_control", !this.props.settings.get("use_internal_control"));
+        this.props.set("use_internal_control", !this.props.settings.use_internal_control);
     };
 
     render () {
@@ -97,13 +95,7 @@ export default class InternalControlOptions extends React.Component {
                                 <strong>Internal Control</strong>
                             </FlexItem>
                             <FlexItem grow={0} shrink={0}>
-                                <Toggle
-                                    on="ON"
-                                    off="OFF"
-                                    size="small"
-                                    active={this.props.settings.get("use_internal_control")}
-                                    onChange={this.toggle}
-                                />
+                                <Checkbox checked={this.props.settings.use_internal_control} onClick={this.toggle} />
                             </FlexItem>
                         </Flex>
                     </Col>
@@ -112,11 +104,11 @@ export default class InternalControlOptions extends React.Component {
                 <Row>
                     <Col md={6}>
                         <Panel>
-                            <TypeAhead
+                            <Typeahead
                                 options={options}
                                 selected={this.state.selected}
                                 onChange={(selected) => this.props.set("internal_control_id", selected[0].id)}
-                                disabled={!this.props.settings.get("use_internal_control")}
+                                disabled={!this.props.settings.use_internal_control}
                             />
                         </Panel>
                     </Col>

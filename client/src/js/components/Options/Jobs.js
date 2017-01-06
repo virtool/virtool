@@ -39,7 +39,7 @@ const JobOptionsInner = (props) => (
                 <h5><strong>Resource Limits</strong></h5>
             </Col>
             <Col md={6}>
-                <Limits {...props} />
+                <Limits settings={props.settings} set={props.set} />
             </Col>
             <Col md={6}>
                 <Panel>
@@ -52,7 +52,7 @@ const JobOptionsInner = (props) => (
                 <h5><strong>Task-specific Limits</strong></h5>
             </Col>
             <Col md={6}>
-                <Tasks {...props} />
+                <Tasks settings={props.settings} set={props.set} />
             </Col>
             <Col md={6}>
                 <Panel footer={<TaskLimitFooter />}>

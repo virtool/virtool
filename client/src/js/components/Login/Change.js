@@ -19,10 +19,8 @@ function getInitialState () {
         old: "",
         password: "",
         confirm: "",
-
         tooShort: true,
         noMatch: true,
-
         submitted: false,
         failure: false
     };
@@ -41,17 +39,13 @@ export default class PasswordChangeForm extends React.Component {
     static propTypes = {
         reset: React.PropTypes.func,
         onHide: React.PropTypes.func,
-
         showExpiry: React.PropTypes.bool,
         requireOld: React.PropTypes.bool,
-
         footer: React.PropTypes.element,
         containerClass: React.PropTypes.string
     };
 
-    componentDidMount () {
-        this.passwordNode.focus();
-    }
+    componentDidMount = () => this.passwordNode.focus();
 
     componentDidUpdate (prevProps, prevState) {
         // Focus on the first Input component if that form is submitted but fails and the fields need to be re-entered.
@@ -62,11 +56,6 @@ export default class PasswordChangeForm extends React.Component {
         }
     }
 
-    /**
-     * Handles changes in input fields. Sets state based on the new values in the field.
-     *
-     * @param event - the input "change" event.
-     */
     handleChange = (event) => {
 
         let newState = clone(this.state);
@@ -85,12 +74,6 @@ export default class PasswordChangeForm extends React.Component {
         this.setState(newState);
     };
 
-    /**
-     * Triggered when the change password form is submitted. Sends a request to the server to change the user"s
-     * password. Check
-     *
-     * @param event - the submit event from the form.
-     */
     handleSubmit = (event) => {
         event.preventDefault();
 
@@ -123,11 +106,6 @@ export default class PasswordChangeForm extends React.Component {
 
     render () {
 
-        const inputProps = {
-            type: "password",
-            onChange: this.handleChange
-        };
-
         let oldError;
         let passwordError;
         let confirmError;
@@ -140,6 +118,11 @@ export default class PasswordChangeForm extends React.Component {
                 oldError = this.state.failure ? "Old password is incorrect" : null;
             }
         }
+
+        const inputProps = {
+            type: "password",
+            onChange: this.handleChange
+        };
 
         let oldField;
 
@@ -164,7 +147,6 @@ export default class PasswordChangeForm extends React.Component {
 
         return (
             <form onSubmit={this.handleSubmit}>
-
                 <div className={this.props.containerClass}>
                     {expiry}
                     {oldField}

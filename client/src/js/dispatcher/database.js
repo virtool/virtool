@@ -7,12 +7,15 @@ if (!("indexedDB" in window)) {
     throw "Cannot find indexedDB";
 }
 
-function Database (definitions, dispatcher) {
+export default class Database {
 
-    this.collectionNames = [];
+    constructor (definitions) {
+        this.collectionNames = [];
+        this.definitions = definitions;
+    }
 
-    this.open = () => {
-        return new Promise((resolve, reject) => {
+    open () {
+        return new Promise ((resolve, reject) => {
 
             this.lokiAdapter = new LokiIndexedAdapter(`virtool-${dispatcher.settings.get("server_id")}`);
 
@@ -24,11 +27,11 @@ function Database (definitions, dispatcher) {
                 adapter: this.lokiAdapter
             });
 
-            this.loki.loadDatabase({}, function (err) {
+            this.loki.loadDatabase({}, (err) => {
                 if (err) {
                     reject();
                 } else {
-                    forIn(definitions, function (definition, collectionName) {
+                    forIn(this.definitions, (definition, collectionName) => {
                         let collection = this.loki.getCollection(collectionName);
 
                         if (!collection) {
@@ -60,7 +63,7 @@ function Database (definitions, dispatcher) {
 
                         this.collectionNames.push(collectionName);
 
-                    }.bind(this));
+                    });
 
                     window.onbeforeunload = () => {
                         dispatcher.db.collectionNames.forEach((collectionName) => {
@@ -76,7 +79,5 @@ function Database (definitions, dispatcher) {
                 }
             });
         });
-    };
+    }
 }
-
-export default Database;

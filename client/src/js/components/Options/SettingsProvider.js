@@ -12,7 +12,7 @@ export default class SettingsProvider extends React.Component {
     }
 
     static propTypes = {
-        children: React.PropTypes.element
+        children: React.PropTypes.node
     };
 
     componentDidMount () {
@@ -29,7 +29,7 @@ export default class SettingsProvider extends React.Component {
 
     render = () => (
         <div>
-            {React.cloneElement(this.props.children, {settings: this.state.settings})}
+            {React.cloneElement(this.props.children, {settings: this.state.settings, set: dispatcher.settings.set})}
         </div>
     )
 }

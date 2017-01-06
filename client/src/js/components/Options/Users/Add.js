@@ -10,8 +10,8 @@
  */
 
 import React from "react";
-import { Row, Col, ButtonToolbar } from "react-bootstrap";
-import { Modal, Icon, Input, Checkbox, Button } from "virtool/js/components/Base";
+import { Row, Col, Modal, ButtonToolbar } from "react-bootstrap";
+import { Icon, Input, Checkbox, Button } from "virtool/js/components/Base";
 
 const getInitialState = () => ({
     username: "",
@@ -71,8 +71,8 @@ export default class AddUser extends React.PureComponent {
     };
 
     render = () => (
-        <Modal show={this.props.show} onHide={this.hide} onEnter={this.modalEnter}>
-            <Modal.Header onHide={this.hide} closeButton>
+        <Modal show={this.props.show} onHide={this.props.onHide} onEnter={this.modalEnter}>
+            <Modal.Header onHide={this.props.onHide} closeButton>
                 Add User
             </Modal.Header>
             <form onSubmit={this.handleSubmit}>
@@ -81,7 +81,7 @@ export default class AddUser extends React.PureComponent {
                         <Col sm={12}>
                             <Input
                                 type="text"
-                                ref={this.usernameNode}
+                                ref={(input) => this.usernameNode = input}
                                 name="username"
                                 label="Username"
                                 value={this.state.username}
@@ -118,9 +118,6 @@ export default class AddUser extends React.PureComponent {
                 </Modal.Body>
                 <Modal.Footer>
                     <ButtonToolbar className="pull-right">
-                        <Button onClick={this.hide}>
-                            Cancel
-                        </Button>
                         <Button bsStyle="primary" type="submit">
                             <Icon name="floppy"/> Save
                         </Button>

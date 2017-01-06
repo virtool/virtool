@@ -21,7 +21,7 @@ export default class ChildButton extends React.Component {
     static propTypes = {
         label: React.PropTypes.string,
         childKey: React.PropTypes.string,
-        active: React.PropTypes.active
+        active: React.PropTypes.bool
     };
 
     /**

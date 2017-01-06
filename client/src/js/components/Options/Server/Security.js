@@ -11,8 +11,7 @@
 
 import React from "react";
 import { Row, Col, Panel } from "react-bootstrap";
-import Toggle from "react-bootstrap-toggle";
-import { Icon, Flex, FlexItem, InputSave } from "virtool/js/components/Base";
+import { Icon, Flex, FlexItem, InputSave, Checkbox } from "virtool/js/components/Base";
 
 const SecurityFooter = () => (
     <small className="text-warning">
@@ -32,12 +31,9 @@ const Security = (props) => (
                         <strong>SSL</strong>
                     </FlexItem>
                     <FlexItem>
-                        <Toggle
-                            on="ON"
-                            off="OFF"
-                            size="small"
-                            active={props.settings.use_ssl}
-                            onChange={() => props.set("use_ssl", !props.settings.use_ssl)}
+                        <Checkbox
+                            checked={props.settings.use_ssl}
+                            onClick={() => props.set("use_ssl", !props.settings.use_ssl)}
                         />
                     </FlexItem>
                 </Flex>

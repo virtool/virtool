@@ -24,6 +24,18 @@ export default class SamplePermissions extends React.Component {
         settings: React.PropTypes.object
     };
 
+    getRights = () => {
+        return {
+            group: (
+                (this.props.settings.sample_group_read ? "r": "") + (this.props.settings.sample_group_write ? "w": "")
+            ),
+
+            all: (
+                (this.props.settings.sample_all_read ? "r": "") + (this.props.settings.sample_all_write ? "w": "")
+            )
+        };
+    };
+
     changeRights = (right, value) => {
         ["read", "write"].forEach((op) => {
             this.props.set(`sample_${right}_${op}`, value.indexOf(op[0]) > -1);
@@ -32,8 +44,7 @@ export default class SamplePermissions extends React.Component {
 
     render () {
 
-        const groupRights = (this.state.sampleGroupRead ? "r": "") + (this.state.sampleGroupWrite ? "w": "");
-        const allRights = (this.state.sampleAllRead ? "r": "") + (this.state.sampleAllWrite ? "w": "");
+        const rights = this.getRights();
 
         const rightProps = {
             onChange: this.changeRights,
@@ -63,7 +74,7 @@ export default class SamplePermissions extends React.Component {
                     <Input
                         type="select"
                         ref="first"
-                        value={this.state.sampleGroup}
+                        value={this.props.settings.sample_group}
                         onChange={(event) => this.props.set("sample_group", event.target.value)}
                     >
                         <option value="none">None</option>
@@ -74,7 +85,7 @@ export default class SamplePermissions extends React.Component {
                     <Input
                         {...rightProps}
                         label="Group Rights"
-                        value={groupRights}
+                        value={rights.group}
                         onChange={(event) => this.changeRights("group", event.target.value)}
                     >
                         <option value="">None</option>
@@ -86,7 +97,7 @@ export default class SamplePermissions extends React.Component {
                         name="all"
                         {...rightProps}
                         label="All Users' Rights"
-                        value={allRights}
+                        value={rights.all}
                         onChange={(event) => this.changeRights("all", event.target.value)}
                     >
                         <option value="">None</option>

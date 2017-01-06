@@ -25,28 +25,28 @@ const Task = (props) => {
     const readOnly = includes(["add_host", "rebuild_index"], props.taskPrefix);
 
     return (
-        <ListGroupItem>
+        <ListGroupItem allowFocus>
             <h5><strong>{getTaskDisplayName(props.taskPrefix)}</strong></h5>
             <Row>
                 <Col md={4}>
                     <TaskField
-                        {...this.props}
+                        {...props}
                         resource="proc"
                         readOnly={readOnly}
                     />
                 </Col>
                 <Col md={4}>
                     <TaskField
-                        {...this.props}
+                        {...props}
                         resource="mem"
                         readOnly={readOnly}
                     />
                 </Col>
                 <Col md={4}>
                     <TaskField
-                        {...this.props}
+                        {...props}
                         resource="inst"
-                        readOnly={this.props.taskPrefix === "rebuild_index"}
+                        readOnly={props.taskPrefix === "rebuild_index"}
                     />
                 </Col>
             </Row>
@@ -55,6 +55,8 @@ const Task = (props) => {
 };
 
 Task.propTypes = {
+    set: React.PropTypes.func,
+    settings: React.PropTypes.object,
     taskPrefix: React.PropTypes.string.isRequired
 };
 

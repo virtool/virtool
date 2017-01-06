@@ -11,7 +11,7 @@
 
 import React from "react";
 import { Row, Col, Modal, ButtonToolbar } from "react-bootstrap";
-import { Icon, Button } from "virtool/js/components/Base";
+import { Icon, Button } from "./";
 
 /**
  * A special Modal.Footer component that contains an action button customized by the user, and a cancel button. When the
@@ -32,7 +32,7 @@ export class ConfirmFooter extends React.Component {
         onHide: React.PropTypes.func.isRequired,
 
         // Content to place in the action button.
-        buttonContent: React.PropTypes.element,
+        buttonContent: React.PropTypes.node,
 
         // String to pass in for bsStyle on the button.
         style: React.PropTypes.string,
@@ -48,7 +48,6 @@ export class ConfirmFooter extends React.Component {
     };
 
     static defaultProps = {
-        buttonContent: <span><Icon name="checkmark-circle"/> Submit</span>,
         style: "danger",
         message: "Are you sure?",
         closeOnConfirm: true
@@ -89,29 +88,32 @@ export class ConfirmFooter extends React.Component {
 
     render () {
 
-        const buttons = (
-            <ButtonToolbar className="pull-right">
-                <Button onClick={this.state.confirming ? this.cancel: this.props.onHide}>
-                    {this.state.confirming ? "Cancel": "Close"}
-                </Button>
-
-                <Button bsStyle={this.props.style} onClick={this.state.confirming ? this.confirm: this.showConfirm}>
-                    {this.props.buttonContent}
-                </Button>
-            </ButtonToolbar>
-        );
+        const buttonContent = this.props.buttonContent || <span><Icon name="checkmark" /> Submit</span>;
 
         return (
-            <Modal.Footer className={this.state.confirming ? (`"bg-${this.props.style}`): ""}>
+            <Modal.Footer className={this.state.confirming ? (`"bg-${this.props.style}`) : ""}>
                 <Row>
                     <Col sm={6}>
-                        {<span className="pull-left">{this.state.confirming ?  this.props.message: ""}</span>}
+                        {<span className="pull-left">{this.state.confirming ? this.props.message : ""}</span>}
                     </Col>
                     <Col sm={6}>
-                        {buttons}
+                        <ButtonToolbar className="pull-right">
+                            <Button
+                                onClick={this.state.confirming ? this.cancel : this.props.onHide}
+                            >
+                                {this.state.confirming ? "Cancel" : "Close"}
+                            </Button>
+
+                            <Button
+                                bsStyle={this.props.style}
+                                onClick={this.state.confirming ? this.confirm : this.showConfirm}
+                            >
+                                {buttonContent}
+                            </Button>
+                        </ButtonToolbar>
                     </Col>
                 </Row>
             </Modal.Footer>
-        )
+        );
     }
 }

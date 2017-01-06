@@ -10,8 +10,8 @@
  */
 
 import React, { PropTypes } from "react";
-import { Button, FormGroup, InputGroup, FormControl, ControlLabel } from "react-bootstrap";
-import { Icon } from "./";
+import { FormGroup, InputGroup, FormControl, ControlLabel } from "react-bootstrap";
+import { Icon, Button } from "./";
 
 /**
  * A single input form component with a submit addon button that behaves well for updated VT settings.
@@ -136,7 +136,7 @@ export class InputSave extends React.Component {
                     {label}
                     <InputGroup>
                         <FormControl
-                            ref={this.inputNode}
+                            inputRef={(input) => this.inputNode = input}
                             type={this.props.type}
                             autoComplete={this.props.autoComplete ? "on": "off"}
                             onChange={this.handleChange}
@@ -145,7 +145,12 @@ export class InputSave extends React.Component {
                             disabled={disabled}
                         />
                         <InputGroup.Button>
-                            <Button ref={this.buttonNode} bsStyle="primary" type="submit" disabled={disabled}>
+                            <Button
+                                type="submit"
+                                bsStyle="primary"
+                                disabled={disabled}
+                                ref={(button) => this.buttonNode = button}
+                            >
                                 <Icon name="floppy" pending={this.state.pending} />
                             </Button>
                         </InputGroup.Button>

@@ -26,7 +26,9 @@ export const Checkbox = (props) => {
     if (props.checked) {
         name = "checked";
     } else {
-        if (props.partial) name = "partial";
+        if (props.partial) {
+            name = "partial";
+        }
     }
 
     return (

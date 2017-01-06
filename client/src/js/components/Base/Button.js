@@ -10,8 +10,8 @@
  */
 
 import React from "react";
-import { omit } from "lodash";
-import { Button as BsButton, Tooltip, OverlayTrigger } from "react-bootstrap";
+import CX from "classnames";
+import { Tooltip, OverlayTrigger } from "react-bootstrap";
 
 /**
  * A react-bootstrap button that does not retain focus when clicked.
@@ -19,34 +19,52 @@ import { Button as BsButton, Tooltip, OverlayTrigger } from "react-bootstrap";
 export class Button extends React.Component {
 
     static propTypes = {
+        type: React.PropTypes.oneOf(["button", "submit"]),
+        bsSize: React.PropTypes.oneOf(["xsmall", "small", "large"]),
+        bsStyle: React.PropTypes.oneOf(["primary", "success", "danger", "warning", "info", "default"]),
+        active: React.PropTypes.bool,
+        disabled: React.PropTypes.bool,
+        block: React.PropTypes.bool,
+        pullRight: React.PropTypes.bool,
+        onClick: React.PropTypes.func,
+
         tip: React.PropTypes.oneOfType([React.PropTypes.string, React.PropTypes.element]),
         tipPlacement: React.PropTypes.oneOf(["top", "right", "bottom", "left"]),
-        pullRight: React.PropTypes.bool
+
+        children: React.PropTypes.node
     };
 
     static defaultProps = {
+        type: "button",
+        bsStyle: "default",
         pullRight: false
     };
 
-    /**
-     * Function to call when the button becomes focused. Immediately blurs focus.
-     *
-     * @param event - the focus event
-     */
-    blur = (event) =>  {
-        event.target.blur();
+    blur = () =>  {
+        this.buttonNode.blur();
     };
 
     render () {
 
-        const props = omit(this.props, "pullRight", "tip", "tipPlacement");
+        const className = CX("btn", `btn-${this.props.bsStyle}`, {
+            "btn-block": this.props.block,
+            "pull-right": this.props.pullRight,
+            "active": this.props.active,
+            "btn-xs": this.props.bsSize === "xsmall",
+            "btm-sm": this.props.bsSize === "small",
+            "btn-lg": this.props.bsSize === "large"
+        });
 
         const button = (
-            <BsButton
-                {...props}
+            <button
+                type={this.props.type}
+                ref={(button) => this.buttonNode = button}
                 onFocus={this.blur}
-                className={this.props.pullRight ? "pull-right": null}
-            />
+                className={className}
+                onClick={this.props.onClick}
+            >
+                {this.props.children}
+            </button>
         );
 
         if (this.props.tip) {
@@ -66,5 +84,4 @@ export class Button extends React.Component {
 
         return button;
     }
-
 }

@@ -64,6 +64,8 @@ class Change extends React.PureComponent {
         }
     };
 
+    clear = () => this.setState(getChangeState());
+
     render () {
 
         let alert;

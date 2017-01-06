@@ -99,7 +99,7 @@ export class ProgressBar extends React.PureComponent {
     static propTypes = {
         now: React.PropTypes.number,
         onMoved: React.PropTypes.func,
-        children: React.PropTypes.element,
+        children: React.PropTypes.node,
         progressStyle: React.PropTypes.oneOf(["modal", "list"])
     };
 

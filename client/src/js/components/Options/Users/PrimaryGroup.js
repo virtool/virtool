@@ -12,7 +12,7 @@
 import React from "react";
 import { capitalize } from "lodash";
 import { Row, Col } from "react-bootstrap";
-import { Icon, Help, Input } from "virtool/js/components/Base/Icon";
+import { Icon, Help, Input } from "virtool/js/components/Base";
 
 /**
  * A component based on ListGroupItem
@@ -50,13 +50,6 @@ export default class PrimaryGroup extends React.Component {
             <option key={groupId} value={groupId}>{capitalize(groupId)}</option>
         );
 
-        const inputProps = {
-            type: "select",
-            value: this.props.primaryGroup,
-            onChange: this.handleChange,
-            disabled: this.state.pending
-        };
-
         return (
             <div>
                 <Row>
@@ -71,7 +64,12 @@ export default class PrimaryGroup extends React.Component {
                 </Row>
                 <Row>
                     <Col md={12}>
-                        <Input {...inputProps}>
+                        <Input
+                            type="select"
+                            value={this.props.primaryGroup}
+                            onChange={this.handleChange}
+                            disabled={this.state.pending}
+                        >
                             <option key="none" value="">None</option>
                             {groupOptions}
                         </Input>

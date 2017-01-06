@@ -32,7 +32,6 @@
     "rc-progress": "^2.0.3",
     "react": "^15.4.1",
     "react-bootstrap": "^0.30.7",
-    "react-bootstrap-toggle": "^1.2.19",
     "react-bootstrap-typeahead": "^1.0.0-beta2",
     "react-cookie": "^1.0.4",
     "react-dom": "^15.4.1",

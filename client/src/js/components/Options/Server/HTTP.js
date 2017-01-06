@@ -32,11 +32,11 @@ const HTTPOptions = (props) => {
                 <Col md={6}>
                     <Panel>
                         <InputSave
-                            name="server_address"
-                            label="Address"
+                            name="server_host"
+                            label="Host"
                             autoComplete={false}
                             onSave={event => props.set("server_host", event.value)}
-                            initialValue={props.settings.server_address}
+                            initialValue={props.settings.server_host}
                         />
                         <InputSave
                             name="server_port"
@@ -51,7 +51,7 @@ const HTTPOptions = (props) => {
                             type="text"
                             autoComplete={false}
                             value={props.settings.server_id}
-                            disabled
+                            readOnly
                         />
                     </Panel>
                 </Col>

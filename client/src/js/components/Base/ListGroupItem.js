@@ -20,10 +20,7 @@ export class ListGroupItem extends React.Component {
 
     static propTypes = {
         allowFocus: React.PropTypes.bool,
-        children: React.PropTypes.oneOf([
-            React.PropTypes.element,
-            React.PropTypes.arrayOf(React.PropTypes.element)
-        ])
+        children: React.PropTypes.node.isRequired
     };
 
     static defaultProps = {

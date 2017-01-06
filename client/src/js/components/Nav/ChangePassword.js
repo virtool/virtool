@@ -12,13 +12,9 @@
 import React from "react";
 import { Modal } from "react-bootstrap";
 import { Icon, Button } from "virtool/js/components/Base";
-import { ChangePassword } from "virtool/js/components/Login/Change";
+import ChangePassword from "virtool/js/components/Login/Change";
 
 export default class ChangePasswordModal extends React.Component {
-
-    constructor (props) {
-        super(props);
-    }
 
     static propTypes = {
         show: React.PropTypes.bool.isRequired,

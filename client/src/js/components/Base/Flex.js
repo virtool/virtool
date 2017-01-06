@@ -43,10 +43,7 @@ export class Flex extends React.Component {
             "space-around"
         ]),
 
-        children: React.PropTypes.oneOfType([
-            React.PropTypes.element,
-            React.PropTypes.arrayOf(React.PropTypes.element)
-        ]).isRequired,
+        children: React.PropTypes.node.isRequired,
 
         className: React.PropTypes.string,
         style: React.PropTypes.object
@@ -89,10 +86,7 @@ export class FlexItem extends React.Component {
         pad: React.PropTypes.oneOfType([React.PropTypes.bool, React.PropTypes.number]),
         style: React.PropTypes.object,
         className: React.PropTypes.string,
-        children: React.PropTypes.oneOfType([
-            React.PropTypes.element,
-            React.PropTypes.arrayOf(React.PropTypes.element)
-        ]).isRequired
+        children: React.PropTypes.node.isRequired
     };
 
     static defaultProps = {

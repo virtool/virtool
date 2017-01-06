@@ -24,10 +24,7 @@ export default class SequenceHeader extends React.PureComponent {
     static propTypes = {
         sequenceId: React.PropTypes.string,
         definition: React.PropTypes.string,
-        children: React.PropTypes.oneOfType([
-            React.PropTypes.element,
-            React.PropTypes.arrayOf(React.PropTypes.element)
-        ])
+        children: React.PropTypes.node.isRequired
     };
 
     /**

@@ -26,10 +26,15 @@ export default class Lifecycle extends React.Component {
         };
     }
 
+    static propTypes = {
+        set: React.PropTypes.func,
+        settings: React.PropTypes.object
+    };
+
     reload = () => {
         this.setState({pendingReload: true}, () => {
             dispatcher.send({interface: "dispatcher", method: "reload", message: {}}).success(() => {
-                const domain = dispatcher.settings.get("server_address") + ":" + dispatcher.settings.get("server_port");
+                const domain = `${this.props.settings.server_address}:${this.props.settings.server_port}`;
                 const protocol = dispatcher.settings.get("use_ssl") ? "https": "http";
 
                 window.location.assign(`${protocol}://${domain}`);

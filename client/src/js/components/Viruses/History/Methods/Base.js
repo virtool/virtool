@@ -51,8 +51,8 @@ export class MethodWithModal extends React.Component {
     }
 
     static propTypes = {
-        children: React.PropTypes.element,
-        message: React.PropTypes.oneOf([React.PropTypes.element, React.PropTypes.string])
+        children: React.PropTypes.node,
+        message: React.PropTypes.oneOfType([React.PropTypes.element, React.PropTypes.string])
     };
 
     shouldComponentUpdate (nextProps, nextState) {

@@ -38,8 +38,7 @@ export class Input extends React.Component {
         onChange: PropTypes.func,
 
         style: PropTypes.object,
-
-        children: PropTypes.arrayOf(PropTypes.element)
+        children: PropTypes.node
     };
 
     static defaultProps = {

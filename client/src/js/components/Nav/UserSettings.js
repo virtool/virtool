@@ -11,8 +11,8 @@
 
 import React from "react";
 import { assign } from "lodash";
-import { Panel, FormGroup, FormControl, ControlLabel } from "react-bootstrap";
-import { Flex, FlexItem, Modal, Checkbox } from "virtool/js/components/Base";
+import { Panel, FormGroup, Modal, FormControl, ControlLabel } from "react-bootstrap";
+import { Flex, FlexItem, Checkbox, ProgressBar } from "virtool/js/components/Base";
 
 export default class UserSettings extends React.Component {
 
@@ -90,7 +90,7 @@ export default class UserSettings extends React.Component {
                     User Settings
                 </Modal.Header>
 
-                <Modal.Progress active={this.state.pending} />
+                <ProgressBar active={this.state.pending} />
 
                 <Modal.Body>
                     <Panel header="Display">

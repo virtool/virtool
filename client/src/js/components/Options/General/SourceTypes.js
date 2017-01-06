@@ -11,16 +11,15 @@
 
 import React from "react";
 import FlipMove from "react-flip-move";
-import Toggle from "react-bootstrap-toggle";
-import { remove, capitalize } from "lodash";
+import { reject, capitalize } from "lodash";
 import { Row, Col, Panel, Overlay, Popover, FormGroup, InputGroup, FormControl } from "react-bootstrap";
-import { Flex, FlexItem, Icon, Button, ListGroupItem } from "virtool/js/components/Base";
+import { Flex, FlexItem, Icon, Button, Checkbox, ListGroupItem } from "virtool/js/components/Base";
 
 /**
  * A component that allows the addition and removal of allowed source types. The use of restricted source types can also
  * be toggled.
  */
-export default class SourceTypes extends React.PureComponent {
+export default class SourceTypes extends React.Component {
 
     constructor (props) {
         super(props);
@@ -50,7 +49,7 @@ export default class SourceTypes extends React.PureComponent {
         // The source type cannot be an empty string...
         if (newSourceType !== "") {
             // Show warning if the source type already exists in the list.
-            if (this.state.sourceTypes.indexOf(newSourceType) > -1) {
+            if (this.props.settings.allowed_source_types.indexOf(newSourceType) > -1) {
                 this.setState({warning: "Source type already exists."});
             }
 
@@ -62,7 +61,7 @@ export default class SourceTypes extends React.PureComponent {
             // If the string is acceptable add it to the existing source types list and replace the one in the
             // settings with the new one.
             else {
-                this.props.set("allowed_source_types", this.state.sourceTypes.concat(newSourceType));
+                this.props.set("allowed_source_types", this.props.settings.allowed_source_types.concat(newSourceType));
                 this.setState({
                     value: "",
                     warning: null
@@ -79,32 +78,31 @@ export default class SourceTypes extends React.PureComponent {
     };
 
     removeSourceType = (sourceType) => {
-        const newSourceTypes = remove(this.state.sourceTypes, n => n !== sourceType);
-        this.props.set("allowed_source_types", newSourceTypes);
+        this.props.set("allowed_source_types", reject(this.props.settings.allowed_source_types, n => n == sourceType));
     };
 
 
     render () {
 
-        var listComponents = this.state.sourceTypes.map(function (sourceType) {
-            var removeButton;
+        const restrictSourceTypes = this.props.settings.restrict_source_types;
+
+        const listComponents = this.props.settings.allowed_source_types.map((sourceType) => {
+            let removeButton;
 
             // Only show remove button is the sourceTypes feature is enabled.
-            if (this.state.enabled) {
+            if (restrictSourceTypes) {
                 removeButton = (
                     <Icon name="remove" onClick={() => this.removeSourceType(sourceType)} pullRight />
                 );
             }
 
             return (
-                <ListGroupItem key={sourceType} disabled={!this.state.enabled}>
+                <ListGroupItem key={sourceType} disabled={!restrictSourceTypes}>
                     {capitalize(sourceType)}
                     {removeButton}
                 </ListGroupItem>
             );
         }, this);
-
-        const restrictSourceTypes = this.props.settings.restrict_source_types;
 
         return (
             <div>
@@ -115,12 +113,9 @@ export default class SourceTypes extends React.PureComponent {
                                 <strong>Source Types</strong>
                             </FlexItem>
                             <FlexItem>
-                                <Toggle
-                                    on="ON"
-                                    off="OFF"
-                                    size="small"
-                                    active={this.state.enabled}
-                                    onChange={() => this.props.set("restrict_source_types", !restrictSourceTypes)}
+                                <Checkbox
+                                    checked={restrictSourceTypes}
+                                    onClick={() => this.props.set("restrict_source_types", !restrictSourceTypes)}
                                 />
                             </FlexItem>
                         </Flex>
@@ -135,14 +130,14 @@ export default class SourceTypes extends React.PureComponent {
                                 <FormGroup>
                                     <InputGroup>
                                         <FormControl
-                                            ref={this.inputNode}
                                             type="text"
+                                            inputRef={(input) => this.inputNode = input}
                                             value={this.state.value}
                                             onChange={this.handleChange}
-                                            disabled={!this.state.enabled}
+                                            disabled={!restrictSourceTypes}
                                         />
                                         <InputGroup.Button>
-                                            <Button type="submit" bsStyle="primary" disabled={!this.state.enabled}>
+                                            <Button type="submit" bsStyle="primary" disabled={!restrictSourceTypes}>
                                                 <Icon name="plus-square" />
                                             </Button>
                                         </InputGroup.Button>
@@ -155,7 +150,7 @@ export default class SourceTypes extends React.PureComponent {
                             </FlipMove>
 
                             <Overlay
-                                target={this.getInputNode}
+                                target={this.inputNode}
                                 container={this}
                                 show={Boolean(this.state.warning)}
                                 placement="top"

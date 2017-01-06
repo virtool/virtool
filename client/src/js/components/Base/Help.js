@@ -38,9 +38,5 @@ export const Help = (props) => {
 Help.propTypes = {
     title: React.PropTypes.string,
     pullRight: React.PropTypes.bool,
-    children: React.PropTypes.oneOfType([
-        React.PropTypes.string,
-        React.PropTypes.element,
-        React.PropTypes.arrayOf(React.PropTypes.element)
-    ])
+    children: React.PropTypes.node.isRequired
 };

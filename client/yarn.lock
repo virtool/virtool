@@ -3146,10 +3146,6 @@ rc@~1.1.6:
     minimist "^1.2.0"
     strip-json-comments "~1.0.4"
 
-react-bootstrap-toggle@^1.2.19:
-  version "1.2.19"
-  resolved "https://registry.yarnpkg.com/react-bootstrap-toggle/-/react-bootstrap-toggle-1.2.19.tgz#babfc4df819088274feaa3ea1b5d6b3c4ed79b28"
-
 react-bootstrap-typeahead@^1.0.0-beta2:
   version "1.0.0-beta2"
   resolved "https://registry.yarnpkg.com/react-bootstrap-typeahead/-/react-bootstrap-typeahead-1.0.0-beta2.tgz#066b49d1fe44ab1eeb4488d96c73818fc19835ce"

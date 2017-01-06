@@ -28,15 +28,15 @@ export default class TaskField extends React.PureComponent {
     }
 
     static propTypes = {
-        settings: React.PropTypes.settings,
-        set: React.PropTypes.func,
+        set: React.PropTypes.func.isRequired,
+        settings: React.PropTypes.object.isRequired,
         readOnly: React.PropTypes.bool,
         taskPrefix: React.PropTypes.string.isRequired,
         resource: React.PropTypes.string.isRequired
     };
 
     getValue = () => {
-        return this.props.settings.data[`${this.props.taskPrefix}_${this.props.resource}`];
+        return this.props.settings[`${this.props.taskPrefix}_${this.props.resource}`];
     };
 
     handleBlur = () => {
@@ -58,18 +58,13 @@ export default class TaskField extends React.PureComponent {
             this.props.set(key, this.state.value === "" ? 1: this.state.value)
                 .success(() => this.setState({pending: false}))
                 .failure(() => this.setState({pending: false}));
-
-            this.refs.input.blur();
         });
     };
 
     render () {
 
         // Apply the "has-feedback" Bootstrap class to the input element if a setting save is pending.
-        const groupClass = CX({
-            "form-group": true,
-            "has-feedback": this.state.pending || this.props.readOnly
-        });
+        const groupClass = CX("form-group", {"has-feedback": this.state.pending || this.props.readOnly});
 
         let feedbackIcon;
 
@@ -86,12 +81,12 @@ export default class TaskField extends React.PureComponent {
             <form onSubmit={this.handleSubmit}>
                 <div className={groupClass}>
                     <input
-                        ref="input"
+                        key="input"
                         type="number"
                         className="form-control"
                         value={this.state.value}
                         onBlur={this.handleBlur}
-                        onChange={this.handleChange}
+                        onChange={(event) => this.handleChange(event)}
                         disabled={this.state.pending || this.props.readOnly}
                     />
                     {feedbackIcon}

@@ -10,8 +10,8 @@
  */
 
 import React from "react";
-import { Modal, Button } from "react-bootstrap";
-import { Icon, Input } from "virtool/js/components/Base";
+import { Modal } from "react-bootstrap";
+import { Icon, Input, Button } from "virtool/js/components/Base";
 
 /**
  * A component based on React-Bootstrap Modal that presents a form used to add a new host from a FASTA file.

@@ -37,5 +37,5 @@ Tooltip.propTypes = {
         React.PropTypes.element
     ]),
 
-    children: React.PropTypes.element
+    children: React.PropTypes.node
 };

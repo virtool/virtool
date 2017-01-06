@@ -12,14 +12,14 @@
 import React from "react";
 import FlipMove from "react-flip-move"
 import { capitalize, find } from "lodash";
-import { Row, Col } from "react-bootstrap";
-import { Modal, Icon, ListGroupItem } from "virtool/js/components/Base";
+import { Row, Col, Modal } from "react-bootstrap";
+import { Icon, ListGroupItem } from "virtool/js/components/Base";
 
 import Add from "./Add";
 import Permissions from "./Permissions";
 
 const getState = () => {
-    const documents = this.getEntries();
+    const documents = dispatcher.db.groups.chain().find().simplesort("_id").data();
 
     return {
         documents: documents,
@@ -53,8 +53,6 @@ export default class Groups extends React.Component {
         dispatcher.db.groups.off("change", this.update);
     }
 
-    getEntries = () => dispatcher.db.groups.chain().find().simplesort("_id").data();
-
     select = (groupId) => {
         this.setState({activeId: groupId});
     };
@@ -72,11 +70,6 @@ export default class Groups extends React.Component {
     render () {
 
         const groupItemComponents = this.state.documents.map((document) => {
-            const props = {
-                key: document._id,
-                active: this.state.activeId == document._id,
-                onClick: function () {this.select(document._id)}.bind(this)
-            };
 
             let removeIcon;
 
@@ -85,7 +78,11 @@ export default class Groups extends React.Component {
             }
 
             return (
-                <ListGroupItem {...props}>
+                <ListGroupItem
+                    key={document._id}
+                    active={this.state.activeId == document._id}
+                    onClick={() => this.select(document._id)}
+                >
                     {capitalize(document._id)}
                     {removeIcon}
                 </ListGroupItem>

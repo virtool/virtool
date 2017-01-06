@@ -20,13 +20,8 @@ const taskNames = ["import_reads", "rebuild_index", "add_host", "pathoscope_bowt
 /**
  * A list of items that contain form fields for modifying resource limits on specific tasks.
  */
-const Tasks = (props) => {
-    
-    const taskComponents = taskNames.map((taskPrefix) =>
-        <Task key={taskPrefix} taskPrefix={taskPrefix} {...props} />
-    );
-
-    const title = (
+const Tasks = (props) => (
+    <ListGroup>
         <ListGroupItem key="title">
             <Row>
                 <Col md={4}>CPU</Col>
@@ -34,14 +29,15 @@ const Tasks = (props) => {
                 <Col md={4}>Concurrent Jobs</Col>
             </Row>
         </ListGroupItem>
-    );
+        {taskNames.map((taskPrefix) =>
+            <Task key={taskPrefix} taskPrefix={taskPrefix} settings={props.settings} set={props.set} />
+        )}
+    </ListGroup>
+);
 
-    return (
-        <ListGroup>
-            {title}
-            {taskComponents}
-        </ListGroup>
-    );
+Tasks.propTypes = {
+    set: React.PropTypes.func,
+    settings: React.PropTypes.object
 };
 
 export default Tasks

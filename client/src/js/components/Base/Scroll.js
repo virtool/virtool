@@ -21,7 +21,7 @@ export class Scroll extends React.Component {
         wheelSpeed: React.PropTypes.number,
         wheelPropagation: React.PropTypes.bool,
         minScrollbarLength: React.PropTypes.number,
-        children: React.PropTypes.element
+        children: React.PropTypes.node
     };
 
     static defaultProps = {

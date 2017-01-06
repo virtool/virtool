@@ -134,12 +134,13 @@ export default class ManageUsers extends React.Component {
         const activeData = find(documents, {_id: this.state.activeId});
 
         const userComponents = documents.map((user) =>
-            <UserEntry
-                key={user._id}
-                _id={user._id}
-                active={activeData._id === user._id}
-                onClick={this.setActiveId}
-            />
+            <div key={user._id}>
+                <UserEntry
+                    _id={user._id}
+                    active={activeData._id === user._id}
+                    onClick={this.setActiveId}
+                />
+            </div>
         );
 
         let content;

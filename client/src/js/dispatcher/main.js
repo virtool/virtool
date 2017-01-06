@@ -1,12 +1,12 @@
 import { pick, transform, without, includes, assign, every } from "lodash";
 import Bowser from "bowser";
 
-import User from "./user.js";
-import Events from "./events.js";
-import Router from "./router.js";
-import Settings from "./settings.js";
-import Database from "./database.js";
-import Transactions from "./transactions.js";
+import User from "./user";
+import Events from "./events";
+import Router from "./router";
+import Settings from "./settings";
+import Database from "./database";
+import Transactions from "./transactions";
 
 function Dispatcher (onReady) {
 

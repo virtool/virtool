@@ -56,7 +56,7 @@ export default class Welcome extends React.Component {
                                 </tr>
                                 <tr>
                                     <th>Address</th>
-                                    <td>{this.state.settings.server_address}:{this.state.settings.server_port}</td>
+                                    <td>{this.state.settings.server_host}:{this.state.settings.server_port}</td>
                                 </tr>
                                 <tr>
                                     <th>Server ID</th>

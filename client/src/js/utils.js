@@ -8,7 +8,7 @@ export const taskDisplayNames = {
     pathoscope_snap: "PathoscopeSNAP"
 };
 
-export const getTaskDisplayName = taskName => get(taskDisplayNames, taskName, startCase(this.props.taskPrefix));
+export const getTaskDisplayName = (taskPrefix) => get(taskDisplayNames, taskPrefix, startCase(taskPrefix));
 
 export const numberDictionary = {
     0: "zero",
