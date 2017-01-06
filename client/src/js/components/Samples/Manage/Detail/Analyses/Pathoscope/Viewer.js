@@ -13,16 +13,16 @@ const PathoscopeReport = (props) => {
 
         const mappedReadCount = props.read_count;
 
-        const data = props.diagnosis.map((virus) => {
+        const data = props.diagnosis.map((baseVirus) => {
 
-            assign({}, virus, {
+            let virus = assign({}, {
                 pi: 0,
                 best: 0,
                 reads: 0,
                 coverage: 0,
                 maxGenomeLength: 0,
                 maxDepth: 0
-            });
+            }, baseVirus);
 
             // Go through each isolate associated with the virus, adding properties for weight, best-hit, read count,
             // and coverage. These values will be calculated from the sequences owned by each isolate.
@@ -37,10 +37,12 @@ const PathoscopeReport = (props) => {
                     isolate.name = "Unnamed Isolate";
                 }
 
-                isolate.pi = 0;
-                isolate.best = 0;
-                isolate.reads = 0;
-                isolate.coverage = 0;
+                assign(isolate, {
+                    pi: 0,
+                    best: 0,
+                    reads: 0,
+                    coverage: 0
+                });
 
                 // Go through each hit/sequence owned by the isolate and composite its values into the overall isolate
                 // values of weight, best-hit, read count, and coverage.

@@ -11,7 +11,7 @@
 
 import React from "react";
 import { find } from "lodash";
-import { Icon } from "virtool/js/components/Base/Icon";
+import { Icon } from "virtool/js/components/Base";
 import { formatIsolateName } from "virtool/js/utils";
 import { MethodBase, changesPropTypes, annotationPropTypes } from "./Base";
 

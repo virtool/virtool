@@ -10,7 +10,6 @@
  */
 
 import React from "react";
-import FlipMove from "react-flip-move"
 import { Flex, FlexItem } from "virtool/js/components/Base";
 
 /**
@@ -47,15 +46,7 @@ export default class SequenceHeader extends React.PureComponent {
                         <span> - {this.props.definition || "Definition"}</span>
                     </FlexItem>
                     <FlexItem>
-                        <FlipMove
-                            typeName="div"
-                            className="icon-group"
-                            leaveAnimation={false}
-                            duration={150}
-                            onClick={this.stopPropagation}
-                        >
-                            {this.props.children}
-                        </FlipMove>
+                        {this.props.children}
                     </FlexItem>
                 </Flex>
             </h5>

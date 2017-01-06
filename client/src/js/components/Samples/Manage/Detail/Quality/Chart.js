@@ -57,7 +57,7 @@ export default class QualityChart extends React.Component {
 
     render () {
         // This is the div the chart will be rendered in.
-        return <div ref={this.chartNode} />;
+        return <div ref={(node) => this.chartNode = node} />;
     }
 
 }

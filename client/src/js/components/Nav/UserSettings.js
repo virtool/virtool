@@ -90,7 +90,7 @@ export default class UserSettings extends React.Component {
                     User Settings
                 </Modal.Header>
 
-                <ProgressBar active={this.state.pending} />
+                <ProgressBar active={this.state.pending} affixed />
 
                 <Modal.Body>
                     <Panel header="Display">

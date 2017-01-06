@@ -10,7 +10,7 @@
  */
 
 import React from "react";
-import { pick, merge } from "lodash";
+import { pick, assign } from "lodash";
 import Ps from "perfect-scrollbar";
 
 export class Scroll extends React.Component {
@@ -50,13 +50,13 @@ export class Scroll extends React.Component {
 
     render () {
 
-        let style = merge({
+        let style = assign({
             height: this.props.height,
             position: "relative"
         }, this.props.style);
 
         return (
-            <div ref={this.containerNode} style={style}>
+            <div ref={(node) => this.containerNode = node} style={style}>
                 {this.props.children}
             </div>
         )

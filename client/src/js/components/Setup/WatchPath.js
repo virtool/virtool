@@ -49,7 +49,7 @@ export default class SetupWatchPath extends React.Component {
                 </Alert>
 
                 <Input
-                    ref="input"
+                    inputRef={input => input.focus()}
                     type="text"
                     label="Path"
                     onChange={(event) => this.setState({watchPath: event.target.value})}

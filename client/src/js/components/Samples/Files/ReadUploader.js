@@ -17,7 +17,7 @@ export default class ReadUploader extends React.Component {
     };
 
     handleClick = () => {
-        this.refs.dropzone.open();
+        this.dropzone.open();
     };
 
     render () {
@@ -35,7 +35,7 @@ export default class ReadUploader extends React.Component {
         return (
             <Flex>
                 <FlexItem grow={1}>
-                    <Dropzone ref="dropzone" onDrop={this.onDrop} style={dropZoneStyle}>
+                    <Dropzone ref={(dropzone) => this.dropzone = dropzone} onDrop={this.onDrop} style={dropZoneStyle}>
                         <Flex justifyContent="center" alignItems="center">
                             <FlexItem>
                                 Drag here to upload

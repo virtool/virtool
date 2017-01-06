@@ -28,9 +28,9 @@ export default class JobError extends React.PureComponent {
 
         if (this.props.error.context.indexOf("External") === -1) {
             // Traceback from a Python exception.
-            const tracebackLines = this.props.error.message.traceback.map(line => {
-                return <div className="traceback-line">{line}</div>;
-            });
+            const tracebackLines = this.props.error.message.traceback.map((line, index) =>
+                <div key={index} className="traceback-line">{line}</div>
+            );
 
             // Only show a colon and exception detail after the exception name if there is detail present.
             let details;

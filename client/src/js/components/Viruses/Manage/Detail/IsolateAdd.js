@@ -61,14 +61,12 @@ export default class IsolateAdd extends React.Component {
         document.removeEventListener("keyup", this.handleKeyUp, true);
     }
 
-    collapseEnter = () => {
-        this.refs.form.focus();
-    };
+    collapseEnter = () => this.formNode.focus();
 
     collapseEntered = () => {
         this.setState({collapsed: false}, () => {
             this.props.updateScroll();
-            this.refs.form.focus();
+            this.formNode.focus();
             this.scrollIntoView({
                 block: "end",
                 behaviour: "smooth"
@@ -76,11 +74,7 @@ export default class IsolateAdd extends React.Component {
         });
     };
 
-    collapseExited = () => {
-        this.setState({
-            collapsed: true
-        }, this.props.updateScroll);
-    };
+    collapseExited = () => this.setState({collapsed: true}, this.props.updateScroll);
 
     /**
      * Handle a change from the isolate form. Updates state to reflect the current input values.
@@ -175,7 +169,7 @@ export default class IsolateAdd extends React.Component {
                 >
                     <div>
                         <div style={{height: "15px"}} />
-                        <IsolateForm ref="form"
+                        <IsolateForm ref={(node) => this.formNode = node}
                             sourceType={this.state.sourceType}
                             sourceName={this.state.sourceName}
                             allowedSourceTypes={this.props.allowedSourceTypes}

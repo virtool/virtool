@@ -8,7 +8,7 @@ import NuVsBLAST from "./BLAST";
 export default class NuVsExpansion extends React.Component {
 
     static propTypes = {
-        index: React.PropTypes.index,
+        index: React.PropTypes.number,
         analysisId: React.PropTypes.string,
         blast: React.PropTypes.object,
         orfs: React.PropTypes.arrayOf(React.PropTypes.object),
@@ -71,7 +71,7 @@ export default class NuVsExpansion extends React.Component {
 
                 <div className="nuvs-layout">
                     <div className="nuvs-item nuvs-sequence">
-                        <div ref={this.containerNode} />
+                        <div ref={(node) => this.containerNode = node} />
                     </div>
                     <div className="nuvs-orfs">
                         {orfComponents}

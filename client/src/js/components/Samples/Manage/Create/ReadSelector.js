@@ -11,7 +11,7 @@
 
 import React from "react";
 import FlipMove from "react-flip-move"
-import { some, isEqual, includes, pull, intersection, clone, filter, endsWith, sortBy } from "lodash";
+import { some, includes, pull, intersection, filter, endsWith, sortBy } from "lodash";
 import { Overlay, Popover, Panel, Label } from "react-bootstrap";
 import { Icon, Input, Button } from "virtool/js/components/Base";
 
@@ -26,7 +26,7 @@ const getReadyFiles = () => dispatcher.db.files.find({file_type: "reads", "ready
  *
  * @class
  */
-export default class ReadSelector extends React.Component {
+export default class ReadSelector extends React.PureComponent {
 
     constructor (props) {
         super(props);
@@ -40,20 +40,14 @@ export default class ReadSelector extends React.Component {
     static propTypes = {
         select: React.PropTypes.func,
         selected: React.PropTypes.arrayOf(React.PropTypes.string),
-        readError: React.PropTypes.string
+        readError: React.PropTypes.bool
     };
 
     componentDidMount () {
-        // Listen for changes to the reads collection
         dispatcher.db.files.on("change", this.update);
     }
 
-    shouldComponentUpdate (nextProps) {
-        return !isEqual(nextProps.selected, this.props.selected) || nextProps.readError != this.props.readError;
-    }
-
     componentWillUnmount () {
-        // Unbind all callbacks
         dispatcher.db.files.off("change", this.update);
     }
 
@@ -70,21 +64,13 @@ export default class ReadSelector extends React.Component {
         this.props.select(selected);
     };
 
-    handleFilter = (event) => {
-        this.setState({
-            filter: event.target.value
-        });
+    handleChange = (event) => {
+        this.setState({filter: event.target.value});
     };
 
-    reset = () => {
-        this.setState({filter: ""}, () => this.props.select([]));
-    };
+    reset = () => this.setState({filter: ""}, () => this.props.select([]));
 
-    toggleShowAll = () => {
-        this.setState({
-            showAll: !this.state.showAll
-        });
-    };
+    toggleShowAll = () => this.setState({showAll: !this.state.showAll});
 
     update = () => {
         const files = getReadyFiles();
@@ -98,24 +84,21 @@ export default class ReadSelector extends React.Component {
 
         const loweredFilter = this.state.filter.toLowerCase();
 
-        let files = clone(this.state.files);
+        const files = filter(this.state.files, file =>
+            (this.state.showAll || some(suffixes.map(suffix => endsWith(file.name, suffix)))) &&
+            (!this.state.filter || includes(file.name.toLowerCase(), loweredFilter))
+        );
 
-        if (!this.state.showAll) {
-            files = filter(files, file => some(suffixes.map(suffix => endsWith(file.name, suffix))));
-        }
+        const fileComponents = sortBy(files, "timestamp").reverse().map((file) =>
+            <div key={file._id}>
+                <ReadItem
 
-        const fileComponents = sortBy(files, "timestamp").reverse().map((file) => {
-            if (file.name.toLowerCase().indexOf(loweredFilter) > -1) {
-                return (
-                    <ReadItem
-                        key={file._id}
-                        {...file}
-                        selected={includes(this.props.selected, file._id)}
-                        onSelect={this.handleSelect}
-                    />
-                );
-            }
-        });
+                    {...file}
+                    selected={includes(this.props.selected, file._id)}
+                    onSelect={this.handleSelect}
+                />
+            </div>
+        );
 
         let overlay;
 
@@ -135,14 +118,14 @@ export default class ReadSelector extends React.Component {
                     Read Files <Label>{this.props.selected.length}/{fileComponents.length} selected</Label>
                 </label>
 
-                <Panel ref={this.panelNode}>
+                <Panel ref={(node) => this.panelNode = node}>
                     <div style={{display: "flex"}}>
                         <div style={{flex: "1 1 auto"}}>
                             <Input
                                 type="text"
-                                onChange={this.handleFilter}
+                                onChange={this.handleChange}
                                 value={this.state.filter}
-                                placeholder="Filter by filename..."
+                                placeholder="Filename"
                             />
                         </div>
                         <div style={{flex: "0 0 auto", paddingLeft: "5px"}}>

@@ -51,7 +51,7 @@ export const RemoveIsolateMethod = (props) => {
                     <InputGroup
                         type="text"
                         label="Source Type"
-                        value={capitalize(this.props.isolate.source_type)}
+                        value={capitalize(isolate.source_type)}
                         readOnly
                     />
                 </Col>
@@ -59,7 +59,7 @@ export const RemoveIsolateMethod = (props) => {
                     <InputGroup
                         type="text"
                         label="Source Name"
-                        value={this.props.isolate.source_name}
+                        value={isolate.source_name}
                         readOnly
                     />
                 </Col>

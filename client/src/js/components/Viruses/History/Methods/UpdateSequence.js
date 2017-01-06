@@ -83,7 +83,7 @@ export const UpdateSequenceMethod = (props) => {
     // modal.
     const message = (
         <span>
-            <Icon name="dna" bsStyle="warning" /> Updated sequence {this.props.annotation._id} in
+            <Icon name="dna" bsStyle="warning" /> Updated sequence {props.annotation._id} in
             <em> {isolateName} ({props.annotation.isolate_id}) </em>
         </span>
     );

@@ -5,7 +5,10 @@ import { Icon } from "virtool/js/components/Base";
 import SequenceForm from "virtool/js/components/Viruses/Manage/Detail/Sequences/Form";
 
 export const changesPropTypes = {
-    changes: React.PropTypes.array
+    changes: React.PropTypes.oneOfType([
+        React.PropTypes.array,
+        React.PropTypes.object
+    ])
 };
 
 export const annotationPropTypes = {

@@ -85,7 +85,7 @@ export default class SetupDatabase extends React.Component {
 
                 <Input
                     type="text"
-                    ref="first"
+                    inputRef={input => input.focus()}
                     name="dataPath"
                     label="Data Path"
                     onChange={this.handleChange}

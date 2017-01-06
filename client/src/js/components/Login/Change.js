@@ -45,7 +45,13 @@ export default class PasswordChangeForm extends React.Component {
         containerClass: React.PropTypes.string
     };
 
-    componentDidMount = () => this.passwordNode.focus();
+    componentDidMount () {
+        if (this.props.requireOld) {
+            this.oldPasswordNode.focus();
+        } else {
+            this.passwordNode.focus();
+        }
+    }
 
     componentDidUpdate (prevProps, prevState) {
         // Focus on the first Input component if that form is submitted but fails and the fields need to be re-entered.
@@ -129,6 +135,7 @@ export default class PasswordChangeForm extends React.Component {
         if (this.props.requireOld) {
             oldField = (
                 <Input
+                    ref={(node) => this.oldPasswordNode = node}
                     name="old"
                     label="Old Password"
                     error={oldError}
@@ -152,7 +159,7 @@ export default class PasswordChangeForm extends React.Component {
                     {oldField}
 
                     <Input
-                        ref={this.passwordNode}
+                        ref={(node) => this.passwordNode = node}
                         name="password"
                         label="New password"
                         error={passwordError}

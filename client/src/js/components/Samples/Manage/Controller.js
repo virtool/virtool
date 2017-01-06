@@ -132,7 +132,7 @@ export default class SampleController extends React.Component {
                                     </InputGroup.Addon>
                                     <FormControl
                                         type="text"
-                                        ref={this.nameNode}
+                                        inputRef={(node) => this.nameNode = node}
                                         onChange={this.setFindTerm}
                                         placeholder="Sample name"
                                     />

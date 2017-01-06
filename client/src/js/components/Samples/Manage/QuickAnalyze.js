@@ -12,7 +12,8 @@
 
 
 import React from "react";
-import { Flex, FlexItem, Icon, Input, Modal, Checkbox, Button } from "virtool/js/components/Base";
+import { Modal } from "react-bootstrap";
+import { Flex, FlexItem, Icon, Input, Checkbox, Button, AutoProgressBar } from "virtool/js/components/Base";
 
 const getInitialState = () => ({
     name: "",
@@ -33,7 +34,7 @@ export default class QuickAnalyze extends React.Component {
 
     constructor (props) {
         super(props);
-        this.props = getInitialState();
+        this.state = getInitialState();
     }
 
     static propTypes = {
@@ -42,7 +43,7 @@ export default class QuickAnalyze extends React.Component {
     };
 
     modalWillEnter = () => {
-        this.refs.name.focus();
+        this.nameNode.focus();
     };
 
     modalExited = () => {
@@ -124,59 +125,59 @@ export default class QuickAnalyze extends React.Component {
                         Quick Analyze
                     </Modal.Header>
 
-                    <Modal.Progress active={this.state.pending} />
+                    <AutoProgressBar active={this.state.pending} progressStyle="modal" />
 
                     <Modal.Body>
-                            <Input
-                                label="Sample"
-                                value={sampleName}
-                                readOnly={true}
-                            />
+                        <Input
+                            label="Sample"
+                            value={sampleName}
+                            readOnly={true}
+                        />
 
-                            <Input
-                                ref="name"
-                                name="name"
-                                label="Analysis Name"
-                                value={this.state.name}
-                                onChange={this.handleChange}
-                                disabled={true}
-                            />
+                        <Input
+                            inputRef={(node) => this.nameNode = node}
+                            name="name"
+                            label="Analysis Name"
+                            value={this.state.name}
+                            onChange={this.handleChange}
+                            disabled={true}
+                        />
 
-                            <Input
-                                name="algorithm"
-                                type="select"
-                                label="Algorithm"
-                                value={this.state.algorithm}
-                                onChange={this.handleChange}
-                            >
-                                <option value="pathoscope_bowtie">PathoscopeBowtie</option>
-                                <option value="pathoscope_snap">PathoscopeSNAP</option>
-                                <option value="nuvs">NuVs</option>
-                            </Input>
+                        <Input
+                            name="algorithm"
+                            type="select"
+                            label="Algorithm"
+                            value={this.state.algorithm}
+                            onChange={this.handleChange}
+                        >
+                            <option value="pathoscope_bowtie">PathoscopeBowtie</option>
+                            <option value="pathoscope_snap">PathoscopeSNAP</option>
+                            <option value="nuvs">NuVs</option>
+                        </Input>
 
-                            <div onClick={this.toggleUseAsDefault} {...checkboxProps}>
-                                <Flex>
-                                    <FlexItem>
-                                        <Checkbox
-                                            checked={this.state.useAsDefault || this.state.skipQuickAnalyzeDialog}
-                                        />
-                                    </FlexItem>
-                                    <FlexItem pad={7}>
-                                        Set as default algorithm
-                                    </FlexItem>
-                                </Flex>
-                            </div>
+                        <div onClick={this.toggleUseAsDefault} {...checkboxProps}>
+                            <Flex>
+                                <FlexItem>
+                                    <Checkbox
+                                        checked={this.state.useAsDefault || this.state.skipQuickAnalyzeDialog}
+                                    />
+                                </FlexItem>
+                                <FlexItem pad={7}>
+                                    Set as default algorithm
+                                </FlexItem>
+                            </Flex>
+                        </div>
 
-                            <div onClick={this.toggleSkipQuickAnalyzeDialog} {...checkboxProps}>
-                                <Flex>
-                                    <FlexItem>
-                                        <Checkbox checked={this.state.skipQuickAnalyzeDialog}  />
-                                    </FlexItem>
-                                    <FlexItem pad={7}>
-                                        Skip this dialog from now on
-                                    </FlexItem>
-                                </Flex>
-                            </div>
+                        <div onClick={this.toggleSkipQuickAnalyzeDialog} {...checkboxProps}>
+                            <Flex>
+                                <FlexItem>
+                                    <Checkbox checked={this.state.skipQuickAnalyzeDialog}  />
+                                </FlexItem>
+                                <FlexItem pad={7}>
+                                    Skip this dialog from now on
+                                </FlexItem>
+                            </Flex>
+                        </div>
                     </Modal.Body>
 
                     <Modal.Footer>

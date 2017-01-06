@@ -33,7 +33,7 @@ export default class HMMToolbar extends React.Component {
     };
 
     componentDidMount () {
-        this.refs.input.focus();
+        this.inputNode.focus();
         dispatcher.user.on("change", this.onUserChange);
     }
 
@@ -69,7 +69,7 @@ export default class HMMToolbar extends React.Component {
                                     <Icon name="search" /> Find
                                 </InputGroup.Addon>
                                 <FormControl
-                                    ref="input"
+                                    inputRef={(node) => this.inputNode = node}
                                     type="text"
                                     placeholder="Definition, cluster, family"
                                     onChange={this.handleChange}

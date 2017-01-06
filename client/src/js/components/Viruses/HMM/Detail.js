@@ -37,12 +37,12 @@ function HMMDetail (props) {
         versionField = (
             <tr>
                 <th>Database Version</th>
-                <td>{this.props.detail._version}</td>
+                <td>{props.detail._version}</td>
             </tr>
         )
     }
 
-    const clusterMembers = this.props.detail.entries.map((entry, index) => {
+    const clusterMembers = props.detail.entries.map((entry, index) => {
         return (
             <tr key={index}>
                 <td>
@@ -56,7 +56,7 @@ function HMMDetail (props) {
         )
     });
 
-    const definitions = this.props.detail.definition.map((def, index) => (
+    const definitions = props.detail.definition.map((def, index) => (
         <span key={index}><Label>{def}</Label> </span>
     ));
 
@@ -68,7 +68,7 @@ function HMMDetail (props) {
     };
 
     ["families", "genera"].forEach((key) => {
-        const entries = sortBy(transform(this.props.detail[key], (result, count, name) => {
+        const entries = sortBy(transform(props.detail[key], (result, count, name) => {
             result.push({
                 name: name,
                 count: count
@@ -91,7 +91,7 @@ function HMMDetail (props) {
 
     return (
         <div>
-            <Modal.Header onHide={this.props.onHide} closeButton>
+            <Modal.Header onHide={props.onHide} closeButton>
                 HMM Detail
             </Modal.Header>
 
@@ -104,7 +104,7 @@ function HMMDetail (props) {
                     <tbody>
                         <tr>
                             <th className="col-md-3">Cluster</th>
-                            <td className="col-md-9">{this.props.detail.cluster}</td>
+                            <td className="col-md-9">{props.detail.cluster}</td>
                         </tr>
 
                         {idField}
@@ -113,9 +113,9 @@ function HMMDetail (props) {
                         <tr>
                             <th>Label</th>
                             <InputCell
-                                _id={this.props.detail._id}
+                                _id={props.detail._id}
                                 field="label"
-                                value={this.props.detail.label}
+                                value={props.detail.label}
                                 collection={dispatcher.db.hmm}
                             />
                         </tr>
@@ -127,23 +127,23 @@ function HMMDetail (props) {
 
                         <tr>
                             <th>Length</th>
-                            <td>{this.props.detail.length}</td>
+                            <td>{props.detail.length}</td>
                         </tr>
 
                         <tr>
                             <th>Mean Entropy</th>
-                            <td>{this.props.detail.mean_entropy}</td>
+                            <td>{props.detail.mean_entropy}</td>
                         </tr>
 
                         <tr>
                             <th>Total Entropy</th>
-                            <td>{this.props.detail.total_entropy}</td>
+                            <td>{props.detail.total_entropy}</td>
                         </tr>
                     </tbody>
                 </Table>
 
                 <h5><strong>
-                    Cluster Members <Badge>{this.props.detail.entries.length}</Badge>
+                    Cluster Members <Badge>{props.detail.entries.length}</Badge>
                 </strong></h5>
 
                 <Panel style={{ height: "408px" }}>
@@ -186,7 +186,8 @@ function HMMDetail (props) {
 }
 
 HMMDetail.propTypes = {
-    detail: React.PropTypes.object
+    detail: React.PropTypes.object,
+    onHide: React.PropTypes.func
 };
 
 export default HMMDetail;

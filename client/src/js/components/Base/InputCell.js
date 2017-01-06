@@ -57,7 +57,7 @@ class InputCellField extends React.Component {
         return (
             <form className="full-width" onSubmit={this.handleSubmit}>
                 <input
-                    ref={this.inputNode}
+                    ref={(node) => this.inputNode = node}
                     className="full-width"
                     value={this.props.value}
                     onChange={this.handleChange}
@@ -70,13 +70,13 @@ class InputCellField extends React.Component {
 }
 
 
-function getInitialInputCellState () {
+function getInitialInputCellState (props) {
     return {
         // True when the cell is editable (not static)
         editing: false,
 
         // The value shown in the editable cell. Initially set to the static value.
-        value: this.props.value,
+        value: props.value,
 
         // Set to true when the mouse is hovering over the component.
         hoverCell: false,
@@ -99,7 +99,7 @@ export class InputCell extends React.Component {
 
     constructor (props) {
         super(props);
-        this.state = getInitialInputCellState();
+        this.state = getInitialInputCellState(props);
     }
 
     static propTypes = {
@@ -111,9 +111,7 @@ export class InputCell extends React.Component {
 
     componentDidUpdate = (nextProps) => {
         if (nextProps.value !== this.props.value) {
-            this.setState({pending: false}, function () {
-                this.toggleEditing(null, false);
-            });
+            this.setState({pending: false}, () =>this.toggleEditing(null, false));
         }
     };
 
@@ -122,7 +120,7 @@ export class InputCell extends React.Component {
      */
     onLostInputFocus = () => {
         if (!this.state.hoverCell) {
-            this.setState(getInitialInputCellState());
+            this.setState(getInitialInputCellState(this.props));
         }
     };
 
@@ -179,28 +177,26 @@ export class InputCell extends React.Component {
      * @func
      */
     save = () => {
-        this.setState({pending: true}, function () {
+        this.setState({pending: true}, () => {
             //
             if (this.state.value !== this.props.value) {
                 this.props.collection.request("set_field", {
                     _id: this.props._id,
                     field: this.props.field,
                     value: this.state.value
-                }).failure(function () {
+                }).failure(() => {
                     this.setState({
                         showError: true,
                         editing: true,
                         pending: false
                     });
-                }, this);
+                });
             }
 
             // Save was clicked, but the value didn't change from the original static value. Toggle editing off but
             // don't send any data to the server.
             else {
-                this.setState({pending: false}, function () {
-                    this.toggleEditing(null, false);
-                });
+                this.setState({pending: false}, () => this.toggleEditing(null, false));
             }
         });
     };

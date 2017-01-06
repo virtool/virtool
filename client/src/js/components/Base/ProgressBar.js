@@ -29,7 +29,7 @@ export class AutoProgressBar extends React.Component {
         step: React.PropTypes.number,
         active: React.PropTypes.bool,
         interval: React.PropTypes.number,
-        progressStyle: React.PropTypes.oneOf(["modal", "list"])
+        affixed: React.PropTypes.bool
     };
 
     static defaultProps = {
@@ -80,7 +80,7 @@ export class AutoProgressBar extends React.Component {
     render () {
         return (
             <ProgressBar
-                progressStyle={this.props.progressStyle}
+                affixed={this.props.affixed}
                 now={this.state.fill * 100}
             />
         );
@@ -91,19 +91,17 @@ export class AutoProgressBar extends React.Component {
 
 export class ProgressBar extends React.PureComponent {
 
-    constructor (props) {
-        super(props);
-        this.state = {};
-    }
-
     static propTypes = {
         now: React.PropTypes.number,
         onMoved: React.PropTypes.func,
         children: React.PropTypes.node,
-        progressStyle: React.PropTypes.oneOf(["modal", "list"])
+        affixed: React.PropTypes.bool,
+        style: React.PropTypes.object,
+        bsStyle: React.PropTypes.string
     };
 
     static defaultProps = {
+        bsStyle: "primary",
         now: 0
     };
 
@@ -124,28 +122,21 @@ export class ProgressBar extends React.PureComponent {
 
         // Call the onMoved callback with the new "now" prop once the bar is done moving.
         if (this.props.onMoved) {
-            this.props.onMoved(this.state.now);
+            this.props.onMoved(this.props.now);
         }
     };
 
     render () {
-
-        const className = CX(
-            "progress", {
-                "progress-modal": this.props.progressStyle === "modal",
-                "progress-list": this.props.progressStyle === "list"
-            }
-        );
-
         return (
-            <div className={className}>
+            <div className={CX("progress", {"progress-affixed": this.props.affixed})} style={this.props.style}>
                 <div
-                    ref={this.barNode}
+                    ref={(node) => this.barNode = node}
                     className="progress-bar"
+                    style={{width: `${this.props.now}%`}}
                     role="progressbar"
-                    ariaValuenow={this.state.now}
-                    ariaValuemin="0"
-                    ariaValuemax="100"
+                    aria-valuenow={`${this.props.now}`}
+                    aria-valuemin="0"
+                    aria-valuemax="100"
                 >
                     {this.props.children}
                 </div>

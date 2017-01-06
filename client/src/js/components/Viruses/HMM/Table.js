@@ -37,7 +37,7 @@ export class CaretHeader extends React.Component {
         if (this.props.showCaret) {
             caret = (
                 <FlexItem pad={5}>
-                    <Icon name={"caret-" + (this.props.descending ? "up": "down")} />1
+                    <Icon name={"caret-" + (this.props.descending ? "up": "down")} />
                 </FlexItem>
             );
         }
@@ -81,10 +81,6 @@ export default class HMMTable extends React.Component {
         this.setState({
             page: page
         });
-    };
-
-    hideModal = () => {
-        dispatcher.router.clearExtra();
     };
 
     render () {

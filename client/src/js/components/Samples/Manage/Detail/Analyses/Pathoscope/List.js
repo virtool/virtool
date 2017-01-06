@@ -8,7 +8,7 @@ import PathoscopeIsolate from "./Isolate";
 export default class PathoscopeList extends React.Component {
 
     static propTypes = {
-        expanded: React.PropTypes.bool,
+        expanded: React.PropTypes.arrayOf(React.PropTypes.string),
         showReads: React.PropTypes.bool,
         toggleIn: React.PropTypes.func,
         data: React.PropTypes.arrayOf(React.PropTypes.object).isRequired
@@ -42,8 +42,7 @@ export default class PathoscopeList extends React.Component {
 
                 const isolateComponents = sortBy(item.isolates, "pi").reverse().map((isolate) =>
                     <PathoscopeIsolate
-                        ref={item._id + "-" + isolate.isolate_id}
-                        key={isolate.isolate_id}
+                        key={item._id + "-" + isolate.isolate_id}
                         virusId={item._id}
                         maxDepth={item.maxDepth}
                         maxGenomeLength={item.maxGenomeLength}

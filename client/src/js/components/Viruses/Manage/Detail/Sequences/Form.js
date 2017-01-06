@@ -99,7 +99,7 @@ export default class SequenceForm extends React.Component {
         let accession = (
             <FormControl
                 {...sharedProps}
-                ref={this.accessionNode}
+                inputRef={(node) => this.accessionNode = node}
                 type="text"
                 name="sequenceId"
                 value={this.props.sequenceId}
@@ -122,7 +122,7 @@ export default class SequenceForm extends React.Component {
             if (this.props.error) {
                 // Set up an overlay to display if there is an error in state.
                 const overlayProps = {
-                    target: function () {return this.refs.accession.getInputDOMNode()}.bind(this),
+                    target: this.accessionNode,
                     placement: "top"
                 };
 
@@ -152,7 +152,6 @@ export default class SequenceForm extends React.Component {
                             type="text"
                             name="host"
                             label="Host"
-                            ref={this.hostNode}
                             value={this.props.host}
                             placeholder={this.props.mode === "edit" ? "eg. Ageratum conyzoides": ""}
                             {...sharedProps}

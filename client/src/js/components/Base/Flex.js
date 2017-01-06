@@ -10,7 +10,7 @@
  */
 
 import React from "react";
-import { pick, join, merge, assign } from "lodash";
+import { pick, join, assign } from "lodash";
 
 export class Flex extends React.Component {
 
@@ -65,7 +65,7 @@ export class Flex extends React.Component {
         style.display = "flex";
 
         if (this.props.style) {
-            merge(style, this.props.style);
+            assign(style, this.props.style);
         }
 
         return (
@@ -108,7 +108,7 @@ export class FlexItem extends React.Component {
         }
 
         if (this.props.style) {
-            merge(style, this.props.style)
+            assign(style, this.props.style)
         }
 
         assign(style, this.props.style);

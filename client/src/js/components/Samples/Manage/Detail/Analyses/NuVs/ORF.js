@@ -91,7 +91,7 @@ export default class NuVsORF extends React.Component {
                     </Flex>
                 </div>
 
-                <div ref={this.containerNode} />
+                <div ref={(node) => this.containerNode = node} />
             </div>
         );
     }

@@ -10,7 +10,8 @@
  */
 
 import React from "react";
-import { ConfirmFooter, Icon, Modal } from "virtool/js/components/Base";
+import { Modal } from "react-bootstrap";
+import { ConfirmFooter, Icon } from "virtool/js/components/Base";
 
 import ConfirmVirus from "./Detail/ConfirmVirus";
 import Isolates from "./Detail/Isolates";

@@ -36,10 +36,6 @@ export default class SetupConnection extends React.Component {
         reset: React.PropTypes.func.isRequired
     };
 
-    componentDidMount () {
-        this.refs.host.focus();
-    }
-
     componentDidUpdate (prevProps) {
         // If the connection was lost, put focus on the host input box again.
         if (!this.props.connected && prevProps.connected) this.refs.host.focus();
@@ -139,7 +135,7 @@ export default class SetupConnection extends React.Component {
                     <Col md={9}>
                         <Input
                             type="text"
-                            ref="host"
+                            inputRef={input => input.focus()}
                             name="host"
                             label="Host"
                             value={this.state.host}

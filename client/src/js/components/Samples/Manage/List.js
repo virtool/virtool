@@ -15,12 +15,6 @@ import { Icon, Paginator, ListGroupItem } from "virtool/js/components/Base";
 
 import SampleEntry from "./Entry";
 
-const NoSamples = () => (
-    <ListGroupItem className="text-center">
-        <Icon name="info" /> No samples found.
-    </ListGroupItem>
-);
-
 /**
  * A component based on DynamicTable that displays sample documents and allows them to be removed, archived, and viewed
  * in detail in a modal.
@@ -60,7 +54,11 @@ export default class SamplesList extends React.Component {
         let sampleComponents;
 
         if (pages.documents.length === 0) {
-            sampleComponents = <NoSamples />;
+            sampleComponents = (
+                <ListGroupItem key="noSample" className="text-center">
+                    <Icon name="info" /> No samples found.
+                </ListGroupItem>
+            );
         } else {
             sampleComponents = pages.documents.map((document) =>
                 <SampleEntry
@@ -87,7 +85,13 @@ export default class SamplesList extends React.Component {
 
         return (
             <div>
-                <FlipMove typeName="div" className="list-group" staggerDurationBy={20} leaveAnimation={false}>
+                <FlipMove
+                    typeName="div"
+                    className="list-group"
+                    duration={200}
+                    staggerDurationBy={20}
+                    leaveAnimation={false}
+                >
                     {sampleComponents}
                 </FlipMove>
 

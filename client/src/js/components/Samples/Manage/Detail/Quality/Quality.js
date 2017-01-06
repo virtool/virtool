@@ -52,7 +52,7 @@ export default class SampleDetailQuality extends React.Component {
 
     render = () => (
         <Panel className="tab-panel">
-            <div ref="container" className="printable-quality">
+            <div className="printable-quality">
                 <h5>
                     <strong>Quality Distribution at Read Positions</strong>
                     <Button

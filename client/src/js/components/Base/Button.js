@@ -27,6 +27,7 @@ export class Button extends React.Component {
         block: React.PropTypes.bool,
         pullRight: React.PropTypes.bool,
         onClick: React.PropTypes.func,
+        style: React.PropTypes.object,
 
         tip: React.PropTypes.oneOfType([React.PropTypes.string, React.PropTypes.element]),
         tipPlacement: React.PropTypes.oneOf(["top", "right", "bottom", "left"]),
@@ -62,6 +63,7 @@ export class Button extends React.Component {
                 onFocus={this.blur}
                 className={className}
                 onClick={this.props.onClick}
+                style={this.props.style}
             >
                 {this.props.children}
             </button>

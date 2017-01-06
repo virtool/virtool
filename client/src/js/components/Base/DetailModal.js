@@ -11,7 +11,8 @@
 
 import React from "react";
 import { cloneDeep } from "lodash";
-import { Pulse, Modal } from "./";
+import { Modal } from "react-bootstrap";
+import { Pulse } from "./";
 
 /**
  * A base modal that displays detailed information for a collection document. Virtool displays documents in tables in a
@@ -72,7 +73,7 @@ export class DetailModal extends React.Component {
     };
 
     handleResize = () => {
-        this.refs.modal.updateStyle();
+        this.modalNode.updateStyle();
     };
 
     tryRefresh = () => {
@@ -133,7 +134,7 @@ export class DetailModal extends React.Component {
         };
 
         return (
-            <Modal ref="modal" {...modalProps}>
+            <Modal ref={(node) => this.modalNode = node} {...modalProps}>
                 {modalContent}
             </Modal>
         );

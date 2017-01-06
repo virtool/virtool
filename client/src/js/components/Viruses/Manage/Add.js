@@ -38,7 +38,7 @@ export default class AddVirus extends React.Component {
     componentDidUpdate (prevProps) {
         // Focus on the first input field ("name") when the modal is shown.
         if (this.props.show && !prevProps.show) {
-            this.refs.name.getInputDOMNode().focus();
+            this.inputNode.focus();
         }
     }
 
@@ -153,7 +153,7 @@ export default class AddVirus extends React.Component {
                                     name="name"
                                     label="Name"
                                     value={this.state.name}
-                                    ref="name"
+                                    ref={(node) => this.inputNode = node}
                                 />
                             </Col>
                             <Col md={3}>

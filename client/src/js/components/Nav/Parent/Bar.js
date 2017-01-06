@@ -97,7 +97,7 @@ export default class ParentBar extends React.Component {
                         <Icon name="lock" /> Password
                     </MenuItem>
                     <MenuItem eventKey="settings">
-                        <Icon name="settings" /> Settings
+                        <Icon name="cog" /> Settings
                     </MenuItem>
                     <MenuItem  eventKey="logout">
                         <Icon name="exit" /> Logout

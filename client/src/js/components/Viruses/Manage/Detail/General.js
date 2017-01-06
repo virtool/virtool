@@ -29,7 +29,7 @@ const VirusGeneral = (props) => {
     let nameCell;
     let abbrCell;
 
-    if (this.props.canModify) {
+    if (props.canModify) {
         nameCell = (
             <InputCell
                 className="col-sm-8"
@@ -64,7 +64,7 @@ const VirusGeneral = (props) => {
     const databaseVersionRow = dispatcher.user.settings.show_versions ? (
         <tr>
             <th>Database Version</th>
-            <td>{this.props._version}</td>
+            <td>{props._version}</td>
         </tr>
     ): null;
 
@@ -93,8 +93,10 @@ const VirusGeneral = (props) => {
 
 VirusGeneral.propTypes = {
     _id: React.PropTypes.string.isRequired,
+    _version: React.PropTypes.number.isRequired,
     name: React.PropTypes.string.isRequired,
-    abbreviation: React.PropTypes.string
+    abbreviation: React.PropTypes.string,
+    canModify: React.PropTypes.bool
 };
 
 export default VirusGeneral;

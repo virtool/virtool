@@ -11,24 +11,20 @@
 
 import React from "react";
 import FlipMove from "react-flip-move"
-import { Icon, Badge, ListGroupItem } from "virtool/js/components/Base";
+import { Badge } from "react-bootstrap";
+import { Icon, ListGroupItem } from "virtool/js/components/Base";
 
 import Sequence from "./Sequence";
 import AddSequence from "./Add";
 
 const getFirstSequenceId = (sequences) => sequences && sequences.length > 0 ? sequences[0]._id: null;
 
-/**
- * A component based on ListGroup that displays sequences associated with a passed
- *
- * @class
- */
 export default class VirusSequences extends React.Component {
 
     constructor (props) {
         super(props);
         this.state = {
-            activeSequenceId: this.getFirstSequenceId(this.props.data),
+            activeSequenceId: getFirstSequenceId(this.props.data),
             editing: false
         };
     }
@@ -108,7 +104,6 @@ export default class VirusSequences extends React.Component {
 
         if (this.props.canModify && sequenceComponents.length > 0 &&
             this.props.isolateId && this.props.isolateId !== "new") {
-
             lastComponent = (
                 <AddSequence
                     virusId={this.props.virusId}

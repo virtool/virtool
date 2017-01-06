@@ -1,7 +1,7 @@
 "use strict";
 
 import React from "react";
-import { find } from "lodash";
+import { omit, find } from "lodash";
 import { Panel } from "react-bootstrap";
 
 import AnalysisList from "./List";
@@ -42,7 +42,8 @@ export default class AnalysisPanel extends React.Component {
             // Show the analysis listing if no activeAnalysisId is defined.
             content = (
                 <AnalysisList
-                    {...this.props}
+                    {...omit(this.props, "_id")}
+                    sampleId={this.props._id}
                     selectAnalysis={this.selectAnalysis}
                 />
             );

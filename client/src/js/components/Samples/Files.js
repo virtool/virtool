@@ -11,7 +11,7 @@ export default class ReadFiles extends React.Component {
     constructor (props) {
         super(props);
         this.state = {
-            files: getFiles()
+            documents: getFiles()
         };
     }
 
@@ -27,11 +27,11 @@ export default class ReadFiles extends React.Component {
         dispatcher.db.files.off("change", this.update);
     }
 
-    update () {
+    update = () => {
         this.setState({
-            files: getFiles()
+            documents: getFiles()
         });
-    }
+    };
 
     render () {
 

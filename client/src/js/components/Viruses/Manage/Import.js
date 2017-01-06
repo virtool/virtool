@@ -171,7 +171,7 @@ export default class ImportViruses extends React.Component {
                 <div>
                     <Row>
                         <Col md={12}>
-                            <Dropzone style={style} activeStyle={activeStyle} {...dropzoneProps} ref="dropzone">
+                            <Dropzone style={style} activeStyle={activeStyle} {...dropzoneProps}>
                                 <div className="drag-area text-center">
                                     {dropzoneContent}
                                 </div>

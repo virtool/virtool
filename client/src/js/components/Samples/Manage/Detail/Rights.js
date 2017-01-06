@@ -8,11 +8,10 @@ export default class SampleDetailRights extends React.PureComponent {
     static propTypes = {
         _id: React.PropTypes.string,
         group: React.PropTypes.string,
-        group_read: React.PropTypes.string,
-        group_write: React.PropTypes.string,
-        all_read: React.PropTypes.string,
-        all_write: React.PropTypes.string,
-
+        group_read: React.PropTypes.bool,
+        group_write: React.PropTypes.bool,
+        all_read: React.PropTypes.bool,
+        all_write: React.PropTypes.bool
     };
 
     changeGroup = (event) => {

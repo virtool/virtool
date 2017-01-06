@@ -14,7 +14,7 @@ import Request from "superagent";
 import Dropzone from "react-dropzone";
 import { assign, includes } from "lodash";
 import { Row, Col, Modal, Panel } from "react-bootstrap";
-import { Icon, Button } from "virtool/js/components/Base/Icon";
+import { Icon, Button } from "virtool/js/components/Base";
 import { byteSize } from "virtool/js/utils";
 
 function getInitialState () {
@@ -131,7 +131,7 @@ export default class ImportHMM extends React.Component {
         );
 
         return (
-            <Modal ref="modal" show={this.props.show} onHide={this.props.onHide} onExited={this.modalExited}>
+            <Modal show={this.props.show} onHide={this.props.onHide} onExited={this.modalExited}>
 
                 <Modal.Header onHide={this.props.onHide} closeButton>
                     Import Viruses

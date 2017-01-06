@@ -80,10 +80,16 @@ export default class HostEntry extends React.Component {
     };
 
     render () {
+
+        let progressBar;
+
+        if (this.state.progress !== 1) {
+            progressBar = <ProgressBar now={this.state.progress * 100} affixed />
+        }
+
         return (
             <ListGroupItem onClick={this.handleClick} disabled={!this.props.added}>
-                <ProgressBar now={this.state.progress} progressStyle="list" />
-
+                {progressBar}
                 <Flex>
                     <FlexItem grow={1}>
                         {this.props._id}

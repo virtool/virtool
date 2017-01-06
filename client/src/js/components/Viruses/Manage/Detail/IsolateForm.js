@@ -52,7 +52,7 @@ export default class IsolateForm extends React.Component {
 
     componentDidMount () {
         // Focus on the source type input when the component mounts.
-        this.refs.sourceType.focus();
+        this.sourceTypeNode.focus();
     }
 
     /**
@@ -77,7 +77,7 @@ export default class IsolateForm extends React.Component {
     };
 
     focus = () => {
-        this.refs.sourceType.focus();
+        this.sourceTypeNode.focus();
     };
 
     render () {
@@ -85,7 +85,7 @@ export default class IsolateForm extends React.Component {
         let sourceTypeInput;
 
         const sourceTypeInputProps = {
-            ref: "sourceType",
+            ref: (node) => this.sourceTypeNode = node,
             name: "sourceType",
             label: "Source Type",
             value: this.props.sourceType,

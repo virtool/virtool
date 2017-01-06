@@ -41,9 +41,11 @@ export default class PathoscopeEntry extends React.Component {
 
         if (this.props.in) {
             closeButton = (
-                <button type="button" className="close" onClick={this.toggleIn}>
-                    <span>×</span>
-                </button>
+                <FlexItem>
+                    <button type="button" className="close" onClick={this.toggleIn}>
+                        <span>×</span>
+                    </button>
+                </FlexItem>
             );
         }
 
@@ -102,9 +104,7 @@ export default class PathoscopeEntry extends React.Component {
                                     {toScientificNotation(this.props.coverage)}
                                 </strong>
                             </FlexItem>
-                            <FlexItem>
-                                {closeButton}
-                            </FlexItem>
+                            {closeButton}
                         </Flex>
                     </Col>
                 </Row>

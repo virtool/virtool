@@ -1,7 +1,7 @@
 import React from "react";
 import Numeral from "numeral";
-import { Row, Col, ProgressBar, ListGroupItem } from "react-bootstrap";
-import { Icon, RelativeTime } from "virtool/js/components/Base";
+import { Row, Col, ListGroupItem } from "react-bootstrap";
+import { Icon, RelativeTime, ProgressBar } from "virtool/js/components/Base";
 
 export default class ReadFile extends React.PureComponent {
 
@@ -29,9 +29,9 @@ export default class ReadFile extends React.PureComponent {
     render = () => (
         <ListGroupItem className="spaced">
             <ProgressBar
-                className="progress-small"
                 bsStyle={this.props.ready ? null: "success"}
                 now={this.props.created ? this.props.size_now / this.props.size_end * 100: 0}
+                affixed
             />
             <Row>
                 <Col md={5}>

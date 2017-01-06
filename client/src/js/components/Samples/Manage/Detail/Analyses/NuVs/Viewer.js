@@ -21,7 +21,7 @@ const NuVsViewer = (props) => {
 
         let minE = 10;
 
-        sequenceEntry.orfs = filter(props.orfs, {index: sequence.index}).map(function (orf) {
+        sequenceEntry.orfs = filter(props.orfs, {index: sequence.index}).map((orf) => {
             // The significant HMM hits associated with this ORF;
             const orfHmms = filter(sequenceHmms, {orf_index: orf.orf_index});
 

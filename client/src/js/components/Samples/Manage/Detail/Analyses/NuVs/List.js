@@ -41,7 +41,7 @@ export default class NuVsList extends React.Component {
         }
 
         else {
-            data = assign({}, this.props.data);
+            data = this.props.data;
         }
 
         let rows = flatten(data.map((item, index) => {

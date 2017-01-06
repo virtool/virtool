@@ -85,7 +85,7 @@ export default class AddGroup extends React.Component {
                 <FormGroup>
                     <InputGroup>
                         <FormControl
-                            ref={this.inputNode}
+                            inputRef={(node) => this.inputNode = node}
                             type="text"
                             placeholder="New group name"
                             value={this.state.groupName}

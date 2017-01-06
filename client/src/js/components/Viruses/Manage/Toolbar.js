@@ -104,7 +104,7 @@ export default class VirusToolbar extends React.Component {
                                 <Icon name="search" /> Find
                             </span>
                             <input
-                                ref={this.inputNode}
+                                ref={(node) => this.inputNode = node}
                                 aria-describedby="find-addon"
                                 className="form-control"
                                 type="text"

@@ -114,8 +114,8 @@ export default class JobsToolbar extends React.Component {
                                 <Icon name="search" /> Find
                             </InputGroup.Addon>
                             <FormControl
-                                ref={this.findNode}
                                 name="find"
+                                inputRef={(node) => this.findNode = node}
                                 onChange={this.props.setFindTerm}
                                 value={this.props.findTerm}
                             />

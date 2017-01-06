@@ -25,7 +25,6 @@ const SequenceField = (props) => {
                 Sequence <Badge>{props.sequence.length}</Badge>
             </ControlLabel>
             <FormControl
-                ref={this.inputNode}
                 name="sequence"
                 className="sequence"
                 componentClass="textarea"

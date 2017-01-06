@@ -11,9 +11,9 @@
  */
 
 import React from "react";
-import {Row, Col, Alert} from "react-bootstrap";
+import { Row, Col, Modal, Alert } from "react-bootstrap";
 import { capitalize, pick, assign } from "lodash";
-import { Icon, Modal, Input, Button } from "virtool/js/components/Base";
+import { Icon, Input, Button, AutoProgressBar } from "virtool/js/components/Base";
 
 import ReadSelector from "./ReadSelector";
 
@@ -67,7 +67,7 @@ export default class CreateSample extends React.Component {
         dispatcher.settings.on("change", this.onSettingsChange);
 
         if (dispatcher.db.hosts.count({added: true}) > 0) {
-            this.refs.name.focus();
+            this.nameNode.focus();
         }
     };
 
@@ -101,7 +101,14 @@ export default class CreateSample extends React.Component {
 
         event.preventDefault();
 
-        let data = pick(this.state, );
+        let data = pick(this.state, [
+            "name",
+            "host",
+            "isolate",
+            "locale",
+            "subtraction",
+            "group"
+        ]);
 
         assign(data, {
             files: this.state.selected,
@@ -188,14 +195,14 @@ export default class CreateSample extends React.Component {
 
             modalBody = (
                 <div>
-                    <Modal.Progress active={this.state.pending} />
+                    <AutoProgressBar active={this.state.pending} affixed />
 
                     <form onSubmit={this.handleSubmit}>
                         <Modal.Body>
-                            <Row ref="nameRow">
+                            <Row>
                                 <Col md={9}>
                                     <Input
-                                        ref="name"
+                                        ref={(node) => this.nameNode = node}
                                         name="name"
                                         type="text"
                                         error={error ? <span className="text-danger">{error}</span> : null}
@@ -216,7 +223,7 @@ export default class CreateSample extends React.Component {
                                 </Col>
                             </Row>
 
-                            <Row ref="hostSubtractionRow">
+                            <Row>
                                 <Col md={6}>
                                     <Input
                                         type="text"
@@ -239,7 +246,7 @@ export default class CreateSample extends React.Component {
                                 </Col>
                             </Row>
 
-                            <Row ref="localeLibraryRow">
+                            <Row>
                                 <Col md={this.state.forceGroupChoice ? 6 : 8}>
                                     <Input
                                         type="text"
@@ -261,7 +268,6 @@ export default class CreateSample extends React.Component {
                             </Row>
 
                             <ReadSelector
-                                ref="reads"
                                 {...this.state}
                                 select={this.select}
                             />

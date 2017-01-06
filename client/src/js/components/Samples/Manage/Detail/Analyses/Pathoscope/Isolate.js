@@ -22,15 +22,15 @@ export default class PathoscopeIsolate extends React.Component {
     };
 
     componentDidMount () {
-        this.refs.chartNode.addEventListener("scroll", this.handleScroll);
+        this.chartNode.addEventListener("scroll", this.handleScroll);
     }
 
     componentWillUnmount () {
-        this.refs.chartNode.removeEventListener("scroll", this.handleScroll);
+        this.chartNode.removeEventListener("scroll", this.handleScroll);
     }
 
     scrollTo = (scrollLeft) => {
-        this.refs.chartNode.scrollLeft = scrollLeft;
+        this.chartNode.scrollLeft = scrollLeft;
     };
 
     handleScroll = (event) => {
@@ -46,17 +46,17 @@ export default class PathoscopeIsolate extends React.Component {
 
         const sorted = this.props.hits.sort(hit => hit.align.length);
 
-        const hitComponents = sorted.map((hit, index) => (
+        const hitComponents = sorted.map((hit, index) =>
             <Coverage
                 key={hit.accession}
                 data={hit.align}
                 accession={hit.accession}
                 definition={hit.definition}
                 yMax={this.props.maxDepth}
-                showYAxis={index === hitComponents.length - 1}
+                showYAxis={index === sorted.length - 1}
                 isolateComponent={this}
             />
-        ));
+        );
 
         const piValue = this.props.showReads ? this.props.reads: toScientificNotation(this.props.pi);
 
@@ -84,7 +84,7 @@ export default class PathoscopeIsolate extends React.Component {
                         </FlexItem>
                     </Flex>
                 </div>
-                <div ref={this.chartNode} style={chartContainerStyle}>
+                <div ref={(node) => this.chartNode = node} style={chartContainerStyle}>
                     {hitComponents}
                 </div>
             </div>

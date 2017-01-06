@@ -101,7 +101,7 @@ export default class SetupDatabaseName extends React.Component {
         return (
             <form onSubmit={this.handleSubmit}>
                 <Input
-                    ref="text"
+                    inputRef={input => input.focus()}
                     type="text"
                     name="name"
                     label="Database Name"

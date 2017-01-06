@@ -108,16 +108,6 @@ div.hoverable:hover {
     box-shadow: 2px 2px 2px 0 #d5d5d5;
 }
 
-.list-group-item > .progress {
-    height: 10px;
-    margin: -10px -15px 0 -15px;
-}
-
-.list-group-item > .progress.progress-small {
-    height: 3px;
-    margin-bottom: 7px;
-}
-
 .list-group-item.job .job-state-overlay {
     height: 16px;
 }
@@ -539,7 +529,7 @@ table.cluster-table tbody tr {
     font-weight: bold;
 }
 
-.modal-progress {
+.progress-affixed {
     height: 4px;
     box-shadow: none;
     background: none;
@@ -547,6 +537,14 @@ table.cluster-table tbody tr {
     -webkit-transition: width 0.1s linear;
     -o-transition: width 0.1s linear;
     transition: width 0.1s linear;
+}
+
+.list-group-item > .progress-affixed {
+    margin: -10px -15px 8px -15px;
+}
+
+.modal-content > .progress-affixed {
+    margin: -10px -15px 8px -15px;
 }
 
 .no-margin {

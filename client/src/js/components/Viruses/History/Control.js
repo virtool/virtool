@@ -52,7 +52,7 @@ export default class HistoryControl extends React.Component {
                                 <Icon name="search" /> Find
                             </InputGroup.Addon>
                             <FormControl
-                                ref={this.inputNode}
+                                inputRef={(node) => this.inputNode = node}
                                 type="text"
                                 onChange={this.props.onFilter}
                                 placeholder="Virus Name"

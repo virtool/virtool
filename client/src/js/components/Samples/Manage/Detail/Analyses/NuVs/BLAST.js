@@ -17,10 +17,10 @@ const requestBLAST = (analysisId, sequenceIndex) => {
 
 const NuVsBLAST = (props) => {
 
-    if (this.props.blast) {
+    if (props.blast) {
 
         if (this.props.blast.ready) {
-            const hitComponents = this.props.blast.hits.map((hit, index) =>
+            const hitComponents = props.blast.hits.map((hit, index) =>
                 <tr key={index}>
                     <td><a target="_blank" href={nuccoreRoot + hit.accession}>{hit.accession}</a></td>
                     <td>{hit.name}</td>
@@ -50,12 +50,12 @@ const NuVsBLAST = (props) => {
             );
         }
 
-        const ridHref = ridRoot + this.props.blast.rid;
+        const ridHref = ridRoot + props.blast.rid;
 
         return (
             <Alert bsStyle="info">
                 <span>BLAST in progress with RID </span>
-                <a target="_blank" href={ridHref}>{this.props.blast.rid} <sup><Icon name="new-tab" /></sup></a>
+                <a target="_blank" href={ridHref}>{props.blast.rid} <sup><Icon name="new-tab" /></sup></a>
             </Alert>
         );
     }

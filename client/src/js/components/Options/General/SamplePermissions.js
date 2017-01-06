@@ -73,7 +73,6 @@ export default class SamplePermissions extends React.Component {
 
                     <Input
                         type="select"
-                        ref="first"
                         value={this.props.settings.sample_group}
                         onChange={(event) => this.props.set("sample_group", event.target.value)}
                     >

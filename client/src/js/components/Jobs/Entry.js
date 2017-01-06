@@ -111,21 +111,19 @@ export default class JobEntry extends React.Component {
         return (
             <ListGroupItem className="spaced job" onClick={this.showDetail}>
 
-                <ProgressBar now={progressValue} bsStyle={progressStyle} />
+                <ProgressBar now={progressValue} bsStyle={progressStyle} affixed />
 
-                <h5 style={{marginTop: "15px", marginBottom: "5px"}}>
-                    <Row>
-                        <Col md={4}>
-                            <strong>{startCase(this.props.task)}</strong>
-                        </Col>
-                        <Col md={5}>
-                             Started <RelativeTime time={this.props.added} /> by {this.props.username}
-                         </Col>
-                        <Col md={3}>
-                            {iconArea}
-                        </Col>
-                    </Row>
-                </h5>
+                <Row>
+                    <Col md={4}>
+                        <strong>{startCase(this.props.task)}</strong>
+                    </Col>
+                    <Col md={5}>
+                         Started <RelativeTime time={this.props.added} /> by {this.props.username}
+                     </Col>
+                    <Col md={3}>
+                        {iconArea}
+                    </Col>
+                </Row>
             </ListGroupItem>
         );
     }

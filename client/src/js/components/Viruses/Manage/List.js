@@ -64,7 +64,7 @@ export default class VirusList extends React.Component {
             );
         } else {
             virusComponents = (
-                <ListGroupItem className="text-center">
+                <ListGroupItem key="noViruses" className="text-center">
                     <Icon name="info" /> No viruses found.
                 </ListGroupItem>
             );

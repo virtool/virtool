@@ -1,8 +1,8 @@
 import React from "react";
 import ResizeDetector from "react-resize-detector";
 import { intersectionWith, difference } from "lodash";
-import { Tab, Tabs } from "react-bootstrap";
-import { Icon, Modal, ConfirmFooter } from "virtool/js/components/Base";
+import { Tab, Tabs, Modal } from "react-bootstrap";
+import { Icon, AutoProgressBar, ConfirmFooter } from "virtool/js/components/Base";
 
 import SampleDetailGeneral from "./General";
 import SampleDetailQuality from "./Quality/Quality";
@@ -27,7 +27,7 @@ export default class SampleDetail extends React.Component {
     };
 
     componentDidMount () {
-        const analysisIds = dispatcher.db.analyses.find({sample_id: this.props.detail._id}.map(a => a["_id"]));
+        const analysisIds = dispatcher.db.analyses.find({sample_id: this.props.detail._id}).map(a => a["_id"]);
 
         this.retrieveAnalyses(analysisIds);
 
@@ -188,7 +188,7 @@ export default class SampleDetail extends React.Component {
                     {this.props.detail.name}
                 </Modal.Header>
 
-                <Modal.Progress active={this.state.showProgress} />
+                <AutoProgressBar active={this.state.showProgress} affixed />
 
                 <Modal.Body>
                     {body}

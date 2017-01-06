@@ -119,7 +119,7 @@ export default class SetupDataPath extends React.Component {
                 {warning}
 
                 <Input
-                    ref="input"
+                    inputRef={input => input.focus()}
                     type="text"
                     name="dataPath"
                     label="Path"

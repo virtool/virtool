@@ -4,22 +4,20 @@ import { sortBy } from "lodash";
 import { Icon, ListGroupItem } from "virtool/js/components/Base";
 import ReadFile from "./ReadFile";
 
-const NoReadFiles = () => (
-    <ListGroupItem>
-        <Icon name="info" /> No uploads in progress
-    </ListGroupItem>
-);
-
 const ReadFileList = (props) => {
 
     let fileComponents;
 
-    if (this.props.files.length > 0) {
+    if (props.files.length > 0) {
         fileComponents = sortBy(props.files, "timestamp").reverse().map(file =>
-            <ReadFile key={file._id} {...file} />
+            <div key={file._id}><ReadFile {...file} /></div>
         );
     } else {
-        fileComponents = <NoReadFiles />
+        fileComponents = (
+            <ListGroupItem className="text-center" key="noFiles">
+                <Icon name="info" /> No files found
+            </ListGroupItem>
+        );
     }
 
     return (
