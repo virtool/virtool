@@ -77,7 +77,7 @@ export default class NuVsList extends React.Component {
                 <FlipMove
                     typeName="div"
                     className="list-group"
-                    enterAnimation="accordianVertical"
+                    enterAnimation="accordionVertical"
                     leaveAnimation={false}
                 >
                     {rows}

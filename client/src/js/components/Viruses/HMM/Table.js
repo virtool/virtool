@@ -133,7 +133,7 @@ export default class HMMTable extends React.Component {
 
                     <FlipMove
                         typeName="tbody"
-                        enterAnimation="accordianHorizontal"
+                        enterAnimation="accordionHorizontal"
                         leaveAnimation={false}
                         duration={150}
                     >

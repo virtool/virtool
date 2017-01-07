@@ -66,11 +66,11 @@ export default class PathoscopeList extends React.Component {
         rows = flatten(rows);
 
         return (
-            <div style={{overflowY: "hidden"}}>
+            <div >
                 <FlipMove
                     typeName="div"
                     className="list-group"
-                    enterAnimation="accordianVertical"
+                    enterAnimation="accordionVertical"
                     leaveAnimation={false}
                 >
                     {rows}
