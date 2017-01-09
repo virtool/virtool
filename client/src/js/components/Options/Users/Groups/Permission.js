@@ -42,7 +42,7 @@ export default class Permission extends React.Component {
 
         permissionUpdate[this.props.name] = !this.props.value;
 
-        this.setState({pending: true}, function () {
+        this.setState({pending: true}, () => {
             dispatcher.db.groups.request("update_permissions", {
                 _id: this.props.groupName,
                 permissions: permissionUpdate

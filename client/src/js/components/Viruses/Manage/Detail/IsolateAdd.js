@@ -98,7 +98,7 @@ export default class IsolateAdd extends React.Component {
         event.preventDefault();
 
         // Set pendingChange so the component is disabled and a spinner icon is displayed.
-        this.setState({pending: true}, function () {
+        this.setState({pending: true}, () => {
             // Construct a replacement isolate object and send it to the server.
             dispatcher.db.viruses.request("upsert_isolate", {
                 _id: this.props.virusId,

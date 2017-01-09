@@ -70,7 +70,7 @@ class InputCellField extends React.Component {
 }
 
 
-function getInitialInputCellState (props) {
+const getInitialInputCellState = (props) => {
     return {
         // True when the cell is editable (not static)
         editing: false,

@@ -40,7 +40,7 @@ class GroupToggle extends React.PureComponent {
 
     handleClick = () => {
         if (!(this.props.userId === dispatcher.user.name && this.props.groupId === "administrator")) {
-            this.setState({pending: true}, function () {
+            this.setState({pending: true}, () => {
                 this.props.setGroup(this.props.userId, this.props.groupId);
             });
         }

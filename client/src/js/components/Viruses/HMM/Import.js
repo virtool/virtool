@@ -17,15 +17,13 @@ import { Row, Col, Modal, Panel } from "react-bootstrap";
 import { Icon, Button } from "virtool/js/components/Base";
 import { byteSize } from "virtool/js/utils";
 
-function getInitialState () {
-    return {
-        file: null,
-        fileId: null,
-        pending: false,
-        warning: null,
-        added: null
-    };
-}
+const getInitialState = () => ({
+    file: null,
+    fileId: null,
+    pending: false,
+    warning: null,
+    added: null
+});
 
 export default class ImportHMM extends React.Component {
 

@@ -19,9 +19,7 @@ import { MethodWithModal, SequenceReader, bothPropTypes } from "./Base";
 export const RemoveIsolateMethod = (props) => {
 
     // Get the part of the changes object that describes the change in the isolates.
-    const fieldChange = find(props.changes, function (change) {
-        return change[1] == "isolates";
-    });
+    const fieldChange = find(props.changes, change => change[1] == "isolates");
 
     // Get the isolate from the change data.
     const isolate = fieldChange[2][0][1];

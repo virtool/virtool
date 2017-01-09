@@ -61,8 +61,8 @@ const CreateSequencesChart = (element, data, baseWidth) => {
 
     // Build a d3 line function for rendering the plot line.
     const line = d3.line()
-        .x(function (d,i) {return x(i);})
-        .y(function (d) {return y(d);});
+        .x((d,i) => x(i))
+        .y(d => y(d));
 
     // Build SVG canvas.
     let svg = d3.select(element).append("svg")

@@ -54,8 +54,8 @@ const CreateNucleotidesChart = (element, data, baseWidth) => {
 
     // Create a d3 line function for generating the four lines showing nucleotide frequency.
     const line = d3.line()
-        .x(function (d, i) { return x(i)} )
-        .y(function (d) { return y(d) });
+        .x((d, i) => x(i))
+        .y(d => y(d));
 
     // Define a scale and d3-legend function for generating a legend.
     const legendScale = d3.scaleOrdinal()

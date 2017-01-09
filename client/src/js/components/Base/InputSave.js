@@ -96,7 +96,7 @@ export class InputSave extends React.Component {
         if (this.state.value !== this.props.initialValue) {
             // If the new value is different to the initial one, show a spinner and call the onSave function. Show a
             // spinner to indicate the request is pending. Drop focus from the form children.
-            this.setState({pending: true}, function () {
+            this.setState({pending: true}, () => {
                 this.props.onSave({
                     value: this.state.value,
                     name: this.props.name

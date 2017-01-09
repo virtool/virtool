@@ -37,7 +37,7 @@ export const toScientificNotation = (number) => {
     return Numeral(number).format("0.000");
 };
 
-export function formatIsolateName (isolate) {
+export const formatIsolateName = (isolate) => {
     if (
         isolate.source_type && isolate.source_type !== "unknown" ||
         isolate.sourceType && isolate.sourceType !== "unknown"
@@ -49,9 +49,9 @@ export function formatIsolateName (isolate) {
     }
 
     return "Unnamed";
-}
+};
 
-export function postJSON (uri, data, callback) {
+export const postJSON = (uri, data, callback) => {
     Request.post(uri)
         .send(data)
         .type("application/x-www-form-urlencoded; charset=UTF-8")
@@ -59,4 +59,4 @@ export function postJSON (uri, data, callback) {
         .end((err, response) => {
             callback(response.body)
         });
-}
+};

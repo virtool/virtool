@@ -24,7 +24,7 @@ export default class SampleDetailRights extends React.PureComponent {
     changeRights = (event) => {
         let newRights = {};
 
-        forEach({"read": false, "write": false}, function (value, key) {
+        forEach({"read": false, "write": false}, (value, key) => {
             newRights[`${event.target.name}_${key}`] = event.target.value.includes(key[0]);
         });
 

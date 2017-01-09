@@ -17,7 +17,7 @@ import { Icon, Flex, FlexItem, Button } from "virtool/js/components/Base";
 import LoginForm from "./Login";
 import PasswordChangeForm from "./Change";
 
-function getInitialState () {
+const getInitialState = () => {
     return {
         username: "",
         password: "",
@@ -56,7 +56,7 @@ export default class LoginDialog extends React.Component {
     };
 
     login = () => {
-        this.setState({pending: true}, function () {
+        this.setState({pending: true}, () => {
             dispatcher.send({
                 interface: "users",
                 method: "authorize_by_login",

@@ -13,7 +13,7 @@ import React from "react";
 import JobList from "./List";
 import JobsToolbar from "./Toolbar";
 
-function progressSortFunction (a, b) {
+const progressSortFunction = (a, b) => {
 
     if (a.state === "running") {
         // Always place before waiting jobs.

@@ -36,7 +36,7 @@ export default class PrimaryGroup extends React.Component {
      * Called when the component is clicked. Selects the component"s user in the parent component.
      */
     handleChange = (event) => {
-        this.setState({pending: true}, function () {
+        this.setState({pending: true}, () => {
             dispatcher.db.users.request("set_primary_group", {
                 _id: this.props._id,
                 group_id: event.target.value

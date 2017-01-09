@@ -61,9 +61,7 @@ export default class SetupDataPath extends React.Component {
             new_server: !includes(this.props.names, this.props.name)
         };
 
-        this.setState({pending: true, feedback: false}, function () {
-            postJSON("/", args, this.onComplete);
-        });
+        this.setState({pending: true, feedback: false}, () => postJSON("/", args, this.onComplete));
     };
 
     onComplete = (data) => {

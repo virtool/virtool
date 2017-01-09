@@ -49,9 +49,7 @@ export default class JobError extends React.PureComponent {
             );
         } else {
             // An error in an external application.
-            content = this.props.error.message.map(function (line) {
-                return <p>{line}</p>
-            });
+            content = this.props.error.message.map(line => <p>{line}</p>);
         }
 
         return (

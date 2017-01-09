@@ -75,13 +75,11 @@ function HMMDetail (props) {
             });
         }, []), "count").reverse();
 
-        taxonomy[key] = entries.map(function (entry) {
-            return (
-                <ListGroupItem key={entry.name}>
-                    {entry.name} <Badge>{entry.count}</Badge>
-                </ListGroupItem>
-            );
-        });
+        taxonomy[key] = entries.map(entry =>
+            <ListGroupItem key={entry.name}>
+                {entry.name} <Badge>{entry.count}</Badge>
+            </ListGroupItem>
+        );
     });
 
     const listGroupStyle = {

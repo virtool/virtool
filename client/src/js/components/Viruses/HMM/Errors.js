@@ -15,9 +15,9 @@ import { Alert } from "react-bootstrap";
 import { numberToWord } from "virtool/js/utils"
 import { Icon, Flex, FlexItem, Button } from "virtool/js/components/Base";
 
-function makeSpecifier (value, noun) {
+const makeSpecifier = (value, noun) => {
     return [(value === 1 ? "is": "are"), numberToWord(value), noun + (value === 1 ? "": "s")].join(" ")
-}
+};
 
 /**
  * A component the contains child components that modify certain general options. A small explanation of each

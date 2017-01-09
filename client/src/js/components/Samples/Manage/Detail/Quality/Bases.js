@@ -51,41 +51,43 @@ const CreateBasesChart = (element, data, width) => {
     const yAxis = d3.axisLeft(y);
 
     // A function for generating the lines representing mean and median base quality.
-    const line = function (data, key) {
+    const line = (data, key) => {
         const column = {
             mean: 0,
             median: 1
         }[key];
 
         const generator = d3.line()
-            .x(function (d, i) {return x(i);})
-            .y(function (d) {return y(d[column]);});
+            .x((d, i) => x(i))
+            .y(d => y(d[column]));
 
         return generator(data);
     };
+
+    const areaX = (d, i) => x(i);
 
     // Define the d3 area functions to render the inter-quartile and upper and lower decile plot areas.
     const areas = [
         {
             name: "upper",
             func: d3.area()
-                .x(function (d, i) { return x(i);})
-                .y0(function (d) {return y(d[3]);})
-                .y1(function (d) {return y(d[5]);})
+                .x(areaX)
+                .y0(d => y(d[3]))
+                .y1(d => y(d[5]))
         },
         {
             name: "lower",
             func: d3.area()
-                .x(function (d, i) { return x(i);})
-                .y0(function (d) {return y(d[2]);})
-                .y1(function (d) {return y(d[4]);})
+                .x(areaX)
+                .y0(d => y(d[2]))
+                .y1(d => y(d[4]))
         },
         {
             name: "quartile",
             func: d3.area()
-                .x(function (d, i) { return x(i);})
-                .y0(function (d) {return y(d[2]);})
-                .y1(function (d) {return y(d[3]);})
+                .x(areaX)
+                .y0(d => y(d[2]))
+                .y1(d => y(d[3]))
         }
     ];
 
@@ -97,7 +99,7 @@ const CreateBasesChart = (element, data, width) => {
         .attr("transform", `translate(${margin.left}, ${margin.top})`);
 
     // Append the areas to the chart.
-    areas.forEach(function (area) {
+    areas.forEach(area => {
         svg.append("path")
             .attr("d", area.func(data))
             .attr("class", "graph-line")

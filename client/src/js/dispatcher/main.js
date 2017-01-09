@@ -95,7 +95,7 @@ function Dispatcher (onReady) {
      * @param message {object} - the message to send to the server.
      * @func
      */
-    this.send = function (message) {
+    this.send = (message) => {
         var transaction = this.transactions.register();
         message.tid = transaction.tid;
         this.connection.send(JSON.stringify(message));
@@ -103,7 +103,7 @@ function Dispatcher (onReady) {
         return transaction;
     };
 
-    this.sync = function () {
+    this.sync = () => {
 
         var dispatcher = this;
 
@@ -113,30 +113,29 @@ function Dispatcher (onReady) {
                 dispatcher.settings.update(data);
 
                 dispatcher.db.open()
-                    .then(function () {
+                    .then(() => {
 
                         var collectionCount = dispatcher.db.collectionNames.length
 
                         dispatcher.syncProgressStep = 1 / (collectionCount + 1);
 
-                        dispatcher.db.collectionNames.forEach(function (collectionName) {
+                        dispatcher.db.collectionNames.forEach((collectionName) => {
 
                             var collection = dispatcher.db[collectionName];
 
                             var manifest = collection.mapReduce(
-                                function (document) {
-                                    return {_id: document._id, _version: document._version};
-                                },
-
-                                function (documents) {
-                                    return transform(documents, function (result, document) {
-                                        result[document._id] = document._version;
-                                    }, {});
-                                }
+                                (document) => ({_id: document._id, _version: document._version}),
+                                (documents) => (
+                                    transform(
+                                        documents,
+                                        (result, document) => result[document._id] = document._version,
+                                        {}
+                                    )
+                                )
                             );
 
                             collection.request("sync", manifest)
-                                .update(function (update) {
+                                .update((update) => {
                                     collection.expectedSyncCount = update;
 
                                     if (collection.expectedSyncCount === 0) {
@@ -156,12 +155,10 @@ function Dispatcher (onReady) {
             });
     };
 
-    this.checkSynced = function () {
+    this.checkSynced = () => {
         var collectionNames = without(dispatcher.db.collectionNames, "reads", "files");
 
-        var allSynced = every(collectionNames, function (collectionName) {
-            return dispatcher.db[collectionName].synced;
-        });
+        var allSynced = every(collectionNames, collectionName => dispatcher.db[collectionName].synced);
 
         if (allSynced) {
             this.emit("synced");
@@ -170,7 +167,7 @@ function Dispatcher (onReady) {
 
     // When a websocket message is received, this method is called with the message as the sole argument. Every message
     // has a property "operation" that tells the dispatcher what to do. Illegal operation names will throw an error.
-    this.handle = function (message) {
+    this.handle = (message) => {
 
         var iface = message.interface;
         var operation = message.operation;
@@ -219,7 +216,7 @@ function Dispatcher (onReady) {
 
                 var updates = message.data.constructor === Array ? message.data : [message.data];
 
-                updates.forEach(function (update) {
+                updates.forEach((update) => {
                     var existingDocument = collection.findOne({_id: update._id});
 
                     if (existingDocument) {
@@ -262,7 +259,7 @@ function Dispatcher (onReady) {
         }
     };
 
-    this.establishConnection = function (callback) {
+    this.establishConnection = (callback) => {
 
         var dispatcher = this;
 

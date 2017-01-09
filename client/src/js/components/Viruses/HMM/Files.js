@@ -60,7 +60,7 @@ export default class HMMFiles extends React.Component {
         });
     };
 
-    clean = () => function () {
+    clean = () => {
         this.setState({ cleaning: true }, () => {
             dispatcher.db.hmm.request("clean", {
                 cluster_ids: this.state.errors["not_in_file"]
@@ -76,9 +76,7 @@ export default class HMMFiles extends React.Component {
 
         let content;
 
-        const hasErrors = !every(values(this.state.errors), function (value) {
-            return value === false;
-        });
+        const hasErrors = !every(values(this.state.errors), value => value === false);
 
         if (this.state.files || hasErrors) {
 

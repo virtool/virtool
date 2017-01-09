@@ -17,7 +17,7 @@ import { Icon, Input, Button, AutoProgressBar } from "virtool/js/components/Base
 
 import ReadSelector from "./ReadSelector";
 
-function getInitialState () {
+const getInitialState = () => {
 
     const readyHosts = dispatcher.db.hosts.find({added: true});
 
@@ -40,11 +40,9 @@ function getInitialState () {
         pending: false
     };
 
-}
+};
 
-function getForceGroupChoice () {
-    return dispatcher.settings.get("sample_group") == "force_choice"
-}
+const getForceGroupChoice = () => dispatcher.settings.get("sample_group") == "force_choice";
 
 /**
  * A main view for importing samples from FASTQ files. Importing starts an import job on the server.

@@ -15,9 +15,7 @@ import { Icon, ListGroupItem } from "virtool/js/components/Base"
 
 import HostFasta from "./Fasta";
 
-function getHostFiles () {
-    return dispatcher.db.files.chain().find({"file_type": "host_fasta"}).branch()
-}
+const getHostFiles = () => dispatcher.db.files.chain().find({"file_type": "host_fasta"}).branch();
 
 export default class HostFiles extends React.Component {
 

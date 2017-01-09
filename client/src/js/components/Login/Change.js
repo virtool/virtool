@@ -14,7 +14,7 @@ import { clone, assign } from "lodash";
 import { Alert } from "react-bootstrap";
 import { Input } from "virtool/js/components/Base";
 
-function getInitialState () {
+const getInitialState = () => {
     return {
         old: "",
         password: "",

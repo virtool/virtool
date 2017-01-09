@@ -41,8 +41,8 @@ const createChart = (element, data, meta, yMax, xMin, showYAxis) => {
     const xAxis = d3.axisBottom(x);
 
     const area = d3.area()
-        .x(function (d, i) {return x(i)})
-        .y0(function (d) {return y(d)})
+        .x((d, i) => x(i))
+        .y0(d => y(d))
         .y1(height);
 
     // Construct the SVG canvas.

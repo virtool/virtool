@@ -172,12 +172,9 @@ export default class Router {
 
     // Clear active states of all routes
     clearActive () {
-        this.structure.forEach(function (parent) {
+        this.structure.forEach(parent => {
             parent.active = false;
-
-            parent.children.forEach(function (child) {
-                child.active = false;
-            });
+            parent.children.forEach(child => child.active = false);
         });
     }
 }

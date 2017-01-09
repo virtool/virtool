@@ -57,9 +57,7 @@ class Events {
      * @func
      */
     off (event, callback) {
-        remove(this.bound[event], function (candidateCallback) {
-            return callback === candidateCallback;
-        });
+        remove(this.bound[event], (candidateCallback) => callback === candidateCallback);
     }
 
     /**
@@ -71,13 +69,8 @@ class Events {
      * @func
      */
     emit (events, data) {
-        events = events instanceof Array ? events: [events];
-
-        events.forEach((event) => {
-            each(this.bound[event], function (callback) {
-                callback(data);
-            });
-        })
+        const eventsArray = events instanceof Array ? events: [events];
+        eventsArray.forEach((event) => each(this.bound[event], (callback) => callback(data)));
     }
 }
 

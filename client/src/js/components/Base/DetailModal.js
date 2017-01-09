@@ -49,12 +49,12 @@ export class DetailModal extends React.Component {
     modalEntered = () => {
         // Request detail for the document from the server. The data will be returned in a transaction. Pass the data
         // to a callback that will update the contentComponent.
-        this.props.collection.request("detail", {_id: this.props.target._id}).success(function (data) {
+        this.props.collection.request("detail", {_id: this.props.target._id}).success((data) => {
             this.setState({
                 pending: false,
                 data: data
             });
-        }, this);
+        });
 
         // Listen for changes to the collection that the detail belongs to. If a change occurs in the document currently
         // displayed in the detail modal, get updated detail from the server and re-render the detail component.

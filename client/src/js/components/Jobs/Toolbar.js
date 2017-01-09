@@ -72,7 +72,7 @@ export default class JobsToolbar extends React.Component {
 
     clearRemove = (toRemove) => {
         if (toRemove.length > 0) {
-            this.setState({pendingRemove: true}, function () {
+            this.setState({pendingRemove: true}, () => {
                 dispatcher.db.jobs.request("remove_job", {_id: toRemove})
                     .success(() => {
                         this.setState({pendingRemove: false});
