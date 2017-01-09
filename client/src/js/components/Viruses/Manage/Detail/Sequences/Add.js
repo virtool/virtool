@@ -11,7 +11,7 @@
 
 import React from "react";
 import CX from "classnames";
-import { assign, isEqual, pick, omit, merge } from "lodash";
+import { assign, isEqual, pick, omit } from "lodash";
 import { Collapse } from "react-bootstrap";
 import { Flex, FlexItem, Icon, Button, LoadingOverlay } from "virtool/js/components/Base";
 
@@ -121,7 +121,7 @@ export default class AddSequence extends React.Component {
     save = (event) => {
         event.preventDefault();
 
-        const newEntry = merge(pick(this.state, ["definition", "host", "sequence"]), {
+        const newEntry = assign(pick(this.state, ["definition", "host", "sequence"]), {
             _id: this.state.sequenceId,
             isolate_id: this.props.isolateId
         });
@@ -156,7 +156,7 @@ export default class AddSequence extends React.Component {
         ]);
 
         // Further extend contentProps for the Sequence component.
-        merge(contentProps, pick(this.props, ["virusId", "isolateId", "canModify"]), {
+        assign(contentProps, pick(this.props, ["virusId", "isolateId", "canModify"]), {
             onSubmit: this.save,
             autofill: this.autofill,
             update: this.update,
