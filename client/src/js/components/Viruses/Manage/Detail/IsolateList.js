@@ -50,12 +50,12 @@ export default class IsolateList extends React.Component {
 
     componentDidMount () {
         dispatcher.settings.on("change", this.update);
-        this.flipMoveNode.addEventListener("resize", this.updateScroll);
+        this.containerNode.addEventListener("resize", this.updateScroll);
     }
 
     componentWillUnmount () {
         dispatcher.settings.off("change", this.update);
-        this.flipMoveNode.removeEventListener("resize", this.updateScroll);
+        this.containerNode.removeEventListener("resize", this.updateScroll);
     }
 
     updateScroll = () => {
@@ -74,9 +74,9 @@ export default class IsolateList extends React.Component {
                 <div key={isolate.isolate_id}>
                     <Isolate
                         virusId={this.props.virusId}
-                        isolateI={isolate.isolate_id}
+                        isolateId={isolate.isolate_id}
                         sourceName={isolate.source_name}
-                        sourceType={isolate.source_name}
+                        sourceType={isolate.source_type}
                         default={isolate.default}
                         active={isolate.isolate_id === this.props.activeIsolateId}
                         selectIsolate={this.props.selectIsolate}
@@ -116,28 +116,26 @@ export default class IsolateList extends React.Component {
             );
         }
 
-        const flipProps = {
-            typeName: "div",
-            className: "list-group",
-            enterAnimation: "fade",
-            leaveAnimation: false,
-            duration: 150
-        };
-
         return (
             <div>
                 <h5>
                     <strong><Icon name="lab" /> Isolates</strong> <Badge>{this.props.data.length}</Badge>
                 </h5>
                 <Scroll ref={(node) => this.scrollNode = node} style={{marginBottom: "15px"}}>
-                    <FlipMove
-                        {...flipProps}
-                        style={{marginBottom: 0, marginRight: "10px"}}
-                        onFinishAll={this.updateScroll}
-                    >
-                        {isolateComponents}
-                        {lastComponent}
-                    </FlipMove>
+                    <div ref={(node) => this.containerNode = node}>
+                        <FlipMove
+                            typeName="div"
+                            className="list-group"
+                            enterAnimation="fade"
+                            leaveAnimation={false}
+                            duration={150}
+                            style={{marginBottom: 0, marginRight: "10px"}}
+                            onFinishAll={this.updateScroll}
+                        >
+                            {isolateComponents}
+                            {lastComponent}
+                        </FlipMove>
+                    </div>
                 </Scroll>
             </div>
         );

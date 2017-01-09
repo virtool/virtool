@@ -18,7 +18,6 @@ export class AutoProgressBar extends React.Component {
 
     constructor (props) {
         super(props);
-
         this.interval = null;
         this.state = {
             fill: 0
@@ -53,9 +52,9 @@ export class AutoProgressBar extends React.Component {
         }
     }
 
-    componentWillUnmount () {
+    componentWillUnmount = () => {
         this.stop();
-    }
+    };
 
     move = () => {
         // Calculate how far the bar should be filled for this iteration.
@@ -73,7 +72,7 @@ export class AutoProgressBar extends React.Component {
         });
     };
 
-    stop = () => function () {
+    stop = () => {
         window.clearInterval(this.interval);
     };
 

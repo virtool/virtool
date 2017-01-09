@@ -67,7 +67,7 @@ export default class Sequence extends React.Component {
 
     componentWillReceiveProps = (nextProps) => {
 
-        let state = getInitialState();
+        let state = getInitialState(this.props);
 
         // If the sequence was editing, but loses active status, disable editing in state.
         if ((!nextProps.active && this.props.active) && this.state.editing) {

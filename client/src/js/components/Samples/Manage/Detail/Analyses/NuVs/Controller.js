@@ -79,11 +79,6 @@ export default class NuVsController extends React.PureComponent {
                             </FormGroup>
                         </FlexItem>
                         <FlexItem pad>
-                            <Button onClick={this.collapseAll}>
-                                <Icon name="shrink" />
-                            </Button>
-                        </FlexItem>
-                        <FlexItem pad>
                             <Dropdown
                                 id="job-clear-dropdown"
                                 className="split-dropdown"

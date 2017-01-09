@@ -11,7 +11,8 @@
 
 import React from "react";
 import { Row, Col, Overlay, Popover, FormGroup, ControlLabel, FormControl, InputGroup } from "react-bootstrap";
-import { Icon, Input, Button, SequenceField } from "virtool/js/components/Base";
+import { Icon, Input, Button } from "virtool/js/components/Base";
+import SequenceField from "./SequenceField";
 
 /**
  * A form-based component that is used for adding, editing, and reading sequence records. When reading, the form

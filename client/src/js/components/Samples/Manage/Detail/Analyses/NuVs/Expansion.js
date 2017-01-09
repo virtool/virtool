@@ -20,8 +20,6 @@ export default class NuVsExpansion extends React.Component {
         this.draw();
     }
 
-    shouldComponentUpdate = () => false;
-
     draw = () => {
 
         const element = this.containerNode;
@@ -80,9 +78,7 @@ export default class NuVsExpansion extends React.Component {
 
                 <NuVsBLAST
                     analysisId={this.props.analysisId}
-
                     blast={this.props.blast}
-
                     sequenceIndex={this.props.index}
                     sequence={this.props.sequence}
                 />

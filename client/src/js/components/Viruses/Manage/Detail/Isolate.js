@@ -216,7 +216,7 @@ export default class Isolate extends React.Component {
      * @func
      */
     toggleEditing = () => {
-        const newState = assign(this.getInitialState(), {editing: !this.state.editing});
+        const newState = assign(getInitialState(this.props), {editing: !this.state.editing});
 
         if (this.state.editing) {
             this.setState(newState, () => {

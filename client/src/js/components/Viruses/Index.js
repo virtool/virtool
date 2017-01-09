@@ -65,9 +65,12 @@ export default class ManageIndexes extends React.Component {
 
             // Render a ListGroupItem for each index version. Mark the first ready index with a checkmark by setting the
             // showReady prop to true.
-            const indexComponents = sortBy(this.state.indexEntries, "index_version").reverse().map((document) => {
-                haveSeenReady = document.ready;
-                return <Entry key={document._id} showReady={!document.ready || !haveSeenReady} {...document} />;
+            const indexComponents = sortBy(this.state.indexEntries, "index_version").reverse().map((doc) => {
+                const entry = <Entry key={doc._id} showReady={!doc.ready || !haveSeenReady} {...doc} />;
+                if (doc.ready) {
+                    haveSeenReady = true;
+                }
+                return entry;
             });
 
             return (

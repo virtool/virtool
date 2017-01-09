@@ -35,7 +35,7 @@ export default class NuVsEntry extends React.Component {
         if (this.props.in) {
             closeButton = (
                 <FlexItem grow={0} shrink={0}>
-                    <button type="button" className="close" onClick={this.toggleIn}>
+                    <button type="button" className="close" onClick={() => this.props.toggleIn(this.props.index)}>
                         <span>×</span>
                     </button>
                 </FlexItem>

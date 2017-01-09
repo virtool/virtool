@@ -40,9 +40,12 @@ export default class PathoscopeList extends React.Component {
 
             if (expanded) {
 
-                const isolateComponents = sortBy(item.isolates, "pi").reverse().map((isolate) =>
-                    <PathoscopeIsolate
-                        key={item._id + "-" + isolate.isolate_id}
+                const isolateComponents = sortBy(item.isolates, "pi").reverse().map((isolate) => {
+                    const key = item._id + "-" + isolate.isolate_id;
+
+                    return <PathoscopeIsolate
+                        ref={key}
+                        key={key}
                         virusId={item._id}
                         maxDepth={item.maxDepth}
                         maxGenomeLength={item.maxGenomeLength}
@@ -50,7 +53,7 @@ export default class PathoscopeList extends React.Component {
                         setScroll={this.setScroll}
                         showReads={this.props.showReads}
                     />
-                );
+                });
 
                 return components.concat(
                     <div key={index} className="list-group-item pathoscope-virus-detail spaced">
@@ -66,7 +69,7 @@ export default class PathoscopeList extends React.Component {
         rows = flatten(rows);
 
         return (
-            <div >
+            <div style={{overflowY: "hidden"}}>
                 <FlipMove
                     typeName="div"
                     className="list-group"

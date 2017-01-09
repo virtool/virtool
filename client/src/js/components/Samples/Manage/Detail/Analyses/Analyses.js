@@ -13,7 +13,7 @@ import AnalysisReport from "./Report";
  *
  * @class
  */
-export default class AnalysisPanel extends React.Component {
+export default class AnalysisPanel extends React.PureComponent {
 
     constructor (props) {
         super(props);
@@ -30,7 +30,9 @@ export default class AnalysisPanel extends React.Component {
         quality: React.PropTypes.object
     };
 
-    selectAnalysis = (analysisId) => this.setState({activeAnalysisId: analysisId});
+    selectAnalysis = (analysisId) => {
+        this.setState({activeAnalysisId: analysisId});
+    };
 
     showListing = () => this.setState({activeAnalysisId: null});
 

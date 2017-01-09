@@ -1,6 +1,6 @@
 import React from "react";
 import ResizeDetector from "react-resize-detector";
-import { intersectionWith, difference } from "lodash";
+import { map, intersectionWith, difference } from "lodash";
 import { Tab, Tabs, Modal } from "react-bootstrap";
 import { Icon, AutoProgressBar, ConfirmFooter } from "virtool/js/components/Base";
 
@@ -28,9 +28,7 @@ export default class SampleDetail extends React.Component {
 
     componentDidMount () {
         const analysisIds = dispatcher.db.analyses.find({sample_id: this.props.detail._id}).map(a => a["_id"]);
-
         this.retrieveAnalyses(analysisIds);
-
         dispatcher.db.analyses.on("change", this.onAnalysesChange);
     }
 
@@ -52,25 +50,26 @@ export default class SampleDetail extends React.Component {
     };
 
     onAnalysesChange = () => {
-
+        // Get all minimal analysis documents including the changed ones.
         const nextAnalyses = dispatcher.db.analyses.find({sample_id: this.props.detail._id});
 
+        // Find which analyses do not need to have an updated version fetched from the server.
         const toRetain = intersectionWith(this.state.analyses, nextAnalyses, (arrValue, othValue) =>
             arrValue._id === othValue._id && arrValue._version === othValue._version
         );
 
         const toRetrieve = difference(
-            nextAnalyses.map(a => a["_id"]),
-            toRetain.map(a => a["_id"])
+            map(nextAnalyses, "_id"),
+            map(toRetain, "_id")
         );
 
         if (toRetrieve.length > 0) {
             this.retrieveAnalyses(toRetrieve, toRetain);
+        } else {
+            this.setState({
+                analyses: toRetain.length === 0 ? null: toRetain
+            });
         }
-
-        this.setState({
-            analyses: toRetain.length === 0 ? null: toRetain
-        });
     };
 
     handleSelect = (eventKey) => this.setState({activeKey: eventKey});

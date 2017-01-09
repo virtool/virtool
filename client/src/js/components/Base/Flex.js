@@ -86,7 +86,7 @@ export class FlexItem extends React.Component {
         pad: React.PropTypes.oneOfType([React.PropTypes.bool, React.PropTypes.number]),
         style: React.PropTypes.object,
         className: React.PropTypes.string,
-        children: React.PropTypes.node.isRequired
+        children: React.PropTypes.node
     };
 
     static defaultProps = {

@@ -1,5 +1,3 @@
-
-
 import CX from "classnames";
 import React from "react";
 import { Row, Col, Label } from "react-bootstrap";
@@ -41,11 +39,9 @@ export default class PathoscopeEntry extends React.Component {
 
         if (this.props.in) {
             closeButton = (
-                <FlexItem>
-                    <button type="button" className="close" onClick={this.toggleIn}>
-                        <span>×</span>
-                    </button>
-                </FlexItem>
+                <button type="button" className="close" onClick={this.toggleIn}>
+                    <span>×</span>
+                </button>
             );
         }
 
@@ -104,7 +100,9 @@ export default class PathoscopeEntry extends React.Component {
                                     {toScientificNotation(this.props.coverage)}
                                 </strong>
                             </FlexItem>
-                            {closeButton}
+                            <FlexItem>
+                                {closeButton}
+                            </FlexItem>
                         </Flex>
                     </Col>
                 </Row>

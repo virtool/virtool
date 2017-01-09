@@ -19,7 +19,7 @@ const NuVsBLAST = (props) => {
 
     if (props.blast) {
 
-        if (this.props.blast.ready) {
+        if (props.blast.ready) {
             const hitComponents = props.blast.hits.map((hit, index) =>
                 <tr key={index}>
                     <td><a target="_blank" href={nuccoreRoot + hit.accession}>{hit.accession}</a></td>

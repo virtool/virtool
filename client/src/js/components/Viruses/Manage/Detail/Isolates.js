@@ -75,15 +75,7 @@ export default class Isolates extends React.Component {
         }
     };
 
-    /**
-     * Set a new active isolate using the passed isolateId. Triggered in response to a click on a Isolate component.
-     *
-     * @param activeIsolateId {string} - the id of the new active isolate.
-     * @func
-     */
-    selectIsolate = (activeIsolateId) => {
-        this.setState({activeIsolateId: activeIsolateId});
-    };
+    selectIsolate = (isolateId) => this.setState({activeIsolateId: isolateId});
 
     /**
      * Toggle whether an add-isolate form should be shown. Triggered by clicking the add-isolate button or by cancelling

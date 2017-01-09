@@ -67,7 +67,7 @@ export default class IsolateAdd extends React.Component {
         this.setState({collapsed: false}, () => {
             this.props.updateScroll();
             this.formNode.focus();
-            this.scrollIntoView({
+            this.node.scrollIntoView({
                 block: "end",
                 behaviour: "smooth"
             });
@@ -155,7 +155,7 @@ export default class IsolateAdd extends React.Component {
         };
 
         return (
-            <div {...itemProps}>
+            <div ref={(node) => this.node = node} {...itemProps}>
                 <Collapse in={!this.props.active}>
                     <div className="text-center">
                         <Icon name="plus-square" bsStyle="primary" /> Add Isolate

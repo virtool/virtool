@@ -21,7 +21,7 @@ export default class AnalysisReport extends React.Component {
     render () {
 
         let content;
-        
+
         if (includes(this.props.algorithm, "pathoscope")) {
             content = (
                 <PathoscopeViewer

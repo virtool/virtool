@@ -125,7 +125,7 @@ export default class QuickAnalyze extends React.Component {
                         Quick Analyze
                     </Modal.Header>
 
-                    <AutoProgressBar active={this.state.pending} progressStyle="modal" />
+                    <AutoProgressBar ref={(node) => this.progressNode = node} active={this.state.pending} affixed />
 
                     <Modal.Body>
                         <Input
@@ -135,7 +135,7 @@ export default class QuickAnalyze extends React.Component {
                         />
 
                         <Input
-                            inputRef={(node) => this.nameNode = node}
+                            ref={(node) => this.nameNode = node}
                             name="name"
                             label="Analysis Name"
                             value={this.state.name}

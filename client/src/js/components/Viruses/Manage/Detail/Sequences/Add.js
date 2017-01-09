@@ -100,7 +100,7 @@ export default class AddSequence extends React.Component {
                     // sequence item.
                     state.pendingAutofill = false;
 
-                    this.setState();
+                    this.setState(state);
                 })
                 .failure(() => {
                     this.setState({

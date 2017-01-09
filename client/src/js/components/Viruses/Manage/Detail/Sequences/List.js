@@ -102,8 +102,7 @@ export default class VirusSequences extends React.Component {
 
         let lastComponent;
 
-        if (this.props.canModify && sequenceComponents.length > 0 &&
-            this.props.isolateId && this.props.isolateId !== "new") {
+        if (this.props.canModify && this.props.isolateId && this.props.isolateId !== "new") {
             lastComponent = (
                 <AddSequence
                     virusId={this.props.virusId}

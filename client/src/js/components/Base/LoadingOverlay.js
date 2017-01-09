@@ -10,7 +10,7 @@
  */
 
 import React from "react";
-import Icon from "./";
+import { Icon } from "./";
 
 export const LoadingOverlay = (props) => {
     if (props.show) {
