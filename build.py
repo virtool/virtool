@@ -32,8 +32,7 @@ with open(os.path.join(target, "VERSION"), "w") as version_file:
 
 shutil.copy("install.sh", os.path.join(target, "install.sh"))
 
-for path in ["assets", "scripts"]:
-    shutil.copytree(path, os.path.join(target, path))
+shutil.copytree("assets", os.path.join(target, "assets"))
 
 shutil.copytree("client/dist", os.path.join(target, "client"))
 
