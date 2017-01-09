@@ -12,8 +12,8 @@
 import React from "react";
 import CX from "classnames";
 import { upperFirst, camelCase } from "lodash";
-import { Row, Col, ProgressBar } from "react-bootstrap";
-import { Icon, RelativeTime } from "virtool/js/components/Base";
+import { Row, Col } from "react-bootstrap";
+import { Icon, RelativeTime, ProgressBar } from "virtool/js/components/Base";
 
 export default class AnalysisItem extends React.Component {
     constructor (props) {
@@ -111,9 +111,9 @@ export default class AnalysisItem extends React.Component {
         if (!this.props.ready) {
             progressBar = (
                 <ProgressBar
-                    className="progress-small"
                     bsStyle={this.props.ready ? "primary": "success"}
                     now={this.props.ready ? 100: this.state.progress * 100}
+                    affixed
                 />
             );
         }
