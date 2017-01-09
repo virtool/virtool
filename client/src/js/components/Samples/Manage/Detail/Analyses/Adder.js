@@ -1,5 +1,5 @@
 import React from "react";
-import { Flex, FlexItem, Icon, Input, Button } from "virtool/js/components/Base";
+import { AlgorithmSelect, FlexItem, Input, Button } from "virtool/js/components/Base";
 
 const getInitialState = () => ({
     name: "",
@@ -47,30 +47,26 @@ export default class AnalysisAdder extends React.Component {
 
     render = () => (
         <form onSubmit={this.handleSubmit}>
-            <Flex alignItems="flex-end">
-                <FlexItem grow={5}>
+            <div className="toolbar">
+                <FlexItem grow={1}>
                     <Input
-                        name="nickname"
-                        label="Name"
+                        placeholder="Analysis Name"
                         value={this.state.nickname}
                         onChange={this.handleChange}
                         disabled={true}
                     />
                 </FlexItem>
-                <FlexItem grow={1} pad>
-                    <Input name="algorithm" type="select" label="Algorithm" value={this.state.algorithm}
-                           onChange={this.handleChange}>
-                        <option value="pathoscope_bowtie">PathoscopeBowtie</option>
-                        <option value="pathoscope_snap">PathoscopeSNAP</option>
-                        <option value="nuvs">NuVs</option>
-                    </Input>
-                </FlexItem>
-                <FlexItem pad>
-                    <Button type="submit" style={{marginBottom: "15px"}} bsStyle="primary">
-                        <Icon name="new-entry" pending={this.state.pending}/> Create
-                    </Button>
-                </FlexItem>
-            </Flex>
+
+                <AlgorithmSelect value={this.state.algorithm} onChange={this.handleChange} noLabel />
+
+                <Button
+                    type="submit"
+                    bsStyle="primary"
+                    icon="new-entry"
+                >
+                    Create
+                </Button>
+            </div>
         </form>
     );
 }

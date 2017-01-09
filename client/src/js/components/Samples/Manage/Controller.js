@@ -2,7 +2,7 @@ import React from "react";
 import FlipMove from "react-flip-move";
 import { intersection, map, xor, includes, assign } from "lodash";
 import { FormGroup, InputGroup, FormControl, ButtonGroup } from "react-bootstrap";
-import { Icon, Flex, FlexItem, Button, DetailModal } from "virtool/js/components/Base";
+import { Icon, Button, DetailModal } from "virtool/js/components/Base";
 import CreateSample from "./Create/Create";
 
 import SampleList from "./List";
@@ -120,73 +120,62 @@ export default class SampleController extends React.Component {
         let selectedDocuments = [];
 
         if (this.state.selected.length === 0) {
-
             toolbar = (
-                <div key="toolbar">
-                    <Flex>
-                        <FlexItem grow={1}>
-                            <FormGroup>
-                                <InputGroup>
-                                    <InputGroup.Addon>
-                                        <Icon name="search" /> Find
-                                    </InputGroup.Addon>
-                                    <FormControl
-                                        type="text"
-                                        inputRef={(node) => this.nameNode = node}
-                                        onChange={this.setFindTerm}
-                                        placeholder="Sample name"
-                                    />
-                                </InputGroup>
-                            </FormGroup>
-                        </FlexItem>
+                <div key="toolbar" className="toolbar">
+                    <FormGroup>
+                        <InputGroup>
+                            <InputGroup.Addon>
+                                <Icon name="search" /> Find
+                            </InputGroup.Addon>
+                            <FormControl
+                                type="text"
+                                inputRef={(node) => this.nameNode = node}
+                                onChange={this.setFindTerm}
+                                placeholder="Sample name"
+                            />
+                        </InputGroup>
+                    </FormGroup>
 
-                        <FlexItem shrink={0} pad>
-                            <ButtonGroup>
-                                <Button
-                                    tip="Show Active"
-                                    active={!this.state.archived}
-                                    onClick={this.state.archived ? () => this.toggleFlag("archived"): null}
-                                >
-                                    <Icon name="play" />
-                                </Button>
+                    <ButtonGroup>
+                        <Button
+                            tip="Show Active"
+                            icon="play"
+                            active={!this.state.archived}
+                            onClick={this.state.archived ? () => this.toggleFlag("archived"): null}
+                        />
 
-                                <Button
-                                    tip="Show Archived"
-                                    active={this.state.archived}
-                                    onClick={this.state.archived ? null: () => this.toggleFlag("archived")}
-                                >
-                                    <Icon name="box-add" />
-                                </Button>
-                            </ButtonGroup>
-                        </FlexItem>
+                        <Button
+                            tip="Show Archived"
+                            icon="box-add"
+                            active={this.state.archived}
+                            onClick={this.state.archived ? null: () => this.toggleFlag("archived")}
+                        />
+                    </ButtonGroup>
 
-                        <FlexItem pad>
-                            <Button
-                                tip="Show Imported"
-                                active={this.state.imported}
-                                disabled={this.state.archived}
-                                onClick={() => this.toggleFlag("imported")}
-                            >
-                                <Icon name="filing" />
-                            </Button>
-                        </FlexItem>
-                        <FlexItem pad>
-                            <Button
-                                tip="Show Analyzed"
-                                active={this.state.analyzed}
-                                disabled={this.state.archived}
-                                onClick={() => this.toggleFlag("analyzed")}
-                            >
-                                <Icon name="bars" />
-                            </Button>
-                        </FlexItem>
+                    <Button
+                        tip="Show Imported"
+                        icon="filing"
+                        active={this.state.imported}
+                        disabled={this.state.archived}
+                        onClick={() => this.toggleFlag("imported")}
+                    />
 
-                        <FlexItem key="create" shrink={0} pad>
-                            <Button bsStyle="primary" onClick={this.create} disabled={this.state.archived}>
-                                <Icon name="new-entry"/> Create
-                            </Button>
-                        </FlexItem>
-                    </Flex>
+                    <Button
+                        tip="Show Analyzed"
+                        icon="bars"
+                        active={this.state.analyzed}
+                        disabled={this.state.archived}
+                        onClick={() => this.toggleFlag("analyzed")}
+                    />
+
+                    <Button
+                        icon="new-entry"
+                        bsStyle="primary"
+                        onClick={this.create}
+                        disabled={this.state.archived}
+                    >
+                        Create
+                    </Button>
                 </div>
             );
         } else {
@@ -219,7 +208,7 @@ export default class SampleController extends React.Component {
 
         return (
             <div>
-                <FlipMove typeName="div" duration={150} enterAnimation="fade" leaveAnimation="fade">
+                <FlipMove typeName="div" duration={150} enterAnimation="fade" leaveAnimation={false}>
                     {toolbar}
                     {selector}
 

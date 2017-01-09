@@ -11,8 +11,8 @@
 
 import React from "react";
 import { assign } from "lodash";
-import { Panel, FormGroup, Modal, FormControl, ControlLabel } from "react-bootstrap";
-import { Flex, FlexItem, Checkbox, ProgressBar } from "virtool/js/components/Base";
+import { Panel, Modal } from "react-bootstrap";
+import { AlgorithmSelect, Flex, FlexItem, Checkbox, ProgressBar,  } from "virtool/js/components/Base";
 
 export default class UserSettings extends React.Component {
 
@@ -125,20 +125,10 @@ export default class UserSettings extends React.Component {
                             </Flex>
                         </div>
 
-                        <FormGroup controlId="defaultAlgorithmLabel">
-                            <ControlLabel>
-                                <small>Default Algorithm</small>
-                            </ControlLabel>
-                            <FormControl
-                                componentClass="select"
-                                onChange={this.setQuickAnalyzeAlgorithm}
-                                value={this.props.user.settings.quick_analyze_algorithm}
-                            >
-                                <option value="pathoscope_bowtie">PathoscopeBowtie</option>
-                                <option value="pathoscope_snap">PathoscopeSNAP</option>
-                                <option value="nuvs">NuVs</option>
-                            </FormControl>
-                        </FormGroup>
+                        <AlgorithmSelect
+                            value={this.props.user.settings.quick_analyze_algorithm}
+                            onChange={this.setQuickAnalyzeAlgorithm}
+                        />
                     </Panel>
                 </Modal.Body>
             </Modal>

@@ -11,7 +11,7 @@
 
 import React, { PropTypes } from "react";
 import { FormGroup, InputGroup, FormControl, ControlLabel } from "react-bootstrap";
-import { Icon, Button } from "./";
+import { Button } from "./";
 
 /**
  * A single input form component with a submit addon button that behaves well for updated VT settings.
@@ -149,10 +149,9 @@ export class InputSave extends React.Component {
                                 type="submit"
                                 bsStyle="primary"
                                 disabled={disabled}
+                                icon="floppy"
                                 ref={(button) => this.buttonNode = button}
-                            >
-                                <Icon name="floppy" pending={this.state.pending} />
-                            </Button>
+                            />
                         </InputGroup.Button>
                     </InputGroup>
                 </FormGroup>

@@ -88,104 +88,89 @@ export default class PathoscopeController extends React.Component {
 
         return (
             <div>
-                <div>
-                    <Flex>
-                        <FlexItem grow={4}>
-                            <FormGroup>
-                                <InputGroup>
-                                    <InputGroup.Addon>
-                                        <Icon name="search" /> Find
-                                    </InputGroup.Addon>
-                                    <FormControl value={this.state.findTerm} onChange={this.setFindTerm} />
-                                </InputGroup>
-                            </FormGroup>
-                        </FlexItem>
+                <div className="toolbar">
+                    <FormGroup>
+                        <InputGroup>
+                            <InputGroup.Addon>
+                                <Icon name="search" /> Find
+                            </InputGroup.Addon>
+                            <FormControl value={this.state.findTerm} onChange={this.setFindTerm} />
+                        </InputGroup>
+                    </FormGroup>
 
-                        <FlexItem pad>
-                            <FormGroup>
-                                <InputGroup>
-                                    <InputGroup.Addon>
-                                        <Icon name="sort" /> Sort
-                                    </InputGroup.Addon>
-                                    <FormControl
-                                        componentClass="select"
-                                        value={this.state.sortKey}
-                                        onChange={this.setSortKey}
-                                    >
-                                        <option className="text-primary" value="coverage">Coverage</option>
-                                        <option className="text-success" value="pi">Weight</option>
-                                        <option className="text-danger" value="best">Best Hit</option>
-                                    </FormControl>
-                                    <InputGroup.Button>
-                                        <Button title="Sort Direction" onClick={this.toggleSortDescending}>
-                                            <Icon name={this.state.sortDescending ? "sort-desc": "sort-asc"} />
-                                        </Button>
-                                    </InputGroup.Button>
-                                </InputGroup>
-                            </FormGroup>
-                        </FlexItem>
-
-                        <FlexItem pad>
-                            <Button
-                                title="Collapse"
-                                onClick={this.collapseAll}
-                                disabled={this.state.expanded.length === 0}
+                    <FormGroup>
+                        <InputGroup>
+                            <InputGroup.Addon>
+                                <Icon name="sort" /> Sort
+                            </InputGroup.Addon>
+                            <FormControl
+                                componentClass="select"
+                                value={this.state.sortKey}
+                                onChange={this.setSortKey}
                             >
-                                <Icon name="shrink" />
-                            </Button>
-                        </FlexItem>
-
-                        <FlexItem pad>
-                            <Button
-                                title="Change Weight Format"
-                                active={!this.state.showReads}
-                                onClick={this.toggleShowReads}
-                            >
-                                <Icon name="pie" />
-                            </Button>
-
-                        </FlexItem>
-
-                        <FlexItem pad>
-                            <Dropdown
-                                id="job-clear-dropdown"
-                                onSelect={this.handleSelect}
-                                className="split-dropdown"
-                                pullRight
-                            >
-                                <Button
-                                    title="Filter"
-                                    onClick={this.filter}
-                                    active={this.state.filterViruses || this.state.filterIsolates}
-                                >
-                                    <Icon name="filter" />
+                                <option className="text-primary" value="coverage">Coverage</option>
+                                <option className="text-success" value="pi">Weight</option>
+                                <option className="text-danger" value="best">Best Hit</option>
+                            </FormControl>
+                            <InputGroup.Button>
+                                <Button title="Sort Direction" onClick={this.toggleSortDescending}>
+                                    <Icon name={this.state.sortDescending ? "sort-desc": "sort-asc"} />
                                 </Button>
-                                <Dropdown.Toggle />
-                                <Dropdown.Menu onSelect={this.filter}>
-                                    <MenuItem eventKey="viruses">
-                                        <Flex>
-                                            <FlexItem>
-                                                <Checkbox checked={this.state.filterViruses} />
-                                            </FlexItem>
-                                            <FlexItem pad={5}>
-                                                Viruses
-                                            </FlexItem>
-                                        </Flex>
-                                    </MenuItem>
-                                    <MenuItem eventKey="isolates">
-                                        <Flex>
-                                            <FlexItem>
-                                                <Checkbox checked={this.state.filterIsolates} />
-                                            </FlexItem>
-                                            <FlexItem pad={5}>
-                                                Isolates
-                                            </FlexItem>
-                                        </Flex>
-                                    </MenuItem>
-                                </Dropdown.Menu>
-                            </Dropdown>
-                        </FlexItem>
-                    </Flex>
+                            </InputGroup.Button>
+                        </InputGroup>
+                    </FormGroup>
+
+                    <Button
+                        icon="shrink"
+                        title="Collapse"
+                        onClick={this.collapseAll}
+                        disabled={this.state.expanded.length === 0}
+                    />
+
+                    <Button
+                        icon="pie"
+                        title="Change Weight Format"
+                        active={!this.state.showReads}
+                        onClick={this.toggleShowReads}
+                    />
+
+                    <Dropdown
+                        id="job-clear-dropdown"
+                        onSelect={this.handleSelect}
+                        className="split-dropdown"
+                        pullRight
+                    >
+                        <Button
+                            title="Filter"
+                            onClick={this.filter}
+                            active={this.state.filterViruses || this.state.filterIsolates}
+                        >
+                            <Icon name="filter" />
+                        </Button>
+                        <Dropdown.Toggle />
+                        <Dropdown.Menu onSelect={this.filter}>
+                            <MenuItem eventKey="viruses">
+                                <Flex>
+                                    <FlexItem>
+                                        <Checkbox checked={this.state.filterViruses} />
+                                    </FlexItem>
+                                    <FlexItem pad={5}>
+                                        Viruses
+                                    </FlexItem>
+                                </Flex>
+                            </MenuItem>
+                            <MenuItem eventKey="isolates">
+                                <Flex>
+                                    <FlexItem>
+                                        <Checkbox checked={this.state.filterIsolates} />
+                                    </FlexItem>
+                                    <FlexItem pad={5}>
+                                        Isolates
+                                    </FlexItem>
+                                </Flex>
+                            </MenuItem>
+                        </Dropdown.Menu>
+                    </Dropdown>
                 </div>
 
                 <PathoscopeList

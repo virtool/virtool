@@ -97,29 +97,27 @@ export class Input extends React.Component {
         }
 
         return (
-            <div>
-                <FormGroup>
-                    {label}
-                    <FormControl
-                        inputRef={ref => this.inputNode = ref}
-                        type={this.props.type}
-                        name={this.props.name}
-                        rows={this.props.rows}
-                        value={this.props.value || ""}
-                        onBlur={this.props.onBlur}
-                        onFocus={this.props.onFocus}
-                        onChange={this.props.onChange}
-                        readOnly={this.props.readOnly}
-                        placeholder={this.props.placeholder}
-                        autoComplete={this.props.autoComplete ? "on": "off"}
-                        componentClass={componentClass}
-                        style={this.props.style}
-                    >
-                        {this.props.children}
-                    </FormControl>
-                </FormGroup>
+            <FormGroup>
+                {label}
+                <FormControl
+                    inputRef={ref => this.inputNode = ref}
+                    type={this.props.type}
+                    name={this.props.name}
+                    rows={this.props.rows}
+                    value={this.props.value || ""}
+                    onBlur={this.props.onBlur}
+                    onFocus={this.props.onFocus}
+                    onChange={this.props.onChange}
+                    readOnly={this.props.readOnly}
+                    placeholder={this.props.placeholder}
+                    autoComplete={this.props.autoComplete ? "on": "off"}
+                    componentClass={componentClass}
+                    style={this.props.style}
+                >
+                    {this.props.children}
+                </FormControl>
                 {overlay}
-            </div>
+            </FormGroup>
         );
     }
 }

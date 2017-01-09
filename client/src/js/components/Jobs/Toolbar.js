@@ -11,7 +11,7 @@
 
 import React from "react";
 import {InputGroup, FormGroup, FormControl, Dropdown, MenuItem} from "react-bootstrap";
-import { Icon, Flex, FlexItem, Button } from "virtool/js/components/Base";
+import { Icon, Button } from "virtool/js/components/Base";
 
 export default class JobsToolbar extends React.Component {
 
@@ -90,47 +90,42 @@ export default class JobsToolbar extends React.Component {
 
         if (this.props.canRemove) {
             removalDropdown = (
-                <FlexItem pad>
-                    <Dropdown id="job-clear-dropdown" onSelect={this.handleSelect} className="split-dropdown" pullRight>
-                        <Button onClick={this.clear} tip="Clear Finished">
-                            <Icon name="remove" pending={this.state.pendingRemove} />
-                        </Button>
-                        <Dropdown.Toggle />
-                        <Dropdown.Menu>
-                            <MenuItem eventKey="removeFailed">Failed</MenuItem>
-                            <MenuItem eventKey="removeComplete">Complete</MenuItem>
-                        </Dropdown.Menu>
-                    </Dropdown>
-                </FlexItem>
+                <Dropdown id="job-clear-dropdown" onSelect={this.handleSelect} className="split-dropdown" pullRight>
+                    <Button onClick={this.clear} tip="Clear Finished">
+                        <Icon name="remove" pending={this.state.pendingRemove} />
+                    </Button>
+                    <Dropdown.Toggle />
+                    <Dropdown.Menu>
+                        <MenuItem eventKey="removeFailed">Failed</MenuItem>
+                        <MenuItem eventKey="removeComplete">Complete</MenuItem>
+                    </Dropdown.Menu>
+                </Dropdown>
             );
         }
 
         return (
-            <Flex>
-                <FlexItem grow={1}>
-                    <FormGroup>
-                        <InputGroup>
-                            <InputGroup.Addon>
-                                <Icon name="search" /> Find
-                            </InputGroup.Addon>
-                            <FormControl
-                                name="find"
-                                inputRef={(node) => this.findNode = node}
-                                onChange={this.props.setFindTerm}
-                                value={this.props.findTerm}
-                            />
-                        </InputGroup>
-                    </FormGroup>
-                </FlexItem>
+            <div className="toolbar">
+                <FormGroup>
+                    <InputGroup>
+                        <InputGroup.Addon>
+                            <Icon name="search" /> Find
+                        </InputGroup.Addon>
+                        <FormControl
+                            name="find"
+                            inputRef={(node) => this.findNode = node}
+                            onChange={this.props.setFindTerm}
+                            value={this.props.findTerm}
+                        />
+                    </InputGroup>
+                </FormGroup>
 
-                <FlexItem pad>
-                    <Button onClick={this.props.changeDirection} tip="Sort Direction">
-                        <Icon name={this.props.sortDescending ? "sort-desc": "sort-asc"} />
-                    </Button>
-                </FlexItem>
+                <Button
+                    icon={this.props.sortDescending ? "sort-desc": "sort-asc"}
+                    onClick={this.props.changeDirection} tip="Sort Direction"
+                />
 
                 {removalDropdown}
-            </Flex>
+            </div>
         );
     }
 }

@@ -13,7 +13,7 @@
 import React from "react";
 import { filter, map, some } from "lodash";
 import { FormGroup, InputGroup, FormControl } from "react-bootstrap";
-import { Icon, Flex, FlexItem, Button } from "virtool/js/components/Base";
+import { Icon, FlexItem, Button } from "virtool/js/components/Base";
 import { stringOrBool } from "virtool/js/propTypes";
 
 /**
@@ -83,43 +83,42 @@ export default class SampleSelector extends React.Component {
             );
         }
 
+
+
         return (
-            <div>
-                <Flex style={{marginBottom: "15px"}} alignItems="stretch">
-                    <FlexItem shrink={0}>
-                        <Button onClick={this.props.selectNone} style={{padding: "6px 15px"}}>
-                            Selected {selectedCount}
-                        </Button>
-                    </FlexItem>
+            <div className="toolbar">
+                <Button
+                    style={{padding: "6px 15px", marginLeft: 0, marginRight: "3px"}}
+                    onClick={this.props.selectNone}
+                >
+                    Selected {selectedCount}
+                </Button>
 
-                    <FlexItem grow={1} pad={5}>
-                        <form onSubmit={this.handleSubmit}>
-                            <FormGroup bsClass="form-group no-margin">
-                                <InputGroup>
-                                    <InputGroup.Addon>
-                                        Analyze
-                                    </InputGroup.Addon>
-                                    <FormControl
-                                        componentClass="select"
-                                        value={this.state.algorithm}
-                                        onChange={this.setAlgorithm}
-                                    >
-                                        <option value="pathoscope_bowtie">PathoscopeBowtie</option>
-                                        <option value="pathoscope_snap">PathoscopeSNAP</option>
-                                        <option value="nuvs">NuVs</option>
-                                    </FormControl>
-                                    <InputGroup.Button>
-                                        <Button type="submit" tip="Start Quick Analysis" bsStyle="success">
-                                            <Icon name="bars" />
-                                        </Button>
-                                    </InputGroup.Button>
-                                </InputGroup>
-                            </FormGroup>
-                        </form>
-                    </FlexItem>
+                <form onSubmit={this.handleSubmit}>
+                    <FormGroup bsClass="form-group no-margin">
+                        <InputGroup>
+                            <InputGroup.Addon>
+                                Analyze
+                            </InputGroup.Addon>
+                            <FormControl
+                                componentClass="select"
+                                value={this.state.algorithm}
+                                onChange={this.setAlgorithm}
+                            >
+                                <option value="pathoscope_bowtie">PathoscopeBowtie</option>
+                                <option value="pathoscope_snap">PathoscopeSNAP</option>
+                                <option value="nuvs">NuVs</option>
+                            </FormControl>
+                            <InputGroup.Button>
+                                <Button type="submit" tip="Start Quick Analysis" bsStyle="success">
+                                    <Icon name="bars" />
+                                </Button>
+                            </InputGroup.Button>
+                        </InputGroup>
+                    </FormGroup>
+                </form>
 
-                    {archiveButton}
-                </Flex>
+                {archiveButton}
             </div>
         );
     }

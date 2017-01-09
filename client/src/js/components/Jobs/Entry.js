@@ -10,9 +10,10 @@
  */
 
 import React from "react";
-import { capitalize, startCase } from "lodash";
+import { capitalize } from "lodash";
 import { Row, Col } from "react-bootstrap";
 import { Icon, RelativeTime, ListGroupItem, ProgressBar } from "virtool/js/components/Base";
+import { getTaskDisplayName } from "virtool/js/utils";
 
 export default class JobEntry extends React.Component {
 
@@ -115,7 +116,7 @@ export default class JobEntry extends React.Component {
 
                 <Row>
                     <Col md={4}>
-                        <strong>{startCase(this.props.task)}</strong>
+                        <strong>{getTaskDisplayName(this.props.task)}</strong>
                     </Col>
                     <Col md={5}>
                          Started <RelativeTime time={this.props.added} /> by {this.props.username}

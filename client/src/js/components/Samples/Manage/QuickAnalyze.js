@@ -13,7 +13,16 @@
 
 import React from "react";
 import { Modal } from "react-bootstrap";
-import { Flex, FlexItem, Icon, Input, Checkbox, Button, AutoProgressBar } from "virtool/js/components/Base";
+import {
+    AlgorithmSelect,
+    Flex,
+    FlexItem,
+    Icon,
+    Input,
+    Checkbox,
+    Button,
+    AutoProgressBar
+} from "virtool/js/components/Base";
 
 const getInitialState = () => ({
     name: "",
@@ -125,7 +134,7 @@ export default class QuickAnalyze extends React.Component {
                         Quick Analyze
                     </Modal.Header>
 
-                    <AutoProgressBar ref={(node) => this.progressNode = node} active={this.state.pending} affixed />
+                    <AutoProgressBar active={this.state.pending} affixed />
 
                     <Modal.Body>
                         <Input
@@ -143,17 +152,7 @@ export default class QuickAnalyze extends React.Component {
                             disabled={true}
                         />
 
-                        <Input
-                            name="algorithm"
-                            type="select"
-                            label="Algorithm"
-                            value={this.state.algorithm}
-                            onChange={this.handleChange}
-                        >
-                            <option value="pathoscope_bowtie">PathoscopeBowtie</option>
-                            <option value="pathoscope_snap">PathoscopeSNAP</option>
-                            <option value="nuvs">NuVs</option>
-                        </Input>
+                        <AlgorithmSelect value={this.state.algorithm} onChange={this.handleChange} />
 
                         <div onClick={this.toggleUseAsDefault} {...checkboxProps}>
                             <Flex>

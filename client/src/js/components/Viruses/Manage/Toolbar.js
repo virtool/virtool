@@ -12,7 +12,7 @@
 
 import React from "react";
 import { DropdownButton, MenuItem } from "react-bootstrap";
-import { Icon, Flex, FlexItem, Button } from "virtool/js/components/Base";
+import { Icon, Button } from "virtool/js/components/Base";
 
 const getInitialState = () => ({
     canAdd: dispatcher.user.permissions.add_virus,
@@ -96,38 +96,32 @@ export default class VirusToolbar extends React.Component {
         }
 
         return (
-            <div style={{marginBottom: "15px"}}>
-                <Flex>
-                    <FlexItem grow={2}>
-                        <div className="input-group">
-                            <span id="find-addon" className="input-group-addon">
-                                <Icon name="search" /> Find
-                            </span>
-                            <input
-                                ref={(node) => this.inputNode = node}
-                                aria-describedby="find-addon"
-                                className="form-control"
-                                type="text"
-                                placeholder="Name or abbreviation"
-                                onChange={this.props.onChange}
-                            />
-                        </div>
-                    </FlexItem>
+            <div className="toolbar">
+                <div className="form-group">
+                    <div className="input-group">
+                        <span id="find-addon" className="input-group-addon">
+                            <Icon name="search" /> Find
+                        </span>
+                        <input
+                            ref={(node) => this.inputNode = node}
+                            aria-describedby="find-addon"
+                            className="form-control"
+                            type="text"
+                            placeholder="Name or abbreviation"
+                            onChange={this.props.onChange}
+                        />
+                    </div>
+                </div>
 
-                    <FlexItem shrink={0} pad>
-                        <Button
-                            onClick={this.props.toggleModifiedOnly}
-                            active={this.props.modifiedOnly}
-                            tip="Modified Only"
-                        >
-                            <Icon name="flag" bsStyle="warning" />
-                        </Button>
-                    </FlexItem>
+                <Button
+                    onClick={this.props.toggleModifiedOnly}
+                    active={this.props.modifiedOnly}
+                    icon="flag"
+                    iconStyle="warning"
+                    tip="Modified Only"
+                />
 
-                    <FlexItem shrink={0} pad>
-                        {menu}
-                    </FlexItem>
-                </Flex>
+                {menu}
             </div>
         );
     }

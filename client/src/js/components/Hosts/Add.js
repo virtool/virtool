@@ -11,7 +11,7 @@
 
 import React from "react";
 import { Modal } from "react-bootstrap";
-import { Icon, Input, Button } from "virtool/js/components/Base";
+import { Input, Button } from "virtool/js/components/Base";
 
 /**
  * A component based on React-Bootstrap Modal that presents a form used to add a new host from a FASTA file.
@@ -110,8 +110,14 @@ export default class AddHost extends React.Component {
 
                     <Modal.Footer className="modal-footer">
                         <Button onClick={this.props.onHide}>Cancel</Button>
-                        <Button type="submit" onClick={this.submit} bsStyle="primary" disabled={!submittable}>
-                            <Icon name="plus-square"/> Add
+                        <Button
+                            type="submit"
+                            onClick={this.submit}
+                            bsStyle="primary"
+                            icon="plus-square"
+                            disabled={!submittable}
+                        >
+                            Add
                         </Button>
                     </Modal.Footer>
                 </form>

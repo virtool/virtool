@@ -16,40 +16,26 @@ export default class ReadUploader extends React.Component {
         });
     };
 
-    handleClick = () => {
-        this.dropzone.open();
-    };
+    handleClick = () => this.dropzone.open();
 
-    render () {
+    render = () => (
+        <Flex>
+            <Dropzone
+                ref={(node) => this.dropzone = node}
+                onDrop={this.onDrop}
+                className="dropzone"
+                activeClassName="dropzone-active"
+                disableClick>
+                <Flex justifyContent="center" alignItems="center">
+                    <FlexItem>
+                        Drag here to upload
+                    </FlexItem>
+                </Flex>
+            </Dropzone>
 
-        const dropZoneStyle = {
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-
-            height: "34px",
-            width: "100%",
-            border: "1px solid #cccccc"
-        };
-
-        return (
-            <Flex>
-                <FlexItem grow={1}>
-                    <Dropzone ref={(dropzone) => this.dropzone = dropzone} onDrop={this.onDrop} style={dropZoneStyle}>
-                        <Flex justifyContent="center" alignItems="center">
-                            <FlexItem>
-                                Drag here to upload
-                            </FlexItem>
-                        </Flex>
-                    </Dropzone>
-                </FlexItem>
-
-                <FlexItem grow={0} pad>
-                    <Button onClick={this.handleClick}>
-                        <Icon name="folder-open" />
-                    </Button>
-                </FlexItem>
-            </Flex>
-        );
-    }
+            <Button style={{marginLeft: "3px"}} onClick={this.handleClick}>
+                <Icon name="folder-open" />
+            </Button>
+        </Flex>
+    );
 }

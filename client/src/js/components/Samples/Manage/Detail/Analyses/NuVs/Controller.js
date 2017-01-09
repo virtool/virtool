@@ -62,62 +62,56 @@ export default class NuVsController extends React.PureComponent {
                     </tbody>
                 </Table>
 
-                <div>
-                    <Flex>
-                        <FlexItem>
-                            <FormGroup>
-                                <InputGroup>
-                                    <InputGroup.Addon>
-                                        <Icon name="search" /> Find
-                                    </InputGroup.Addon>
-                                    <FormControl
-                                        value={this.state.findTerm}
-                                        onChange={this.setFindTerm}
-                                        placeholder="Definition, family"
-                                    />
-                                </InputGroup>
-                            </FormGroup>
-                        </FlexItem>
-                        <FlexItem pad>
-                            <Dropdown
-                                id="job-clear-dropdown"
-                                className="split-dropdown"
-                                onSelect={this.handleSelect}
-                                 pullRight
-                            >
-                                <Button
-                                    title="Filter"
-                                    onClick={this.filter}
-                                    active={this.state.filterSequences || this.state.filterORFs}
-                                >
-                                    <Icon name="filter" />
-                                </Button>
-                                <Dropdown.Toggle />
-                                <Dropdown.Menu onSelect={this.filter}>
-                                    <MenuItem eventKey="sequences">
-                                        <Flex>
-                                            <FlexItem>
-                                                <Checkbox checked={this.state.filterSequences} />
-                                            </FlexItem>
-                                            <FlexItem pad={5}>
-                                                Sequences
-                                            </FlexItem>
-                                        </Flex>
-                                    </MenuItem>
-                                    <MenuItem eventKey="orfs">
-                                        <Flex>
-                                            <FlexItem>
-                                                <Checkbox checked={this.state.filterORFs} />
-                                            </FlexItem>
-                                            <FlexItem pad={5}>
-                                                ORFs
-                                            </FlexItem>
-                                        </Flex>
-                                    </MenuItem>
-                                </Dropdown.Menu>
-                            </Dropdown>
-                        </FlexItem>
-                    </Flex>
+                <div className="toolbar">
+                    <FormGroup>
+                        <InputGroup>
+                            <InputGroup.Addon>
+                                <Icon name="search" /> Find
+                            </InputGroup.Addon>
+                            <FormControl
+                                value={this.state.findTerm}
+                                onChange={this.setFindTerm}
+                                placeholder="Definition, family"
+                            />
+                        </InputGroup>
+                    </FormGroup>
+                    <Dropdown
+                        id="job-clear-dropdown"
+                        className="split-dropdown"
+                        onSelect={this.handleSelect}
+                         pullRight
+                    >
+                        <Button
+                            title="Filter"
+                            onClick={this.filter}
+                            active={this.state.filterSequences || this.state.filterORFs}
+                        >
+                            <Icon name="filter" />
+                        </Button>
+                        <Dropdown.Toggle />
+                        <Dropdown.Menu onSelect={this.filter}>
+                            <MenuItem eventKey="sequences">
+                                <Flex>
+                                    <FlexItem>
+                                        <Checkbox checked={this.state.filterSequences} />
+                                    </FlexItem>
+                                    <FlexItem pad={5}>
+                                        Sequences
+                                    </FlexItem>
+                                </Flex>
+                            </MenuItem>
+                            <MenuItem eventKey="orfs">
+                                <Flex>
+                                    <FlexItem>
+                                        <Checkbox checked={this.state.filterORFs} />
+                                    </FlexItem>
+                                    <FlexItem pad={5}>
+                                        ORFs
+                                    </FlexItem>
+                                </Flex>
+                            </MenuItem>
+                        </Dropdown.Menu>
+                    </Dropdown>
                 </div>
 
                 <NuVsList

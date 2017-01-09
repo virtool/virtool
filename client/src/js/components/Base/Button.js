@@ -12,6 +12,9 @@
 import React from "react";
 import CX from "classnames";
 import { Tooltip, OverlayTrigger } from "react-bootstrap";
+import { Icon } from "./";
+
+const bsStyles = ["primary", "success", "danger", "warning", "info", "default"];
 
 /**
  * A react-bootstrap button that does not retain focus when clicked.
@@ -21,13 +24,15 @@ export class Button extends React.Component {
     static propTypes = {
         type: React.PropTypes.oneOf(["button", "submit"]),
         bsSize: React.PropTypes.oneOf(["xsmall", "small", "large"]),
-        bsStyle: React.PropTypes.oneOf(["primary", "success", "danger", "warning", "info", "default"]),
+        bsStyle: React.PropTypes.oneOf(),
         active: React.PropTypes.bool,
         disabled: React.PropTypes.bool,
         block: React.PropTypes.bool,
         pullRight: React.PropTypes.bool,
         onClick: React.PropTypes.func,
         style: React.PropTypes.object,
+        icon: React.PropTypes.string,
+        iconStyle: React.PropTypes.oneOf(bsStyles),
 
         tip: React.PropTypes.oneOfType([React.PropTypes.string, React.PropTypes.element]),
         tipPlacement: React.PropTypes.oneOf(["top", "right", "bottom", "left"]),
@@ -53,8 +58,21 @@ export class Button extends React.Component {
             "active": this.props.active,
             "btn-xs": this.props.bsSize === "xsmall",
             "btm-sm": this.props.bsSize === "small",
-            "btn-lg": this.props.bsSize === "large"
+            "btn-lg": this.props.bsSize === "large",
+            "btn-with-icon": this.props.icon
         });
+
+        let icon;
+
+        if (this.props.icon) {
+            icon = <Icon name={this.props.icon} className={`text-${this.props.iconStyle}`} />;
+        }
+
+        let children;
+
+        if (this.props.children) {
+            children = <span>{this.props.children}</span>
+        }
 
         const button = (
             <button
@@ -65,7 +83,7 @@ export class Button extends React.Component {
                 onClick={this.props.onClick}
                 style={this.props.style}
             >
-                {this.props.children}
+                {icon}{children}
             </button>
         );
 
