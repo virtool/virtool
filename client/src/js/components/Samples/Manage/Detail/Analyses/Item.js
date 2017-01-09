@@ -118,8 +118,7 @@ export default class AnalysisItem extends React.Component {
             );
         }
 
-        const itemClass = CX({
-            "list-group-item": true,
+        const itemClass = CX("list-group-item", {
             "disabled": this.state.disabled || !this.props.ready,
             "hoverable": !this.state.disabled && this.props.ready
         });

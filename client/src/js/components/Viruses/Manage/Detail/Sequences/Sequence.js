@@ -124,18 +124,14 @@ export default class Sequence extends React.Component {
         });
     };
 
-    update = (data) => {
-        this.setState(data);
-    };
+    update = (data) => this.setState(data);
 
     /**
      * Handles a click event on the sequence. Calls the onSelect prop with the sequenceId for this component.
      *
      * @func
      */
-    handleClick = () => {
-        this.props.onSelect(this.props._id);
-    };
+    handleClick = () => this.props.onSelect(this.props._id);
 
     /**
      * Toggle editing mode on the sequence component. Triggered by clicking the yellow pencil icon for by cancelling an
@@ -196,10 +192,7 @@ export default class Sequence extends React.Component {
             ];
         }
 
-        const itemClass = CX({
-            "list-group-item": true,
-            "hoverable": !this.props.active
-        });
+        const itemClass = CX("list-group-item", {"hoverable": !this.props.active});
 
         const itemStyle = this.state.editing ? {background: "#fcf8e3"}: null;
 

@@ -140,11 +140,7 @@ export default class IsolateAdd extends React.Component {
         }
 
         const itemProps = {
-            className: CX({
-                "list-group-item": true,
-                "hoverable": !this.props.active,
-                "band": this.props.active
-            }),
+            className: CX("list-group-item", "band", {"hoverable": !this.props.active}),
 
             style: {
                 background: this.props.active ? "#dbe9f5": null,

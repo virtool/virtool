@@ -29,11 +29,7 @@ export default class PathoscopeEntry extends React.Component {
 
     render () {
 
-        const className = CX({
-            "list-group-item": true,
-            "hoverable": !this.props.in,
-            "spaced": true
-        });
+        const className = CX("list-group-item", "spaced", {"hoverable": !this.props.in});
 
         let closeButton;
 

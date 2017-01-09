@@ -32,17 +32,9 @@ export default class ChildButton extends React.Component {
         dispatcher.router.setChild(this.props.childKey);
     };
 
-    render () {
-
-        const itemClasses = CX({
-            pointer: true,
-            active: this.props.active
-        });
-
-        return (
-            <li className={itemClasses} onClick={this.handleClick}>
-                <a>{this.props.label || capitalize(this.props.childKey)}</a>
-            </li>
-        )
-    }
+    render = () => (
+        <li className={CX("pointer", {active: this.props.active})} onClick={this.handleClick}>
+            <a>{this.props.label || capitalize(this.props.childKey)}</a>
+        </li>
+    );
 }

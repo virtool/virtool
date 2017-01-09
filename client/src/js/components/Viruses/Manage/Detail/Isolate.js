@@ -242,10 +242,7 @@ export default class Isolate extends React.Component {
             onClick: this.props.active ? null: this.select,
             disabled: this.state.pendingRemoval,
             allowFocus: this.props.active,
-
-            className: CX({
-                band: this.props.active
-            })
+            className: CX({band: this.props.active})
         };
 
         const itemStyle = {

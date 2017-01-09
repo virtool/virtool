@@ -24,11 +24,7 @@ export default class NuVsEntry extends React.Component {
             height: "21px"
         };
 
-        const className = CX({
-            "list-group-item": true,
-            "hoverable": !this.props.in,
-            "spaced": true
-        });
+        const className = CX("list-group-item", "spaced", {"hoverable": !this.props.in});
 
         let closeButton;
 

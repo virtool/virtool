@@ -163,10 +163,7 @@ export default class AddSequence extends React.Component {
             mode: "add"
         });
 
-        const classes = CX({
-            "list-group-item": true,
-            "hoverable": !this.props.active,
-        });
+        const classes = CX("list-group-item", {"hoverable": !this.props.active});
 
         return (
             <div className={classes} style={itemStyle} onClick={this.state.collapsed ? this.props.toggleAdding: null}>
