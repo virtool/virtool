@@ -9,7 +9,7 @@ export default class ReadUploader extends React.Component {
         files.forEach(file => {
             dispatcher.db.samples.request("authorize_upload", {name: file.name, size: file.size })
                 .success(data => {
-                    Request.post("/upload/" + data.file_id)
+                    Request.post(`/upload/${data.file_id}`)
                         .send(file)
                         .end();
                 });

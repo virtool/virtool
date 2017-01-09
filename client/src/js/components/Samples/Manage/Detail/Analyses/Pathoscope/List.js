@@ -41,7 +41,7 @@ export default class PathoscopeList extends React.Component {
             if (expanded) {
 
                 const isolateComponents = sortBy(item.isolates, "pi").reverse().map((isolate) => {
-                    const key = item._id + "-" + isolate.isolate_id;
+                    const key = `${item._id}-${isolate.isolate_id}`;
 
                     return <PathoscopeIsolate
                         ref={key}

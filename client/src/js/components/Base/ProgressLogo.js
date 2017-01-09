@@ -68,7 +68,7 @@ export class ProgressLogo extends React.Component {
             .attr("transform", `translate(${WIDTH / 2}, ${HEIGHT / 2})`);
 
         svg.append("g")
-            .attr("transform", "translate(" + 76.5 + "," + 76.5 + ")")
+            .attr("transform", "translate(76.5, 76.5)")
             .append("path")
             .attr("d", ICON_PATH)
             .attr("fill", "black");

@@ -25,7 +25,7 @@ export default class TaskArgs extends React.PureComponent {
     render () {
         // Render the first level nodes of the task args object.
         const nodeComponents = transform(this.props.taskArgs, (result, value, key) => {
-            result.push(<TaskArgNode key={value + "-" + key} nodeKey={key} nodeData={value}/>);
+            result.push(<TaskArgNode key={`${value}-${key}`} nodeKey={key} nodeData={value}/>);
         }, []);
 
         return (

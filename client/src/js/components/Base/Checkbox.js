@@ -33,7 +33,7 @@ export const Checkbox = (props) => {
 
     return (
         <span className={props.pullRight ? "pull-right": null} onClick={props.onClick}>
-            <i className={"pointer i-checkbox-" + name} />
+            <i className={`pointer i-checkbox-${name}`} />
         </span>
     );
 };

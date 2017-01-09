@@ -90,7 +90,7 @@ export default class HistoryItem extends React.Component {
         const Method = MethodClasses[this.props.method_name];
 
         return (
-            <div className={"list-group-item" + (this.props.pending ? " disabled": "")}>
+            <div className={`list-group-item${this.props.pending ? " disabled": ""}`}>
                 <Row>
                     <Col md={1}>
                         <Version version={this.props.entry_version} />

@@ -39,7 +39,7 @@ export default class HistoryControl extends React.Component {
 
         const optionComponents = this.props.indexVersions.map(indexVersion => (
             <option key={indexVersion} value={indexVersion}>
-                {indexVersion === "unbuilt" ? "Unbuilt Changes": "Version " + indexVersion}
+                {indexVersion === "unbuilt" ? "Unbuilt Changes": `Version ${indexVersion}`}
             </option>
         ));
 

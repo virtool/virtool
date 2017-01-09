@@ -17,7 +17,7 @@ import { Icon } from "./";
  */
 export const Radio = (props) => (
     // Set the icon class to "i-radio-checked" if checked is true, otherwise set it to "i-radio-unchecked"
-    <Icon onClick={props.onClick} name={"radio-" + (props.checked ? "checked": "unchecked")} />
+    <Icon onClick={props.onClick} name={`radio-${props.checked ? "checked": "unchecked"}`} />
 );
 
 Radio.propTypes = {

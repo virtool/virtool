@@ -37,7 +37,7 @@ export class CaretHeader extends React.Component {
         if (this.props.showCaret) {
             caret = (
                 <FlexItem pad={5}>
-                    <Icon name={"caret-" + (this.props.descending ? "up": "down")} />
+                    <Icon name={`caret-${this.props.descending ? "up": "down"}`} />
                 </FlexItem>
             );
         }

@@ -46,7 +46,7 @@ function HMMDetail (props) {
         return (
             <tr key={index}>
                 <td>
-                    <a href={"http://www.ncbi.nlm.nih.gov/protein/" + entry.accession} target="_blank">
+                    <a href={`http://www.ncbi.nlm.nih.gov/protein/${entry.accession}`} target="_blank">
                         {entry.accession}
                     </a>
                 </td>

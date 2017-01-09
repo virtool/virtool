@@ -72,7 +72,7 @@ const CreateNucleotidesChart = (element, data, baseWidth) => {
         .attr("width", width + margin.left + margin.right)
         .attr("height", height + margin.top + margin.bottom)
         .append("g")
-        .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+        .attr("transform", `translate(${margin.left}, ${margin.top})`);
 
     // Append the four plot lines to the SVG.
     unzip(data).forEach((set, index) => {

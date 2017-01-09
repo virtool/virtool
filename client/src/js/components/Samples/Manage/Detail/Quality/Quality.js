@@ -58,8 +58,8 @@ export default class SampleDetailQuality extends React.Component {
                     <Button
                         onClick={this.state.download ? null : this.pdf}
                         bsStyle={this.state.download ? "primary" : "default"}
-                        href={this.state.download ? "download/" + this.state.download : null}
-                        download={this.state.download ? "quality_" + this.props._id + ".pdf" : null}
+                        href={this.state.download ? `download/${this.state.download}`: null}
+                        download={this.state.download ? `quality_${this.props._id}.pdf`: null}
                         bsSize="xsmall"
                         pullRight
                     >

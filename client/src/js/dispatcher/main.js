@@ -186,7 +186,7 @@ function Dispatcher (onReady) {
                     break;
 
                 default:
-                    throw("Illegal transaction operation: " + operation);
+                    throw(`Illegal transaction operation: ${operation}`);
 
             }
         }

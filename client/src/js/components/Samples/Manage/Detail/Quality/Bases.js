@@ -94,7 +94,7 @@ const CreateBasesChart = (element, data, width) => {
         .attr("width", width + margin.left + margin.right)
         .attr("height", height + margin.top + margin.bottom)
         .append("g")
-        .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+        .attr("transform", `translate(${margin.left}, ${margin.top})`);
 
     // Append the areas to the chart.
     areas.forEach(function (area) {
@@ -119,7 +119,7 @@ const CreateBasesChart = (element, data, width) => {
     // Append the legend to the chart.
     svg.append("g")
         .attr("class", "legendOrdinal")
-        .attr("transform", "translate(" + (width - 60) + ", 5)")
+        .attr("transform", `translate(${width - 60}, 5)`)
         .call(legend);
 
     // Append the median line to the chart. Color is blue.
@@ -137,7 +137,7 @@ const CreateBasesChart = (element, data, width) => {
     // Append the x-axis to the chart.
     svg.append("g")
         .attr("class", "x axis")
-        .attr("transform", "translate(" + 0 + "," + height + ")")
+        .attr("transform", `translate(0, ${height})`)
         .call(xAxis)
         .append("text")
         .attr("x", width / 2)

@@ -58,7 +58,7 @@ class ExpandableNode extends React.Component {
 
     render () {
         // Should the caret point right or down?
-        const caret = <Icon name={"caret-" + (this.state.expanded ? "down": "right")} fixedWidth />;
+        const caret = <Icon name={`caret-${this.state.expanded ? "down": "right"}`} fixedWidth />;
 
         // This component will contain the additional nodes shown when this node is expanded.
         let expandedContent;
@@ -72,7 +72,7 @@ class ExpandableNode extends React.Component {
                 );
             } else {
                 nodeComponents = transform(this.props.nodeData, (result, value, key) => {
-                    result.push(<TaskArgNode key={key + "-" + value} nodeKey={key} nodeData={value} />);
+                    result.push(<TaskArgNode key={`${key}-${value}`} nodeKey={key} nodeData={value} />);
                 }, []);
             }
 

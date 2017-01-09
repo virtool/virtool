@@ -55,11 +55,11 @@ export default class NuVsORF extends React.Component {
         const yBase = HEIGHT - 4;
 
         const d = [
-            "M" + x0 + "," + (yBase + 2),
-            "L" + x2 + "," + (yBase + 2),
-            "L" + x1 + "," + yBase,
-            "L" + x2 + "," + (yBase - 2),
-            "L" + x0 + "," + (yBase - 2)
+            `M${x0},${yBase + 2}`,
+            `L${x2},${yBase + 2}`,
+            `L${x1},${yBase}`,
+            `L${x2},${yBase - 2}`,
+            `L${x0},${yBase - 2}`
         ].join(" ");
 
         group.append("path")

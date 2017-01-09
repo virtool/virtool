@@ -50,7 +50,7 @@ export default class NuVsList extends React.Component {
 
             let components = [
                 <NuVsEntry
-                    key={"sequence_" + item.index}
+                    key={`sequence_${item.index}`}
                     {...item}
                     toggleIn={this.toggleIn}
                     in={expanded}

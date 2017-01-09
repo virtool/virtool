@@ -50,7 +50,7 @@ const createChart = (element, data, meta, yMax, xMin, showYAxis) => {
         .attr("width", width + margin.left + margin.right)
         .attr("height", height + margin.top + margin.bottom)
         .append("g")
-            .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+            .attr("transform", `translate(${margin.left},${margin.top})`);
 
     svg.append("path")
         .datum(data)
@@ -60,7 +60,7 @@ const createChart = (element, data, meta, yMax, xMin, showYAxis) => {
     // Set-up a y-axis that will appear at the top of the chart.
     svg.append("g")
         .attr("class", "x axis")
-        .attr("transform", "translate(0," + height + ")")
+        .attr("transform", `translate(0,${height})`)
         .call(xAxis)
         .selectAll("text")
             .style("text-anchor", "end")
@@ -79,7 +79,7 @@ const createChart = (element, data, meta, yMax, xMin, showYAxis) => {
     svg.append("text")
         .attr("class", "coverage-label small")
         .attr("transform", "translate(4,10)")
-        .text(meta.accession + " - " + meta.definition);
+        .text(`${meta.accession} - ${meta.definition}`);
 };
 
 export default class CoverageChart extends React.Component {
