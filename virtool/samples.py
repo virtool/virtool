@@ -245,11 +245,11 @@ class Collection(virtool.database.Collection):
         :type data: dict
 
         """
-        analysis = yield self.analyses_collection.find_one({"_id": data["analysis_id"]})
+        analysis = yield self.collections["analyses"].find_one({"_id": data["analysis_id"]})
         analysis.update(data["analysis"])
         analysis["ready"] = True
 
-        yield self.analyses_collection.update({"_id": data["analysis_id"]}, {"$set": analysis})
+        yield self.collections["analyses"].update({"_id": data["analysis_id"]}, {"$set": analysis})
 
         yield self.update(data["_id"], {
             "$inc": {"_version": 1},
@@ -556,7 +556,7 @@ class ImportReads(virtool.job.Job):
             os.makedirs(os.path.join(self.sample_path, "analysis"))
 
     def trim_reads(self):
-        input_paths = [os.path.join(self.settings.get("watch_path"), filename) for filename in self.files]
+        input_paths = [os.path.join(self.settings.get("data_path"), "files", filename) for filename in self.files]
 
         command = [
             "skewer",
@@ -744,8 +744,7 @@ class ImportReads(virtool.job.Job):
 
     def clean_watch(self):
         """ Try to remove the original read files from the watch directory """
-        for read_file in self.files:
-            os.remove(os.path.join(self.settings.get("watch_path"), read_file))
+        self.collection_operation("files", "_remove_files", {"to_remove": self.files})
 
     def cleanup(self):
         """

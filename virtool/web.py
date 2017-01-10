@@ -442,9 +442,9 @@ class UploadHandler(tornado.web.RequestHandler):
 
     @virtool.gen.coroutine
     def prepare(self):
-        file_id = self.path_args[0]
-        file_document = yield self.collections["files"].find_one({"_id": file_id})
-        self.handle = open(os.path.join("data/files", file_id), "wb")
+        target = self.path_args[0]
+        file_document = yield self.collections["files"].find_one({"target": target})
+        self.handle = open(os.path.join("data/files", file_document["_id"]), "wb")
         self.request.connection.set_max_body_size(file_document["size_end"] + 1000)
 
     def data_received(self, chunk):

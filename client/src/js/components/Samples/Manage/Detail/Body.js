@@ -183,7 +183,7 @@ export default class SampleDetail extends React.Component {
             <div>
                 <ResizeDetector handleHeight handleWidth onResize={this.handleResize} />
 
-                <Modal.Header>
+                <Modal.Header onHide={this.props.onHide} closeButton>
                     {this.props.detail.name}
                 </Modal.Header>
 

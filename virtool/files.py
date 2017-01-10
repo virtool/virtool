@@ -175,11 +175,12 @@ class Collection(virtool.database.Collection):
         :rtype: str
 
         """
-        file_id = yield self.get_new_id()
+        target = yield self.get_new_id()
 
         yield self.insert({
-            "_id": file_id,
+            "_id": "{}-{}".format(target, name),
             "name": name,
+            "target": target,
             "ready": False,
             "created": False,
             "size_end": size,
@@ -191,7 +192,7 @@ class Collection(virtool.database.Collection):
             "expires": 1200
         })
 
-        return file_id
+        return target
 
     @virtool.gen.exposed_method([])
     def remove_file(self, transaction):
@@ -200,8 +201,11 @@ class Collection(virtool.database.Collection):
 
         """
         response = yield self.remove_files(transaction.data["file_id"])
-
         return True, response
+
+    @virtool.gen.coroutine
+    def _remove_files(self, data):
+        yield self.remove_files(data["to_remove"])
 
     @virtool.gen.coroutine
     def remove_files(self, to_remove):

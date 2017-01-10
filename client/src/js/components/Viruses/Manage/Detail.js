@@ -35,6 +35,7 @@ export default class VirusDetail extends React.Component {
     }
 
     static propTypes = {
+        onHide: React.PropTypes.func,
         detail: React.PropTypes.object
     };
 
@@ -71,7 +72,7 @@ export default class VirusDetail extends React.Component {
 
         return (
             <div>
-                <Modal.Header>
+                <Modal.Header onHide={this.props.onHide} closeButton>
                     Virus Detail
                 </Modal.Header>
                 <Modal.Body>

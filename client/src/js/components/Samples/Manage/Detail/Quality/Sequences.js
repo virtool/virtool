@@ -42,7 +42,7 @@ const CreateSequencesChart = (element, data, baseWidth) => {
      */
     const formatter = (number) => {
         number = number.toExponential().split("e");
-        return Numeral(number[0]).format("0.0") + "ₑ" + number[1].replace("+", "");
+        return Numeral(number[0]).format("0.0") + "E" + number[1].replace("+", "");
     };
 
     // Set up scales.

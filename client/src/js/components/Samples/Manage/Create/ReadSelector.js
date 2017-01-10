@@ -64,9 +64,7 @@ export default class ReadSelector extends React.PureComponent {
         this.props.select(selected);
     };
 
-    handleChange = (event) => {
-        this.setState({filter: event.target.value});
-    };
+    handleChange = (event) => this.setState({filter: event.target.value});
 
     reset = () => this.setState({filter: ""}, () => this.props.select([]));
 
@@ -92,7 +90,6 @@ export default class ReadSelector extends React.PureComponent {
         const fileComponents = sortBy(files, "timestamp").reverse().map((file) =>
             <div key={file._id}>
                 <ReadItem
-
                     {...file}
                     selected={includes(this.props.selected, file._id)}
                     onSelect={this.handleSelect}

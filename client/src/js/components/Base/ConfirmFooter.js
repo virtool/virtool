@@ -10,7 +10,7 @@
  */
 
 import React from "react";
-import { Row, Col, Modal, ButtonToolbar } from "react-bootstrap";
+import { Row, Col, Modal } from "react-bootstrap";
 import { Icon, Button } from "./";
 
 /**
@@ -97,20 +97,13 @@ export class ConfirmFooter extends React.Component {
                         {<span className="pull-left">{this.state.confirming ? this.props.message : ""}</span>}
                     </Col>
                     <Col sm={6}>
-                        <ButtonToolbar className="pull-right">
-                            <Button
-                                onClick={this.state.confirming ? this.cancel : this.props.onHide}
-                            >
-                                {this.state.confirming ? "Cancel" : "Close"}
-                            </Button>
-
-                            <Button
-                                bsStyle={this.props.style}
-                                onClick={this.state.confirming ? this.confirm : this.showConfirm}
-                            >
-                                {buttonContent}
-                            </Button>
-                        </ButtonToolbar>
+                        <Button
+                            className="pull-right"
+                            bsStyle={this.props.style}
+                            onClick={this.state.confirming ? this.confirm : this.showConfirm}
+                        >
+                            {buttonContent}
+                        </Button>
                     </Col>
                 </Row>
             </Modal.Footer>

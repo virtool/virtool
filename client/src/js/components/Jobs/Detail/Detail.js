@@ -17,31 +17,31 @@ import ProgressTable from "./ProgressTable";
 import General from "./General";
 import Error from "./Error";
 
-export default class JobDetail extends React.Component {
+const JobDetail = (props) => {
 
-    static propTypes = {
-        detail: React.PropTypes.object,
-        collection: React.PropTypes.object,
-        onHide: React.PropTypes.func
-    };
+    const data = props.detail;
 
-    render () {
+    // The error will be included in the last status update of a failed job. If undefined, no error message will be
+    // displayed.
+    const error = last(data.status).error;
 
-        const data = this.props.detail;
+    return (
+        <div>
+            <Modal.Header onHide={props.onHide} closeButton>
+                Job {props.detail._id.toUpperCase()}
+            </Modal.Header>
+            <Modal.Body>
+                <General {...data} />
+                {error ? <Error error={error} />: null}
+                <ProgressTable status={data.status} log={data.log} />
+            </Modal.Body>
+        </div>
+    );
+};
 
-        // The error will be included in the last status update of a failed job. If undefined, no error message will be
-        // displayed.
-        const error = last(data.status).error;
+JobDetail.propTypes = {
+    detail: React.PropTypes.object,
+    onHide: React.PropTypes.func
+};
 
-        return (
-            <div>
-                <Modal.Body>
-                    <General {...data} />
-                    {error ? <Error error={error} />: null}
-                    <ProgressTable status={data.status} log={data.log} />
-                </Modal.Body>
-            </div>
-        )
-    }
-
-}
+export default JobDetail;

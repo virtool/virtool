@@ -23,20 +23,16 @@ const getInitialState = () => {
 
     return {
         selected: [],
-
         name: "",
         host: "",
         isolate: "",
         locale: "",
         subtraction: readyHosts.length > 0 ? readyHosts[0]._id: null,
-
         forceGroupChoice: getForceGroupChoice(),
         group: dispatcher.settings.get("sample_group") == "force_choice" ? "none": "",
-
         nameExistsError: false,
         nameEmptyError: false,
         readError: false,
-
         pending: false
     };
 

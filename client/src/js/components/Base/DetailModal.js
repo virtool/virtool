@@ -110,13 +110,8 @@ export class DetailModal extends React.Component {
                 />
             );
         } else {
-            const loadingStyle = {
-                marginTop: "35px",
-                marginBottom: "35px"
-            };
-
             modalContent = (
-                <Modal.Body key="loading" style={loadingStyle}>
+                <Modal.Body key="loading" style={{marginTop: "35px", marginBottom: "35px"}}>
                     <div className="text-center">
                         <Pulse bsStyle="primary" />
                     </div>
