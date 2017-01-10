@@ -214,8 +214,6 @@ class Collection(virtool.database.Collection):
         # Remove the analysis directory
         path = os.path.join(self.settings.get("data_path"), "samples/sample_" + sample_id, "analysis", analysis_id)
 
-        shutil.rmtree(path)
-
         try:
             yield virtool.utils.rm(path, recursive=True)
         except FileNotFoundError:
