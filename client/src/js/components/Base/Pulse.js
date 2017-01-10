@@ -21,7 +21,7 @@ export const Pulse = ({color}) => {
     }
 
     return (
-        <div className="spinner">
+        <div className="pulse">
             <div className="double-bounce1" style={style}></div>
             <div className="double-bounce2" style={style}></div>
         </div>

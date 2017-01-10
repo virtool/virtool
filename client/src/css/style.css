@@ -149,33 +149,6 @@ div.hoverable:hover {
     min-width: 100px;
 }
 
-@-webkit-keyframes anim-rotate {
-	0% {
-		-webkit-transform: rotate(0deg);
-	}
-	100% {
-		-webkit-transform: rotate(360deg);
-	}
-}
-
-@keyframes anim-rotate {
-	0% {
-		transform: rotate(0deg);
-	}
-	100% {
-		transform: rotate(359deg);
-	}
-}
-
-.spinning {
-    font-size: 14px;
-    width: 14px;
-    display: inline-block;
-    line-height: 1;
-    -webkit-animation: anim-rotate 2s infinite linear;
-	animation: anim-rotate 2s infinite linear;
-}
-
 .icon-group {
     float: right;
 }
@@ -362,19 +335,6 @@ p.sequence {
 	}
 }
 
-.spinner {
-	display: inline-block;
-	line-height: 1;
-	animation: anim-rotate 2s infinite linear;
-	text-shadow: 0 0 .25em rgba(255,255,255, .3);
-}
-.spinner--steps {
-	animation: anim-rotate 1s infinite steps(8);
-}
-.spinner--steps2 {
-	animation: anim-rotate 1s infinite steps(12);
-}
-
 div.page-loading {
     display: flex;
     align-content: center;
@@ -439,47 +399,9 @@ table.cluster-table tbody tr {
     border-radius: 2px;
 }
 
-.spinner {
+.pulse {
   width: 11px;
   height: 11px;
-}
-
-.double-bounce1, .double-bounce2 {
-  width: 100%;
-  height: 100%;
-  border-radius: 50%;
-  background-color: white;
-  opacity: 0.6;
-  position: absolute;
-  top: 0;
-  left: 0;
-
-  -webkit-animation: sk-bounce 2.0s infinite ease-in-out;
-  animation: sk-bounce 2.0s infinite ease-in-out;
-}
-
-.double-bounce2 {
-  -webkit-animation-delay: -1.0s;
-  animation-delay: -1.0s;
-}
-
-.double-bounce1.primary, .double-bounce2.primary {
-    background-color: #337ab7;
-}
-
-@-webkit-keyframes sk-bounce {
-  0%, 100% { -webkit-transform: scale(0.0) }
-  50% { -webkit-transform: scale(1.0) }
-}
-
-@keyframes sk-bounce {
-  0%, 100% {
-    transform: scale(0.0);
-    -webkit-transform: scale(0.0);
-  } 50% {
-    transform: scale(1.0);
-    -webkit-transform: scale(1.0);
-  }
 }
 
 .text-strong {
@@ -532,6 +454,7 @@ table.cluster-table tbody tr {
 
 .btn-with-icon {
     display: flex;
+    flex-wrap: nowrap;
     align-items: center;
     justify-content: center;
 }
@@ -569,6 +492,10 @@ div.toolbar .form-group {
     margin-bottom: 0 !important;
 }
 
+div.toolbar > .form-group {
+    margin-bottom: 0 !important;
+}
+
 div.toolbar > * {
     margin-left: 3px;
 }
@@ -582,4 +509,20 @@ div.toolbar > .btn-group {
     align-items: stretch;
     margin-left: 3px;
     flex: 0 0 auto;
+}
+
+.pulsing {
+	animation: animate-pulse 1.2s infinite ease-in-out;
+}
+
+@keyframes animate-pulse {
+	0% {
+		opacity: 0.7;
+	}
+	50% {
+		opacity: 1;
+	}
+    100% {
+        opacity: 0.7;
+    }
 }

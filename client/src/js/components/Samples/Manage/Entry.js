@@ -9,17 +9,12 @@
  * @exports SampleEntry
  */
 
-
 import React from "react";
+import CX from "classnames";
 import { Row, Col } from "react-bootstrap";
-import { ListGroupItem, Icon, Flex, FlexItem, Pulse, Checkbox, RelativeTime } from "virtool/js/components/Base";
+import { ListGroupItem, Icon, Flex, FlexItem, Checkbox, RelativeTime } from "virtool/js/components/Base";
 import { stringOrBool } from "virtool/js/propTypes";
 
-/**
- * A form-based component used to filter the documents presented in JobsTable component.
- *
- * @class
- */
 export default class SampleEntry extends React.Component {
 
     constructor (props) {
@@ -92,8 +87,8 @@ export default class SampleEntry extends React.Component {
 
         if (this.props.analyzed) {
             analysisLabel = (
-                <FlexItem className="bg-primary sample-label" pad>
-                    {this.props.analyzed === "ip" ? <Pulse />: <Icon name="bars" />} Analysis
+                <FlexItem className={CX("bg-primary", "sample-label", {"pulsing": this.props.analyzed === "ip"})} pad>
+                    <Icon name="bars" /> Analysis
                 </FlexItem>
             );
         }
@@ -145,8 +140,10 @@ export default class SampleEntry extends React.Component {
                     </Col>
                     <Col md={3}>
                         <Flex>
-                            <FlexItem className="bg-primary sample-label">
-                                {this.props.imported === true ? <Icon name="filing" />: <Pulse />} Import
+                            <FlexItem
+                                className={CX("bg-primary", "sample-label", {pulsing: this.props.imported === "ip"})}
+                            >
+                                <Icon name="filing" /> Import
                             </FlexItem>
                             {analysisLabel}
                         </Flex>

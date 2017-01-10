@@ -12,9 +12,7 @@
 import React from "react";
 import CX from "classnames";
 import { Tooltip, OverlayTrigger } from "react-bootstrap";
-import { Icon } from "./";
-
-const bsStyles = ["primary", "success", "danger", "warning", "info", "default"];
+import { Icon, bsStyles } from "./";
 
 /**
  * A react-bootstrap button that does not retain focus when clicked.
@@ -24,7 +22,7 @@ export class Button extends React.Component {
     static propTypes = {
         type: React.PropTypes.oneOf(["button", "submit"]),
         bsSize: React.PropTypes.oneOf(["xsmall", "small", "large"]),
-        bsStyle: React.PropTypes.oneOf(),
+        bsStyle: React.PropTypes.oneOf(bsStyles),
         active: React.PropTypes.bool,
         disabled: React.PropTypes.bool,
         block: React.PropTypes.bool,

@@ -11,7 +11,7 @@
 
 import React from "react";
 import { FormGroup, InputGroup, FormControl } from "react-bootstrap";
-import { Flex, FlexItem, Icon, Button } from "virtool/js/components/Base";
+import { Icon, Button } from "virtool/js/components/Base";
 
 import Add from "./Add";
 import Groups from "./Groups/Groups";
@@ -59,33 +59,27 @@ export default class UserToolbar extends React.PureComponent {
 
     render = () => (
         <div>
-            <Flex>
-                <FlexItem grow={1}>
-                    <FormGroup>
-                        <InputGroup>
-                            <InputGroup.Addon>
-                                <Icon name="search"/>
-                            </InputGroup.Addon>
-                            <FormControl
-                                type="text"
-                                onChange={this.props.onChange}
-                            />
-                        </InputGroup>
-                    </FormGroup>
-                </FlexItem>
+            <div className="toolbar">
+                <FormGroup>
+                    <InputGroup>
+                        <InputGroup.Addon>
+                            <Icon name="search"/>
+                        </InputGroup.Addon>
+                        <FormControl
+                            type="text"
+                            onChange={this.props.onChange}
+                        />
+                    </InputGroup>
+                </FormGroup>
 
-                <FlexItem pad>
-                    <Button bsStyle="primary" onClick={this.showGroupsModal}>
-                        <Icon name="users"/>
-                    </Button>
-                </FlexItem>
+                <Button bsStyle="primary" onClick={this.showGroupsModal}>
+                    <Icon name="users"/>
+                </Button>
 
-                <FlexItem pad>
-                    <Button bsStyle="primary" onClick={this.showAddUserModal}>
-                        <Icon name="plus-square"/>
-                    </Button>
-                </FlexItem>
-            </Flex>
+                <Button bsStyle="primary" onClick={this.showAddUserModal}>
+                    <Icon name="plus-square"/>
+                </Button>
+            </div>
 
             <Add
                 show={this.state.showAddUser}

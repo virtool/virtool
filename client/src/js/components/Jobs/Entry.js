@@ -19,10 +19,7 @@ export default class JobEntry extends React.Component {
 
     constructor (props) {
         super(props);
-
-        this.state = {
-            in: false
-        };
+        this.state = {in: false};
     }
 
     static propTypes = {
@@ -32,14 +29,11 @@ export default class JobEntry extends React.Component {
         progress: React.PropTypes.number.isRequired,
         added: React.PropTypes.string.isRequired,
         username: React.PropTypes.string.isRequired,
-
         canCancel: React.PropTypes.bool,
         canRemove: React.PropTypes.bool
     };
 
-    showDetail = () => {
-        dispatcher.router.setExtra(["detail", this.props._id]);
-    };
+    showDetail = () =>         dispatcher.router.setExtra(["detail", this.props._id]);
 
     remove = (event) => {
         event.stopPropagation();

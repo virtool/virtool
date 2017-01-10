@@ -13,6 +13,7 @@
 import React from "react";
 import CX from "classnames";
 import { round } from "lodash";
+import { bsStyles } from "./";
 
 export class AutoProgressBar extends React.Component {
 
@@ -26,13 +27,14 @@ export class AutoProgressBar extends React.Component {
 
     static propTypes = {
         step: React.PropTypes.number,
+        bsStyle: React.PropTypes.oneOf(bsStyles),
         active: React.PropTypes.bool,
         interval: React.PropTypes.number,
         affixed: React.PropTypes.bool
     };
 
     static defaultProps = {
-        step: 0.3,
+        step: 30,
         interval: 120
     };
 
@@ -41,12 +43,12 @@ export class AutoProgressBar extends React.Component {
             this.stop();
 
             this.setState({
-                fill: 1
+                fill: 100
             });
         }
 
         if (!this.props.active && nextProps.active) {
-            this.setState({ fill: 0.1 }, () => {
+            this.setState({fill: 10}, () => {
                 this.interval = window.setInterval(this.move, this.props.interval);
             });
         }
@@ -62,7 +64,7 @@ export class AutoProgressBar extends React.Component {
 
         // If the fill is more than 80% of the bar, stop iterating and wait for a prop change before moving the bar
         // again.
-        if (fill >= 0.8) {
+        if (fill >= 80) {
             this.stop();
         }
 
@@ -72,15 +74,27 @@ export class AutoProgressBar extends React.Component {
         });
     };
 
+    handleMoved = (now) => {
+        if (now === 100) {
+            this.setState({fill: 0});
+        }
+    };
+
     stop = () => {
         window.clearInterval(this.interval);
     };
 
     render () {
+        if (this.state.fill === 0) {
+            return <div style={{height: "4px"}} />;
+        }
+
         return (
             <ProgressBar
                 affixed={this.props.affixed}
-                now={this.state.fill * 100}
+                now={this.state.fill}
+                bsStyle={this.props.bsStyle}
+                onMoved={this.handleMoved}
             />
         );
     }
@@ -96,7 +110,7 @@ export class ProgressBar extends React.PureComponent {
         children: React.PropTypes.node,
         affixed: React.PropTypes.bool,
         style: React.PropTypes.object,
-        bsStyle: React.PropTypes.string
+        bsStyle: React.PropTypes.oneOf(bsStyles)
     };
 
     static defaultProps = {
@@ -130,7 +144,7 @@ export class ProgressBar extends React.PureComponent {
             <div className={CX("progress", {"progress-affixed": this.props.affixed})} style={this.props.style}>
                 <div
                     ref={(node) => this.barNode = node}
-                    className="progress-bar"
+                    className={`progress-bar progress-bar-${this.props.bsStyle}`}
                     style={{width: `${this.props.now}%`}}
                     role="progressbar"
                     aria-valuenow={`${this.props.now}`}
