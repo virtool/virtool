@@ -13,7 +13,7 @@ import React from "react";
 import FlipMove from "react-flip-move"
 import { sortBy } from "lodash";
 import { Alert } from "react-bootstrap";
-import { Icon } from "virtool/js/components/Base";
+import { Icon, getFlipMoveProps } from "virtool/js/components/Base";
 
 import Entry from "./Index/Entry";
 import Rebuild from "./Index/Rebuild";
@@ -79,7 +79,7 @@ export default class ManageIndexes extends React.Component {
                         documents={this.state.historyEntries}
                         collection={dispatcher.db.viruses}
                     />
-                    <FlipMove typeName="div" className="list-group">
+                    <FlipMove {...getFlipMoveProps()}>
                         {indexComponents}
                     </FlipMove>
                 </div>

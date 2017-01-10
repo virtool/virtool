@@ -13,7 +13,7 @@ import React from "react";
 import FlipMove from "react-flip-move"
 import { sortBy } from "lodash";
 import { Alert } from "react-bootstrap";
-import { ListGroupItem, Icon } from "virtool/js/components/Base";
+import { ListGroupItem, Icon, getFlipMoveProps } from "virtool/js/components/Base";
 
 import AnalysisAdder from "./Adder";
 import AnalysisItem from "./Item";
@@ -134,7 +134,7 @@ export default class AnalysisList extends React.Component {
         return (
             <div>
                 {adder}
-                <FlipMove typeName="ul" className="list-group">
+                <FlipMove {...getFlipMoveProps({typeName: "ul"})}>
                     {listContent}
                 </FlipMove>
             </div>

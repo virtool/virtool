@@ -13,7 +13,7 @@ import React from "react";
 import FlipMove from "react-flip-move"
 import { some, includes, pull, intersection, filter, endsWith, sortBy } from "lodash";
 import { Overlay, Popover, Panel, Label } from "react-bootstrap";
-import { Icon, Input, Button } from "virtool/js/components/Base";
+import { Icon, Input, Button, getFlipMoveProps } from "virtool/js/components/Base";
 
 import ReadItem from "./ReadItem";
 
@@ -141,7 +141,7 @@ export default class ReadSelector extends React.PureComponent {
                     </div>
 
                     <Panel style={{minHeight: "420px", maxHeight: "420px", overflowY: "scroll"}}>
-                        <FlipMove typeName="div" className="list-group" fill={true}>
+                        <FlipMove {...getFlipMoveProps()}>
                             {fileComponents}
                         </FlipMove>
                     </Panel>

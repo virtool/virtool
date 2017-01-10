@@ -12,7 +12,7 @@
 import React from "react";
 import FlipMove from "react-flip-move"
 import { Panel, Pagination } from "react-bootstrap";
-import { Icon } from "virtool/js/components/Base";
+import { Icon, getFlipMoveProps } from "virtool/js/components/Base";
 import Virus from"./Virus";
 
 /**
@@ -122,7 +122,7 @@ export default class HistoryPager extends React.Component {
             // Render panels with list groups of history items.
             content = (
                 <div>
-                    <FlipMove typeName="div" className="panel-group" duration={200} leaveAnimation={false}>
+                    <FlipMove {...getFlipMoveProps()}>
                         {virusComponents}
                     </FlipMove>
 

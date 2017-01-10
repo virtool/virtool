@@ -13,7 +13,7 @@ import React from "react";
 import FlipMove from "react-flip-move"
 import { find } from "lodash";
 import { Row, Col, Panel } from "react-bootstrap";
-import { Icon } from "virtool/js/components/Base";
+import { Icon, getFlipMoveProps } from "virtool/js/components/Base";
 
 import Toolbar from "./Users/Toolbar";
 import Password from "./Users/Password";
@@ -181,12 +181,12 @@ export default class ManageUsers extends React.Component {
                         onChange={this.filter}
                         add={this.add}
                     />
-                    <FlipMove typeName="div" duration={200} className="list-group">
+                    <FlipMove {...getFlipMoveProps()}>
                         {userComponents}
                     </FlipMove>
                 </Col>
                 <Col sm={8}>
-                    <FlipMove typeName="div" leaveAnimation={false} duration={200}>
+                    <FlipMove typeName="div" enterAnimation="fade" leaveAnimation={false} duration={180}>
                         {content}
                     </FlipMove>
                 </Col>

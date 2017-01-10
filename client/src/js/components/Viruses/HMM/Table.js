@@ -13,7 +13,7 @@ import { capitalize } from "lodash";
 import React from "react";
 import FlipMove from "react-flip-move"
 import { Table } from "react-bootstrap";
-import { Icon, Flex, FlexItem, Paginator } from "virtool/js/components/Base";
+import { Icon, Flex, FlexItem, Paginator, getFlipMoveProps } from "virtool/js/components/Base";
 
 import HMMEntry from "./Entry";
 
@@ -131,11 +131,7 @@ export default class HMMTable extends React.Component {
                         </tr>
                     </thead>
 
-                    <FlipMove
-                        typeName="tbody"
-                        enterAnimation="accordionHorizontal"
-                        leaveAnimation={false}
-                        duration={150}
+                    <FlipMove {...getFlipMoveProps({enterAnimation: "accordionHorizontal"})}
                     >
                         {rowComponents}
                     </FlipMove>

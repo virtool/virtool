@@ -12,7 +12,7 @@
 import React from "react";
 import FlipMove from "react-flip-move";
 import { ListGroupItem } from "react-bootstrap";
-import { Icon, DetailModal } from "virtool/js/components/Base";
+import { Icon, DetailModal, getFlipMoveProps } from "virtool/js/components/Base";
 
 import JobEntry from "./Entry";
 import JobDetail from "./Detail/Detail";
@@ -60,7 +60,7 @@ export default class JobList extends React.Component {
 
         return (
             <div>
-                <FlipMove typeName="div" className="list-group" staggerDurationBy={10} leaveAnimation={false}>
+                <FlipMove {...getFlipMoveProps()}>
                     {jobComponents}
                 </FlipMove>
 

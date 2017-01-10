@@ -13,7 +13,7 @@ import React from "react";
 import FlipMove from "react-flip-move"
 import { capitalize, find } from "lodash";
 import { Row, Col, Modal } from "react-bootstrap";
-import { Icon, ListGroupItem } from "virtool/js/components/Base";
+import { Icon, ListGroupItem, getFlipMoveProps } from "virtool/js/components/Base";
 
 import Add from "./Add";
 import Permissions from "./Permissions";
@@ -100,13 +100,13 @@ export default class Groups extends React.Component {
                 <Modal.Body>
                     <Row>
                         <Col md={6}>
-                            <FlipMove>
+                            <FlipMove {...getFlipMoveProps()}>
                                 <Add collection={dispatcher.db.groups} />
                                 {groupItemComponents}
                             </FlipMove>
                         </Col>
                         <Col md={6}>
-                            <FlipMove leaveAnimation={false} duration={200}>
+                            <FlipMove enterAnimation="fade" leaveAnimation={false} duration={180}>
                                 <Permissions
                                     key={activeGroup._id}
                                     groupName={activeGroup._id}

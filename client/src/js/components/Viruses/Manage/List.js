@@ -11,7 +11,7 @@
 
 import React from "react";
 import FlipMove from "react-flip-move"
-import { Icon, Paginator, DetailModal, ListGroupItem } from "virtool/js/components/Base";
+import { Icon, Paginator, DetailModal, ListGroupItem, getFlipMoveProps } from "virtool/js/components/Base";
 
 import VirusEntry from "./Entry";
 import VirusDetail from "./Detail";
@@ -90,7 +90,7 @@ export default class VirusList extends React.Component {
 
         return (
             <div>
-                <FlipMove typeName="div" className="list-group" leaveAnimation={false}>
+                <FlipMove {...getFlipMoveProps()}>
                     {virusComponents}
                 </FlipMove>
 

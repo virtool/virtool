@@ -13,7 +13,7 @@ import React from "react";
 import FlipMove from "react-flip-move";
 import { reject, capitalize } from "lodash";
 import { Row, Col, Panel, Overlay, Popover, FormGroup, InputGroup, FormControl } from "react-bootstrap";
-import { Flex, FlexItem, Icon, Button, Checkbox, ListGroupItem } from "virtool/js/components/Base";
+import { Flex, FlexItem, Icon, Button, Checkbox, ListGroupItem, getFlipMoveProps } from "virtool/js/components/Base";
 
 /**
  * A component that allows the addition and removal of allowed source types. The use of restricted source types can also
@@ -145,7 +145,7 @@ export default class SourceTypes extends React.Component {
                                 </FormGroup>
                             </form>
 
-                            <FlipMove typeName="div" className="list-group" leaveAnimation={false}>
+                            <FlipMove {...getFlipMoveProps()}>
                                 {listComponents}
                             </FlipMove>
 

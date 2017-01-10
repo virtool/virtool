@@ -11,7 +11,7 @@
 
 import React from "react";
 import FlipMove from "react-flip-move"
-import { Icon, Paginator, ListGroupItem } from "virtool/js/components/Base";
+import { Icon, Paginator, ListGroupItem, getFlipMoveProps } from "virtool/js/components/Base";
 
 import SampleEntry from "./Entry";
 
@@ -85,13 +85,7 @@ export default class SamplesList extends React.Component {
 
         return (
             <div>
-                <FlipMove
-                    typeName="div"
-                    className="list-group"
-                    duration={200}
-                    staggerDurationBy={20}
-                    leaveAnimation={false}
-                >
+                <FlipMove {...getFlipMoveProps()}>
                     {sampleComponents}
                 </FlipMove>
 

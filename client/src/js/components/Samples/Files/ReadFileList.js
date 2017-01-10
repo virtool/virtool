@@ -1,7 +1,7 @@
 import React from "react";
 import FlipMove from "react-flip-move";
 import { sortBy } from "lodash";
-import { Icon, ListGroupItem } from "virtool/js/components/Base";
+import { Icon, ListGroupItem, getFlipMoveProps } from "virtool/js/components/Base";
 import ReadFile from "./ReadFile";
 
 const ReadFileList = (props) => {
@@ -26,7 +26,7 @@ const ReadFileList = (props) => {
                 {props.header}
             </h5>
 
-            <FlipMove typeName="div" className="list-group">
+            <FlipMove {...getFlipMoveProps()}>
                 {fileComponents}
             </FlipMove>
         </div>
