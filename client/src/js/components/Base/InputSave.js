@@ -10,8 +10,7 @@
  */
 
 import React, { PropTypes } from "react";
-import { FormGroup, InputGroup, FormControl, ControlLabel } from "react-bootstrap";
-import { Button } from "./";
+import { Flex, FlexItem, Input, Button } from "./";
 
 /**
  * A single input form component with a submit addon button that behaves well for updated VT settings.
@@ -126,37 +125,37 @@ export class InputSave extends React.Component {
     };
 
     render () {
-        const label = this.props.label ?  <ControlLabel>{this.props.label}</ControlLabel>: null;
 
         const disabled = this.state.pending || this.props.disabled;
 
         return (
             <form onSubmit={this.handleSubmit}>
-                <FormGroup>
-                    {label}
-                    <InputGroup>
-                        <FormControl
-                            inputRef={(input) => this.inputNode = input}
+                <Flex alignItems="stretch" style={{marginBottom: "15px"}}>
+                    <FlexItem grow={1} shrink={0}>
+                        <Input
+                            ref={(input) => this.inputNode = input}
                             type={this.props.type}
                             autoComplete={this.props.autoComplete ? "on": "off"}
                             onChange={this.handleChange}
                             onBlur={this.handleBlur}
                             value={this.state.value}
                             disabled={disabled}
+                            noMargin
                         />
-                        <InputGroup.Button>
-                            <Button
-                                type="submit"
-                                bsStyle="primary"
-                                disabled={disabled}
-                                icon="floppy"
-                                ref={(button) => this.buttonNode = button}
-                            />
-                        </InputGroup.Button>
-                    </InputGroup>
-                </FormGroup>
+                    </FlexItem>
+                    <Button
+                        type="submit"
+                        bsStyle="primary"
+                        disabled={disabled}
+                        icon="floppy"
+                        ref={(button) => this.buttonNode = button}
+                    />
+                </Flex>
             </form>
         );
+
+
     }
 
 }
+

@@ -38,7 +38,8 @@ export class Input extends React.Component {
         onChange: PropTypes.func,
 
         style: PropTypes.object,
-        children: PropTypes.node
+        children: PropTypes.node,
+        noMargin: PropTypes.bool
     };
 
     static defaultProps = {
@@ -96,8 +97,14 @@ export class Input extends React.Component {
             );
         }
 
+        let groupStyle;
+
+        if (this.props.noMargin) {
+            groupStyle = {marginBottom: 0};
+        }
+
         return (
-            <FormGroup>
+            <FormGroup style={groupStyle}>
                 {label}
                 <FormControl
                     inputRef={ref => this.inputNode = ref}
