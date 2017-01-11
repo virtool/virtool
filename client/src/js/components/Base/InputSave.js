@@ -135,7 +135,7 @@ export class InputSave extends React.Component {
                         <Input
                             ref={(input) => this.inputNode = input}
                             type={this.props.type}
-                            autoComplete={this.props.autoComplete ? "on": "off"}
+                            autoComplete={this.props.autoComplete}
                             onChange={this.handleChange}
                             onBlur={this.handleBlur}
                             value={this.state.value}

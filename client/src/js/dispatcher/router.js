@@ -26,6 +26,7 @@ import ManageHosts from "virtool/js/components/Hosts/Manage";
 
 import GeneralOptions from "virtool/js/components/Options/General";
 import ServerOptions from "virtool/js/components/Options/Server";
+import UpdateOptions from "virtool/js/components/Options/Updates";
 import DataPathOptions from "virtool/js/components/Options/Data";
 import JobsOptions from "virtool/js/components/Options/Jobs";
 import ManageUsers from "virtool/js/components/Options/Users";
@@ -87,6 +88,7 @@ const routerStructure = [
         children: [
             {key: "general", component: GeneralOptions},
             {key: "server", component: ServerOptions},
+            {key: "updates", component: UpdateOptions},
             {key: "data", component: DataPathOptions},
             {key: "jobs", component: JobsOptions},
             {key: "users", component: ManageUsers}
