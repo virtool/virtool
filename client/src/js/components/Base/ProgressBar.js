@@ -86,7 +86,7 @@ export class AutoProgressBar extends React.Component {
 
     render () {
         if (this.state.fill === 0) {
-            return <div style={{height: "4px"}} />;
+            return <div className="progress-affixed-empty" />;
         }
 
         return (
