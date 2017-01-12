@@ -216,8 +216,6 @@ function Dispatcher (onReady) {
 
                 var updates = message.data.constructor === Array ? message.data: [message.data];
 
-                console.log(updates);
-
                 updates.forEach((update) => {
                     var existingDocument = collection.findOne({_id: update._id});
 
