@@ -1,4 +1,4 @@
-import { pick, transform, without, includes, assign, every } from "lodash";
+import { pick, transform, includes, assign, every } from "lodash";
 import Bowser from "bowser";
 
 import User from "./user";
@@ -78,6 +78,11 @@ function Dispatcher (onReady) {
             retain: true
         },
 
+        "updates": {
+            unique: ["_id"],
+            retain: true
+        },
+
         "users": {
             unique: ["_id"]
         },
@@ -105,25 +110,23 @@ function Dispatcher (onReady) {
 
     this.sync = () => {
 
-        var dispatcher = this;
-
         this.send({interface: "settings", method: "download", data: null})
             .success((data) => {
 
-                dispatcher.settings.update(data);
+                this.settings.update(data);
 
-                dispatcher.db.open()
+                this.db.open()
                     .then(() => {
 
-                        var collectionCount = dispatcher.db.collectionNames.length
+                        const collectionCount = this.db.collectionNames.length
 
-                        dispatcher.syncProgressStep = 1 / (collectionCount + 1);
+                        this.syncProgressStep = 1 / (collectionCount + 1);
 
-                        dispatcher.db.collectionNames.forEach((collectionName) => {
+                        this.db.collectionNames.forEach((collectionName) => {
 
-                            var collection = dispatcher.db[collectionName];
+                            const collection = this.db[collectionName];
 
-                            var manifest = collection.mapReduce(
+                            const manifest = collection.mapReduce(
                                 (document) => ({_id: document._id, _version: document._version}),
                                 (documents) => (
                                     transform(
@@ -139,28 +142,24 @@ function Dispatcher (onReady) {
                                     collection.expectedSyncCount = update;
 
                                     if (collection.expectedSyncCount === 0) {
-                                        dispatcher.syncProgress += dispatcher.syncProgressStep;
-                                        dispatcher.emit("syncing", dispatcher.syncProgress);
+                                        this.syncProgress += this.syncProgressStep;
+                                        this.emit("syncing", this.syncProgress);
 
                                         collection.synced = true;
-                                        dispatcher.checkSynced();
+                                        this.checkSynced();
                                     }
                                 });
 
-                            dispatcher.syncProgress += dispatcher.syncProgressStep * (1 / collectionCount);
+                            this.syncProgress += this.syncProgressStep * (1 / collectionCount);
 
-                            dispatcher.emit("syncing", dispatcher.syncProgress);
+                            this.emit("syncing", this.syncProgress);
                         });
                     });
             });
     };
 
     this.checkSynced = () => {
-        var collectionNames = without(dispatcher.db.collectionNames, "reads", "files");
-
-        var allSynced = every(collectionNames, collectionName => dispatcher.db[collectionName].synced);
-
-        if (allSynced) {
+        if (every(this.db.collectionNames, collectionName => this.db[collectionName].synced)) {
             this.emit("synced");
         }
     };
@@ -171,6 +170,8 @@ function Dispatcher (onReady) {
 
         var iface = message.interface;
         var operation = message.operation;
+
+        console.log(`${iface}.${operation}`); // eslint-disable-line
 
         if (iface === "transaction") {
             switch (operation) {
@@ -213,8 +214,9 @@ function Dispatcher (onReady) {
 
             if (operation === "update") {
 
+                var updates = message.data.constructor === Array ? message.data: [message.data];
 
-                var updates = message.data.constructor === Array ? message.data : [message.data];
+                console.log(updates);
 
                 updates.forEach((update) => {
                     var existingDocument = collection.findOne({_id: update._id});
