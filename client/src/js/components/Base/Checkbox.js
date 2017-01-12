@@ -9,6 +9,7 @@
  * @exports Checkbox
  */
 
+import CX from "classnames";
 import React from "react";
 
 /**
@@ -31,14 +32,20 @@ export const Checkbox = (props) => {
         }
     }
 
+    const className = CX("pointer", {
+        "pull-right": props.pullRight,
+        "labelled-checkbox": props.label
+    });
+
     return (
-        <span className={props.pullRight ? "pull-right": null} onClick={props.onClick}>
-            <i className={`pointer i-checkbox-${name}`} />
+        <span className={className} onClick={props.onClick}>
+            <i className={`i-checkbox-${name}`} /> {props.label ? <span>{props.label}</span>: null}
         </span>
     );
 };
 
 Checkbox.propTypes = {
+    label: React.PropTypes.node,
     checked: React.PropTypes.bool,
     partial: React.PropTypes.bool,
     onClick: React.PropTypes.func,
