@@ -31,6 +31,7 @@ export class Button extends React.Component {
         style: React.PropTypes.object,
         icon: React.PropTypes.string,
         iconStyle: React.PropTypes.oneOf(bsStyles),
+        pad: React.PropTypes.bool,
 
         tip: React.PropTypes.oneOfType([React.PropTypes.string, React.PropTypes.element]),
         tipPlacement: React.PropTypes.oneOf(["top", "right", "bottom", "left"]),
@@ -39,7 +40,6 @@ export class Button extends React.Component {
     };
 
     static defaultProps = {
-        type: "button",
         bsStyle: "default",
         pullRight: false
     };
@@ -55,9 +55,10 @@ export class Button extends React.Component {
             "pull-right": this.props.pullRight,
             "active": this.props.active,
             "btn-xs": this.props.bsSize === "xsmall",
-            "btm-sm": this.props.bsSize === "small",
+            "btn-sm": this.props.bsSize === "small",
             "btn-lg": this.props.bsSize === "large",
-            "btn-with-icon": this.props.icon
+            "btn-with-icon": this.props.icon,
+            "btn-padded": this.props.pad
         });
 
         let icon;
