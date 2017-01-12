@@ -81,16 +81,7 @@ class Collection:
         :return: a boolean indicating success and the total number of operations performed.
         :rtype: tuple
 
-
-
         """
-
-        '''
-        if "modify_options" in transaction.connection.user["permissions"]:
-            sync_list.append("users")
-            sync_list.append("groups")
-        '''
-
         manifest = transaction.data
 
         cursor = self.find(self.sync_filter, self.sync_projector)
@@ -154,7 +145,10 @@ class Collection:
         response = yield self.db.insert(document)
 
         # Pare down the new document using the sync_projector list.
-        to_dispatch = {key: document[key] for key in self.sync_projector}
+        if self.sync_projector:
+            to_dispatch = {key: document[key] for key in self.sync_projector}
+        else:
+            to_dispatch = dict(document)
 
         # Run the new document through the collection's sync_processor if it has been defined.
         to_dispatch = yield self.sync_processor([to_dispatch])
@@ -201,18 +195,18 @@ class Collection:
         :rtype: dict
 
         """
-        query, multi = coerce_query(query)
-
-        ids_to_update = yield self.find(query, ["_id"]).distinct("_id")
+        query = coerce_query(query)
 
         if increment_version:
             update["$inc"] = {"_version": 1}
 
-        # Perform the update on the database, saving the response.
-        response = yield self.db.update(query, update, multi=multi, upsert=upsert)
+        ids_to_update = yield self.find(query, ["_id"]).distinct("_id")
 
-        # Attach a list of the updated entry_ids to the response. This will be returned by the method.
-        response["_ids"] = ids_to_update
+        # Perform the update on the database, saving the response.
+        write_result = yield self.db.update_many(query, update, upsert=upsert)
+
+        if write_result.upserted_id:
+            ids_to_update.append(write_result.upserted_id)
 
         # Get the pared down versions of the updated documents that should be sent to listening clients to update there
         # collections.
@@ -226,11 +220,11 @@ class Collection:
 
         logger.debug("Updated one or more entries in collection " + self.collection_name)
 
-        return response
+        return {"_ids": ids_to_update}
 
     @virtool.gen.coroutine
     def _perform_update(self, query, update, increment_version=True, upsert=False):
-        query, multi = coerce_query(query)
+        query = coerce_query(query)
 
         if increment_version:
             update["$inc"] = {"_version": 1}
@@ -239,7 +233,6 @@ class Collection:
         response = yield self.db.update(
             query,
             update,
-            multi=multi,
             upsert=upsert
         )
 
@@ -393,13 +386,10 @@ def coerce_query(query):
     :rtype: tuple
 
     """
-    multi = True
-
     if not isinstance(query, dict):
         query = {"_id": query}
-        multi = False
 
-    return query, multi
+    return query
 
 
 def coerce_list(obj):
