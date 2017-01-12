@@ -413,13 +413,24 @@ table.cluster-table tbody tr {
     box-shadow: none;
     background: none;
     margin-bottom: 0;
-    -webkit-transition: width 0.1s linear;
-    -o-transition: width 0.1s linear;
     transition: width 0.1s linear;
+}
+
+.progress-affixed-empty {
+    height: 4px;
+}
+
+.panel > .progress-affixed {
+    height: 1px;
+    margin-top: -1px;
 }
 
 .list-group-item > .progress-affixed {
     margin: -10px -15px 8px -15px;
+}
+
+.panel > .progress-affixed-empty {
+    display: none;
 }
 
 .modal-content > .progress-affixed {
@@ -466,8 +477,6 @@ table.cluster-table tbody tr {
 .btn-with-icon > i:only-child {
     margin-right: 0;
 }
-
-
 
 .dropzone {
     width: 100%;
@@ -525,4 +534,12 @@ div.toolbar > .btn-group {
     100% {
         opacity: 0.7;
     }
+}
+
+.no-margin {
+    margin: 0;
+}
+
+.btn-padded {
+    margin-left: 3px;
 }

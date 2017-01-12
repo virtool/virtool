@@ -20,32 +20,8 @@ i {
     -moz-osx-font-smoothing: grayscale;
 }
 
-.i-ruler:before {
-  content: "\e90e";
-}
-.i-lock:before {
-  content: "\e90c";
-}
-.i-key:before {
-  content: "\e911";
-}
-.i-vtlogo:before {
-  content: "\e67a";
-}
-.i-dna:before {
-  content: "\e673";
-}
-.i-arrow-back:before {
-  content: "\e677";
-}
-.i-export:before {
-  content: "\e912";
-}
-.i-new-entry:before {
-  content: "\e67c";
-}
-.i-eraser:before {
-  content: "\e674";
+.i-github:before {
+  content: "\e903";
 }
 .i-sort-desc:before {
   content: "\e900";
@@ -121,9 +97,6 @@ i {
 }
 .i-users:before {
   content: "\e623";
-}
-.i-spinner:before {
-  content: "\e625";
 }
 .i-search:before {
   content: "\e627";
@@ -250,6 +223,33 @@ i {
 }
 .i-new-tab:before {
   content: "\ea7e";
+}
+.i-ruler:before {
+  content: "\e90e";
+}
+.i-lock:before {
+  content: "\e90c";
+}
+.i-key:before {
+  content: "\e911";
+}
+.i-vtlogo:before {
+  content: "\e67a";
+}
+.i-dna:before {
+  content: "\e673";
+}
+.i-arrow-back:before {
+  content: "\e677";
+}
+.i-export:before {
+  content: "\e912";
+}
+.i-new-entry:before {
+  content: "\e67c";
+}
+.i-eraser:before {
+  content: "\e674";
 }
 .i-menu:before {
   content: "\e914";
