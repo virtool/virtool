@@ -4,6 +4,7 @@ export * from "./Button";
 export * from "./Checkbox";
 export * from "./ConfirmFooter";
 export * from "./DetailModal";
+export * from "./Divider";
 export * from "./Flex";
 export * from "./Help";
 export * from "./Icon";

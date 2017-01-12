@@ -543,3 +543,41 @@ div.toolbar > .btn-group {
 .btn-padded {
     margin-left: 3px;
 }
+
+hr {
+    border: 0;
+    height: 0;
+    border-top: 1px solid #ccc;
+    border-bottom: 1px solid #ccc;
+}
+
+.divider {
+    display: flex;
+    align-items: center;
+}
+
+.divider hr {
+    flex: 1 1 auto;
+}
+
+.divider span {
+    color: #555555;
+    margin: 0 5px;
+}
+
+ul.tight-list {
+    padding-left: 12px;
+}
+
+ul.tight-list > li {
+    margin-bottom: 7px;
+}
+
+.labelled-checkbox {
+    display: flex;
+    align-items: center;
+}
+
+.labelled-checkbox > i {
+    margin-right: 5px;
+}
