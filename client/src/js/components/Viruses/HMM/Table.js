@@ -131,8 +131,7 @@ export default class HMMTable extends React.Component {
                         </tr>
                     </thead>
 
-                    <FlipMove {...getFlipMoveProps({enterAnimation: "accordionHorizontal"})}
-                    >
+                    <FlipMove {...getFlipMoveProps()} typeName="tbody" enterAnimation="accordionHorizontal">
                         {rowComponents}
                     </FlipMove>
                 </Table>
