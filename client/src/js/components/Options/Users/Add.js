@@ -111,7 +111,10 @@ export default class AddUser extends React.PureComponent {
                     <Row>
                         <Col sm={12}>
                             <div onClick={this.toggleForceReset} className="pointer">
-                                <Checkbox checked={this.state.forceReset}/> Force user to reset password on login
+                                <Checkbox
+                                    label="Force user to reset password on login"
+                                    checked={this.state.forceReset}
+                                />
                             </div>
                         </Col>
                     </Row>

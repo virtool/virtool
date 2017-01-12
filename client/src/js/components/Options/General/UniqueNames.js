@@ -24,7 +24,7 @@ const UniqueNames = (props) => {
     return (
         <Panel>
             <Button onClick={() => props.set("sample_unique_names", !enabled)} block>
-                <Checkbox checked={enabled} /> Enable this feature
+                <Checkbox checked={enabled} /> Enable
             </Button>
         </Panel>
     );
@@ -36,4 +36,3 @@ UniqueNames.propTypes = {
 };
 
 export default UniqueNames;
-

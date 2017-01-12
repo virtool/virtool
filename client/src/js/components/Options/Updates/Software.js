@@ -15,6 +15,8 @@ import { Row, Col, Alert, Panel, FormGroup, FormControl, InputGroup } from "reac
 import { Icon, Flex, FlexItem, Button, ListGroupItem, AutoProgressBar } from "virtool/js/components/Base";
 import { byteSize } from "virtool/js/utils";
 
+import SoftwareInstall from "./SoftwareInstall";
+
 const makeOrderable = (version) => parseInt(version.replace(/\D/g, "").replace(".", ""));
 
 const SoftwareRelease = (props) => {
@@ -69,7 +71,8 @@ export default class SoftwareUpdates extends React.Component {
         super(props);
         this.state = {
             repo: this.props.settings.software_repo,
-            refreshing: false
+            refreshing: false,
+            showInstall: false
         };
     }
 
@@ -105,7 +108,7 @@ export default class SoftwareUpdates extends React.Component {
 
     render () {
 
-        const version = this.props.settings.server_version.split("-")[0];
+        const version = "v1.7.5"; // this.props.settings.server_version.split("-")[0];
 
         const releases = this.props.updates.find({"type": "software"}).simplesort("published_at").data().reverse();
 
@@ -128,8 +131,13 @@ export default class SoftwareUpdates extends React.Component {
                             <FlexItem grow={1}>
                                 <span><Icon name="notification" /> <strong>Update available</strong></span>
                             </FlexItem>
-                            <Button bsStyle="success" bsSize="small" icon="arrow-up">
-                                Upgrade
+                            <Button
+                                bsStyle="success"
+                                bsSize="small"
+                                icon="arrow-up"
+                                onClick={() => this.setState({showInstall: true})}
+                            >
+                                Update
                             </Button>
                         </Flex>
                     </Alert>
@@ -148,8 +156,6 @@ export default class SoftwareUpdates extends React.Component {
                 </ListGroupItem>
             );
         }
-
-
 
         return (
             <div>
@@ -190,6 +196,12 @@ export default class SoftwareUpdates extends React.Component {
                         </Flex>
                     </form>
                 </Panel>
+
+                <SoftwareInstall
+                    show={this.state.showInstall}
+                    onHide={() => this.setState({showInstall: false})}
+                    release={releases[0]}
+                />
             </div>
         )
     }

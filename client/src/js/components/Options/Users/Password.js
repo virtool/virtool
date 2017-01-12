@@ -11,7 +11,7 @@
 
 import React from "react";
 import { Alert, Panel } from "react-bootstrap";
-import { Flex, FlexItem, Icon, Input, Checkbox, Button, RelativeTime } from "virtool/js/components/Base";
+import { FlexItem, Icon, Input, Checkbox, Button, RelativeTime } from "virtool/js/components/Base";
 
 const getChangeState = () => ({
     password: "",
@@ -93,7 +93,7 @@ class Change extends React.PureComponent {
                     <RelativeTime time={this.props.last_password_change} em={true} />
                 </p>
                 <form onSubmit={this.submit}>
-                    <Flex>
+                    <div className="toolbar">
                         <FlexItem grow={1}>
                             <Input
                                 type="password"
@@ -105,7 +105,7 @@ class Change extends React.PureComponent {
                             />
                         </FlexItem>
 
-                        <FlexItem grow={1} pad>
+                        <FlexItem grow={1}>
                             <Input
                                 type="password"
                                 name="confirm"
@@ -116,18 +116,14 @@ class Change extends React.PureComponent {
                             />
                         </FlexItem>
 
-                        <FlexItem pad>
-                            <Button onClick={this.clear} disabled={this.state.pendingChange}>
-                                Clear
-                            </Button>
-                        </FlexItem>
+                        <Button onClick={this.clear} disabled={this.state.pendingChange}>
+                            Clear
+                        </Button>
 
-                        <FlexItem pad>
-                            <Button type="submit" bsStyle="primary" disabled={submitDisabled}>
-                                <Icon name="floppy" pending={this.state.pendingChange} /> Save
-                            </Button>
-                        </FlexItem>
-                    </Flex>
+                        <Button type="submit" bsStyle="primary" disabled={submitDisabled}>
+                            <Icon name="floppy" pending={this.state.pendingChange} /> Save
+                        </Button>
+                    </div>
                 </form>
                 {alert}
             </div>
@@ -155,8 +151,11 @@ class Reset extends React.PureComponent {
 
     render = () => (
         <div className="panel-section">
-            <Checkbox checked={this.props.forceReset} onClick={this.toggle} />
-            <span> Force user to reset password on next login.</span>
+            <Checkbox
+                label="Force user to reset password on next login"
+                checked={this.props.forceReset}
+                onClick={this.toggle}
+            />
         </div>
     );
 

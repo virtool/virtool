@@ -32,6 +32,7 @@ const Security = (props) => (
                     </FlexItem>
                     <FlexItem>
                         <Checkbox
+                            label="Enable"
                             checked={props.settings.use_ssl}
                             onClick={() => props.set("use_ssl", !props.settings.use_ssl)}
                         />

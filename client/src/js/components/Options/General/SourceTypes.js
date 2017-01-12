@@ -114,6 +114,7 @@ export default class SourceTypes extends React.Component {
                             </FlexItem>
                             <FlexItem>
                                 <Checkbox
+                                    label="Enable"
                                     checked={restrictSourceTypes}
                                     onClick={() => this.props.set("restrict_source_types", !restrictSourceTypes)}
                                 />

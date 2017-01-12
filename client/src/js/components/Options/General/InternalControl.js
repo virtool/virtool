@@ -95,7 +95,11 @@ export default class InternalControlOptions extends React.Component {
                                 <strong>Internal Control</strong>
                             </FlexItem>
                             <FlexItem grow={0} shrink={0}>
-                                <Checkbox checked={this.props.settings.use_internal_control} onClick={this.toggle} />
+                                <Checkbox
+                                    label="Enable"
+                                    checked={this.props.settings.use_internal_control}
+                                    onClick={this.toggle}
+                                />
                             </FlexItem>
                         </Flex>
                     </Col>
