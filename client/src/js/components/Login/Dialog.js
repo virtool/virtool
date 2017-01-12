@@ -12,10 +12,9 @@
 import React from "react";
 import { assign } from "lodash";
 import { Alert } from "react-bootstrap";
-import { Icon, Flex, FlexItem, Button } from "virtool/js/components/Base";
+import { Icon, Flex, FlexItem, Button, Input } from "virtool/js/components/Base";
 
-import LoginForm from "./Login";
-import PasswordChangeForm from "./Change";
+import ChangePasswordForm from "./ChangePasswordForm";
 
 const getInitialState = () => {
     return {
@@ -23,13 +22,11 @@ const getInitialState = () => {
         password: "",
         loginPending: false,
         loginFailed: false,
-
         needsReset: false,
-        new: "",
-        confirm: "",
+        wasReset: false,
         warnings: []
     };
-}
+};
 
 export default class LoginDialog extends React.Component {
 
@@ -44,25 +41,25 @@ export default class LoginDialog extends React.Component {
         forcedLogout: React.PropTypes.bool
     };
 
-    handleChange = (event) => {
-        let state = {
-            loginFailed: false,
-            warnings: []
-        };
+    componentDidMount () {
+        this.usernameNode.focus();
+    }
 
-        state[event.target.name] = event.target.value;
+    componentDidUpdate (prevState) {
+        if (!prevState.loginFailed && this.state.loginFailed || !prevState.wasReset && this.state.wasReset) {
+            this.usernameNode.focus();
+        }
+    }
 
-        this.setState(state);
-    };
-
-    login = () => {
+    handleSubmit = (event) => {
+        event.preventDefault();
         this.setState({pending: true}, () => {
             dispatcher.send({
                 interface: "users",
                 method: "authorize_by_login",
                 data: {
                     username: this.state.username,
-                    password: this.state.new || this.state.password,
+                    password: this.state.password,
                     browser: dispatcher.browser
                 }
             })
@@ -71,56 +68,15 @@ export default class LoginDialog extends React.Component {
         });
     };
 
-    reset = () => {
-
-        let newState = {
-            warnings: []
-        };
-
-        if (this.state.new.length < 8) {
-            newState.warnings.push("Passwords must be at least 8 characters long.");
-            newState.new = "";
-            newState.confirm = "";
-        }
-
-        if (this.state.new != this.state.confirm) {
-            newState.warnings.push("Passwords do not match");
-        }
-
-        if (this.state.new.length >= 8 && this.state.new === this.state.confirm) {
-            dispatcher.send({
-                interface: "users",
-                method: "change_password",
-                data: {
-                    _id: this.state.username,
-                    old_password: this.state.password,
-                    new_password: this.state.new
-                }
-            })
-            .success(this.login)
-            .failure(this.onResetFailure);
-        }
-
-        if (newState.warnings.length > 0) {
-            this.setState(newState);
-        }
-    };
-
-    onResetFailure = () => {
-        this.setState({
-            new: "",
-            confirm: "",
-            warnings: ["Server error. Contact administrator."]
-        });
+    onReset = () => {
+        this.setState(assign(getInitialState(), {wasReset: true}));
     };
 
     onLoginFailure = (data) => {
         if (data.force_reset) {
-            this.setState({
-                needsReset: true
-            });
+            this.setState({needsReset: true});
         } else {
-            this.setState(assign(getInitialState(), { loginFailed: true }));
+            this.setState(assign(getInitialState(), {loginFailed: true}));
         }
     };
 
@@ -164,11 +120,60 @@ export default class LoginDialog extends React.Component {
         }
 
         else if (this.state.needsReset) {
-            content = <PasswordChangeForm {...sharedProps} />;
+            content = (
+                <ChangePasswordForm
+                    {...sharedProps}
+                    showExpiry={true}
+                    requireOld={true}
+                    onReset={this.onReset}
+                    username={this.state.username}
+                />
+            );
         }
 
         else {
-            content = <LoginForm {...sharedProps} />
+            const alertStyle = this.state.loginFailed ? null: {visibility: "hidden"};
+
+            let resetMessage;
+
+            if (this.state.wasReset) {
+                resetMessage = (
+                    <Alert bsStyle="info">
+                        <Icon name="checkmark" /> Password was reset successfully
+                    </Alert>
+                );
+            }
+
+            content = (
+                <form onSubmit={this.handleSubmit}>
+                    {resetMessage}
+
+                    <Input
+                        ref={(input) => this.usernameNode = input}
+                        type="text"
+                        label="Username"
+                        name="username"
+                        value={this.state.username}
+                        onChange={(event) => this.setState({username: event.target.value, loginFailed: false})}
+                    />
+
+                    <Input
+                        type="password"
+                        label="Password"
+                        name="password"
+                        value={this.state.password}
+                        onChange={(event) => this.setState({password: event.target.value, loginFailed: false})}
+                    />
+
+                    <p className="text-danger" style={alertStyle}>
+                        <Icon name="warning" /> Invalid username or password
+                    </p>
+
+                    <Button type="submit" bsStyle="primary" block disabled={this.state.loginPending}>
+                        <Icon name="key" pending={this.state.loginPending} /> Login
+                    </Button>
+                </form>
+            );
         }
 
         return (

@@ -11,39 +11,32 @@
 
 import React from "react";
 import { Modal } from "react-bootstrap";
-import { Icon, Button } from "virtool/js/components/Base";
-import ChangePassword from "virtool/js/components/Login/Change";
+import ChangePasswordForm from "virtool/js/components/Login/ChangePasswordForm";
 
-export default class ChangePasswordModal extends React.Component {
+const ChangePasswordModal = (props) => {
 
-    static propTypes = {
-        show: React.PropTypes.bool.isRequired,
-        onHide: React.PropTypes.func.isRequired
-    };
+    const header = (
+        <Modal.Header onHide={props.onHide} closeButton>
+            Change Password
+        </Modal.Header>
+    );
 
-    render () {
+    return (
+        <Modal bsSize="small" show={props.show} onHide={props.onHide}>
+            <ChangePasswordForm
+                onReset={props.onHide}
+                requireOld={true}
+                header={header}
+                bodyClass="modal-body"
+                footerClass="modal-footer"
+            />
+        </Modal>
+    );
+};
 
-        const footer = (
-            <Modal.Footer>
-                <Button bsStyle="primary" type="submit">
-                    <Icon name="floppy" /> Save
-                </Button>
-            </Modal.Footer>
-        );
+ChangePasswordModal.propTypes = {
+    show: React.PropTypes.bool.isRequired,
+    onHide: React.PropTypes.func.isRequired
+};
 
-        return (
-            <Modal bsSize="small" show={this.props.show} onHide={this.props.onHide}>
-                <Modal.Header onHide={this.props.onHide} closeButton>
-                    Change Password
-                </Modal.Header>
-
-                <ChangePassword
-                    onSuccess={this.props.onHide}
-                    requireOld={true}
-                    footer={footer}
-                    containerClass="modal-body"
-                />
-            </Modal>
-        );
-    }
-}
+export default ChangePasswordModal;

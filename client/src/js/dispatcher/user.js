@@ -43,13 +43,13 @@ export default class User {
         dispatcher.db.loki.deleteDatabase({}, () => {
 
             window.location.hash = "home/welcome";
-            
-            this.name = null;
 
-             forIn(dispatcher.db, collection => {
+            forIn(dispatcher.db, collection => {
                 collection.documents = [];
                 collection.synced = false;
             });
+
+            dispatcher.user = new User();
 
             this.emit("logout", data);
         });

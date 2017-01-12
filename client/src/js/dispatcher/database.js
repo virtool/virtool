@@ -1,4 +1,4 @@
-import { assign, forIn } from "lodash";
+import { assign, forIn, keys } from "lodash";
 import Promise from "bluebird";
 import Loki from "lokijs";
 import LokiIndexedAdapter from "lokijs/src/loki-indexed-adapter";
@@ -7,11 +7,80 @@ if (!("indexedDB" in window)) {
     throw "Cannot find indexedDB";
 }
 
+const DEFINITIONS = {
+
+    jobs: {
+        unique: ["_id"],
+        indices: ["username"],
+        retain: true
+    },
+
+    files: {
+        unique: ["_id"],
+        indices: ["name", "ready"],
+        retain: true
+    },
+
+    samples: {
+        unique: ["_id", "name"],
+        indices: ["added", "username", "imported", "archived", "analyzed"],
+        retain: true
+    },
+
+    analyses: {
+        unique: ["_id"],
+        indices: ["sample_id", "username"],
+        retain: true
+    },
+
+    viruses: {
+        unique: ["_id", "name"],
+        indices: ["modified", "abbreviation", "last_indexed_version"],
+        retain: true
+    },
+
+    hmm: {
+        unique: ["_id", "cluster"],
+        indices: ["label"],
+        retain: true
+    },
+
+    history: {
+        unique: ["_id"],
+        indices: ["operation", "timestamp", "entry_id", "entry_version", "username", "index", "index_version"],
+        retain: true
+    },
+
+    indexes: {
+        unique: ["_id", "index_version"],
+        indices: ["timestamp", "virus_count", "ready", "has_files"],
+        retain: true
+    },
+
+    hosts: {
+        unique: ["_id", "file", "job"],
+        indices: ["added"],
+        retain: true
+    },
+
+    updates: {
+        unique: ["_id"],
+        retain: true
+    },
+
+    users: {
+        unique: ["_id"]
+    },
+
+    groups: {
+        unique: ["_id"]
+    }
+};
+
 export default class Database {
 
-    constructor (definitions) {
-        this.collectionNames = [];
-        this.definitions = definitions;
+    constructor () {
+        this.collectionNames = keys(DEFINITIONS);
     }
 
     open () {
@@ -31,7 +100,7 @@ export default class Database {
                 if (err) {
                     reject();
                 } else {
-                    forIn(this.definitions, (definition, collectionName) => {
+                    forIn(DEFINITIONS, (definition, collectionName) => {
                         let collection = this.loki.getCollection(collectionName);
 
                         if (!collection) {
@@ -60,9 +129,6 @@ export default class Database {
                         });
 
                         this[collectionName] = collection;
-
-                        this.collectionNames.push(collectionName);
-
                     });
 
                     window.onbeforeunload = () => {

@@ -22,76 +22,7 @@ function Dispatcher (onReady) {
     this.syncProgress = 0;
     this.syncProgressStep = 0;
 
-    this.db = new Database({
-
-        "jobs": {
-            unique: ["_id"],
-            indices: ["username"],
-            retain: true
-        },
-
-        "files": {
-            unique: ["_id"],
-            indices: ["name", "ready"],
-            retain: true
-        },
-
-        "samples": {
-            unique: ["_id", "name"],
-            indices: ["added", "username", "imported", "archived", "analyzed"],
-            retain: true
-        },
-
-        "analyses": {
-            unique: ["_id"],
-            indices: ["sample_id", "username"],
-            retain: true
-        },
-
-        "viruses": {
-            unique: ["_id", "name"],
-            indices: ["modified", "abbreviation", "last_indexed_version"],
-            retain: true
-        },
-
-        "hmm": {
-            unique: ["_id", "cluster"],
-            indices: ["label"],
-            retain: true
-        },
-
-        "history": {
-            unique: ["_id"],
-            indices: ["operation", "timestamp", "entry_id", "entry_version", "username", "index", "index_version"],
-            retain: true
-        },
-
-        "indexes": {
-            unique: ["_id", "index_version"],
-            indices: ["timestamp", "virus_count", "ready", "has_files"],
-            retain: true
-        },
-
-        "hosts": {
-            unique: ["_id", "file", "job"],
-            indices: ["added"],
-            retain: true
-        },
-
-        "updates": {
-            unique: ["_id"],
-            retain: true
-        },
-
-        "users": {
-            unique: ["_id"]
-        },
-
-        "groups": {
-            unique: ["_id"]
-        }
-
-    }, this);
+    this.db = new Database();
 
     /**
      * Takes a message object, stringifies it, and sends it to the server via web socket. Binds a transaction ID to the
@@ -109,15 +40,12 @@ function Dispatcher (onReady) {
     };
 
     this.sync = () => {
-
         this.send({interface: "settings", method: "download", data: null})
             .success((data) => {
-
                 this.settings.update(data);
 
                 this.db.open()
                     .then(() => {
-
                         const collectionCount = this.db.collectionNames.length
 
                         this.syncProgressStep = 1 / (collectionCount + 1);

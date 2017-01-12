@@ -12,11 +12,11 @@
 import React from "react";
 import { clone, assign } from "lodash";
 import { Alert } from "react-bootstrap";
-import { Input } from "virtool/js/components/Base";
+import { Input, Button } from "virtool/js/components/Base";
 
 const getInitialState = () => {
     return {
-        old: "",
+        oldPassword: "",
         password: "",
         confirm: "",
         tooShort: true,
@@ -24,7 +24,7 @@ const getInitialState = () => {
         submitted: false,
         failure: false
     };
-}
+};
 
 /**
  * A form used by user to change their password.
@@ -37,20 +37,28 @@ export default class PasswordChangeForm extends React.Component {
     }
 
     static propTypes = {
-        reset: React.PropTypes.func,
-        onHide: React.PropTypes.func,
-        showExpiry: React.PropTypes.bool,
+        // Function called when the user's password is successfully reset.
+        onReset: React.PropTypes.func,
+
+        // Should the old password be required in order for a new one to be set?
         requireOld: React.PropTypes.bool,
-        footer: React.PropTypes.element,
-        containerClass: React.PropTypes.string
+
+        // Toggles the visibility of a notice telling the user their password expired.
+        showExpiry: React.PropTypes.bool,
+
+        // An element to position above the reset form.
+        header: React.PropTypes.element,
+
+        // Classes to apply to the form body and the footer that contains the submit button.
+        bodyClass: React.PropTypes.string,
+        footerClass: React.PropTypes.string,
+
+        // A username to override the one stored in dispatcher.user.
+        username: React.PropTypes.string
     };
 
     componentDidMount () {
-        if (this.props.requireOld) {
-            this.oldPasswordNode.focus();
-        } else {
-            this.passwordNode.focus();
-        }
+        (this.props.requireOld ? this.oldPasswordNode: this.passwordNode).focus();
     }
 
     componentDidUpdate (prevProps, prevState) {
@@ -72,29 +80,31 @@ export default class PasswordChangeForm extends React.Component {
             newState.failure = false;
         }
 
-        assign(newState, {
+        this.setState(assign(newState, {
             noMatch: newState.confirm !== newState.password,
             tooShort: newState.confirm.length < 4 || newState.password.length < 4
-        });
-
-        this.setState(newState);
+        }));
     };
 
     handleSubmit = (event) => {
         event.preventDefault();
 
-        let newState = clone(this.state);
-
         // Only send the request if the new passwords match and the password is at least four characters in length.
         if (!this.state.tooShort && !this.state.noMatch) {
-            dispatcher.db.users.request("change_password", {
-                _id: dispatcher.user.name,
+            const data = {
+                _id: this.props.username || dispatcher.user.name,
                 old_password: this.state.old,
                 new_password: this.state.password
+            };
+
+            dispatcher.send({
+                interface: "users",
+                method: "change_password",
+                data: data
             }).success(() => {
-                this.setState(getInitialState());
-                this.props.onHide();
+                this.setState(getInitialState(), this.props.onReset);
             }).failure(() => {
+                // The old and new passwords do not match. Can only be determined on the server.
                 this.setState({
                     old: "",
                     password: "",
@@ -105,9 +115,7 @@ export default class PasswordChangeForm extends React.Component {
         }
 
         // Set state to show that the user attempted to submit the form.
-        newState.submitted = true;
-
-        this.setState(newState);
+        this.setState({submitted: true});
     };
 
     render () {
@@ -154,7 +162,9 @@ export default class PasswordChangeForm extends React.Component {
 
         return (
             <form onSubmit={this.handleSubmit}>
-                <div className={this.props.containerClass}>
+                {this.props.header}
+
+                <div className={this.props.bodyClass}>
                     {expiry}
                     {oldField}
 
@@ -178,7 +188,11 @@ export default class PasswordChangeForm extends React.Component {
                     />
                 </div>
 
-                {this.props.footer}
+                <div className={this.props.footerClass}>
+                    <Button icon="floppy" bsStyle="primary" type="submit" pullRight>
+                        Save
+                    </Button>
+                </div>
             </form>
         );
     }
