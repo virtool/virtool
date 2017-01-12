@@ -10,5 +10,6 @@ COLLECTIONS = [
     "indexes",
     "hosts",
     "groups",
-    "users"
+    "users",
+    "updates"
 ]

@@ -20,6 +20,7 @@ import virtool.gen
 
 # Collection modules
 import virtool.analyses
+import virtool.updates
 import virtool.files
 import virtool.groups
 import virtool.history

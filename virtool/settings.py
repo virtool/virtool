@@ -59,6 +59,9 @@ DEFAULTS = [
     ("server_version", "Unknown"),
     ("server_id", virtool.utils.random_alphanumeric(12)),
 
+    ("software_repo", "virtool/virtool"),
+    ("database_repo", "virtool/virtool-reference"),
+
     ("use_ssl", False),
     ("cert_path", ""),
     ("key_path", ""),
@@ -117,6 +120,9 @@ VALID_TYPES = {
     "server_ready": bool,
     "server_id": str,
     "server_version": str,
+
+    "software_repo": str,
+    "database_repo": str,
 
     "use_ssl": bool,
     "cert_path": str,
