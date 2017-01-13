@@ -223,8 +223,8 @@ class Dispatcher:
         :param conn_modifier: modifies the connection objects to which messages are written.
         :type conn_modifier: callable
 
-        :param conn_transform: modifies the written message based on the connection.
-        :type conn_transform: callable
+        :param writer: modifies the written message based on the connection.
+        :type writer: callable
 
         """
         to_send = {
@@ -258,7 +258,7 @@ class Dispatcher:
             for connection in connections:
                 writer(connection, dict(to_send))
 
-            return None
+            return
 
         for connection in connections:
             connection.write_message(message)

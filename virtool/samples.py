@@ -37,9 +37,6 @@ class Collection(virtool.database.Collection):
             "all_write"
         ]
 
-        #: A list of read files that are being imported and should not be shown as available for import.
-        self.excluded_files = list()
-
     @virtool.gen.coroutine
     def sync_processor(self, documents):
         """
@@ -77,51 +74,13 @@ class Collection(virtool.database.Collection):
 
         return to_send
 
-    @virtool.gen.coroutine
-    def dispatch(self, operation, data, interface=None, connections=None, sync=False):
-        """
-        A redefinition of :meth:`.database.Collection.dispatch` that only dispatches sample change messages to
-        connections that have permission to read them.
-
-        :param operation: the operation that should be performed by the client on its local representation of the data.
-        :type operation: str
-
-        :param data: the data payload associated with the operation
-        :type data: dict or list
-
-        :param interface: overrides :attr:`collection_name` as the dispatched interface.
-        :type interface: str
-
-        :param connections: The connections to send the dispatch to. By default, it will be sent to all connections.
-        :type connections: list
-
-        :param sync: indicates whether dispatch is part of a sync operation
-        :type connections: bool
-
-        """
-        data = virtool.database.coerce_list(data)
-
-        yield super().dispatch(
-            operation,
-            data,
-            interface,
-            connections=connections,
-            sync=sync,
-            writer=writer
-        )
-
-        send_count = 0
-
-        return send_count
-
     @virtool.gen.exposed_method(["add_sample"])
     def new(self, transaction):
         """
         Creates a new sample based on the data in ``transaction`` and starts a sample import job.
 
-        Adds the imported files to the :attr:`.excluded_files` list so that they will not be imported again. Ensures
-        that a valid subtraction host was the submitted. Configures read and write permissions on the sample document
-        and assigns it a creator username based on the connection attached to the transaction.
+        Ensures that a valid subtraction host was the submitted. Configures read and write permissions on the sample
+        document and assigns it a creator username based on the connection attached to the transaction.
 
         :param transaction: the transaction associated with the request.
         :type transaction: :class:`.Transaction`
@@ -144,9 +103,6 @@ class Collection(virtool.database.Collection):
         # Make sure a subtraction host was submitted and it exists.
         if not data["subtraction"] or data["subtraction"] not in available_subtraction_hosts:
             return False, dict(message="Could not find subtraction host or none was supplied.")
-
-        # Add the submitted file names for import to the excluded_files list.
-        self.excluded_files += data["files"]
 
         # Construct a new sample entry.
         data.update({
@@ -299,11 +255,6 @@ class Collection(virtool.database.Collection):
             }
         })
 
-        files = yield self.get_field(data["_id"], "files")
-
-        for filename in files:
-            self.excluded_files.remove(filename)
-
     @virtool.gen.exposed_method([])
     def set_field(self, transaction):
         """
@@ -435,7 +386,6 @@ class Collection(virtool.database.Collection):
         - removes all analyses associated with the sample from the analyses collection
         - removes the sample from the samples collection
         - removes the sample directory from the file system
-        - removes files associated with the sample from :attr:`.excluded_files`.
 
         :param id_list: a list sample ids to remove
         :type id_list: list
@@ -447,26 +397,16 @@ class Collection(virtool.database.Collection):
         # Remove all analysis documents associated with the sample.
         yield self.collections["analyses"].remove_by_sample_id(id_list)
 
-        # Make a list of read files that will no longer be hidden in the watch directory.
-        files_to_reinclude = list()
-
-        samples_cursor = self.find({"_id": {"$in": id_list}}, {"files": True})
-
-        while (yield samples_cursor.fetch_next):
-            files_to_reinclude += samples_cursor.next_object()["files"]
-
         # Remove the samples described by id_list from the database.
         response = yield super().remove(id_list)
 
         samples_path = os.path.join(self.settings.get("data_path"), "samples")
 
         for sample_id in id_list:
-            shutil.rmtree(os.path.join(samples_path, "sample_" + sample_id))
-
-        # Only make previously excluded read files available the sample(s) were removed successfully. Make them
-        # available by removing them from self.excluded_files.
-        if response:
-            self.excluded_files = list(filter(lambda filename: filename not in files_to_reinclude, self.excluded_files))
+            try:
+                yield virtool.utils.rm(os.path.join(samples_path, "sample_" + sample_id), recursive=True)
+            except FileNotFoundError:
+                pass
 
         return response
 

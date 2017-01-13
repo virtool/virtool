@@ -301,6 +301,15 @@ class Collection:
         :param connections: the connections to send the dispatch to. By default, it will be sent to all connections.
         :type connections: list
 
+        :param conn_filter: filters the connections to which messages are written.
+        :type conn_filter: callable
+
+        :param conn_modifier: modifies the connection objects to which messages are written.
+        :type conn_modifier: callable
+
+        :param writer: modifies the written message based on the connection.
+        :type writer: callable
+
         :param sync: set to ``True`` when the dispatch is part of a sync operation.
         :type sync: bool
 
@@ -362,7 +371,7 @@ class Collection:
         :rtype: any JSON-compatible type
 
         """
-        query, _ = coerce_query(query)
+        query = coerce_query(query)
 
         document = yield self.find_one(query, {key: True})
 
