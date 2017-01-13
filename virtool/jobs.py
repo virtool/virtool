@@ -57,6 +57,10 @@ class Collection(virtool.database.Collection):
         #: A :class:`dict` containing dicts describing each running or waiting job.
         self.jobs_dict = {}
 
+        #: Jobs are blocked from starting when this is ``True``. This cannot be canonically changed without
+        #: reinitializing the job manager.
+        self.blocked = False
+
         #: A :class:`dict` used for keeping track of used system resources.
         self.used = {
             "proc": 0,
@@ -68,6 +72,34 @@ class Collection(virtool.database.Collection):
 
         #: A :class:`multiprocessing.Queue` object used to communicate with job processes.
         self.message_queue = multiprocessing.Queue()
+
+        db = self.settings.get_db_client(sync=True)
+
+        for document in db.jobs.find({"status.1": {"$exists": False}}):
+            job_id = document["_id"]
+            task = document["task"]
+            proc = document["proc"]
+            mem = document["mem"]
+
+            # Instantiate a new job object.
+            job = TASK_CLASSES[task](
+                job_id,
+                self.settings.to_read_only(),
+                self.message_queue,
+                task,
+                document["args"],
+                proc,
+                mem
+            )
+
+            # Add a dict describing the new job to jobs_dict.
+            self.jobs_dict[job_id] = {
+                "obj": job,
+                "task": task,
+                "started": False,
+                "proc": proc,
+                "mem": mem
+            }
 
         #: A :class:`tornado.queues.Queue` object that accepts dicts describing updates to the jobs collection. Updates
         #: are performed in the order they are added to the queue, ensuring that status updates are added to job
@@ -462,7 +494,7 @@ class Collection(virtool.database.Collection):
             task_count = self.task_counts[task]
 
             # Check if resources are available to run a waiting job
-            if not job_dict["started"]:
+            if not self.blocked and not job_dict["started"]:
                 task_limit = self.settings.get(task + "_inst")
 
                 if self.resources_available(job_dict["proc"], job_dict["mem"]) and task_count < task_limit:
