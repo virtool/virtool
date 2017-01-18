@@ -86,7 +86,6 @@ class Application:
         self.port = self.settings.get("server_port")
 
         if self.settings.get("server_ready"):
-
             #: The shared :class:`~.virtool.settings.Settings` object created by the server. Passed to all collections.
             self.dispatcher.add_interface("settings", self.settings.to_collection, None)
 
@@ -293,19 +292,19 @@ class Application:
         """
         logging.info("Shutting down")
 
-        if self.dispatcher:
+        if "jobs" in self.dispatcher.collections:
             id_list = list(self.dispatcher.collections["jobs"].jobs_dict.keys())
             yield self.dispatcher.collections["jobs"]._cancel(id_list)
 
-        timed = 0
+            timed = 0
 
-        while len(self.dispatcher.collections["jobs"].jobs_dict) > 0 and timed < 5:
-            yield tornado.gen.sleep(1)
-            timed += 1
+            while len(self.dispatcher.collections["jobs"].jobs_dict) > 0 and timed < 5:
+                yield tornado.gen.sleep(1)
+                timed += 1
 
-        if timed == 5:
-            logging.critical("Timed out waiting for jobs to cancel")
-            exit_code = 1
+            if timed == 5:
+                logging.critical("Timed out waiting for jobs to cancel")
+                exit_code = 1
 
         logging.info("Exiting")
 
