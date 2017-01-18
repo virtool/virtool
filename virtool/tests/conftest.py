@@ -10,6 +10,10 @@ from .mock_connection import MockConnection
 from .mock_transaction import MockTransaction
 
 
+def pytest_addoption(parser):
+    parser.addoption("--quick", action="store_true", help="Skip slower tests")
+
+
 @pytest.fixture(scope="session")
 def mock_settings():
     return MockSettings()

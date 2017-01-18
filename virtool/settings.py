@@ -230,8 +230,7 @@ class Simple(ReadOnly):
     def write_to_file(self):
         """ Write self.data dictionary to a formatted JSON file """
         with open(self.path, "w") as settings_file:
-            string = json.dumps(self.data)
-            settings_file.write(string)
+            json.dump(self.data, settings_file, indent=4, sort_keys=True)
 
     def as_dict(self):
         return dict(self.data)
