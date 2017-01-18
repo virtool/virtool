@@ -1,26 +1,44 @@
 import React, { PropTypes } from "react";
+import { assign } from "lodash";
 import Marked from "marked";
 import { Modal, ListGroup } from "react-bootstrap";
 import { Icon, ListGroupItem, Button, Checkbox } from "virtool/js/components/Base";
 
-export default class SoftwareInstall extends React.PureComponent {
+const getInitialState = () => ({
+    displayNotification: true,
+    deleteTemporary: true,
+    forcefullyCancel: false,
+    shutdown: false
+});
+
+export default class SoftwareInstallForm extends React.PureComponent {
+
+    constructor (props) {
+        super(props);
+        this.state = getInitialState();
+    }
 
     static propTypes = {
         show: PropTypes.bool.isRequired,
         onHide: PropTypes.func.isRequired,
-        installDocument: PropTypes.object.isRequired
+        latestRelease: PropTypes.object.isRequired
+    };
+
+    install = () => {
+        dispatcher.db.updates.request("upgrade_to_latest", assign({name: this.props.latestRelease.name}, this.state));
     };
 
     render () {
         return (
-            <Modal show={this.props.show} onHide={this.props.onHide}>
+            <Modal show={this.props.show} onHide={this.props.onHide} onExit={() => this.setState(getInitialState())}>
                 <Modal.Header>
-                    Install Progress
+                    Install Software Update
                 </Modal.Header>
                 <Modal.Body>
                     <ListGroup style={{margin: 0}}>
                         <ListGroupItem>
-                            <h5><strong>Installing Virtool {this.props.installDocument.name}</strong></h5>
+                            <h5><strong>Virtool {this.props.latestRelease.name}</strong></h5>
+                            <div dangerouslySetInnerHTML={{__html: Marked(this.props.latestRelease.body)}} />
                         </ListGroupItem>
                         <ListGroupItem>
                             <h5>
@@ -73,7 +91,7 @@ export default class SoftwareInstall extends React.PureComponent {
                     </ListGroup>
                 </Modal.Body>
                 <Modal.Footer>
-                    <Button bsStyle="primary" icon="arrow-up" pullRight>
+                    <Button bsStyle="primary" icon="arrow-up" onClick={this.install} pullRight>
                         Update
                     </Button>
                 </Modal.Footer>

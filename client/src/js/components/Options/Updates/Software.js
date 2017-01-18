@@ -15,7 +15,7 @@ import { Row, Col, Alert, Panel, FormGroup, FormControl, InputGroup } from "reac
 import { Icon, Flex, FlexItem, Button, ListGroupItem, AutoProgressBar } from "virtool/js/components/Base";
 import { byteSize } from "virtool/js/utils";
 
-import SoftwareInstall from "./SoftwareInstall";
+import SoftwareNotification from "./SoftwareNotification";
 
 const makeOrderable = (version) => parseInt(version.replace(/\D/g, "").replace(".", ""));
 
@@ -71,8 +71,7 @@ export default class SoftwareUpdates extends React.Component {
         super(props);
         this.state = {
             repo: this.props.settings.software_repo,
-            refreshing: false,
-            showInstall: false
+            refreshing: false
         };
     }
 
@@ -110,13 +109,22 @@ export default class SoftwareUpdates extends React.Component {
 
         const version = "v1.7.5"; // this.props.settings.server_version.split("-")[0];
 
-        const releases = this.props.updates.find({"type": "software"}).simplesort("published_at").data().reverse();
+        const releases = this.props.updates.branch()
+            .find({"type": "software"})
+            .simplesort("published_at")
+            .data()
+            .reverse();
 
         let notification;
         let releaseComponents;
 
         if (releases.length > 0) {
-            if (version === releases[0].name) {
+
+            let installDocument = this.props.updates.branch().find({"_id": "software_install"}, true).data();
+
+            installDocument = installDocument.length === 1 ? installDocument[0]: null;
+
+            if (version === releases[0].name && !installDocument) {
                 notification = (
                     <Alert bsStyle="info">
                         <Icon name="checkmark" /> Running latest version
@@ -126,21 +134,10 @@ export default class SoftwareUpdates extends React.Component {
 
             if (makeOrderable(version) < makeOrderable(releases[0].name)) {
                 notification = (
-                    <Alert bsStyle="success">
-                        <Flex alignItems="center">
-                            <FlexItem grow={1}>
-                                <span><Icon name="notification" /> <strong>Update available</strong></span>
-                            </FlexItem>
-                            <Button
-                                bsStyle="success"
-                                bsSize="small"
-                                icon="arrow-up"
-                                onClick={() => this.setState({showInstall: true})}
-                            >
-                                Update
-                            </Button>
-                        </Flex>
-                    </Alert>
+                    <SoftwareNotification
+                        latestRelease={releases[0]}
+                        installDocument={installDocument}
+                    />
                 );
             }
 
@@ -152,7 +149,7 @@ export default class SoftwareUpdates extends React.Component {
             releaseComponents = (
                 <ListGroupItem bsStyle="danger" className="text-center">
                     <h5><Icon name="warning" /> <strong>No releases found</strong></h5>
-                    <p><small>Ensure the target repository exists and has at least on published release.</small></p>
+                    <p><small>Ensure the target repository exists and has at least one published release.</small></p>
                 </ListGroupItem>
             );
         }
@@ -196,12 +193,6 @@ export default class SoftwareUpdates extends React.Component {
                         </Flex>
                     </form>
                 </Panel>
-
-                <SoftwareInstall
-                    show={this.state.showInstall}
-                    onHide={() => this.setState({showInstall: false})}
-                    release={releases[0]}
-                />
             </div>
         )
     }
