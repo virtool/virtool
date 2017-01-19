@@ -3,11 +3,11 @@ import pytest
 
 from virtool.permissions import PERMISSIONS
 
-from .mock_mongo import MockMongo
-from .mock_settings import MockSettings
-from .mock_interface import EmptyInterface, MockInterface
-from .mock_connection import MockConnection
-from .mock_transaction import MockTransaction
+from virtool.tests.mock_mongo import MockMongo
+from virtool.tests.mock_settings import MockSettings
+from virtool.tests.mock_interface import EmptyInterface, MockInterface
+from virtool.tests.mock_connection import MockConnection
+from virtool.tests.mock_transaction import MockTransaction
 
 
 def pytest_addoption(parser):
