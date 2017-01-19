@@ -31,9 +31,10 @@ class Collection(virtool.database.Collection):
     An :class:`.virtool.database.Collection` interface for the *updates* MongoDB collection.
 
     """
-    def __init__(self, dispatch, collections, settings, add_periodic_callback):
+    def __init__(self, dispatch, collections, settings, add_periodic_callback, reload):
         super().__init__("updates", dispatch, collections, settings, add_periodic_callback)
 
+        self.reload = reload
         self.sync_projector = None
 
     @virtool.gen.exposed_method(["modify_options"])
@@ -175,6 +176,8 @@ class Collection(virtool.database.Collection):
                     "complete": True
                 }
             })
+
+            yield self.reload()
 
     @virtool.gen.coroutine
     def update_software_step(self, progress, step=None):
