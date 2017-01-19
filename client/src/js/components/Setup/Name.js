@@ -47,14 +47,12 @@ export default class SetupDatabaseName extends React.Component {
     };
 
     componentDidMount () {
-        this.refs.text.focus();
+        this.inputNode.focus();
     }
 
     updateName = (name) => this.setState({name: name.toLowerCase()});
 
-    handleRadioFocus = () => this.refs.text.focus();
-
-    handleChange = (event) => this.updateName(event.target.value);
+    handleRadioFocus = () => this.inputNode.focus();
 
     handleSubmit = (event) => {
         event.preventDefault();
@@ -80,7 +78,7 @@ export default class SetupDatabaseName extends React.Component {
 
         let existingDatabases;
 
-        if (this.props.names.length > 0) {
+        if (this.props.names.length) {
             existingDatabases = this.props.names.map((name, index) =>
                 <Name
                     key={index}
@@ -101,11 +99,10 @@ export default class SetupDatabaseName extends React.Component {
         return (
             <form onSubmit={this.handleSubmit}>
                 <Input
-                    inputRef={input => input.focus()}
+                    ref={(node) => {this.inputNode = node}}
                     type="text"
-                    name="name"
                     label="Database Name"
-                    onChange={this.handleChange}
+                    onChange={(event) => this.updateName(event.target.value)}
                     spellCheck={false}
                     value={this.state.name}
                 />

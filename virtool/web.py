@@ -110,7 +110,10 @@ class Application:
 
         # Setup static handlers and handler classes defined in this module.
         handlers = [
-            (r"/", HTTPHandler),
+            (r"/", HTTPHandler, {
+                "reload": self._reload,
+                "settings": self.settings
+            }),
 
             (r"/ws", SocketHandler, {
                 "handle": self.dispatcher.handle,
@@ -208,7 +211,11 @@ class Application:
         periodic_callback.start()
 
     @virtool.gen.exposed_method(["modify_options"])
-    def reload(self):
+    def reload(self, transaction):
+        yield self.reload()
+
+    @virtool.gen.coroutine
+    def _reload(self):
         """
         Reloads the server by:
 
@@ -243,8 +250,7 @@ class Application:
         # Listen on a new host if the "server_port" or "server_address" settings were changed since the last start.
         if (self.host != settings.get("server_host") or
             self.port != settings.get("server_port") or
-            self.ssl != settings.get("use_ssl")
-            ):
+            self.ssl != settings.get("use_ssl")):
 
             self.server_object.stop()
 
@@ -274,7 +280,7 @@ class Application:
         return True, None
 
     @virtool.gen.exposed_method(["modify_options"])
-    def shutdown(self):
+    def shutdown(self, transaction):
         """
         Shutdown the server by calling :func:`sys.exit` with an exit code of 0.
 
@@ -325,6 +331,10 @@ class HTTPHandler(tornado.web.RequestHandler):
     `AJAX <https://en.wikipedia.org/wiki/Ajax_(programming)>`_ requests from the client.
 
     """
+    def initialize(self, reload, settings):
+        self.reload = reload
+        self.server_settings = settings
+
     @virtool.gen.coroutine
     def get(self):
         """
@@ -378,7 +388,7 @@ class SocketHandler(tornado.websocket.WebSocketHandler):
 
     """
     def __init__(self, *args, **kwargs):
-        super(SocketHandler, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
         #: The IP of the remote connection.
         self.ip = self.request.remote_ip
