@@ -12,7 +12,7 @@
 
 import React from "react";
 import { Alert } from "react-bootstrap";
-import { Button, Icon, Input } from "virtool/js/components/Base";
+import { Button, Input } from "virtool/js/components/Base";
 
 export default class SetupWatchPath extends React.Component {
 
@@ -45,19 +45,18 @@ export default class SetupWatchPath extends React.Component {
         return (
             <form onSubmit={this.handleSubmit}>
                 <Alert bsStyle="info">
-                    Sequence files in this path will be visible and importable in Virtool.
+                    Sequence files in this path will be automatically moved into Virtool's file manager.
                 </Alert>
 
                 <Input
-                    inputRef={input => input.focus()}
+                    ref={(node) => this.inputNode = node}
                     type="text"
-                    label="Path"
                     onChange={(event) => this.setState({watchPath: event.target.value})}
                     value={this.state.watchPath}
                 />
 
-                <Button bsStyle="primary" className="pull-right" type="submit">
-                    <Icon name="floppy" /> Save
+                <Button bsStyle="primary" icon="floppy" className="pull-right" type="submit">
+                    Save
                 </Button>
             </form>
         );

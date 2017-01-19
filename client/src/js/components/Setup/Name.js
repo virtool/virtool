@@ -10,7 +10,7 @@
  */
 
 import React from "react";
-import { ButtonToolbar, ListGroup } from "react-bootstrap";
+import { ListGroup } from "react-bootstrap";
 import { Input, Icon, Button, ListGroupItem } from "virtool/js/components/Base"
 import { postJSON } from "virtool/js/utils";
 
@@ -31,7 +31,7 @@ export default class SetupDatabaseName extends React.Component {
 
     constructor (props) {
         super(props);
-        return {
+        this.state = {
             name: this.props.name,
             pending: false
         };
@@ -112,11 +112,9 @@ export default class SetupDatabaseName extends React.Component {
                     {existingDatabases}
                 </ListGroup>
 
-                <ButtonToolbar className="pull-right">
-                    <Button bsStyle="primary" type="submit" disabled={!(this.state.name)}>
-                        <Icon name="floppy" pending={this.state.pending} /> Save
-                    </Button>
-                </ButtonToolbar>
+                <Button bsStyle="primary" type="submit" disabled={!this.state.name} pullRight>
+                    <Icon name="floppy" pending={this.state.pending} /> Save
+                </Button>
             </form>
         );
     }

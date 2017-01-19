@@ -11,34 +11,27 @@
 
 import React from "react";
 import { Alert } from "react-bootstrap";
-import { Icon, Button } from "virtool/js/components/Base";
+import { Button } from "virtool/js/components/Base";
 
-export default class SetupReload extends React.Component {
+const SetupReload = (props) => (
+    <div>
+        <Alert bsStyle="info">
+            Virtool is configured and must be reloaded before it can be used.
+        </Alert>
 
-    propTypes = {
-        saveAndReload: React.PropTypes.func
-    };
+        <Button
+            bsStyle="primary"
+            icon="reset"
+            onClick={() => props.saveAndReload()}
+            pullRight
+        >
+            Accept
+        </Button>
+    </div>
+);
 
-    componentDidMount () {
-        this.buttonNode.focus();
-    }
+SetupReload.propTypes = {
+    saveAndReload: React.PropTypes.func
+};
 
-    render () {
-
-        return (
-            <div>
-                <Alert bsStyle="info">
-                    Virtool is configured and must be reloaded before it can be used.
-                </Alert>
-
-                <Button
-                    ref={this.buttonNode}
-                    bsStyle="primary"
-                    onClick={() => this.props.saveAndReload()}
-                    className="pull-right">
-                    <Icon name="reset" /> Accept
-                </Button>
-            </div>
-        );
-    }
-}
+export default SetupReload;

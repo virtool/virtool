@@ -20,7 +20,7 @@ const SetupStep = (props) => (
     >
         {props.index + 1}. {props.label}
         <span style={{marginTop: "1px", marginBottom: "-1px"}} className="pull-right">
-            {this.props.ready ? <Icon name="checkmark" />: null}
+            {props.ready ? <Icon name="checkmark" />: null}
         </span>
     </ListGroupItem>
 );
@@ -30,7 +30,7 @@ SetupStep.propTypes = {
     label: React.PropTypes.string.isRequired,
     setActiveStepIndex: React.PropTypes.func.isRequired,
     ready: React.PropTypes.bool,
-    active: React.PropTypes.active,
+    active: React.PropTypes.bool,
     disabled: React.PropTypes.bool
 };
 

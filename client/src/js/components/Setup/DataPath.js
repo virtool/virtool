@@ -40,14 +40,8 @@ export default class SetupDataPath extends React.Component {
     };
 
     componentDidMount () {
-        this.refs.input.focus();
+        this.inputNode.focus();
     }
-
-    handleChange = (event) => {
-        let data = {};
-        data[event.target.name] = event.target.value;
-        this.setState(data);
-    };
 
     handleSubmit = (event) => {
         event.preventDefault();
@@ -78,9 +72,9 @@ export default class SetupDataPath extends React.Component {
         });
     };
 
-    dismissError = () => this.setState({errors: null});
-
     render () {
+
+        console.log(this.state);
 
         let warning;
 
@@ -100,7 +94,7 @@ export default class SetupDataPath extends React.Component {
 
         if (this.state.feedback) {
             error = (
-                <Alert bsStyle="danger" onDismiss={this.dismissError}>
+                <Alert bsStyle="danger" onDismiss={() => this.setState({errors: null})}>
                     {this.state.feedback.message}
                 </Alert>
             );
@@ -110,24 +104,21 @@ export default class SetupDataPath extends React.Component {
             <form onSubmit={this.handleSubmit}>
                 <Alert bsStyle="info">
                     Virtool will use this path to store and read data including sample reads, viral and host references,
-                    and logs. The path is relative to Virtool"s working directory unless prepended with
-                    <strong>/</strong>.
+                    and logs. The path is relative to Virtool's working directory unless prepended with <code>/</code>.
                 </Alert>
 
                 {warning}
 
                 <Input
-                    inputRef={input => input.focus()}
+                    ref={(node) => this.inputNode = node}
                     type="text"
-                    name="dataPath"
-                    label="Path"
-                    onChange={this.handleChange}
+                    onChange={(event) => this.setState({dataPath: event.target.value})}
                     value={this.state.dataPath}
                 />
 
                 {error}
 
-                <Button bsStyle="primary" className="pull-right" type="submit">
+                <Button type="submit" bsStyle="primary" pullRight>
                     <Icon name="floppy" /> Save
                 </Button>
             </form>

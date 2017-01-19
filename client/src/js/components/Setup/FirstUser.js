@@ -12,9 +12,9 @@
 import React from "react";
 import { pick } from "lodash";
 import { Row, Col, Alert } from "react-bootstrap";
-import { Icon, Input, Button } from "virtool/js/components/Base";
+import { Input, Button } from "virtool/js/components/Base";
 
-export default class SetupUser extends React.Component {
+export default class SetupFirstUser extends React.Component {
 
     constructor (props) {
         super(props);
@@ -36,18 +36,8 @@ export default class SetupUser extends React.Component {
     };
 
     componentDidMount () {
-        if (!this.props.hasAdmin) {
-            this.usernameNode.focus();
-        } else {
-            this.acceptNode.focus();
-        }
+        (this.props.hasAdmin ? this.acceptNode : this.usernameNode).focus();
     }
-
-    handleChange = (event) => {
-        let data = {};
-        data[event.target.name] = event.target.value;
-        this.setState(data);
-    };
 
     handleSubmit = (event) => {
         event.preventDefault();
@@ -56,10 +46,6 @@ export default class SetupUser extends React.Component {
             this.props.updateSetup(pick(this.state, ["username", "password"]))
             this.props.nextStep();
         }
-    };
-
-    handleClick = () => {
-        this.props.acceptedAdmin();
     };
 
     render () {
@@ -72,8 +58,14 @@ export default class SetupUser extends React.Component {
                 footer = <div style={{marginTop: "-20px"}} />;
             } else {
                 footer = (
-                    <Button bsStyle="primary" onClick={this.handleClick} className="pull-right" ref={this.acceptNode}>
-                        <Icon name="checkmark" /> Accept
+                    <Button
+                        bsStyle="primary"
+                        icon="checkmark"
+                        ref={(node) => this.acceptNode = node}
+                        onClick={() => this.props.acceptedAdmin()}
+                        pullRight
+                    >
+                        Accept
                     </Button>
                 );
             }
@@ -98,10 +90,9 @@ export default class SetupUser extends React.Component {
                         <Col md={12}>
                             <Input
                                 type="text"
-                                ref={this.usernameNode}
-                                name="username"
+                                ref={(node) => this.usernameNode = node}
                                 label="Username"
-                                onChange={this.handleChange}
+                                onChange={(event) => this.setState({username: event.target.value})}
                                 value={this.state.username}
                             />
                         </Col>
@@ -112,7 +103,7 @@ export default class SetupUser extends React.Component {
                                 type="password"
                                 name="password"
                                 label="Password"
-                                onChange={this.handleChange}
+                                onChange={(event) => this.setState({password: event.target.value})}
                                 value={this.state.password}
                             />
                         </Col>
@@ -121,14 +112,14 @@ export default class SetupUser extends React.Component {
                                 type="password"
                                 name="confirm"
                                 label="Confirm Password"
-                                onChange={this.handleChange}
+                                onChange={(event) => this.setState({confirm: event.target.value})}
                                 value={this.state.confirm}
                             />
                         </Col>
                     </Row>
 
-                    <Button bsStyle="primary" type="submit" className="pull-right">
-                        <Icon name="floppy" /> Save
+                    <Button type="submit" icon="floppy" bsStyle="primary" pullRight>
+                        Save
                     </Button>
                 </form>
             );

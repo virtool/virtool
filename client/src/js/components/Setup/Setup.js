@@ -16,12 +16,11 @@ import { Icon } from "virtool/js/components/Base";
 import { postJSON } from "virtool/js/utils";
 
 import SetupConnection from "./Connection";
+import SetupDatabaseName from "./Name";
 import SetupDataPath from "./DataPath";
 import SetupWatchPath from "./WatchPath";
 import SetupFirstUser from "./FirstUser";
-import SetupNames from "./Names";
 import SetupReload from "./Reload";
-
 import SetupStep from "./Step";
 
 const steps = [
@@ -41,7 +40,7 @@ const steps = [
     {
         key: "database",
         label: "Choose database",
-        component: SetupNames,
+        component: SetupDatabaseName,
 
         shouldBeDisabled: function (state) {
             return !state.names;
@@ -79,7 +78,7 @@ const steps = [
     },
     {
         key: "watch",
-        label: "Import directory",
+        label: "Watch directory",
         component: SetupWatchPath,
 
         shouldBeDisabled: function () {

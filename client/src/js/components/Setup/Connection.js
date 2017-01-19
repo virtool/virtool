@@ -36,9 +36,15 @@ export default class SetupConnection extends React.Component {
         reset: React.PropTypes.func.isRequired
     };
 
+    componentDidMount () {
+        this.hostNode.focus();
+    }
+
     componentDidUpdate (prevProps) {
         // If the connection was lost, put focus on the host input box again.
-        if (!this.props.connected && prevProps.connected) this.refs.host.focus();
+        if (!this.props.connected && prevProps.connected) {
+            this.hostNode.focus();
+        }
     }
 
     handleChange = (event) => {
@@ -90,6 +96,8 @@ export default class SetupConnection extends React.Component {
     };
 
     render () {
+
+        console.log(this.state);
         
         let footer;
 
@@ -97,8 +105,10 @@ export default class SetupConnection extends React.Component {
             if (this.state.attempted) {
                 footer = (
                     <Alert bsStyle="danger">
-                        <p><strong><Icon name="warning" /> Could not connect to MongoDB.</strong></p>
-                        <ul>
+                        <p style={{paddingBottom: "5px"}}>
+                            <strong><Icon name="warning" /> Could not connect to MongoDB.</strong>
+                        </p>
+                        <ul style={{paddingLeft: "25px"}}>
                             <li>Make sure MongoDB is installed and mongod is running.</li>
                             <li>Make sure the host and port values are correct.</li>
                         </ul>
@@ -118,7 +128,7 @@ export default class SetupConnection extends React.Component {
         if (this.props.names) {
             footer = (
                 <Alert bsStyle="success">
-                    <Icon name="checkmark-circle" /> Connected to MongoDB.
+                    <Icon name="checkmark" /> Connected to MongoDB.
                 </Alert>
             )
         }
@@ -135,7 +145,7 @@ export default class SetupConnection extends React.Component {
                     <Col md={9}>
                         <Input
                             type="text"
-                            inputRef={input => input.focus()}
+                            ref={(node) => this.hostNode = node}
                             name="host"
                             label="Host"
                             value={this.state.host}
