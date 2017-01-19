@@ -30,9 +30,6 @@ export default class SoftwareInstall extends React.PureComponent {
     };
 
     render () {
-
-
-
         return (
             <Modal show={this.props.show} onHide={this.props.onHide}>
                 <Modal.Header>
