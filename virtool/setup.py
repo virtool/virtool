@@ -32,11 +32,11 @@ def handle_request(handler, data):
 
 @virtool.gen.coroutine
 def check_ready(handler, data):
-    return {"serverReady": handler.settings["server_ready"]}
+    return {"serverReady": handler.server_settings.get("server_ready")}
 
 
 @virtool.gen.coroutine
-def save_setup(handler,data):
+def save_setup(handler, data):
     host = handler.get_body_argument('host')
     port = int(handler.get_body_argument('port'))
     name = handler.get_body_argument('name')
@@ -48,10 +48,8 @@ def save_setup(handler,data):
         "db_host": host,
         "db_port": int(port),
         "db_name": name,
-
         "data_path": data["dataPath"],
         "watch_path": data["watchPath"],
-
         "server_ready": True
     }
 
@@ -93,6 +91,7 @@ def save_setup(handler,data):
             "_id": username,
             # A list of group _ids the user is associated with.
             "groups": ["administrator"],
+            "primary_group": "administrator",
             "settings": {},
             "sessions": [],
             "salt": salt,
@@ -107,9 +106,9 @@ def save_setup(handler,data):
             "invalidate_sessions": False
         })
 
-    handler.settings["server"].settings.update(settings)
+    handler.server_settings.update(settings)
 
-    response = yield handler.settings["server"].reload()
+    response = yield handler.reload()
 
     return response
 
@@ -118,29 +117,22 @@ def save_setup(handler,data):
 def connect(handler, data):
     # The response to send to the client. If the connection fails, the names property is set to None. This is
     # interpreted as a failed connection by the client.
-    response = {
-        "names": None
-    }
+    names = None
 
     try:
         # Try to make a connection to the Mongo instance. This will throw a ConnectionFailure exception if it fails
-        connection = motor.MotorClient(host=data["host"], port=int(data["port"]))
-        client = yield connection.open()
+        connection = motor.MotorClient(host=data["host"], port=int(data["port"]), serverSelectionTimeoutMS=2000)
 
         # Succeeds if the connection was successful. Names will always contain at least the 'local' database.
-        response["names"] = yield client.database_names()
+        names = yield connection.database_names()
 
         # Remove the local database that is always present in the list of databases if a connection was made.
-        response["names"].remove("local")
+        names.remove("local")
 
-    except pymongo.errors.ConnectionFailure:
-        pass
-    except TypeError:
-        pass
-    except ValueError:
+    except (pymongo.errors.ConnectionFailure, TypeError, ValueError):
         pass
 
-    return response
+    return {"names": names}
 
 
 @virtool.gen.coroutine
@@ -153,15 +145,15 @@ def check_db(handler, data):
     }
 
     # Try to make a connection to the Mongo instance. This will throw a ConnectionFailure exception if it fails.
+    client = motor.MotorClient(host=data["host"], port=int(data["port"]), serverSelectionTimeoutMS=2000)
+
+    # Check if the passed db_name exists.
     try:
-        connection = motor.MotorClient(host=data["host"], port=int(data["port"]))
-        client = yield connection.open()
+        names = yield client.database_names()
     except pymongo.errors.ConnectionFailure:
         response["error"] = "Could not connect to MongoDB instance."
         return response
 
-    # Check if the passed db_name exists.
-    names = yield client.database_names()
     response["exists"] = data["name"] in names
 
     # Immediately return the response if the database specified by db_name does not exist.
@@ -213,12 +205,11 @@ def ensure_path(path, new_server):
     }
 
     subdirs = [
-        "upload",
+        "files",
         "reference/viruses",
         "reference/hosts",
         "reference/hosts/index",
         "reference/hosts/fasta",
-        "download",
         "samples",
         "hmm",
         "logs/jobs"
