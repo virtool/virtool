@@ -46,9 +46,11 @@ class Application:
 
     def __init__(self, development=False):
 
-        self.version = find_server_version()
+        self.settings = None
 
-        self.settings = virtool.settings.Simple(self.version)
+        self.static_path = "client/dist/"
+
+        self.version = find_server_version()
 
         logger.info("Starting Virtool " + self.version)
 
@@ -75,12 +77,9 @@ class Application:
 
         self.server_object = None
 
-    def run(self):
+    def initialize(self):
+        self.settings = virtool.settings.Simple(self.version)
 
-        self.loop = tornado.ioloop.IOLoop.instance()
-
-        # Create a Settings object because it is required whether the server has been setup or not. Will write a default
-        # 'settings.json' file if none is found.
         self.ssl = self.settings.get("use_ssl")
         self.host = self.settings.get("server_host")
         self.port = self.settings.get("server_port")
@@ -89,20 +88,24 @@ class Application:
             #: The shared :class:`~.virtool.settings.Settings` object created by the server. Passed to all collections.
             self.dispatcher.add_interface("settings", self.settings.to_collection, None)
 
-            add_collections(self.dispatcher)
+            self.add_collections(self.dispatcher)
 
-            logger.debug("Instantiated dispatcher")
-        else:
-            logger.info("Server has not been setup.")
+            logger.debug("Initialized dispatcher")
 
         # Define the path where the server will look for the client HTML file. Path depends on the value of the
         # development attribute.
-        static_path = "client/dist/" if self.development else "client/"
+        self.static_path = "client/dist/" if self.development else "client/"
 
         if self.development and not os.path.isfile(os.path.join("client/dist/index.html")):
-            static_path = "client/"
+            self.static_path = "client/"
 
-        logger.debug("Client HTML path is " + static_path)
+        logger.debug("Client HTML path is " + self.static_path)
+
+    def run(self):
+
+        self.initialize()
+
+        self.loop = tornado.ioloop.IOLoop.instance()
 
         # Define the path where the server will look for the documentation files.
         doc_path = "doc/_build/html/" if self.development else "doc"
@@ -127,7 +130,7 @@ class Application:
 
             (r"/download/(.*)", tornado.web.StaticFileHandler, {"path": self.settings.get("data_path") + "/download/"}),
             (r"/doc/(.*)", tornado.web.StaticFileHandler, {"path": doc_path}),
-            (r"/(app.*js$|favicon.ico)", tornado.web.StaticFileHandler, {"path": static_path})
+            (r"/(app.*js$|favicon.ico)", tornado.web.StaticFileHandler, {"path": self.static_path})
         ]
 
         # Create application object. All responses are compressed and a reference to this object is made available to
@@ -210,6 +213,26 @@ class Application:
 
         periodic_callback.start()
 
+    def add_collections(self, dispatcher):
+        for module_name in virtool.collections.COLLECTIONS:
+            module = getattr(virtool, module_name)
+
+            if module_name == "updates":
+                dispatcher.add_interface(
+                    module_name,
+                    getattr(module, "Collection"),
+                    dispatcher.interfaces["settings"],
+                    is_collection=True,
+                    args=[self._reload]
+                )
+            else:
+                dispatcher.add_interface(
+                    module_name,
+                    getattr(module, "Collection"),
+                    dispatcher.interfaces["settings"],
+                    is_collection=True
+                )
+
     @virtool.gen.exposed_method(["modify_options"])
     def reload(self, transaction):
         yield self.reload()
@@ -239,40 +262,34 @@ class Application:
             module = getattr(virtool, module_name)
             importlib.reload(module)
 
-        logger.debug("Reloading settings")
-        settings = virtool.settings.Settings(self.version)
-
-        # Re-instantiate the dispatcher if the "server_ready" setting is ``True``.
-        if settings.get("server_ready"):
-            logger.debug("Instantiating dispatcher")
-            self.dispatcher = virtool.dispatcher.Dispatcher(self)
+        self.initialize()
 
         # Listen on a new host if the "server_port" or "server_address" settings were changed since the last start.
-        if (self.host != settings.get("server_host") or
-            self.port != settings.get("server_port") or
-            self.ssl != settings.get("use_ssl")):
+        if (self.host != self.settings.get("server_host") or
+            self.port != self.settings.get("server_port") or
+            self.ssl != self.settings.get("use_ssl")):
 
             self.server_object.stop()
 
-            self.ssl = settings.get("use_ssl")
-            self.host = settings.get("server_host")
-            self.port = settings.get("server_port")
+            self.ssl = self.settings.get("use_ssl")
+            self.host = self.settings.get("server_host")
+            self.port = self.settings.get("server_port")
 
             ssl_ctx = None
 
-            ssl_cert_path = settings.get("cert_path")
-            ssl_key_path = settings.get("key_path")
+            ssl_cert_path = self.settings.get("cert_path")
+            ssl_key_path = self.settings.get("key_path")
 
             # Setup SSL if necessary.
-            if settings.get("use_ssl") and ssl_cert_path and ssl_key_path:
+            if self.settings.get("use_ssl") and ssl_cert_path and ssl_key_path:
                 ssl_ctx = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
                 ssl_ctx.load_cert_chain(ssl_cert_path, ssl_key_path)
 
             # Try to start the application. If the set host and port cannot be bound, an error is logged and the
             # program exits with an return code of 1. X-headers are enabled for future implementation of SSL.
             self.server_object = self.app.listen(
-                settings.get("server_port"),
-                settings.get("server_host"),
+                self.settings.get("server_port"),
+                self.settings.get("server_host"),
                 xheaders=bool(ssl_ctx),
                 ssl_options=ssl_ctx
             )
@@ -485,11 +502,3 @@ def find_server_version(install_path="."):
         except FileNotFoundError:
             logger.critical("Could not determine software version.")
             return "Unknown"
-
-
-def add_collections(dispatcher):
-    for module_name in virtool.collections.COLLECTIONS:
-        module = getattr(virtool, module_name)
-        dispatcher.add_interface(module_name, getattr(module, "Collection"), dispatcher.interfaces["settings"], True)
-
-

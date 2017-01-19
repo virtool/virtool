@@ -25,7 +25,7 @@ class Dispatcher:
         # Calls the ping method on the next IOLoop iteration.
         add_periodic_callback(self.ping, 10000)
 
-    def add_interface(self, name, interface_class, settings, is_collection=False):
+    def add_interface(self, name, interface_class, settings, is_collection=False, args=None):
         """
         Add an interface to the dispatcher. It will be available in ``self.interfaces`` with the key ``name``. If the
         interface is a collection, it will also be referenced in ``self.collections``.
@@ -46,6 +46,9 @@ class Dispatcher:
         :param is_collection: a flag indicating whether the interface is a collection
         :type is_collection: bool
 
+        :param extra: extra attributes to set on the interface object.
+        :type extra: dict
+
         """
         if name in self.interfaces:
             raise ValueError("Dispatcher already has interface with name '{}'".format(name))
@@ -55,7 +58,16 @@ class Dispatcher:
         if not any(hasattr(attr, "is_exposed") for attr in attr_list):
             warnings.warn(Warning("Passed interface '{}' has no exposed methods".format(name)))
 
-        interface = interface_class(self.dispatch, self.collections, settings, self.add_periodic_callback)
+        if not args:
+            args = []
+
+        interface = interface_class(
+            self.dispatch,
+            self.collections,
+            settings,
+            self.add_periodic_callback,
+            *args
+        )
 
         self.interfaces[name] = interface
 
