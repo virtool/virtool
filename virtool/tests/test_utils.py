@@ -138,11 +138,8 @@ class TestListFiles:
         assert file_list["hello.txt"]["size"] < file_list["world.txt"]["size"]
 
         for file_dict in file_list.values():
-            assert "_id" in file_dict
             assert "size" in file_dict
-            assert "access" in file_dict
             assert "modify" in file_dict
-            assert file_dict["access"]
             assert file_dict["modify"]
 
     @pytest.mark.gen_test
