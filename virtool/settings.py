@@ -185,7 +185,7 @@ class ReadOnly:
         if sync:
             return pymongo.MongoClient(host, port, serverSelectionTimeoutMS=2000, appname="Virtool")[name]
 
-        return motor.MotorClient(host, port, connectTimeoutMS=2000, appname="Virtool")[name]
+        return motor.MotorClient(host, port, serverSelectionTimeoutMS=2000, appname="Virtool")[name]
 
     def as_dict(self):
         return dict(self.data)
