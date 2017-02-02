@@ -98,9 +98,9 @@ class Collection(virtool.database.Collection):
         return True, None
 
     @virtool.gen.coroutine
-    def add(self, operation, method_name, old, new, username):
+    def add(self, operation, method_name, old, new, username, imported=False):
         # Construct and _id for the change entry. It is composed of the _id of the changed entry and the new version
-        # number of the entry separated by a dot (eg. a7sydi.3)
+        # number of the entry separated by a dot (eg. a7sds23.3)
         try:
             document_id = old["_id"]
         except TypeError:
@@ -121,6 +121,7 @@ class Collection(virtool.database.Collection):
             "entry_version": document_version,
             "username": username,
             "annotation": None,
+            "imported": imported,
             "index": "unbuilt",
             "index_version": "unbuilt"
         }
@@ -224,9 +225,6 @@ class Collection(virtool.database.Collection):
             for isolate in patched["isolates"]:
                 for sequence in isolate["sequences"]:
                     yield self.sequences_collection.insert(sequence)
-
-            for isolate in patched["isolates"]:
-                isolate["sequence_count"] = len(isolate.pop("sequences"))
 
             if document:
                 yield self.collections["viruses"].update(
