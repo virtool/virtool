@@ -3,7 +3,6 @@ import re
 import json
 import gzip
 import logging
-import motor
 import pymongo
 import pymongo.errors
 import pymongo.collection
@@ -664,8 +663,7 @@ class Collection(virtool.database.Collection):
         """
         # The file id to import the data from.
         file_id = transaction.data.pop("file_id")
-
-        options = transaction.data
+        replace = transaction.data.pop("replace")
 
         viruses = yield virusutils.read_import_file(os.path.join(self.settings.get("data_path"), "files", file_id))
 
@@ -692,7 +690,7 @@ class Collection(virtool.database.Collection):
 
         empty_collection = len(used_names) == 0
 
-        conflicts = yield self.find_import_conflicts(viruses, options["replace"])
+        conflicts = yield self.find_import_conflicts(viruses, replace)
 
         if conflicts:
             return False, dict(message="Conflicting sequence ids", conflicts=conflicts)
@@ -711,6 +709,8 @@ class Collection(virtool.database.Collection):
         for i, virus in enumerate(viruses):
             # Calculate the overall progress (how many viruses in the import document have been processed?)
             progress = round((i + 1) / virus_count, 3)
+
+            print(progress)
 
             # Send the current progress data in ``counter`` to the client if the progress has increased by at least
             # 2% since the last report.
@@ -740,7 +740,7 @@ class Collection(virtool.database.Collection):
 
             virus_exists = lower_name in used_names
 
-            if virus_exists and not options["replace"]:
+            if virus_exists and not replace:
                 counter["skipped"] += 1
                 continue
 
