@@ -502,7 +502,6 @@ class TestCollection:
 
         # Make sure the settings data (from DEFAULTS), is sent in the fulfilled transaction.
         transaction = mock_transaction(message, permissions="all", administrator=True)
-        print(transaction)
         yield collection.download(transaction)
         success, data = transaction.fulfill_called
 

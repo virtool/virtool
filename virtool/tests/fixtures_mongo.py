@@ -1,4 +1,6 @@
+import pytest
 import pymongo
+import motor
 
 from virtool.utils import random_alphanumeric
 
@@ -16,6 +18,7 @@ class MockMongo:
             "jobs",
             "samples",
             "analyses",
+            "sequences",
             "viruses",
             "hmm",
             "history",
@@ -40,3 +43,22 @@ class MockMongo:
     def delete(self):
         pymongo.MongoClient().drop_database(self.name)
 
+
+@pytest.fixture(scope="session")
+def mock_mongo():
+    mock = MockMongo()
+    yield mock
+    mock.delete()
+
+
+@pytest.fixture(scope="function")
+def mock_motor(mock_mongo, io_loop):
+    yield motor.MotorClient(io_loop=io_loop)[mock_mongo.name]
+    mock_mongo.clean()
+
+
+@pytest.fixture(scope="function")
+def mock_pymongo(mock_mongo):
+    import pymongo
+    yield pymongo.MongoClient()[mock_mongo.name]
+    mock_mongo.clean()

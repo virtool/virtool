@@ -128,8 +128,6 @@ class TestDecompressFile:
 
         yield virtool.updates.decompress_file(tar_path, str(install_dir))
 
-        print(os.listdir(str(install_dir)))
-
         assert "virtool" in os.listdir(str(install_dir))
 
     @pytest.mark.gen_test
