@@ -168,7 +168,6 @@ class Pathoscope(Base):
                 for isolate in virus["isolates"]:
                     isolate_sequences = self.db.sequences.find({"isolate_id": isolate["isolate_id"]})
                     isolate["sequences"] = list(isolate_sequences)
-                    isolate.pop("sequence_count")
 
                 viruses[virus_id] = virus
 
