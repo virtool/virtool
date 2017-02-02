@@ -283,7 +283,9 @@ def verify_virus_list(viruses):
     else:
         duplicates = {key: list(duplicates[key]) for key in duplicates}
 
-    if not any(errors.values()):
+    if any(errors.values()):
+        errors = {key: errors[key] for key in errors if errors[key]}
+    else:
         errors = None
 
     return duplicates, errors
