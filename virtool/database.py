@@ -156,9 +156,12 @@ class Collection:
         # Dispatch the update to all connected clients.
         yield self.dispatch("update", to_dispatch, connections=connections)
 
-        logger.debug("Inserted new document in collection " + self.collection_name)
+        self.log_insert()
 
         return response
+
+    def log_insert(self):
+        logger.debug("Inserted new document in collection {}".format(self.collection_name))
 
     @virtool.gen.coroutine
     def _perform_insert(self, document):
