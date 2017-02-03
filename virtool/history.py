@@ -5,6 +5,7 @@ import virtool.utils
 import virtool.gen
 import virtool.database
 import virtool.viruses
+import virtool.virusutils
 
 
 class Collection(virtool.database.Collection):
@@ -98,113 +99,27 @@ class Collection(virtool.database.Collection):
         return True, None
 
     @virtool.gen.coroutine
-    def add(self, operation, method_name, old, new, username, imported=False):
-        # Construct and _id for the change entry. It is composed of the _id of the changed entry and the new version
-        # number of the entry separated by a dot (eg. a7sds23.3)
-        try:
-            document_id = old["_id"]
-        except TypeError:
-            document_id = new["_id"]
+    def add(self, operation, method_name, old, new, username):
+        history_document = yield create_history_document(operation, method_name, old, new, username)
 
-        try:
-            document_version = new["_version"]
-        except TypeError:
-            document_version = "removed"
-
-        history_document = {
-            "_id":  str(document_id) + "." + (str(document_version)),
-            "_version": 0,
-            "operation": operation,
-            "method_name": method_name,
-            "timestamp": virtool.utils.timestamp(),
-            "entry_id": document_id,
-            "entry_version": document_version,
-            "username": username,
-            "annotation": None,
-            "imported": imported,
-            "index": "unbuilt",
-            "index_version": "unbuilt"
-        }
-
-        if operation in ["update", "remove", "insert"]:
-            if operation == "update":
-                history_document["changes"] = list(dictdiffer.diff(old, new))
-            elif operation == "remove":
-                history_document["changes"] = old
-            else:
-                history_document["changes"] = new
-        else:
-            raise ValueError("Passed operation is not one of 'update', 'remove', 'insert'")
-
-        if method_name == "set_default_isolate":
-            history_document["annotation"] = yield self.get_default_isolate(new)
-
-        if method_name == "upsert_isolate":
-            history_document["annotation"] = yield self.get_upserted_isolate(old, history_document["changes"])
-
-        if method_name == "remove_sequence":
-            subject_isolate = yield self.get_isolate_of_removed_sequence(old, history_document["changes"])
-            assert subject_isolate is not None
-            history_document["annotation"] = subject_isolate
-
-        if method_name == "add_sequence":
-            subject_isolate = yield self.get_isolate_of_added_sequence(new, history_document["changes"])
-            history_document["annotation"] = subject_isolate
-
-        if method_name == "update_sequence":
-            subject_isolate = yield self.get_info_for_updated_sequence(new, history_document["changes"])
-            history_document["annotation"] = subject_isolate
+        history_document["imported"] = False
 
         yield self.insert(history_document)
 
-    @virtool.gen.synchronous
-    def get_default_isolate(self, document):
-        for isolate in document["isolates"]:
-            if isolate["default"]:
-                return strip_isolate(isolate)
+    @virtool.gen.coroutine
+    def add_for_import(self, operation, method_name, old, new, username):
+        history_document = yield create_history_document(operation, method_name, old, new, username)
 
-        raise ValueError("Could not find default isolate in virus document")
+        history_document["imported"] = True
 
-    @virtool.gen.synchronous
-    def get_upserted_isolate(self, document, changes):
-        for change in changes:
-            if change[0] == "change" and change[1][0] == "isolates":
-                return document["isolates"][change[1][1]]
+        # Perform the actual database insert operation, retaining the response.
+        yield self.db.insert(history_document)
 
-        return None
+        self.log_insert()
 
-    @virtool.gen.synchronous
-    def get_info_for_updated_sequence(self, document, changes):
-        for change in changes:
-            if change[0] == "change" and change[1][2] == "sequences":
-                isolate = document["isolates"][change[1][1]]
-                sequence_index = change[1][3]
-                sequence = {key: isolate["sequences"][sequence_index][key] for key in ["_id", "definition"]}
+        to_dispatch = yield self.sync_processor([{key: history_document[key] for key in self.sync_projector}])
 
-                isolate = strip_isolate(isolate)
-                isolate.update(sequence)
-
-                return isolate
-
-        raise ValueError("Could not find isolate of updated sequence")
-
-    @virtool.gen.synchronous
-    def get_isolate_of_added_sequence(self, document, changes):
-        for change in changes:
-            if change[0] == "add" and change[1][0] == "isolates":
-                isolate_index = change[1][1]
-                return strip_isolate(document["isolates"][isolate_index])
-
-        raise ValueError("Could not find isolate of added sequence")
-
-    @virtool.gen.synchronous
-    def get_isolate_of_removed_sequence(self, document, changes):
-        for change in changes:
-            if change[0] == "remove":
-                isolate_index = change[1][1]
-                return strip_isolate(document["isolates"][isolate_index])
-
-        raise ValueError("Could not find isolate of removed sequence")
+        return to_dispatch
 
     @virtool.gen.exposed_method(["modify_virus"])
     def revert(self, transaction):
@@ -215,7 +130,7 @@ class Collection(virtool.database.Collection):
             data["entry_version"]
         )
 
-        isolate_ids = yield virtool.viruses.extract_isolate_ids(document or patched)
+        isolate_ids = yield virtool.virusutils.extract_isolate_ids(document or patched)
 
         # Remove the old sequences from the collection.
         yield self.sequences_collection.remove({"isolate_id": {"$in": isolate_ids}})
@@ -276,7 +191,7 @@ class Collection(virtool.database.Collection):
 
                 else:
                     diff = dictdiffer.swap(history_document["changes"])
-                    patched = yield patch(diff, patched)
+                    patched = dictdiffer.patch(diff, patched)
             else:
                 break
 
@@ -296,10 +211,130 @@ class Collection(virtool.database.Collection):
         })
 
 
-@virtool.gen.synchronous
-def patch(diff, subject):
-    return dictdiffer.patch(diff, subject)
-
-
 def strip_isolate(isolate):
     return {key: isolate[key] for key in ["source_type", "source_name", "isolate_id"]}
+
+
+@virtool.gen.synchronous
+def create_history_document(operation, method_name, old, new, username, imported=False):
+    # Construct and _id for the change entry. It is composed of the _id of the changed entry and the new version
+    # number of the entry separated by a dot (eg. a7sds23.3)
+    try:
+        document_id = old["_id"]
+    except TypeError:
+        document_id = new["_id"]
+
+    try:
+        document_version = new["_version"]
+    except TypeError:
+        document_version = "removed"
+
+    history_document = {
+        "_id": str(document_id) + "." + (str(document_version)),
+        "_version": 0,
+        "operation": operation,
+        "method_name": method_name,
+        "timestamp": virtool.utils.timestamp(),
+        "entry_id": document_id,
+        "entry_version": document_version,
+        "username": username,
+        "annotation": None,
+        "index": "unbuilt",
+        "index_version": "unbuilt"
+    }
+
+    if operation in ["update", "remove", "insert"]:
+        if operation == "update":
+            history_document["changes"] = list(dictdiffer.diff(old, new))
+        elif operation == "remove":
+            history_document["changes"] = old
+        else:
+            history_document["changes"] = new
+    else:
+        raise ValueError("Passed operation is not one of 'update', 'remove', 'insert'")
+
+    if method_name == "set_default_isolate":
+        history_document["annotation"] = get_default_isolate(new)
+
+    if method_name == "upsert_isolate":
+        history_document["annotation"] = get_upserted_isolate(old, history_document["changes"])
+
+    if method_name == "remove_sequence":
+        subject_isolate = get_isolate_of_removed_sequence(old, history_document["changes"])
+        assert subject_isolate is not None
+        history_document["annotation"] = subject_isolate
+
+    if method_name == "add_sequence":
+        subject_isolate = get_isolate_of_added_sequence(new, history_document["changes"])
+        history_document["annotation"] = subject_isolate
+
+    if method_name == "update_sequence":
+        subject_isolate = get_info_for_updated_sequence(new, history_document["changes"])
+        history_document["annotation"] = subject_isolate
+
+    return history_document
+
+
+def get_default_isolate(document):
+    """
+    Return the stripped, default isolate of the given virus ``document``. Raise exceptions if there is not exactly one
+    default isolate in the document.
+
+    :param document: a virus document
+    :type document: dict
+
+    :return: the stripped, default isolate
+    :rtype: dict
+
+    """
+    default_isolates = [isolate for isolate in document["isolates"] if isolate["default"]]
+
+    default_isolate_count = len(default_isolates)
+
+    if default_isolate_count > 1:
+        raise ValueError("Virus has {} default isolates. Expected exactly 1.".format(default_isolate_count))
+
+    if default_isolate_count == 0:
+        raise ValueError("Could not find default isolate in virus document")
+
+    return strip_isolate(default_isolates[0])
+
+
+def get_upserted_isolate(document, changes):
+    for change in changes:
+        if change[0] == "change" and change[1][0] == "isolates":
+            return document["isolates"][change[1][1]]
+
+
+def get_info_for_updated_sequence(document, changes):
+    for change in changes:
+        if change[0] == "change" and change[1][2] == "sequences":
+            isolate = document["isolates"][change[1][1]]
+            sequence_index = change[1][3]
+            sequence = {key: isolate["sequences"][sequence_index][key] for key in ["_id", "definition"]}
+
+            isolate = strip_isolate(isolate)
+            isolate.update(sequence)
+
+            return isolate
+
+    raise ValueError("Could not find isolate of updated sequence")
+
+
+def get_isolate_of_added_sequence(document, changes):
+    for change in changes:
+        if change[0] == "add" and change[1][0] == "isolates":
+            isolate_index = change[1][1]
+            return strip_isolate(document["isolates"][isolate_index])
+
+    raise ValueError("Could not find isolate of added sequence")
+
+
+def get_isolate_of_removed_sequence(document, changes):
+    for change in changes:
+        if change[0] == "remove":
+            isolate_index = change[1][1]
+            return strip_isolate(document["isolates"][isolate_index])
+
+    raise ValueError("Could not find isolate of removed sequence")
+
