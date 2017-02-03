@@ -29,11 +29,12 @@ class VirusComponents extends React.Component {
     }
 
     static propTypes = {
+        page: React.PropTypes.number,
         documents: React.PropTypes.arrayOf(React.PropTypes.object)
     };
 
     componentWillReceiveProps (nextProps) {
-        if (!this.state.wait) {
+        if (!this.state.wait || this.props.page != nextProps.page) {
             this.setState({documents: nextProps.documents});
         }
     }
@@ -100,8 +101,6 @@ export default class VirusList extends React.Component {
 
     componentWillUnmount = () => this.hideModal();
 
-    setPage = (page) => this.setState({page: page});
-
     hideModal = () => dispatcher.router.clearExtra();
 
     render () {
@@ -115,7 +114,7 @@ export default class VirusList extends React.Component {
                 <Paginator
                     page={this.state.page}
                     count={pages.count}
-                    onChange={this.setPage}
+                    onChange={(page) => this.setState({page: page})}
                 />
             );
         }
@@ -128,7 +127,7 @@ export default class VirusList extends React.Component {
 
         return (
             <div>
-                <VirusComponents documents={pages.documents} />
+                <VirusComponents documents={pages.documents} page={this.state.page} />
 
                 {paginator}
 
