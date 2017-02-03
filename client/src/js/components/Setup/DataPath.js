@@ -74,8 +74,6 @@ export default class SetupDataPath extends React.Component {
 
     render () {
 
-        console.log(this.state);
-
         let warning;
 
         if (this.props.hasCollections) {

@@ -1,7 +1,7 @@
 import React from "react";
 import Dropzone from "react-dropzone";
 import Request from "superagent";
-import { Flex, FlexItem, Icon, Button } from "virtool/js/components/Base";
+import { Flex, Icon, Button } from "virtool/js/components/Base";
 
 export default class ReadUploader extends React.Component {
 
@@ -16,8 +16,6 @@ export default class ReadUploader extends React.Component {
         });
     };
 
-    handleClick = () => this.dropzone.open();
-
     render = () => (
         <Flex>
             <Dropzone
@@ -25,15 +23,12 @@ export default class ReadUploader extends React.Component {
                 onDrop={this.onDrop}
                 className="dropzone"
                 activeClassName="dropzone-active"
-                disableClick>
-                <Flex justifyContent="center" alignItems="center">
-                    <FlexItem>
-                        Drag here to upload
-                    </FlexItem>
-                </Flex>
+                disableClick
+            >
+                Drag here to upload
             </Dropzone>
 
-            <Button style={{marginLeft: "3px"}} onClick={this.handleClick}>
+            <Button style={{marginLeft: "3px"}} onClick={() => this.dropzone.open()}>
                 <Icon name="folder-open" />
             </Button>
         </Flex>

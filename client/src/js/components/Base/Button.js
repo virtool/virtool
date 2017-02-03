@@ -81,6 +81,7 @@ export class Button extends React.Component {
                 className={className}
                 onClick={this.props.onClick}
                 style={this.props.style}
+                disabled={this.props.disabled}
             >
                 {icon}{children}
             </button>

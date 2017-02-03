@@ -425,6 +425,17 @@ table.cluster-table tbody tr {
     margin-top: -1px;
 }
 
+.dropzone-progress {
+    width: 100%;
+    height: 34px;
+    margin-bottom: 15px;
+    border: 1px solid #cccccc;
+}
+
+.dropzone-progress > .text-center {
+    padding-top: 4px;
+}
+
 .list-group-item > .progress-affixed {
     margin: -10px -15px 8px -15px;
 }
@@ -480,6 +491,7 @@ table.cluster-table tbody tr {
 
 .dropzone {
     width: 100%;
+    height: 34px;
     display: flex;
     align-items: center;
     justify-content: center;

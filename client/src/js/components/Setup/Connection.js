@@ -97,8 +97,6 @@ export default class SetupConnection extends React.Component {
 
     render () {
 
-        console.log(this.state);
-        
         let footer;
 
         if (!this.props.names) {

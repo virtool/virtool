@@ -12,17 +12,21 @@
 import React from "react";
 import Request from "superagent";
 import Dropzone from "react-dropzone";
-import { assign, mapValues, includes } from "lodash";
-import { Row, Col, Modal, Alert, Panel } from "react-bootstrap";
-import { Icon, Button} from "virtool/js/components/Base";
+import { includes, pick } from "lodash";
+import { Alert, Modal, ListGroup } from "react-bootstrap";
+import { Button, Icon, Flex, FlexItem, ListGroupItem, Checkbox } from "virtool/js/components/Base";
 import { byteSize } from "virtool/js/utils";
 
+import ImportVirusesProgress from "./Import/Progress";
+
 const getInitialState = () => ({
-    file: null,
     fileId: null,
-    pending: false,
-    warnings: null,
-    response: null
+    target: null,
+    dropped: null,
+    replace: false,
+    fileDocument: null,
+    complete: false,
+    errors: []
 });
 
 /**
@@ -41,145 +45,120 @@ export default class ImportViruses extends React.Component {
         onHide: React.PropTypes.func.isRequired
     };
 
-    modalExited = () => {
-        this.setState(getInitialState());
-    };
+    componentDidUpdate (prevProps, prevState) {
+        if (!prevState.fileId && this.state.fileId) {
+            dispatcher.db.files.on("change", this.onFileChange);
 
-    handleDrop = (files) => {
-        this.setState(assign(getInitialState(), {file: files[0]}));
+            Request.post(`/upload/${this.state.target}`)
+                .send(this.state.dropped)
+                .ok(res => res.status === 200)
+                .end();
+        }
+    }
+
+    componentWillUnmount () {
+        dispatcher.db.files.off("change", this.onFileChange);
+    }
+
+    modalExited = () => this.setState(getInitialState());
+
+    onFileChange = () => this.setState({fileDocument: dispatcher.db.files.findOne({_id: this.state.fileId})});
+
+    onDrop = (files) => {
+        let errors = [];
+
+        if (!includes(files[0].name, "json.gz")) {
+            errors.push(<span>The file must have the extension <strong>json.gz</strong></span>);
+        }
+
+        if (errors.length) {
+            return this.setState({errors: errors, dropped: null});
+        }
+
+        this.setState({dropped: files[0], errors: []});
     };
 
     upload = () => {
-        this.setState({pending: true}, () => {
-            Request.post("/upload")
-                .attach(this.state.file.name, this.state.file)
-                .end((data, res) => {
-                    this.setState({fileId: res.text}, this.importData);
-                });
-        });
-    };
-
-    importData = () => {
-        dispatcher.db.viruses.request("import_data", {file_id: this.state.fileId})
-            .success((data) => {
-                this.setState(assign(getInitialState(), {response: data}));
-            })
-            .failure((data) => {
-                this.setState({warnings: data});
-            });
+        dispatcher.db.viruses.request("authorize_upload", pick(this.state.dropped, ["name", "size"]))
+            .success(data => this.setState({
+                target: data.target,
+                fileId: `${data.target}-${this.state.dropped.name}`
+            }));
     };
 
     render () {
 
-        const dropzoneProps = {
-            onDrop: this.handleDrop,
-            multiple: false,
-            disableClick: true
-        };
-
-        const style = {
-            width: "100%",
-            height: "auto",
-            border: "1px solid #dddddd",
-            borderColor: "#dddddd",
-            padding: "15px",
-            marginBottom: "15px"
-        };
-
-        const activeStyle = assign({
-            backgroundColor: "#337ab7",
-            borderColor: "#337ab7",
-            color: "#ffffff"
-        }, style);
-
         let content;
 
-        if (this.state.warnings) {
-            const warnings = mapValues(this.state.warnings, (items, warning) => {
-                if (items.length === 0) {
-                    return null;
-                }
-
-                const itemComponents = items.map((item, index) => <li key={index}>{item}</li>);
-
-                return (
-                    <div>
-                        <h5>The following {warning}s already exist in the database:</h5>
-                        <ul>
-                            {itemComponents}
-                        </ul>
-                    </div>
-                );
-            });
-
-            const footer = (
-                <div className="clearfix">
-                    <Button onClick={this.props.onHide} className="pull-right">
-                        <Icon name="checkmark" /> Accept
-                    </Button>
-                </div>
-            );
-
+        if (this.state.fileDocument) {
             content = (
-                <div className="clearfix">
-                    <Panel bsStyle="danger" header="Error" footer={footer}>
-                        {warnings.name}
-                        {warnings.abbreviation}
-                    </Panel>
-                </div>
+                <ImportVirusesProgress
+                    fileId={this.state.fileId}
+                    fileDocument={this.state.fileDocument}
+                    replace={this.state.replace}
+                />
             );
-        } else if (this.state.response) {
-            content = (
-                <Alert bsStyle="success">
-                    <Row>
-                        <Col md={9}>
-                            Added {this.state.response.viruses} viruses and {this.state.response.isolates} isolates.
-                        </Col>
-                        <Col md={3}>
-                            <Button className="pull-right" onClick={this.hide}>
-                                <Icon name="checkmark" /> Accept
-                            </Button>
-                        </Col>
-                    </Row>
+        } else {
+
+            const errorComponents = this.state.errors.map((error, index) =>
+                <Alert key={index} bsStyle="danger">
+                    <Flex alignItems="center">
+                        <Icon name="warning" />
+                        <FlexItem pad={5}>
+                            {error}
+                        </FlexItem>
+                    </Flex>
                 </Alert>
             );
 
-        } else {
-            let button;
+            let dropzoneText = "Drag file here";
 
-            if (this.state.file) {
-                button = (
-                    <Button bsStyle="primary" onClick={this.upload} block>
-                        <Icon name="arrow-up" pending={this.state.pending} /> Import
-                    </Button>
-                );
-            }
-
-            let dropzoneContent = "Drag file here.";
-
-            if (this.state.file) {
-                const iconName = includes(this.state.file.name, ".gz") ? "file-zip": "file-text";
-
-                dropzoneContent = (
-                    <span>
-                        <Icon name={iconName} /> {this.state.file.name} ({byteSize(this.state.file.size)})
-                    </span>
-                );
+            if (this.state.dropped) {
+                dropzoneText = `${this.state.dropped.name} (${byteSize(this.state.dropped.size)})`;
             }
 
             content = (
                 <div>
-                    <Row>
-                        <Col md={12}>
-                            <Dropzone style={style} activeStyle={activeStyle} {...dropzoneProps}>
-                                <div className="drag-area text-center">
-                                    {dropzoneContent}
-                                </div>
-                            </Dropzone>
-                        </Col>
-                    </Row>
+                    {errorComponents}
 
-                    {button}
+                    <Flex style={{marginBottom: "15px"}}>
+                        <Dropzone
+                            ref={(node) => this.dropzone = node}
+                            className="dropzone"
+                            activeClassName="dropzone-active"
+                            onDrop={this.onDrop}
+                            multiple={false}
+                            disableClick={true}
+                        >
+                            {dropzoneText}
+                        </Dropzone>
+
+                        <Button
+                            icon="folder-open"
+                            style={{marginLeft: "3px"}}
+                            onClick={() => this.dropzone.open()}
+                        />
+                    </Flex>
+
+                    <ListGroup>
+                        <ListGroupItem onClick={() => {this.setState({replace: !this.state.replace})}}>
+                            <h5><Checkbox label="Replace Viruses" checked={this.state.replace} /></h5>
+                            <p><small>
+                                Replace viruses that already exist in the database if they are present in the import
+                                file. Matches are made by virus name and are case insensitive.
+                            </small></p>
+                        </ListGroupItem>
+                    </ListGroup>
+
+                    <Button
+                        icon="arrow-up"
+                        bsStyle="primary"
+                        onClick={this.upload}
+                        disabled={!this.state.dropped}
+                        block
+                    >
+                        Import
+                    </Button>
                 </div>
             );
         }
@@ -189,14 +168,7 @@ export default class ImportViruses extends React.Component {
                 <Modal.Header onHide={this.props.onHide} closeButton>
                     Import Viruses
                 </Modal.Header>
-
                 <Modal.Body>
-                    <Panel>
-                        Import viruses from a JSON or gzip-compressed JSON file generated by Virtool. The file will be
-                        scanned for duplicate sequence accessions and virus names. All imported records will be
-                        assigned new unique IDs and will not be compatible with the originating Virtool instance.
-                    </Panel>
-
                     {content}
                 </Modal.Body>
             </Modal>
