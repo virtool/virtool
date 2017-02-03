@@ -328,8 +328,6 @@ class TestVerifyVirusList:
 
         assert duplicates is None
 
-        assert len(([x for x in errors.values() if x is None])) == 3
-
         assert errors["example virus"]["isolate_inconsistency"]
 
     @pytest.mark.gen_test
@@ -356,8 +354,6 @@ class TestVerifyVirusList:
 
         assert duplicates is None
 
-        assert len(([x for x in errors.values() if x is None])) == 2
-
         assert errors["example virus"]["isolate_inconsistency"]
         assert errors["test virus"]["isolate_inconsistency"]
 
@@ -368,8 +364,6 @@ class TestVerifyVirusList:
         duplicates, errors = yield virtool.virusutils.verify_virus_list(virus_list)
 
         assert duplicates is None
-
-        assert len(([x for x in errors.values() if x is None])) == 3
 
         assert errors["cucumber mosaic virus"]["empty_virus"]
 
@@ -382,8 +376,6 @@ class TestVerifyVirusList:
 
         assert duplicates is None
 
-        assert len(([x for x in errors.values() if x is None])) == 2
-
         assert errors["cucumber mosaic virus"]["empty_virus"] is True
         assert errors["test virus"]["empty_virus"] is True
 
@@ -394,8 +386,6 @@ class TestVerifyVirusList:
         duplicates, errors = yield virtool.virusutils.verify_virus_list(virus_list)
 
         assert duplicates is None
-
-        assert len(([x for x in errors.values() if x is None])) == 3
 
         assert errors["test virus"]["empty_isolate"] == ["second_0"]
 
@@ -408,8 +398,6 @@ class TestVerifyVirusList:
 
         assert duplicates is None
 
-        assert len(([x for x in errors.values() if x is None])) == 2
-
         assert errors["example virus"]["empty_isolate"] == ["third_0"]
         assert errors["test virus"]["empty_isolate"] == ["second_0"]
 
@@ -420,8 +408,6 @@ class TestVerifyVirusList:
         duplicates, errors = yield virtool.virusutils.verify_virus_list(virus_list)
 
         assert duplicates is None
-
-        assert len(([x for x in errors.values() if x is None])) == 3
 
         assert errors["test virus"]["empty_sequence"][0]["_id"] == "second_seq_0"
 
@@ -434,9 +420,5 @@ class TestVerifyVirusList:
 
         assert duplicates is None
 
-        assert len(([x for x in errors.values() if x is None])) == 2
-
         assert errors["test virus"]["empty_sequence"][0]["_id"] == "second_seq_0"
         assert errors["example virus"]["empty_sequence"][0]["_id"] == "third_seq_0"
-
-
