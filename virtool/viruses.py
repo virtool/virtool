@@ -26,6 +26,8 @@ class Collection(virtool.database.Collection):
     def __init__(self, dispatch, collections, settings, add_periodic_callback):
         super().__init__("viruses", dispatch, collections, settings, add_periodic_callback)
 
+        db = settings.get_db_client(sync=True)
+
         # Set what is sent to the client when syncing.
         self.sync_projector += ["name", "modified", "abbreviation"]
 
@@ -58,7 +60,7 @@ class Collection(virtool.database.Collection):
         return True, response
 
     @virtool.gen.coroutine
-    def _add(self, virus, imported=False):
+    def _add(self, virus):
         name_count, abbreviation_count = yield self.check_name_and_abbreviation(virus["name"], virus["abbreviation"])
 
         # Transaction fails if the name or abbreviation are in use.
@@ -69,8 +71,6 @@ class Collection(virtool.database.Collection):
             raise VirusNameExistsError
 
         virus["_id"] = yield self.get_new_id()
-
-        virus["imported"] = imported
 
         yield self.insert(virus)
 
@@ -121,7 +121,7 @@ class Collection(virtool.database.Collection):
         return True, response
 
     @virtool.gen.coroutine
-    def _remove_virus(self, virus_id, username, imported=False):
+    def _remove_virus(self, virus_id, username):
         """
         Remove a virus document by its id. Also removes any associated sequence documents from the sequences
         collection and adds a record of the removal to the history collection.
@@ -161,8 +161,7 @@ class Collection(virtool.database.Collection):
             "remove",
             virus,
             None,
-            username,
-            imported=imported
+            username
         )
 
         return response
@@ -200,22 +199,29 @@ class Collection(virtool.database.Collection):
         :rtype: tuple
 
         """
-        data = transaction.data
+        field = transaction.data["field"]
+        value = transaction.data["value"]
+
         user = transaction.connection.user
 
-        if data["field"] in ["abbreviation", "name"]:
+        if field in ["abbreviation", "name"]:
             existing_value_count = 0
 
-            if data["value"]:
-                existing_value_count = yield self.find({data["field"]: data["value"]}).count()
+            if value:
+                existing_value_count = yield self.db.count({field: value})
+
+            set_dict = {
+                "modified": True,
+                field: value
+            }
+
+            if field == "name":
+                set_dict["lower_name"] = value.lower()
 
             if existing_value_count == 0:
                 # Apply the update.
-                old, new = yield self.update(data["_id"], {
-                    "$set": {
-                        data["field"]: data["value"],
-                        "modified": True
-                    }
+                old, new = yield self.update(transaction.data["_id"], {
+                    "$set": set_dict
                 }, return_change=True)
 
                 # Add a history record describing the change.
@@ -685,8 +691,7 @@ class Collection(virtool.database.Collection):
 
         # Make a list of virus names that are already in use in the database. Force them all to lowercase for
         # case-insensitive comparison of existing viruses to those being imported.
-        used_names = yield self.db.distinct("name")
-        used_names = {name.lower() for name in used_names}
+        used_names = yield self.db.distinct("lower_name")
 
         empty_collection = len(used_names) == 0
 
@@ -700,11 +705,15 @@ class Collection(virtool.database.Collection):
 
         base_virus_document = {
             "_version": 0,
-            "last_index_version": 0,
+            "last_indexed_version": 0,
             "modified": False,
             "username": transaction.connection.user["_id"],
             "imported": True
         }
+
+        # Lists of pending dispatches. These are sent in batches of ten to avoid overwhelming browsers.
+        adds = list()
+        replaces = list()
 
         for i, virus in enumerate(viruses):
             # Calculate the overall progress (how many viruses in the import document have been processed?)
@@ -725,12 +734,16 @@ class Collection(virtool.database.Collection):
             if empty_collection:
                 to_insert["_id"] = yield self.get_new_id()
 
-                yield self.insert(to_insert)
+                dispatches = yield self.insert_from_import(to_insert)
+
+                adds.append(dispatches)
 
                 for sequence_document in sequences:
                     yield self.sequences_collection.insert(sequence_document)
 
                 counter["added"] += 1
+
+                yield self.send_import_dispatches(adds, replaces)
 
                 continue
 
@@ -751,7 +764,7 @@ class Collection(virtool.database.Collection):
             if virus["abbreviation"]:
                 virus_with_abbreviation = yield self.find_one({"abbreviation": virus["abbreviation"]})
 
-            if virus_with_abbreviation and virus_with_abbreviation["name"].lower() != lower_name:
+            if virus_with_abbreviation and virus_with_abbreviation["lower_name"] != lower_name:
                 # Remove the imported virus's abbreviation because it is already assigned to an existing virus.
                 virus["abbreviation"] = ""
 
@@ -776,12 +789,15 @@ class Collection(virtool.database.Collection):
                     used_isolate_ids.add(isolate["isolate_id"])
 
             if virus_exists:
-                existing_virus = yield self.find_one({"name": re.compile(virus["name"], re.IGNORECASE)})
+                existing_virus = yield self.find_one({"lower_name": lower_name})
 
                 isolate_ids = yield virtool.virusutils.extract_isolate_ids(existing_virus)
 
                 # Remove the existing virus, including its sequences.
-                yield self._remove_virus(existing_virus["_id"], transaction.connection.user["_id"])
+                remove_dispatches = yield self.remove_for_import(
+                    existing_virus["_id"],
+                    transaction.connection.user["_id"]
+                )
 
                 # Remove all sequence documents associated with the existing virus.
                 yield self.sequences_collection.remove({"_id": {
@@ -793,7 +809,12 @@ class Collection(virtool.database.Collection):
             to_insert.update({key: virus_document[key] for key in ["abbreviation", "name", "isolates"]})
 
             # Add the new virus.
-            yield self.insert(to_insert)
+            insert_dispatches = yield self.insert_from_import(to_insert)
+
+            if virus_exists:
+                replaces.append((remove_dispatches, insert_dispatches))
+            else:
+                adds.append(insert_dispatches)
 
             for sequence_document in sequences:
                 yield self.sequences_collection.insert(sequence_document)
@@ -801,15 +822,35 @@ class Collection(virtool.database.Collection):
             if not virus_exists:
                 counter["added"] += 1
 
+            self.send_import_dispatches(adds, replaces)
+
+        yield self.send_import_dispatches(adds, replaces, flush=True)
+
         counter["progress"] = 1
         transaction.update(counter)
 
         return True, counter
 
     @virtool.gen.coroutine
+    def send_import_dispatches(self, adds, replaces, flush=False):
+        if len(adds) == 30 or flush:
+            yield self.dispatch("update", [add[0] for add in adds])
+            yield self.collections["history"].dispatch("insert", [add[1] for add in adds])
+
+            del adds[:]
+
+        if len(replaces) == 30 or flush:
+            yield self.dispatch("remove", [replace[0][0] for replace in replaces])
+            yield self.collections["history"].dispatch("insert", [replace[0][1] for replace in replaces])
+
+            yield self.dispatch("update", [replace[1][0] for replace in replaces])
+            yield self.collections["history"].dispatch("insert", [replace[1][1] for replace in replaces])
+
+            del replaces[:]
+
+    @virtool.gen.coroutine
     def find_import_conflicts(self, viruses, replace):
-        used_names = yield self.db.distinct("name")
-        used_names = [name.lower() for name in used_names]
+        used_names = yield self.db.distinct("lower_name")
 
         conflicts = list()
 
@@ -828,8 +869,6 @@ class Collection(virtool.database.Collection):
                 ["_id", "isolate_id"]
             ).to_list(length=None)
 
-            # print(virus["name"], virus_exists, sequence_ids_to_import, len(already_existing_sequences))
-
             if virus_exists:
                 # Continue to the next virus if this one cannot be applied to the database.
                 if not replace:
@@ -837,8 +876,8 @@ class Collection(virtool.database.Collection):
 
                 # The full document of the existing virus.
                 existing_virus = yield self.find_one(
-                    {"name": re.compile(virus["name"], re.IGNORECASE)},
-                    ["_id", "isolates"]
+                    {"lower_name": lower_name},
+                    ["_id", "name", "isolates"]
                 )
 
                 # The isolate ids in the existing virus document.
@@ -907,18 +946,11 @@ class Collection(virtool.database.Collection):
 
         """
         virus.update({
-            "modified": False,
-            "last_indexed_version": None
+            "last_indexed_version": None,
+            "isolates": list(),
+            "modified": True,
+            "lower_name": virus["name"].lower()
         })
-
-        if "imported" not in virus:
-            virus.update({
-                "imported": False,
-                "modified": True
-            })
-
-        if "isolates" not in virus:
-            virus["isolates"] = list()
 
         response = yield super().insert(virus, connections)
 
@@ -930,11 +962,63 @@ class Collection(virtool.database.Collection):
             "add",
             None,  # there is no old document
             joined,
-            virus["username"],
-            imported=virus["imported"]
+            virus["username"]
         )
 
         return response
+
+    @virtool.gen.coroutine
+    def insert_from_import(self, virus):
+        virus.update({
+            "_version": 0,
+            "lower_name": virus["name"].lower()
+        })
+
+        # Perform the actual database insert operation, retaining the response.
+        yield self.db.insert(virus)
+
+        logger.debug("Imported virus {}".format(virus["name"]))
+
+        to_dispatch_virus = yield self.sync_processor([{key: virus[key] for key in self.sync_projector}])
+
+        joined = yield self.join(virus["_id"])
+
+        to_dispatch_history = yield self.collections["history"].add_for_import(
+            "insert",
+            "add",
+            None,  # there is no old document
+            joined,
+            virus["username"]
+        )
+
+        return to_dispatch_virus[0], to_dispatch_history
+
+    @virtool.gen.coroutine
+    def remove_for_import(self, virus_id, username):
+        # Join the virus.
+        virus = yield self.join(virus_id)
+
+        if not virus:
+            raise ValueError("No virus associated with _id {}".format(virus_id))
+
+        # Get all the isolate ids from the
+        isolate_ids = yield virusutils.extract_isolate_ids(virus)
+
+        # Remove all sequences associated with the isolates.
+        yield self.sequences_collection.remove({"isolate_id": {"$in": isolate_ids}})
+
+        yield self.db.remove({"_id": virus_id})
+
+        # Put an entry in the history collection saying the virus was removed.
+        to_dispatch_history = yield self.collections["history"].add_for_import(
+            "remove",
+            "remove",
+            virus,
+            None,
+            username
+        )
+
+        return virus_id, to_dispatch_history
 
     @virtool.gen.coroutine
     def update(self, virus_id, update, increment_version=True, return_change=False, upsert=False):
@@ -1078,9 +1162,6 @@ class Collection(virtool.database.Collection):
         )
 
         return True, dict(target=target)
-
-
-
 
 
 class VirusNameExistsError(Exception):
