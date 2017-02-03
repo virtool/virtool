@@ -1,9 +1,11 @@
 import os
+import subprocess
 import virtool.utils
 
 from virtool.permissions import PERMISSIONS
 from virtool.users import reconcile_permissions
-
+from virtool.history import get_default_isolate
+from virtool.virusutils import merge_virus
 
 def organize_analyses(database):
 
@@ -110,7 +112,9 @@ def extract_sequence_ids(joined_virus):
 def organize_viruses(database):
     database.viruses.update({}, {
         "$unset": {
-            "segments": ""
+            "segments": "",
+            "abbrevation": "",
+            "new": ""
         }
     }, multi=True)
 
@@ -128,7 +132,7 @@ def organize_viruses(database):
 
     # Get the entry describing the most recently built (active) index from the DB.
     try:
-        active_index = db.indexes.find({"ready": True}).sort("index_version", -1)[0]
+        active_index = database.indexes.find({"ready": True}).sort("index_version", -1)[0]
     except IndexError:
         active_index = None
 
@@ -150,10 +154,10 @@ def organize_viruses(database):
 
     sequence_ids = list()
 
-    for virus in db.viruses.find({}):
+    for virus in database.viruses.find({}):
         default_isolate = get_default_isolate(virus)
 
-        sequences = list(db.sequences.find({"isolate_id": default_isolate["isolate_id"]}))
+        sequences = list(database.sequences.find({"isolate_id": default_isolate["isolate_id"]}))
 
         patched_and_joined = merge_virus(virus, sequences)
 
@@ -195,6 +199,17 @@ def organize_viruses(database):
         "missing_recent_history"]
 
     return response
+
+
+def organize_sequences(database):
+    database.sequences.update({}, {
+        "$unset": {
+            "neighbours": "",
+            "proteins": "",
+            "molecule_type": "",
+            "molecular_structure": ""
+        }
+    })
 
 
 def organize_hosts(database):
