@@ -64,6 +64,7 @@ def viruses_collection(mock_collection, called_tester, mock_settings, mock_motor
     }
 
     collections["history"].add_coroutine("add")
+    collections["history"].add_coroutine("add_for_import")
 
     return Collection(called_tester(), collections, mock_settings, called_tester())
 
@@ -111,7 +112,7 @@ def create_merged_virus():
                 "source_name": "Fny",
                 "isolate_id": "sad23gat",
                 "source_type": "strain",
-                "default": True
+                "default": False
             }
         ]
     }
@@ -137,7 +138,7 @@ def virus_document():
                 "source_name": "Fny",
                 "isolate_id": "sad23gat",
                 "source_type": "strain",
-                "default": True
+                "default": False
             }
         ]
     }
