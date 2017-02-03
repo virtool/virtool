@@ -11,10 +11,73 @@
 
 import React from "react";
 import FlipMove from "react-flip-move"
+import { isEqual } from "lodash";
 import { Icon, Paginator, DetailModal, ListGroupItem, getFlipMoveProps } from "virtool/js/components/Base";
 
 import VirusEntry from "./Entry";
 import VirusDetail from "./Detail";
+
+class VirusComponents extends React.Component {
+
+    constructor (props) {
+        super(props);
+
+        this.state = {
+            wait: false,
+            documents: this.props.documents
+        };
+    }
+
+    static propTypes = {
+        documents: React.PropTypes.arrayOf(React.PropTypes.object)
+    };
+
+    componentWillReceiveProps (nextProps) {
+        if (!this.state.wait) {
+            this.setState({documents: nextProps.documents});
+        }
+    }
+
+    shouldComponentUpdate (nextProps, nextState) {
+        return !isEqual(this.state.documents, nextState.documents);
+    }
+
+    handleStartAll = () => this.setState({wait: true});
+
+    handleFinishAll = () => {
+        this.setState({
+            wait: false,
+            documents: this.props.documents
+        });
+    };
+
+    render () {
+
+        let virusComponents;
+
+        if (this.state.documents && this.state.documents.length > 0) {
+            virusComponents = this.state.documents.map(document =>
+                <VirusEntry
+                    key={document._id}
+                    {...document}
+                />
+            );
+        } else {
+            virusComponents = (
+                <ListGroupItem key="noViruses" className="text-center">
+                    <Icon name="info" /> No viruses found.
+                </ListGroupItem>
+            );
+        }
+
+        return (
+            <FlipMove {...getFlipMoveProps()} onStartAll={this.handleStartAll} onFinishAll={this.handleFinishAll}>
+                {virusComponents}
+            </FlipMove>
+        );
+    }
+
+}
 
 /**
  * A React component that is a simple composition of JobsTable. Applies a baseFilter that includes only active jobs.
@@ -35,40 +98,15 @@ export default class VirusList extends React.Component {
         documents: React.PropTypes.arrayOf(React.PropTypes.object)
     };
 
-    componentWillUnmount () {
-        this.hideModal();
-    }
+    componentWillUnmount = () => this.hideModal();
 
-    setPage = (page) => {
-        this.setState({
-            page: page
-        });
-    };
+    setPage = (page) => this.setState({page: page});
 
-    hideModal = () => {
-        dispatcher.router.clearExtra();
-    };
+    hideModal = () => dispatcher.router.clearExtra();
 
     render () {
 
-        const pages = Paginator.calculatePages(this.props.documents, this.state.page, 18);
-
-        let virusComponents;
-
-        if (pages.documents && pages.documents.length > 0) {
-            virusComponents = pages.documents.map(document =>
-                <VirusEntry
-                    key={document._id}
-                    {...document}
-                />
-            );
-        } else {
-            virusComponents = (
-                <ListGroupItem key="noViruses" className="text-center">
-                    <Icon name="info" /> No viruses found.
-                </ListGroupItem>
-            );
-        }
+        const pages = Paginator.calculatePages(this.props.documents, this.state.page, 15);
 
         let paginator;
 
@@ -90,9 +128,7 @@ export default class VirusList extends React.Component {
 
         return (
             <div>
-                <FlipMove {...getFlipMoveProps()}>
-                    {virusComponents}
-                </FlipMove>
+                <VirusComponents documents={pages.documents} />
 
                 {paginator}
 

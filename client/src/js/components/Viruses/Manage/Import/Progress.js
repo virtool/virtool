@@ -12,7 +12,6 @@
 import React from "react";
 import { capitalize } from "lodash";
 import { Alert, ListGroup } from "react-bootstrap";
-import { ProgressBar as bar } from "react-bootstrap";
 import { ListGroupItem, Icon, Flex, FlexItem, ProgressBar } from "virtool/js/components/Base";
 import { byteSize } from "virtool/js/utils";
 
@@ -45,7 +44,8 @@ export default class ImportVirusesProgress extends React.Component {
         if (!prevProps.fileDocument.ready && this.props.fileDocument.ready) {
             dispatcher.db.viruses.request("import_file", {file_id: this.props.fileId, replace: this.props.replace})
                 .update((data) => this.setState(data))
-                .success((data) => this.setState(data));
+                .success((data) => this.setState(data))
+                .failure((data) => console.log(data));
         }
     }
 
@@ -86,8 +86,6 @@ export default class ImportVirusesProgress extends React.Component {
         return (
             <div>
                 {warningComponents}
-
-                <bar now={progress} />
 
                 <div style={{marginBottom: "15px"}}>
                     <ProgressBar now={progress} />

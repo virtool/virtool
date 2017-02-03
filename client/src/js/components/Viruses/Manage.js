@@ -10,7 +10,7 @@
  */
 
 import React from "react";
-
+import { sortBy } from "lodash";
 import Add from "./Manage/Add";
 import Export from "./Manage/Export";
 import Import from "./Manage/Import";
@@ -95,7 +95,7 @@ export default class ManageViruses extends React.Component {
             ]});
         }
 
-        documents = documents.simplesort(this.state.sortTerm).data();
+        documents = sortBy(documents.data(), document => document.name.toLowerCase());
 
         return (
             <div>
