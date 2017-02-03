@@ -710,8 +710,6 @@ class Collection(virtool.database.Collection):
             # Calculate the overall progress (how many viruses in the import document have been processed?)
             progress = round((i + 1) / virus_count, 3)
 
-            print(progress)
-
             # Send the current progress data in ``counter`` to the client if the progress has increased by at least
             # 2% since the last report.
             if progress - counter["progress"] > 0.02:
@@ -909,12 +907,15 @@ class Collection(virtool.database.Collection):
 
         """
         virus.update({
-            "modified": True,
+            "modified": False,
             "last_indexed_version": None
         })
 
         if "imported" not in virus:
-            virus["imported"] = False
+            virus.update({
+                "imported": False,
+                "modified": True
+            })
 
         if "isolates" not in virus:
             virus["isolates"] = list()
