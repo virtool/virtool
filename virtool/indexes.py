@@ -9,6 +9,7 @@ import virtool.database
 import virtool.utils
 import virtool.job
 import virtool.viruses
+import virtool.virusutils
 
 logger = logging.getLogger(__name__)
 
@@ -275,7 +276,7 @@ class RebuildIndex(virtool.job.Job):
         sequences = list(self.db.sequences.find({"isolate_id": {"$in": isolate_ids}}))
 
         # Merge the sequence entries into the virus entry.
-        joined = virtool.viruses.merge_virus(virus, sequences)
+        joined = virtool.virusutils.merge_virus(virus, sequences)
 
         return joined, sequences
 
