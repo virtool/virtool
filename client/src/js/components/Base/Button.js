@@ -83,7 +83,9 @@ export class Button extends React.Component {
                 style={this.props.style}
                 disabled={this.props.disabled}
             >
-                {icon}{children}
+                <div>
+                    {icon}{children}
+                </div>
             </button>
         );
 
