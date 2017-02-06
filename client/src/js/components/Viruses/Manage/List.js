@@ -77,7 +77,6 @@ class VirusComponents extends React.Component {
             </FlipMove>
         );
     }
-
 }
 
 /**

@@ -73,11 +73,11 @@ const routerStructure = [
     },
 
     {
-        key: "hosts",
-        icon: "leaf",
+        key: "subtraction",
+        icon: "minus-square",
 
         children: [
-            {key: "manage", component: ManageHosts}
+            {key: "hosts", component: ManageHosts}
         ]
     },
 
