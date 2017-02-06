@@ -2,9 +2,9 @@ import React from "react";
 import Request from "superagent";
 import { Uploader } from "virtool/js/components/Base";
 
-const getFiles = () => dispatcher.db.files.chain().find({file_type: "reads"});
+export const getFiles = () => dispatcher.db.files.chain().find({file_type: "subtraction"});
 
-export default class ReadFiles extends React.Component {
+export default class SubtractionFiles extends React.Component {
 
     constructor (props) {
         super(props);

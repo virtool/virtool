@@ -10,8 +10,64 @@
  */
 
 import React from "react";
-import { Modal } from "react-bootstrap";
-import { Input, Button } from "virtool/js/components/Base";
+import { Modal, ListGroup } from "react-bootstrap";
+import { Icon, Flex, FlexItem, Input, Button, ListGroupItem } from "virtool/js/components/Base";
+import { getFiles } from "../Files";
+
+class HostFileSelector extends React.PureComponent {
+
+    constructor (props) {
+        super(props);
+        this.state = {
+            documents: getFiles()
+        };
+    }
+
+    static propTypes = {
+        route: React.PropTypes.object
+    };
+
+    componentDidMount () {
+        dispatcher.db.files.on("change", this.update);
+    }
+
+    componentWillUnmount () {
+        dispatcher.db.files.off("change", this.update);
+    }
+
+    update = () => this.setState({documents: getFiles()});
+
+    render () {
+
+        let fileComponents = this.state.documents.branch().data().map((file) =>
+            <ListGroupItem>
+                {file.name}
+            </ListGroupItem>
+        );
+
+        if (fileComponents.length === 0) {
+            fileComponents = (
+                <ListGroupItem>
+                    <Flex justifyContent="center" alignItems="center">
+                        <Icon name="notification" />
+                        <FlexItem pad={5}>
+                            <span>No files found. </span>
+                            <a className="pointer" onClick={() => dispatcher.router.setChild("files")}>
+                                Upload a fasta file.
+                            </a>
+                        </FlexItem>
+                    </Flex>
+                </ListGroupItem>
+            )
+        }
+
+        return (
+            <ListGroup>
+                {fileComponents}
+            </ListGroup>
+        );
+    }
+}
 
 /**
  * A component based on React-Bootstrap Modal that presents a form used to add a new host from a FASTA file.
@@ -22,6 +78,7 @@ export default class AddHost extends React.Component {
         super(props);
 
         this.state = {
+            file_id: "",
             organism: "",
             description: ""
         };
@@ -29,8 +86,7 @@ export default class AddHost extends React.Component {
 
     static propTypes = {
         show: React.PropTypes.bool.isRequired,
-        onHide: React.PropTypes.func.isRequired,
-        target: React.PropTypes.object
+        onHide: React.PropTypes.func.isRequired
     };
 
     modalEnter = () => {
@@ -39,6 +95,7 @@ export default class AddHost extends React.Component {
 
     modalExited = () => {
         this.setState({
+            file_id: "",
             organism: "",
             description: ""
         });
@@ -47,7 +104,6 @@ export default class AddHost extends React.Component {
     handleChange = (event) => {
         let data = {};
         data[event.target.name] = event.target.value;
-
         this.setState(data);
     };
 
@@ -63,7 +119,7 @@ export default class AddHost extends React.Component {
         // Only submit the request if the two form fields are filled.
         if (this.state.organism.length > 0 && this.state.description.length > 0) {
             dispatcher.db.hosts.request("add", {
-                file: this.props.target._id,
+                file: this.state.file_id,
                 description: this.state.description,
                 organism: this.state.organism
             }).success(this.props.onHide);
@@ -72,20 +128,23 @@ export default class AddHost extends React.Component {
 
     render () {
         // The form is submittable if both fields are filled.
-        const submittable = this.state.organism.length > 0 && this.state.description.length > 0;
+        const submittable = this.state.organism && this.state.description && this.state.file_id;
 
-        let content;
+        return (
+            <Modal
+                show={this.props.show}
+                onHide={this.props.onHide}
+                onEnter={this.modalEnter}
+                onExited={this.modalExited}
+            >
+                <Modal.Header>
+                    Add Host
+                </Modal.Header>
 
-        if (this.props.show && this.props.target) {
-            content = (
                 <form onSubmit={this.handleSubmit}>
-                    <Modal.Header>
-                        Add Host
-                    </Modal.Header>
-
                     <Modal.Body>
                         <Input
-                            ref={this.organismNode}
+                            ref={(node) => this.organismNode = node}
                             type="text"
                             className="text-em"
                             name="organism"
@@ -100,36 +159,28 @@ export default class AddHost extends React.Component {
                             value={this.state.description}
                             onChange={this.handleChange}
                         />
-                        <Input
-                            type="text"
-                            label="File"
-                            value={this.props.target._id}
-                            readOnly
+
+                        <HostFileSelector
+                            selected={this.state.file_id}
+                            onSelect={(file_id) => this.setState({file_id: file_id})}
                         />
                     </Modal.Body>
 
                     <Modal.Footer className="modal-footer">
-                        <Button onClick={this.props.onHide}>Cancel</Button>
                         <Button
                             type="submit"
                             onClick={this.submit}
                             bsStyle="primary"
                             icon="plus-square"
                             disabled={!submittable}
+                            pullRight
                         >
                             Add
                         </Button>
                     </Modal.Footer>
                 </form>
-            );
-        }
-
-        return (
-            <Modal show={this.props.show} onHide={this.props.onHide} onEnter={this.modalEnter}
-                   onExited={this.modalExited}>
-                {content}
             </Modal>
-        )
+        );
     }
 
 }

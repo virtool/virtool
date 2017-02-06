@@ -22,7 +22,8 @@ import VirusHistory from "virtool/js/components/Viruses/History";
 import ManageIndexes from "virtool/js/components/Viruses/Index";
 import ManageHMM from "virtool/js/components/Viruses/HMM";
 
-import ManageHosts from "virtool/js/components/Hosts/Manage";
+import SubtractionHosts from "virtool/js/components/Subtraction/Hosts";
+import SubtractionFiles from "virtool/js/components/Subtraction/Files";
 
 import GeneralOptions from "virtool/js/components/Options/General";
 import ServerOptions from "virtool/js/components/Options/Server";
@@ -77,7 +78,8 @@ const routerStructure = [
         icon: "minus-square",
 
         children: [
-            {key: "hosts", component: ManageHosts}
+            {key: "hosts", component: SubtractionHosts},
+            {key: "files", component: SubtractionFiles}
         ]
     },
 

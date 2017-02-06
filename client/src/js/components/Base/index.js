@@ -21,5 +21,6 @@ export * from "./Radio";
 export * from "./RelativeTime";
 export * from "./Scroll";
 export * from "./Tooltip";
+export * from "./Uploader";
 
 
