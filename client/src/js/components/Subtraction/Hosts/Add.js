@@ -12,6 +12,7 @@
 import React from "react";
 import { Modal, ListGroup } from "react-bootstrap";
 import { Icon, Flex, FlexItem, Input, Button, ListGroupItem } from "virtool/js/components/Base";
+import { byteSize } from "virtool/js/utils";
 import { getFiles } from "../Files";
 
 class HostFileSelector extends React.PureComponent {
@@ -24,7 +25,8 @@ class HostFileSelector extends React.PureComponent {
     }
 
     static propTypes = {
-        route: React.PropTypes.object
+        selected: React.PropTypes.string,
+        onSelect: React.PropTypes.func.isRequired
     };
 
     componentDidMount () {
@@ -40,14 +42,25 @@ class HostFileSelector extends React.PureComponent {
     render () {
 
         let fileComponents = this.state.documents.branch().data().map((file) =>
-            <ListGroupItem>
-                {file.name}
+            <ListGroupItem
+                key={file._id}
+                active={this.props.selected === file._id}
+                onClick={() => this.props.onSelect(file._id)}
+            >
+                <Flex>
+                    <FlexItem grow={1} shrink={0}>
+                        {file.name}
+                    </FlexItem>
+                    <FlexItem grow={0} shrink={0}>
+                        {byteSize(file.size_end)}
+                    </FlexItem>
+                </Flex>
             </ListGroupItem>
         );
 
         if (fileComponents.length === 0) {
             fileComponents = (
-                <ListGroupItem>
+                <ListGroupItem key="none">
                     <Flex justifyContent="center" alignItems="center">
                         <Icon name="notification" />
                         <FlexItem pad={5}>
@@ -78,7 +91,7 @@ export default class AddHost extends React.Component {
         super(props);
 
         this.state = {
-            file_id: "",
+            fileId: "",
             organism: "",
             description: ""
         };
@@ -95,7 +108,7 @@ export default class AddHost extends React.Component {
 
     modalExited = () => {
         this.setState({
-            file_id: "",
+            fileId: "",
             organism: "",
             description: ""
         });
@@ -117,9 +130,9 @@ export default class AddHost extends React.Component {
         event.preventDefault();
 
         // Only submit the request if the two form fields are filled.
-        if (this.state.organism.length > 0 && this.state.description.length > 0) {
+        if (this.state.organism && this.state.description.length && this.state.fileId) {
             dispatcher.db.hosts.request("add", {
-                file: this.state.file_id,
+                file_id: this.state.fileId,
                 description: this.state.description,
                 organism: this.state.organism
             }).success(this.props.onHide);
@@ -128,7 +141,7 @@ export default class AddHost extends React.Component {
 
     render () {
         // The form is submittable if both fields are filled.
-        const submittable = this.state.organism && this.state.description && this.state.file_id;
+        const submittable = this.state.organism && this.state.description && this.state.fileId;
 
         return (
             <Modal
@@ -160,9 +173,10 @@ export default class AddHost extends React.Component {
                             onChange={this.handleChange}
                         />
 
+                        <h5><strong>Select File</strong></h5>
                         <HostFileSelector
-                            selected={this.state.file_id}
-                            onSelect={(file_id) => this.setState({file_id: file_id})}
+                            selected={this.state.fileId}
+                            onSelect={(fileId) => this.setState({fileId: fileId === this.state.fileId ? "": fileId})}
                         />
                     </Modal.Body>
 
