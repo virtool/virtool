@@ -8,7 +8,7 @@ import { Row, Col } from "react-bootstrap";
 import { Flex, Button, ListGroupItem, getFlipMoveProps } from "virtool/js/components/Base";
 
 
-export default class FileItem extends React.PureComponent {
+export class FileItem extends React.PureComponent {
 
     static propTypes = {
         _id: React.PropTypes.string.isRequired,
@@ -58,7 +58,7 @@ export default class FileItem extends React.PureComponent {
     );
 }
 
-const FileList = (props) => {
+export const FileList = (props) => {
 
     let fileComponents;
 
