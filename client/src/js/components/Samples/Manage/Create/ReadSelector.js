@@ -88,13 +88,12 @@ export default class ReadSelector extends React.PureComponent {
         );
 
         const fileComponents = sortBy(files, "timestamp").reverse().map((file) =>
-            <div key={file._id}>
-                <ReadItem
-                    {...file}
-                    selected={includes(this.props.selected, file._id)}
-                    onSelect={this.handleSelect}
-                />
-            </div>
+            <ReadItem
+                key={file._id}
+                {...file}
+                selected={includes(this.props.selected, file._id)}
+                onSelect={this.handleSelect}
+            />
         );
 
         let overlay;
@@ -137,11 +136,15 @@ export default class ReadSelector extends React.PureComponent {
                         </div>
                     </div>
 
-                    <Panel style={{minHeight: "420px", maxHeight: "420px", overflowY: "scroll"}}>
-                        <FlipMove {...getFlipMoveProps()}>
+                    <div className="panel panel-default">
+                        <FlipMove
+                            {...getFlipMoveProps()}
+                            className="list-group"
+                            style={{minHeight: "420px", maxHeight: "420px", overflowY: "scroll"}}
+                        >
                             {fileComponents}
                         </FlipMove>
-                    </Panel>
+                    </div>
                 </Panel>
 
                 {overlay}

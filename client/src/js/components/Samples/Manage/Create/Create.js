@@ -19,7 +19,7 @@ import ReadSelector from "./ReadSelector";
 
 const getInitialState = () => {
 
-    const readyHosts = dispatcher.db.hosts.find({added: true});
+    const readyHosts = dispatcher.db.hosts.find({ready: true});
 
     return {
         selected: [],
@@ -27,6 +27,7 @@ const getInitialState = () => {
         host: "",
         isolate: "",
         locale: "",
+        readyHosts: readyHosts,
         subtraction: readyHosts.length > 0 ? readyHosts[0]._id: null,
         forceGroupChoice: getForceGroupChoice(),
         group: dispatcher.settings.get("sample_group") == "force_choice" ? "none": "",
@@ -60,7 +61,7 @@ export default class CreateSample extends React.Component {
     modalEntered = () => {
         dispatcher.settings.on("change", this.onSettingsChange);
 
-        if (dispatcher.db.hosts.count({added: true}) > 0) {
+        if (this.state.readyHosts.length > 0) {
             this.nameNode.focus();
         }
     };
@@ -76,15 +77,7 @@ export default class CreateSample extends React.Component {
         this.setState(data);
     };
 
-    onSettingsChange = () => {
-        this.setState({forceGroupChoice: getForceGroupChoice ()});
-    };
-
-    select = (selected) => {
-        this.setState({
-            selected: selected
-        });
-    };
+    onSettingsChange = () => this.setState({forceGroupChoice: getForceGroupChoice()});
 
     /**
      * Send a request to the server
@@ -125,9 +118,7 @@ export default class CreateSample extends React.Component {
             // Send the request to the server.
             this.setState({pending: true}, () => {
                 dispatcher.db.samples.request("new", data)
-                    .success(() => {
-                        this.setState(getInitialState());
-                    })
+                    .success(() => this.setState(getInitialState()))
                     .failure(() => {
                         this.setState({
                             nameExistsError: true,
@@ -142,7 +133,7 @@ export default class CreateSample extends React.Component {
 
         let modalBody;
 
-        if (dispatcher.db.hosts.count({added: true}) === 0) {
+        if (this.state.readyHosts.length === 0) {
             modalBody = (
                 <Modal.Body>
                     <Alert bsStyle="warning" className="text-center">
@@ -152,18 +143,17 @@ export default class CreateSample extends React.Component {
                 </Modal.Body>
             );
         } else {
-
-            const hostComponents = dispatcher.db.hosts.find({added: true}).map(host => {
-                return <option key={host._id}>{host._id}</option>;
-            });
+            const hostComponents = this.state.readyHosts.map(host =>
+                <option key={host._id}>{host._id}</option>
+            );
 
             let userGroup;
 
             if (this.state.forceGroupChoice) {
 
-                const userGroupComponents = dispatcher.user.groups.map(groupId => {
-                    return <option key={groupId} value={groupId}>{capitalize(groupId)}</option>
-                });
+                const userGroupComponents = dispatcher.user.groups.map(groupId =>
+                    <option key={groupId} value={groupId}>{capitalize(groupId)}</option>
+                );
 
                 userGroup = (
                     <Col md={3}>
@@ -263,7 +253,7 @@ export default class CreateSample extends React.Component {
 
                             <ReadSelector
                                 {...this.state}
-                                select={this.select}
+                                select={(selected) => {this.setState({selected: selected})}}
                             />
                         </Modal.Body>
 

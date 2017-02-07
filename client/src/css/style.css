@@ -481,11 +481,11 @@ table.cluster-table tbody tr {
     justify-content: center;
 }
 
-.btn-with-icon > i {
+.btn-with-icon > div > i {
     margin-right: 3px;
 }
 
-.btn-with-icon > i:only-child {
+.btn-with-icon > div > i:only-child {
     margin-right: 0;
 }
 
