@@ -208,8 +208,6 @@ def ensure_path(path, new_server):
         "files",
         "reference/viruses",
         "reference/hosts",
-        "reference/hosts/index",
-        "reference/hosts/fasta",
         "samples",
         "hmm",
         "logs/jobs"

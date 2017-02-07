@@ -103,7 +103,9 @@ class TestFindImportConflicts:
         same virus as the one being imported.
 
         """
-        yield viruses_collection.db.insert(iresine)
+        iresine["username"] = "test"
+
+        yield viruses_collection.insert(iresine)
         yield viruses_collection.sequences_collection.insert(iresine_sequence)
 
         iresine["isolates"][0]["sequences"] = [iresine_sequence]
@@ -135,7 +137,7 @@ class TestImportFile:
         yield viruses_collection.import_file(transaction)
 
         # Check that history.Collection.add was called three times.
-        assert viruses_collection.collections["history"].stubs["add"].call_count == 5
+        assert viruses_collection.collections["history"].stubs["add_for_import"].call_count == 5
 
         # Check the the correct numbers of documents were inserted.
         assert mock_pymongo.viruses.count() == 5
@@ -278,7 +280,7 @@ class TestImportFile:
 
         virus_document["_version"] = 10
 
-        mock_pymongo.viruses.insert(virus_document)
+        yield viruses_collection.insert(virus_document)
 
         assert 1 == mock_pymongo.viruses.count({
             "_id": virus_document["_id"],
@@ -292,12 +294,14 @@ class TestImportFile:
 
         assert mock_pymongo.viruses.count({"_version": 0, "name": "Cucumber mosaic virus"}) == 1
 
+        print(list(mock_pymongo.viruses.find({}, ["name"])))
+
         assert mock_pymongo.viruses.count() == 4
 
         assert mock_pymongo.sequences.count() == 9
 
         # There should be 4 history additions for inserting new viruses and 1 addition for removing the existing CMV.
-        calls = [c[1] for c in viruses_collection.collections["history"].stubs["add"].mock_calls]
+        calls = [c[1] for c in viruses_collection.collections["history"].stubs["add_for_import"].mock_calls]
 
         assert len([call for call in calls if call[0] == "insert"]) == 4
         assert len([call for call in calls if call[0] == "remove"]) == 1
@@ -327,7 +331,7 @@ class TestImportFile:
 
         virus_document["_version"] = 10
 
-        mock_pymongo.viruses.insert(virus_document)
+        yield viruses_collection.insert(virus_document)
 
         assert 1 == mock_pymongo.viruses.count({
             "_id": virus_document["_id"],
@@ -351,7 +355,7 @@ class TestImportFile:
         assert mock_pymongo.sequences.count() == 7
 
         # There should be 4 history additions for inserting new viruses and 1 addition for removing the existing CMV.
-        calls = [c[1] for c in viruses_collection.collections["history"].stubs["add"].mock_calls]
+        calls = [c[1] for c in viruses_collection.collections["history"].stubs["add_for_import"].mock_calls]
 
         assert len([call for call in calls if call[0] == "insert"]) == 3
         assert len([call for call in calls if call[0] == "remove"]) == 0

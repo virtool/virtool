@@ -17,12 +17,12 @@ FAKE_CONTENT = "foobar-foobar-foobar-foobar-foobar-foobar-foobar-foobar"
 
 @pytest.fixture(scope="function")
 def install_file():
-    return open(os.path.join("./virtool/tests/", INSTALL_FILE_NAME), "rb")
+    return open(os.path.join("./virtool/tests/test_files/", INSTALL_FILE_NAME), "rb")
 
 
 @pytest.fixture(scope="function")
 def install_dir(tmpdir):
-    shutil.copy(os.path.join("./virtool/tests/", INSTALL_FILE_NAME), str(tmpdir))
+    shutil.copy(os.path.join("./virtool/tests/test_files/", INSTALL_FILE_NAME), str(tmpdir))
     return tmpdir
 
 

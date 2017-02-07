@@ -63,6 +63,7 @@ def viruses_collection(mock_collection, called_tester, mock_settings, mock_motor
         "history": mock_collection
     }
 
+    collections["history"].add_coroutine("dispatch")
     collections["history"].add_coroutine("add")
     collections["history"].add_coroutine("add_for_import")
 

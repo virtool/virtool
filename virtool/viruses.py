@@ -832,23 +832,6 @@ class Collection(virtool.database.Collection):
         return True, counter
 
     @virtool.gen.coroutine
-    def send_import_dispatches(self, adds, replaces, flush=False):
-        if len(adds) == 30 or flush:
-            yield self.dispatch("update", [add[0] for add in adds])
-            yield self.collections["history"].dispatch("insert", [add[1] for add in adds])
-
-            del adds[:]
-
-        if len(replaces) == 30 or flush:
-            yield self.dispatch("remove", [replace[0][0] for replace in replaces])
-            yield self.collections["history"].dispatch("insert", [replace[0][1] for replace in replaces])
-
-            yield self.dispatch("update", [replace[1][0] for replace in replaces])
-            yield self.collections["history"].dispatch("insert", [replace[1][1] for replace in replaces])
-
-            del replaces[:]
-
-    @virtool.gen.coroutine
     def find_import_conflicts(self, viruses, replace):
         used_names = yield self.db.distinct("lower_name")
 
@@ -895,6 +878,23 @@ class Collection(virtool.database.Collection):
                     conflicts.append((existing_virus["_id"], existing_virus["name"], sequence["_id"]))
 
         return conflicts or None
+
+    @virtool.gen.coroutine
+    def send_import_dispatches(self, adds, replaces, flush=False):
+        if len(adds) == 30 or flush:
+            yield self.dispatch("update", [add[0] for add in adds])
+            yield self.collections["history"].dispatch("insert", [add[1] for add in adds])
+
+            del adds[:]
+
+        if len(replaces) == 30 or flush:
+            yield self.dispatch("remove", [replace[0][0] for replace in replaces])
+            yield self.collections["history"].dispatch("insert", [replace[0][1] for replace in replaces])
+
+            yield self.dispatch("update", [replace[1][0] for replace in replaces])
+            yield self.collections["history"].dispatch("insert", [replace[1][1] for replace in replaces])
+
+            del replaces[:]
 
     @virtool.gen.coroutine
     def join(self, virus_id, virus_document=None):
@@ -947,10 +947,12 @@ class Collection(virtool.database.Collection):
         """
         virus.update({
             "last_indexed_version": None,
-            "isolates": list(),
             "modified": True,
             "lower_name": virus["name"].lower()
         })
+
+        if "isolates" not in virus:
+            virus["isolates"] = list()
 
         response = yield super().insert(virus, connections)
 

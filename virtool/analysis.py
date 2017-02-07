@@ -320,7 +320,7 @@ class PathoscopeBowtie(Pathoscope):
         # The path to the index of the subtraction host for the sample.
         self.paths["host"] = os.path.join(
             self.paths["data"],
-            "reference/hosts/index",
+            "reference/hosts",
             self.sample["subtraction"].lower().replace(" ", "_"),
             "reference"
         )
@@ -455,7 +455,7 @@ class PathoscopeSNAP(Pathoscope):
         # The path to the SNAP index for the subtraction host for the sample.
         self.paths["host"] = os.path.join(
             self.paths["data"],
-            "reference/hosts/index",
+            "reference/hosts",
             self.sample["subtraction"].lower().replace(" ", "_")
         )
 
@@ -627,7 +627,7 @@ class NuVs(Base):
 
         self.paths["host"] = os.path.join(
             self.paths["data"],
-            "reference/hosts/index",
+            "reference/hosts",
             self.sample["subtraction"].lower().replace(" ", "_"),
             "reference"
         )
