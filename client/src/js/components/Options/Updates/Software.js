@@ -107,7 +107,7 @@ export default class SoftwareUpdates extends React.Component {
 
     render () {
 
-        const version = "v1.7.5"; // this.props.settings.server_version.split("-")[0];
+        const version = this.props.settings.server_version.split("-")[0];
 
         const releases = this.props.updates.branch()
             .find({"type": "software"})
