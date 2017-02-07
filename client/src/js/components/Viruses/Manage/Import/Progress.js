@@ -45,7 +45,7 @@ export default class ImportVirusesProgress extends React.Component {
             dispatcher.db.viruses.request("import_file", {file_id: this.props.fileId, replace: this.props.replace})
                 .update((data) => this.setState(data))
                 .success((data) => this.setState(data))
-                .failure((data) => console.log(data));
+                .failure((data) => console.warn(data));
         }
     }
 
