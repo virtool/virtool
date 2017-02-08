@@ -125,7 +125,8 @@ class Application:
             }),
 
             (r"/upload/([a-zA-Z0-9]+)", UploadHandler, {
-                "collections": self.dispatcher.collections
+                "collections": self.dispatcher.collections,
+                "get_data_path": lambda: self.settings.get("data_path")
             }),
 
             (r"/download/(.*)", tornado.web.StaticFileHandler, {"path": self.settings.get("data_path") + "/download/"}),
@@ -463,15 +464,16 @@ class UploadHandler(tornado.web.RequestHandler):
     :class:`.files.Manager` for handling.
 
     """
-    def initialize(self, collections):
+    def initialize(self, collections, get_data_path):
         self.handle = None
         self.collections = collections
+        self.get_data_path = get_data_path
 
     @virtool.gen.coroutine
     def prepare(self):
         target = self.path_args[0]
         file_document = yield self.collections["files"].find_one({"target": target})
-        self.handle = open(os.path.join("data/files", file_document["_id"]), "wb")
+        self.handle = open(os.path.join(self.get_data_path(), "files", file_document["_id"]), "wb")
         self.request.connection.set_max_body_size(file_document["size_end"] + 1000)
 
     def data_received(self, chunk):
