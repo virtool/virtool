@@ -27,6 +27,8 @@ pyparsing==2.1.5
 pytest==3.0.4
 pytest-catchlog==1.2.2
 pytest-cov==2.4.0
+pytest-datafiles==1.0
+pytest-mock==1.5.0
 pytest-tornado==0.4.5
 python-dateutil==2.5.3
 pytz==2016.4

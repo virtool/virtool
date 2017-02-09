@@ -169,7 +169,8 @@ class TestTimeStamp:
 
     def test_posix(self):
         result = virtool.utils.timestamp(1480549990.4495726)
-        assert result == "2016-11-30T15:53:10.449573"
+        assert "2016-11-30T" in result
+        assert ":53:10.449573" in result
 
     def test_invalid_time(self):
         with pytest.raises(TypeError):
