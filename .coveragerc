@@ -2,10 +2,6 @@
 branch = False
 source = virtool
 
-omit =
-    virtool/tests/*
-    */__init__.py
-
 [report]
 exclude_lines =
     if self.debug:
