@@ -1,11 +1,13 @@
 [run]
 branch = False
 source = virtool
-concurrency = multiprocessing
-
-omit =
-    virtool/tests/*
-    */__init__.py
 
 [report]
-show_missing = True
+exclude_lines =
+    if self.debug:
+    pragma: no cover
+    raise NotImplementedError
+    if __name__ == .__main__.:
+ignore_errors = True
+omit =
+    tests/*
