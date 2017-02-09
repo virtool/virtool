@@ -2,6 +2,13 @@ language: python
 python: "3.6"
 services: mongodb
 cache: pip
+sudo: false
 
-install: "pip install -r requirements.txt"
+install: "pip install --user -r requirements.txt"
 script: pytest
+
+before_install:
+  - "pip install --user codecov"
+
+after_success:
+  - "codecov"
