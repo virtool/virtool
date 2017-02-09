@@ -4,7 +4,7 @@ services: mongodb
 cache: pip
 
 install: "pip install -r requirements.txt"
-script: pytest
+script: "pytest --cov"
 
 before_install:
   - "pip install codecov"
