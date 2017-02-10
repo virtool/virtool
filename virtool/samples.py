@@ -141,12 +141,9 @@ class Collection(virtool.database.Collection):
         data.update({
             "added": virtool.utils.timestamp(),
             "format": "fastq",
-
             "imported": "ip",
             "quality": None,
-
             "analyzed": False,
-
             "hold": True,
             "archived": False
         })
@@ -155,6 +152,8 @@ class Collection(virtool.database.Collection):
 
         # Start the import job
         proc, mem = 2, 6
+
+        yield self.collections["files"].reserve_files(data["files"])
 
         self.collections["jobs"].new("import_reads", task_args, proc, mem, data["username"])
 
@@ -709,6 +708,7 @@ class ImportReads(virtool.job.Job):
 
         """
         # Delete database entry
+        self.collection_operation("files", "reserve_files_cop", {"file_ids": self.files, "reserved": False})
         self.collection_operation("samples", "_remove_samples", [self.sample_id])
 
 
