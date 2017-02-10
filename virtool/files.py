@@ -9,6 +9,7 @@ import multiprocessing
 import virtool.gen
 import virtool.utils
 import virtool.database
+import virtool.organize
 
 
 TYPE_NAME_DICT = {
@@ -70,8 +71,13 @@ class Collection(virtool.database.Collection):
             "timestamp",
             "file_type",
             "created",
+            "reserved",
             "ready"
         ]
+
+        db = self.settings.get_db_client(sync=True)
+
+        virtool.organize.organize_files(db)
 
         self.path = os.path.join(self.settings.get("data_path"), "files")
 
@@ -188,11 +194,27 @@ class Collection(virtool.database.Collection):
             "bytes": file_type,
             "file_type": file_type,
             "download": download,
+            "reserved": False,
             "timestamp": time_getter(),
             "expires": 1200
         })
 
         return target
+
+    @virtool.gen.coroutine
+    def reserve_files(self, file_ids, reserved=True):
+        yield self.update({"_id": {"$in": file_ids}}, {
+            "$set": {
+                "reserved": reserved
+            }
+        })
+
+    @virtool.gen.coroutine
+    def reserve_files_cop(self, data):
+        if "reserved" not in data:
+            data["reserved"] = True
+
+        yield self.reserve_files(data["file_ids"], data["reserved"])
 
     @virtool.gen.exposed_method([])
     def remove_file(self, transaction):
