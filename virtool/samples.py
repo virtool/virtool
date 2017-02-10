@@ -108,7 +108,9 @@ class Collection(virtool.database.Collection):
         # Construct a new sample entry.
         data.update({
             "_id": sample_id,
-            "username": transaction.connection.user["_id"]
+            "username": transaction.connection.user["_id"],
+            "nuvs": False,
+            "pathoscope": False
         })
 
         sample_group_setting = self.settings.get("sample_group")
