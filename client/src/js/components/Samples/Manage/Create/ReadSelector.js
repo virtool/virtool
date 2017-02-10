@@ -19,7 +19,14 @@ import ReadItem from "./ReadItem";
 
 const suffixes = [".fastq", ".fq", ".fastq.gz", ".fq.gz"];
 
-const getReadyFiles = () => dispatcher.db.files.find({file_type: "reads", "ready": true});
+const getAvailableFiles = () => {
+    let files = dispatcher.db.files.find({
+        file_type: "reads",
+        ready: true
+    });
+
+    return filter(files, {reserved: false});
+};
 
 /**
  * A main view for importing samples from FASTQ files. Importing starts an import job on the server.
@@ -31,7 +38,7 @@ export default class ReadSelector extends React.PureComponent {
     constructor (props) {
         super(props);
         this.state = {
-            files: getReadyFiles(),
+            files: getAvailableFiles(),
             filter: "",
             showAll: false
         };
@@ -71,7 +78,7 @@ export default class ReadSelector extends React.PureComponent {
     toggleShowAll = () => this.setState({showAll: !this.state.showAll});
 
     update = () => {
-        const files = getReadyFiles();
+        const files = getAvailableFiles();
 
         this.setState({files: files}, () => {
             this.props.select(intersection(this.props.selected, files.map(f => f["_id"])));
