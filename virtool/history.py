@@ -130,7 +130,7 @@ class Collection(virtool.database.Collection):
             data["entry_version"]
         )
 
-        isolate_ids = yield virtool.virusutils.extract_isolate_ids(document or patched)
+        isolate_ids = virtool.virusutils.extract_isolate_ids(document or patched)
 
         # Remove the old sequences from the collection.
         yield self.sequences_collection.remove({"isolate_id": {"$in": isolate_ids}})

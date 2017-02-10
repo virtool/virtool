@@ -147,7 +147,7 @@ class Collection(virtool.database.Collection):
             raise ValueError("No virus associated with _id {}".format(virus_id))
 
         # Get all the isolate ids from the
-        isolate_ids = yield virusutils.extract_isolate_ids(virus)
+        isolate_ids = virusutils.extract_isolate_ids(virus)
 
         # Remove all sequences associated with the isolates.
         yield self.sequences_collection.remove({"isolate_id": {"$in": isolate_ids}})
@@ -465,7 +465,7 @@ class Collection(virtool.database.Collection):
         virus = yield self.find_one({"_id": data["_id"]})
 
         # Extract the isolate ids from the virus.
-        isolate_ids = yield virusutils.extract_isolate_ids(virus)
+        isolate_ids = virusutils.extract_isolate_ids(virus)
 
         # Get the sequences associated with the virus isolates.
         sequences = yield self.sequences_collection.find({"isolate_id": {"$in": isolate_ids}}).to_list(None)
@@ -791,7 +791,7 @@ class Collection(virtool.database.Collection):
             if virus_exists:
                 existing_virus = yield self.find_one({"lower_name": lower_name})
 
-                isolate_ids = yield virtool.virusutils.extract_isolate_ids(existing_virus)
+                isolate_ids = virtool.virusutils.extract_isolate_ids(existing_virus)
 
                 # Remove the existing virus, including its sequences.
                 remove_dispatches = yield self.remove_for_import(
@@ -864,7 +864,7 @@ class Collection(virtool.database.Collection):
                 )
 
                 # The isolate ids in the existing virus document.
-                existing_isolate_ids = yield virtool.virusutils.extract_isolate_ids(existing_virus)
+                existing_isolate_ids = virtool.virusutils.extract_isolate_ids(existing_virus)
 
                 for sequence in already_existing_sequences:
                     if not sequence["isolate_id"] in existing_isolate_ids:
@@ -920,7 +920,7 @@ class Collection(virtool.database.Collection):
             return None
 
         # Extract the isolate_ids associated with the virus.
-        isolate_ids = yield virusutils.extract_isolate_ids(virus_document)
+        isolate_ids = virusutils.extract_isolate_ids(virus_document)
 
         # Get the sequence entries associated with the isolate ids.
         sequences = yield self.sequences_collection.find({"isolate_id": {"$in": isolate_ids}}).to_list(None)
@@ -1004,7 +1004,7 @@ class Collection(virtool.database.Collection):
             raise ValueError("No virus associated with _id {}".format(virus_id))
 
         # Get all the isolate ids from the
-        isolate_ids = yield virusutils.extract_isolate_ids(virus)
+        isolate_ids = virusutils.extract_isolate_ids(virus)
 
         # Remove all sequences associated with the isolates.
         yield self.sequences_collection.remove({"isolate_id": {"$in": isolate_ids}})

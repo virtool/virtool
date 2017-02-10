@@ -6,6 +6,8 @@ from virtool.permissions import PERMISSIONS
 from virtool.users import reconcile_permissions
 from virtool.history import get_default_isolate
 from virtool.virusutils import merge_virus
+from virtool.sampleutils import calculate_algorithm_tags
+
 
 def organize_analyses(database):
 
@@ -275,84 +277,10 @@ def organize_jobs(database):
 
 
 def organize_samples(database):
+    for sample in database.samples.find({}):
+        analyses = list(database.analyses.find({"sample_id": sample["_id"]}, ["ready", "algorithm"]))
 
-    quality_updates = list()
-
-    for document in database.samples.find({"quality.left": {"$exists": True}}):
-        # The quality data for the left side. Should be in every sample. It is the only side in single end
-        # libraries.
-        left = document["quality"]["left"]
-
-        # The quality data for the right side. Only present for paired-end libraries.
-        right = document["quality"].get("right", None)
-
-        # We will make a quality dict describing one or both sides instead of each separately. Encoding is the same
-        # for both sides.
-        quality = {
-            "encoding": left["encoding"].rstrip(),
-            "count": left["count"],
-            "length": left["length"],
-            "gc": left["gc"]
-        }
-
-        # If a right side is present, sum the read counts and average the GC contents.
-        if right:
-            quality["count"] += right["count"]
-            quality["gc"] = (left["gc"] + right["gc"]) / 2
-
-            quality["length"] = [
-                min(left["length"][0], right["length"][0]),
-                max(left["length"][1], right["length"][1])
-            ]
-
-        bases_keys = ["mean", "median", "lower", "upper", "10%", "90%"]
-
-        quality["bases"] = [[base[key] for key in bases_keys] for base in left["bases"]]
-
-        if right:
-            assert(len(left["bases"]) == len(right["bases"]))
-
-            for i, base in enumerate(quality["bases"]):
-                right_bases = [[base[key] for key in bases_keys] for base in right["bases"]]
-
-                quality["bases"][i] = virtool.utils.average_list(
-                    base,
-                    right_bases[i]
-                )
-
-        composition_keys = ["g", "a", "t", "c"]
-
-        quality["composition"] = [[base[key] for key in composition_keys] for base in left["composition"]]
-
-        if right:
-            assert (len(left["composition"]) == len(right["composition"]))
-
-            for i, base in enumerate(quality["composition"]):
-                right_composition = [[base[key] for key in composition_keys] for base in right["composition"]]
-
-                quality["composition"][i] = virtool.utils.average_list(
-                    base,
-                    right_composition[i]
-                )
-
-        quality["sequences"] = [0] * 50
-
-        for side in [left, right]:
-            if side:
-                for entry in side["sequences"]:
-                    quality["sequences"][entry["quality"]] += entry["count"]
-
-        quality_updates.append({
-            "_id": document["_id"],
-            "quality": quality
+        database.samples.update({"_id": sample["_id"]}, {
+            "$set": calculate_algorithm_tags(analyses),
+            "$inc": {"_version": 1}
         })
-
-    for entry in quality_updates:
-        database.samples.update({"_id": entry["_id"]}, {
-            "$set": {"quality": entry["quality"]}
-        })
-
-    database.samples.update({}, {
-        "$unset": {"format": "", "analyses": ""},
-        "$inc": {"_version": 1}
-    }, multi=True)

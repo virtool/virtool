@@ -393,10 +393,17 @@ table.cluster-table tbody tr {
 }
 
 .sample-label {
+    opacity: 0.85;
+    border: 1px solid #ccc;
     font-size: 11px;
     font-weight: bold;
     padding: 2px 4px;
     border-radius: 2px;
+}
+
+.sample-label.bg-primary {
+    opacity: 1;
+    border: none;
 }
 
 .pulse {

@@ -110,24 +110,21 @@ class TestSplitVirus:
 
 class TestExtractIsolateIds:
 
-    @pytest.mark.gen_test
     def test_merged_virus(self, merged_virus):
-        isolate_ids = yield virtool.virusutils.extract_isolate_ids(merged_virus)
+        isolate_ids = virtool.virusutils.extract_isolate_ids(merged_virus)
 
         assert set(isolate_ids) == {"dqz9u58g", "sad23gat"}
 
-    @pytest.mark.gen_test
     def test_virus_document(self, virus_document):
-        isolate_ids = yield virtool.virusutils.extract_isolate_ids(virus_document)
+        isolate_ids = virtool.virusutils.extract_isolate_ids(virus_document)
 
         assert set(isolate_ids) == {"dqz9u58g", "sad23gat"}
 
-    @pytest.mark.gen_test
     def test_missing_isolates(self, virus_document):
         del virus_document["isolates"]
 
         with pytest.raises(KeyError) as err:
-            yield virtool.virusutils.extract_isolate_ids(virus_document)
+            virtool.virusutils.extract_isolate_ids(virus_document)
 
         assert "'isolates'" in str(err)
 

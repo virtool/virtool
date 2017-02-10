@@ -179,7 +179,6 @@ def get_default_isolate(virus, processor=None):
     return default_isolate
 
 
-@virtool.gen.synchronous
 def extract_isolate_ids(virus):
     """
     Get the isolate ids from a virus document.

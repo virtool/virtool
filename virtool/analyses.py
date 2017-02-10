@@ -88,6 +88,8 @@ class Collection(virtool.database.Collection):
             job_id=job_id
         )
 
+        yield self.collections["samples"].recalculate_algorithm_tags(data["sample_id"])
+
     @virtool.gen.coroutine
     def set_analysis(self, data):
         """
@@ -103,9 +105,13 @@ class Collection(virtool.database.Collection):
         """
         data["analysis"]["ready"] = True
 
+        analysis = yield self.collections["analyses"].find_one(data["analysis_id"], ["sample_id"])
+
         yield self.update({"_id": data["analysis_id"]}, {
             "$set": data["analysis"]
         })
+
+        yield self.collections["samples"].recalculate_algorithm_tags(analysis["sample_id"])
 
     @virtool.gen.exposed_method([])
     def blast_nuvs_sequence(self, transaction):
@@ -219,6 +225,8 @@ class Collection(virtool.database.Collection):
         except FileNotFoundError:
             pass
 
+        yield self.collections["samples"].recalculate_algorithm_tags(sample_id)
+
         return response
 
     @virtool.gen.coroutine
@@ -240,6 +248,8 @@ class Collection(virtool.database.Collection):
                 "$in": id_list
             }
         })
+
+        yield self.collections["samples"].recalculate_algorithm_tags(data["sample_id"])
 
     @virtool.gen.exposed_method([])
     def detail(self, transaction):

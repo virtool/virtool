@@ -45,7 +45,7 @@ export default class SampleSelector extends React.Component {
 
     archive = () => {
         const candidates = filter(this.props.selected, (document) =>
-            !this.props.archived && document.analyzed === true
+            !this.props.archived && (document.pathoscope || document.nuvs) === true
         );
 
         dispatcher.db.samples.request("archive", {_id: map(candidates, "_id")});
