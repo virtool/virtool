@@ -28,7 +28,7 @@ export const Icon = (props) => {
 
     const className = CX(
         props.className,
-        props.pending ? "i-spinner spinner": (`i-${props.name}`),
+        props.pending ? "i-spinner spinning": (`i-${props.name}`),
         props.bsStyle && !props.pending ? `text-${props.bsStyle}`: false,
         {
             "pull-right": props.pullRight,

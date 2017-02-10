@@ -13,7 +13,7 @@ import React from "react";
 import CX from "classnames";
 import { mapValues } from "lodash";
 import { Row, Col } from "react-bootstrap";
-import { ListGroupItem, Icon, Flex, FlexItem, Checkbox, RelativeTime } from "virtool/js/components/Base";
+import { ListGroupItem, Icon, Flex, FlexItem, Checkbox, RelativeTime, Spinner } from "virtool/js/components/Base";
 import { stringOrBool } from "virtool/js/propTypes";
 
 export default class SampleEntry extends React.Component {
@@ -82,18 +82,16 @@ export default class SampleEntry extends React.Component {
 
     render () {
 
-        const labels = mapValues({pathoscope: null, nuvs: null}, (value, key) => {
-            const className = CX("sample-label", {
-                "bg-primary": this.props[key],
-                "pulsing": this.props[key] === "ip"
-            });
-
-            return (
-                <FlexItem className={className} pad>
-                    <Icon name="bars"/> {key === "pathoscope" ? "Pathoscope" : "NuVs"}
-                </FlexItem>
-            );
-        });
+        const labels = mapValues({pathoscope: null, nuvs: null}, (value, key) =>
+            <FlexItem className={CX("sample-label", {"bg-primary": this.props[key]})} pad>
+                <Flex alignItems="center">
+                    {this.props[key] === "ip" ? <Spinner />: <Icon name="bars" />}
+                    <span style={{paddingLeft: "3px"}}>
+                        {key === "pathoscope" ? "Pathoscope" : "NuVs"}
+                    </span>
+                </Flex>
+            </FlexItem>
+        );
 
         let analyzeIcon;
         let archiveIcon;
@@ -143,9 +141,12 @@ export default class SampleEntry extends React.Component {
                     <Col md={3}>
                         <Flex>
                             <FlexItem
-                                className={CX("bg-primary", "sample-label", {pulsing: this.props.imported === "ip"})}
+                                className={CX("bg-primary", "sample-label")}
                             >
-                                <Icon name="filing" /> Import
+                                <Flex alignItems="center">
+                                    {this.props.imported === "ip" ? <Spinner />: <Icon name="filing" />}
+                                    <span style={{paddingLeft: "3px"}}>Import</span>
+                                </Flex>
                             </FlexItem>
                             {labels.pathoscope}
                             {labels.nuvs}
