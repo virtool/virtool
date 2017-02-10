@@ -284,3 +284,11 @@ def organize_samples(database):
             "$set": calculate_algorithm_tags(analyses),
             "$inc": {"_version": 1}
         })
+
+
+def organize_files(database):
+    database.files.update({"reserved": {"$exists": False}}, {
+        "$set": {
+            "reserved": False
+        }
+    }, multi=True)
