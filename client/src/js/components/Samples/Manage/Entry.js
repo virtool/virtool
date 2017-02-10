@@ -11,6 +11,7 @@
 
 import React from "react";
 import CX from "classnames";
+import { mapValues } from "lodash";
 import { Row, Col } from "react-bootstrap";
 import { ListGroupItem, Icon, Flex, FlexItem, Checkbox, RelativeTime } from "virtool/js/components/Base";
 import { stringOrBool } from "virtool/js/propTypes";
@@ -29,8 +30,9 @@ export default class SampleEntry extends React.Component {
         name: React.PropTypes.string.isRequired,
         added: React.PropTypes.string.isRequired,
         username: React.PropTypes.string.isRequired,
-        imported: stringOrBool,
-        analyzed: stringOrBool,
+        imported: stringOrBool.isRequired,
+        pathoscope: stringOrBool.isRequired,
+        nuvs: stringOrBool.isRequired,
         archived: React.PropTypes.bool.isRequired,
         selected: React.PropTypes.bool,
         selecting: React.PropTypes.bool,
@@ -38,9 +40,6 @@ export default class SampleEntry extends React.Component {
     };
 
     static defaultProps = {
-        imported: false,
-        analyzed: false,
-        archived: false,
         selected: false,
         selecting: false
     };
@@ -83,15 +82,18 @@ export default class SampleEntry extends React.Component {
 
     render () {
 
-        let analysisLabel;
+        const labels = mapValues({pathoscope: null, nuvs: null}, (value, key) => {
+            const className = CX("sample-label", {
+                "bg-primary": this.props[key],
+                "pulsing": this.props[key] === "ip"
+            });
 
-        if (this.props.analyzed) {
-            analysisLabel = (
-                <FlexItem className={CX("bg-primary", "sample-label", {"pulsing": this.props.analyzed === "ip"})} pad>
-                    <Icon name="bars" /> Analysis
+            return (
+                <FlexItem className={className} pad>
+                    <Icon name="bars"/> {key === "pathoscope" ? "Pathoscope" : "NuVs"}
                 </FlexItem>
             );
-        }
+        });
 
         let analyzeIcon;
         let archiveIcon;
@@ -109,7 +111,7 @@ export default class SampleEntry extends React.Component {
                 </FlexItem>
             );
 
-            if (this.props.analyzed === true && !this.props.archived) {
+            if (this.props.nuvs === true || this.props.pathoscope === true && !this.props.archived) {
                 archiveIcon = (
                     <FlexItem pad={5}>
                         <Icon
@@ -145,7 +147,8 @@ export default class SampleEntry extends React.Component {
                             >
                                 <Icon name="filing" /> Import
                             </FlexItem>
-                            {analysisLabel}
+                            {labels.pathoscope}
+                            {labels.nuvs}
                         </Flex>
                     </Col>
                     <Col md={3}>

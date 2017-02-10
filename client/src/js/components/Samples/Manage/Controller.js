@@ -101,7 +101,10 @@ export default class SampleController extends React.Component {
         }
 
         if (this.state.analyzed) {
-            documents = documents.find({analyzed: true});
+            documents = documents.find({$or: [
+                {pathoscope: true},
+                {nuvs: true}
+            ]});
         }
 
         if (this.state.findTerm) {
