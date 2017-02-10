@@ -89,6 +89,8 @@ class Application:
             #: The shared :class:`~.virtool.settings.Settings` object created by the server. Passed to all collections.
             self.dispatcher.add_interface("settings", self.settings.to_collection, None)
 
+            self.dispatcher.add_interface("web", WebInterface, self.settings, args=[self._reload, self._shutdown])
+
             self.add_collections(self.dispatcher)
 
             logger.debug("Initialized dispatcher")
@@ -235,76 +237,17 @@ class Application:
                     is_collection=True
                 )
 
-    @virtool.gen.exposed_method(["modify_options"])
-    def reload(self, transaction):
-        yield self.reload()
-
     @virtool.gen.coroutine
     def _reload(self):
-        """
-        Reloads the server by:
+        exe = sys.executable
 
-        * stopping all periodic callbacks
-        * reloading all Virtool modules
-        * reloading settings
-        * starting the dispatcher if the setting ``server_ready`` is True.
+        if exe.endswith("python"):
+            os.execl(exe, exe, *sys.argv)
 
-        """
-        logger.info("Reloading server")
+        if exe.endswith("run"):
+            os.execv(exe, sys.argv)
 
-        logger.debug("Stopping all periodic callbacks.")
-        for periodic_callback in self.periodic_callbacks:
-            periodic_callback.stop()
-
-        logger.debug("Reloading Virtool modules")
-        for module in [virtool.setup, virtool.settings, virtool.dispatcher]:
-            importlib.reload(module)
-
-        for module_name in virtool.collections.COLLECTIONS:
-            module = getattr(virtool, module_name)
-            importlib.reload(module)
-
-        self.initialize()
-
-        # Listen on a new host if the "server_port" or "server_address" settings were changed since the last start.
-        if (self.host != self.settings.get("server_host") or
-            self.port != self.settings.get("server_port") or
-            self.ssl != self.settings.get("use_ssl")):
-
-            self.server_object.stop()
-
-            self.ssl = self.settings.get("use_ssl")
-            self.host = self.settings.get("server_host")
-            self.port = self.settings.get("server_port")
-
-            ssl_ctx = None
-
-            ssl_cert_path = self.settings.get("cert_path")
-            ssl_key_path = self.settings.get("key_path")
-
-            # Setup SSL if necessary.
-            if self.settings.get("use_ssl") and ssl_cert_path and ssl_key_path:
-                ssl_ctx = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
-                ssl_ctx.load_cert_chain(ssl_cert_path, ssl_key_path)
-
-            # Try to start the application. If the set host and port cannot be bound, an error is logged and the
-            # program exits with an return code of 1. X-headers are enabled for future implementation of SSL.
-            self.server_object = self.app.listen(
-                self.settings.get("server_port"),
-                self.settings.get("server_host"),
-                xheaders=bool(ssl_ctx),
-                ssl_options=ssl_ctx
-            )
-
-        return True, None
-
-    @virtool.gen.exposed_method(["modify_options"])
-    def shutdown(self, transaction):
-        """
-        Shutdown the server by calling :func:`sys.exit` with an exit code of 0.
-
-        """
-        yield self._shutdown(0)
+        raise SystemError("Couldn't determine executable type")
 
     @tornado.gen.coroutine
     def _shutdown(self, exit_code=0):
@@ -338,6 +281,29 @@ class Application:
     def handle_interrupt(self, *args):
         future = self._shutdown(130)
         self.loop.add_future(future)
+
+
+class WebInterface:
+
+    def __init__(self, dispatch, collections, settings, add_periodic_callback, reload, shutdown):
+        self.dispatch = dispatch
+        self.collections = collections
+        self.settings = settings
+        self.add_periodic_callback = add_periodic_callback
+        self._reload = reload
+        self._shutdown = shutdown
+
+    @virtool.gen.exposed_method(["modify_options"])
+    def reload(self, transaction):
+        yield self._reload()
+
+    @virtool.gen.exposed_method(["modify_options"])
+    def shutdown(self, transaction):
+        """
+        Shutdown the server by calling :func:`sys.exit` with an exit code of 0.
+
+        """
+        yield self._shutdown(0)
 
 
 class HTTPHandler(tornado.web.RequestHandler):

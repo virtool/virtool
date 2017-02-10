@@ -75,10 +75,6 @@ export default class SoftwareUpdates extends React.Component {
         };
     }
 
-    componentWillReceiveProps (nextProps) {
-        this.setState({repo: nextProps.settings.software_repo});
-    }
-
     static propTypes = {
         set: React.PropTypes.func,
         settings: React.PropTypes.object,

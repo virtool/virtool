@@ -33,12 +33,12 @@ export default class Lifecycle extends React.Component {
 
     reload = () => {
         this.setState({pendingReload: true}, () => {
-            dispatcher.send({interface: "dispatcher", method: "reload", message: {}}).success(() => {
-                const domain = `${this.props.settings.server_address}:${this.props.settings.server_port}`;
-                const protocol = dispatcher.settings.get("use_ssl") ? "https": "http";
+            const domain = `${this.props.settings.server_host}:${this.props.settings.server_port}`;
+            const protocol = dispatcher.settings.get("use_ssl") ? "https": "http";
 
-                window.location.assign(`${protocol}://${domain}`);
-            });
+            dispatcher.send({interface: "web", method: "reload", message: {}});
+
+            window.setTimeout(() => window.location.assign(`${protocol}://${domain}`), 2000);
         });
     };
 
