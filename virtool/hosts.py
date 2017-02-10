@@ -3,11 +3,12 @@ import pymongo
 import logging
 import subprocess
 
+import virtool.gen
 import virtool.job
 import virtool.utils
 import virtool.files
-import virtool.gen
 import virtool.database
+import virtool.organize
 
 logger = logging.getLogger(__name__)
 
@@ -28,6 +29,10 @@ class Collection(virtool.database.Collection):
             "ready",
             "job"
         ]
+
+        db = self.settings.get_db_client(sync=True)
+
+        virtool.organize.organize_hosts(db)
 
     @virtool.gen.exposed_method(["add_host"])
     def add(self, transaction):
@@ -153,7 +158,7 @@ class Collection(virtool.database.Collection):
     @virtool.gen.coroutine
     def set_ready(self, data):
         """
-        Class by :class:`.AddHost` job processes. Sets the *added* field to true for the host document identified by the
+        Class by :class:`.AddHost` job processes. Sets the *ready* field to true for the host document identified by the
         passed host id.
 
         :param data: a dict containing the host id.
@@ -304,7 +309,7 @@ class AddHost(virtool.job.Job):
 
     def update_db(self):
         """
-        Set the *added* field to True by calling :meth:`.hosts.Collection.set_added`.
+        Set the *ready* field to True by calling :meth:`.hosts.Collection.set_added`.
 
         """
         self.collection_operation("hosts", "set_ready", {"_id": self.host_id})
