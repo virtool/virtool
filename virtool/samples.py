@@ -11,6 +11,9 @@ import virtool.gen
 import virtool.database
 import virtool.job
 import virtool.pathoscope
+import virtool.sampleutils
+
+from virtool.organize import organize_samples
 
 
 class Collection(virtool.database.Collection):
@@ -37,6 +40,10 @@ class Collection(virtool.database.Collection):
             "all_read",
             "all_write"
         ]
+
+        db = self.settings.get_db_client(sync=True)
+
+        organize_samples(db)
 
     @virtool.gen.coroutine
     def sync_processor(self, documents):
@@ -65,12 +72,6 @@ class Collection(virtool.database.Collection):
             )
 
             if send:
-                analysis_count = yield self.collections["analyses"].find({
-                    "sample_id": document["_id"]
-                }).count()
-
-                if not document["analyzed"] and analysis_count > 0:
-                    document["analyzed"] = "ip"
                 to_send.append(document)
 
         return to_send
@@ -442,6 +443,18 @@ class Collection(virtool.database.Collection):
         )
 
         return True, dict(file_id=file_id)
+
+    @virtool.gen.coroutine
+    def recalculate_algorithm_tags(self, sample_id):
+        analyses = yield self.collections["analyses"].find({
+            "sample_id": sample_id
+        }, ["ready", "algorithm"]).to_list(None)
+
+        update = virtool.sampleutils.calculate_algorithm_tags(analyses)
+
+        yield self.update(sample_id, {
+            "$set": update
+        })
 
 
 class ImportReads(virtool.job.Job):
