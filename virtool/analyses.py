@@ -249,7 +249,8 @@ class Collection(virtool.database.Collection):
             }
         })
 
-        yield self.collections["samples"].recalculate_algorithm_tags(data["sample_id"])
+        for sample_id in id_list:
+            yield self.collections["samples"].recalculate_algorithm_tags(sample_id)
 
     @virtool.gen.exposed_method([])
     def detail(self, transaction):
