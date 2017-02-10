@@ -221,6 +221,23 @@ def organize_hosts(database):
         }
     }, multi=True)
 
+    for host in database.hosts.find():
+        if "ready" not in host:
+            try:
+                ready = host["added"]
+            except KeyError:
+                ready = True
+
+            database.hosts.update_one({"_id": host["_id"]}, {
+                "$unset": {
+                    "added": ""
+                },
+
+                "$set": {
+                    "ready": ready
+                }
+            })
+
 
 def organize_users(database):
     # If any users lack the ``primary_group`` field or it is None, add it with a value of "".
