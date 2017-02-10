@@ -20,6 +20,7 @@ export * from "./Pulse";
 export * from "./Radio";
 export * from "./RelativeTime";
 export * from "./Scroll";
+export * from "./Spinner";
 export * from "./Tooltip";
 export * from "./Uploader";
 
