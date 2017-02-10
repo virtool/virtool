@@ -11,6 +11,7 @@
 
 import React from "react";
 import Moment from "moment";
+import { includes } from "lodash";
 
 /**
  * Renders a timestamp into a readable relative time (eg. 2 hours ago). On mount it sets an interval that updates the
@@ -71,7 +72,7 @@ export class RelativeTime extends React.Component {
         // It is possible that the relative time could be in the future if the browser time lags behind the server time.
         // If this is the case the string will contain the substring 'in a'. If this substring is present, return the
         // alternative time string 'just now'.
-        return timeString.indexOf("in a") > -1 ? "just now": timeString;
+        return includes(timeString, "in a") || includes(timeString, "a few") ? "just now": timeString;
     };
 
     update = () => {
