@@ -35,7 +35,3 @@ shutil.copy("install.sh", os.path.join(target, "install.sh"))
 shutil.copytree("assets", os.path.join(target, "assets"))
 
 shutil.copytree("client/dist", os.path.join(target, "client"))
-
-subprocess.call(["make", "-C", "doc", "html"])
-
-shutil.copytree("doc/_build/html", os.path.join(target, "doc"))

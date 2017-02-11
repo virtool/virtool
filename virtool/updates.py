@@ -7,6 +7,7 @@ import requests
 import tempfile
 import urllib.request
 import tornado.ioloop
+import tornado.gen
 
 import virtool.gen
 import virtool.database
@@ -170,12 +171,9 @@ class Collection(virtool.database.Collection):
             yield self.update_software_step(0, "copy_files")
             yield copy_software_files(decompressed_path, INSTALL_PATH)
 
-            yield self.update({"_id": "software_install"}, {
-                "$set": {
-                    "progress": 1,
-                    "complete": True
-                }
-            })
+            yield self.remove(["software_install"])
+
+            yield tornado.gen.sleep(1.5)
 
             yield self.reload()
 
