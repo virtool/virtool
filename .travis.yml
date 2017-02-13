@@ -16,6 +16,7 @@ install:
 - nvm install $TRAVIS_NODE_VERSION
 - npm install -g yarn
 - npm install -g webpack
+- cd
 
 script:
 - pytest --cov
@@ -30,6 +31,7 @@ after_success:
 - cd ~/client
 - yarn install
 - webpack --config webpack.production.config.js
+- cd
 - pyinstaller -F --distpath build/virtool run.py
 - cp -rv assets build/virtool
 - cp -rv client/dist build/virtool/client
