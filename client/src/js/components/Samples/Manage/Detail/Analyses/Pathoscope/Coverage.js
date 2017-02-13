@@ -10,7 +10,7 @@ const createChart = (element, data, meta, yMax, xMin, showYAxis) => {
 
     const margin = {
         top: 10,
-        left: maxWidth + (showYAxis ? 15: 0),
+        left: maxWidth + (showYAxis ? 50: 0),
         bottom: 50,
         right: 10
     };
@@ -33,6 +33,8 @@ const createChart = (element, data, meta, yMax, xMin, showYAxis) => {
     const x = d3.scaleLinear()
         .range([0, width])
         .domain([0, data.length]);
+
+    console.log(height, yMax);
 
     const y = d3.scaleLinear()
         .range([height, 0])
@@ -69,11 +71,9 @@ const createChart = (element, data, meta, yMax, xMin, showYAxis) => {
             .attr("transform", "rotate(-65)");
 
     if (showYAxis) {
-        const yAxis = d3.axisLeft(y);
-
         svg.append("g")
             .attr("class", "y axis")
-            .call(yAxis);
+            .call(d3.axisLeft(y));
     }
 
     svg.append("text")
