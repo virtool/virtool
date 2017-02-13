@@ -19,7 +19,6 @@ install:
 - nvm install $TRAVIS_NODE_VERSION
 - npm install -g yarn
 - npm install -g webpack
-- tree ~
 - cd $TRAVIS_BUILD_DIR
 
 script:
