@@ -16,51 +16,20 @@ import JobsToolbar from "./Toolbar";
 const progressSortFunction = (a, b) => {
 
     if (a.state === "running") {
-        // Always place before waiting jobs.
-        if (b.state === "waiting") {
-            return -1;
-        }
-
-        // Sort by the progress field if both jobs are running.
         if (b.state === "running") {
             return a.progress > b.progress ? -1: 1;
         }
-
-        // Finished jobs go before running jobs.
         return 1;
     }
 
-    if (a.state === "complete") {
-        return  b.state === "complete" ? 0: -1;
-    }
-
-    if (a.state === "cancelled") {
-        if (b.state === "complete") {
+    if (a.state === "waiting") {
+        if (b.state !== "waiting") {
             return 1;
         }
-
-        if (b.state === "cancelled") {
-            return 0;
-        }
-
-        return -1;
-    }
-
-    if (a.state === "error") {
-        if (b.state === "complete") {
-            return 1;
-        }
-
-        if (b.state === "error") {
-            return 0;
-        }
-
-        return -1;
     }
 
     return 0;
-
-}
+};
 
 export default class ManageJobs extends React.Component {
 
@@ -139,7 +108,7 @@ export default class ManageJobs extends React.Component {
 
             documents = this.state.documents.branch().find(query).sort(progressSortFunction).data();
 
-            if (this.state.sortDescending) {
+            if (!this.state.sortDescending) {
                 documents.reverse();
             }
         }
