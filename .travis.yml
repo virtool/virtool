@@ -1,10 +1,13 @@
 language: python
 python: "3.5"
 services: mongodb
-cache: pip, yarn
+cache:
+  -pip
+  directories:
+    - client/node_modules
 
 env:
-- TRAVIS_NODE_VERSION="4.2.6"
+- TRAVIS_NODE_VERSION="6"
 
 install:
 - pip install -r requirements.txt
@@ -16,7 +19,7 @@ install:
 - nvm install $TRAVIS_NODE_VERSION
 - npm install -g yarn
 - npm install -g webpack
-- cd
+- cd ~/virtool
 
 script:
 - pytest --cov
@@ -28,10 +31,10 @@ after_success:
 - codecov
 - mkdir build
 - mkdir build/virtool
-- cd ~/client
+- cd client
 - yarn install
 - webpack --config webpack.production.config.js
-- cd
+- cd ..
 - pyinstaller -F --distpath build/virtool run.py
 - cp -rv assets build/virtool
 - cp -rv client/dist build/virtool/client
