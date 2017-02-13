@@ -3,7 +3,6 @@ import sys
 import ssl
 import logging
 import subprocess
-import importlib
 import tornado.web
 import tornado.gen
 import tornado.ioloop
@@ -72,7 +71,9 @@ class Application:
         self.host = None
         self.port = None
 
-        self.dispatcher = None
+        #: The global :class:`.Dispatcher` object used to communicate with clients.
+        self.dispatcher = virtool.dispatcher.Dispatcher(self.add_periodic_callback)
+
         self.server_object = None
 
     def initialize(self):
@@ -83,9 +84,6 @@ class Application:
         self.port = self.settings.get("server_port")
 
         if self.settings.get("server_ready"):
-            #: The global :class:`.Dispatcher` object used to communicate with clients.
-            self.dispatcher = virtool.dispatcher.Dispatcher(self.add_periodic_callback)
-
             #: The shared :class:`~.virtool.settings.Settings` object created by the server. Passed to all collections.
             self.dispatcher.add_interface("settings", self.settings.to_collection, None)
 
