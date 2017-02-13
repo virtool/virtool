@@ -34,8 +34,6 @@ const createChart = (element, data, meta, yMax, xMin, showYAxis) => {
         .range([0, width])
         .domain([0, data.length]);
 
-    console.log(height, yMax);
-
     const y = d3.scaleLinear()
         .range([height, 0])
         .domain([0, yMax]);
