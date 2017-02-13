@@ -108,9 +108,9 @@ export default class SourceTypes extends React.Component {
             <div>
                 <Row>
                     <Col md={6}>
-                        <Flex alignItems="center" style={{marginBottom: "10px"}}>
+                        <Flex alignItems="center">
                             <FlexItem grow={1} >
-                                <strong>Source Types</strong>
+                                <h5><strong>Source Types</strong></h5>
                             </FlexItem>
                             <FlexItem>
                                 <Checkbox

@@ -68,7 +68,8 @@ class Collection(virtool.database.Collection):
         # Reformat the release dicts to make them more palatable. If the response code was not 200, the releases list
         # will be empty. This is interpreted by the web client as an error.
         if response.status_code == 200:
-            releases = [format_software_release(release) for release in response.json()[0:5]]
+            releases = [format_software_release(release) for release in response.json() if not release["prerelease"]]
+            releases = releases[0:5]
 
         # A list of ids of documents that should be removed from the updates collection. Initially all document ids in
         # the collection.

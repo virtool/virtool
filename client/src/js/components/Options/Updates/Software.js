@@ -11,7 +11,7 @@
 
 import React from "react";
 import Moment from "moment";
-import { Row, Col, Alert, Panel, FormGroup, FormControl, InputGroup } from "react-bootstrap";
+import { Row, Col, Alert, Panel, FormGroup, FormControl, InputGroup, Label } from "react-bootstrap";
 import { Icon, Flex, FlexItem, Button, ListGroupItem, AutoProgressBar } from "virtool/js/components/Base";
 import { byteSize } from "virtool/js/utils";
 
@@ -21,14 +21,16 @@ const makeOrderable = (version) => parseInt(version.replace(/\D/g, "").replace("
 
 const SoftwareRelease = (props) => {
 
-    let endTag;
+    let installedLabel;
 
-    if (props.name === props.runningVersion) {
-        endTag = <strong className="text-primary">Installed</strong>
+    if (props.installed) {
+        installedLabel = <Label bsStyle="primary">Installed</Label>
     }
 
-    if (makeOrderable(props.runningVersion) < makeOrderable(props.name)) {
-        endTag = <strong className="text-success">Latest</strong>
+    let latestLabel;
+
+    if (props.latest) {
+        latestLabel = <Label bsStyle="success">Latest</Label>
     }
 
     return (
@@ -44,7 +46,7 @@ const SoftwareRelease = (props) => {
                 </Col>
                 <Col md={1}>
                     <span className="pull-right">
-                        {endTag}
+                        {installedLabel} {latestLabel}
                     </span>
                 </Col>
             </Row>
@@ -58,7 +60,9 @@ SoftwareRelease.propTypes = {
     html_url: React.PropTypes.string,
     prerelease: React.PropTypes.bool,
     published_at: React.PropTypes.string,
-    runningVersion: React.PropTypes.string
+    installed: React.PropTypes.bool,
+    latest: React.PropTypes.bool
+
 };
 
 /**
@@ -137,9 +141,14 @@ export default class SoftwareUpdates extends React.Component {
                 );
             }
 
-            releaseComponents = releases.map((release) =>
-                <SoftwareRelease key={release._id} {...release} runningVersion={version} />
-            );
+            releaseComponents = releases.map((release, index) => {
+                return <SoftwareRelease
+                    key={release._id}
+                    latest={index === 0}
+                    installed={version.split("-")[0] === release.name}
+                    {...release}
+                />
+            });
 
         } else {
             releaseComponents = (
