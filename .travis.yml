@@ -1,12 +1,28 @@
 language: python
-python: '3.5'
+python: "3.5"
 services: mongodb
-cache: pip
+cache:
+  -pip
+  directories:
+    - client/node_modules
+
+env:
+- TRAVIS_NODE_VERSION="6"
 
 install:
 - pip install -r requirements.txt
+- rm -rf ~/.nvm
+- git clone https://github.com/creationix/nvm.git ~/.nvm
+- cd ~/.nvm
+- git checkout `git describe --abbrev=0 --tags`
+- source ~/.nvm/nvm.sh
+- nvm install $TRAVIS_NODE_VERSION
+- npm install -g yarn
+- npm install -g webpack
+- cd ~/virtool
 
-script: pytest --cov
+script:
+- pytest --cov
 
 before_install:
 - pip install codecov
@@ -15,9 +31,13 @@ after_success:
 - codecov
 - mkdir build
 - mkdir build/virtool
+- cd client
+- yarn install
+- webpack --config webpack.production.config.js
+- cd ..
 - pyinstaller -F --distpath build/virtool run.py
 - cp -rv assets build/virtool
-- cp -rv client build/virtool
+- cp -rv client/dist build/virtool/client
 - cp -v VERSION build/virtool
 - cp -v LICENSE build/virtool
 - cp -v readme build/virtool
