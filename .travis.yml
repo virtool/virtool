@@ -35,7 +35,7 @@ after_success:
 - yarn install
 - webpack --config webpack.production.config.js
 - cd ..
-- pyinstaller -F --distpath build/virtool run.py
+- pyinstaller -F --hidden-import=tkinter --hidden-import=tkinter.filedialog --distpath build/virtool run.py
 - cp -rv assets build/virtool
 - cp -rv client/dist build/virtool/client
 - cp -v VERSION build/virtool
