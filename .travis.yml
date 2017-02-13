@@ -1,12 +1,25 @@
 language: python
-python: '3.5'
+python: "3.5"
 services: mongodb
 cache: pip
 
+env:
+- TRAVIS_NODE_VERSION="4.2.6"
+
 install:
 - pip install -r requirements.txt
+- rm -rf ~/.nvm
+- git clone https://github.com/creationix/nvm.git ~/.nvm
+- cd ~/.nvm
+- git checkout `git describe --abbrev=0 --tags`
+- source ~/.nvm/nvm.sh
+- nvm install $TRAVIS_NODE_VERSION
+- npm install yarn
+- yarn install
 
-script: pytest --cov
+script:
+- pytest --cov
+- mocha
 
 before_install:
 - pip install codecov
