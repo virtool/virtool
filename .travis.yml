@@ -1,32 +1,50 @@
 language: python
-python: '3.5'
+python: "3.5"
 services: mongodb
-cache: pip
+cache:
+  -pip
+  directories:
+    - client/node_modules
+
+env:
+- TRAVIS_NODE_VERSION="6"
 
 install:
 - pip install -r requirements.txt
+- rm -rf ~/.nvm
+- git clone https://github.com/creationix/nvm.git ~/.nvm
+- cd ~/.nvm
+- git checkout `git describe --abbrev=0 --tags`
+- source ~/.nvm/nvm.sh
+- nvm install $TRAVIS_NODE_VERSION
+- npm install -g yarn
+- npm install -g webpack
+- cd ~/virtool
 
-script: pytest --cov
+script:
+- pytest --cov
 
 before_install:
 - pip install codecov
 
 after_success:
 - codecov
-
-before_deploy:
 - mkdir build
 - mkdir build/virtool
+- cd client
+- yarn install
+- webpack --config webpack.production.config.js
+- cd ..
 - pyinstaller -F --distpath build/virtool run.py
-- cp -v run build/virtool
 - cp -rv assets build/virtool
-- cp -rv client build/virtool
+- cp -rv client/dist build/virtool/client
 - cp -v VERSION build/virtool
 - cp -v LICENSE build/virtool
 - cp -v readme build/virtool
 - tar -cvzf virtool.tar.gz build/virtool
 
 deploy:
+  skip_cleanup: true
   provider: releases
   api_key:
     secure: Otm5EqAcBp2i/KghWT/LZkLlpY1qHbYolCRk/Mwgqr0IQvy1ryM8IQot88/mntzKjVFbUIlJDVU8UmWgXac0cBCCT4rvzpRqMXEiWK+sl0Lqqg4tiOMS5gdQF5ywYVinT8e5Zl7O4g05zjU7mUMnSLRlTCNtcffdwOAqp9tfNJ4/FqlmHK+mhufmThQOdschbPLo7dFfSA7oioXesPWSA33lwG8PQWwQjmm55oMOqZiN38HG0wdZQgoH3QsVXLlTwqxAuyBfmOjrwkhTLhTfJ1EWwnlq1RF9uzxZF7J7bYR+IWm8Ws7z9n9kMX0F6/onnAS4D3QLue59jzfR7MJqyaDpyEONjjaP/8wC0afJ8vdc3X5SEdLz5S3/4X8d0llJLEZPL2i1PNfJzDIF7GDerF+0UARhtnHjMQFy5oV6UO6Pd3UuFaoaQUQff4Gw6ZYxVGEkbCUwYqMn4JaiDBrViUK2fzFQzWqiMnI3CrYYW19lcC4ppHLuTJz8YlpNwCsxpCU5YB14m6ra5ZPSJ+dqBLuF46KU+4uW+cXi+oAoS6t4Mb9Jz5Nhfgum965uFuOcsYaEilQSGzqRdIJFhBxyp+ow9Cnq0acmffm+W7jT+m0v2IvUlDkthAPSIBDLRrjOECTUXB7VorSusrK6J3hBcdkl6J58DfNi55N2px8KB7w=
