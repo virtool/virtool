@@ -35,14 +35,11 @@ def install_uncompressed(tmpdir):
     for filename in ["install.sh", "run", "VERSION"]:
         open(os.path.join(root_path, filename), "w").close()
 
-    for dirname in ["client", "doc"]:
+    for dirname in ["client"]:
         os.mkdir(os.path.join(root_path, dirname))
 
     for filename in ["app.d879w8wa0kj0l2.js", "index.html", "favicon.ico"]:
         open(os.path.join(root_path, "client", filename), "w").close()
-
-    for filename in ["doc.pdf", "doc.html"]:
-        open(os.path.join(root_path, "doc", filename), "w").close()
 
     return tmpdir
 
@@ -181,15 +178,6 @@ class TestCheckSoftwareTree:
         assert not intact
 
     @pytest.mark.gen_test
-    def test_missing_doc_dir(self, install_uncompressed):
-        release_path = os.path.join(str(install_uncompressed), "virtool")
-        shutil.rmtree(os.path.join(release_path, "doc"))
-
-        intact = yield virtool.updates.check_software_tree(release_path)
-
-        assert not intact
-
-    @pytest.mark.gen_test
     def test_missing_client_file(self, install_uncompressed):
         release_path = os.path.join(str(install_uncompressed), "virtool")
         os.remove(os.path.join(release_path, "client/index.html"))
@@ -224,6 +212,5 @@ class TestCopySoftwareFiles:
 
         yield virtool.updates.copy_software_files(src, dest)
 
-        assert set(os.listdir(dest)) == {"client", "doc", "run", "VERSION"}
+        assert set(os.listdir(dest)) == {"client", "run", "VERSION"}
         assert set(os.listdir(os.path.join(dest, "client"))) == {"app.d879w8wa0kj0l2.js", "index.html", "favicon.ico"}
-        assert set(os.listdir(os.path.join(dest, "doc"))) == {"doc.pdf", "doc.html"}

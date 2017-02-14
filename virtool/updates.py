@@ -274,7 +274,7 @@ def decompress_file(path, target):
 
 @virtool.gen.synchronous
 def check_software_tree(path):
-    if set(os.listdir(path)) != {"client", "install.sh", "run", "VERSION", "doc"}:
+    if set(os.listdir(path)) != {"client", "install.sh", "run", "VERSION"}:
         return False
 
     client_content = os.listdir(os.path.join(path, "client"))
@@ -290,14 +290,13 @@ def check_software_tree(path):
 
 @virtool.gen.synchronous
 def copy_software_files(src, dest):
-    # Remove the client and doc dirs and replace them with the new ones.
-    for dirname in ["client", "doc"]:
-        try:
-            shutil.rmtree(os.path.join(dest, dirname))
-        except FileNotFoundError:
-            pass
+    # Remove the client dir and replace it with the new one.
+    try:
+        shutil.rmtree(os.path.join(dest, "client"))
+    except FileNotFoundError:
+        pass
 
-        shutil.copytree(os.path.join(src, dirname), os.path.join(dest, dirname))
+    shutil.copytree(os.path.join(src, "client"), os.path.join(dest, "client"))
 
     # Remove the old files and copy in new ones.
     for filename in ["run", "VERSION"]:

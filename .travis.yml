@@ -38,9 +38,9 @@ after_success:
 - pyinstaller -F --hidden-import=tkinter --hidden-import=tkinter.filedialog --distpath build/virtool run.py
 - cp -rv assets build/virtool
 - cp -rv client/dist build/virtool/client
-- cp -v VERSION build/virtool
 - cp -v LICENSE build/virtool
 - cp -v readme.md build/virtool
+- echo $TRAVIS_TAG > build/virtool/VERSION
 - cd build
 - tar -cvzf virtool.tar.gz virtool
 - tar -tvf virtool.tar.gz
