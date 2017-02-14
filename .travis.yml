@@ -41,6 +41,7 @@ after_success:
 - cp -v VERSION build/virtool
 - cp -v LICENSE build/virtool
 - cp -v readme.md build/virtool
+- echo $TRAVIS_TAG > build/virtool/VERSION
 - cd build
 - tar -cvzf virtool.tar.gz virtool
 - tar -tvf virtool.tar.gz
