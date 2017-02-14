@@ -477,6 +477,8 @@ class Collection(virtool.database.Collection):
             "sessions.token": data["token"]
         })
 
+        print()
+
         # Fail authorization if no user if found for the token.
         if not user:
             return False, None
@@ -541,11 +543,8 @@ class Collection(virtool.database.Collection):
             # Retrieve user information from database (username, hashed and salted password, salt)
             user = yield self.find_one({"_id": username})
 
-            # Salt and hash attempted password
-            _, attempted_password = salt_hash(password, salt=user["salt"])
-
             # Return True if the attempted password matches the stored password.
-            if attempted_password == user["password"]:
+            if check_password(password, user["password"], user["salt"]):
                 return user
 
         return False
@@ -616,50 +615,42 @@ class Collection(virtool.database.Collection):
         return bool(user_count)
 
 
-def salt_hash(password, salt=None):
+def salt_hash(password):
     """
     Salt and hash a password. This function is used for generating new salts and salted and hashed passwords for users.
-    If the ``salt`` argument is not assigned, it is assumed we are generating a new salt and hashed password.
-
-    .. code-block:: pycon
-
-        >>> salt, hashed = salt_hash("grapevine")
-        >>> print(salt)
-        '02166953ca2d0fc5286d6a39'
-        >>> print(hashed)
-        '91338439af0d048f2e5ae3253c5003c43a6a0874dce711fbe563b5efb9eba958c598e89b8f90fdd05295c1b22984aac96aa2a114e3adead8f6231d1b463d161c'
-
-    If ``salt`` is not assigned, it will concatenated to the passed ``password`` and the result will be hashed. This is
-    used to compare submitted login passwords to the salted and hashed password in the database.
-
-    .. code-block:: pycon
-
-        >>> salt_from_db = '02166953ca2d0fc5286d6a39'
-        >>> hashed_from_db = '91338439af0d048f2e5ae3253c5003c43a6a0874dce711fbe563b5efb9eba958c598e89b8f90fdd05295c1b22984aac96aa2a114e3adead8f6231d1b463d161c'
-        >>> salt, hashed = salt_hash("grapevine", salt=salt_from_db)
-        >>> print(hashed)
-        '91338439af0d048f2e5ae3253c5003c43a6a0874dce711fbe563b5efb9eba958c598e89b8f90fdd05295c1b22984aac96aa2a114e3adead8f6231d1b463d161c'
-        >>> hashed == hashed_from_db
-        True
 
     :param password: the string to salt and hash.
     :type password: str
-
-    :param salt: the salt to apply to the password if we are checking a password
-    :type salt: str
 
     :return: a salt and hashed password.
     :rtype: tuple
 
     """
-    # If salt is not provided, a new password hash is being generated, so make a new salt string
-    salt = salt or virtool.utils.random_alphanumeric(24)
+    salt = virtool.utils.random_alphanumeric(24)
 
-    # Hash the password prepended with salt
     hashed = hashlib.sha512(salt.encode("utf-8") + password.encode("utf-8")).hexdigest()
 
-    # Return a dict of the salt and the hashed password + salt
     return salt, hashed
+
+
+def check_password(password, hashed, salt):
+    """
+    Check if the plain text ``password`` matches the ``hashed_password`` and ``salt``. Returns ``True`` if they match.
+
+    :param password: the plain text password to check.
+    :type password: str
+
+    :param hashed: the salted and hashed password from the database
+    :type salt: str
+
+    :param salt: the salt to apply to the hashed password
+    :type salt: str
+
+    :return: ``True`` if there is a match; ``False`` if not
+    :rtype: bool
+
+    """
+    return hashed == hashlib.sha512(salt.encode("utf-8") + password.encode("utf-8")).hexdigest()
 
 
 def reconcile_permissions(groups):
