@@ -458,7 +458,7 @@ class UploadHandler(tornado.web.RequestHandler):
 
 def find_server_version(install_path="."):
     try:
-        return subprocess.check_output(['git', 'describe']).decode().rstrip()
+        return subprocess.check_output(["git", "describe", "--tags"]).decode().rstrip()
     except (subprocess.CalledProcessError, FileNotFoundError):
         try:
             version_file_path = os.path.join(install_path, "VERSION")
