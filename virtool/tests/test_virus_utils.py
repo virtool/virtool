@@ -123,10 +123,8 @@ class TestExtractIsolateIds:
     def test_missing_isolates(self, virus_document):
         del virus_document["isolates"]
 
-        with pytest.raises(KeyError) as err:
+        with pytest.raises(KeyError):
             virtool.virusutils.extract_isolate_ids(virus_document)
-
-        assert "'isolates'" in str(err)
 
 
 class TestExtractSequenceIds:
