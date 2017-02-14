@@ -274,7 +274,7 @@ def decompress_file(path, target):
 
 @virtool.gen.synchronous
 def check_software_tree(path):
-    if set(os.listdir(path)) != {"client", "install.sh", "run", "VERSION", "doc"}:
+    if set(os.listdir(path)) != {"client", "install.sh", "run", "VERSION"}:
         return False
 
     client_content = os.listdir(os.path.join(path, "client"))
