@@ -187,9 +187,6 @@ def extract_isolate_ids(virus):
     :return: a list of isolate ids.
 
     """
-    if not virus["isolates"]:
-        raise ValueError("Empty isolates list in virus document")
-
     return [isolate["isolate_id"] for isolate in virus["isolates"]]
 
 
