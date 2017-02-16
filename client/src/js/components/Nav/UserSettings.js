@@ -39,7 +39,6 @@ export default class UserSettings extends React.Component {
     requestSet = (key, value) => {
         this.setState({pending: true}, () => {
             dispatcher.db.users.request("change_user_setting", {
-                _id: this.props.user.name,
                 key: key,
                 value: value
             }).success(() => this.setState({pending: false}));
