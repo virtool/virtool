@@ -45,7 +45,6 @@ export default class User {
             window.location.hash = "home/welcome";
 
             forIn(dispatcher.db, collection => {
-                collection.documents = [];
                 collection.synced = false;
             });
 
@@ -56,13 +55,10 @@ export default class User {
 
     }
 
-    logout () {
+    static logout () {
         dispatcher.send({
             interface: "users",
-            method: "logout",
-            data: {
-                token: this.token
-            }
+            method: "logout"
         });
     }
 }
