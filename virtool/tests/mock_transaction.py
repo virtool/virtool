@@ -4,9 +4,9 @@ class MockTransaction:
 
         self.message = message
 
-        self.method_name = self.message.get("method")
+        self.method = self.message.get("method")
 
-        self.collection_name = self.message.get("interface")
+        self.interface = self.message.get("interface")
 
         self.data = self.message.get("data")
 

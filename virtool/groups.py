@@ -4,6 +4,7 @@ import pymongo.errors
 import virtool.gen
 import virtool.utils
 import virtool.database
+
 from virtool.permissions import PERMISSIONS
 
 logger = logging.getLogger(__name__)
@@ -81,11 +82,7 @@ class Collection(virtool.database.Collection):
             }
         })
 
-        # Get a list of user ids of users affected by the change.
-        affected_user_ids = yield self.get_member_users(data["_id"])
-
-        # Make a list of affected user ids and call update_user_groups to update the user entries.
-        yield self.collections["users"].update_user_permissions(affected_user_ids)
+        yield self.update_member_users(data["_id"])
 
         return True, response
 
@@ -105,38 +102,80 @@ class Collection(virtool.database.Collection):
 
         # Check if the user has permission to remove users.
         # Only accept single id strings.
-        if isinstance(group_id, str):
-            # The administrator is not permitted to be removed.
-            if group_id != "administrator":
-                affected_user_ids = yield self.get_member_users(group_id)
+        if not isinstance(group_id, str):
+            return False, dict(message="Only one user group can be removed per call.")
 
-                yield self.collections["users"].db.update({"_id": {"$in": affected_user_ids}}, {
-                    "$pull": {
-                        "groups": group_id
-                    }
-                })
-
-                yield self.collections["users"].update_user_permissions(affected_user_ids)
-
-                response = yield super().remove([group_id])
-
-                return True, response
-
+        # The administrator is not permitted to be removed.
+        if group_id == "administrator":
             logger.warning("User {} attempted to remove administrator group".format(
                 transaction.connection.user["_id"]
             ))
-
             return False, dict(message="Administrator group cannot be removed.")
 
-        # Send an error message to the client in a transaction if the provided user id is not a single string.
-        else:
-            return False, dict(message="Only one user group can be removed per call.")
+        group_count = yield self.find({"_id": group_id}).count()
+
+        if group_count == 0:
+            logger.warning("User {} attempted to remove non-existent group {}".format(
+                transaction.connection.user["_id"],
+                group_id
+            ))
+
+            return False, dict(message="Group {} does not exist.")
+
+        yield self.update_member_users(group_id, remove=True)
+
+        response = yield super().remove([group_id])
+
+        return True, response
+
+    @virtool.gen.coroutine
+    def update_member_users(self, group_id, remove=False):
+        groups = yield self.collections["groups"].find().to_list(length=None)
+
+        member_users = yield self.collections["users"].find({"groups": group_id}).to_list(None)
+
+        for user in member_users:
+            if remove:
+                user["groups"].pop(group_id)
+
+            new_permissions = merge_group_permissions([group for group in groups if group["_id"] in user["groups"]])
+
+            # Skip updating this user if their group membership and permissions haven't changed.
+            if not remove and new_permissions == user["permissions"]:
+                continue
+
+            update_dict = {
+                "$set": {
+                    "permissions": new_permissions
+                }
+            }
+
+            if remove:
+                update_dict["$pull"] = {
+                    "groups": group_id
+                }
+
+            yield self.collections["users"].db.update(user["_id"], update_dict)
 
     @virtool.gen.coroutine
     def get_member_users(self, group_id):
-        member_user_ids = yield self.collections["users"].find(
-            {"groups": group_id},
-            {"_id": True}
-        ).distinct("_id")
-
+        member_user_ids = yield self.collections["users"].find({"groups": group_id}).distinct("_id")
         return member_user_ids
+
+
+def merge_group_permissions(groups):
+    """
+    Return a :class:`dict` of permissions that will be inherited by a user belonging to all the passed ``groups``.
+
+    :param groups: a list of group documents.
+    :return: a dict keyed by permission names with boolean values indicating the state of the permission
+
+    """
+    permission_dict = {permission_name: False for permission_name in virtool.groups.PERMISSIONS}
+
+    for permission_name in PERMISSIONS:
+        for group in groups:
+            if group["permissions"][permission_name]:
+                permission_dict[permission_name] = True
+
+    return permission_dict

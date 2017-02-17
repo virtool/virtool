@@ -290,7 +290,7 @@ class TestHandle:
 
         last_message = list(caplog.records)[-1].message
 
-        assert last_message == "test (8.8.8.8) requested unknown interface foo"
+        assert last_message == "test (127.0.0.1) requested unknown interface foo"
 
     @pytest.mark.gen_test
     def test_unknown_method(self, caplog, dispatcher, mock_connection):
@@ -313,7 +313,7 @@ class TestHandle:
 
         last_message = list(caplog.records)[-1].message
 
-        assert last_message == "test (8.8.8.8) requested unknown interface method test.non_existent_method"
+        assert last_message == "test (127.0.0.1) requested unknown interface method test.non_existent_method"
 
     @pytest.mark.gen_test
     def test_unexposed_method(self, caplog, dispatcher, mock_connection):
@@ -336,7 +336,7 @@ class TestHandle:
 
         last_message = list(caplog.records)[-1].message
 
-        assert last_message == "test (8.8.8.8) attempted to call unexposed method test.test_unexposed_method"
+        assert last_message == "test (127.0.0.1) attempted to call unexposed method test.test_unexposed_method"
 
     @pytest.mark.gen_test
     def test_unauthorized(self, caplog, dispatcher, mock_connection):
@@ -359,7 +359,7 @@ class TestHandle:
 
         last_message = list(caplog.records)[-1].message
 
-        assert last_message == "Unauthorized connection at 8.8.8.8 attempted to call" \
+        assert last_message == "Unauthorized connection at 127.0.0.1 attempted to call" \
                                " protected method test.test_exposed_method"
 
     @pytest.mark.gen_test
@@ -526,4 +526,4 @@ class TestPing:
 
 def test_gen_log_prefix(mock_connection):
     conn = mock_connection()
-    assert gen_log_prefix(conn) == "test (8.8.8.8)"
+    assert gen_log_prefix(conn) == "test (127.0.0.1)"

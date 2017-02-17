@@ -9,6 +9,14 @@ import virtool.groups
 logger = logging.getLogger(__name__)
 
 
+USER_SETTINGS = {
+    "show_ids": False,
+    "show_versions": False,
+    "quick_analyze_algorithm": None,
+    "skip_quick_analyze_dialog": False
+}
+
+
 class Collection(virtool.database.Collection):
     """
     Provides an interface to the users MongoDB collection. During initialisation of the object, permissions are
@@ -93,19 +101,42 @@ class Collection(virtool.database.Collection):
         :rtype: tuple
 
         """
+        user_id = transaction.data["user_id"]
+        group_id = transaction.data["group_id"]
+
         data = transaction.data
 
-        group_ids = yield self.get_field(data["user_id"], "groups")
+        user_exists = yield self.user_exists(user_id)
 
-        if data["group_id"] == "administrator" and data["user_id"] == transaction.connection.user["_id"]:
-            return False, dict(message="Administrator cannot remove themselves from the administrator group.")
+        if not user_exists:
+            return False, dict(message="User does not exist")
 
-        if data["group_id"] in group_ids:
-            group_ids.remove(data["group_id"])
+        all_group_ids = yield self.collections["groups"].distinct("_id")
+        member_group_ids = yield self.distinct("groups", {"_id": user_id})
+
+        if group_id == "administrator" and user_id == transaction.connection.user["_id"]:
+            return False, dict(message="Administrators cannot remove themselves from the administrator group")
+
+        if group_id not in all_group_ids:
+            return False, dict(message="Group does not exist")
+
+        if group_id in member_group_ids:
+            member_group_ids.remove(data["group_id"])
         else:
-            group_ids.append(data["group_id"])
+            member_group_ids.append(data["group_id"])
 
-        response = yield self.update_user_permissions(data["user_id"], group_ids)
+        groups = yield self.collections["groups"].find({"_id": {
+            "$in": member_group_ids
+        }}).to_list(None)
+
+        new_permissions = virtool.groups.merge_group_permissions(list(groups))
+
+        response = yield self.update(data["user_id"], {
+            "$set": {
+                "permissions": new_permissions,
+                "groups": member_group_ids
+            }
+        })
 
         return True, response
 
@@ -121,71 +152,24 @@ class Collection(virtool.database.Collection):
         :rtype: tuple
 
         """
-        response = yield self.update(transaction.data["_id"], {"$set": {
-            "primary_group": transaction.data["group_id"]
+        user_id = transaction.data["_id"]
+        group_id = transaction.data["group_id"]
+
+        user_exists = yield self.user_exists(user_id)
+
+        if not user_exists:
+            return False, dict(message="User does not exist")
+
+        group_ids = yield self.collections["groups"].distinct("_id")
+
+        if group_id not in group_ids:
+            return False, dict(message="Group does not exist")
+
+        response = yield self.update(user_id, {"$set": {
+            "primary_group": group_id
         }})
 
         return True, response
-
-    @virtool.gen.coroutine
-    def update_user_permissions(self, user_ids, group_ids=None):
-        """
-        Update user permissions when the properties of a group change or when a user is added to or remove from a group.
-        If the update is due to a change in the user's group membership, a list of group ids is passed and used to
-        update the both the users' groups and permissions.
-
-        :param user_ids: the id or ids of the user or users to update permissions for.
-        :type user_ids: list or str
-
-        :param group_ids: a list of groups that should be associated with the user if changing membership.
-        :type group_ids: list
-
-        :return: a list of responses from Mongo update.
-        :rtype: list
-
-        """
-        user_ids = virtool.database.coerce_list(user_ids)
-
-        # Get the affected users.
-        users = yield self.find({"_id": {"$in": user_ids}}, {
-            "groups": True,
-            "permissions": True
-        }).to_list(None)
-
-        groups = None
-
-        if group_ids is not None:
-            groups = yield self.collections["groups"].find({
-                "_id": {
-                    "$in": virtool.database.coerce_list(group_ids)
-                }
-            }).to_list(None)
-
-        responses = list()
-
-        for user in users:
-            # If a new list of group_ids is passed set these as the user's new groups. A list of group documents has
-            # already been defined above.
-            try:
-                own_groups = list(groups)
-            except TypeError:
-                own_groups = yield self.collections["groups"].find({
-                    "_id": {
-                        "$in": user["groups"]
-                    }
-                }).to_list(None)
-            else:
-                user["groups"] = group_ids
-
-            user["permissions"] = yield virtool.gen.THREAD_POOL.submit(reconcile_permissions, own_groups)
-
-            user_id = user.pop("_id")
-
-            response = yield self.update(user_id, {"$set": user})
-
-            responses.append(response)
-
-        return responses
 
     @virtool.gen.exposed_method([])
     def change_user_setting(self, transaction):
@@ -200,17 +184,16 @@ class Collection(virtool.database.Collection):
         :rtype: tuple
 
         """
-        user = transaction.connection.user
         data = transaction.data
 
-        if data["_id"] == user["_id"]:
-            response = yield self.update(data["_id"], {"$set": {
-                "settings." + data["key"]: data["value"]
-            }}, transaction)
+        if data["key"] not in USER_SETTINGS:
+            return False, dict(message="Unknown user setting {}".format(data["key"]))
 
-            return True, response
+        response = yield self.update(transaction.connection.user["_id"], {"$set": {
+            "settings.{}".format(data["key"]): data["value"]
+        }}, transaction)
 
-        return False, dict(message="Must be user account holder to change settings.")
+        return True, response
 
     @virtool.gen.exposed_method(["modify_options"])
     def add(self, transaction):
@@ -242,7 +225,7 @@ class Collection(virtool.database.Collection):
             "_id": data["_id"],
             # A list of group _ids the user is associated with.
             "groups": list(),
-            "settings": {},
+            "settings": USER_SETTINGS,
             "sessions": [],
             "salt": salt,
             "permissions": {permission: False for permission in virtool.groups.PERMISSIONS},
@@ -257,9 +240,9 @@ class Collection(virtool.database.Collection):
             "invalidate_sessions": False
         }
 
-        response = yield self.insert(new_user)
+        yield self.insert(new_user)
 
-        return True, response
+        return True, None
 
     @virtool.gen.exposed_method(["modify_options"])
     def remove_user(self, transaction):
@@ -284,17 +267,17 @@ class Collection(virtool.database.Collection):
             logger.warning("User {} attempted to remove multiple users in a single call".format(user["_id"]))
             return False, dict(message="Can only remove one user per call")
 
-        if not self.user_exists(data["_id"]):
-            # Otherwise send an error message to the client and log a warning.
-            logger.warning("User {} attempted to remove non-existent user".format(user["_id"]))
-            return False, dict(message="User does not exist.")
-
         if data["_id"] == transaction.connection.user["_id"]:
             # Otherwise send an error message to the client and log a warning.
             logger.warning("User {} attempted to remove their own user account".format(user["_id"]))
-            return False, dict(message="User cannot remove their own account.")
+            return False, dict(message="User cannot remove their own account")
 
         response = yield super().remove(data["_id"])
+
+        if response["n"] == 0:
+            # Fail and log warning if no documents matched the provided document id.
+            logger.warning("User {} attempted to remove non-existent user".format(user["_id"]))
+            return False, dict(message="User does not exist")
 
         return True, response
 
@@ -317,7 +300,7 @@ class Collection(virtool.database.Collection):
         valid_credentials = yield self.validate_login(data["_id"], data["old_password"])
 
         if not valid_credentials:
-            return False, dict(message="Credentials are invalid.")
+            return False, dict(message="Invalid credentials")
 
         # Salt and hash the new password
         salt, password = salt_hash(data["new_password"])
@@ -361,7 +344,10 @@ class Collection(virtool.database.Collection):
             }
         })
 
-        return True, response
+        if len(response["_ids"]):
+            return True, response
+
+        return False, dict(message="User does not exist")
 
     @virtool.gen.exposed_method(["modify_options"])
     def set_force_reset(self, transaction):
@@ -378,7 +364,10 @@ class Collection(virtool.database.Collection):
             }
         })
 
-        return True, response
+        if response["_ids"] == [transaction.data["_id"]]:
+            return True, response
+
+        return False, dict(message="User does not exist")
 
     @virtool.gen.exposed_method([], unprotected=True)
     def authorize_by_login(self, transaction):
@@ -410,11 +399,11 @@ class Collection(virtool.database.Collection):
         user = yield self.validate_login(data["username"], data["password"])
 
         if not user:
-            return False, dict(force_reset=False)
+            return False, dict(message="Incorrect username or password", force_reset=False)
 
         # Remove expired sessions.
         sessions = list(filter(
-            lambda x: x["browser"] == data["browser"] and x["ip"] == transaction.connection.ip,
+            lambda x: x["browser"]["name"] != data["browser"]["name"] and x["ip"] != transaction.connection.ip,
             user["sessions"]
         ))
 
@@ -439,7 +428,7 @@ class Collection(virtool.database.Collection):
         transaction.connection.authorized = not user["force_reset"]
 
         if user["force_reset"]:
-            return False, dict(force_reset=True)
+            return False, dict(message="Password must be reset", force_reset=True)
 
         return True, {key: user[key] for key in [
             "_id",
@@ -477,18 +466,15 @@ class Collection(virtool.database.Collection):
             "sessions.token": data["token"]
         })
 
-        print()
-
-        # Fail authorization if no user if found for the token.
         if not user:
-            return False, None
+            return False, dict(message="Token does not exist")
 
         # Get the user's session associated with the supplied token.
         session = virtool.utils.where(user["sessions"], lambda x: x["token"] == data["token"])
 
-        # Make sure the token matches the passed browser and ip. Fail otherwise.
-        if session["ip"] != transaction.connection.ip or session["browser"] != data["browser"]:
-            return False, None
+        # Fail if the token does not match the passed browser and ip.
+        if session["ip"] != transaction.connection.ip or session["browser"]["name"] != data["browser"]["name"]:
+            return False, dict(message="Token is invalid")
 
         # If the user has the invalidate sessions flag set, fail authorization and clear all of their sessions. Unset
         # the invalidate_sessions flag since we just did it.
@@ -500,7 +486,7 @@ class Collection(virtool.database.Collection):
                 }
             })
 
-            return False, None
+            return False, dict(message="Token was invalidated")
 
         # Get ready to send the token to the client.
         user["token"] = data["token"]
@@ -519,6 +505,24 @@ class Collection(virtool.database.Collection):
             "settings",
             "token"
         ]}
+
+    @virtool.gen.exposed_method(["modify_options"])
+    def remove_session(self, transaction):
+        removed = yield self.invalidate_session(transaction.data["token"])
+
+        if not removed:
+            return False, dict(message="Session does not exist")
+
+        return True, None
+
+    @virtool.gen.exposed_method([])
+    def logout(self, transaction):
+        yield self.invalidate_session(
+            transaction.connection.user["token"],
+            logout=True
+        )
+
+        return True, None
 
     @virtool.gen.coroutine
     def validate_login(self, username, password):
@@ -549,24 +553,6 @@ class Collection(virtool.database.Collection):
 
         return False
 
-    @virtool.gen.exposed_method(["modify_options"])
-    def remove_session(self, transaction):
-        yield self.invalidate_session(transaction.data["token"])
-
-        return True, None
-
-    @virtool.gen.exposed_method([])
-    def logout(self, transaction):
-        if transaction.data["token"] == transaction.connection.user["token"]:
-            yield self.invalidate_session(
-                transaction.data["token"],
-                logout=True
-            )
-
-            return True, None
-
-        return False, None
-
     @virtool.gen.coroutine
     def invalidate_session(self, token, logout=False):
         """
@@ -583,7 +569,12 @@ class Collection(virtool.database.Collection):
         :rtype: bool
 
         """
-        yield self.update({"sessions.0.token": token}, {
+        session_count = yield self.find({"sessions.0.token": token}).count()
+
+        if session_count > 1:
+            raise ValueError("Multiple sessions matching token {}".format(token))
+
+        response = yield self.update({"sessions.0.token": token}, {
             "$pull": {
                 "sessions": {
                     "token": token
@@ -591,12 +582,19 @@ class Collection(virtool.database.Collection):
             }
         })
 
-        self._dispatch({
-            "operation": "deauthorize",
-            "data": {
-                "logout": logout
-            }
-        }, conn_filter=lambda conn: conn.user["token"] == token)
+        removed_count = len(response["_ids"])
+
+        if removed_count:
+            self._dispatch({
+                "operation": "deauthorize",
+                "data": {
+                    "logout": logout
+                }
+            }, conn_filter=lambda conn: conn.user["token"] == token)
+
+            return True
+
+        return False
 
     @virtool.gen.coroutine
     def user_exists(self, user_id):
@@ -651,21 +649,3 @@ def check_password(password, hashed, salt):
 
     """
     return hashed == hashlib.sha512(salt.encode("utf-8") + password.encode("utf-8")).hexdigest()
-
-
-def reconcile_permissions(groups):
-    """
-    Return a :class:`dict` of permissions that will be inherited by a user belonging to all the passed ``groups``.
-
-    :param groups: a list of group documents.
-    :return: a dict keyed by permission names with boolean values indicating the state of the permission
-
-    """
-    permission_dict = {permission_name: False for permission_name in virtool.groups.PERMISSIONS}
-
-    for permission_name in virtool.groups.PERMISSIONS:
-        for group in groups:
-            if group["permissions"][permission_name]:
-                permission_dict[permission_name] = True
-
-    return permission_dict
