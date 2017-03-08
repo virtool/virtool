@@ -3,7 +3,7 @@ import subprocess
 import virtool.utils
 
 from virtool.permissions import PERMISSIONS
-from virtool.users import reconcile_permissions
+from virtool.groups import merge_group_permissions
 from virtool.history import get_default_isolate
 from virtool.virusutils import merge_virus
 from virtool.sampleutils import calculate_algorithm_tags
@@ -253,7 +253,7 @@ def organize_users(database):
         "$set": {"settings": {"show_ids": False, "show_versions": False}}
     }, multi=True)
 
-    # Make sure permissions are reconciled for all users.
+    # Make sure permissions are correct for all users.
     for user in database.users.find():
         groups = database.groups.find({"_id": {
             "$in": user["groups"]
@@ -261,7 +261,7 @@ def organize_users(database):
 
         database.users.update({"_id": user["_id"]}, {
             "$set": {
-                "permissions": reconcile_permissions(list(groups))
+                "permissions": merge_group_permissions(list(groups))
             }
         })
 

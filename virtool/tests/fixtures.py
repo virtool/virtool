@@ -27,7 +27,23 @@ def data_dir(tmpdir_factory):
     return mock_dir
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture
+def coroutine_stub(mocker):
+    def create(name):
+        stub = mocker.stub(name=name)
+
+        @virtool.gen.coroutine
+        def decorated(*args, **kwargs):
+            return stub(*args, **kwargs)
+
+        decorated.stub = stub
+
+        return decorated
+
+    return create
+
+
+@pytest.fixture
 def mock_collection(mocker):
     class MockCollection:
 
@@ -54,9 +70,18 @@ def mock_collection(mocker):
     return MockCollection()
 
 
-@pytest.fixture(scope="session")
-def mock_settings():
-    return MockSettings()
+@pytest.fixture()
+def mock_settings(mock_pymongo, mock_motor):
+    settings = MockSettings()
+
+    def get_db_client(sync=False):
+        if sync:
+            return mock_pymongo
+        return mock_motor
+
+    settings.get_db_client = get_db_client
+
+    return settings
 
 
 @pytest.fixture()
@@ -97,7 +122,8 @@ def user():
 
 @pytest.fixture(scope="function")
 def mock_connection(user, called_tester):
-    def create_connection(source=None, username="test", permissions="all", administrator=False, authorized=True, auto=True):
+    def create_connection(source=None, username="test", permissions="all", administrator=False, authorized=True,
+                          ip="127.0.0.1", auto=True):
 
         method_keys = ["add_connection", "remove_connection", "handle"]
 
@@ -114,7 +140,7 @@ def mock_connection(user, called_tester):
             administrator=administrator
         )
 
-        conn = MockConnection(web_settings, new_user, authorized)
+        conn = MockConnection(web_settings, new_user, authorized, ip)
 
         if auto:
             conn.open()
@@ -126,12 +152,14 @@ def mock_connection(user, called_tester):
 
 @pytest.fixture
 def mock_transaction(mock_connection):
-    def create_transaction(message, username="test", permissions=None, administrator=False, authorized=True):
+    def create_transaction(message, username="test", permissions=None, administrator=False, authorized=True,
+                           ip="127.0.0.1"):
         connection = mock_connection(
             username=username,
             permissions=permissions,
             administrator=administrator,
-            authorized=authorized
+            authorized=authorized,
+            ip=ip
         )
         return MockTransaction(message, connection)
 

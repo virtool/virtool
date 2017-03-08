@@ -12,4 +12,5 @@ settings.json
 /assets/prunus_persica
 *.log*
 .coverage.cog*
+.coverage
 .cache

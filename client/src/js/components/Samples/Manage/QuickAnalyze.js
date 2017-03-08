@@ -77,7 +77,6 @@ export default class QuickAnalyze extends React.Component {
 
                 if (this.state.useAsDefault) {
                     dispatcher.db.users.request("change_user_setting", {
-                        _id: dispatcher.user.name,
                         key: "quick_analyze_algorithm",
                         value: this.state.algorithm
                     });
@@ -85,7 +84,6 @@ export default class QuickAnalyze extends React.Component {
 
                 if (this.state.skipQuickAnalyzeDialog) {
                     dispatcher.db.users.request("change_user_setting", {
-                        _id: dispatcher.user.name,
                         key: "skip_quick_analyze_dialog",
                         value: true
                     });

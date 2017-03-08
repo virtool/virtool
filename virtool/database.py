@@ -43,6 +43,9 @@ class Collection:
         #: A reference to the :meth:`~motor.motor_tornado.MotorCollection.find_one` method of :attr:`.db`.
         self.find_one = self.db.find_one
 
+        #: A reference to the :meth:`~motor.motor_tornado.MotorCollection.distinct` method of :attr:`.db`.
+        self.distinct = self.db.distinct
+
         #: A reference to the :meth:`~motor.motor_tornado.MotorCollection.aggregate` method of :attr:`.db`.
         self.aggregate = self.db.aggregate
 

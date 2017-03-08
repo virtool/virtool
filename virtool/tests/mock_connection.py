@@ -3,7 +3,7 @@ import tornado.websocket
 
 class MockConnection:
 
-    def __init__(self, settings, user, authorized):
+    def __init__(self, settings, user, authorized, ip="127.0.0.1"):
         self.settings = settings
 
         self.user = {
@@ -17,7 +17,7 @@ class MockConnection:
         if authorized:
             self.authorize()
 
-        self.ip = "8.8.8.8"
+        self.ip = ip
 
         self._closed = False
 
