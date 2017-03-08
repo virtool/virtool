@@ -525,7 +525,7 @@ class Collection(virtool.database.Collection):
 
         """
         old_virus, sequence = yield self.prepare_sequences(
-            transaction.data["_id"],
+            transaction.data["_id"].strip(),
             transaction.data["new"]
         )
 
