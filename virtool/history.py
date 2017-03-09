@@ -130,6 +130,8 @@ class Collection(virtool.database.Collection):
             data["entry_version"]
         )
 
+        print(history_to_delete)
+
         isolate_ids = virtool.virusutils.extract_isolate_ids(document or patched)
 
         # Remove the old sequences from the collection.
@@ -148,7 +150,7 @@ class Collection(virtool.database.Collection):
                     increment_version=False
                 )
             else:
-                yield self.collections["viruses"].insert(patched)
+                yield self.collections["viruses"].db.insert(patched)
         else:
             yield self.collections["viruses"].remove(document["_id"])
 
@@ -187,7 +189,6 @@ class Collection(virtool.database.Collection):
 
                 elif history_document["method_name"] == "remove":
                     patched = history_document["changes"]
-                    break
 
                 else:
                     diff = dictdiffer.swap(history_document["changes"])
