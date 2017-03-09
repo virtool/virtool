@@ -12,7 +12,6 @@
 
 import React from "react";
 import FlipMove from "react-flip-move"
-import { sortBy } from "lodash";
 import { getFlipMoveProps } from "virtool/js/components/Base";
 import HistoryItem from "./HistoryItem";
 
