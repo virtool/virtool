@@ -11,7 +11,7 @@
  */
 
 import React from "react";
-import { Row, Col, Modal, Alert } from "react-bootstrap";
+import { Row, Col, FormGroup, ControlLabel, FormControl, InputGroup, Modal, Alert } from "react-bootstrap";
 import { capitalize, pick, assign } from "lodash";
 import { Icon, Input, Button, AutoProgressBar } from "virtool/js/components/Base";
 
@@ -75,6 +75,12 @@ export default class CreateSample extends React.Component {
         let data = {};
         data[event.target.name] = event.target.value;
         this.setState(data);
+    };
+
+    autofill = () => {
+        this.setState({
+            name: this.state.selected[0].replace(/[0-9a-z]{8}-/, "").split(/_S\d+/)[0]
+        });
     };
 
     onSettingsChange = () => this.setState({forceGroupChoice: getForceGroupChoice()});
@@ -177,6 +183,8 @@ export default class CreateSample extends React.Component {
 
             const libraryType = this.state.selected.length === 2 ? "Paired": "Unpaired";
 
+            // const error = error ? <span className="text-danger">{error}</span> : null;
+
             modalBody = (
                 <div>
                     <AutoProgressBar active={this.state.pending} affixed />
@@ -185,16 +193,31 @@ export default class CreateSample extends React.Component {
                         <Modal.Body>
                             <Row>
                                 <Col md={9}>
-                                    <Input
-                                        ref={(node) => this.nameNode = node}
-                                        name="name"
-                                        type="text"
-                                        error={error ? <span className="text-danger">{error}</span> : null}
-                                        value={this.state.name}
-                                        onChange={this.handleChange}
-                                        label="Sample Name"
-                                        autoComplete={false}
-                                    />
+                                    <FormGroup>
+                                        <ControlLabel>
+                                            Sample Name
+                                        </ControlLabel>
+                                        <InputGroup>
+                                            <FormControl
+                                                inputRef={(node) => this.nameNode = node}
+                                                type="text"
+                                                name="name"
+                                                value={this.state.name}
+                                                onChange={this.handleChange}
+                                                autoComplete={false}
+
+                                            />
+                                            <InputGroup.Button>
+                                                <Button
+                                                    type="button"
+                                                    onClick={this.autofill}
+                                                    disabled={!this.state.selected.length}
+                                                >
+                                                    <Icon name="wand" />
+                                                </Button>
+                                            </InputGroup.Button>
+                                        </InputGroup>
+                                    </FormGroup>
                                 </Col>
                                 <Col md={3}>
                                     <Input
