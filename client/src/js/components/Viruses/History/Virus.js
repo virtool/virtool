@@ -62,8 +62,16 @@ export default class VirusHistoryList extends React.Component {
 
     render () {
 
+        const sorted = this.props.history.sort((a, b) => {
+            if (a === "removed") {
+                return 1;
+            }
+
+            return a > b ? 1: -1;
+        });
+
         // Generate all the history components that will be shown in the history panel for the virus.
-        const historyComponents = sortBy(this.props.history, "entry_version").reverse().map((historyEntry) => (
+        const historyComponents = sorted.map((historyEntry) => (
             <HistoryItem
                 key={historyEntry._id}
                 {...historyEntry}
