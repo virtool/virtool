@@ -57,7 +57,7 @@ export class FileItem extends React.PureComponent {
                     </Col>
                     <Col md={2}>
                         <span className="pull-right">
-                            {Numeral(this.props.size_now).format("0.0 b")}
+                            {Numeral(this.props.size_end).format("0.0 b")}
                         </span>
                     </Col>
                     <Col md={2}>
