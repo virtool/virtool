@@ -20,10 +20,11 @@ import ReadItem from "./ReadItem";
 const suffixes = [".fastq", ".fq", ".fastq.gz", ".fq.gz"];
 
 const getAvailableFiles = () => {
-    let files = dispatcher.db.files.find({
-        file_type: "reads",
-        ready: true
-    });
+    let files = dispatcher.db.files.chain().find({
+        $and: [
+            {file_type: "reads"},
+            {ready: true}
+    ]}).data();
 
     return filter(files, {reserved: false});
 };
@@ -146,6 +147,7 @@ export default class ReadSelector extends React.PureComponent {
                     <div className="panel panel-default">
                         <FlipMove
                             {...getFlipMoveProps()}
+                            enterAnimation="fade"
                             className="list-group"
                             style={{minHeight: "420px", maxHeight: "420px", overflowY: "scroll"}}
                         >
