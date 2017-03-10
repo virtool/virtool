@@ -54,11 +54,4 @@ export default class User {
         });
 
     }
-
-    static logout () {
-        dispatcher.send({
-            interface: "users",
-            method: "logout"
-        });
-    }
 }

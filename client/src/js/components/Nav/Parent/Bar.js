@@ -40,15 +40,9 @@ export default class ParentBar extends React.Component {
         dispatcher.router.off("change", this.onRouteChange);
     }
 
-    onRouteChange = (route) => {
-        this.setState({
-            activeParent: route.parent
-        });
-    };
+    onRouteChange = (route) => this.setState({activeParent: route.parent});
 
-    hideModal = () => {
-        this.setState({modalMode: null});
-    };
+    hideModal = () => this.setState({modalMode: null});
 
     handleDropdownSelect = (eventKey) => {
         if (eventKey === "password" || eventKey === "settings") {
@@ -58,7 +52,10 @@ export default class ParentBar extends React.Component {
         }
 
         if (eventKey === "logout") {
-            dispatcher.user.logout();
+            dispatcher.send({
+                interface: "users",
+                method: "logout"
+            });
         }
     };
 
