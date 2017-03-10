@@ -130,8 +130,6 @@ class Collection(virtool.database.Collection):
             data["entry_version"]
         )
 
-        print(history_to_delete)
-
         isolate_ids = virtool.virusutils.extract_isolate_ids(document or patched)
 
         # Remove the old sequences from the collection.
