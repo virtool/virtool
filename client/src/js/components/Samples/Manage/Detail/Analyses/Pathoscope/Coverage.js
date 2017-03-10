@@ -1,10 +1,13 @@
 import React from "react";
 import { pick } from "lodash";
-import * as d3 from "d3";
+import { select } from "d3-selection";
+import { area } from "d3-shape";
+import { scaleLinear } from "d3-scale";
+import { axisBottom, axisLeft } from "d3-axis";
 
 const createChart = (element, data, meta, yMax, xMin, showYAxis) => {
 
-    let svg = d3.select(element).append("svg");
+    let svg = select(element).append("svg");
 
     let maxWidth = 0;
 
@@ -30,23 +33,23 @@ const createChart = (element, data, meta, yMax, xMin, showYAxis) => {
 
     width -= (margin.left + margin.right);
 
-    const x = d3.scaleLinear()
+    const x = scaleLinear()
         .range([0, width])
         .domain([0, data.length]);
 
-    const y = d3.scaleLinear()
+    const y = scaleLinear()
         .range([height, 0])
         .domain([0, yMax]);
 
-    const xAxis = d3.axisBottom(x);
+    const xAxis = axisBottom(x);
 
-    const area = d3.area()
+    const areaDrawer = area()
         .x((d, i) => x(i))
         .y0(d => y(d))
         .y1(height);
 
     // Construct the SVG canvas.
-    svg = d3.select(element).append("svg")
+    svg = select(element).append("svg")
         .attr("width", width + margin.left + margin.right)
         .attr("height", height + margin.top + margin.bottom)
         .append("g")
@@ -55,7 +58,7 @@ const createChart = (element, data, meta, yMax, xMin, showYAxis) => {
     svg.append("path")
         .datum(data)
         .attr("class", "depth-area")
-        .attr("d", area);
+        .attr("d", areaDrawer);
 
     // Set-up a y-axis that will appear at the top of the chart.
     svg.append("g")
@@ -71,7 +74,7 @@ const createChart = (element, data, meta, yMax, xMin, showYAxis) => {
     if (showYAxis) {
         svg.append("g")
             .attr("class", "y axis")
-            .call(d3.axisLeft(y));
+            .call(axisLeft(y));
     }
 
     svg.append("text")

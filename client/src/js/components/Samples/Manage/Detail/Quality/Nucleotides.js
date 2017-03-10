@@ -9,9 +9,12 @@
  * @exports CreateNucleotidesChart
  */
 
-import * as d3 from "d3";
+import { select } from "d3-selection";
+import { line, symbol, symbolSquare } from "d3-shape";
+import { scaleOrdinal, scaleLinear } from "d3-scale";
+import { axisBottom, axisLeft } from "d3-axis";
 import { map, unzip } from "lodash";
-import * as Legend from "d3-svg-legend";
+import { legendColor } from "d3-svg-legend";
 
 const margin = {
     top: 20,
@@ -41,34 +44,34 @@ const CreateNucleotidesChart = (element, data, baseWidth) => {
 
     const width = baseWidth - margin.left - margin.right;
 
-    const y = d3.scaleLinear()
+    const y = scaleLinear()
         .range([height, 0])
         .domain([0, 100]);
 
-    const x = d3.scaleLinear()
+    const x = scaleLinear()
         .range([0, width])
         .domain([0, data.length]);
 
-    const xAxis = d3.axisBottom(x);
-    const yAxis = d3.axisLeft(y);
+    const xAxis = axisBottom(x);
+    const yAxis = axisLeft(y);
 
     // Create a d3 line function for generating the four lines showing nucleotide frequency.
-    const line = d3.line()
+    const lineDrawer = line()
         .x((d, i) => x(i))
         .y(d => y(d));
 
     // Define a scale and d3-legend function for generating a legend.
-    const legendScale = d3.scaleOrdinal()
+    const legendScale = scaleOrdinal()
         .domain(map(series, "label"))
         .range(map(series, "color"));
 
-    const legend = Legend.legendColor()
-        .shape("path", d3.symbol().type(d3.symbolSquare).size(150)())
+    const legend = legendColor()
+        .shape("path", symbol().type(symbolSquare).size(150)())
         .shapePadding(10)
         .scale(legendScale);
 
     // Generate base SVG.
-    let svg = d3.select(element).append("svg")
+    let svg = select(element).append("svg")
         .attr("width", width + margin.left + margin.right)
         .attr("height", height + margin.top + margin.bottom)
         .append("g")
@@ -77,7 +80,7 @@ const CreateNucleotidesChart = (element, data, baseWidth) => {
     // Append the four plot lines to the SVG.
     unzip(data).forEach((set, index) => {
         svg.append("path")
-            .attr("d", () => line(set))
+            .attr("d", () => lineDrawer(set))
             .attr("stroke", () => series[index].color)
             .attr("stroke-width", 2)
             .attr("fill", "none")

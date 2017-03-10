@@ -9,7 +9,10 @@
  * @exports ProgressLogo
  */
 
-import * as d3 from "d3";
+import { interpolate } from "d3-interpolate"
+import { arc } from "d3-shape";
+import { select } from "d3-selection";
+import "d3-transition";
 import React from "react";
 
 const TWO_PI = 2 * Math.PI;
@@ -17,10 +20,10 @@ const TWO_PI = 2 * Math.PI;
 const arcTween = (newValue, arc) => {
 
     return (d) => {
-        const interpolate = d3.interpolate(d.endAngle, newValue * TWO_PI);
+        const inter = interpolate(d.endAngle, newValue * TWO_PI);
 
         return (t) => {
-            d.endAngle = interpolate(t);
+            d.endAngle = inter(t);
             return arc(d);
         };
     }
@@ -55,12 +58,12 @@ export class ProgressLogo extends React.Component {
 
     componentDidMount () {
 
-        this.arc = d3.arc()
+        this.arc = arc()
             .startAngle(0)
             .innerRadius(50)
             .outerRadius(60);
 
-        const svg = d3.select(".progress-logo-container").append("svg")
+        const svg = select(".progress-logo-container").append("svg")
             .attr("height", HEIGHT)
             .attr("width", WIDTH);
 

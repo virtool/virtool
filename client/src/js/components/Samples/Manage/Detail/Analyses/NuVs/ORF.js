@@ -1,4 +1,5 @@
-import * as d3 from "d3";
+import { select } from "d3-selection";
+import { scaleLinear } from "d3-scale";
 import React from "react";
 import { capitalize } from "lodash";
 import { Flex, FlexItem } from "virtool/js/components/Base";
@@ -35,7 +36,7 @@ export default class NuVsORF extends React.Component {
         const width = element.offsetWidth - 30;
 
         // Construct the SVG canvas.
-        const svg = d3.select(element).append("svg")
+        const svg = select(element).append("svg")
             .attr("width", width + 30)
             .attr("height", HEIGHT);
 
@@ -44,7 +45,7 @@ export default class NuVsORF extends React.Component {
             .attr("transform", "translate(15,0)");
 
         // Set-up a y-axis that will appear at the top of the chart.
-        const x = d3.scaleLinear()
+        const x = scaleLinear()
             .range([0, width])
             .domain([0, this.props.maxSequenceLength]);
 

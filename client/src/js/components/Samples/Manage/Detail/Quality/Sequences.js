@@ -9,7 +9,10 @@
  * @exports CreateSequencesChart
  */
 
-import * as d3 from "d3";
+import { select } from "d3-selection";
+import { line } from "d3-shape";
+import { scaleLinear } from "d3-scale";
+import { axisBottom, axisLeft } from "d3-axis";
 import { max } from "lodash";
 import Numeral from "numeral";
 
@@ -46,26 +49,26 @@ const CreateSequencesChart = (element, data, baseWidth) => {
     };
 
     // Set up scales.
-    const y = d3.scaleLinear()
+    const y = scaleLinear()
         .range([height, 0])
         .domain([0, max(data)]);
 
-    const x = d3.scaleLinear()
+    const x = scaleLinear()
         .range([0, width])
         .domain([0, data.length]);
 
     // Set up scales. Use formatter function to make scientific notation tick labels for y-axis.
-    const xAxis = d3.axisBottom(x);
+    const xAxis = axisBottom(x);
 
-    const yAxis = d3.axisLeft(y).tickFormat(formatter);
+    const yAxis = axisLeft(y).tickFormat(formatter);
 
     // Build a d3 line function for rendering the plot line.
-    const line = d3.line()
+    const lineDrawer = line()
         .x((d,i) => x(i))
         .y(d => y(d));
 
     // Build SVG canvas.
-    let svg = d3.select(element).append("svg")
+    let svg = select(element).append("svg")
         .attr("width", width + margin.left + margin.right)
         .attr("height", height + margin.top + margin.bottom)
         .append("g")
@@ -73,7 +76,7 @@ const CreateSequencesChart = (element, data, baseWidth) => {
 
     // Append the plot line to the SVG.
     svg.append("path")
-        .attr("d", line(data))
+        .attr("d", lineDrawer(data))
         .attr("class", "graph-line");
 
     // Append a labelled x-axis to the SVG.
