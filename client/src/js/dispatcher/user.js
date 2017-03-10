@@ -46,7 +46,7 @@ export default class User {
             collection.synced = false;
         });
 
-        dispatcher.db.loki.saveDatabase((err) => {
+        dispatcher.db.loki.saveDatabase(() => {
 
             window.location.hash = "home/welcome";
 
