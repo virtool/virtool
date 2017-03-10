@@ -10,6 +10,7 @@
  */
 
 import React from "react";
+import { forIn } from "lodash";
 import ChildBar from "./Child/Bar";
 import ParentBar from "./Parent/Bar";
 import LostConnection from "./LostConnection";
@@ -36,9 +37,11 @@ export default class Bar extends React.Component {
     }
 
     showLostConnection = () => {
-        this.setState({
-            closed: true
+        forIn(dispatcher.db.collectionNames, collectionName => {
+            dispatcher.db[collectionName].clear();
         });
+
+        dispatcher.db.loki.saveDatabase(() => this.setState({closed: true}));
     };
 
     render = () => (

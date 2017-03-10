@@ -36,7 +36,8 @@ export default class ConfirmVirus extends React.PureComponent {
     static propTypes = {
         _id: React.PropTypes.string,
         show: React.PropTypes.bool.isRequired,
-        isolates: React.PropTypes.arrayOf(React.PropTypes.object)
+        isolates: React.PropTypes.arrayOf(React.PropTypes.object),
+        detail: React.PropTypes.object
     };
 
     componentWillReceiveProps (nextProps) {
