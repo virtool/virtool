@@ -11,7 +11,7 @@
 
 import React from "react";
 import { Panel, Table, ButtonToolbar } from "react-bootstrap";
-import { Icon, Divider } from "virtool/js/components/Base"
+import { Icon } from "virtool/js/components/Base"
 
 export default class Welcome extends React.Component {
 
