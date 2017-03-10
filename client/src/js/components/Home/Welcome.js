@@ -10,7 +10,8 @@
  */
 
 import React from "react";
-import { Panel, Table } from "react-bootstrap";
+import { Panel, Table, ButtonToolbar } from "react-bootstrap";
+import { Icon, Divider } from "virtool/js/components/Base"
 
 export default class Welcome extends React.Component {
 
@@ -44,9 +45,22 @@ export default class Welcome extends React.Component {
 
             content = (
                 <div>
-                    <Panel header="Virtool">
-                        <a href="/doc/index.html?v=2" target="_blank">Documentation</a> (incomplete)
+                    <Panel>
+                        <p>Viral infection diagnostics using next-generation sequencing</p>
+
+                        <ButtonToolbar>
+                            <a className="btn btn-default" href="http://www.virtool.ca/" target="_blank">
+                                <Icon name="vtlogo" /> Website
+                            </a>
+                            <a className="btn btn-default" href="https://github.com/virtool/virtool" target="_blank">
+                                <Icon name="github" /> Github
+                            </a>
+                            <a className="btn btn-default" href="/doc/index.html?v=2" target="_blank">
+                                <Icon name="book" /> Documentation
+                            </a>
+                        </ButtonToolbar>
                     </Panel>
+
                     <Panel header="Server">
                         <Table fill bordered>
                             <tbody>

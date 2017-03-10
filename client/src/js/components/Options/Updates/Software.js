@@ -36,7 +36,7 @@ const SoftwareRelease = (props) => {
     return (
         <ListGroupItem>
             <Row>
-                <Col md={3}>{props.name}</Col>
+                <Col md={2}>{props.name}</Col>
                 <Col md={2}>{byteSize(props.size)}</Col>
                 <Col md={3}>Released on {Moment(props.published_at).format("YY-MM-DD")}</Col>
                 <Col md={3}>
@@ -44,7 +44,7 @@ const SoftwareRelease = (props) => {
                         <Icon name="github" /> GitHub
                     </a>
                 </Col>
-                <Col md={1}>
+                <Col md={2}>
                     <span className="pull-right">
                         {installedLabel} {latestLabel}
                     </span>

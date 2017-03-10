@@ -22,6 +22,9 @@ i {
   -moz-osx-font-smoothing: grayscale;
 }
 
+.i-book:before {
+  content: "\e906";
+}
 .i-github:before {
   content: "\e903";
 }
