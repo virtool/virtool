@@ -111,7 +111,10 @@ export default class VirusSequences extends React.Component {
                     active={this.state.activeSequenceId === "new"}
                 />
             );
-        } else {
+        }
+
+        if (!this.props.canModify && !sequenceComponents.length ||
+            this.props.canModify && this.props.isolateId === "new") {
             lastComponent = (
                 <ListGroupItem>
                     <div className="text-center">
