@@ -40,13 +40,15 @@ export default class User {
 
     deauthorize (data) {
 
-        dispatcher.db.loki.deleteDatabase({}, () => {
+        forIn(dispatcher.db.collectionNames, collectionName => {
+            const collection = dispatcher.db[collectionName];
+            collection.clear();
+            collection.synced = false;
+        });
+
+        dispatcher.db.loki.saveDatabase((err) => {
 
             window.location.hash = "home/welcome";
-
-            forIn(dispatcher.db, collection => {
-                collection.synced = false;
-            });
 
             dispatcher.user = new User();
 
