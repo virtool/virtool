@@ -18,14 +18,7 @@ import { Icon, ListGroupItem, getFlipMoveProps } from "virtool/js/components/Bas
 import Add from "./Add";
 import Permissions from "./Permissions";
 
-const getState = () => {
-    const documents = dispatcher.db.groups.chain().find().simplesort("_id").data();
-
-    return {
-        documents: documents,
-        activeId: documents[0]._id
-    };
-};
+const getDocuments = () => dispatcher.db.groups.chain().find().simplesort("_id").data();
 
 /**
  * Renders either a table describing the sessions associated with the user or a panel with a message indicating no
@@ -37,7 +30,13 @@ export default class Groups extends React.Component {
 
     constructor (props) {
         super(props);
-        this.state = getState();
+
+        const documents = getDocuments();
+
+        this.state = {
+            documents: documents,
+            activeId: documents[0]._id
+        };
     }
 
     static propTypes = {
@@ -58,7 +57,14 @@ export default class Groups extends React.Component {
     };
 
     update = () => {
-        this.setState(getState());
+        const documents = getDocuments();
+
+        const activeDocument = find(documents, {_id: this.state.activeId});
+
+        this.setState({
+            documents: documents,
+            activeId: (activeDocument || documents[0])._id
+        });
     };
 
     remove = (groupName) => {

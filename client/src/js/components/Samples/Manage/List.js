@@ -49,7 +49,7 @@ export default class SamplesList extends React.Component {
 
     render () {
 
-        const pages = Paginator.calculatePages(this.props.documents, this.state.page, 18);
+        const pages = Paginator.calculatePages(this.props.documents, this.state.page, 15);
 
         let sampleComponents;
 

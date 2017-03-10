@@ -1,4 +1,5 @@
 import React from "react";
+import { sortBy } from "lodash";
 import { Flex, FlexItem } from "virtool/js/components/Base";
 import { toScientificNotation } from "virtool/js/utils";
 import Coverage from "./Coverage";
@@ -44,16 +45,16 @@ export default class PathoscopeIsolate extends React.Component {
             whiteSpace: "nowrap"
         };
 
-        const sorted = this.props.hits.sort(hit => hit.align.length);
+        const sorted = sortBy(this.props.hits, hit => hit.align.length);
 
-        const hitComponents = sorted.map((hit, index) =>
+        const hitComponents = sorted.map((hit, i) =>
             <Coverage
                 key={hit.accession}
                 data={hit.align}
                 accession={hit.accession}
                 definition={hit.definition}
                 yMax={this.props.maxDepth}
-                showYAxis={index === sorted.length - 1}
+                showYAxis={i === 0}
                 isolateComponent={this}
             />
         );
