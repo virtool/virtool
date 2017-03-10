@@ -130,6 +130,7 @@ export class InputSave extends React.Component {
 
         return (
             <form onSubmit={this.handleSubmit}>
+                <h5><strong>{this.props.label}</strong></h5>
                 <Flex alignItems="stretch" style={{marginBottom: "15px"}}>
                     <FlexItem grow={1} shrink={0}>
                         <Input
