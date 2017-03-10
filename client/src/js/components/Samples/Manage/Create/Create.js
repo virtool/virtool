@@ -11,7 +11,8 @@
  */
 
 import React from "react";
-import { Row, Col, FormGroup, ControlLabel, FormControl, InputGroup, Modal, Alert } from "react-bootstrap";
+import { Row, Col, Overlay, Popover, FormGroup, ControlLabel, FormControl, InputGroup,
+    Modal, Alert } from "react-bootstrap";
 import { capitalize, pick, assign } from "lodash";
 import { Icon, Input, Button, AutoProgressBar } from "virtool/js/components/Base";
 
@@ -171,19 +172,41 @@ export default class CreateSample extends React.Component {
                 );
             }
 
-            let error;
+            let errors = [];
 
             if (this.state.nameExistsError) {
-                error = "Sample name already exists. Choose another."
+                errors.push("Sample name already exists");
             }
 
             if (this.state.nameEmptyError) {
-                error = "The name field cannot be empty."
+                errors.push("The name field cannot be empty");
+            }
+
+            let overlay;
+
+            if (errors.length > 0) {
+
+                const errorComponents = errors.map((error, index) =>
+                    <div key={index} className="text-danger">{error}</div>
+                );
+
+                overlay = (
+                    <Overlay
+                        show={true}
+                        placement="top"
+                        container={this}
+                        target={this.nameNode}
+                    >
+                        <Popover id="name-warning-popover">
+                            <div>
+                                {errorComponents}
+                            </div>
+                        </Popover>
+                    </Overlay>
+                );
             }
 
             const libraryType = this.state.selected.length === 2 ? "Paired": "Unpaired";
-
-            // const error = error ? <span className="text-danger">{error}</span> : null;
 
             modalBody = (
                 <div>
@@ -192,6 +215,7 @@ export default class CreateSample extends React.Component {
                     <form onSubmit={this.handleSubmit}>
                         <Modal.Body>
                             <Row>
+                                {overlay}
                                 <Col md={9}>
                                     <FormGroup>
                                         <ControlLabel>

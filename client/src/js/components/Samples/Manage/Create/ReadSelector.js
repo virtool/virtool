@@ -108,8 +108,8 @@ export default class ReadSelector extends React.PureComponent {
 
         if (this.props.readError) {
             overlay = (
-                <Overlay target={this.panelNode} container={this} placement="top" show={true}>
-                    <Popover id="read-error-popover">
+                <Overlay target={this.panelNode} placement="top" show={true}>
+                    <Popover id="read-error-popover" {...this.props}>
                         <span className="text-danger">At least one read file must be attached to the sample</span>
                     </Popover>
                 </Overlay>
@@ -118,6 +118,8 @@ export default class ReadSelector extends React.PureComponent {
         
         return (
             <div>
+                {overlay}
+
                 <label className="control-label">
                     Read Files <Label>{this.props.selected.length}/{fileComponents.length} selected</Label>
                 </label>
@@ -155,8 +157,6 @@ export default class ReadSelector extends React.PureComponent {
                         </FlipMove>
                     </div>
                 </Panel>
-
-                {overlay}
             </div>
         );
     }
