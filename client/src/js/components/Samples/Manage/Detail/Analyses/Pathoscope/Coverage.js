@@ -116,7 +116,6 @@ export default class CoverageChart extends React.Component {
 
     render = () => (
         <span style={{marginTop: "5px"}} className="coverage-chart">
-            <div>{this.props.title}</div>
             <div ref={(node) => this.chartNode = node} />
         </span>
     );
