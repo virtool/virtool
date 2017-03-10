@@ -9,9 +9,12 @@
  * @exports BasesChart
  */
 
-import * as d3 from "d3";
+import { select } from "d3-selection";
+import { line, area, symbol, symbolSquare } from "d3-shape";
+import { scaleOrdinal, scaleLinear } from "d3-scale";
+import { axisBottom, axisLeft } from "d3-axis";
 import { min, values } from "lodash";
-import * as Legend from "d3-svg-legend";
+import { legendColor } from "d3-svg-legend";
 
 /**
  * A function for creating a chart showing the distribution of base quality at each position in a libraries reads.
@@ -38,26 +41,26 @@ const CreateBasesChart = (element, data, width) => {
     width = width - margin.left - margin.right;
 
     // Set up scales and axes.
-    const y = d3.scaleLinear()
+    const y = scaleLinear()
         .range([height, 0])
         .domain([minQuality - 5, 48]);
 
-    const x = d3.scaleLinear()
+    const x = scaleLinear()
         .range([0, width])
         .domain([0, data.length]);
 
-    const xAxis = d3.axisBottom(x);
+    const xAxis = axisBottom(x);
 
-    const yAxis = d3.axisLeft(y);
+    const yAxis = axisLeft(y);
 
     // A function for generating the lines representing mean and median base quality.
-    const line = (data, key) => {
+    const lineDrawer = (data, key) => {
         const column = {
             mean: 0,
             median: 1
         }[key];
 
-        const generator = d3.line()
+        const generator = line()
             .x((d, i) => x(i))
             .y(d => y(d[column]));
 
@@ -70,21 +73,21 @@ const CreateBasesChart = (element, data, width) => {
     const areas = [
         {
             name: "upper",
-            func: d3.area()
+            func: area()
                 .x(areaX)
                 .y0(d => y(d[3]))
                 .y1(d => y(d[5]))
         },
         {
             name: "lower",
-            func: d3.area()
+            func: area()
                 .x(areaX)
                 .y0(d => y(d[2]))
                 .y1(d => y(d[4]))
         },
         {
             name: "quartile",
-            func: d3.area()
+            func: area()
                 .x(areaX)
                 .y0(d => y(d[2]))
                 .y1(d => y(d[3]))
@@ -92,7 +95,7 @@ const CreateBasesChart = (element, data, width) => {
     ];
 
     // Create base SVG canvas.
-    let svg = d3.select(element).append("svg")
+    let svg = select(element).append("svg")
         .attr("width", width + margin.left + margin.right)
         .attr("height", height + margin.top + margin.bottom)
         .append("g")
@@ -109,12 +112,12 @@ const CreateBasesChart = (element, data, width) => {
     });
 
     // Define a scale and a d3-legend for rendering a legend on the chart.
-    const legendScale = d3.scaleOrdinal()
+    const legendScale = scaleOrdinal()
         .domain(["Mean", "Median", "Quartile", "Decile"])
         .range(["#a94442", "#428bca", "#3C763D", "#FFF475"]);
 
-    const legend = Legend.legendColor()
-        .shape("path", d3.symbol().type(d3.symbolSquare).size(150))
+    const legend = legendColor()
+        .shape("path", symbol().type(symbolSquare).size(150))
         .shapePadding(10)
         .scale(legendScale);
 
@@ -126,13 +129,13 @@ const CreateBasesChart = (element, data, width) => {
 
     // Append the median line to the chart. Color is blue.
     svg.append("path")
-        .attr("d", line(data, "median"))
+        .attr("d", lineDrawer(data, "median"))
         .attr("class", "graph-line")
         .style("stroke", "#428bca");
 
     // Append the median line to the chart. Color is red.
     svg.append("path")
-        .attr("d", line(data, "mean"))
+        .attr("d", lineDrawer(data, "mean"))
         .attr("class", "graph-line")
         .style("stroke", "#a94442");
 

@@ -1,4 +1,6 @@
-import * as d3 from "d3";
+import { select } from "d3-selection";
+import { scaleLinear } from "d3-scale"
+import { axisTop } from "d3-axis";
 import React from "react";
 import { ListGroupItem } from "virtool/js/components/Base";
 
@@ -29,12 +31,12 @@ export default class NuVsExpansion extends React.Component {
         const width = element.offsetWidth;
 
         // Set-up a y-axis that will appear at the top of the chart.
-        const x = d3.scaleLinear()
+        const x = scaleLinear()
             .range([0, width - 30])
             .domain([0, this.props.maxSequenceLength]);
 
         // Construct the SVG canvas.
-        let svg = d3.select(element).append("svg")
+        let svg = select(element).append("svg")
             .attr("width", width)
             .attr("height", 26);
 
@@ -51,7 +53,7 @@ export default class NuVsExpansion extends React.Component {
         group.append("g")
             .attr("class", "x axis")
             .attr("transform", "translate(0,16)")
-            .call(d3.axisTop(x));
+            .call(axisTop(x));
     };
 
     render () {
