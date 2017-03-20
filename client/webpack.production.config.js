@@ -43,7 +43,9 @@ var config = {
         new webpack.optimize.UglifyJsPlugin({
             compress: {
                 warnings: true
-            }
+            },
+
+            comments: false
         }),
 
         new HTMLPlugin({
