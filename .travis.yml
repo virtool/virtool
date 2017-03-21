@@ -27,8 +27,9 @@ script:
 
 before_install:
 - pip install codecov
-- sudo apt-get update
-- sudo apt-get install hmmer
+- wget http://eddylab.org/software/hmmer3/3.1b2/hmmer-3.1b2-linux-intel-x86_64.tar.gz
+- tar -xf hmmer-3.1b2-linux-intel-x86_64.tar.gz
+- export PATH=${PATH}:${PWD}/hmmer-3.1b2-linux-intel-x86_64/binaries
 
 after_success:
 - codecov
