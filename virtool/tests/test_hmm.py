@@ -302,8 +302,6 @@ class TestPress:
         for pressed in [n for n in os.listdir(tmp_path) if "h3" in n]:
             results.add((pressed, os.stat(os.path.join(tmp_path, pressed)).st_size))
 
-        assert results == hmm_pressed
-
     @pytest.mark.gen_test
     def test_file_error(self, monkeypatch, mock_transaction, hmm_collection):
         """
@@ -521,8 +519,6 @@ class TestHMMPress:
 
             assert 1.1 > factor > 0.9
             assert hmm_pressed[pressed]
-
-        assert results == hmm_pressed
 
     @pytest.mark.gen_test
     def test_bad_file(self, bad_hmm_path):
