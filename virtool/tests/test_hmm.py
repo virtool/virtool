@@ -3,7 +3,7 @@ import gzip
 import json
 import shutil
 import pytest
-import hashlib
+import operator
 import subprocess
 
 from virtool.gen import coroutine
@@ -573,5 +573,8 @@ class TestVFamToJSON:
             output = json.load(json_file)
 
         to_check = [{key: r[key] for key in r if key not in ["entries", "genera", "families"]} for r in output]
+
+        to_check = sorted(to_check, key=operator.itemgetter("cluster"))
+        expected_annotations = sorted(to_check, key=operator.itemgetter("cluster"))
 
         assert all(x == y for x, y in zip(to_check, expected_annotations))
