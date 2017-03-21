@@ -25,22 +25,25 @@ class Collection(virtool.database.Collection):
     @virtool.gen.exposed_method([])
     def detail(self, transaction):
         detail = yield self.find_one({"_id": transaction.data["_id"]})
-        return True, detail
+
+        if detail:
+            return True, detail
+
+        return False, dict(message="Document not found")
 
     @virtool.gen.exposed_method(["modify_hmm"])
     def import_data(self, transaction):
         annotation_count = yield self.db.count()
 
         if annotation_count > 0:
-            return False, dict(message="Cannot import annotation when one or more annotations already exist.")
+            return False, dict(message="Annotations collection is not empty")
 
         # The file id to import the data from.
         file_id = transaction.data["file_id"]
 
         inserted_count = 0
 
-        # Load a list of joined virus from a the gzip-compressed JSON.
-        with gzip.open(os.path.join(self.settings.get("data_path"), "upload", file_id), "rt") as input_file:
+        with gzip.open(os.path.join(self.settings.get("data_path"), "files", file_id), "rt") as input_file:
             annotations_to_import = json.load(input_file)
 
         for annotation in annotations_to_import:
@@ -64,10 +67,15 @@ class Collection(virtool.database.Collection):
 
     @virtool.gen.exposed_method([])
     def check_files(self, transaction):
+        result = yield self._check_files()
+        return True, result
+
+    @virtool.gen.coroutine
+    def _check_files(self):
         hmm_dir_path = os.path.join(self.settings.get("data_path"), "hmm")
 
         result = {
-            "files": list(),
+            "files": set(),
             "errors": {
                 "hmm_dir": False,
                 "hmm_file": False,
@@ -79,18 +87,18 @@ class Collection(virtool.database.Collection):
 
         if not os.path.isdir(hmm_dir_path):
             result["errors"]["hmm_dir"] = True
-            return True, result
+            return result
 
-        hmm_file_path = os.path.join(hmm_dir_path, "vFam.hmm")
+        hmm_file_path = os.path.join(hmm_dir_path, "profiles.hmm")
 
         if not os.path.isfile(hmm_file_path):
             result["errors"]["hmm_file"] = True
-            return True, result
+            return result
 
         if not all(os.path.isfile(hmm_file_path + ".h3" + suffix) for suffix in ["f", "i", "m", "p"]):
             result["errors"]["press"] = True
 
-        hmm_stats = yield self.hmmstat(hmm_file_path)
+        hmm_stats = yield hmmstat(hmm_file_path)
 
         annotations = yield self.db.find({}, {
             "cluster": True,
@@ -107,42 +115,36 @@ class Collection(virtool.database.Collection):
 
         files = yield virtool.utils.list_files(hmm_dir_path)
 
-        result["files"] = [file for _, file in files.items() if ".hmm" in file["_id"]]
+        result["files"] = {filename for filename in files if ".hmm" in filename}
 
-        return True, result
+        return result
 
     @virtool.gen.exposed_method([])
-    def press(self):
-        output = yield self.hmmpress()
-        return True, None
+    def press(self, transaction):
+        path = os.path.join(self.settings.get("data_path"), "hmm", "profiles.hmm")
+
+        try:
+            yield hmmpress(path)
+            return True, None
+        except FileNotFoundError:
+            return False, dict(message="File not found")
+        except subprocess.CalledProcessError:
+            return False, dict(message="HMMER call failed")
 
     @virtool.gen.exposed_method(["modify_hmm"])
     def clean(self, transaction):
-        hmm_ids = yield self.find({"cluster": {
-            "$in": transaction.data["cluster_ids"]
-        }}).distinct("_id")
+        results = yield self._check_files()
 
-        result = yield self.remove(hmm_ids)
+        if results["errors"]["not_in_file"]:
+            hmm_ids = yield self.find({"cluster": {
+                "$in": results["errors"]["not_in_file"]
+            }}).distinct("_id")
 
-        return True, result
+            result = yield self.remove(hmm_ids)
 
-    @virtool.gen.synchronous
-    def hmmstat(self, hmm_file_path):
-        output = subprocess.check_output(["hmmstat", hmm_file_path])
+            return True, result
 
-        result = [line.split() for line in output.decode("utf-8").split("\n") if line and line[0] != "#"]
-
-        return [{
-            "cluster": int(line[1].replace("vFam_", "")),
-            "count": int(line[3]),
-            "length": int(line[5])
-        } for line in result]
-
-    @virtool.gen.synchronous
-    def hmmpress(self):
-        hmm_file_path = os.path.join(self.settings.get("data_path"), "hmm", "vFam.hmm")
-        output = subprocess.check_output(["hmmpress", "-f", hmm_file_path])
-        return output
+        return False, dict(message="No problems found")
 
     @virtool.gen.exposed_method(["modify_hmm"])
     def set_field(self, transaction):
@@ -157,7 +159,32 @@ class Collection(virtool.database.Collection):
 
         return True, None
 
-def text_to_json(annotation_path):
+
+@virtool.gen.synchronous
+def hmmstat(hmm_file_path):
+    if not os.path.isfile(hmm_file_path):
+        raise FileNotFoundError("HMM file does not exist")
+
+    output = subprocess.check_output(["hmmstat", hmm_file_path])
+
+    result = [line.split() for line in output.decode("utf-8").split("\n") if line and line[0] != "#"]
+
+    return [{
+        "cluster": int(line[1].replace("vFam_", "")),
+        "count": int(line[3]),
+        "length": int(line[5])
+    } for line in result]
+
+
+@virtool.gen.synchronous
+def hmmpress(hmm_file_path):
+    if not os.path.isfile(hmm_file_path):
+        raise FileNotFoundError("HMM file does not exist")
+
+    return subprocess.check_output(["hmmpress", "-f", hmm_file_path])
+
+
+def vfam_text_to_json(annotation_path, output_path=None):
     paths = os.listdir(annotation_path)
 
     annotations = list()
@@ -208,5 +235,8 @@ def text_to_json(annotation_path):
 
         annotations.append(document)
 
-    with gzip.open("annotations.json.gz", "wt") as output:
-        json.dump(annotations, output)
+    if output_path:
+        with gzip.open(output_path, "wt") as output:
+            json.dump(annotations, output)
+
+    return annotations
