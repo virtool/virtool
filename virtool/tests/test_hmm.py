@@ -281,7 +281,7 @@ class TestCheckFiles:
 class TestPress:
 
     @pytest.mark.gen_test
-    def test_valid(self, mock_transaction, hmm_collection, hmm_path, hmm_checksums):
+    def test_valid(self, mock_transaction, hmm_collection, hmm_path, hmm_pressed):
         """
         Make sure profiles.hmm is properly pressed when possible.
 
@@ -297,12 +297,12 @@ class TestPress:
 
         yield hmm_collection.press(transaction)
 
-        checksums = set()
+        results = set()
 
         for pressed in [n for n in os.listdir(tmp_path) if "h3" in n]:
-            checksums.add(hashlib.md5(open(os.path.join(tmp_path, pressed), "rb").read()).hexdigest())
+            results.add((pressed, os.stat(os.path.join(tmp_path, pressed)).st_size))
 
-        assert checksums == hmm_checksums
+        assert results == hmm_pressed
 
     @pytest.mark.gen_test
     def test_file_error(self, monkeypatch, mock_transaction, hmm_collection):
@@ -503,7 +503,7 @@ class TestHMMStat:
 class TestHMMPress:
 
     @pytest.mark.gen_test
-    def test_valid(self, hmm_path, hmm_checksums):
+    def test_valid(self, hmm_path, hmm_pressed):
         """
         Test that the HMM file is pressed when possible.
 
@@ -512,12 +512,12 @@ class TestHMMPress:
 
         tmp_path = os.path.dirname(hmm_path[1])
 
-        checksums = set()
+        results = set()
 
         for pressed in [n for n in os.listdir(tmp_path) if "h3" in n]:
-            checksums.add(hashlib.md5(open(os.path.join(tmp_path, pressed), "rb").read()).hexdigest())
+            results.add((pressed, os.stat(os.path.join(tmp_path, pressed)).st_size))
 
-        assert checksums == hmm_checksums
+        assert results == hmm_pressed
 
     @pytest.mark.gen_test
     def test_bad_file(self, bad_hmm_path):

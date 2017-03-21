@@ -9,12 +9,12 @@ ANNOTATION_PATH = os.path.join(DIRNAME, "test_files", "annotations")
 
 
 @pytest.fixture
-def hmm_checksums():
+def hmm_pressed():
     return {
-        "f837b40b9385833f0cebc45028c2e526",
-        "64e9dfcd68284f5a44033ff6101d5919",
-        "e9fe7c06e1f5f21660f287fd99aa6123",
-        "87281cc69d87bbc571b5ed68e546fa81"
+        ('profiles.hmm.h3p', 531878),
+        ('profiles.hmm.h3f', 195593),
+        ('profiles.hmm.h3m', 453461),
+        ('profiles.hmm.h3i', 395)
     }
 
 
