@@ -1,8 +1,5 @@
 import os
-import motor
 import pytest
-import pymongo
-
 import virtool.utils
 
 
