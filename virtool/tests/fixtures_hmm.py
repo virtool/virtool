@@ -11,10 +11,10 @@ ANNOTATION_PATH = os.path.join(DIRNAME, "test_files", "annotations")
 @pytest.fixture
 def hmm_pressed():
     return {
-        ('profiles.hmm.h3p', 531878),
-        ('profiles.hmm.h3f', 195593),
-        ('profiles.hmm.h3m', 453461),
-        ('profiles.hmm.h3i', 395)
+        "profiles.hmm.h3p": 531878,
+        "profiles.hmm.h3f": 195593,
+        "profiles.hmm.h3m": 453461,
+        "profiles.hmm.h3i": 395
     }
 
 

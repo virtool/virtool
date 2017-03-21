@@ -515,7 +515,12 @@ class TestHMMPress:
         results = set()
 
         for pressed in [n for n in os.listdir(tmp_path) if "h3" in n]:
-            results.add((pressed, os.stat(os.path.join(tmp_path, pressed)).st_size))
+            assert pressed in hmm_pressed
+
+            factor = hmm_pressed[pressed] / os.stat(os.path.join(tmp_path, pressed)).st_size
+
+            assert 1.1 > factor > 0.9
+            assert hmm_pressed[pressed]
 
         assert results == hmm_pressed
 
