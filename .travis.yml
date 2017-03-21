@@ -27,6 +27,7 @@ script:
 
 before_install:
 - pip install codecov
+- sudo apt-get update
 - sudo apt-get install hmmer
 
 after_success:
