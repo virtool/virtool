@@ -173,7 +173,7 @@ class TestCheckFiles:
 
         hmm_collection.settings.data["data_path"] = pressed_hmm_path[0]
 
-        with open(pressed_hmm_path[1], "r") as handle:
+        with open(os.path.join(pressed_hmm_path[1], "profiles.hmm"), "r") as handle:
             lines = [next(handle).rstrip() for x in range(100)]
 
             for line in lines:
