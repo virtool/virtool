@@ -3,6 +3,7 @@ python: "3.5"
 services: mongodb
 cache:
   pip: true
+  apt: true
   directories:
     - client/node_modules
 
