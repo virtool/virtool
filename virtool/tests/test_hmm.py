@@ -173,6 +173,12 @@ class TestCheckFiles:
 
         hmm_collection.settings.data["data_path"] = pressed_hmm_path[0]
 
+        with open(pressed_hmm_path[1], "r") as handle:
+            lines = [next(handle).rstrip() for x in range(100)]
+
+            for line in lines:
+                print(line)
+
         yield hmm_collection.check_files(hmm_check_transaction)
 
         assert hmm_check_transaction.fulfill_called == (True, hmm_check_result)
