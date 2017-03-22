@@ -19,7 +19,6 @@ import virtool.gen
 
 # Collection modules
 import virtool.analyses
-import virtool.updates
 import virtool.files
 import virtool.groups
 import virtool.history
@@ -27,6 +26,8 @@ import virtool.hosts
 import virtool.indexes
 import virtool.jobs
 import virtool.samples
+import virtool.status
+import virtool.updates
 import virtool.users
 import virtool.viruses
 
