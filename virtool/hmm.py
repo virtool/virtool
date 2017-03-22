@@ -75,7 +75,7 @@ class Collection(virtool.database.Collection):
         hmm_dir_path = os.path.join(self.settings.get("data_path"), "hmm")
 
         result = {
-            "files": set(),
+            "files": list(),
             "errors": {
                 "hmm_dir": False,
                 "hmm_file": False,
@@ -115,7 +115,7 @@ class Collection(virtool.database.Collection):
 
         files = yield virtool.utils.list_files(hmm_dir_path)
 
-        result["files"] = {filename for filename in files if ".hmm" in filename}
+        result["files"] = sorted(filename for filename in files if ".hmm" in filename)
 
         return result
 

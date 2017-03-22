@@ -147,13 +147,13 @@ def hmm_collection(mocker, mock_settings):
 @pytest.fixture
 def hmm_check_result():
     return {
-        "files": {
+        "files": [
             "profiles.hmm",
             "profiles.hmm.h3f",
             "profiles.hmm.h3i",
             "profiles.hmm.h3m",
             "profiles.hmm.h3p"
-        },
+        ],
         "errors": {
             "hmm_dir": False,
             "hmm_file": False,

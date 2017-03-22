@@ -189,7 +189,7 @@ class TestCheckFiles:
 
         yield hmm_collection.check_files(hmm_check_transaction)
 
-        hmm_check_result["files"] = {"profiles.hmm"}
+        hmm_check_result["files"] = ["profiles.hmm"]
         hmm_check_result["errors"]["press"] = True
 
         assert hmm_check_transaction.fulfill_called == (True, hmm_check_result)
@@ -208,9 +208,7 @@ class TestCheckFiles:
 
         yield hmm_collection.check_files(hmm_check_transaction)
 
-        print(hmm_check_transaction.fulfill_called[1])
-
-        hmm_check_result["files"] = set()
+        hmm_check_result["files"] = list()
         hmm_check_result["errors"]["hmm_dir"] = True
 
         assert hmm_check_transaction.fulfill_called == (True, hmm_check_result)
@@ -229,7 +227,7 @@ class TestCheckFiles:
 
         yield hmm_collection.check_files(hmm_check_transaction)
 
-        hmm_check_result["files"] = set()
+        hmm_check_result["files"] = list()
         hmm_check_result["errors"]["hmm_file"] = True
 
         assert hmm_check_transaction.fulfill_called == (True, hmm_check_result)
@@ -262,8 +260,6 @@ class TestCheckFiles:
 
         with open(hmm_path[1], "r") as handle:
             replacement_lines = [next(handle) for x in range(5631)]
-
-        print(replacement_lines[-1])
 
         with open(hmm_path[1], "w") as handle:
             for line in replacement_lines:
