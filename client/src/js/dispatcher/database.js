@@ -9,9 +9,9 @@ if (!("indexedDB" in window)) {
 
 const DEFINITIONS = {
 
-    jobs: {
+    analyses: {
         unique: ["_id"],
-        indices: ["username"],
+        indices: ["sample_id", "username"],
         retain: true
     },
 
@@ -21,21 +21,13 @@ const DEFINITIONS = {
         retain: true
     },
 
-    samples: {
-        unique: ["_id", "name"],
-        indices: ["added", "username", "imported", "archived", "analyzed"],
-        retain: true
+    groups: {
+        unique: ["_id"]
     },
 
-    analyses: {
+    history: {
         unique: ["_id"],
-        indices: ["sample_id", "username"],
-        retain: true
-    },
-
-    viruses: {
-        unique: ["_id", "name"],
-        indices: ["modified", "abbreviation", "last_indexed_version"],
+        indices: ["operation", "timestamp", "entry_id", "entry_version", "username", "index", "index_version"],
         retain: true
     },
 
@@ -45,9 +37,9 @@ const DEFINITIONS = {
         retain: true
     },
 
-    history: {
-        unique: ["_id"],
-        indices: ["operation", "timestamp", "entry_id", "entry_version", "username", "index", "index_version"],
+    hosts: {
+        unique: ["_id", "file", "job"],
+        indices: ["added"],
         retain: true
     },
 
@@ -57,9 +49,26 @@ const DEFINITIONS = {
         retain: true
     },
 
-    hosts: {
-        unique: ["_id", "file", "job"],
-        indices: ["added"],
+    jobs: {
+        unique: ["_id"],
+        indices: ["username"],
+        retain: true
+    },
+
+    samples: {
+        unique: ["_id", "name"],
+        indices: ["added", "username", "imported", "archived", "analyzed"],
+        retain: true
+    },
+
+    status: {
+        unique: ["_id"],
+        retain: true
+    },
+
+    viruses: {
+        unique: ["_id", "name"],
+        indices: ["modified", "abbreviation", "last_indexed_version"],
         retain: true
     },
 
@@ -70,11 +79,8 @@ const DEFINITIONS = {
 
     users: {
         unique: ["_id"]
-    },
-
-    groups: {
-        unique: ["_id"]
     }
+
 };
 
 export default class Database {
