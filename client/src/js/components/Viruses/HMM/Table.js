@@ -12,8 +12,8 @@
 import { capitalize } from "lodash";
 import React from "react";
 import FlipMove from "react-flip-move"
-import { Table } from "react-bootstrap";
-import { Icon, Flex, FlexItem, Paginator, getFlipMoveProps } from "virtool/js/components/Base";
+import { Table, ListGroup } from "react-bootstrap";
+import { Icon, Flex, FlexItem, Paginator, ListGroupItem, getFlipMoveProps } from "virtool/js/components/Base";
 
 import HMMEntry from "./Entry";
 
@@ -97,51 +97,62 @@ export default class HMMTable extends React.Component {
             />
         ));
 
-        const caretProps = {
-            onClick: this.props.sort,
-            descending: this.props.sortDescending
-        };
+        if (rowComponents.length) {
+
+            const caretProps = {
+                onClick: this.props.sort,
+                descending: this.props.sortDescending
+            };
+
+            return (
+                <div>
+                    <Table hover>
+                        <thead>
+                            <tr>
+                                <th className="col-md-1">
+                                    <CaretHeader
+                                        name="cluster"
+                                        showCaret={this.props.sortKey === "cluster"}
+                                        {...caretProps}
+                                    />
+                                </th>
+                                <th className="col-md-7">
+                                    <CaretHeader
+                                        name="label"
+                                        showCaret={this.props.sortKey === "label"}
+                                        {...caretProps}
+                                    />
+                                </th>
+                                <th className="col-md-4">
+                                    <CaretHeader
+                                        name="families"
+                                        showCaret={this.props.sortKey === "families"}
+                                        {...caretProps}
+                                    />
+                                </th>
+                            </tr>
+                        </thead>
+
+                        <FlipMove {...getFlipMoveProps()} typeName="tbody" enterAnimation="accordionHorizontal">
+                            {rowComponents}
+                        </FlipMove>
+                    </Table>
+
+                    <Paginator
+                        page={this.state.page}
+                        count={pages.count}
+                        onChange={this.setPage}
+                    />
+                </div>
+            );
+        }
 
         return (
-            <div>
-                <Table hover>
-                    <thead>
-                        <tr>
-                            <th className="col-md-1">
-                                <CaretHeader
-                                    name="cluster"
-                                    showCaret={this.props.sortKey === "cluster"}
-                                    {...caretProps}
-                                />
-                            </th>
-                            <th className="col-md-7">
-                                <CaretHeader
-                                    name="label"
-                                    showCaret={this.props.sortKey === "label"}
-                                    {...caretProps}
-                                />
-                            </th>
-                            <th className="col-md-4">
-                                <CaretHeader
-                                    name="families"
-                                    showCaret={this.props.sortKey === "families"}
-                                    {...caretProps}
-                                />
-                            </th>
-                        </tr>
-                    </thead>
-
-                    <FlipMove {...getFlipMoveProps()} typeName="tbody" enterAnimation="accordionHorizontal">
-                        {rowComponents}
-                    </FlipMove>
-                </Table>
-
-                <Paginator
-                    page={this.state.page}
-                    count={pages.count}
-                    onChange={this.setPage}
-                />
-            </div>
+            <ListGroup>
+                <ListGroupItem className="text-center">
+                    <Icon name="info" /> No profiles found
+                </ListGroupItem>
+            </ListGroup>
         );
     }
 }
