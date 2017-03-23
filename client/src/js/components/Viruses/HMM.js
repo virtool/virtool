@@ -137,7 +137,7 @@ export default class ManageHMM extends React.Component {
                 <Alert bsStyle="warning">
                     <Icon name="warning" />
                     <span> {fileWarning} {fileWarning && annotationWarning ? "and": null} {annotationWarning}</span> to
-                    start using NuVs.
+                    start using NuVs. {fileWarning ? null: "An HMM file has already been uploaded."}
                     <Icon name="reset" onClick={this.checkFiles} pullRight />
                 </Alert>
             );
