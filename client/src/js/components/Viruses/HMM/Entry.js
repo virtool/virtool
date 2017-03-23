@@ -14,11 +14,6 @@ import React from "react";
 import { keys } from "lodash";
 import { Label } from "react-bootstrap";
 
-/**
- * A form-based component used to filter the documents presented in JobsTable component.
- *
- * @class
- */
 export default class HMMEntry extends React.Component {
 
     static propTypes = {
@@ -26,10 +21,6 @@ export default class HMMEntry extends React.Component {
         label: React.PropTypes.string,
         cluster: React.PropTypes.number,
         families: React.PropTypes.object
-    };
-
-    showDetail = () => {
-        dispatcher.router.setExtra(["detail", this.props._id]);
     };
 
     render () {
@@ -41,7 +32,7 @@ export default class HMMEntry extends React.Component {
         ));
 
         return (
-            <tr className="pointer" onClick={this.showDetail}>
+            <tr className="pointer" onClick={() => dispatcher.router.setExtra(["detail", this.props._id])}>
                 <td>{this.props.cluster}</td>
                 <td>{this.props.label}</td>
                 <td>{labelComponents} {families.length > 3 ? "...": null}</td>

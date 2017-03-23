@@ -6,18 +6,7 @@
  * @author
  * Ian Boyes
  *
- * @exports ImportHMM
- */
-
-/**
- * @license
- * The MIT License (MIT)
- * Copyright 2015 Government of Canada
- *
- * @author
- * Ian Boyes
- *
- * @exports ImportHMM
+ * @exports ImportModal
  */
 
 import React from "react";

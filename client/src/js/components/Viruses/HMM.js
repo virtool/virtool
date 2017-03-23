@@ -11,7 +11,7 @@
 
 import React from "react";
 import { Alert } from "react-bootstrap";
-import { Icon, DetailModal } from "virtool/js/components/Base"
+import { Icon, DetailModal, Flex, FlexItem, Button } from "virtool/js/components/Base"
 import { numberToWord } from "virtool/js/utils";
 
 import HMMTable from "./HMM/Table";
@@ -175,6 +175,33 @@ export default class ManageHMM extends React.Component {
                     </span>
                 </Alert>
             )
+        }
+
+        if (this.state.hmmStatus.errors.not_in_file.length > 0 && !alert) {
+            const value = this.state.hmmStatus.errors.not_in_file.length;
+
+            errors.push(
+                <Alert key="not_in_file" bsStyle="warning">
+                    <Flex>
+                        <FlexItem>
+                            <strong>
+                                There {makeSpecifier(value.length, "annotation")} in the database for which no
+                                profiles exist in the HMM file.
+                            </strong>
+                            &nbsp;
+                            <span>
+                                Repairing this problem will remove extra annotations from the database.
+                            </span>
+                        </FlexItem>
+
+                        <FlexItem grow={0} shrink={0} pad={30}>
+                            <Button icon="hammer" onClick={() => dispatcher.db.hmm.request("clean", {})}>
+                                Repair
+                            </Button>
+                        </FlexItem>
+                    </Flex>
+                </Alert>
+            );
         }
 
         return (
