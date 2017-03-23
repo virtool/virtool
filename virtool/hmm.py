@@ -1,6 +1,7 @@
 import os
 import gzip
 import json
+import shutil
 import subprocess
 
 from collections import Counter
@@ -32,7 +33,22 @@ class Collection(virtool.database.Collection):
         return False, dict(message="Document not found")
 
     @virtool.gen.exposed_method(["modify_hmm"])
-    def import_data(self, transaction):
+    def import_hmm(self, transaction):
+        src_path = os.path.join(self.settings.get("data_path"), "files", transaction.data["file_id"])
+        dest_path = os.path.join(self.settings.get("data_path"), "hmm/profiles.hmm")
+
+        shutil.copyfile(src_path, dest_path)
+
+        result = yield self._check_files()
+
+        yield self.collections["status"].update("hmm", {
+            "$set": result
+        }, upsert=True)
+
+        return True, result
+
+    @virtool.gen.exposed_method(["modify_hmm"])
+    def import_annotations(self, transaction):
         annotation_count = yield self.db.count()
 
         if annotation_count > 0:
@@ -68,6 +84,11 @@ class Collection(virtool.database.Collection):
     @virtool.gen.exposed_method([])
     def check_files(self, transaction):
         result = yield self._check_files()
+
+        yield self.collections["status"].update("hmm", {
+            "$set": result
+        }, upsert=True)
+
         return True, result
 
     @virtool.gen.coroutine
