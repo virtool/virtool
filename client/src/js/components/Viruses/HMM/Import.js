@@ -9,23 +9,33 @@
  * @exports ImportHMM
  */
 
+/**
+ * @license
+ * The MIT License (MIT)
+ * Copyright 2015 Government of Canada
+ *
+ * @author
+ * Ian Boyes
+ *
+ * @exports ImportHMM
+ */
+
 import React from "react";
 import Request from "superagent";
 import Dropzone from "react-dropzone";
-import { assign, includes } from "lodash";
-import { Row, Col, Modal, Panel } from "react-bootstrap";
-import { Icon, Button } from "virtool/js/components/Base";
+import { assign, pick } from "lodash";
+import { Modal } from "react-bootstrap";
 import { byteSize } from "virtool/js/utils";
+import { Button, Flex, ProgressBar } from "virtool/js/components/Base";
 
 const getInitialState = () => ({
-    file: null,
-    fileId: null,
-    pending: false,
-    warning: null,
-    added: null
+    uploaded: 0,
+    dropped: null,
+    target: null,
+    fileId: null
 });
 
-export default class ImportHMM extends React.Component {
+export default class ImportModal extends React.Component {
 
     constructor (props) {
         super(props);
@@ -34,105 +44,115 @@ export default class ImportHMM extends React.Component {
 
     static propTypes = {
         show: React.PropTypes.bool,
-        onHide: React.PropTypes.func
+        onHide: React.PropTypes.func,
+        annotationCount: React.PropTypes.number
     };
+
+    componentDidUpdate () {
+        if (this.state.count !== undefined && this.state.count === this.props.annotationCount) {
+            this.props.onHide();
+        }
+    }
+
+    componentWillUnmount () {
+        dispatcher.db.files.off("change", this.updateCount);
+    }
 
     modalExited = () => {
         this.setState(getInitialState());
     };
 
-    handleDrop =(files) => {
-        this.setState(assign(getInitialState(), { file: files[0] }));
-    };
+    handleDrop = (files) => {
+        this.setState({dropped: files[0]}, () => {
 
-    upload = () => {
-        this.setState({ pending: true }, () => {
-            Request.post("/upload")
-                .attach(this.state.file.name, this.state.file)
-                .end((data, res) => {
-                    this.setState({ fileId: res.text }, this.importData);
+            const fileData = assign({"file_type": "annotations"}, pick(this.state.dropped, ["name", "size"]));
+
+            dispatcher.db.files.request("authorize_upload", fileData)
+                .success((data) => {
+                    const newState = {
+                        pending: true,
+                        target: data.target,
+                        fileId: `${data.target}-${this.state.dropped.name}`
+                    };
+
+                    dispatcher.db.files.on("change", this.updateFile);
+
+                    this.setState(newState, () => {
+                        Request.post(`/upload/${this.state.target}`)
+                            .send(this.state.dropped)
+                            .ok(res => res.status === 200)
+                            .end(this.importAnnotations);
+                    });
                 });
         });
     };
 
-    importData = () => {
-        dispatcher.db.hmm.request("import_data", { file_id: this.state.fileId })
-            .success((data) => {
-                this.setState(assign(getInitialState(), { added: data.message }));
+    importAnnotations = () => {
+        dispatcher.db.hmm.request("import_annotations", {file_id: this.state.fileId})
+            .update((data) => {
+                this.setState({count: data.count});
             })
             .failure((data) => {
-                this.setState({ warning: data.message });
+                this.setState({warning: data.message});
             });
+    };
+
+    updateFile = () => {
+        const fileDocument = dispatcher.db.files.by("_id", this.state.fileId);
+
+        this.setState({
+            uploaded: fileDocument ? fileDocument.size_now: 0
+        });
     };
 
     render () {
 
-        const dropzoneProps = {
-            onDrop: this.handleDrop,
-            multiple: false,
-            disableClick: true
-        };
-
-        const style = {
-            width: "100%",
-            height: "auto",
-            border: "1px solid #dddddd",
-            borderColor: "#dddddd",
-            padding: "15px",
-            marginBottom: "15px"
-        };
-
-        const activeStyle = assign({
-            backgroundColor: "#337ab7",
-            borderColor: "#337ab7",
-            color: "#ffffff"
-        }, style);
+        let dropzone;
 
         let content;
 
-        let button;
+        if (this.state.target) {
+            let message;
+            let now;
 
-        if (this.state.file) {
-            button = (
-                <Button bsStyle="primary" onClick={this.upload} block>
-                    <Icon name="arrow-up" pending={this.state.pending} /> Import
-                </Button>
+            if (this.props.annotationCount) {
+                message = `Imported ${this.props.annotationCount} of ${this.state.count}`;
+                now = (this.props.annotationCount / this.state.count * 50) + 50;
+            } else {
+                message = `Uploaded ${byteSize(this.state.uploaded)} of ${byteSize(this.state.dropped.size)}`;
+                now = this.state.uploaded / this.state.dropped.size * 50
+            }
+
+            content = (
+                <div>
+                    <ProgressBar now={now} />
+                    <p className="text-center text-muted">
+                        <small>{message}</small>
+                    </p>
+                </div>
+            );
+        } else {
+            content = (
+                <Flex>
+                    <Dropzone
+                        ref={(node) => dropzone = node}
+                        onDrop={this.handleDrop}
+                        className="dropzone"
+                        activeClassName="dropzone-active"
+                        disableClick
+                    >
+                        Drag file here
+                    </Dropzone>
+
+                    <Button icon="folder-open" style={{marginLeft: "3px"}} onClick={() => dropzone.open()}/>
+                </Flex>
             );
         }
-
-        let dropzoneContent = "Drag file here.";
-
-        if (this.state.file) {
-            const iconName = includes(this.state.file.name, ".gz") ? "file-zip": "file-text";
-
-            dropzoneContent = (
-                <span>
-                    <Icon name={iconName} /> {this.state.file.name} ({byteSize(this.state.file.size)})
-                </span>
-            );
-        }
-
-        content = (
-            <div>
-                <Row>
-                    <Col md={12}>
-                        <Dropzone style={style} activeStyle={activeStyle} {...dropzoneProps} ref="dropzone">
-                            <div className="drag-area text-center">
-                                {dropzoneContent}
-                            </div>
-                        </Dropzone>
-                    </Col>
-                </Row>
-
-                {button}
-            </div>
-        );
 
         return (
             <Modal show={this.props.show} onHide={this.props.onHide} onExited={this.modalExited}>
-
                 <Modal.Header onHide={this.props.onHide} closeButton>
-                    Import HMM Annotations
+                    Upload Annotation file
                 </Modal.Header>
 
                 <Modal.Body>

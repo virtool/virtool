@@ -18,11 +18,14 @@ import HMMTable from "./HMM/Table";
 import HMMDetail from "./HMM/Detail";
 import HMMToolbar from "./HMM/Toolbar"
 import ImportModal from "./HMM/Import";
-import FilesModal from "./HMM/Files";
 import UploadModal from "./HMM/Upload";
 
 const getHMMStatus = () => {
     return dispatcher.db.status.by("_id", "hmm");
+};
+
+const getDocuments = () => {
+    return dispatcher.db.hmm.chain().branch();
 };
 
 const makeSpecifier = (value, noun) => {
@@ -40,9 +43,10 @@ export default class ManageHMM extends React.Component {
         super(props);
 
         this.state = {
-            findTerm: "",
+            documents: getDocuments(),
             hmmStatus: getHMMStatus(),
 
+            findTerm: "",
             sortKey: "cluster",
             sortDescending: false
         };
@@ -53,11 +57,13 @@ export default class ManageHMM extends React.Component {
     };
 
     componentDidMount () {
-        dispatcher.db.status.on("change", this.update);
+        dispatcher.db.status.on("change", this.updateStatus);
+        dispatcher.db.hmm.on("change", this.updateAnnotations)
     }
 
     componentWillUnmount () {
-        dispatcher.db.status.off("change", this.update);
+        dispatcher.db.status.off("change", this.updateStatus);
+        dispatcher.db.hmm.off("change", this.updateAnnotations)
     }
 
     setFindTerm = (value) => {
@@ -81,9 +87,15 @@ export default class ManageHMM extends React.Component {
         dispatcher.db.hmm.request("check_files", {});
     };
 
-    update = () => {
+    updateStatus = () => {
         this.setState({
             hmmStatus: getHMMStatus()
+        });
+    };
+
+    updateAnnotations = () => {
+        this.setState({
+            documents: getDocuments()
         });
     };
 
@@ -102,7 +114,9 @@ export default class ManageHMM extends React.Component {
             };
         }
 
-        let documents = dispatcher.db.hmm.chain().find(query).simplesort(this.state.sortKey).data();
+        const annotationCount = this.state.documents.count();
+
+        let documents = this.state.documents.find(query).simplesort(this.state.sortKey).data();
 
         if (this.state.sortDescending) {
             documents = documents.reverse();
@@ -149,7 +163,7 @@ export default class ManageHMM extends React.Component {
             const value = this.state.hmmStatus.errors.not_in_database;
 
             errors.push(
-                <Alert bsStyle="danger">
+                <Alert key="not_in_database" bsStyle="danger">
                     <strong>
                         There {makeSpecifier(value.length, "profile")} in <code>profiles.hmm</code> that do not have
                         annotations in the database.
@@ -186,16 +200,13 @@ export default class ManageHMM extends React.Component {
                 <UploadModal
                     show={this.props.route.extra[0] === "upload"}
                     onHide={this.hideModal}
+
                 />
 
                 <ImportModal
                     show={this.props.route.extra[0] === "import"}
                     onHide={this.hideModal}
-                />
-
-                <FilesModal
-                    show={this.props.route.extra[0] === "files"}
-                    onHide={this.hideModal}
+                    annotationCount={annotationCount}
                 />
 
                 <DetailModal

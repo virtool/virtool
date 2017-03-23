@@ -1,4 +1,5 @@
 import os
+import math
 import gzip
 import json
 import shutil
@@ -57,12 +58,21 @@ class Collection(virtool.database.Collection):
         # The file id to import the data from.
         file_id = transaction.data["file_id"]
 
-        inserted_count = 0
-
         with gzip.open(os.path.join(self.settings.get("data_path"), "files", file_id), "rt") as input_file:
             annotations_to_import = json.load(input_file)
 
-        for annotation in annotations_to_import:
+        # The number of annotation documents that will be imported.
+        count = len(annotations_to_import)
+
+        transaction.update({"count": count})
+
+        # The number of documents to insert at a time.
+        chunk_size = int(math.ceil(count * 0.01))
+
+        # A list of documents that have to be inserted when chunk_size is met.
+        cache = list()
+
+        for i, annotation in enumerate(annotations_to_import):
             top_three = Counter([entry["name"] for entry in annotation["entries"]]).most_common(3)
             top_names = [entry[0] for entry in top_three]
 
@@ -75,11 +85,16 @@ class Collection(virtool.database.Collection):
                 "_version": 0
             })
 
-            inserted_count += 1
+            cache.append(annotation)
 
-            yield self.insert(annotation)
+            if len(cache) == chunk_size or i == count - 1:
+                self.db.insert_many(cache)
+                yield self.dispatch("update", [{key: d[key] for key in self.sync_projector} for d in cache])
+                cache = []
 
-        return True, {"count": inserted_count}
+        yield self._check_files()
+
+        return True, None
 
     @virtool.gen.exposed_method([])
     def check_files(self, transaction):
