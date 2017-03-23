@@ -25,7 +25,7 @@ const getHMMStatus = () => {
 };
 
 const getDocuments = () => {
-    return dispatcher.db.hmm.chain().branch();
+    return dispatcher.db.hmm.chain();
 };
 
 const makeSpecifier = (value, noun) => {
@@ -110,9 +110,9 @@ export default class ManageHMM extends React.Component {
             };
         }
 
-        const annotationCount = this.state.documents.count();
+        const annotationCount = this.state.documents.branch().count();
 
-        let documents = this.state.documents.find(query).simplesort(this.state.sortKey).data();
+        let documents = this.state.documents.branch().find(query).simplesort(this.state.sortKey).data();
 
         if (this.state.sortDescending) {
             documents = documents.reverse();
