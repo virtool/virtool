@@ -9,16 +9,6 @@ ANNOTATION_PATH = os.path.join(DIRNAME, "test_files", "annotations")
 
 
 @pytest.fixture
-def hmm_pressed():
-    return {
-        "profiles.hmm.h3p": 531878,
-        "profiles.hmm.h3f": 195593,
-        "profiles.hmm.h3m": 453461,
-        "profiles.hmm.h3i": 395
-    }
-
-
-@pytest.fixture
 def annotation_path(tmpdir):
     path = os.path.join(str(tmpdir), "annotations")
     shutil.copytree(ANNOTATION_PATH, path)
@@ -49,17 +39,6 @@ def hmm_path(tmpdir):
     shutil.copyfile(src_path, hmm_file_path)
 
     return str(tmpdir), hmm_file_path
-
-
-@pytest.fixture
-def pressed_hmm_path(hmm_path):
-    for extension in ["h3f", "h3i", "h3m", "h3p"]:
-        shutil.copyfile(
-            os.path.join(DIRNAME, "test_files", "test.hmm.{}".format(extension)),
-            os.path.join(hmm_path[0], "hmm", "profiles.hmm.{}".format(extension))
-        )
-
-    return hmm_path[0], os.path.join(hmm_path[0], "hmm")
 
 
 @pytest.fixture
@@ -135,10 +114,16 @@ def hmm_document():
 
 
 @pytest.fixture
-def hmm_collection(mocker, mock_settings):
+def hmm_collection(mocker, mock_collection, mock_settings):
+    collections = {
+        "status": mock_collection
+    }
+
+    collections["status"].add_coroutine("update")
+
     return Collection(
         mocker.stub(name="dispatch"),
-        {},
+        collections,
         mock_settings,
         mocker.stub(name="add_periodic_callback")
     )
@@ -147,20 +132,9 @@ def hmm_collection(mocker, mock_settings):
 @pytest.fixture
 def hmm_check_result():
     return {
-        "files": [
-            "profiles.hmm",
-            "profiles.hmm.h3f",
-            "profiles.hmm.h3i",
-            "profiles.hmm.h3m",
-            "profiles.hmm.h3p"
-        ],
-        "errors": {
-            "hmm_dir": False,
-            "hmm_file": False,
-            "press": False,
-            "not_in_file": False,
-            "not_in_database": False
-        }
+        "hmm_file": False,
+        "not_in_file": False,
+        "not_in_database": False
     }
 
 
