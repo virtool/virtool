@@ -155,18 +155,6 @@ class Collection(virtool.database.Collection):
 
         return result
 
-    @virtool.gen.exposed_method([])
-    def press(self, transaction):
-        path = os.path.join(self.settings.get("data_path"), "hmm", "profiles.hmm")
-
-        try:
-            yield hmmpress(path)
-            return True, None
-        except FileNotFoundError:
-            return False, dict(message="File not found")
-        except subprocess.CalledProcessError:
-            return False, dict(message="HMMER call failed")
-
     @virtool.gen.exposed_method(["modify_hmm"])
     def clean(self, transaction):
         results = yield self._check_files()
@@ -177,6 +165,8 @@ class Collection(virtool.database.Collection):
             }}).distinct("_id")
 
             result = yield self.remove(hmm_ids)
+
+            yield self._check_files()
 
             return True, result
 
