@@ -44,7 +44,7 @@ export default class ManageHMM extends React.Component {
 
         this.state = {
             documents: getDocuments(),
-            hmmStatus: getHMMStatus(),
+            status: getHMMStatus(),
 
             findTerm: "",
             sortKey: "cluster",
@@ -83,13 +83,9 @@ export default class ManageHMM extends React.Component {
         dispatcher.router.clearExtra();
     };
 
-    checkFiles = () => {
-        dispatcher.db.hmm.request("check_files", {});
-    };
-
     updateStatus = () => {
         this.setState({
-            hmmStatus: getHMMStatus()
+            status: getHMMStatus()
         });
     };
 
@@ -130,7 +126,7 @@ export default class ManageHMM extends React.Component {
 
         let fileWarning;
 
-        if (this.state.hmmStatus.errors.hmm_file) {
+        if (this.state.status.hmm_file) {
             fileWarning = <a href="#viruses/hmm/upload" className="pointer alert-link">Upload an HMM file</a>;
         }
 
@@ -152,15 +148,19 @@ export default class ManageHMM extends React.Component {
                     <Icon name="warning" />
                     <span> {fileWarning} {fileWarning && annotationWarning ? "and": null} {annotationWarning}</span> to
                     start using NuVs. {fileWarning ? null: "An HMM file has already been uploaded."}
-                    <Icon name="reset" onClick={this.checkFiles} pullRight />
+                    <Icon
+                        name="reset"
+                        onClick={() => dispatcher.db.hmm.request("check")}
+                        pullRight
+                    />
                 </Alert>
             );
         }
 
         let errors = [];
 
-        if (this.state.hmmStatus.errors.not_in_database.length > 0 && !alert) {
-            const value = this.state.hmmStatus.errors.not_in_database;
+        if (this.state.status.not_in_database.length > 0 && !alert) {
+            const value = this.state.status.not_in_database;
 
             errors.push(
                 <Alert key="not_in_database" bsStyle="danger">
@@ -177,8 +177,8 @@ export default class ManageHMM extends React.Component {
             )
         }
 
-        if (this.state.hmmStatus.errors.not_in_file.length > 0 && !alert) {
-            const value = this.state.hmmStatus.errors.not_in_file.length;
+        if (this.state.status.not_in_file.length > 0 && !alert) {
+            const value = this.state.status.not_in_file.length;
 
             errors.push(
                 <Alert key="not_in_file" bsStyle="warning">
@@ -217,7 +217,7 @@ export default class ManageHMM extends React.Component {
 
                 <HMMTable
                     documents={documents}
-                    hmmStatus={this.state.hmmStatus}
+                    status={this.state.status}
 
                     sort={this.sort}
                     sortKey={this.state.sortKey}
