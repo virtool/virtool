@@ -85,7 +85,7 @@ export default class HMMToolbar extends React.Component {
                             <Icon name="new-entry" /> Import Annotations
                         </MenuItem>
                         <MenuItem eventKey="files" disabled={!this.state.canModify}>
-                            <Icon name="folder-open" /> View Files
+                            <Icon name="folder-open" /> Manage Files
                         </MenuItem>
                     </Dropdown.Menu>
                 </Dropdown>

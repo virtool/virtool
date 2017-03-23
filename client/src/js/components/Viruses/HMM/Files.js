@@ -49,17 +49,6 @@ export default class HMMFiles extends React.Component {
         });
     };
 
-    press = () => {
-        this.setState({ pressing: true }, () => {
-            dispatcher.db.hmm.request("press").success(() => {
-                this.setState({
-                    pressing: false,
-                    cleaning: false
-                }, this.checkFiles);
-            });
-        });
-    };
-
     clean = () => {
         this.setState({ cleaning: true }, () => {
             dispatcher.db.hmm.request("clean", {

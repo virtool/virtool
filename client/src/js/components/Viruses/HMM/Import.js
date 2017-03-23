@@ -132,20 +132,11 @@ export default class ImportHMM extends React.Component {
             <Modal show={this.props.show} onHide={this.props.onHide} onExited={this.modalExited}>
 
                 <Modal.Header onHide={this.props.onHide} closeButton>
-                    Import Viruses
+                    Import HMM Annotations
                 </Modal.Header>
 
                 <Modal.Body>
-                    <Row>
-                        <Col md={12}>
-                            <Panel>
-                                Import annotations from a Virtool-compatible JSON or gzip-compressed JSON file.
-                            </Panel>
-                        </Col>
-                    </Row>
-
                     {content}
-
                 </Modal.Body>
             </Modal>
         );
