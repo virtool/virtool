@@ -6,7 +6,7 @@
  * @author
  * Ian Boyes
  *
- * @exports ImportModal
+ * @exports ImportHMM
  */
 
 import React from "react";
@@ -19,14 +19,13 @@ import { Button, Flex, ProgressBar } from "virtool/js/components/Base";
 
 const getInitialState = () => ({
     uploaded: 0,
-    checking: false,
-    complete: false,
+    imported: false,
     dropped: null,
     target: null,
     fileId: null
 });
 
-export default class ImportModal extends React.Component {
+export default class UploadModal extends React.Component {
 
     constructor (props) {
         super(props);
@@ -35,18 +34,17 @@ export default class ImportModal extends React.Component {
 
     static propTypes = {
         show: React.PropTypes.bool,
-        onHide: React.PropTypes.func,
-        annotationCount: React.PropTypes.number
+        onHide: React.PropTypes.func
     };
 
-    componentDidUpdate () {
-        if (this.state.complete && this.state.count !== undefined && this.state.count === this.props.annotationCount) {
+    componentDidUpdate (prevProps, prevState) {
+        if (!prevState.imported && this.state.imported) {
             this.props.onHide();
         }
     }
 
     componentWillUnmount () {
-        dispatcher.db.files.off("change", this.updateCount);
+        dispatcher.db.files.off("change", this.updateFiles);
     }
 
     modalExited = () => {
@@ -56,7 +54,7 @@ export default class ImportModal extends React.Component {
     handleDrop = (files) => {
         this.setState({dropped: files[0]}, () => {
 
-            const fileData = assign({"file_type": "annotations"}, pick(this.state.dropped, ["name", "size"]));
+            const fileData = assign({"file_type": "hmm"}, pick(this.state.dropped, ["name", "size"]));
 
             dispatcher.db.files.request("authorize_upload", fileData)
                 .success((data) => {
@@ -66,37 +64,24 @@ export default class ImportModal extends React.Component {
                         fileId: `${data.target}-${this.state.dropped.name}`
                     };
 
-                    dispatcher.db.files.on("change", this.updateFile);
+                    dispatcher.db.files.on("change", this.update);
 
                     this.setState(newState, () => {
                         Request.post(`/upload/${this.state.target}`)
                             .send(this.state.dropped)
                             .ok(res => res.status === 200)
-                            .end(this.importAnnotations);
+                            .end(this.importHmm);
                     });
                 });
         });
     };
 
-    importAnnotations = () => {
-        dispatcher.db.hmm.request("import_annotations", {file_id: this.state.fileId})
-            .update((data) => {
-                if (data.count) {
-                    this.setState({count: data.count});
-                }
-                if (data.checking) {
-                    this.setState({checking: true});
-                }
-            })
-            .success(() => {
-                this.setState({complete: true});
-            })
-            .failure((data) => {
-                this.setState({warning: data.message});
-            });
+    importHmm = () => {
+        dispatcher.db.hmm.request("import_hmm", {file_id: this.state.fileId})
+            .success(() => this.setState({imported: true}));
     };
 
-    updateFile = () => {
+    update = () => {
         const fileDocument = dispatcher.db.files.by("_id", this.state.fileId);
 
         this.setState({
@@ -114,18 +99,12 @@ export default class ImportModal extends React.Component {
             let message;
             let now;
 
-            if (this.state.checking) {
-                message = "Checking";
-                now = 88;
-            } else if (this.props.annotationCount) {
-                message = `Imported ${this.props.annotationCount} of ${this.state.count}`;
-                now = (this.props.annotationCount / this.state.count * 40) + 40;
-            } else if (this.state.complete) {
-                message = "Complete"
-                now = 100;
+            if (this.state.uploaded === this.state.dropped.size) {
+                message = "Importing";
+                now = 75;
             } else {
                 message = `Uploaded ${byteSize(this.state.uploaded)} of ${byteSize(this.state.dropped.size)}`;
-                now = this.state.uploaded / this.state.dropped.size * 40
+                now = this.state.uploaded / this.state.dropped.size * 50
             }
 
             content = (
@@ -156,8 +135,9 @@ export default class ImportModal extends React.Component {
 
         return (
             <Modal show={this.props.show} onHide={this.props.onHide} onExited={this.modalExited}>
+
                 <Modal.Header onHide={this.props.onHide} closeButton>
-                    Upload Annotation file
+                    Upload HMM file
                 </Modal.Header>
 
                 <Modal.Body>

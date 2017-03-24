@@ -62,7 +62,7 @@ class TestDetail:
         assert transaction.fulfill_called == (False, dict(message="Document not found", warning=True))
 
 
-class TestImportHMM:
+class TestImportAnnotations:
 
     @pytest.mark.gen_test
     def test_non_zero(self, mock_transaction, hmm_collection, hmm_document):
@@ -74,13 +74,13 @@ class TestImportHMM:
 
         transaction = mock_transaction({
             "interface": "hmm",
-            "method": "import_data",
+            "method": "import_annotations",
             "data": {
                 "file_id": "foobar-file"
             }
         }, permissions=["modify_hmm"])
 
-        yield hmm_collection.import_data(transaction)
+        yield hmm_collection.import_annotations(transaction)
 
         assert transaction.fulfill_called == (False, dict(message="Annotations collection is not empty", warning=True))
 
@@ -104,13 +104,13 @@ class TestImportHMM:
 
         transaction = mock_transaction({
             "interface": "hmm",
-            "method": "import_data",
+            "method": "import_annotations",
             "data": {
                 "file_id": "annotations.json.gz"
             }
         }, permissions=["modify_hmm"])
 
-        yield hmm_collection.import_data(transaction)
+        yield hmm_collection.import_annotations(transaction)
 
         filter_keys = [
             "label",
@@ -161,59 +161,23 @@ class TestImportHMM:
         assert all(key in doc for key in filter_keys for doc in inserted)
 
 
-class TestCheckFiles:
+class TestCheck:
 
     @pytest.mark.gen_test
-    def test_good(self, hmm_check_transaction, hmm_documents, hmm_check_result, pressed_hmm_path, hmm_collection):
+    def test_good(self, hmm_check_transaction, hmm_documents, hmm_check_result, hmm_path, hmm_collection):
         """
         Ensure a good result is returned for a healthy HMM file and collection.
 
         """
         yield hmm_collection.db.insert_many(hmm_documents)
 
-        hmm_collection.settings.data["data_path"] = pressed_hmm_path[0]
-
-        yield hmm_collection.check_files(hmm_check_transaction)
-
-        assert hmm_check_transaction.fulfill_called == (True, hmm_check_result)
-
-    @pytest.mark.gen_test
-    def test_not_pressed(self, hmm_check_transaction, hmm_documents, hmm_check_result, hmm_path, hmm_collection):
-        """
-        Check that an HMM file that has not been pressed is reported.
-
-        """
-        yield hmm_collection.db.insert_many(hmm_documents)
-
         hmm_collection.settings.data["data_path"] = hmm_path[0]
 
-        yield hmm_collection.check_files(hmm_check_transaction)
-
-        hmm_check_result["files"] = {"profiles.hmm"}
-        hmm_check_result["errors"]["press"] = True
+        yield hmm_collection.check(hmm_check_transaction)
 
         assert hmm_check_transaction.fulfill_called == (True, hmm_check_result)
 
-    @pytest.mark.gen_test
-    def test_no_dir(self, hmm_check_transaction, hmm_documents, hmm_check_result, hmm_path, hmm_collection):
-        """
-        Test that a non-existent HMM dir shows up in the check result.
-
-        """
-        yield hmm_collection.db.insert_many(hmm_documents)
-
-        hmm_collection.settings.data["data_path"] = hmm_path[0]
-
-        shutil.rmtree(os.path.join(hmm_path[0], "hmm"))
-
-        yield hmm_collection.check_files(hmm_check_transaction)
-
-        print(hmm_check_transaction.fulfill_called[1])
-
-        hmm_check_result["files"] = set()
-        hmm_check_result["errors"]["hmm_dir"] = True
-
-        assert hmm_check_transaction.fulfill_called == (True, hmm_check_result)
+        assert hmm_collection.collections["status"].stubs["update"].called
 
     @pytest.mark.gen_test
     def test_no_file(self, hmm_check_transaction, hmm_documents, hmm_check_result, hmm_path, hmm_collection):
@@ -227,26 +191,25 @@ class TestCheckFiles:
 
         os.remove(os.path.join(hmm_path[0], "hmm", "profiles.hmm"))
 
-        yield hmm_collection.check_files(hmm_check_transaction)
+        yield hmm_collection.check(hmm_check_transaction)
 
-        hmm_check_result["files"] = set()
-        hmm_check_result["errors"]["hmm_file"] = True
+        hmm_check_result["hmm_file"] = True
 
         assert hmm_check_transaction.fulfill_called == (True, hmm_check_result)
 
     @pytest.mark.gen_test
-    def test_not_in_db(self, hmm_check_transaction, hmm_documents, hmm_check_result, pressed_hmm_path, hmm_collection):
+    def test_not_in_db(self, hmm_check_transaction, hmm_documents, hmm_check_result, hmm_path, hmm_collection):
         """
         Make sure a list of cluster numbers present in the file, but not the database is reported.
 
         """
         yield hmm_collection.db.insert_many(hmm_documents[0:6])
 
-        hmm_collection.settings.data["data_path"] = pressed_hmm_path[0]
+        hmm_collection.settings.data["data_path"] = hmm_path[0]
 
-        yield hmm_collection.check_files(hmm_check_transaction)
+        yield hmm_collection.check(hmm_check_transaction)
 
-        hmm_check_result["errors"]["not_in_database"] = [10]
+        hmm_check_result["not_in_database"] = [10]
 
         assert hmm_check_transaction.fulfill_called == (True, hmm_check_result)
 
@@ -263,84 +226,17 @@ class TestCheckFiles:
         with open(hmm_path[1], "r") as handle:
             replacement_lines = [next(handle) for x in range(5631)]
 
-        print(replacement_lines[-1])
-
         with open(hmm_path[1], "w") as handle:
             for line in replacement_lines:
                 handle.write(line)
 
         yield hmmpress(hmm_path[1])
 
-        yield hmm_collection.check_files(hmm_check_transaction)
+        yield hmm_collection.check(hmm_check_transaction)
 
-        hmm_check_result["errors"]["not_in_file"] = [10]
+        hmm_check_result["not_in_file"] = [10]
 
         assert hmm_check_transaction.fulfill_called == (True, hmm_check_result)
-
-
-class TestPress:
-
-    @pytest.mark.gen_test
-    def test_valid(self, mock_transaction, hmm_collection, hmm_path, hmm_pressed):
-        """
-        Make sure profiles.hmm is properly pressed when possible.
-
-        """
-        transaction = mock_transaction({
-            "interface": "hmm",
-            "method": "press"
-        })
-
-        tmp_path = os.path.dirname(hmm_path[1])
-
-        hmm_collection.settings.data["data_path"] = hmm_path[0]
-
-        yield hmm_collection.press(transaction)
-
-        results = set()
-
-        for pressed in [n for n in os.listdir(tmp_path) if "h3" in n]:
-            results.add((pressed, os.stat(os.path.join(tmp_path, pressed)).st_size))
-
-    @pytest.mark.gen_test
-    def test_file_error(self, monkeypatch, mock_transaction, hmm_collection):
-        """
-        Make sure an error is dispatched for a non-existent file.
-
-        """
-        transaction = mock_transaction({
-            "interface": "hmm",
-            "method": "press"
-        })
-
-        def dummy(*args):
-            raise FileNotFoundError()
-
-        monkeypatch.setattr("virtool.hmm.hmmpress", dummy)
-
-        yield hmm_collection.press(transaction)
-
-        assert transaction.fulfill_called == (False, {"message": "File not found", "warning": True})
-
-    @pytest.mark.gen_test
-    def test_process_error(self, monkeypatch, mock_transaction, hmm_collection):
-        """
-        Make sure an error is dispatched for a incompatible HMM file.
-
-        """
-        transaction = mock_transaction({
-            "interface": "hmm",
-            "method": "press"
-        })
-
-        def dummy(*args):
-            raise subprocess.CalledProcessError(1, ["cat"])
-
-        monkeypatch.setattr("virtool.hmm.hmmpress", dummy)
-
-        yield hmm_collection.press(transaction)
-
-        assert transaction.fulfill_called == (False, {"message": "HMMER call failed", "warning": True})
 
 
 class TestClean:
@@ -353,10 +249,10 @@ class TestClean:
         """
         @coroutine
         def dummy(*args):
-            hmm_check_result["errors"]["not_in_file"] = [2]
+            hmm_check_result["not_in_file"] = [2]
             return hmm_check_result
 
-        setattr(hmm_collection, "_check_files", dummy)
+        setattr(hmm_collection, "_check", dummy)
 
         yield hmm_collection.db.insert_many(hmm_documents)
 
@@ -387,7 +283,7 @@ class TestClean:
         def dummy(*args):
             return hmm_check_result
 
-        setattr(hmm_collection, "_check_files", dummy)
+        setattr(hmm_collection, "_check", dummy)
 
         transaction = mock_transaction({
             "interface": "hmm",
@@ -494,51 +390,6 @@ class TestHMMStat:
         """
         with pytest.raises(FileNotFoundError) as err:
             yield hmmstat("/home/watson/crick.hmm")
-
-        assert "HMM file does not exist" in str(err)
-
-
-class TestHMMPress:
-
-    @pytest.mark.gen_test
-    def test_valid(self, hmm_path, hmm_pressed):
-        """
-        Test that the HMM file is pressed when possible.
-
-        """
-        yield hmmpress(hmm_path[1])
-
-        tmp_path = os.path.dirname(hmm_path[1])
-
-        results = set()
-
-        for pressed in [n for n in os.listdir(tmp_path) if "h3" in n]:
-            assert pressed in hmm_pressed
-
-            factor = hmm_pressed[pressed] / os.stat(os.path.join(tmp_path, pressed)).st_size
-
-            assert 1.1 > factor > 0.9
-            assert hmm_pressed[pressed]
-
-    @pytest.mark.gen_test
-    def test_bad_file(self, bad_hmm_path):
-        """
-        Make sure hmmpress call fails for a damaged hmm file.
-
-        """
-        with pytest.raises(subprocess.CalledProcessError) as err:
-            yield hmmpress(bad_hmm_path)
-
-        assert "returned non-zero" in str(err)
-
-    @pytest.mark.gen_test
-    def test_missing_file(self):
-        """
-        Make sure hmmpress fails when the provided path does not exist
-
-        """
-        with pytest.raises(FileNotFoundError) as err:
-            yield hmmpress("/home/watson/crick.hmm")
 
         assert "HMM file does not exist" in str(err)
 

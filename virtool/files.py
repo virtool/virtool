@@ -152,6 +152,16 @@ class Collection(virtool.database.Collection):
             yield self.remove_files(to_remove)
         '''
 
+    @virtool.gen.exposed_method([])
+    def authorize_upload(self, transaction):
+        target = yield self.collections["files"].register(
+            name=transaction.data["name"],
+            size=transaction.data["size"],
+            file_type="hmm"
+        )
+
+        return True, dict(target=target)
+
     @virtool.gen.coroutine
     def register(self, name, size, file_type=None, download=False, time_getter=virtool.utils.timestamp, expires=1200):
         """

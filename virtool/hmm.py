@@ -1,6 +1,8 @@
 import os
+import math
 import gzip
 import json
+import shutil
 import subprocess
 
 from collections import Counter
@@ -32,7 +34,22 @@ class Collection(virtool.database.Collection):
         return False, dict(message="Document not found")
 
     @virtool.gen.exposed_method(["modify_hmm"])
-    def import_data(self, transaction):
+    def import_hmm(self, transaction):
+        src_path = os.path.join(self.settings.get("data_path"), "files", transaction.data["file_id"])
+        dest_path = os.path.join(self.settings.get("data_path"), "hmm/profiles.hmm")
+
+        shutil.copyfile(src_path, dest_path)
+
+        result = yield self._check()
+
+        yield self.collections["status"].update("hmm", {
+            "$set": result
+        }, upsert=True)
+
+        return True, result
+
+    @virtool.gen.exposed_method(["modify_hmm"])
+    def import_annotations(self, transaction):
         annotation_count = yield self.db.count()
 
         if annotation_count > 0:
@@ -41,12 +58,21 @@ class Collection(virtool.database.Collection):
         # The file id to import the data from.
         file_id = transaction.data["file_id"]
 
-        inserted_count = 0
-
         with gzip.open(os.path.join(self.settings.get("data_path"), "files", file_id), "rt") as input_file:
             annotations_to_import = json.load(input_file)
 
-        for annotation in annotations_to_import:
+        # The number of annotation documents that will be imported.
+        count = len(annotations_to_import)
+
+        transaction.update({"count": count})
+
+        # The number of documents to insert at a time.
+        chunk_size = int(math.ceil(count * 0.03))
+
+        # A list of documents that have to be inserted when chunk_size is met.
+        cache = list()
+
+        for i, annotation in enumerate(annotations_to_import):
             top_three = Counter([entry["name"] for entry in annotation["entries"]]).most_common(3)
             top_names = [entry[0] for entry in top_three]
 
@@ -59,88 +85,76 @@ class Collection(virtool.database.Collection):
                 "_version": 0
             })
 
-            inserted_count += 1
+            cache.append(annotation)
 
-            yield self.insert(annotation)
+            if len(cache) == chunk_size or i == count - 1:
+                self.db.insert_many(cache)
+                yield self.dispatch("update", [{key: d[key] for key in self.sync_projector} for d in cache])
+                cache = []
 
-        return True, {"count": inserted_count}
+        transaction.update({"checking": True})
+
+        yield self._check()
+
+        return True, None
 
     @virtool.gen.exposed_method([])
-    def check_files(self, transaction):
-        result = yield self._check_files()
+    def check(self, transaction):
+        result = yield self._check()
         return True, result
 
     @virtool.gen.coroutine
-    def _check_files(self):
+    def _check(self):
+
         hmm_dir_path = os.path.join(self.settings.get("data_path"), "hmm")
 
-        result = {
-            "files": set(),
-            "errors": {
-                "hmm_dir": False,
-                "hmm_file": False,
-                "press": False,
-                "not_in_file": False,
-                "not_in_database": False
-            }
+        errors = {
+            "hmm_file": False,
+            "not_in_file": False,
+            "not_in_database": False
         }
 
         if not os.path.isdir(hmm_dir_path):
-            result["errors"]["hmm_dir"] = True
-            return result
+            os.mkdir(hmm_dir_path)
 
         hmm_file_path = os.path.join(hmm_dir_path, "profiles.hmm")
 
-        if not os.path.isfile(hmm_file_path):
-            result["errors"]["hmm_file"] = True
-            return result
+        if os.path.isfile(hmm_file_path):
+            hmm_stats = yield hmmstat(hmm_file_path)
 
-        if not all(os.path.isfile(hmm_file_path + ".h3" + suffix) for suffix in ["f", "i", "m", "p"]):
-            result["errors"]["press"] = True
+            annotations = yield self.db.find({}, {
+                "cluster": True,
+                "count": True,
+                "length": True
+            }).to_list(None)
 
-        hmm_stats = yield hmmstat(hmm_file_path)
+            clusters_in_file = {entry["cluster"] for entry in hmm_stats}
+            clusters_in_database = {entry["cluster"] for entry in annotations}
 
-        annotations = yield self.db.find({}, {
-            "cluster": True,
-            "count": True,
-            "length": True
-        }).to_list(None)
+            # Calculate which cluster ids are unique to the HMM file and/or the annotation database.
+            errors["not_in_file"] = list(clusters_in_database - clusters_in_file) or False
+            errors["not_in_database"] = list(clusters_in_file - clusters_in_database) or False
+        else:
+            errors["hmm_file"] = True
 
-        clusters_in_file = {entry["cluster"] for entry in hmm_stats}
-        clusters_in_database = {entry["cluster"] for entry in annotations}
+        yield self.collections["status"].update("hmm", {
+            "$set": errors
+        }, upsert=True)
 
-        # Calculate which cluster ids are unique to the HMM file and/or the annotation database.
-        result["errors"]["not_in_file"] = list(clusters_in_database - clusters_in_file) or False
-        result["errors"]["not_in_database"] = list(clusters_in_file - clusters_in_database) or False
-
-        files = yield virtool.utils.list_files(hmm_dir_path)
-
-        result["files"] = {filename for filename in files if ".hmm" in filename}
-
-        return result
-
-    @virtool.gen.exposed_method([])
-    def press(self, transaction):
-        path = os.path.join(self.settings.get("data_path"), "hmm", "profiles.hmm")
-
-        try:
-            yield hmmpress(path)
-            return True, None
-        except FileNotFoundError:
-            return False, dict(message="File not found")
-        except subprocess.CalledProcessError:
-            return False, dict(message="HMMER call failed")
+        return errors
 
     @virtool.gen.exposed_method(["modify_hmm"])
     def clean(self, transaction):
-        results = yield self._check_files()
+        errors = yield self._check()
 
-        if results["errors"]["not_in_file"]:
+        if errors["not_in_file"]:
             hmm_ids = yield self.find({"cluster": {
-                "$in": results["errors"]["not_in_file"]
+                "$in": errors["not_in_file"]
             }}).distinct("_id")
 
             result = yield self.remove(hmm_ids)
+
+            yield self._check()
 
             return True, result
 
