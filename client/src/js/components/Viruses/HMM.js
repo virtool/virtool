@@ -11,7 +11,7 @@
 
 import React from "react";
 import { Alert } from "react-bootstrap";
-import { Icon, DetailModal, Flex, FlexItem, Button } from "virtool/js/components/Base"
+import { Icon, DetailModal, Flex, FlexItem, Button, AutoProgressBar } from "virtool/js/components/Base"
 import { numberToWord } from "virtool/js/utils";
 
 import HMMTable from "./HMM/Table";
@@ -48,7 +48,8 @@ export default class ManageHMM extends React.Component {
 
             findTerm: "",
             sortKey: "cluster",
-            sortDescending: false
+            sortDescending: false,
+            pending: false
         };
     }
 
@@ -83,10 +84,22 @@ export default class ManageHMM extends React.Component {
         dispatcher.router.clearExtra();
     };
 
-    updateStatus = () => {
-        this.setState({
-            status: getHMMStatus()
+    clean = () => {
+        this.setState({pending: true}, () => {
+            dispatcher.db.hmm.request("clean", {})
         });
+    };
+
+    updateStatus = () => {
+        let state = {
+            status: getHMMStatus()
+        };
+
+        if (state.status.not_in_file.length === 0) {
+            state.pending = false;
+        }
+
+        this.setState(state);
     };
 
     updateAnnotations = () => {
@@ -177,11 +190,18 @@ export default class ManageHMM extends React.Component {
             )
         }
 
-        if (this.state.status.not_in_file.length > 0 && !alert) {
+        if (this.state.status.not_in_file.length && !alert) {
             const value = this.state.status.not_in_file.length;
 
             errors.push(
                 <Alert key="not_in_file" bsStyle="warning">
+                    <AutoProgressBar
+                        active={this.state.pending}
+                        bsStyle="warning"
+                        step={4}
+                        interval={600}
+                        affixed
+                    />
                     <Flex>
                         <FlexItem>
                             <strong>
@@ -195,7 +215,7 @@ export default class ManageHMM extends React.Component {
                         </FlexItem>
 
                         <FlexItem grow={0} shrink={0} pad={30}>
-                            <Button icon="hammer" onClick={() => dispatcher.db.hmm.request("clean", {})}>
+                            <Button icon="hammer" onClick={this.clean}>
                                 Repair
                             </Button>
                         </FlexItem>
