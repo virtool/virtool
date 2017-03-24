@@ -92,6 +92,8 @@ class Collection(virtool.database.Collection):
                 yield self.dispatch("update", [{key: d[key] for key in self.sync_projector} for d in cache])
                 cache = []
 
+        transaction.update({"checking": True})
+
         yield self._check()
 
         return True, None

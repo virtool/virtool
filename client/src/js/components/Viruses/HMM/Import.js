@@ -19,6 +19,8 @@ import { Button, Flex, ProgressBar } from "virtool/js/components/Base";
 
 const getInitialState = () => ({
     uploaded: 0,
+    checking: false,
+    complete: false,
     dropped: null,
     target: null,
     fileId: null
@@ -38,7 +40,7 @@ export default class ImportModal extends React.Component {
     };
 
     componentDidUpdate () {
-        if (this.state.count !== undefined && this.state.count === this.props.annotationCount) {
+        if (this.state.complete && this.state.count !== undefined && this.state.count === this.props.annotationCount) {
             this.props.onHide();
         }
     }
@@ -79,7 +81,15 @@ export default class ImportModal extends React.Component {
     importAnnotations = () => {
         dispatcher.db.hmm.request("import_annotations", {file_id: this.state.fileId})
             .update((data) => {
-                this.setState({count: data.count});
+                if (data.count) {
+                    this.setState({count: data.count});
+                }
+                if (data.checking) {
+                    this.setState({checking: true});
+                }
+            })
+            .success(() => {
+                this.setState({complete: true});
             })
             .failure((data) => {
                 this.setState({warning: data.message});
@@ -104,12 +114,18 @@ export default class ImportModal extends React.Component {
             let message;
             let now;
 
-            if (this.props.annotationCount) {
+            if (this.state.checking) {
+                message = "Checking";
+                now = 88;
+            } else if (this.props.annotationCount) {
                 message = `Imported ${this.props.annotationCount} of ${this.state.count}`;
-                now = (this.props.annotationCount / this.state.count * 50) + 50;
+                now = (this.props.annotationCount / this.state.count * 40) + 40;
+            } else if (this.state.complete) {
+                message = "Complete"
+                now = 100;
             } else {
                 message = `Uploaded ${byteSize(this.state.uploaded)} of ${byteSize(this.state.dropped.size)}`;
-                now = this.state.uploaded / this.state.dropped.size * 50
+                now = this.state.uploaded / this.state.dropped.size * 40
             }
 
             content = (
