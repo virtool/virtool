@@ -67,7 +67,7 @@ class Collection(virtool.database.Collection):
         transaction.update({"count": count})
 
         # The number of documents to insert at a time.
-        chunk_size = int(math.ceil(count * 0.01))
+        chunk_size = int(math.ceil(count * 0.03))
 
         # A list of documents that have to be inserted when chunk_size is met.
         cache = list()
