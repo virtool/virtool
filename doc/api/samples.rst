@@ -2,8 +2,60 @@
 Samples
 =======
 
-Retrieve a sample
------------------
+Find
+----
+
+Retrieve a list of samples, filtered by URL parameters.
+
+::
+
+    GET /samples
+
+
+**Response**
+
+.. code-block:: javascript
+
+
+    [
+        {
+            "username": "heidi",
+            "group_read": true,
+            "name":"16SP017-M",
+            "archived":true,
+            "group_write":true,
+            "_version":56,
+            "nuvs":false,
+            "_id":"21f6f983",
+            "group":"biotech",
+            "all_write":false,
+            "added":"2016-07-20T15:07:52.579347",
+            "imported":true,
+            "pathoscope":false,
+            "all_read":true
+        },
+
+        {
+            "username":"heidi",
+            "group_read":true,
+            "name":"16SP021-M",
+            "archived":true,
+            "group_write":true,
+            "_version":56,
+            "nuvs":false,
+            "_id":"92e2887d",
+            "group":"biotech",
+            "all_write":false,
+            "added":"2016-07-20T15:09:09.299341",
+            "imported":true,
+            "pathoscope":false,
+            "all_read":true
+        }
+    ]
+
+
+Get
+---
 
 Retrieve a complete sample document from the server.
 
@@ -12,8 +64,8 @@ Retrieve a complete sample document from the server.
     GET /samples/:sample_id
 
 
-Remove a sample
----------------
+Remove
+------
 
 Remove a sample document and all associated analyses.
 
@@ -22,8 +74,10 @@ Remove a sample document and all associated analyses.
     DELETE /samples/:sample_id
 
 
-Modify a sample
----------------
+Update
+------
+
+Edit modifiable fields in a sample document.
 
 ::
 
@@ -44,8 +98,8 @@ Modify a sample
 +----------+---------+----------------------------------+
 
 
-Retrieve rights for a sample
-----------------------------
+Get rights
+----------
 
 Retrieve the owner group and rights for the sample.
 
@@ -66,8 +120,8 @@ Retrieve the owner group and rights for the sample.
     }
 
 
-Set rights for a sample
------------------------
+Modify rights
+-------------
 
 Set the rights fields and the owner group for a given sample. All fields are optional.
 
@@ -104,8 +158,8 @@ Set the rights fields and the owner group for a given sample. All fields are opt
     }
 
 
-Get a list of analyses
-----------------------
+List of analyses
+----------------
 
 Retrieve a list of all analyses associated with a given sample. The complete analysis documents are not returned.
 
@@ -114,8 +168,8 @@ Retrieve a list of all analyses associated with a given sample. The complete ana
     GET /samples/:sample_id/analyses
 
 
-Analyze a sample
-----------------
+Analyze
+-------
 
 Start a new analysis for a given sample.
 
@@ -126,8 +180,8 @@ Start a new analysis for a given sample.
 
 
 
-Retrieve an analysis
---------------------
+Get analysis
+------------
 
 Retrieve a complete analysis document given a ``sample_id`` and an ``analysis_id``.
 
@@ -146,16 +200,16 @@ BLAST a contig that was generated as part of a NuVs analysis. This request will 
     POST /samples/:sample_id/analyses/:analysis_id/:sequence_index/blast
 
 
-Remove a NuVs BLAST record
---------------------------
+Remove BLAST record
+-------------------
 
 ::
 
     DELETE /samples/:sample_id/analyses/:analysis_id/:sequence_index/blast
 
 
-Remove an analysis
-------------------
+Remove analysis
+---------------
 
 Remove an analysis given a ``sample_id`` and an ``analysis_id``.
 

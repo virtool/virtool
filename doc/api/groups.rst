@@ -5,9 +5,9 @@ Groups
 Manage user groups.
 
 List groups
--------------------------
+-----------
 
-Retrieve a list of all existing groups. The list on contains the ``group_id`` for each group.
+Retrieve a list of all existing ``group_ids``.
 
 ::
 

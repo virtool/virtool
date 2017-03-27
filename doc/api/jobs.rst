@@ -1,8 +1,8 @@
 Jobs
 ====
 
-Retrieve a job
---------------
+Get
+---
 
 Retrieve a complete job document from the server.
 
@@ -55,8 +55,8 @@ Retrieve a complete job document from the server.
         username: "igboyes"
     }
 
-Remove a job
-------------
+Remove
+------
 
 ::
 

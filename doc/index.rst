@@ -20,4 +20,3 @@ Documentation
 
     installation/index
     api/index
-
