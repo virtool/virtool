@@ -1,6 +1,10 @@
+aiohttp==2.0.3
 alabaster==0.7.8
+async-timeout==1.2.0
 Babel==2.3.4
 biopython==1.68
+cchardet==1.1.3
+chardet==2.3.0
 coloredlogs==5.2
 coverage==4.2
 cycler==0.10.0
@@ -16,6 +20,7 @@ matplotlib==1.5.1
 mock==2.0.0
 mongomock==3.7.0
 motor==1.1
+multidict==2.1.4
 numpy==1.11.1
 pbr==1.10.0
 psutil==4.3.0
@@ -41,3 +46,5 @@ snowballstemmer==1.2.1
 Sphinx==1.4.5
 sphinx-rtd-theme==0.1.9
 tornado==4.4.2
+uvloop==0.8.0
+yarl==0.10.0
