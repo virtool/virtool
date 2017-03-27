@@ -7,5 +7,6 @@ Web API
     jobs
     samples
     hmm
+    users
     groups
     account
