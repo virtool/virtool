@@ -8,6 +8,10 @@ from virtool.data.utils import get_new_id
 from virtool.data.samples import get_sample_owner, remove_samples
 
 
+async def find_samples(req):
+    pass
+
+
 async def create_sample(req):
     """
     Creates a new sample based on the data in ``transaction`` and starts a sample import job.
