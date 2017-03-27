@@ -4,10 +4,7 @@ import gzip
 from copy import deepcopy
 from Bio import Entrez, SeqIO
 
-import virtool.gen
 
-
-@virtool.gen.synchronous
 def get_from_ncbi(accession):
     """
     Retrieve the Genbank data associated with the given accession and transform it into a Virtool-format sequence
@@ -50,7 +47,6 @@ def get_from_ncbi(accession):
         return None
 
 
-@virtool.gen.synchronous
 def check_virus(virus, sequences):
     """
     Checks that the passed virus and sequences constitute valid Virtool records and can be included in a virus
@@ -190,7 +186,6 @@ def extract_isolate_ids(virus):
     return [isolate["isolate_id"] for isolate in virus["isolates"]]
 
 
-@virtool.gen.synchronous
 def extract_sequence_ids(virus):
     """
     Extract all sequence ids from a merged virus.
@@ -221,14 +216,12 @@ def extract_sequence_ids(virus):
     return sequence_ids
 
 
-@virtool.gen.synchronous
 def read_import_file(path):
     # Load a list of joined virus from a the gzip-compressed JSON.
     with gzip.open(path, "rt") as input_file:
         return [virus for virus in json.load(input_file) if isinstance(virus, dict)]
 
 
-@virtool.gen.coroutine
 def verify_virus_list(viruses):
     fields = ["_id", "name", "abbreviation"]
 
