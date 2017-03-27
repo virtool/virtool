@@ -1,7 +1,7 @@
 import os
 
 from virtool.utils import timestamp, rm
-from virtool.data.utils import get_new_id, coerce_list
+from virtool.data.utils import get_new_id
 from virtool.data.samples import recalculate_algorithm_tags
 from virtool.data.indexes import get_current_index
 
@@ -69,116 +69,26 @@ async def new(db, settings, sample_id, name, user_id, algorithm):
     await recalculate_algorithm_tags(db, sample_id)
 
 
-def remove_by_id(self, analysis_id):
+async def remove_by_id(db, settings, analysis_id):
     """
     Removes the analysis document identified by the id in ``data``.
 
-    :param analysis_id: the id of the analysis document to remove.
-    :type analysis_id: str
-
     """
     # Get the sample id for the analysis
-    minimal_analysis = yield self.find_one({"_id": analysis_id}, {"sample_id": True})
-
-    sample_id = minimal_analysis["sample_id"]
+    sample_id = await db.analyses.find_one({"_id": analysis_id}, ["sample_id"])["sample_id"]
 
     # Remove analysis entry from database
-    response = yield self.remove(analysis_id)
+    await db.analyses.remove({"_id": analysis_id})
 
     # Remove the analysis directory
-    path = os.path.join(self.settings.get("data_path"), "samples/sample_" + sample_id, "analysis", analysis_id)
+    path = os.path.join(settings.get("data_path"), "samples/sample_{}".format(sample_id), "analysis", analysis_id)
 
     try:
-        yield rm(path, recursive=True)
+        await rm(path, recursive=True)
     except FileNotFoundError:
         pass
 
-    yield self.collections["samples"].recalculate_algorithm_tags(sample_id)
-
-    return response
-
-
-async def remove_by_sample_id(db, sample_id_list):
-    """
-    Removes the analysis documents and files associated with the passed sample_id. The files on disk are **not**
-    removed.
-
-    """
-    # Make sure we are working with a list of sample ids.
-    id_list = coerce_list(sample_id_list)
-
-    # Remove analysis documents from database.
-    await db.analyses.remove({
-        "sample_id": {
-            "$in": sample_id_list
-        }
-    })
-
-    for sample_id in id_list:
-        await db.samples.recalculate_algorithm_tags(sample_id)
-
-
-async def blast_nuvs_sequence(db, analysis_id, sequence_index):
-    """
-    BLAST a contig sequence that is part of a NuVs result record. The resulting BLAST data will be attached to that
-    sequence.
-
-    """
-
-    minimal_analysis = await db.analyses.find_one({"_id": analysis_id}, {
-        "sample": True,
-        "sequences": True
-    })
-
-    sequences = [sequence for sequence in minimal_analysis["sequences"] if sequence["index"] == int(sequence_index)]
-
-    assert len(sequences) == 1
-
-    nuc = sequences[0]["sequence"]
-
-    rid, _ = yield initialize_blast(nuc)
-
-    ready = False
-    checked = False
-    interval = 3
-
-    while not ready:
-
-        yield self.update({"_id": analysis_id, "sequences.index": sequence_index}, {
-            "$set": {
-                "sequences.$.blast": {
-                    "rid": rid,
-                    "ready": ready,
-                    "checked": checked,
-                    "interval": interval
-                }
-            }
-        })
-
-        yield tornado.gen.sleep(interval)
-
-        ready = yield check_rid(rid)
-
-        interval += 3
-
-    result = yield retrieve_blast_result(rid)
-
-    result.update({
-        "rid": rid,
-        "ready": ready,
-        "checked": checked,
-        "interval": interval
-    })
-
-    print(result)
-
-    response = yield self.update({"_id": analysis_id, "sequences.index": sequence_index}, {
-        "$set": {
-            "sequences.$.blast": result
-        }
-    })
-
-    return True, response
+    await db.samples.recalculate_algorithm_tags(sample_id)
 
 
 def initialize_blast(sequence):
