@@ -2,7 +2,8 @@ from aiohttp import web
 from pymongo import ReturnDocument
 from virtool.utils import timestamp
 from virtool.permissions import PERMISSIONS
-from virtool.data.users import invalidate_session, salt_hash, ACCOUNT_SETTINGS
+from virtool.data.groups import merge_group_permissions
+from virtool.data.users import invalidate_session, user_exists, salt_hash, ACCOUNT_SETTINGS
 
 
 async def list_users(req):
@@ -45,7 +46,7 @@ async def create_user(req):
     data = await req.json()
 
     # Check if the username is already taken. Fail if it does.
-    if await req["db"].users.find().count({"_id": data["user_id"]}):
+    if await user_exists(req["db"], data["user_id"]):
         return web.json_response({"message": "User already exists"}, status=400)
 
     salt, password = salt_hash(data["password"])
@@ -85,7 +86,7 @@ async def set_password(req):
 
     user_id = req.match_info["user_id"]
 
-    if req["db"].users.find({"_id": user_id}).count() == 0:
+    if not await user_exists(req["db"], user_id):
         return web.json_response({"Not found"}, status=404)
 
     salt, password = salt_hash(data["new_password"])
@@ -109,62 +110,67 @@ async def set_force_reset(req):
     administrative privileges.
 
     """
-    response = yield self.update(transaction.data["_id"], {
+    user_id = req.match_info["user_id"]
+
+    data = await req.json()
+
+    if not await user_exists(req["db"], user_id):
+        return web.json_response({"message": "User does not exist"}, status=404)
+
+    result = await req["db"].update({"_id": user_id}, {
         "$set": {
-            "force_reset": transaction.data["force_reset"],
+            "force_reset": data["force_reset"],
             "invalidate_sessions": True
         }
     })
 
-    if response["_ids"] == [transaction.data["_id"]]:
-        return True, response
-
-    return False, dict(message="User does not exist")
+    return web.json_response(result)
 
 
-async def toggle_group(req):
+async def add_group(req):
     """
-    Toggle membership in a group for the given user.
+    Enable membership in a group for the given user.
 
     """
-    user_id = transaction.data["user_id"]
-    group_id = transaction.data["group_id"]
+    user_id = req.match_info["user_id"]
 
-    data = transaction.data
+    requesting_user = None
 
-    user_exists = yield self.user_exists(user_id)
+    data = await req.json()
 
-    if not user_exists:
-        return False, dict(message="User does not exist")
+    if not await user_exists(req["db"], user_id):
+        web.json_response({"message": "User does not exist"}, status=404)
 
-    all_group_ids = yield self.collections["groups"].distinct("_id")
-    member_group_ids = yield self.distinct("groups", {"_id": user_id})
+    if data["group_id"] == "administrator" and user_id == requesting_user:
+        return web.json_response(
+            {"message": "Administrators cannot remove themselves from the administrator group"},
+            status=400
+        )
 
-    if group_id == "administrator" and user_id == transaction.connection.user["_id"]:
-        return False, dict(message="Administrators cannot remove themselves from the administrator group")
+    if data["group_id"] not in await req["db"].groups.distinct("_id"):
+        return web.json_response({"message": "Group does not exist"}, status=404)
 
-    if group_id not in all_group_ids:
-        return False, dict(message="Group does not exist")
+    member_group_ids = await req["db"].users.distinct("groups", {"_id": user_id})
 
-    if group_id in member_group_ids:
+    if data["group_id"] in member_group_ids:
         member_group_ids.remove(data["group_id"])
     else:
         member_group_ids.append(data["group_id"])
 
-    groups = yield self.collections["groups"].find({"_id": {
+    groups = await req["db"].groups.find({"_id": {
         "$in": member_group_ids
     }}).to_list(None)
 
-    new_permissions = virtool.groups.merge_group_permissions(list(groups))
+    new_permissions = merge_group_permissions(list(groups))
 
-    response = yield self.update(data["user_id"], {
+    document = await req["db"].users.find_one_and_update({"_id": user_id}, {
         "$set": {
             "permissions": new_permissions,
             "groups": member_group_ids
         }
     })
 
-    return True, response
+    return web.json_response(document)
 
 
 async def remove_session(req):
