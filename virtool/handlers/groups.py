@@ -40,9 +40,7 @@ async def add_group(req):
         })
 
     except pymongo.errors.DuplicateKeyError:
-        resp = web.json_response({"message": "Group already exists"})
-        resp.set_status(400)
-        return resp
+        return web.json_response({"message": "Group already exists"}, status=400)
 
 
 async def get_group(req):
@@ -55,10 +53,7 @@ async def get_group(req):
     if document:
         return web.json_response(document)
 
-    resp = web.json_response({"message": "Not found"})
-    resp.set_status(404)
-
-    return resp
+    return web.json_response({"message": "Not found"}, status=404)
 
 
 async def update_permissions(req):
@@ -88,20 +83,14 @@ async def remove_group(req):
 
     # Only accept single id strings.
     if not isinstance(group_id, str):
-        resp = web.json_response({"message": "Only one user group can be removed per call."})
-        resp.set_status(400)
-        return resp
+        return web.json_response({"message": "Only one user group can be removed per call."}, status=400)
 
     # The administrator is not permitted to be removed.
     if group_id == "administrator":
-        resp = web.json_response({"message": "Administrator group cannot be removed."})
-        resp.set_status(400)
-        return resp
+        return web.json_response({"message": "Administrator group cannot be removed."}, status=400)
 
     if await req["db"].groups.find({"_id": group_id}).count():
-        resp = web.json_response({"message": "Group {} does not exist.".format(group_id)})
-        resp.set_status(400)
-        return resp
+        return web.json_response({"message": "Group {} does not exist.".format(group_id)}, status=400)
 
     await update_member_users(req["db"], group_id, remove=True)
 
