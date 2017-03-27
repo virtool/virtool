@@ -3,7 +3,9 @@ import pymongo.errors
 from aiohttp import web
 from pymongo import ReturnDocument
 from virtool.utils import timestamp
+from virtool.database import coerce_list
 from virtool.data.utils import get_new_id
+from virtool.data.samples import get_sample_owner, remove_samples
 
 
 async def create_sample(req):
@@ -18,18 +20,14 @@ async def create_sample(req):
 
     # Check if the submitted sample name is unique if unique sample names are being enforced.
     if req["settings"].get("sample_unique_names") and await req["db"].samples.find({"name": data["name"]}).count():
-        resp = web.json_response({"message": "Sample name already exists."})
-        resp.set_status(400)
-        return resp
+        return web.json_response({"message": "Sample name already exists."}, status=400)
 
     # Get a list of the subtraction hosts in MongoDB that are ready for use during analysis.
     available_subtraction_hosts = await req["db"].hosts.find().distinct("_id")
 
     # Make sure a subtraction host was submitted and it exists.
     if not data["subtraction"] or data["subtraction"] not in available_subtraction_hosts:
-        resp = web.json_response({"message": "Could not find subtraction host or none was provided."})
-        resp.set_status(400)
-        return resp
+        return web.json_response({"message": "Could not find subtraction host or none was provided."}, status=400)
 
     sample_id = await get_new_id(req["db"].samples)
 
@@ -107,15 +105,70 @@ async def update_sample(req):
     valid_fields = ["name", "host", "isolate"]
 
     if not all(field in valid_fields for field in data.keys()):
-        resp = web.json_response({"message": "Invalid field provided"})
-        resp.set_status(400)
-        return resp
+        return web.json_response({"message": "Invalid field provided"}, status=400)
 
     document = await req["db"].find_one_and_update({"_id": req.match_info["sample_id"]}, {
         "$set": {field: data[field] for field in valid_fields}
     }, return_document=ReturnDocument.AFTER)
 
     return web.json_response(document)
+
+
+async def set_owner_group(req):
+    """
+    Set the owner group for the sample.
+
+    """
+    sample_id = req.match_info["sample_id"]
+
+    sample_owner = (await req["db"].users.find_one(sample_id, "user_id"))["user_id"]
+
+    requesting_user = None
+
+    if "administrator" not in requesting_user["groups"] and requesting_user["_id"] != sample_owner:
+        return web.json_response({"message": "Must be administrator or sample owner."}, status=403)
+
+    existing_group_ids = await req["db"].groups.distinct("_id")
+
+    data = await req.json()
+
+    if data["group_id"] not in existing_group_ids:
+        return False, dict(message="Passed group id does not exist.")
+
+    await req["db"].samples.update({"_id": sample_id}, {
+        "$set": {
+            "group_id": data["group_id"]
+        }
+    })
+
+    return web.json_response({"group_id": data["group_id"]})
+
+
+async def set_rights(req):
+    """
+    Change rights setting for the specified sample document.
+
+    """
+    data = await req.json()
+
+    sample_id = req.match_info["sample_id"]
+
+    # Only update the document if the connected user owns the samples or is an administrator.
+    if "administrator" in requesting_user["groups"] or requesting_user["_id"] == await get_sample_owner(req["db"], sample_id):
+        valid_fields = ["all_read", "all_write", "group_read", "group_write"]
+
+        # Make a dict for updating the rights fields. Fail the transaction if there is an unknown right key.
+        if any(field not in valid_fields for field in data.keys()):
+            return web.json_response({"message": "Unknown right name."}, status=400)
+
+        # Update the sample document with the new rights.
+        document = await req["db"].find_one_and_update(data["_id"], {
+            "$set": data["changes"]
+        })
+
+        return web.json_response({field: document[field] for field in valid_fields})
+
+    return web.json_response({"message": "Must be administrator or sample owner."}, 403)
 
 
 async def analyze(req):
@@ -138,6 +191,11 @@ async def analyze(req):
     return web.json_response({"analysis_id": analysis_id})
 
 
+async def remove_sample(req):
+        """
+        Remove a sample document and all associated analyses.
 
+        """
+        id_list = coerce_list(req.match_info["_id"])
 
-
+        result = await remove_samples(id_list)
