@@ -6,392 +6,79 @@ import logging
 import pymongo
 import pymongo.errors
 import pymongo.collection
-
-import virtool.gen
-import virtool.utils
 import virtool.database
 
-from virtool import virusutils
+from copy import deepcopy
+from virtool.utils import random_alphanumeric
 
 
 logger = logging.getLogger(__name__)
 
 
-class Collection(virtool.database.Collection):
+projection = [
+    "_id",
+    "_version",
+    "name",
+    "modified",
+    "abbreviation"
+]
+
+
+def to_client(document):
+    document["virus_id"] = document.pop("_id")
+    return document
+
+
+def to_dispatcher(document):
+    return to_client(document)
+
+
+async def join(db, virus_id, document=None):
+    """
+    Join the virus associated with the supplied virus id with its sequences. If a virus entry is also passed, the
+    database will not be queried for the virus based on its id.
+    
+    :param db: a database client
+    :type db: object
+
+    :param virus_id: the id of the virus to join.
+    :type virus_id: str
+
+    :param document: use this virus document as a basis for the join instead finding it using the virus id.
+    :type document: dict
+
+    :return: the joined virus document
+    :rtype: dict
 
     """
-    Viruses collection
+    # Get the virus entry if a virus parameter was not passed.
+    if not document:
+        document = await db.viruses.find_one({"_id": virus_id})
 
-    """
-    def __init__(self, dispatch, collections, settings, add_periodic_callback):
-        super().__init__("viruses", dispatch, collections, settings, add_periodic_callback)
+    if document is None:
+        return None
 
-        db = settings.get_db_client(sync=True)
+    # Extract the isolate_ids associated with the virus.
+    isolate_ids = extract_isolate_ids(document)
 
-        # Set what is sent to the client when syncing.
-        self.sync_projector += ["name", "modified", "abbreviation"]
+    # Get the sequence entries associated with the isolate ids.
+    sequences = await db.sequences.find({"isolate_id": {"$in": isolate_ids}}).to_list(None)
 
-        # Contains documents describing viral sequences associated with viruses in the viruses collection. Changes to
-        # sequence documents only occur by calling methods in this Collection object.
-        self.sequences_collection = settings.get_db_client()["sequences"]
+    # Merge the sequence entries into the virus entry.
+    return merge_virus(document, sequences)
 
-    @virtool.gen.exposed_method(["add_virus"])
-    def add(self, transaction):
-        """
-        Adds a new virus to the collection. Checks to make sure the supplied virus name and abbreviation are not
-        already in use in the collection. Any errors are sent back to the client.
 
-        :param transaction: the Transaction object generated from the client request.
-        :type transaction: :class:`~.dispatcher.Transaction`
+def check_name_and_abbreviation(self, name, abbreviation=None):
+    abbreviation_count = 0
 
-        :return: a tuple containing a bool indicating success and data to pass back to the client.
-        :rtype: tuple
+    if abbreviation:
+        abbreviation_count = yield self.find({"abbreviation": abbreviation}).count()
 
-        """
-        virus = dict(transaction.data, username=transaction.connection.user["_id"])
+    name_count = yield self.find({"name": re.compile(name, re.IGNORECASE)}).count()
 
-        try:
-            response = yield self._add(virus)
-        except VirusNameExistsError:
-            return False, dict(message="Virus name already exists")
-        except VirusAbbreviationExistsError:
-            return False, dict(message="Virus abbreviation already exists")
+    return name_count > 0, abbreviation_count > 0
 
-        return True, response
 
-    @virtool.gen.coroutine
-    def _add(self, virus):
-        name_count, abbreviation_count = yield self.check_name_and_abbreviation(virus["name"], virus["abbreviation"])
-
-        # Transaction fails if the name or abbreviation are in use.
-        if abbreviation_count:
-            raise VirusAbbreviationExistsError
-
-        if name_count:
-            raise VirusNameExistsError
-
-        virus["_id"] = yield self.get_new_id()
-
-        yield self.insert(virus)
-
-        return virus["_id"]
-
-    @virtool.gen.coroutine
-    def check_name_and_abbreviation(self, name, abbreviation=None):
-        abbreviation_count = 0
-
-        if abbreviation:
-            abbreviation_count = yield self.find({"abbreviation": abbreviation}).count()
-
-        name_count = yield self.find({"name": re.compile(name, re.IGNORECASE)}).count()
-
-        return name_count, abbreviation_count
-
-    @virtool.gen.exposed_method(["remove_virus"])
-    def remove_virus(self, transaction):
-        """
-        Remove a virus document by its id. Also removes any associated sequence documents from the sequences
-        collection and adds a record of the removal to the history collection.
-
-        :param transaction: the Transaction object generated from the client request.
-        :type transaction: :class:`~.dispatcher.Transaction`
-
-        :return: a tuple containing a bool indicating success and data to pass back to the client.
-        :rtype: tuple
-
-        """
-        virus_id = transaction.data["_id"]
-        username = transaction.connection.user["_id"]
-
-        try:
-            response = yield self._remove_virus(virus_id, username)
-
-        except TypeError as err:
-            if "_id must be" in str(err):
-                logger.warning("User {} attempted to remove more than one virus in a single call".format(username))
-                return False, dict(message="Attempted to remove more than one virus in a single call")
-            raise
-
-        except ValueError as err:
-            if "virus associated with" in str(err):
-                logger.warning("User {} attempted to remove non-existent virus".format(username))
-                return False, dict(message="Attempted to remove non-existent virus")
-            raise
-
-        return True, response
-
-    @virtool.gen.coroutine
-    def _remove_virus(self, virus_id, username):
-        """
-        Remove a virus document by its id. Also removes any associated sequence documents from the sequences
-        collection and adds a record of the removal to the history collection.
-
-        :param virus_id: the _id of the virus to remove.
-        :type virus_id: str
-
-        :param username: the name of the user responsible for the removal.
-        :type username: str
-
-        :return: a tuple containing a bool indicating success and data to pass back to the client.
-        :rtype: tuple
-
-        """
-        # Can only remove one virus per request. Fail if a list of virus ids is passed.
-        if not isinstance(virus_id, str):
-            raise TypeError("Virus _id must be an instance of str")
-
-        # Join the virus.
-        virus = yield self.join(virus_id)
-
-        if not virus:
-            raise ValueError("No virus associated with _id {}".format(virus_id))
-
-        # Get all the isolate ids from the
-        isolate_ids = virusutils.extract_isolate_ids(virus)
-
-        # Remove all sequences associated with the isolates.
-        yield self.sequences_collection.remove({"isolate_id": {"$in": isolate_ids}})
-
-        # Remove the virus document itself.
-        response = yield super().remove(virus_id)
-
-        # Put an entry in the history collection saying the virus was removed.
-        yield self.collections["history"].add(
-            "remove",
-            "remove",
-            virus,
-            None,
-            username
-        )
-
-        return response
-
-    @virtool.gen.exposed_method([])
-    def detail(self, transaction):
-        """
-        Get the complete detailed data for the passed virus id. Joins the virus document with its associated
-        sequence documents.
-
-        :param transaction: the Transaction object generated from the client request.
-        :type transaction: :class:`~.dispatcher.Transaction`
-
-        :return: a tuple containing a bool indicating success and the detailed data to send back to the client.
-        :rtype: tuple
-
-        """
-        # Gather the virus document and associated documents from the sequences collection into one dict.
-        # This will be sent to the client.
-        detail = yield self.join(transaction.data["_id"])
-
-        return True, detail
-
-    @virtool.gen.exposed_method(["modify_virus"])
-    def set_field(self, transaction):
-        """
-        Set either the abbreviation or name field in the virus document identified by the the supplied virus
-        id. Checks that the abbreviation or name is not used elsewhere in the collection and adds a history document
-        describing the change.
-
-        :param transaction: the Transaction object generated from the client request.
-        :type transaction: :class:`~.dispatcher.Transaction`
-
-        :return: a tuple containing a bool indicating success and a dict describing any errors.
-        :rtype: tuple
-
-        """
-        field = transaction.data["field"]
-        value = transaction.data["value"]
-
-        user = transaction.connection.user
-
-        if field in ["abbreviation", "name"]:
-            existing_value_count = 0
-
-            if value:
-                existing_value_count = yield self.db.count({field: value})
-
-            set_dict = {
-                "modified": True,
-                field: value
-            }
-
-            if field == "name":
-                set_dict["lower_name"] = value.lower()
-
-            if existing_value_count == 0:
-                # Apply the update.
-                old, new = yield self.update(transaction.data["_id"], {
-                    "$set": set_dict
-                }, return_change=True)
-
-                # Add a history record describing the change.
-                yield self.collections["history"].add(
-                    "update",
-                    "set_field",
-                    old,
-                    new,
-                    user["_id"]
-                )
-
-                # If the field is successfully set, complete the transaction successfully.
-                return True, None
-
-            # Return False to indicate the method failed and send a message to the client indicating that the supplied
-            # field value already exists.
-            return False, {"message": "already exists"}
-
-        # Log a warning and return False to indicate the method failed.
-        logger.warning("User {} attempted to change protected field".format(user["_id"]))
-        return False, "Attempted to change protected field"
-
-    @virtool.gen.exposed_method(["modify_virus"])
-    def upsert_isolate(self, transaction):
-        """
-        Update or insert a virus isolate. If no isolate_id is included in the data passed from the client, a new isolate
-        will be created.
-
-        :param transaction: the Transaction object generated from the client request.
-        :type transaction: :class:`~.dispatcher.Transaction`
-
-        :return: a tuple containing a bool indicating success and a dict containing the id of the upserted isolate.
-        :rtype: tuple
-
-        """
-        data = transaction.data
-
-        new_isolate = data["new"]
-
-        # All source types are stored in lower case.
-        new_isolate["source_type"] = new_isolate["source_type"].lower()
-
-        # Get the existing isolates from the database.
-        isolates = yield self.get_field(data["_id"], "isolates")
-
-        # Get the complete, joined entry before the update.
-        old = yield self.join(data["_id"])
-
-        # If the update dict contains an isolate id field, update the matching isolate in the virus document. The
-        # provided isolate id must already exist in the virus, otherwise the method will fail.
-        if "isolate_id" in new_isolate:
-            isolate_id = new_isolate.pop("isolate_id")
-
-            # Set to True when and if the included isolate id is found in the viruses isolates list.
-            found_isolate_id = False
-
-            # Go through the virus' isolates until a matching isolate id is found. If a match is not found.
-            for isolate in isolates:
-                if isolate["isolate_id"] == isolate_id:
-                    isolate.update(new_isolate)
-                    found_isolate_id = True
-                    break
-
-            # Check that the isolate id already exists in the virus, before updating.
-            if found_isolate_id:
-                yield self.update(data["_id"], {
-                    "$set": {
-                        "isolates": isolates,
-                        "modified": True
-                    }
-                })
-
-            # Fail if the isolate update contains an isolate id not found in the virus.
-            else:
-
-                logger.warning("User {} attempted to update isolate with non-existent isolate id".format(
-                    transaction.connection.user["_id"]
-                ))
-                return False, {"error": "Invalid isolate id."}
-
-        # If no isolate id is included in the upsert dict, we assume we are adding a new isolate.
-        else:
-            # Get a unique isolate_id for the new isolate.
-            isolate_id = yield self.get_new_isolate_id()
-
-            # Set the isolate as the default isolate if it is the first one.
-            new_isolate.update({
-                "default": len(isolates) == 0,
-                "isolate_id": isolate_id,
-            })
-
-            # Push the new isolate to the database.
-            yield self.update(data["_id"], {
-                "$push": {"isolates": new_isolate},
-                "$set": {"modified": True}
-            })
-
-        # Get the joined entry now that it has been updated.
-        new = yield self.join(data["_id"])
-
-        # Use the old and new entry to add a new history document for the change.
-        yield self.collections["history"].add(
-            "update",
-            "upsert_isolate",
-            old,
-            new,
-            transaction.connection.user["_id"]
-        )
-
-        return True, {"isolate_id": isolate_id}
-
-    @virtool.gen.exposed_method(["modify_virus"])
-    def remove_isolate(self, transaction):
-        """
-        Remove an isolate from a virus document given a virus id and isolate id.
-
-        :param transaction: the Transaction object generated from the client request.
-        :type transaction: :class:`~.dispatcher.Transaction`
-
-        :return: a tuple containing a bool indicating success and the id of the removed isolate and its virus.
-        :rtype: tuple
-
-        """
-        data = transaction.data
-
-        # Get the isolates associated with the supplied virus id.
-        isolates = yield self.get_field(data["_id"], "isolates")
-
-        # Get any isolates that have the isolate id to be removed (only one should match!).
-        isolates_to_remove = [isolate for isolate in isolates if isolate["isolate_id"] == data["isolate_id"]]
-
-        # Make sure that one and only one isolate matches the isolate id that is being removed.
-        assert len(isolates_to_remove) == 1
-
-        # The isolate the is to be removed.
-        isolate_to_remove = isolates_to_remove[0]
-
-        # Remove the isolate from the virus' isolate list.
-        isolates.remove(isolate_to_remove)
-
-        # Set the first isolate as default is the removed isolate was the default.
-        if isolate_to_remove["default"]:
-            for i, isolate in enumerate(isolates):
-                isolate["default"] = (i == 0)
-
-        old = yield self.join(data["_id"])
-
-        yield self.update(data["_id"], {
-            "$set": {
-                "isolates": isolates,
-                "modified": True
-            }
-        })
-
-        # Remove any sequences associated with the removed isolate.
-        yield self.sequences_collection.remove({"isolate_id": data["isolate_id"]})
-        new = yield self.join(data["_id"])
-
-        yield self.collections["history"].add(
-            "update",
-            "remove_isolate",
-            old,
-            new,
-            transaction.connection.user["_id"]
-        )
-
-        return True, {
-            "isolate_id": data["isolate_id"],
-            "virus_id": data["_id"]
-        }
 
     @virtool.gen.exposed_method(["modify_virus"])
     def set_default_isolate(self, transaction):
@@ -897,40 +584,6 @@ class Collection(virtool.database.Collection):
             del replaces[:]
 
     @virtool.gen.coroutine
-    def join(self, virus_id, virus_document=None):
-        """
-        Join the virus associated with the supplied virus id with its sequences. If a virus entry is also passed, the
-        database will not be queried for the virus based on its id.
-
-        :param virus_id: the id of the virus to join.
-        :type virus_id: str
-
-        :param virus_document: use this virus document as a basis for the join instead finding it using the virus id.
-        :type virus_document: dict
-
-        :return: the joined virus document
-        :rtype: dict
-
-        """
-        # Get the virus entry if a virus parameter was not passed.
-        if not virus_document:
-            virus_document = yield self.find_one({"_id": virus_id})
-
-        if virus_document is None:
-            return None
-
-        # Extract the isolate_ids associated with the virus.
-        isolate_ids = virusutils.extract_isolate_ids(virus_document)
-
-        # Get the sequence entries associated with the isolate ids.
-        sequences = yield self.sequences_collection.find({"isolate_id": {"$in": isolate_ids}}).to_list(None)
-
-        # Merge the sequence entries into the virus entry.
-        virus = virusutils.merge_virus(virus_document, sequences)
-
-        return virus
-
-    @virtool.gen.coroutine
     def insert(self, virus, connections=None):
         """
         Inserts the passed virus dict into the collection as a new document, attributing it to the passed username.
@@ -1141,34 +794,69 @@ class Collection(virtool.database.Collection):
 
         return response
 
-    @virtool.gen.coroutine
-    def get_new_isolate_id(self, used_isolate_ids=None):
-        """
-        Generates a unique isolate id.
 
-        :param used_isolate_ids: a list of all extant isolate ids; will be calculated from scratch is None is provided.
-        :return: a unique isolate id.
-        """
+async def get_new_isolate_id(db, used_isolate_ids=None):
+    """
+    Generates a unique isolate id.
+    
+    """
+    if not used_isolate_ids:
+        used_isolate_ids = await db.viruses.distinct("isolates.isolate_id")
 
-        if not used_isolate_ids:
-            used_isolate_ids = yield self.db.distinct("isolates.isolate_id")
-
-        return virtool.utils.random_alphanumeric(8, excluded=used_isolate_ids)
-
-    @virtool.gen.exposed_method(["modify_virus"])
-    def authorize_upload(self, transaction):
-        target = yield self.collections["files"].register(
-            name=transaction.data["name"],
-            size=transaction.data["size"],
-            file_type="viruses"
-        )
-
-        return True, dict(target=target)
+    return random_alphanumeric(8, excluded=used_isolate_ids)
 
 
-class VirusNameExistsError(Exception):
-    pass
+def merge_virus(virus, sequences):
+    """
+    Merge the given sequences in the given virus document. The virus will gain a ``sequences`` field containing a list
+    of its associated sequence documents.
+
+    :param virus: a virus document.
+    :type virus: dict
+
+    :param sequences: the sequence documents to merge into the virus.
+    :type sequences: list
+
+    :return: the merged virus.
+    :rtype: dict
+
+    """
+    for isolate in virus["isolates"]:
+        isolate["sequences"] = [sequence for sequence in sequences if sequence["isolate_id"] == isolate["isolate_id"]]
+
+    return virus
 
 
-class VirusAbbreviationExistsError(Exception):
-    pass
+def split_virus(virus):
+    """
+    Split a merged virus document into a list of sequence documents associated with the virus and a regular virus
+    document containing no sequence subdocuments.
+
+    :param virus: the merged virus to split
+    :type virus: dict
+
+    :return: a tuple containing the new virus document and a list of sequence documents
+    :type: tuple
+
+    """
+    sequences = list()
+
+    virus_document = deepcopy(virus)
+
+    for isolate in virus_document["isolates"]:
+        sequences += isolate.pop("sequences")
+
+    return virus_document, sequences
+
+
+def extract_isolate_ids(virus):
+    """
+    Get the isolate ids from a virus document.
+
+    :param virus: a virus document.
+    :return: a list of isolate ids.
+
+    """
+    return [isolate["isolate_id"] for isolate in virus["isolates"]]
+
+

@@ -1,99 +1,396 @@
-import logging
-import pymongo.errors
-
 from aiohttp import web
 from pymongo import ReturnDocument
-from virtool.data.groups import update_member_users
-from virtool.permissions import PERMISSIONS
-
-logger = logging.getLogger(__name__)
-
-projector = ["_id", "_version", "permissions"]
+from virtool.data_utils import get_new_id
+from virtool.handler_utils import unpack_json_request
+from virtool import viruses
+from virtool import history
 
 
-async def list_groups(req):
+async def find(req):
+    pass
+
+
+async def create(req):
     """
-    Get a list of all existing group documents.
-     
-    """
-    documents = await req["db"].find().to_list(None)
-    return web.json_response(documents)
-
-
-async def add_group(req):
-    """
-    Adds a new user group.
+    Adds a new virus to the collection. Checks to make sure the supplied virus name and abbreviation are not already in
+    use in the collection. Any errors are sent back to the client.
 
     """
-    try:
-        group_id = (await req.json())["group_id"]
-        permissions = {permission: False for permission in PERMISSIONS}
+    db, data = await unpack_json_request(req)
 
-        await req["db"].users.insert({
-            "_id": group_id,
-            "permissions": permissions
+    unique_name, unique_abbreviation = await viruses.check_name_and_abbreviation(data["name"], data["abbreviation"])
+
+    if not unique_name and not unique_abbreviation:
+        return web.json_response({"Name and abbreviation are already in use"}, status=400)
+
+    if not unique_name:
+        return web.json_response({"Name is already in use"}, status=400)
+
+    if not unique_abbreviation:
+        return web.json_response({"Abbreviation is already in use"}, status=400)
+
+    data.update({
+        "_id": await get_new_id(db.viruses),
+        "user_id": req["session"]["user_id"]
+    })
+
+    await db.viruses.insert_one(data)
+
+    return web.json_response(viruses.to_client(data))
+
+
+async def get(req):
+    """
+    Get a complete virus document. Joins the virus document with its associated sequence documents.
+
+    """
+    db = req.app["db"]
+
+    # Gather the virus document and associated documents from the sequences collection into one dict. This will be sent
+    # to the client.
+    document = await db.viruses.find_one({"_id": req.match_info["virus_id"]})
+
+    if not document:
+        return web.json_response({"message": "Not found"}, status=404)
+
+    return web.json_response(viruses.to_client(document))
+
+
+async def update(req):
+    """
+    Set either the abbreviation or name field in the virus document identified by the the supplied virus id. Checks that
+    the abbreviation or name is not used elsewhere in the collection and adds a history document describing the change.
+
+    """
+    db, data = await unpack_json_request(req)
+
+    virus_id = req.match_info["virus_id"]
+
+    # Make sure valid fields are being updated.
+    valid_fields = ["abbreviation", "name"]
+
+    if not all(field in valid_fields for field in data):
+        return web.json_response({"Invalid field(s)"}, status=400)
+
+    document = await viruses.join(db, virus_id)
+
+    if not document:
+        return web.json_response({"Not found"}, status=404)
+
+    exists = {
+        "name": False,
+        "abbreviation": False
+    }
+
+    for field in exists:
+        if field in data and data[field]:
+            exists[field] = await db.viruses.find({field: data[field]})
+
+    if exists["name"] and exists["abbreviation"]:
+        return web.json_response({"Name and abbreviation already exist"})
+
+    if exists["name"]:
+        return web.json_response({"Name already exists"}, status=400)
+
+    if exists["abbreviation"]:
+        return web.json_response({"Abbreviation already exists"}, status=400)
+
+    set_dict = dict(data, modified=True)
+
+    if "name" in set_dict:
+        set_dict["lower_name"] = set_dict["name"].lower()
+
+    new = await db.viruses.update({"_id": virus_id}, {
+        "$set": update
+    }, return_document=ReturnDocument.AFTER)
+
+    # Add a history record describing the change.
+    await history.add(
+        db,
+        "update",
+        "set_field",
+        document,
+        await viruses.join(db, virus_id, new),
+        req["session"]["user_id"]
+    )
+
+    return web.json_response(viruses.to_client(new))
+
+
+async def remove(req):
+    """
+    Remove a virus document and its associated sequence documents. Add a record of the removal to the history
+    collection.
+
+    """
+    db = req.app["db"]
+    virus_id = req.match_info["virus_id"]
+    user_id = req["session"]["user_id"]
+
+    # Can only remove one virus per request. Fail if a list of virus ids is passed.
+    if not isinstance(virus_id, str):
+        return web.json_response({"message": "Virus _id must be an instance of str"}, status=400)
+
+    # Join the virus.
+    joined = await viruses.join(db, virus_id)
+
+    if not joined:
+        return web.json_response({"message": "Not found"}, status=404)
+
+    # Get all the isolate ids from the
+    isolate_ids = viruses.extract_isolate_ids(joined)
+
+    # Remove all sequences associated with the isolates.
+    await db.sequences.remove({"isolate_id": {"$in": isolate_ids}})
+
+    # Remove the virus document itself.
+    await db.viruses.remove({"_id": virus_id})
+
+    # Put an entry in the history collection saying the virus was removed.
+    await db.history.add(
+        "remove",
+        "remove",
+        joined,
+        None,
+        user_id
+    )
+
+    return web.json_response({"removed": virus_id})
+
+
+async def add_isolate(req):
+    """
+    Update or insert a virus isolate. If no isolate_id is included in the data passed from the client, a new isolate
+    will be created.
+
+    """
+    db, data = await unpack_json_request(req)
+
+    new_isolate = data["new"]
+
+    # All source types are stored in lower case.
+    new_isolate["source_type"] = new_isolate["source_type"].lower()
+
+    # Get the existing isolates from the database.
+    isolates = yield self.get_field(data["_id"], "isolates")
+
+    # Get the complete, joined entry before the update.
+    old = yield self.join(data["_id"])
+
+    # If the update dict contains an isolate id field, update the matching isolate in the virus document. The
+    # provided isolate id must already exist in the virus, otherwise the method will fail.
+    if "isolate_id" in new_isolate:
+        isolate_id = new_isolate.pop("isolate_id")
+
+        # Set to True when and if the included isolate id is found in the viruses isolates list.
+        found_isolate_id = False
+
+        # Go through the virus' isolates until a matching isolate id is found. If a match is not found.
+        for isolate in isolates:
+            if isolate["isolate_id"] == isolate_id:
+                isolate.update(new_isolate)
+                found_isolate_id = True
+                break
+
+        # Check that the isolate id already exists in the virus, before updating.
+        if found_isolate_id:
+            yield self.update(data["_id"], {
+                "$set": {
+                    "isolates": isolates,
+                    "modified": True
+                }
+            })
+
+        # Fail if the isolate update contains an isolate id not found in the virus.
+        else:
+
+            logger.warning("User {} attempted to update isolate with non-existent isolate id".format(
+                transaction.connection.user["_id"]
+            ))
+            return False, {"error": "Invalid isolate id."}
+
+    # If no isolate id is included in the upsert dict, we assume we are adding a new isolate.
+    else:
+        # Get a unique isolate_id for the new isolate.
+        isolate_id = yield self.get_new_isolate_id()
+
+        # Set the isolate as the default isolate if it is the first one.
+        new_isolate.update({
+            "default": len(isolates) == 0,
+            "isolate_id": isolate_id,
         })
 
-        return web.json_response({
-            "group_id": group_id,
-            "permissions": permissions
+        # Push the new isolate to the database.
+        yield self.update(data["_id"], {
+            "$push": {"isolates": new_isolate},
+            "$set": {"modified": True}
         })
 
-    except pymongo.errors.DuplicateKeyError:
-        return web.json_response({"message": "Group already exists"}, status=400)
+    # Get the joined entry now that it has been updated.
+    new = yield self.join(data["_id"])
+
+    # Use the old and new entry to add a new history document for the change.
+    yield self.collections["history"].add(
+        "update",
+        "upsert_isolate",
+        old,
+        new,
+        transaction.connection.user["_id"]
+    )
+
+    return True, {"isolate_id": isolate_id}
 
 
-async def get_group(req):
+async def update_isolate(req):
     """
-    Gets a complete group document.
-    
-    """
-    document = await req["db"].find_one(req.match_info["group_id"])
-
-    if document:
-        return web.json_response(document)
-
-    return web.json_response({"message": "Not found"}, status=404)
-
-
-async def update_permissions(req):
-    """
-    Updates the permissions of a given group.
-    
-    """
-    group_id = req.match_info["group_id"]
-    permissions = (await req.json())["permissions"]
-
-    # Get the current permissions dict for the passed group id.
-    document = await req["db"].groups.update({"_id": group_id}, {"group.permissions": {
-        "$set": permissions
-    }}, return_document=ReturnDocument.AFTER)
-
-    document["group_id"] = document.pop("_id")
-
-    return web.json_response(document)
-
-
-async def remove_group(req):
-    """
-    Remove a group.
+    Update or insert a virus isolate. If no isolate_id is included in the data passed from the client, a new isolate
+    will be created.
 
     """
-    group_id = req.match_info["group_id"]
+    db, data = unpack_json_request(req)
 
-    # Only accept single id strings.
-    if not isinstance(group_id, str):
-        return web.json_response({"message": "Only one user group can be removed per call."}, status=400)
+    new_isolate = data["new"]
 
-    # The administrator is not permitted to be removed.
-    if group_id == "administrator":
-        return web.json_response({"message": "Administrator group cannot be removed."}, status=400)
+    # All source types are stored in lower case.
+    new_isolate["source_type"] = new_isolate["source_type"].lower()
 
-    if await req["db"].groups.find({"_id": group_id}).count():
-        return web.json_response({"message": "Group {} does not exist.".format(group_id)}, status=400)
+    # Get the existing isolates from the database.
+    isolates = yield self.get_field(data["_id"], "isolates")
 
-    await update_member_users(req["db"], group_id, remove=True)
+    # Get the complete, joined entry before the update.
+    old = yield self.join(data["_id"])
 
-    await req["db"].groups.remove({"_id": group_id})
+    # If the update dict contains an isolate id field, update the matching isolate in the virus document. The
+    # provided isolate id must already exist in the virus, otherwise the method will fail.
+    if "isolate_id" in new_isolate:
+        isolate_id = new_isolate.pop("isolate_id")
 
-    return web.json_response({"group_id": group_id})
+        # Set to True when and if the included isolate id is found in the viruses isolates list.
+        found_isolate_id = False
+
+        # Go through the virus' isolates until a matching isolate id is found. If a match is not found.
+        for isolate in isolates:
+            if isolate["isolate_id"] == isolate_id:
+                isolate.update(new_isolate)
+                found_isolate_id = True
+                break
+
+        # Check that the isolate id already exists in the virus, before updating.
+        if found_isolate_id:
+            yield self.update(data["_id"], {
+                "$set": {
+                    "isolates": isolates,
+                    "modified": True
+                }
+            })
+
+        # Fail if the isolate update contains an isolate id not found in the virus.
+        else:
+
+            logger.warning("User {} attempted to update isolate with non-existent isolate id".format(
+                transaction.connection.user["_id"]
+            ))
+            return False, {"error": "Invalid isolate id."}
+
+    # If no isolate id is included in the upsert dict, we assume we are adding a new isolate.
+    else:
+        # Get a unique isolate_id for the new isolate.
+        isolate_id = yield self.get_new_isolate_id()
+
+        # Set the isolate as the default isolate if it is the first one.
+        new_isolate.update({
+            "default": len(isolates) == 0,
+            "isolate_id": isolate_id,
+        })
+
+        # Push the new isolate to the database.
+        yield self.update(data["_id"], {
+            "$push": {"isolates": new_isolate},
+            "$set": {"modified": True}
+        })
+
+    # Get the joined entry now that it has been updated.
+    new = yield self.join(data["_id"])
+
+    # Use the old and new entry to add a new history document for the change.
+    yield self.collections["history"].add(
+        "update",
+        "upsert_isolate",
+        old,
+        new,
+        transaction.connection.user["_id"]
+    )
+
+    return True, {"isolate_id": isolate_id}
+
+
+async def remove_isolate(req):
+    """
+    Remove an isolate from a virus document given a virus id and isolate id.
+
+    """
+    db = req.app["db"]
+
+    user_id = req["session"]["user_id"]
+    virus_id = req.match_info["virus_id"]
+    isolate_id = req.match_info["isolate_id"]
+
+    document = await db.viruses.find_one({"isolates.isolate_id": isolate_id})
+
+    isolates = document["isolates"]
+
+    if not document:
+        return web.json_response({"message": "Not found"}, status=404)
+
+    # Get any isolates that have the isolate id to be removed (only one should match!).
+    isolates_to_remove = [isolate for isolate in isolates if isolate["isolate_id"] == isolate_id]
+
+    # Make sure the isolate is unique within the virus.
+    assert len(isolates_to_remove) == 1
+
+    # The isolate that will be removed.
+    isolate_to_remove = isolates_to_remove[0]
+
+    # Remove the isolate from the virus' isolate list.
+    isolates.remove(isolate_to_remove)
+
+    # Set the first isolate as default if the removed isolate was the default.
+    if isolate_to_remove["default"]:
+        for i, isolate in enumerate(isolates):
+            isolate["default"] = (i == 0)
+
+    old = await viruses.join(db, virus_id, document=document)
+
+    document = await db.viruses.find_one_and_update({"_id": virus_id}, {
+        "$set": {
+            "isolates": isolates,
+            "modified": True
+        }
+    }, return_document=ReturnDocument.AFTER)
+
+    new = await viruses.join(db, virus_id, document=document)
+
+    # Remove any sequences associated with the removed isolate.
+    await db.sequences.remove({"isolate_id": isolate_id})
+
+    await db.history.add(
+        "update",
+        "remove_isolate",
+        old,
+        new,
+        user_id
+    )
+
+    return web.json_response(viruses.to_client(document))
+
+
+async def authorize_upload(req):
+    db, data = await unpack_json_request(req)
+
+    file_id = await db.files.register(
+        name=data["name"],
+        size=data["size"],
+        file_type="viruses"
+    )
+
+    return web.json_response({"file_id": file_id})

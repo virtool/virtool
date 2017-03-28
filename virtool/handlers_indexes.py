@@ -11,7 +11,7 @@ async def rebuild_index(req):
 
     """
     # Check if any viruses are unverified.
-    unverified_virus_count = await req["db"].viruses.find({"modified": True}).count()
+    unverified_virus_count = await req.app["db"].viruses.find({"modified": True}).count()
 
     requesting_user = None
 
@@ -21,11 +21,11 @@ async def rebuild_index(req):
             "count": unverified_virus_count
         }, status=400)
 
-    index_version = await get_current_index_version(req["db"]) + 1
+    index_version = await get_current_index_version(req.app["db"]) + 1
 
-    index_id = await get_new_id(req["db"].indexes)
+    index_id = await get_new_id(req.app["db"].indexes)
 
-    await req["db"].indexes.insert({
+    await req.app["db"].indexes.insert({
         "_id": index_id,
         "index_version": index_version,
         "timestamp": timestamp(),
@@ -39,7 +39,7 @@ async def rebuild_index(req):
     })
 
     # Update all history entries with no index_version to the new index version.
-    await req["db"].history.update({"index": "unbuilt"}, {
+    await req.app["db"].history.update({"index": "unbuilt"}, {
         "$set": {
             "index": index_id,
             "index_version": index_version
@@ -49,7 +49,7 @@ async def rebuild_index(req):
     # Generate a dict of virus document version numbers keyed by the document id.
     virus_manifest = dict()
 
-    virus_cursor = req["db"].viruses.find()
+    virus_cursor = req.app["db"].viruses.find()
 
     while await virus_cursor.fetch_next:
         virus = virus_cursor.next_object()

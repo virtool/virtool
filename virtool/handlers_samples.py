@@ -20,17 +20,17 @@ async def create(req):
     data = await req.json()
 
     # Check if the submitted sample name is unique if unique sample names are being enforced.
-    if req["settings"].get("sample_unique_names") and await req["db"].samples.find({"name": data["name"]}).count():
+    if req["settings"].get("sample_unique_names") and await req.app["db"].samples.find({"name": data["name"]}).count():
         return web.json_response({"message": "Sample name already exists."}, status=400)
 
     # Get a list of the subtraction hosts in MongoDB that are ready for use during analysis.
-    available_subtraction_hosts = await req["db"].hosts.find().distinct("_id")
+    available_subtraction_hosts = await req.app["db"].hosts.find().distinct("_id")
 
     # Make sure a subtraction host was submitted and it exists.
     if not data["subtraction"] or data["subtraction"] not in available_subtraction_hosts:
         return web.json_response({"message": "Could not find subtraction host or none was provided."}, status=400)
 
-    sample_id = await get_new_id(req["db"].samples)
+    sample_id = await get_new_id(req.app["db"].samples)
 
     user_id = None
 
@@ -47,7 +47,7 @@ async def create(req):
     # Assign the user"s primary group as the sample owner group if the ``sample_group`` settings is
     # ``users_primary_group``.
     if sample_group_setting == "users_primary_group":
-        data["group"] = (await req["db"].users.find_one({"_id": user_id}))["primary_group"]
+        data["group"] = (await req.app["db"].users.find_one({"_id": user_id}))["primary_group"]
 
     # Make the owner group none if the setting is none.
     if sample_group_setting == "none":
@@ -73,9 +73,9 @@ async def create(req):
         "archived": False
     })
 
-    await req["db"].samples.insert(data)
+    await req.app["db"].samples.insert(data)
 
-    await req["db"].files.reserve_files(data["files"])
+    await req.app["db"].files.reserve_files(data["files"])
 
     proc, mem = 2, 6
 
@@ -91,7 +91,7 @@ async def get(req):
     Get a complete sample document.
     
     """
-    document = await req["db"].samples.find_one({"_id": req.match_info["sample_id"]})
+    document = await req.app["db"].samples.find_one({"_id": req.match_info["sample_id"]})
     document["sample_id"] = document.pop("_id")
     return web.json_response(document)
 
@@ -108,7 +108,7 @@ async def update(req):
     if not all(field in valid_fields for field in data.keys()):
         return web.json_response({"message": "Invalid field provided"}, status=400)
 
-    document = await req["db"].find_one_and_update({"_id": req.match_info["sample_id"]}, {
+    document = await req.app["db"].find_one_and_update({"_id": req.match_info["sample_id"]}, {
         "$set": {field: data[field] for field in valid_fields}
     }, return_document=ReturnDocument.AFTER)
 
@@ -122,21 +122,21 @@ async def set_owner_group(req):
     """
     sample_id = req.match_info["sample_id"]
 
-    sample_owner = (await req["db"].users.find_one(sample_id, "user_id"))["user_id"]
+    sample_owner = (await req.app["db"].users.find_one(sample_id, "user_id"))["user_id"]
 
     requesting_user = None
 
     if "administrator" not in requesting_user["groups"] and requesting_user["_id"] != sample_owner:
         return web.json_response({"message": "Must be administrator or sample owner."}, status=403)
 
-    existing_group_ids = await req["db"].groups.distinct("_id")
+    existing_group_ids = await req.app["db"].groups.distinct("_id")
 
     data = await req.json()
 
     if data["group_id"] not in existing_group_ids:
         return False, dict(message="Passed group id does not exist.")
 
-    await req["db"].samples.update({"_id": sample_id}, {
+    await req.app["db"].samples.update({"_id": sample_id}, {
         "$set": {
             "group_id": data["group_id"]
         }
@@ -158,7 +158,7 @@ async def set_rights(req):
     sample_id = req.match_info["sample_id"]
 
     # Only update the document if the connected user owns the samples or is an administrator.
-    if "administrator" in user_groups or user_id == await get_sample_owner(req["db"], sample_id):
+    if "administrator" in user_groups or user_id == await get_sample_owner(req.app["db"], sample_id):
         valid_fields = ["all_read", "all_write", "group_read", "group_write"]
 
         # Make a dict for updating the rights fields. Fail the transaction if there is an unknown right key.
@@ -166,7 +166,7 @@ async def set_rights(req):
             return web.json_response({"message": "Unknown right name."}, status=400)
 
         # Update the sample document with the new rights.
-        document = await req["db"].find_one_and_update(data["_id"], {
+        document = await req.app["db"].find_one_and_update(data["_id"], {
             "$set": data["changes"]
         })
 
@@ -185,7 +185,7 @@ async def analyze(req):
     user_id = None
 
     # Generate a unique _id for the analysis entry
-    analysis_id = await req["db"].analyses.new(
+    analysis_id = await req.app["db"].analyses.new(
         sample_id,
         data["name"],
         user_id,

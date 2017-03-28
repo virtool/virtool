@@ -12,7 +12,7 @@ async def get_analysis(req):
     """
     analysis_id = req.match_info["analysis_id"]
 
-    document = await req["db"].find_one(analysis_id)
+    document = await req.app["db"].find_one(analysis_id)
 
     if document:
         return web.json_response(await format_analyses(document))
@@ -29,7 +29,7 @@ async def blast_nuvs_sequence(req):
     analysis_id = req.match_info["analysis_id"]
     sequence_index = req.match_info["sequence_index"]
 
-    analysis = await req["db"].analyses.find_one({"_id": analysis_id}, ["sample_id", "sequences"])
+    analysis = await req.app["db"].analyses.find_one({"_id": analysis_id}, ["sample_id", "sequences"])
 
     sequences = [sequence for sequence in analysis["sequences"] if sequence["index"] == int(sequence_index)]
 
@@ -44,7 +44,7 @@ async def blast_nuvs_sequence(req):
     interval = 3
 
     while not ready:
-        await req["db"].analyses.update({"_id": analysis_id, "sequences.index": sequence_index}, {
+        await req.app["db"].analyses.update({"_id": analysis_id, "sequences.index": sequence_index}, {
             "$set": {
                 "sequences.$.blast": {
                     "rid": rid,
@@ -70,7 +70,7 @@ async def blast_nuvs_sequence(req):
         "interval": interval
     })
 
-    response = await req["db"].analyses.update({"_id": analysis_id, "sequences.index": sequence_index}, {
+    response = await req.app["db"].analyses.update({"_id": analysis_id, "sequences.index": sequence_index}, {
         "$set": {
             "sequences.$.blast": result
         }
@@ -86,8 +86,8 @@ async def remove_analysis(req):
     """
     analysis_id = req.match_info["analysis_id"]
 
-    document = await req["db"].analyses.find_one({"_id": analysis_id}, ["sample_id"])
+    document = await req.app["db"].analyses.find_one({"_id": analysis_id}, ["sample_id"])
 
-    await recalculate_algorithm_tags(req["db"], document["sample_id"])
+    await recalculate_algorithm_tags(req.app["db"], document["sample_id"])
 
-    await remove_by_id(req["db"], analysis_id)
+    await remove_by_id(req.app["db"], analysis_id)

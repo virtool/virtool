@@ -11,7 +11,7 @@ async def find(req):
     Get a list of the existing ``user_ids`` in the database.
      
     """
-    return web.json_response({"users": req["db"].users.distinct("_id")})
+    return web.json_response({"users": req.app["db"].users.distinct("_id")})
 
 
 async def get(req):
@@ -25,7 +25,7 @@ async def get(req):
     """
     user_id = req.match_info["user_id"]
 
-    document = req["db"].users.find_one(user_id)
+    document = req.app["db"].users.find_one(user_id)
 
     if not document:
         return web.json_response({"Not found"}, status=404)
@@ -46,7 +46,7 @@ async def create(req):
     data = await req.json()
 
     # Check if the username is already taken. Fail if it does.
-    if await user_exists(req["db"], data["user_id"]):
+    if await user_exists(req.app["db"], data["user_id"]):
         return web.json_response({"message": "User already exists"}, status=400)
 
     salt, password = salt_hash(data["password"])
@@ -70,7 +70,7 @@ async def create(req):
         "invalidate_sessions": False
     }
 
-    await req["db"].users.insert(document)
+    await req.app["db"].users.insert(document)
     
     document["user_id"] = document.pop("_id")
     
@@ -86,12 +86,12 @@ async def set_password(req):
 
     user_id = req.match_info["user_id"]
 
-    if not await user_exists(req["db"], user_id):
+    if not await user_exists(req.app["db"], user_id):
         return web.json_response({"Not found"}, status=404)
 
     salt, password = salt_hash(data["new_password"])
 
-    document = await req["db"].users.find_one_and_update({"_id": user_id}, {
+    document = await req.app["db"].users.find_one_and_update({"_id": user_id}, {
         "$set": {
             "password": password,
             "salt": salt,
@@ -114,10 +114,10 @@ async def set_force_reset(req):
 
     data = await req.json()
 
-    if not await user_exists(req["db"], user_id):
+    if not await user_exists(req.app["db"], user_id):
         return web.json_response({"message": "User does not exist"}, status=404)
 
-    result = await req["db"].update({"_id": user_id}, {
+    result = await req.app["db"].update({"_id": user_id}, {
         "$set": {
             "force_reset": data["force_reset"],
             "invalidate_sessions": True
@@ -138,7 +138,7 @@ async def add_group(req):
 
     data = await req.json()
 
-    if not await user_exists(req["db"], user_id):
+    if not await user_exists(req.app["db"], user_id):
         web.json_response({"message": "User does not exist"}, status=404)
 
     if data["group_id"] == "administrator" and user_id == requesting_user:
@@ -147,23 +147,23 @@ async def add_group(req):
             status=400
         )
 
-    if data["group_id"] not in await req["db"].groups.distinct("_id"):
+    if data["group_id"] not in await req.app["db"].groups.distinct("_id"):
         return web.json_response({"message": "Group does not exist"}, status=404)
 
-    member_group_ids = await req["db"].users.distinct("groups", {"_id": user_id})
+    member_group_ids = await req.app["db"].users.distinct("groups", {"_id": user_id})
 
     if data["group_id"] in member_group_ids:
         member_group_ids.remove(data["group_id"])
     else:
         member_group_ids.append(data["group_id"])
 
-    groups = await req["db"].groups.find({"_id": {
+    groups = await req.app["db"].groups.find({"_id": {
         "$in": member_group_ids
     }}).to_list(None)
 
     new_permissions = merge_group_permissions(list(groups))
 
-    document = await req["db"].users.find_one_and_update({"_id": user_id}, {
+    document = await req.app["db"].users.find_one_and_update({"_id": user_id}, {
         "$set": {
             "permissions": new_permissions,
             "groups": member_group_ids
@@ -176,7 +176,7 @@ async def add_group(req):
 async def remove_session(req):
     token = req.match_info["token"]
 
-    removed = await invalidate_session(req["db"], token)
+    removed = await invalidate_session(req.app["db"], token)
 
     if not removed:
         return web.json_response({"message": "Session does not exist"}, status=404)
@@ -201,7 +201,7 @@ async def remove(req):
         # Otherwise send an error message to the client and log a warning.
         return web.json_response({"message": "Cannot remove own account"}, status=400)
 
-    result = await req["db"].users.remove({"_id": data["user_id"]})
+    result = await req.app["db"].users.remove({"_id": data["user_id"]})
 
     if result["n"] == 0:
         return web.json_response({"message": "User does not exist"})

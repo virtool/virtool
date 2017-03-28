@@ -1,9 +1,6 @@
 import os
-import time
 import queue
-import inotify.adapters
 import logging
-import setproctitle
 import multiprocessing
 
 import virtool.gen
@@ -12,16 +9,9 @@ import virtool.database
 import virtool.organize
 
 
-TYPE_NAME_DICT = {
-    "IN_CREATE": "create",
-    "IN_MODIFY": "modify",
-    "IN_DELETE": "delete",
-    "IN_MOVED_FROM": "delete",
-    "IN_CLOSE_WRITE": "close"
-}
 
 
-logger = logging.getLogger(__name__)
+
 
 
 class Collection(virtool.database.Collection):
@@ -64,20 +54,6 @@ class Collection(virtool.database.Collection):
     def __init__(self, dispatch, collections, settings, add_periodic_callback):
         super().__init__("files", dispatch, collections, settings, add_periodic_callback)
 
-        self.sync_projector += [
-            "name",
-            "size_end",
-            "size_now",
-            "timestamp",
-            "file_type",
-            "created",
-            "reserved",
-            "ready"
-        ]
-
-        db = self.settings.get_db_client(sync=True)
-
-        virtool.organize.organize_files(db)
 
         self.path = os.path.join(self.settings.get("data_path"), "files")
 
@@ -258,63 +234,4 @@ class Collection(virtool.database.Collection):
         return response
 
 
-class Watcher(multiprocessing.Process):
 
-    def __init__(self, path, queue, interval=0.300):
-        super().__init__()
-
-        self.path = path
-        self.queue = queue
-        self.interval = interval
-        self.notifier = inotify.adapters.Inotify()
-
-    def run(self):
-
-        setproctitle.setproctitle("virtool-inotify")
-
-        logger.debug("Started file watcher")
-
-        self.notifier.add_watch(bytes(self.path, encoding="utf-8"))
-
-        last_modification = time.time()
-
-        try:
-            for event in self.notifier.event_gen():
-                if event is not None:
-                    _, type_names, _, filename = event
-
-                    if filename and type_names[0] in TYPE_NAME_DICT:
-                        assert len(type_names) == 1
-
-                        action = TYPE_NAME_DICT[type_names[0]]
-
-                        filename = filename.decode()
-
-                        now = time.time()
-
-                        if action in ["create", "modify", "close"]:
-                            file_entry = virtool.utils.file_stats(os.path.join(self.path, filename))
-                            file_entry["filename"] = filename
-
-                            if action == "modify" and (now - last_modification) > self.interval:
-                                self.queue.put({
-                                    "action": action,
-                                    "file": file_entry
-                                })
-
-                                last_modification = now
-
-                            if action in ["create", "close"]:
-                                self.queue.put({
-                                    "action": action,
-                                    "file": file_entry
-                                })
-
-                        if action == "delete":
-                            self.queue.put({
-                                "action": "delete",
-                                "file": filename
-                            })
-
-        except KeyboardInterrupt:
-            logging.debug("Stopped file watcher")

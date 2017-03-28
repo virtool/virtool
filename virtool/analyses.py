@@ -1,9 +1,10 @@
 import os
+import virtool.blast
 
 from virtool.utils import timestamp, rm
-from virtool.data.utils import get_new_id
-from virtool.data.samples import recalculate_algorithm_tags
-from virtool.data.indexes import get_current_index
+from virtool.data_utils import get_new_id
+from virtool.samples import recalculate_algorithm_tags
+from virtool.indexes import get_current_index
 
 
 projector = [
@@ -138,7 +139,7 @@ async def format_analyses(db, analyses):
 
                     if virus_id not in fetched_viruses:
                         # Get the virus entry (patched to correct version).
-                        _, virus_document, _ = yield self.collections["history"].get_versioned_document(
+                        _, virus_document, _ = await db.history.get_versioned_document(
                             virus_id,
                             virus_version + 1
                         )

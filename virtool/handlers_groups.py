@@ -16,7 +16,7 @@ async def find(req):
     Get a list of all existing group documents.
      
     """
-    documents = await req["db"].find().to_list(None)
+    documents = await req.app["db"].find().to_list(None)
     return web.json_response(documents)
 
 
@@ -29,7 +29,7 @@ async def create(req):
         group_id = (await req.json())["group_id"]
         permissions = {permission: False for permission in PERMISSIONS}
 
-        await req["db"].users.insert({
+        await req.app["db"].users.insert({
             "_id": group_id,
             "permissions": permissions
         })
@@ -48,7 +48,7 @@ async def get(req):
     Gets a complete group document.
     
     """
-    document = await req["db"].find_one(req.match_info["group_id"])
+    document = await req.app["db"].find_one(req.match_info["group_id"])
 
     if document:
         return web.json_response(document)
@@ -65,7 +65,7 @@ async def update_permissions(req):
     permissions = (await req.json())["permissions"]
 
     # Get the current permissions dict for the passed group id.
-    document = await req["db"].groups.update({"_id": group_id}, {"group.permissions": {
+    document = await req.app["db"].groups.update({"_id": group_id}, {"group.permissions": {
         "$set": permissions
     }}, return_document=ReturnDocument.AFTER)
 
@@ -89,11 +89,11 @@ async def remove(req):
     if group_id == "administrator":
         return web.json_response({"message": "Administrator group cannot be removed."}, status=400)
 
-    if await req["db"].groups.find({"_id": group_id}).count():
+    if await req.app["db"].groups.find({"_id": group_id}).count():
         return web.json_response({"message": "Group {} does not exist.".format(group_id)}, status=400)
 
-    await update_member_users(req["db"], group_id, remove=True)
+    await update_member_users(req.app["db"], group_id, remove=True)
 
-    await req["db"].groups.remove({"_id": group_id})
+    await req.app["db"].groups.remove({"_id": group_id})
 
     return web.json_response({"group_id": group_id})
