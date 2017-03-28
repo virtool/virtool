@@ -1,177 +1,66 @@
 import os
-import math
 import gzip
 import json
-import shutil
 import subprocess
-
-from collections import Counter
-
-import virtool.gen
-import virtool.database
 import virtool.utils
 
+projection = [
+    "_id",
+    "_version",
+    "cluster",
+    "label",
+    "count",
+    "families"
+]
 
-class Collection(virtool.database.Collection):
 
-    def __init__(self, dispatch, collections, settings, add_periodic_callback):
-        super().__init__("hmm", dispatch, collections, settings, add_periodic_callback)
+def to_client(document):
+    document["hmm_id"] = document.pop("_id")
+    return document
 
-        self.sync_projector += [
-            "cluster",
-            "label",
-            "count",
-            "families"
-        ]
 
-    @virtool.gen.exposed_method([])
-    def detail(self, transaction):
-        detail = yield self.find_one({"_id": transaction.data["_id"]})
+def to_dispatcher(document):
+    return to_client(document)
 
-        if detail:
-            return True, detail
 
-        return False, dict(message="Document not found")
+async def check(db, settings):
 
-    @virtool.gen.exposed_method(["modify_hmm"])
-    def import_hmm(self, transaction):
-        src_path = os.path.join(self.settings.get("data_path"), "files", transaction.data["file_id"])
-        dest_path = os.path.join(self.settings.get("data_path"), "hmm/profiles.hmm")
+    hmm_dir_path = os.path.join(settings.get("data_path"), "hmm")
 
-        shutil.copyfile(src_path, dest_path)
+    errors = {
+        "hmm_file": False,
+        "not_in_file": False,
+        "not_in_database": False
+    }
 
-        result = yield self._check()
+    if not os.path.isdir(hmm_dir_path):
+        os.mkdir(hmm_dir_path)
 
-        yield self.collections["status"].update("hmm", {
-            "$set": result
-        }, upsert=True)
+    hmm_file_path = os.path.join(hmm_dir_path, "profiles.hmm")
 
-        return True, result
+    if os.path.isfile(hmm_file_path):
+        hmm_stats = await hmmstat(hmm_file_path)
 
-    @virtool.gen.exposed_method(["modify_hmm"])
-    def import_annotations(self, transaction):
-        annotation_count = yield self.db.count()
+        annotations = await db.hmm.find({}, {
+            "cluster": True,
+            "count": True,
+            "length": True
+        }).to_list(None)
 
-        if annotation_count > 0:
-            return False, dict(message="Annotations collection is not empty")
+        clusters_in_file = {entry["cluster"] for entry in hmm_stats}
+        clusters_in_database = {entry["cluster"] for entry in annotations}
 
-        # The file id to import the data from.
-        file_id = transaction.data["file_id"]
+        # Calculate which cluster ids are unique to the HMM file and/or the annotation database.
+        errors["not_in_file"] = list(clusters_in_database - clusters_in_file) or False
+        errors["not_in_database"] = list(clusters_in_file - clusters_in_database) or False
+    else:
+        errors["hmm_file"] = True
 
-        with gzip.open(os.path.join(self.settings.get("data_path"), "files", file_id), "rt") as input_file:
-            annotations_to_import = json.load(input_file)
+    await db.status.update("hmm", {
+        "$set": errors
+    }, upsert=True)
 
-        # The number of annotation documents that will be imported.
-        count = len(annotations_to_import)
-
-        transaction.update({"count": count})
-
-        # The number of documents to insert at a time.
-        chunk_size = int(math.ceil(count * 0.03))
-
-        # A list of documents that have to be inserted when chunk_size is met.
-        cache = list()
-
-        for i, annotation in enumerate(annotations_to_import):
-            top_three = Counter([entry["name"] for entry in annotation["entries"]]).most_common(3)
-            top_names = [entry[0] for entry in top_three]
-
-            new_id = yield self.get_new_id()
-
-            annotation.update({
-                "_id": new_id,
-                "definition": top_names,
-                "label": top_names[0],
-                "_version": 0
-            })
-
-            cache.append(annotation)
-
-            if len(cache) == chunk_size or i == count - 1:
-                self.db.insert_many(cache)
-                yield self.dispatch("update", [{key: d[key] for key in self.sync_projector} for d in cache])
-                cache = []
-
-        transaction.update({"checking": True})
-
-        yield self._check()
-
-        return True, None
-
-    @virtool.gen.exposed_method([])
-    def check(self, transaction):
-        result = yield self._check()
-        return True, result
-
-    @virtool.gen.coroutine
-    def _check(self):
-
-        hmm_dir_path = os.path.join(self.settings.get("data_path"), "hmm")
-
-        errors = {
-            "hmm_file": False,
-            "not_in_file": False,
-            "not_in_database": False
-        }
-
-        if not os.path.isdir(hmm_dir_path):
-            os.mkdir(hmm_dir_path)
-
-        hmm_file_path = os.path.join(hmm_dir_path, "profiles.hmm")
-
-        if os.path.isfile(hmm_file_path):
-            hmm_stats = yield hmmstat(hmm_file_path)
-
-            annotations = yield self.db.find({}, {
-                "cluster": True,
-                "count": True,
-                "length": True
-            }).to_list(None)
-
-            clusters_in_file = {entry["cluster"] for entry in hmm_stats}
-            clusters_in_database = {entry["cluster"] for entry in annotations}
-
-            # Calculate which cluster ids are unique to the HMM file and/or the annotation database.
-            errors["not_in_file"] = list(clusters_in_database - clusters_in_file) or False
-            errors["not_in_database"] = list(clusters_in_file - clusters_in_database) or False
-        else:
-            errors["hmm_file"] = True
-
-        yield self.collections["status"].update("hmm", {
-            "$set": errors
-        }, upsert=True)
-
-        return errors
-
-    @virtool.gen.exposed_method(["modify_hmm"])
-    def clean(self, transaction):
-        errors = yield self._check()
-
-        if errors["not_in_file"]:
-            hmm_ids = yield self.find({"cluster": {
-                "$in": errors["not_in_file"]
-            }}).distinct("_id")
-
-            result = yield self.remove(hmm_ids)
-
-            yield self._check()
-
-            return True, result
-
-        return False, dict(message="No problems found")
-
-    @virtool.gen.exposed_method(["modify_hmm"])
-    def set_field(self, transaction):
-        if transaction.data["field"] != "label":
-            return False, dict(message="Not allowed to set this field.")
-
-        yield self.update(transaction.data["_id"], {
-            "$set": {
-                transaction.data["field"]: transaction.data["value"]
-            }
-        })
-
-        return True, None
+    return errors
 
 
 @virtool.gen.synchronous
