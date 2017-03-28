@@ -1,4 +1,4 @@
-from virtool import handlers_samples, handlers_hosts, handlers_groups
+from virtool import handlers_samples, handlers_hosts, handlers_account, handlers_groups
 
 
 def setup_routes(app):
@@ -23,6 +23,13 @@ def setup_hosts_routes(app):
 
     app.router.add_get("/hosts/{host_id}", handlers_hosts.get)
     app.router.add_delete("/hosts/{host_id}", handlers_hosts.remove)
+
+
+def setup_account_routes(app):
+    app.router.add_get("/account/settings", handlers_account.get_settings)
+    app.router.add_put("/account/settings", handlers_account.update_settings)
+    app.router.add_put("/account/password", handlers_account.change_password)
+    app.router.add_get("/account/logout", handlers_account.logout)
 
 
 def setup_groups_routes(app):
