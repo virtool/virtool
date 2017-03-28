@@ -1,4 +1,4 @@
-from virtool import handlers_samples, handlers_hmm, handlers_hosts, handlers_account, handlers_groups
+from virtool import handlers_samples, handlers_history, handlers_hmm, handlers_hosts, handlers_account, handlers_groups
 
 
 def setup_routes(app):
@@ -18,6 +18,10 @@ def setup_samples_routes(app):
 
     app.router.add_put("/samples/{sample_id}/group", handlers_samples.set_owner_group),
     app.router.add_put("/samples/{sample_id}/rights", handlers_samples.set_rights),
+
+
+def setup_history_routes(app):
+    app.router.add_delete("/history/{history_id}", handlers_history.revert)
 
 
 def setup_hmm_routes(app):
