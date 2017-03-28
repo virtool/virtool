@@ -79,9 +79,6 @@ async def invalidate_session(db, token, logout=False):
     """
     Invalidate the session identified by the passed token. Can be called as the result of a logout or a forced
     invalidation by a user with the *modify_options* permission.
-    
-    :param db: a database client
-    :type db: :class:`~motor.motor_asyncio.AsyncIOMotorClient`
 
     """
     session_count = await db.users.find({"sessions.0.token": token}).count()
@@ -99,6 +96,7 @@ async def invalidate_session(db, token, logout=False):
 
     removed_count = len(response["_ids"])
 
+    '''
     if removed_count:
         self._dispatch({
             "operation": "deauthorize",
@@ -110,6 +108,7 @@ async def invalidate_session(db, token, logout=False):
         return True
 
     return False
+    '''
 
 
 def salt_hash(password):

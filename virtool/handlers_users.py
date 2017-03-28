@@ -2,11 +2,11 @@ from aiohttp import web
 from pymongo import ReturnDocument
 from virtool.utils import timestamp
 from virtool.permissions import PERMISSIONS
-from virtool.data.groups import merge_group_permissions
-from virtool.data.users import invalidate_session, user_exists, salt_hash, ACCOUNT_SETTINGS
+from virtool.groups import merge_group_permissions
+from virtool.users import invalidate_session, user_exists, salt_hash, ACCOUNT_SETTINGS
 
 
-async def list_users(req):
+async def find(req):
     """
     Get a list of the existing ``user_ids`` in the database.
      
@@ -14,7 +14,7 @@ async def list_users(req):
     return web.json_response({"users": req["db"].users.distinct("_id")})
 
 
-async def get_user(req):
+async def get(req):
     """
     Get a near-complete user document. Sensitive data are removed:
     
@@ -38,7 +38,7 @@ async def get_user(req):
     return web.json_response(document)
 
 
-async def create_user(req):
+async def create(req):
     """
     Add a new user to the user database.
 
@@ -184,7 +184,7 @@ async def remove_session(req):
     return web.json_response({"removed": removed})
 
 
-async def remove_user(req):
+async def remove(req):
     """
     Remove existing user with the id passed in the transaction.
 

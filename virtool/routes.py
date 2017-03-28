@@ -1,4 +1,5 @@
-from virtool import handlers_samples, handlers_history, handlers_hmm, handlers_hosts, handlers_account, handlers_groups
+from virtool import handlers_samples, handlers_history, handlers_hmm, handlers_hosts, handlers_account, \
+    handlers_groups, handlers_users
 
 
 def setup_routes(app):
@@ -45,8 +46,25 @@ def setup_hosts_routes(app):
 def setup_account_routes(app):
     app.router.add_get("/account/settings", handlers_account.get_settings)
     app.router.add_put("/account/settings", handlers_account.update_settings)
+
     app.router.add_put("/account/password", handlers_account.change_password)
+
     app.router.add_get("/account/logout", handlers_account.logout)
+
+
+def setup_user_routes(app):
+    app.router.add_get("/users", handlers_users.find)
+    app.router.add_post("/users", handlers_users.create)
+
+    app.router.add_get("/users/{user_id}", handlers_users.get)
+    app.router.add_delete("/users/{user_id}", handlers_users.remove)
+
+    app.router.add_put("/users/{user_id}/reset", handlers_users.set_force_reset)
+    app.router.add_put("/users/{user_id}/password", handlers_users.set_password)
+
+    app.router.add_post("/users/{user_id}/groups", handlers_users.add_group)
+
+    app.router.add_delete("/users/{user_id}/sessions", handlers_users.remove_session)
 
 
 def setup_groups_routes(app):
