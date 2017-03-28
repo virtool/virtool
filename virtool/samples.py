@@ -1,9 +1,8 @@
 import os
-import virtool.database
 
 from pymongo import ReturnDocument
 from virtool.utils import rm
-
+from virtool.data_utils import coerce_list
 
 PATHOSCOPE_TASK_NAMES = ["pathoscope_bowtie", "pathoscope_snap"]
 
@@ -38,7 +37,7 @@ async def processor(documents):
     :rtype: list
 
     """
-    documents = virtool.database.coerce_list(documents)
+    documents = coerce_list(documents)
 
     to_send = list()
 

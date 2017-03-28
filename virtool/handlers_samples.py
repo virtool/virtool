@@ -1,18 +1,15 @@
-import pymongo.errors
-
 from aiohttp import web
 from pymongo import ReturnDocument
 from virtool.utils import timestamp
-from virtool.database import coerce_list
-from virtool.data.utils import get_new_id
-from virtool.data.samples import get_sample_owner, remove_samples
+from virtool.data_utils import get_new_id, coerce_list
+from virtool.samples import get_sample_owner, remove_samples
 
 
-async def find_samples(req):
+async def find(req):
     pass
 
 
-async def create_sample(req):
+async def create(req):
     """
     Creates a new sample based on the data in ``transaction`` and starts a sample import job.
 
@@ -89,7 +86,7 @@ async def create_sample(req):
     return web.json_response(data)
 
 
-async def get_sample(req):
+async def get(req):
     """
     Get a complete sample document.
     
@@ -99,7 +96,7 @@ async def get_sample(req):
     return web.json_response(document)
 
 
-async def update_sample(req):
+async def update(req):
     """
     Update specific fields in the sample document.
 
@@ -155,10 +152,13 @@ async def set_rights(req):
     """
     data = await req.json()
 
+    user_id = req["session"]["user_id"]
+    user_groups = req["session"]["user_groups"]
+
     sample_id = req.match_info["sample_id"]
 
     # Only update the document if the connected user owns the samples or is an administrator.
-    if "administrator" in requesting_user["groups"] or requesting_user["_id"] == await get_sample_owner(req["db"], sample_id):
+    if "administrator" in user_groups or user_id == await get_sample_owner(req["db"], sample_id):
         valid_fields = ["all_read", "all_write", "group_read", "group_write"]
 
         # Make a dict for updating the rights fields. Fail the transaction if there is an unknown right key.
@@ -172,7 +172,7 @@ async def set_rights(req):
 
         return web.json_response({field: document[field] for field in valid_fields})
 
-    return web.json_response({"message": "Must be administrator or sample owner."}, 403)
+    return web.json_response({"message": "Must be administrator or sample owner."}, status=403)
 
 
 async def analyze(req):
@@ -195,11 +195,11 @@ async def analyze(req):
     return web.json_response({"analysis_id": analysis_id})
 
 
-async def remove_sample(req):
-        """
-        Remove a sample document and all associated analyses.
+async def remove(req):
+    """
+    Remove a sample document and all associated analyses.
 
-        """
-        id_list = coerce_list(req.match_info["_id"])
+    """
+    id_list = coerce_list(req.match_info["_id"])
 
-        result = await remove_samples(id_list)
+    result = await remove_samples(id_list)

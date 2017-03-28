@@ -11,7 +11,7 @@ logger = logging.getLogger(__name__)
 projector = ["_id", "_version", "permissions"]
 
 
-async def list_groups(req):
+async def find(req):
     """
     Get a list of all existing group documents.
      
@@ -20,7 +20,7 @@ async def list_groups(req):
     return web.json_response(documents)
 
 
-async def add_group(req):
+async def create(req):
     """
     Adds a new user group.
 
@@ -43,7 +43,7 @@ async def add_group(req):
         return web.json_response({"message": "Group already exists"}, status=400)
 
 
-async def get_group(req):
+async def get(req):
     """
     Gets a complete group document.
     
@@ -74,7 +74,7 @@ async def update_permissions(req):
     return web.json_response(document)
 
 
-async def remove_group(req):
+async def remove(req):
     """
     Remove a group.
 

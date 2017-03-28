@@ -1,13 +1,35 @@
-from handlers import groups
+from virtool import handlers_samples, handlers_hosts, handlers_groups
 
 
-def set_routes(app):
-    set_groups_routes(app)
+def setup_routes(app):
+    setup_groups_routes(app)
 
 
-def set_groups_routes(app):
-    app.router.add_get("/groups", groups.list_groups)
-    app.router.add_post("/groups/", groups.add_group)
-    app.router.add_get("/groups/{group_id}", groups.get_group)
-    app.router.add_put("/groups/{group_id}", groups.update_permissions)
-    app.router.add_delete("/groups/{group_id}", groups.remove_group)
+def setup_samples_routes(app):
+    app.router.add_get("/samples", handlers_samples.find)
+    app.router.add_post("/samples", handlers_samples.create),
+
+    app.router.add_get("/samples/{sample_id}", handlers_samples.get),
+    app.router.add_put("/samples/{sample_id}", handlers_samples.update),
+    app.router.add_delete("/samples/{sample_id}", handlers_samples.remove),
+
+    app.router.add_put("/samples/{sample_id}/group", handlers_samples.set_owner_group),
+    app.router.add_put("/samples/{sample_id}/rights", handlers_samples.set_rights),
+
+
+def setup_hosts_routes(app):
+    app.router.add_get("/hosts", handlers_hosts.find)
+    app.router.add_post("/hosts", handlers_hosts.create)
+
+    app.router.add_get("/hosts/{host_id}", handlers_hosts.get)
+    app.router.add_delete("/hosts/{host_id}", handlers_hosts.remove)
+
+
+def setup_groups_routes(app):
+    app.router.add_get("/groups", handlers_groups.find)
+    app.router.add_post("/groups", handlers_groups.create)
+
+    app.router.add_get("/groups/{group_id}", handlers_groups.get)
+    app.router.add_put("/groups/{group_id}", handlers_groups.update_permissions)
+    app.router.add_delete("/groups/{group_id}", handlers_groups.remove)
+
