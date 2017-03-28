@@ -3,19 +3,12 @@ import sys
 import ssl
 import logging
 import subprocess
-import tornado.web
-import tornado.gen
-import tornado.ioloop
-import tornado.escape
-import tornado.websocket
-import tornado.httpserver
 
 # Main Virtool modules
 import virtool.setup
 import virtool.settings
 import virtool.dispatcher
 import virtool.collections
-import virtool.gen
 
 # Collection modules
 import virtool.analyses

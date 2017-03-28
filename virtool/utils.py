@@ -2,10 +2,6 @@ import os
 import shutil
 import binascii
 import datetime
-import pymongo
-import motor
-
-import virtool.gen
 
 
 @virtool.gen.synchronous

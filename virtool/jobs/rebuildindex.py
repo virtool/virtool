@@ -4,12 +4,10 @@ import logging
 
 from collections import defaultdict
 
-import virtool.gen
 import virtool.database
 import virtool.utils
 import virtool.job
 import virtool.viruses
-import virtool.virusutils
 
 logger = logging.getLogger(__name__)
 

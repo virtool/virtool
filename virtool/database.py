@@ -1,6 +1,5 @@
 import logging
 
-import virtool.gen
 import virtool.utils
 
 logger = logging.getLogger(__name__)

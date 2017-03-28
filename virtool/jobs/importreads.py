@@ -6,8 +6,6 @@ import pymongo
 
 import virtool.utils
 import virtool.files
-import virtool.plots
-import virtool.gen
 import virtool.database
 import virtool.job
 import virtool.pathoscope

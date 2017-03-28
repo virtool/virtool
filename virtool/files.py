@@ -3,15 +3,9 @@ import queue
 import logging
 import multiprocessing
 
-import virtool.gen
 import virtool.utils
 import virtool.database
 import virtool.organize
-
-
-
-
-
 
 
 class Collection(virtool.database.Collection):

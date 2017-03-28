@@ -1,10 +1,6 @@
 import json
 import logging
 import warnings
-import tornado.concurrent
-import tornado.websocket
-
-import virtool.gen
 
 
 logger = logging.getLogger(__name__)

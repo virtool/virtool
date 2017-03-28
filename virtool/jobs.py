@@ -1,12 +1,6 @@
 import os
 import logging
 import multiprocessing
-import tornado.gen
-import tornado.queues
-import tornado.concurrent
-import tornado.ioloop
-
-import virtool.gen
 import virtool.utils
 import virtool.database
 
@@ -449,7 +443,6 @@ class Collection(virtool.database.Collection):
             # Tells the queue to move onto the next item.
             self._action_queue.task_done()
 
-    @tornado.gen.coroutine
     def iterate(self):
         """
         The central runtime method for the collection. When called, it:

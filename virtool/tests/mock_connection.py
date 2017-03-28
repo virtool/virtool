@@ -1,4 +1,3 @@
-import tornado.websocket
 
 
 class MockConnection:

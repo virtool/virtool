@@ -5,8 +5,8 @@ import virtool.utils
 from virtool.permissions import PERMISSIONS
 from virtool.groups import merge_group_permissions
 from virtool.history import get_default_isolate
-from virtool.virusutils import merge_virus
-from virtool.sampleutils import calculate_algorithm_tags
+from virtool.viruses import merge_virus
+from virtool.samples import calculate_algorithm_tags
 
 
 def organize_analyses(database):

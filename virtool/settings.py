@@ -3,7 +3,6 @@ import motor
 import pymongo
 import logging
 
-import virtool.gen
 import virtool.utils
 import virtool.database
 

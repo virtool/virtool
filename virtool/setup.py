@@ -1,9 +1,7 @@
 import os
 import motor
 import pymongo.errors
-import tornado.web
 
-import virtool.gen
 import virtool.utils
 import virtool.users
 import virtool.viruses

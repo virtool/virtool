@@ -67,6 +67,9 @@ if not args.development or args.write_pid:
     with open(pid_path, "w") as pidfile:
         pidfile.write(pid)
 
+
+
+
 server = virtool.web.Application(args.development)
 
 server.run()
