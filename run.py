@@ -1,78 +1,41 @@
 import os
 import sys
-import logging.handlers
-import coloredlogs
-import argparse
-import virtool.web
+import uvloop
+import asyncio
+import virtool.args
+import virtool.logs
 
+from aiohttp import web
 from setproctitle import setproctitle
+from virtool.web import create_app
 
 sys.dont_write_bytecode = True
 
-setproctitle('virtool')
+setproctitle("virtool")
 
-parser = argparse.ArgumentParser()
+args = virtool.args.get_args()
 
-parser.add_argument(
-    "--dev",
-    dest="development",
-    action="store_true",
-    default=False,
-    help="Make the server run in development mode."
-)
+logger = virtool.logs.configure(verbose=args.verbose)
 
-parser.add_argument(
-    "--write-pid",
-    dest="write_pid",
-    action="store_true",
-    default=False,
-    help="Force the server to write a PID file even if it is development mode"
-)
-
-args = parser.parse_args()
-
-logging_level = logging.INFO
-
-logging.captureWarnings(True)
-
-if args.development:
-    logging_level = logging.DEBUG
-
-log_format = "%(asctime)-20s %(module)-11s %(levelname)-8s %(message)s"
-
-coloredlogs.install(
-    level=logging_level,
-    fmt=log_format
-)
-
-logger = logging.getLogger('virtool')
-
-handler = logging.handlers.RotatingFileHandler("virtool.log", maxBytes=1000000, backupCount=5)
-handler.setFormatter(logging.Formatter(log_format))
-
-logger.addHandler(handler)
-
-pid_path = None
-
-if not args.development or args.write_pid:
-    logger.info("writing pid file")
+if args.write_pid:
+    logger.debug("Writing pid file")
 
     pid = str(os.getpid())
     pid_path = "/var/run/virtoold/virtoold.pid"
 
     if os.path.isfile(pid_path):
-        logger.fatal('PID file already exists.')
+        logger.fatal("PID file already exists.")
         sys.exit(1)
 
     with open(pid_path, "w") as pidfile:
         pidfile.write(pid)
 
 
+asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
 
+loop = asyncio.get_event_loop()
 
-server = virtool.web.Application(args.development)
-
-server.run()
-
-if not args.development:
-    os.unlink(pid_path)
+if __name__ == "__main__":
+    app = create_app(loop)
+    web.run_app(app)
+    server = virtool.web.Application(args.development)
