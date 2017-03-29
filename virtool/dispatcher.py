@@ -1,3 +1,4 @@
+import json
 import logging
 
 from aiohttp import web, WSMsgType
@@ -7,22 +8,47 @@ logger = logging.getLogger(__name__)
 
 
 async def websocket_handler(req):
+    """
+    Handles requests for WebSocket connections.
+     
+    """
+    # if req["session"].authorized:
+    ws = web.WebSocketResponse(autoping=True, heartbeat=10)
 
-    ws = web.WebSocketResponse()
+    connection = Connection(ws, req["session"])
+
+    req.app["dispatcher"].add_connection(connection)
 
     await ws.prepare(req)
 
     async for msg in ws:
-        if msg.type == WSMsgType.TEXT:
-            print(msg)
+        pass
+
+    await connection.close()
 
     return ws
+
+    # return web.json_response({"message": "Not authorized"}, status=403)
+
+
+class Connection:
+
+    def __init__(self, ws, session):
+        self.ws = ws
+        self.user_id = session.user_id
+        self.groups = session.groups
+
+    async def send(self, message):
+        await self.ws.send_json(message)
+
+    async def close(self):
+        await self.ws.close()
 
 
 class Dispatcher:
 
     def __init__(self):
-        #: A list of all active connections.
+        #: A dict of all active connections.
         self.connections = list()
 
     def add_connection(self, connection):
