@@ -558,7 +558,6 @@ class Collection(virtool.database.Collection):
             "limit": {key: self.settings.get(key) for key in self.used}
         }
 
-    @virtool.gen.synchronous
     def read_log(self, job_id):
         """
         Return the log text for the given ``job_id``.

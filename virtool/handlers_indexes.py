@@ -1,7 +1,7 @@
 from aiohttp import web
 from virtool.utils import timestamp
-from virtool.data.utils import get_new_id
-from virtool.data.indexes import get_current_index_version
+from virtool.data_utils import get_new_id
+from virtool.indexes import get_current_index_version
 
 
 async def rebuild_index(req):

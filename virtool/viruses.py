@@ -6,7 +6,6 @@ import logging
 import pymongo
 import pymongo.errors
 import pymongo.collection
-import virtool.database
 
 from copy import deepcopy
 from virtool.utils import random_alphanumeric

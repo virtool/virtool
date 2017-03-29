@@ -63,7 +63,6 @@ async def check(db, settings):
     return errors
 
 
-@virtool.gen.synchronous
 def hmmstat(hmm_file_path):
     if not os.path.isfile(hmm_file_path):
         raise FileNotFoundError("HMM file does not exist")
@@ -79,7 +78,6 @@ def hmmstat(hmm_file_path):
     } for line in result]
 
 
-@virtool.gen.synchronous
 def hmmpress(hmm_file_path):
     if not os.path.isfile(hmm_file_path):
         raise FileNotFoundError("HMM file does not exist")

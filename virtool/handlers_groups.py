@@ -3,7 +3,7 @@ import pymongo.errors
 
 from aiohttp import web
 from pymongo import ReturnDocument
-from virtool.data.groups import update_member_users
+from virtool.groups import update_member_users
 from virtool.permissions import PERMISSIONS
 
 logger = logging.getLogger(__name__)
