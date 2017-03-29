@@ -67,13 +67,19 @@ async def update_permissions(req):
     if permissions == {} or not all([key in PERMISSIONS for key in permissions.keys()]):
         return web.json_response(({"message": "Invalid key"}), status=400)
 
-    if not await req.app["db"].groups.find({"_id": group_id}).count():
+    old_document = await req.app["db"].groups.find_one({"_id": group_id}, ["permissions"])
+
+    if not old_document:
         return web.json_response({"message": "Not found"}, status=404)
 
+    old_document["permissions"].update(permissions)
+
     # Get the current permissions dict for the passed group id.
-    document = await req.app["db"].groups.find_one_and_update({"_id": group_id}, {"group.permissions": {
-        "$set": permissions
-    }}, return_document=ReturnDocument.AFTER)
+    document = await req.app["db"].groups.find_one_and_update({"_id": group_id}, {
+        "$set": {
+            "permissions": old_document["permissions"]
+        }
+    }, return_document=ReturnDocument.AFTER)
 
     document["group_id"] = document.pop("_id")
 
@@ -87,19 +93,21 @@ async def remove(req):
     """
     group_id = req.match_info["group_id"]
 
+    print("group_id", group_id)
+
     # Only accept single id strings.
     if not isinstance(group_id, str):
-        return web.json_response({"message": "Only one user group can be removed per call."}, status=400)
+        return web.json_response({"message": "Invalid type"}, status=400)
 
     # The administrator is not permitted to be removed.
     if group_id == "administrator":
-        return web.json_response({"message": "Administrator group cannot be removed."}, status=400)
+        return web.json_response({"message": "Cannot remove administrator group"}, status=400)
 
-    if await req.app["db"].groups.find({"_id": group_id}).count():
-        return web.json_response({"message": "Group {} does not exist.".format(group_id)}, status=400)
+    document = await req.app["db"].groups.find_one_and_delete({"_id": group_id})
+
+    if not document:
+        return web.json_response({"message": "Not found"}, status=404)
 
     await update_member_users(req.app["db"], group_id, remove=True)
 
-    await req.app["db"].groups.remove({"_id": group_id})
-
-    return web.json_response({"group_id": group_id})
+    return web.json_response({"removed": group_id})

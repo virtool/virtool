@@ -2,7 +2,6 @@ import os
 import pytest
 import pymongo
 
-from virtool.web import create_app
 from virtool.permissions import PERMISSIONS
 
 

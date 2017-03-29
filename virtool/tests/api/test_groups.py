@@ -191,13 +191,13 @@ class TestUpdatePermissions:
         client = await test_client(create_app, "test")
 
         resp = await client.put("/api/groups/test", data=json.dumps({
-            "modify_virus": True
+            "foo_bar": True
         }))
 
-        assert resp.status == 404
+        assert resp.status == 400
 
         assert await resp.json() == {
-            "message": "Not found"
+            "message": "Invalid key"
         }
 
     async def test_not_found(self, test_client):
@@ -212,3 +212,60 @@ class TestUpdatePermissions:
         assert await resp.json() == {
             "message": "Not found"
         }
+
+
+class TestRemove:
+
+    async def test_valid(self, test_db, test_client, no_permissions):
+        """
+        Test that an existing document can be removed at ``DELETE /api/groups/:group_id``.
+         
+        """
+        test_db.groups.insert({
+            "_id": "test",
+            "permissions": no_permissions
+        })
+
+        assert test_db.groups.count({"_id": "test"}) == 1
+
+        client = await test_client(create_app, "test")
+
+        resp = await client.delete("/api/groups/test")
+
+        assert await resp.json() == {
+            "removed": "test"
+        }
+
+        assert resp.status == 200
+
+        assert test_db.groups.count({"_id": "test"}) == 0
+
+    async def test_not_found(self, test_client):
+        """
+        Test that 404 is returned for non-existent group.
+         
+        """
+        client = await test_client(create_app, "test")
+
+        resp = await client.delete("/api/groups/test")
+
+        assert await resp.json() == {
+            "message": "Not found"
+        }
+
+        assert resp.status == 404
+
+    async def test_administrator(self, test_client):
+        """
+        Test that the administrator group cannot be removed (400).
+         
+        """
+        client = await test_client(create_app, "test")
+
+        resp = await client.delete("/api/groups/administrator")
+
+        assert await resp.json() == {
+            "message": "Cannot remove administrator group"
+        }
+
+        assert resp.status == 400
