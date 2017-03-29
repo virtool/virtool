@@ -5,7 +5,8 @@ from virtool import hosts
 
 
 async def find(req):
-    pass
+    documents = await req.app["db"].hosts.find({}).to_list(length=10)
+    return web.json_response(documents)
 
 
 async def create(req):
@@ -46,7 +47,7 @@ async def get(req):
     Get a complete host document.
 
     """
-    document = await req.app["db"].find_one({"_id": req.match_info["host_id"]})
+    document = await req.app["db"].hosts.find_one({"_id": req.match_info["host_id"]})
 
     if document:
         return web.json_response(document)

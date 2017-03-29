@@ -13,7 +13,8 @@ from virtool.handler_utils import unpack_json_request
 
 
 async def find(req):
-    pass
+    documents = await req.app["db"].hmm.find({}).to_list(length=10)
+    return web.json_response(documents, status=200)
 
 
 async def get(req):

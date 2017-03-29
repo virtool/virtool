@@ -7,7 +7,8 @@ from virtool import history
 
 
 async def find(req):
-    pass
+    documents = await req.app["db"].viruses.find({}).to_list(length=10)
+    return web.json_response(documents)
 
 
 async def create(req):
