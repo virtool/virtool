@@ -1,10 +1,4 @@
-import json
-import logging
-
-from aiohttp import web, WSMsgType
-
-
-logger = logging.getLogger(__name__)
+from aiohttp import web
 
 
 async def websocket_handler(req):
@@ -68,23 +62,18 @@ class Dispatcher:
         """
         self.connections.remove(connection)
 
-    def dispatch(self, message, connections=None, conn_filter=None, conn_modifier=None, writer=None):
+    def dispatch(self, operation, interface, data, connections=None, conn_filter=None, conn_modifier=None, writer=None):
         """
-        Dispatch a ``message`` with a conserved format to a selection of active ``connections``
-        (:class:`.SocketHandler` objects). Messages are dicts with the scheme:
+        Dispatch a ``message`` with a conserved format to a selection of active ``connections``.
 
-        +----------------+-----------------------------------------------------------------------+
-        | Key            | Description                                                           |
-        +================+=======================================================================+
-        | operation      | a word used to tell the client what to do in response to the message. |
-        +----------------+-----------------------------------------------------------------------+
-        | interface      | the name of the interface the client should perform the operation on  |
-        +----------------+-----------------------------------------------------------------------+
-        | data           | test                                                                  |
-        +----------------+-----------------------------------------------------------------------+
-
-        :param message: the message to dispatch
-        :type message: dict or list
+        :param operation: a word used to tell the client what to do in response to the message
+        :type operation: str
+        
+        :param interface: the name of the interface the client should perform the operation on
+        :type interface: str
+        
+        :param data: the data the client will use
+        :type data: dict
 
         :param connections: the connection(s) (:class:`.SocketHandler` objects) to dispatch the message to.
         :type connections: list
@@ -99,13 +88,11 @@ class Dispatcher:
         :type writer: callable
 
         """
-        to_send = {
-            "operation": None,
-            "interface": None,
-            "data": None
+        message = {
+            "operation": operation,
+            "interface": interface,
+            "data": data
         }
-
-        to_send.update(message)
 
         # If the connections parameter was not set, dispatch the message to all authorized connections.
         connections = connections or [conn for conn in self.connections if conn.authorized]
@@ -128,30 +115,9 @@ class Dispatcher:
                 raise TypeError("writer must be callable")
 
             for connection in connections:
-                writer(connection, dict(to_send))
+                writer(connection, dict(message))
 
             return
 
         for connection in connections:
             connection.write_message(message)
-
-    def ping(self):
-        """
-        Sends a ping message to the client to keep the connection alive. Added as a periodic callback using
-        :meth:`.Application.add_periodic_callback` as soon as the dispatcher is created. Called every three seconds.
-
-        """
-        self.dispatch({
-            "operation": "ping",
-            "interface": None,
-            "data": None
-        })
-
-        return "test"
-
-
-def gen_log_prefix(connection):
-    return "{} ({})".format(
-        connection.user["_id"] or "<unauthorized>",
-        connection.ip
-    )
