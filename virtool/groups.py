@@ -1,6 +1,14 @@
 from virtool.permissions import PERMISSIONS
 
 
+projection = ["_id", "permissions"]
+
+
+def processor(document):
+    document["group_id"] = document.pop("_id")
+    return document
+
+
 def merge_group_permissions(groups):
     """
     Return a :class:`dict` of permissions that will be inherited by a user belonging to all the passed ``groups``.
