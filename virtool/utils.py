@@ -1,10 +1,11 @@
 import os
 import shutil
-import binascii
 import datetime
 
+from random import choice
+from string import ascii_letters, ascii_lowercase, digits
 
-@virtool.gen.synchronous
+
 def rm(path, recursive=False):
     """
     A function that removes files or directories in a separate thread. Wraps :func:`os.remove` and func:`shutil.rmtree`.
@@ -30,7 +31,6 @@ def rm(path, recursive=False):
         raise
 
 
-@virtool.gen.synchronous
 def write_file(path, body, is_bytes=False):
     """
     Writes the data in ``body`` to a file at ``path``. Write in bytes mode if ``is_bytes`` is ``True``.
@@ -54,7 +54,6 @@ def write_file(path, body, is_bytes=False):
         handle.write(body)
 
 
-@virtool.gen.synchronous
 def list_files(directory, excluded=None):
     """
     Get a list of dicts describing the files in the passed directory. Each dict contains the information:
@@ -119,7 +118,7 @@ def timestamp(time=None, time_getter=datetime.datetime.now):
     raise TypeError("Couldn't calculate timestamp from time or time_getter")
 
 
-def random_alphanumeric(length=6, excluded=[], randomizer=None):
+def random_alphanumeric(length=6, mixed_case=False, excluded=[]):
     """
     Generates a random string composed of letters and numbers.
 
@@ -129,23 +128,18 @@ def random_alphanumeric(length=6, excluded=[], randomizer=None):
     :param excluded: strings that may not be returned.
     :type excluded: list
 
-    :param randomizer: a custom function for return the random string.
-    :type randomizer: func
-
     :return: a random alphanumeric string.
     :rtype: string
 
     """
-    if randomizer is None:
-        def randomizer():
-            return binascii.hexlify(os.urandom(length * 3)).decode()[0:length]
+    characters = digits + ascii_letters if mixed_case else ascii_lowercase
 
-    candidate = randomizer()
+    candidate = "".join([choice(characters) for i in range(length)])
 
     if candidate not in excluded:
         return candidate
 
-    return random_alphanumeric(length, excluded, randomizer)
+    return random_alphanumeric(length, excluded)
 
 
 def where(subject, predicate):
