@@ -2,12 +2,6 @@ from sphinx.addnodes import desc, desc_signature
 from sphinx import addnodes
 from sphinx.util.inspect import safe_getattr
 
-import virtool.database
-
-coroutines = set()
-exposed = set()
-synchronous = set()
-unprotected = set()
 stage_methods = set()
 
 def get_signature_node(node):
@@ -54,21 +48,7 @@ def process_nodes(app, doctree):
 def get_virtool_attr(virtool_class, name, *defargs):
     attr = safe_getattr(virtool_class, name)
 
-    is_coroutine = safe_getattr(attr, "is_coroutine", False)
-
     full_name = ".".join([virtool_class.__module__, virtool_class.__name__, name])
-
-    if is_coroutine:
-        coroutines.add(full_name)
-
-        if safe_getattr(attr, "is_exposed", False):
-            exposed.add(full_name)
-
-        if safe_getattr(attr, "is_synchronous", False):
-            synchronous.add(full_name)
-
-        if safe_getattr(attr, "is_unprotected", False):
-            unprotected.add(full_name)
 
     if safe_getattr(attr, "is_stage_method", False):
         stage_methods.add(full_name)
@@ -77,5 +57,4 @@ def get_virtool_attr(virtool_class, name, *defargs):
 
 
 def setup(app):
-    app.add_autodoc_attrgetter(type(virtool.database.Collection), get_virtool_attr)
     app.connect("doctree-read", process_nodes)

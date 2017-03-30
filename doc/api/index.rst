@@ -4,6 +4,7 @@ Web API
 
 .. toctree::
 
+    overview
     jobs
     samples
     hmm
