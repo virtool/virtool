@@ -1,5 +1,4 @@
-from virtool import handlers_samples, handlers_history, handlers_hmm, handlers_hosts,\
-    handlers_account, handlers_groups, handlers_users
+from virtool.handlers import samples, history, hmm, hosts, account, groups, users
 
 from virtool.dispatcher import websocket_handler
 
@@ -19,68 +18,67 @@ def setup_websocket_routes(app):
 
 
 def setup_samples_routes(app):
-    app.router.add_get("/api/samples", handlers_samples.find)
-    app.router.add_post("/api/samples", handlers_samples.create),
+    app.router.add_get("/api/samples", samples.find)
+    app.router.add_post("/api/samples", samples.create),
 
-    app.router.add_get("/api/samples/{sample_id}", handlers_samples.get),
-    app.router.add_put("/api/samples/{sample_id}", handlers_samples.update),
-    app.router.add_delete("/api/samples/{sample_id}", handlers_samples.remove),
+    app.router.add_get("/api/samples/{sample_id}", samples.get),
+    app.router.add_put("/api/samples/{sample_id}", samples.update),
+    app.router.add_delete("/api/samples/{sample_id}", samples.remove),
 
-    app.router.add_put("/api/samples/{sample_id}/group", handlers_samples.set_owner_group),
-    app.router.add_put("/api/samples/{sample_id}/rights", handlers_samples.set_rights),
+    app.router.add_put("/api/samples/{sample_id}/group", samples.set_owner_group),
+    app.router.add_put("/api/samples/{sample_id}/rights", samples.set_rights),
 
 
 def setup_history_routes(app):
-    app.router.add_delete("/api/history/{history_id}", handlers_history.revert)
+    app.router.add_delete("/api/history/{history_id}", history.revert)
 
 
 def setup_hmm_routes(app):
-    app.router.add_get("/api/hmm", handlers_hmm.find)
+    app.router.add_get("/api/hmm", hmm.find)
 
-    app.router.add_get("/api/hmm/{hmm_id}", handlers_hmm.get)
-    app.router.add_put("/api/hmm/{hmm_id}", handlers_hmm.update)
+    app.router.add_get("/api/hmm/{hmm_id}", hmm.get)
+    app.router.add_put("/api/hmm/{hmm_id}", hmm.update)
 
-    app.router.add_get("/api/hmm/check", handlers_hmm.check)
-    app.router.add_get("/api/hmm/clean", handlers_hmm.clean)
+    app.router.add_get("/api/hmm/check", hmm.check)
+    app.router.add_get("/api/hmm/clean", hmm.clean)
 
 
 def setup_hosts_routes(app):
-    app.router.add_get("/api/hosts", handlers_hosts.find)
-    app.router.add_post("/api/hosts", handlers_hosts.create)
+    app.router.add_get("/api/hosts", hosts.find)
+    app.router.add_post("/api/hosts", hosts.create)
 
-    app.router.add_get("/api/hosts/{host_id}", handlers_hosts.get)
-    app.router.add_delete("/api/hosts/{host_id}", handlers_hosts.remove)
+    app.router.add_get("/api/hosts/{host_id}", hosts.get)
+    app.router.add_delete("/api/hosts/{host_id}", hosts.remove)
 
 
 def setup_account_routes(app):
-    app.router.add_get("/api/account/settings", handlers_account.get_settings)
-    app.router.add_put("/api/account/settings", handlers_account.update_settings)
+    app.router.add_get("/api/account/settings", account.get_settings)
+    app.router.add_put("/api/account/settings", account.update_settings)
 
-    app.router.add_put("/api/account/password", handlers_account.change_password)
+    app.router.add_put("/api/account/password", account.change_password)
 
-    app.router.add_get("/api/account/logout", handlers_account.logout)
+    app.router.add_get("/api/account/logout", account.logout)
 
 
 def setup_user_routes(app):
-    app.router.add_get("/api/users", handlers_users.find)
-    app.router.add_post("/api/users", handlers_users.create)
+    app.router.add_get("/api/users", users.find)
+    app.router.add_post("/api/users", users.create)
 
-    app.router.add_get("/api/users/{user_id}", handlers_users.get)
-    app.router.add_delete("/api/users/{user_id}", handlers_users.remove)
+    app.router.add_get("/api/users/{user_id}", users.get)
+    app.router.add_delete("/api/users/{user_id}", users.remove)
 
-    app.router.add_put("/api/users/{user_id}/reset", handlers_users.set_force_reset)
-    app.router.add_put("/api/users/{user_id}/password", handlers_users.set_password)
+    app.router.add_put("/api/users/{user_id}/reset", users.set_force_reset)
+    app.router.add_put("/api/users/{user_id}/password", users.set_password)
 
-    app.router.add_post("/api/users/{user_id}/groups", handlers_users.add_group)
+    app.router.add_post("/api/users/{user_id}/groups", users.add_group)
 
-    app.router.add_delete("/api/users/{user_id}/sessions", handlers_users.remove_session)
+    app.router.add_delete("/api/users/{user_id}/sessions", users.remove_session)
 
 
 def setup_groups_routes(app):
-    app.router.add_get("/api/groups", handlers_groups.find)
-    app.router.add_post("/api/groups", handlers_groups.create)
+    app.router.add_get("/api/groups", groups.find)
+    app.router.add_post("/api/groups", groups.create)
 
-    app.router.add_get("/api/groups/{group_id}", handlers_groups.get)
-    app.router.add_put("/api/groups/{group_id}", handlers_groups.update_permissions)
-    app.router.add_delete("/api/groups/{group_id}", handlers_groups.remove)
-
+    app.router.add_get("/api/groups/{group_id}", groups.get)
+    app.router.add_put("/api/groups/{group_id}", groups.update_permissions)
+    app.router.add_delete("/api/groups/{group_id}", groups.remove)

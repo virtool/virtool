@@ -1,7 +1,7 @@
 from aiohttp import web
 from virtool.viruses import extract_isolate_ids
 from virtool.history import get_versioned_document
-from virtool.handler_utils import unpack_json_request
+from virtool.handlers.utils import unpack_json_request
 
 async def revert(req):
     db, data = await unpack_json_request(req)

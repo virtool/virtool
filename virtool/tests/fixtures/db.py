@@ -2,6 +2,7 @@ import os
 import pytest
 import pymongo
 
+from virtool.tests.fixtures_documents import user_document
 from virtool.permissions import PERMISSIONS
 
 
@@ -20,6 +21,32 @@ def all_permissions():
 @pytest.fixture
 def no_permissions():
     return {permission: False for permission in PERMISSIONS}
+
+
+@pytest.fixture
+def authorize_session(test_db, user_document, no_permissions):
+    def func(response, user_id="test", groups=None, permissions=no_permissions):
+        resp
+
+        groups = groups or list()
+
+        update = {
+            "user_id": user_id,
+            "groups": groups,
+            "permissions": permissions
+        }
+
+        test_db.users.insert(user_document)
+
+        document = test_db.sessions.find_one_and_update(
+            {"_id": response.cookies["session_id"]},
+            {"$set": update},
+            return_document=pymongo.ReturnDocument.AFTER
+        )
+
+        return document
+
+    return func
 
 
 @pytest.fixture(scope="session")

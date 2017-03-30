@@ -3,7 +3,7 @@ from pymongo import ReturnDocument
 from virtool.utils import timestamp
 from virtool.permissions import PERMISSIONS
 from virtool.groups import merge_group_permissions
-from virtool.users import invalidate_session, user_exists, salt_hash, ACCOUNT_SETTINGS
+from virtool.users import processor, invalidate_session, user_exists, salt_hash, ACCOUNT_SETTINGS
 
 
 async def find(req):
@@ -11,7 +11,7 @@ async def find(req):
     Get a list of the existing ``user_ids`` in the database.
      
     """
-    return web.json_response({"users": req.app["db"].users.distinct("_id")})
+    return web.json_response([processor(document) for document in await req.app["db"].users.distinct("_id")])
 
 
 async def get(req):

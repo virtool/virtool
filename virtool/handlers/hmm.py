@@ -9,7 +9,7 @@ from pymongo import ReturnDocument
 from collections import Counter
 from virtool import hmm
 from virtool.data_utils import get_new_id
-from virtool.handler_utils import unpack_json_request
+from virtool.handlers.utils import unpack_json_request
 
 
 async def find(req):

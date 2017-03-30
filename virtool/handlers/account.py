@@ -11,7 +11,9 @@ async def get_settings(req):
     Get account settings
     
     """
-    user_id = req["session"]["user_id"]
+    user_id = req["session"].user_id
+
+    print(req["session"].id)
 
     document = await req.app["db"].users.find_one({"_id": user_id})
 

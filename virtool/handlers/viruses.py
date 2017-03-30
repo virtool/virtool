@@ -1,7 +1,7 @@
 from aiohttp import web
 from pymongo import ReturnDocument
 from virtool.data_utils import get_new_id
-from virtool.handler_utils import unpack_json_request
+from virtool.handlers.utils import unpack_json_request
 from virtool import viruses
 from virtool import history
 
