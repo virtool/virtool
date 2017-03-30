@@ -28,15 +28,15 @@ async def websocket_handler(req):
 class Connection:
 
     def __init__(self, ws, session):
-        self.ws = ws
+        self._ws = ws
         self.user_id = session.user_id
         self.groups = session.groups
 
     async def send(self, message):
-        await self.ws.send_json(message)
+        await self._ws.send_json(message)
 
     async def close(self):
-        await self.ws.close()
+        await self._ws.close()
 
 
 class Dispatcher:
