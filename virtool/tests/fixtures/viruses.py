@@ -4,8 +4,6 @@ import json
 import copy
 import pytest
 
-from virtool.viruses import Collection
-
 FIXTURE_DIR = os.path.join(os.path.dirname(os.path.realpath(__file__)), "test_files")
 
 
