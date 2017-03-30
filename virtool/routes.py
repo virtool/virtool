@@ -1,9 +1,11 @@
-from virtool.handlers import samples, history, hmm, hosts, account, groups, users
+from virtool.handlers import root, samples, history, hmm, hosts, account, groups, users
 
 from virtool.dispatcher import websocket_handler
 
 
 def setup_routes(app):
+    app.router.add_get("/api", root.get)
+
     setup_samples_routes(app)
     setup_hmm_routes(app)
     setup_hosts_routes(app)
