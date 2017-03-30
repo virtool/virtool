@@ -3,7 +3,7 @@ from pymongo import ReturnDocument
 from virtool.utils import timestamp
 from virtool.permissions import PERMISSIONS
 from virtool.groups import merge_group_permissions
-from virtool.users import processor, invalidate_session, user_exists, salt_hash
+from virtool.users import processor, invalidate_session, user_exists, hash_password
 
 
 async def find(req):
@@ -49,17 +49,14 @@ async def create(req):
     if await user_exists(req.app["db"], data["user_id"]):
         return web.json_response({"message": "User already exists"}, status=400)
 
-    salt, password = salt_hash(data["password"])
-
     document = {
         "_id": data["_id"],
         # A list of group _ids the user is associated with.
         "groups": list(),
         "settings": ACCOUNT_SETTINGS,
         "sessions": [],
-        "salt": salt,
         "permissions": {permission: False for permission in PERMISSIONS},
-        "password": password,
+        "password": hash_password(data["password"]),
         "primary_group": "",
         # Should the user be forced to reset their password on their next login?
         "force_reset": data["force_reset"],
@@ -89,12 +86,9 @@ async def set_password(req):
     if not await user_exists(req.app["db"], user_id):
         return web.json_response({"Not found"}, status=404)
 
-    salt, password = salt_hash(data["new_password"])
-
     document = await req.app["db"].users.find_one_and_update({"_id": user_id}, {
         "$set": {
-            "password": password,
-            "salt": salt,
+            "password": hash_password(data["password"]),
             "last_password_change": timestamp(),
             "invalidate_sessions": True
         }

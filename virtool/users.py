@@ -1,4 +1,5 @@
 import bcrypt
+import hashlib
 
 from pymongo import ReturnDocument
 
@@ -45,35 +46,6 @@ async def set_primary_group(db, user_id, group_id):
     return document
 
 
-async def validate_login(db, user_id, password):
-    """
-    Returns ``True`` if the username exists and the password is correct. Returns ``False`` if the username does not
-    exist or the or the password is incorrect.
-    
-    :param db: a database client
-    :type db: :class:`~motor.motor_asyncio.AsyncIOMotorClient`
-
-    :param user_id: the username to check.
-    :type user_id: str
-
-    :param password: the password to check.
-    :type password: str
-
-    :return: ``True`` if valid, otherwise ``False``.
-    :rtype: bool
-
-    """
-    document = await db.users.find_one({"_id": user_id})
-
-    # First, check if the user exists in the database. Return False if the user does not exist.
-    if not document:
-        return False
-
-    # Return True if the attempted password matches the stored password.
-    if check_password(password, document["password"], document["salt"]):
-        return document
-
-
 async def invalidate_session(db, token, logout=False):
     """
     Invalidate the session identified by the passed token. Can be called as the result of a logout or a forced
@@ -110,42 +82,90 @@ async def invalidate_session(db, token, logout=False):
     '''
 
 
-def salt_hash(password):
+async def validate_credentials(db, user_id, password):
     """
-    Salt and hash a password. This function is used for generating new salts and salted and hashed passwords for users.
+    Returns ``True`` if the username exists and the password is correct. Returns ``False`` if the username does not
+    exist or the or the password is incorrect.
 
-    :param password: the string to salt and hash.
+    :param db: a database client
+    :type db: :class:`~motor.motor_asyncio.AsyncIOMotorClient`
+
+    :param user_id: the username to check.
+    :type user_id: str
+
+    :param password: the password to check.
     :type password: str
 
-    :return: a salt and hashed password.
-    :rtype: tuple
-
-    """
-    salt = bcrypt.gensalt()
-
-    hashed = bcrypt.hashpw(password.encode(), salt)
-
-    return salt, hashed
-
-
-def check_password(password, hashed, salt):
-    """
-    Check if the plain text ``password`` matches the ``hashed_password`` and ``salt``. Returns ``True`` if they match.
-
-    :param password: the plain text password to check.
-    :type password: str
-
-    :param hashed: the salted and hashed password from the database
-    :type salt: str
-
-    :param salt: the salt to apply to the hashed password
-    :type salt: str
-
-    :return: ``True`` if there is a match; ``False`` if not
+    :return: validation success
     :rtype: bool
 
     """
-    return bcrypt.hashpw(password.encode(), salt) == hashed
+    document = await db.users.find_one({"_id": user_id}, ["password", "salt"])
+
+    # First, check if the user exists in the database. Return False if the user does not exist.
+    if not document:
+        return False
+
+    # Return True if the attempted password matches the stored password.
+    if check_password(password, document["password"]):
+        return True
+
+    if "salt" in document and check_legacy_password(password, document["password"], document["salt"]):
+        return True
+
+    return False
+
+
+def hash_password(password):
+    """
+    Salt and hash a unicode password. Uses bcrypt.
+
+    :param password: a password string to salt and hash
+    :type password: str
+
+    :return: a salt and hashed password
+    :rtype: tuple
+
+    """
+    return bcrypt.hashpw(password.encode(), bcrypt.gensalt(12))
+
+
+def check_password(password, hashed):
+    """
+    Check if a unicode ``password`` matches a ``hashed_password``.
+
+    :param password: the password to check.
+    :type password: str
+
+    :param hashed: the salted and hashed password from the database
+    :type hashed: str
+
+    :return: success of test
+    :rtype: bool
+
+    """
+    return bcrypt.checkpw(password.encode(), hashed)
+
+
+def check_legacy_password(password, salt, hashed):
+    """
+    Check if a unicode ``password`` and ``salt`` match a ``hashed`` password from the database. This is for use only
+    with legacy SHA512 hashed passwords. New password hash with :func:`.hash_password` will be hashed using bcrypt.
+    
+    :param password: the password to check
+    :type password: str
+    
+    :param salt: a salt
+    :type salt: str
+
+    :param hashed: the hashed password from the database
+    :type hashed: str
+
+    :return: success of test
+    :rtype: bool
+     
+    """
+    return hashed == hashlib.sha512(salt.encode("utf-8") + password.encode("utf-8")).hexdigest()
 
 
 class UserNotFoundError(Exception):

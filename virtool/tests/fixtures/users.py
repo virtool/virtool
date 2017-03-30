@@ -22,9 +22,7 @@ def create_user():
                 "quick_analyze_algorithm": "pathoscope_bowtie"
             },
             "force_reset": False,
-            "salt": "8699041ecb71763ccef7937e",
-            "password": "cbd4df372a380f57b45ba76b73e0e778cdd4edf881ef3db6a2232db02f1d2bb5"
-                        "dd1489a2b10fa055d09924169f598d5094cd47e60c398b011df2a3cf03039ae1"
+            "password": "$2b$12$0aC1WPkTG.up/KQb3KcQVOMkMbThtjMMrFfG5tiILY2cUMVcnEW0.".encode()
 
         }
 
