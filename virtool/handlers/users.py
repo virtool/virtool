@@ -3,7 +3,7 @@ from pymongo import ReturnDocument
 from virtool.utils import timestamp
 from virtool.permissions import PERMISSIONS
 from virtool.groups import merge_group_permissions
-from virtool.users import processor, invalidate_session, user_exists, salt_hash, ACCOUNT_SETTINGS
+from virtool.users import processor, invalidate_session, user_exists, salt_hash
 
 
 async def find(req):

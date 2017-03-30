@@ -1,12 +1,6 @@
 import bcrypt
-from pymongo import ReturnDocument
 
-ACCOUNT_SETTINGS = {
-    "show_ids": False,
-    "show_versions": False,
-    "quick_analyze_algorithm": None,
-    "skip_quick_analyze_dialog": False
-}
+from pymongo import ReturnDocument
 
 
 projector = [
@@ -20,6 +14,11 @@ projector = [
     "settings",
     "primary_group"
 ]
+
+
+def processor (document):
+    document["user_id"] = document.pop("user_id")
+    return document
 
 
 async def user_exists(db, user_id):
