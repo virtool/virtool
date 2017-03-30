@@ -31,45 +31,6 @@ def import_report():
     }
 
 
-@pytest.fixture(scope="function")
-def import_transaction(mock_transaction):
-    def create_transaction(options=None):
-        data = dict({
-            "replace": False
-        }, file_id="import.json.gz")
-
-        if options:
-            data.update(options)
-
-        return mock_transaction({
-            "interface": "viruses",
-            "method": "import_file",
-            "data": data
-        }, permissions=["modify_virus"])
-
-    return create_transaction
-
-
-@pytest.fixture(scope="function")
-def viruses_collection(mock_collection, called_tester, mock_settings, mock_motor, mock_pymongo):
-    def get_db_client(sync=False):
-        if sync:
-            return mock_pymongo
-        return mock_motor
-
-    mock_settings.get_db_client = get_db_client
-
-    collections = {
-        "history": mock_collection
-    }
-
-    collections["history"].add_coroutine("dispatch")
-    collections["history"].add_coroutine("add")
-    collections["history"].add_coroutine("add_for_import")
-
-    return Collection(called_tester(), collections, mock_settings, called_tester())
-
-
 def create_merged_virus():
     return {
         "last_indexed_version": 0,

@@ -114,36 +114,12 @@ def hmm_document():
 
 
 @pytest.fixture
-def hmm_collection(mocker, mock_collection, mock_settings):
-    collections = {
-        "status": mock_collection
-    }
-
-    collections["status"].add_coroutine("update")
-
-    return Collection(
-        mocker.stub(name="dispatch"),
-        collections,
-        mock_settings,
-        mocker.stub(name="add_periodic_callback")
-    )
-
-
-@pytest.fixture
 def hmm_check_result():
     return {
         "hmm_file": False,
         "not_in_file": False,
         "not_in_database": False
     }
-
-
-@pytest.fixture
-def hmm_check_transaction(mock_transaction):
-    return mock_transaction({
-        "interface": "hmm",
-        "method": "check_files"
-    })
 
 
 @pytest.fixture
