@@ -15,19 +15,19 @@ def file_documents():
 
 class TestOrganizeFiles:
 
-    def test_add_reserved(self, mock_pymongo, file_documents):
-        mock_pymongo.files.insert_many(file_documents)
+    def test_add_reserved(self, test_db, file_documents):
+        test_db.files.insert_many(file_documents)
 
-        organize_files(mock_pymongo)
+        organize_files(test_db)
 
-        assert all([document["reserved"] is False for document in mock_pymongo.files.find()])
+        assert all([document["reserved"] is False for document in test_db.files.find()])
 
-    def test_retain_existing(self, mock_pymongo, file_documents):
+    def test_retain_existing(self, test_db, file_documents):
         file_documents[0]["reserved"] = True
         file_documents[1]["reserved"] = True
 
-        mock_pymongo.files.insert_many(file_documents)
+        test_db.files.insert_many(file_documents)
 
-        organize_files(mock_pymongo)
+        organize_files(test_db)
 
-        assert [document["reserved"] for document in mock_pymongo.files.find()] == [True, True, False, False]
+        assert [document["reserved"] for document in test_db.files.find()] == [True, True, False, False]
