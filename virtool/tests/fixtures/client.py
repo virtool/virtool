@@ -6,25 +6,21 @@ from virtool.web import create_app
 
 
 @pytest.fixture
-def authorize_client(test_db, user_document, no_permissions):
-    async def func(client, user_id="test", groups=None, permissions=no_permissions):
+def authorize_client(test_db, create_user):
+    async def func(client, groups=None, permissions=None):
         resp = await client.get("/api")
 
-        groups = groups or list()
-
-        update = {
-            "user_id": user_id,
-            "groups": groups,
-            "permissions": permissions
-        }
+        user_document = create_user("test", groups, permissions)
 
         test_db.users.insert(user_document)
 
-        test_db.sessions.find_one_and_update(
-            {"_id": resp.cookies["session_id"]},
-            {"$set": update},
-            return_document=pymongo.ReturnDocument.AFTER
-        )
+        test_db.sessions.find_one_and_update({"_id": resp.cookies["session_id"].value}, {
+            "$set": {
+                "user_id": "test",
+                "groups": user_document["groups"],
+                "permissions": user_document["permissions"]
+            }
+        }, return_document=pymongo.ReturnDocument.AFTER)
 
         return client
 
