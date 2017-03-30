@@ -17,8 +17,8 @@ projector = [
 ]
 
 
-def processor (document):
-    document["user_id"] = document.pop("user_id")
+def processor(document):
+    document["user_id"] = document.pop("_id")
     return document
 
 
