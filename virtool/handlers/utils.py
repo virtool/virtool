@@ -50,10 +50,28 @@ def json_response(data, status=200):
     return web.json_response(data, status=status, dumps=dumps)
 
 
+def bad_request(message="Bad request"):
+    """
+    A shortcut for creating a :class:`~aiohttp.web.Response` object with a ``400`` status the JSON body
+    ``{"message": "Bad request"}``.
+    
+    :param message: text to send instead of 'Bad request'
+    :type message: str
+
+    :return: the response
+    :rtype: :class:`aiohttp.Response`
+
+    """
+    return json_response({"message": message}, status=400)
+
+
 def not_found(message="Not found"):
     """
     A shortcut for creating a :class:`~aiohttp.web.Response` object with a ``404`` status the JSON body
-    ``{"message": "Not found"}``.    
+    ``{"message": "Not found"}``.
+     
+    :param message: text to send instead of 'Not found'
+    :type message: str
 
     :return: the response
     :rtype: :class:`aiohttp.Response`
