@@ -347,3 +347,144 @@ class TestSetForceReset(ProtectedTest):
         assert await resp.json() == {
             "message": "User does not exist"
         }
+
+
+class TestAddGroup(ProtectedTest):
+
+    async def test_valid(self, test_db, do_post, create_user, no_permissions):
+        test_db.groups.insert_many([
+            {
+                "_id": "tech",
+                "permissions": dict(no_permissions, modify_virus=True)
+            },
+            {
+                "_id": "test",
+                "permissions": dict(no_permissions, rebuild_index=True)
+            }
+        ])
+
+        test_db.users.insert(create_user("bob"))
+
+        data = {
+            "group_id": "tech"
+        }
+
+        resp = await do_post("/api/users/bob/groups", data, authorize=True, permissions=["manage_users"])
+
+        assert resp.status == 200
+
+        assert await resp.json() == {
+            "user_id": "bob",
+            "groups": ["tech"],
+            "permissions": dict(no_permissions, modify_virus=True)
+        }
+
+    async def test_user_does_not_exist(self, test_db, do_post, no_permissions):
+        test_db.groups.insert_one({
+            "_id": "tech",
+            "permissions": dict(no_permissions, modify_virus=True)
+        })
+
+        data = {
+            "group_id": "tech"
+        }
+
+        resp = await do_post("/api/users/bob/groups", data, authorize=True, permissions=["manage_users"])
+
+        assert resp.status == 404
+
+        assert await resp.json() == {
+            "message": "User does not exist"
+        }
+
+    async def test_group_does_not_exist(self, test_db, do_post, create_user):
+        test_db.users.insert(create_user("bob"))
+
+        data = {
+            "group_id": "unknown"
+        }
+
+        resp = await do_post("/api/users/bob/groups", data, authorize=True, permissions=["manage_users"])
+
+        assert resp.status == 404
+
+        assert await resp.json() == {
+            "message": "Group does not exist"
+        }
+
+    async def test_invalid_input(self, do_post):
+        data = {
+            "group": "tech"
+        }
+
+        resp = await do_post("/api/users/bob/groups", data, authorize=True, permissions=["manage_users"])
+
+        assert resp.status == 422
+
+        assert await resp.json() == {
+            "message": "Invalid input",
+            "errors": {
+                "group": ["unknown field"],
+                "group_id": ["required field"]
+            }
+        }
+
+
+class TestRemoveGroup(ProtectedTest):
+
+    async def test_valid(self, test_db, do_delete, create_user, no_permissions):
+        """
+        Test that a valid request can result in removal of a group from a user and recalculation of the user's
+        permissions.
+        
+        """
+        test_db.groups.insert_many([
+            {
+                "_id": "tech",
+                "permissions": dict(no_permissions, modify_virus=True)
+            },
+            {
+                "_id": "test",
+                "permissions": dict(no_permissions, rebuild_index=True)
+            }
+        ])
+
+        test_db.users.insert(create_user(
+            "bob",
+            groups=["tech", "test"],
+            permissions=["modify_virus", "rebuild_index"]
+        ))
+
+        assert test_db.users.find_one("bob", ["_id", "groups", "permissions"]) == {
+            "_id": "bob",
+            "groups": ["tech", "test"],
+            "permissions": dict(no_permissions, modify_virus=True, rebuild_index=True)
+        }
+
+        resp = await do_delete("/api/users/bob/groups/tech", authorize=True, permissions=["manage_users"])
+
+        assert resp.status == 200
+
+        assert await resp.json() == {
+            "user_id": "bob",
+            "groups": ["test"],
+            "permissions": dict(no_permissions, rebuild_index=True)
+        }
+
+    async def test_user_does_not_exist(self, test_db, do_post, no_permissions):
+        test_db.groups.insert_one({
+            "_id": "tech",
+            "permissions": dict(no_permissions, modify_virus=True)
+        })
+
+        data = {
+            "group_id": "tech"
+        }
+
+        resp = await do_post("/api/users/bob/groups", data, authorize=True, permissions=["manage_users"])
+
+        assert resp.status == 404
+
+        assert await resp.json() == {
+            "message": "User does not exist"
+        }

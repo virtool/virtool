@@ -151,48 +151,86 @@ async def set_force_reset(req):
     return json_response(document)
 
 
+@protected("manage_users")
 async def add_group(req):
     """
     Enable membership in a group for the given user.
 
     """
+    db, data = await unpack_json_request(req)
+
     user_id = req.match_info["user_id"]
 
-    requesting_user = None
+    v = Validator({
+        "group_id": {"type": "string", "required": True}
+    })
 
-    data = await req.json()
+    if not v(data):
+        return invalid_input(v.errors)
 
-    if not await user_exists(req.app["db"], user_id):
-        not_found("User does not exist")
+    if not await user_exists(db, user_id):
+        return not_found("User does not exist")
 
-    if data["group_id"] == "administrator" and user_id == requesting_user:
-        return json_response(
-            {"message": "Administrators cannot remove themselves from the administrator group"},
-            status=400
-        )
-
-    if data["group_id"] not in await req.app["db"].groups.distinct("_id"):
+    if data["group_id"] not in await db.groups.distinct("_id"):
         return not_found("Group does not exist")
 
-    member_group_ids = await req.app["db"].users.distinct("groups", {"_id": user_id})
+    document = await db.users.find_one_and_update({"_id": user_id}, {
+        "$addToSet": {
+            "groups": data["group_id"]
+        }
+    }, return_document=ReturnDocument.AFTER, projection=["groups"])
 
-    if data["group_id"] in member_group_ids:
-        member_group_ids.remove(data["group_id"])
-    else:
-        member_group_ids.append(data["group_id"])
+    groups = await db.groups.find({"_id": {"$in": document["groups"]}}).to_list(None)
 
-    groups = await req.app["db"].groups.find({"_id": {
-        "$in": member_group_ids
+    new_permissions = merge_group_permissions(groups)
+
+    document = await db.users.find_one_and_update({"_id": user_id}, {
+        "$set": {
+            "permissions": new_permissions
+        }
+    }, return_document=ReturnDocument.AFTER, projection=["groups", "permissions"])
+
+    document["user_id"] = document.pop("_id")
+
+    print(document)
+
+    return json_response(document)
+
+
+@protected("manage_users")
+async def remove_group(req):
+    """
+    Disable membership in a group for the given user.
+
+    """
+    db = req.app["db"]
+
+    user_id = req.match_info["user_id"]
+    group_id = req.match_info["group_id"]
+
+    if not await user_exists(db, user_id):
+        return not_found("User does not exist")
+
+    if group_id == "administrator" and user_id == req["session"].user_id:
+        return bad_request("Administrators cannot remove themselves from the administrator group")
+
+    document = await db.users.find_one_and_update({"_id": user_id}, {
+        "$pull": {
+            "groups": group_id
+        }
+    }, return_document=ReturnDocument.AFTER, projection=["groups"])
+
+    groups = await db.groups.find({"_id": {
+        "$in": document["groups"]
     }}).to_list(None)
 
-    new_permissions = merge_group_permissions(list(groups))
-
-    document = await req.app["db"].users.find_one_and_update({"_id": user_id}, {
+    document = await db.users.find_one_and_update({"_id": user_id}, {
         "$set": {
-            "permissions": new_permissions,
-            "groups": member_group_ids
+            "permissions": merge_group_permissions(list(groups))
         }
-    })
+    }, return_document=ReturnDocument.AFTER, projection=["groups", "permissions"])
+
+    document["user_id"] = document.pop("_id")
 
     return json_response(document)
 
