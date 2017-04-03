@@ -129,7 +129,7 @@ class TestCreate(ProtectedTest):
             "force_reset": False
         }
 
-        monkeypatch.setattr("virtool.utils.timestamp", static_time)
+        monkeypatch.setattr("virtool.utils.timestamp", lambda: static_time)
 
         resp = await do_post("/api/users", data, authorize=True, permissions=["manage_users"])
 
@@ -239,8 +239,16 @@ class TestSetPassword(ProtectedTest):
             "force_reset": False
         }
 
-        monkeypatch.setattr("virtool.utils.timestamp", static_time)
+        monkeypatch.setattr("virtool.utils.timestamp", lambda: static_time)
 
-        resp = await do_put("/api/users/password", data, authorize=True, permissions=["manage_users"])
+        resp = await do_put("/api/users/bob/password", data, authorize=True, permissions=["manage_users"])
 
         assert resp.status == 200
+
+        print(test_db.users.find_one("bob"))
+
+        assert await resp.json() == {
+            "last_password_change": static_time.isoformat(),
+            "force_reset": False,
+            "user_id": "bob"
+        }
