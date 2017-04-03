@@ -1,7 +1,8 @@
 from virtool.tests.fixtures.db import *
-from virtool.tests.fixtures.client import *
-from virtool.tests.fixtures.users import *
 from virtool.tests.fixtures.documents import *
+from virtool.tests.fixtures.client import *
+from virtool.tests.fixtures.core import *
+from virtool.tests.fixtures.users import *
 
 
 def pytest_addoption(parser):
