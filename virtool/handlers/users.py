@@ -82,12 +82,20 @@ async def create(req):
     return json_response(processor({key: document[key] for key in projection}))
 
 
+@protected("manage_users")
 async def set_password(req):
     """
     Used by users with the *modify_options* permission to change other users passwords.
 
     """
     data = await req.json()
+
+    v = Validator({
+        "password": {"type": "string", "required": True}
+    })
+
+    if not v(data):
+        return invalid_input(v.errors)
 
     user_id = req.match_info["user_id"]
 
@@ -102,13 +110,12 @@ async def set_password(req):
         }
     }, return_document=ReturnDocument.AFTER, projection=["force_reset", "last_password_change"])
 
-    print(document)
-
     document["user_id"] = document.pop("_id")
 
     return json_response(document)
 
 
+@protected("manage_users")
 async def set_force_reset(req):
     """
     Used by users with the *modify_options* permission to Set a users password. Can take a "reset" property, which
@@ -120,17 +127,28 @@ async def set_force_reset(req):
 
     data = await req.json()
 
+    print(data)
+
+    v = Validator({
+        "force_reset": {"type": "boolean", "required": True}
+    })
+
+    if not v(data):
+        return invalid_input(v.errors)
+
     if not await user_exists(req.app["db"], user_id):
         return not_found("User does not exist")
 
-    result = await req.app["db"].update({"_id": user_id}, {
+    document = await req.app["db"].users.find_one_and_update({"_id": user_id}, {
         "$set": {
             "force_reset": data["force_reset"],
             "invalidate_sessions": True
         }
-    })
+    }, return_document=ReturnDocument.AFTER, projection=["force_reset"])
 
-    return json_response(result)
+    document["user_id"] = document.pop("_id")
+
+    return json_response(document)
 
 
 async def add_group(req):

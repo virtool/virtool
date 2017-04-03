@@ -235,8 +235,7 @@ class TestSetPassword(ProtectedTest):
         test_db.users.insert(bob)
 
         data = {
-            "password": "foo_bar",
-            "force_reset": False
+            "password": "foo_bar"
         }
 
         monkeypatch.setattr("virtool.utils.timestamp", lambda: static_time)
@@ -245,10 +244,106 @@ class TestSetPassword(ProtectedTest):
 
         assert resp.status == 200
 
-        print(test_db.users.find_one("bob"))
-
         assert await resp.json() == {
             "last_password_change": static_time.isoformat(),
             "force_reset": False,
             "user_id": "bob"
+        }
+
+    async def test_does_not_exist(self, do_put):
+        """
+        Test that a ``404`` response results when the ``user_id`` does not exist.
+        
+        """
+        data = {
+            "password": "foo_bar"
+        }
+
+        resp = await do_put("/api/users/fred/password", data, authorize=True, permissions=["manage_users"])
+
+        assert resp.status == 404
+
+        assert await resp.json() == {
+            "message": "Not found"
+        }
+
+    async def test_invalid_input(self, do_put):
+        """
+        Test that a valid request results in a password change.
+
+        """
+        resp = await do_put("/api/users/test/password", {"reset": False}, authorize=True, permissions=["manage_users"])
+
+        assert resp.status == 422
+
+        assert await resp.json() == {
+            "message": "Invalid input",
+            "errors": {
+                "password": ["required field"],
+                "reset": ["unknown field"]
+            }
+        }
+
+
+class TestSetForceReset(ProtectedTest):
+
+    async def test_valid(self, do_put, test_db, create_user):
+        """
+        Test that a valid request results in a password change.
+
+        """
+        test_db.users.insert(create_user("bob"))
+
+        data = {
+            "force_reset": True
+        }
+
+        resp = await do_put("/api/users/bob/reset", data, authorize=True, permissions=["manage_users"])
+
+        assert resp.status == 200
+
+        assert await resp.json() == {
+            "user_id": "bob",
+            "force_reset": True
+        }
+
+    async def test_invalid_input(self, do_put, test_db, create_user):
+        """
+        Test that a valid request results in a change to the ``force_reset`` field.
+
+        """
+        test_db.users.insert(create_user("bob"))
+
+        data = {
+            "unwanted": True,
+            "force_reset": "False"
+        }
+
+        resp = await do_put("/api/users/bob/reset", data, authorize=True, permissions=["manage_users"])
+
+        assert resp.status == 422
+
+        assert await resp.json() == {
+            "message": "Invalid input",
+            "errors": {
+                "unwanted": ["unknown field"],
+                "force_reset": ["must be of boolean type"]
+            }
+        }
+
+    async def test_does_not_exist(self, do_put):
+        """
+        Test that a ``404`` response results when the ``user_id`` does not exist.
+
+        """
+        data = {
+            "force_reset": False
+        }
+
+        resp = await do_put("/api/users/fred/reset", data, authorize=True, permissions=["manage_users"])
+
+        assert resp.status == 404
+
+        assert await resp.json() == {
+            "message": "User does not exist"
         }
