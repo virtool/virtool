@@ -1,65 +1,74 @@
 from pymongo import ReturnDocument
+from cerberus import Validator
+
 from virtool.utils import timestamp
-from virtool.handlers.utils import json_response, not_found
+from virtool.handlers.utils import protected, bad_request, invalid_input, unpack_json_request, json_response, not_found
 from virtool.permissions import PERMISSIONS
 from virtool.groups import merge_group_permissions
-from virtool.users import processor, invalidate_session, user_exists, hash_password
+from virtool.users import projection, processor, invalidate_session, user_exists, hash_password
 
 
+@protected("manage_users")
 async def find(req):
     """
     Get a list of the existing ``user_ids`` in the database.
      
     """
-    return json_response([processor(document) for document in await req.app["db"].users.find().to_list(None)])
+    data = [processor(document) for document in await req.app["db"].users.find({}, projection).to_list(None)]
+    return json_response(data)
 
 
+@protected("manage_users")
 async def get(req):
     """
-    Get a near-complete user document. Sensitive data are removed:
-    
-    - password
-    - salt
-    - session ids
+    Get a near-complete user document. Password data are removed.
      
     """
-    user_id = req.match_info["user_id"]
-
-    document = req.app["db"].users.find_one(user_id)
+    document = await req.app["db"].users.find_one(req.match_info["user_id"], projection)
 
     if not document:
         return not_found()
 
-    document.pop("password")
-    document.pop("salt")
-
-    [session.pop("token") for session in document["sessions"]]
-
-    return json_response(document)
+    return json_response(processor(document))
 
 
+@protected("manage_users")
 async def create(req):
     """
     Add a new user to the user database.
 
     """
-    data = await req.json()
+    db, data = await unpack_json_request(req)
+
+    v = Validator({
+        "user_id": {"type": "string", "required": True},
+        "password": {"type": "string", "required": True},
+        "force_reset": {"type": "boolean"}
+    })
+
+    if not v(data):
+        return invalid_input(v.errors)
 
     # Check if the username is already taken. Fail if it does.
-    if await user_exists(req.app["db"], data["user_id"]):
-        return json_response({"message": "User already exists"}, status=400)
+    if await user_exists(db, data["user_id"]):
+        return bad_request("User already exists")
 
     document = {
-        "_id": data["_id"],
+        "_id": data["user_id"],
         # A list of group _ids the user is associated with.
         "groups": list(),
-        "settings": ACCOUNT_SETTINGS,
+        "settings": {
+            "skip_quick_analyze_dialog": True,
+            "show_ids": True,
+            "show_versions": True,
+            "quick_analyze_algorithm": "pathoscope_bowtie"
+        },
         "sessions": [],
         "permissions": {permission: False for permission in PERMISSIONS},
         "password": hash_password(data["password"]),
         "primary_group": "",
         # Should the user be forced to reset their password on their next login?
-        "force_reset": data["force_reset"],
+        "force_reset": data.get("force_reset", True),
         # A timestamp taken at the last password change.
         "last_password_change": timestamp(),
         # Should all of the user's sessions be invalidated so that they are forced to login next time they
@@ -67,11 +76,9 @@ async def create(req):
         "invalidate_sessions": False
     }
 
-    await req.app["db"].users.insert(document)
+    await db.users.insert(document)
     
-    document["user_id"] = document.pop("_id")
-    
-    return json_response(document)
+    return json_response(processor({key: document[key] for key in projection}))
 
 
 async def set_password(req):
