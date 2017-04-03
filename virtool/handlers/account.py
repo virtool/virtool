@@ -1,9 +1,9 @@
 from aiohttp import web
+from cerberus import Validator
 from pymongo import ReturnDocument
 from virtool.utils import timestamp
-from virtool.users import salt_hash, validate_login, invalidate_session, ACCOUNT_SETTINGS
-
-VALID_SETTING_KEYS = ACCOUNT_SETTINGS.keys()
+from virtool.handlers.utils import json_response, requires_login, invalid_input
+from virtool.users import hash_password, validate_credentials, invalidate_session
 
 
 async def get_settings(req):
@@ -13,11 +13,12 @@ async def get_settings(req):
     """
     user_id = req["session"].user_id
 
-    print(req["session"].id)
+    if not user_id:
+        return requires_login()
 
     document = await req.app["db"].users.find_one({"_id": user_id})
 
-    return web.json_response(document["settings"])
+    return json_response(document["settings"])
 
 
 async def update_settings(req):
@@ -25,12 +26,34 @@ async def update_settings(req):
     Update account settings.
 
     """
-    user_id = req["session"]["user_id"]
+    user_id = req["session"].user_id
+
+    if not user_id:
+        return requires_login()
 
     data = await req.json()
 
-    if not all(key in VALID_SETTING_KEYS for key in data.keys()):
-        return web.json_response({"message": "Invalid setting field(s)."}, status=400)
+    v = Validator({
+        "show_ids": {
+            "type": "boolean",
+            "required": False
+        },
+        "show_versions": {
+            "type": "boolean",
+            "required": False
+        },
+        "quick_analyze_algorithm": {
+            "type": "boolean",
+            "required": False
+        },
+        "skip_quick_analyze_dialog": {
+            "type": "string",
+            "required": False
+        }
+    })
+
+    if not v(data):
+        return invalid_input(v.errors)
 
     settings = (await req.app["db"].users.find_one({"_id": user_id}))["settings"]
 
@@ -42,7 +65,7 @@ async def update_settings(req):
         }
     }, return_document=ReturnDocument.AFTER)
 
-    return web.json_response(document["settings"])
+    return json_response(document["settings"])
 
 
 async def change_password(req):
@@ -50,31 +73,44 @@ async def change_password(req):
     Allows a user change their own password.
 
     """
+    user_id = req["session"].user_id
+
+    if not user_id:
+        return requires_login()
+
     data = await req.json()
 
-    user_id = req.match_info["user_id"]
+    v = Validator({
+        "old_password": {"type": "string", "required": True},
+        "new_password": {"type": "string", "required": True}
+    })
+
+    if not v(data):
+        return invalid_input(v.errors)
+
+    data = await req.json()
 
     # Will evaluate true if the passed username and password are correct.
-    if not await validate_login(req.app["db"], user_id, data["old_password"]):
-        return web.json_response({"message": "Invalid credentials"}, status=400)
+    if not await validate_credentials(req.app["db"], user_id, data["old_password"]):
+        return json_response({"message": "Invalid credentials"}, status=400)
 
     # Salt and hash the new password
-    salt, password = salt_hash(data["new_password"])
+    hashed = hash_password(data["new_password"])
+
+    last_password_change = timestamp()
 
     # Update the user document. Remove all sessions so those clients will have to authenticate with the new
     # password.
-    response = await req.app["db"].users.update({"_id": user_id}, {
+    await req.app["db"].users.update({"_id": user_id}, {
         "$set": {
-            "password": password,
-            "sessions": [],
+            "password": hashed,
             "invalidate_sessions": False,
-            "salt": salt,
-            "last_password_change": timestamp(),
+            "last_password_change": last_password_change,
             "force_reset": False
         }
     })
 
-    return True, response
+    return json_response({"timestamp": last_password_change})
 
 
 async def logout(req):
@@ -82,4 +118,4 @@ async def logout(req):
 
     await invalidate_session(req.app["db"], requesting_token, logout=True)
 
-    return web.json_response({"logout": True})
+    return json_response({"logout": True})

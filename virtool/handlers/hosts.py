@@ -1,12 +1,11 @@
-from aiohttp import web
 from virtool.data_utils import get_new_id
-from virtool.handlers.utils import unpack_json_request
+from virtool.handlers.utils import unpack_json_request, json_response, bad_request, not_found
 from virtool import hosts
 
 
 async def find(req):
     documents = await req.app["db"].hosts.find({}).to_list(length=10)
-    return web.json_response(documents)
+    return json_response(documents)
 
 
 async def create(req):
@@ -39,7 +38,7 @@ async def create(req):
         job_id=job_id
     )
 
-    return web.json_response(hosts.to_client(data))
+    return json_response(hosts.to_client(data))
 
 
 async def get(req):
@@ -50,9 +49,9 @@ async def get(req):
     document = await req.app["db"].hosts.find_one({"_id": req.match_info["host_id"]})
 
     if document:
-        return web.json_response(document)
+        return json_response(document)
 
-    return web.json_response({"message": "Not found"}, status=404)
+    return not_found()
 
 
 async def remove(req):
@@ -65,11 +64,11 @@ async def remove(req):
     try:
         await hosts.remove(req.app["db"], req.app["settings"], host_id)
     except hosts.HostInUseError:
-        return web.json_response({"message": "Host is in use"}, status=400)
+        return bad_request("Host is in use")
     except hosts.HostNotFoundError:
-        return web.json_response({"message": "Not found"}, status=404)
+        return not_found()
 
-    return web.json_response({"removed": host_id})
+    return json_response({"removed": host_id})
 
 
 async def authorize_upload(req):
@@ -82,4 +81,4 @@ async def authorize_upload(req):
         expires=None
     )
 
-    return web.json_response({"file_id": file_id})
+    return json_response({"file_id": file_id})

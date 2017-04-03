@@ -1,10 +1,10 @@
 import logging
 import pymongo.errors
 
-from aiohttp import web
 from pymongo import ReturnDocument
 from virtool.groups import projection, processor, update_member_users
 from virtool.permissions import PERMISSIONS
+from virtool.handlers.utils import json_response, bad_request, not_found
 
 logger = logging.getLogger(__name__)
 
@@ -14,7 +14,7 @@ async def find(req):
      
     """
     documents = await req.app["db"].groups.find({}, projection).to_list(None)
-    return web.json_response([processor(d) for d in documents])
+    return json_response([processor(d) for d in documents])
 
 
 async def create(req):
@@ -25,10 +25,10 @@ async def create(req):
     try:
         group_id = (await req.json())["group_id"]
     except KeyError:
-        return web.json_response({"message": "Missing group_id"}, status=400)
+        return bad_request("Missing group_id")
 
     if not isinstance(group_id, str):
-        return web.json_response({"message": "Wrong type for group_id"}, status=400)
+        return bad_request("Wrong type for group_id")
 
     document = {
         "_id": (await req.json())["group_id"],
@@ -38,9 +38,9 @@ async def create(req):
     try:
         await req.app["db"].groups.insert(document)
     except pymongo.errors.DuplicateKeyError:
-        return web.json_response({"message": "Group already exists"}, status=400)
+        return bad_request("Group already exists")
 
-    return web.json_response(processor(document))
+    return json_response(processor(document))
 
 
 async def get(req):
@@ -51,9 +51,9 @@ async def get(req):
     document = await req.app["db"].groups.find_one(req.match_info["group_id"], projection)
 
     if document:
-        return web.json_response(processor(document))
+        return json_response(processor(document))
 
-    return web.json_response({"message": "Not found"}, status=404)
+    return not_found()
 
 
 async def update_permissions(req):
@@ -65,12 +65,12 @@ async def update_permissions(req):
     permissions = await req.json()
 
     if permissions == {} or not all([key in PERMISSIONS for key in permissions.keys()]):
-        return web.json_response(({"message": "Invalid key"}), status=400)
+        return bad_request("Invalid key")
 
     old_document = await req.app["db"].groups.find_one({"_id": group_id}, ["permissions"])
 
     if not old_document:
-        return web.json_response({"message": "Not found"}, status=404)
+        return not_found()
 
     old_document["permissions"].update(permissions)
 
@@ -83,7 +83,7 @@ async def update_permissions(req):
 
     document["group_id"] = document.pop("_id")
 
-    return web.json_response(document)
+    return json_response(document)
 
 
 async def remove(req):
@@ -97,17 +97,17 @@ async def remove(req):
 
     # Only accept single id strings.
     if not isinstance(group_id, str):
-        return web.json_response({"message": "Invalid type"}, status=400)
+        return bad_request("Invalid type")
 
     # The administrator is not permitted to be removed.
     if group_id == "administrator":
-        return web.json_response({"message": "Cannot remove administrator group"}, status=400)
+        return bad_request("Cannot remove administrator group")
 
     document = await req.app["db"].groups.find_one_and_delete({"_id": group_id})
 
     if not document:
-        return web.json_response({"message": "Not found"}, status=404)
+        return not_found()
 
     await update_member_users(req.app["db"], group_id, remove=True)
 
-    return web.json_response({"removed": group_id})
+    return json_response({"removed": group_id})
