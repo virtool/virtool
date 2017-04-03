@@ -95,22 +95,11 @@ def timestamp():
     """
     Returns and ISO format timestamp. Generates one for the current time if no ``time`` argument is passed.
 
-    :param time: the datetime to generate a timestamp for.
-    :type time: :class:`datetime.datetime` or str
-
-    :return: a timestamp
-    :rtype: str
+    :return: a UTC timestamp
+    :rtype: datetime.datetime
 
     """
-    if time is None:
-        return datetime.datetime.utcnow()
-
-    if isinstance(time, datetime.datetime):
-        return time
-
-    # Probably a POSIX timestamp.
-    if isinstance(time, float):
-        return datetime.datetime.fromtimestamp(time).isoformat()
+    return datetime.datetime.utcnow()
 
 
 def random_alphanumeric(length=6, mixed_case=False, excluded=[]):
