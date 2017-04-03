@@ -179,7 +179,7 @@ def organize_viruses(database):
                 required_unbuilt_change_count = int(virus["_version"] - virus["last_indexed_version"])
 
                 # Count the number of history entries containing unbuilt changes for this virus.
-                recent_history = virtool.utils.where(history, lambda x: x["index_version"] == x["unbuilt"])
+                recent_history = [doc for doc in history if doc["index_version"] == "unbuilt"]
 
                 # The two previously assigned variables must be equal. Otherwise the virus_id will be added to the
                 # missing_recent_history list in the response dict returned by this function.

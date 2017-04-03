@@ -146,37 +146,6 @@ def random_alphanumeric(length=6, mixed_case=False, excluded=[]):
     return random_alphanumeric(length, excluded)
 
 
-def where(subject, predicate):
-    """
-    Returns the first object in ``subject`` that return True for the given ``predicate``.
-
-    :param subject: a list of objects.
-    :type subject: list
-
-    :param predicate: a function or dict to test items in the ``subject`` list.
-    :type predicate: func or dict
-
-    :return: the matched object or None.
-    :rtype: any
-
-    """
-    if isinstance(predicate, dict):
-        clone = dict(predicate)
-
-        def predicate(entry):
-            return all([(key in entry and entry[key] == value) for key, value in clone.items()])
-
-    if callable(predicate):
-        filtered = list(filter(predicate, subject))
-
-        if len(filtered) > 0:
-            return filtered[0]
-
-        return None
-
-    raise TypeError("Predicate must be callable or dict")
-
-
 def average_list(list1, list2):
     if not isinstance(list1, list) or not isinstance(list2, list):
         raise TypeError("Both arguments must be lists")
