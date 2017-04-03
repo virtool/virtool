@@ -6,7 +6,7 @@ def user_document():
     return {
         "_id": "bob",
         "invalidate_sessions": False,
-        "last_password_change": "2017-02-06T13:00:00.000000",
+        "last_password_change": "2017-10-06T13:00:00.000000",
         "primary_group": "",
         "groups": [],
         "settings": {
