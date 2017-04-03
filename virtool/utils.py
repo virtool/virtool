@@ -118,6 +118,10 @@ def timestamp(time=None, time_getter=datetime.datetime.now):
     raise TypeError("Couldn't calculate timestamp from time or time_getter")
 
 
+def time_now():
+    return datetime.datetime.utcnow()
+
+
 def random_alphanumeric(length=6, mixed_case=False, excluded=[]):
     """
     Generates a random string composed of letters and numbers.
