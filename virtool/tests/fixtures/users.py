@@ -1,4 +1,5 @@
 import pytest
+import datetime
 
 from virtool.permissions import PERMISSIONS
 
@@ -13,7 +14,7 @@ def create_user():
             "permissions": {perm: perm in permissions for perm in PERMISSIONS},
             "groups": groups or list(),
             "invalidate_sessions": False,
-            "last_password_change": "2017-10-06T13:00:00.000000",
+            "last_password_change": datetime.datetime(2015, 10, 6, 20, 0, 0, tzinfo=datetime.timezone.utc),
             "primary_group": "",
             "settings": {
                 "skip_quick_analyze_dialog": True,

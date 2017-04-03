@@ -27,7 +27,7 @@ class TestFind(ProtectedTest):
                 "user_id": user_id,
                 "force_reset": False,
                 "groups": [],
-                "last_password_change": "2017-10-06T20:00:00+00:00",
+                "last_password_change": "2015-10-06T20:00:00+00:00",
                 "permissions": {
                     "add_host": False,
                     "add_sample": False,
@@ -73,7 +73,7 @@ class TestGet(ProtectedTest):
             "user_id": "fred",
             "force_reset": False,
             "groups": [],
-            "last_password_change": "2017-10-06T20:00:00+00:00",
+            "last_password_change": "2015-10-06T20:00:00+00:00",
             "permissions": {
                 "add_host": False,
                 "add_sample": False,
