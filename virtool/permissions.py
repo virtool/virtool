@@ -11,5 +11,6 @@ PERMISSIONS = [
     "remove_job",
     "archive_job",
     "rebuild_index",
-    "modify_options"
+    "modify_options",
+    "manage_users"
 ]
