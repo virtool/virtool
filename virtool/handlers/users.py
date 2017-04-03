@@ -197,17 +197,6 @@ async def add_group(req):
     return json_response(document)
 
 
-async def remove_session(req):
-    token = req.match_info["token"]
-
-    removed = await invalidate_session(req.app["db"], token)
-
-    if not removed:
-        return not_found("Session does not exist")
-
-    return json_response({"removed": removed})
-
-
 async def remove(req):
     """
     Remove existing user with the id passed in the transaction.

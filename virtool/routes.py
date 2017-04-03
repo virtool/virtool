@@ -74,9 +74,8 @@ def setup_users_routes(app):
     app.router.add_put("/api/users/{user_id}/password", users.set_password)
 
     app.router.add_post("/api/users/{user_id}/groups", users.add_group)
-
-    app.router.add_delete("/api/users/{user_id}/sessions", users.remove_session)
-
+    app.router.add_delete("/api/users/{user_id}/groups", users.remove_group)
+    
 
 def setup_groups_routes(app):
     app.router.add_get("/api/groups", groups.find)
