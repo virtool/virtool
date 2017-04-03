@@ -10,7 +10,7 @@ def setup_routes(app):
     setup_hmm_routes(app)
     setup_hosts_routes(app)
     setup_account_routes(app)
-    setup_user_routes(app)
+    setup_users_routes(app)
     setup_groups_routes(app)
 
     setup_websocket_routes(app)
@@ -63,7 +63,7 @@ def setup_account_routes(app):
     app.router.add_get("/api/account/logout", account.logout)
 
 
-def setup_user_routes(app):
+def setup_users_routes(app):
     app.router.add_get("/api/users", users.find)
     app.router.add_post("/api/users", users.create)
 
