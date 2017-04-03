@@ -1,5 +1,6 @@
 import os
 import sys
+import ssl
 import logging
 import subprocess
 import virtool.routes
@@ -19,6 +20,13 @@ def create_app(loop, db_name="virtool"):
     virtool.routes.setup_routes(app)
 
     return app
+
+
+def configure_ssl(cert_path, key_path):
+    ssl_ctx = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
+    ssl_ctx.load_cert_chain(cert_path, key_path)
+
+    return ssl_ctx
 
 
 def reload():
