@@ -7,7 +7,7 @@ from virtool.web import create_app
 
 @pytest.fixture
 def authorize_client(test_db, create_user):
-    async def func(client, groups=None, permissions=None):
+    async def func(client, groups, permissions):
         resp = await client.get("/api")
 
         user_document = create_user("test", groups, permissions)
@@ -31,12 +31,12 @@ def authorize_client(test_db, create_user):
 def do_get(test_client, authorize_client):
     client = None
 
-    async def func(url, authorize=False):
+    async def func(url, authorize=False, groups=None, permissions=None):
         nonlocal client
         client = client or await test_client(create_app, "test")
 
         if authorize:
-            await authorize_client(client)
+            await authorize_client(client, groups, permissions)
 
         return await client.get(url)
 
@@ -47,12 +47,12 @@ def do_get(test_client, authorize_client):
 def do_post(test_client, authorize_client):
     client = None
 
-    async def func(url, data, authorize=False):
+    async def func(url, data, authorize=False, groups=None, permissions=None):
         nonlocal client
         client = client or await test_client(create_app, "test")
 
         if authorize:
-            authorize_client(client)
+            await authorize_client(client, groups, permissions)
 
         return await client.post(url, data=json.dumps(data))
 
@@ -63,13 +63,13 @@ def do_post(test_client, authorize_client):
 def do_put(test_client, authorize_client):
     client = None
 
-    async def func(url, data, authorize=False):
+    async def func(url, data, authorize=False, groups=None, permissions=None):
         nonlocal client
 
         client = client or await test_client(create_app, "test")
 
         if authorize:
-            await authorize_client(client)
+            await authorize_client(client, groups, permissions)
 
         return await client.put(url, data=json.dumps(data))
 
@@ -80,13 +80,13 @@ def do_put(test_client, authorize_client):
 def do_delete(test_client, authorize_client):
     client = None
 
-    async def func(url, authorize=False):
+    async def func(url, authorize=False, groups=None, permissions=None):
         nonlocal client
 
         client = client or await test_client(create_app, "test")
 
         if authorize:
-            await authorize_client(client)
+            await authorize_client(client, groups, permissions)
 
         return await client.delete(url)
 
