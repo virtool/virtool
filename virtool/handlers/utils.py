@@ -1,42 +1,21 @@
 import json
+import datetime
 
 from aiohttp import web
 from virtool.permissions import PERMISSIONS
 
 
-def protected(required_perm):
+class CustomEncoder(json.JSONEncoder):
 
-    if required_perm not in PERMISSIONS:
-        raise ValueError("Permission {} is not valid".format(required_perm))
+    def default(self, obj):
+        if isinstance(obj, datetime.datetime):
+            return obj.isoformat()
 
-    def decorator(handler):
-        async def wrapped(req):
-            if not req["session"].user_id:
-                return json_response({"message": "Not authorized"}, status=403)
-
-            if not req["session"].permissions[required_perm]:
-                return json_response({"message": "Not permitted"}, status=403)
-
-            return await handler(req)
-
-        return wrapped
-
-    return decorator
+        return json.JSONEncoder.default(self, obj)
 
 
-async def unpack_json_request(req):
-    """
-    A shortcut for pulling the app database reference and the request JSON body from a :class:`~aiohttp.web.Request`
-    object.
-    
-    :param req: a request
-    :type req: :class:`~aiohttp.web.Request`
-    
-    :return: the app DB connection and the request JSON body
-    :rtype: tuple
-    
-    """
-    return req.app["db"], await req.json()
+async def unpack_request(request):
+    return request.app["db"], await request.json()
 
 
 def dumps(obj):
@@ -51,7 +30,7 @@ def dumps(obj):
     :rtype: str
      
     """
-    return json.dumps(obj, indent=4, sort_keys=True)
+    return json.dumps(obj, indent=4, sort_keys=True, cls=CustomEncoder)
 
 
 def json_response(data, status=200):
@@ -126,3 +105,37 @@ def invalid_input(errors):
 
     """
     return json_response({"message": "Invalid input", "errors": errors}, status=422)
+
+
+def protected(required_perm):
+    if required_perm not in PERMISSIONS:
+        raise ValueError("Permission {} is not valid".format(required_perm))
+
+    def decorator(handler):
+        async def wrapped(req):
+            if not req["session"].user_id:
+                return json_response({"message": "Not authorized"}, status=403)
+
+            if not req["session"].permissions[required_perm]:
+                return json_response({"message": "Not permitted"}, status=403)
+
+            return await handler(req)
+
+        return wrapped
+
+    return decorator
+
+
+async def unpack_json_request(req):
+    """
+    A shortcut for pulling the app database reference and the request JSON body from a :class:`~aiohttp.web.Request`
+    object.
+
+    :param req: a request
+    :type req: :class:`~aiohttp.web.Request`
+
+    :return: the app DB connection and the request JSON body
+    :rtype: tuple
+
+    """
+    return req.app["db"], await req.json()
