@@ -9,7 +9,7 @@ class CustomEncoder(json.JSONEncoder):
 
     def default(self, obj):
         if isinstance(obj, datetime.datetime):
-            return obj.isoformat()
+            return obj.replace(tzinfo=datetime.timezone.utc).isoformat()
 
         return json.JSONEncoder.default(self, obj)
 
