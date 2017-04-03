@@ -1,6 +1,27 @@
 import json
 
 from aiohttp import web
+from virtool.permissions import PERMISSIONS
+
+
+def protected(required_perm):
+
+    if required_perm not in PERMISSIONS:
+        raise ValueError("Permission {} is not valid".format(required_perm))
+
+    def decorator(handler):
+        async def wrapped(req):
+            if not req["session"].user_id:
+                return json_response({"message": "Not authorized"}, status=403)
+
+            if not req["session"].permissions[required_perm]:
+                return json_response({"message": "Not permitted"}, status=403)
+
+            return await handler(req)
+
+        return wrapped
+
+    return decorator
 
 
 async def unpack_json_request(req):
