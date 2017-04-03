@@ -81,10 +81,6 @@ def save_setup(handler, data):
     username = data["username"]
 
     if username:
-        password = data["password"]
-
-        salt, password = virtool.users.salt_hash(password)
-
         db.users.insert({
             "_id": username,
             # A list of group _ids the user is associated with.
@@ -92,8 +88,7 @@ def save_setup(handler, data):
             "primary_group": "administrator",
             "settings": {},
             "sessions": [],
-            "salt": salt,
-            "password": password,
+            "password": virtool.users.hash_password(data["password"]),
             "permissions": {permission: True for permission in virtool.groups.PERMISSIONS},
             # Should the user be forced to reset their password on their next login?
             "force_reset": False,
