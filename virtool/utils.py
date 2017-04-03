@@ -99,7 +99,7 @@ def timestamp():
     :rtype: datetime.datetime
 
     """
-    return datetime.datetime.utcnow()
+    return datetime.datetime.now(tz=datetime.timezone.utc)
 
 
 def random_alphanumeric(length=6, mixed_case=False, excluded=[]):
