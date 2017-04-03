@@ -1,7 +1,8 @@
+import virtool.utils
+
 from pymongo import ReturnDocument
 from cerberus import Validator
 
-from virtool.utils import timestamp
 from virtool.handlers.utils import protected, bad_request, invalid_input, unpack_json_request, json_response, not_found
 from virtool.permissions import PERMISSIONS
 from virtool.groups import merge_group_permissions
@@ -70,7 +71,7 @@ async def create(req):
         # Should the user be forced to reset their password on their next login?
         "force_reset": data.get("force_reset", True),
         # A timestamp taken at the last password change.
-        "last_password_change": timestamp(),
+        "last_password_change": virtool.utils.timestamp,
         # Should all of the user's sessions be invalidated so that they are forced to login next time they
         # download the client.
         "invalidate_sessions": False
@@ -96,7 +97,7 @@ async def set_password(req):
     document = await req.app["db"].users.find_one_and_update({"_id": user_id}, {
         "$set": {
             "password": hash_password(data["password"]),
-            "last_password_change": timestamp(),
+            "last_password_change": virtool.utils.timestamp(),
             "invalidate_sessions": True
         }
     }, return_document=ReturnDocument.AFTER)
