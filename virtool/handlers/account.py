@@ -1,8 +1,7 @@
-from aiohttp import web
 from cerberus import Validator
 from pymongo import ReturnDocument
 from virtool.utils import timestamp
-from virtool.handlers.utils import json_response, requires_login, invalid_input
+from virtool.handlers.utils import json_response, bad_request, requires_login, invalid_input
 from virtool.users import hash_password, validate_credentials, invalidate_session
 
 
@@ -92,7 +91,7 @@ async def change_password(req):
 
     # Will evaluate true if the passed username and password are correct.
     if not await validate_credentials(req.app["db"], user_id, data["old_password"]):
-        return json_response({"message": "Invalid credentials"}, status=400)
+        return bad_request("Invalid credentials")
 
     # Salt and hash the new password
     hashed = hash_password(data["new_password"])
@@ -114,7 +113,6 @@ async def change_password(req):
 
 
 async def logout(req):
-    requesting_token = None
 
     await invalidate_session(req.app["db"], requesting_token, logout=True)
 

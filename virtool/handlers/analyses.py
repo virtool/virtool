@@ -1,8 +1,9 @@
 import asyncio
 
 from aiohttp import web
-from virtool.data.samples import recalculate_algorithm_tags
-from virtool.data.analyses import format_analyses, remove_by_id, initialize_blast, check_rid, retrieve_blast_result
+from virtool.handlers.utils import not_found
+from virtool.samples import recalculate_algorithm_tags
+from virtool.analyses import format_analyses, remove_by_id, initialize_blast, check_rid, retrieve_blast_result
 
 
 async def get_analysis(req):
@@ -17,7 +18,7 @@ async def get_analysis(req):
     if document:
         return web.json_response(await format_analyses(document))
 
-    return web.json_response({"message": "Not found"}, status=404)
+    return not_found()
 
 
 async def blast_nuvs_sequence(req):
@@ -87,6 +88,9 @@ async def remove_analysis(req):
     analysis_id = req.match_info["analysis_id"]
 
     document = await req.app["db"].analyses.find_one({"_id": analysis_id}, ["sample_id"])
+
+    if not document:
+        return not_found()
 
     await recalculate_algorithm_tags(req.app["db"], document["sample_id"])
 
