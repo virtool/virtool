@@ -87,39 +87,30 @@ def file_stats(path):
     # Append file entry to reply list
     return {
         "size": stats.st_size,
-        "modify": timestamp(stats.st_mtime)
+        "modify": datetime.datetime.fromtimestamp(stats.st_mtime)
     }
 
 
-def timestamp(time=None, time_getter=datetime.datetime.now):
+def timestamp():
     """
     Returns and ISO format timestamp. Generates one for the current time if no ``time`` argument is passed.
 
     :param time: the datetime to generate a timestamp for.
     :type time: :class:`datetime.datetime` or str
 
-    :param time_getter: a function that return a :class:"datetime.datetime" object.
-    :type time_getter: func
-
     :return: a timestamp
     :rtype: str
 
     """
     if time is None:
-        time = time_getter()
+        return datetime.datetime.utcnow()
 
     if isinstance(time, datetime.datetime):
-        return time.isoformat()
+        return time
 
     # Probably a POSIX timestamp.
     if isinstance(time, float):
         return datetime.datetime.fromtimestamp(time).isoformat()
-
-    raise TypeError("Couldn't calculate timestamp from time or time_getter")
-
-
-def time_now():
-    return datetime.datetime.utcnow()
 
 
 def random_alphanumeric(length=6, mixed_case=False, excluded=[]):

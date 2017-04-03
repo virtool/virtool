@@ -154,26 +154,6 @@ class TestListFiles:
         assert "world.txt" not in file_list.keys()
 
 
-class TestTimeStamp:
-
-    def test_time_getter(self, static_time):
-        result = virtool.utils.timestamp(time_getter=lambda: static_time)
-        assert result == "2000-01-01T00:00:00"
-
-    def test_datetime(self, static_time):
-        result = virtool.utils.timestamp(static_time)
-        assert result == "2000-01-01T00:00:00"
-
-    def test_posix(self):
-        result = virtool.utils.timestamp(1480549990.4495726)
-        assert "2016-11-30T" in result
-        assert ":53:10.449573" in result
-
-    def test_invalid_time(self):
-        with pytest.raises(TypeError):
-            virtool.utils.timestamp("a")
-
-
 class TestRandomAlphanumeric:
 
     @pytest.mark.gen_test
