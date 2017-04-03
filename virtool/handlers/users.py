@@ -71,7 +71,7 @@ async def create(req):
         # Should the user be forced to reset their password on their next login?
         "force_reset": data.get("force_reset", True),
         # A timestamp taken at the last password change.
-        "last_password_change": virtool.utils.timestamp,
+        "last_password_change": virtool.utils.timestamp(),
         # Should all of the user's sessions be invalidated so that they are forced to login next time they
         # download the client.
         "invalidate_sessions": False
@@ -100,7 +100,11 @@ async def set_password(req):
             "last_password_change": virtool.utils.timestamp(),
             "invalidate_sessions": True
         }
-    }, return_document=ReturnDocument.AFTER)
+    }, return_document=ReturnDocument.AFTER, projection=["force_reset", "last_password_change"])
+
+    print(document)
+
+    document["user_id"] = document.pop("_id")
 
     return json_response(document)
 
