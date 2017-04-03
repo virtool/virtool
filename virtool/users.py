@@ -3,12 +3,9 @@ import hashlib
 
 from pymongo import ReturnDocument
 
-
-projector = [
+projection = [
     "_id",
-    "_version",
     "groups",
-    "sessions",
     "force_reset",
     "last_password_change",
     "permissions",
