@@ -14,9 +14,6 @@ class Session:
         self.groups = session_document.get("groups", None)
         self.permissions = session_document.get("permissions", None)
 
-    def authorize(self):
-        pass
-
     def has_group(self, *args):
         if not all(isinstance(str, arg) for arg in args):
             raise ValueError("Permissions must be of type str")
