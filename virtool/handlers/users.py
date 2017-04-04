@@ -235,19 +235,20 @@ async def remove_group(req):
     return json_response(document)
 
 
+@protected("manage_users")
 async def remove(req):
     """
-    Remove existing user with the id passed in the transaction.
+    Remove a user.
 
     """
-    data = await req.json()
+    user_id = req.match_info["user_id"]
 
-    if data["_id"] == req["session"].user_id:
-        return json_response({"message": "Cannot remove own account"}, status=400)
+    if user_id == req["session"].user_id:
+        return bad_request("Cannot remove own account")
 
-    result = await req.app["db"].users.remove({"_id": data["user_id"]})
+    result = await req.app["db"].users.remove({"_id": user_id})
 
     if result["n"] == 0:
         return not_found("User does not exist")
 
-    return json_response({"removed": data["user_id"]})
+    return json_response({"removed": user_id})

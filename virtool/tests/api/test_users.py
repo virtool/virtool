@@ -1,10 +1,9 @@
 import datetime
 
 from virtool.users import check_password
-from virtool.tests.cls import ProtectedTest
 
 
-class TestFind(ProtectedTest):
+class TestFind:
 
     async def test_valid(self, do_get, test_db, create_user):
         """
@@ -52,8 +51,34 @@ class TestFind(ProtectedTest):
                 }
             }
 
+    async def test_not_authorized(self, do_get):
+        """
+        Test that a request from an unauthorized session results in a ``403`` response. 
 
-class TestGet(ProtectedTest):
+        """
+        resp = await do_get("/api/users")
+
+        assert resp.status == 403
+
+        assert await resp.json() == {
+            "message": "Not authorized"
+        }
+
+    async def test_not_permitted(self, do_get):
+        """
+        Test that a request from a session with inadequate permissions results in a ``403`` response. 
+
+        """
+        resp = await do_get("/api/users", authorize=True)
+
+        assert resp.status == 403
+
+        assert await resp.json() == {
+            "message": "Not permitted"
+        }
+
+
+class TestGet:
 
     async def test_exists(self, do_get, test_db, create_user):
         """
@@ -111,8 +136,34 @@ class TestGet(ProtectedTest):
             "message": "Not found"
         }
 
+    async def test_not_authorized(self, do_get):
+        """
+        Test that a request from an unauthorized session results in a ``403`` response. 
 
-class TestCreate(ProtectedTest):
+        """
+        resp = await do_get("/api/users/bob")
+
+        assert resp.status == 403
+
+        assert await resp.json() == {
+            "message": "Not authorized"
+        }
+
+    async def test_not_permitted(self, do_get):
+        """
+        Test that a request from a session with inadequate permissions results in a ``403`` response. 
+
+        """
+        resp = await do_get("/api/users/bob", authorize=True)
+
+        assert resp.status == 403
+
+        assert await resp.json() == {
+            "message": "Not permitted"
+        }
+
+
+class TestCreate:
 
     async def test_valid(self, monkeypatch, static_time, do_post, test_db):
         """
@@ -220,8 +271,34 @@ class TestCreate(ProtectedTest):
             "message": "User already exists"
         }
 
+    async def test_not_authorized(self, do_post):
+        """
+        Test that a request from an unauthorized session results in a ``403`` response. 
 
-class TestSetPassword(ProtectedTest):
+        """
+        resp = await do_post("/api/users", {})
+
+        assert resp.status == 403
+
+        assert await resp.json() == {
+            "message": "Not authorized"
+        }
+
+    async def test_not_permitted(self, do_post):
+        """
+        Test that a request from a session with inadequate permissions results in a ``403`` response. 
+
+        """
+        resp = await do_post("/api/users", {}, authorize=True)
+
+        assert resp.status == 403
+
+        assert await resp.json() == {
+            "message": "Not permitted"
+        }
+
+
+class TestSetPassword:
 
     async def test_valid(self, monkeypatch, do_put, test_db, static_time, create_user):
         """
@@ -284,8 +361,34 @@ class TestSetPassword(ProtectedTest):
             }
         }
 
+    async def test_not_authorized(self, do_put):
+        """
+        Test that a request from an unauthorized session results in a ``403`` response. 
 
-class TestSetForceReset(ProtectedTest):
+        """
+        resp = await do_put("/api/users/bob/password", {})
+
+        assert resp.status == 403
+
+        assert await resp.json() == {
+            "message": "Not authorized"
+        }
+
+    async def test_not_permitted(self, do_put):
+        """
+        Test that a request from a session with inadequate permissions results in a ``403`` response. 
+
+        """
+        resp = await do_put("/api/users/bob/password", {}, authorize=True)
+
+        assert resp.status == 403
+
+        assert await resp.json() == {
+            "message": "Not permitted"
+        }
+
+
+class TestSetForceReset:
 
     async def test_valid(self, do_put, test_db, create_user):
         """
@@ -348,10 +451,40 @@ class TestSetForceReset(ProtectedTest):
             "message": "User does not exist"
         }
 
+    async def test_not_authorized(self, do_put):
+        """
+        Test that a request from an unauthorized session results in a ``403`` response. 
 
-class TestAddGroup(ProtectedTest):
+        """
+        resp = await do_put("/api/users/bob/reset", {})
+
+        assert resp.status == 403
+
+        assert await resp.json() == {
+            "message": "Not authorized"
+        }
+
+    async def test_not_permitted(self, do_put):
+        """
+        Test that a request from a session with inadequate permissions results in a ``403`` response. 
+
+        """
+        resp = await do_put("/api/users/bob/reset", {}, authorize=True)
+
+        assert resp.status == 403
+
+        assert await resp.json() == {
+            "message": "Not permitted"
+        }
+
+
+class TestAddGroup:
 
     async def test_valid(self, test_db, do_post, create_user, no_permissions):
+        """
+        Test that a valid request results in the addition of a group to a user document.
+         
+        """
         test_db.groups.insert_many([
             {
                 "_id": "tech",
@@ -380,6 +513,10 @@ class TestAddGroup(ProtectedTest):
         }
 
     async def test_user_does_not_exist(self, test_db, do_post, no_permissions):
+        """
+        Test that a request to remove a group from a non-existent user results in a ``404`` response.
+         
+        """
         test_db.groups.insert_one({
             "_id": "tech",
             "permissions": dict(no_permissions, modify_virus=True)
@@ -398,6 +535,10 @@ class TestAddGroup(ProtectedTest):
         }
 
     async def test_group_does_not_exist(self, test_db, do_post, create_user):
+        """
+        Test that a request to delete an non-existent group results in a ``404`` response.
+         
+        """
         test_db.users.insert(create_user("bob"))
 
         data = {
@@ -413,6 +554,10 @@ class TestAddGroup(ProtectedTest):
         }
 
     async def test_invalid_input(self, do_post):
+        """
+        Test that problems in the request input result in a ``422`` response with the appropriate error data attached. 
+
+        """
         data = {
             "group": "tech"
         }
@@ -429,8 +574,34 @@ class TestAddGroup(ProtectedTest):
             }
         }
 
+    async def test_not_authorized(self, do_post):
+        """
+        Test that a request from an unauthorized session results in a ``403`` response. 
 
-class TestRemoveGroup(ProtectedTest):
+        """
+        resp = await do_post("/api/users/bob/groups", {})
+
+        assert resp.status == 403
+
+        assert await resp.json() == {
+            "message": "Not authorized"
+        }
+
+    async def test_not_permitted(self, do_post):
+        """
+        Test that a request from a session with inadequate permissions results in a ``403`` response. 
+
+        """
+        resp = await do_post("/api/users/bob/groups", {}, authorize=True)
+
+        assert resp.status == 403
+
+        assert await resp.json() == {
+            "message": "Not permitted"
+        }
+
+
+class TestRemoveGroup:
 
     async def test_valid(self, test_db, do_delete, create_user, no_permissions):
         """
@@ -472,6 +643,10 @@ class TestRemoveGroup(ProtectedTest):
         }
 
     async def test_user_does_not_exist(self, test_db, do_post, no_permissions):
+        """
+        Test that a ``404`` response results if the ``user_id`` does not exist.
+        
+        """
         test_db.groups.insert_one({
             "_id": "tech",
             "permissions": dict(no_permissions, modify_virus=True)
@@ -487,4 +662,87 @@ class TestRemoveGroup(ProtectedTest):
 
         assert await resp.json() == {
             "message": "User does not exist"
+        }
+
+    async def test_not_authorized(self, do_delete):
+        """
+        Test that a request from an unauthorized session results in a ``403`` response. 
+
+        """
+        resp = await do_delete("/api/users/bob/groups/tech")
+
+        assert resp.status == 403
+
+        assert await resp.json() == {
+            "message": "Not authorized"
+        }
+
+    async def test_not_permitted(self, do_delete):
+        """
+        Test that a request from a session with inadequate permissions results in a ``403`` response. 
+
+        """
+        resp = await do_delete("/api/users/bob/groups/tech", authorize=True)
+
+        assert resp.status == 403
+
+        assert await resp.json() == {
+            "message": "Not permitted"
+        }
+
+
+class TestRemove:
+
+    async def test_valid(self, test_db, do_delete, create_user):
+        """
+        Test that a group is removed from the user for a valid request.
+         
+        """
+        test_db.users.insert(create_user("bob"))
+
+        resp = await do_delete("/api/users/bob", authorize=True, permissions=["manage_users"])
+
+        assert resp.status == 200
+
+        assert await resp.json() == {
+            "removed": "bob"
+        }
+
+    async def test_does_not_exist(self, do_delete):
+        """
+        Test that a request to remove a non-existent user results in a ``404`` response.
+                 
+        """
+        resp = await do_delete("/api/users/bob", authorize=True, permissions=["manage_users"])
+
+        assert resp.status == 404
+
+        assert await resp.json() == {
+            "message": "User does not exist"
+        }
+
+    async def test_not_authorized(self, do_delete):
+        """
+        Test that a request from an unauthorized session results in a ``403`` response. 
+         
+        """
+        resp = await do_delete("/api/users/bob")
+
+        assert resp.status == 403
+
+        assert await resp.json() == {
+            "message": "Not authorized"
+        }
+
+    async def test_not_permitted(self, do_delete):
+        """
+        Test that a request from a session with inadequate permissions results in a ``403`` response. 
+
+        """
+        resp = await do_delete("/api/users/bob", authorize=True)
+
+        assert resp.status == 403
+
+        assert await resp.json() == {
+            "message": "Not permitted"
         }
