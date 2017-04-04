@@ -1,13 +1,16 @@
-import os
 import logging
 import multiprocessing
-import virtool.utils
-import virtool.database
 
-from virtool.hosts import AddHost
-from virtool.samples import ImportReads
-from virtool.indexes import RebuildIndex
-from virtool.analysis import PathoscopeBowtie, PathoscopeSNAP, NuVs
+from operator import itemgetter
+
+import virtool.utils
+
+from virtool.data_utils import get_new_id
+from virtool.jobs.add_host import AddHost
+from virtool.jobs.import_reads import ImportReads
+from virtool.jobs.rebuild_index import RebuildIndex
+from virtool.jobs.analysis import PathoscopeBowtie, PathoscopeSNAP, NuVs
+
 
 logger = logging.getLogger(__name__)
 
@@ -22,7 +25,51 @@ TASK_CLASSES = {
 }
 
 
-class Collection(virtool.database.Collection):
+def processor(document):
+    document["job_id"] = document["_id"]
+    return document
+
+
+dispatch_projection = [
+    "_id",
+    "task",
+    "status",
+    "proc",
+    "mem",
+    "user_id"
+]
+
+
+def dispatch_processor(document):
+    """
+    Removes the ``status`` and ``args`` fields from the job document.
+
+    Adds a ``username`` field, an ``added`` date taken from the first status entry in the job document, and
+    ``state`` and ``progress`` fields taken from the most recent status entry in the job document.
+    
+    :param document: a document to process.
+    :type document: dict
+    
+    :return: a processed documents.
+    :rtype: dict
+
+    """
+    status = document.pop("status")
+
+    last_update = status[-1]
+
+    document.update({
+        "job_id": document.pop("_id"),
+        "state": last_update["state"],
+        "stage": last_update["stage"],
+        "added": str(status[0]["date"]),
+        "progress": status[-1]["progress"]
+    })
+
+    return document
+
+
+class Manager:
     """
     Provides functionality for managing active jobs and manipulating and reading the job documents in the MongoDB
     collection. This object is referred to as the **job manager** in this documentation.
@@ -35,18 +82,10 @@ class Collection(virtool.database.Collection):
     new jobs and interacting with separate job processes.
 
     """
-    def __init__(self, dispatch, collections, settings, add_periodic_callback):
-        super().__init__("jobs", dispatch, collections, settings, add_periodic_callback)
-
-        # Database-specific attributes
-        self.sync_projector += [
-            "task",
-            "status",
-            "proc",
-            "mem",
-            "username",
-            "args"
-        ]
+    def __init__(self, db, settings, dispatch):
+        self.db = db
+        self.settings = settings
+        self.dispatch = dispatch
 
         #: A :class:`dict` containing dicts describing each running or waiting job.
         self.jobs_dict = {}
@@ -67,13 +106,13 @@ class Collection(virtool.database.Collection):
         #: A :class:`multiprocessing.Queue` object used to communicate with job processes.
         self.message_queue = multiprocessing.Queue()
 
-        db = self.settings.get_db_client(sync=True)
-
-        for document in db.jobs.find({"status.1": {"$exists": False}}):
-            job_id = document["_id"]
-            task = document["task"]
-            proc = document["proc"]
-            mem = document["mem"]
+    async def resume(self):
+        """
+        Resume preserved waiting jobs.
+         
+        """
+        async for document in self.db.jobs.find({"status.1": {"$exists": False}}):
+            job_id, task, proc, mem = itemgetter("job_id", "task", "proc", "mem")(document)
 
             # Instantiate a new job object.
             job = TASK_CLASSES[task](
@@ -95,55 +134,7 @@ class Collection(virtool.database.Collection):
                 "mem": mem
             }
 
-        #: A :class:`tornado.queues.Queue` object that accepts dicts describing updates to the jobs collection. Updates
-        #: are performed in the order they are added to the queue, ensuring that status updates are added to job
-        #: documents in the correct order. This is important as job updates can be generated in quick succession.
-        self._action_queue = tornado.queues.Queue()
-
-        # Calls the _perform_update method which runs endlessly. Waits for updates for the jobs collection to appear in
-        # the update queue.
-        tornado.ioloop.IOLoop.current().spawn_callback(self._perform_action)
-
-        # Iterate through the jobs dict every 300 ms.
-        self.add_periodic_callback(self.iterate, 300)
-
-    @virtool.gen.coroutine
-    def sync_processor(self, documents):
-        """
-        Overrides :meth:`.database.Collection.sync_processor`.
-
-        Removes the ``status`` and ``args`` fields from the job document.
-
-        Adds a ``username`` field, an ``added`` date taken from the first status entry in the job document, and
-        ``state`` and ``progress`` fields taken from the most recent status entry in the job document.
-
-        :param documents: a list of documents to process.
-        :type documents: list
-
-        :return: a list of processed documents.
-        :rtype: list
-
-        """
-        documents = virtool.database.coerce_list(documents)
-
-        for document in documents:
-            status = document.pop("status")
-            args = document.pop("args")
-
-            last_update = status[-1]
-
-            document.update({
-                "state": last_update["state"],
-                "stage": last_update["stage"],
-                "added": str(status[0]["date"]),
-                "progress": status[-1]["progress"],
-                "username": args["username"]
-            })
-
-        return documents
-
-    @virtool.gen.coroutine
-    def new(self, task, task_args, proc, mem, username, job_id=None):
+    async def new(self, task, task_args, proc, mem, username, job_id=None):
         """
         Start a new job. Inserts a new job document into the database, instantiates a new :class:`.Job` object, and
         creates a new job dict in :attr:`.jobs_dict`. New jobs are in the waiting state.
@@ -171,11 +162,10 @@ class Collection(virtool.database.Collection):
 
         """
         # Generate a new random job id.
-        if job_id is None:
-            job_id = yield self.get_new_id()
+        job_id = job_id or await get_new_id(self.db.jobs)
 
         # Insert a document in the database describing the new job.
-        response = yield self.insert({
+        await self.db.jobs.insert_one({
             "_id": job_id,
             "task": task,
             "args": task_args,
@@ -211,48 +201,13 @@ class Collection(virtool.database.Collection):
             "mem": mem
         }
 
-        return response
+        document = await self.db.jobs.find_one(job_id, dispatch_projection)
 
-    @virtool.gen.exposed_method([])
-    def detail(self, transaction):
-        """
-        Return detail for the passed job id to the requesting client.
+        self.dispatch("jobs", "update", document)
 
-        :param transaction: the transaction generated by the request.
-        :type transaction: :class:`~.dispatcher.Transaction`
+        return dispatch_processor(document)
 
-        :return: a boolean indicating success of the request and a dict containing the job detail.
-        :rtype: tuple
-
-        """
-        detail = yield self.find_one({"_id": transaction.data["_id"]})
-
-        detail["log"] = yield self.read_log(detail["_id"])
-
-        return True, detail
-
-    @virtool.gen.exposed_method(["cancel_job"])
-    def cancel(self, transaction):
-        """
-        Cancel the job(s) or jobs identified by the job id(s) in ``transaction`` by calling :meth:`._cancel`.
-
-        :param transaction: the transaction generated by the request.
-        :type transaction: :class:`~.dispatcher.Transaction`
-
-        :return: ``True`` and ``None``
-        :rtype: tuple
-
-        """
-        # Make sure the id(s) are in a list.
-        id_list = virtool.database.coerce_list(transaction.data["_id"])
-
-        # Cancel the job(s) identified in id_list.
-        yield self._cancel(id_list)
-
-        return True, None
-
-    @virtool.gen.coroutine
-    def _cancel(self, id_list):
+    async def cancel(self, id_list):
         """
         Cancel the jobs with the ids in ``id_list``.
 
@@ -275,35 +230,12 @@ class Collection(virtool.database.Collection):
 
             # Just delete the job if it still waiting to be started
             else:
-                yield self.update_status(job_id, 0, "cancelled", None)
+                await self.update_status(job_id, 0, "cancelled", None)
 
                 job_dict["obj"].cleanup()
 
                 # self._to_remove.append(_id)
                 self.jobs_dict.pop(job_id)
-
-    @virtool.gen.exposed_method(["remove_job"])
-    def remove_job(self, transaction):
-        """
-        Remove the job or jobs identified by the passed job id(s).
-
-        :param transaction: the transaction generated by the request.
-        :type transaction: :class:`~.dispatcher.Transaction`
-
-        :return: ``True`` and the response from the Mongo remove operation.
-        :rtype: tuple
-
-        """
-        data = transaction.data
-
-        # Removed the documents associated with the job ids from the database.
-        response = yield super().remove(data["_id"])
-
-        # Remove the logs associated with the jobs that were removed.
-        for job_id in virtool.database.coerce_list(data["_id"]):
-            yield self.remove_log(job_id)
-
-        return True, response
 
     @virtool.gen.coroutine
     def update(self, query, update, increment_version=True, upsert=False, connections=None):
@@ -347,8 +279,7 @@ class Collection(virtool.database.Collection):
 
         self._action_queue.put(payload)
 
-    @virtool.gen.coroutine
-    def update_status(self, job_id, progress, state, stage, error=None):
+    async def update_status(self, job_id, progress, state, stage, error=None):
         """
         Update the *status* field for the document identified by the passed ``job_id``.
 
@@ -545,7 +476,6 @@ class Collection(virtool.database.Collection):
         """
         return proc <= self.resources["available"]["proc"] and mem <= self.resources["available"]["mem"]
 
-    @property
     def resources(self):
         """
         A method decorated by :class:`property` and exposed as an instance attribute that returns a dictionary of
@@ -557,46 +487,3 @@ class Collection(virtool.database.Collection):
             "available": {key: self.settings.get(key) - self.used[key] for key in self.used},
             "limit": {key: self.settings.get(key) for key in self.used}
         }
-
-    def read_log(self, job_id):
-        """
-        Return the log text for the given ``job_id``.
-
-        :param job_id: the id of the job to return a log for.
-        :type job_id: str
-
-        :return: a list of line strings from the log file.
-        :rtype: list
-
-        """
-        path = os.path.join(self.settings.get("data_path"), "logs/jobs", job_id + ".log")
-
-        try:
-            # Return a list of lines from the log file if it exists.
-            with open(path, "r") as log_file:
-                return [line.rstrip() for line in log_file]
-
-        except OSError:
-            # Return an empty list if the log file doesn't exist.
-            return list()
-
-    @virtool.gen.synchronous
-    def remove_log(self, job_id):
-        """
-        Remove the log file for a given ``job_id``.
-
-        :param job_id: the id of the job to remove the log file for.
-        :type job_id: str
-
-        :return: boolean indicating whether a log file was removed or not.
-        :rtype: bool
-
-        """
-        try:
-            # Calculate the log path and remove the log file. If it exists, return True.
-            path = os.path.join(self.settings.get("data_path"), "logs/jobs", job_id + ".log")
-            yield virtool.utils.rm(path)
-            return True
-        except OSError:
-            # Return False if the log file does not exist.
-            return False
