@@ -3,19 +3,43 @@ import sys
 import ssl
 import logging
 import subprocess
-import virtool.routes
-import virtool.sessions
-
+import concurrent.futures
 from aiohttp import web
 from motor import motor_asyncio
+
+import virtool.routes
+import virtool.sessions
+from virtool.settings import Settings
 
 logger = logging.getLogger(__name__)
 
 
-def create_app(loop, db_name="virtool"):
+def init_db(app):
+    app["db_name"] = app["db_name"] or app["settings"].get("db_name")
+    app["db"] = motor_asyncio.AsyncIOMotorClient(io_loop=app.loop)[app["db_name"]]
+
+
+def init_thread_pool(app):
+    executor = concurrent.futures.ThreadPoolExecutor(max_workers=5)
+    app.loop.set_default_executor(executor)
+    app["executor"] = executor
+
+
+async def init_settings(app):
+    app["settings"] = Settings(app)
+    await app["settings"].load()
+    import pprint
+    pprint.pprint(app["settings"].data)
+
+
+def create_app(loop, db_name=None):
     app = web.Application(loop=loop, middlewares=[virtool.sessions.middleware_factory])
 
-    app["db"] = motor_asyncio.AsyncIOMotorClient(io_loop=loop)[db_name]
+    app["db_name"] = db_name
+
+    app.on_startup.append(init_thread_pool)
+    app.on_startup.append(init_settings)
+    app.on_startup.append(init_db)
 
     virtool.routes.setup_routes(app)
 
