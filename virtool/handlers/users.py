@@ -15,7 +15,7 @@ async def find(req):
     Get a list of the existing ``user_ids`` in the database.
      
     """
-    return json_response(req.app["db"].users.distinct("_id"))
+    return json_response(await req.app["db"].users.distinct("_id"))
 
 
 @protected("manage_users")

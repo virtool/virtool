@@ -19,7 +19,7 @@ class TestFind:
 
         assert resp.status == 200
 
-        assert set(await resp.json()) == set(user_ids)
+        assert set(await resp.json()) == set(user_ids + ["test"])
 
     async def test_not_authorized(self, do_get):
         """
