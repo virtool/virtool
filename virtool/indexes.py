@@ -2,9 +2,8 @@ import os
 
 from virtool.utils import rm
 
-sync_projector = [
+projection = [
     "_id",
-    "_version",
     "timestamp",
     "virus_count",
     "modification_count",
@@ -12,8 +11,14 @@ sync_projector = [
     "username",
     "index_version",
     "ready",
-    "has_files"
+    "has_files",
+    "job_id"
 ]
+
+
+def processor(document):
+    document["index_id"] = document["_id"]
+    return document
 
 
 async def set_stats(db, index_id, data):
