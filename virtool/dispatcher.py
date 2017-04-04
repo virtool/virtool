@@ -22,8 +22,6 @@ async def websocket_handler(req):
 
     return ws
 
-    # return web.json_response({"message": "Not authorized"}, status=403)
-
 
 class Connection:
 
@@ -31,6 +29,7 @@ class Connection:
         self._ws = ws
         self.user_id = session.user_id
         self.groups = session.groups
+        self.permissions = session
 
     async def send(self, message):
         await self._ws.send_json(message)
@@ -62,15 +61,15 @@ class Dispatcher:
         """
         self.connections.remove(connection)
 
-    def dispatch(self, operation, interface, data, connections=None, conn_filter=None, conn_modifier=None, writer=None):
+    def dispatch(self, interface, operation, data, connections=None, conn_filter=None, conn_modifier=None, writer=None):
         """
         Dispatch a ``message`` with a conserved format to a selection of active ``connections``.
-
-        :param operation: a word used to tell the client what to do in response to the message
-        :type operation: str
         
         :param interface: the name of the interface the client should perform the operation on
         :type interface: str
+
+        :param operation: a word used to tell the client what to do in response to the message
+        :type operation: str
         
         :param data: the data the client will use
         :type data: dict

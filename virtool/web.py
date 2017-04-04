@@ -4,12 +4,18 @@ import ssl
 import logging
 import subprocess
 import concurrent.futures
+
 from aiohttp import web
 from motor import motor_asyncio
 
+import virtool.jobs
 import virtool.routes
 import virtool.sessions
+
+from virtool.jobs import manager
 from virtool.settings import Settings
+from virtool.dispatcher import Dispatcher
+
 
 logger = logging.getLogger(__name__)
 
@@ -30,6 +36,18 @@ async def init_settings(app):
     await app["settings"].load()
     import pprint
     pprint.pprint(app["settings"].data)
+
+
+async def init_dispatcher(app):
+    app["dispatcher"] = Dispatcher()
+
+
+async def init_job_manager(app):
+    app["job_manager"] = manager.Manager(
+        app["settings"],
+        app["db"],
+        app["dispatcher"].dispatch
+    )
 
 
 def create_app(loop, db_name=None):
