@@ -37,10 +37,10 @@ def setup_history_routes(app):
 
 
 def setup_hmm_routes(app):
-    app.router.add_get("/api/hmm", hmm.find)
+    app.router.add_get("/api/hmm/annotations", hmm.find)
 
-    app.router.add_get("/api/hmm/{hmm_id}", hmm.get)
-    app.router.add_put("/api/hmm/{hmm_id}", hmm.update)
+    app.router.add_get("/api/hmm/annotations/{hmm_id}", hmm.get)
+    app.router.add_put("/api/hmm/annotations/{hmm_id}", hmm.update)
 
     app.router.add_get("/api/hmm/check", hmm.check)
     app.router.add_get("/api/hmm/clean", hmm.clean)

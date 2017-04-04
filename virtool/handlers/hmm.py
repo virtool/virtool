@@ -4,49 +4,67 @@ import json
 import math
 import shutil
 
-from aiohttp import web
+from cerberus import Validator
 from pymongo import ReturnDocument
 from collections import Counter
-from virtool import hmm
+from virtool.hmm import to_client, projection, check
 from virtool.data_utils import get_new_id
-from virtool.handlers.utils import unpack_json_request
+from virtool.handlers.utils import unpack_json_request, json_response, not_found, invalid_input, protected
 
 
 async def find(req):
-    documents = await req.app["db"].hmm.find({}).to_list(length=10)
-    return web.json_response(documents, status=200)
+    """
+    Find HMM annotation documents.
+     
+    """
+    documents = await req.app["db"].hmm.find({}, projection=projection).to_list(length=10)
+
+    return json_response([to_client(document) for document in documents])
 
 
 async def get(req):
-    document = await req.app["db"].find_one({"_id": req.match_info["hmm_id"]})
+    """
+    Get a complete individual HMM annotation document.
+     
+    """
+    document = await req.app["db"].hmm.find_one({"_id": req.match_info["hmm_id"]})
 
     if document:
-        return web.json_response(hmm.to_client(document))
+        return json_response(to_client(document))
 
-    return web.json_response({"message": "Not found"}, status=404)
+    return not_found()
 
 
+@protected("modify_hmm")
 async def update(req):
+    """
+    Update the label field for an HMM annotation document.
+    
+    """
     db, data = await unpack_json_request(req)
 
-    if len(data) != 1 or "label" not in data:
-        return web.json_response({"Invalid input"}, status=400)
+    v = Validator({
+        "label": {"type": "string", "required": True}
+    })
+
+    if not v(data):
+        return invalid_input(v.errors)
 
     hmm_id = req.match_info["hmm_id"]
 
     if not await db.hmm.find({"_id": hmm_id}).count():
-        return web.json_response({"Not found"}, status=404)
+        return not_found()
 
     document = await db.hmm.find_one_and_update({"_id": hmm_id}, {
         "$set": data
-    }, projection=hmm.projection, return_document=ReturnDocument.AFTER)
+    }, return_document=ReturnDocument.AFTER)
 
-    return web.json_response(document)
+    return json_response(to_client(document))
 
 
 async def check(req):
-    result = await hmm.check(req.app["db"], req.app["settings"])
-    return web.json_response(result)
+    result = await check(req.app["db"], req.app["settings"])
+    return json_response(result)
 
 
 async def clean(req):
@@ -62,9 +80,9 @@ async def clean(req):
 
         await db.hmm.remove({"_id": {"$in": hmm_ids}})
 
-        return web.json_response(await hmm.check(db, settings))
+        return json_response(await hmm.check(db, settings))
 
-    return web.json_response({"No problems found"}, status=404)
+    return json_response({"No problems found"}, status=404)
 
 
 async def import_hmm(req):
@@ -83,7 +101,7 @@ async def import_hmm(req):
         "$set": result
     }, upsert=True)
 
-    return web.json_response(result)
+    return json_response(result)
 
 
 async def import_annotations(req):
@@ -92,7 +110,7 @@ async def import_annotations(req):
     settings = req.app["settings"]
 
     if await db.hmm.count():
-        return web.json_response({"message": "Annotations collection is not empty"}, status=400)
+        return json_response({"message": "Annotations collection is not empty"}, status=400)
 
     with gzip.open(os.path.join(settings.get("data_path"), "files", data["file_id"]), "rt") as input_file:
         annotations_to_import = json.load(input_file)
@@ -132,4 +150,4 @@ async def import_annotations(req):
 
     # transaction.update({"checking": True})
 
-    return web.json_response(await hmm.check(db, settings))
+    return json_response(await hmm.check(db, settings))

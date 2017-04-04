@@ -2,11 +2,9 @@ import os
 import gzip
 import json
 import subprocess
-import virtool.utils
 
 projection = [
     "_id",
-    "_version",
     "cluster",
     "label",
     "count",

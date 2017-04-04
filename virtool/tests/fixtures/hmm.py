@@ -2,8 +2,6 @@ import os
 import shutil
 import pytest
 
-from virtool.hmm import Collection
-
 DIRNAME = os.path.dirname(os.path.realpath(__file__))
 ANNOTATION_PATH = os.path.join(DIRNAME, "test_files", "annotations")
 
@@ -103,7 +101,6 @@ def hmm_document():
         "families": {
             "Baculoviridae": 3
         },
-        "_version": 0,
         "genera": {
             "Alphabaculovirus": 3
         },
