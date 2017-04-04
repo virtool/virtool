@@ -31,3 +31,7 @@ def coerce_list(obj):
 
     """
     return [obj] if not isinstance(obj, list) else obj
+
+
+def to_bool(obj):
+    return str(obj).lower() in ["1", "true"]
