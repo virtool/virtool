@@ -9,7 +9,6 @@ from virtool.indexes import get_current_index
 
 projector = [
     "_id",
-    "_version",
     "name",
     "algorithm",
     "sample_id",
