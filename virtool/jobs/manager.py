@@ -237,7 +237,6 @@ class Manager:
                 # self._to_remove.append(_id)
                 self.jobs_dict.pop(job_id)
 
-    @virtool.gen.coroutine
     def update(self, query, update, increment_version=True, upsert=False, connections=None):
         """
         Redefinition of :meth:`.database.Collection.update`. Instead of directly making an update to the database
@@ -319,7 +318,6 @@ class Manager:
 
         self._action_queue.put(payload)
 
-    @virtool.gen.coroutine
     def _perform_action(self):
         """
         Endlessly looping method that takes update tuples from :attr:`._update_queue` and calls

@@ -5,13 +5,11 @@ import random
 import pymongo
 
 import virtool.utils
-import virtool.files
-import virtool.database
-import virtool.job
 import virtool.pathoscope
+from virtool.jobs.job import Job, stage_method
 
 
-class ImportReads(virtool.job.Job):
+class ImportReads(Job):
 
     """
     A subclass of :class:`~.job.Job` that creates a new sample by importing reads from the watch directory. Has the
@@ -52,7 +50,7 @@ class ImportReads(virtool.job.Job):
             self.clean_watch
         ]
 
-    @virtool.job.stage_method
+    @stage_method
     def mk_sample_dir(self):
         """
         Make a data directory for the sample. Read files, quality data from FastQC, and analysis data will be stored

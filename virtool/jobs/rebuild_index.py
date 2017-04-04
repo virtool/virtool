@@ -1,18 +1,16 @@
 import os
-import dictdiffer
 import logging
-
+import dictdiffer
 from collections import defaultdict
 
-import virtool.database
-import virtool.utils
-import virtool.job
-import virtool.viruses
+from virtool.jobs.job import Job
+from virtool.viruses import merge_virus
+
 
 logger = logging.getLogger(__name__)
 
 
-class RebuildIndex(virtool.job.Job):
+class RebuildIndex(Job):
     """
     Job object that rebuilds the viral Bowtie2 index from the viral sequence database. Job stages are:
 
@@ -62,7 +60,7 @@ class RebuildIndex(virtool.job.Job):
         sequences = list(self.db.sequences.find({"isolate_id": {"$in": isolate_ids}}))
 
         # Merge the sequence entries into the virus entry.
-        joined = virtool.virusutils.merge_virus(virus, sequences)
+        joined = merge_virus(virus, sequences)
 
         return joined, sequences
 
