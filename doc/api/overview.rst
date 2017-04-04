@@ -47,9 +47,9 @@ report. Refer to the `Cerberus documentation <http://docs.python-cerberus.org/en
     {
         "message": "Invalid input",
         "errors": {
-            'foo_bar': ['unknown field'],
-            'new_password': ['required field'],
-            'old_password': ['required field']
+            "foo_bar": ["unknown field"],
+            "new_password": ["required field"],
+            "old_password": ["required field"]
         }
     }
 

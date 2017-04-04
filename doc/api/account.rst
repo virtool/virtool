@@ -2,30 +2,11 @@
 Account
 =======
 
-Used for authenticated connections to modify their associated user accounts.
+Used for authenticated users to modify their accounts.
 
 .. note::
 
-    These endpoints can only affect the user account associated the requesting client.
-
-Change Password
----------------
-
-Change the account password. An old password must be supplied.
-
-::
-
-    PUT /account/password
-
-**Input**
-
-+---------------+--------+-----------------------------------+
-| Name          | Type   | Description                       |
-+===============+========+===================================+
-| old_password  | string | the old password for verification |
-+---------------+--------+-----------------------------------+
-| new_password  | string | the new password                  |
-+---------------+--------+-----------------------------------+
+    These endpoints can only affect the account associated the requesting session.
 
 
 Retrieve settings
@@ -47,6 +28,7 @@ Retrieve all personalized settings.
         "show_ids" : true,
         "show_versions" : true
     }
+
 
 Modify settings
 ---------------
@@ -81,6 +63,29 @@ Modify personalized settings. All fields are optional.
         "show_ids" : true,
         "show_versions" : true
     }
+
+
+Change Password
+---------------
+
+Change the account password. An old password must be supplied.
+
+::
+
+    PUT /account/password
+
+**Input**
+
++---------------+--------+-----------------------------------+
+| Name          | Type   | Description                       |
++===============+========+===================================+
+| old_password  | string | the old password for verification |
++---------------+--------+-----------------------------------+
+| new_password  | string | the new password                  |
++---------------+--------+-----------------------------------+
+
+
+
 
 
 

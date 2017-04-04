@@ -158,7 +158,7 @@ Set the rights fields and the owner group for a given sample. All fields are opt
     }
 
 
-List of analyses
+List analyses
 ----------------
 
 Retrieve a list of all analyses associated with a given sample. The complete analysis documents are not returned.
@@ -190,8 +190,8 @@ Retrieve a complete analysis document given a ``sample_id`` and an ``analysis_id
     GET /samples/:sample_id/analyses/:analysis_id
 
 
-BLAST a NuVs contig
--------------------
+BLAST a contig
+--------------
 
 BLAST a contig that was generated as part of a NuVs analysis. This request will fail for non-NuVs analyses.
 

@@ -6,7 +6,7 @@ from cerberus import Validator
 from virtool.handlers.utils import protected, bad_request, invalid_input, unpack_json_request, json_response, not_found
 from virtool.permissions import PERMISSIONS
 from virtool.groups import merge_group_permissions
-from virtool.users import projection, processor, invalidate_session, user_exists, hash_password
+from virtool.users import projection, processor, user_exists, hash_password
 
 
 @protected("manage_users")
@@ -15,8 +15,7 @@ async def find(req):
     Get a list of the existing ``user_ids`` in the database.
      
     """
-    data = [processor(document) for document in await req.app["db"].users.find({}, projection).to_list(None)]
-    return json_response(data)
+    return json_response(req.app["db"].users.distinct("_id"))
 
 
 @protected("manage_users")

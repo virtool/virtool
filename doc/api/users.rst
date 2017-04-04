@@ -8,21 +8,21 @@ Methods intended for user management by administrative users.
 List
 ----
 
-List the ``user_ids`` for all users in the database.
+List the ``user_id`` for every user in the database.
 
 ::
 
     GET /users
 
+**Response**
+
 .. code-block:: javascript
 
-    {
-        users: [
-            "bob",
-            "fred",
-            "wilfred"
-        ]
-    }
+    [
+        "bob",
+        "fred",
+        "wilfred"
+    ]
 
 
 Get
@@ -41,12 +41,17 @@ Get a complete user document. Sensitive data including passwords, salts, and ses
 
     {
         "user_id" : "bob",
-        "_version" : 13,
         "invalidate_sessions" : true,
         "last_password_change" : "2017-02-17T13:58:25.792550",
         "primary_group" : "",
         "groups" : [],
-        "settings" : {},
+        "settings" : {
+            "quick_analyze_algorithm" : "pathoscope_bowtie",
+            "skip_quick_analyze_dialog" : true,
+            "show_ids" : true,
+            "show_versions" : true
+        },
+        "force_reset" : false,
         "permissions" : {
             "remove_virus" : false,
             "rebuild_index" : false,
@@ -60,19 +65,7 @@ Get a complete user document. Sensitive data including passwords, salts, and ses
             "modify_virus" : false,
             "modify_options" : false,
             "add_sample" : false
-        },
-        "sessions" : [
-            {
-                "browser" : {
-                    "name" : "Firefox",
-                    "version" : "51.0"
-                },
-                "token" : "92b16f56663da0fec99e8cda",
-                "ip" : "127.0.0.1",
-                "timestamp" : "2017-02-06T13:00:07.664126"
-            }
-        ],
-        "force_reset" : false
+        }
     }
 
 
@@ -104,12 +97,16 @@ Create a new user.
 
     {
         "user_id" : "fred",
-        "_version" : 0,
         "invalidate_sessions" : true,
         "last_password_change" : "2017-02-17T13:58:25.792550",
         "primary_group" : "",
         "groups" : [],
-        "settings" : {},
+        "settings" : {
+            "quick_analyze_algorithm" : "pathoscope_bowtie",
+            "skip_quick_analyze_dialog" : true,
+            "show_ids" : true,
+            "show_versions" : true
+        },
         "permissions" : {
             "remove_virus" : false,
             "rebuild_index" : false,
@@ -124,17 +121,6 @@ Create a new user.
             "modify_options" : false,
             "add_sample" : false
         },
-        "sessions" : [
-            {
-                "browser" : {
-                    "name" : "Firefox",
-                    "version" : "51.0"
-                },
-                "token" : "92b16f56663da0fec99e8cda",
-                "ip" : "127.0.0.1",
-                "timestamp" : "2017-02-06T13:00:07.664126"
-            }
-        ],
         "force_reset" : true
     }
 

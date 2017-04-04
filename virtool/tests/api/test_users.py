@@ -19,37 +19,7 @@ class TestFind:
 
         assert resp.status == 200
 
-        data = await resp.json()
-
-        for i, user_id in enumerate(user_ids):
-            assert data[i] == {
-                "user_id": user_id,
-                "force_reset": False,
-                "groups": [],
-                "last_password_change": "2015-10-06T20:00:00+00:00",
-                "permissions": {
-                    "add_host": False,
-                    "add_sample": False,
-                    "add_virus": False,
-                    "archive_job": False,
-                    "cancel_job": False,
-                    "manage_users": False,
-                    "modify_hmm": False,
-                    "modify_options": False,
-                    "modify_virus": False,
-                    "rebuild_index": False,
-                    "remove_host": False,
-                    "remove_job": False,
-                    "remove_virus": False
-                },
-                "primary_group": "",
-                "settings": {
-                    "quick_analyze_algorithm": "pathoscope_bowtie",
-                    "show_ids": True,
-                    "show_versions": True,
-                    "skip_quick_analyze_dialog": True
-                }
-            }
+        assert set(await resp.json()) == set(user_ids)
 
     async def test_not_authorized(self, do_get):
         """
