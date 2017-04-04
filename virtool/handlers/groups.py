@@ -4,10 +4,12 @@ import pymongo.errors
 from pymongo import ReturnDocument
 from virtool.groups import projection, processor, update_member_users
 from virtool.permissions import PERMISSIONS
-from virtool.handlers.utils import json_response, bad_request, not_found
+from virtool.handlers.utils import json_response, bad_request, not_found, protected
 
 logger = logging.getLogger(__name__)
 
+
+@protected("manage_users")
 async def find(req):
     """
     Get a list of all existing group documents.
@@ -17,6 +19,7 @@ async def find(req):
     return json_response([processor(d) for d in documents])
 
 
+@protected("manage_users")
 async def create(req):
     """
     Adds a new user group.
@@ -43,6 +46,7 @@ async def create(req):
     return json_response(processor(document))
 
 
+@protected("manage_users")
 async def get(req):
     """
     Gets a complete group document.
@@ -56,6 +60,7 @@ async def get(req):
     return not_found()
 
 
+@protected("manage_users")
 async def update_permissions(req):
     """
     Updates the permissions of a given group.
@@ -86,6 +91,7 @@ async def update_permissions(req):
     return json_response(document)
 
 
+@protected("manage_users")
 async def remove(req):
     """
     Remove a group.

@@ -1,8 +1,3 @@
-import json
-
-from virtool.web import create_app
-
-
 class TestFind:
 
     async def test_no_params(self, test_db, do_get, all_permissions, no_permissions):
@@ -20,7 +15,7 @@ class TestFind:
             "permissions": no_permissions
         })
 
-        resp = await do_get("/api/groups")
+        resp = await do_get("/api/groups", authorize=True, permissions=["manage_users"])
 
         assert resp.status == 200
 
@@ -35,6 +30,32 @@ class TestFind:
             }
         ]
 
+    async def test_not_authorized(self, do_get):
+        """
+        Test that a request from an unauthorized session results in a ``403`` response. 
+
+        """
+        resp = await do_get("/api/groups")
+
+        assert resp.status == 403
+
+        assert await resp.json() == {
+            "message": "Not authorized"
+        }
+
+    async def test_not_permitted(self, do_get):
+        """
+        Test that a request from a session with inadequate permissions results in a ``403`` response. 
+
+        """
+        resp = await do_get("/api/groups", authorize=True)
+
+        assert resp.status == 403
+
+        assert await resp.json() == {
+            "message": "Not permitted"
+        }
+
 
 class TestCreate:
 
@@ -45,7 +66,7 @@ class TestCreate:
         """
         resp = await do_post("/api/groups", data={
             "group_id": "test"
-        })
+        }, authorize=True, permissions=["manage_users"])
 
         assert resp.status == 200
 
@@ -74,7 +95,7 @@ class TestCreate:
 
         resp = await do_post("/api/groups", data={
             "group_id": "test"
-        })
+        }, authorize=True, permissions=["manage_users"])
 
         assert resp.status == 400
 
@@ -85,7 +106,7 @@ class TestCreate:
     async def test_missing(self, do_post):
         resp = await do_post("/api/groups", data={
             "test": "test"
-        })
+        }, authorize=True, permissions=["manage_users"])
 
         assert resp.status == 400
 
@@ -96,12 +117,38 @@ class TestCreate:
     async def test_wrong_type(self, do_post):
         resp = await do_post("/api/groups", data={
             "group_id": 1
-        })
+        }, authorize=True, permissions=["manage_users"])
 
         assert resp.status == 400
 
         assert await resp.json() == {
             "message": "Wrong type for group_id"
+        }
+
+    async def test_not_authorized(self, do_post):
+        """
+        Test that a request from an unauthorized session results in a ``403`` response. 
+
+        """
+        resp = await do_post("/api/groups", {})
+
+        assert resp.status == 403
+
+        assert await resp.json() == {
+            "message": "Not authorized"
+        }
+
+    async def test_not_permitted(self, do_post):
+        """
+        Test that a request from a session with inadequate permissions results in a ``403`` response. 
+
+        """
+        resp = await do_post("/api/groups", {}, authorize=True)
+
+        assert resp.status == 403
+
+        assert await resp.json() == {
+            "message": "Not permitted"
         }
 
 
@@ -117,7 +164,7 @@ class TestGet:
             "permissions": all_permissions
         })
 
-        resp = await do_get("/api/groups/test")
+        resp = await do_get("/api/groups/test", authorize=True, permissions=["manage_users"])
 
         assert await resp.json() == {
             "group_id": "test",
@@ -129,12 +176,38 @@ class TestGet:
         Test that a ``GET /api/groups/:group_id`` returns 404 for a non-existent ``group_id``.
          
         """
-        resp = await do_get("/api/groups/foo")
+        resp = await do_get("/api/groups/foo", authorize=True, permissions=["manage_users"])
 
         assert resp.status == 404
 
         assert await resp.json() == {
             "message": "Not found"
+        }
+
+    async def test_not_authorized(self, do_get):
+        """
+        Test that a request from an unauthorized session results in a ``403`` response. 
+
+        """
+        resp = await do_get("/api/groups/test")
+
+        assert resp.status == 403
+
+        assert await resp.json() == {
+            "message": "Not authorized"
+        }
+
+    async def test_not_permitted(self, do_get):
+        """
+        Test that a request from a session with inadequate permissions results in a ``403`` response. 
+
+        """
+        resp = await do_get("/api/groups/test", authorize=True)
+
+        assert resp.status == 403
+
+        assert await resp.json() == {
+            "message": "Not permitted"
         }
 
 
@@ -148,7 +221,7 @@ class TestUpdatePermissions:
 
         resp = await do_put("/api/groups/test", data={
             "modify_virus": True
-        })
+        }, authorize=True, permissions=["manage_users"])
 
         assert resp.status == 200
 
@@ -174,7 +247,7 @@ class TestUpdatePermissions:
 
         resp = await do_put("/api/groups/test", data={
             "foo_bar": True
-        })
+        }, authorize=True, permissions=["manage_users"])
 
         assert resp.status == 400
 
@@ -185,12 +258,38 @@ class TestUpdatePermissions:
     async def test_not_found(self, do_put):
         resp = await do_put("/api/groups/test", data={
             "modify_virus": True
-        })
+        }, authorize=True, permissions=["manage_users"])
 
         assert resp.status == 404
 
         assert await resp.json() == {
             "message": "Not found"
+        }
+
+    async def test_not_authorized(self, do_put):
+        """
+        Test that a request from an unauthorized session results in a ``403`` response. 
+
+        """
+        resp = await do_put("/api/groups/test", {})
+
+        assert resp.status == 403
+
+        assert await resp.json() == {
+            "message": "Not authorized"
+        }
+
+    async def test_not_permitted(self, do_put):
+        """
+        Test that a request from a session with inadequate permissions results in a ``403`` response. 
+
+        """
+        resp = await do_put("/api/groups/test", {}, authorize=True)
+
+        assert resp.status == 403
+
+        assert await resp.json() == {
+            "message": "Not permitted"
         }
 
 
@@ -206,7 +305,7 @@ class TestRemove:
             "permissions": no_permissions
         })
 
-        resp = await do_delete("/api/groups/test")
+        resp = await do_delete("/api/groups/test", authorize=True, permissions=["manage_users"])
 
         assert await resp.json() == {
             "removed": "test"
@@ -221,7 +320,7 @@ class TestRemove:
         Test that 404 is returned for non-existent group.
          
         """
-        resp = await do_delete("/api/groups/test")
+        resp = await do_delete("/api/groups/test", authorize=True, permissions=["manage_users"])
 
         assert await resp.json() == {
             "message": "Not found"
@@ -234,10 +333,36 @@ class TestRemove:
         Test that the administrator group cannot be removed (400).
          
         """
-        resp = await do_delete("/api/groups/administrator")
+        resp = await do_delete("/api/groups/administrator", authorize=True, permissions=["manage_users"])
 
         assert await resp.json() == {
             "message": "Cannot remove administrator group"
         }
 
         assert resp.status == 400
+
+    async def test_not_authorized(self, do_delete):
+        """
+        Test that a request from an unauthorized session results in a ``403`` response. 
+
+        """
+        resp = await do_delete("/api/groups/test")
+
+        assert resp.status == 403
+
+        assert await resp.json() == {
+            "message": "Not authorized"
+        }
+
+    async def test_not_permitted(self, do_delete):
+        """
+        Test that a request from a session with inadequate permissions results in a ``403`` response. 
+
+        """
+        resp = await do_delete("/api/groups/test", authorize=True)
+
+        assert resp.status == 403
+
+        assert await resp.json() == {
+            "message": "Not permitted"
+        }
