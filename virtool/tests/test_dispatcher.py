@@ -1,238 +1,288 @@
-import json
 import pytest
 
-from virtool.dispatcher import Dispatcher, gen_log_prefix
-
-
-@pytest.fixture(scope="function")
-def empty_dispatcher(called_tester):
-    return Dispatcher(called_tester())
-
-
-@pytest.fixture(scope="function")
-def dispatcher(empty_dispatcher, mock_interface, mock_settings):
-    empty_dispatcher.add_interface("test", mock_interface, mock_settings)
-    return empty_dispatcher
-
-
-@pytest.fixture(params=["open", "on_message", "on_close", "write_message"])
-def bad_connection(request, mock_connection):
-    def create(settings):
-        socket = mock_connection(settings, auto=False)
-        setattr(socket, request.param, None)
-
-        return socket
-
-    return create
-
-
-@pytest.fixture(scope="function")
-def fake_message():
-    return {
-        "operation": "test",
-        "interface": "test",
-        "data": dict(message="This is a test")
-    }
-
-
-class TestInit:
-
-    def test_ping(self, dispatcher):
-
-        callback = dispatcher.add_periodic_callback
-
-        assert callback.was_called
-        assert callback.with_args[0].__name__ == "ping"
-        assert callback.with_args[1] == 10000
+from virtool.dispatcher import Dispatcher, Connection
 
 
 class TestConnections:
 
-    def test_add_connection(self, dispatcher, mock_connection):
+    def test_add_connection(self, mocker):
 
-        conn = mock_connection(dispatcher, auto=False)
+        dispatcher = Dispatcher()
 
-        assert dispatcher.connections == []
+        m = mocker.Mock()
 
-        conn.open()
+        dispatcher.add_connection(m)
 
-        assert dispatcher.connections == [conn]
+        assert m in dispatcher.connections
 
-    def test_add_bad_connection(self, dispatcher, bad_connection):
+    def test_remove_connection(self, mocker):
 
-        conn = bad_connection(dispatcher)
+        dispatcher = Dispatcher()
 
-        for method_name in ["open", "on_message", "on_close", "write_message"]:
-            if getattr(conn, method_name) is None:
-                with pytest.raises(AttributeError):
-                    dispatcher.add_connection(conn)
+        m = mocker.Mock()
 
-    def test_remove_connection(self, dispatcher, mock_connection):
+        dispatcher.add_connection(m)
 
-        conn = mock_connection(dispatcher)
+        assert m in dispatcher.connections
 
-        assert dispatcher.connections == [conn]
-
-        dispatcher.remove_connection(conn)
-
-        assert dispatcher.connections == []
-
-    def test_close_connection(self, dispatcher, mock_connection):
-
-        conn = mock_connection(dispatcher)
-
-        assert dispatcher.connections == [conn]
-
-        conn.close()
+        dispatcher.remove_connection(m)
 
         assert dispatcher.connections == []
 
 
 class TestDispatch:
 
-    def test_dispatch_authorized(self, dispatcher, mock_connection, fake_message):
+    def test_dispatch_authorized(self, mocker):
         """
-        Test the both of two AUTHORIZED connections can have messages dispatched through them using their
-        ``write_message`` methods.
-
-        """
-        conn1 = mock_connection(dispatcher)
-        conn2 = mock_connection(dispatcher)
-
-        dispatcher.dispatch(fake_message)
-
-        assert conn1.messages[0] == fake_message
-        assert conn2.messages[0] == fake_message
-
-    def test_dispatch_unauthorized(self, dispatcher, mock_connection, fake_message):
-        """
-        Test the neither of two unauthorized connections have their ``write_message`` methods called during a dispatch.
+        Test if an authorized connection can have a message dispatched through it using its ``send`` method.
 
         """
-        conn1 = mock_connection(dispatcher, authorized=False)
-        conn2 = mock_connection(dispatcher, authorized=False)
+        dispatcher = Dispatcher()
 
-        dispatcher.dispatch(fake_message)
+        m = mocker.Mock(spec=Connection)
 
-        assert conn1.messages == []
-        assert conn2.messages == []
+        m.user_id = "test"
 
-    def test_dispatch_either(self, dispatcher, mock_connection, fake_message):
+        dispatcher.add_connection(m)
+
+        dispatcher.dispatch("test", "test", {"test": True})
+
+        m.send.assert_called_with({
+            "interface": "test",
+            "operation": "test",
+            "data": {
+                "test": True
+            }
+        })
+
+    def test_dispatch_unauthorized(self, mocker):
         """
-        Test the only the authorized connection has its ``write_message`` method called when an one authorized and one
+        Test an unauthorized connections does not have its ``send`` method called during a dispatch.
+
+        """
+        dispatcher = Dispatcher()
+
+        m = mocker.Mock(spec=Connection)
+
+        m.user_id = None
+
+        dispatcher.add_connection(m)
+
+        dispatcher.dispatch("test", "test", {"test": True})
+
+        m.send.assert_not_called()
+
+    def test_dispatch_either(self, mocker):
+        """
+        Test the only the authorized connection has its ``send`` method called when an one authorized and one
         unauthorized connection are managed by the dispatcher.
 
         """
-        conn1 = mock_connection(dispatcher, authorized=False)
-        conn2 = mock_connection(dispatcher, authorized=True)
+        dispatcher = Dispatcher()
 
-        dispatcher.dispatch(fake_message)
+        m_authorized = mocker.Mock(spec=Connection)
+        m_authorized.user_id = "test"
 
-        assert conn1.messages == []
-        assert conn2.messages == [fake_message]
+        m_unauthorized = mocker.Mock(spec=Connection)
+        m_unauthorized.user_id = None
 
-    def test_dispatch_specific(self, dispatcher, mock_connection, fake_message):
+        dispatcher.add_connection(m_authorized)
+        dispatcher.add_connection(m_unauthorized)
+
+        dispatcher.dispatch("test", "test", {"test": True})
+
+        m_authorized.send.assert_called_with({
+            "interface": "test",
+            "operation": "test",
+            "data": {
+                "test": True
+            }
+        })
+
+        m_unauthorized.send.assert_not_called()
+
+    def test_dispatch_specific(self, mocker):
         """
-        Test that only the connection passed in the keyword argument ``connections`` has its ``write_message``
-        method called when a dispatch occurs.
+        Test that only the connection passed in the keyword argument ``connections`` has its ``send`` method called when
+        a dispatch occurs.
 
         """
-        conn1 = mock_connection(dispatcher)
-        conn2 = mock_connection(dispatcher)
+        dispatcher = Dispatcher()
 
-        dispatcher.dispatch(fake_message, connections=[conn2])
+        m_1 = mocker.Mock(spec=Connection)
+        m_1.user_id = "bob"
 
-        assert conn1.messages == []
-        assert conn2.messages[0] == fake_message
+        m_2 = mocker.Mock(spec=Connection)
+        m_2.user_id = "fred"
 
-    def test_callable_filter(self, dispatcher, mock_connection, fake_message):
+        m_3 = mocker.Mock(spec=Connection)
+        m_3.user_id = "test"
+
+        for m in (m_1, m_2, m_3):
+            dispatcher.add_connection(m)
+
+        dispatcher.dispatch("test", "test", {"test": True}, connections=[m_2])
+
+        m_1.send.assert_not_called()
+
+        m_2.send.assert_called_with({
+            "interface": "test",
+            "operation": "test",
+            "data": {
+                "test": True
+            }
+        })
+
+        m_3.send.assert_not_called()
+
+    def test_callable_filter(self, mocker):
         """
-        Test that the conn_filter keyword argument properly filters connections and dispatches to them.
+        Test that the ``conn_filter`` keyword argument properly filters connections and dispatches to them.
 
         """
-        conn1 = mock_connection(dispatcher, username="winston")
-        conn2 = mock_connection(dispatcher, username="wallace")
+        dispatcher = Dispatcher()
 
-        dispatcher.dispatch(fake_message, conn_filter=lambda conn: conn.user["_id"] == "winston")
+        m_1 = mocker.Mock(spec=Connection)
+        m_1.user_id = "bob"
 
-        assert conn1.messages[0] == fake_message
-        assert len(conn2.messages) == 0
+        m_2 = mocker.Mock(spec=Connection)
+        m_2.user_id = "fred"
 
-    def test_not_callable_filter(self, dispatcher, mock_connection, fake_message):
+        dispatcher.add_connection(m_1)
+        dispatcher.add_connection(m_2)
+
+        dispatcher.dispatch("test", "test", {"test": True}, conn_filter=lambda conn: conn.user_id == "bob")
+
+        m_1.send.assert_called_with({
+            "interface": "test",
+            "operation": "test",
+            "data": {
+                "test": True
+            }
+        })
+
+        m_2.send.assert_not_called()
+
+    def test_not_callable_filter(self):
         """
-        Test that that passing a non-callable conn_filter keyword argument raises a specific TypeError.
+        Test that that passing a non-callable ``conn_filter`` keyword argument raises a specific ``TypeError``.
 
         """
         with pytest.raises(TypeError) as err:
-            dispatcher.dispatch(fake_message, conn_filter="abc")
+            Dispatcher().dispatch("test", "test", {"test": True}, conn_filter=True)
 
         assert "conn_filter must be callable" in str(err.value)
 
-    def test_callable_modifier(self, dispatcher, mock_connection, fake_message):
+    def test_callable_modifier(self, mocker):
         """
-        Test that the conn_modifier keyword argument properly modifies connection objects.
+        Test that the ``conn_modifier`` keyword argument properly modifies connection objects.
 
         """
-        conn1 = mock_connection(dispatcher, username="winston")
-        conn2 = mock_connection(dispatcher, username="wallace")
+        dispatcher = Dispatcher()
 
-        def apply_animal(conn):
-            conn.user["animal"] = True
+        m_1 = mocker.Mock(spec=Connection)
+        m_1.user_id = "bob"
 
-        dispatcher.dispatch(fake_message, conn_modifier=apply_animal)
+        m_2 = mocker.Mock(spec=Connection)
+        m_2.user_id = "fred"
 
-        assert conn1.user["animal"]
-        assert conn2.user["animal"]
+        dispatcher.add_connection(m_1)
+        dispatcher.add_connection(m_2)
 
-        assert len(conn1.messages) == 1
-        assert len(conn2.messages) == 1
+        def apply_male(conn):
+            conn.groups = ["men"]
 
-    def test_not_callable_modifier(self, dispatcher, mock_connection, fake_message):
+        dispatcher.dispatch("test", "test", {"test": True}, conn_modifier=apply_male)
+
+        assert m_1.groups == ["men"]
+        assert m_2.groups == ["men"]
+
+    def test_not_callable_modifier(self):
         """
-        Test that an non-callable conn_modifier raises a specific TypeError.
+        Test that an non-callable ``conn_modifier`` raises a specific ``TypeError``.
 
         """
         with pytest.raises(TypeError) as err:
-            dispatcher.dispatch(fake_message, conn_modifier="abc")
+            Dispatcher().dispatch("test", "test", {"test": True}, conn_modifier="abc")
 
         assert "conn_modifier must be callable" in str(err.value)
 
-    def test_modifier_filter(self, dispatcher, mock_connection, fake_message):
+    def test_modifier_filter(self, mocker):
         """
-        Test that the conn_modifier keyword argument only modifies connection objects that pass conn_filter.
+        Test that the ``conn_modifier`` keyword argument only modifies connection objects that pass ``conn_filter``.
 
         """
-        conn1 = mock_connection(dispatcher, username="winston")
-        conn2 = mock_connection(dispatcher, username="wallace")
+        dispatcher = Dispatcher()
 
-        def apply_animal(conn):
-            conn.user["animal"] = "monkey"
+        m_1 = mocker.Mock(spec=Connection)
+        m_1.user_id = "bob"
+        m_1.groups = None
 
-        dispatcher.dispatch(fake_message, conn_filter=lambda conn: conn.user["_id"] == "wallace", conn_modifier=apply_animal)
+        m_2 = mocker.Mock(spec=Connection)
+        m_2.user_id = "fred"
+        m_2.groups = None
 
-        # Only conn2 (wallace) should write messages.
-        assert len(conn1.messages) == 0
-        assert len(conn2.messages) == 1
+        dispatcher.add_connection(m_1)
+        dispatcher.add_connection(m_2)
 
-        # conn1 (winston) should not have 'animal' key.
-        assert "animal" not in conn1.user
+        def apply_male(conn):
+            conn.groups = ["men"]
 
-        # conn2 (wallace) should have 'animal' key set to 'monkey'.
-        assert conn2.user["animal"] == "monkey"
+        dispatcher.dispatch(
+            "test", "test", {"test": True},
+            conn_filter=lambda conn: conn.user_id == "bob",
+            conn_modifier=apply_male
+        )
 
-    def test_writer(self, dispatcher, mock_connection, fake_message):
+        assert m_1.groups == ["men"]
+        assert m_2.groups is None
+
+    def test_writer(self, mocker):
         """
         Test that a writer can properly modify and write a message to the passed connection.
 
         """
-        def fake_writer(connection, message):
-            message["data"] = dict(message="Hello " + connection.user["_id"])
-            connection.write_message(message)
+        def writer(connection, message):
+            if connection.user_id == "bob":
+                message["data"]["test"] = False
 
-        conn1 = mock_connection(dispatcher, username="Fred")
-        conn2 = mock_connection(dispatcher, username="John")
+            connection.send(message)
 
-        dispatcher.dispatch(fake_message, writer=fake_writer)
+        dispatcher = Dispatcher()
 
-        assert conn1.messages[0]["data"]["message"] == "Hello Fred"
-        assert conn2.messages[0]["data"]["message"] == "Hello John"
+        m_1 = mocker.Mock(spec=Connection)
+        m_1.user_id = "bob"
+
+        m_2 = mocker.Mock(spec=Connection)
+        m_2.user_id = "fred"
+
+        dispatcher.add_connection(m_1)
+        dispatcher.add_connection(m_2)
+
+        dispatcher.dispatch("test", "test", {"test": True}, writer=writer)
+
+        m_1.send.assert_called_with({
+            "interface": "test",
+            "operation": "test",
+            "data": {
+                "test": False
+            }
+        })
+
+        m_2.send.assert_called_with({
+            "interface": "test",
+            "operation": "test",
+            "data": {
+                "test": True
+            }
+        })
+
+    def test_writer_not_callable(self):
+        """
+        Test that a writer can properly modify and write a message to the passed connection.
+
+        """
+        with pytest.raises(TypeError) as err:
+            Dispatcher().dispatch("test", "test", {"test": True}, writer="writer")
+
+        assert "writer must be callable" in str(err)

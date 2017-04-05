@@ -1,4 +1,7 @@
+from copy import deepcopy
 from aiohttp import web
+
+from virtool.handlers.utils import dumps
 
 
 async def websocket_handler(req):
@@ -32,10 +35,11 @@ class Connection:
         self.permissions = session
 
     async def send(self, message):
-        await self._ws.send_json(message)
+        await self._ws.send_json(message, dumps=dumps)
 
     async def close(self):
         await self._ws.close()
+
 
 
 class Dispatcher:
@@ -93,12 +97,15 @@ class Dispatcher:
             "data": data
         }
 
-        # If the connections parameter was not set, dispatch the message to all authorized connections.
-        connections = connections or [conn for conn in self.connections if conn.authorized]
+        # If the connections parameter was not set, dispatch the message to all authorized connections. Authorized
+        # connections have assigned ``user_id`` properties.
+        connections = connections or [conn for conn in self.connections if conn.user_id]
 
         if conn_filter:
             if not callable(conn_filter):
                 raise TypeError("conn_filter must be callable")
+
+            print(connections)
 
             connections = [conn for conn in connections if conn_filter(conn)]
 
@@ -114,9 +121,9 @@ class Dispatcher:
                 raise TypeError("writer must be callable")
 
             for connection in connections:
-                writer(connection, dict(message))
+                writer(connection, deepcopy(message))
 
             return
 
         for connection in connections:
-            connection.write_message(message)
+            connection.send(message)
