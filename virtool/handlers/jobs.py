@@ -12,7 +12,7 @@ async def find(req):
      
     """
     documents = await req.app["db"].jobs.find({}, dispatch_projection).to_list(15)
-    return json_response([processor(document) for document in documents])
+    return json_response([dispatch_processor(document) for document in documents])
 
 
 async def get(req):
@@ -22,7 +22,7 @@ async def get(req):
     """
     job_id = req.match_info["job_id"]
 
-    document = await req.app["db"].find_one(job_id)
+    document = await req.app["db"].jobs.find_one(job_id)
 
     if not document:
         return not_found()
