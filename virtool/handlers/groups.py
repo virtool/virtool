@@ -99,8 +99,6 @@ async def remove(req):
     """
     group_id = req.match_info["group_id"]
 
-    print("group_id", group_id)
-
     # Only accept single id strings.
     if not isinstance(group_id, str):
         return bad_request("Invalid type")

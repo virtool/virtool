@@ -126,8 +126,6 @@ async def set_force_reset(req):
 
     data = await req.json()
 
-    print(data)
-
     v = Validator({
         "force_reset": {"type": "boolean", "required": True}
     })
@@ -190,8 +188,6 @@ async def add_group(req):
     }, return_document=ReturnDocument.AFTER, projection=["groups", "permissions"])
 
     document["user_id"] = document.pop("_id")
-
-    print(document)
 
     return json_response(document)
 

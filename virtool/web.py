@@ -34,8 +34,6 @@ def init_thread_pool(app):
 async def init_settings(app):
     app["settings"] = Settings(app)
     await app["settings"].load()
-    import pprint
-    pprint.pprint(app["settings"].data)
 
 
 async def init_dispatcher(app):

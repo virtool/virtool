@@ -41,7 +41,6 @@ class Connection:
         await self._ws.close()
 
 
-
 class Dispatcher:
 
     def __init__(self):
