@@ -4,6 +4,7 @@ from virtool.tests.fixtures.client import *
 from virtool.tests.fixtures.core import *
 from virtool.tests.fixtures.hmm import *
 from virtool.tests.fixtures.users import *
+from virtool.tests.fixtures.viruses import *
 
 
 def pytest_addoption(parser):
