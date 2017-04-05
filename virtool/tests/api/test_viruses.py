@@ -99,11 +99,11 @@ class TestCreate:
         assert resp.status == 422
 
         assert await resp.json() == {
-            'message': 'Invalid input',
-            'errors': {
-                'virus_name': ['unknown field'],
-                'abbreviation': ['must be of string type'],
-                'name': ['required field']
+            "message": "Invalid input",
+            "errors": {
+                "virus_name": ["unknown field"],
+                "abbreviation": ["must be of string type"],
+                "name": ["required field"]
             }
         }
 
@@ -189,3 +189,53 @@ class TestCreate:
         assert await resp.json() == {
             "message": "Not permitted"
         }
+
+
+class TestListIsolates:
+
+    async def test(self, test_db, do_get, test_virus):
+        test_virus["isolates"].append({
+            "default": True,
+            "source_type": "isolate",
+            "source_name": "7865",
+            "isolate_id": "bcb9b352"
+        })
+
+        test_db.viruses.insert(test_virus)
+
+        resp = await do_get("/api/viruses/6116cba1/isolates")
+
+        assert resp.status == 200
+
+        assert await resp.json() == [
+            {
+                "default": True,
+                "source_type": "isolate",
+                "source_name": "8816-v2",
+                "isolate_id": "cab8b360"
+            },
+            {
+                "default": True,
+                "source_type": "isolate",
+                "source_name": "7865",
+                "isolate_id": "bcb9b352"
+            }
+        ]
+
+    async def test_not_found(self, do_get):
+        resp = await do_get("/api/viruses/6116cba1/isolates")
+
+        assert resp.status == 404
+
+        assert await resp.json() == {
+            "message": "Not found"
+        }
+
+
+class TestGetIsolate:
+
+
+
+
+
+

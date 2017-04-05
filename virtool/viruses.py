@@ -38,7 +38,6 @@ async def join(db, virus_id, document=None):
     database will not be queried for the virus based on its id.
     
     :param db: a database client
-    :type db: object
 
     :param virus_id: the id of the virus to join.
     :type virus_id: str
@@ -51,8 +50,7 @@ async def join(db, virus_id, document=None):
 
     """
     # Get the virus entry if a virus parameter was not passed.
-    if not document:
-        document = await db.viruses.find_one({"_id": virus_id})
+    document = document or await db.viruses.find_one(virus_id)
 
     if document is None:
         return None

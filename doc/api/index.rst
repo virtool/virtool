@@ -7,6 +7,7 @@ Web API
     overview
     jobs
     samples
+    viruses
     hmm
     users
     groups

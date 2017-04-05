@@ -1,13 +1,9 @@
-from pymongo import ReturnDocument
 from cerberus import Validator
 
-
 import virtool.data_utils
-from virtool import history
 from virtool.handlers.utils import unpack_json_request, json_response, not_found, invalid_input, protected
 from virtool.viruses import processor, dispatch_projection, extract_isolate_ids, merge_virus, \
-    check_name_and_abbreviation
-
+    check_name_and_abbreviation, join
 
 
 async def find(req):
@@ -24,16 +20,12 @@ async def get(req):
 
     virus_id = req.match_info["virus_id"]
 
-    document = await db.viruses.find_one(virus_id)
+    joined = await join(db, virus_id)
 
-    if not document:
+    if not joined:
         return not_found()
 
-    isolate_ids = extract_isolate_ids(document)
-
-    sequence_documents = await db.sequences.find({"isolate_id": {"$in": isolate_ids}}).to_list(None)
-
-    return json_response(processor(merge_virus(document, sequence_documents)))
+    return json_response(processor(joined))
 
 
 @protected("modify_virus")
@@ -72,6 +64,25 @@ async def create(req):
     await db.viruses.insert_one(data)
 
     return json_response(processor(data))
+
+
+async def list_isolates(req):
+    """
+    Returns a list of isolate records for a given virus. 
+     
+    """
+    db = req.app["db"]
+
+    virus_id = req.match_info["virus_id"]
+
+    document = await db.viruses.find_one(virus_id, ["isolates"])
+
+    if not document:
+        return not_found()
+
+    return json_response(document["isolates"])
+
+
 
 
 '''

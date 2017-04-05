@@ -2,7 +2,7 @@ import os
 import virtool.blast
 
 from virtool.utils import timestamp, rm
-from virtool.data_utils import get_new_id
+from virtool.data_utils import get_new_id, format_doc_id
 from virtool.samples import recalculate_algorithm_tags
 from virtool.indexes import get_current_index
 
@@ -16,6 +16,10 @@ projector = [
     "username",
     "timestamp"
 ]
+
+
+def processor(document):
+    return format_doc_id("analysis", document)
 
 
 async def new(db, settings, sample_id, name, user_id, algorithm):
