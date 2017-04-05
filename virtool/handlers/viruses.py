@@ -1,43 +1,18 @@
-from aiohttp import web
 from pymongo import ReturnDocument
-from virtool.data_utils import get_new_id
-from virtool.handlers.utils import unpack_json_request
-from virtool import viruses
+from cerberus import Validator
+
+
+import virtool.data_utils
 from virtool import history
+from virtool.handlers.utils import unpack_json_request, json_response, not_found, invalid_input, protected
+from virtool.viruses import processor, dispatch_projection, extract_isolate_ids, merge_virus, \
+    check_name_and_abbreviation
+
 
 
 async def find(req):
-    documents = await req.app["db"].viruses.find({}).to_list(length=10)
-    return web.json_response(documents)
-
-
-async def create(req):
-    """
-    Adds a new virus to the collection. Checks to make sure the supplied virus name and abbreviation are not already in
-    use in the collection. Any errors are sent back to the client.
-
-    """
-    db, data = await unpack_json_request(req)
-
-    unique_name, unique_abbreviation = await viruses.check_name_and_abbreviation(data["name"], data["abbreviation"])
-
-    if not unique_name and not unique_abbreviation:
-        return web.json_response({"Name and abbreviation are already in use"}, status=400)
-
-    if not unique_name:
-        return web.json_response({"Name is already in use"}, status=400)
-
-    if not unique_abbreviation:
-        return web.json_response({"Abbreviation is already in use"}, status=400)
-
-    data.update({
-        "_id": await get_new_id(db.viruses),
-        "user_id": req["session"]["user_id"]
-    })
-
-    await db.viruses.insert_one(data)
-
-    return web.json_response(viruses.to_client(data))
+    documents = await req.app["db"].viruses.find({}, dispatch_projection).to_list(length=10)
+    return json_response([processor(document) for document in documents])
 
 
 async def get(req):
@@ -47,15 +22,59 @@ async def get(req):
     """
     db = req.app["db"]
 
-    # Gather the virus document and associated documents from the sequences collection into one dict. This will be sent
-    # to the client.
-    document = await db.viruses.find_one({"_id": req.match_info["virus_id"]})
+    virus_id = req.match_info["virus_id"]
+
+    document = await db.viruses.find_one(virus_id)
 
     if not document:
-        return web.json_response({"message": "Not found"}, status=404)
+        return not_found()
 
-    return web.json_response(viruses.to_client(document))
+    isolate_ids = extract_isolate_ids(document)
 
+    sequence_documents = await db.sequences.find({"isolate_id": {"$in": isolate_ids}}).to_list(None)
+
+    return json_response(processor(merge_virus(document, sequence_documents)))
+
+
+@protected("modify_virus")
+async def create(req):
+    """
+    Adds a new virus to the collection. Checks to make sure the supplied virus name and abbreviation are not already in
+    use in the collection. Any errors are sent back to the client.
+
+    """
+    db, data = await unpack_json_request(req)
+
+    v = Validator({
+        "name": {"type": "string", "required": True},
+        "abbreviation": {"type": "string"}
+    })
+
+    if not v(data):
+        return invalid_input(v.errors)
+
+    unique_name, unique_abbreviation = await check_name_and_abbreviation(db, data["name"], data["abbreviation"])
+
+    if not unique_name and not unique_abbreviation:
+        return json_response({"message": "Name and abbreviation already exist"}, status=409)
+
+    if not unique_name:
+        return json_response({"message": "Name already exists"}, status=409)
+
+    if not unique_abbreviation:
+        return json_response({"message": "Abbreviation already exists"}, status=409)
+
+    data.update({
+        "_id": await virtool.data_utils.get_new_id(db.viruses),
+        "user_id": req["session"].user_id
+    })
+
+    await db.viruses.insert_one(data)
+
+    return json_response(processor(data))
+
+
+'''
 
 async def update(req):
     """
@@ -395,3 +414,4 @@ async def authorize_upload(req):
     )
 
     return web.json_response({"file_id": file_id})
+'''

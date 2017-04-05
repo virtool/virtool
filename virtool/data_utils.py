@@ -1,7 +1,7 @@
 from virtool.utils import random_alphanumeric
 
 
-async def get_new_id(collection, excluded=None, randomizer=None):
+async def get_new_id(collection, excluded=None):
     """
     Returns a new, unique, id that can be used for inserting a new document. Will not return any id that is included
     in ``excluded``.
@@ -15,7 +15,12 @@ async def get_new_id(collection, excluded=None, randomizer=None):
 
     excluded = set(excluded)
 
-    return random_alphanumeric(length=8, excluded=excluded, randomizer=randomizer)
+    return random_alphanumeric(length=8, excluded=excluded)
+
+
+def format_doc_id(prefix, document):
+    document[prefix + "_id"] = document.pop("_id")
+    return document
 
 
 def coerce_list(obj):

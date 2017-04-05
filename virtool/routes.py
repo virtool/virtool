@@ -1,4 +1,4 @@
-from virtool.handlers import root, jobs, samples, history, hmm, hosts, account, groups, users
+from virtool.handlers import root, jobs, samples, viruses, history, hmm, hosts, account, groups, users
 
 from virtool.dispatcher import websocket_handler
 
@@ -6,8 +6,9 @@ from virtool.dispatcher import websocket_handler
 def setup_routes(app):
     app.router.add_get("/api", root.get)
 
-    setup_samples_routes(app)
     setup_jobs_routes(app)
+    setup_samples_routes(app)
+    setup_viruses_routes(app)
     setup_hmm_routes(app)
     setup_hosts_routes(app)
     setup_account_routes(app)
@@ -36,6 +37,12 @@ def setup_samples_routes(app):
 
     app.router.add_put("/api/samples/{sample_id}/group", samples.set_owner_group),
     app.router.add_put("/api/samples/{sample_id}/rights", samples.set_rights),
+
+
+def setup_viruses_routes(app):
+    app.router.add_get("/api/viruses", viruses.find)
+    app.router.add_get("/api/viruses/{virus_id}", viruses.get)
+    app.router.add_post("/api/viruses", viruses.create)
 
 
 def setup_history_routes(app):
