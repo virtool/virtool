@@ -37,8 +37,12 @@ class TestFind:
 class TestGet:
 
     async def test(self, test_db, do_get, test_virus, test_sequence, test_merged_virus):
-        test_db.viruses.insert(test_virus)
-        test_db.sequences.insert(test_sequence)
+        """
+        Test that a valid request returns a complete virus document. 
+         
+        """
+        test_db.viruses.insert_one(test_virus)
+        test_db.sequences.insert_one(test_sequence)
 
         resp = await do_get("/api/viruses/" + test_virus["_id"])
 
@@ -47,7 +51,11 @@ class TestGet:
         assert await resp.json() == test_merged_virus
 
     async def test_no_sequences(self, test_db, do_get, test_virus, test_merged_virus):
-        test_db.viruses.insert(test_virus)
+        """
+        Test that a valid request returns an empty sequence list for a virus with no associated sequences.
+         
+        """
+        test_db.viruses.insert_one(test_virus)
 
         resp = await do_get("/api/viruses/" + test_virus["_id"])
 
@@ -58,6 +66,10 @@ class TestGet:
         assert await resp.json() == test_merged_virus
 
     async def test_not_found(self, do_get):
+        """
+        Test that a request for a non-existent virus results in a ``404`` response.
+         
+        """
         resp = await do_get("/api/viruses/foobar")
 
         assert resp.status == 404
@@ -70,6 +82,10 @@ class TestGet:
 class TestCreate:
 
     async def test(self, monkeypatch, test_db, do_post):
+        """
+        Test that a valid request results in the creation of a virus document and a ``201`` response.
+         
+        """
         data = {
             "name": "Tobacco mosaic virus",
             "abbreviation": "TMV"
@@ -102,6 +118,10 @@ class TestCreate:
         assert test_db.viruses.find_one() == expected
 
     async def test_invalid_input(self, do_post):
+        """
+        Test that invalid input results in a ``422`` response with error data.
+         
+        """
         data = {
             "virus_name": "Tobacco mosaic virus",
             "abbreviation": 123
@@ -121,7 +141,11 @@ class TestCreate:
         }
 
     async def test_name_exists(self, test_db, do_post):
-        test_db.viruses.insert({
+        """
+        Test that the request fails with ``409 Conflict`` if the requested virus name already exists.
+         
+        """
+        test_db.viruses.insert_one({
             "name": "Tobacco mosaic virus"
         })
 
@@ -139,7 +163,11 @@ class TestCreate:
         }
 
     async def test_abbreviation_exists(self, test_db, do_post):
-        test_db.viruses.insert({
+        """
+        Test that the request fails with ``409 Conflict`` if the requested abbreviation already exists.
+         
+        """
+        test_db.viruses.insert_one({
             "abbreviation": "TMV"
         })
 
@@ -157,7 +185,11 @@ class TestCreate:
         }
 
     async def test_both_exist(self, test_db, do_post):
-        test_db.viruses.insert({
+        """
+        Test that the request fails with ``409 Conflict`` if the requested name and abbreviation already exist.
+
+        """
+        test_db.viruses.insert_one({
             "name": "Tobacco mosaic virus",
             "abbreviation": "TMV"
         })
@@ -176,6 +208,10 @@ class TestCreate:
         }
 
     async def test_not_authorized(self, do_post):
+        """
+        Test that the request fails if the session is not authorized
+         
+        """
         data = {
             "name": "Tobacco mosaic virus",
             "abbreviation": "TMV"
@@ -190,6 +226,10 @@ class TestCreate:
         }
 
     async def test_not_permitted(self, do_post):
+        """
+        Test that the request fails if the session user has inadequate permissions.
+
+        """
         data = {
             "name": "Tobacco mosaic virus",
             "abbreviation": "TMV"
@@ -207,7 +247,11 @@ class TestCreate:
 class TestEdit:
 
     async def test(self, test_db, do_patch, test_virus):
-        test_db.viruses.insert(test_virus)
+        """
+        Test that a valid request results in the correct changes to a virus document.
+
+        """
+        test_db.viruses.insert_one(test_virus)
 
         data = {
             "name": "Tobacco mosaic virus"
@@ -230,6 +274,10 @@ class TestEdit:
         assert await resp.json() == processor(test_virus)
 
     async def test_invalid_input(self, do_patch):
+        """
+        Test that invalid input results in a ``422`` response with error data.
+
+        """
         data = {
             "virus_name": "Tobacco mosaic virus",
             "abbreviation": 123
@@ -248,7 +296,11 @@ class TestEdit:
         }
 
     async def test_name_exists(self, test_db, do_patch):
-        test_db.viruses.insert({
+        """
+        Test that the request fails with ``409 Conflict`` if the requested virus name already exists.
+
+        """
+        test_db.viruses.insert_one({
             "_id": "test",
             "name": "Tobacco mosaic virus",
             "isolates": []
@@ -268,7 +320,11 @@ class TestEdit:
         }
 
     async def test_abbreviation_exists(self, test_db, do_patch):
-        test_db.viruses.insert({
+        """
+        Test that the request fails with ``409 Conflict`` if the requested abbreviation already exists.
+
+        """
+        test_db.viruses.insert_one({
             "_id": "test",
             "abbreviation": "TMV",
             "isolates": []
@@ -287,7 +343,11 @@ class TestEdit:
         }
 
     async def test_both_exist(self, test_db, do_patch):
-        test_db.viruses.insert({
+        """
+        Test that the request fails with ``409 Conflict`` if the requested name and abbreviation already exist.
+
+        """
+        test_db.viruses.insert_one({
             "_id": "test",
             "name": "Tobacco mosaic virus",
             "abbreviation": "TMV",
@@ -308,6 +368,10 @@ class TestEdit:
         }
 
     async def test_not_authorized(self, do_patch):
+        """
+        Test that the request fails if the session is not authorized
+
+        """
         data = {
             "name": "Tobacco mosaic virus",
             "abbreviation": "TMV"
@@ -322,6 +386,10 @@ class TestEdit:
         }
 
     async def test_not_permitted(self, do_patch):
+        """
+        Test that the request fails if the session user has inadequate permissions.
+
+        """
         resp = await do_patch("/api/viruses/test", {}, authorize=True)
 
         assert resp.status == 403
@@ -338,7 +406,7 @@ class TestRemove:
         Test that an existing virus can be removed.        
          
         """
-        test_db.viruses.insert(test_virus)
+        test_db.viruses.insert_one(test_virus)
 
         assert test_db.viruses.find({"_id": "6116cba1"}).count()
 
@@ -361,6 +429,10 @@ class TestRemove:
         }
 
     async def test_not_authorized(self, do_delete):
+        """
+        Test that the request fails if the session is not authorized
+
+        """
         resp = await do_delete("/api/viruses/6116cba1", {})
 
         assert resp.status == 403
@@ -370,6 +442,10 @@ class TestRemove:
         }
 
     async def test_not_permitted(self, do_delete):
+        """
+        Test that the request fails if the session user has inadequate permissions.
+
+        """
         resp = await do_delete("/api/viruses/6116cba1", authorize=True)
 
         assert resp.status == 403
@@ -393,7 +469,7 @@ class TestListIsolates:
             "isolate_id": "bcb9b352"
         })
 
-        test_db.viruses.insert(test_virus)
+        test_db.viruses.insert_one(test_virus)
 
         resp = await do_get("/api/viruses/6116cba1/isolates")
 
@@ -435,8 +511,8 @@ class TestGetIsolate:
         Test that an existing isolate is successfully returned.
          
         """
-        test_db.viruses.insert(test_virus)
-        test_db.sequences.insert(test_sequence)
+        test_db.viruses.insert_one(test_virus)
+        test_db.sequences.insert_one(test_sequence)
 
         resp = await do_get("/api/viruses/6116cba1/isolates/cab8b360")
 
@@ -482,7 +558,7 @@ class TestAddIsolate:
         process.
          
         """
-        test_db.viruses.insert(test_virus)
+        test_db.viruses.insert_one(test_virus)
 
         data = {
             "source_name": "b",
@@ -529,7 +605,7 @@ class TestAddIsolate:
         Test that a non-default isolate can be properly added
         
         """
-        test_db.viruses.insert(test_virus)
+        test_db.viruses.insert_one(test_virus)
 
         data = {
             "source_name": "b",
@@ -579,7 +655,7 @@ class TestAddIsolate:
         """
         test_virus["isolates"] = []
 
-        test_db.viruses.insert(test_virus)
+        test_db.viruses.insert_one(test_virus)
 
         async def get_fake_id(*args):
             return "test"
@@ -619,7 +695,7 @@ class TestAddIsolate:
         Test that the ``source_type`` value is forced to lower case.
          
         """
-        test_db.viruses.insert(test_virus)
+        test_db.viruses.insert_one(test_virus)
 
         data = {
             "source_name": "Beta",
@@ -667,7 +743,7 @@ class TestAddIsolate:
         default values.
          
         """
-        test_db.viruses.insert(test_virus)
+        test_db.viruses.insert_one(test_virus)
 
         async def get_fake_id(*args):
             return "test"
@@ -704,6 +780,10 @@ class TestAddIsolate:
         ]
 
     async def test_not_authorized(self, do_post):
+        """
+        Test that the request fails if the session is not authorized
+
+        """
         resp = await do_post("/api/viruses/6116cba1/isolates", {})
 
         assert resp.status == 403
@@ -713,6 +793,10 @@ class TestAddIsolate:
         }
 
     async def test_not_permitted(self, do_post):
+        """
+        Test that the request fails if the session user has inadequate permissions.
+
+        """
         resp = await do_post("/api/viruses/6116cba1/isolates", {}, authorize=True)
 
         assert resp.status == 403
@@ -738,7 +822,7 @@ class TestEditIsolate:
             "sequences": []
         })
 
-        test_db.viruses.insert(test_virus)
+        test_db.viruses.insert_one(test_virus)
 
         data = {
             "source_type": "variant",
@@ -780,7 +864,7 @@ class TestEditIsolate:
         appropriate way to change the default isolate is to set ``default`` to ``True`` on another isolate.
 
         """
-        test_db.viruses.insert(test_virus)
+        test_db.viruses.insert_one(test_virus)
 
         data = {
             "default": False
@@ -806,7 +890,7 @@ class TestEditIsolate:
         Test that the ``source_type`` value is forced to lower case.
 
         """
-        test_db.viruses.insert(test_virus)
+        test_db.viruses.insert_one(test_virus)
 
         data = {
             "source_type": "Variant",
@@ -849,6 +933,10 @@ class TestEditIsolate:
         }
 
     async def test_not_authorized(self, do_patch):
+        """
+        Test that the request fails if the session is not authorized
+
+        """
         resp = await do_patch("/api/viruses/6116cba1/isolates/test", {})
 
         assert resp.status == 403
@@ -858,6 +946,10 @@ class TestEditIsolate:
         }
 
     async def test_not_permitted(self, do_patch):
+        """
+        Test that the request fails if the session user has inadequate permissions.
+
+        """
         resp = await do_patch("/api/viruses/6116cba1/isolates/test", {}, authorize=True)
 
         assert resp.status == 403
@@ -875,8 +967,8 @@ class TestRemoveIsolate:
         database.
          
         """
-        test_db.viruses.insert(test_virus)
-        test_db.sequences.insert(test_sequence)
+        test_db.viruses.insert_one(test_virus)
+        test_db.sequences.insert_one(test_sequence)
 
         assert test_db.viruses.find({"isolates.isolate_id": "cab8b360"}).count() == 1
 
@@ -900,8 +992,8 @@ class TestRemoveIsolate:
             "isolate_id": "bcb9b352"
         })
 
-        test_db.viruses.insert(test_virus)
-        test_db.sequences.insert(test_sequence)
+        test_db.viruses.insert_one(test_virus)
+        test_db.sequences.insert_one(test_sequence)
 
         resp = await do_delete("/api/viruses/6116cba1/isolates/cab8b360", authorize=True, permissions=["modify_virus"])
 
@@ -914,6 +1006,10 @@ class TestRemoveIsolate:
         assert test_db.sequences.count() == 0
 
     async def test_virus_not_found(self, do_delete):
+        """
+        Test that removal fails with ``404`` if the virus does not exist.
+         
+        """
         resp = await do_delete("/api/viruses/test/isolates/cab8b360", authorize=True, permissions=["modify_virus"])
 
         assert resp.status == 404
@@ -923,6 +1019,10 @@ class TestRemoveIsolate:
         }
 
     async def test_isolate_not_found(self, do_delete):
+        """
+        Test that removal fails with ``404`` if the isolate does not exist.
+
+        """
         resp = await do_delete("/api/viruses/6116cba1/isolates/test", authorize=True, permissions=["modify_virus"])
 
         assert resp.status == 404
@@ -932,6 +1032,10 @@ class TestRemoveIsolate:
         }
 
     async def test_not_authorized(self, do_delete):
+        """
+        Test that the request fails if the session is not authorized
+
+        """
         resp = await do_delete("/api/viruses/6116cba1/isolates/test")
 
         assert resp.status == 403
@@ -941,6 +1045,10 @@ class TestRemoveIsolate:
         }
 
     async def test_not_permitted(self, do_delete):
+        """
+        Test that the request fails if the session user has inadequate permissions.
+
+        """
         resp = await do_delete("/api/viruses/6116cba1/isolates/test", authorize=True)
 
         assert resp.status == 403

@@ -11,6 +11,10 @@ from virtool.viruses import processor, dispatch_projection, check_name_and_abbre
 
 
 async def find(req):
+    """
+    List truncated virus documents. Will take filters in URL parameters eventually.
+     
+    """
     documents = await req.app["db"].viruses.find({}, dispatch_projection).to_list(length=10)
     return json_response([processor(document) for document in documents])
 
@@ -35,7 +39,7 @@ async def get(req):
 @protected("modify_virus")
 async def create(req):
     """
-    Adds a new virus to the collection. Checks to make sure the supplied virus name and abbreviation are not already in
+    Add a new virus to the collection. Checks to make sure the supplied virus name and abbreviation are not already in
     use in the collection. Any errors are sent back to the client.
 
     """
@@ -193,7 +197,7 @@ async def remove(req):
 
 async def list_isolates(req):
     """
-    Returns a list of isolate records for a given virus. 
+    Return a list of isolate records for a given virus. 
      
     """
     db = req.app["db"]
