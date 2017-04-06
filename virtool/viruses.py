@@ -576,45 +576,6 @@ def send_import_dispatches(self, adds, replaces, flush=False):
         del replaces[:]
 
 
-def insert(self, virus, connections=None):
-    """
-    Inserts the passed virus dict into the collection as a new document, attributing it to the passed username.
-
-    :param virus: the virus dict to insert
-    :type virus: dict
-
-    :param connections: connection objects to dispatch the update to
-    :type connections: list
-
-    :return: the response from the Mongo insert method
-    :rtype: object
-
-    """
-    virus.update({
-        "last_indexed_version": None,
-        "modified": True,
-        "lower_name": virus["name"].lower()
-    })
-
-    if "isolates" not in virus:
-        virus["isolates"] = list()
-
-    response = yield super().insert(virus, connections)
-
-    # Join the virus entry in order to insert the first history record for the virus.
-    joined = yield self.join(virus["_id"])
-
-    yield self.collections["history"].add(
-        "insert",
-        "add",
-        None,  # there is no old document
-        joined,
-        virus["username"]
-    )
-
-    return response
-
-
 def insert_from_import(self, virus):
     virus.update({
         "_version": 0,
@@ -792,10 +753,11 @@ async def get_new_isolate_id(db, used_isolate_ids=None):
     Generates a unique isolate id.
     
     """
-    if not used_isolate_ids:
-        used_isolate_ids = await db.viruses.distinct("isolates.isolate_id")
+    used_isolate_ids = used_isolate_ids or list()
 
-    return random_alphanumeric(8, excluded=used_isolate_ids)
+    used_isolate_ids += await db.viruses.distinct("isolates.isolate_id")
+
+    return random_alphanumeric(8, excluded=set(used_isolate_ids))
 
 
 def merge_virus(virus, sequences):

@@ -43,7 +43,14 @@ def setup_viruses_routes(app):
     app.router.add_get("/api/viruses", viruses.find)
     app.router.add_get("/api/viruses/{virus_id}", viruses.get)
     app.router.add_post("/api/viruses", viruses.create)
+    app.router.add_put("/api/viruses/{virus_id}", viruses.edit)
+    app.router.add_delete("/api/viruses/{virus_id}", viruses.remove)
+
     app.router.add_get("/api/viruses/{virus_id}/isolates", viruses.list_isolates)
+    app.router.add_get("/api/viruses/{virus_id}/isolates/{isolate_id}", viruses.get_isolate)
+    app.router.add_post("/api/viruses/{virus_id}/isolates", viruses.add_isolate)
+    app.router.add_put("/api/viruses/{virus_id}/isolates/{isolate_id}", viruses.edit_isolate)
+    # app.router.add_delete("/api/viruses/{virus_id}/isolates/{isolate_id}", viruses.remove_isolate)
 
 
 def setup_history_routes(app):

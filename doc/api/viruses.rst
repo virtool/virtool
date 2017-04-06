@@ -120,6 +120,59 @@ Create a new virus document. Isolates and sequence data must be added in separat
 
 
 
+Edit
+----
+
+Edit an existing virus.
+
+::
+
+    PUT /api/viruses/:virus_id
+
+
+**Input**
+
++--------------+--------+----------+-------------------------------+
+| Name         | Type   | Optional | Description                   |
++==============+========+==========+===============================+
+| name         | string | True     | the virus name                |
++--------------+--------+----------+-------------------------------+
+| abbreviation | string | False    | an abbreviation for the virus |
++--------------+--------+----------+-------------------------------+
+
+**Response**
+
+.. code-block:: javascript
+
+    {
+        "virus_id": "2f97f077",
+        "user_id": "igboyes",
+        "name": "Tobacco Mosaic Virus",
+        "abbreviation": "TMV"
+    }
+
+
+
+Remove
+------
+
+Edit an existing virus.
+
+::
+
+    PUT /api/viruses/:virus_id
+
+
+**Response**
+
+.. code-block:: javascript
+
+    {
+        "removed": "2f97f077"
+    }
+
+
+
 List Isolates
 -------------
 
@@ -127,7 +180,7 @@ List the isolates for a given virus.
 
 ::
 
-    GET /api/viruses/2f97f077/isolates
+    GET /api/viruses/:virus_id/isolates
 
 
 **Response**
@@ -154,4 +207,115 @@ List the isolates for a given virus.
             "source_type": "internal"
         }
     ]
+
+
+
+Get Isolate
+-----------
+
+Get a single, complete isolate for given virus and isolate ids.
+
+::
+
+    GET /api/viruses/:virus_id/isolates/:isolate_id
+
+
+**Response**
+
+.. code-block:: javascript
+
+    {
+        "default": true,
+        "isolate_id": "cab8b360",
+        "sequences": [
+            {
+                "_id": "KX269872",
+                "annotated": true,
+                "definition": "Prunus virus F isolate 8816-s2 segment...",
+                "host": "sweet cherry",
+                "isolate_id": "cab8b360",
+                "sequence": "TGTTTAAGAGATTAAACAACCGCTTTCGTTACCAGAAACTGCT..."
+            }
+        ],
+        "source_name": "8816-v2",
+        "source_type": "isolate"
+    }
+
+
+
+Add Isolate
+-----------
+
+Add a new isolate to a virus.
+
+Setting the isolate to default will steal default status from any existing default isolate. The first added isolate will
+be set to default regardless of input.
+
+::
+
+    POST /api/viruses/:virus_id/isolates
+
+
+**Input**
+
++--------------+---------+----------+--------------------------------------+
+| Name         | Type    | Optional | Description                          |
++==============+=========+==========+======================================+
+| source_type  | string  | True     | a source type (eg. isolate, variant) |
++--------------+---------+----------+--------------------------------------+
+| source_name  | string  | True     | a source name (eg. 8816-v2, Jal-01)  |
++--------------+---------+----------+--------------------------------------+
+| default      | boolean | True     | set the isolate as default           |
++--------------+---------+----------+--------------------------------------+
+
+**Response**
+
+.. code-block:: javascript
+
+    {
+        "default": false,
+        "isolate_id": "b4ce655d",
+        "source_name": "Jal-01",
+        "source_type": "isolate",
+        "sequences": []
+    }
+
+
+
+Edit Isolate
+------------
+
+Edit an existing isolate. Setting the isolate as default will unset any existing default isolates.
+
+::
+
+    PUT /api/viruses/:virus_id/isolates/:isolate_id
+
+
+**Input**
+
++--------------+---------+----------+--------------------------------------+
+| Name         | Type    | Optional | Description                          |
++==============+=========+==========+======================================+
+| source_type  | string  | True     | a source type (eg. isolate, variant) |
++--------------+---------+----------+--------------------------------------+
+| source_name  | string  | True     | a source name (eg. 8816-v2, Jal-01)  |
++--------------+---------+----------+--------------------------------------+
+| default      | boolean | True     | set the isolate as default           |
++--------------+---------+----------+--------------------------------------+
+
+**Response**
+
+.. code-block:: javascript
+
+    {
+        "default": true,
+        "isolate_id": "b4ce655d",
+        "source_name": "Jal-01",
+        "source_type": "isolate",
+        "sequences": []
+    }
+
+
+
 
