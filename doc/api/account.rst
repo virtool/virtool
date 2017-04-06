@@ -16,7 +16,8 @@ Retrieve all personalized settings.
 
 ::
 
-    GET /account/settings
+    GET /api/account/settings
+
 
 **Response**
 
@@ -30,6 +31,7 @@ Retrieve all personalized settings.
     }
 
 
+
 Modify settings
 ---------------
 
@@ -37,7 +39,7 @@ Modify personalized settings. **All fields are optional**.
 
 ::
 
-    PATCH /account/settings
+    PATCH /api/account/settings
 
 
 **Input**
@@ -74,7 +76,7 @@ Change the account password. An old password must be supplied.
 
 ::
 
-    PUT /account/password
+    PUT /api/account/password
 
 
 **Input**
@@ -86,13 +88,3 @@ Change the account password. An old password must be supplied.
 +---------------+--------+-----------------------------------+
 | new_password  | string | the new password                  |
 +---------------+--------+-----------------------------------+
-
-
-
-
-
-
-
-
-
-

@@ -9,13 +9,12 @@ Retrieve a list of samples, filtered by URL parameters.
 
 ::
 
-    GET /samples
+    GET /api/samples
 
 
 **Response**
 
 .. code-block:: javascript
-
 
     [
         {
@@ -54,6 +53,7 @@ Retrieve a list of samples, filtered by URL parameters.
     ]
 
 
+
 Get
 ---
 
@@ -61,7 +61,7 @@ Retrieve a complete sample document from the server.
 
 ::
 
-    GET /samples/:sample_id
+    GET /api/samples/:sample_id
 
 
 Remove
@@ -71,7 +71,7 @@ Remove a sample document and all associated analyses.
 
 ::
 
-    DELETE /samples/:sample_id
+    DELETE /api/samples/:sample_id
 
 
 Update
@@ -81,7 +81,8 @@ Edit modifiable fields in a sample document.
 
 ::
 
-    PUT /samples/:sample_id
+    PUT /api/samples/:sample_id
+
 
 **Input**
 
@@ -105,7 +106,8 @@ Retrieve the owner group and rights for the sample.
 
 ::
 
-    GET /samples/:sample_id/rights
+    GET /api/samples/:sample_id/rights
+
 
 **Response**
 
@@ -120,6 +122,7 @@ Retrieve the owner group and rights for the sample.
     }
 
 
+
 Modify rights
 -------------
 
@@ -127,7 +130,8 @@ Set the rights fields and the owner group for a given sample. All fields are opt
 
 ::
 
-    PUT /samples/:sample_id/rights
+    PUT /api/samples/:sample_id/rights
+
 
 **Input**
 
@@ -158,14 +162,15 @@ Set the rights fields and the owner group for a given sample. All fields are opt
     }
 
 
+
 List analyses
-----------------
+-------------
 
 Retrieve a list of all analyses associated with a given sample. The complete analysis documents are not returned.
 
 ::
 
-    GET /samples/:sample_id/analyses
+    GET /api/samples/:sample_id/analyses
 
 
 Analyze
@@ -175,9 +180,7 @@ Start a new analysis for a given sample.
 
 ::
 
-    POST /samples/:sample_id/analyses
-
-
+    POST /api/samples/:sample_id/analyses
 
 
 Get analysis
@@ -187,7 +190,7 @@ Retrieve a complete analysis document given a ``sample_id`` and an ``analysis_id
 
 ::
 
-    GET /samples/:sample_id/analyses/:analysis_id
+    GET /api/samples/:sample_id/analyses/:analysis_id
 
 
 BLAST a contig
@@ -197,7 +200,7 @@ BLAST a contig that was generated as part of a NuVs analysis. This request will 
 
 ::
 
-    POST /samples/:sample_id/analyses/:analysis_id/:sequence_index/blast
+    POST /api/samples/:sample_id/analyses/:analysis_id/:sequence_index/blast
 
 
 Remove BLAST record
@@ -205,7 +208,7 @@ Remove BLAST record
 
 ::
 
-    DELETE /samples/:sample_id/analyses/:analysis_id/:sequence_index/blast
+    DELETE /api/samples/:sample_id/analyses/:analysis_id/:sequence_index/blast
 
 
 Remove analysis
@@ -215,5 +218,6 @@ Remove an analysis given a ``sample_id`` and an ``analysis_id``.
 
 ::
 
-    DELETE /samples/:sample_id/analyses/:analysis_id
+    DELETE /api/samples/:sample_id/analyses/:analysis_id
+
 

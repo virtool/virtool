@@ -11,7 +11,7 @@ Retrieve a list of HMM annotations, filtered by URL parameters.
 
 ::
 
-    GET /hmm/annotations
+    GET /api/hmm/annotations
 
 
 Get
@@ -21,7 +21,7 @@ Retrieve a complete HMM annotation document.
 
 ::
 
-    GET /hmm/annotations/:hmm_id
+    GET /api/hmm/annotations/:hmm_id
 
 
 **Response**
@@ -65,6 +65,7 @@ Retrieve a complete HMM annotation document.
     }
 
 
+
 Set label
 ---------
 
@@ -72,7 +73,7 @@ Change the ``label`` field for a given HMM annotation.
 
 ::
 
-    PATCH /hmm/annotations/:hmm_id
+    PATCH /api/hmm/annotations/:hmm_id
 
 
 **Input**
@@ -94,6 +95,7 @@ Change the ``label`` field for a given HMM annotation.
     }
 
 
+
 Check
 -----
 
@@ -101,7 +103,7 @@ Modify the permissions assigned to a group. All fields are optional.
 
 ::
 
-    GET /hmm/check
+    GET /api/hmm/check
 
 
 **Response**
@@ -116,7 +118,7 @@ Remove annotation documents for which profiles do not exist in the application `
 
 ::
 
-    GET /hmm/clean
+    GET /api/hmm/clean
 
 
 **Response**

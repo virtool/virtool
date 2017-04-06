@@ -7,37 +7,34 @@ Manage user groups.
 List groups
 -----------
 
-Retrieve a list of all existing ``group_ids``.
+List the ``group_id`` for every user.
 
 ::
 
-    GET /groups/
+    GET /api/groups/
 
 
 **Response**
 
 .. code-block:: javascript
 
-    {
-        "groups": [
-            "administrator",
-            "diagnostics",
-            "technician",
-            "research"
-        ]
-    }
+    [
+        "administrator",
+        "diagnostics",
+        "technician",
+        "research"
+    ]
 
 
 
 Create
 ------
 
-Create a user group. A ``group_id`` **must** be provided. By default, new groups
-have no permissions.
+Create a user group. By default, new groups have no permissions.
 
 ::
 
-    POST /groups
+    POST /api/groups
 
 
 **Input**
@@ -79,7 +76,7 @@ Retrieve a complete group document.
 
 ::
 
-    GET /groups/:group_id
+    GET /api/groups/:group_id
 
 
 **Response**
@@ -113,7 +110,7 @@ Modify the permissions assigned to a group. All fields are optional.
 
 ::
 
-    PATCH /groups/:group_id
+    PATCH /api/groups/:group_id
 
 
 **Input**
@@ -164,6 +161,7 @@ Modify the permissions assigned to a group. All fields are optional.
     }
 
 
+
 Remove
 ------
 
@@ -171,7 +169,8 @@ Remove a group. This will fail if for the built-in administrator group.
 
 ::
 
-    DELETE /groups/:group_id
+    DELETE /api/groups/:group_id
+
 
 **Response**
 

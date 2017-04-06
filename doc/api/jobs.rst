@@ -63,6 +63,7 @@ Retrieve a list of job documents based on filters defined in URL parameters.
     ]
 
 
+
 Get
 ---
 
@@ -118,10 +119,11 @@ Retrieve a complete job document from the server.
     }
 
 
+
 Cancel
 ------
 
-Cancel a running or waiting job. Will fail with ``422`` for any input other than :json:`"{'cancel': true}"`.
+Cancel a running or waiting job.
 
 ::
 
@@ -186,6 +188,7 @@ Cancel a running or waiting job. Will fail with ``422`` for any input other than
         ],
         "user_id": "igboyes"
     }
+
 
 
 Remove
