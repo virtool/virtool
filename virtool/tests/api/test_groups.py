@@ -213,13 +213,17 @@ class TestGet:
 
 class TestUpdatePermissions:
 
-    async def test_valid(self, do_put, test_db, no_permissions):
+    async def test_valid(self, do_patch, test_db, no_permissions):
+        """
+        Test that a valid request results in permission changes.
+         
+        """
         test_db.groups.insert({
             "_id": "test",
             "permissions": no_permissions
         })
 
-        resp = await do_put("/api/groups/test", data={
+        resp = await do_patch("/api/groups/test", data={
             "modify_virus": True
         }, authorize=True, permissions=["manage_users"])
 
@@ -232,31 +236,37 @@ class TestUpdatePermissions:
             "permissions": no_permissions
         }
 
-        document = test_db.groups.find_one({"_id": "test"})
-
-        assert document == {
+        assert test_db.groups.find_one({"_id": "test"}) == {
             "_id": "test",
             "permissions": no_permissions
         }
 
-    async def test_invalid_key(self, do_put, test_db, no_permissions):
+    async def test_invalid_key(self, do_patch, test_db, no_permissions):
+        """
+        Test that an invalid permission key results in a ``422`` response.
+         
+        """
         test_db.groups.insert({
             "_id": "test",
             "permissions": no_permissions
         })
 
-        resp = await do_put("/api/groups/test", data={
+        resp = await do_patch("/api/groups/test", data={
             "foo_bar": True
         }, authorize=True, permissions=["manage_users"])
 
-        assert resp.status == 400
+        assert resp.status == 422
 
         assert await resp.json() == {
-            "message": "Invalid key"
+            "message": "Invalid input"
         }
 
-    async def test_not_found(self, do_put):
-        resp = await do_put("/api/groups/test", data={
+    async def test_not_found(self, do_patch):
+        """
+        Test that updating an non-existent group results in a ``404`` response.
+         
+        """
+        resp = await do_patch("/api/groups/test", data={
             "modify_virus": True
         }, authorize=True, permissions=["manage_users"])
 
@@ -266,12 +276,12 @@ class TestUpdatePermissions:
             "message": "Not found"
         }
 
-    async def test_not_authorized(self, do_put):
+    async def test_not_authorized(self, do_patch):
         """
         Test that a request from an unauthorized session results in a ``403`` response. 
 
         """
-        resp = await do_put("/api/groups/test", {})
+        resp = await do_patch("/api/groups/test", {})
 
         assert resp.status == 403
 
@@ -279,12 +289,12 @@ class TestUpdatePermissions:
             "message": "Not authorized"
         }
 
-    async def test_not_permitted(self, do_put):
+    async def test_not_permitted(self, do_patch):
         """
         Test that a request from a session with inadequate permissions results in a ``403`` response. 
 
         """
-        resp = await do_put("/api/groups/test", {}, authorize=True)
+        resp = await do_patch("/api/groups/test", {}, authorize=True)
 
         assert resp.status == 403
 

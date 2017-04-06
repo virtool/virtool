@@ -23,6 +23,7 @@ Retrieve a complete HMM annotation document.
 
     GET /hmm/annotations/:hmm_id
 
+
 **Response**
 
 .. code-block:: javascript
@@ -71,7 +72,8 @@ Change the ``label`` field for a given HMM annotation.
 
 ::
 
-    PUT /hmm/annotations/:hmm_id
+    PATCH /hmm/annotations/:hmm_id
+
 
 **Input**
 

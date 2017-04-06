@@ -43,13 +43,13 @@ def setup_viruses_routes(app):
     app.router.add_get("/api/viruses", viruses.find)
     app.router.add_get("/api/viruses/{virus_id}", viruses.get)
     app.router.add_post("/api/viruses", viruses.create)
-    app.router.add_put("/api/viruses/{virus_id}", viruses.edit)
+    app.router.add_patch("/api/viruses/{virus_id}", viruses.edit)
     app.router.add_delete("/api/viruses/{virus_id}", viruses.remove)
 
     app.router.add_get("/api/viruses/{virus_id}/isolates", viruses.list_isolates)
     app.router.add_get("/api/viruses/{virus_id}/isolates/{isolate_id}", viruses.get_isolate)
     app.router.add_post("/api/viruses/{virus_id}/isolates", viruses.add_isolate)
-    app.router.add_put("/api/viruses/{virus_id}/isolates/{isolate_id}", viruses.edit_isolate)
+    app.router.add_patch("/api/viruses/{virus_id}/isolates/{isolate_id}", viruses.edit_isolate)
     # app.router.add_delete("/api/viruses/{virus_id}/isolates/{isolate_id}", viruses.remove_isolate)
 
 
@@ -61,7 +61,7 @@ def setup_hmm_routes(app):
     app.router.add_get("/api/hmm/annotations", hmm.find)
 
     app.router.add_get("/api/hmm/annotations/{hmm_id}", hmm.get)
-    app.router.add_put("/api/hmm/annotations/{hmm_id}", hmm.update)
+    app.router.add_patch("/api/hmm/annotations/{hmm_id}", hmm.update)
 
     app.router.add_get("/api/hmm/check", hmm.check)
     app.router.add_get("/api/hmm/clean", hmm.clean)
@@ -77,7 +77,7 @@ def setup_hosts_routes(app):
 
 def setup_account_routes(app):
     app.router.add_get("/api/account/settings", account.get_settings)
-    app.router.add_put("/api/account/settings", account.update_settings)
+    app.router.add_patch("/api/account/settings", account.update_settings)
 
     app.router.add_put("/api/account/password", account.change_password)
 
@@ -103,5 +103,5 @@ def setup_groups_routes(app):
     app.router.add_post("/api/groups", groups.create)
 
     app.router.add_get("/api/groups/{group_id}", groups.get)
-    app.router.add_put("/api/groups/{group_id}", groups.update_permissions)
+    app.router.add_patch("/api/groups/{group_id}", groups.update_permissions)
     app.router.add_delete("/api/groups/{group_id}", groups.remove)

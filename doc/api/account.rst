@@ -33,11 +33,12 @@ Retrieve all personalized settings.
 Modify settings
 ---------------
 
-Modify personalized settings. All fields are optional.
+Modify personalized settings. **All fields are optional**.
 
 ::
 
-    PUT /account/settings
+    PATCH /account/settings
+
 
 **Input**
 
@@ -65,6 +66,7 @@ Modify personalized settings. All fields are optional.
     }
 
 
+
 Change Password
 ---------------
 
@@ -73,6 +75,7 @@ Change the account password. An old password must be supplied.
 ::
 
     PUT /account/password
+
 
 **Input**
 

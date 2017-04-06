@@ -127,7 +127,7 @@ Edit an existing virus.
 
 ::
 
-    PUT /api/viruses/:virus_id
+    PATCH /api/viruses/:virus_id
 
 
 **Input**
@@ -156,7 +156,7 @@ Edit an existing virus.
 Remove
 ------
 
-Edit an existing virus.
+Remove an existing virus, its isolates, and sequences.
 
 ::
 
@@ -289,7 +289,7 @@ Edit an existing isolate. Setting the isolate as default will unset any existing
 
 ::
 
-    PUT /api/viruses/:virus_id/isolates/:isolate_id
+    PATCH /api/viruses/:virus_id/isolates/:isolate_id
 
 
 **Input**

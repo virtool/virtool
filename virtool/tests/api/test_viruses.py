@@ -584,7 +584,7 @@ class TestAddIsolate:
 
 class TestEditIsolate:
 
-    async def test(self, test_db, do_put, test_virus):
+    async def test(self, test_db, do_patch, test_virus):
         """
         Test that the isolate can be edited such that it is the default isolate and all other isolates are set with
         ``default`` to ``False``.
@@ -605,7 +605,7 @@ class TestEditIsolate:
             "default": True
         }
 
-        resp = await do_put("/api/viruses/6116cba1/isolates/test", data, authorize=True, permissions=["modify_virus"])
+        resp = await do_patch("/api/viruses/6116cba1/isolates/test", data, authorize=True, permissions=["modify_virus"])
 
         assert resp.status == 200
 
@@ -634,7 +634,7 @@ class TestEditIsolate:
             }
         ]
 
-    async def test_unset_default(self, test_db, do_put, test_virus):
+    async def test_unset_default(self, test_db, do_patch, test_virus):
         """
         Test that attempting to set ``default`` to ``False`` for a default isolate results in a ``400`` response. The
         appropriate way to change the default isolate is to set ``default`` to ``True`` on another isolate.
@@ -649,8 +649,8 @@ class TestEditIsolate:
         async def get_fake_id(*args):
             return "test"
 
-        resp = await do_put("/api/viruses/6116cba1/isolates/cab8b360", data, authorize=True,
-                            permissions=["modify_virus"])
+        resp = await do_patch("/api/viruses/6116cba1/isolates/cab8b360", data, authorize=True,
+                              permissions=["modify_virus"])
 
         assert resp.status == 422
 
@@ -661,7 +661,7 @@ class TestEditIsolate:
             }
         }
 
-    async def test_force_case(self, monkeypatch, test_db, do_put, test_virus):
+    async def test_force_case(self, monkeypatch, test_db, do_patch, test_virus):
         """
         Test that the ``source_type`` value is forced to lower case.
 
@@ -677,7 +677,7 @@ class TestEditIsolate:
 
         monkeypatch.setattr("virtool.viruses.get_new_isolate_id", get_fake_id)
 
-        resp = await do_put("/api/viruses/6116cba1/isolates/cab8b360", data, authorize=True,
+        resp = await do_patch("/api/viruses/6116cba1/isolates/cab8b360", data, authorize=True,
                             permissions=["modify_virus"])
 
         assert resp.status == 200
@@ -694,12 +694,12 @@ class TestEditIsolate:
 
         assert test_db.viruses.find_one("6116cba1", ["isolates"])["isolates"] == [expected]
 
-    async def test_empty(self, do_put):
+    async def test_empty(self, do_patch):
         """
         Test that an empty data input results in a ``400`` response.
 
         """
-        resp = await do_put("/api/viruses/6116cba1/isolates/cab8b360", {}, authorize=True, permissions=["modify_virus"])
+        resp = await do_patch("/api/viruses/6116cba1/isolates/cab8b360", {}, authorize=True, permissions=["modify_virus"])
 
         assert resp.status == 400
 
@@ -707,8 +707,8 @@ class TestEditIsolate:
             "message": "Empty input"
         }
 
-    async def test_not_authorized(self, do_put):
-        resp = await do_put("/api/viruses/6116cba1/isolates/test", {})
+    async def test_not_authorized(self, do_patch):
+        resp = await do_patch("/api/viruses/6116cba1/isolates/test", {})
 
         assert resp.status == 403
 
@@ -716,8 +716,8 @@ class TestEditIsolate:
             "message": "Not authorized"
         }
 
-    async def test_not_permitted(self, do_put):
-        resp = await do_put("/api/viruses/6116cba1/isolates/test", {}, authorize=True)
+    async def test_not_permitted(self, do_patch):
+        resp = await do_patch("/api/viruses/6116cba1/isolates/test", {}, authorize=True)
 
         assert resp.status == 403
 

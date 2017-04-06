@@ -37,12 +37,12 @@ class TestGetSettings:
 
 class TestUpdateSettings:
 
-    async def test_authorized(self, do_put):
+    async def test_authorized(self, do_patch):
         """
         Test that account settings can be updated at ``POST /account/settings``.
 
         """
-        resp = await do_put("/api/account/settings", {
+        resp = await do_patch("/api/account/settings", {
             "show_ids": False
         }, authorize=True)
 
@@ -55,12 +55,12 @@ class TestUpdateSettings:
             "quick_analyze_algorithm": "pathoscope_bowtie"
         }
 
-    async def test_not_authorized(self, do_put):
+    async def test_not_authorized(self, do_patch):
         """
         Test that requests to ``POST /account/settings`` return 400 for unauthorized sessions.
 
         """
-        resp = await do_put("/api/account/settings", {
+        resp = await do_patch("/api/account/settings", {
             "show_ids": False
         })
 
@@ -70,23 +70,23 @@ class TestUpdateSettings:
             "message": "Requires login"
         }
 
-    async def test_unknown_field(self, do_put):
+    async def test_unknown_field(self, do_patch):
         """
         Test that requests to ``POST /account/settings`` return 422 for unknown JSON fields.
 
         """
-        resp = await do_put("/api/account/settings", {
+        resp = await do_patch("/api/account/settings", {
             "foo_bar": False
         }, authorize=True)
 
         assert resp.status == 422
 
-    async def test_invalid_field(self, do_put):
+    async def test_invalid_field(self, do_patch):
         """
         Test that requests to ``POST /account/settings`` return 422 for invalid JSON fields.
 
         """
-        resp = await do_put("/api/account/settings", {
+        resp = await do_patch("/api/account/settings", {
             "show_ids": "False"
         }, authorize=True)
 

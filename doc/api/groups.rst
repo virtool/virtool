@@ -13,6 +13,7 @@ Retrieve a list of all existing ``group_ids``.
 
     GET /groups/
 
+
 **Response**
 
 .. code-block:: javascript
@@ -27,6 +28,7 @@ Retrieve a list of all existing ``group_ids``.
     }
 
 
+
 Create
 ------
 
@@ -36,6 +38,7 @@ have no permissions.
 ::
 
     POST /groups
+
 
 **Input**
 
@@ -68,6 +71,7 @@ have no permissions.
     }
 
 
+
 Get
 ---
 
@@ -76,6 +80,7 @@ Retrieve a complete group document.
 ::
 
     GET /groups/:group_id
+
 
 **Response**
 
@@ -100,6 +105,7 @@ Retrieve a complete group document.
     }
 
 
+
 Set Permissions
 ---------------
 
@@ -107,7 +113,8 @@ Modify the permissions assigned to a group. All fields are optional.
 
 ::
 
-    PUT /groups/:group_id
+    PATCH /groups/:group_id
+
 
 **Input**
 

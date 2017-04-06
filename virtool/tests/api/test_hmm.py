@@ -62,7 +62,7 @@ class TestGet:
 
 class TestUpdate:
 
-    async def test_valid(self, test_db, do_put, hmm_document):
+    async def test_valid(self, test_db, do_patch, hmm_document):
         """
         Test that a valid request results in a document insertion and a valid response.
         
@@ -73,7 +73,7 @@ class TestUpdate:
             "label": "Hypothetical protein"
         }
 
-        resp = await do_put("/api/hmm/annotations/f8666902", data, authorize=True, permissions=["modify_hmm"])
+        resp = await do_patch("/api/hmm/annotations/f8666902", data, authorize=True, permissions=["modify_hmm"])
 
         assert resp.status == 200
 
@@ -82,7 +82,7 @@ class TestUpdate:
 
         assert await resp.json() == expected
 
-    async def test_not_found(self, do_put):
+    async def test_not_found(self, do_patch):
         """
         Test that a request to update a non-existent annotation results in a ``404`` response.
          
@@ -91,7 +91,7 @@ class TestUpdate:
             "label": "Hypothetical protein"
         }
 
-        resp = await do_put("/api/hmm/annotations/f8666902", data, authorize=True, permissions=["modify_hmm"])
+        resp = await do_patch("/api/hmm/annotations/f8666902", data, authorize=True, permissions=["modify_hmm"])
 
         assert resp.status == 404
 
@@ -99,7 +99,7 @@ class TestUpdate:
             "message": "Not found"
         }
 
-    async def test_invalid_input(self, do_put):
+    async def test_invalid_input(self, do_patch):
         """
         Test that invalid input results in a ``422`` response including error data.
          
@@ -109,7 +109,7 @@ class TestUpdate:
             "name": "Test"
         }
 
-        resp = await do_put("/api/hmm/annotations/f8666902", data, authorize=True, permissions=["modify_hmm"])
+        resp = await do_patch("/api/hmm/annotations/f8666902", data, authorize=True, permissions=["modify_hmm"])
 
         assert resp.status == 422
 
@@ -121,12 +121,12 @@ class TestUpdate:
             }
         }
 
-    async def test_not_authorized(self, do_put):
+    async def test_not_authorized(self, do_patch):
         """
         Test that a request from an unauthorized session results in a ``403`` response. 
 
         """
-        resp = await do_put("/api/hmm/annotations/f8666902", {})
+        resp = await do_patch("/api/hmm/annotations/f8666902", {})
 
         assert resp.status == 403
 
@@ -134,12 +134,12 @@ class TestUpdate:
             "message": "Not authorized"
         }
 
-    async def test_not_permitted(self, do_put):
+    async def test_not_permitted(self, do_patch):
         """
         Test that a request from a session with inadequate permissions results in a ``403`` response. 
 
         """
-        resp = await do_put("/api/hmm/annotations/f8666902", {}, authorize=True)
+        resp = await do_patch("/api/hmm/annotations/f8666902", {}, authorize=True)
 
         assert resp.status == 403
 

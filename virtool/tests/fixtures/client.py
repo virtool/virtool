@@ -77,6 +77,23 @@ def do_put(test_client, authorize_client):
 
 
 @pytest.fixture
+def do_patch(test_client, authorize_client):
+    client = None
+
+    async def func(url, data, authorize=False, groups=None, permissions=None):
+        nonlocal client
+
+        client = client or await test_client(create_app, "test")
+
+        if authorize:
+            await authorize_client(client, groups, permissions)
+
+        return await client.patch(url, data=json.dumps(data))
+
+    return func
+
+
+@pytest.fixture
 def do_delete(test_client, authorize_client):
     client = None
 
