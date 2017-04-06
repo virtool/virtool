@@ -65,12 +65,11 @@ async def join(db, virus_id, document=None):
     return merge_virus(document, sequences)
 
 
-async def check_name_and_abbreviation(db, name, abbreviation=None):
-    name = await db.viruses.find({"name": re.compile(name, re.IGNORECASE)}).count()
-
-    abbreviation = abbreviation and await db.viruses.find({"abbreviation": abbreviation}).count()
-
-    return not name, not abbreviation
+async def check_name_and_abbreviation(db, name=None, abbreviation=None):
+    return (
+        not (name and await db.viruses.find({"name": re.compile(name, re.IGNORECASE)}).count()),
+        not (abbreviation and await db.viruses.find({"abbreviation": abbreviation}).count())
+    )
 
 
 def set_default_isolate(db, virus_id, isolate_id):

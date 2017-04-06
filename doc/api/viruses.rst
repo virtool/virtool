@@ -19,6 +19,8 @@ Find truncated viruses based on filters described in URL parameters. Documents a
 
 .. code-block:: javascript
 
+    Status: 200 OK
+
     [
         {
             "abbreviation": "",
@@ -55,6 +57,8 @@ Get a specific virus document.
 **Response**
 
 .. code-block:: javascript
+
+    Status: 200 OK
 
     {
         "version": 0,
@@ -102,14 +106,16 @@ Create a new virus document. Isolates and sequence data must be added in separat
 +--------------+--------+----------+-------------------------------+
 | Name         | Type   | Optional | Description                   |
 +==============+========+==========+===============================+
-| name         | string | True     | the virus name                |
+| name         | string | False    | the virus name                |
 +--------------+--------+----------+-------------------------------+
-| abbreviation | string | False    | an abbreviation for the virus |
+| abbreviation | string | True     | an abbreviation for the virus |
 +--------------+--------+----------+-------------------------------+
 
 **Response**
 
 .. code-block:: javascript
+
+    Status: 201 Created
 
     {
         "virus_id": "2f97f077",
@@ -137,12 +143,14 @@ Edit an existing virus.
 +==============+========+==========+===============================+
 | name         | string | True     | the virus name                |
 +--------------+--------+----------+-------------------------------+
-| abbreviation | string | False    | an abbreviation for the virus |
+| abbreviation | string | True     | an abbreviation for the virus |
 +--------------+--------+----------+-------------------------------+
 
 **Response**
 
 .. code-block:: javascript
+
+    Status: 200 OK
 
     {
         "virus_id": "2f97f077",
@@ -167,9 +175,7 @@ Remove an existing virus, its isolates, and sequences.
 
 .. code-block:: javascript
 
-    {
-        "removed": "2f97f077"
-    }
+    Status: 204 No content
 
 
 
@@ -186,6 +192,8 @@ List the isolates for a given virus.
 **Response**
 
 .. code-block:: javascript
+
+    Status: 200 OK
 
     [
         {
@@ -223,6 +231,8 @@ Get a single, complete isolate for given virus and isolate ids.
 **Response**
 
 .. code-block:: javascript
+
+    Status: 200 OK
 
     {
         "default": true,
@@ -272,6 +282,8 @@ be set to default regardless of input.
 
 .. code-block:: javascript
 
+    Status: 201 Created
+
     {
         "default": false,
         "isolate_id": "b4ce655d",
@@ -308,6 +320,8 @@ Edit an existing isolate. Setting the isolate as default will unset any existing
 
 .. code-block:: javascript
 
+    Status: 200 OK
+
     {
         "default": true,
         "isolate_id": "b4ce655d",
@@ -318,4 +332,19 @@ Edit an existing isolate. Setting the isolate as default will unset any existing
 
 
 
+Remove Isolate
+--------------
 
+Remove an existing isolate and its sequences. If it is the default isolate, the first isolate in the list will be set as
+default.
+
+::
+
+    DELETE /api/viruses/:virus_id/isolates/:isolate_id
+
+
+**Response**
+
+.. code-block:: javascript
+
+    Status: 204 No content

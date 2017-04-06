@@ -1,4 +1,4 @@
-from virtool.viruses import dispatch_processor
+from virtool.viruses import processor, dispatch_processor
 
 
 class TestFind:
@@ -69,7 +69,7 @@ class TestGet:
 
 class TestCreate:
 
-    async def test_valid(self, monkeypatch, test_db, do_post):
+    async def test(self, monkeypatch, test_db, do_post):
         data = {
             "name": "Tobacco mosaic virus",
             "abbreviation": "TMV"
@@ -204,6 +204,133 @@ class TestCreate:
         }
 
 
+class TestEdit:
+
+    async def test(self, test_db, do_patch, test_virus):
+        test_db.viruses.insert(test_virus)
+
+        data = {
+            "name": "Tobacco mosaic virus"
+        }
+
+        resp = await do_patch("/api/viruses/6116cba1", data, authorize=True, permissions=["modify_virus"])
+
+        assert resp.status == 200
+
+        test_virus.update({
+            "name": "Tobacco mosaic virus",
+            "lower_name": "tobacco mosaic virus",
+            "modified": True
+        })
+
+        assert test_db.viruses.find_one() == test_virus
+
+        test_virus["isolates"][0]["sequences"] = []
+
+        assert await resp.json() == processor(test_virus)
+
+    async def test_invalid_input(self, do_patch):
+        data = {
+            "virus_name": "Tobacco mosaic virus",
+            "abbreviation": 123
+        }
+
+        resp = await do_patch("/api/viruses/test", data, authorize=True, permissions=["modify_virus"])
+
+        assert resp.status == 422
+
+        assert await resp.json() == {
+            "message": "Invalid input",
+            "errors": {
+                "virus_name": ["unknown field"],
+                "abbreviation": ["must be of string type"]
+            }
+        }
+
+    async def test_name_exists(self, test_db, do_patch):
+        test_db.viruses.insert({
+            "_id": "test",
+            "name": "Tobacco mosaic virus",
+            "isolates": []
+        })
+
+        data = {
+            "name": "Tobacco mosaic virus",
+            "abbreviation": "TMV"
+        }
+
+        resp = await do_patch("/api/viruses/test", data, authorize=True, permissions=["modify_virus"])
+
+        assert resp.status == 409
+
+        assert await resp.json() == {
+            "message": "Name already exists"
+        }
+
+    async def test_abbreviation_exists(self, test_db, do_patch):
+        test_db.viruses.insert({
+            "_id": "test",
+            "abbreviation": "TMV",
+            "isolates": []
+        })
+
+        data = {
+            "abbreviation": "TMV"
+        }
+
+        resp = await do_patch("/api/viruses/test", data, authorize=True, permissions=["modify_virus"])
+
+        assert resp.status == 409
+
+        assert await resp.json() == {
+            "message": "Abbreviation already exists"
+        }
+
+    async def test_both_exist(self, test_db, do_patch):
+        test_db.viruses.insert({
+            "_id": "test",
+            "name": "Tobacco mosaic virus",
+            "abbreviation": "TMV",
+            "isolates": []
+        })
+
+        data = {
+            "name": "Tobacco mosaic virus",
+            "abbreviation": "TMV"
+        }
+
+        resp = await do_patch("/api/viruses/test", data, authorize=True, permissions=["modify_virus"])
+
+        assert resp.status == 409
+
+        assert await resp.json() == {
+            "message": "Name and abbreviation already exist"
+        }
+
+    async def test_not_authorized(self, do_patch):
+        data = {
+            "name": "Tobacco mosaic virus",
+            "abbreviation": "TMV"
+        }
+
+        resp = await do_patch("/api/viruses/test", data)
+
+        assert resp.status == 403
+
+        assert await resp.json() == {
+            "message": "Not authorized"
+        }
+
+    async def test_not_permitted(self, do_patch):
+        resp = await do_patch("/api/viruses/test", {}, authorize=True)
+
+        assert resp.status == 403
+
+        assert await resp.json() == {
+            "message": "Not permitted"
+        }
+
+
 class TestRemove:
 
     async def test(self, test_db, do_delete, test_virus):
@@ -217,11 +344,7 @@ class TestRemove:
 
         resp = await do_delete("/api/viruses/6116cba1", authorize=True, permissions=["modify_virus"])
 
-        assert resp.status == 200
-
-        assert await resp.json() == {
-            "removed": "6116cba1"
-        }
+        assert resp.status == 204
 
         assert test_db.viruses.find({"_id": "6116cba1"}).count() == 0
 
@@ -259,6 +382,10 @@ class TestRemove:
 class TestListIsolates:
 
     async def test(self, test_db, do_get, test_virus):
+        """
+        Test the isolates are properly listed and formatted for an existing virus.
+         
+        """
         test_virus["isolates"].append({
             "default": False,
             "source_type": "isolate",
@@ -288,6 +415,10 @@ class TestListIsolates:
         ]
 
     async def test_not_found(self, do_get):
+        """
+        Test that a request for a non-existent virus returns a ``404`` response.
+         
+        """
         resp = await do_get("/api/viruses/6116cba1/isolates")
 
         assert resp.status == 404
@@ -300,6 +431,10 @@ class TestListIsolates:
 class TestGetIsolate:
 
     async def test(self, test_db, do_get, test_virus, test_sequence):
+        """
+        Test that an existing isolate is successfully returned.
+         
+        """
         test_db.viruses.insert(test_virus)
         test_db.sequences.insert(test_sequence)
 
@@ -315,7 +450,12 @@ class TestGetIsolate:
             "sequences": [test_sequence]
         }
 
+
     async def test_virus_not_found(self, do_get):
+        """
+        Test that a ``404`` response results for a non-existent virus.
+         
+        """
         resp = await do_get("/api/viruses/foobar/isolates/cab8b360")
 
         assert resp.status == 404
@@ -678,7 +818,7 @@ class TestEditIsolate:
         monkeypatch.setattr("virtool.viruses.get_new_isolate_id", get_fake_id)
 
         resp = await do_patch("/api/viruses/6116cba1/isolates/cab8b360", data, authorize=True,
-                            permissions=["modify_virus"])
+                              permissions=["modify_virus"])
 
         assert resp.status == 200
 
@@ -699,7 +839,8 @@ class TestEditIsolate:
         Test that an empty data input results in a ``400`` response.
 
         """
-        resp = await do_patch("/api/viruses/6116cba1/isolates/cab8b360", {}, authorize=True, permissions=["modify_virus"])
+        resp = await do_patch("/api/viruses/6116cba1/isolates/cab8b360", {}, authorize=True,
+                              permissions=["modify_virus"])
 
         assert resp.status == 400
 
@@ -718,6 +859,89 @@ class TestEditIsolate:
 
     async def test_not_permitted(self, do_patch):
         resp = await do_patch("/api/viruses/6116cba1/isolates/test", {}, authorize=True)
+
+        assert resp.status == 403
+
+        assert await resp.json() == {
+            "message": "Not permitted"
+        }
+
+
+class TestRemoveIsolate:
+
+    async def test(self, test_db, do_delete, test_virus, test_sequence):
+        """
+        Test that a valid request results in a ``204`` response and the isolate and sequence data is removed from the
+        database.
+         
+        """
+        test_db.viruses.insert(test_virus)
+        test_db.sequences.insert(test_sequence)
+
+        assert test_db.viruses.find({"isolates.isolate_id": "cab8b360"}).count() == 1
+
+        resp = await do_delete("/api/viruses/6116cba1/isolates/cab8b360", authorize=True, permissions=["modify_virus"])
+
+        assert resp.status == 204
+
+        assert test_db.viruses.find({"isolates.isolate_id": "cab8b360"}).count() == 0
+
+        assert test_db.sequences.count() == 0
+
+    async def test_reassign_default(self, test_db, do_delete, test_virus, test_sequence):
+        """
+        Test that a valid request results in a ``204`` response and ``default`` status is reassigned correctly.
+
+        """
+        test_virus["isolates"].append({
+            "default": False,
+            "source_type": "isolate",
+            "source_name": "7865",
+            "isolate_id": "bcb9b352"
+        })
+
+        test_db.viruses.insert(test_virus)
+        test_db.sequences.insert(test_sequence)
+
+        resp = await do_delete("/api/viruses/6116cba1/isolates/cab8b360", authorize=True, permissions=["modify_virus"])
+
+        assert resp.status == 204
+
+        assert test_db.viruses.find({"isolates.isolate_id": "cab8b360"}).count() == 0
+
+        assert test_db.viruses.find_one({"isolates.isolate_id": "bcb9b352"}, ["isolates"])["isolates"][0]["default"]
+
+        assert test_db.sequences.count() == 0
+
+    async def test_virus_not_found(self, do_delete):
+        resp = await do_delete("/api/viruses/test/isolates/cab8b360", authorize=True, permissions=["modify_virus"])
+
+        assert resp.status == 404
+
+        assert await resp.json() == {
+            "message": "Not found"
+        }
+
+    async def test_isolate_not_found(self, do_delete):
+        resp = await do_delete("/api/viruses/6116cba1/isolates/test", authorize=True, permissions=["modify_virus"])
+
+        assert resp.status == 404
+
+        assert await resp.json() == {
+            "message": "Not found"
+        }
+
+    async def test_not_authorized(self, do_delete):
+        resp = await do_delete("/api/viruses/6116cba1/isolates/test")
+
+        assert resp.status == 403
+
+        assert await resp.json() == {
+            "message": "Not authorized"
+        }
+
+    async def test_not_permitted(self, do_delete):
+        resp = await do_delete("/api/viruses/6116cba1/isolates/test", authorize=True)
 
         assert resp.status == 403
 
