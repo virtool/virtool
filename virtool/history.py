@@ -1,95 +1,171 @@
 import dictdiffer
 
 from virtool.utils import timestamp
-from virtool.data_utils import coerce_list
 
 
-projector = [
+virus_projection = [
     "_id",
-    "_version",
+    "annotation",
+    "method_name",
+    "user_id",
+    "index_version",
+    "virus_version",
+    "timestamp",
+    "diff"
+]
+
+dispatch_projection = [
+    "_id",
     "operation",
     "method_name",
-    "changes",
     "timestamp",
-    "entry_id",
-    "entry_version",
-    "username",
-    "annotation",
+    "virus_id",
+    "virus_name",
+    "virus_version",
+    "user_id",
     "index",
     "index_version"
 ]
 
 
-async def sync_processor(db, documents):
-    documents = coerce_list(documents)
-
-    for document in documents:
-        if document["operation"] in ["insert", "remove"]:
-            document["virus"] = document["changes"]["name"]
-        else:
-            _, patched, _ = await get_versioned_document(db, document["entry_id"], document["entry_version"])
-            document["virus"] = patched["name"]
-
-    return documents
+projection = dispatch_projection + [
+    "annotation",
+    "diff"
+]
 
 
-def create_history_document(operation, method_name, old, new, username):
-    # Construct and _id for the change entry. It is composed of the _id of the changed entry and the new version
-    # number of the entry separated by a dot (eg. a7sds23.3)
+def processor(document):
+    document["change_id"] = document.pop("_id")
+    return document
+
+
+async def add(db, method_name, old, new, description, user_id):
+    """
+    Add a change document to the history collection.
+    
+    :param db: a database client
+    :type db: :class:`~motor.motor_asyncio.AsyncIOMotorClient`
+    
+    :param method_name: the name of the handler method that executed the change
+    :type method_name: str
+    
+    :param old: the virus document prior to the change
+    :type old: dict
+    
+    :param new: the virus document after the change
+    :type new: dict
+    
+    :param description: a human readable description of the change
+    :type description: str 
+    
+    :param user_id: 
+    :type user_id: str
+    
+    :return: the change document
+    :rtype: dict
+    
+    """
     try:
-        document_id = old["_id"]
+        virus_id = old["_id"]
     except TypeError:
-        document_id = new["_id"]
+        virus_id = new["_id"]
 
     try:
-        document_version = new["_version"]
+        virus_version = str(int(new["version"]))
     except TypeError:
-        document_version = "removed"
+        virus_version = "removed"
 
-    history_document = {
-        "_id": str(document_id) + "." + (str(document_version)),
-        "_version": 0,
-        "operation": operation,
+    document = {
+        "_id": ".".join([str(virus_id), virus_version]),
         "method_name": method_name,
+        "description": description,
         "timestamp": timestamp(),
-        "entry_id": document_id,
-        "entry_version": document_version,
-        "username": username,
-        "annotation": None,
+        "virus_id": virus_id,
+        "virus_version": virus_version,
+        "user_id": user_id,
         "index": "unbuilt",
         "index_version": "unbuilt"
     }
 
-    if operation in ["update", "remove", "insert"]:
-        if operation == "update":
-            history_document["changes"] = list(dictdiffer.diff(old, new))
-        elif operation == "remove":
-            history_document["changes"] = old
-        else:
-            history_document["changes"] = new
+    if method_name == "create":
+        document["diff"] = new
+
+    elif method_name == "remove":
+        document["diff"] = old
+
     else:
-        raise ValueError("Passed operation is not one of 'update', 'remove', 'insert'")
+        document["diff"] = calculate_diff(old, new)
 
-    if method_name == "set_default_isolate":
-        history_document["annotation"] = get_default_isolate(new)
+    await db.history.insert(document)
 
-    if method_name == "upsert_isolate":
-        history_document["annotation"] = get_upserted_isolate(old, history_document["changes"])
+    return document
 
-    if method_name == "remove_sequence":
-        subject_isolate = get_isolate_of_removed_sequence(old, history_document["changes"])
-        assert subject_isolate is not None
-        history_document["annotation"] = subject_isolate
 
-    if method_name == "add_sequence":
-        subject_isolate = get_isolate_of_added_sequence(new, history_document["changes"])
-        history_document["annotation"] = subject_isolate
+def calculate_diff(old, new):
+    return list(dictdiffer.diff(old, new))
 
-    if method_name == "update_sequence":
-        subject_isolate = get_info_for_updated_sequence(new, history_document["changes"])
-        history_document["annotation"] = subject_isolate
 
-    return history_document
+async def add_for_import(db, operation, method_name, old, new, username):
+    history_document = create_history_document(operation, method_name, old, new, username)
+
+    history_document["imported"] = True
+
+    # Perform the actual database insert operation, retaining the response.
+    await db.history.insert(history_document)
+
+    to_dispatch = await sync_processor(db, [{key: history_document[key] for key in projector}])
+
+    return to_dispatch
+
+
+def strip_isolate(isolate):
+    return {key: isolate[key] for key in ("source_type", "source_name", "isolate_id")}
+
+
+def get_default_isolate(document):
+    """
+    Return the stripped, default isolate of the given virus ``document``. Raise exceptions if there is not exactly one
+    default isolate in the document.
+
+    :param document: a virus document
+    :type document: dict
+
+    :return: the stripped, default isolate
+    :rtype: dict
+
+    """
+    default_isolates = [isolate for isolate in document["isolates"] if isolate["default"]]
+
+    default_isolate_count = len(default_isolates)
+
+    if default_isolate_count > 1:
+        raise ValueError("Virus has {} default isolates. Expected exactly 1.".format(default_isolate_count))
+
+    if default_isolate_count == 0:
+        raise ValueError("Could not find default isolate in virus document")
+
+    return strip_isolate(default_isolates[0])
+
+
+def get_upserted_isolate(document, changes):
+    for change in changes:
+        if change[0] == "change" and change[1][0] == "isolates":
+            return document["isolates"][change[1][1]]
+
+
+def get_info_for_updated_sequence(document, changes):
+    for change in changes:
+        if change[0] == "change" and change[1][2] == "sequences":
+            isolate = document["isolates"][change[1][1]]
+            sequence_index = change[1][3]
+            sequence = {key: isolate["sequences"][sequence_index][key] for key in ["_id", "definition"]}
+
+            isolate = strip_isolate(isolate)
+            isolate.update(sequence)
+
+            return isolate
+
+    raise ValueError("Could not find isolate of updated sequence")
 
 
 async def get_versioned_document(db, virus_id, virus_version):
@@ -145,90 +221,8 @@ async def set_index_as_unbuilt(db, data):
     })
 
 
-async def add(db, operation, method_name, old, new, username):
-    history_document = create_history_document(operation, method_name, old, new, username)
+def format_isolate_name(isolate):
+    if isolate["source_type"] is None or isolate["source_name"] is None:
+        return "Unnamed isolate"
 
-    history_document["imported"] = False
-
-    await db.history.insert(history_document)
-
-
-async def add_for_import(db, operation, method_name, old, new, username):
-    history_document = create_history_document(operation, method_name, old, new, username)
-
-    history_document["imported"] = True
-
-    # Perform the actual database insert operation, retaining the response.
-    await db.history.insert(history_document)
-
-    to_dispatch = await sync_processor(db, [{key: history_document[key] for key in projector}])
-
-    return to_dispatch
-
-
-def strip_isolate(isolate):
-    return {key: isolate[key] for key in ["source_type", "source_name", "isolate_id"]}
-
-
-def get_default_isolate(document):
-    """
-    Return the stripped, default isolate of the given virus ``document``. Raise exceptions if there is not exactly one
-    default isolate in the document.
-
-    :param document: a virus document
-    :type document: dict
-
-    :return: the stripped, default isolate
-    :rtype: dict
-
-    """
-    default_isolates = [isolate for isolate in document["isolates"] if isolate["default"]]
-
-    default_isolate_count = len(default_isolates)
-
-    if default_isolate_count > 1:
-        raise ValueError("Virus has {} default isolates. Expected exactly 1.".format(default_isolate_count))
-
-    if default_isolate_count == 0:
-        raise ValueError("Could not find default isolate in virus document")
-
-    return strip_isolate(default_isolates[0])
-
-
-def get_upserted_isolate(document, changes):
-    for change in changes:
-        if change[0] == "change" and change[1][0] == "isolates":
-            return document["isolates"][change[1][1]]
-
-
-def get_info_for_updated_sequence(document, changes):
-    for change in changes:
-        if change[0] == "change" and change[1][2] == "sequences":
-            isolate = document["isolates"][change[1][1]]
-            sequence_index = change[1][3]
-            sequence = {key: isolate["sequences"][sequence_index][key] for key in ["_id", "definition"]}
-
-            isolate = strip_isolate(isolate)
-            isolate.update(sequence)
-
-            return isolate
-
-    raise ValueError("Could not find isolate of updated sequence")
-
-
-def get_isolate_of_added_sequence(document, changes):
-    for change in changes:
-        if change[0] == "add" and change[1][0] == "isolates":
-            isolate_index = change[1][1]
-            return strip_isolate(document["isolates"][isolate_index])
-
-    raise ValueError("Could not find isolate of added sequence")
-
-
-def get_isolate_of_removed_sequence(document, changes):
-    for change in changes:
-        if change[0] == "remove":
-            isolate_index = change[1][1]
-            return strip_isolate(document["isolates"][isolate_index])
-
-    raise ValueError("Could not find isolate of removed sequence")
+    return " ".join((isolate["source_type"].capitalize(), isolate["source_name"]))
