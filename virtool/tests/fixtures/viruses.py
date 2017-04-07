@@ -25,7 +25,7 @@ def test_virus():
         "lower_name": "prunus virus f",
         "modified": False,
         "name": "Prunus virus F",
-        "username": "igboyes",
+        "user_id": "igboyes",
         "_id": "6116cba1"
     }
 
@@ -82,7 +82,6 @@ def test_sequence():
                     "ATTTCGAGTCCCACCTGGGTTATGGTTTTATTTTGTTTGTGTTGTTTTCTCTCCTTTTGTTTGTTTGTAACTTTTGTTGAGA"
                     "ATTGGTGAAAGCCCAATCGAGCAC"
     }
-
 
 
 @pytest.fixture
@@ -158,6 +157,18 @@ def test_merged_virus():
         "username": "igboyes",
         "virus_id": "6116cba1"
     }
+
+
+@pytest.fixture
+def test_add_history(monkeypatch, mocker):
+    m = mocker.Mock()
+
+    async def fake_add_history(*args, **kwargs):
+        return m(*args, **kwargs)
+
+    monkeypatch.setattr("virtool.history.add", fake_add_history)
+
+    return m
 
 
 @pytest.fixture(scope="session")
