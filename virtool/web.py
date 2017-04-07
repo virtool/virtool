@@ -20,9 +20,11 @@ from virtool.dispatcher import Dispatcher
 logger = logging.getLogger(__name__)
 
 
-def init_db(app):
+async def init_db(app):
     app["db_name"] = app["db_name"] or app["settings"].get("db_name")
     app["db"] = motor_asyncio.AsyncIOMotorClient(io_loop=app.loop)[app["db_name"]]
+
+    await app["db"].history.create_index("virus_id")
 
 
 def init_thread_pool(app):
