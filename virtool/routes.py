@@ -9,6 +9,7 @@ def setup_routes(app):
     setup_jobs_routes(app)
     setup_samples_routes(app)
     setup_viruses_routes(app)
+    setup_history_routes(app)
     setup_hmm_routes(app)
     setup_hosts_routes(app)
     setup_account_routes(app)
@@ -52,9 +53,13 @@ def setup_viruses_routes(app):
     app.router.add_patch("/api/viruses/{virus_id}/isolates/{isolate_id}", viruses.edit_isolate)
     app.router.add_delete("/api/viruses/{virus_id}/isolates/{isolate_id}", viruses.remove_isolate)
 
+    app.router.add_get("/api/viruses/{virus_id}/history", viruses.list_history)
+
 
 def setup_history_routes(app):
-    app.router.add_delete("/api/history/{history_id}", history.revert)
+    app.router.add_get("/api/history", history.find)
+    app.router.add_get("/api/history/{change_id}", history.get)
+    app.router.add_delete("/api/history/{change_id}", history.revert)
 
 
 def setup_hmm_routes(app):
