@@ -1,7 +1,29 @@
-from aiohttp import web
-from virtool.viruses import extract_isolate_ids
-from virtool.history import get_versioned_document
+
+from virtool.handlers.utils import json_response, not_found
+from virtool.history import get_versioned_document, projection, dispatch_projection, processor
 from virtool.handlers.utils import unpack_json_request
+
+
+async def find(req):
+    db = req.app["db"]
+
+    documents = await db.history.find({}, dispatch_projection).to_list(length=15)
+
+    return json_response([processor(document) for document in documents])
+
+
+async def get(req):
+    db = req.app["db"]
+
+    change_id = req.match_info["change_id"]
+
+    document = await db.history.find_one(change_id, projection)
+
+    if not document:
+        return not_found()
+
+    return json_response(processor(document))
+
 
 async def revert(req):
     db, data = await unpack_json_request(req)
