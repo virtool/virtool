@@ -1,3 +1,6 @@
+from copy import deepcopy
+from motor.motor_asyncio import AsyncIOMotorClient
+
 from virtool.viruses import processor, dispatch_processor
 
 
@@ -81,7 +84,7 @@ class TestGet:
 
 class TestCreate:
 
-    async def test(self, monkeypatch, test_db, do_post):
+    async def test(self, monkeypatch, test_db, do_post, test_add_history):
         """
         Test that a valid request results in the creation of a virus document and a ``201`` response.
          
@@ -108,7 +111,8 @@ class TestCreate:
             "isolates": [],
             "last_indexed_version": None,
             "modified": True,
-            "abbreviation": "TMV"
+            "abbreviation": "TMV",
+            "version": 0
         }
 
         assert await resp.json() == expected
@@ -116,6 +120,28 @@ class TestCreate:
         expected["_id"] = expected.pop("virus_id")
 
         assert test_db.viruses.find_one() == expected
+
+        assert test_add_history.call_args[0][1:] == (
+            "create",
+            None,
+            {
+                "isolates": [],
+                "name": "Tobacco mosaic virus",
+                "lower_name": "tobacco mosaic virus",
+                "virus_id": "test",
+                "version": 0,
+                "user_id": "test",
+                "modified": True,
+                "abbreviation": "TMV",
+                "last_indexed_version": None
+            },
+            (
+                "Created virus ",
+                "Tobacco mosaic virus",
+                "test"
+            ),
+            "test"
+        )
 
     async def test_invalid_input(self, do_post):
         """
@@ -246,9 +272,51 @@ class TestCreate:
 
 class TestEdit:
 
-    async def test(self, test_db, do_patch, test_virus):
+    async def test_both(self, test_db, do_patch, test_virus, test_add_history):
         """
-        Test that a valid request results in the correct changes to a virus document.
+        Test that a changing the name and abbreviation results in changes to the virus document and a new change
+        document in history.
+
+        """
+        test_db.viruses.insert_one(test_virus)
+
+        data = {
+            "name": "Tobacco mosaic virus",
+            "abbreviation": "TMV"
+        }
+
+        resp = await do_patch("/api/viruses/6116cba1", data, authorize=True, permissions=["modify_virus"])
+
+        assert resp.status == 200
+
+        expected = deepcopy(test_virus)
+
+        expected.update({
+            "name": "Tobacco mosaic virus",
+            "lower_name": "tobacco mosaic virus",
+            "abbreviation": "TMV",
+            "modified": True,
+            "version": 1
+        })
+
+        assert dict(test_db.viruses.find_one()) == expected
+
+        for document in (test_virus, expected):
+            document["isolates"][0]["sequences"] = []
+
+        assert test_add_history.call_args[0][1:] == (
+            "edit",
+            test_virus,
+            expected,
+            ("Changed name and abbreviation to", "Tobacco mosaic virus", "TMV"),
+            "test"
+        )
+
+        assert await resp.json() == processor(expected)
+
+    async def test_name(self, test_db, do_patch, test_virus, test_add_history):
+        """
+        Test that a changing the name results in changes to the virus document and a new change document in history.
 
         """
         test_db.viruses.insert_one(test_virus)
@@ -261,17 +329,68 @@ class TestEdit:
 
         assert resp.status == 200
 
-        test_virus.update({
+        expected = deepcopy(test_virus)
+
+        expected.update({
             "name": "Tobacco mosaic virus",
             "lower_name": "tobacco mosaic virus",
-            "modified": True
+            "modified": True,
+            "version": 1
         })
 
-        assert test_db.viruses.find_one() == test_virus
+        assert test_db.viruses.find_one() == expected
 
-        test_virus["isolates"][0]["sequences"] = []
+        for document in (test_virus, expected):
+            document["isolates"][0]["sequences"] = []
 
-        assert await resp.json() == processor(test_virus)
+        assert test_add_history.call_args[0][1:] == (
+            "edit",
+            test_virus,
+            expected,
+            ("Changed name to", "Tobacco mosaic virus"),
+            "test"
+        )
+
+        assert await resp.json() == processor(expected)
+
+    async def test_abbreviation(self, test_db, do_patch, test_virus, test_add_history):
+        """
+        Test that a changing the abbreviation results in changes to the virus document and a new change document in
+        history.
+
+        """
+        test_db.viruses.insert_one(test_virus)
+
+        data = {
+            "abbreviation": "TMV"
+        }
+
+        resp = await do_patch("/api/viruses/6116cba1", data, authorize=True, permissions=["modify_virus"])
+
+        assert resp.status == 200
+
+        expected = deepcopy(test_virus)
+
+        expected.update({
+            "abbreviation": "TMV",
+            "modified": True,
+            "version": 1
+        })
+
+        assert test_db.viruses.find_one() == expected
+
+        for document in (test_virus, expected):
+            document["isolates"][0]["sequences"] = []
+
+        assert test_add_history.call_args[0][1:] == (
+            "edit",
+            test_virus,
+            expected,
+            ("Changed abbreviation to", "TMV"),
+            "test"
+        )
+
+        assert await resp.json() == processor(expected)
 
     async def test_invalid_input(self, do_patch):
         """
@@ -401,20 +520,32 @@ class TestEdit:
 
 class TestRemove:
 
-    async def test(self, test_db, do_delete, test_virus):
+    async def test(self, test_db, do_delete, test_virus, test_add_history):
         """
         Test that an existing virus can be removed.        
          
         """
         test_db.viruses.insert_one(test_virus)
 
-        assert test_db.viruses.find({"_id": "6116cba1"}).count()
+        old = test_db.viruses.find_one("6116cba1")
+
+        assert old
 
         resp = await do_delete("/api/viruses/6116cba1", authorize=True, permissions=["modify_virus"])
 
         assert resp.status == 204
 
         assert test_db.viruses.find({"_id": "6116cba1"}).count() == 0
+
+        old["isolates"][0]["sequences"] = []
+
+        assert test_add_history.call_args[0][1:] == (
+            "remove",
+            old,
+            None,
+            ("Removed virus", old["name"], old["_id"]),
+            "test"
+        )
 
     async def test_does_not_exist(self, do_delete):
         """
@@ -526,7 +657,6 @@ class TestGetIsolate:
             "sequences": [test_sequence]
         }
 
-
     async def test_virus_not_found(self, do_get):
         """
         Test that a ``404`` response results for a non-existent virus.
@@ -552,7 +682,7 @@ class TestGetIsolate:
 
 class TestAddIsolate:
 
-    async def test_is_default(self, monkeypatch, test_db, do_post, test_virus):
+    async def test_is_default(self, monkeypatch, test_db, do_post, test_virus, test_add_history):
         """
         Test that a new default isolate can be added, setting ``default`` to ``False`` on all other isolates in the
         process.
@@ -579,26 +709,38 @@ class TestAddIsolate:
             "source_name": "b",
             "source_type": "isolate",
             "isolate_id": "test",
-            "default": True,
-            "sequences": []
+            "default": True
         }
 
-        assert test_db.viruses.find_one("6116cba1", ["isolates"])["isolates"] == [
+        new = test_db.viruses.find_one("6116cba1")
+
+        assert new["isolates"] == [
             {
                 "isolate_id": "cab8b360",
                 "default": False,
                 "source_type": "isolate",
-                "source_name": "8816-v2",
-                "sequences": []
+                "source_name": "8816-v2"
             },
             {
                 "isolate_id": "test",
                 "source_name": "b",
                 "source_type": "isolate",
-                "default": True,
-                "sequences": []
+                "default": True
             }
         ]
+
+        for isolate in new["isolates"]:
+            isolate["sequences"] = []
+
+        test_virus["isolates"][0]["sequences"] = []
+
+        assert test_add_history.call_args[0][1:] == (
+            "add_isolate",
+            test_virus,
+            new,
+            ("Added isolate", "Isolate b", "test"),
+            "test"
+        )
 
     async def test_not_default(self, monkeypatch, test_db, do_post, test_virus):
         """
@@ -626,8 +768,7 @@ class TestAddIsolate:
             "source_name": "b",
             "source_type": "isolate",
             "isolate_id": "test",
-            "default": False,
-            "sequences": []
+            "default": False
         }
 
         assert test_db.viruses.find_one("6116cba1", ["isolates"])["isolates"] == [
@@ -635,15 +776,13 @@ class TestAddIsolate:
                 "isolate_id": "cab8b360",
                 "default": True,
                 "source_type": "isolate",
-                "source_name": "8816-v2",
-                "sequences": []
+                "source_name": "8816-v2"
             },
             {
                 "isolate_id": "test",
                 "source_name": "b",
                 "source_type": "isolate",
-                "default": False,
-                "sequences": []
+                "default": False
             }
         ]
 
@@ -676,8 +815,7 @@ class TestAddIsolate:
             "source_name": "b",
             "source_type": "isolate",
             "isolate_id": "test",
-            "default": True,
-            "sequences": []
+            "default": True
         }
 
         assert test_db.viruses.find_one("6116cba1", ["isolates"])["isolates"] == [
@@ -685,8 +823,7 @@ class TestAddIsolate:
                 "isolate_id": "test",
                 "source_name": "b",
                 "source_type": "isolate",
-                "default": True,
-                "sequences": []
+                "default": True
             }
         ]
 
@@ -716,8 +853,7 @@ class TestAddIsolate:
             "source_name": "Beta",
             "source_type": "isolate",
             "isolate_id": "test",
-            "default": False,
-            "sequences": []
+            "default": False
         }
 
         assert test_db.viruses.find_one("6116cba1", ["isolates"])["isolates"] == [
@@ -725,15 +861,13 @@ class TestAddIsolate:
                 "isolate_id": "cab8b360",
                 "default": True,
                 "source_type": "isolate",
-                "source_name": "8816-v2",
-                "sequences": []
+                "source_name": "8816-v2"
             },
             {
                 "isolate_id": "test",
                 "source_name": "Beta",
                 "source_type": "isolate",
-                "default": False,
-                "sequences": []
+                "default": False
             }
         ]
 
@@ -758,8 +892,7 @@ class TestAddIsolate:
             "source_name": "",
             "source_type": "",
             "isolate_id": "test",
-            "default": False,
-            "sequences": []
+            "default": False
         }
 
         assert test_db.viruses.find_one("6116cba1", ["isolates"])["isolates"] == [
@@ -767,15 +900,13 @@ class TestAddIsolate:
                 "isolate_id": "cab8b360",
                 "default": True,
                 "source_type": "isolate",
-                "source_name": "8816-v2",
-                "sequences": []
+                "source_name": "8816-v2"
             },
             {
                 "isolate_id": "test",
                 "source_name": "",
                 "source_type": "",
-                "default": False,
-                "sequences": []
+                "default": False
             }
         ]
 

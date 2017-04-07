@@ -5,6 +5,7 @@ from cerberus import Validator
 
 import virtool.data_utils
 import virtool.viruses
+import virtool.history
 
 from virtool.handlers.utils import unpack_json_request, json_response, bad_request, not_found, invalid_input, protected
 from virtool.viruses import processor, dispatch_projection, check_name_and_abbreviation, join, extract_isolate_ids
@@ -32,6 +33,10 @@ async def get(req):
 
     if not joined:
         return not_found()
+
+    history = await db.history.find({"virus_id": virus_id}, virtool.history.virus_projection).to_list(None)
+
+    joined["history"] = [virtool.history.processor(change) for change in history]
 
     return json_response(processor(joined))
 
@@ -64,28 +69,30 @@ async def create(req):
     if not unique_abbreviation:
         return json_response({"message": "Abbreviation already exists"}, status=409)
 
+    virus_id = await virtool.data_utils.get_new_id(db.viruses)
+
     data.update({
-        "_id": await virtool.data_utils.get_new_id(db.viruses),
+        "_id": virus_id,
         "user_id": req["session"].user_id,
         "last_indexed_version": None,
         "modified": True,
         "lower_name": data["name"].lower(),
-        "isolates": []
+        "isolates": [],
+        "version": 0
     })
 
     await db.viruses.insert_one(data)
 
-    '''
+    joined = await join(db, virus_id, data)
 
-    await db.history.add(
-        "insert",
-        "add",
-        None,  # there is no old document
+    await virtool.history.add(
+        db,
+        "create",
+        None,
         joined,
-        virus["username"]
+        ("Created virus ", data["name"], virus_id),
+        req["session"].user_id
     )
-    
-    '''
 
     return json_response(processor(data), status=201)
 
@@ -119,10 +126,13 @@ async def edit(req):
     if not old:
         return not_found()
 
+    name_change = data.get("name", None)
+    abbreviation_change = data.get("abbreviation", None)
+
     unique_name, unique_abbreviation = await check_name_and_abbreviation(
         db,
-        data.get("name", None),
-        data.get("abbreviation", None)
+        name_change,
+        abbreviation_change
     )
 
     if not unique_name and not unique_abbreviation:
@@ -134,27 +144,37 @@ async def edit(req):
     if not unique_abbreviation:
         return json_response({"message": "Abbreviation already exists"}, status=409)
 
-    if "name" in data:
+    if name_change:
         data["lower_name"] = data["name"].lower()
 
     data["modified"] = True
 
     document = await db.viruses.find_one_and_update({"_id": virus_id}, {
-        "$set": data
+        "$set": data,
+        "$inc": {
+            "version": 1
+        }
     }, return_document=ReturnDocument.AFTER)
 
     new = await join(db, virus_id, document)
 
-    '''
-    await db.history.add(
-        "insert",
-        "add",
+    description = None
+
+    if name_change and abbreviation_change:
+        description = ("Changed name and abbreviation to", new["name"], new["abbreviation"])
+    elif name_change:
+        description = ("Changed name to", new["name"])
+    elif abbreviation_change:
+        description = ("Changed abbreviation to", new["abbreviation"])
+
+    await virtool.history.add(
+        db,
+        "edit",
         old,
         new,
-        virus["username"]
+        description,
+        req["session"].user_id
     )
-
-    '''
 
     return json_response(processor(new), status=200)
 
@@ -181,16 +201,14 @@ async def remove(req):
     # Remove the virus document itself.
     await db.viruses.delete_one({"_id": virus_id})
 
-    '''
-    # Put an entry in the history collection saying the virus was removed.
-    await db.history.add(
-        "remove",
+    await virtool.history.add(
+        db,
         "remove",
         joined,
         None,
-        user_id
-    )    
-    '''
+        ("Removed virus", joined["name"], joined["_id"]),
+        req["session"].user_id
+    )
 
     return web.Response(status=204)
 
@@ -255,22 +273,24 @@ async def add_isolate(req):
 
     virus_id = req.match_info["virus_id"]
 
-    # Get the complete, joined entry before the update.
-    old = await join(db, virus_id)
+    document = await db.viruses.find_one(virus_id)
 
-    if not old:
+    if not document:
         return not_found()
+
+    isolates = deepcopy(document["isolates"])
+
+    # True if the new isolate should be default and any existing isolates should be non-default.
+    will_be_default = not isolates or data["default"]
+
+    # Get the complete, joined entry before the update.
+    old = await join(db, virus_id, document)
 
     # All source types are stored in lower case.
     data["source_type"] = data["source_type"].lower()
 
     # Get a unique isolate_id for the new isolate.
     isolate_id = await virtool.viruses.get_new_isolate_id(db)
-
-    # True if the new isolate should be default and any existing isolates should be non-default.
-    will_be_default = not old["isolates"] or data["default"]
-
-    isolates = deepcopy(old["isolates"])
 
     # Set ``default`` to ``False`` for all existing isolates if the new one should be default.
     if isolates and data["default"]:
@@ -284,8 +304,7 @@ async def add_isolate(req):
     # Set the isolate as the default isolate if it is the first one.
     data.update({
         "default": will_be_default,
-        "isolate_id": isolate_id,
-        "sequences": []
+        "isolate_id": isolate_id
     })
 
     isolates.append(data)
@@ -295,22 +314,25 @@ async def add_isolate(req):
         "$set": {
             "isolates": isolates,
             "modified": True
+        },
+        "$inc": {
+            "version": 1
         }
     }, return_document=ReturnDocument.AFTER)
 
     # Get the joined entry now that it has been updated.
     new = await join(db, virus_id, document)
 
-    '''
-    # Use the old and new entry to add a new history document for the change.
-    await db.history["history"].add(
-        "update",
+    isolate_name = virtool.history.format_isolate_name(data)
+
+    await virtool.history.add(
+        db,
         "add_isolate",
         old,
         new,
+        ("Added isolate", isolate_name, isolate_id),
         req["session"].user_id
     )
-    '''
 
     return json_response(data, status=201)
 
@@ -441,3 +463,16 @@ async def remove_isolate(req):
         isolate.pop("sequences")
 
     return web.Response(status=204)
+
+
+async def list_history(req):
+    db = req.app["db"]
+
+    virus_id = req.match_info["virus_id"]
+
+    if not await db.viruses.find({"_id": virus_id}).count():
+        return not_found()
+
+    documents = await db.history.find({"virus_id": virus_id}).to_list(None)
+
+    return json_response(documents)

@@ -25,7 +25,7 @@ dispatch_projection = [
 
 
 def processor(document):
-    return format_doc_id("virus", document)
+    return format_doc_id("virus", dict(document))
 
 
 def dispatch_processor(document):
