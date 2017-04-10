@@ -66,10 +66,19 @@ async def join(db, virus_id, document=None):
 
 
 async def check_name_and_abbreviation(db, name=None, abbreviation=None):
-    return (
-        not (name and await db.viruses.find({"name": re.compile(name, re.IGNORECASE)}).count()),
-        not (abbreviation and await db.viruses.find({"abbreviation": abbreviation}).count())
-    )
+    unique_name = not (name and await db.viruses.find({"name": re.compile(name, re.IGNORECASE)}).count())
+    unique_abbreviation = not (abbreviation and await db.viruses.find({"abbreviation": abbreviation}).count())
+
+    if not unique_name and not unique_abbreviation:
+        return "Name and abbreviation already exist"
+
+    if not unique_name:
+        return "Name already exists"
+
+    if not unique_abbreviation:
+        return "Abbreviation already exists"
+
+    return False
 
 
 def set_default_isolate(db, virus_id, isolate_id):

@@ -1,5 +1,4 @@
 from copy import deepcopy
-from motor.motor_asyncio import AsyncIOMotorClient
 
 from virtool.viruses import processor, dispatch_processor
 
@@ -272,7 +271,7 @@ class TestEdit:
 
     async def test_both(self, test_db, do_patch, test_virus, test_add_history):
         """
-        Test that a changing the name and abbreviation results in changes to the virus document and a new change
+        Test that changing the name and abbreviation results in changes to the virus document and a new change
         document in history.
 
         """
@@ -962,7 +961,7 @@ class TestAddIsolate:
 
 class TestEditIsolate:
 
-    async def test(self, test_db, do_patch, test_virus):
+    async def test_both(self, test_db, do_patch, test_virus, test_add_history):
         """
         Test that the isolate can be edited such that it is the default isolate and all other isolates are set with
         ``default`` to ``False``.
@@ -972,8 +971,7 @@ class TestEditIsolate:
             "isolate_id": "test",
             "source_name": "b",
             "source_type": "isolate",
-            "default": False,
-            "sequences": []
+            "default": False
         })
 
         test_db.viruses.insert_one(test_virus)
@@ -991,26 +989,153 @@ class TestEditIsolate:
             "source_type": "variant",
             "isolate_id": "test",
             "source_name": "b",
-            "sequences": [],
             "default": True
         }
 
-        assert test_db.viruses.find_one("6116cba1", ["isolates"])["isolates"] == [
+        new = test_db.viruses.find_one("6116cba1")
+
+        assert new["isolates"] == [
             {
                 "isolate_id": "cab8b360",
                 "default": False,
                 "source_type": "isolate",
-                "source_name": "8816-v2",
-                "sequences": []
+                "source_name": "8816-v2"
             },
             {
                 "isolate_id": "test",
                 "source_name": "b",
                 "source_type": "variant",
-                "default": True,
-                "sequences": []
+                "default": True
             }
         ]
+
+        for joined in (test_virus, new):
+            for isolate in joined["isolates"]:
+                isolate["sequences"] = []
+
+        assert test_add_history.call_args[0][1:] == (
+            "edit_isolate",
+            test_virus,
+            new,
+            ("Renamed isolate to", "Variant b", "test", "and set as default"),
+            "test"
+        )
+
+    async def test_name(self, test_db, do_patch, test_virus, test_add_history):
+        """
+        Test that a change to the isolate name results in the correct changes, history, and response.
+
+        """
+        test_virus["isolates"].append({
+            "isolate_id": "test",
+            "source_name": "b",
+            "source_type": "isolate",
+            "default": False
+        })
+
+        test_db.viruses.insert_one(test_virus)
+
+        data = {
+            "source_type": "variant"
+        }
+
+        resp = await do_patch("/api/viruses/6116cba1/isolates/test", data, authorize=True, permissions=["modify_virus"])
+
+        assert resp.status == 200
+
+        assert await resp.json() == {
+            "source_type": "variant",
+            "isolate_id": "test",
+            "source_name": "b",
+            "default": False
+        }
+
+        new = test_db.viruses.find_one("6116cba1")
+
+        assert new["isolates"] == [
+            {
+                "isolate_id": "cab8b360",
+                "default": True,
+                "source_type": "isolate",
+                "source_name": "8816-v2"
+            },
+            {
+                "isolate_id": "test",
+                "source_name": "b",
+                "source_type": "variant",
+                "default": False
+            }
+        ]
+
+        for joined in (test_virus, new):
+            for isolate in joined["isolates"]:
+                isolate["sequences"] = []
+
+        assert test_add_history.call_args[0][1:] == (
+            "edit_isolate",
+            test_virus,
+            new,
+            ("Renamed isolate to", "Variant b", "test"),
+            "test"
+        )
+
+    async def test_to_default(self, test_db, do_patch, test_virus, test_add_history):
+        """
+        Test that a change to the isolate name results in the correct changes, history, and response.
+
+        """
+        test_virus["isolates"].append({
+            "isolate_id": "test",
+            "source_name": "b",
+            "source_type": "isolate",
+            "default": False
+        })
+
+        test_db.viruses.insert_one(test_virus)
+
+        data = {
+            "default": True
+        }
+
+        resp = await do_patch("/api/viruses/6116cba1/isolates/test", data, authorize=True, permissions=["modify_virus"])
+
+        assert resp.status == 200
+
+        assert await resp.json() == {
+            "source_type": "isolate",
+            "isolate_id": "test",
+            "source_name": "b",
+            "default": True
+        }
+
+        new = test_db.viruses.find_one("6116cba1")
+
+        assert new["isolates"] == [
+            {
+                "isolate_id": "cab8b360",
+                "default": False,
+                "source_type": "isolate",
+                "source_name": "8816-v2"
+            },
+            {
+                "isolate_id": "test",
+                "source_name": "b",
+                "source_type": "isolate",
+                "default": True
+            }
+        ]
+
+        for joined in (test_virus, new):
+            for isolate in joined["isolates"]:
+                isolate["sequences"] = []
+
+        assert test_add_history.call_args[0][1:] == (
+            "edit_isolate",
+            test_virus,
+            new,
+            ("Set", "Isolate b", "test", "as default"),
+            "test"
+        )
 
     async def test_unset_default(self, test_db, do_patch, test_virus):
         """
@@ -1064,8 +1189,7 @@ class TestEditIsolate:
             "isolate_id": "cab8b360",
             "default": True,
             "source_type": "variant",
-            "source_name": "8816-v2",
-            "sequences": []
+            "source_name": "8816-v2"
         }
 
         assert await resp.json() == expected

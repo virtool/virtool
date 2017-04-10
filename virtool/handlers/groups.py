@@ -1,10 +1,11 @@
 import logging
 import pymongo.errors
 
+from cerberus import Validator
 from pymongo import ReturnDocument
 from virtool.groups import projection, processor, update_member_users
 from virtool.permissions import PERMISSIONS
-from virtool.handlers.utils import json_response, bad_request, not_found, protected
+from virtool.handlers.utils import unpack_json_request, json_response, invalid_input, bad_request, not_found, protected
 
 logger = logging.getLogger(__name__)
 
@@ -16,6 +17,7 @@ async def find(req):
      
     """
     documents = await req.app["db"].groups.find({}, projection).to_list(None)
+
     return json_response([processor(d) for d in documents])
 
 
@@ -25,13 +27,7 @@ async def create(req):
     Adds a new user group.
 
     """
-    try:
-        group_id = (await req.json())["group_id"]
-    except KeyError:
-        return bad_request("Missing group_id")
-
-    if not isinstance(group_id, str):
-        return bad_request("Wrong type for group_id")
+    db, data = await unpack_json_request(req)
 
     document = {
         "_id": (await req.json())["group_id"],
@@ -39,9 +35,9 @@ async def create(req):
     }
 
     try:
-        await req.app["db"].groups.insert(document)
+        await db.groups.insert(document)
     except pymongo.errors.DuplicateKeyError:
-        return bad_request("Group already exists")
+        return json_response("Group already exists", status=409)
 
     return json_response(processor(document))
 
