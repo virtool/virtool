@@ -7,7 +7,8 @@ import virtool.data_utils
 import virtool.viruses
 import virtool.history
 
-from virtool.handlers.utils import unpack_json_request, json_response, bad_request, not_found, invalid_input, protected
+from virtool.handlers.utils import unpack_json_request, json_response, bad_request, not_found, invalid_input, \
+    protected, validation
 
 
 async def find(req):
@@ -42,6 +43,10 @@ async def get(req):
 
 
 @protected("modify_virus")
+@validation({
+    "name": {"type": "string", "required": True},
+    "abbreviation": {"type": "string"}
+})
 async def create(req):
     """
     Add a new virus to the collection. Checks to make sure the supplied virus name and abbreviation are not already in
@@ -50,13 +55,6 @@ async def create(req):
     """
     db, data = req.app["db"], req["data"]
 
-    v = Validator({
-        "name": {"type": "string", "required": True},
-        "abbreviation": {"type": "string"}
-    })
-
-    if not v(data):
-        return invalid_input(v.errors)
     message = await virtool.viruses.check_name_and_abbreviation(db, data["name"], data["abbreviation"])
 
     if message:
@@ -86,32 +84,22 @@ async def create(req):
         req["session"].user_id
     )
 
-    req["dispatcher"].dispatch("viruses", "update", virtool.viruses.dispatch_processor(joined))
+    req.app["dispatcher"].dispatch("viruses", "update", virtool.viruses.dispatch_processor(joined))
 
     return json_response(virtool.viruses.processor(data), status=201)
 
 
 @protected("modify_virus")
+@validation({
+    "name": {"type": "string"},
+    "abbreviation": {"type": "string"}
+})
 async def edit(req):
     """
     Edit an existing new virus. Checks to make sure the supplied virus name and abbreviation are not already in use in
     the collection.
 
     """
-    db, data = await unpack_json_request(req)
-
-    if not data:
-        return bad_request("Empty input")
-
-    v = Validator({
-        "name": {"type": "string"},
-        "abbreviation": {"type": "string"}
-    })
-
-    if not v(data):
-        return invalid_input(v.errors)
-
-    data = v.document
     db, data = req.app["db"], req["data"]
 
     virus_id = req.match_info["virus_id"]
@@ -121,8 +109,7 @@ async def edit(req):
     if not old:
         return not_found()
 
-    name_change = data.get("name", None)
-    abbreviation_change = data.get("abbreviation", None)
+    name_change, abbreviation_change = data.get("name", None), data.get("abbreviation", None)
 
     message = await virtool.viruses.check_name_and_abbreviation(
         db,
@@ -242,23 +229,12 @@ async def get_isolate(req):
 
 
 @protected("modify_virus")
+@validation(virtool.viruses.isolate_schema)
 async def add_isolate(req):
     """
     Add a new isolate to a virus.
 
     """
-    db, data = await unpack_json_request(req)
-
-    v = Validator({
-        "source_type": {"type": "string", "default": ""},
-        "source_name": {"type": "string", "default": ""},
-        "default": {"type": "boolean", "default": False}
-    })
-
-    if not v(data):
-        return invalid_input(v.errors)
-
-    data = v.document
     db, data = req.app["db"], req["data"]
 
     virus_id = req.match_info["virus_id"]
@@ -333,6 +309,7 @@ async def add_isolate(req):
 
 
 @protected("modify_virus")
+@validation(virtool.viruses.isolate_schema)
 async def edit_isolate(req):
     """
     Edit an existing isolate.

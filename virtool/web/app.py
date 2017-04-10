@@ -60,6 +60,7 @@ def create_app(loop, db_name=None):
 
     app.on_startup.append(init_thread_pool)
     app.on_startup.append(init_settings)
+    app.on_startup.append(init_dispatcher)
     app.on_startup.append(init_db)
 
     return app

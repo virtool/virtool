@@ -1,11 +1,10 @@
 import logging
 import pymongo.errors
 
-from cerberus import Validator
 from pymongo import ReturnDocument
 from virtool.groups import projection, processor, update_member_users
 from virtool.permissions import PERMISSIONS
-from virtool.handlers.utils import unpack_json_request, json_response, invalid_input, bad_request, not_found, protected
+from virtool.handlers.utils import unpack_json_request, json_response, bad_request, not_found, protected, validation
 
 logger = logging.getLogger(__name__)
 
@@ -22,22 +21,28 @@ async def find(req):
 
 
 @protected("manage_users")
+@validation({
+    "group_id": {
+        "type": "string",
+        "required": True
+    }
+})
 async def create(req):
     """
     Adds a new user group.
 
     """
-    db, data = await unpack_json_request(req)
+    db, data = req.app["db"], req["data"]
 
     document = {
-        "_id": (await req.json())["group_id"],
+        "_id": data["group_id"],
         "permissions": {permission: False for permission in PERMISSIONS}
     }
 
     try:
         await db.groups.insert(document)
     except pymongo.errors.DuplicateKeyError:
-        return json_response("Group already exists", status=409)
+        return json_response({"message": "Group already exists"}, status=409)
 
     return json_response(processor(document))
 
@@ -57,23 +62,22 @@ async def get(req):
 
 
 @protected("manage_users")
+@validation({key: dict(type="boolean") for key in PERMISSIONS})
 async def update_permissions(req):
     """
     Updates the permissions of a given group.
     
     """
+    db, data = req.app["db"], req["data"]
+
     group_id = req.match_info["group_id"]
-    permissions = await req.json()
 
-    if permissions == {} or not all([key in PERMISSIONS for key in permissions.keys()]):
-        return bad_request("Invalid key")
-
-    old_document = await req.app["db"].groups.find_one({"_id": group_id}, ["permissions"])
+    old_document = await db.groups.find_one({"_id": group_id}, ["permissions"])
 
     if not old_document:
         return not_found()
 
-    old_document["permissions"].update(permissions)
+    old_document["permissions"].update(data)
 
     # Get the current permissions dict for the passed group id.
     document = await req.app["db"].groups.find_one_and_update({"_id": group_id}, {

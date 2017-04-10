@@ -15,6 +15,13 @@ from virtool.utils import random_alphanumeric
 logger = logging.getLogger(__name__)
 
 
+isolate_schema = {
+    "source_type": {"type": "string", "default": ""},
+    "source_name": {"type": "string", "default": ""},
+    "default": {"type": "boolean", "default": False}
+}
+
+
 dispatch_projection = [
     "_id",
     "version",

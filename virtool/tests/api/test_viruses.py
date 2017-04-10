@@ -230,42 +230,6 @@ class TestCreate:
             "message": "Name and abbreviation already exist"
         }
 
-    async def test_not_authorized(self, do_post):
-        """
-        Test that the request fails if the session is not authorized
-         
-        """
-        data = {
-            "name": "Tobacco mosaic virus",
-            "abbreviation": "TMV"
-        }
-
-        resp = await do_post("/api/viruses", data)
-
-        assert resp.status == 403
-
-        assert await resp.json() == {
-            "message": "Not authorized"
-        }
-
-    async def test_not_permitted(self, do_post):
-        """
-        Test that the request fails if the session user has inadequate permissions.
-
-        """
-        data = {
-            "name": "Tobacco mosaic virus",
-            "abbreviation": "TMV"
-        }
-
-        resp = await do_post("/api/viruses", data, authorize=True)
-
-        assert resp.status == 403
-
-        assert await resp.json() == {
-            "message": "Not permitted"
-        }
-
 
 class TestEdit:
 
@@ -352,7 +316,7 @@ class TestEdit:
 
     async def test_abbreviation(self, test_db, do_patch, test_virus, test_add_history):
         """
-        Test that a changing the abbreviation results in changes to the virus document and a new change document in
+        Test that changing the abbreviation results in changes to the virus document and a new change document in
         history.
 
         """
@@ -363,6 +327,8 @@ class TestEdit:
         }
 
         resp = await do_patch("/api/viruses/6116cba1", data, authorize=True, permissions=["modify_virus"])
+
+        print(await resp.json())
 
         assert resp.status == 200
 
@@ -481,37 +447,6 @@ class TestEdit:
 
         assert await resp.json() == {
             "message": "Name and abbreviation already exist"
-        }
-
-    async def test_not_authorized(self, do_patch):
-        """
-        Test that the request fails if the session is not authorized
-
-        """
-        data = {
-            "name": "Tobacco mosaic virus",
-            "abbreviation": "TMV"
-        }
-
-        resp = await do_patch("/api/viruses/test", data)
-
-        assert resp.status == 403
-
-        assert await resp.json() == {
-            "message": "Not authorized"
-        }
-
-    async def test_not_permitted(self, do_patch):
-        """
-        Test that the request fails if the session user has inadequate permissions.
-
-        """
-        resp = await do_patch("/api/viruses/test", {}, authorize=True)
-
-        assert resp.status == 403
-
-        assert await resp.json() == {
-            "message": "Not permitted"
         }
 
 

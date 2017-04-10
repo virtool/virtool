@@ -6,7 +6,7 @@ from virtool.web.dispatcher import websocket_handler
 def setup_routes(app):
     app.router.add_get("/ws", websocket_handler)
 
-    app.router.add_get("", root.get)
+    app.router.add_get("/api", root.get)
 
     # Jobs routes
     app.router.add_get("/api/jobs", jobs.find)

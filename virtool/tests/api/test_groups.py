@@ -58,7 +58,7 @@ class TestCreate:
 
     async def test_exists(self, do_post, test_db, all_permissions):
         """
-        Test that a 404 is returned when attempting to create a new group at ``POST /api/groups/:group_id`` when the
+        Test that a 409 is returned when attempting to create a new group at ``POST /api/groups/:group_id`` when the
         ``group_id`` already exists.
          
         """
@@ -71,10 +71,10 @@ class TestCreate:
             "group_id": "test"
         }, authorize=True, permissions=["manage_users"])
 
-        assert resp.status == 400
+        assert resp.status == 409
 
         assert await resp.json() == {
-            "message": "Already exists"
+            "message": "Group already exists"
         }
 
     async def test_missing(self, do_post):
@@ -87,7 +87,7 @@ class TestCreate:
         assert await resp.json() == {
             "message": "Invalid input",
             "errors": {
-                "test": ["unknown_field"],
+                "test": ["unknown field"],
                 "group_id": ["required field"]
             }
         }
@@ -170,7 +170,7 @@ class TestUpdatePermissions:
             "permissions": no_permissions
         }
 
-    async def test_invalid_key(self, do_patch, test_db, no_permissions):
+    async def test_invalid_input(self, do_patch, test_db, no_permissions):
         """
         Test that an invalid permission key results in a ``422`` response.
          
@@ -187,7 +187,10 @@ class TestUpdatePermissions:
         assert resp.status == 422
 
         assert await resp.json() == {
-            "message": "Invalid input"
+            "message": "Invalid input",
+            "errors": {
+                "foo_bar": ["unknown field"]
+            }
         }
 
     async def test_not_found(self, do_patch):
