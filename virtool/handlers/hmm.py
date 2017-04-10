@@ -9,7 +9,7 @@ from pymongo import ReturnDocument
 from collections import Counter
 from virtool.hmm import to_client, projection, check
 from virtool.data_utils import get_new_id
-from virtool.handlers.utils import unpack_json_request, json_response, not_found, invalid_input, protected
+from virtool.handlers.utils import unpack_json_request, json_response, not_found, validation, protected
 
 
 async def find(req):
@@ -36,19 +36,13 @@ async def get(req):
 
 
 @protected("modify_hmm")
+@validation({"label": {"type": "string", "required": True}})
 async def update(req):
     """
     Update the label field for an HMM annotation document.
     
     """
-    db, data = await unpack_json_request(req)
-
-    v = Validator({
-        "label": {"type": "string", "required": True}
-    })
-
-    if not v(data):
-        return invalid_input(v.errors)
+    db, data = req.app["db"], req["data"]
 
     hmm_id = req.match_info["hmm_id"]
 

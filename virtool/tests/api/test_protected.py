@@ -18,8 +18,14 @@ parameters = [
     ("delete", ("/api/groups/foobar",))
 ]
 
+authorized_only = [
+    ("get", ("/api/account/settings",)),
+    ("patch", ("/api/account/settings", {})),
+    ("put", ("/api/account/password", {})),
+]
 
-@pytest.mark.parametrize("method, args", parameters)
+
+@pytest.mark.parametrize("method, args", parameters + authorized_only)
 async def test_not_authorized(method, args, do_get, do_post, do_patch, do_put, do_delete):
     doer = {
         "get": do_get,

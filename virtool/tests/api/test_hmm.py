@@ -120,29 +120,3 @@ class TestUpdate:
                 "label": ["must be of string type"]
             }
         }
-
-    async def test_not_authorized(self, do_patch):
-        """
-        Test that a request from an unauthorized session results in a ``403`` response. 
-
-        """
-        resp = await do_patch("/api/hmm/annotations/f8666902", {})
-
-        assert resp.status == 403
-
-        assert await resp.json() == {
-            "message": "Not authorized"
-        }
-
-    async def test_not_permitted(self, do_patch):
-        """
-        Test that a request from a session with inadequate permissions results in a ``403`` response. 
-
-        """
-        resp = await do_patch("/api/hmm/annotations/f8666902", {}, authorize=True)
-
-        assert resp.status == 403
-
-        assert await resp.json() == {
-            "message": "Not permitted"
-        }

@@ -108,8 +108,8 @@ def invalid_input(errors):
     return json_response({"message": "Invalid input", "errors": errors}, status=422)
 
 
-def protected(required_perm):
-    if required_perm not in PERMISSIONS:
+def protected(required_perm=None):
+    if required_perm and required_perm not in PERMISSIONS:
         raise ValueError("Permission {} is not valid".format(required_perm))
 
     def decorator(handler):
@@ -117,7 +117,7 @@ def protected(required_perm):
             if not req["session"].user_id:
                 return json_response({"message": "Not authorized"}, status=403)
 
-            if not req["session"].permissions[required_perm]:
+            if required_perm and not req["session"].permissions[required_perm]:
                 return json_response({"message": "Not permitted"}, status=403)
 
             return await handler(req)
