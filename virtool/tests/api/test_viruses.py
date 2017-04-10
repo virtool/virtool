@@ -736,11 +736,11 @@ class TestAddIsolate:
             "add_isolate",
             test_virus,
             new,
-            ("Added isolate", "Isolate b", "test"),
+            ("Added isolate", "Isolate b", "test", "as default"),
             "test"
         )
 
-    async def test_not_default(self, monkeypatch, test_db, do_post, test_virus):
+    async def test_not_default(self, monkeypatch, test_db, do_post, test_virus, test_add_history):
         """
         Test that a non-default isolate can be properly added
         
@@ -769,7 +769,9 @@ class TestAddIsolate:
             "default": False
         }
 
-        assert test_db.viruses.find_one("6116cba1", ["isolates"])["isolates"] == [
+        new = test_db.viruses.find_one("6116cba1")
+
+        assert new["isolates"] == [
             {
                 "isolate_id": "cab8b360",
                 "default": True,
@@ -784,7 +786,20 @@ class TestAddIsolate:
             }
         ]
 
-    async def test_first(self, monkeypatch, test_db, do_post, test_virus):
+        for isolate in new["isolates"]:
+            isolate["sequences"] = []
+
+        test_virus["isolates"][0]["sequences"] = []
+
+        assert test_add_history.call_args[0][1:] == (
+            "add_isolate",
+            test_virus,
+            new,
+            ("Added isolate", "Isolate b", "test"),
+            "test"
+        )
+
+    async def test_first(self, monkeypatch, test_db, do_post, test_virus, test_add_history):
         """
         Test that the first isolate for a virus is set as the ``default`` virus even if ``default`` is set to ``False``
         in the POST input.
@@ -816,14 +831,24 @@ class TestAddIsolate:
             "default": True
         }
 
-        assert test_db.viruses.find_one("6116cba1", ["isolates"])["isolates"] == [
-            {
+        new = test_db.viruses.find_one("6116cba1")
+
+        assert new["isolates"] == [{
                 "isolate_id": "test",
-                "source_name": "b",
+                "default": True,
                 "source_type": "isolate",
-                "default": True
-            }
-        ]
+                "source_name": "b"
+        }]
+
+        new["isolates"][0]["sequences"] = []
+
+        assert test_add_history.call_args[0][1:] == (
+            "add_isolate",
+            test_virus,
+            new,
+            ("Added isolate", "Isolate b", "test", "as default"),
+            "test"
+        )
 
     async def test_force_case(self, monkeypatch, test_db, do_post, test_virus):
         """

@@ -324,12 +324,17 @@ async def add_isolate(req):
 
     isolate_name = virtool.history.format_isolate_name(data)
 
+    description = ("Added isolate", isolate_name, isolate_id)
+
+    if will_be_default:
+        description += tuple(("as default",))
+
     await virtool.history.add(
         db,
         "add_isolate",
         old,
         new,
-        ("Added isolate", isolate_name, isolate_id),
+        description,
         req["session"].user_id
     )
 
