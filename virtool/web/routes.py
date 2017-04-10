@@ -17,7 +17,7 @@ def setup_routes(app):
     app.router.add_post("/api/samples", samples.create)
 
     app.router.add_get("/api/samples/{sample_id}", samples.get)
-    app.router.add_put("/api/samples/{sample_id}", samples.update)
+    app.router.add_patch("/api/samples/{sample_id}", samples.update)
     app.router.add_delete("/api/samples/{sample_id}", samples.remove)
 
     app.router.add_put("/api/samples/{sample_id}/group", samples.set_owner_group)
