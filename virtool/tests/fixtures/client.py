@@ -2,7 +2,7 @@ import json
 import pytest
 import pymongo
 
-from virtool.web import create_app
+from virtool.web.app import create_app
 
 
 @pytest.fixture

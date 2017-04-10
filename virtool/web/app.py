@@ -10,7 +10,6 @@ from motor import motor_asyncio
 
 import virtool.jobs
 import virtool.web.routes
-import virtool.web.schemas
 import virtool.web.sessions
 
 from virtool.jobs import manager
@@ -53,26 +52,9 @@ async def init_job_manager(app):
 
 
 def create_app(loop, db_name=None):
-    app = web.Application(
-        loop=loop,
-        middlewares=[
-            virtool.web.sessions.middleware_factory
-        ]
-    )
+    app = web.Application(loop=loop, middlewares=[virtool.web.sessions.middleware_factory])
 
-    virtool.web.routes.setup_root_routes(app)
-
-    api = web.Application(
-        loop=loop,
-        middlewares=[
-            virtool.web.sessions.middleware_factory,
-            # virtool.web.schemas.middleware_factory
-        ]
-    )
-
-    virtool.web.routes.setup_api_routes(api)
-
-    app.add_subapp("/api/", api)
+    virtool.web.routes.setup_routes(app)
 
     app["db_name"] = db_name
 
