@@ -2,6 +2,7 @@ import json
 import datetime
 
 from aiohttp import web
+from cerberus import Validator
 from virtool.permissions import PERMISSIONS
 
 
@@ -118,6 +119,25 @@ def protected(required_perm):
 
             if not req["session"].permissions[required_perm]:
                 return json_response({"message": "Not permitted"}, status=403)
+
+            return await handler(req)
+
+        return wrapped
+
+    return decorator
+
+
+def validation(schema):
+    def decorator(handler):
+        async def wrapped(req):
+            v = Validator(schema)
+
+            data = await req.json()
+
+            if not v(data):
+                return invalid_input(v.errors)
+
+            req["data"] = v.document
 
             return await handler(req)
 
