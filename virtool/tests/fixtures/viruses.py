@@ -25,7 +25,6 @@ def test_virus():
         "lower_name": "prunus virus f",
         "modified": False,
         "name": "Prunus virus F",
-        "user_id": "igboyes",
         "_id": "6116cba1"
     }
 
@@ -153,8 +152,8 @@ def test_merged_virus():
         "last_indexed_version": 0,
         "lower_name": "prunus virus f",
         "modified": False,
+        "history": [],
         "name": "Prunus virus F",
-        "username": "igboyes",
         "virus_id": "6116cba1"
     }
 

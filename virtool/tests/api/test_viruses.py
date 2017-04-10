@@ -106,7 +106,6 @@ class TestCreate:
         expected = {
             "virus_id": "test",
             "lower_name": "tobacco mosaic virus",
-            "user_id": "test",
             "name": "Tobacco mosaic virus",
             "isolates": [],
             "last_indexed_version": None,
@@ -128,9 +127,8 @@ class TestCreate:
                 "isolates": [],
                 "name": "Tobacco mosaic virus",
                 "lower_name": "tobacco mosaic virus",
-                "virus_id": "test",
+                "_id": "test",
                 "version": 0,
-                "user_id": "test",
                 "modified": True,
                 "abbreviation": "TMV",
                 "last_indexed_version": None

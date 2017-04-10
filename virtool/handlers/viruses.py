@@ -73,7 +73,6 @@ async def create(req):
 
     data.update({
         "_id": virus_id,
-        "user_id": req["session"].user_id,
         "last_indexed_version": None,
         "modified": True,
         "lower_name": data["name"].lower(),
