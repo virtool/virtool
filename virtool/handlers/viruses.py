@@ -11,6 +11,18 @@ from virtool.handlers.utils import unpack_json_request, json_response, bad_reque
     protected, validation
 
 
+CREATE_SCHEMA = {
+    "name": {"type": "string", "required": True},
+    "abbreviation": {"type": "string"}
+}
+
+
+EDIT_SCHEMA = {
+    "name": {"type": "string"},
+    "abbreviation": {"type": "string"}
+}
+
+
 async def find(req):
     """
     List truncated virus documents. Will take filters in URL parameters eventually.
@@ -43,10 +55,7 @@ async def get(req):
 
 
 @protected("modify_virus")
-@validation({
-    "name": {"type": "string", "required": True},
-    "abbreviation": {"type": "string"}
-})
+@validation(CREATE_SCHEMA)
 async def create(req):
     """
     Add a new virus to the collection. Checks to make sure the supplied virus name and abbreviation are not already in
@@ -90,10 +99,7 @@ async def create(req):
 
 
 @protected("modify_virus")
-@validation({
-    "name": {"type": "string"},
-    "abbreviation": {"type": "string"}
-})
+@validation(EDIT_SCHEMA)
 async def edit(req):
     """
     Edit an existing new virus. Checks to make sure the supplied virus name and abbreviation are not already in use in
@@ -399,14 +405,15 @@ async def remove_isolate(req):
     db = req.app["db"]
 
     virus_id = req.match_info["virus_id"]
-    isolate_id = req.match_info["isolate_id"]
 
-    old = await virtool.viruses.join(db, virus_id)
+    document = await db.viruses.find_one(virus_id)
 
-    if not old:
+    if not document:
         return not_found()
 
-    isolates = deepcopy(old["isolates"])
+    isolates = deepcopy(document["isolates"])
+
+    isolate_id = req.match_info["isolate_id"]
 
     # Get any isolates that have the isolate id to be removed (only one should match!).
     isolate_to_remove = next((isolate for isolate in isolates if isolate["isolate_id"] == isolate_id), None)
@@ -414,10 +421,14 @@ async def remove_isolate(req):
     # Remove the isolate from the virus' isolate list.
     isolates.remove(isolate_to_remove)
 
+    new_default = None
+
     # Set the first isolate as default if the removed isolate was the default.
-    if isolate_to_remove["default"]:
-        for i, isolate in enumerate(isolates):
-            isolate["default"] = (i == 0)
+    if isolate_to_remove["default"] and len(isolates):
+        new_default = isolates[0]
+        new_default["default"] = True
+
+    old = await virtool.viruses.join(db, virus_id, document)
 
     document = await db.viruses.find_one_and_update({"_id": virus_id}, {
         "$set": {
@@ -431,18 +442,27 @@ async def remove_isolate(req):
     # Remove any sequences associated with the removed isolate.
     await db.sequences.delete_many({"isolate_id": isolate_id})
 
-    '''
-    await db.history.add(
-        "update",
+    description = (
+        "Removed isolate",
+        virtool.history.format_isolate_name(isolate_to_remove),
+        isolate_to_remove["isolate_id"]
+    )
+
+    if isolate_to_remove["default"] and new_default:
+        description += (
+            "and set",
+            virtool.history.format_isolate_name(new_default), new_default["isolate_id"],
+            "as default"
+        )
+
+    await virtool.history.add(
+        db,
         "remove_isolate",
         old,
         new,
+        description,
         req["session"].user_id
-    )    
-    '''
-
-    for isolate in new["isolates"]:
-        isolate.pop("sequences")
+    )
 
     return web.Response(status=204)
 

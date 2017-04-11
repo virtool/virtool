@@ -1,3 +1,4 @@
+import pytest
 from copy import deepcopy
 
 from virtool.viruses import processor, dispatch_processor
@@ -491,32 +492,6 @@ class TestRemove:
             "message": "Not found"
         }
 
-    async def test_not_authorized(self, do_delete):
-        """
-        Test that the request fails if the session is not authorized
-
-        """
-        resp = await do_delete("/api/viruses/6116cba1", {})
-
-        assert resp.status == 403
-
-        assert await resp.json() == {
-            "message": "Not authorized"
-        }
-
-    async def test_not_permitted(self, do_delete):
-        """
-        Test that the request fails if the session user has inadequate permissions.
-
-        """
-        resp = await do_delete("/api/viruses/6116cba1", authorize=True)
-
-        assert resp.status == 403
-
-        assert await resp.json() == {
-            "message": "Not permitted"
-        }
-
 
 class TestListIsolates:
 
@@ -867,32 +842,6 @@ class TestAddIsolate:
             }
         ]
 
-    async def test_not_authorized(self, do_post):
-        """
-        Test that the request fails if the session is not authorized
-
-        """
-        resp = await do_post("/api/viruses/6116cba1/isolates", {})
-
-        assert resp.status == 403
-
-        assert await resp.json() == {
-            "message": "Not authorized"
-        }
-
-    async def test_not_permitted(self, do_post):
-        """
-        Test that the request fails if the session user has inadequate permissions.
-
-        """
-        resp = await do_post("/api/viruses/6116cba1/isolates", {}, authorize=True)
-
-        assert resp.status == 403
-
-        assert await resp.json() == {
-            "message": "Not permitted"
-        }
-
 
 class TestEditIsolate:
 
@@ -1145,36 +1094,10 @@ class TestEditIsolate:
             "message": "Empty input"
         }
 
-    async def test_not_authorized(self, do_patch):
-        """
-        Test that the request fails if the session is not authorized
-
-        """
-        resp = await do_patch("/api/viruses/6116cba1/isolates/test", {})
-
-        assert resp.status == 403
-
-        assert await resp.json() == {
-            "message": "Not authorized"
-        }
-
-    async def test_not_permitted(self, do_patch):
-        """
-        Test that the request fails if the session user has inadequate permissions.
-
-        """
-        resp = await do_patch("/api/viruses/6116cba1/isolates/test", {}, authorize=True)
-
-        assert resp.status == 403
-
-        assert await resp.json() == {
-            "message": "Not permitted"
-        }
-
 
 class TestRemoveIsolate:
 
-    async def test(self, test_db, do_delete, test_virus, test_sequence):
+    async def test(self, test_db, do_delete, test_virus, test_sequence, test_add_history):
         """
         Test that a valid request results in a ``204`` response and the isolate and sequence data is removed from the
         database.
@@ -1193,7 +1116,23 @@ class TestRemoveIsolate:
 
         assert test_db.sequences.count() == 0
 
-    async def test_reassign_default(self, test_db, do_delete, test_virus, test_sequence):
+        old = deepcopy(test_virus)
+        old["isolates"][0]["sequences"] = [test_sequence]
+
+        test_virus.update({
+            "isolates": [],
+            "modified": True
+        })
+
+        assert test_add_history.call_args[0][1:] == (
+            "remove_isolate",
+            old,
+            test_virus,
+            ("Removed isolate", "Isolate 8816-v2", "cab8b360"),
+            "test"
+        )
+
+    async def test_reassign_default(self, test_db, do_delete, test_virus, test_sequence, test_add_history):
         """
         Test that a valid request results in a ``204`` response and ``default`` status is reassigned correctly.
 
@@ -1218,54 +1157,40 @@ class TestRemoveIsolate:
 
         assert test_db.sequences.count() == 0
 
-    async def test_virus_not_found(self, do_delete):
+        old = deepcopy(test_virus)
+        old["isolates"][0]["sequences"] = [test_sequence]
+        old["isolates"][1]["sequences"] = []
+
+        test_virus.update({
+            "isolates": [test_virus["isolates"][1]],
+            "modified": True
+        })
+
+        test_virus["isolates"][0].update({
+            "default": True,
+            "sequences": []
+        })
+
+        assert test_add_history.call_args[0][1:] == (
+            "remove_isolate",
+            old,
+            test_virus,
+            ("Removed isolate", "Isolate 8816-v2", "cab8b360", "and set", "Isolate 7865", "bcb9b352", "as default"),
+            "test"
+        )
+
+    @pytest.mark.parametrize("url", ["/api/viruses/foobar/isolates/cab8b360", "/api/viruses/test/isolates/foobar"])
+    async def test_not_found(self, url, do_delete, test_db, test_virus):
         """
         Test that removal fails with ``404`` if the virus does not exist.
          
         """
-        resp = await do_delete("/api/viruses/test/isolates/cab8b360", authorize=True, permissions=["modify_virus"])
+        test_db.viruses.insert(test_virus)
+
+        resp = await do_delete(url, authorize=True, permissions=["modify_virus"])
 
         assert resp.status == 404
 
         assert await resp.json() == {
             "message": "Not found"
-        }
-
-    async def test_isolate_not_found(self, do_delete):
-        """
-        Test that removal fails with ``404`` if the isolate does not exist.
-
-        """
-        resp = await do_delete("/api/viruses/6116cba1/isolates/test", authorize=True, permissions=["modify_virus"])
-
-        assert resp.status == 404
-
-        assert await resp.json() == {
-            "message": "Not found"
-        }
-
-    async def test_not_authorized(self, do_delete):
-        """
-        Test that the request fails if the session is not authorized
-
-        """
-        resp = await do_delete("/api/viruses/6116cba1/isolates/test")
-
-        assert resp.status == 403
-
-        assert await resp.json() == {
-            "message": "Not authorized"
-        }
-
-    async def test_not_permitted(self, do_delete):
-        """
-        Test that the request fails if the session user has inadequate permissions.
-
-        """
-        resp = await do_delete("/api/viruses/6116cba1/isolates/test", authorize=True)
-
-        assert resp.status == 403
-
-        assert await resp.json() == {
-            "message": "Not permitted"
         }
