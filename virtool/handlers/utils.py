@@ -31,7 +31,7 @@ def dumps(obj):
     :rtype: str
      
     """
-    return json.dumps(obj, indent=4, sort_keys=True, cls=CustomEncoder)
+    return json.dumps(obj, indent=4, sort_keys=False, cls=CustomEncoder)
 
 
 def json_response(data, status=200):

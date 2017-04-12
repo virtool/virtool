@@ -11,12 +11,10 @@ from motor import motor_asyncio
 import virtool.jobs
 import virtool.web.routes
 import virtool.web.sessions
+import virtool.web.dispatcher
 
 from virtool.jobs import manager
 from virtool.web.settings import Settings
-
-from virtool.web.dispatcher import Dispatcher
-
 
 logger = logging.getLogger(__name__)
 
@@ -40,7 +38,7 @@ async def init_settings(app):
 
 
 async def init_dispatcher(app):
-    app["dispatcher"] = Dispatcher()
+    app["dispatcher"] = virtool.web.dispatcher.Dispatcher()
 
 
 async def init_job_manager(app):

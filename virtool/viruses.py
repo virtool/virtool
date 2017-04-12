@@ -3,31 +3,37 @@ import re
 import json
 import gzip
 import logging
-import pymongo
-import pymongo.errors
-import pymongo.collection
 
 from copy import deepcopy
+
 from virtool.data_utils import format_doc_id
 from virtool.utils import random_alphanumeric
+from virtool import history
 
 
 logger = logging.getLogger(__name__)
 
 
-isolate_schema = {
+ISOLATE_SCHEMA = {
     "source_type": {"type": "string", "default": ""},
     "source_name": {"type": "string", "default": ""},
     "default": {"type": "boolean", "default": False}
 }
 
-
-dispatch_projection = [
+LIST_PROJECTION = [
     "_id",
-    "version",
     "name",
-    "modified",
-    "abbreviation"
+    "abbreviation",
+    "version",
+    "modified"
+]
+
+SEQUENCE_PROJECTION = [
+    "_id",
+    "definition",
+    "host",
+    "isolate_id",
+    "sequence"
 ]
 
 
@@ -35,8 +41,11 @@ def processor(document):
     return format_doc_id("virus", dict(document))
 
 
-def dispatch_processor(document):
-    return processor(document)
+def sequence_processor(document):
+    document = dict(document)
+    document.pop("isolate_id")
+    document["accession"] = document.pop("_id")
+    return document
 
 
 async def join(db, virus_id, document=None):
@@ -72,6 +81,30 @@ async def join(db, virus_id, document=None):
     return merge_virus(document, sequences)
 
 
+async def get_complete(db, virus_id):
+    joined = await join(db, virus_id)
+
+    if not joined:
+        return None
+
+    joined = processor(joined)
+
+    joined.pop("lower_name")
+
+    for isolate in joined["isolates"]:
+        for sequence in isolate["sequences"]:
+            sequence["accession"] = sequence.pop("_id")
+
+    most_recent_change = await history.get_most_recent_change(db, virus_id)
+
+    if most_recent_change:
+        most_recent_change["change_id"] = most_recent_change.pop("_id")
+
+    joined["most_recent_change"] = most_recent_change
+
+    return joined
+
+
 async def check_name_and_abbreviation(db, name=None, abbreviation=None):
     unique_name = not (name and await db.viruses.find({"name": re.compile(name, re.IGNORECASE)}).count())
     unique_abbreviation = not (abbreviation and await db.viruses.find({"abbreviation": abbreviation}).count())
@@ -86,59 +119,6 @@ async def check_name_and_abbreviation(db, name=None, abbreviation=None):
         return "Abbreviation already exists"
 
     return False
-
-
-def set_default_isolate(db, virus_id, isolate_id):
-    """
-    Sets the isolate with the passed isolate id as the default isolate. Removes the default flag from the previous
-    default isolate.
-
-    :param virus_id: the Transaction object generated from the client request.
-    :type virus_id: :class:`~.dispatcher.Transaction`
-
-    :return: a tuple containing a bool indicating success and the isolate id of the old and new default isolates.
-    :rtype: tuple
-
-    """
-    data = transaction.data
-
-    # Get a list of the current isolates for a virus.
-    isolates = yield self.get_field(data["_id"], "isolates")
-
-    old_default = None
-
-    # Set the default key to True for the supplied data["isolate_id"]. Set all of the other isolates' default
-    # keys to False,
-    for isolate in isolates:
-        # Save the id of the old default isolate.
-        if isolate["default"]:
-            old_default = isolate["isolate_id"]
-
-        # Set the new default isolate.
-        isolate["default"] = isolate["isolate_id"] == data["isolate_id"]
-
-    assert old_default is not None
-
-    old, new = yield self.update(data["_id"], {
-        "$set": {
-            "isolates": isolates,
-            "modified": True
-        }
-    }, return_change=True)
-
-    yield self.collections["history"].add(
-        "update",
-        "set_default_isolate",
-        old,
-        new,
-        transaction.connection.user["_id"]
-    )
-
-    return True, {
-        "old_default": old_default,
-        "new_default": data["isolate_id"],
-        "virus_id": data["_id"]
-    }
 
 
 def verify_virus(self, transaction):
@@ -205,37 +185,6 @@ def fetch_ncbi(self, transaction):
         return True, seq_dict
 
     return False, None
-
-
-def add_sequence(self, transaction):
-    """
-    Adds a new sequence to a virus isolate with given virus and isolate ids.
-
-    :param transaction: the Transaction object generated from the client request.
-    :type transaction: :class:`~.dispatcher.Transaction`
-
-    :return: a tuple containing a bool indicating success and a the update response.
-    :rtype: tuple
-
-    """
-    old_virus, sequence = yield self.prepare_sequences(
-        transaction.data["_id"].strip(),
-        transaction.data["new"]
-    )
-
-    try:
-        response = yield self.sequences_collection.insert(sequence)
-    except pymongo.errors.DuplicateKeyError:
-        return False, dict(message="Accession already exists.")
-
-    yield self.complete_sequence_upsert(
-        old_virus,
-        sequence["isolate_id"],
-        transaction.connection.user["_id"],
-        add=True
-    )
-
-    return True, response
 
 
 def update_sequence(self, transaction):
@@ -644,43 +593,6 @@ def remove_for_import(self, virus_id, username):
     return virus_id, to_dispatch_history
 
 
-def update(self, virus_id, update, increment_version=True, return_change=False, upsert=False):
-    """
-    A wrapper around the database.Collection superclass 'update' method. Adds functionality for easily getting
-    joined virus document before and after that update is applied.
-
-    :param virus_id: the document id or query to used to direct the update.
-    :type virus_id: str
-
-    :param update: an update dict in Pymongo vernacular.
-    :type update: dict
-
-    :param increment_version: should the document version be incremented.
-    :type increment_version: bool
-
-    :param return_change: should the method create and return the old and new documents.
-    :type return_change: bool
-
-    :return: a tuple containing the old and new documents.
-    :rtype: tuple
-
-    """
-    # Get the current entry from the virus collection.
-    old_doc = None
-    new_doc = None
-
-    if return_change:
-        old_doc = yield self.join(virus_id)
-
-    yield super().update(virus_id, update, increment_version=increment_version)
-
-    # Get the new entry.
-    if return_change:
-        new_doc = yield self.join(virus_id)
-
-    return old_doc, new_doc
-
-
 def set_last_indexed_version(self, data):
     """
     Called as a result of a request from the index rebuild job. Updates the last indexed version and _version fields
@@ -696,69 +608,6 @@ def set_last_indexed_version(self, data):
             "_version": data["version"]
         }
     }, increment_version=False)
-
-    return response
-
-
-def prepare_sequences(self, virus_id, sequence):
-    """
-    Called when a add_sequence or update_sequence are called. Returns a tweaked version of the new sequence or
-    update and the joined virus associated with the supplied virus id.
-
-    :param virus_id: the id of the virus to get a joined document for.
-    :param sequence: the sequence dict to add or update.
-    :return: the joined virus and tweaked sequence dict.
-
-    """
-    # Remove all whitespace from the sequence string in the sequence dict.
-    sequence.update({
-        "sequence": "".join(sequence["sequence"].split()),
-        "annotated": True
-    })
-
-    virus = yield self.join(virus_id)
-
-    return virus, sequence
-
-
-def complete_sequence_upsert(self, old_document, isolate_id, username, add=False):
-    """
-    Called by both the :any:`add_sequence` and :any:`update_sequence` methods. Adds information about a new or
-    updated sequence to the viruses collection and adds a history record for the change.
-
-    :param old_document: the joined virus before the change.
-    :param isolate_id: the id of the isolate that the sequence belongs to.
-    :param username: the username performing the operation.
-    :param add: the sequence is a new sequence not an update.
-    :return: the Mongo update response.
-
-    """
-    update = {"$set": {"modified": True}}
-
-    # If a new sequence is being added, increment its associated isolate's sequence_count field by one.
-    if add:
-        isolates = yield self.get_field(old_document["_id"], "isolates")
-
-        for isolate in isolates:
-            if isolate["isolate_id"] == isolate_id:
-                break
-
-        # Modify the update dict so the isolate list is updated.
-        update["$set"]["isolates"] = isolates
-
-    # Set the virus modified flag and update the isolate list if necessary.
-    response = yield self.update(old_document["_id"], update)
-
-    # Get the new joined
-    new_document = yield self.join(old_document["_id"])
-
-    yield self.collections["history"].add(
-        "update",
-        "add_sequence" if add else "update_sequence",
-        old_document,
-        new_document,
-        username
-    )
 
     return response
 
@@ -829,3 +678,35 @@ def extract_isolate_ids(virus):
     return [isolate["isolate_id"] for isolate in virus["isolates"]]
 
 
+def find_isolate(isolates, isolate_id):
+    """
+    Return the isolate identified by ``isolate_id`` from a list of isolates.
+    
+    :param isolates: a list of isolate dicts
+    :type isolates: list
+    
+    :param isolate_id: the isolate_id of the isolate to return
+    :type isolate_id: str
+    
+    :return: an isolate
+    :rtype: dict
+    
+    """
+    return next((isolate for isolate in isolates if isolate["isolate_id"] == isolate_id), None)
+
+
+def format_isolate_name(isolate):
+    """
+    Take a complete or partial isolate ``dict`` and return a readable isolate name.
+    
+    :param isolate: a complete or partial isolate ``dict`` containing ``source_type`` and ``source_name`` fields.
+    :type isolate: dict
+    
+    :return: an isolate name
+    :rtype: str
+     
+    """
+    if isolate["source_type"] is None or isolate["source_name"] is None:
+        return "Unnamed isolate"
+
+    return " ".join((isolate["source_type"].capitalize(), isolate["source_name"]))

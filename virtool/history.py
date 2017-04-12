@@ -1,22 +1,21 @@
+import pymongo
 import dictdiffer
 
 from virtool.utils import timestamp
 
 
-virus_projection = [
+VIRUS_PROJECTION = [
     "_id",
-    "annotation",
+    "description",
     "method_name",
     "user_id",
-    "index_version",
     "virus_version",
     "timestamp",
-    "diff"
 ]
 
 dispatch_projection = [
     "_id",
-    "operation",
+    "description",
     "method_name",
     "timestamp",
     "virus_id",
@@ -29,7 +28,6 @@ dispatch_projection = [
 
 
 projection = dispatch_projection + [
-    "annotation",
     "diff"
 ]
 
@@ -105,6 +103,13 @@ def calculate_diff(old, new):
     return list(dictdiffer.diff(old, new))
 
 
+async def get_most_recent_change(db, virus_id):
+    return await db.history.find_one({
+        "virus_id": virus_id,
+        "index_id": "unbuilt"
+    }, VIRUS_PROJECTION, sort=[("timestamp", pymongo.DESCENDING)])
+
+
 async def add_for_import(db, operation, method_name, old, new, username):
     history_document = create_history_document(operation, method_name, old, new, username)
 
@@ -147,27 +152,6 @@ def get_default_isolate(document):
     return strip_isolate(default_isolates[0])
 
 
-def get_upserted_isolate(document, changes):
-    for change in changes:
-        if change[0] == "change" and change[1][0] == "isolates":
-            return document["isolates"][change[1][1]]
-
-
-def get_info_for_updated_sequence(document, changes):
-    for change in changes:
-        if change[0] == "change" and change[1][2] == "sequences":
-            isolate = document["isolates"][change[1][1]]
-            sequence_index = change[1][3]
-            sequence = {key: isolate["sequences"][sequence_index][key] for key in ["_id", "definition"]}
-
-            isolate = strip_isolate(isolate)
-            isolate.update(sequence)
-
-            return isolate
-
-    raise ValueError("Could not find isolate of updated sequence")
-
-
 async def get_versioned_document(db, virus_id, virus_version):
     current = await db.viruses.join(virus_id)
 
@@ -208,10 +192,6 @@ async def patch_virus_to_version(db, joined_virus, version):
     return current, patched, reverted_history_ids
 
 
-async def reversion_update(self, history_id, reverted):
-    await self.update(history_id, reverted, reversion=True)
-
-
 async def set_index_as_unbuilt(db, data):
     await db.history.update({"index": data["index_id"]}, {
         "$set": {
@@ -219,10 +199,3 @@ async def set_index_as_unbuilt(db, data):
             "index_version": "unbuilt"
         }
     })
-
-
-def format_isolate_name(isolate):
-    if isolate["source_type"] is None or isolate["source_name"] is None:
-        return "Unnamed isolate"
-
-    return " ".join((isolate["source_type"].capitalize(), isolate["source_name"]))
