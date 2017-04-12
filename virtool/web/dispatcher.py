@@ -104,8 +104,6 @@ class Dispatcher:
             if not callable(conn_filter):
                 raise TypeError("conn_filter must be callable")
 
-            print(connections)
-
             connections = [conn for conn in connections if conn_filter(conn)]
 
         if conn_modifier:

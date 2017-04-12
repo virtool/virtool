@@ -102,7 +102,7 @@ def timestamp():
     return datetime.datetime.now(tz=datetime.timezone.utc)
 
 
-def random_alphanumeric(length=6, mixed_case=False, excluded=[]):
+def random_alphanumeric(length=6, mixed_case=False, excluded=None):
     """
     Generates a random string composed of letters and numbers.
 
@@ -116,6 +116,8 @@ def random_alphanumeric(length=6, mixed_case=False, excluded=[]):
     :rtype: string
 
     """
+    excluded = excluded or list()
+
     characters = digits + ascii_letters if mixed_case else ascii_lowercase
 
     candidate = "".join([choice(characters) for i in range(length)])
