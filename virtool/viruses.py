@@ -41,9 +41,16 @@ def processor(document):
     return format_doc_id("virus", dict(document))
 
 
+def dispatch_version_only(req, new):
+    req.app["dispatcher"].dispatch(
+        "viruses",
+        "update",
+        processor({key: new[key] for key in LIST_PROJECTION})
+    )
+
+
 def sequence_processor(document):
     document = dict(document)
-    document.pop("isolate_id")
     document["accession"] = document.pop("_id")
     return document
 

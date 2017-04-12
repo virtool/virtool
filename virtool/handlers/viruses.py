@@ -260,9 +260,12 @@ async def get_isolate(req):
     if not document:
         return not_found()
 
-    isolate = [isolate for isolate in document["isolates"] if isolate["isolate_id"] == isolate_id][0]
+    isolate = virtool.viruses.find_isolate(document["isolates"], isolate_id)
 
-    isolate["sequences"] = await db.sequences.find({"isolate_id": isolate["isolate_id"]}).to_list(None)
+    isolate["sequences"] = await db.sequences.find({"isolate_id": isolate_id}, {"isolate_id": False}).to_list(None)
+
+    for sequence in isolate["sequences"]:
+        sequence["accession"] = sequence.pop("_id")
 
     return json_response(isolate)
 
@@ -344,7 +347,9 @@ async def add_isolate(req):
         req["session"].user_id
     )
 
-    return json_response(data, status=201)
+    virtool.viruses.dispatch_version_only(req, new)
+
+    return json_response(dict(data, sequences=[]), status=201)
 
 
 @protected("modify_virus")
@@ -400,6 +405,9 @@ async def edit_isolate(req):
         "$set": {
             "isolates": isolates,
             "modified": True
+        },
+        "$inc": {
+            "version": 1
         }
     }, return_document=ReturnDocument.AFTER)
 
@@ -425,6 +433,8 @@ async def edit_isolate(req):
         description,
         req["session"].user_id
     )
+
+    virtool.viruses.dispatch_version_only(req, new)
 
     return json_response(isolate, status=200)
 
@@ -467,6 +477,9 @@ async def remove_isolate(req):
         "$set": {
             "isolates": isolates,
             "modified": True
+        },
+        "$inc": {
+            "version": 1
         }
     }, return_document=ReturnDocument.AFTER)
 
@@ -497,6 +510,8 @@ async def remove_isolate(req):
         req["session"].user_id
     )
 
+    virtool.viruses.dispatch_version_only(req, new)
+
     return web.Response(status=204)
 
 
@@ -509,7 +524,11 @@ async def list_sequences(req):
     if not await db.viruses.find({"_id": virus_id}, {"isolates.isolate_id": isolate_id}).count():
         return not_found()
 
-    documents = await db.sequences.find({"isolate_id": isolate_id}, virtool.viruses.sequence_projection).to_list(None)
+    projection = list(virtool.viruses.SEQUENCE_PROJECTION)
+
+    projection.remove("isolate_id")
+
+    documents = await db.sequences.find({"isolate_id": isolate_id}, projection).to_list(None)
 
     return json_response([virtool.viruses.sequence_processor(d) for d in documents])
 
@@ -523,7 +542,7 @@ async def get_sequence(req):
 
     accession = req.match_info["accession"]
 
-    document = await db.sequences.find_one(accession, virtool.viruses.sequence_projection)
+    document = await db.sequences.find_one(accession, virtool.viruses.SEQUENCE_PROJECTION)
 
     if not document:
         return not_found()
@@ -545,20 +564,31 @@ async def create_sequence(req):
     data.update({
         "_id": data.pop("accession"),
         "isolate_id": isolate_id,
-        "host": data["host"] or ""
+        "host": data.get("host", "")
     })
 
-    old = await virtool.viruses.join(db, virus_id)
+    document = await db.viruses.find_one({"_id": virus_id, "isolates.isolate_id": isolate_id})
 
-    if not old:
+    if not document:
         return not_found()
+
+    old = await virtool.viruses.join(db, virus_id, document)
 
     try:
         await db.sequences.insert_one(data)
     except pymongo.errors.DuplicateKeyError:
         return json_response({"message": "Accession already exists"}, status=409)
 
-    new = await virtool.viruses.join(db, virus_id)
+    document = await db.viruses.find_one_and_update({"_id": virus_id}, {
+        "$set": {
+            "modified": True
+        },
+        "$inc": {
+            "version": 1
+        }
+    }, return_document=ReturnDocument.AFTER)
+
+    new = await virtool.viruses.join(db, virus_id, document)
 
     isolate = virtool.viruses.find_isolate(old["isolates"], isolate_id)
 
@@ -571,6 +601,8 @@ async def create_sequence(req):
         req["session"].user_id
     )
 
+    virtool.viruses.dispatch_version_only(req, new)
+
     return json_response(virtool.viruses.sequence_processor(data))
 
 
@@ -581,19 +613,27 @@ async def edit_sequence(req):
 
     virus_id, isolate_id, accession = (req.match_info[key] for key in ["virus_id", "isolate_id", "accession"])
 
-    data["_id"] = data.pop("accession")
-
-    sequence_document = await db.sequences.update_one({"_id": accession}, {
+    result = await db.sequences.update_one({"_id": accession}, {
         "$set": data
     })
 
-    if not sequence_document:
+    if not result.modified_count:
         return not_found()
+
+    await db.viruses.find_one_and_update({"_id": virus_id}, {
+        "$inc": {
+            "version": 1
+        }
+    })
 
     return json_response(virtool.viruses.sequence_processor(sequence_document))
 
 
 async def remove_sequence(req):
+    """
+    Remove a sequence from an isolate.
+     
+    """
     db = req.app["db"]
 
     accession = req.match_info["accession"]
@@ -610,6 +650,20 @@ async def list_history(req):
     db = req.app["db"]
 
     virus_id = req.match_info["virus_id"]
+
+    if not await db.viruses.find({"_id": virus_id}).count():
+        return not_found()
+
+    documents = await db.history.find({"virus_id": virus_id}).to_list(None)
+
+    return json_response(documents)
+
+
+async def get_history(req):
+    db = req.app["db"]
+
+    virus_id = req.match_info["virus_id"]
+    version = req.match_info[""]
 
     if not await db.viruses.find({"_id": virus_id}).count():
         return not_found()
