@@ -29,7 +29,8 @@ var config = {
 
     output: {
         path: "dist",
-        filename: "app.[hash].js"
+        filename: "app.[hash].js",
+        publicPath: "/static/"
     },
 
     eslint: {
