@@ -68,7 +68,7 @@ class TestGet:
             "user_id": "fred",
             "force_reset": False,
             "groups": [],
-            "last_password_change": "2015-10-06T20:00:00+00:00",
+            "last_password_change": "2015-10-06T20:00:00Z",
             "permissions": {
                 "add_host": False,
                 "add_sample": False,
@@ -160,7 +160,7 @@ class TestCreate:
             "user_id": "bob",
             "force_reset": False,
             "groups": [],
-            "last_password_change": "2017-10-06T20:00:00+00:00",
+            "last_password_change": "2017-10-06T20:00:00Z",
             "permissions": {
                 "add_host": False,
                 "add_sample": False,
@@ -292,7 +292,7 @@ class TestSetPassword:
         assert resp.status == 200
 
         assert await resp.json() == {
-            "last_password_change": static_time.isoformat(),
+            "last_password_change": "2017-10-06T20:00:00Z",
             "force_reset": False,
             "user_id": "bob"
         }
