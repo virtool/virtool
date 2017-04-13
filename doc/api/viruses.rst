@@ -23,22 +23,25 @@ Find truncated viruses based on filters described in URL parameters. Documents a
 
     [
         {
+            "virus_id": "cd5dbc59",
+            "name": "Peach rosette mosaic virus",
+            "abbreviation": "PRMV",
+            "version": 0,
+            "modified": false
+        },
+        {
+            "virus_id": "e71be9e3",
+            "name": "Pelargonium leaf curl virus",
             "abbreviation": "",
-            "modified": false,
-            "name": "Passiflora chlorosis virus",
-            "virus_id": "8eef7ebd"
+            "version": 0,
+            "modified": false
         },
         {
-            "abbreviation": "PVF",
-            "modified": false,
-            "name": "Prunus virus F",
-            "virus_id": "6116cba1"
-        },
-        {
-            "abbreviation": "EV_TF3-mycovirus",
-            "modified": false,
-            "name": "Endornavirus of Tree Fruit #3",
-            "virus_id": "5350af44"
+            "virus_id": "d3a91e42",
+            "name": "Pepper cryptic virus 1",
+            "abbreviation": "",
+            "version": 0,
+            "modified": false
         }
     ]
 
@@ -161,6 +164,65 @@ Edit an existing virus.
 
 
 
+Verify
+------
+
+Verify a modified virus. The response will either be a verified virus document or a ``400`` response containing
+verification error information.
+
+::
+
+    PUT /api/viruses/:virus_id/verify
+
+
+**Responses**
+
+.. code-block:: javascript
+
+    Status: 200 OK
+
+    {
+        "virus_id": "6116cba1",
+        "name": "Prunus virus F",
+        "abbreviation": "PVF",
+        "imported": True,
+        "modified": False,
+        "last_indexed_version": 0,
+        "version": 1,
+        "isolates": [
+            {
+                "default": True,
+                "isolate_id": "cab8b360",
+                "sequences": [
+                    {
+                        "sequence": "TGTTTAAGAGATTAAACAACCGCTTTC",
+                        "host": "sweet cherry",
+                        "definition": "Prunus virus F isolate 8816-s2...",
+                        "accession": "KX269872",
+                        "isolate_id": "cab8b360"
+                    }
+                ],
+                "source_name": "8816-v2",
+                "source_type": "isolate"
+            }
+        ]
+    }
+
+.. code-block:: javascript
+
+    Status: 400 Bad Request
+
+    {
+        "message": "Verification errors",
+        "errors": {
+            "empty_isolate": ["cab8b360"],
+            "empty_sequence": False,
+            "empty_virus": False,
+            "isolate_inconsistency": False
+        }
+    }
+
+
 Remove
 ------
 
@@ -168,7 +230,7 @@ Remove an existing virus, its isolates, and sequences.
 
 ::
 
-    PUT /api/viruses/:virus_id
+    DELETE /api/viruses/:virus_id
 
 
 **Response**
@@ -201,18 +263,6 @@ List the isolates for a given virus.
             "isolate_id": "cab8b360",
             "source_name": "8816-v2",
             "source_type": "isolate"
-        },
-        {
-            "default": false,
-            "isolate_id": "016e8f8f",
-            "source_name": "16TFA020",
-            "source_type": "internal"
-        },
-        {
-            "default": false,
-            "isolate_id": "dbb82643",
-            "source_name": "13TF122",
-            "source_type": "internal"
         }
     ]
 
@@ -235,20 +285,24 @@ Get a single, complete isolate for given virus and isolate ids.
     Status: 200 OK
 
     {
-        "default": true,
-        "isolate_id": "cab8b360",
+        "isolate_id": "016e8f8f",
+        "source_name": "16TFA020",
+        "source_type": "internal",
+        "default": false,
         "sequences": [
             {
-                "_id": "KX269872",
-                "annotated": true,
-                "definition": "Prunus virus F isolate 8816-s2 segment...",
-                "host": "sweet cherry",
-                "isolate_id": "cab8b360",
-                "sequence": "TGTTTAAGAGATTAAACAACCGCTTTCGTTACCAGAAACTGCT..."
+                "sequence": "GACCGCTTTCGTTACCAGAAACCTCTTTCTACGTTCTCTGAACGTTTCTG...",
+                "definition": "Prunus virus F, RNA2, complete sequence",
+                "accession": "16TFA020_PVF_RNA2_B",
+                "host": "Prunus"
+            },
+            {
+                "sequence": "CCGCTTTCGATACCAGCTTCTTCTTACAGCTTTCGTTCTTAAGCCTTCTT...",
+                "definition": "Prunus virus F, RNA1 complete sequence",
+                "accession": "16TFA020_PVF_RNA1_B",
+                "host": "Prunus"
             }
-        ],
-        "source_name": "8816-v2",
-        "source_type": "isolate"
+        ]
     }
 
 
@@ -285,10 +339,10 @@ be set to default regardless of input.
     Status: 201 Created
 
     {
-        "default": false,
         "isolate_id": "b4ce655d",
         "source_name": "Jal-01",
         "source_type": "isolate",
+        "default": false,
         "sequences": []
     }
 
@@ -348,3 +402,24 @@ default.
 .. code-block:: javascript
 
     Status: 204 No content
+
+
+List History
+------------
+
+Retrieve a list of all changes made to the virus.
+
+::
+
+    GET /api/viruses/:virus_id/history
+
+
+**Response**
+
+.. code-block:: javascript
+
+    Status: 200
+
+    {
+
+    }
