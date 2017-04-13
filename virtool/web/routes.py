@@ -1,11 +1,24 @@
-from virtool.handlers import root, jobs, samples, viruses, history, hmm, hosts, account, groups, users
+from aiohttp import web
 
 from virtool.web.dispatcher import websocket_handler
+from virtool.handlers import root, jobs, samples, viruses, history, hmm, hosts, account, groups, users
+
+
+def index_handler(req):
+    with open("client/dist/index.html") as handle:
+        return web.Response(body=handle.read(), content_type="text/html")
 
 
 def setup_routes(app):
+
+    # Site routes
+    app.router.add_get("/", index_handler)
+    app.router.add_static("/static", "client/dist")
+
+    # Websocket route
     app.router.add_get("/ws", websocket_handler)
 
+    # API Root
     app.router.add_get("/api", root.get)
 
     # Jobs routes
