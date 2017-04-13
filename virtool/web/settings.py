@@ -83,8 +83,8 @@ SCHEMA = {
 
 class Settings:
 
-    def __init__(self, app):
-        self.app = app
+    def __init__(self, loop):
+        self.loop = loop
         self.data = None
         self.path = "./settings.json"
 
@@ -96,7 +96,7 @@ class Settings:
         return self.data
 
     async def load(self):
-        await self.app.loop.run_in_executor(None, self.load_from_file)
+        await self.loop.run_in_executor(None, self.load_from_file)
 
     def load_from_file(self):
         """ Load a JSON settings file. If the path cannot be found, generate a new settings file. """
@@ -117,6 +117,9 @@ class Settings:
 
         self.data = v.document
         self.write_to_file()
+
+    async def write(self):
+        await self.loop.run_in_executor(None, self.write_to_file)
 
     def write_to_file(self):
         """ Write self.data dictionary to a formatted JSON file """

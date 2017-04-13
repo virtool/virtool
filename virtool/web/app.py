@@ -33,7 +33,7 @@ def init_thread_pool(app):
 
 
 async def init_settings(app):
-    app["settings"] = Settings(app)
+    app["settings"] = Settings(app.loop)
     await app["settings"].load()
 
 
