@@ -1,6 +1,6 @@
 import pytest
 
-from virtool.dispatcher import Dispatcher, Connection
+from virtool.web.dispatcher import Dispatcher, Connection
 
 
 class TestConnections:

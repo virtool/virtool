@@ -2,7 +2,7 @@ import os
 import pytest
 import subprocess
 
-from virtool.web import find_server_version
+from virtool.web.app import find_server_version
 
 
 @pytest.fixture
