@@ -43,42 +43,6 @@ async def set_primary_group(db, user_id, group_id):
     return document
 
 
-async def invalidate_session(db, token, logout=False):
-    """
-    Invalidate the session identified by the passed token. Can be called as the result of a logout or a forced
-    invalidation by a user with the *modify_options* permission.
-
-    """
-    session_count = await db.users.find({"sessions.0.token": token}).count()
-
-    if session_count > 1:
-        raise ValueError("Multiple sessions matching token {}".format(token))
-
-    response = db.users.update({"sessions.0.token": token}, {
-        "$pull": {
-            "sessions": {
-                "token": token
-            }
-        }
-    })
-
-    removed_count = len(response["_ids"])
-
-    '''
-    if removed_count:
-        self._dispatch({
-            "operation": "deauthorize",
-            "data": {
-                "logout": logout
-            }
-        }, conn_filter=lambda conn: conn.user["token"] == token)
-
-        return True
-
-    return False
-    '''
-
-
 async def validate_credentials(db, user_id, password):
     """
     Returns ``True`` if the username exists and the password is correct. Returns ``False`` if the username does not

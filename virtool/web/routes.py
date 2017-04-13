@@ -73,8 +73,6 @@ def setup_routes(app):
 
     app.router.add_put("/api/account/password", account.change_password)
 
-    app.router.add_get("/api/account/logout", account.logout)
-
     # Users routes
     app.router.add_get("/api/users", users.find)
     app.router.add_post("/api/users", users.create)

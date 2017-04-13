@@ -1,7 +1,7 @@
 from pymongo import ReturnDocument
 from virtool.utils import timestamp
 from virtool.handlers.utils import json_response, bad_request, requires_login, protected, validation
-from virtool.users import hash_password, validate_credentials, invalidate_session
+from virtool.users import hash_password, validate_credentials
 
 
 SETTINGS_SCHEMA = {
@@ -104,11 +104,3 @@ async def change_password(req):
     })
 
     return json_response({"timestamp": last_password_change})
-
-
-@protected()
-async def logout(req):
-
-    await invalidate_session(req.app["db"], requesting_token, logout=True)
-
-    return json_response({"logout": True})
