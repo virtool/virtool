@@ -127,52 +127,6 @@ async def check_name_and_abbreviation(db, name=None, abbreviation=None):
     return False
 
 
-def verify_virus(self, transaction):
-    """
-    Takes a virus id passed by the client and verifies that the associated virus is ready to be included in an
-    index rebuild.
-
-    :param transaction: the Transaction object generated from the client request.
-    :type transaction: :class:`~.dispatcher.Transaction`
-
-    :return: a tuple containing a bool indicating success and a dict describing any verification errors.
-    :rtype: tuple
-
-    """
-    data = transaction.data
-
-    # Get the virus document of interest.
-    virus = yield self.find_one({"_id": data["_id"]})
-
-    # Extract the isolate ids from the virus.
-    isolate_ids = extract_isolate_ids(virus)
-
-    # Get the sequences associated with the virus isolates.
-    sequences = yield self.sequences_collection.find({"isolate_id": {"$in": isolate_ids}}).to_list(None)
-
-    # Verify the virus, returning any verification errors.
-    verification_errors = yield check_virus(virus, sequences)
-
-    if not verification_errors:
-        old, new = yield self.update(data["_id"], {
-            "$set": {
-                "modified": False
-            }
-        }, return_change=True)
-
-        yield self.collections["history"].add(
-            "update",
-            "verify_virus",
-            old,
-            new,
-            transaction.connection.user["_id"]
-        )
-
-        return True, None
-
-    return False, verification_errors
-
-
 def fetch_ncbi(accession):
     """
     Retrieve the Genbank data associated with the given accession and transform it into a Virtool-style sequence
@@ -213,65 +167,6 @@ def fetch_ncbi(accession):
         return seq_dict
     else:
         return None
-
-
-def check_virus(virus, sequences):
-    """
-    Checks that the passed virus and sequences constitute valid Virtool records and can be included in a virus
-    index. Error fields are:
-
-    * emtpy_virus - virus has no isolates associated with it.
-    * empty_isolate - isolates that have no sequences associated with them.
-    * empty_sequence - sequences that have a zero length sequence field.
-    * isolate_inconsistency - virus has isolates containing different numbers of sequences.
-
-    :param virus: the virus document.
-    :param sequences: a list of sequence documents associated with the virus.
-    :return: return any errors or False if there are no errors.
-
-    """
-    errors = {
-        "empty_virus": len(virus["isolates"]) == 0,  #
-        "empty_isolate": list(),
-        "empty_sequence": list(),
-        "isolate_inconsistency": False
-    }
-
-    isolate_sequence_counts = list()
-
-    # Append the isolate_ids of any isolates without sequences to empty_isolate. Append the isolate_id and sequence
-    # id of any sequences that have an empty sequence.
-    for isolate in virus["isolates"]:
-        isolate_sequences = [sequence for sequence in sequences if sequence["isolate_id"] == isolate["isolate_id"]]
-        isolate_sequence_count = len(isolate_sequences)
-
-        if isolate_sequence_count == 0:
-            errors["empty_isolate"].append(isolate["isolate_id"])
-
-        isolate_sequence_counts.append(isolate_sequence_count)
-
-        errors["empty_sequence"] += filter(lambda sequence: len(sequence["sequence"]) == 0, isolate_sequences)
-
-    # Give an isolate_inconsistency error the number of sequences is not the same for every isolate. Only give the
-    # error if the virus is not also emtpy (empty_virus error).
-    errors["isolate_inconsistency"] = (
-        len(set(isolate_sequence_counts)) != 1 and not
-        (errors["empty_virus"] or errors["empty_isolate"])
-    )
-
-    # If there is an error in the virus, return the errors object. Otherwise return False.
-    has_errors = False
-
-    for key, value in errors.items():
-        if value:
-            has_errors = True
-        else:
-            errors[key] = False
-
-    if has_errors:
-        return errors
-
-    return None
 
 
 def update_sequence(self, transaction):

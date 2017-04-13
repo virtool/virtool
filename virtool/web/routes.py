@@ -30,6 +30,8 @@ def setup_routes(app):
     app.router.add_patch("/api/viruses/{virus_id}", viruses.edit)
     app.router.add_delete("/api/viruses/{virus_id}", viruses.remove)
 
+    app.router.add_put("/api/viruses/{virus_id}/verify", viruses.verify)
+
     app.router.add_get("/api/viruses/{virus_id}/isolates", viruses.list_isolates)
     app.router.add_get("/api/viruses/{virus_id}/isolates/{isolate_id}", viruses.get_isolate)
     app.router.add_post("/api/viruses/{virus_id}/isolates", viruses.add_isolate)

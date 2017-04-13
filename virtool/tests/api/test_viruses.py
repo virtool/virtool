@@ -468,6 +468,235 @@ class TestEdit:
         }
 
 
+class TestVerify:
+
+    async def test_valid(self, test_db, do_put, test_virus, test_sequence, test_add_history, test_dispatch):
+        """
+        Test that a complete virus document is returned in a ``200`` response when verification is successful. Check
+        that history is updated and dispatches are made. 
+
+        """
+        test_virus["modified"] = True
+
+        test_db.viruses.insert(test_virus)
+        test_db.sequences.insert(test_sequence)
+
+        resp = await do_put("/api/viruses/6116cba1/verify", {}, authorize=True, permissions=["modify_virus"])
+
+        assert resp.status == 200
+
+        expected = {
+            "virus_id": "6116cba1",
+            "name": "Prunus virus F",
+            "abbreviation": "PVF",
+            "imported": True,
+            "modified": False,
+            "last_indexed_version": 0,
+            "version": 1,
+            "isolates": [
+                {
+                    "default": True,
+                    "isolate_id": "cab8b360",
+                    "sequences": [
+                        {
+                            "sequence": "TGTTTAAGAGATTAAACAACCGCTTTC",
+                            "host": "sweet cherry",
+                            "definition": "Prunus virus F isolate 8816-s2 segment RNA2 polyprotein 2 gene, complete cds.",
+                            "accession": "KX269872",
+                            "isolate_id": "cab8b360"
+                        }
+                    ],
+                    "source_name": "8816-v2",
+                    "source_type": "isolate"
+                }
+            ]
+        }
+
+        assert await resp.json() == expected
+
+        assert test_db.viruses.find_one() == {
+            "_id": "6116cba1",
+            "abbreviation": "PVF",
+            "imported": True,
+            "isolates": [
+                {
+                    "default": True,
+                    "isolate_id": "cab8b360",
+                    "source_name": "8816-v2",
+                    "source_type": "isolate"
+                }
+            ],
+            "last_indexed_version": 0,
+            "lower_name": "prunus virus f",
+            "modified": False,
+            "name": "Prunus virus F",
+            "version": 1
+        }
+
+        old = deepcopy(test_virus)
+
+        old["isolates"][0]["sequences"] = [test_sequence]
+
+        new = deepcopy(expected)
+
+        new.update({
+            "_id": new.pop("virus_id"),
+            "lower_name": new["name"].lower()
+        })
+
+        for isolate in new["isolates"]:
+            for sequence in isolate["sequences"]:
+                sequence["_id"] = sequence.pop("accession")
+
+        assert test_add_history.call_args[0][1:] == (
+            "verify",
+            old,
+            new,
+            ("Verified",),
+            "test"
+        )
+
+        assert test_dispatch.call_args[0] == (
+            "viruses",
+            "update",
+            {
+                "virus_id": "6116cba1",
+                "name": "Prunus virus F",
+                "abbreviation": "PVF",
+                "modified": False,
+                "version": 1
+            }
+        )
+
+    async def test_empty_virus(self, test_db, do_put, test_virus, test_add_history, test_dispatch):
+        """
+        Test that a virus with no isolates can be detected and be reported by the handler in a ``400`` response.
+
+        """
+        test_virus["isolates"] = []
+
+        test_db.viruses.insert(test_virus)
+
+        resp = await do_put("/api/viruses/6116cba1/verify", {}, authorize=True, permissions=["modify_virus"])
+
+        assert resp.status == 400
+
+        assert await resp.json() == {
+            "message": "Verification errors",
+            "errors": {
+                "empty_isolate": False,
+                "empty_sequence": False,
+                "empty_virus": True,
+                "isolate_inconsistency": False
+            }
+        }
+
+        assert not test_add_history.called
+        assert not test_dispatch.called
+
+    async def test_empty_isolate(self, test_db, do_put, test_virus, test_add_history, test_dispatch):
+        """
+        Test that an isolate with no sequences can be detected and be reported by the handler in a ``400`` response.
+
+        """
+        test_db.viruses.insert(test_virus)
+
+        resp = await do_put("/api/viruses/6116cba1/verify", {}, authorize=True, permissions=["modify_virus"])
+
+        assert resp.status == 400
+
+        assert await resp.json() == {
+            "message": "Verification errors",
+            "errors": {
+                "empty_isolate": ["cab8b360"],
+                "empty_sequence": False,
+                "empty_virus": False,
+                "isolate_inconsistency": False
+            }
+        }
+
+        assert not test_add_history.called
+        assert not test_dispatch.called
+
+    async def test_empty_sequence(self, test_db, do_put, test_virus, test_sequence, test_add_history, test_dispatch):
+        """
+        Test that an empty sequence field can be detected and be reported by the handler in a ``400`` response.
+
+        """
+        test_db.viruses.insert(test_virus)
+
+        test_sequence["sequence"] = ""
+
+        test_db.sequences.insert(test_sequence)
+
+        resp = await do_put("/api/viruses/6116cba1/verify", {}, authorize=True, permissions=["modify_virus"])
+
+        assert resp.status == 400
+
+        assert await resp.json() == {
+            "message": "Verification errors",
+            "errors": {
+                "empty_isolate": False,
+                "empty_sequence": ["KX269872"],
+                "empty_virus": False,
+                "isolate_inconsistency": False
+            }
+        }
+
+        assert not test_add_history.called
+        assert not test_dispatch.called
+
+    async def test_isolate_inconsistency(self, test_db, do_put, test_virus, test_sequence, test_add_history,
+                                         test_dispatch):
+        """
+        Test that an isolate consistency can be detected and be reported by the handler in a ``400`` response.
+         
+        """
+
+        test_virus["isolates"].append({
+            "isolate_id": "foobar",
+            "source_type": "isolate",
+            "source_name": "b",
+            "default": False
+        })
+
+        # Make database changes so that one isolate has one more sequence than the other isolate.
+        test_db.viruses.insert(test_virus)
+        test_db.sequences.insert(test_sequence)
+        test_db.sequences.insert(dict(test_sequence, _id="a", isolate_id="foobar"))
+        test_db.sequences.insert(dict(test_sequence, _id="b", isolate_id="foobar"))
+
+        resp = await do_put("/api/viruses/6116cba1/verify", {}, authorize=True, permissions=["modify_virus"])
+
+        assert resp.status == 400
+
+        assert await resp.json() == {
+            "message": "Verification errors",
+            "errors": {
+                "empty_isolate": False,
+                "empty_sequence": False,
+                "empty_virus": False,
+                "isolate_inconsistency": True
+            }
+        }
+
+        assert not test_add_history.called
+        assert not test_dispatch.called
+
+    async def test_not_found(self, do_put):
+        """
+        Test that an isolate consistency can be detected and be reported by the handler in a ``400`` response.
+
+        """
+        resp = await do_put("/api/viruses/foobar/verify", {}, authorize=True, permissions=["modify_virus"])
+
+        assert resp.status == 404
+
+        assert await resp.json() == {
+            "message": "Not found"
+        }
+
+
 class TestRemove:
 
     async def test(self, test_db, do_delete, test_virus, test_add_history, test_dispatch):
@@ -1138,17 +1367,6 @@ class TestEditIsolate:
             "test"
         )
 
-        assert test_dispatch.call_args[0] == (
-            "viruses",
-            "update",
-            {
-                "virus_id": "6116cba1",
-                "name": "Prunus virus F",
-                "abbreviation": "PVF",
-                "modified": True,
-                "version": 1
-            }
-        )
 
     async def test_unset_default(self, test_db, do_patch, test_virus, test_dispatch):
         """
