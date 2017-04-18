@@ -1,10 +1,27 @@
 from aiohttp import web
 
+from virtool.web.login import login_handler
 from virtool.web.dispatcher import websocket_handler
 from virtool.handlers import root, jobs, samples, viruses, history, hmm, hosts, account, groups, users
+from virtool.web.login import get_login_template, generate_verification_keys
 
 
-def index_handler(req):
+async def index_handler(req):
+    if not req["session"].user_id:
+        keys = generate_verification_keys()
+
+        session_id = req["session"].id
+
+        await req.app["db"].sessions.update_one({"_id": session_id}, {
+            "$set": {
+                "keys": keys
+            }
+        })
+
+        html = get_login_template().render(key_1=keys[0], key_2=keys[1], key_3=keys[2])
+
+        return web.Response(body=html, content_type="text/html")
+
     with open("client/dist/index.html") as handle:
         return web.Response(body=handle.read(), content_type="text/html")
 
@@ -13,6 +30,7 @@ def setup_routes(app):
 
     # Site routes
     app.router.add_get("/", index_handler)
+    app.router.add_post("/login", login_handler)
     app.router.add_static("/static", "client/dist")
 
     # Websocket route
