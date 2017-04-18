@@ -8,6 +8,8 @@ parameters = [
     ("post", ("/api/viruses/foobar/isolates", {})),
     ("patch", ("/api/viruses/foobar/isolates/test", {})),
     ("delete", ("/api/viruses/foobar/isolates/test",)),
+    ("post", ("/api/viruses/foobar/isolates/test/sequences", {})),
+    ("patch", ("/api/viruses/foobar/isolates/test/sequences/foobar", {})),
 
     ("patch", ("/api/hmm/annotations/foobar", {})),
 

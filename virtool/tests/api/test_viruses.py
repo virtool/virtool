@@ -1891,3 +1891,144 @@ class TestCreateSequence:
         assert await resp.json() == {
             "message": "Not found"
         }
+
+
+class TestEditSequence:
+
+    async def test(self, do_patch, test_db, test_virus, test_sequence, test_add_history, test_dispatch):
+        test_db.viruses.insert(test_virus)
+        test_db.sequences.insert(test_sequence)
+
+        data = {
+            "host": "Grapevine",
+            "sequence": "ATGCGTGTACTG",
+            "definition": "A made up sequence"
+        }
+
+        resp = await do_patch(
+            "/api/viruses/6116cba1/isolates/cab8b360/sequences/KX269872",
+            data,
+            authorize=True,
+            permissions=["modify_virus"]
+        )
+
+        assert resp.status == 200
+
+        assert await resp.json() == {
+            "accession": "KX269872",
+            "definition": "A made up sequence",
+            "host": "Grapevine",
+            "isolate_id": "cab8b360",
+            "sequence": "ATGCGTGTACTG"
+        }
+
+        old = {
+            "_id": "6116cba1",
+            "abbreviation": "PVF",
+            "imported": True,
+            "isolates": [
+                {
+                    "default": True,
+                    "isolate_id": "cab8b360",
+                    "sequences": [test_sequence],
+                    "source_name": "8816-v2",
+                    "source_type": "isolate"
+                }
+            ],
+            "last_indexed_version": 0,
+            "lower_name": "prunus virus f",
+            "modified": False,
+            "name": "Prunus virus F",
+            "version": 0
+        }
+
+        new = deepcopy(old)
+
+        new["isolates"][0]["sequences"] = [{
+            "_id": "KX269872",
+            "definition": "A made up sequence",
+            "isolate_id": "cab8b360",
+            "host": "Grapevine",
+            "sequence": "ATGCGTGTACTG"
+        }]
+
+        new.update({
+            "modified": True,
+            "version": 1
+        })
+
+        assert test_add_history.call_args[0][1:] == (
+            "edit_sequence",
+            old,
+            new,
+            ("Edited sequence", "KX269872", "in isolate", "Isolate 8816-v2", "cab8b360"),
+            "test"
+        )
+
+        assert test_dispatch.call_args[0] == (
+            "viruses",
+            "update",
+            {
+                "virus_id": "6116cba1",
+                "abbreviation": "PVF",
+                "modified": True,
+                "name": "Prunus virus F",
+                "version": 1
+            }
+        )
+
+    async def test_invalid_input(self, do_patch):
+        resp = await do_patch(
+            "/api/viruses/6116cba1/isolates/cab8b360/sequences/KX269872",
+            {
+                "plant": "Grapevine",
+                "sequence": "ATGCGTGTACTG",
+                "definition": 123
+            },
+            authorize=True,
+            permissions=["modify_virus"]
+        )
+
+        assert resp.status == 422
+
+        assert await resp.json() == {
+            "message": "Invalid input",
+            "errors": {
+                "definition": ["must be of string type"],
+                "plant": ["unknown field"]
+            }
+        }
+
+    @pytest.mark.parametrize("foobar", ["virus_id", "isolate_id", "sequence_id"])
+    async def test_not_found(self, foobar, do_patch, test_db, test_virus, test_sequence):
+        test_db.viruses.insert(test_virus)
+        test_db.sequences.insert(test_sequence)
+
+        url = "/api/viruses/{}/isolates/{}/sequences/{}".format(
+            "foobar" if foobar == "virus_id" else "6116cba1",
+            "foobar" if foobar == "isolate_id" else "cab8b360",
+            "foobar" if foobar == "sequence_id" else "KX269872"
+        )
+
+        resp = await do_patch(
+            url,
+            {
+                "host": "Grapevine",
+                "sequence": "ATGCGTGTACTG",
+                "definition": "A made up sequence"
+            },
+            authorize=True,
+            permissions=["modify_virus"]
+        )
+
+        assert resp.status == 404
+
+        if foobar == "sequence_id":
+            assert await resp.json() == {
+                "message": "Sequence not found"
+            }
+
+        else:
+            assert await resp.json() == {
+                "message": "Virus or isolate not found"
+            }
