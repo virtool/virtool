@@ -52,7 +52,8 @@ def test_merged_virus():
                 "isolate_id": "cab8b360",
                 "sequences": [
                     {
-                        "accession": "KX269872",
+                        "_id": "KX269872",
+                        "isolate_id": "cab8b360",
                         "definition": "Prunus virus F isolate 8816-s2 segment RNA2 polyprotein 2 gene, complete cds.",
                         "host": "sweet cherry",
                         "sequence": "TGTTTAAGAGATTAAACAACCGCTTTC"
@@ -65,39 +66,8 @@ def test_merged_virus():
         "last_indexed_version": 0,
         "lower_name": "prunus virus f",
         "modified": False,
-        "history": [],
         "name": "Prunus virus F",
-        "virus_id": "6116cba1"
-    }
-
-
-@pytest.fixture
-def test_virus_response():
-    return {
-        "version": 0,
-        "abbreviation": "PVF",
-        "imported": True,
-        "isolates": [
-            {
-                "default": True,
-                "isolate_id": "cab8b360",
-                "sequences": [
-                    {
-                        "accession": "KX269872",
-                        "definition": "Prunus virus F isolate 8816-s2 segment RNA2 polyprotein 2 gene, complete cds.",
-                        "host": "sweet cherry",
-                        "sequence": "TGTTTAAGAGATTAAACAACCGCTTTC"
-                    }
-                ],
-                "source_name": "8816-v2",
-                "source_type": "isolate"
-            }
-        ],
-        "last_indexed_version": 0,
-        "modified": False,
-        "most_recent_change": None,
-        "name": "Prunus virus F",
-        "virus_id": "6116cba1"
+        "_id": "6116cba1"
     }
 
 
@@ -135,83 +105,11 @@ def import_report():
     }
 
 
-def create_merged_virus():
-    return {
-        "last_indexed_version": 0,
-        "abbreviation": "CMV",
-        "modified": False,
-        "_id": "067jz0t8",
-        "_version": 0,
-        "name": "Cucumber mosaic virus",
-        "isolates": [
-            {
-                "sequences": [
-                    {
-                        "sequence": "CAT",
-                        "_id": "NC_001440",
-                        "definition": "Cucumber mosaic virus RNA 3, complete sequence",
-                        "_version": 0,
-                        "isolate_id": "dqz9u58g",
-                        "host": None,
-                        "length": 2216
-                    }
-                ],
-                "source_name": "Fny",
-                "isolate_id": "dqz9u58g",
-                "source_type": "strain",
-                "default": True
-            },
-            {
-                "sequences": [
-                    {
-                        "sequence": "GAT",
-                        "_id": "NC_001441",
-                        "definition": "Cucumber mosaic virus RNA 2, complete sequence",
-                        "_version": 0,
-                        "isolate_id": "sad23gat",
-                        "host": None,
-                        "length": 2212
-                    }
-                ],
-                "source_name": "Fny",
-                "isolate_id": "sad23gat",
-                "source_type": "strain",
-                "default": False
-            }
-        ]
-    }
-
-
 @pytest.fixture
-def virus_document():
-    return {
-        "last_indexed_version": 0,
-        "abbreviation": "CMV",
-        "modified": False,
-        "_id": "067jz0t8",
-        "_version": 0,
-        "name": "Cucumber mosaic virus",
-        "isolates": [
-            {
-                "source_name": "Fny",
-                "isolate_id": "dqz9u58g",
-                "source_type": "strain",
-                "default": True
-            },
-            {
-                "source_name": "Fny",
-                "isolate_id": "sad23gat",
-                "source_type": "strain",
-                "default": False
-            }
-        ]
-    }
-
-
-@pytest.fixture
-def sequences_list():
+def test_sequences_list():
     return [
         {
+            "annotated": True,
             "sequence": "CAT",
             "_id": "NC_001440",
             "definition": "Cucumber mosaic virus RNA 3, complete sequence",
@@ -221,6 +119,7 @@ def sequences_list():
             "length": 2216
         },
         {
+            "annotated": True,
             "sequence": "GAT",
             "_id": "NC_001441",
             "definition": "Cucumber mosaic virus RNA 2, complete sequence",
@@ -233,16 +132,9 @@ def sequences_list():
 
 
 @pytest.fixture
-def merged_virus():
-    return create_merged_virus()
-
-
-@pytest.fixture
-def virus_list():
-    first_virus = create_merged_virus()
-    second_virus = create_merged_virus()
-    third_virus = create_merged_virus()
-    fourth_virus = create_merged_virus()
+def test_virus_list(test_merged_virus):
+    first_virus = test_merged_virus
+    second_virus, third_virus, fourth_virus = (copy.deepcopy(test_merged_virus) for i in range(3))
 
     second_virus.update({
         "_id": "067jz0t3",

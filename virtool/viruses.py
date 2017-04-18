@@ -519,6 +519,64 @@ def read_import_file(path):
         return [virus for virus in json.load(input_file) if isinstance(virus, dict)]
 
 
+def check_virus(virus, sequences):
+    """
+    Checks that the passed virus and sequences constitute valid Virtool records and can be included in a virus
+    index. Error fields are:
+    * emtpy_virus - virus has no isolates associated with it.
+    * empty_isolate - isolates that have no sequences associated with them.
+    * empty_sequence - sequences that have a zero length sequence field.
+    * isolate_inconsistency - virus has isolates containing different numbers of sequences.
+    
+    :param virus: the virus document.
+    :param sequences: a list of sequence documents associated with the virus.
+    :return: return any errors or False if there are no errors.
+    
+    """
+    errors = {
+        "empty_virus": len(virus["isolates"]) == 0,  #
+        "empty_isolate": list(),
+        "empty_sequence": list(),
+        "isolate_inconsistency": False
+    }
+
+    isolate_sequence_counts = list()
+
+    # Append the isolate_ids of any isolates without sequences to empty_isolate. Append the isolate_id and sequence
+    # id of any sequences that have an empty sequence.
+    for isolate in virus["isolates"]:
+        isolate_sequences = [sequence for sequence in sequences if sequence["isolate_id"] == isolate["isolate_id"]]
+        isolate_sequence_count = len(isolate_sequences)
+
+        if isolate_sequence_count == 0:
+            errors["empty_isolate"].append(isolate["isolate_id"])
+
+        isolate_sequence_counts.append(isolate_sequence_count)
+
+        errors["empty_sequence"] += filter(lambda sequence: len(sequence["sequence"]) == 0, isolate_sequences)
+
+    # Give an isolate_inconsistency error the number of sequences is not the same for every isolate. Only give the
+    # error if the virus is not also emtpy (empty_virus error).
+    errors["isolate_inconsistency"] = (
+        len(set(isolate_sequence_counts)) != 1 and not
+        (errors["empty_virus"] or errors["empty_isolate"])
+    )
+
+    # If there is an error in the virus, return the errors object. Otherwise return False.
+    has_errors = False
+
+    for key, value in errors.items():
+        if value:
+            has_errors = True
+        else:
+            errors[key] = False
+
+    if has_errors:
+        return errors
+
+    return None
+
+
 def verify_virus_list(viruses):
     fields = ["_id", "name", "abbreviation"]
 
@@ -531,7 +589,7 @@ def verify_virus_list(viruses):
 
         virus_document, sequences = split_virus(virus)
 
-        errors[virus["name"].lower()] = yield check_virus(virus_document, sequences)
+        errors[virus["name"].lower()] = check_virus(virus_document, sequences)
 
         for field in fields:
 
