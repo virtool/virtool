@@ -2,7 +2,7 @@ from aiohttp import web
 
 from virtool.web.login import login_handler
 from virtool.web.dispatcher import websocket_handler
-from virtool.handlers import root, jobs, samples, viruses, history, hmm, hosts, account, groups, users
+from virtool.handlers import root, jobs, samples, viruses, history, hmm, hosts, account, groups, users, genbank
 from virtool.web.login import get_login_template, generate_verification_keys
 
 
@@ -78,6 +78,8 @@ def setup_routes(app):
                           viruses.remove_sequence)
 
     app.router.add_get("/api/viruses/{virus_id}/history", viruses.list_history)
+
+    app.router.add_get("/api/genbank/{accession}", genbank.get)
 
     # History Routes
     app.router.add_get("/api/history", history.find)
