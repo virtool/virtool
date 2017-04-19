@@ -3,10 +3,11 @@ import re
 import logging
 import json
 import gzip
-from Bio import Entrez, SeqIO
-from copy import deepcopy
 
-from virtool.data_utils import format_doc_id
+from copy import deepcopy
+from pymongo import ReturnDocument
+
+from virtool.data_utils import get_new_id, format_doc_id
 from virtool.utils import random_alphanumeric
 from virtool import history
 
@@ -127,120 +128,10 @@ async def check_name_and_abbreviation(db, name=None, abbreviation=None):
     return False
 
 
-def fetch_ncbi(accession):
-    """
-    Retrieve the Genbank data associated with the given accession and transform it into a Virtool-style sequence
-    document.
-
-    :param accession: the Genbank accession number.
-    :return: a sequence document containing relevant Genbank data for the accession.
-
-    """
-    Entrez.tool = "Virtool"
-    Entrez.email = "ian.boyes@inspection.gc.ca"
-
-    term = "{}[accn]".format(accession)
-
-    gi_handle = Entrez.esearch(db="nucleotide", term=term)
-    gi_record = Entrez.read(gi_handle)
-
-    gi_list = gi_record["IdList"]
-
-    if len(gi_list) == 1:
-        gb_handle = Entrez.efetch(db="nuccore", id=gi_list[0], rettype="gb", retmode="text")
-        gb_record = list(SeqIO.parse(gb_handle, "gb"))
-
-        seq_record = gb_record[0]
-
-        seq_dict = {
-            "accession": seq_record.name,
-            "sequence": str(seq_record.seq),
-            "definition": seq_record.description,
-            "host": ""
-        }
-
-        for feature in seq_record.features:
-            for key, value in feature.qualifiers.items():
-                if key == "host":
-                    seq_dict["host"] = value[0]
-
-        return seq_dict
-    else:
-        return None
-
-
-def update_sequence(self, transaction):
-    """
-    Updates an existing sequence in a isolate and virus with given ids. Takes a dict of changes to apply to the
-    sequence document.
-
-    :param transaction: the Transaction object generated from the client request.
-    :type transaction: :class:`~.dispatcher.Transaction`
-
-    :return: a tuple containing a bool indicating success and a the update response.
-    :rtype: tuple
-
-    """
-    old_virus, sequence = yield self.prepare_sequences(
-        transaction.data["_id"],
-        transaction.data["new"]
-    )
-
-    sequence_id = sequence.pop("_id")
-
-    response = yield self.sequences_collection.update({"_id": sequence_id}, {"$set": sequence})
-
-    yield self.complete_sequence_upsert(
-        old_virus,
-        sequence["isolate_id"],
-        transaction.connection.user["_id"]
-    )
-
-    return True, response
-
-
-def remove_sequence(self, transaction):
-    """
-    Removes a sequence from the sequence collection and from its associated virus document. Takes virus id,
-    isolate id, and the sequence id to be removed.
-
-    :param transaction: the Transaction object generated from the client request.
-    :type transaction: :class:`~.dispatcher.Transaction`
-
-    :return: a tuple containing a bool indicating success and a the remove method's response.
-    :rtype: tuple
-
-    """
-    old = yield self.join(transaction.data["_id"])
-
-    # Remove the sequence document.
-    response = yield self.sequences_collection.remove({"_id": transaction.data["sequence_id"]})
-
-    # Update the virus document, decrementing the sequence_count by one and setting the modified flag.
-    yield self.update(transaction.data["_id"], {
-        "$set": {"modified": True}
-    })
-
-    new = yield self.join(transaction.data["_id"])
-
-    yield self.collections["history"].add(
-        "update",
-        "remove_sequence",
-        old,
-        new,
-        transaction.connection.user["_id"]
-    )
-
-    return True, response
-
-
 def export_file(self):
     """
     Removes a sequence from the sequence collection and from its associated virus document. Takes virus id,
     isolate id, and the sequence id to be removed.
-
-    :return: a tuple containing a bool indicating success and a the generated file's id and size.
-    :rtype: tuple
 
     """
     # A list of joined viruses.
@@ -281,55 +172,30 @@ def export_file(self):
     }
 
 
-def get_default_isolate(virus, isolate_processor=None):
-    """
-    Returns the default isolate dict for the given virus document.
+async def import_file(db, dispatcher, handle, replace=False):
 
-    :param virus: a virus document.
-    :type virus: dict
-    :param isolate_processor: a function to process the default isolate into a desired format.
-    :type: func
-    :return: the default isolate dict.
-    :rtype: dict
-
-    """
-    # Get the virus isolates with the default flag set to True. This list should only contain one item.
-    default_isolates = [isolate for isolate in virus["isolates"] if virus["default"] is True]
-
-    # Check that there is only one item.
-    assert len(default_isolates) == 1
-
-    default_isolate = default_isolates[0]
-
-    if isolate_processor:
-        default_isolate = isolate_processor(default_isolate)
-
-    return default_isolate
-
-
-def import_file(self, transaction):
-    """
-    Import virus data from an uploaded json.gz file identified by a file_id passed in ``transaction``.
-
-    :param transaction: the Transaction object generated from the client request.
-    :type transaction: :class:`~.dispatcher.Transaction`
-
-    :return: a tuple containing a bool indicating success and a the number of viruses and isolates added.
-    :rtype: tuple
-
-    """
-    # The file id to import the data from.
-    file_id = transaction.data.pop("file_id")
-    replace = transaction.data.pop("replace")
-
-    viruses = yield read_import_file(os.path.join(self.settings.get("data_path"), "files", file_id))
+    with gzip.open(handle, "rt") as gzip_file:
+        viruses = json.load(gzip_file)
 
     virus_count = len(viruses)
 
-    duplicates, errors = yield verify_virus_list(viruses)
+    duplicates, errors = verify_virus_list(viruses)
 
     if duplicates or errors:
-        return False, dict(message="Invalid import file", duplicates=duplicates, errors=errors)
+        document = db.status.find_one_and_update({"_id": "import_viruses"}, {
+            "$set": {
+                "file_name": None,
+                "file_size": 0,
+                "added": 0,
+                "replaced": 0,
+                "skipped": 0,
+                "in_progress": False,
+                "errors": errors,
+                "duplicates": duplicates
+            }
+        }, return_document=ReturnDocument.AFTER)
+
+        dispatcher.dispatch("status", "update", document)
 
     # Keeps track of the progress of the import process. Sent to the client intermittently.
     counter = {
@@ -340,25 +206,23 @@ def import_file(self, transaction):
         "warnings": list()
     }
 
-    # Make a list of virus names that are already in use in the database. Force them all to lowercase for
-    # case-insensitive comparison of existing viruses to those being imported.
-    used_names = yield self.db.distinct("lower_name")
+    # Make a list of lowered virus names that are already in use in the database.
+    used_names = await db.viruses.distinct("lower_name")
 
     empty_collection = len(used_names) == 0
 
-    conflicts = yield self.find_import_conflicts(viruses, replace)
+    conflicts = await find_import_conflicts(db, viruses, replace)
 
     if conflicts:
         return False, dict(message="Conflicting sequence ids", conflicts=conflicts)
 
-    used_isolate_ids = yield self.db.distinct("isolates.isolate_id")
-    used_isolate_ids = set(used_isolate_ids)
+    used_isolate_ids = set(await db.viruses.distinct("isolates.isolate_id"))
 
     base_virus_document = {
         "_version": 0,
         "last_indexed_version": 0,
         "modified": False,
-        "username": transaction.connection.user["_id"],
+        "username": req["session"].user_id,
         "imported": True
     }
 
@@ -374,7 +238,7 @@ def import_file(self, transaction):
         # 2% since the last report.
         if progress - counter["progress"] > 0.02:
             counter["progress"] = progress
-            transaction.update(counter)
+            # transaction.update(counter)
 
         virus_document, sequences = split_virus(virus)
 
@@ -383,18 +247,17 @@ def import_file(self, transaction):
         to_insert.update({key: virus_document[key] for key in ["name", "abbreviation", "isolates"]})
 
         if empty_collection:
-            to_insert["_id"] = yield self.get_new_id()
+            to_insert["_id"] = await get_new_id(db.viruses)
 
-            dispatches = yield self.insert_from_import(to_insert)
+            dispatches = await insert_from_import(to_insert)
 
             adds.append(dispatches)
 
-            for sequence_document in sequences:
-                yield self.sequences_collection.insert(sequence_document)
+            await db.sequences.insert_many(sequences)
 
             counter["added"] += 1
 
-            yield self.send_import_dispatches(adds, replaces)
+            await send_import_dispatches(adds, replaces)
 
             continue
 
@@ -406,14 +269,14 @@ def import_file(self, transaction):
             counter["skipped"] += 1
             continue
 
-        to_insert["_id"] = yield self.get_new_id()
+        to_insert["_id"] = await get_new_id(db.viruses)
 
         # Check if abbreviation exists already.
         virus_with_abbreviation = None
 
         # Don't count empty strings as duplicate abbreviations!
         if virus["abbreviation"]:
-            virus_with_abbreviation = yield self.find_one({"abbreviation": virus["abbreviation"]})
+            virus_with_abbreviation = await db.viruses.find_one({"abbreviation": virus["abbreviation"]})
 
         if virus_with_abbreviation and virus_with_abbreviation["lower_name"] != lower_name:
             # Remove the imported virus's abbreviation because it is already assigned to an existing virus.
@@ -433,25 +296,25 @@ def import_file(self, transaction):
             # Check if the isolate id is already used in the viruses collection.
             if isolate["isolate_id"] in used_isolate_ids:
                 # Generate a new isolate id if the imported isolate id is already in the viruses collection.
-                isolate["isolate_id"] = yield self.get_new_isolate_id(used_isolate_ids)
+                isolate["isolate_id"] = await get_new_isolate_id(db, used_isolate_ids)
 
                 # Append the generated isolate to a list of used isolate ids so that is isn't reused during the
                 # import process.
                 used_isolate_ids.add(isolate["isolate_id"])
 
         if virus_exists:
-            existing_virus = yield self.find_one({"lower_name": lower_name})
+            existing_virus = await db.viruses.find_one({"lower_name": lower_name})
 
             isolate_ids = extract_isolate_ids(existing_virus)
 
             # Remove the existing virus, including its sequences.
-            remove_dispatches = yield self.remove_for_import(
+            remove_dispatches = await remove_for_import(
                 existing_virus["_id"],
-                transaction.connection.user["_id"]
+                # transaction.connection.user["_id"]
             )
 
             # Remove all sequence documents associated with the existing virus.
-            yield self.sequences_collection.remove({"_id": {
+            await db.sequences.remove({"_id": {
                 "$in": isolate_ids
             }})
 
@@ -460,63 +323,26 @@ def import_file(self, transaction):
         to_insert.update({key: virus_document[key] for key in ["abbreviation", "name", "isolates"]})
 
         # Add the new virus.
-        insert_dispatches = yield self.insert_from_import(to_insert)
+        insert_dispatches = await insert_from_import(to_insert)
 
         if virus_exists:
             replaces.append((remove_dispatches, insert_dispatches))
         else:
             adds.append(insert_dispatches)
 
-        for sequence_document in sequences:
-            yield self.sequences_collection.insert(sequence_document)
+        await db.sequences.insert_many(sequences)
 
         if not virus_exists:
             counter["added"] += 1
 
-        self.send_import_dispatches(adds, replaces)
+        await send_import_dispatches(adds, replaces)
 
-    yield self.send_import_dispatches(adds, replaces, flush=True)
+    await send_import_dispatches(adds, replaces, flush=True)
 
     counter["progress"] = 1
-    transaction.update(counter)
+    # transaction.update(counter)
 
     return True, counter
-
-
-def extract_sequence_ids(virus):
-    """
-    Extract all sequence ids from a merged virus.
-
-    :param virus: the merged virus
-    :type virus: dict
-
-    :return: the sequence ids belonging to ``virus``
-    :rtype: list
-
-    """
-    sequence_ids = list()
-
-    isolates = virus["isolates"]
-
-    if not isolates:
-        raise ValueError("Empty isolates list in merged virus")
-
-    for isolate in isolates:
-        if "sequences" not in isolate:
-            raise KeyError("Isolate in merged virus missing sequences field")
-
-        if not isolate["sequences"]:
-            raise ValueError("Empty sequences list in merged virus")
-
-        sequence_ids += [sequence["_id"] for sequence in isolate["sequences"]]
-
-    return sequence_ids
-
-
-def read_import_file(path):
-    # Load a list of joined virus from a the gzip-compressed JSON.
-    with gzip.open(path, "rt") as input_file:
-        return [virus for virus in json.load(input_file) if isinstance(virus, dict)]
 
 
 def check_virus(virus, sequences):
@@ -635,8 +461,7 @@ def verify_virus_list(viruses):
     return duplicates, errors
 
 
-def find_import_conflicts(self, viruses, replace):
-    used_names = yield self.db.distinct("lower_name")
+def find_import_conflicts(db, used_name, viruses, replace):
 
     conflicts = list()
 
@@ -772,6 +597,32 @@ async def set_last_indexed_version(db, data):
     return response
 
 
+def get_default_isolate(virus, isolate_processor=None):
+    """
+    Returns the default isolate dict for the given virus document.
+
+    :param virus: a virus document.
+    :type virus: dict
+    :param isolate_processor: a function to process the default isolate into a desired format.
+    :type: func
+    :return: the default isolate dict.
+    :rtype: dict
+
+    """
+    # Get the virus isolates with the default flag set to True. This list should only contain one item.
+    default_isolates = [isolate for isolate in virus["isolates"] if virus["default"] is True]
+
+    # Check that there is only one item.
+    assert len(default_isolates) == 1
+
+    default_isolate = default_isolates[0]
+
+    if isolate_processor:
+        default_isolate = isolate_processor(default_isolate)
+
+    return default_isolate
+
+
 async def get_new_isolate_id(db, used_isolate_ids=None):
     """
     Generates a unique isolate id.
@@ -853,6 +704,36 @@ def find_isolate(isolates, isolate_id):
     
     """
     return next((isolate for isolate in isolates if isolate["isolate_id"] == isolate_id), None)
+
+
+def extract_sequence_ids(virus):
+    """
+    Extract all sequence ids from a merged virus.
+
+    :param virus: the merged virus
+    :type virus: dict
+
+    :return: the sequence ids belonging to ``virus``
+    :rtype: list
+
+    """
+    sequence_ids = list()
+
+    isolates = virus["isolates"]
+
+    if not isolates:
+        raise ValueError("Empty isolates list in merged virus")
+
+    for isolate in isolates:
+        if "sequences" not in isolate:
+            raise KeyError("Isolate in merged virus missing sequences field")
+
+        if not isolate["sequences"]:
+            raise ValueError("Empty sequences list in merged virus")
+
+        sequence_ids += [sequence["_id"] for sequence in isolate["sequences"]]
+
+    return sequence_ids
 
 
 def format_isolate_name(isolate):

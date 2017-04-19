@@ -14,7 +14,9 @@ response, so make sure your JSON is formatted properly!
 
     400 Bad Request
 
-    {"message": "Invalid JSON"}
+    {
+        "message": "Invalid JSON"
+    }
 
 - `jsonapi.org <http://jsonapi.org/>`_
 - `Python JSON encoder and decoder <https://docs.python.org/3.5/library/json.html>`_
@@ -30,7 +32,9 @@ a ``session_id`` cookie. Accessing user-specific endpoints like ``GET /api/accou
 
     400 Bad Request
 
-    {"message": "Requires login"}
+    {
+        "message": "Requires login"
+    }
 
 
 Input Validation Errors

@@ -1,5 +1,6 @@
 import pymongo
 import pymongo.errors
+import tempfile
 
 from pprint import pprint
 from aiohttp import web
@@ -795,3 +796,39 @@ async def get_history(req):
     documents = await db.history.find({"virus_id": virus_id}).to_list(None)
 
     return json_response(documents)
+
+@protected("modify_virus")
+async def upload(req):
+    db = req.app["db"]
+
+    reader = await req.multipart()
+
+    import_file = await reader.next()
+
+    size = 0
+
+    db.status.find_one_and_update({"_id": "import_viruses"}, {
+        "$set": {
+            "file_size": size,
+            "file_name": import_file.filename,
+            "added_count": 0
+        }
+    }, return_document=ReturnDocument.AFTER)
+
+    handle = tempfile.TemporaryFile()
+
+    while True:
+        chunk = await import_file.read_chunk()
+
+        if not chunk:
+            break
+
+        size += len(chunk)
+
+        handle.write(chunk)
+
+    handle.seek(0)
+
+    await virtool.viruses.import_file(req.app["db"], req.app["settings"], handle)
+
+    return json_response({"message": "Accepted. Check '/api/status' for more info."}, status=202)

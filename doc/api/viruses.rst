@@ -129,6 +129,32 @@ Create a new virus document. Isolates and sequence data must be added in separat
 
 
 
+Import
+------
+
+Import viruses from a ``viruses.json.gz`` file that was exported by another instance of Virtool.
+
+::
+
+    POST /uploads/viruses
+
+
+**Input**
+
+A multipart file upload. See :ref:`uploads <uploads>`.
+
+**Response**
+
+.. code-block:: javascript
+
+    Status: 202 Accepted
+
+    {
+        "message": "Accepted. Check /api/status for more info."
+    }
+
+
+
 Edit
 ----
 

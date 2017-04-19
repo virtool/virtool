@@ -1,7 +1,10 @@
+import os
 import pytest
 
 from copy import deepcopy
 from pprint import pprint
+
+FIXTURE_DIR = os.path.join(os.path.dirname(os.path.realpath(__file__)), "test_files")
 
 
 class TestFind:
@@ -2032,3 +2035,21 @@ class TestEditSequence:
             assert await resp.json() == {
                 "message": "Virus or isolate not found"
             }
+
+
+class TestUpload:
+
+    async def test(self, pytestconfig, do_upload):
+
+        path = os.path.join(str(pytestconfig.rootdir), "virtool/tests/test_files/files", "import.json.gz")
+
+        with open(path, "rb") as handle:
+            files = {
+                "file": handle
+            }
+
+            resp = await do_upload("/upload/viruses", files, authorize=True, permissions=["modify_virus"])
+
+        assert resp.status == 200
+
+        assert 0
