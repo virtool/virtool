@@ -790,14 +790,20 @@ async def get_history(req):
     db = req.app["db"]
 
     virus_id = req.match_info["virus_id"]
-    version = req.match_info[""]
+    version = req.match_info["version"]
 
     if not await db.viruses.find({"_id": virus_id}).count():
-        return not_found()
+        return not_found("Virus not found")
 
     documents = await db.history.find({"virus_id": virus_id}).to_list(None)
 
     return json_response(documents)
+
+
+@protected("modify_virus")
+async def revert_history(req):
+    return not_found()
+
 
 @protected("modify_virus")
 async def upload(req):
@@ -807,15 +813,24 @@ async def upload(req):
 
     import_file = await reader.next()
 
-    size = 0
-
-    db.status.find_one_and_update({"_id": "import_viruses"}, {
+    document = await db.status.find_one_and_update({"_id": "import_viruses"}, {
         "$set": {
-            "file_size": size,
             "file_name": import_file.filename,
-            "added_count": 0
+            "file_size": 0,
+            "virus_count": 0,
+            "in_progress": True,
+            "progress": 0,
+            "inserted": 0,
+            "replaced": 0,
+            "skipped": 0,
+            "errors": None,
+            "duplicates": None,
+            "conflicts": None,
+            "warnings": []
         }
-    }, return_document=ReturnDocument.AFTER)
+    }, return_document=ReturnDocument.AFTER, upsert=True)
+
+    req.app["dispatcher"].dispatch("status", "update", document)
 
     handle = tempfile.TemporaryFile()
 
@@ -825,7 +840,13 @@ async def upload(req):
         if not chunk:
             break
 
-        size += len(chunk)
+        document = await db.status.find_one_and_update({"_id": "import_viruses"}, {
+            "$inc": {
+                "file_size": len(chunk)
+            }
+        }, return_document=ReturnDocument.AFTER, projection=["_id", "file_size"])
+
+        req.app["dispatcher"].dispatch("status", "update", document)
 
         handle.write(chunk)
 

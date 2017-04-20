@@ -1,13 +1,16 @@
-import os
 import re
 import logging
 import json
 import gzip
 
+from pprint import pprint
 from copy import deepcopy
 from pymongo import ReturnDocument
 
+import virtool.history
+
 from virtool.data_utils import get_new_id, format_doc_id
+from virtool.handlers.status import status_processor
 from virtool.utils import random_alphanumeric
 from virtool import history
 
@@ -61,6 +64,7 @@ async def join(db, virus_id, document=None):
     database will not be queried for the virus based on its id.
     
     :param db: a database client
+    :type db: :class:`~motor.motor_asyncio.AsyncIOMotorClient`
 
     :param virus_id: the id of the virus to join.
     :type virus_id: str
@@ -128,75 +132,101 @@ async def check_name_and_abbreviation(db, name=None, abbreviation=None):
     return False
 
 
+async def import_file(db, dispatcher, handle, user_id, replace=False):
     """
-    Removes a sequence from the sequence collection and from its associated virus document. Takes virus id,
-    isolate id, and the sequence id to be removed.
-
+    
+    
+    :param db: the application database client
+    :type db: :class:`~motor.motor_asyncio.AsyncIOMotorClient`
+    
+    :param dispatcher: the application dispatcher instance
+    :type dispatcher: :class:`~.Dispatcher`
+    
+    :param handle: the temporary file handle for the file to import
+    :type handle: :class:`~.TemporaryFile`
+    
+    :param user_id: the requesting ``user_id``
+    :type user_id: str
+     
+    :param replace: should viruses existing in the database be replaced by ones in the import file 
+    :type replace: bool
+     
     """
-
-
-
-
-
-
-
-async def import_file(db, dispatcher, handle, replace=False):
-
+    # Open GZIP file and parse JSON into dict.
     with gzip.open(handle, "rt") as gzip_file:
         viruses = json.load(gzip_file)
 
+    # Close the temporary handle. It isn't closed by the calling handler function.
+    handle.close()
+
     virus_count = len(viruses)
+
+    document = await db.status.find_one_and_update({"_id": "import_viruses"}, {
+        "$set": {
+            "virus_count": virus_count
+        }
+    }, return_document=ReturnDocument.AFTER)
+
+    dispatcher.dispatch("status", "update", status_processor(document))
 
     duplicates, errors = verify_virus_list(viruses)
 
+    # If there are problems in the import file, report them to the status collection and stop the import.
     if duplicates or errors:
-        document = db.status.find_one_and_update({"_id": "import_viruses"}, {
+        document = await db.status.find_one_and_update({"_id": "import_viruses"}, {
             "$set": {
-                "file_name": None,
-                "file_size": 0,
-                "added": 0,
-                "replaced": 0,
-                "skipped": 0,
                 "in_progress": False,
                 "errors": errors,
                 "duplicates": duplicates
             }
         }, return_document=ReturnDocument.AFTER)
 
-        dispatcher.dispatch("status", "update", document)
+        dispatcher.dispatch("status", "update", status_processor(document))
+
+        return
+
+    # Make a list of lowered virus names that are already in use in the database.
+    used_names = await db.viruses.distinct("lower_name")
+
+    conflicts = await find_import_conflicts(db, viruses, replace, used_names=used_names)
+
+    if conflicts:
+        document = await db.status.find_one_and_update({"_id": "import_viruses"}, {
+            "$set": {
+                "in_progress": False,
+                "errors": errors,
+                "duplicates": duplicates,
+                "conflicts": conflicts
+            }
+        }, return_document=ReturnDocument.AFTER)
+
+        dispatcher.dispatch("status", "update", status_processor(document))
+
+        return
+
+    empty_collection = len(used_names) == 0
 
     # Keeps track of the progress of the import process. Sent to the client intermittently.
     counter = {
         "progress": 0,
-        "added": 0,
+        "inserted": 0,
         "replaced": 0,
         "skipped": 0,
         "warnings": list()
     }
 
-    # Make a list of lowered virus names that are already in use in the database.
-    used_names = await db.viruses.distinct("lower_name")
-
-    empty_collection = len(used_names) == 0
-
-    conflicts = await find_import_conflicts(db, viruses, replace)
-
-    if conflicts:
-        return False, dict(message="Conflicting sequence ids", conflicts=conflicts)
-
     used_isolate_ids = set(await db.viruses.distinct("isolates.isolate_id"))
 
     base_virus_document = {
-        "_version": 0,
         "last_indexed_version": 0,
         "modified": False,
-        "username": req["session"].user_id,
+        "user_id": user_id,
         "imported": True
     }
 
-    # Lists of pending dispatches. These are sent in batches of ten to avoid overwhelming browsers.
-    adds = list()
-    replaces = list()
+    # Lists of pending dispatches. These are batched to avoid overwhelming clients.
+    insertions = list()
+    replacements = list()
 
     for i, virus in enumerate(viruses):
         # Calculate the overall progress (how many viruses in the import document have been processed?)
@@ -206,7 +236,12 @@ async def import_file(db, dispatcher, handle, replace=False):
         # 2% since the last report.
         if progress - counter["progress"] > 0.02:
             counter["progress"] = progress
-            # transaction.update(counter)
+
+            document = await db.status.find_one_and_update({"_id": "import_viruses"}, {
+                "$set": counter
+            }, return_document=ReturnDocument.AFTER)
+
+            dispatcher.dispatch("status", "update", status_processor(document))
 
         virus_document, sequences = split_virus(virus)
 
@@ -214,18 +249,19 @@ async def import_file(db, dispatcher, handle, replace=False):
 
         to_insert.update({key: virus_document[key] for key in ["name", "abbreviation", "isolates"]})
 
+        # If the collection was empty when the import started, do not bother considering replacement.
         if empty_collection:
             to_insert["_id"] = await get_new_id(db.viruses)
 
-            dispatches = await insert_from_import(to_insert)
-
-            adds.append(dispatches)
+            await db.viruses.insert_one(to_insert)
 
             await db.sequences.insert_many(sequences)
 
-            counter["added"] += 1
+            insertions.append(processor(to_insert))
 
-            await send_import_dispatches(adds, replaces)
+            counter["inserted"] += 1
+
+            await send_import_dispatches(insertions)
 
             continue
 
@@ -233,6 +269,7 @@ async def import_file(db, dispatcher, handle, replace=False):
 
         virus_exists = lower_name in used_names
 
+        # Do nothing if the virus exists and replacement is disabled. Increment ``skipped`` counter by one.
         if virus_exists and not replace:
             counter["skipped"] += 1
             continue
@@ -259,7 +296,7 @@ async def import_file(db, dispatcher, handle, replace=False):
 
         virus_document, sequences = split_virus(virus)
 
-        # Loops through each isolate in the imported virus.
+        # Loops through each isolate in the imported virus, replacing isolate_ids if they are not unique.
         for isolate in virus_document["isolates"]:
             # Check if the isolate id is already used in the viruses collection.
             if isolate["isolate_id"] in used_isolate_ids:
@@ -270,20 +307,19 @@ async def import_file(db, dispatcher, handle, replace=False):
                 # import process.
                 used_isolate_ids.add(isolate["isolate_id"])
 
+        # In this case, do a replacement by removing the existing virus and inserting a new virus document.
         if virus_exists:
             existing_virus = await db.viruses.find_one({"lower_name": lower_name})
 
-            isolate_ids = extract_isolate_ids(existing_virus)
-
             # Remove the existing virus, including its sequences.
-            remove_dispatches = await remove_for_import(
+            remove_dispatches = await delete_for_import(
                 existing_virus["_id"],
                 # transaction.connection.user["_id"]
             )
 
             # Remove all sequence documents associated with the existing virus.
             await db.sequences.remove({"_id": {
-                "$in": isolate_ids
+                "$in": extract_isolate_ids(existing_virus)
             }})
 
             counter["replaced"] += 1
@@ -294,14 +330,14 @@ async def import_file(db, dispatcher, handle, replace=False):
         insert_dispatches = await insert_from_import(to_insert)
 
         if virus_exists:
-            replaces.append((remove_dispatches, insert_dispatches))
+            replacements.append((remove_dispatches, insert_dispatches))
         else:
-            adds.append(insert_dispatches)
+            insertions.append(insert_dispatches)
 
         await db.sequences.insert_many(sequences)
 
         if not virus_exists:
-            counter["added"] += 1
+            counter["inserted"] += 1
 
         await send_import_dispatches(adds, replaces)
 
@@ -429,21 +465,24 @@ def verify_virus_list(viruses):
     return duplicates, errors
 
 
-def find_import_conflicts(db, used_name, viruses, replace):
+async def find_import_conflicts(db, viruses, replace, used_names=None):
+
+    used_names = used_names or list()
 
     conflicts = list()
 
     for virus in viruses:
+
         lower_name = virus["name"].lower()
 
         # Check if the virus to be imported already exists in the database using a case-insensitive name comparison.
         virus_exists = lower_name in used_names
 
         # A list of sequence ids that will be imported along with the virus.
-        sequence_ids_to_import = yield extract_sequence_ids(virus)
+        sequence_ids_to_import = extract_sequence_ids(virus)
 
         # Sequences that already exist in the database and have the same ids as some sequences to be imported.
-        already_existing_sequences = yield self.sequences_collection.find(
+        already_existing_sequences = await db.sequences.find(
             {"_id": {"$in": sequence_ids_to_import}},
             ["_id", "isolate_id"]
         ).to_list(length=None)
@@ -454,7 +493,7 @@ def find_import_conflicts(db, used_name, viruses, replace):
                 continue
 
             # The full document of the existing virus.
-            existing_virus = yield self.find_one(
+            existing_virus = await db.viruses.find_one(
                 {"lower_name": lower_name},
                 ["_id", "name", "isolates"]
             )
@@ -467,83 +506,109 @@ def find_import_conflicts(db, used_name, viruses, replace):
                     conflicts.append((existing_virus["_id"], existing_virus["name"], sequence["_id"]))
 
         else:
-            # The virus doesn't already exist but some of its sequence ids are already assigned to other viruses.
-            # This is a problem.
+            # The virus doesn't already exist but some of its sequence ids are already assigned to other viruses. This
+            # is a problem.
             for sequence in already_existing_sequences:
-                existing_virus = yield self.find_one({"isolates.isolate_id": sequence["isolate_id"]})
-                conflicts.append((existing_virus["_id"], existing_virus["name"], sequence["_id"]))
+                existing = await db.viruses.find_one({"isolates.isolate_id": sequence["isolate_id"]}, ["_id", "name"])
+                conflicts.append((existing["_id"], existing["name"], sequence["_id"]))
 
     return conflicts or None
 
 
-def send_import_dispatches(self, adds, replaces, flush=False):
-    if len(adds) == 30 or flush:
-        yield self.dispatch("update", [add[0] for add in adds])
-        yield self.collections["history"].dispatch("insert", [add[1] for add in adds])
+def send_import_dispatches(dispatch, insertions, replacements, flush=False):
+    if len(insertions) == 30 or flush:
+        virus_updates, history_updates = zip(*insertions)
 
-        del adds[:]
+        dispatch("viruses", "update", virus_updates)
+        dispatch("history", "update", history_updates)
 
-    if len(replaces) == 30 or flush:
-        yield self.dispatch("remove", [replace[0][0] for replace in replaces])
-        yield self.collections["history"].dispatch("insert", [replace[0][1] for replace in replaces])
+        del insertions[:]
 
-        yield self.dispatch("update", [replace[1][0] for replace in replaces])
-        yield self.collections["history"].dispatch("insert", [replace[1][1] for replace in replaces])
+    if len(replacements) == 30 or flush:
+        dispatch("viruses", "remove", [replace[0][0] for replace in replacements])
+        dispatch("history", "update", [replace[0][1] for replace in replacements])
 
-        del replaces[:]
+        dispatch("viruses", "update", [replace[1][0] for replace in replacements])
+        dispatch("history", "update", [replace[1][1] for replace in replacements])
+
+        del replacements[:]
 
 
-def insert_from_import(self, virus):
-    virus.update({
+async def insert_from_import(db, virus_document, user_id):
+    """
+    :param db: the application database client
+    :type db: :class:`~motor.motor_asyncio.AsyncIOMotorClient`
+    
+    :param virus_document: the virus document to add
+    :type virus_document: dict
+    
+    :param user_id: the requesting ``user_id``
+    :type user_id: str
+    
+    """
+    virus_document.update({
         "_version": 0,
-        "lower_name": virus["name"].lower()
+        "lower_name": virus_document["name"].lower()
     })
 
     # Perform the actual database insert operation, retaining the response.
-    yield self.db.insert(virus)
+    await db.viruses.insert(virus_document)
 
-    logger.debug("Imported virus {}".format(virus["name"]))
+    to_dispatch = processor({key: virus_document[key] for key in LIST_PROJECTION})
 
-    to_dispatch_virus = yield self.sync_processor([{key: virus[key] for key in self.sync_projector}])
+    joined = await join(db, virus_document["_id"])
 
-    joined = yield self.join(virus["_id"])
-
-    to_dispatch_history = yield self.collections["history"].add_for_import(
-        "insert",
-        "add",
-        None,  # there is no old document
+    change = await virtool.history.add(
+        db,
+        "create",
+        None,
         joined,
-        virus["username"]
+        ("Created virus ", virus_document["name"], virus_document["_id"]),
+        user_id
     )
 
-    return to_dispatch_virus[0], to_dispatch_history
+    change_to_dispatch = virtool.history.processor({key: change[key] for key in virtool.history.DISPATCH_PROJECTION})
+
+    return to_dispatch, change_to_dispatch
 
 
-def remove_for_import(self, virus_id, username):
-    # Join the virus.
-    virus = yield self.join(virus_id)
+async def delete_for_import(db, virus_id, user_id):
+    """
+    Delete a virus document and its sequences as part of an import process.
+    
+    :param db: the application database client
+    :type db: :class:`~motor.motor_asyncio.AsyncIOMotorClient`
+    
+    :param virus_id: the ``virus_id`` to remove
+    :type virus_id: str
+    
+    :param user_id: the requesting ``user_id``
+    :type user_id: str
+     
+    """
+    joined = await join(db, virus_id)
 
-    if not virus:
-        raise ValueError("No virus associated with _id {}".format(virus_id))
+    if not joined:
+        raise ValueError("Could not find virus_id {}".format(virus_id))
 
-    # Get all the isolate ids from the
-    isolate_ids = extract_isolate_ids(virus)
+    # Perform database operations.
+    await db.sequences.delete_many({"isolate_id": {"$in": extract_isolate_ids(joined)}})
 
-    # Remove all sequences associated with the isolates.
-    yield self.sequences_collection.remove({"isolate_id": {"$in": isolate_ids}})
-
-    yield self.db.remove({"_id": virus_id})
+    await db.viruses.delete_one({"_id": virus_id})
 
     # Put an entry in the history collection saying the virus was removed.
-    to_dispatch_history = yield self.collections["history"].add_for_import(
+    change = await virtool.history.add(
+        db,
         "remove",
-        "remove",
-        virus,
+        joined,
         None,
-        username
+        ("Removed virus", joined["name"], joined["_id"]),
+        user_id
     )
 
-    return virus_id, to_dispatch_history
+    change_to_dispatch = virtool.history.processor({key: change[key] for key in virtool.history.DISPATCH_PROJECTION})
+
+    return virus_id, change_to_dispatch
 
 
 async def set_last_indexed_version(db, data):

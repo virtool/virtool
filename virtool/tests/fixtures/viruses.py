@@ -4,6 +4,8 @@ import json
 import copy
 import pytest
 
+from virtool.utils import random_alphanumeric
+
 FIXTURE_DIR = os.path.join(os.path.dirname(os.path.realpath(__file__)), "test_files")
 
 
@@ -161,3 +163,28 @@ def test_virus_list(test_merged_virus):
             isolate["sequences"][0]["_id"] = "{}_seq_{}".format(prefix, i)
 
     return [first_virus, second_virus, third_virus, fourth_virus]
+
+
+@pytest.fixture
+def get_test_insertions(test_virus, test_base_change):
+    def func(length=30):
+        insertions = []
+
+        for i in range(length):
+            virus = dict(test_virus, name=random_alphanumeric(7), _id=random_alphanumeric(7), abbreviation="")
+            insertions.append((virus, test_base_change))
+
+        return insertions
+
+    return func
+
+
+@pytest.fixture
+def get_test_replacements(get_test_insertions, test_base_change):
+    def func(length=30):
+        insertions = get_test_insertions(length)
+        removals = [(virus["_id"], change) for virus, change in get_test_insertions(length)]
+
+        return list(zip(removals, insertions))
+
+    return func

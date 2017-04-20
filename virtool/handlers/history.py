@@ -1,13 +1,13 @@
-
+from virtool.viruses import extract_isolate_ids
 from virtool.handlers.utils import json_response, not_found
-from virtool.history import get_versioned_document, projection, dispatch_projection, processor
+from virtool.history import get_versioned_document, PROJECTION, DISPATCH_PROJECTION, processor
 from virtool.handlers.utils import unpack_json_request
 
 
 async def find(req):
     db = req.app["db"]
 
-    documents = await db.history.find({}, dispatch_projection).to_list(length=15)
+    documents = await db.history.find({}, DISPATCH_PROJECTION).to_list(length=15)
 
     return json_response([processor(document) for document in documents])
 
@@ -17,7 +17,7 @@ async def get(req):
 
     change_id = req.match_info["change_id"]
 
-    document = await db.history.find_one(change_id, projection)
+    document = await db.history.find_one(change_id, PROJECTION)
 
     if not document:
         return not_found()
@@ -55,4 +55,4 @@ async def revert(req):
 
     await db.history.remove(history_to_delete)
 
-    return web.json_response({"reverted": history_to_delete})
+    return json_response({"reverted": history_to_delete})

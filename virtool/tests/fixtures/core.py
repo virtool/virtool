@@ -4,8 +4,12 @@ import virtool.web.dispatcher
 
 
 @pytest.fixture
-def static_time():
-    return datetime.datetime(2017, 10, 6, 20, 0, 0, tzinfo=datetime.timezone.utc)
+def static_time(monkeypatch):
+    time = datetime.datetime(2017, 10, 6, 20, 0, 0, tzinfo=datetime.timezone.utc)
+
+    monkeypatch.setattr("virtool.utils.timestamp", lambda: time)
+
+    return time
 
 
 @pytest.fixture

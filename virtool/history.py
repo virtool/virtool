@@ -1,7 +1,7 @@
 import pymongo
 import dictdiffer
 
-from virtool.utils import timestamp
+import virtool.utils
 
 
 VIRUS_PROJECTION = [
@@ -13,7 +13,7 @@ VIRUS_PROJECTION = [
     "timestamp",
 ]
 
-dispatch_projection = [
+DISPATCH_PROJECTION = [
     "_id",
     "description",
     "method_name",
@@ -26,8 +26,7 @@ dispatch_projection = [
     "index_version"
 ]
 
-
-projection = dispatch_projection + [
+PROJECTION = DISPATCH_PROJECTION + [
     "diff"
 ]
 
@@ -69,6 +68,11 @@ async def add(db, method_name, old, new, description, user_id):
         virus_id = new["_id"]
 
     try:
+        virus_name = old["name"]
+    except TypeError:
+        virus_name = new["name"]
+
+    try:
         virus_version = str(int(new["version"]))
     except TypeError:
         virus_version = "removed"
@@ -77,8 +81,9 @@ async def add(db, method_name, old, new, description, user_id):
         "_id": ".".join([str(virus_id), virus_version]),
         "method_name": method_name,
         "description": description,
-        "timestamp": timestamp(),
+        "timestamp": virtool.utils.timestamp(),
         "virus_id": virus_id,
+        "virus_name": virus_name,
         "virus_version": virus_version,
         "user_id": user_id,
         "index": "unbuilt",
