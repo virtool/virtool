@@ -2,7 +2,7 @@ from aiohttp import web
 
 from virtool.web.login import login_handler
 from virtool.web.dispatcher import websocket_handler
-from virtool.handlers import root, jobs, samples, viruses, history, hmm, hosts, account, groups, users, genbank
+from virtool.handlers import root, jobs, samples, viruses, history, hmm, hosts, account, groups, users, genbank, status
 from virtool.web.login import get_login_template, generate_verification_keys
 
 
@@ -44,6 +44,10 @@ def setup_routes(app):
 
     # API Root
     app.router.add_get("/api", root.get)
+
+    # Status Routes
+    app.router.add_get("/api/status", status.list_status)
+    # app.router.add_get("/api/status/import_viruses")
 
     # Jobs routes
     app.router.add_get("/api/jobs", jobs.find)
