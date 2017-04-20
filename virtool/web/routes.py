@@ -33,11 +33,14 @@ def setup_routes(app):
     app.router.add_post("/login", login_handler)
     app.router.add_static("/static", "client/dist")
 
+    # Websocket route
+    app.router.add_get("/ws", websocket_handler)
+
     # Upload Routes
     app.router.add_post("/upload/viruses", viruses.upload)
 
-    # Websocket route
-    app.router.add_get("/ws", websocket_handler)
+    # Download Routes
+    app.router.add_get("/download/viruses", viruses.export)
 
     # API Root
     app.router.add_get("/api", root.get)

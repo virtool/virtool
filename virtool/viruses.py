@@ -128,48 +128,16 @@ async def check_name_and_abbreviation(db, name=None, abbreviation=None):
     return False
 
 
-def export_file(self):
     """
     Removes a sequence from the sequence collection and from its associated virus document. Takes virus id,
     isolate id, and the sequence id to be removed.
 
     """
-    # A list of joined viruses.
-    virus_list = list()
 
-    cursor = self.find()
 
-    while (yield cursor.fetch_next):
-        virus = cursor.next_object()
 
-        if virus["last_indexed_version"] is not None:
-            # Join the virus document with its associated sequence documents.
-            joined = yield self.join(virus["_id"], virus)
 
-            # If the virus has been changed since the last index rebuild, patch it to its last indexed version.
-            if virus["_version"] != virus["last_indexed_version"]:
-                _, joined, _ = yield self.collections["history"].patch_virus_to_version(
-                    joined,
-                    virus["last_indexed_version"]
-                )
 
-            virus_list.append(joined)
-
-    # Convert the list of viruses to a JSON-formatted string.
-    json_string = json.dumps(virus_list)
-
-    # Compress the JSON string with gzip.
-    body = gzip.compress(bytes(json_string, "utf-8"))
-
-    # Register the file content with the file manager. The file manager will write the content to a file and make
-    # it available for download. It returns a file_id that will be passed back to the client so it can send in a
-    # request to download the file.
-    file_id = yield self.collections["files"].register("viruses.json.gz", body, "json")
-
-    return True, {
-        "filename": file_id,
-        "size": os.path.getsize(self.settings.get("data_path") + "/download/" + file_id)
-    }
 
 
 async def import_file(db, dispatcher, handle, replace=False):

@@ -1,3 +1,5 @@
+import json
+import gzip
 import pymongo
 import pymongo.errors
 import tempfile
@@ -832,3 +834,44 @@ async def upload(req):
     await virtool.viruses.import_file(req.app["db"], req.app["settings"], handle)
 
     return json_response({"message": "Accepted. Check '/api/status' for more info."}, status=202)
+
+
+async def export(req):
+    """
+    Export all viruses and sequences as a gzipped JSON string. Made available as a downloadable file named
+    ``viruses.json.gz``.
+     
+    """
+    db = req.app["db"]
+
+    # A list of joined viruses.
+    virus_list = list()
+
+    cursor = db.viruses.find()
+
+    async for document in cursor:
+        if document["last_indexed_version"] is not None:
+            # Join the virus document with its associated sequence documents.
+            joined = await virtool.viruses.join(db, document["_id"], document)
+
+            # If the virus has been changed since the last index rebuild, patch it to its last indexed version.
+            if document["version"] != document["last_indexed_version"]:
+                _, joined, _ = await virtool.history.patch_virus_to_version(
+                    db,
+                    joined,
+                    document["last_indexed_version"]
+                )
+
+            virus_list.append(joined)
+
+    # Convert the list of viruses to a JSON-formatted string.
+    json_string = json.dumps(virus_list)
+
+    # Compress the JSON string with gzip.
+    body = gzip.compress(bytes(json_string, "utf-8"))
+
+    return web.Response(
+        headers={"Content-Disposition": "attachment; filename='viruses.json.gz'"},
+        content_type="application/gzip",
+        body=body
+    )
