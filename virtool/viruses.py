@@ -1,4 +1,5 @@
 import re
+import asyncio
 import logging
 import json
 import gzip
@@ -8,10 +9,10 @@ from copy import deepcopy
 from pymongo import ReturnDocument
 
 import virtool.history
+import virtool.utils
 
 from virtool.data_utils import get_new_id, format_doc_id
 from virtool.handlers.status import status_processor
-from virtool.utils import random_alphanumeric
 from virtool import history
 
 logger = logging.getLogger(__name__)
@@ -41,10 +42,29 @@ SEQUENCE_PROJECTION = [
 
 
 def processor(document):
+    """
+    The base processor for virus documents. Calls :func:`~.format_doc_id` and returns the result.
+    
+    :param document: the document to process
+    :type document: dict
+    
+    :return: the processed document
+    :rtype: dict
+         
+    """
     return format_doc_id("virus", dict(document))
 
 
 def dispatch_version_only(req, new):
+    """
+    Dispatch a virus update. Should be called when the document itself is not being modified.
+    
+    :param req: the request object
+    
+    :param new: the virus document
+    :type new: dict
+    
+    """
     req.app["dispatcher"].dispatch(
         "viruses",
         "update",
@@ -53,8 +73,19 @@ def dispatch_version_only(req, new):
 
 
 def sequence_processor(document):
+    """
+    Process a sequence document to send it to a client.
+    
+    :param document: the document to process
+    :type document: dict
+    
+    :return: the processed document
+    :rtype: dict
+     
+    """
     document = dict(document)
     document["accession"] = document.pop("_id")
+
     return document
 
 
@@ -63,7 +94,7 @@ async def join(db, virus_id, document=None):
     Join the virus associated with the supplied virus id with its sequences. If a virus entry is also passed, the
     database will not be queried for the virus based on its id.
     
-    :param db: a database client
+    :param db: the application database client
     :type db: :class:`~motor.motor_asyncio.AsyncIOMotorClient`
 
     :param virus_id: the id of the virus to join.
@@ -117,6 +148,23 @@ async def get_complete(db, virus_id):
 
 
 async def check_name_and_abbreviation(db, name=None, abbreviation=None):
+    """
+    Check is a virus name and abbreviation are already in use in the database. Returns a message if the ``name`` or
+    ``abbreviation`` are already in use. Returns ``False`` if they are not in use.
+    
+    :param db: the application database client
+    :type db: :class:`~motor.motor_asyncio.AsyncIOMotorClient`
+    
+    :param name: a virus name
+    :type name: str
+    
+    :param abbreviation: a virus abbreviation
+    :type abbreviation: str
+     
+    :return: a message or ``False``
+    :rtype: str or bool
+    
+    """
     unique_name = not (name and await db.viruses.find({"name": re.compile(name, re.IGNORECASE)}).count())
     unique_abbreviation = not (abbreviation and await db.viruses.find({"abbreviation": abbreviation}).count())
 
@@ -132,32 +180,28 @@ async def check_name_and_abbreviation(db, name=None, abbreviation=None):
     return False
 
 
-async def import_file(db, dispatcher, handle, user_id, replace=False):
+async def import_file(loop, db, dispatch, handle, user_id, replace=False):
     """
     
-    
+    :param loop: the application IO loop
+
     :param db: the application database client
     :type db: :class:`~motor.motor_asyncio.AsyncIOMotorClient`
-    
-    :param dispatcher: the application dispatcher instance
-    :type dispatcher: :class:`~.Dispatcher`
-    
+
+    :param dispatch: the dispatcher's dispatch function
+    :type dispatch: func
+
     :param handle: the temporary file handle for the file to import
     :type handle: :class:`~.TemporaryFile`
-    
+
     :param user_id: the requesting ``user_id``
     :type user_id: str
-     
+
     :param replace: should viruses existing in the database be replaced by ones in the import file 
     :type replace: bool
-     
-    """
-    # Open GZIP file and parse JSON into dict.
-    with gzip.open(handle, "rt") as gzip_file:
-        viruses = json.load(gzip_file)
 
-    # Close the temporary handle. It isn't closed by the calling handler function.
-    handle.close()
+    """
+    viruses = await loop.run_in_executor(None, load_import_file, handle)
 
     virus_count = len(viruses)
 
@@ -167,7 +211,7 @@ async def import_file(db, dispatcher, handle, user_id, replace=False):
         }
     }, return_document=ReturnDocument.AFTER)
 
-    dispatcher.dispatch("status", "update", status_processor(document))
+    dispatch("status", "update", status_processor(document))
 
     duplicates, errors = verify_virus_list(viruses)
 
@@ -181,7 +225,7 @@ async def import_file(db, dispatcher, handle, user_id, replace=False):
             }
         }, return_document=ReturnDocument.AFTER)
 
-        dispatcher.dispatch("status", "update", status_processor(document))
+        dispatch("status", "update", status_processor(document))
 
         return
 
@@ -200,7 +244,7 @@ async def import_file(db, dispatcher, handle, user_id, replace=False):
             }
         }, return_document=ReturnDocument.AFTER)
 
-        dispatcher.dispatch("status", "update", status_processor(document))
+        dispatch("status", "update", status_processor(document))
 
         return
 
@@ -241,7 +285,7 @@ async def import_file(db, dispatcher, handle, user_id, replace=False):
                 "$set": counter
             }, return_document=ReturnDocument.AFTER)
 
-            dispatcher.dispatch("status", "update", status_processor(document))
+            dispatch("status", "update", status_processor(document))
 
         virus_document, sequences = split_virus(virus)
 
@@ -253,15 +297,13 @@ async def import_file(db, dispatcher, handle, user_id, replace=False):
         if empty_collection:
             to_insert["_id"] = await get_new_id(db.viruses)
 
-            await db.viruses.insert_one(to_insert)
+            insertions.append(await insert_from_import(db, to_insert, user_id))
 
             await db.sequences.insert_many(sequences)
 
-            insertions.append(processor(to_insert))
-
             counter["inserted"] += 1
 
-            await send_import_dispatches(insertions)
+            send_import_dispatches(dispatch, insertions, replacements)
 
             continue
 
@@ -339,14 +381,40 @@ async def import_file(db, dispatcher, handle, user_id, replace=False):
         if not virus_exists:
             counter["inserted"] += 1
 
-        await send_import_dispatches(adds, replaces)
+        send_import_dispatches(dispatch, insertions, replacements)
 
-    await send_import_dispatches(adds, replaces, flush=True)
+    # Flush any remaining messages to the dispatcher.
+    send_import_dispatches(dispatch, insertions, replacements, flush=True)
 
     counter["progress"] = 1
-    # transaction.update(counter)
 
-    return True, counter
+    document = await db.status.find_one_and_update({"_id": "import_viruses"}, {
+        "$set": counter
+    }, return_document=ReturnDocument.AFTER)
+
+    dispatch("status", "update", status_processor(document))
+
+    return counter
+
+
+def load_import_file(handle):
+    """
+    Load a list of merged virus documents from a file handle associated with a Virtool ``viruses.json.gz`` file.
+    
+    :param handle: the handle for a importable file
+    
+    :return: list of merged virus documents
+    :rtype: list
+    
+    """
+    # Open GZIP file and parse JSON into dict.
+    with gzip.open(handle, "rt") as gzip_file:
+        data = json.load(gzip_file)
+
+    # Close the temporary handle. It isn't closed by the calling handler function.
+    handle.close()
+
+    return data
 
 
 def check_virus(virus, sequences):
@@ -358,9 +426,14 @@ def check_virus(virus, sequences):
     * empty_sequence - sequences that have a zero length sequence field.
     * isolate_inconsistency - virus has isolates containing different numbers of sequences.
     
-    :param virus: the virus document.
+    :param virus: the virus document
+    :type virus: dict
+    
     :param sequences: a list of sequence documents associated with the virus.
+    :type sequences: list
+    
     :return: return any errors or False if there are no errors.
+    :rtype: dict or NoneType
     
     """
     errors = {
@@ -516,7 +589,25 @@ async def find_import_conflicts(db, viruses, replace, used_names=None):
 
 
 def send_import_dispatches(dispatch, insertions, replacements, flush=False):
-    if len(insertions) == 30 or flush:
+    """
+    Dispatch all possible insertion and replacement messages for a running virus reference import. Called many times
+    during an import process.
+    
+    :param dispatch: the dispatch function
+    :type dispatch: func
+    
+    :param insertions: a list of tuples describing insertions
+    :type insertions: list
+    
+    :param replacements: a list of tuples describing replacements and their component removals and an insertions 
+    :type replacements: list
+    
+    :param flush: override the length check and flush all data to the dispatcher
+    :type flush: bool
+     
+    """
+
+    if len(insertions) == 30 or (flush and insertions):
         virus_updates, history_updates = zip(*insertions)
 
         dispatch("viruses", "update", virus_updates)
@@ -524,7 +615,7 @@ def send_import_dispatches(dispatch, insertions, replacements, flush=False):
 
         del insertions[:]
 
-    if len(replacements) == 30 or flush:
+    if len(replacements) == 30 or (flush and replacements):
         dispatch("viruses", "remove", [replace[0][0] for replace in replacements])
         dispatch("history", "update", [replace[0][1] for replace in replacements])
 
@@ -547,7 +638,9 @@ async def insert_from_import(db, virus_document, user_id):
     
     """
     virus_document.update({
-        "_version": 0,
+        "version": 0,
+        "modified": True,
+        "last_indexed_version": None,
         "lower_name": virus_document["name"].lower()
     })
 
@@ -611,23 +704,32 @@ async def delete_for_import(db, virus_id, user_id):
     return virus_id, change_to_dispatch
 
 
-async def set_last_indexed_version(db, data):
+async def update_last_indexed_version(db, virus_ids, version):
     """
-    Called as a result of a request from the index rebuild job. Updates the last indexed version and _version fields
+    Called from a index rebuild job. Updates the last indexed version and _version fields
     of all viruses involved in the rebuild when the build completes.
-
-    :param data: the new last_indexed_version and _version fields.
-    :return: the response from the update call.
+    
+    :param db: the application database client
+    :type db: :class:`~motor.motor_asyncio.AsyncIOMotorClient`
+    
+    :param virus_ids: a list the ``virus_id`` of each virus to update
+    :type virus_ids: list
+    
+    :param version: the value to set for the viruses ``version`` and ``last_indexed_version`` fields
+    :type: int
+    
+    :return: the Pymongo update result
+    :rtype: :class:`~pymongo.results.UpdateResult`
 
     """
-    response = await db.viruses.update({"_id": {"$in": data["ids"]}}, {
+    result = await db.viruses.update({"_id": {"$in": virus_ids}}, {
         "$set": {
-            "last_indexed_version": data["version"],
-            "version": data["version"]
+            "last_indexed_version": version,
+            "version": version
         }
     })
 
-    return response
+    return result
 
 
 def get_default_isolate(virus, isolate_processor=None):
@@ -636,17 +738,22 @@ def get_default_isolate(virus, isolate_processor=None):
 
     :param virus: a virus document.
     :type virus: dict
+    
     :param isolate_processor: a function to process the default isolate into a desired format.
     :type: func
+    
     :return: the default isolate dict.
     :rtype: dict
 
     """
     # Get the virus isolates with the default flag set to True. This list should only contain one item.
-    default_isolates = [isolate for isolate in virus["isolates"] if virus["default"] is True]
+    default_isolates = [isolate for isolate in virus["isolates"] if isolate["default"] is True]
 
-    # Check that there is only one item.
-    assert len(default_isolates) == 1
+    if len(default_isolates) > 1:
+        raise ValueError("Found more than one default isolate")
+
+    if len(default_isolates) == 0:
+        raise ValueError("No default isolate found")
 
     default_isolate = default_isolates[0]
 
@@ -656,16 +763,16 @@ def get_default_isolate(virus, isolate_processor=None):
     return default_isolate
 
 
-async def get_new_isolate_id(db, used_isolate_ids=None):
+async def get_new_isolate_id(db, excluded=None):
     """
     Generates a unique isolate id.
     
     """
-    used_isolate_ids = used_isolate_ids or list()
+    used_isolate_ids = excluded or list()
 
     used_isolate_ids += await db.viruses.distinct("isolates.isolate_id")
 
-    return random_alphanumeric(8, excluded=set(used_isolate_ids))
+    return virtool.utils.random_alphanumeric(8, excluded=set(used_isolate_ids))
 
 
 def merge_virus(virus, sequences):
@@ -780,7 +887,7 @@ def format_isolate_name(isolate):
     :rtype: str
      
     """
-    if isolate["source_type"] is None or isolate["source_name"] is None:
-        return "Unnamed isolate"
+    if not isolate["source_type"] or not isolate["source_name"]:
+        return "Unnamed Isolate"
 
     return " ".join((isolate["source_type"].capitalize(), isolate["source_name"]))

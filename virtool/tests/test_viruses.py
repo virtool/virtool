@@ -1,13 +1,12 @@
 import os
 import pytest
-import unittest
-import virtool.viruses
 
 from unittest import mock
+from string import ascii_lowercase, digits
 from pprint import pprint
 from copy import deepcopy
 
-
+import virtool.viruses
 
 FIXTURE_DIR = os.path.join(os.path.dirname(os.path.realpath(__file__)), "test_files")
 
@@ -48,500 +47,132 @@ def duplicate_result():
     return {"isolate_id": [], "_id": [], "name": [], "sequence_id": [], "abbreviation": []}
 
 
-class TestMergeVirus:
+class TestProcessor:
 
-    def test_valid(self, test_virus, test_sequence, test_merged_virus):
-        merged = virtool.viruses.merge_virus(test_virus, [test_sequence])
+    def test(self, test_virus):
+        expected = deepcopy(test_virus)
+        expected["virus_id"] = expected.pop("_id")
 
-        assert merged == test_merged_virus
+        processed = virtool.viruses.processor(test_virus)
 
-
-class TestSplitVirus:
-
-    def test_valid(self, test_virus, test_sequence, test_merged_virus):
-        virus, sequences = virtool.viruses.split_virus(test_merged_virus)
-
-        assert virus == test_virus
-        assert sequences == [test_sequence]
+        assert processed == expected
 
 
-class TestExtractIsolateIds:
+class TestJoin:
 
-    def test_merged_virus(self, test_merged_virus):
-        isolate_ids = virtool.viruses.extract_isolate_ids(test_merged_virus)
-        assert isolate_ids == ["cab8b360"]
-
-    def test_virus_document(self, test_virus):
-        isolate_ids = virtool.viruses.extract_isolate_ids(test_virus)
-        assert isolate_ids == ["cab8b360"]
-
-    def test_multiple(self, test_virus):
-        test_virus["isolates"].append({
-            "source_type": "isolate",
-            "source_name": "b",
-            "isolate_id": "foobar",
-            "default": False
-        })
-
-        isolate_ids = virtool.viruses.extract_isolate_ids(test_virus)
-
-        assert set(isolate_ids) == {"cab8b360", "foobar"}
-
-    def test_missing_isolates(self, test_virus):
-        del test_virus["isolates"]
-
-        with pytest.raises(KeyError):
-            virtool.viruses.extract_isolate_ids(test_virus)
-
-
-class TestExtractSequenceIds:
-
-    def test_valid(self, test_merged_virus):
-        sequence_ids = virtool.viruses.extract_sequence_ids(test_merged_virus)
-        assert sequence_ids == ["KX269872"]
-
-    def test_missing_isolates(self, test_merged_virus):
-        del test_merged_virus["isolates"]
-
-        with pytest.raises(KeyError) as err:
-            virtool.viruses.extract_sequence_ids(test_merged_virus)
-
-        assert "'isolates'" in str(err)
-
-    def test_empty_isolates(self, test_merged_virus):
-        test_merged_virus["isolates"] = list()
-
-        with pytest.raises(ValueError) as err:
-            virtool.viruses.extract_sequence_ids(test_merged_virus)
-
-        assert "Empty isolates list" in str(err)
-
-    def test_missing_sequences(self, test_merged_virus):
-        del test_merged_virus["isolates"][0]["sequences"]
-
-        with pytest.raises(KeyError) as err:
-            virtool.viruses.extract_sequence_ids(test_merged_virus)
-
-        assert "missing sequences field" in str(err)
-
-    def test_empty_sequences(self, test_merged_virus):
-        test_merged_virus["isolates"][0]["sequences"] = list()
-
-        with pytest.raises(ValueError) as err:
-            virtool.viruses.extract_sequence_ids(test_merged_virus)
-
-        assert "Empty sequences list" in str(err)
-
-
-class TestVerifyVirusList:
-
-    def test_valid(self, test_virus_list):
+    async def test(self, test_motor, test_virus, test_sequence, test_merged_virus):
         """
-        Test that a valid virus list returns no duplicates or errors.
-         
-        """
-        result = virtool.viruses.verify_virus_list(test_virus_list)
-        assert result == (None, None)
-
-    @pytest.mark.parametrize("multiple", [False, True])
-    def test_duplicate_virus_ids(self, multiple, test_virus_list):
-        test_virus_list[0]["_id"] = "067jz0t3"
-
-        if multiple:
-            test_virus_list[3]["_id"] = "067jz213"
-
-        duplicates, error = virtool.viruses.verify_virus_list(test_virus_list)
-
-        assert error is None
-
-        assert all([duplicates[key] == [] for key in ["isolate_id", "name", "abbreviation", "sequence_id"]])
-
-        expected = {"067jz0t3"}
-
-        if multiple:
-            expected.add("067jz213")
-
-        assert set(duplicates["_id"]) == expected
-
-    def test_empty_abbreviations(self, test_virus_list, duplicate_result):
-        """
-        Ensure that abbreviations with value "" are not counted as duplicates.
-
-        """
-        test_virus_list[0]["abbreviation"] = ""
-        test_virus_list[1]["abbreviation"] = ""
-
-        result = virtool.viruses.verify_virus_list(test_virus_list)
-
-        assert result == (None, None)
-
-    @pytest.mark.parametrize("multiple", [False, True])
-    def test_duplicate_abbreviations(self, multiple, test_virus_list):
-        """
-        Test that duplicate abbreviations are detected. Use parametrization to test if single and multiple occurrences
-        are detected.
+        Test that a virus is properly joined when only a ``virus_id`` is provided.
         
         """
-        test_virus_list[0]["abbreviation"] = "TST"
+        await test_motor.viruses.insert(test_virus)
+        await test_motor.sequences.insert(test_sequence)
 
-        if multiple:
-            test_virus_list[3]["abbreviation"] = "EXV"
+        joined = await virtool.viruses.join(test_motor, "6116cba1")
 
-        duplicates, error = virtool.viruses.verify_virus_list(test_virus_list)
+        assert joined == test_merged_virus
 
-        assert error is None
-
-        for key in ["isolate_id", "name", "_id", "sequence_id"]:
-            assert duplicates[key] == []
-
-        expected = {"TST"}
-
-        if multiple:
-            expected.add("EXV")
-
-        assert set(duplicates["abbreviation"]) == expected
-
-    @pytest.mark.parametrize("multiple", [False, True])
-    def test_duplicate_names(self, multiple, test_virus_list):
+    async def test_document(self, monkeypatch, mocker, test_motor, test_virus, test_sequence, test_merged_virus):
         """
-        Test that duplicate virus names are detected. Use parametrization to test if single and multiple occurrences are
-        detected.
+        Test that the virus is joined using a passed ``document`` when provided. Ensure that another ``find_one`` call
+        to the virus collection is NOT made.
          
         """
-        # Add a duplicate virus name to the list.
-        test_virus_list[1]["name"] = "Prunus virus F"
+        stub = mocker.stub(name="find_one")
 
-        if multiple:
-            test_virus_list[3]["name"] = "Example virus"
+        async def async_stub(*args, **kwargs):
+            stub(*args, **kwargs)
+            return test_virus
 
-        duplicates, error = virtool.viruses.verify_virus_list(test_virus_list)
+        monkeypatch.setattr("motor.motor_asyncio.AsyncIOMotorCollection.find_one", async_stub)
 
-        assert error is None
+        await test_motor.viruses.insert(test_virus)
+        await test_motor.sequences.insert(test_sequence)
 
-        assert all([duplicates[key] == [] for key in ["isolate_id", "_id", "sequence_id"]])
+        assert not stub.called
 
-        expected = {"prunus virus f"}
+        document = await test_motor.viruses.find_one()
 
-        if multiple:
-            expected.add("example virus")
+        assert stub.called
 
-        assert set(duplicates["name"]) == expected
+        stub.reset_mock()
 
-    @pytest.mark.parametrize("multiple", [False, True])
-    def test_duplicate_sequence_ids(self, multiple, test_virus_list):
+        assert not stub.called
+
+        joined = await virtool.viruses.join(test_motor, "6116cba1", document)
+
+        assert not stub.called
+
+        assert joined == test_merged_virus
+
+
+class TestCheckNameAndAbbreviation:
+
+    @pytest.mark.parametrize("name,abbreviation,return_value", [
+        ("Foobar Virus", "FBR", False),
+        ("Prunus virus F", "FBR", "Name already exists"),
+        ("Foobar Virus", "PVF", "Abbreviation already exists"),
+        ("Prunus virus F", "PVF", "Name and abbreviation already exist"),
+    ])
+    async def test(self, name, abbreviation, return_value, test_motor, test_virus):
         """
-        Test that duplicate sequence ids in a virus list are detected. Use parametrization to test if single and
-        multiple occurrences are detected.
-    
-        """
-        test_virus_list[0]["isolates"][0]["sequences"].append(
-            dict(test_virus_list[0]["isolates"][0]["sequences"][0])
-        )
-
-        if multiple:
-            test_virus_list[1]["isolates"][0]["sequences"].append(
-                dict(test_virus_list[1]["isolates"][0]["sequences"][0])
-            )
-
-        duplicates, error = virtool.viruses.verify_virus_list(test_virus_list)
-
-        assert error is None
-
-        assert all([duplicates[key] == [] for key in ["isolate_id", "_id", "name", "abbreviation"]])
-
-        expected = {test_virus_list[0]["isolates"][0]["sequences"][0]["_id"]}
-
-        if multiple:
-            expected.add(test_virus_list[1]["isolates"][0]["sequences"][0]["_id"])
-
-        assert set(duplicates["sequence_id"]) == expected
-
-    def test_isolate_inconsistency(self, test_virus_list):
-        """
-        Test that viruses containing isolates associated with disparate numbers of sequences are detected.
-
-        """
-        extra_isolate = deepcopy(test_virus_list[0]["isolates"][0])
-
-        test_virus_list[0]["isolates"].append(extra_isolate)
-
-        extra_isolate.update({
-            "_id": "extra",
-            "isolate_id": "extra"
-        })
-
-        extra_isolate["sequences"][0].update({
-            "_id": "extra_0",
-            "isolate_id": "extra"
-        })
-
-        extra_sequence = dict(test_virus_list[0]["isolates"][0]["sequences"][0])
-
-        extra_sequence.update({
-            "_id": "extra_1",
-            "isolate_id": "extra"
-        })
-
-        extra_isolate["sequences"].append(extra_sequence)
-
-        duplicates, errors = virtool.viruses.verify_virus_list(test_virus_list)
-
-        assert duplicates is None
-
-        assert errors["prunus virus f"]["isolate_inconsistency"]
-
-    @pytest.mark.parametrize("multiple", [False, True])
-    def test_empty_virus(self, multiple, test_virus_list):
-        """
-        Test that viruses with no isolates are detected. Use parametrization to test if single and multiple occurrences
-        are detected.
-    
-        """
-        test_virus_list[0]["isolates"] = list()
-
-        if multiple:
-            test_virus_list[1]["isolates"] = list()
-
-        duplicates, errors = virtool.viruses.verify_virus_list(test_virus_list)
-
-        assert duplicates is None
-
-        assert errors["prunus virus f"]["empty_virus"]
-
-        if multiple:
-            assert errors["test virus"]["empty_virus"] is True
-
-    @pytest.mark.parametrize("multiple", [False, True])
-    def test_empty_isolate(self, multiple, test_virus_list):
-        """
-        Test that isolates with no sequences are detected. Use parametrization to test if single and multiple
-        occurrences are detected.
-
-        """
-        test_virus_list[0]["isolates"][0]["sequences"] = list()
-
-        if multiple:
-            test_virus_list[1]["isolates"][0]["sequences"] = list()
-
-        duplicates, errors = virtool.viruses.verify_virus_list(test_virus_list)
-
-        assert errors["prunus virus f"]["empty_isolate"] == ["cab8b360"]
-
-        if multiple:
-            assert errors["test virus"]["empty_isolate"] == ["second_0"]
-
-    @pytest.mark.parametrize("multiple", [False, True])
-    def test_empty_sequences(self, multiple, test_virus_list):
-        """
-        Test that sequences with empty ``sequence`` fields are detected. Use parametrization to test if single and
-        multiple occurrences are detected.
-         
-        """
-        test_virus_list[1]["isolates"][0]["sequences"][0]["sequence"] = ""
-
-        if multiple:
-            test_virus_list[2]["isolates"][0]["sequences"][0]["sequence"] = ""
-
-        duplicates, errors = virtool.viruses.verify_virus_list(test_virus_list)
-
-        assert duplicates is None
-
-        assert errors["test virus"]["empty_sequence"][0]["_id"] == "second_seq_0"
-
-        if multiple:
-            assert errors["example virus"]["empty_sequence"][0]["_id"] == "third_seq_0"
-
-
-class TestFindImportConflicts:
-
-    async def test_empty_collection(self, test_motor, test_virus_list):
-        """
-        Test that no conflicts are found when the sequence collection is empty.
-
-        """
-        result = await virtool.viruses.find_import_conflicts(test_motor, test_virus_list, False)
-
-        assert result is None
-
-    async def test_no_conflicts(self, test_motor, test_virus_list, iresine, iresine_sequence):
-        """
-        Test that no conflicts are found when the sequence collection is populated, but there really are no conflicts.
-
-        """
-        await test_motor.viruses.insert(iresine)
-        await test_motor.sequences.insert(iresine_sequence)
-
-        result = await virtool.viruses.find_import_conflicts(test_motor, test_virus_list, False)
-
-        assert result is None
-
-    @pytest.mark.parametrize("replace", [True, False])
-    async def test_existing_sequence_id(self, replace, test_motor, test_virus_list, iresine, iresine_sequence):
-        """
-        Test that a conflict is found when ``replace`` is ``True`` or ``False`` and an imported sequence id already
-        exists in the database.
-
-        """
-        await test_motor.viruses.insert(iresine)
-        await test_motor.sequences.insert(iresine_sequence)
-
-        # Replace CMV's first sequence id with the one from ``iresine_sequence``. This creates a situation in which we
-        # are attempting to import a sequence id (NC_003613) that already exists in another virus (IrVd).
-        test_virus_list[0]["isolates"][0]["sequences"][0]["_id"] = "NC_003613"
-
-        result = await virtool.viruses.find_import_conflicts(test_motor, test_virus_list, replace)
-
-        assert result == [('008lgo', 'Iresine viroid', 'NC_003613')]
-
-    async def test_existing_sequence_id_same_virus(self, test_motor, test_virus_list, iresine, iresine_sequence):
-        """
-        Test that no conflict is found when ``replace`` is ``True`` and and imported sequence id already exists in the
-        same virus as the one being imported.
-
-        """
-        iresine.update({
-            "user_id": "test",
-            "lower_name": "iresine viroid"
-        })
-
-        await test_motor.viruses.insert(iresine)
-        await test_motor.sequences.insert(iresine_sequence)
-
-        iresine["isolates"][0]["sequences"] = [iresine_sequence]
-
-        test_virus_list.append(iresine)
-
-        result = await virtool.viruses.find_import_conflicts(test_motor, test_virus_list, True, ["iresine viroid"])
-
-        assert result is None
-
-
-class TestSendImportDispatches:
-
-    def test_insertions(self, mocker, get_test_insertions):
-        insertions = get_test_insertions()
-
-        viruses, changes = zip(*deepcopy(insertions))
-
-        stub = mocker.stub(name="dispatch")
-
-        virtool.viruses.send_import_dispatches(stub, insertions, [])
-
-        viruses_call, history_call = stub.mock_calls
-
-        assert viruses_call == mock.call("viruses", "update", viruses)
-
-        assert history_call == mock.call("history", "update", changes)
-
-    def test_replacements(self, mocker, get_test_replacements):
-        replacements = get_test_replacements()
-
-        remove, insert = zip(*deepcopy(replacements))
-
-        viruses_1, changes_1 = [list(t) for t in zip(*remove)]
-        viruses_2, changes_2 = [list(t) for t in zip(*insert)]
-
-        stub = mocker.stub(name="dispatch")
-
-        virtool.viruses.send_import_dispatches(stub, [], replacements)
-
-        assert len(stub.mock_calls) == 4
-
-        viruses_call_1, history_call_1, viruses_call_2, history_call_2 = stub.mock_calls
-
-        assert viruses_call_1 == mock.call("viruses", "remove", viruses_1)
-        assert history_call_1 == mock.call("history", "update", changes_1)
-
-        assert viruses_call_2 == mock.call("viruses", "update", viruses_2)
-        assert history_call_2 == mock.call("history", "update", changes_2)
-
-    @pytest.mark.parametrize("replacement", [True, False])
-    @pytest.mark.parametrize("count", [28, 30, 0])
-    def test_too_few(self, replacement, count, mocker, get_test_insertions, get_test_replacements):
-
-        insertions = []
-        replacements = []
-
-        if replacement:
-            replacements = get_test_replacements(count)
-        else:
-            insertions = get_test_insertions(count)
-
-        stub = mocker.stub(name="dispatch")
-
-        virtool.viruses.send_import_dispatches(stub, insertions, replacements)
-
-        if replacement:
-            if count == 30:
-                assert len(stub.mock_calls) == 4
-            else:
-                assert not stub.mock_calls
-
-        else:
-            if count == 30:
-                assert len(stub.mock_calls) == 2
-            else:
-                assert not stub.mock_calls
-
-
-class TestInsertFromImport:
-
-    async def test(self, static_time, test_motor, test_virus, test_sequence):
-        joined = virtool.viruses.merge_virus(test_virus, [test_sequence])
-
-        virus, change = await virtool.viruses.insert_from_import(test_motor, joined, "test")
-
-        assert virus == {
-            "abbreviation": "PVF",
-            "modified": False,
-            "name": "Prunus virus F",
-            "version": 0,
-            "virus_id": "6116cba1"
-        }
-
-        assert change == {
-            "change_id": "6116cba1.0",
-            "description": ("Created virus ", "Prunus virus F", "6116cba1"),
-            "index": "unbuilt",
-            "index_version": "unbuilt",
-            "method_name": "create",
-            "timestamp": static_time,
-            "user_id": "test",
-            "virus_id": "6116cba1",
-            "virus_name": "Prunus virus F",
-            "virus_version": "0"
-        }
-
-
-class TestDeleteForImport:
-
-    async def test(self, static_time, test_motor, test_virus, test_sequence):
-        """
-        Test that function returns the removed ``virus_id`` and a processed change document ready for dispatch.
+        Test that the function works properly for all possible inputs.
          
         """
         await test_motor.viruses.insert_one(test_virus)
-        await test_motor.sequences.insert_one(test_sequence)
 
-        virus_id, change = await virtool.viruses.delete_for_import(test_motor, test_virus["_id"], "test")
+        result = await virtool.viruses.check_name_and_abbreviation(test_motor, name, abbreviation)
 
-        assert virus_id == test_virus["_id"]
+        assert result == return_value
 
-        assert change == {
-            "change_id": "6116cba1.removed",
-            "description": ("Removed virus", "Prunus virus F", "6116cba1"),
-            "index": "unbuilt",
-            "index_version": "unbuilt",
-            "method_name": "remove",
-            "timestamp": static_time,
-            "user_id": "test",
-            "virus_id": "6116cba1",
-            "virus_name": "Prunus virus F",
-            "virus_version": "removed"
+
+class TestImportFile:
+
+    async def test(self, mocker, loop, test_motor, test_import_handle):
+        stub = mocker.stub(name="dispatch")
+
+        result = await virtool.viruses.import_file(loop, test_motor, stub, test_import_handle, "test", replace=False)
+
+        status_calls = [call[0] for call in stub.call_args_list if call[0][0] == "status"]
+
+        assert all(args[1] == "update" for args in status_calls)
+
+        expected = {
+            'skipped': 0,
+            'file_size': 0,
+            'conflicts': None,
+            'duplicates': None,
+            'in_progress': True,
+            'inserted': 0,
+            'warnings': [],
+            'virus_count': 1,
+            'replaced': 0,
+            'file_name': 'viruses.json.gz',
+            'id': 'import_viruses',
+            'errors': None, 'progress': 0
         }
 
-'''
-class TestImportFile:
+        assert status_calls[0][2] == expected
+
+        expected["progress"] = 1
+
+        assert status_calls[1][2] == expected
+
+        expected["inserted"] = 1
+
+        assert status_calls[2][2] == expected
+
+        assert result == {
+            "inserted": 1,
+            "progress": 1,
+            "replaced": 0,
+            "skipped": 0,
+            "warnings": []
+        }
+
+        assert 0
+
+    '''
 
     @pytest.mark.gen_test
     def test_empty_collection(self, monkeypatch, mock_pymongo, import_transaction, viruses_collection, import_report,
@@ -787,3 +418,782 @@ class TestImportFile:
             {"added": 3, "replaced": 0, "skipped": 1, "warnings": [], "progress": 1}
         )
     '''
+
+
+class TestCheckVirus:
+
+    def test_pass(self, test_virus, test_sequence):
+        """
+        Test that a valid virus and sequence list results in return value of ``None``.
+         
+        """
+        result = virtool.viruses.check_virus(test_virus, [test_sequence])
+        assert result is None
+
+    def test_empty_isolate(self, test_virus):
+        """
+        Test that an isolate with no sequences is detected.
+         
+        """
+        result = virtool.viruses.check_virus(test_virus, [])
+
+        assert result == {
+            "empty_isolate": ["cab8b360"],
+            "empty_sequence": False,
+            "empty_virus": False,
+            "isolate_inconsistency": False
+        }
+
+    def test_empty_sequence(self, test_virus, test_sequence):
+        """
+        Test that a sequence with an empty ``sequence`` field is detected.
+         
+        """
+        test_sequence["sequence"] = ""
+
+        result = virtool.viruses.check_virus(test_virus, [test_sequence])
+
+        assert result == {
+            "empty_isolate": False,
+            "empty_sequence": [{
+                "_id": "KX269872",
+                "definition": "Prunus virus F isolate 8816-s2 segment RNA2 polyprotein 2 gene, complete cds.",
+                "host": "sweet cherry",
+                "isolate_id": "cab8b360",
+                "sequence": ""
+            }],
+            "empty_virus": False,
+            "isolate_inconsistency": False
+        }
+
+    def test_empty_virus(self, test_virus):
+        """
+        Test that an virus with no isolates is detected.
+         
+        """
+        test_virus["isolates"] = []
+
+        result = virtool.viruses.check_virus(test_virus, [])
+
+        assert result == {
+            "empty_isolate": False,
+            "empty_sequence": False,
+            "empty_virus": True,
+            "isolate_inconsistency": False
+        }
+
+    def test_isolate_inconsistency(self, test_virus, test_sequence):
+        """
+        Test that isolates in a single virus with disparate sequence counts are detected. 
+         
+        """
+        test_virus["isolates"].append(dict(test_virus["isolates"][0], isolate_id="foobar"))
+
+        sequences = [
+            test_sequence,
+            dict(test_sequence, _id="foobar_1", isolate_id="foobar"),
+            dict(test_sequence, _id="foobar_2", isolate_id="foobar")
+        ]
+
+        pprint(test_virus)
+
+        pprint(sequences)
+
+        result = virtool.viruses.check_virus(test_virus, sequences)
+
+        assert result == {
+            "empty_isolate": False,
+            "empty_sequence": False,
+            "empty_virus": False,
+            "isolate_inconsistency": True
+        }
+
+
+class TestVerifyVirusList:
+    def test_valid(self, test_virus_list):
+        """
+        Test that a valid virus list returns no duplicates or errors.
+
+        """
+        result = virtool.viruses.verify_virus_list(test_virus_list)
+        assert result == (None, None)
+
+    @pytest.mark.parametrize("multiple", [False, True])
+    def test_duplicate_virus_ids(self, multiple, test_virus_list):
+        test_virus_list[0]["_id"] = "067jz0t3"
+
+        if multiple:
+            test_virus_list[3]["_id"] = "067jz213"
+
+        duplicates, error = virtool.viruses.verify_virus_list(test_virus_list)
+
+        assert error is None
+
+        assert all([duplicates[key] == [] for key in ["isolate_id", "name", "abbreviation", "sequence_id"]])
+
+        expected = {"067jz0t3"}
+
+        if multiple:
+            expected.add("067jz213")
+
+        assert set(duplicates["_id"]) == expected
+
+    def test_empty_abbreviations(self, test_virus_list, duplicate_result):
+        """
+        Ensure that abbreviations with value "" are not counted as duplicates.
+
+        """
+        test_virus_list[0]["abbreviation"] = ""
+        test_virus_list[1]["abbreviation"] = ""
+
+        result = virtool.viruses.verify_virus_list(test_virus_list)
+
+        assert result == (None, None)
+
+    @pytest.mark.parametrize("multiple", [False, True])
+    def test_duplicate_abbreviations(self, multiple, test_virus_list):
+        """
+        Test that duplicate abbreviations are detected. Use parametrization to test if single and multiple occurrences
+        are detected.
+
+        """
+        test_virus_list[0]["abbreviation"] = "TST"
+
+        if multiple:
+            test_virus_list[3]["abbreviation"] = "EXV"
+
+        duplicates, error = virtool.viruses.verify_virus_list(test_virus_list)
+
+        assert error is None
+
+        for key in ["isolate_id", "name", "_id", "sequence_id"]:
+            assert duplicates[key] == []
+
+        expected = {"TST"}
+
+        if multiple:
+            expected.add("EXV")
+
+        assert set(duplicates["abbreviation"]) == expected
+
+    @pytest.mark.parametrize("multiple", [False, True])
+    def test_duplicate_names(self, multiple, test_virus_list):
+        """
+        Test that duplicate virus names are detected. Use parametrization to test if single and multiple occurrences are
+        detected.
+
+        """
+        # Add a duplicate virus name to the list.
+        test_virus_list[1]["name"] = "Prunus virus F"
+
+        if multiple:
+            test_virus_list[3]["name"] = "Example virus"
+
+        duplicates, error = virtool.viruses.verify_virus_list(test_virus_list)
+
+        assert error is None
+
+        assert all([duplicates[key] == [] for key in ["isolate_id", "_id", "sequence_id"]])
+
+        expected = {"prunus virus f"}
+
+        if multiple:
+            expected.add("example virus")
+
+        assert set(duplicates["name"]) == expected
+
+    @pytest.mark.parametrize("multiple", [False, True])
+    def test_duplicate_sequence_ids(self, multiple, test_virus_list):
+        """
+        Test that duplicate sequence ids in a virus list are detected. Use parametrization to test if single and
+        multiple occurrences are detected.
+
+        """
+        test_virus_list[0]["isolates"][0]["sequences"].append(
+            dict(test_virus_list[0]["isolates"][0]["sequences"][0])
+        )
+
+        if multiple:
+            test_virus_list[1]["isolates"][0]["sequences"].append(
+                dict(test_virus_list[1]["isolates"][0]["sequences"][0])
+            )
+
+        duplicates, error = virtool.viruses.verify_virus_list(test_virus_list)
+
+        assert error is None
+
+        assert all([duplicates[key] == [] for key in ["isolate_id", "_id", "name", "abbreviation"]])
+
+        expected = {test_virus_list[0]["isolates"][0]["sequences"][0]["_id"]}
+
+        if multiple:
+            expected.add(test_virus_list[1]["isolates"][0]["sequences"][0]["_id"])
+
+        assert set(duplicates["sequence_id"]) == expected
+
+    def test_isolate_inconsistency(self, test_virus_list):
+        """
+        Test that viruses containing isolates associated with disparate numbers of sequences are detected.
+
+        """
+        extra_isolate = deepcopy(test_virus_list[0]["isolates"][0])
+
+        test_virus_list[0]["isolates"].append(extra_isolate)
+
+        extra_isolate.update({
+            "_id": "extra",
+            "isolate_id": "extra"
+        })
+
+        extra_isolate["sequences"][0].update({
+            "_id": "extra_0",
+            "isolate_id": "extra"
+        })
+
+        extra_sequence = dict(test_virus_list[0]["isolates"][0]["sequences"][0])
+
+        extra_sequence.update({
+            "_id": "extra_1",
+            "isolate_id": "extra"
+        })
+
+        extra_isolate["sequences"].append(extra_sequence)
+
+        duplicates, errors = virtool.viruses.verify_virus_list(test_virus_list)
+
+        assert duplicates is None
+
+        assert errors["prunus virus f"]["isolate_inconsistency"]
+
+    @pytest.mark.parametrize("multiple", [False, True])
+    def test_empty_virus(self, multiple, test_virus_list):
+        """
+        Test that viruses with no isolates are detected. Use parametrization to test if single and multiple occurrences
+        are detected.
+
+        """
+        test_virus_list[0]["isolates"] = list()
+
+        if multiple:
+            test_virus_list[1]["isolates"] = list()
+
+        duplicates, errors = virtool.viruses.verify_virus_list(test_virus_list)
+
+        assert duplicates is None
+
+        assert errors["prunus virus f"]["empty_virus"]
+
+        if multiple:
+            assert errors["test virus"]["empty_virus"] is True
+
+    @pytest.mark.parametrize("multiple", [False, True])
+    def test_empty_isolate(self, multiple, test_virus_list):
+        """
+        Test that isolates with no sequences are detected. Use parametrization to test if single and multiple
+        occurrences are detected.
+
+        """
+        test_virus_list[0]["isolates"][0]["sequences"] = list()
+
+        if multiple:
+            test_virus_list[1]["isolates"][0]["sequences"] = list()
+
+        duplicates, errors = virtool.viruses.verify_virus_list(test_virus_list)
+
+        assert errors["prunus virus f"]["empty_isolate"] == ["cab8b360"]
+
+        if multiple:
+            assert errors["test virus"]["empty_isolate"] == ["second_0"]
+
+    @pytest.mark.parametrize("multiple", [False, True])
+    def test_empty_sequences(self, multiple, test_virus_list):
+        """
+        Test that sequences with empty ``sequence`` fields are detected. Use parametrization to test if single and
+        multiple occurrences are detected.
+
+        """
+        test_virus_list[1]["isolates"][0]["sequences"][0]["sequence"] = ""
+
+        if multiple:
+            test_virus_list[2]["isolates"][0]["sequences"][0]["sequence"] = ""
+
+        duplicates, errors = virtool.viruses.verify_virus_list(test_virus_list)
+
+        assert duplicates is None
+
+        assert errors["test virus"]["empty_sequence"][0]["_id"] == "second_seq_0"
+
+        if multiple:
+            assert errors["example virus"]["empty_sequence"][0]["_id"] == "third_seq_0"
+
+
+class TestFindImportConflicts:
+
+    async def test_empty_collection(self, test_motor, test_virus_list):
+        """
+        Test that no conflicts are found when the sequence collection is empty.
+
+        """
+        result = await virtool.viruses.find_import_conflicts(test_motor, test_virus_list, False)
+
+        assert result is None
+
+    async def test_no_conflicts(self, test_motor, test_virus_list, iresine, iresine_sequence):
+        """
+        Test that no conflicts are found when the sequence collection is populated, but there really are no conflicts.
+
+        """
+        await test_motor.viruses.insert(iresine)
+        await test_motor.sequences.insert(iresine_sequence)
+
+        result = await virtool.viruses.find_import_conflicts(test_motor, test_virus_list, False)
+
+        assert result is None
+
+    @pytest.mark.parametrize("replace", [True, False])
+    async def test_existing_sequence_id(self, replace, test_motor, test_virus_list, iresine, iresine_sequence):
+        """
+        Test that a conflict is found when ``replace`` is ``True`` or ``False`` and an imported sequence id already
+        exists in the database.
+
+        """
+        await test_motor.viruses.insert(iresine)
+        await test_motor.sequences.insert(iresine_sequence)
+
+        # Replace CMV's first sequence id with the one from ``iresine_sequence``. This creates a situation in which we
+        # are attempting to import a sequence id (NC_003613) that already exists in another virus (IrVd).
+        test_virus_list[0]["isolates"][0]["sequences"][0]["_id"] = "NC_003613"
+
+        result = await virtool.viruses.find_import_conflicts(test_motor, test_virus_list, replace)
+
+        assert result == [('008lgo', 'Iresine viroid', 'NC_003613')]
+
+    async def test_existing_sequence_id_same_virus(self, test_motor, test_virus_list, iresine, iresine_sequence):
+        """
+        Test that no conflict is found when ``replace`` is ``True`` and and imported sequence id already exists in the
+        same virus as the one being imported.
+
+        """
+        iresine.update({
+            "user_id": "test",
+            "lower_name": "iresine viroid"
+        })
+
+        await test_motor.viruses.insert(iresine)
+        await test_motor.sequences.insert(iresine_sequence)
+
+        iresine["isolates"][0]["sequences"] = [iresine_sequence]
+
+        test_virus_list.append(iresine)
+
+        result = await virtool.viruses.find_import_conflicts(test_motor, test_virus_list, True, ["iresine viroid"])
+
+        assert result is None
+
+
+class TestSendImportDispatches:
+    def test_insertions(self, mocker, get_test_insertions):
+        insertions = get_test_insertions()
+
+        viruses, changes = zip(*deepcopy(insertions))
+
+        stub = mocker.stub(name="dispatch")
+
+        virtool.viruses.send_import_dispatches(stub, insertions, [])
+
+        viruses_call, history_call = stub.mock_calls
+
+        assert viruses_call == mock.call("viruses", "update", viruses)
+
+        assert history_call == mock.call("history", "update", changes)
+
+    def test_replacements(self, mocker, get_test_replacements):
+        replacements = get_test_replacements()
+
+        remove, insert = zip(*deepcopy(replacements))
+
+        viruses_1, changes_1 = [list(t) for t in zip(*remove)]
+        viruses_2, changes_2 = [list(t) for t in zip(*insert)]
+
+        stub = mocker.stub(name="dispatch")
+
+        virtool.viruses.send_import_dispatches(stub, [], replacements)
+
+        assert len(stub.mock_calls) == 4
+
+        viruses_call_1, history_call_1, viruses_call_2, history_call_2 = stub.mock_calls
+
+        assert viruses_call_1 == mock.call("viruses", "remove", viruses_1)
+        assert history_call_1 == mock.call("history", "update", changes_1)
+
+        assert viruses_call_2 == mock.call("viruses", "update", viruses_2)
+        assert history_call_2 == mock.call("history", "update", changes_2)
+
+    @pytest.mark.parametrize("replacement", [True, False])
+    @pytest.mark.parametrize("count", [28, 30, 0])
+    def test_too_few(self, replacement, count, mocker, get_test_insertions, get_test_replacements):
+
+        insertions = []
+        replacements = []
+
+        if replacement:
+            replacements = get_test_replacements(count)
+        else:
+            insertions = get_test_insertions(count)
+
+        stub = mocker.stub(name="dispatch")
+
+        virtool.viruses.send_import_dispatches(stub, insertions, replacements)
+
+        if replacement:
+            if count == 30:
+                assert len(stub.mock_calls) == 4
+            else:
+                assert not stub.mock_calls
+
+        else:
+            if count == 30:
+                assert len(stub.mock_calls) == 2
+            else:
+                assert not stub.mock_calls
+
+
+class TestInsertFromImport:
+
+    async def test(self, static_time, test_motor, test_virus, test_sequence):
+        """
+        Test that function returns a processed virus document and change document.
+         
+        """
+        joined = virtool.viruses.merge_virus(test_virus, [test_sequence])
+
+        virus, change = await virtool.viruses.insert_from_import(test_motor, joined, "test")
+
+        assert virus == {
+            "abbreviation": "PVF",
+            "modified": False,
+            "name": "Prunus virus F",
+            "version": 0,
+            "virus_id": "6116cba1"
+        }
+
+        assert change == {
+            "change_id": "6116cba1.0",
+            "description": ("Created virus ", "Prunus virus F", "6116cba1"),
+            "index": "unbuilt",
+            "index_version": "unbuilt",
+            "method_name": "create",
+            "timestamp": static_time,
+            "user_id": "test",
+            "virus_id": "6116cba1",
+            "virus_name": "Prunus virus F",
+            "virus_version": "0"
+        }
+
+
+class TestDeleteForImport:
+
+    async def test(self, static_time, test_motor, test_virus, test_sequence):
+        """
+        Test that function returns the removed ``virus_id`` and a processed change document ready for dispatch.
+
+        """
+        await test_motor.viruses.insert_one(test_virus)
+        await test_motor.sequences.insert_one(test_sequence)
+
+        virus_id, change = await virtool.viruses.delete_for_import(test_motor, test_virus["_id"], "test")
+
+        assert virus_id == test_virus["_id"]
+
+        assert change == {
+            "change_id": "6116cba1.removed",
+            "description": ("Removed virus", "Prunus virus F", "6116cba1"),
+            "index": "unbuilt",
+            "index_version": "unbuilt",
+            "method_name": "remove",
+            "timestamp": static_time,
+            "user_id": "test",
+            "virus_id": "6116cba1",
+            "virus_name": "Prunus virus F",
+            "virus_version": "removed"
+        }
+
+
+class TestUpdateLastIndexedVersion:
+
+    async def test(self, test_motor, test_virus):
+        """
+        Test that function works as expected.
+         
+        """
+        virus_1 = test_virus
+        virus_2 = deepcopy(test_virus)
+
+        virus_2.update({
+            "_id": "foobar"
+        })
+
+        await test_motor.viruses.insert_many([virus_1, virus_2])
+
+        result = await virtool.viruses.update_last_indexed_version(test_motor, ["foobar"], 5)
+
+        assert result == {"updatedExisting": True, "nModified": 1, "ok": 1.0, "n": 1}
+
+        virus_1 = await test_motor.viruses.find_one({"_id": "6116cba1"})
+        virus_2 = await test_motor.viruses.find_one({"_id": "foobar"})
+
+        assert virus_1["version"] == 0
+        assert virus_1["last_indexed_version"] == 0
+
+        assert virus_2["version"] == 5
+        assert virus_2["last_indexed_version"] == 5
+
+
+class TestGetDefaultIsolate:
+
+    def test(self, test_virus, test_isolate):
+        """
+        Test that the function can find the default isolate.
+         
+        """
+        default_isolate = dict(test_isolate, isolate_id="foobar3", default=True)
+
+        test_virus["isolates"] = [
+            dict(test_isolate, isolate_id="foobar1", default=False),
+            dict(test_isolate, isolate_id="foobar2", default=False),
+            default_isolate,
+            dict(test_isolate, isolate_id="foobar4", default=False)
+        ]
+
+        pprint(test_virus["isolates"])
+
+        assert virtool.viruses.get_default_isolate(test_virus) == default_isolate
+
+    def test_processor(self, test_virus, test_isolate):
+        """
+        Test that the ``processor`` argument works.
+         
+        """
+
+        default_isolate = dict(test_isolate, isolate_id="foobar3", default=True)
+
+        expected = dict(default_isolate, processed=True)
+
+        test_virus["isolates"] = [
+            dict(test_isolate, isolate_id="foobar1", default=False),
+            default_isolate
+        ]
+
+        def test_processor(isolate):
+            return dict(isolate, processed=True)
+
+        assert virtool.viruses.get_default_isolate(test_virus, test_processor) == expected
+
+    def test_no_default(self, test_virus):
+        """
+        Test that a ``ValueError`` is raised when the virus contains not default isolates. 
+         
+        """
+        test_virus["isolates"][0]["default"] = False
+
+        with pytest.raises(ValueError) as err:
+            virtool.viruses.get_default_isolate(test_virus)
+
+        assert "No default isolate found" in str(err)
+
+    def test_multiple_defaults(self, test_virus, test_isolate):
+        """
+        Test that a ``ValueError`` is raised when the virus contains more than one default isolate. 
+
+        """
+        extra_isolate = dict(test_isolate, isolate_id="foobar3", default=True)
+
+        test_virus["isolates"].append(extra_isolate)
+
+        with pytest.raises(ValueError) as err:
+            virtool.viruses.get_default_isolate(test_virus)
+
+        assert "Found more than one" in str(err)
+
+
+class TestGetNewIsolateId:
+
+    async def test(self, test_motor, test_virus):
+        await test_motor.viruses.insert(test_virus)
+
+        new_id = await virtool.viruses.get_new_isolate_id(test_motor)
+
+        allowed = ascii_lowercase + digits
+
+        assert all(c in allowed for c in new_id)
+
+    async def test_exists(self, test_motor, test_virus, test_random_alphanumeric):
+        """
+        Test that a different ``isolate_id`` is generated if the first generated one already exists in the database.        
+         
+        """
+        next_choice = test_random_alphanumeric.next_choice[:8].lower()
+
+        expected = test_random_alphanumeric.choices[1][:8].lower()
+
+        test_virus["isolates"][0]["isolate_id"] = next_choice
+
+        await test_motor.viruses.insert(test_virus)
+
+        new_id = await virtool.viruses.get_new_isolate_id(test_motor)
+
+        assert new_id == expected
+
+    async def test_excluded(self, test_motor, test_random_alphanumeric):
+        """
+        Test that a different ``isolate_id`` is generated if the first generated one is in the ``excluded`` list.        
+
+        """
+        excluded = [test_random_alphanumeric.next_choice[:8].lower()]
+
+        expected = test_random_alphanumeric.choices[1][:8].lower()
+
+        new_id = await virtool.viruses.get_new_isolate_id(test_motor, excluded=excluded)
+
+        assert new_id == expected
+
+    async def test_exists_and_excluded(self, test_motor, test_virus, test_random_alphanumeric):
+        """
+        Test that a different ``isolate_id`` is generated if the first generated one is in the ``excluded`` list.        
+
+        """
+        excluded = [test_random_alphanumeric.choices[2][:8].lower()]
+
+        test_virus["isolates"][0]["isolate_id"] = test_random_alphanumeric.choices[1][:8].lower()
+
+        await test_motor.viruses.insert(test_virus)
+
+        expected = test_random_alphanumeric.choices[0][:8].lower()
+
+        new_id = await virtool.viruses.get_new_isolate_id(test_motor, excluded=excluded)
+
+        assert new_id == expected
+
+
+class TestMergeVirus:
+
+    def test(self, test_virus, test_sequence, test_merged_virus):
+        merged = virtool.viruses.merge_virus(test_virus, [test_sequence])
+
+        assert merged == test_merged_virus
+
+
+class TestSplitVirus:
+
+    def test(self, test_virus, test_sequence, test_merged_virus):
+        virus, sequences = virtool.viruses.split_virus(test_merged_virus)
+
+        assert virus == test_virus
+        assert sequences == [test_sequence]
+
+
+class TestExtractIsolateIds:
+
+    def test_merged_virus(self, test_merged_virus):
+        isolate_ids = virtool.viruses.extract_isolate_ids(test_merged_virus)
+        assert isolate_ids == ["cab8b360"]
+
+    def test_virus_document(self, test_virus):
+        isolate_ids = virtool.viruses.extract_isolate_ids(test_virus)
+        assert isolate_ids == ["cab8b360"]
+
+    def test_multiple(self, test_virus):
+        test_virus["isolates"].append({
+            "source_type": "isolate",
+            "source_name": "b",
+            "isolate_id": "foobar",
+            "default": False
+        })
+
+        isolate_ids = virtool.viruses.extract_isolate_ids(test_virus)
+
+        assert set(isolate_ids) == {"cab8b360", "foobar"}
+
+    def test_missing_isolates(self, test_virus):
+        del test_virus["isolates"]
+
+        with pytest.raises(KeyError):
+            virtool.viruses.extract_isolate_ids(test_virus)
+
+
+class TestFindIsolate:
+
+    def test(self, test_virus, test_isolate):
+        new_isolate = dict(test_isolate, isolate_id="foobar", source_type="isolate", source_name="b")
+
+        test_virus["isolates"].append(new_isolate)
+
+        isolate = virtool.viruses.find_isolate(test_virus["isolates"], "foobar")
+
+        assert isolate == new_isolate
+
+    def test_does_not_exist(self, test_virus):
+        assert virtool.viruses.find_isolate(test_virus["isolates"], "foobar") is None
+
+
+class TestExtractSequenceIds:
+
+    def test_valid(self, test_merged_virus):
+        sequence_ids = virtool.viruses.extract_sequence_ids(test_merged_virus)
+        assert sequence_ids == ["KX269872"]
+
+    def test_missing_isolates(self, test_merged_virus):
+        del test_merged_virus["isolates"]
+
+        with pytest.raises(KeyError) as err:
+            virtool.viruses.extract_sequence_ids(test_merged_virus)
+
+        assert "'isolates'" in str(err)
+
+    def test_empty_isolates(self, test_merged_virus):
+        test_merged_virus["isolates"] = list()
+
+        with pytest.raises(ValueError) as err:
+            virtool.viruses.extract_sequence_ids(test_merged_virus)
+
+        assert "Empty isolates list" in str(err)
+
+    def test_missing_sequences(self, test_merged_virus):
+        del test_merged_virus["isolates"][0]["sequences"]
+
+        with pytest.raises(KeyError) as err:
+            virtool.viruses.extract_sequence_ids(test_merged_virus)
+
+        assert "missing sequences field" in str(err)
+
+    def test_empty_sequences(self, test_merged_virus):
+        test_merged_virus["isolates"][0]["sequences"] = list()
+
+        with pytest.raises(ValueError) as err:
+            virtool.viruses.extract_sequence_ids(test_merged_virus)
+
+        assert "Empty sequences list" in str(err)
+
+
+class TestFormatIsolateName:
+
+    @pytest.mark.parametrize("source_type, source_name", [("Isolate", ""), ("Isolate", ""), ("", "8816 - v2")])
+    def test(self, source_type, source_name, test_isolate):
+        """
+        Test that a formatted isolate name is produced for a full ``source_type`` and ``source_name``. Test that if
+        either of these fields are missing, "Unnamed isolate" is returned.
+         
+        """
+        test_isolate.update({
+            "source_type": source_type,
+            "source_name": source_name
+        })
+
+        print(source_type, source_name)
+
+        formatted = virtool.viruses.format_isolate_name(test_isolate)
+
+        if source_type and source_name:
+            assert formatted == "Isolate 8816 - v2"
+        else:
+            assert formatted == "Unnamed Isolate"

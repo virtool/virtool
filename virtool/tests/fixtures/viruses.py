@@ -32,6 +32,16 @@ def test_virus():
 
 
 @pytest.fixture
+def test_isolate():
+    return {
+        "default": True,
+        "isolate_id": "cab8b360",
+        "source_name": "8816-v2",
+        "source_type": "isolate"
+    }
+
+
+@pytest.fixture
 def test_sequence():
     return {
         "_id": "KX269872",
@@ -188,3 +198,31 @@ def get_test_replacements(get_test_insertions, test_base_change):
         return list(zip(removals, insertions))
 
     return func
+
+
+@pytest.fixture
+def test_import_handle(mocker, monkeypatch, test_db, test_merged_virus):
+    test_db.status.insert_one({
+        "_id": "import_viruses",
+        "file_name": "viruses.json.gz",
+        "file_size": 0,
+        "virus_count": 0,
+        "in_progress": True,
+        "progress": 0,
+        "inserted": 0,
+        "replaced": 0,
+        "skipped": 0,
+        "errors": None,
+        "duplicates": None,
+        "conflicts": None,
+        "warnings": []
+    })
+
+    def func(*args):
+        return [test_merged_virus]
+
+    monkeypatch.setattr("virtool.viruses.load_import_file", func)
+
+    m = mocker.Mock()
+
+    return m
