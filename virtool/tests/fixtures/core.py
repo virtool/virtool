@@ -4,6 +4,43 @@ import virtool.web.dispatcher
 
 
 @pytest.fixture
+def test_random_alphanumeric(monkeypatch):
+    class RandomAlphanumericTester:
+
+        def __init__(self):
+            self.choices = [
+                "aB67nm89jL56hj34AL90",
+                "fX1l90Rt45JK34bA7890",
+                "kl84Fg067jJa109lmQ021"
+            ]
+
+            self.last_choice = None
+
+        def __call__(self, length=6, mixed_case=False, excluded=None):
+            string = self.choices.pop()[:length]
+
+            if not mixed_case:
+                string = string.lower()
+
+            if string in excluded:
+                string = self.__call__(length, mixed_case, excluded)
+
+            self.last_choice = string
+
+            return string
+
+        @property
+        def next_choice(self):
+            return self.choices[-1]
+
+    tester = RandomAlphanumericTester()
+
+    monkeypatch.setattr("virtool.utils.random_alphanumeric", tester)
+
+    return tester
+
+
+@pytest.fixture
 def static_time(monkeypatch):
     time = datetime.datetime(2017, 10, 6, 20, 0, 0, tzinfo=datetime.timezone.utc)
 
