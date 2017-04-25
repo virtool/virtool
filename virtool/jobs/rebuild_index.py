@@ -3,8 +3,8 @@ import logging
 import dictdiffer
 from collections import defaultdict
 
-from virtool.jobs.job import Job
-from virtool.viruses import merge_virus
+from virtool.job import Job
+from virtool.virus import merge_virus
 
 
 logger = logging.getLogger(__name__)

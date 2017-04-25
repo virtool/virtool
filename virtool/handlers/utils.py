@@ -3,7 +3,7 @@ import datetime
 
 from aiohttp import web
 from cerberus import Validator
-from virtool.permissions import PERMISSIONS
+from virtool.user_permissions import PERMISSIONS
 
 
 class CustomEncoder(json.JSONEncoder):

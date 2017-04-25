@@ -1,12 +1,11 @@
 import os
 import subprocess
-import virtool.utils
 
-from virtool.permissions import PERMISSIONS
-from virtool.groups import merge_group_permissions
-from virtool.history import get_default_isolate
-from virtool.viruses import merge_virus
-from virtool.samples import calculate_algorithm_tags
+from virtool.user_permissions import PERMISSIONS
+from virtool.user_groups import merge_group_permissions
+from virtool.virus_history import get_default_isolate
+from virtool.virus import merge_virus
+from virtool.sample import calculate_algorithm_tags
 
 
 def organize_analyses(database):

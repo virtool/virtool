@@ -1,4 +1,4 @@
-from virtool.data_utils import get_new_id
+from virtool.utils import get_new_id
 from virtool.handlers.utils import unpack_json_request, json_response, bad_request, not_found
 from virtool import hosts
 

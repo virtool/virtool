@@ -1,14 +1,12 @@
 import os
 import gzip
 import json
-import math
 import shutil
-
-from cerberus import Validator
-from pymongo import ReturnDocument
 from collections import Counter
-from virtool.hmm import to_client, projection, check
-from virtool.data_utils import get_new_id
+from pymongo import ReturnDocument
+
+import virtool.virus_hmm
+from virtool.utils import get_new_id
 from virtool.handlers.utils import unpack_json_request, json_response, not_found, validation, protected
 
 
@@ -17,9 +15,9 @@ async def find(req):
     Find HMM annotation documents.
      
     """
-    documents = await req.app["db"].hmm.find({}, projection=projection).to_list(length=10)
+    documents = await req.app["db"].hmm.find({}, projection=virtool.virus_hmm.projection).to_list(length=10)
 
-    return json_response([to_client(document) for document in documents])
+    return json_response([virtool.virus_hmm.to_client(document) for document in documents])
 
 
 async def get(req):
@@ -30,7 +28,7 @@ async def get(req):
     document = await req.app["db"].hmm.find_one({"_id": req.match_info["hmm_id"]})
 
     if document:
-        return json_response(to_client(document))
+        return json_response(virtool.virus_hmm.to_client(document))
 
     return not_found()
 
@@ -53,11 +51,11 @@ async def update(req):
         "$set": data
     }, return_document=ReturnDocument.AFTER)
 
-    return json_response(to_client(document))
+    return json_response(virtool.virus_hmm.to_client(document))
 
 
 async def check(req):
-    result = await check(req.app["db"], req.app["settings"])
+    result = await virtool.virus_hmm.check(req.app["db"], req.app["settings"])
     return json_response(result)
 
 
@@ -65,7 +63,7 @@ async def clean(req):
     db = req.app["db"]
     settings = req.app["settings"]
 
-    errors = await hmm.check(db, settings)
+    errors = await virtool.virus_hmm.check(db, settings)
 
     if errors["not_in_file"]:
         hmm_ids = await db.hmm.find({"cluster": {
@@ -74,7 +72,7 @@ async def clean(req):
 
         await db.hmm.remove({"_id": {"$in": hmm_ids}})
 
-        return json_response(await hmm.check(db, settings))
+        return json_response(await virtool.virus_hmm.check(db, settings))
 
     return json_response({"No problems found"}, status=404)
 
@@ -89,7 +87,7 @@ async def import_hmm(req):
 
     shutil.copyfile(src_path, dest_path)
 
-    result = await hmm.check(db, settings)
+    result = await virtool.virus_hmm.check(db, settings)
 
     await db.status.update("hmm", {
         "$set": result
@@ -115,7 +113,7 @@ async def import_annotations(req):
     # transaction.update({"count": count})
 
     # The number of documents to insert at a time.
-    chunk_size = int(math.ceil(count * 0.03))
+    # chunk_size = int(math.ceil(count * 0.03))
 
     # A list of documents that have to be inserted when chunk_size is met.
     cache = list()
@@ -144,4 +142,4 @@ async def import_annotations(req):
 
     # transaction.update({"checking": True})
 
-    return json_response(await hmm.check(db, settings))
+    return json_response(await virtool.virus_hmm.check(db, settings))

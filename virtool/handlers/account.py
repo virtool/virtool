@@ -1,8 +1,9 @@
 from pymongo import ReturnDocument
-from virtool.utils import timestamp
-from virtool.handlers.utils import json_response, bad_request, requires_login, protected, validation
-from virtool.users import hash_password, validate_credentials
 
+import virtool.utils
+import virtool.user
+
+from virtool.handlers.utils import json_response, bad_request, requires_login, protected, validation
 
 SETTINGS_SCHEMA = {
     "show_ids": {
@@ -84,13 +85,13 @@ async def change_password(req):
     data = await req.json()
 
     # Will evaluate true if the passed username and password are correct.
-    if not await validate_credentials(db, user_id, data["old_password"]):
+    if not await virtool.user.validate_credentials(db, user_id, data["old_password"]):
         return bad_request("Invalid credentials")
 
     # Salt and hash the new password
-    hashed = hash_password(data["new_password"])
+    hashed = virtool.user.hash_password(data["new_password"])
 
-    last_password_change = timestamp()
+    last_password_change = virtool.utils.timestamp()
 
     # Update the user document. Remove all sessions so those clients will have to authenticate with the new
     # password.

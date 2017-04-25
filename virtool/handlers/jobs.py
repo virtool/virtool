@@ -2,7 +2,7 @@ import os
 from cerberus import Validator
 
 import virtool.utils
-from virtool.jobs.manager import processor, dispatch_projection, dispatch_processor
+from virtool.job_manager import processor, dispatch_projection, dispatch_processor
 from virtool.handlers.utils import unpack_json_request, json_response, bad_request, not_found, invalid_input
 
 

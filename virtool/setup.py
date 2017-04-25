@@ -2,12 +2,12 @@ import os
 import motor
 import pymongo.errors
 
+import virtool.user
+import virtool.user_groups
 import virtool.utils
-import virtool.users
-import virtool.viruses
-import virtool.samples
+import virtool.virus
+import virtool.sample
 import virtool.hosts
-import virtool.groups
 
 
 @virtool.gen.coroutine

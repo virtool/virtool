@@ -6,7 +6,7 @@ import pymongo
 
 import virtool.utils
 import virtool.pathoscope
-from virtool.jobs.job import Job, stage_method
+from virtool.job import Job, stage_method
 
 
 class ImportReads(Job):

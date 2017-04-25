@@ -2,8 +2,8 @@ import asyncio
 
 from aiohttp import web
 from virtool.handlers.utils import not_found
-from virtool.samples import recalculate_algorithm_tags
-from virtool.analyses import format_analyses, remove_by_id, initialize_blast, check_rid, retrieve_blast_result
+from virtool.sample import recalculate_algorithm_tags
+from virtool.sample_analysis import format_analyses, remove_by_id, initialize_blast, check_rid, retrieve_blast_result
 
 
 async def get_analysis(req):

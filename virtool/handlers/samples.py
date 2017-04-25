@@ -1,8 +1,8 @@
 from pymongo import ReturnDocument
 from virtool.utils import timestamp
-from virtool.data_utils import get_new_id, coerce_list
+from virtool.utils import get_new_id, coerce_list
 from virtool.handlers.utils import json_response, bad_request, not_found
-from virtool.samples import get_sample_owner, remove_samples
+from virtool.sample import get_sample_owner, remove_samples
 
 
 async def find(req):

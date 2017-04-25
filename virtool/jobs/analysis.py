@@ -4,11 +4,11 @@ import shutil
 from Bio import SeqIO
 
 
-import virtool.hmm
+import virtool.virus_hmm
 import virtool.utils
-import virtool.settings
+import virtool.app_settings
 import virtool.pathoscope
-from virtool.jobs.job import Job, stage_method
+from virtool.job import Job, stage_method
 
 
 class Base(Job):
@@ -25,7 +25,7 @@ class Base(Job):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        self.settings = virtool.settings.Simple()
+        self.settings = virtool.app_settings.Simple()
 
         #: The document id for the sample being analyzed. and the analysis document the results will be committed to.
         self.sample_id = self.task_args["sample_id"]

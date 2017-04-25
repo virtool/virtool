@@ -2,9 +2,9 @@ import logging
 import pymongo.errors
 
 from pymongo import ReturnDocument
-from virtool.groups import projection, processor, update_member_users
-from virtool.permissions import PERMISSIONS
-from virtool.handlers.utils import unpack_json_request, json_response, bad_request, not_found, protected, validation
+from virtool.user_groups import projection, processor, update_member_users
+from virtool.user_permissions import PERMISSIONS
+from virtool.handlers.utils import json_response, bad_request, not_found, protected, validation
 
 logger = logging.getLogger(__name__)
 

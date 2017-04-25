@@ -1,12 +1,11 @@
-import virtool.utils
-
 from pymongo import ReturnDocument
 from cerberus import Validator
 
+import virtool.user
+import virtool.utils
 from virtool.handlers.utils import protected, bad_request, invalid_input, unpack_json_request, json_response, not_found
-from virtool.permissions import PERMISSIONS
-from virtool.groups import merge_group_permissions
-from virtool.users import projection, processor, user_exists, hash_password
+from virtool.user_permissions import PERMISSIONS
+from virtool.user_groups import merge_group_permissions
 
 
 @protected("manage_users")
@@ -24,12 +23,12 @@ async def get(req):
     Get a near-complete user document. Password data are removed.
      
     """
-    document = await req.app["db"].users.find_one(req.match_info["user_id"], projection)
+    document = await req.app["db"].users.find_one(req.match_info["user_id"], virtool.user.projection)
 
     if not document:
         return not_found()
 
-    return json_response(processor(document))
+    return json_response(virtool.user.processor(document))
 
 
 @protected("manage_users")
@@ -50,7 +49,7 @@ async def create(req):
         return invalid_input(v.errors)
 
     # Check if the username is already taken. Fail if it does.
-    if await user_exists(db, data["user_id"]):
+    if await virtool.user.user_exists(db, data["user_id"]):
         return bad_request("User already exists")
 
     document = {
@@ -65,7 +64,7 @@ async def create(req):
         },
         "sessions": [],
         "permissions": {permission: False for permission in PERMISSIONS},
-        "password": hash_password(data["password"]),
+        "password": virtool.user.hash_password(data["password"]),
         "primary_group": "",
         # Should the user be forced to reset their password on their next login?
         "force_reset": data.get("force_reset", True),
@@ -78,7 +77,7 @@ async def create(req):
 
     await db.users.insert(document)
     
-    return json_response(processor({key: document[key] for key in projection}))
+    return json_response(virtool.user.processor({key: document[key] for key in virtool.user.projection}))
 
 
 @protected("manage_users")
@@ -98,12 +97,12 @@ async def set_password(req):
 
     user_id = req.match_info["user_id"]
 
-    if not await user_exists(req.app["db"], user_id):
+    if not await virtool.user.user_exists(req.app["db"], user_id):
         return not_found()
 
     document = await req.app["db"].users.find_one_and_update({"_id": user_id}, {
         "$set": {
-            "password": hash_password(data["password"]),
+            "password": virtool.user.hash_password(data["password"]),
             "last_password_change": virtool.utils.timestamp(),
             "invalidate_sessions": True
         }
@@ -133,7 +132,7 @@ async def set_force_reset(req):
     if not v(data):
         return invalid_input(v.errors)
 
-    if not await user_exists(req.app["db"], user_id):
+    if not await virtool.user.user_exists(req.app["db"], user_id):
         return not_found("User does not exist")
 
     document = await req.app["db"].users.find_one_and_update({"_id": user_id}, {
@@ -165,7 +164,7 @@ async def add_group(req):
     if not v(data):
         return invalid_input(v.errors)
 
-    if not await user_exists(db, user_id):
+    if not await virtool.user.user_exists(db, user_id):
         return not_found("User does not exist")
 
     if data["group_id"] not in await db.groups.distinct("_id"):
@@ -203,7 +202,7 @@ async def remove_group(req):
     user_id = req.match_info["user_id"]
     group_id = req.match_info["group_id"]
 
-    if not await user_exists(db, user_id):
+    if not await virtool.user.user_exists(db, user_id):
         return not_found("User does not exist")
 
     if group_id == "administrator" and user_id == req["session"].user_id:

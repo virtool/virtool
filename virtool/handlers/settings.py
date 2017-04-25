@@ -1,5 +1,5 @@
 from cerberus import Validator
-from settings import SCHEMA
+from virtool.app_settings import SCHEMA
 from handlers.utils import unpack_json_request, json_response, not_found, invalid_input
 
 

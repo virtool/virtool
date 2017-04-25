@@ -1,9 +1,9 @@
 import os
 
-from virtool.jobs.job import Job
+import virtool.job
 
 
-class AddHost(Job):
+class AddHost(virtool.job.Job):
 
     """
     A subclass of :class:`.Job` that adds a new host to Virtool from a passed FASTA file. Job stages are:
