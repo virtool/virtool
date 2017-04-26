@@ -24,6 +24,15 @@ def test_change():
 
 
 @pytest.fixture
+def test_changes(test_change):
+    return [
+        test_change,
+        dict(test_change, _id="foobar.1"),
+        dict(test_change, _id="foobar.2")
+    ]
+
+
+@pytest.fixture
 def test_virus_edit():
     """
     An :class:`tuple` containing old and new virus documents for testing history diffing.
