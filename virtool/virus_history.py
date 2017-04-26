@@ -1,5 +1,6 @@
 import pymongo
 import dictdiffer
+from copy import deepcopy
 
 import virtool.utils
 
@@ -22,7 +23,7 @@ DISPATCH_PROJECTION = [
     "virus_name",
     "virus_version",
     "user_id",
-    "index",
+    "index_id",
     "index_version"
 ]
 
@@ -32,6 +33,16 @@ PROJECTION = DISPATCH_PROJECTION + [
 
 
 def processor(document):
+    """
+    Process a history change document for transmission to a client.
+    
+    :param document: the document to process
+    :type document: dict
+    
+    :return: the processed document
+    :rtype: dict
+    
+    """
     document["change_id"] = document.pop("_id")
     return document
 
@@ -40,7 +51,7 @@ async def add(db, method_name, old, new, description, user_id):
     """
     Add a change document to the history collection.
     
-    :param db: a database client
+    :param db: the application database client
     :type db: :class:`~motor.motor_asyncio.AsyncIOMotorClient`
     
     :param method_name: the name of the handler method that executed the change
@@ -73,12 +84,12 @@ async def add(db, method_name, old, new, description, user_id):
         virus_name = new["name"]
 
     try:
-        virus_version = str(int(new["version"]))
-    except TypeError:
+        virus_version = int(new["version"])
+    except (TypeError, KeyError):
         virus_version = "removed"
 
     document = {
-        "_id": ".".join([str(virus_id), virus_version]),
+        "_id": ".".join([str(virus_id), str(virus_version)]),
         "method_name": method_name,
         "description": description,
         "timestamp": virtool.utils.timestamp(),
@@ -86,7 +97,7 @@ async def add(db, method_name, old, new, description, user_id):
         "virus_name": virus_name,
         "virus_version": virus_version,
         "user_id": user_id,
-        "index": "unbuilt",
+        "index_id": "unbuilt",
         "index_version": "unbuilt"
     }
 
@@ -99,97 +110,83 @@ async def add(db, method_name, old, new, description, user_id):
     else:
         document["diff"] = calculate_diff(old, new)
 
-    await db.history.insert(document)
+    await db.history.insert_one(document)
 
     return document
 
 
 def calculate_diff(old, new):
+    """
+    Calculate the diff for a joined virus document before and after modification.
+    
+    :param old: the joined virus document before modification
+    :type old: dict
+    
+    :param new: the joined virus document after modification
+    :type new: dict
+    
+    :return: the diff
+    :rtype: list
+    
+    """
     return list(dictdiffer.diff(old, new))
 
 
 async def get_most_recent_change(db, virus_id):
+    """
+    Get the most recent change for the virus identified by the passed ``virus_id``.
+    
+    :param db: the application database client
+    :type db: :class:`~motor.motor_asyncio.AsyncIOMotorClient`
+    
+    :param virus_id: the target virus_id
+    :type virus_id: str
+    
+    :return: the most recent change document
+    :rtype: dict
+    
+    """
     return await db.history.find_one({
         "virus_id": virus_id,
         "index_id": "unbuilt"
-    }, VIRUS_PROJECTION, sort=[("timestamp", pymongo.DESCENDING)])
-
-
-async def add_for_import(db, operation, method_name, old, new, username):
-    history_document = create_history_document(operation, method_name, old, new, username)
-
-    history_document["imported"] = True
-
-    # Perform the actual database insert operation, retaining the response.
-    await db.history.insert(history_document)
-
-    to_dispatch = await sync_processor(db, [{key: history_document[key] for key in projector}])
-
-    return to_dispatch
-
-
-def strip_isolate(isolate):
-    return {key: isolate[key] for key in ("source_type", "source_name", "isolate_id")}
-
-
-def get_default_isolate(document):
-    """
-    Return the stripped, default isolate of the given virus ``document``. Raise exceptions if there is not exactly one
-    default isolate in the document.
-
-    :param document: a virus document
-    :type document: dict
-
-    :return: the stripped, default isolate
-    :rtype: dict
-
-    """
-    default_isolates = [isolate for isolate in document["isolates"] if isolate["default"]]
-
-    default_isolate_count = len(default_isolates)
-
-    if default_isolate_count > 1:
-        raise ValueError("Virus has {} default isolates. Expected exactly 1.".format(default_isolate_count))
-
-    if default_isolate_count == 0:
-        raise ValueError("Could not find default isolate in virus document")
-
-    return strip_isolate(default_isolates[0])
-
-
-async def get_versioned_document(db, virus_id, virus_version):
-    current = await db.viruses.join(virus_id)
-
-    versioned = await patch_virus_to_version(db, current or {"_id": virus_id}, virus_version)
-
-    return current, versioned[1], versioned[2]
+    }, VIRUS_PROJECTION, sort=[("_id", pymongo.DESCENDING)])
 
 
 async def patch_virus_to_version(db, joined_virus, version):
-    virus_history = await db.history.find({"entry_id": joined_virus["_id"]}).to_list(None)
-
-    current = joined_virus or dict()
-
+    """
+    Take a joined virus back in time to the passed ``version``. Uses the diffs in the change documents associated with
+    the virus.    
+    
+    :param db: the application database client
+    :type db: :class:`~motor.motor_asyncio.AsyncIOMotorClient`
+     
+    :param joined_virus: the joined virus to patch
+    :type joined_virus: dict
+    
+    :param version: the version to patch to
+    :type version: str or int
+    
+    :return: the current joined virus, patched virus, and the ids of changes reverted in the process
+    :rtype: tuple
+    
+    """
     # A list of history_ids reverted to produce the patched entry.
     reverted_history_ids = list()
 
-    # Sort the changes be descending entry version.
-    virus_history = sorted(virus_history, key=lambda x: x["timestamp"], reverse=True)
+    current = joined_virus or dict()
 
-    patched = dict(current)
+    patched = deepcopy(current)
 
-    for history_document in virus_history:
-        if history_document["entry_version"] == "removed" or history_document["entry_version"] >= version:
-            reverted_history_ids.append(history_document["_id"])
+    # Sort the changes by descending timestamp.
+    async for change in db.history.find({"virus_id": joined_virus["_id"]}, sort=[("_id", pymongo.DESCENDING)]):
+        if change["virus_version"] == "removed" or change["virus_version"] > version:
+            reverted_history_ids.append(change["_id"])
 
-            if history_document["method_name"] == "add":
-                patched = "remove"
-
-            elif history_document["method_name"] == "remove":
-                patched = history_document["changes"]
+            if change["method_name"] == "remove":
+                patched = change["diff"]
 
             else:
-                diff = dictdiffer.swap(history_document["changes"])
+                diff = dictdiffer.swap(change["diff"])
                 patched = dictdiffer.patch(diff, patched)
         else:
             break
@@ -197,10 +194,21 @@ async def patch_virus_to_version(db, joined_virus, version):
     return current, patched, reverted_history_ids
 
 
-async def set_index_as_unbuilt(db, data):
-    await db.history.update({"index": data["index_id"]}, {
+async def set_index_as_unbuilt(db, index_id):
+    """
+    Set the ``index_id`` and ``index_version`` fields to "unbuilt" for all change documents with the passed
+    ``index_id``. This is called in the event that a index rebuild process fails. 
+    
+    :param db: the application database client
+    :type db: :class:`~motor.motor_asyncio.AsyncIOMotorClient`
+     
+    :param index_id: the ``index_id`` to replace
+    :type index_id: str
+     
+    """
+    await db.history.update_many({"index_id": index_id}, {
         "$set": {
-            "index": "unbuilt",
+            "index_id": "unbuilt",
             "index_version": "unbuilt"
         }
     })

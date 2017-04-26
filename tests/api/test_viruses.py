@@ -1959,6 +1959,13 @@ class TestEditSequence:
             "version": 1
         })
 
+        import pprint
+
+        pprint.pprint(old)
+        pprint.pprint(new)
+
+        assert 0
+
         assert test_add_history.call_args[0][1:] == (
             "edit_sequence",
             old,
