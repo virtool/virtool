@@ -42,15 +42,10 @@ class TestFindServerVersion:
 
         assert version == "1.0.12"
 
-    def test_none(self, caplog, monkeypatch, bad_check_output, tmpdir):
+    def test_none(self, monkeypatch, bad_check_output, tmpdir):
 
         monkeypatch.setattr(subprocess, "check_output", bad_check_output)
 
         version = find_server_version(str(tmpdir))
 
         assert version == "Unknown"
-
-        last_message = list(caplog.records)[-1]
-
-        assert last_message.levelname == "CRITICAL"
-        assert "Could not determine software version" in last_message.message
