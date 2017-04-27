@@ -1,5 +1,6 @@
 import virtool.virus_history
 
+import virtool.virus
 from virtool.virus import join, extract_isolate_ids
 from virtool.handlers.utils import unpack_json_request, json_response, not_found
 
@@ -69,16 +70,17 @@ async def revert(req):
     await db.sequences.delete_many({"virus_id": virus_id})
 
     if patched is not None:
+        patched_virus, sequences = virtool.virus.split_virus(patched)
+
         # Add the reverted sequences to the collection.
-        sequences_to_insert = [sequence for isolate in patched["isolates"] for sequence in isolate["sequences"]]
-        await db.sequences.insert_many(sequences_to_insert)
+        await db.sequences.insert_many(sequences)
 
         # Replace the existing virus with the patched one. If it doesn't exist, insert it.
-        await db.viruses.replace_one({"_id": virus_id}, patched, upsert=True)
+        await db.viruses.replace_one({"_id": virus_id}, patched_virus, upsert=True)
 
     else:
         await db.viruses.delete_one({"_id": virus_id})
 
     await db.history.remove(history_to_delete)
 
-    return json_response({"reverted": history_to_delete})
+    return json_response(virtool.virus.processor(patched))
