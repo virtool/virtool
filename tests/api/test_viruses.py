@@ -1740,13 +1740,17 @@ class TestCreateSequence:
             permissions=["modify_virus"]
         )
 
-        data["isolate_id"] = "cab8b360"
+        data.update({
+            "isolate_id": "cab8b360",
+            "virus_id": "6116cba1"
+        })
 
         assert resp.status == 200
 
         assert await resp.json() == {
             "accession": "FOOBAR",
             "definition": "A made up sequence",
+            "virus_id": "6116cba1",
             "isolate_id": "cab8b360",
             "host": "Plant",
             "sequence": "ATGCGTGTACTG"
@@ -1785,6 +1789,7 @@ class TestCreateSequence:
         new["isolates"][0]["sequences"] = [{
             "_id": "FOOBAR",
             "definition": "A made up sequence",
+            "virus_id": "6116cba1",
             "isolate_id": "cab8b360",
             "host": "Plant",
             "sequence": "ATGCGTGTACTG"
@@ -1794,6 +1799,8 @@ class TestCreateSequence:
             "modified": True,
             "version": 1
         })
+
+        document = test_db.sequences.find_one("FOOBAR")
 
         assert test_add_history.call_args[0][1:] == (
             "create_sequence",
@@ -1963,8 +1970,6 @@ class TestEditSequence:
 
         pprint.pprint(old)
         pprint.pprint(new)
-
-        assert 0
 
         assert test_add_history.call_args[0][1:] == (
             "edit_sequence",

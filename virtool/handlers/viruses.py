@@ -307,8 +307,8 @@ async def remove(req):
     if not joined:
         return not_found()
 
-    # Remove all sequences associated with the isolates.
-    await db.sequences.delete_many({"isolate_id": {"$in": virtool.virus.extract_isolate_ids(joined)}})
+    # Remove all sequences associated with the virus.
+    await db.sequences.delete_many({"virus_id": virus_id})
 
     # Remove the virus document itself.
     await db.viruses.delete_one({"_id": virus_id})
@@ -662,14 +662,18 @@ async def create_sequence(req):
     """
     db, data = req.app["db"], req["data"]
 
+    # Extract variables from URL path.
     virus_id, isolate_id = (req.match_info[key] for key in ["virus_id", "isolate_id"])
 
+    # Update POST data to make sequence document.
     data.update({
         "_id": data.pop("accession"),
+        "virus_id": virus_id,
         "isolate_id": isolate_id,
         "host": data.get("host", "")
     })
 
+    # Get the subject virus document. Will be ``None`` if it doesn't exist. This will result in a ``404`` response.
     document = await db.viruses.find_one({"_id": virus_id, "isolates.isolate_id": isolate_id})
 
     if not document:
