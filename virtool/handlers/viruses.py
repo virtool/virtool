@@ -4,7 +4,6 @@ import pymongo
 import pymongo.errors
 import tempfile
 
-from pprint import pprint
 from aiohttp import web
 from copy import deepcopy
 from pymongo import ReturnDocument
