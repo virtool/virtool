@@ -152,7 +152,7 @@ async def get_most_recent_change(db, virus_id):
     }, VIRUS_PROJECTION, sort=[("_id", pymongo.DESCENDING)])
 
 
-async def patch_virus_to_version(db, joined_virus, version):
+async def patch_virus_to_version(db, joined_virus, version, inclusive=False):
     """
     Take a joined virus back in time to the passed ``version``. Uses the diffs in the change documents associated with
     the virus.    
@@ -166,6 +166,9 @@ async def patch_virus_to_version(db, joined_virus, version):
     :param version: the version to patch to
     :type version: str or int
     
+    :param inclusive: also remove the passed ``version``
+    :type inclusive: bool
+    
     :return: the current joined virus, patched virus, and the ids of changes reverted in the process
     :rtype: tuple
     
@@ -177,13 +180,18 @@ async def patch_virus_to_version(db, joined_virus, version):
 
     patched = deepcopy(current)
 
+    comparator = get_version_comparator(inclusive)
+
     # Sort the changes by descending timestamp.
     async for change in db.history.find({"virus_id": joined_virus["_id"]}, sort=[("_id", pymongo.DESCENDING)]):
-        if change["virus_version"] == "removed" or change["virus_version"] > version:
+        if change["virus_version"] == "removed" or comparator(change, version):
             reverted_history_ids.append(change["_id"])
 
             if change["method_name"] == "remove":
                 patched = change["diff"]
+
+            elif change["method_name"] == "create":
+                patched = None
 
             else:
                 diff = dictdiffer.swap(change["diff"])
@@ -192,6 +200,17 @@ async def patch_virus_to_version(db, joined_virus, version):
             break
 
     return current, patched, reverted_history_ids
+
+
+def get_version_comparator(inclusive):
+    if inclusive:
+        def func(change, version):
+            return change["virus_version"] >= version
+    else:
+        def func(change, version):
+            return change["virus_version"] > version
+
+    return func
 
 
 async def set_index_as_unbuilt(db, index_id):

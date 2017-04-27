@@ -1,10 +1,14 @@
 import virtool.virus_history
 
-from virtool.virus import extract_isolate_ids
+from virtool.virus import join, extract_isolate_ids
 from virtool.handlers.utils import unpack_json_request, json_response, not_found
 
 
 async def find(req):
+    """
+    Get a list of change documents.
+     
+    """
     db = req.app["db"]
 
     documents = await db.history.find({}, virtool.virus_history.DISPATCH_PROJECTION).to_list(length=15)
@@ -13,6 +17,10 @@ async def find(req):
 
 
 async def get(req):
+    """
+    Get a specific change document by its ``change_id``.
+     
+    """
     db = req.app["db"]
 
     change_id = req.match_info["change_id"]
@@ -26,32 +34,50 @@ async def get(req):
 
 
 async def revert(req):
-    db, data = await unpack_json_request(req)
+    """
+    Remove the change document with the given ``change_id`` and any subsequent changes.
+     
+    """
+    db = req.app["db"]
 
-    document, patched, history_to_delete = await virtool.virus_history.get_versioned_document(
+    change_id = req.match_info["change_id"]
+
+    if not await db.history.count({"_id": change_id}):
+        return not_found()
+
+    virus_id, virus_version = change_id.split(".")
+
+    if virus_version != "removed":
+        virus_version = int(virus_version)
+
+    # Try to find the current document for the given virus_id. If it has been deleted, use an empty dict.
+    current_document = await db.viruses.find_one(virus_id)
+
+    if current_document:
+        current_document = await join(db, virus_id, current_document)
+    else:
+        current_document = {"_id": virus_id}
+
+    _, patched, history_to_delete = await virtool.virus_history.patch_virus_to_version(
         db,
-        data["entry_id"],
-        data["entry_version"]
+        current_document,
+        virus_version,
+        inclusive=True
     )
 
-    isolate_ids = extract_isolate_ids(document or patched)
-
     # Remove the old sequences from the collection.
-    await db.sequences.remove({"isolate_id": {"$in": isolate_ids}})
+    await db.sequences.delete_many({"virus_id": virus_id})
 
-    if patched != "remove":
+    if patched is not None:
         # Add the reverted sequences to the collection.
-        for isolate in patched["isolates"]:
-            for sequence in isolate["sequences"]:
-                await db.sequences.insert_one(sequence)
+        sequences_to_insert = [sequence for isolate in patched["isolates"] for sequence in isolate["sequences"]]
+        await db.sequences.insert_many(sequences_to_insert)
 
-        if document:
-            await db.viruses.update({"_id": document["_id"]}, {"$set": patched})
-        else:
-            await db.viruses.insert(patched)
+        # Replace the existing virus with the patched one. If it doesn't exist, insert it.
+        await db.viruses.replace_one({"_id": virus_id}, patched, upsert=True)
 
     else:
-        await db.viruses.remove(document["_id"])
+        await db.viruses.delete_one({"_id": virus_id})
 
     await db.history.remove(history_to_delete)
 
