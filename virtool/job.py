@@ -9,6 +9,60 @@ from setproctitle import setproctitle
 from virtool import utils
 
 
+PROJECTION = [
+    "_id",
+    "task",
+    "status",
+    "proc",
+    "mem",
+    "user_id"
+]
+
+
+def processor(document):
+    """
+    Process a job document for transmission to a client.
+    
+    :param document: a job document
+    :type document: dict
+    
+    :return: a processed job document
+    :rtype: dict
+    
+    """
+    document["job_id"] = document.pop("_id")
+    return document
+
+
+def dispatch_processor(document):
+    """
+    Removes the ``status`` and ``args`` fields from the job document.
+
+    Adds a ``username`` field, an ``added`` date taken from the first status entry in the job document, and
+    ``state`` and ``progress`` fields taken from the most recent status entry in the job document.
+
+    :param document: a document to process.
+    :type document: dict
+
+    :return: a processed documents.
+    :rtype: dict
+
+    """
+    status = document.pop("status")
+
+    last_update = status[-1]
+
+    document.update({
+        "job_id": document.pop("_id"),
+        "state": last_update["state"],
+        "stage": last_update["stage"],
+        "added": str(status[0]["date"]),
+        "progress": status[-1]["progress"]
+    })
+
+    return document
+
+
 class Termination(Exception):
     """
     Exception raised when a Job handles SIGTERM.

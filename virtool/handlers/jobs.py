@@ -2,7 +2,7 @@ import os
 from cerberus import Validator
 
 import virtool.utils
-from virtool.job_manager import processor, dispatch_projection, dispatch_processor
+from virtool.job import PROJECTION, processor, dispatch_processor
 from virtool.handlers.utils import unpack_json_request, json_response, bad_request, not_found, invalid_input
 
 
@@ -11,7 +11,7 @@ async def find(req):
     Return a list of job documents.
      
     """
-    documents = await req.app["db"].jobs.find({}, dispatch_projection).to_list(15)
+    documents = await req.app["db"].jobs.find({}, PROJECTION).to_list(15)
     return json_response([dispatch_processor(document) for document in documents])
 
 
