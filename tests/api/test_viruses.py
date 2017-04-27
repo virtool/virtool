@@ -95,6 +95,7 @@ class TestGet:
                             "complete cds.",
                             "host": "sweet cherry",
                             "isolate_id": "cab8b360",
+                            "virus_id": "6116cba1",
                             "sequence": "TGTTTAAGAGATTAAACAACCGCTTTC"
                         }
                     ]
@@ -503,8 +504,10 @@ class TestVerify:
                         {
                             "sequence": "TGTTTAAGAGATTAAACAACCGCTTTC",
                             "host": "sweet cherry",
-                            "definition": "Prunus virus F isolate 8816-s2 segment RNA2 polyprotein 2 gene, complete cds.",
+                            "definition": "Prunus virus F isolate 8816-s2 segment RNA2 polyprotein 2 gene, complete "
+                                          "cds.",
                             "accession": "KX269872",
+                            "virus_id": "6116cba1",
                             "isolate_id": "cab8b360"
                         }
                     ],
@@ -1498,6 +1501,7 @@ class TestRemoveIsolate:
                             "segment RNA2 polyprotein 2 gene, "
                             "complete cds.",
                             "host": "sweet cherry",
+                            "virus_id": "6116cba1",
                             "isolate_id": "cab8b360",
                             "sequence": "TGTTTAAGAGATTAAACAACCGCTTTC"
                         }
@@ -1581,6 +1585,7 @@ class TestRemoveIsolate:
                                           "segment RNA2 polyprotein 2 gene, "
                                           "complete cds.",
                             "host": "sweet cherry",
+                            "virus_id": "6116cba1",
                             "isolate_id": "cab8b360",
                             "sequence": "TGTTTAAGAGATTAAACAACCGCTTTC"
                         }
@@ -1927,6 +1932,7 @@ class TestEditSequence:
             "accession": "KX269872",
             "definition": "A made up sequence",
             "host": "Grapevine",
+            "virus_id": "6116cba1",
             "isolate_id": "cab8b360",
             "sequence": "ATGCGTGTACTG"
         }
@@ -1939,7 +1945,7 @@ class TestEditSequence:
                 {
                     "default": True,
                     "isolate_id": "cab8b360",
-                    "sequences": [test_sequence],
+                    "sequences": [dict(test_sequence, virus_id="6116cba1")],
                     "source_name": "8816-v2",
                     "source_type": "isolate"
                 }
@@ -1956,6 +1962,7 @@ class TestEditSequence:
         new["isolates"][0]["sequences"] = [{
             "_id": "KX269872",
             "definition": "A made up sequence",
+            "virus_id": "6116cba1",
             "isolate_id": "cab8b360",
             "host": "Grapevine",
             "sequence": "ATGCGTGTACTG"
@@ -1965,11 +1972,6 @@ class TestEditSequence:
             "modified": True,
             "version": 1
         })
-
-        import pprint
-
-        pprint.pprint(old)
-        pprint.pprint(new)
 
         assert test_add_history.call_args[0][1:] == (
             "edit_sequence",

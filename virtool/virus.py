@@ -27,6 +27,7 @@ SEQUENCE_PROJECTION = [
     "_id",
     "definition",
     "host",
+    "virus_id",
     "isolate_id",
     "sequence"
 ]
@@ -104,11 +105,8 @@ async def join(db, virus_id, document=None):
     if document is None:
         return None
 
-    # Extract the isolate_ids associated with the virus.
-    isolate_ids = extract_isolate_ids(document)
-
     # Get the sequence entries associated with the isolate ids.
-    sequences = await db.sequences.find({"isolate_id": {"$in": isolate_ids}}).to_list(None) or []
+    sequences = await db.sequences.find({"virus_id": virus_id}).to_list(None) or list()
 
     # Merge the sequence entries into the virus entry.
     return merge_virus(document, sequences)

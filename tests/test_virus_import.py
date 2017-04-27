@@ -727,6 +727,7 @@ class TestFindImportConflicts:
 
 
 class TestSendImportDispatches:
+
     def test_insertions(self, mocker, get_test_insertions):
         insertions = get_test_insertions()
 
@@ -815,14 +816,14 @@ class TestInsertFromImport:
         assert change == {
             "change_id": "6116cba1.0",
             "description": ("Created virus ", "Prunus virus F", "6116cba1"),
-            "index": "unbuilt",
+            "index_id": "unbuilt",
             "index_version": "unbuilt",
             "method_name": "create",
             "timestamp": static_time,
             "user_id": "test",
             "virus_id": "6116cba1",
             "virus_name": "Prunus virus F",
-            "virus_version": "0"
+            "virus_version": 0
         }
 
 
@@ -843,7 +844,7 @@ class TestDeleteForImport:
         assert change == {
             "change_id": "6116cba1.removed",
             "description": ("Removed virus", "Prunus virus F", "6116cba1"),
-            "index": "unbuilt",
+            "index_id": "unbuilt",
             "index_version": "unbuilt",
             "method_name": "remove",
             "timestamp": static_time,

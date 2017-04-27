@@ -154,23 +154,7 @@ async def import_file(loop, db, dispatch, handle, user_id, replace=False):
 
         to_insert["_id"] = await get_new_id(db.viruses)
 
-        # Check if abbreviation exists already.
-        virus_with_abbreviation = None
-
-        # Don't count empty strings as duplicate abbreviations!
-        if virus["abbreviation"]:
-            virus_with_abbreviation = await db.viruses.find_one({"abbreviation": virus["abbreviation"]})
-
-        if virus_with_abbreviation and virus_with_abbreviation["lower_name"] != lower_name:
-            # Remove the imported virus's abbreviation because it is already assigned to an existing virus.
-            virus["abbreviation"] = ""
-
-            # Record a message for the user.
-            counter["warnings"].append(
-                "Abbreviation {} already existed for virus {} and was not assigned to new virus {}.".format(
-                    virus_with_abbreviation["abbreviation"], virus_with_abbreviation["name"], virus["name"]
-                )
-            )
+        abbreviation_warning = await check_import_abbreviation(db, to_insert, lower_name=lower_name)
 
         virus_document, sequences = virtool.virus.split_virus(virus)
 
@@ -205,7 +189,7 @@ async def import_file(loop, db, dispatch, handle, user_id, replace=False):
         to_insert.update({key: virus_document[key] for key in ["abbreviation", "name", "isolates"]})
 
         # Add the new virus.
-        insert_dispatches = await insert_from_import(to_insert)
+        insert_dispatches = await insert_from_import(db, to_insert, user_id)
 
         if virus_exists:
             replacements.append((remove_dispatches, insert_dispatches))
@@ -254,6 +238,10 @@ def load_import_file(handle):
 
 
 def verify_virus_list(viruses):
+    """
+        
+     
+    """
     fields = ["_id", "name", "abbreviation"]
 
     seen = {field: set() for field in fields + ["isolate_id", "sequence_id"]}
@@ -265,8 +253,10 @@ def verify_virus_list(viruses):
 
         virus_document, sequences = virtool.virus.split_virus(virus)
 
+        # Check for problems local to the virus document.
         errors[virus["name"].lower()] = virtool.virus.check_virus(virus_document, sequences)
 
+        # Check for problems in the list as a whole.
         for field in fields:
 
             value = virus[field]
@@ -361,8 +351,41 @@ async def find_import_conflicts(db, viruses, replace, used_names=None):
     return conflicts or None
 
 
-async def check_import_abbreviation():
-    pass
+async def check_import_abbreviation(db, virus_document, lower_name=None):
+    """
+    Check if the abbreviation for a virus document to be imported already exists in the database. If the abbreviation
+    exists, set the ``abbreviation`` field in the virus document to an empty string and return warning text to
+    send to the client.
+    
+    :param db: the application database client
+    :type db: :class:`~motor.motor_asyncio.AsyncIOMotorClient`
+    
+    :param virus_document: the virus document that is being imported
+    :type virus_document: dict
+    
+    :param lower_name: the name of the virus coerced to lowercase
+    :type lower_name: str
+     
+    """
+    lower_name = lower_name or virus_document["name"].lower()
+
+    # Check if abbreviation exists already.
+    virus_with_abbreviation = None
+
+    # Don't count empty strings as duplicate abbreviations!
+    if virus_document["abbreviation"]:
+        virus_with_abbreviation = await db.viruses.find_one({"abbreviation": virus["abbreviation"]})
+
+    if virus_with_abbreviation and virus_with_abbreviation["lower_name"] != lower_name:
+        # Remove the imported virus's abbreviation because it is already assigned to an existing virus.
+        virus_document["abbreviation"] = ""
+
+        # Record a message for the user.
+        return "Abbreviation {} already existed for virus {} and was not assigned to new virus {}.".format(
+            virus_with_abbreviation["abbreviation"], virus_with_abbreviation["name"], virus["name"]
+        )
+
+    return None
 
 
 def send_import_dispatches(dispatch, insertions, replacements, flush=False):
@@ -419,7 +442,8 @@ async def insert_from_import(db, virus_document, user_id):
         "version": 0,
         "modified": False,
         "last_indexed_version": None,
-        "lower_name": virus_document["name"].lower()
+        "lower_name": virus_document["name"].lower(),
+        "imported": True
     })
 
     # Perform the actual database insert operation, retaining the response.

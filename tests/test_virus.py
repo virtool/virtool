@@ -165,6 +165,7 @@ class TestCheckVirus:
                 "_id": "KX269872",
                 "definition": "Prunus virus F isolate 8816-s2 segment RNA2 polyprotein 2 gene, complete cds.",
                 "host": "sweet cherry",
+                "virus_id": "6116cba1",
                 "isolate_id": "cab8b360",
                 "sequence": ""
             }],

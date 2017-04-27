@@ -629,6 +629,7 @@ async def list_sequences(req):
 
     projection = list(virtool.virus.SEQUENCE_PROJECTION)
 
+    projection.remove("virus_id")
     projection.remove("isolate_id")
 
     documents = await db.sequences.find({"isolate_id": isolate_id}, projection).to_list(None)

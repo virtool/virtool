@@ -47,6 +47,7 @@ def test_sequence():
         "_id": "KX269872",
         "definition": "Prunus virus F isolate 8816-s2 segment RNA2 polyprotein 2 gene, complete cds.",
         "host": "sweet cherry",
+        "virus_id": "6116cba1",
         "isolate_id": "cab8b360",
         "sequence": "TGTTTAAGAGATTAAACAACCGCTTTC"
     }
@@ -65,6 +66,7 @@ def test_merged_virus():
                 "sequences": [
                     {
                         "_id": "KX269872",
+                        "virus_id": "6116cba1",
                         "isolate_id": "cab8b360",
                         "definition": "Prunus virus F isolate 8816-s2 segment RNA2 polyprotein 2 gene, complete cds.",
                         "host": "sweet cherry",
@@ -176,13 +178,13 @@ def test_virus_list(test_merged_virus):
 
 
 @pytest.fixture
-def get_test_insertions(test_virus, test_base_change):
+def get_test_insertions(test_virus, test_change):
     def func(length=30):
         insertions = []
 
         for i in range(length):
             virus = dict(test_virus, name=random_alphanumeric(7), _id=random_alphanumeric(7), abbreviation="")
-            insertions.append((virus, test_base_change))
+            insertions.append((virus, test_change))
 
         return insertions
 
@@ -190,7 +192,7 @@ def get_test_insertions(test_virus, test_base_change):
 
 
 @pytest.fixture
-def get_test_replacements(get_test_insertions, test_base_change):
+def get_test_replacements(get_test_insertions, test_change):
     def func(length=30):
         insertions = get_test_insertions(length)
         removals = [(virus["_id"], change) for virus, change in get_test_insertions(length)]
