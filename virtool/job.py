@@ -29,6 +29,7 @@ def processor(document):
     :rtype: dict
     
     """
+    document = dict(document)
     document["job_id"] = document.pop("_id")
     return document
 
@@ -47,12 +48,13 @@ def dispatch_processor(document):
     :rtype: dict
 
     """
+    document = processor(document)
+
     status = document.pop("status")
 
     last_update = status[-1]
 
     document.update({
-        "job_id": document.pop("_id"),
         "state": last_update["state"],
         "stage": last_update["stage"],
         "added": status[0]["timestamp"],

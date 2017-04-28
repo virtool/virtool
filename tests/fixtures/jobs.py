@@ -11,7 +11,10 @@ def test_job_manager(mocker, loop, test_motor):
             self._data = {
                 "db_name": "test",
                 "db_host": "localhost",
-                "db_port": 27017
+                "db_port": 27017,
+                "rebuild_index_inst": 2,
+                "proc": 4,
+                "mem": 8
             }
 
         def __getitem__(self, key):

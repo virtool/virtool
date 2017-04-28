@@ -73,6 +73,8 @@ class Manager:
         """
         while not self.die:
 
+            print("ITER")
+
             while not self.queue.empty():
                 message = self.queue.get()
 
@@ -206,7 +208,7 @@ class Manager:
                 "stage": None,
                 "error": None,
                 "progress": 0,
-                "date": virtool.utils.timestamp()
+                "timestamp": virtool.utils.timestamp()
             }]
         })
 

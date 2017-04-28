@@ -2,6 +2,7 @@ import time
 import datetime
 import pytest
 from pprint import pprint
+from unittest import mock
 
 import virtool.errors
 
@@ -60,10 +61,89 @@ class TestGetCallback:
 
 class TestNew:
 
-    async def test(self, mocker, test_job_manager):
-        m = mocker.patch.object("virtool.virus_index.RebuildIndex")
+    async def test(self, monkeypatch, mocker, static_time, test_db, test_job_manager):
+        """
+        Test that :meth:`.Manager.new` creates all the right objects, database documents, and dispatches.
+         
+        """
+        # Mock the :class:`.RebuildIndex` job class so we can see what calls are made on it and its returned instance.
+        mock_obj = mocker.Mock()
+        mock_class = mocker.Mock(name="RebuildIndex", return_value=mock_obj)
 
-        await test_job_manager.new("rebuild_index", {}, 1, 2, "test", job_id=None)
+        monkeypatch.setattr("virtool.job_classes.TASK_CLASSES", {
+            "rebuild_index": mock_class
+        })
+
+        await test_job_manager.new("rebuild_index", {"index": 5}, 5, 2, "test", job_id="foobar")
+
+        # Test that the mock job class constructor was passed the correct args.
+        assert mock_class.call_args[0] == (
+            "foobar",
+            {
+                "db_host": "localhost",
+                "db_name": "test",
+                "db_port": 27017,
+                "mem": 8,
+                "proc": 4,
+                "rebuild_index_inst": 2
+            },
+            test_job_manager.queue,
+            "rebuild_index",
+            {"index": 5},
+            5,
+            2
+        )
+
+        # Make sure new job_dict was formed properly.
+        assert test_job_manager._jobs_dict == {
+            "foobar": {
+                "proc": 5,
+                "mem": 2,
+                "started": False,
+                "task": "rebuild_index",
+                "obj": mock_obj
+            }
+        }
+
+        # Make sure a job document was added with the correct data.
+        assert test_db.jobs.find_one() == {
+            "_id": "foobar",
+            "args": {
+                "index": 5
+            },
+            "mem": 2,
+            "proc": 5,
+            "status": [
+                {
+                    "error": None,
+                    "progress": 0,
+                    "stage": None,
+                    "state": "waiting",
+                    "timestamp": datetime.datetime(2017, 10, 6, 20, 0)
+                }
+            ],
+            "task": "rebuild_index",
+            "user_id": "test"
+        }
+
+        # Make sure the correct dispatch is sent.
+        pprint(test_job_manager.dispatch.call_args[0])
+
+        assert test_job_manager.dispatch.call_args[0] == (
+            "jobs",
+            "update",
+            {
+                "added": datetime.datetime(2017, 10, 6, 20, 0),
+                "job_id": "foobar",
+                "mem": 2,
+                "proc": 5,
+                "progress": 0,
+                "stage": None,
+                "state": "waiting",
+                "task": "rebuild_index",
+                "user_id": "test"
+            }
+        )
 
 
 class TestCancel:
@@ -164,8 +244,6 @@ class TestUpdateStatus:
                 "error": "Error",
                 "state": "error"
             })
-
-        pprint(test_db.jobs.find_one())
 
         assert test_db.jobs.find_one() == expected_db
 
