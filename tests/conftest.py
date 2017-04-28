@@ -6,6 +6,7 @@ from .fixtures.history import *
 from .fixtures.hmm import *
 from .fixtures.users import *
 from .fixtures.viruses import *
+from .fixtures.jobs import *
 
 
 def pytest_addoption(parser):
