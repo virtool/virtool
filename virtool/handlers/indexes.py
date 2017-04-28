@@ -3,7 +3,7 @@ from pymongo import ReturnDocument
 from virtool.handlers.utils import unpack_json_request, json_response, bad_request, not_found, protected
 from virtool.utils import timestamp
 from virtool.utils import get_new_id
-from virtool.virus_indexes import get_current_index_version, projection, processor
+from virtool.virus_index import get_current_index_version, projection, processor
 
 
 async def find(req):

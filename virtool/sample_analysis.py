@@ -4,7 +4,7 @@ import virtool.blast
 from virtool.utils import timestamp, rm
 from virtool.utils import get_new_id, format_doc_id
 from virtool.sample import recalculate_algorithm_tags
-from virtool.virus_indexes import get_current_index
+from virtool.virus_index import get_current_index
 
 
 projector = [

@@ -1,16 +1,139 @@
 import os
-import logging
 import dictdiffer
-from collections import defaultdict
+import collections
 
-from virtool.job import Job
-from virtool.virus import merge_virus
+import virtool.job
+import virtool.virus
+import virtool.utils
+
+projection = [
+    "_id",
+    "timestamp",
+    "virus_count",
+    "modification_count",
+    "modified_virus_count",
+    "username",
+    "index_version",
+    "ready",
+    "has_files",
+    "job_id"
+]
 
 
-logger = logging.getLogger(__name__)
+def processor(document):
+    document["index_id"] = document["_id"]
+    return document
 
 
-class RebuildIndex(Job):
+async def set_stats(db, index_id, data):
+    """
+    Updates the index document with data describing the changes made to the virus reference since the last index
+    build:
+
+    * modification_count - the number of changes recorded since the last index build.
+    * modified_virus_count - The number of viruses modified since the last index build.
+    * virus_count - Number of viruses now present in the viruses collection.
+
+    """
+    return await db.indexes.update(index_id, {"$set": data})
+
+
+async def set_ready(db, index_id):
+    """
+    Updates the index document described by the passed index id to show whether it is ready or not.
+
+    """
+    return await db.indexes.update({"_id": index_id}, {
+        "$set": {
+            "ready": True
+        }
+    })
+
+
+async def cleanup_index_files(db, settings):
+    """
+    Cleans up unused index dirs. Only the **active** index (latest ready index) is ever available for running
+    analysis from the web client. Any older indexes are removed from disk. If a running analysis still needs an old
+    index, it cannot be removed.
+
+    This method removes old index dirs while ensuring to retain old ones that are still references by pending
+    analyses.
+
+    """
+    aggregation_cursor = await db.analyses.aggregate([
+        {"$match": {"ready": False}},
+        {"$group": {"_id": "$index_id"}}
+    ])
+
+    # The indexes (_ids) currently in use by running analysis jobs.
+    active_indexes = list()
+
+    while await aggregation_cursor.fetch_next:
+        active_indexes.append(aggregation_cursor.next_object()["_id"])
+
+    # The newest index version.
+    current_index_id, _ = await get_current_index(db)
+    active_indexes.append(current_index_id)
+
+    # Any rebuilding index
+    unready_index = await db.indexes.find_one({"ready": False}, ["_id"])
+
+    if unready_index:
+        active_indexes.append(unready_index["_id"])
+
+    try:
+        active_indexes.remove("unbuilt")
+    except ValueError:
+        pass
+
+    active_indexes = list(set(active_indexes))
+
+    await db.indexes.update({"_id": {"$in": active_indexes}}, {
+        "$set": {
+            "has_files": False
+        }
+    })
+
+    base_path = os.path.join(settings.get("data_path"), "reference/viruses")
+
+    for dir_name in os.listdir(base_path):
+        if dir_name not in active_indexes:
+            try:
+                await virtool.utils.rm(os.path.join(base_path, dir_name), recursive=True)
+            except OSError:
+                pass
+
+
+async def get_current_index_version(db):
+    """
+    Get the current (latest) index version number.
+
+    """
+    # Make sure only one index is in the 'ready' state.
+    index_count = await db.indexes.find({"ready": True}).count()
+
+    assert index_count > -1
+
+    # Index versions start at 0. Returns -1 if no indexes exist.
+    return index_count - 1
+
+
+async def get_current_index(db):
+    """
+    Return the current index id and version number.
+
+    """
+    current_index_version = await get_current_index_version(db)
+
+    if current_index_version == -1:
+        return None
+
+    index_id = (await db.indexes.find_one({"index_version": current_index_version}))["_id"]
+
+    return index_id, current_index_version
+
+
+class RebuildIndex(virtool.job.Job):
     """
     Job object that rebuilds the viral Bowtie2 index from the viral sequence database. Job stages are:
 
@@ -33,9 +156,9 @@ class RebuildIndex(Job):
             self.replace_old
         ]
 
-        self.index_id = self.task_args["index_id"]
+        self.index_id = self._task_args["index_id"]
 
-        self.reference_path = os.path.join(self.settings.get("data_path"), "reference/viruses", self.index_id)
+        self.reference_path = os.path.join(self._settings.get("data_path"), "reference/viruses", self.index_id)
 
     def get_joined_virus(self, virus_id):
         """
@@ -60,7 +183,7 @@ class RebuildIndex(Job):
         sequences = list(self.db.sequences.find({"isolate_id": {"$in": isolate_ids}}))
 
         # Merge the sequence entries into the virus entry.
-        joined = merge_virus(virus, sequences)
+        joined = virtool.virus.merge_virus(virus, sequences)
 
         return joined, sequences
 
@@ -125,7 +248,7 @@ class RebuildIndex(Job):
 
         modification_count = self.db.history.find({"index": self.index_id}).count()
 
-        for virus_id, virus_version in self.task_args["virus_manifest"].items():
+        for virus_id, virus_version in self._task_args["virus_manifest"].items():
             current, sequences = self.get_joined_virus(virus_id) or dict()
 
             # A the virus joined at the correct version.
@@ -137,7 +260,7 @@ class RebuildIndex(Job):
                 modified_virus_count += 1
 
             # Extract the list of sequences from the joined patched virus.
-            sequences = get_default_sequences(patched)
+            sequences = virtool.virus.get_default_sequences(patched)
 
             assert len(sequences) > 0
 
@@ -161,7 +284,7 @@ class RebuildIndex(Job):
 
         self.collection_operation("indexes", "set_stats", {
             "_id": self.index_id,
-            "virus_count": len(self.task_args["virus_manifest"]),
+            "virus_count": len(self._task_args["virus_manifest"]),
             "modified_virus_count": modified_virus_count,
             "modification_count": modification_count
         })
@@ -192,7 +315,7 @@ class RebuildIndex(Job):
             "index",
             os.path.join(self.reference_path, "ref.fa"),
             self.reference_path + "/",
-            "-t" + str(self.proc)
+            "-t" + str(self._proc)
         ]
 
         self.run_process(command)
@@ -213,9 +336,9 @@ class RebuildIndex(Job):
             "ready": True
         })
 
-        by_version = defaultdict(list)
+        by_version = collections.defaultdict(list)
 
-        for virus_id, virus_version in self.task_args["virus_manifest"].items():
+        for virus_id, virus_version in self._task_args["virus_manifest"].items():
             by_version[virus_version].append(virus_id)
 
         for version, virus_ids in by_version.items():
@@ -236,20 +359,5 @@ class RebuildIndex(Job):
 
         self.collection_operation("history", "set_index_as_unbuilt", {
             "index_id": self.index_id,
-            "index_version": self.task_args["index_version"]
+            "index_version": self._task_args["index_version"]
         })
-
-
-def get_default_sequences(joined_document):
-    """
-    Return a list of sequences from the default isolate of the passed joined virus document.
-
-    :param joined_document: the joined virus document.
-    :type joined_document: dict
-    :return: a list of sequences associated with the default isolate.
-    :rtype: list
-
-    """
-    for isolate in joined_document["isolates"]:
-        if isolate["default"]:
-            return isolate["sequences"]
