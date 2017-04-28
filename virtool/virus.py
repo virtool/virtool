@@ -404,6 +404,22 @@ def extract_sequence_ids(virus):
     return sequence_ids
 
 
+def get_default_sequences(joined_virus):
+    """
+    Return a list of sequences from the default isolate of the passed joined virus document.
+
+    :param joined_virus: the joined virus document.
+    :type joined_virus: dict
+    
+    :return: a list of sequences associated with the default isolate.
+    :rtype: list
+
+    """
+    for isolate in joined_virus["isolates"]:
+        if isolate["default"]:
+            return isolate["sequences"]
+
+
 def format_isolate_name(isolate):
     """
     Take a complete or partial isolate ``dict`` and return a readable isolate name.
