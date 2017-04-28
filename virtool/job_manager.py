@@ -29,13 +29,16 @@ class Manager:
     new jobs and interacting with separate job processes.
 
     """
-    def __init__(self, db, settings, dispatch):
+    def __init__(self, loop, db, settings, dispatch):
+        self.loop = loop
         self.db = db
         self.settings = settings
         self.dispatch = dispatch
 
         #: A :class:`dict` containing dicts describing each running or waiting job.
-        self.jobs_dict = {}
+        self._jobs_dict = dict()
+
+        self._callbacks = collections.defaultdict(dict)
 
         #: Jobs are blocked from starting when this is ``True``. This cannot be canonically changed without
         #: reinitializing the job manager.
@@ -48,12 +51,16 @@ class Manager:
         }
 
         #: A :class:`dict` for keeping track of the number or running jobs for each task type.
-        self.task_counts = {key: 0 for key in TASK_CLASSES}
+        self.task_counts = {key: 0 for key in virtool.job_classes.TASK_CLASSES}
 
         #: A :class:`multiprocessing.Queue` object used to communicate with job processes.
-        self.message_queue = multiprocessing.Queue()
+        self.queue = multiprocessing.Queue()
 
-    def iterate(self):
+        self.loop.create_task(self.iterate())
+
+        self.die = False
+
+    async def iterate(self):
         """
         The central runtime method for the collection. When called, it:
 
@@ -64,62 +71,69 @@ class Manager:
            removes jobs that have been terminated.
 
         """
-        while not self.message_queue.empty():
-            message = self.message_queue.get()
-            data = message["data"]
+        while not self.die:
 
-            if message["operation"] == "update_status":
-                if data["error"]:
-                    self.jobs_dict[data["_id"]]["obj"].terminate()
+            while not self.queue.empty():
+                message = self.queue.get()
 
-                self.update_status(
-                    data["_id"],
-                    data["progress"],
-                    data["state"],
-                    data["stage"],
-                    data["error"]
-                )
+                callback = self.get_callback(message["job_id"], message["cb_name"])
 
-            else:
-                method = getattr(self.collections[message["collection_name"]], message["operation"])
+                if inspect.iscoroutine(callback):
+                    await callback(*message["args"], **message["kwargs"])
+                else:
+                    callback(*message["args"], **message["kwargs"])
 
-                try:
-                    yield method(message["data"])
-                except TypeError:
-                    yield method()
+            for job_id in list(self._jobs_dict.keys()):
+                # Get job data.
+                job_dict = self._jobs_dict[job_id]
+                task = job_dict["task"]
 
-        for job_id in list(self.jobs_dict.keys()):
-            # Get job data.
-            job_dict = self.jobs_dict[job_id]
-            task = job_dict["task"]
+                # Get the number of running jobs with the same task.
+                task_count = self.task_counts[task]
 
-            # Get the number of running jobs with the same task.
-            task_count = self.task_counts[task]
+                # Check if resources are available to run a waiting job
+                if not self.blocked and not job_dict["started"]:
+                    task_limit = self.settings.get(task + "_inst")
 
-            # Check if resources are available to run a waiting job
-            if not self.blocked and not job_dict["started"]:
-                task_limit = self.settings.get(task + "_inst")
+                    if self.resources_available(job_dict["proc"], job_dict["mem"]) and task_count < task_limit:
+                        # Reserve resources and task slots
+                        for key in self.used:
+                            self.used[key] += job_dict[key]
 
-                if self.resources_available(job_dict["proc"], job_dict["mem"]) and task_count < task_limit:
-                    # Reserve resources and task slots
-                    for key in self.used:
-                        self.used[key] += job_dict[key]
+                        self.task_counts[task] += 1
 
-                    self.task_counts[task] += 1
+                        # Start job
+                        job_dict["started"] = True
+                        job_dict["obj"].start()
 
-                    # Start job
-                    job_dict["started"] = True
-                    job_dict["obj"].start()
+                if job_dict["started"] and not job_dict["obj"].is_alive():
+                    # Join the job process.
+                    job_dict["obj"].join()
 
-            if job_dict["started"] and not job_dict["obj"].is_alive():
-                # Join the job process.
-                job_dict["obj"].join()
+                    # Remove any callbacks registered for the job.
+                    self._callbacks.pop(job_id)
 
-                # Release the resources reserved for the job.
-                self.release_resources(job_id)
+                    # Release the resources reserved for the job.
+                    self.release_resources(job_id)
 
-                # Add the job to a list of job_ids that should be removed
-                del self.jobs_dict[job_id]
+                    # Add the job to a list of job_ids that should be removed
+                    del self._jobs_dict[job_id]
+
+            await asyncio.sleep(0.1, loop=self.loop)
+
+    def register_callback(self, job_id, cb_name, func):
+        self._callbacks[job_id][cb_name] = func
+
+    def get_callback(self, job_id, cb_name):
+        callbacks = self._callbacks[job_id]
+
+        if not callbacks:
+            raise KeyError("No callbacks registered for job {}".format(job_id))
+
+        try:
+            return callbacks[cb_name]
+        except KeyError:
+            raise KeyError("No callback with name {} registered for job {}".format(cb_name, job_id))
 
     async def resume(self):
         """
@@ -130,10 +144,10 @@ class Manager:
             job_id, task, proc, mem = itemgetter("job_id", "task", "proc", "mem")(document)
 
             # Instantiate a new job object.
-            job = TASK_CLASSES[task](
+            job = virtool.job_classes.TASK_CLASSES[task](
                 job_id,
                 self.settings.to_read_only(),
-                self.message_queue,
+                self.queue,
                 task,
                 document["args"],
                 proc,
@@ -141,7 +155,7 @@ class Manager:
             )
 
             # Add a dict describing the new job to jobs_dict.
-            self.jobs_dict[job_id] = {
+            self._jobs_dict[job_id] = {
                 "obj": job,
                 "task": task,
                 "started": False,
@@ -149,7 +163,7 @@ class Manager:
                 "mem": mem
             }
 
-    async def new(self, task, task_args, proc, mem, username, job_id=None):
+    async def new(self, task, task_args, proc, mem, user_id, job_id=None):
         """
         Start a new job. Inserts a new job document into the database, instantiates a new :class:`.Job` object, and
         creates a new job dict in :attr:`.jobs_dict`. New jobs are in the waiting state.
@@ -166,18 +180,18 @@ class Manager:
         :param mem: the number of GBs of memory to reserve for the job.
         :type mem: int
 
-        :param username: the name of the user that started the job.
-        :type username: str
+        :param user_id: the id of the user that started the job.
+        :type user_id: str
 
         :param job_id: optionally provide a job id--one will be automatically generated otherwise.
         :type job_id: str or None
 
-        :return: the response from the Mongo insert operation.
+        :return: the new job document.
         :rtype: dict
 
         """
         # Generate a new random job id.
-        job_id = job_id or await get_new_id(self.db.jobs)
+        job_id = job_id or await virtool.utils.get_new_id(self.db.jobs)
 
         # Insert a document in the database describing the new job.
         await self.db.jobs.insert_one({
@@ -186,7 +200,7 @@ class Manager:
             "args": task_args,
             "proc": proc,
             "mem": mem,
-            "username": username,
+            "user_id": user_id,
             "status": [{
                 "state": "waiting",
                 "stage": None,
@@ -197,10 +211,10 @@ class Manager:
         })
 
         # Instantiate a new job object.
-        job = TASK_CLASSES[task](
+        job = virtool.job_classes.TASK_CLASSES[task](
             job_id,
-            self.settings.to_read_only(),
-            self.message_queue,
+            self.settings.as_dict(),
+            self.queue,
             task,
             task_args,
             proc,
@@ -208,7 +222,7 @@ class Manager:
         )
 
         # Add a dict describing the new job to jobs_dict.
-        self.jobs_dict[job_id] = {
+        self._jobs_dict[job_id] = {
             "obj": job,
             "task": task,
             "started": False,
@@ -216,11 +230,11 @@ class Manager:
             "mem": mem
         }
 
-        document = await self.db.jobs.find_one(job_id, dispatch_projection)
+        document = await self.db.jobs.find_one(job_id, virtool.job.PROJECTION)
 
-        self.dispatch("jobs", "update", document)
+        self.dispatch("jobs", "update", virtool.job.dispatch_processor(document))
 
-        return dispatch_processor(document)
+        return virtool.job.processor(document)
 
     async def cancel(self, job_id):
         """
@@ -237,7 +251,10 @@ class Manager:
         :type job_id: str
 
         """
-        job_dict = self.jobs_dict[job_id]
+        try:
+            job_dict = self._jobs_dict[job_id]
+        except KeyError:
+            raise KeyError("Job object not found: '{}'".format(job_id))
 
         if job_dict["started"]:
             job_dict["obj"].terminate()
@@ -248,8 +265,7 @@ class Manager:
 
             job_dict["obj"].cleanup()
 
-            # self._to_remove.append(_id)
-            self.jobs_dict.pop(job_id)
+            self._jobs_dict.pop(job_id)
 
     async def update_status(self, job_id, progress, state, stage, error=None):
         """
@@ -278,13 +294,16 @@ class Manager:
                     "state": state,
                     "stage": stage,
                     "progress": progress,
-                    "date": virtool.utils.timestamp(),
+                    "timestamp": virtool.utils.timestamp(),
                     "error": error
                 }
             }
-        }, return_document=ReturnDocument.AFTER, projection=dispatch_projection)
+        }, return_document=ReturnDocument.AFTER, projection=virtool.job.PROJECTION)
 
-        self.dispatch("jobs", "update", dispatch_processor(document))
+        if not document:
+            raise virtool.errors.DatabaseError("Job does not exist: '{}'".format(job_id))
+
+        self.dispatch("jobs", "update", virtool.job.dispatch_processor(document))
 
     def release_resources(self, job_id):
         """
@@ -295,7 +314,10 @@ class Manager:
 
         """
         # Get the dict for the job.
-        job = self.jobs_dict[job_id]
+        try:
+            job = self._jobs_dict[job_id]
+        except KeyError:
+            raise KeyError("Job object not found: '{}'".format(job_id))
 
         # Reduce the used resource counts by the amounts reserved for the job.
         for key in ["proc", "mem"]:
@@ -320,6 +342,7 @@ class Manager:
         """
         return proc <= self.resources["available"]["proc"] and mem <= self.resources["available"]["mem"]
 
+    @property
     def resources(self):
         """
         A method decorated by :class:`property` and exposed as an instance attribute that returns a dictionary of
@@ -327,7 +350,10 @@ class Manager:
 
         """
         return {
-            "used": dict(self.used.items()),
+            "used": dict(self.used),
             "available": {key: self.settings.get(key) - self.used[key] for key in self.used},
             "limit": {key: self.settings.get(key) for key in self.used}
         }
+
+    def close(self):
+        self.die = True
