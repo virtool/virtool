@@ -1,6 +1,7 @@
+import virtool.host
+
 from virtool.utils import get_new_id
 from virtool.handlers.utils import unpack_json_request, json_response, bad_request, not_found
-from virtool import hosts
 
 
 async def find(req):
@@ -38,7 +39,7 @@ async def create(req):
         job_id=job_id
     )
 
-    return json_response(hosts.to_client(data))
+    return json_response(virtool.host.to_client(data))
 
 
 async def get(req):
@@ -62,10 +63,10 @@ async def remove(req):
     host_id = req.match_info["host_id"]
 
     try:
-        await hosts.remove(req.app["db"], req.app["settings"], host_id)
-    except hosts.HostInUseError:
+        await virtool.host.remove(req.app["db"], req.app["settings"], host_id)
+    except virtool.host.HostInUseError:
         return bad_request("Host is in use")
-    except hosts.HostNotFoundError:
+    except virtool.host.HostNotFoundError:
         return not_found()
 
     return json_response({"removed": host_id})
