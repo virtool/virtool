@@ -5,9 +5,8 @@ import asyncio
 
 from aiohttp import web
 from setproctitle import setproctitle
-from virtool.web.app import create_app
-from virtool.web.logs import configure
-from virtool.web.args import get_args
+from virtool.app import create_app
+from virtool.app_init import get_args, configure
 
 sys.dont_write_bytecode = True
 
