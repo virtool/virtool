@@ -61,7 +61,7 @@ async def cancel(req):
     return json_response(processor(document))
 
 
-async def remove_job(req):
+async def remove(req):
     """
     Remove a job.
 
