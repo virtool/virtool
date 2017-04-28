@@ -1,29 +1,19 @@
+import asyncio
 import logging
+import inspect
+import collections
 import multiprocessing
 
 from pymongo import ReturnDocument
 from operator import itemgetter
 
+import virtool.job
+import virtool.job_classes
 import virtool.utils
-
-from virtool.utils import get_new_id
-from virtool.jobs.add_host import AddHost
-from virtool.jobs.import_reads import ImportReads
-from virtool.jobs.rebuild_index import RebuildIndex
-from virtool.jobs.analysis import PathoscopeBowtie, PathoscopeSNAP, NuVs
-
+import virtool.errors
+import virtool.virus_index
 
 logger = logging.getLogger(__name__)
-
-#: A dict containing :class:`~.job.Job` subclasses keyed by their task names.
-TASK_CLASSES = {
-    "rebuild_index": RebuildIndex,
-    "pathoscope_bowtie": PathoscopeBowtie,
-    "pathoscope_snap": PathoscopeSNAP,
-    "nuvs": NuVs,
-    "add_host": AddHost,
-    "import_reads": ImportReads
-}
 
 
 class Manager:
