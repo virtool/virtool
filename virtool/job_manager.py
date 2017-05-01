@@ -39,7 +39,10 @@ class Manager:
         self._jobs_dict = dict()
 
         #: A :class:`dict` of callback functions that allow job process to interact with the main process.
-        self._callbacks = collections.defaultdict(dict)
+        self._callbacks = dict()
+
+        # Register the manager's :meth:`.update_status` method as a callback.
+        self.register_callback("update_status", self.update_status)
 
         #: Jobs are blocked from starting when this is ``True``. This cannot be changed without
         #: reinitializing the job manager.
@@ -80,9 +83,9 @@ class Manager:
 
                 message = self.queue.get()
 
-                callback = self.get_callback(message["job_id"], message["cb_name"])
+                callback = self.get_callback(message["cb_name"])
 
-                if inspect.iscoroutine(callback):
+                if inspect.iscoroutinefunction(callback):
                     await callback(*message["args"], **message["kwargs"])
                 else:
                     callback(*message["args"], **message["kwargs"])
@@ -114,27 +117,21 @@ class Manager:
                     # Join the job process.
                     job_dict["obj"].join()
 
-                    # Remove any callbacks registered for the job.
-                    self._callbacks.pop(job_id)
-
                     # Release the resources reserved for the job.
                     self.release_resources(job_id)
 
                     # Add the job to a list of job_ids that should be removed
-                    del self._jobs_dict[job_id]
+                    self._jobs_dict.pop(job_id)
 
             await asyncio.sleep(0.1, loop=self.loop)
 
             if self.die:
                 break
 
-    def register_callback(self, job_id, cb_name, func):
+    def register_callback(self, cb_name, func):
         """
         Register a callback function that can be called from the job process identified associated with ``job_id``. This
         allows job processes to make database changes in the the main process.
-         
-        :param job_id: the ``job_id`` for the process is allowed to call the callback function
-        :type job_id: str
         
         :param cb_name: the name to register the callback under
         :type cb_name: str
@@ -143,14 +140,11 @@ class Manager:
         :type func: func
          
         """
-        self._callbacks[job_id][cb_name] = func
+        self._callbacks[cb_name] = func
 
-    def get_callback(self, job_id, cb_name):
+    def get_callback(self, cb_name):
         """
         Retrieve a registered callback function given the ``job_id`` and ``name`` it is registered under.
-        
-        :param job_id: the ``job_id`` associated with the calling process
-        :type job_id: str
         
         :param cb_name: the callback name
         :type cb_name: str
@@ -159,15 +153,10 @@ class Manager:
         :rtype: func
         
         """
-        callbacks = self._callbacks[job_id]
-
-        if not callbacks:
-            raise KeyError("No callbacks registered for job {}".format(job_id))
-
         try:
-            return callbacks[cb_name]
+            return self._callbacks[cb_name]
         except KeyError:
-            raise KeyError("No callback with name {} registered for job {}".format(cb_name, job_id))
+            raise KeyError("No callback with name '{}'".format(cb_name))
 
     async def resume(self):
         """

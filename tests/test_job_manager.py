@@ -36,6 +36,8 @@ class TestRun:
         """
         assert test_queue == test_job_manager.queue
 
+
+
         class Sayer:
 
             def __init__(self):
@@ -47,15 +49,15 @@ class TestRun:
                 if caps:
                     self.said = self.said.upper()
 
-            def say_async(self, first, second, **kwargs):
-                self.say(first, second, **kwargs)
+            async def say_async(self, first, second, caps=False):
+                self.say(first, second, caps)
 
         sayer = Sayer()
 
         if async_cb:
-            test_job_manager.register_callback("foobar", "say", sayer.say)
+            test_job_manager.register_callback("say", sayer.say_async)
         else:
-            test_job_manager.register_callback("foobar", "say", sayer.say_async)
+            test_job_manager.register_callback("say", sayer.say)
 
         test_queue.put({
             "job_id": "foobar",
@@ -64,9 +66,72 @@ class TestRun:
             "kwargs": keywords
         })
 
-        await asyncio.sleep(0.3, loop=test_job_manager.loop)
+        await asyncio.sleep(0.5, loop=test_job_manager.loop)
 
         assert sayer.said == full
+
+    @pytest.mark.parametrize("blocked", [True, False])
+    async def test_start_job(self, blocked, mocker, test_job_manager):
+        job_dict = {
+            "obj": mocker.Mock(),
+            "task": "rebuild_index",
+            "started": False,
+            "proc": 2,
+            "mem": 4
+        }
+
+        test_job_manager.blocked = blocked
+
+        test_job_manager._jobs_dict["foobar"] = job_dict
+
+        await asyncio.sleep(0.3, loop=test_job_manager.loop)
+
+        assert job_dict["started"] is not blocked
+        assert job_dict["obj"].start.called is not blocked
+
+        if not blocked:
+            # If the job was allowed to start, check that used resource counts were updated.
+            assert test_job_manager.used == {
+                "proc": 2,
+                "mem": 4
+            }
+
+            # if the job was allowed to start, check that task instance counts were updated.
+            assert test_job_manager.task_counts["rebuild_index"] == 1
+
+    @pytest.mark.parametrize("is_alive", [True, False])
+    async def test_join_job(self, is_alive, mocker, test_job_manager):
+        """
+        Test that :meth:`~virtool.job.Job.join` is called for job processes that are no longer alive, but not for jobs
+        that are still alive.
+         
+        """
+        job_dict = {
+            "obj": mocker.Mock(),
+            "task": "rebuild_index",
+            "started": False,
+            "proc": 2,
+            "mem": 4
+        }
+
+        # Use this stub to check if :meth:`.release_resources` is called when the job is joined.
+        test_job_manager.release_resources = mocker.stub(name="release_resources")
+
+        job_dict["obj"].is_alive.return_value = is_alive
+
+        test_job_manager._jobs_dict["foobar"] = job_dict
+
+        await asyncio.sleep(0.3, loop=test_job_manager.loop)
+
+        # Make sure join is called on the job if it is no longer alive.
+        assert job_dict["obj"].join.called is not is_alive
+
+        if not is_alive:
+            # Make sure job is popped from jobs dict if it is no longer alive.
+            assert len(test_job_manager._jobs_dict) == 0
+
+            # Make sure the job's resources are released if it was joined.
+            assert test_job_manager.release_resources.call_args[0] == ("foobar",)
 
 
 class TestRegisterCallback:
@@ -75,9 +140,9 @@ class TestRegisterCallback:
 
         m = mocker.stub(name="callback")
 
-        test_job_manager.register_callback("foobar", "hello_world", m)
+        test_job_manager.register_callback("hello_world", m)
 
-        assert test_job_manager._callbacks["foobar"]["hello_world"]
+        assert test_job_manager._callbacks["hello_world"]
 
 
 class TestGetCallback:
@@ -86,27 +151,18 @@ class TestGetCallback:
 
         m = mocker.stub(name="callback")
 
-        test_job_manager.register_callback("foobar", "hello_world", m)
+        test_job_manager.register_callback("hello_world", m)
 
-        assert test_job_manager.get_callback("foobar", "hello_world") == m
-
-    def test_missing_job(self, mocker, test_job_manager):
-
-        test_job_manager.register_callback("test", "hello_world", mocker.stub(name="callback"))
-
-        with pytest.raises(KeyError) as err:
-            test_job_manager.get_callback("foobar", "hello_world")
-
-        assert "No callbacks registered for job foobar" in str(err)
+        assert test_job_manager.get_callback("hello_world") == m
 
     def test_missing_cb(self, mocker, test_job_manager):
 
-        test_job_manager.register_callback("foobar", "bye_world", mocker.stub(name="callback"))
+        test_job_manager.register_callback("bye_world", mocker.stub(name="callback"))
 
         with pytest.raises(KeyError) as err:
-            test_job_manager.get_callback("foobar", "hello_world")
+            test_job_manager.get_callback("hello_world")
 
-        assert "No callback with name hello_world registered for job foobar" in str(err)
+        assert "No callback with name 'hello_world'" in str(err)
 
 
 class TestResume:
