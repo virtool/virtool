@@ -21,23 +21,24 @@ class Manager:
     Provides functionality for managing active jobs and manipulating and reading the job documents in the MongoDB
     collection. This object is referred to as the **job manager** in this documentation.
 
-    The job manager controls which jobs are running based on the job resource settings. Jobs that are running or are
-    waiting for resources to become available are represented by instances of the :class:`~.job.Job` subclasses
-    described in :data:`.TASK_CLASSES`. The job manager can create new active jobs and cancel existing active jobs. It
-
-    Exposed methods allow clients to cancel and remove jobs. Internal methods also are provided for starting
-    new jobs and interacting with separate job processes.
-
     """
     def __init__(self, loop, db, settings, dispatch):
+        #: The application loop
         self.loop = loop
+
+        #: The application database client object
         self.db = db
+
+        #: The application :class:`.Settings` instance.
         self.settings = settings
+
+        #: A reference to the application dispatcher's :meth:`~.Dispatcher.dispatch` method.
         self.dispatch = dispatch
 
         #: A :class:`dict` containing dicts describing each running or waiting job.
         self._jobs_dict = dict()
 
+        #: A :class:`dict` of callback functions that allow job process to interact with the main process.
         self._callbacks = collections.defaultdict(dict)
 
         #: Jobs are blocked from starting when this is ``True``. This cannot be changed without
@@ -56,11 +57,13 @@ class Manager:
         #: A :class:`multiprocessing.Queue` object used to communicate with job processes.
         self.queue = multiprocessing.Queue()
 
-        self.loop.create_task(self.iterate())
-
+        #: A kill signal for the job manager. The main loop will stop when :attr:`.die` is ``True``.
         self.die = False
 
-    async def iterate(self):
+        # Run the main loop until the kill signal is set to ``True``.
+        self.loop.create_task(self.run())
+
+    async def run(self):
         """
         The central runtime method for the collection. When called, it:
 
@@ -122,9 +125,36 @@ class Manager:
             await asyncio.sleep(0.1, loop=self.loop)
 
     def register_callback(self, job_id, cb_name, func):
+        """
+        Register a callback function that can be called from the job process identified associated with ``job_id``. This
+        allows job processes to make database changes in the the main process.
+         
+        :param job_id: the ``job_id`` for the process is allowed to call the callback function
+        :type job_id: str
+        
+        :param cb_name: the name to register the callback under
+        :type cb_name: str
+        
+        :param func: the callback function
+        :type func: func
+         
+        """
         self._callbacks[job_id][cb_name] = func
 
     def get_callback(self, job_id, cb_name):
+        """
+        Retrieve a registered callback function given the ``job_id`` and ``name`` it is registered under.
+        
+        :param job_id: the ``job_id`` associated with the calling process
+        :type job_id: str
+        
+        :param cb_name: the callback name
+        :type cb_name: str
+         
+        :return: the matching callback function
+        :rtype: func
+        
+        """
         callbacks = self._callbacks[job_id]
 
         if not callbacks:
@@ -356,4 +386,8 @@ class Manager:
         }
 
     def close(self):
+        """
+        Close the job manager by stopping its main loop function (:meth:`.run`).
+        
+        """
         self.die = True
