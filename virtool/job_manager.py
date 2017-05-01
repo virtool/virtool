@@ -74,9 +74,10 @@ class Manager:
            removes jobs that have been terminated.
 
         """
-        while not self.die:
+        while True:
 
             while not self.queue.empty():
+
                 message = self.queue.get()
 
                 callback = self.get_callback(message["job_id"], message["cb_name"])
@@ -123,6 +124,9 @@ class Manager:
                     del self._jobs_dict[job_id]
 
             await asyncio.sleep(0.1, loop=self.loop)
+
+            if self.die:
+                break
 
     def register_callback(self, job_id, cb_name, func):
         """

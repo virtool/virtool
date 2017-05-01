@@ -1,4 +1,5 @@
 import time
+import asyncio
 import datetime
 import pytest
 from pprint import pprint
@@ -16,6 +17,56 @@ class TestInit:
         test_job_manager.close()
 
         assert test_job_manager.die
+
+
+class TestRun:
+
+    @pytest.mark.parametrize("async_cb", [True, False])
+    @pytest.mark.parametrize("keywords,full", [
+        ({}, "hello world"),
+        ({"caps": False}, "hello world"),
+        ({"caps": True}, "HELLO WORLD")
+    ])
+    async def test_queue(self, keywords, full, async_cb, test_queue, test_job_manager):
+        """
+        Test the queue reading functionality of the job manager :meth:`.run` loop. The loop should successfully handle
+        both synchronous and asynchronous registered callback functions. As well it should unpack and interpret passed
+        ``args`` and ``kwargs`` parameters.
+         
+        """
+        assert test_queue == test_job_manager.queue
+
+        class Sayer:
+
+            def __init__(self):
+                self.said = None
+
+            def say(self, first, second, caps=False):
+                self.said = "{} {}".format(first, second)
+
+                if caps:
+                    self.said = self.said.upper()
+
+            def say_async(self, first, second, **kwargs):
+                self.say(first, second, **kwargs)
+
+        sayer = Sayer()
+
+        if async_cb:
+            test_job_manager.register_callback("foobar", "say", sayer.say)
+        else:
+            test_job_manager.register_callback("foobar", "say", sayer.say_async)
+
+        test_queue.put({
+            "job_id": "foobar",
+            "cb_name": "say",
+            "args": ["hello", "world"],
+            "kwargs": keywords
+        })
+
+        await asyncio.sleep(0.3, loop=test_job_manager.loop)
+
+        assert sayer.said == full
 
 
 class TestRegisterCallback:
@@ -128,9 +179,6 @@ class TestNew:
             "task": "rebuild_index",
             "user_id": "test"
         }
-
-        # Make sure the correct dispatch is sent.
-        pprint(test_job_manager.dispatch.call_args[0])
 
         assert test_job_manager.dispatch.call_args[0] == (
             "jobs",

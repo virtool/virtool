@@ -1,39 +1,67 @@
 import pytest
+import collections
 
 import virtool.job_manager
 
 
+class MockQueue:
+
+    def __init__(self):
+        self.messages = collections.deque()
+
+    def put(self, message):
+        self.messages.append(message)
+
+    def get(self):
+        return self.messages.popleft()
+
+    def empty(self):
+        return len(self.messages) == 0
+
+
+class MockSettings:
+
+    def __init__(self):
+        self._data = {
+            "db_name": "test",
+            "db_host": "localhost",
+            "db_port": 27017,
+            "rebuild_index_inst": 2,
+            "proc": 4,
+            "mem": 8
+        }
+
+    def __getitem__(self, key):
+        return self._data[key]
+
+    def get(self, key):
+        return self._data[key]
+
+    def update(self, update_dict):
+        self._data.update(update_dict)
+
+    def as_dict(self):
+        return dict(self._data)
+
+
 @pytest.fixture
 def test_job_manager(mocker, loop, test_motor):
-    class TestSettings:
 
-        def __init__(self):
-            self._data = {
-                "db_name": "test",
-                "db_host": "localhost",
-                "db_port": 27017,
-                "rebuild_index_inst": 2,
-                "proc": 4,
-                "mem": 8
-            }
-
-        def __getitem__(self, key):
-            return self._data[key]
-
-        def get(self, key):
-            return self._data[key]
-
-        def update(self, update_dict):
-            self._data.update(update_dict)
-
-        def as_dict(self):
-            return dict(self._data)
-
-    manager = virtool.job_manager.Manager(loop, test_motor, TestSettings(), mocker.stub(name="dispatch"))
+    manager = virtool.job_manager.Manager(loop, test_motor, MockSettings(), mocker.stub(name="dispatch"))
 
     yield manager
 
     manager.close()
+
+
+@pytest.fixture
+def test_queue(monkeypatch):
+
+    mock_queue = MockQueue()
+
+    monkeypatch.setattr("multiprocessing.Queue", lambda: mock_queue)
+
+    return mock_queue
 
 
 @pytest.fixture
