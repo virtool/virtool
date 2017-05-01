@@ -2,7 +2,6 @@ import time
 import datetime
 import pytest
 from pprint import pprint
-from unittest import mock
 
 import virtool.errors
 
@@ -59,20 +58,24 @@ class TestGetCallback:
         assert "No callback with name hello_world registered for job foobar" in str(err)
 
 
+class TestResume:
+
+    async def test(self, static_time, test_db, test_job, test_job_manager, mock_job_class):
+        test_job["status"] = test_job["status"][0]
+
+        test_db.jobs.insert_one(test_job)
+
+        await test_job_manager.resume()
+
+
 class TestNew:
 
-    async def test(self, monkeypatch, mocker, static_time, test_db, test_job_manager):
+    async def test(self, static_time, test_db, test_job_manager, mock_job_class):
         """
         Test that :meth:`.Manager.new` creates all the right objects, database documents, and dispatches.
          
         """
-        # Mock the :class:`.RebuildIndex` job class so we can see what calls are made on it and its returned instance.
-        mock_obj = mocker.Mock()
-        mock_class = mocker.Mock(name="RebuildIndex", return_value=mock_obj)
-
-        monkeypatch.setattr("virtool.job_classes.TASK_CLASSES", {
-            "rebuild_index": mock_class
-        })
+        mock_class, mock_obj = mock_job_class
 
         await test_job_manager.new("rebuild_index", {"index": 5}, 5, 2, "test", job_id="foobar")
 

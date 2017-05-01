@@ -40,7 +40,7 @@ class Manager:
 
         self._callbacks = collections.defaultdict(dict)
 
-        #: Jobs are blocked from starting when this is ``True``. This cannot be canonically changed without
+        #: Jobs are blocked from starting when this is ``True``. This cannot be changed without
         #: reinitializing the job manager.
         self.blocked = False
 
@@ -72,8 +72,6 @@ class Manager:
 
         """
         while not self.die:
-
-            print("ITER")
 
             while not self.queue.empty():
                 message = self.queue.get()
@@ -143,12 +141,12 @@ class Manager:
          
         """
         async for document in self.db.jobs.find({"status.1": {"$exists": False}}):
-            job_id, task, proc, mem = itemgetter("job_id", "task", "proc", "mem")(document)
+            job_id, task, proc, mem = itemgetter("job_id", "task", "proc", "mem")(virtool.job.processor(document))
 
             # Instantiate a new job object.
             job = virtool.job_classes.TASK_CLASSES[task](
                 job_id,
-                self.settings.to_read_only(),
+                self.settings.as_dict(),
                 self.queue,
                 task,
                 document["args"],
