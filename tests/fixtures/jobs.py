@@ -37,13 +37,26 @@ def test_job_manager(mocker, loop, test_motor):
 
 
 @pytest.fixture
-def test_job():
+def mock_job_class(monkeypatch, mocker):
+    # Mock the :class:`.RebuildIndex` job class so we can see what calls are made on it and its returned instance.
+    mock_obj = mocker.Mock()
+    mock_class = mocker.Mock(name="RebuildIndex", return_value=mock_obj)
+
+    monkeypatch.setattr("virtool.job_classes.TASK_CLASSES", {
+        "rebuild_index": mock_class
+    })
+
+    return mock_class, mock_obj
+
+
+@pytest.fixture
+def test_job(static_time):
     return {
         "_id": "4c530449",
         "user_id": "igboyes",
         "proc": 10,
         "mem": 16,
-        "task": "nuvs",
+        "task": "rebuild_index",
         "args": {
             "name": None,
             "username": "igboyes",
@@ -55,28 +68,28 @@ def test_job():
         "status": [
             {
                 "error": None,
-                "date": "2017-03-24T13:20:35.780926",
+                "timestamp": static_time,
                 "state": "waiting",
                 "stage": None,
                 "progress": 0
             },
             {
                 "error": None,
-                "date": "2017-03-24T13:20:36.123162",
+                "timestamp": static_time,
                 "state": "running",
                 "stage": None,
                 "progress": 0
             },
             {
                 "error": None,
-                "date": "2017-03-24T13:20:36.127059",
+                "timestamp": static_time,
                 "state": "running",
                 "stage": "mk_analysis_dir",
                 "progress": 0.091
             },
             {
                 "error": None,
-                "date": "2017-03-24T13:23:32.254088",
+                "timestamp": static_time,
                 "state": "complete",
                 "stage": "import_results",
                 "progress": 1.0

@@ -1,4 +1,5 @@
 import pytest
+import datetime
 import multiprocessing
 from copy import deepcopy
 from pprint import pprint
@@ -22,13 +23,17 @@ class TestProcessor:
 
 class TestDispatchProcessor:
 
-    def test(self, test_job):
+    def test(self, test_db, test_job):
         """
         Test that the dispatch processor properly formats a raw job document into a dispatchable format.
          
         """
-        assert virtool.job.dispatch_processor(test_job) == {
-            "added": "2017-03-24T13:20:35.780926",
+        test_db.jobs.insert_one(test_job)
+
+        document = test_db.jobs.find_one()
+
+        assert virtool.job.dispatch_processor(document) == {
+            "added": datetime.datetime(2017, 10, 6, 20, 0),
             "args": {
                 "algorithm": "nuvs",
                 "analysis_id": "e410429b",
@@ -43,7 +48,7 @@ class TestDispatchProcessor:
             "progress": 1.0,
             "stage": "import_results",
             "state": "complete",
-            "task": "nuvs",
+            "task": "rebuild_index",
             "user_id": "igboyes"
         }
 
@@ -76,8 +81,6 @@ class TestJob:
 
         print(queue.get())
         print(queue.get())
-
-        assert 0
 
 
 class TestTermination:
