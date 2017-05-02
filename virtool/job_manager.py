@@ -1,7 +1,6 @@
 import asyncio
 import logging
 import inspect
-import collections
 import multiprocessing
 
 from pymongo import ReturnDocument
@@ -63,8 +62,20 @@ class Manager:
         #: A kill signal for the job manager. The main loop will stop when :attr:`.die` is ``True``.
         self.die = False
 
+        #: Is the job manager running?
+        self.alive = False
+
         # Run the main loop until the kill signal is set to ``True``.
         self.loop.create_task(self.run())
+
+    def __len__(self):
+        return len(self._jobs_dict)
+
+    def __iter__(self):
+        return iter(self._jobs_dict.keys())
+
+    def __getitem__(self, item):
+        return self._jobs_dict[item]
 
     async def run(self):
         """
@@ -77,6 +88,8 @@ class Manager:
            removes jobs that have been terminated.
 
         """
+        self.alive = True
+
         while True:
 
             while not self.queue.empty():
@@ -127,6 +140,8 @@ class Manager:
 
             if self.die:
                 break
+
+        self.alive = False
 
     def register_callback(self, cb_name, func):
         """
@@ -378,9 +393,12 @@ class Manager:
             "limit": {key: self.settings.get(key) for key in self.used}
         }
 
-    def close(self):
+    async def close(self):
         """
         Close the job manager by stopping its main loop function (:meth:`.run`).
         
         """
         self.die = True
+
+        while self.alive:
+            await asyncio.sleep(0.3)
