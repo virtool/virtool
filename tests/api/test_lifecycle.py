@@ -37,4 +37,3 @@ class TestShutdown:
         await do_get("/api/lifecycle/shutdown", authorize=True)
 
         assert stub.called
-

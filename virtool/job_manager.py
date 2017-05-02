@@ -401,4 +401,4 @@ class Manager:
         self.die = True
 
         while self.alive:
-            await asyncio.sleep(0.3)
+            await asyncio.sleep(0.3, loop=self.loop)

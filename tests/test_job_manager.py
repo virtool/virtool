@@ -6,18 +6,6 @@ import pytest
 import virtool.errors
 
 
-class TestInit:
-
-    def test(self, test_job_manager):
-        time.sleep(0.1)
-
-        assert not test_job_manager.die
-
-        test_job_manager.close()
-
-        assert test_job_manager.die
-
-
 class TestRun:
 
     @pytest.mark.parametrize("async_cb", [True, False])
@@ -498,9 +486,9 @@ class TestResources:
 
 class TestClose:
 
-    def test(self, test_job_manager):
+    async def test(self, test_job_manager):
         assert test_job_manager.die is False
 
-        test_job_manager.close()
+        await test_job_manager.close()
 
         assert test_job_manager.die is True

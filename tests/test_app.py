@@ -141,21 +141,6 @@ class TestInitJobManager:
         assert app["job_manager"].dispatch == test_dispatch.dispatch
 
 
-class TestCreateApp:
-
-    async def test_on_shutdown(self, mocker, monkeypatch, loop):
-        cancel_stub = mocker.stub(name="cancel")
-
-        async def cancel(*args):
-            return cancel_stub(*args)
-
-        mocker.patch("virtool.job_manager.Manager.cancel", cancel)
-
-        app = virtool.app.create_app(loop, "test")
-
-        await app.shutdown()
-
-
 class TestConfigureSSL:
 
     async def test(self, test_files_path):
