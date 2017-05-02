@@ -168,27 +168,6 @@ def reload():
     raise SystemError("Could not determine executable type")
 
 
-def shutdown(app, exit_code=0):
-    """
-    Shutdown the server by cancelling all jobs and calling :func:`sys.exit`.
-
-    :param exit_code: the exit code to return.
-    :type exit_code: int
-
-    """
-    logging.info("Shutting down")
-
-    job_manager = app.get("job_manager")
-
-    if job_manager:
-        for job_id in job_manager.jobs_dict:
-            job_manager.cancel(job_id)
-
-    logging.info("Exiting")
-
-    sys.exit(exit_code)
-
-
 def find_server_version(install_path="."):
     try:
         return subprocess.check_output(["git", "describe", "--tags"]).decode().rstrip()
