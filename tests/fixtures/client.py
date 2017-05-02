@@ -29,18 +29,27 @@ def authorize_client(test_db, create_user):
 
 @pytest.fixture
 def do_get(test_client, authorize_client):
-    client = None
 
-    async def func(url, authorize=False, groups=None, permissions=None):
-        nonlocal client
-        client = client or await test_client(create_app, "test")
+    class DoGet:
 
-        if authorize:
-            await authorize_client(client, groups, permissions)
+        def __init__(self):
+            self.client = None
+            self.server = None
 
-        return await client.get(url)
+        async def init_client(self):
+            self.client = await test_client(create_app, "test")
+            self.server = self.client.server
 
-    return func
+        async def __call__(self, url, authorize=False, groups=None, permissions=None):
+            if not self.client:
+                await self.init_client()
+
+            if authorize:
+                await authorize_client(self.client, groups, permissions)
+
+            return await self.client.get(url)
+
+    return DoGet()
 
 
 @pytest.fixture
