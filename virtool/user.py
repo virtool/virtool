@@ -68,10 +68,13 @@ async def validate_credentials(db, user_id, password):
         return False
 
     # Return True if the attempted password matches the stored password.
-    if check_password(password, document["password"]):
-        return True
+    try:
+        if check_password(password, document["password"]):
+            return True
+    except TypeError:
+        pass
 
-    if "salt" in document and check_legacy_password(password, document["password"], document["salt"]):
+    if "salt" in document and check_legacy_password(password, document["salt"], document["password"]):
         return True
 
     return False
