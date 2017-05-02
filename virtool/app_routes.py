@@ -1,8 +1,9 @@
 from aiohttp import web
 
 from virtool.app_dispatcher import websocket_handler
-from virtool.handlers import root, jobs, samples, viruses, history, hmm, hosts, account, groups, users, genbank, status
 from virtool.user_login import get_login_template, generate_verification_keys, login_handler
+from virtool.handlers import root, jobs, samples, viruses, history, hmm, hosts, account, groups, users, genbank, \
+    status, lifecycle
 
 
 async def index_handler(req):
@@ -43,6 +44,9 @@ def setup_routes(app):
 
     # API Root
     app.router.add_get("/api", root.get)
+
+    # Lifecycle routes
+    app.router.add_get("/api/lifecycle/shutdown", lifecycle.shutdown)
 
     # Status Routes
     app.router.add_get("/api/status", status.list_status)
