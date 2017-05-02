@@ -32,6 +32,22 @@ PASSWORD_SCHEMA = {
 
 
 @protected()
+async def get(req):
+    """
+    Get complete user document
+
+    """
+    user_id = req["session"].user_id
+
+    if not user_id:
+        return requires_login()
+
+    document = await req.app["db"].users.find_one(user_id)
+
+    return json_response(document)
+
+
+@protected()
 async def get_settings(req):
     """
     Get account settings

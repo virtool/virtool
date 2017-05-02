@@ -115,6 +115,7 @@ def setup_routes(app):
     app.router.add_delete("/api/hosts/{host_id}", hosts.remove)
 
     # Account Routes
+    app.router.add_get("/api/account", account.get)
     app.router.add_get("/api/account/settings", account.get_settings)
     app.router.add_patch("/api/account/settings", account.update_settings)
 
