@@ -1,6 +1,44 @@
 import pytest
 
+import virtool.handlers.utils
 from virtool.app_dispatcher import Dispatcher, Connection
+
+
+class TestConnection:
+
+    def test_init(self, test_ws_connection):
+        """
+        Test that :meth:`.Connection.__init__` draws attributes from the passed session and websocket handler.
+         
+        """
+        assert test_ws_connection.user_id == "test"
+        assert test_ws_connection.groups == ["admin", "test"]
+        assert test_ws_connection.permissions == ["modify_virus"]
+
+    async def test_send(self, test_ws_connection):
+        await test_ws_connection.send({
+            "interface": "users",
+            "operation": "update",
+            "data": {
+                "user_id": "john",
+                "groups": []
+            }
+        })
+
+        assert test_ws_connection._ws.send_json.stub.call_args[0] == ({
+            'data': {
+                'groups': [],
+                'user_id': 'john'
+            },
+            'interface': 'users',
+            'operation': 'update'
+        }, virtool.handlers.utils.dumps)
+
+    async def test_close(self, test_ws_connection):
+        await test_ws_connection.close()
+
+        assert test_ws_connection._ws.close.stub.called
+
 
 
 class TestConnections:

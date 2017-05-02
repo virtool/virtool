@@ -1,7 +1,6 @@
 from copy import deepcopy
-from aiohttp import web
 
-from virtool.handlers.utils import dumps
+import virtool.handlers.utils
 
 
 class Connection:
@@ -10,10 +9,10 @@ class Connection:
         self._ws = ws
         self.user_id = session.user_id
         self.groups = session.groups
-        self.permissions = session
+        self.permissions = session.permissions
 
     async def send(self, message):
-        await self._ws.send_json(message, dumps=dumps)
+        await self._ws.send_json(message, dumps=virtool.handlers.utils.dumps)
 
     async def close(self):
         await self._ws.close()
