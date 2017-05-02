@@ -8,7 +8,6 @@
  */
 
 import { assign, omit, forIn } from "lodash";
-import Cookie from "js-cookie";
 import Events from "./events";
 
 /**
@@ -26,11 +25,6 @@ export default class User {
     load (data) {
         // Update the username, token, and reset properties with the authorized values.
          assign(this, omit(data, "_id"));
-
-        this.name = data._id;
-        Cookie.set("token", data.token, { expires: 7 });
-
-        this.emit("change");
     }
 
     authorize (data) {
