@@ -4,28 +4,6 @@ from aiohttp import web
 from virtool.handlers.utils import dumps
 
 
-async def websocket_handler(req):
-    """
-    Handles requests for WebSocket connections.
-     
-    """
-    # if req["session"].authorized:
-    ws = web.WebSocketResponse(autoping=True, heartbeat=10)
-
-    connection = Connection(ws, req["session"])
-
-    req.app["dispatcher"].add_connection(connection)
-
-    await ws.prepare(req)
-
-    async for msg in ws:
-        pass
-
-    await connection.close()
-
-    return ws
-
-
 class Connection:
 
     def __init__(self, ws, session):
