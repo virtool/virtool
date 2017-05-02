@@ -2,7 +2,6 @@ import time
 import asyncio
 import datetime
 import pytest
-from pprint import pprint
 
 import virtool.errors
 
@@ -35,8 +34,6 @@ class TestRun:
          
         """
         assert test_queue == test_job_manager.queue
-
-
 
         class Sayer:
 

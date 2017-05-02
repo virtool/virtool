@@ -145,17 +145,3 @@ class MockSettings:
 
     def as_dict(self):
         return dict(self.data)
-
-
-@pytest.fixture()
-def mock_settings(mock_pymongo, mock_motor):
-    settings = MockSettings()
-
-    def get_db_client(sync=False):
-        if sync:
-            return mock_pymongo
-        return mock_motor
-
-    settings.get_db_client = get_db_client
-
-    return settings

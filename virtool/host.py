@@ -123,9 +123,6 @@ def check_collection(db_name, data_path, host="localhost", port=27017):
     return response
 
 
-print(virtool.job.Job)
-
-
 class AddHost(virtool.job.Job):
 
     """
