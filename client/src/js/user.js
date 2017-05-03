@@ -7,7 +7,7 @@
  * @providesModule User
  */
 
-import { assign, omit, forIn } from "lodash";
+import { assign, omit } from "lodash";
 import Events from "./events";
 
 /**
@@ -25,29 +25,5 @@ export default class User {
     load (data) {
         // Update the username, token, and reset properties with the authorized values.
          assign(this, omit(data, "_id"));
-    }
-
-    authorize (data) {
-        this.load(data);
-        dispatcher.sync();
-    }
-
-    deauthorize (data) {
-
-        forIn(dispatcher.db.collectionNames, collectionName => {
-            const collection = dispatcher.db[collectionName];
-            collection.clear();
-            collection.synced = false;
-        });
-
-        dispatcher.db.loki.saveDatabase(() => {
-
-            window.location.hash = "home/welcome";
-
-            dispatcher.user = new User();
-
-            this.emit("logout", data);
-        });
-
     }
 }
