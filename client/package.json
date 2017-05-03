@@ -41,6 +41,7 @@
     "react-dom": "^15.4.1",
     "react-dropzone": "^3.7.3",
     "react-flip-move": "^2.8.0",
+    "react-redux": "^5.0.4",
     "react-resize-detector": "^0.3.3",
     "redux": "^3.6.0",
     "redux-saga": "^0.15.1",
