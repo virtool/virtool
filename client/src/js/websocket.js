@@ -1,7 +1,7 @@
 import User from "./user";
 import Router from "./router";
 
-export default function Dispatcher () {
+export default function WSConnection () {
 
     this.user = new User();
     this.router = new Router();
