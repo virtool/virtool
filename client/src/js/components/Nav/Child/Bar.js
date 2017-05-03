@@ -21,17 +21,17 @@ export default class ChildBar extends React.Component {
         super(props);
 
         this.state = {
-            activeChild: dispatcher.router.route.child,
-            children: dispatcher.router.route.children
+            activeChild: window.router.route.child,
+            children: window.router.route.children
         }
     }
 
     componentDidMount () {
-        dispatcher.router.on("change", this.onRouteChange);
+        window.router.on("change", this.onRouteChange);
     }
 
     componentWillUnmount () {
-        dispatcher.router.off("change", this.onRouteChange);
+        window.router.off("change", this.onRouteChange);
     }
 
     /**

@@ -28,14 +28,6 @@ export default class UserSettings extends React.Component {
         onHide: React.PropTypes.func.isRequired
     };
 
-    componentDidMount () {
-        dispatcher.user.on("change", this.update);
-    }
-
-    componentWillUnmount () {
-        dispatcher.user.off("change", this.update);
-    }
-
     requestSet = (key, value) => {
         this.setState({pending: true}, () => {
             dispatcher.db.users.request("change_user_setting", {

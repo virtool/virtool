@@ -32,7 +32,7 @@ export default class HMMEntry extends React.Component {
         ));
 
         return (
-            <tr className="pointer" onClick={() => dispatcher.router.setExtra(["detail", this.props._id])}>
+            <tr className="pointer" onClick={() => window.router.setExtra(["detail", this.props._id])}>
                 <td>{this.props.cluster}</td>
                 <td>{this.props.label}</td>
                 <td>{labelComponents} {families.length > 3 ? "...": null}</td>

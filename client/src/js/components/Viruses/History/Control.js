@@ -32,7 +32,7 @@ export default class HistoryControl extends React.Component {
     }
 
     selectIndex = (event) => {
-        dispatcher.router.setExtra([event.target.value]);
+        window.router.setExtra([event.target.value]);
     };
 
     render () {

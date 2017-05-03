@@ -77,11 +77,11 @@ export default class SampleController extends React.Component {
     };
 
     create = () => {
-        dispatcher.router.setExtra(["create"]);
+        window.router.setExtra(["create"]);
     };
 
     hideModal = () => {
-        dispatcher.router.clearExtra();
+        window.router.clearExtra();
     };
 
     onUserChange = () => {

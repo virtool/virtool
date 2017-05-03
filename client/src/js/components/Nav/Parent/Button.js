@@ -38,7 +38,7 @@ export default class ParentButton extends React.Component {
      */
     handleClick = (event) => {
         event.preventDefault();
-        dispatcher.router.setParent(this.props.parentKey);
+        window.router.setParent(this.props.parentKey);
     };
 
     render () {

@@ -47,7 +47,7 @@ export default class SubtractionHosts extends React.Component {
     }
 
     hideModal = () => {
-        dispatcher.router.clearExtra();
+        window.router.clearExtra();
     };
 
     update = () => {
@@ -104,7 +104,7 @@ export default class SubtractionHosts extends React.Component {
                 <ListGroupItem
                     key={host._id}
                     className="spaced"
-                    onClick={() => dispatcher.router.setExtra(["detail", host._id])}
+                    onClick={() => window.router.setExtra(["detail", host._id])}
                 >
                     <Row>
                         <Col md={4}>
@@ -148,7 +148,7 @@ export default class SubtractionHosts extends React.Component {
                         </InputGroup>
                     </FormGroup>
 
-                    <Button icon="new-entry" bsStyle="primary" onClick={() => dispatcher.router.setExtra(["add"])}>
+                    <Button icon="new-entry" bsStyle="primary" onClick={() => window.router.setExtra(["add"])}>
                         Create
                     </Button>
                 </div>

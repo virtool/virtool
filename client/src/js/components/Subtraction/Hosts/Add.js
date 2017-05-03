@@ -65,7 +65,7 @@ class HostFileSelector extends React.PureComponent {
                         <Icon name="notification" />
                         <FlexItem pad={5}>
                             <span>No files found. </span>
-                            <a className="pointer" onClick={() => dispatcher.router.setChild("files")}>
+                            <a className="pointer" onClick={() => window.router.setChild("files")}>
                                 Upload a fasta file.
                             </a>
                         </FlexItem>

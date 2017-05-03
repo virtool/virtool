@@ -59,13 +59,13 @@ export default class VirusToolbar extends React.Component {
     handleSelect = (eventKey) => {
         switch (eventKey) {
             case "add":
-                dispatcher.router.setExtra(["add"]);
+                window.router.setExtra(["add"]);
                 break;
             case "import":
-                dispatcher.router.setExtra(["import"]);
+                window.router.setExtra(["import"]);
                 break;
             case "export":
-                dispatcher.router.setExtra(["export"]);
+                window.router.setExtra(["export"]);
                 break;
         }
     };

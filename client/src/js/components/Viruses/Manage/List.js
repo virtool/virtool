@@ -100,7 +100,7 @@ export default class VirusList extends React.Component {
 
     componentWillUnmount = () => this.hideModal();
 
-    hideModal = () => dispatcher.router.clearExtra();
+    hideModal = () => window.router.clearExtra();
 
     render () {
 

@@ -29,7 +29,7 @@ export default class ChildButton extends React.Component {
      * @func
      */
     handleClick = () => {
-        dispatcher.router.setChild(this.props.childKey);
+        window.router.setChild(this.props.childKey);
     };
 
     render = () => (

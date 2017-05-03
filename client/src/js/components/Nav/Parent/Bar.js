@@ -26,44 +26,17 @@ export default class ParentBar extends React.Component {
         super(props);
 
         this.state = {
-            activeParent: dispatcher.router.route.parent,
+            activeParent: window.router.route.parent,
             modalMode: null,
             showUserSettings: false
         };
     }
 
-    componentDidMount () {
-        dispatcher.router.on("change", this.onRouteChange);
-    }
-
-    componentWillUnmount () {
-        dispatcher.router.off("change", this.onRouteChange);
-    }
-
-    onRouteChange = (route) => this.setState({activeParent: route.parent});
-
-    hideModal = () => this.setState({modalMode: null});
-
-    handleDropdownSelect = (eventKey) => {
-        if (eventKey === "password" || eventKey === "settings") {
-            this.setState({
-                modalMode: eventKey
-            });
-        }
-
-        if (eventKey === "logout") {
-            dispatcher.send({
-                interface: "users",
-                method: "logout"
-            });
-        }
-    };
-
     render () {
 
         // Generate a primary navItem for each primary route (home, jobs, samples, viruses, hosts, options). Only show
         // the options navItem if the user is an administrator.
-        const navItemComponents = dispatcher.router.structure.map((parent) => {
+        const navItemComponents = window.router.structure.map((parent) => {
             if (parent.key !== "options" || dispatcher.user.permissions.modify_options) {
                 return (
                     <ParentButton
@@ -103,18 +76,6 @@ export default class ParentBar extends React.Component {
             );
         }
 
-        let userSettings;
-
-        if (dispatcher.user.name) {
-            userSettings = (
-                <UserSettings
-                    user={dispatcher.user}
-                    show={this.state.modalMode === "settings"}
-                    onHide={this.hideModal}
-                />
-            );
-        }
-
         return (
             <Navbar fixedTop fluid>
 
@@ -132,16 +93,6 @@ export default class ParentBar extends React.Component {
                         {dropDown}
                     </Nav>
                 </Navbar.Collapse>
-
-                <ChangePassword
-                    {...this.props}
-                    user={dispatcher.user}
-                    show={this.state.modalMode === "password"}
-                    onHide={this.hideModal}
-                />
-
-                {userSettings}
-
             </Navbar>
         );
     }

@@ -70,7 +70,7 @@ export default class QuickAnalyze extends React.Component {
 
         this.setState({pending: true}, () => {
             dispatcher.db.samples.request("analyze", {
-                samples: [dispatcher.router.route.extra[1]],
+                samples: [window.router.route.extra[1]],
                 algorithm: this.state.algorithm,
                 name: this.state.name || null
             }).success(() => {
@@ -109,7 +109,7 @@ export default class QuickAnalyze extends React.Component {
 
     render () {
 
-        const sampleName = dispatcher.db.samples.by("_id", dispatcher.router.route.extra[1]).name;
+        const sampleName = dispatcher.db.samples.by("_id", window.router.route.extra[1]).name;
 
         const checkboxProps = {
             className: "pointer",

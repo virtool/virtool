@@ -74,7 +74,7 @@ export default class ManageViruses extends React.Component {
      * @func
      */
     hideModal = () => {
-        dispatcher.router.clearExtra();
+        window.router.clearExtra();
     };
 
     render () {

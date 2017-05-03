@@ -32,7 +32,7 @@ export default class JobList extends React.Component {
     }
 
     hideModal = () => {
-        dispatcher.router.clearExtra();
+        window.router.clearExtra();
     };
 
     render () {

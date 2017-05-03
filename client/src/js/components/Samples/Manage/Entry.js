@@ -45,7 +45,7 @@ export default class SampleEntry extends React.Component {
     };
 
     showDetail = () => {
-        dispatcher.router.setExtra(["detail", this.props._id]);
+        window.router.setExtra(["detail", this.props._id]);
     };
 
     quickAnalyze = (event) => {
@@ -66,7 +66,7 @@ export default class SampleEntry extends React.Component {
                 })
             });
         } else {
-            dispatcher.router.setExtra(["quick-analyze", this.props._id]);
+            window.router.setExtra(["quick-analyze", this.props._id]);
         }
     };
 

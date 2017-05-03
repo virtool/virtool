@@ -35,7 +35,7 @@ export default class VirusEntry extends React.Component {
     };
 
     showDetail = () => {
-        dispatcher.router.setExtra(["detail", this.props._id]);
+        window.router.setExtra(["detail", this.props._id]);
     };
 
     archive = (event) => {

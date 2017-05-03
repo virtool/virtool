@@ -69,7 +69,7 @@ export default class AddVirus extends React.Component {
         if (this.state.name !== "") {
             dispatcher.db.viruses.request("add", {name: this.state.name, abbreviation: this.state.abbreviation})
                 .success((virusId) => {
-                    this.setState(getInitialState(), () => dispatcher.router.setExtra(["detail", virusId]));
+                    this.setState(getInitialState(), () => window.router.setExtra(["detail", virusId]));
                 })
                 .failure((data) => {
                     this.setState({error: data});

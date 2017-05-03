@@ -81,7 +81,7 @@ export default class ManageHMM extends React.Component {
     };
 
     hideModal = () => {
-        dispatcher.router.clearExtra();
+        window.router.clearExtra();
     };
 
     clean = () => {

@@ -33,7 +33,7 @@ export default class JobEntry extends React.Component {
         canRemove: React.PropTypes.bool
     };
 
-    showDetail = () =>         dispatcher.router.setExtra(["detail", this.props._id]);
+    showDetail = () => window.router.setExtra(["detail", this.props._id]);
 
     remove = (event) => {
         event.stopPropagation();
