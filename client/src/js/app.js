@@ -1,13 +1,12 @@
-/**
- * Created by igboyes on 03/03/15.
- */
-
 import React from "react";
 import ReactDOM from "react-dom";
-import Start from "./components/Start";
+import { Provider } from "react-redux";
 
-import Request from "superagent";
-import Dispatcher from "virtool/js/dispatcher";
+import App from "./components/App";
+import Router from "./router";
+import WSConnection from "virtool/js/websocket";
+import { store } from "./store/createStore";
+
 
 export * from "../css/bootstrap.css";
 export * from "../css/font.css";
@@ -17,15 +16,16 @@ export * from "../css/typeahead.css";
 export * from "../css/graphics.css";
 export * from "../css/style.css";
 
-window.dispatcher = new Dispatcher();
-window.dispatcher.establishConnection();
+window.ws = new WSConnection();
+window.ws.establishConnection();
 
-Request
-    .get("/api/account")
-    .end((err, res) => {
-        window.dispatcher.user.load(res.body);
+window.store = store;
 
-        ReactDOM.render(React.createElement(Start), document.getElementById("app-container"));
-    });
+window.router = new Router();
 
-
+ReactDOM.render(
+    <Provider store={store}>
+        <App />
+    </Provider>,
+    document.getElementById("app-container")
+);
