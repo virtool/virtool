@@ -1,5 +1,4 @@
 import Numeral from "numeral";
-import Request from "superagent";
 import { get, startCase, capitalize } from "lodash";
 
 export const taskDisplayNames = {
@@ -49,14 +48,4 @@ export const formatIsolateName = (isolate) => {
     }
 
     return "Unnamed";
-};
-
-export const postJSON = (uri, data, callback) => {
-    Request.post(uri)
-        .send(data)
-        .type("application/x-www-form-urlencoded; charset=UTF-8")
-        .accept("json")
-        .end((err, response) => {
-            callback(response.body)
-        });
 };
