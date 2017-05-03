@@ -10,9 +10,7 @@
  */
 
 import React from "react";
-import Request from "superagent";
 import Dropzone from "react-dropzone";
-import { assign, pick } from "lodash";
 import { Modal } from "react-bootstrap";
 import { byteSize } from "virtool/js/utils";
 import { Button, Flex, ProgressBar } from "virtool/js/components/Base";
@@ -45,63 +43,12 @@ export default class ImportModal extends React.Component {
         }
     }
 
-    componentWillUnmount () {
-        dispatcher.db.files.off("change", this.updateCount);
-    }
-
     modalExited = () => {
         this.setState(getInitialState());
     };
 
     handleDrop = (files) => {
-        this.setState({dropped: files[0]}, () => {
-
-            const fileData = assign({"file_type": "annotations"}, pick(this.state.dropped, ["name", "size"]));
-
-            dispatcher.db.files.request("authorize_upload", fileData)
-                .success((data) => {
-                    const newState = {
-                        pending: true,
-                        target: data.target,
-                        fileId: `${data.target}-${this.state.dropped.name}`
-                    };
-
-                    dispatcher.db.files.on("change", this.updateFile);
-
-                    this.setState(newState, () => {
-                        Request.post(`/upload/${this.state.target}`)
-                            .send(this.state.dropped)
-                            .ok(res => res.status === 200)
-                            .end(this.importAnnotations);
-                    });
-                });
-        });
-    };
-
-    importAnnotations = () => {
-        dispatcher.db.hmm.request("import_annotations", {file_id: this.state.fileId})
-            .update((data) => {
-                if (data.count) {
-                    this.setState({count: data.count});
-                }
-                if (data.checking) {
-                    this.setState({checking: true});
-                }
-            })
-            .success(() => {
-                this.setState({complete: true});
-            })
-            .failure((data) => {
-                this.setState({warning: data.message});
-            });
-    };
-
-    updateFile = () => {
-        const fileDocument = dispatcher.db.files.by("_id", this.state.fileId);
-
-        this.setState({
-            uploaded: fileDocument ? fileDocument.size_now: 0
-        });
+        this.setState({dropped: files[0]});
     };
 
     render () {

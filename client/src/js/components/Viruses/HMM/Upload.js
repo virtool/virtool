@@ -10,9 +10,7 @@
  */
 
 import React from "react";
-import Request from "superagent";
 import Dropzone from "react-dropzone";
-import { assign, pick } from "lodash";
 import { Modal } from "react-bootstrap";
 import { byteSize } from "virtool/js/utils";
 import { Button, Flex, ProgressBar } from "virtool/js/components/Base";
@@ -43,50 +41,8 @@ export default class UploadModal extends React.Component {
         }
     }
 
-    componentWillUnmount () {
-        dispatcher.db.files.off("change", this.updateFiles);
-    }
-
     modalExited = () => {
         this.setState(getInitialState());
-    };
-
-    handleDrop = (files) => {
-        this.setState({dropped: files[0]}, () => {
-
-            const fileData = assign({"file_type": "hmm"}, pick(this.state.dropped, ["name", "size"]));
-
-            dispatcher.db.files.request("authorize_upload", fileData)
-                .success((data) => {
-                    const newState = {
-                        pending: true,
-                        target: data.target,
-                        fileId: `${data.target}-${this.state.dropped.name}`
-                    };
-
-                    dispatcher.db.files.on("change", this.update);
-
-                    this.setState(newState, () => {
-                        Request.post(`/upload/${this.state.target}`)
-                            .send(this.state.dropped)
-                            .ok(res => res.status === 200)
-                            .end(this.importHmm);
-                    });
-                });
-        });
-    };
-
-    importHmm = () => {
-        dispatcher.db.hmm.request("import_hmm", {file_id: this.state.fileId})
-            .success(() => this.setState({imported: true}));
-    };
-
-    update = () => {
-        const fileDocument = dispatcher.db.files.by("_id", this.state.fileId);
-
-        this.setState({
-            uploaded: fileDocument ? fileDocument.size_now: 0
-        });
     };
 
     render () {

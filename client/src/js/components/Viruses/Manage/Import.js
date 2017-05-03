@@ -10,7 +10,6 @@
  */
 
 import React from "react";
-import Request from "superagent";
 import Dropzone from "react-dropzone";
 import { includes, pick } from "lodash";
 import { Alert, Modal, ListGroup } from "react-bootstrap";
@@ -48,11 +47,6 @@ export default class ImportViruses extends React.Component {
     componentDidUpdate (prevProps, prevState) {
         if (!prevState.fileId && this.state.fileId) {
             dispatcher.db.files.on("change", this.onFileChange);
-
-            Request.post(`/upload/${this.state.target}`)
-                .send(this.state.dropped)
-                .ok(res => res.status === 200)
-                .end();
         }
     }
 

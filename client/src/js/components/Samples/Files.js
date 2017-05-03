@@ -1,5 +1,4 @@
 import React from "react";
-import Request from "superagent";
 import { Uploader } from "virtool/js/components/Base";
 
 const getFiles = () => dispatcher.db.files.chain().find({file_type: "reads"});
@@ -28,11 +27,6 @@ export default class ReadFiles extends React.Component {
     upload = (files) => {
         files.forEach(file => {
             dispatcher.db.samples.request("authorize_upload", {name: file.name, size: file.size })
-                .success(data => {
-                    Request.post(`/upload/${data.file_id}`)
-                        .send(file)
-                        .end();
-                });
         });
     };
 
