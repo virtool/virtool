@@ -11,7 +11,7 @@
 
 import React from "react";
 import { Modal } from "react-bootstrap";
-import ChangePasswordForm from "virtool/js/components/Login/ChangePasswordForm";
+import ChangePasswordForm from "./ChangePasswordForm";
 
 const ChangePasswordModal = (props) => {
 
