@@ -1,9 +1,7 @@
 import React from "react";
 import ReactDOM from "react-dom";
-import { Provider } from "react-redux";
 
 import App from "./components/App";
-import Router from "./router";
 import WSConnection from "virtool/js/websocket";
 import { store } from "./store/createStore";
 
@@ -21,11 +19,7 @@ window.ws.establishConnection();
 
 window.store = store;
 
-window.router = new Router();
-
 ReactDOM.render(
-    <Provider store={store}>
-        <App />
-    </Provider>,
+    <App store={store} />
     document.getElementById("app-container")
 );
