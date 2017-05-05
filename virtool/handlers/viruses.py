@@ -1,5 +1,7 @@
+import re
 import json
 import gzip
+import asyncio
 import pymongo
 import pymongo.errors
 import tempfile
@@ -50,7 +52,33 @@ async def find(req):
     List truncated virus documents. Will take filters in URL parameters eventually.
      
     """
-    documents = await req.app["db"].viruses.find({}, virtool.virus.LIST_PROJECTION).to_list(length=10)
+    print(req.query)
+
+    find_term = req.query.get("find", None)
+    modified = virtool.utils.to_bool(req.query.get("modified", False))
+    descending = virtool.utils.to_bool(req.query.get("descending", False))
+
+    query = dict()
+
+    if find_term:
+        regex = re.compile("{}".format(find_term), re.IGNORECASE)
+        query["$or"] = [{field: {"$regex": regex}} for field in ["name", "abbreviation"]]
+
+    if modified:
+        query["modified"] = True
+
+    sort_term = req.query.get("sort", "name")
+
+    sort_direction = 1
+
+    if descending:
+        sort_direction = -1
+
+    documents = await req.app["db"].viruses.find(
+        query,
+        virtool.virus.LIST_PROJECTION,
+        sort=[(sort_term, sort_direction)]
+    ).to_list(length=15)
 
     return json_response([virtool.virus.processor(document) for document in documents])
 
