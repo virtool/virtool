@@ -10,12 +10,7 @@
 import { assign } from "lodash";
 import { GET_ACCOUNT_SUCCEEDED } from "../actions/actionTypes";
 
-const initialState = {
-    user_id: null,
-    groups: null,
-    permissions: null,
-    settings: null
-};
+const initialState = {};
 
 export function accountReducer (state = initialState, action) {
 
