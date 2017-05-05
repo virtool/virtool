@@ -7,10 +7,7 @@
  *
  */
 
-
-
 import { all } from "redux-saga/effects"
-
 import { watchViruses } from "./viruses";
 
 export function* rootSaga () {
