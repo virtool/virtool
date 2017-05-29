@@ -27,8 +27,11 @@ async def index_handler(req):
 
 def setup_routes(app):
 
-    # Site routes
+    # Index routes
     app.router.add_get("/", index_handler)
+    app.router.add_get("/viruses", index_handler)
+
+    # Other routes
     app.router.add_post("/login", login_handler)
     app.router.add_static("/static", "client/dist")
 
