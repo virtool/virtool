@@ -1,4 +1,4 @@
-    /**
+/**
  *
  *
  * @copyright 2017 Government of Canada
@@ -6,6 +6,8 @@
  * @author igboyes
  *
  */
+
+import Request from "superagent";
 
 export const virusesAPI = {
 
