@@ -26,27 +26,6 @@ export default class ChildBar extends React.Component {
         }
     }
 
-    componentDidMount () {
-        window.router.on("change", this.onRouteChange);
-    }
-
-    componentWillUnmount () {
-        window.router.off("change", this.onRouteChange);
-    }
-
-    /**
-     * Changes the child route documents when the route changes. Called in response to a change event in the router.
-     *
-     * @param route
-     * @func
-     */
-    onRouteChange = (route) => {
-        this.setState({
-            activeChild: route.child,
-            children: route.children
-        });
-    };
-
     render () {
 
         // Each button component shows up in the secondary navbar.
