@@ -9,9 +9,14 @@
 
 export const virusesAPI = {
 
-    find: () => {
-        fetch("/api/viruses")
-            .then(resp => resp.json());
+    find: (findParams) => {
+        if (!findParams.find) {
+            delete findParams["find"];
+        }
+
+        return Request
+            .get("/api/viruses")
+            .query(findParams);
     },
 
     create: (virusData) => {

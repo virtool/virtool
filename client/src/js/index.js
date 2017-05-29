@@ -20,6 +20,6 @@ window.ws.establishConnection();
 window.store = store;
 
 ReactDOM.render(
-    <App store={store} />
+    <App store={store} />,
     document.getElementById("app-container")
 );

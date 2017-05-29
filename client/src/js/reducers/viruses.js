@@ -25,8 +25,11 @@ import {
 } from "../actions/actionTypes";
 
 const initialState = {
-    viruses: [],
-    filter: null,
+    documents: [],
+    find: null,
+    sort: "name",
+    descending: false,
+    modified: false,
     page: 1,
 
     detailVisible: false,
@@ -58,14 +61,11 @@ export function virusesReducer (state = initialState, action) {
             });
 
         case FIND_VIRUSES_REQUESTED:
-            return assign({}, state, {
-                viruses: [],
-                finding: true
-            });
+            return assign({}, state, assign({finding: true}, action.terms));
 
         case FIND_VIRUSES_SUCCEEDED:
             return assign({}, state, {
-                viruses: action.data,
+                documents: action.data,
                 finding: false
             });
 
