@@ -10,14 +10,16 @@
 import { assign } from "lodash";
 import { GET_ACCOUNT_SUCCEEDED } from "../actions/actionTypes";
 
-const initialState = {};
+const initialState = {
+    ready: false
+};
 
 export function accountReducer (state = initialState, action) {
 
     switch (action.type) {
 
         case GET_ACCOUNT_SUCCEEDED:
-            return assign({}, state, action.data);
+            return assign({}, state, action.data, {ready: true});
 
         default:
             return state;
