@@ -11,58 +11,92 @@
 
 import React from "react";
 import { LinkContainer } from "react-router-bootstrap";
-import { Navbar, Nav, NavItem } from "react-bootstrap";
-import { Icon } from "virtool/js/components/Base"
+import { Navbar, Nav, NavItem, NavDropdown, MenuItem } from "react-bootstrap";
+import { Icon, Flex, FlexItem } from "virtool/js/components/Base"
+
+import { connect } from "react-redux";
+import { withRouter } from "react-router-dom";
 
 /**
  * A container component that renders the primary and secondary navigation bars.
  */
-const Bar = () => (
-    <Navbar>
-        <Navbar.Header>
-            <Navbar.Brand>
-                <Icon name="vt-logo" />
-            </Navbar.Brand>
-        </Navbar.Header>
+const Bar = (props) => {
 
-        <Nav>
-            <LinkContainer to="/">
-                <NavItem>
-                    Home
-                </NavItem>
-            </LinkContainer>
+    const dropdownTitle = (
+        <span><Icon name="user" /> {props.user_id}</span>
+    );
 
-            <LinkContainer to="/jobs">
-                <NavItem>
-                    Jobs
-                </NavItem>
-            </LinkContainer>
+    return (
+        <Navbar>
+            <Navbar.Header>
+                <Navbar.Brand>
+                    <Icon name="vtlogo" className="vtlogo"/>
+                </Navbar.Brand>
+            </Navbar.Header>
 
-            <LinkContainer to="/samples">
-                <NavItem>
-                    Samples
-                </NavItem>
-            </LinkContainer>
+            <Nav>
+                <LinkContainer to="/">
+                    <NavItem>
+                        Home
+                    </NavItem>
+                </LinkContainer>
 
-            <LinkContainer to="/viruses">
-                <NavItem>
-                    Viruses
-                </NavItem>
-            </LinkContainer>
+                <LinkContainer to="/jobs">
+                    <NavItem>
+                        Jobs
+                    </NavItem>
+                </LinkContainer>
 
-            <LinkContainer to="/subtraction">
-                <NavItem>
-                    Subtraction
-                </NavItem>
-            </LinkContainer>
+                <LinkContainer to="/samples">
+                    <NavItem>
+                        Samples
+                    </NavItem>
+                </LinkContainer>
 
-            <LinkContainer to="/settings">
-                <NavItem>
-                    Settings
-                </NavItem>
-            </LinkContainer>
-        </Nav>
-    </Navbar>
-);
+                <LinkContainer to="/viruses">
+                    <NavItem>
+                        Viruses
+                    </NavItem>
+                </LinkContainer>
 
-export default Bar;
+                <LinkContainer to="/subtraction">
+                    <NavItem>
+                        Subtraction
+                    </NavItem>
+                </LinkContainer>
+
+                <LinkContainer to="/settings">
+                    <NavItem>
+                        Settings
+                    </NavItem>
+                </LinkContainer>
+            </Nav>
+
+            <Nav pullRight>
+                <NavDropdown id="account-dropdown" title={dropdownTitle}>
+                    <MenuItem>Settings</MenuItem>
+                    <MenuItem>Logout</MenuItem>
+                </NavDropdown>
+            </Nav>
+        </Navbar>
+    );
+};
+
+Bar.propTypes = {
+    user_id: React.PropTypes.string
+};
+
+const mapStateToProps = (state) => {
+    return state.account;
+};
+
+const mapDispatchToProps = () => {
+    return {};
+};
+
+const BarContainer = withRouter(connect(
+    mapStateToProps,
+    mapDispatchToProps
+)(Bar));
+
+export default BarContainer;
