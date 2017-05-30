@@ -4,6 +4,7 @@ import ReactDOM from "react-dom";
 import App from "./components/App";
 import WSConnection from "virtool/js/websocket";
 import { store } from "./store/createStore";
+import { getAccount } from "./actions/accountActions";
 
 
 export * from "../css/bootstrap.css";
@@ -18,6 +19,8 @@ window.ws = new WSConnection();
 window.ws.establishConnection();
 
 window.store = store;
+
+window.store.dispatch(getAccount());
 
 ReactDOM.render(
     <App store={store} />,
