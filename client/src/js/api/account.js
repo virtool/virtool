@@ -13,6 +13,10 @@ export const accountAPI = {
 
     get: () => {
         return Request.get("/api/account");
+    },
+
+    logout: () => {
+        return Request.get("/api/account/logout");
     }
 
 };
