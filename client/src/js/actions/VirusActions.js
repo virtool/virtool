@@ -12,7 +12,8 @@ import {
     WS_REMOVE_VIRUS,
     FIND_VIRUSES_REQUESTED,
     CREATE_VIRUS_SET_NAME,
-    CREATE_VIRUS_SET_ABBREVIATION
+    CREATE_VIRUS_SET_ABBREVIATION,
+    CREATE_VIRUS_CLEAR
 } from "./actionTypes";
 
 
@@ -44,9 +45,15 @@ export function createVirusSetName (name) {
     }
 }
 
-export function createVirusSetAbbreviation (name) {
+export function createVirusSetAbbreviation (abbreviation) {
     return {
         type: CREATE_VIRUS_SET_ABBREVIATION,
-        name
+        abbreviation
+    }
+}
+
+export function createVirusClear () {
+    return {
+        type: CREATE_VIRUS_CLEAR
     }
 }

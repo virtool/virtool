@@ -45,7 +45,7 @@ export default class VirusToolbar extends React.Component {
                 <DropdownButton id="virus-dropdown" title={<Icon name="menu" />} noCaret pullRight>
                     <LinkContainer to="/viruses/create">
                         <MenuItem>
-                            <Icon name="new-entry" /> New
+                            <Icon name="new-entry" /> Create
                         </MenuItem>
                     </LinkContainer>
 

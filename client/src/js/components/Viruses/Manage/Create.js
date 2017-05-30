@@ -15,7 +15,7 @@ import { withRouter } from "react-router-dom";
 import { Row, Col, Modal, Alert, ButtonToolbar } from "react-bootstrap";
 
 import { Icon, Flex, FlexItem, Input, Button } from "virtool/js/components/Base";
-import { createVirusSetName, createVirusSetAbbreviation } from "../../../actions/VirusActions";
+import { createVirusSetName, createVirusSetAbbreviation, createVirusClear } from "../../../actions/VirusActions";
 
 /**
  * A form for adding a new virus, defining its name and abbreviation.
@@ -29,8 +29,10 @@ class CreateVirus extends React.Component {
     static propTypes = {
         name: React.PropTypes.string,
         abbreviation: React.PropTypes.string,
+        errors: React.PropTypes.arrayOf(React.PropTypes.string),
         onSetName: React.PropTypes.func,
-        onSetAbbreviation: React.PropTypes.func
+        onSetAbbreviation: React.PropTypes.func,
+        onHide: React.PropTypes.func
     };
 
     componentDidMount () {
@@ -39,22 +41,20 @@ class CreateVirus extends React.Component {
 
     render () {
 
-        /*
-        // An alert that can be shown when an error occurs when submitting the form.
         let alert;
 
-        if (this.state.error) {
+        if (this.props.errors.length) {
             let message;
 
             // Show an error when no virus name is defined. Getting this error doesn't require a trip to the server.
-            if (this.state.error.unnamed) {
+            if (this.props.errors.unnamed) {
                 message = "A virus name must be provided";
             }
 
             // Show an error when the provided name or abbreviation is already in use in the database. These errors are
             // sent by the server.
             else {
-                if (this.state.error.name) {
+                if (this.props.errors.name) {
                     message = "Name is already in use";
                 }
 
@@ -82,17 +82,15 @@ class CreateVirus extends React.Component {
             );
         }
 
-        */
-
         const inputProps = {
             type: "text",
             onChange: this.handleChange
         };
 
         return (
-            <Modal show={true} onHide={this.props.onClose} onExited={this.modalExited}>
-                <Modal.Header onHide={this.props.onClose} closeButton>
-                    New Virus
+            <Modal show={true} onHide={this.props.onHide} onExited={this.modalExited} animation={false}>
+                <Modal.Header onHide={this.props.onHide} closeButton>
+                    Create Virus
                 </Modal.Header>
 
                 <form onSubmit={this.handleSubmit}>
@@ -116,6 +114,8 @@ class CreateVirus extends React.Component {
                                 />
                             </Col>
                         </Row>
+
+                        {alert}
                     </Modal.Body>
 
                     <Modal.Footer>
@@ -133,13 +133,10 @@ class CreateVirus extends React.Component {
 }
 
 const mapStateToProps = (state) => {
-    return {
-        name: state.createVirus.name,
-        abbreviation: state.createVirus.abbreviation
-    };
+    return state.createVirus;
 };
 
-const mapDispatchToProps = (dispatch) => {
+const mapDispatchToProps = (dispatch, ownProps) => {
     return {
         onSetName: (name) => {
             dispatch(createVirusSetName(name));
@@ -147,6 +144,11 @@ const mapDispatchToProps = (dispatch) => {
 
         onSetAbbreviation: (abbreviation) => {
             dispatch(createVirusSetAbbreviation(abbreviation));
+        },
+
+        onHide: () => {
+            ownProps.history.push("/viruses");
+            dispatch(createVirusClear());
         }
     };
 };
