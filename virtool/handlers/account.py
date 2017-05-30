@@ -123,3 +123,18 @@ async def change_password(req):
     })
 
     return json_response({"timestamp": last_password_change})
+
+
+@protected()
+async def logout(req):
+    """
+    Invalidates the requesting session, effectively logging out the user.
+     
+    """
+    db = req.app["db"]
+
+    session_id = req["session"].id
+
+    response = await db.sessions.delete_one({"_id": session_id})
+
+    return json_response({"session_id": session_id})
