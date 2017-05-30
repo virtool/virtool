@@ -10,7 +10,7 @@
 import { createStore, combineReducers, applyMiddleware } from "redux";
 import createSagaMiddleware from "redux-saga";
 
-import { virusesReducer } from "../reducers/viruses";
+import { virusesReducer, createVirusReducer } from "../reducers/viruses";
 import { accountReducer } from "../reducers/account";
 import { rootSaga } from "../sagas/root";
 import { watchViruses } from "../sagas/viruses"
@@ -20,6 +20,7 @@ const sagaMiddleware = createSagaMiddleware();
 
 const reducer = combineReducers({
     viruses: virusesReducer,
+    createVirus: createVirusReducer,
     account: accountReducer
 });
 

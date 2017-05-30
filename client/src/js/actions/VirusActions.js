@@ -11,9 +11,8 @@ import {
     WS_UPDATE_VIRUS,
     WS_REMOVE_VIRUS,
     FIND_VIRUSES_REQUESTED,
-    GET_VIRUS_REQUESTED,
-    EDIT_VIRUS_REQUESTED,
-    REMOVE_VIRUS_REQUESTED
+    CREATE_VIRUS_SET_NAME,
+    CREATE_VIRUS_SET_ABBREVIATION
 } from "./actionTypes";
 
 
@@ -38,32 +37,16 @@ export function findViruses (terms) {
     }
 }
 
-export function getVirus (virusId) {
+export function createVirusSetName (name) {
     return {
-        type: GET_VIRUS_REQUESTED,
-        virusId: virusId
+        type: CREATE_VIRUS_SET_NAME,
+        name
     }
 }
 
-export function editVirus (name, abbreviation) {
-    let action = {
-        type: EDIT_VIRUS_REQUESTED
-    };
-
-    if (name) {
-        action.name = name;
-    }
-
-    if (abbreviation) {
-        action.abbreviation = abbreviation;
-    }
-
-    return action;
-}
-
-export function removeVirus (virusId) {
+export function createVirusSetAbbreviation (name) {
     return {
-        type: REMOVE_VIRUS_REQUESTED,
-        virusId: virusId
+        type: CREATE_VIRUS_SET_ABBREVIATION,
+        name
     }
 }

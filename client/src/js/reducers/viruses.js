@@ -16,6 +16,11 @@ import {
     FIND_VIRUSES_SUCCEEDED,
     FIND_VIRUSES_FAILED,
 
+    CREATE_VIRUS_SET_NAME,
+    CREATE_VIRUS_SET_ABBREVIATION,
+    CREATE_VIRUS_CLEAR,
+    CREATE_VIRUS_REQUESTED,
+
     EDIT_VIRUS_REQUESTED,
     EDIT_VIRUS_FAILED,
 
@@ -24,7 +29,7 @@ import {
     GET_VIRUS_FAILED
 } from "../actions/actionTypes";
 
-const initialState = {
+const virusesInitialState = {
     documents: [],
     find: null,
     sort: "name",
@@ -32,18 +37,18 @@ const initialState = {
     modified: false,
     page: 1,
 
-    detailVisible: false,
-    detailData: null,
-
-    createVisible: false,
-    createData: null,
+    create: {
+        name: "",
+        abbreviation: "",
+        errors: []
+    },
 
     pendingFind: false,
     pendingEdit: false,
     pendingRemove: false
 };
 
-export function virusesReducer (state = initialState, action) {
+export function virusesReducer (state = virusesInitialState, action) {
 
     switch (action.type) {
 
@@ -104,4 +109,38 @@ export function virusesReducer (state = initialState, action) {
         default:
             return state;
     }
+}
+
+const createVirusInitialState = {
+    name: "",
+    abbreviation: "",
+    errors: []
+};
+
+export function createVirusReducer (state = createVirusInitialState, action) {
+
+    switch (action.type) {
+
+        case CREATE_VIRUS_SET_NAME:
+            return assign({}, state, {
+                name: action.name
+            });
+
+        case CREATE_VIRUS_SET_ABBREVIATION:
+            return assign({}, state, {
+                abbreviation: action.abbreviation
+            });
+
+        case CREATE_VIRUS_CLEAR:
+            return assign({}, createVirusInitialState);
+
+        case CREATE_VIRUS_REQUESTED:
+            return assign({}, state, {
+                pending: true
+            });
+
+    }
+
+    return state;
+
 }
