@@ -42,14 +42,6 @@ export default class ManageViruses extends React.Component {
         route: React.PropTypes.object
     };
 
-    componentDidMount () {
-        dispatcher.db.viruses.on("change", this.update);
-    }
-
-    componentWillUnmount () {
-        dispatcher.db.viruses.off("change", this.update);
-    }
-
     setFindTerm = (event) => {
         this.setState({
             findTerm: event.target.value || ""

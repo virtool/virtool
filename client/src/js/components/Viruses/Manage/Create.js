@@ -9,93 +9,44 @@
  * @exports AddVirus
  */
 
-
 import React from "react";
+import { connect } from "react-redux";
+import { withRouter } from "react-router-dom";
 import { Row, Col, Modal, Alert, ButtonToolbar } from "react-bootstrap";
-import { Icon, Flex, FlexItem, Input, Button } from "virtool/js/components/Base";
 
-const getInitialState = () => ({
-    name: "",
-    abbreviation: "",
-    error: null
-});
+import { Icon, Flex, FlexItem, Input, Button } from "virtool/js/components/Base";
+import { createVirusSetName, createVirusSetAbbreviation } from "../../../actions/VirusActions";
 
 /**
  * A form for adding a new virus, defining its name and abbreviation.
  */
-export default class AddVirus extends React.Component {
+class CreateVirus extends React.Component {
 
     constructor (props) {
         super(props);
-        this.state = getInitialState();
     }
 
     static propTypes = {
-        show: React.PropTypes.bool.isRequired,
-        onHide: React.PropTypes.func.isRequired
+        name: React.PropTypes.string,
+        abbreviation: React.PropTypes.string,
+        onSetName: React.PropTypes.func,
+        onSetAbbreviation: React.PropTypes.func
     };
 
-    componentDidUpdate (prevProps) {
-        // Focus on the first input field ("name") when the modal is shown.
-        if (this.props.show && !prevProps.show) {
-            this.inputNode.focus();
-        }
+    componentDidMount () {
+        this.inputNode.focus();
     }
 
-    modalExited = () => {
-        this.setState(getInitialState());
-    };
-
-    /**
-     * Handles change events in input fields. Updates state based on the name and value of the event target.
-     *
-     * @param event {object} - the change event.
-     */
-    handleChange = (event) => {
-        let newState = {};
-        newState[event.target.name] = event.target.value;
-        this.setState(newState);
-    };
-
-    /**
-     * Submits the form data to the server to add a new virus. Binds callbacks to the success or failure of the request.
-     *
-     * @param event {object} - The passed event. Used only for preventing the default action.
-     */
-    handleSubmit = (event) => {
-        event.preventDefault();
-
-        // Only send a request to the server if a new virus name is defined.
-        if (this.state.name !== "") {
-            dispatcher.db.viruses.request("add", {name: this.state.name, abbreviation: this.state.abbreviation})
-                .success((virusId) => {
-                    this.setState(getInitialState(), () => window.router.setExtra(["detail", virusId]));
-                })
-                .failure((data) => {
-                    this.setState({error: data});
-                });
-        }
-
-        // Set state to show an error because no virus name is defined.
-        else {
-            this.setState({
-                error: {
-                    name: false,
-                    abbreviation: false,
-                    unnamed: true
-                }
-            });
-        }
-    };
-
     render () {
+
+        /*
         // An alert that can be shown when an error occurs when submitting the form.
         let alert;
 
         if (this.state.error) {
             let message;
 
-            // Show an error when no virus name is defined. Getting this error doesn"t require a trip to the server.
+            // Show an error when no virus name is defined. Getting this error doesn't require a trip to the server.
             if (this.state.error.unnamed) {
                 message = "A virus name must be provided";
             }
@@ -131,14 +82,16 @@ export default class AddVirus extends React.Component {
             );
         }
 
+        */
+
         const inputProps = {
             type: "text",
             onChange: this.handleChange
         };
 
         return (
-            <Modal show={this.props.show} onHide={this.props.onHide} onExited={this.modalExited}>
-                <Modal.Header onHide={this.props.onHide} closeButton>
+            <Modal show={true} onHide={this.props.onClose} onExited={this.modalExited}>
+                <Modal.Header onHide={this.props.onClose} closeButton>
                     New Virus
                 </Modal.Header>
 
@@ -148,22 +101,21 @@ export default class AddVirus extends React.Component {
                             <Col md={9}>
                                 <Input
                                     {...inputProps}
-                                    name="name"
-                                    label="Name"
-                                    value={this.state.name}
                                     ref={(node) => this.inputNode = node}
+                                    label="Name"
+                                    value={this.props.name}
+                                    onChange={(e) => {this.props.onSetName(e.target.value)}}
                                 />
                             </Col>
                             <Col md={3}>
                                 <Input
                                     {...inputProps}
-                                    name="abbreviation"
                                     label="Abbreviation"
-                                    value={this.state.abbreviation}
+                                    value={this.props.abbreviation}
+                                    onChange={(e) => {this.props.onSetAbbreviation(e.target.value)}}
                                 />
                             </Col>
                         </Row>
-                        {alert}
                     </Modal.Body>
 
                     <Modal.Footer>
@@ -179,3 +131,30 @@ export default class AddVirus extends React.Component {
     }
 
 }
+
+const mapStateToProps = (state) => {
+    return {
+        name: state.createVirus.name,
+        abbreviation: state.createVirus.abbreviation
+    };
+};
+
+const mapDispatchToProps = (dispatch) => {
+    return {
+        onSetName: (name) => {
+            dispatch(createVirusSetName(name));
+        },
+
+        onSetAbbreviation: (abbreviation) => {
+            dispatch(createVirusSetAbbreviation(abbreviation));
+        }
+    };
+};
+
+const CreateVirusContainer = withRouter(connect(
+    mapStateToProps,
+    mapDispatchToProps
+)(CreateVirus));
+
+export default CreateVirusContainer;
+
