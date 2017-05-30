@@ -44,6 +44,8 @@ async def get(req):
 
     document = await req.app["db"].users.find_one(user_id)
 
+    document["user_id"] = document.pop("_id")
+
     return json_response(document)
 
 
