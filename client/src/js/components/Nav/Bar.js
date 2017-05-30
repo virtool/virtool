@@ -10,12 +10,15 @@
  */
 
 import React from "react";
-import { LinkContainer } from "react-router-bootstrap";
-import { Navbar, Nav, NavItem, NavDropdown, MenuItem } from "react-bootstrap";
-import { Icon, Flex, FlexItem } from "virtool/js/components/Base"
-
 import { connect } from "react-redux";
 import { withRouter } from "react-router-dom";
+import { LinkContainer } from "react-router-bootstrap";
+import { Navbar, Nav, NavItem, NavDropdown, MenuItem } from "react-bootstrap";
+
+
+import { logout } from "../../actions/accountActions";
+import { Icon } from "virtool/js/components/Base"
+
 
 /**
  * A container component that renders the primary and secondary navigation bars.
@@ -75,7 +78,7 @@ const Bar = (props) => {
             <Nav pullRight>
                 <NavDropdown id="account-dropdown" title={dropdownTitle}>
                     <MenuItem>Settings</MenuItem>
-                    <MenuItem>Logout</MenuItem>
+                    <MenuItem onClick={props.logout}>Logout</MenuItem>
                 </NavDropdown>
             </Nav>
         </Navbar>
@@ -83,15 +86,20 @@ const Bar = (props) => {
 };
 
 Bar.propTypes = {
-    user_id: React.PropTypes.string
+    user_id: React.PropTypes.string,
+    logout: React.PropTypes.func
 };
 
 const mapStateToProps = (state) => {
     return state.account;
 };
 
-const mapDispatchToProps = () => {
-    return {};
+const mapDispatchToProps = (dispatch) => {
+    return {
+        logout: () => {
+            dispatch(logout())
+        }
+    };
 };
 
 const BarContainer = withRouter(connect(

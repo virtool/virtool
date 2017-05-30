@@ -7,10 +7,16 @@
  *
  */
 
-import { GET_ACCOUNT_REQUESTED } from "./actionTypes";
+import { GET_ACCOUNT_REQUESTED, LOGOUT_REQUESTED } from "./actionTypes";
 
 export function getAccount() {
     return {
         type: GET_ACCOUNT_REQUESTED
+    }
+}
+
+export function logout() {
+    return {
+        type: LOGOUT_REQUESTED
     }
 }

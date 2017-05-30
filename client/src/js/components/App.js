@@ -45,9 +45,6 @@ const InnerContainer = withRouter(connect(
 )(Inner));
 
 const App = (props) => {
-
-    console.log(props.store.getState());
-
     return (
         <Provider store={props.store}>
             <BrowserRouter>
