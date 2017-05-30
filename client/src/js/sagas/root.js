@@ -7,11 +7,14 @@
  *
  */
 
-import { all } from "redux-saga/effects"
-import { watchViruses } from "./viruses";
+import { fork } from "redux-saga/effects"
+import { watchViruses } from "../sagas/viruses"
+import { watchAccount, watchLogout } from "../sagas/account"
 
 export function* rootSaga () {
-    yield all([
-        watchViruses
-    ])
+    yield [
+        fork(watchViruses),
+        fork(watchAccount),
+        fork(watchLogout)
+    ]
 }

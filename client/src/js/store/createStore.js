@@ -13,8 +13,6 @@ import createSagaMiddleware from "redux-saga";
 import { virusesReducer, createVirusReducer } from "../reducers/viruses";
 import { accountReducer } from "../reducers/account";
 import { rootSaga } from "../sagas/root";
-import { watchViruses } from "../sagas/viruses"
-import { watchAccount } from "../sagas/account"
 
 const sagaMiddleware = createSagaMiddleware();
 
@@ -29,5 +27,4 @@ export const store = createStore(
     applyMiddleware(sagaMiddleware)
 );
 
-sagaMiddleware.run(watchViruses);
-sagaMiddleware.run(watchAccount);
+sagaMiddleware.run(rootSaga);
