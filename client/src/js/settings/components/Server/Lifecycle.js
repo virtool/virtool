@@ -19,13 +19,6 @@ import { Button, Icon } from "virtool/js/components/Base";
  */
 export default class Lifecycle extends React.Component {
 
-    constructor (props) {
-        super(props);
-        this.state = {
-            pendingReload: false
-        };
-    }
-
     static propTypes = {
         set: React.PropTypes.func,
         settings: React.PropTypes.object

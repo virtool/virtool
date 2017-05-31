@@ -10,8 +10,11 @@
  */
 
 import React from "react";
+import { connect } from "react-redux";
 import { Row, Col, Panel } from "react-bootstrap";
-import { Icon, Input, InputSave } from "virtool/js/components/Base";
+
+import { updateSettings } from "../../actions";
+import { Icon, InputSave } from "virtool/js/components/Base";
 
 const HTTPOptions = (props) => {
 
@@ -22,54 +25,64 @@ const HTTPOptions = (props) => {
     );
 
     return (
-        <div>
-            <Row>
-                <Col md={12}>
-                    <h5><strong>HTTP Server</strong></h5>
-                </Col>
-            </Row>
-            <Row>
-                <Col md={6}>
-                    <Panel>
-                        <InputSave
-                            name="server_host"
-                            label="Host"
-                            autoComplete={false}
-                            onSave={event => props.set("server_host", event.value)}
-                            initialValue={props.settings.server_host}
-                        />
-                        <InputSave
-                            name="server_port"
-                            label="Port"
-                            type="number"
-                            autoComplete={false}
-                            onSave={event => props.set("server_port", event.value)}
-                            initialValue={props.settings.server_port}
-                        />
-                        <Input
-                            label="Server ID"
-                            type="text"
-                            autoComplete={false}
-                            value={props.settings.server_id}
-                            readOnly
-                        />
-                    </Panel>
-                </Col>
-                <Col md={6}>
-                    <Panel footer={footer}>
-                        Change the address and port the the Virtool HTTP server listens on. The server ID uniquely
-                        identifies the server to workstations that are connecting to multiple instances of Virtool
-                        server.
-                    </Panel>
-                </Col>
-            </Row>
-        </div>
+        <Row>
+            <Col md={12}>
+                <h5><strong>HTTP Server</strong></h5>
+            </Col>
+            <Col md={6}>
+                <Panel>
+                    <InputSave
+                        name="server_host"
+                        label="Host"
+                        autoComplete={false}
+                        onSave={e => props.onChangeHost(e.value)}
+                        initialValue={props.host}
+                    />
+                    <InputSave
+                        name="server_port"
+                        label="Port"
+                        type="number"
+                        autoComplete={false}
+                        onSave={event => props.onChangePort("server_port", event.value)}
+                        initialValue={props.port}
+                    />
+                </Panel>
+            </Col>
+            <Col md={6}>
+                <Panel footer={footer}>
+                    Change the address and port the the Virtool HTTP server listens on.
+                </Panel>
+            </Col>
+        </Row>
     );
 };
 
 HTTPOptions.propTypes = {
-    set: React.PropTypes.func,
-    settings: React.PropTypes.object,
+    host: React.PropTypes.string,
+    port: React.PropTypes.number,
+    onChangeHost: React.PropTypes.func,
+    onChangePort: React.PropTypes.func
 };
 
-export default HTTPOptions;
+const mapStateToProps = (state) => {
+    return {
+        host: state.settings.data.server_host,
+        port: state.settings.data.server_port
+    }
+};
+
+const mapDispatchToProps = (dispatch) => {
+    return {
+        onChangeHost: (host) => {
+            dispatch(updateSettings({server_host: host}));
+        },
+
+        onChangePort: (port) => {
+            dispatch(updateSettings({server_port: Number(port)}));
+        }
+    };
+};
+
+const Container = connect(mapStateToProps, mapDispatchToProps)(HTTPOptions);
+
+export default Container;
