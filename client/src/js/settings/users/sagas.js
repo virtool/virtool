@@ -9,11 +9,10 @@
 
 import { put, takeLatest } from "redux-saga/effects";
 import usersAPI from "./api";
-import { LIST_USERS, SELECT_USER, SET_FORCE_RESET } from "../../actionTypes";
+import { LIST_USERS, SET_FORCE_RESET } from "../../actionTypes";
 
 export function* watchUsers () {
     yield takeLatest(LIST_USERS.REQUESTED, listUsers);
-    yield takeLatest(SELECT_USER.REQUESTED, getUser);
     yield takeLatest(SET_FORCE_RESET.REQUESTED, setForceReset);
 }
 
@@ -23,15 +22,6 @@ function* listUsers () {
         yield put({type: LIST_USERS.SUCCEEDED, users: response.body});
     } catch (error) {
         yield put({type: LIST_USERS.FAILED}, error);
-    }
-}
-
-function* getUser (action) {
-    try {
-        const response = yield usersAPI.get(action.userId);
-        yield put({type: SELECT_USER.SUCCEEDED, data: response.body});
-    } catch (error) {
-        yield put({type: SELECT_USER.FAILED, error: true});
     }
 }
 

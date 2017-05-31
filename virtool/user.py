@@ -9,7 +9,6 @@ projection = [
     "force_reset",
     "last_password_change",
     "permissions",
-    "settings",
     "primary_group"
 ]
 

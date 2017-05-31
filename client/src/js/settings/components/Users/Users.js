@@ -29,7 +29,6 @@ class ManageUsers extends React.Component {
     static propTypes = {
         users: React.PropTypes.array,
         activeId: React.PropTypes.string,
-        activeData: React.PropTypes.object,
         listUsers: React.PropTypes.func,
         onSelectUser: React.PropTypes.func
     };
@@ -44,29 +43,31 @@ class ManageUsers extends React.Component {
             return <p className="text-center">Loading</p>
         }
 
-        const userComponents = this.props.users.map((userId) =>
+        const userComponents = this.props.users.map((user) =>
             <ListGroupItem
-                key={userId}
-                active={userId === this.props.activeId}
-                onClick={() => this.props.onSelectUser(userId)}
+                key={user.user_id}
+                active={user.user_id === this.props.activeId}
+                onClick={() => this.props.onSelectUser(user.user_id)}
             >
-                {userId}
+                {user.user_id}
             </ListGroupItem>
         );
 
         let content;
 
-        if (this.props.activeData) {
+        if (this.props.activeId) {
             content = (
-                <span>
+                <Panel header={this.props.activeId}>
                     <Password />
-                </span>
+                </Panel>
             )
         } else {
             content = (
-                <div className="text-center">
-                    <Spinner color="#777777" />
-                </div>
+                <Panel>
+                    <div className="text-center">
+                        <Spinner color="#777777" />
+                    </div>
+                </Panel>
             );
         }
 
@@ -78,9 +79,7 @@ class ManageUsers extends React.Component {
                     </ListGroup>
                 </Col>
                 <Col md={9}>
-                    <Panel>
-                        {content}
-                    </Panel>
+                    {content}
                 </Col>
             </Row>
         )
@@ -90,8 +89,7 @@ class ManageUsers extends React.Component {
 const mapStateToProps = (state) => {
     return {
         users: state.users.list,
-        activeId: state.users.activeId,
-        activeData: state.users.activeData
+        activeId: state.users.activeId
     };
 };
 

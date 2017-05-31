@@ -17,7 +17,7 @@ export const listUsers = () => {
 
 export const selectUser = (userId) => {
     return {
-        type: SELECT_USER.REQUESTED,
+        type: SELECT_USER,
         userId
     };
 };

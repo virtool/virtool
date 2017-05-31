@@ -11,10 +11,12 @@ from virtool.user_groups import merge_group_permissions
 @protected("manage_users")
 async def find(req):
     """
-    Get a list of the existing ``user_ids`` in the database.
+    Get a list of all user documents in the database.
      
     """
-    return json_response(await req.app["db"].users.distinct("_id"))
+    users = await req.app["db"].users.find({}, virtool.user.projection).to_list(length=None)
+
+    return json_response([virtool.user.processor(user) for user in users])
 
 
 @protected("manage_users")

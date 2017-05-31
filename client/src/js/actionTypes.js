@@ -66,7 +66,7 @@ export const GET_CONTROL_READAHEAD_SUCCEEDED = "GET_CONTROL_READAHEAD_SUCCEEDED"
 export const GET_CONTROL_READAHEAD_FAILED = "GET_CONTROL_READAHEAD_FAILED";
 
 export const LIST_USERS = createRequestActionType("LIST_USERS");
-export const SELECT_USER = createRequestActionType("SELECT_USER");
+export const SELECT_USER = "SELECT_USER";
 export const CHANGE_SET_PASSWORD = "CHANGE_SET_PASSWORD";
 export const CLEAR_SET_PASSWORD = "CLEAR_SET_PASSWORD";
 export const SET_FORCE_RESET = createRequestActionType("SET_FORCE_RESET");

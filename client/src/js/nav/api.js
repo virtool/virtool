@@ -15,6 +15,8 @@ const accountAPI = {
         return Request.get("/api/account");
     },
 
+
+
     logout: () => {
         return Request.get("/api/account/logout");
     }

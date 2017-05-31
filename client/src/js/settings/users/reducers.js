@@ -7,13 +7,12 @@
  *
  */
 
-import { assign } from "lodash";
+import { assign, find, findIndex } from "lodash";
 import { LIST_USERS, SELECT_USER, CHANGE_SET_PASSWORD, CLEAR_SET_PASSWORD, SET_FORCE_RESET } from "../../actionTypes";
 
 const initialState = {
     list: null,
     activeId: null,
-    activeData: null,
 
     password: "",
     confirm: "",
@@ -30,26 +29,24 @@ const reducer = (state = initialState, action) => {
         case LIST_USERS.REQUESTED:
             return assign({}, state);
 
-        case LIST_USERS.SUCCEEDED:
+        case LIST_USERS.SUCCEEDED: {
+            const activeId = action.users[0].user_id;
+
             return assign({}, state, {
                 list: action.users,
-                activeId: action.users[0] || null
+                activeId: activeId,
+                activeData: find(action.users, {user_id: activeId})
             });
+        }
 
-        case SELECT_USER.REQUESTED:
+        case SELECT_USER:
             return assign({}, state, {
                 activeId: action.userId,
-                activeData: null,
                 password: "",
                 confirm: "",
                 passwordChangeFailed: false,
                 passwordChangePending: false,
                 setForceResetPending: false
-            });
-
-        case SELECT_USER.SUCCEEDED:
-            return assign({}, state, {
-                activeData: action.data
             });
 
         case CHANGE_SET_PASSWORD:
@@ -69,11 +66,17 @@ const reducer = (state = initialState, action) => {
                 forceResetChangePending: true
             });
 
-        case SET_FORCE_RESET.SUCCEEDED:
-            return assign({}, state, {
-                forceResetChangePending: false,
-                activeData: action.data
+        case SET_FORCE_RESET.SUCCEEDED: {
+            let newState = assign({}, state, {
+                forceResetChangePending: false
             });
+
+            const index = findIndex(newState.list, {user_id: state.activeId});
+
+            assign(newState.list[index], action.data);
+
+            return newState;
+        }
 
         default:
             return state;

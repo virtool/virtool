@@ -10,6 +10,7 @@
  */
 
 import React from "react";
+import { find } from "lodash";
 import { connect } from "react-redux";
 import { Alert, Panel } from "react-bootstrap";
 
@@ -142,15 +143,18 @@ class Password extends React.PureComponent {
 }
 
 const mapStateToProps = (state) => {
+
+    const activeData = find(state.users.list, {user_id: state.users.activeId});
+
     return {
         userId: state.users.activeId,
 
         password: state.users.password,
         confirm: state.users.confirm,
         passwordChangePending: state.users.passwordChangePending,
-        lastPasswordChange: state.users.activeData.last_password_change,
 
-        forceReset: state.users.activeData.force_reset
+        lastPasswordChange: activeData.last_password_change,
+        forceReset: activeData.force_reset
     };
 };
 
