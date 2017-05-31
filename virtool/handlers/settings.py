@@ -1,6 +1,6 @@
 from cerberus import Validator
 from virtool.app_settings import SCHEMA
-from handlers.utils import unpack_json_request, json_response, not_found, invalid_input
+from virtool.handlers.utils import unpack_json_request, json_response, not_found, invalid_input
 
 
 async def get_all(req):
@@ -21,7 +21,7 @@ async def update(req):
     Update application settings based on request data.
     
     """
-    db, data = await unpack_json_request(req)
+    data = await req.json()
 
     settings = req.app["settings"]
 
@@ -34,6 +34,10 @@ async def update(req):
 
     settings.data.update(document)
 
-    await settings.write_to_file
+    import pprint
 
-    return json_response(req["settings"].data)
+    pprint.pprint(settings.data)
+
+    await settings.write()
+
+    return json_response(settings.data)

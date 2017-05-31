@@ -1,8 +1,8 @@
 from aiohttp import web
 
 from virtool.user_login import get_login_template, generate_verification_keys, login_handler
-from virtool.handlers import root, jobs, samples, viruses, history, hmm, hosts, account, groups, users, genbank, \
-    status, lifecycle, websocket
+from virtool.handlers import root, jobs, samples, viruses, history, hmm, hosts, settings, account, groups, users, \
+    genbank, status, lifecycle, websocket
 
 
 async def index_handler(req):
@@ -29,7 +29,12 @@ def setup_routes(app):
 
     # Index routes
     app.router.add_get("/", index_handler)
-    app.router.add_get("/viruses", index_handler)
+    app.router.add_get(r"/home{suffix:.*}", index_handler)
+    app.router.add_get(r"/jobs{suffix:.*}", index_handler)
+    app.router.add_get(r"/samples{suffix:.*}", index_handler)
+    app.router.add_get(r"/viruses{suffix:.*}", index_handler)
+    app.router.add_get(r"/subtraction{suffix:.*}", index_handler)
+    app.router.add_get(r"/settings{suffix:.*}", index_handler)
 
     # Other routes
     app.router.add_post("/login", login_handler)
@@ -116,6 +121,9 @@ def setup_routes(app):
 
     app.router.add_get("/api/hosts/{host_id}", hosts.get)
     app.router.add_delete("/api/hosts/{host_id}", hosts.remove)
+
+    app.router.add_get("/api/settings", settings.get_all)
+    app.router.add_patch("/api/settings", settings.update)
 
     # Account Routes
     app.router.add_get("/api/account", account.get)
