@@ -1,11 +1,11 @@
 import React from "react";
 import ReactDOM from "react-dom";
 
-import App from "./components/App";
+import App from "./App";
 import WSConnection from "virtool/js/websocket";
-import { store } from "./store/createStore";
-import { getAccount } from "./actions/accountActions";
-import { getSettings } from "./actions/SettingsActions";
+import { store } from "./store";
+import { getAccount } from "./nav/actions";
+import { getSettings } from "./settings/actions";
 
 
 export * from "../css/bootstrap.css";
