@@ -23,6 +23,7 @@ import HTTP from "./Server/HTTP";
 import SSL from "./Server/SSL";
 import Resources from "./Jobs/Resources";
 import Tasks from "./Jobs/Tasks";
+import Users from "./Users/Users";
 
 const General = () => (
     <div>
@@ -70,6 +71,10 @@ const Settings = () => {
                         <LinkContainer to="/settings/jobs">
                             <NavItem>Jobs</NavItem>
                         </LinkContainer>
+
+                        <LinkContainer to="/settings/users">
+                            <NavItem>Users</NavItem>
+                        </LinkContainer>
                     </Nav>
                 </FlexItem>
 
@@ -77,10 +82,11 @@ const Settings = () => {
                     <div style={{borderRight: "1px solid #e5e5e5", height: "100%"}} />
                 </FlexItem>
 
-                <FlexItem pad={15}>
+                <FlexItem grow={1} pad={15}>
                     <Route path="/settings/general" component={General} />
                     <Route path="/settings/server" component={Server} />
                     <Route path="/settings/jobs" component={Jobs} />
+                    <Route path="/settings/users" component={Users} />
                 </FlexItem>
             </Flex>
         </div>

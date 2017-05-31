@@ -10,35 +10,26 @@
  */
 
 import React from "react";
+import { connect } from "react-redux";
 import { Alert, Panel } from "react-bootstrap";
+
+import { setForceReset, clearSetPassword } from "../../users/actions";
 import { FlexItem, Icon, Input, Checkbox, Button, RelativeTime } from "virtool/js/components/Base";
 
-const getChangeState = () => ({
-    password: "",
-    confirm: "",
-    failed: false,
-    pendingChange: false
-});
-
-/**
- * The password change form subcomponent of the component exported by the module.
- */
-class Change extends React.PureComponent {
-
-    constructor (props) {
-        super(props);
-        this.state = getChangeState();
-    }
+class Password extends React.PureComponent {
 
     static propTypes = {
-        _id: React.PropTypes.string,
-        last_password_change: React.PropTypes.string
-    };
+        userId: React.PropTypes.string,
 
-    handleChange = (event) => {
-        let data = {};
-        data[event.target.name] = event.target.value;
-        this.setState(data);
+        password: React.PropTypes.string,
+        confirm: React.PropTypes.string,
+        lastPasswordChange: React.PropTypes.string,
+        passwordChangePending: React.PropTypes.bool,
+        onChangePassword: React.PropTypes.func,
+        onChangeConfirm: React.PropTypes.func,
+
+        forceReset: React.PropTypes.bool,
+        onSetForceReset: React.PropTypes.func
     };
 
     isMatch = () => this.state.password === this.state.confirm;
@@ -64,11 +55,11 @@ class Change extends React.PureComponent {
         }
     };
 
-    clear = () => this.setState(getChangeState());
-
     render () {
 
         let alert;
+
+        /*
 
         const match = this.isMatch();
         const long = this.isLong();
@@ -86,98 +77,99 @@ class Change extends React.PureComponent {
         // Boolean to set whether the submit button is disabled or not.
         const submitDisabled = (!(match && long) && this.state.failed) || this.state.pendingChange;
 
+        */
+
+        const submitDisabled = this.props.passwordChangePending;
+
         return (
             <div>
-                <p>
-                    <em>Last changed </em>
-                    <RelativeTime time={this.props.last_password_change} em={true} />
-                </p>
-                <form onSubmit={this.submit}>
-                    <div className="toolbar">
-                        <FlexItem grow={1}>
-                            <Input
-                                type="password"
-                                name="password"
-                                placeholder="New Password"
-                                value={this.state.password}
-                                onChange={this.handleChange}
-                                disabled={this.state.pendingChange}
-                            />
-                        </FlexItem>
+                <h5><Icon name="lock" /> <strong>Password</strong></h5>
 
-                        <FlexItem grow={1}>
-                            <Input
-                                type="password"
-                                name="confirm"
-                                placeholder="Confirm Password"
-                                value={this.state.confirm}
-                                onChange={this.handleChange}
-                                disabled={this.state.pendingChange}
-                            />
-                        </FlexItem>
+                <Panel>
+                    <p>
+                        <em>Last changed </em>
+                        <RelativeTime time={this.props.lastPasswordChange} em={true} />
+                    </p>
 
-                        <Button onClick={this.clear} disabled={this.state.pendingChange}>
-                            Clear
-                        </Button>
+                    <form onSubmit={this.submit}>
+                        <div className="toolbar">
+                            <FlexItem grow={1}>
+                                <Input
+                                    type="password"
+                                    name="password"
+                                    placeholder="New Password"
+                                    value={this.props.password}
+                                    onChange={this.props.onChangePassword}
+                                    disabled={this.props.passwordChangePending}
+                                />
+                            </FlexItem>
 
-                        <Button type="submit" bsStyle="primary" disabled={submitDisabled}>
-                            <Icon name="floppy" pending={this.state.pendingChange} /> Save
-                        </Button>
+                            <FlexItem grow={1}>
+                                <Input
+                                    type="password"
+                                    name="confirm"
+                                    placeholder="Confirm Password"
+                                    value={this.props.confirm}
+                                    onChange={this.props.onChangeSet}
+                                    disabled={this.props.passwordChangePending}
+                                />
+                            </FlexItem>
+
+                            <Button onClick={this.props.clear} disabled={this.props.passwordChangePending}>
+                                Clear
+                            </Button>
+
+                            <Button type="submit" bsStyle="primary" disabled={submitDisabled}>
+                                <Icon name="floppy" pending={this.props.passwordChangePending} /> Save
+                            </Button>
+                        </div>
+                    </form>
+
+                    {alert}
+
+                    <div className="panel-section">
+                        <Checkbox
+                            label="Force user to reset password on next login"
+                            checked={this.props.forceReset}
+                            onClick={() => {this.props.onSetForceReset(this.props.userId, !this.props.forceReset)}}
+                        />
                     </div>
-                </form>
-                {alert}
+                </Panel>
             </div>
+
         );
     }
 }
 
-/**
- * An subcomponent of the password change form that allows the force reset status of the user to be toggled. Consists
- * only of a label checkbox.
- */
-class Reset extends React.PureComponent {
+const mapStateToProps = (state) => {
+    return {
+        userId: state.users.activeId,
 
-    static propTypes = {
-        _id: React.PropTypes.string,
-        forceReset: React.PropTypes.bool
+        password: state.users.password,
+        confirm: state.users.confirm,
+        passwordChangePending: state.users.passwordChangePending,
+        lastPasswordChange: state.users.activeData.last_password_change,
+
+        forceReset: state.users.activeData.force_reset
     };
-
-    toggle = () => {
-        dispatcher.db.users.request("set_force_reset", {
-            _id: this.props._id,
-            force_reset: !this.props.forceReset
-        });
-    };
-
-    render = () => (
-        <div className="panel-section">
-            <Checkbox
-                label="Force user to reset password on next login"
-                checked={this.props.forceReset}
-                onClick={this.toggle}
-            />
-        </div>
-    );
-
-}
-
-/**
- * A parent component to wrap the password change form and reset checkbox with a headed panel.
- */
-const AdminChangePassword = (props) => (
-    <div>
-        <h5><Icon name="lock" /> <strong>Password</strong></h5>
-
-        <Panel>
-            <Change {...props} />
-            <Reset _id={props._id} forceReset={props.force_reset} />
-        </Panel>
-    </div>
-);
-
-AdminChangePassword.propTypes = {
-    _id: React.PropTypes.string,
-    force_reset: React.PropTypes.bool
 };
 
-export default AdminChangePassword;
+const mapDispatchToProps = (dispatch) => {
+    return {
+        onClear: () => {
+            dispatch(clearSetPassword())
+        },
+
+        onChangeSetPassword: (password, confirm) => {
+            dispatch(changeSetPassword(password, confirm));
+        },
+
+        onSetForceReset: (userId, enabled) => {
+            dispatch(setForceReset(userId, enabled));
+        }
+    }
+};
+
+const Container = connect(mapStateToProps, mapDispatchToProps)(Password);
+
+export default Container;
