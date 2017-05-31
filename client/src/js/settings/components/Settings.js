@@ -14,10 +14,15 @@ import { Nav, NavItem } from "react-bootstrap";
 import { LinkContainer } from "react-router-bootstrap";
 
 import { Flex, FlexItem } from "virtool/js/components/Base";
+
 import SourceTypes from "./General/SourceTypes";
 import InternalControl from "./General/InternalControl";
 import UniqueNames from "./General/UniqueNames";
 import SamplePermissions from "./General/SamplePermissions";
+import HTTP from "./Server/HTTP";
+import SSL from "./Server/SSL";
+import Resources from "./Jobs/Resources";
+import Tasks from "./Jobs/Tasks";
 
 const General = () => (
     <div>
@@ -28,10 +33,24 @@ const General = () => (
     </div>
 );
 
+const Server = () => (
+    <div>
+        <HTTP />
+        <SSL />
+    </div>
+);
+
+const Jobs = () => (
+    <div>
+        <Resources />
+        <Tasks />
+    </div>
+);
+
 const Settings = () => {
     return (
         <div className="container">
-            <Redirect from="/settings" to="/settings/general" exact />
+            <Redirect from="/settings" to="/settings/general"  />
 
             <Flex>
                 <FlexItem>
@@ -44,8 +63,12 @@ const Settings = () => {
                             <NavItem>Server</NavItem>
                         </LinkContainer>
 
-                        <LinkContainer to="/settings/Database">
+                        <LinkContainer to="/settings/database">
                             <NavItem>Database</NavItem>
+                        </LinkContainer>
+
+                        <LinkContainer to="/settings/jobs">
+                            <NavItem>Jobs</NavItem>
                         </LinkContainer>
                     </Nav>
                 </FlexItem>
@@ -56,6 +79,8 @@ const Settings = () => {
 
                 <FlexItem pad={15}>
                     <Route path="/settings/general" component={General} />
+                    <Route path="/settings/server" component={Server} />
+                    <Route path="/settings/jobs" component={Jobs} />
                 </FlexItem>
             </Flex>
         </div>

@@ -22,26 +22,20 @@ export default class TaskField extends React.PureComponent {
     constructor (props) {
         super(props);
         this.state = {
-            value: this.getValue(),
+            value: this.props.value,
             pending: false
         };
     }
 
     static propTypes = {
-        set: React.PropTypes.func.isRequired,
-        settings: React.PropTypes.object.isRequired,
-        readOnly: React.PropTypes.bool,
-        taskPrefix: React.PropTypes.string.isRequired,
-        resource: React.PropTypes.string.isRequired
-    };
-
-    getValue = () => {
-        return this.props.settings[`${this.props.taskPrefix}_${this.props.resource}`];
+        value: React.PropTypes.number,
+        onChange: React.PropTypes.func,
+        readOnly: React.PropTypes.bool
     };
 
     handleBlur = () => {
         if (!this.state.pending) {
-            this.setState({value: this.getValue()});
+            this.setState({value: this.props.value});
         }
     };
 
@@ -51,14 +45,7 @@ export default class TaskField extends React.PureComponent {
 
     handleSubmit = (event) => {
         event.preventDefault();
-
-        this.setState({pending: true}, () => {
-            const key = `${this.props.taskPrefix}_${this.props.resource}`;
-
-            this.props.set(key, this.state.value === "" ? 1: this.state.value)
-                .success(() => this.setState({pending: false}))
-                .failure(() => this.setState({pending: false}));
-        });
+        this.props.onChange(this.state.value);
     };
 
     render () {

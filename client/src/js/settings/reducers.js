@@ -10,8 +10,8 @@
 import { assign } from "lodash";
 import { combineReducers } from "redux";
 import {
-    GET_SETTINGS_SUCCEEDED,
-    UPDATE_SETTINGS_SUCCEEDED,
+    GET_SETTINGS,
+    UPDATE_SETTINGS,
     GET_CONTROL_READAHEAD_REQUESTED,
     GET_CONTROL_READAHEAD_SUCCEEDED,
     SET_SOURCE_TYPE_VALUE
@@ -21,10 +21,10 @@ const dataReducer = (state = {}, action) => {
 
     switch (action.type) {
 
-        case GET_SETTINGS_SUCCEEDED:
+        case GET_SETTINGS.SUCCEEDED:
             return assign({}, state, action.data);
 
-        case UPDATE_SETTINGS_SUCCEEDED:
+        case UPDATE_SETTINGS.SUCCEEDED:
             return assign({}, state, action.settings);
 
         default:

@@ -30,23 +30,23 @@ const Task = (props) => {
             <Row>
                 <Col md={4}>
                     <TaskField
-                        {...props}
-                        resource="proc"
+                        value={props.proc}
                         readOnly={readOnly}
+                        onChange={(value) => {props.onChangeLimit(props.taskPrefix, "proc", value)}}
                     />
                 </Col>
                 <Col md={4}>
                     <TaskField
-                        {...props}
-                        resource="mem"
+                        value={props.mem}
                         readOnly={readOnly}
+                        onChange={(value) => {props.onChangeLimit(props.taskPrefix, "mem", value)}}
                     />
                 </Col>
                 <Col md={4}>
                     <TaskField
-                        {...props}
-                        resource="inst"
+                        value={props.inst}
                         readOnly={props.taskPrefix === "rebuild_index"}
+                        onChange={(value) => {props.onChangeLimit(props.taskPrefix, "inst", value)}}
                     />
                 </Col>
             </Row>
@@ -55,9 +55,11 @@ const Task = (props) => {
 };
 
 Task.propTypes = {
-    set: React.PropTypes.func,
-    settings: React.PropTypes.object,
-    taskPrefix: React.PropTypes.string.isRequired
+    taskPrefix: React.PropTypes.string.isRequired,
+    proc: React.PropTypes.number,
+    mem: React.PropTypes.number,
+    inst: React.PropTypes.number,
+    onChangeLimit: React.PropTypes.func
 };
 
 export default Task;

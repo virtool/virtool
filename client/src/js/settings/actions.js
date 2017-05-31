@@ -8,14 +8,14 @@
  */
 
 import {
-    GET_SETTINGS_REQUESTED,
-    UPDATE_SETTINGS_REQUESTED,
+    GET_SETTINGS,
+    UPDATE_SETTINGS,
     SET_SOURCE_TYPE_VALUE
 } from "../actionTypes";
 
 export function getSettings () {
     return {
-        type: GET_SETTINGS_REQUESTED
+        type: GET_SETTINGS.REQUESTED
     }
 }
 
@@ -28,7 +28,7 @@ export function setSourceTypeValue (value) {
 
 export function updateSettings (update) {
     return {
-        type: UPDATE_SETTINGS_REQUESTED,
+        type: UPDATE_SETTINGS.REQUESTED,
         update
     };
 }
