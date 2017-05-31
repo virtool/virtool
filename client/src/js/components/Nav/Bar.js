@@ -30,7 +30,7 @@ const Bar = (props) => {
     );
 
     return (
-        <Navbar>
+        <Navbar fixedTop>
             <Navbar.Header>
                 <Navbar.Brand>
                     <Icon name="vtlogo" className="vtlogo"/>
