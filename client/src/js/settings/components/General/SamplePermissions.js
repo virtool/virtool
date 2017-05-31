@@ -10,50 +10,30 @@
  */
 
 import React from "react";
-import { Panel } from "react-bootstrap"
+import { connect } from "react-redux";
+import { Row, Col, Panel } from "react-bootstrap"
+
+import { updateSettings } from "../../actions";
 import { Help, Input } from "virtool/js/components/Base"
 
 /**
  * A component that allows the addition and removal of allowed source types. The use of restricted source types can also
  * be toggled.
  */
-export default class SamplePermissions extends React.Component {
+const SamplePermissions = (props) => {
 
-    static propTypes = {
-        set: React.PropTypes.func,
-        settings: React.PropTypes.object
+    const rightProps = {
+        onChange: props.onChangeRights,
+        type: "select"
     };
 
-    getRights = () => {
-        return {
-            group: (
-                (this.props.settings.sample_group_read ? "r": "") + (this.props.settings.sample_group_write ? "w": "")
-            ),
-
-            all: (
-                (this.props.settings.sample_all_read ? "r": "") + (this.props.settings.sample_all_write ? "w": "")
-            )
-        };
-    };
-
-    changeRights = (right, value) => {
-        ["read", "write"].forEach((op) => {
-            this.props.set(`sample_${right}_${op}`, value.indexOf(op[0]) > -1);
-        });
-    };
-
-    render () {
-
-        const rights = this.getRights();
-
-        const rightProps = {
-            onChange: this.changeRights,
-            type: "select"
-        };
-
-        return (
-            <Panel>
-                <form onSubmit={this.add}>
+    return (
+        <Row>
+            <Col md={12}>
+                <h5><strong>Default Sample Permissions</strong></h5>
+            </Col>
+            <Col md={6}>
+                <Panel>
                     <label className="control-label" style={{width: "100%"}}>
                         <span>Sample Group</span>
                         <Help pullRight>
@@ -73,8 +53,8 @@ export default class SamplePermissions extends React.Component {
 
                     <Input
                         type="select"
-                        value={this.props.settings.sample_group}
-                        onChange={(event) => this.props.set("sample_group", event.target.value)}
+                        value={props.sampleGroup}
+                        onChange={(e) => props.onChangeSampleGroup(e.target.value)}
                     >
                         <option value="none">None</option>
                         <option value="force_choice">Force choice</option>
@@ -84,7 +64,7 @@ export default class SamplePermissions extends React.Component {
                     <Input
                         {...rightProps}
                         label="Group Rights"
-                        value={rights.group}
+                        value={props.group}
                         onChange={(event) => this.changeRights("group", event.target.value)}
                     >
                         <option value="">None</option>
@@ -96,15 +76,61 @@ export default class SamplePermissions extends React.Component {
                         name="all"
                         {...rightProps}
                         label="All Users' Rights"
-                        value={rights.all}
+                        value={props.all}
                         onChange={(event) => this.changeRights("all", event.target.value)}
                     >
                         <option value="">None</option>
                         <option value="r">Read</option>
                         <option value="rw">Read & write</option>
                     </Input>
-                </form>
-            </Panel>
-        );
+                </Panel>
+            </Col>
+            <Col md={6}>
+                <Panel>
+                    Set the method used to assign groups to new samples and the default rights.
+                </Panel>
+            </Col>
+        </Row>
+
+    );
+};
+
+SamplePermissions.propTypes = {
+    sampleGroup: React.PropTypes.string,
+    group: React.PropTypes.string,
+    all: React.PropTypes.string,
+    onChangeSampleGroup: React.PropTypes.func,
+    onChangeRights: React.PropTypes.func
+};
+
+const mapStateToProps = (state) => {
+    const settings = state.settings.data;
+
+    return {
+        sampleGroup: settings.sample_group,
+        group: (settings.sample_group_read ? "r": "") + (settings.sample_group_write ? "w": ""),
+        all: (settings.sample_all_read ? "r": "") + (settings.sample_all_write ? "w": "")
+    };
+};
+
+const mapDispatchToProps = (dispatch) => {
+    return {
+        onChangeSampleGroup: (value) => {
+            dispatch(updateSettings({sample_group: value}));
+        },
+
+        onChangeRights: (right, value) => {
+            let update = {};
+
+            ["read", "write"].forEach(op => {
+                update[`sample_${right}_${op}`] = value.indexOf(op[0]) > -1;
+            });
+
+            dispatch(updateSettings(update));
+        }
     }
-}
+};
+
+const Container = connect(mapStateToProps, mapDispatchToProps)(SamplePermissions);
+
+export default Container;

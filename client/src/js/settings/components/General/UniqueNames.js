@@ -10,7 +10,10 @@
  */
 
 import React from "react";
-import { Panel } from "react-bootstrap";
+import { connect } from "react-redux";
+import { Row, Col, Panel } from "react-bootstrap";
+
+import { updateSettings } from "../../actions";
 import { Checkbox, Button } from "virtool/js/components/Base";
 
 /**
@@ -18,21 +21,50 @@ import { Checkbox, Button } from "virtool/js/components/Base";
  * be toggled.
  */
 const UniqueNames = (props) => {
-
-    const enabled = props.settings.sample_unique_names;
-
     return (
-        <Panel>
-            <Button onClick={() => props.set("sample_unique_names", !enabled)} block>
-                <Checkbox checked={enabled} /> Enable
-            </Button>
-        </Panel>
+        <Row>
+            <Col md={12}>
+                <h5><strong>Unique Sample Names</strong></h5>
+            </Col>
+            <Col md={6}>
+                <Panel>
+                    <Button onClick={() => {props.onToggle(!props.enabled)}} block>
+                        <Checkbox checked={props.enabled} /> Enable
+                    </Button>
+                </Panel>
+            </Col>
+            <Col md={6}>
+                <Panel>
+                    Enable this feature to ensure that every created sample has a unique name. If a user
+                    attempts to assign an existing name to a new sample an error will be displayed.
+                </Panel>
+            </Col>
+        </Row>
     );
 };
 
 UniqueNames.propTypes = {
-    set: React.PropTypes.func,
-    settings: React.PropTypes.object
+    enabled: React.PropTypes.bool,
+    onToggle: React.PropTypes.func,
 };
 
-export default UniqueNames;
+const mapStateToProps = (state) => {
+    return {
+        enabled: state.settings.data.sample_unique_names
+    };
+};
+
+const mapDispatchToProps = (dispatch) => {
+    return {
+        onToggle: (enabled) => {
+            dispatch(updateSettings({sample_unique_names: enabled}));
+        }
+    };
+};
+
+const Container = connect(
+    mapStateToProps,
+    mapDispatchToProps
+)(UniqueNames);
+
+export default Container;

@@ -14,13 +14,24 @@ import { Nav, NavItem } from "react-bootstrap";
 import { LinkContainer } from "react-router-bootstrap";
 
 import { Flex, FlexItem } from "virtool/js/components/Base";
-import { getSettings } from "../actions";
-import GeneralSettings from "./General";
+import SourceTypes from "./General/SourceTypes";
+import InternalControl from "./General/InternalControl";
+import UniqueNames from "./General/UniqueNames";
+import SamplePermissions from "./General/SamplePermissions";
 
-const Settings = (props) => {
+const General = () => (
+    <div>
+        <SourceTypes />
+        <InternalControl />
+        <UniqueNames />
+        <SamplePermissions />
+    </div>
+);
+
+const Settings = () => {
     return (
         <div className="container">
-            <Redirect from="/settings" to="/settings/general" />
+            <Redirect from="/settings" to="/settings/general" exact />
 
             <Flex>
                 <FlexItem>
@@ -44,7 +55,7 @@ const Settings = (props) => {
                 </FlexItem>
 
                 <FlexItem pad={15}>
-                    <Route path="/settings/general" render={() => (<GeneralSettings {...props} />)} />
+                    <Route path="/settings/general" component={General} />
                 </FlexItem>
             </Flex>
         </div>
@@ -58,22 +69,16 @@ Settings.propTypes = {
 
 const mapStateToProps = (state) => {
     return {
-        restrictSourceTypes: state.settings.restrict_source_types,
-        allowedSourceTypes: state.settings.allowed_source_types
+        restrictSourceTypes: state.settings.data.restrict_source_types,
+        allowedSourceTypes: state.settings.data.allowed_source_types
     };
 };
 
-const mapDispatchToProps = (dispatch) => {
+const mapDispatchToProps = () => {
     return {
-
-        get: () => {
-            dispatch(getSettings())
-        },
-
         set: (key, value) => {
             console.log(key, value);
         }
-
     };
 };
 

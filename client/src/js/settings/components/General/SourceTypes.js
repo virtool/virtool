@@ -34,10 +34,6 @@ class SourceTypes extends React.Component {
         onToggle: React.PropTypes.func
     };
 
-    componentDidMount () {
-        this.inputNode.focus();
-    }
-
     /*
 
     handleSubmit = (event) => {

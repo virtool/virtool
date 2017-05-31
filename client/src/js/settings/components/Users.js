@@ -22,8 +22,6 @@ import Sessions from "./Users/Sessions";
 import PrimaryGroup from "./Users/PrimaryGroup";
 import GroupsPermissions from "./Users/GroupsPermissions";
 
-const getUsers = () => dispatcher.db.users.chain().find().simplesort("_id");
-
 /**
  * A component for managing users that is accessible in the options section. Contains components for changing passwords,
  * forcing password resets, changing user roles, and removing and adding users. All of the sessions registered to each
@@ -44,16 +42,6 @@ export default class ManageUsers extends React.Component {
             activeId: documents.copy().data()[0]._id,
             addedId: null,
         };
-    }
-
-    componentDidMount () {
-        dispatcher.db.users.on("change", this.update);
-        dispatcher.db.groups.on("change", this.update);
-    }
-
-    componentWillUnmount () {
-        dispatcher.db.users.off("change", this.update);
-        dispatcher.db.groups.off("change", this.update);
     }
 
     add = (data, success, failure) => {
