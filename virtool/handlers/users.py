@@ -116,9 +116,7 @@ async def set_password(req):
 @protected("manage_users")
 async def set_force_reset(req):
     """
-    Used by users with the *modify_options* permission to Set a users password. Can take a "reset" property, which
-    when True will force the user to reset their password on next login. To be called by an connection with
-    administrative privileges.
+    Set the ``force_reset`` field on user document.
 
     """
     user_id = req.match_info["user_id"]
@@ -145,6 +143,38 @@ async def set_force_reset(req):
     document["user_id"] = document.pop("_id")
 
     return json_response(document)
+
+
+@protected("manage_users")
+async def set_primary_group(req):
+    """
+    Set a user's primary group.
+
+    """
+    user_id = req.match_info["user_id"]
+
+    data = await req.json()
+
+    v = Validator({
+        "primary_group": {"type": "string", "required": True}
+    })
+
+    if not v(data):
+        return invalid_input(v.errors)
+
+    if not await virtool.user.user_exists(req.app["db"], user_id):
+        return not_found("User does not exist")
+
+    if data["primary_group"] != "none" and not await req.app["db"].groups.count({"_id": data["primary_group"]}):
+        return not_found("Group does not exist")
+
+    document = await req.app["db"].users.find_one_and_update({"_id": user_id}, {
+        "$set": {
+            "primary_group": data["primary_group"]
+        }
+    }, return_document=ReturnDocument.AFTER, projection=["primary_group"])
+
+    return json_response(virtool.user.processor(document))
 
 
 @protected("manage_users")
