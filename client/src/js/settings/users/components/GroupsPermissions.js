@@ -10,112 +10,106 @@
  */
 
 import React from "react";
+import { find } from "lodash";
+import { connect } from "react-redux";
 import { capitalize, includes} from "lodash";
 import { Row, Col, Panel, ListGroup } from "react-bootstrap";
 import { ListGroupItem, Checkbox, Icon, Help } from "virtool/js/components/Base";
 
-import Permissions from "./Groups/Permissions";
+import { addUserToGroup, removeUserFromGroup } from "../actions";
+import Permissions from "../../groups/components/Permissions";
 
-class GroupToggle extends React.PureComponent {
+const GroupsPermissions = (props) => {
 
-    constructor (props) {
-        super(props);
-        this.state = {
-            pending: false
-        };
-    }
+    const groupComponents = props.allGroups.map(groupId => {
 
-    static propTypes = {
-        userId: React.PropTypes.string.isRequired,
-        groupId: React.PropTypes.string.isRequired,
-        toggled: React.PropTypes.bool.isRequired,
-        setGroup: React.PropTypes.func.isRequired
-    };
+        console.log(groupId, props.memberGroups);
 
-    componentWillReceiveProps (nextProps) {
-        if (this.props.toggled !== nextProps.toggled) {
-            this.setState({pending: false});
-        }
-    }
+        const toggled = includes(props.memberGroups, groupId);
 
-    handleClick = () => {
-        if (!(this.props.userId === dispatcher.user.name && this.props.groupId === "administrator")) {
-            this.setState({pending: true}, () => {
-                this.props.setGroup(this.props.userId, this.props.groupId);
-            });
-        }
-    };
 
-    render () {
-        const disabled = this.props.userId === dispatcher.user.name && this.props.groupId === "administrator";
-        
+
         return (
-            <ListGroupItem key={this.props.groupId} onClick={this.handleClick} disabled={disabled}>
-                {capitalize(this.props.groupId)}
-                <Checkbox checked={this.props.toggled} pending={this.state.pending} pullRight />
+            <ListGroupItem
+                key={groupId}
+                onClick={() => (toggled ? props.removeFromGroup: props.addToGroup)(props.userId, groupId)}
+                disabled={groupId === "administrator" && props.userId === props.accountUserId}
+            >
+                {capitalize(groupId)}
+                <Checkbox checked={toggled} pullRight/>
             </ListGroupItem>
         );
-    }
-}
+    });
 
-export default class GroupsPermissions extends React.Component {
+    return (
+        <div>
+            <Row>
+                <Col md={5}>
+                    <h5><Icon name="users" /> <strong>Groups</strong></h5>
+                </Col>
+                <Col md={7}>
+                    <h5>
+                        <span>
+                            <Icon name="key" /> <strong>Permissions</strong>
+                        </span>
+                        <Help pullRight>
+                            Users inherit permissions from groups they belong to. Change a user"s groups to modify
+                            their permissions.
+                        </Help>
+                    </h5>
+                </Col>
+            </Row>
+            <Row>
+                <Col md={5}>
+                    <Panel style={{height: "493px", overflowY: "scroll"}}>
+                        <ListGroup fill style={{borderBottom: "1px solid #dddddd"}}>
+                            {groupComponents}
+                        </ListGroup>
+                    </Panel>
+                </Col>
+                <Col md={7} style={{height: "100%"}}>
+                    <Permissions permissions={props.permissions} />
+                </Col>
+            </Row>
+        </div>
+    );
+};
 
-    static propTypes = {
-        _id: React.PropTypes.string,
-        groups: React.PropTypes.array.isRequired,
-        permissions: React.PropTypes.object.isRequired
+GroupsPermissions.propTypes = {
+    userId: React.PropTypes.string,
+    accountUserId: React.PropTypes.string,
+    allGroups: React.PropTypes.array,
+    memberGroups: React.PropTypes.array,
+    permissions: React.PropTypes.object,
+    addToGroup: React.PropTypes.func,
+    removeFromGroup: React.PropTypes.func
+};
+
+const mapStateToProps = (state) => {
+
+    const activeData = find(state.users.list, {user_id: state.users.activeId});
+
+    return {
+        userId: activeData.user_id,
+        accountUserId: state.account.user_id,
+        allGroups: state.groups.list.map(group => group.group_id),
+        memberGroups: activeData.groups,
+        permissions: activeData.permissions
     };
+};
 
-    setGroup = (userId, groupId) => {
-        dispatcher.db.users.request("set_group", {
-            user_id: userId,
-            group_id: groupId
-        });
+const mapDispatchToProps = (dispatch) => {
+    return {
+        addToGroup: (userId, groupId) => {
+            dispatch(addUserToGroup(userId, groupId));
+        },
+
+        removeFromGroup: (userId, groupId) => {
+            dispatch(removeUserFromGroup(userId, groupId));
+        }
     };
+};
 
-    render () {
+const Container = connect(mapStateToProps, mapDispatchToProps)(GroupsPermissions);
 
-        const groupComponents = dispatcher.db.groups.find().map((group, index) =>
-            <GroupToggle
-                key={index}
-                userId={this.props._id}
-                groupId={group._id}
-                toggled={includes(this.props.groups, group._id)}
-                setGroup={this.setGroup}
-            />
-        );
-
-        return (
-            <div>
-                <Row>
-                    <Col md={5}>
-                        <h5><Icon name="users" /> <strong>Groups</strong></h5>
-                    </Col>
-                    <Col md={7}>
-                        <h5>
-                            <span>
-                                <Icon name="key" /> <strong>Permissions</strong>
-                            </span>
-                            <Help pullRight>
-                                Users inherit permissions from groups they belong to. Change a user"s groups to modify
-                                their permissions.
-                            </Help>
-                        </h5>
-                    </Col>
-                </Row>
-                <Row>
-                    <Col md={5}>
-                        <Panel style={{height: "493px", overflowY: "scroll"}}>
-                            <ListGroup fill style={{borderBottom: "1px solid #dddddd"}}>
-                                {groupComponents}
-                            </ListGroup>
-                        </Panel>
-                    </Col>
-                    <Col md={7} style={{height: "100%"}}>
-                        <Permissions permissions={this.props.permissions} />
-                    </Col>
-                </Row>
-            </div>
-        );
-    }
-}
+export default Container;

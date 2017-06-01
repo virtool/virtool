@@ -7,7 +7,7 @@
  *
  */
 
-import { assign, find, findIndex } from "lodash";
+import { assign, find, reject, findIndex } from "lodash";
 import {
     LIST_USERS,
     SELECT_USER,
@@ -16,8 +16,20 @@ import {
     SET_PASSWORD,
     CLEAR_SET_PASSWORD,
     SET_FORCE_RESET,
-    SET_PRIMARY_GROUP
+    SET_PRIMARY_GROUP,
+    ADD_USER_TO_GROUP,
+    REMOVE_USER_FROM_GROUP
 } from "../../actionTypes";
+
+const updateActiveData = (state, updater) => {
+    const newState = assign({}, state);
+
+    const index = findIndex(state.list, {user_id: state.activeId});
+
+    updater(newState.list[index]);
+
+    return newState;
+};
 
 const initialState = {
     list: null,
@@ -129,6 +141,18 @@ const reducer = (state = initialState, action) => {
             assign(newState.list[index], action.data);
 
             return newState;
+        }
+
+        case ADD_USER_TO_GROUP.SUCCEEDED: {
+            return updateActiveData(state, (activeData => {
+                assign(activeData, action.data);
+            }));
+        }
+
+        case REMOVE_USER_FROM_GROUP.SUCCEEDED: {
+            return updateActiveData(state, (activeData => {
+                assign(activeData, action.data);
+            }));
         }
 
         default:

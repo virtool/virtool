@@ -73,5 +73,7 @@ export const SET_PASSWORD = createRequestActionType("SET_PASSWORD");
 export const CLEAR_SET_PASSWORD = "CLEAR_SET_PASSWORD";
 export const SET_FORCE_RESET = createRequestActionType("SET_FORCE_RESET");
 export const SET_PRIMARY_GROUP = createRequestActionType("SET_PRIMARY_GROUP");
+export const ADD_USER_TO_GROUP = createRequestActionType("ADD_USER_TO_GROUP");
+export const REMOVE_USER_FROM_GROUP = createRequestActionType("REMOVE_USER_FROM_GROUP");
 
 export const LIST_GROUPS = createRequestActionType("LIST_GROUPS");

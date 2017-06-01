@@ -17,6 +17,7 @@ import { Spinner, ListGroupItem, AutoProgressBar } from "virtool/js/components/B
 import { listUsers, selectUser } from "../../users/actions";
 import { listGroups } from "../../groups/actions";
 import Password from "./Password";
+import GroupsPermissions from "./GroupsPermissions";
 import PrimaryGroup from "./PrimaryGroup";
 
 /**
@@ -68,6 +69,7 @@ class ManageUsers extends React.Component {
                 <Panel header={this.props.activeId}>
                     <AutoProgressBar affixed />
                     <Password />
+                    <GroupsPermissions />
                     <PrimaryGroup />
                 </Panel>
             )

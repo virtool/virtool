@@ -67,7 +67,7 @@ const mapStateToProps = (state) => {
     return {
         userId: activeData.user_id,
         primaryGroup: activeData.primary_group,
-        groups: state.groups.list.map(group => group.group_id)
+        groups: activeData.groups
     };
 };
 

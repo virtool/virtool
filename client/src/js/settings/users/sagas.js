@@ -7,15 +7,24 @@
  *
  */
 
-import { call, put, takeLatest } from "redux-saga/effects";
+import { call, put, takeEvery, takeLatest } from "redux-saga/effects";
 import usersAPI from "./api";
-import { LIST_USERS, SET_PASSWORD, SET_FORCE_RESET, SET_PRIMARY_GROUP } from "../../actionTypes";
+import {
+    LIST_USERS,
+    SET_PASSWORD,
+    SET_FORCE_RESET,
+    SET_PRIMARY_GROUP,
+    ADD_USER_TO_GROUP,
+    REMOVE_USER_FROM_GROUP
+} from "../../actionTypes";
 
 export function* watchUsers () {
     yield takeLatest(LIST_USERS.REQUESTED, listUsers);
     yield takeLatest(SET_PASSWORD.REQUESTED, setPassword);
     yield takeLatest(SET_FORCE_RESET.REQUESTED, setForceReset);
     yield takeLatest(SET_PRIMARY_GROUP.REQUESTED, setPrimaryGroup);
+    yield takeEvery(ADD_USER_TO_GROUP.REQUESTED, addUserToGroup);
+    yield takeEvery(REMOVE_USER_FROM_GROUP.REQUESTED, removeUserFromGroup);
 }
 
 function* listUsers () {
@@ -55,5 +64,23 @@ function* setPrimaryGroup (action) {
         yield put({type: SET_PRIMARY_GROUP.SUCCEEDED, data: response.body});
     } catch (error) {
         yield put({type: SET_PRIMARY_GROUP.FAILED, error: error});
+    }
+}
+
+function* addUserToGroup (action) {
+    try {
+        const response = yield call(usersAPI.addUserToGroup, action.userId, action.groupId);
+        yield put({type: ADD_USER_TO_GROUP.SUCCEEDED, data: response.body});
+    } catch (error) {
+        yield put({type: ADD_USER_TO_GROUP.FAILED, error: error});
+    }
+}
+
+function* removeUserFromGroup (action) {
+    try {
+        const response = yield call(usersAPI.removeUserFromGroup, action.userId, action.groupId);
+        yield put({type: REMOVE_USER_FROM_GROUP.SUCCEEDED, data: response.body});
+    } catch (error) {
+        yield put({type: REMOVE_USER_FROM_GROUP.FAILED, error: error});
     }
 }

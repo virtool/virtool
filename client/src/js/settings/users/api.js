@@ -32,8 +32,17 @@ const usersAPI = {
     setPrimaryGroup: (userId, primaryGroup) => {
         return Request.put(`/api/users/${userId}/primary`)
             .send({primary_group: primaryGroup});
-    }
+    },
 
+    addUserToGroup: (userId, groupId) => {
+        return Request.post(`/api/users/${userId}/groups`, {
+            group_id: groupId
+        });
+    },
+
+    removeUserFromGroup: (userId, groupId) => {
+        return Request.delete(`/api/users/${userId}/groups/${groupId}`);
+    }
 };
 
 export default usersAPI;
