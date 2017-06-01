@@ -11,7 +11,7 @@
 
 import React from "react";
 import { startCase } from "lodash";
-import { Checkbox, ListGroupItem } from "virtool/js/components/Base";
+import { Icon, ListGroupItem } from "virtool/js/components/Base";
 
 export default class Permission extends React.Component {
 
@@ -56,8 +56,8 @@ export default class Permission extends React.Component {
             disabled={this.props.disabled}
         >
             {startCase(this.props.name)}
-            <span className="pull-right">
-                <Checkbox checked={this.props.value} />
+            <span className="pull-right text-muted">
+                {this.props.value ? <Icon name="checkmark" />: <Icon name="close" />}
             </span>
         </ListGroupItem>
     );

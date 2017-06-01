@@ -21,6 +21,7 @@ import UniqueNames from "./General/UniqueNames";
 import SamplePermissions from "./General/SamplePermissions";
 import HTTP from "./Server/HTTP";
 import SSL from "./Server/SSL";
+import Data from "./Data";
 import Resources from "./Jobs/Resources";
 import Tasks from "./Jobs/Tasks";
 import Users from "../users/components/Users";
@@ -64,8 +65,8 @@ const Settings = () => {
                             <NavItem>Server</NavItem>
                         </LinkContainer>
 
-                        <LinkContainer to="/settings/database">
-                            <NavItem>Database</NavItem>
+                        <LinkContainer to="/settings/data">
+                            <NavItem>Data</NavItem>
                         </LinkContainer>
 
                         <LinkContainer to="/settings/jobs">
@@ -85,6 +86,7 @@ const Settings = () => {
                 <FlexItem grow={1} pad={15}>
                     <Route path="/settings/general" component={General} />
                     <Route path="/settings/server" component={Server} />
+                    <Route path="/settings/data" component={Data} />
                     <Route path="/settings/jobs" component={Jobs} />
                     <Route path="/settings/users" component={Users} />
                 </FlexItem>

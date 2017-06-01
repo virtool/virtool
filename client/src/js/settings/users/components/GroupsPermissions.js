@@ -23,11 +23,7 @@ const GroupsPermissions = (props) => {
 
     const groupComponents = props.allGroups.map(groupId => {
 
-        console.log(groupId, props.memberGroups);
-
         const toggled = includes(props.memberGroups, groupId);
-
-
 
         return (
             <ListGroupItem
@@ -59,15 +55,15 @@ const GroupsPermissions = (props) => {
                     </h5>
                 </Col>
             </Row>
-            <Row>
+            <Row style={{display: "flex"}}>
                 <Col md={5}>
-                    <Panel style={{height: "493px", overflowY: "scroll"}}>
+                    <Panel style={{height: "100%"}}>
                         <ListGroup fill style={{borderBottom: "1px solid #dddddd"}}>
                             {groupComponents}
                         </ListGroup>
                     </Panel>
                 </Col>
-                <Col md={7} style={{height: "100%"}}>
+                <Col md={7}>
                     <Permissions permissions={props.permissions} />
                 </Col>
             </Row>

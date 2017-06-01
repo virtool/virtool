@@ -10,18 +10,17 @@
  */
 
 import React from "react";
+import { connect } from "react-redux";
 import { Row, Col, Panel } from "react-bootstrap";
-import { Icon } from "virtool/js/components/Base";
 
-import SettingsProvider from "./SettingsProvider";
-import DatabaseOptions from "./Data/Database";
-import PathsOptions from "./Data/Paths";
+import { updateSettings } from "../actions";
+import { Icon, InputSave } from "virtool/js/components/Base";
 
 /**
  * A component the contains child components that modify certain general options. A small explanation of each
  * subcomponent is also rendered.
  */
-const DataOptionsInner = (props) => {
+const DataOptions = (props) => {
 
     const warningFooter = (
         <small className="text-danger">
@@ -36,7 +35,24 @@ const DataOptionsInner = (props) => {
                     <h5><strong>Database</strong></h5>
                 </Col>
                 <Col md={6}>
-                    <DatabaseOptions {...props} />
+                    <Panel>
+                        <InputSave
+                            label="Database Name"
+                            onSave={(e) => props.onSave("db_name", e.value)}
+                            initialValue={props.dbName}
+                        />
+                        <InputSave
+                            label="MongoDB Host"
+                            onSave={(e) => props.onSave("db_host", e.value)}
+                            initialValue={props.dbHost}
+                        />
+                        <InputSave
+                            label="MongoDB Port"
+                            type="number"
+                            onSave={(e) => props.onSave("db_port", Number(e.value))}
+                            initialValue={props.dbPort}
+                        />
+                    </Panel>
                 </Col>
                 <Col md={6}>
                     <Panel footer={warningFooter}>
@@ -49,7 +65,18 @@ const DataOptionsInner = (props) => {
                     <h5><strong>Paths</strong></h5>
                 </Col>
                 <Col md={6}>
-                    <PathsOptions {...props} />
+                    <Panel>
+                        <InputSave
+                            label="Virtool Data"
+                            onSave={(e) => props.onSave("watch_path", e.value)}
+                            initialValue={props.dataPath}
+                        />
+                        <InputSave
+                            label="Watch Folder"
+                            onSave={(e) => props.onSave("watch_path", e.value)}
+                            initialValue={props.watchPath}
+                        />
+                    </Panel>
                 </Col>
                 <Col md={6}>
                     <Panel footer={warningFooter}>
@@ -61,15 +88,39 @@ const DataOptionsInner = (props) => {
     )
 };
 
-DataOptionsInner.propsTypes = {
-    set: React.PropTypes.func,
-    settings: React.PropTypes.object
+DataOptions.propTypes = {
+    dataPath: React.PropTypes.string,
+    watchPath: React.PropTypes.string,
+    dbName: React.PropTypes.string,
+    dbHost: React.PropTypes.string,
+    dbPort: React.PropTypes.number,
+    onSave: React.PropTypes.func
 };
 
-const DataOptions = () => (
-    <SettingsProvider>
-        <DataOptionsInner />
-    </SettingsProvider>
-);
+const mapStateToProps = (state) => {
 
-export default DataOptions;
+    const settings = state.settings.data;
+
+    return {
+        dataPath: settings.data_path,
+        watchPath: settings.watch_path,
+        dbName: settings.db_name,
+        dbHost: settings.db_host,
+        dbPort: settings.db_port
+    };
+};
+
+const mapDispatchToProps = (dispatch) => {
+    return {
+        onSave: (key, value) => {
+            console.log(key, value);
+            let update = {};
+            update[key] = value;
+            dispatch(updateSettings(update));
+        }
+    };
+};
+
+const Container = connect(mapStateToProps, mapDispatchToProps)(DataOptions);
+
+export default Container;

@@ -31,8 +31,10 @@ class ManageUsers extends React.Component {
 
     static propTypes = {
         users: React.PropTypes.array,
+        groups: React.PropTypes.array,
         activeId: React.PropTypes.string,
         listUsers: React.PropTypes.func,
+        listGroups: React.PropTypes.func,
         onSelectUser: React.PropTypes.func
     };
 
