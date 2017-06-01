@@ -19,6 +19,11 @@ const usersAPI = {
         return Request.get(`/api/users/${userId}`);
     },
 
+    setPassword: (userId, password) => {
+        return Request.put(`/api/users/${userId}/password`)
+            .send({password: password});
+    },
+
     setForceReset: (userId, enabled) => {
         return Request.put(`/api/users/${userId}/reset`)
             .send({force_reset: enabled});

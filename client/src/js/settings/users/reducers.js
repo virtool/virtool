@@ -8,7 +8,15 @@
  */
 
 import { assign, find, findIndex } from "lodash";
-import { LIST_USERS, SELECT_USER, CHANGE_SET_PASSWORD, CLEAR_SET_PASSWORD, SET_FORCE_RESET } from "../../actionTypes";
+import {
+    LIST_USERS,
+    SELECT_USER,
+    CHANGE_SET_PASSWORD,
+    CHANGE_SET_CONFIRM,
+    SET_PASSWORD,
+    CLEAR_SET_PASSWORD,
+    SET_FORCE_RESET
+} from "../../actionTypes";
 
 const initialState = {
     list: null,
@@ -16,6 +24,7 @@ const initialState = {
 
     password: "",
     confirm: "",
+    passwordError: "",
     passwordChangeFailed: false,
     passwordChangePending: false,
 
@@ -51,14 +60,46 @@ const reducer = (state = initialState, action) => {
 
         case CHANGE_SET_PASSWORD:
             return assign({}, state, {
-                password: action.password,
+                password: action.password
+            });
+
+        case CHANGE_SET_CONFIRM:
+            return assign({}, state, {
                 confirm: action.confirm
             });
 
         case CLEAR_SET_PASSWORD:
             return assign({}, state, {
                 password: "",
-                confirm: ""
+                confirm: "",
+                passwordError: ""
+            });
+
+        case SET_PASSWORD.REQUESTED: {
+            return assign({}, state, {
+                passwordChangePending: true
+            });
+        }
+
+        case SET_PASSWORD.SUCCEEDED: {
+            let newState = assign({}, state, {
+                password: "",
+                confirm: "",
+                error: "",
+                passwordChangePending: false
+            });
+
+            const index = findIndex(newState.list, {user_id: state.activeId});
+
+            assign(newState.list[index], action.data);
+
+            return newState;
+        }
+
+        case SET_PASSWORD.FAILED:
+            return assign({}, state, {
+                passwordError: action.error,
+                passwordChangePending: false
             });
 
         case SET_FORCE_RESET.REQUESTED:

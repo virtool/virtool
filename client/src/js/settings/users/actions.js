@@ -7,7 +7,15 @@
  *
  */
 
-import { LIST_USERS, SELECT_USER, CHANGE_SET_PASSWORD, CLEAR_SET_PASSWORD, SET_FORCE_RESET } from "../../actionTypes";
+import {
+    LIST_USERS,
+    SELECT_USER,
+    CHANGE_SET_PASSWORD,
+    CHANGE_SET_CONFIRM,
+    SET_PASSWORD,
+    CLEAR_SET_PASSWORD,
+    SET_FORCE_RESET
+} from "../../actionTypes";
 
 export const listUsers = () => {
     return {
@@ -30,9 +38,24 @@ export const setForceReset = (userId, enabled) => {
     };
 };
 
-export const changeSetPassword = (password, confirm) => {
+export const changeSetPassword = (password) => {
     return {
         type: CHANGE_SET_PASSWORD,
+        password
+    };
+};
+
+export const changeSetConfirm = (confirm) => {
+    return {
+        type: CHANGE_SET_CONFIRM,
+        confirm
+    };
+};
+
+export const setPassword = (userId, password, confirm) => {
+    return {
+        type: SET_PASSWORD.REQUESTED,
+        userId,
         password,
         confirm
     };

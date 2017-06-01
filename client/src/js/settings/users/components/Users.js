@@ -13,8 +13,8 @@ import React from "react";
 import { connect } from "react-redux";
 import { Row, Col, Panel, ListGroup } from "react-bootstrap";
 
-import { Spinner, ListGroupItem } from "virtool/js/components/Base";
-import { listUsers, selectUser } from "../../users/actions";
+import { Spinner, ListGroupItem, AutoProgressBar } from "virtool/js/components/Base";
+import { listUsers, selectUser, changeSetPassword } from "../../users/actions";
 import Password from "./Password";
 
 /**
@@ -58,6 +58,7 @@ class ManageUsers extends React.Component {
         if (this.props.activeId) {
             content = (
                 <Panel header={this.props.activeId}>
+                    <AutoProgressBar affixed />
                     <Password />
                 </Panel>
             )

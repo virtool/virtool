@@ -23,7 +23,7 @@ import HTTP from "./Server/HTTP";
 import SSL from "./Server/SSL";
 import Resources from "./Jobs/Resources";
 import Tasks from "./Jobs/Tasks";
-import Users from "./Users/Users";
+import Users from "../users/components/Users";
 
 const General = () => (
     <div>

@@ -14,7 +14,7 @@ import { find } from "lodash";
 import { connect } from "react-redux";
 import { Alert, Panel } from "react-bootstrap";
 
-import { setForceReset, clearSetPassword } from "../../users/actions";
+import { setForceReset, changeSetPassword, changeSetConfirm, setPassword, clearSetPassword } from "../../users/actions";
 import { FlexItem, Icon, Input, Checkbox, Button, RelativeTime } from "virtool/js/components/Base";
 
 class Password extends React.PureComponent {
@@ -24,63 +24,39 @@ class Password extends React.PureComponent {
 
         password: React.PropTypes.string,
         confirm: React.PropTypes.string,
+        error: React.PropTypes.string,
         lastPasswordChange: React.PropTypes.string,
         passwordChangePending: React.PropTypes.bool,
         onChangePassword: React.PropTypes.func,
         onChangeConfirm: React.PropTypes.func,
+        onSubmit: React.PropTypes.func,
+        onClear: React.PropTypes.func,
 
         forceReset: React.PropTypes.bool,
         onSetForceReset: React.PropTypes.func
     };
 
-    isMatch = () => this.state.password === this.state.confirm;
-    isLong = () => this.state.password.length >= 4;
-
     /**
      * Called when the password is submitted. Sends the new password data to the server.
      *
-     * @param event - the submit event, used purely to prevent the default submit action
+     * @param e - the submit event, used purely to prevent the default submit action
      */
-    submit = (event) => {
-        event.preventDefault();
-
-        if (this.isMatch() && this.isLong()) {
-            this.setState({pendingChange: true} , () => {
-                dispatcher.db.users.request("set_password", {_id: this.props._id, new_password: this.state.password})
-                    .success(() => {
-                        this.setState(getChangeState());
-                    });
-            });
-        } else {
-            this.setState({failed: true});
-        }
+    submit = (e) => {
+        e.preventDefault();
+        this.props.onSubmit(this.props.userId, this.props.password, this.props.confirm);
     };
 
     render () {
 
         let alert;
 
-        /*
-
-        const match = this.isMatch();
-        const long = this.isLong();
-
-        // Show and alert with warnings if the password failed the pre-request checks.
-        if (!(match && long) && this.state.failed) {
+        if (this.props.error) {
             alert = (
-                <Alert bsStyle="danger" className="">
-                    {long ? null: <li>passwords are not at least 4 characters long</li>}
-                    {match ? null: <li>passwords don"t match</li>}
+                <Alert bsStyle="danger">
+                    {this.props.error}
                 </Alert>
             );
         }
-
-        // Boolean to set whether the submit button is disabled or not.
-        const submitDisabled = (!(match && long) && this.state.failed) || this.state.pendingChange;
-
-        */
-
-        const submitDisabled = this.props.passwordChangePending;
 
         return (
             <div>
@@ -100,7 +76,7 @@ class Password extends React.PureComponent {
                                     name="password"
                                     placeholder="New Password"
                                     value={this.props.password}
-                                    onChange={this.props.onChangePassword}
+                                    onChange={(e) => {this.props.onChangePassword(e.target.value)}}
                                     disabled={this.props.passwordChangePending}
                                 />
                             </FlexItem>
@@ -111,17 +87,26 @@ class Password extends React.PureComponent {
                                     name="confirm"
                                     placeholder="Confirm Password"
                                     value={this.props.confirm}
-                                    onChange={this.props.onChangeSet}
+                                    onChange={(e) => {this.props.onChangeConfirm(e.target.value)}}
                                     disabled={this.props.passwordChangePending}
                                 />
                             </FlexItem>
 
-                            <Button onClick={this.props.clear} disabled={this.props.passwordChangePending}>
+                            <Button
+                                type="button"
+                                onClick={this.props.onClear}
+                                disabled={this.props.passwordChangePending}
+                            >
                                 Clear
                             </Button>
 
-                            <Button type="submit" bsStyle="primary" disabled={submitDisabled}>
-                                <Icon name="floppy" pending={this.props.passwordChangePending} /> Save
+                            <Button
+                                icon="floppy"
+                                type="submit"
+                                bsStyle="primary"
+                                disabled={this.props.passwordChangePending}
+                            >
+                                Save
                             </Button>
                         </div>
                     </form>
@@ -151,6 +136,7 @@ const mapStateToProps = (state) => {
 
         password: state.users.password,
         confirm: state.users.confirm,
+        error: state.users.passwordError,
         passwordChangePending: state.users.passwordChangePending,
 
         lastPasswordChange: activeData.last_password_change,
@@ -164,14 +150,22 @@ const mapDispatchToProps = (dispatch) => {
             dispatch(clearSetPassword())
         },
 
-        onChangeSetPassword: (password, confirm) => {
-            dispatch(changeSetPassword(password, confirm));
+        onChangePassword: (password) => {
+            dispatch(changeSetPassword(password));
+        },
+
+        onChangeConfirm: (confirm) => {
+            dispatch(changeSetConfirm(confirm));
+        },
+
+        onSubmit: (userId, password, confirm) => {
+            dispatch(setPassword(userId, password, confirm));
         },
 
         onSetForceReset: (userId, enabled) => {
             dispatch(setForceReset(userId, enabled));
         }
-    }
+    };
 };
 
 const Container = connect(mapStateToProps, mapDispatchToProps)(Password);

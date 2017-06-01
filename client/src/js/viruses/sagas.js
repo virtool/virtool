@@ -8,7 +8,7 @@
  */
 
 import { pick } from "lodash";
-import { put, select, takeLatest } from "redux-saga/effects";
+import { call, put, select, takeLatest } from "redux-saga/effects";
 
 import virusesAPI from "./api";
 import { FIND_VIRUSES }  from "../actionTypes";
@@ -24,28 +24,10 @@ export function* watchViruses () {
 export function* findViruses () {
     try {
         const findParams = yield select(getFindParams);
-        const response = yield virusesAPI.find(findParams);
+        const response = yield call(virusesAPI.find, findParams);
 
         yield put({type: FIND_VIRUSES.SUCCEEDED, data: response.body});
     } catch (error) {
         yield put({type: FIND_VIRUSES.FAILED}, error);
     }
 }
-
-/*
-
-export function* getVirusSaga(virusId) {
-}
-
-export function* editVirusSaga (virusId, data) {
-}
-
-export function* removeVirusSaga (virusId) {
-}
-
-export function* listIsolatesSaga (virusId, isolateId) {
-}
-
-export function* addIsolateSaga (virusId, data) {
-}
-*/

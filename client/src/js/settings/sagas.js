@@ -7,7 +7,7 @@
  *
  */
 
-import { put, takeEvery, takeLatest } from "redux-saga/effects";
+import { call, put, takeEvery, takeLatest } from "redux-saga/effects";
 import settingsAPI from "./api";
 import { GET_SETTINGS, UPDATE_SETTINGS } from "../actionTypes";
 
@@ -17,7 +17,7 @@ export function* watchSettings () {
 
 function* getSettings () {
     try {
-        const response = yield settingsAPI.get();
+        const response = yield call(settingsAPI.get);
         yield put({type: GET_SETTINGS.SUCCEEDED, data: response.body});
     } catch (error) {
         yield put({type: GET_SETTINGS.FAILED}, error);
@@ -30,7 +30,7 @@ export function* watchUpdateSettings () {
 
 function* updateSettings (action) {
     try {
-        const response = yield settingsAPI.update(action.update);
+        const response = yield call(settingsAPI.update, action.update);
         yield put({type: UPDATE_SETTINGS.SUCCEEDED, settings: response.body});
     } catch(error) {
         yield put({type: UPDATE_SETTINGS.FAILED})
