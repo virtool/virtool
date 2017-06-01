@@ -14,8 +14,10 @@ import { connect } from "react-redux";
 import { Row, Col, Panel, ListGroup } from "react-bootstrap";
 
 import { Spinner, ListGroupItem, AutoProgressBar } from "virtool/js/components/Base";
-import { listUsers, selectUser, changeSetPassword } from "../../users/actions";
+import { listUsers, selectUser } from "../../users/actions";
+import { listGroups } from "../../groups/actions";
 import Password from "./Password";
+import PrimaryGroup from "./PrimaryGroup";
 
 /**
  * A component for managing users that is accessible in the options section. Contains components for changing passwords,
@@ -34,7 +36,13 @@ class ManageUsers extends React.Component {
     };
 
     componentWillMount () {
-        this.props.listUsers();
+        if (this.props.users === null) {
+            this.props.listUsers();
+        }
+
+        if (this.props.groups === null) {
+            this.props.listGroups();
+        }
     }
 
     render () {
@@ -60,6 +68,7 @@ class ManageUsers extends React.Component {
                 <Panel header={this.props.activeId}>
                     <AutoProgressBar affixed />
                     <Password />
+                    <PrimaryGroup />
                 </Panel>
             )
         } else {
@@ -90,7 +99,8 @@ class ManageUsers extends React.Component {
 const mapStateToProps = (state) => {
     return {
         users: state.users.list,
-        activeId: state.users.activeId
+        activeId: state.users.activeId,
+        groups: state.groups.list
     };
 };
 
@@ -98,6 +108,10 @@ const mapDispatchToProps = (dispatch) => {
     return {
         listUsers: () => {
             dispatch(listUsers());
+        },
+
+        listGroups: () => {
+            dispatch(listGroups());
         },
 
         onSelectUser: (userId) => {

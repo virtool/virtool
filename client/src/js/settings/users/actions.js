@@ -13,6 +13,7 @@ import {
     CHANGE_SET_PASSWORD,
     CHANGE_SET_CONFIRM,
     SET_PASSWORD,
+    SET_PRIMARY_GROUP,
     CLEAR_SET_PASSWORD,
     SET_FORCE_RESET
 } from "../../actionTypes";
@@ -58,6 +59,14 @@ export const setPassword = (userId, password, confirm) => {
         userId,
         password,
         confirm
+    };
+};
+
+export const setPrimaryGroup = (userId, primaryGroup) => {
+    return {
+        type: SET_PRIMARY_GROUP.REQUESTED,
+        userId,
+        primaryGroup
     };
 };
 

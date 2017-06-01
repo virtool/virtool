@@ -72,3 +72,6 @@ export const CHANGE_SET_CONFIRM = "CHANGE_SET_CONFIRM";
 export const SET_PASSWORD = createRequestActionType("SET_PASSWORD");
 export const CLEAR_SET_PASSWORD = "CLEAR_SET_PASSWORD";
 export const SET_FORCE_RESET = createRequestActionType("SET_FORCE_RESET");
+export const SET_PRIMARY_GROUP = createRequestActionType("SET_PRIMARY_GROUP");
+
+export const LIST_GROUPS = createRequestActionType("LIST_GROUPS");

@@ -10,72 +10,75 @@
  */
 
 import React from "react";
-import { capitalize } from "lodash";
+import { connect } from "react-redux";
+import { find, capitalize } from "lodash";
 import { Row, Col } from "react-bootstrap";
+
+import { setPrimaryGroup } from "../actions";
 import { Icon, Help, Input } from "virtool/js/components/Base";
 
 /**
  * A component based on ListGroupItem
  */
-export default class PrimaryGroup extends React.Component {
+const PrimaryGroup = (props) => {
 
-    constructor (props) {
-        super(props);
-        this.state = {
-            pending: false
-        };
-    }
+    const groupOptions = props.groups.map(groupId =>
+        <option key={groupId} value={groupId}>{capitalize(groupId)}</option>
+    );
 
-    static propTypes = {
-        _id: React.PropTypes.string,
-        primaryGroup: React.PropTypes.string,
-        groups: React.PropTypes.arrayOf(React.PropTypes.string)
+    return (
+        <div>
+            <Row>
+                <Col md={12}>
+                    <h5>
+                        <Icon name="checkmark" /> <strong>Primary Group</strong>
+                        <Help pullRight>
+                            This group will be assigned to any samples created by the user.
+                        </Help>
+                    </h5>
+                </Col>
+            </Row>
+            <Row>
+                <Col md={12}>
+                    <Input
+                        type="select"
+                        value={props.primaryGroup}
+                        onChange={(e) => props.onChange(props.userId, e.target.value)}
+                    >
+                        <option key="none" value="none">None</option>
+                        {groupOptions}
+                    </Input>
+                </Col>
+            </Row>
+        </div>
+    );
+};
+
+PrimaryGroup.propTypes = {
+    userId: React.PropTypes.string,
+    primaryGroup: React.PropTypes.string,
+    groups: React.PropTypes.arrayOf(React.PropTypes.string),
+    onChange: React.PropTypes.func
+};
+
+const mapStateToProps = (state) => {
+    const activeData = find(state.users.list, {user_id: state.users.activeId});
+
+    return {
+        userId: activeData.user_id,
+        primaryGroup: activeData.primary_group,
+        groups: state.groups.list.map(group => group.group_id)
     };
+};
 
-    /**
-     * Called when the component is clicked. Selects the component"s user in the parent component.
-     */
-    handleChange = (event) => {
-        this.setState({pending: true}, () => {
-            dispatcher.db.users.request("set_primary_group", {
-                _id: this.props._id,
-                group_id: event.target.value
-            });
-        });
+const mapDispatchToProps = (dispatch) => {
+    return {
+        onChange: (userId, groupId) => {
+            dispatch(setPrimaryGroup(userId, groupId));
+        }
     };
+};
 
-    render () {
+const Container = connect(mapStateToProps, mapDispatchToProps)(PrimaryGroup);
 
-        const groupOptions = this.props.groups.map(groupId =>
-            <option key={groupId} value={groupId}>{capitalize(groupId)}</option>
-        );
-
-        return (
-            <div>
-                <Row>
-                    <Col md={12}>
-                        <h5>
-                            <Icon name="checkmark" /> <strong>Primary Group</strong>
-                            <Help pullRight>
-                                This group will be assigned to any samples created by the user.
-                            </Help>
-                        </h5>
-                    </Col>
-                </Row>
-                <Row>
-                    <Col md={12}>
-                        <Input
-                            type="select"
-                            value={this.props.primaryGroup}
-                            onChange={this.handleChange}
-                            disabled={this.state.pending}
-                        >
-                            <option key="none" value="">None</option>
-                            {groupOptions}
-                        </Input>
-                    </Col>
-                </Row>
-            </div>
-        );
-    }
-}
+export default Container;

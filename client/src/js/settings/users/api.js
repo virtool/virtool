@@ -27,6 +27,11 @@ const usersAPI = {
     setForceReset: (userId, enabled) => {
         return Request.put(`/api/users/${userId}/reset`)
             .send({force_reset: enabled});
+    },
+
+    setPrimaryGroup: (userId, primaryGroup) => {
+        return Request.put(`/api/users/${userId}/primary`)
+            .send({primary_group: primaryGroup});
     }
 
 };

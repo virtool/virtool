@@ -12,6 +12,7 @@ import { watchViruses } from "./viruses/sagas"
 import { watchAccount, watchLogout } from "./nav/sagas"
 import { watchSettings, watchUpdateSettings } from "./settings/sagas"
 import { watchUsers } from "./settings/users/sagas";
+import { watchGroups } from "./settings/groups/sagas";
 
 export function* rootSaga () {
     yield [
@@ -20,6 +21,7 @@ export function* rootSaga () {
         fork(watchSettings),
         fork(watchUpdateSettings),
         fork(watchUsers),
+        fork(watchGroups),
         fork(watchLogout)
     ]
 }

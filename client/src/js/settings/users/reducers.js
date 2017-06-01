@@ -15,7 +15,8 @@ import {
     CHANGE_SET_CONFIRM,
     SET_PASSWORD,
     CLEAR_SET_PASSWORD,
-    SET_FORCE_RESET
+    SET_FORCE_RESET,
+    SET_PRIMARY_GROUP
 } from "../../actionTypes";
 
 const initialState = {
@@ -113,6 +114,17 @@ const reducer = (state = initialState, action) => {
             });
 
             const index = findIndex(newState.list, {user_id: state.activeId});
+
+            assign(newState.list[index], action.data);
+
+            return newState;
+        }
+
+        case SET_PRIMARY_GROUP.SUCCEEDED: {
+
+            const newState = assign({}, state);
+
+            const index = findIndex(state.list, {user_id: state.activeId});
 
             assign(newState.list[index], action.data);
 
