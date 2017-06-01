@@ -110,9 +110,7 @@ async def set_password(req):
         }
     }, return_document=ReturnDocument.AFTER, projection=["force_reset", "last_password_change"])
 
-    document["user_id"] = document.pop("_id")
-
-    return json_response(document)
+    return json_response(virtool.user.processor(document))
 
 
 @protected("manage_users")
