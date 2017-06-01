@@ -165,8 +165,12 @@ async def set_primary_group(req):
     if not await virtool.user.user_exists(req.app["db"], user_id):
         return not_found("User does not exist")
 
-    if data["primary_group"] != "none" and not await req.app["db"].groups.count({"_id": data["primary_group"]}):
-        return not_found("Group does not exist")
+    if data["primary_group"] != "none":
+        if not await req.app["db"].groups.count({"_id": data["primary_group"]}):
+            return not_found("Group does not exist")
+
+        if not await req.app["db"].users.count({"_id": user_id, "groups": data["primary_group"]}):
+            return bad_request("User is not member of group {}".format(data["primary_group"]))
 
     document = await req.app["db"].users.find_one_and_update({"_id": user_id}, {
         "$set": {

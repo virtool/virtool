@@ -21,8 +21,11 @@ def merge_group_permissions(groups):
 
     for permission_name in PERMISSIONS:
         for group in groups:
-            if group["permissions"][permission_name]:
-                permission_dict[permission_name] = True
+            try:
+                if group["permissions"][permission_name]:
+                    permission_dict[permission_name] = True
+            except KeyError:
+                permission_dict[permission_name] = False
 
     return permission_dict
 
