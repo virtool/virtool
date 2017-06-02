@@ -18,7 +18,13 @@ import { Modal, Nav, NavItem, Panel } from "react-bootstrap";
 import { getVirus } from "../../actions";
 import { Spinner } from "virtool/js/components/Base";
 // import Isolates from "./Detail/Isolates";
-// import General from "./Detail/General";
+import General from "./Detail/General";
+
+const VirusSection = () => (
+    <div>
+        <General />
+    </div>
+);
 
 class VirusDetail extends React.Component {
 
@@ -64,7 +70,7 @@ class VirusDetail extends React.Component {
                     <Panel className="tab-panel">
                         <Switch>
                             <Redirect from="/viruses/detail/:virusId" to={`/viruses/detail/${virusId}/virus`} exact />
-                            <Route path="/viruses/detail/:virusId/virus" render={() => <div>Virus</div>} />
+                            <Route path="/viruses/detail/:virusId/virus" component={VirusSection} />
                             <Route path="/viruses/detail/:virusId/history" render={() => <div>History</div>} />
                         </Switch>
                     </Panel>

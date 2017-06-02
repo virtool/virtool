@@ -11,6 +11,7 @@
 
 
 import React from "react";
+import { connect } from "react-redux";
 import { Table } from "react-bootstrap";
 import { Icon, InputCell } from "virtool/js/components/Base";
 
@@ -22,10 +23,6 @@ import { Icon, InputCell } from "virtool/js/components/Base";
  */
 const VirusGeneral = (props) => {
 
-    const data = {
-        _id: props._id
-    };
-
     let nameCell;
     let abbrCell;
 
@@ -33,20 +30,17 @@ const VirusGeneral = (props) => {
         nameCell = (
             <InputCell
                 className="col-sm-8"
-                collection={dispatcher.db.viruses}
-                _id={data._id}
                 field="name"
                 value={props.name}
+                onSave={props.onSave}
             />
         );
 
         abbrCell = (
             <InputCell
-                collection={dispatcher.db.viruses}
-                _id={data._id}
                 field="abbreviation"
                 value={props.abbreviation}
-
+                onSave={props.onSave}
             />
         );
     } else {
@@ -54,17 +48,10 @@ const VirusGeneral = (props) => {
         abbrCell = <td>{props.abbreviation}</td>;
     }
 
-    const databaseIdRow = dispatcher.user.settings.show_ids ? (
+    const databaseIdRow = props.showIds ? (
         <tr>
             <th>Database ID</th>
-            <td>{data._id}</td>
-        </tr>
-    ): null;
-
-    const databaseVersionRow = dispatcher.user.settings.show_versions ? (
-        <tr>
-            <th>Database Version</th>
-            <td>{props._version}</td>
+            <td>{props.virusId}</td>
         </tr>
     ): null;
 
@@ -83,8 +70,11 @@ const VirusGeneral = (props) => {
                         <th>Abbreviation</th>
                         {abbrCell}
                     </tr>
+                    <tr>
+                        <th>Version</th>
+                        <td>{props.version}</td>
+                    </tr>
                     {databaseIdRow}
-                    {databaseVersionRow}
                 </tbody>
             </Table>
         </div>
@@ -92,20 +82,34 @@ const VirusGeneral = (props) => {
 };
 
 VirusGeneral.propTypes = {
-    _id: React.PropTypes.string.isRequired,
-    _version: React.PropTypes.number.isRequired,
+    virusId: React.PropTypes.string.isRequired,
+    version: React.PropTypes.number.isRequired,
     name: React.PropTypes.string.isRequired,
     abbreviation: React.PropTypes.string,
     canModify: React.PropTypes.bool
 };
 
 const mapStateToProps = (state) => {
+    const detail = state.viruses.detail;
+
     return {
-        virusId: state.viruses.detail.virus_id,
-        canModify: state.account.permissions.modify_virus
+        showIds: state.account.settings.show_ids,
+        canModify: state.account.permissions.modify_virus,
+        virusId: detail.virus_id,
+        name: detail.name,
+        abbreviation: detail.abbreviation,
+        version: detail.version,
     };
 };
 
-const
+const mapDispatchToProps = (dispatch) => {
+    return {
+        onSave: (key, value) => {
+            console.log(key, value);
+        }
+    };
+};
 
-export default VirusGeneral;
+const Container = connect(mapStateToProps, mapDispatchToProps)(VirusGeneral);
+
+export default Container;
