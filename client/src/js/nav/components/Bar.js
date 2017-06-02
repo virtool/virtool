@@ -33,52 +33,57 @@ const Bar = (props) => {
                 <Navbar.Brand>
                     <Icon name="vtlogo" className="vtlogo"/>
                 </Navbar.Brand>
+
+                <Navbar.Toggle />
             </Navbar.Header>
 
-            <Nav>
-                <LinkContainer to="/">
-                    <NavItem>
-                        Home
-                    </NavItem>
-                </LinkContainer>
+            <Navbar.Collapse>
 
-                <LinkContainer to="/jobs">
-                    <NavItem>
-                        Jobs
-                    </NavItem>
-                </LinkContainer>
+                <Nav>
+                    <LinkContainer to="/">
+                        <NavItem>
+                            Home
+                        </NavItem>
+                    </LinkContainer>
 
-                <LinkContainer to="/samples">
-                    <NavItem>
-                        Samples
-                    </NavItem>
-                </LinkContainer>
+                    <LinkContainer to="/jobs">
+                        <NavItem>
+                            Jobs
+                        </NavItem>
+                    </LinkContainer>
 
-                <LinkContainer to="/viruses">
-                    <NavItem>
-                        Viruses
-                    </NavItem>
-                </LinkContainer>
+                    <LinkContainer to="/samples">
+                        <NavItem>
+                            Samples
+                        </NavItem>
+                    </LinkContainer>
 
-                <LinkContainer to="/subtraction">
-                    <NavItem>
-                        Subtraction
-                    </NavItem>
-                </LinkContainer>
+                    <LinkContainer to="/viruses">
+                        <NavItem>
+                            Viruses
+                        </NavItem>
+                    </LinkContainer>
 
-                <LinkContainer to="/settings">
-                    <NavItem>
-                        Settings
-                    </NavItem>
-                </LinkContainer>
-            </Nav>
+                    <LinkContainer to="/subtraction">
+                        <NavItem>
+                            Subtraction
+                        </NavItem>
+                    </LinkContainer>
 
-            <Nav pullRight>
-                <NavDropdown id="account-dropdown" title={dropdownTitle}>
-                    <MenuItem>Settings</MenuItem>
-                    <MenuItem onClick={props.logout}>Logout</MenuItem>
-                </NavDropdown>
-            </Nav>
+                    <LinkContainer to="/settings">
+                        <NavItem>
+                            Settings
+                        </NavItem>
+                    </LinkContainer>
+                </Nav>
+
+                <Nav pullRight>
+                    <NavDropdown id="account-dropdown" title={dropdownTitle}>
+                        <MenuItem>Settings</MenuItem>
+                        <MenuItem onClick={props.logout}>Logout</MenuItem>
+                    </NavDropdown>
+                </Nav>
+            </Navbar.Collapse>
         </Navbar>
     );
 };
