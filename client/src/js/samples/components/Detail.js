@@ -15,8 +15,8 @@ import { Nav, NavItem, Modal } from "react-bootstrap";
 
 import { getSample } from "../actions";
 import { Spinner } from "virtool/js/components/Base";
-import General from "./Detail/General";
-import Quality from "./Detail/Quality/Quality";
+import General from "./General";
+import Quality from "./Quality/Quality";
 
 class SampleDetail extends React.Component {
 
