@@ -30,22 +30,7 @@ const virusesAPI = {
     },
 
     get: (virusId) => {
-        fetch(`/api/viruses/${virusId}`, {
-            method: "GET"
-        }).then(resp => resp.json());
-    },
-
-    edit: (virusId, update) => {
-        fetch(`/api/viruses/${virusId}`, {
-            method: "PATCH",
-            body: JSON.stringify(update)
-        }).then(resp => resp.json());
-    },
-
-    remove: virusId => {
-        fetch(`/api/viruses/${virusId}`, {
-            method: "DELETE"
-        }).then(resp => resp.json());
+        return Request.get(`/api/viruses/${virusId}`);
     }
 
 };

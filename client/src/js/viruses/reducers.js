@@ -13,11 +13,8 @@ import {
     WS_REMOVE_VIRUS,
 
     FIND_VIRUSES,
-    CREATE_VIRUS,
-
-    GET_VIRUS_REQUESTED,
-    GET_VIRUS_SUCCEEDED,
-    GET_VIRUS_FAILED
+    GET_VIRUS,
+    CREATE_VIRUS
 } from "../actionTypes";
 
 const virusesInitialState = {
@@ -27,6 +24,8 @@ const virusesInitialState = {
     descending: false,
     modified: false,
     page: 1,
+
+    detail: null,
 
     createError: "",
     createPending: false,
@@ -68,20 +67,14 @@ export function virusesReducer (state = virusesInitialState, action) {
                 finding: false
             });
 
-        case GET_VIRUS_REQUESTED:
+        case GET_VIRUS.REQUESTED:
             return assign({}, state, {
-                detailVisible: true
+                detail: null
             });
 
-        case GET_VIRUS_SUCCEEDED:
+        case GET_VIRUS.SUCCEEDED:
             return assign({}, state, {
-                detailVisible: true,
-                detailData: action.data
-            });
-
-        case GET_VIRUS_FAILED:
-            return assign({}, state, {
-                detailVisible: false
+                detail: action.data
             });
 
         case CREATE_VIRUS.REQUESTED:

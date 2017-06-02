@@ -11,6 +11,7 @@ import {
     WS_UPDATE_VIRUS,
     WS_REMOVE_VIRUS,
     FIND_VIRUSES,
+    GET_VIRUS,
     CREATE_VIRUS
 } from "../actionTypes";
 
@@ -34,6 +35,13 @@ export function findViruses (terms) {
         type: FIND_VIRUSES.REQUESTED,
         terms
     }
+}
+
+export function getVirus (virusId) {
+    return {
+        type: GET_VIRUS.REQUESTED,
+        virusId: virusId
+    };
 }
 
 export function createVirus (name, abbreviation) {

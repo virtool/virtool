@@ -7,10 +7,81 @@
  *
  */
 
+import React from "react";
 import { connect } from "react-redux";
-import { withRouter } from "react-router-dom";
+import { Route } from "react-router-dom";
+import { LinkContainer } from "react-router-bootstrap";
+import { Row, Col, ListGroup } from "react-bootstrap";
+
 import { findViruses } from "../../actions";
-import VirusList from "./VirusList";
+import { Icon, ListGroupItem } from "virtool/js/components/Base";
+import VirusToolbar from "./Toolbar";
+import VirusDetail from "./Detail";
+import CreateVirus from "./Create";
+
+class ManageViruses extends React.Component {
+
+    constructor (props) {
+        super(props)
+    }
+
+    static propTypes = {
+        documents: React.PropTypes.arrayOf(React.PropTypes.object),
+        onFind: React.PropTypes.func
+    };
+
+    componentDidMount () {
+        this.props.onFind(null);
+    }
+
+    render () {
+
+        let virusComponents;
+
+        if (this.props.documents && this.props.documents.length > 0) {
+            virusComponents = this.props.documents.map(document =>
+                <LinkContainer to={`/viruses/detail/${document.virus_id}`} key={document.virus_id} className="spaced">
+                    <ListGroupItem bsStyle={document.modified ? "warning": null}>
+                        <Row>
+                            <Col md={6}>
+                                <strong>{document.name}</strong>
+                            </Col>
+                            <Col md={6}>
+                                {document.abbreviation}
+                                <span className="pull-right">
+                                    {document.modified ? <Icon bsStyle="warning" name="flag" />: null}
+                                </span>
+                            </Col>
+                        </Row>
+                    </ListGroupItem>
+                </LinkContainer>
+            );
+        } else {
+            virusComponents = (
+                <ListGroupItem key="noViruses" className="text-center">
+                    <Icon name="info"/> No viruses found.
+                </ListGroupItem>
+            );
+        }
+
+        return (
+            <div className="container">
+                <VirusToolbar {...this.props} />
+
+                <ListGroup>
+                    {virusComponents}
+                </ListGroup>
+
+                <Route path="/viruses/create">
+                    <CreateVirus {...this.props} />
+                </Route>
+
+                <Route path="/viruses/detail/:virusId" component={VirusDetail} />
+            </div>
+        );
+
+    }
+}
 
 const mapStateToProps = (state) => {
     return {
@@ -36,9 +107,9 @@ const mapDispatchToProps = (dispatch, ownProps) => {
     };
 };
 
-const ManageViruses = withRouter(connect(
+const Container = connect(
     mapStateToProps,
     mapDispatchToProps
-)(VirusList));
+)(ManageViruses);
 
-export default ManageViruses;
+export default Container;

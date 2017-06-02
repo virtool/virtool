@@ -99,4 +99,13 @@ VirusGeneral.propTypes = {
     canModify: React.PropTypes.bool
 };
 
+const mapStateToProps = (state) => {
+    return {
+        virusId: state.viruses.detail.virus_id,
+        canModify: state.account.permissions.modify_virus
+    };
+};
+
+const
+
 export default VirusGeneral;

@@ -9,93 +9,103 @@
  * @exports VirusDetail
  */
 
-import React from "react";
-import { Modal } from "react-bootstrap";
-import { ConfirmFooter, Icon } from "virtool/js/components/Base";
+import React, { PropTypes } from "react";
+import { connect } from "react-redux";
+import { Switch, Route, Redirect } from "react-router-dom";
+import { LinkContainer } from "react-router-bootstrap";
+import { Modal, Nav, NavItem, Panel } from "react-bootstrap";
 
-import ConfirmVirus from "./Detail/ConfirmVirus";
-import Isolates from "./Detail/Isolates";
-import General from "./Detail/General";
+import { getVirus } from "../../actions";
+import { Spinner } from "virtool/js/components/Base";
+// import Isolates from "./Detail/Isolates";
+// import General from "./Detail/General";
 
-const getInitialState = () => ({
-    canModify: dispatcher.user.permissions.modify_virus,
-    canRemove: dispatcher.user.permissions.remove_virus
-});
-
-/**
- * A modal component for editing and viewing virus details.
- *
- * @class
- */
-export default class VirusDetail extends React.Component {
-
-    constructor (props) {
-        super(props);
-        this.state = getInitialState();
-    }
+class VirusDetail extends React.Component {
 
     static propTypes = {
-        onHide: React.PropTypes.func,
-        detail: React.PropTypes.object
+        match: PropTypes.object,
+        history: PropTypes.object,
+        detail: PropTypes.object,
+        getVirus: PropTypes.func
     };
 
-    componentDidMount () {
-        dispatcher.user.on("change", this.update);
-    }
-
-    componentWillUnmount () {
-        dispatcher.user.off("change", this.update);
-    }
-
-    update = () => {
-        this.setState(getInitialState());
+    modalEnter = () => {
+        this.props.getVirus(this.props.match.params.virusId);
     };
 
-    remove = () => {
-        dispatcher.db.viruses.request("remove_virus", {_id: this.props.detail._id});
+    hide = () => {
+        this.props.history.push("/viruses")
     };
 
-    render () {
+    render = () => {
 
-        let footer;
+        let content;
 
-        if (this.state.canRemove) {
-            footer = (
-                <ConfirmFooter
-                    {...this.props}
-                    buttonContent={<span><Icon name="remove" /> Remove</span>}
-                    callback={this.remove}
-                    message="Are you sure you want to remove this virus?"
-                />
+        if (this.props.detail) {
+
+            const virusId = this.props.match.params.virusId;
+
+            content = (
+                <div>
+                    <Nav bsStyle="tabs">
+                        <LinkContainer to={`/viruses/detail/${virusId}/virus`}>
+                            <NavItem>
+                                Virus
+                            </NavItem>
+                        </LinkContainer>
+
+                        <LinkContainer to={`/viruses/detail/${virusId}/history`}>
+                            <NavItem>
+                                History
+                            </NavItem>
+                        </LinkContainer>
+                    </Nav>
+
+                    <Panel className="tab-panel">
+                        <Switch>
+                            <Redirect from="/viruses/detail/:virusId" to={`/viruses/detail/${virusId}/virus`} exact />
+                            <Route path="/viruses/detail/:virusId/virus" render={() => <div>Virus</div>} />
+                            <Route path="/viruses/detail/:virusId/history" render={() => <div>History</div>} />
+                        </Switch>
+                    </Panel>
+                </div>
+            );
+        } else {
+            content = (
+                <div className="text-center">
+                    <Spinner />
+                </div>
             );
         }
 
         return (
-            <div>
-                <Modal.Header onHide={this.props.onHide} closeButton>
+            <Modal bsSize="lg" show={true} onEnter={this.modalEnter} onHide={this.hide}>
+                <Modal.Header onHide={this.hide} closeButton>
                     Virus Detail
                 </Modal.Header>
                 <Modal.Body>
-                    <General
-                        {...this.props.detail}
-                        canModify={this.state.canModify}
-                    />
-
-                    <Isolates
-                        data={this.props.detail.isolates}
-                        virusId={this.props.detail._id}
-                        canModify={this.state.canModify}
-                    />
-
-                    <ConfirmVirus
-                        _id={this.props.detail._id}
-                        show={this.props.detail.modified && this.state.canModify}
-                        isolates={this.props.detail.isolates}
-                    />
+                    {content}
                 </Modal.Body>
-
-                {footer}
-            </div>
+            </Modal>
         );
-    }
+    };
 }
+
+const mapStateToProps = (state) => {
+    return {
+        thing: "test",
+        detail: state.viruses.detail
+    };
+};
+
+const mapDispatchToProps = (dispatch) => {
+    return {
+        getVirus: (virusId) => {
+            dispatch(getVirus(virusId));
+        }
+    };
+};
+
+const Container = connect(mapStateToProps, mapDispatchToProps)(VirusDetail);
+
+export default Container;
