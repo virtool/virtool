@@ -1,3 +1,4 @@
+import os
 import random
 import pymongo
 from aiohttp import web
@@ -9,6 +10,14 @@ import virtool.utils
 
 def get_login_template():
     return Template(filename="virtool/templates/login.html")
+
+
+def get_static_hash():
+    client_files = os.listdir("./client/dist")
+
+    for file_name in client_files:
+        if "style." in file_name:
+            return file_name.split(".")[1]
 
 
 def generate_verification_keys():
