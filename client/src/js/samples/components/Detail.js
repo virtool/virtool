@@ -8,7 +8,7 @@
  */
 
 import React from "react";
-import { Route, Redirect } from "react-router-dom";
+import { Switch, Route, Redirect } from "react-router-dom";
 import { connect } from "react-redux";
 import { LinkContainer } from "react-router-bootstrap";
 import { Nav, NavItem, Modal } from "react-bootstrap";
@@ -16,6 +16,7 @@ import { Nav, NavItem, Modal } from "react-bootstrap";
 import { getSample } from "../actions";
 import { Spinner } from "virtool/js/components/Base";
 import General from "./Detail/General";
+import Quality from "./Detail/Quality/Quality";
 
 class SampleDetail extends React.Component {
 
@@ -49,8 +50,6 @@ class SampleDetail extends React.Component {
 
             content = (
                 <div>
-                    <Redirect from="/samples/detail/:sampleId" to={`/samples/detail/${sampleId}/general`} exact />
-
                     <Nav bsStyle="tabs">
                         <LinkContainer to={`/samples/detail/${sampleId}/general`}>
                             <NavItem>General</NavItem>
@@ -63,7 +62,11 @@ class SampleDetail extends React.Component {
                         </LinkContainer>
                     </Nav>
 
-                    <Route path="/samples/detail/:sampleId/general" component={General} />
+                    <Switch>
+                        <Redirect from="/samples/detail/:sampleId" to={`/samples/detail/${sampleId}/general`} exact />
+                        <Route path="/samples/detail/:sampleId/general" component={General} />
+                        <Route path="/samples/detail/:sampleId/quality" component={Quality} />
+                    </Switch>
                 </div>
             );
         }
