@@ -5,8 +5,6 @@
   font-style: normal;
 }
 
-
-
 i {
   /* use !important to prevent issues with browser extensions that change fonts */
   font-family: 'vtfont' !important;

@@ -1,6 +1,50 @@
+// Import Bootstrap less 3.37
+@import "./bootstrap.less";
+
+// Import CSS for custom font and icons
+@import "./roboto.css";
+@import "./font.css";
+
+// Import extra NPM module CSS
+@import "./typeahead.css";
+@import "./perfect-scrollbar.css";
+
+// Virtool LESS modules
+@import "./divider.less";
+@import "./graphics.less";
+@import "./spinner.less";
+
+// Bootstrap color variables
+@brand-primary: lighten(#05486c, 12%);
+@brand-success: #60af98;
+@brand-warning: #be9235;
+@brand-danger: #d44b40;
+
+// Bootstrap border-radius variable
+@border-radius-base: 0;
+@border-radius-large: 0;
+@border-radius-small: 0;
+
+@navbar-default-bg: #3c8786;
+@navbar-default-link-color: #edf7f6;
+@navbar-default-link-active-color: #edf7f6;
+@navbar-default-border: none;
+@navbar-height: 45px;
+
+@grid-gutter-width: 16px;
+
+@modal-lg: 1000px;
+@modal-md: 500px;
+
+@input-border-focus: lighten(@brand-primary, 8%);
+
 body {
-    padding-top: 70px;
-    font-family: 'Roboto', sans-serif;
+  padding-top: 65px;
+  font-family: 'Roboto', sans-serif;
+}
+
+.navbar {
+    box-shadow: 0px 2px 2px 0 #d5d5d5;
 }
 
 .text-em {
@@ -48,45 +92,6 @@ div.hoverable:hover {
     width: 8px;
     text-align: center;
     display: inline-block;
-}
-
-.subnav {
-    margin-top: 50px;
-    padding: 8px 15px;
-    margin-bottom: 20px;
-    list-style: none;
-    background-color: #f5f5f5;
-    border-radius: 4px;
-}
-
-.subnav > li {
-  display: inline-block;
-}
-
-.subnav > li + li:before {
-  content: "    \00a0";
-  padding: 0 5px;
-  color: #CCCCCC;
-}
-
-.subnav > li a {
-  text-decoration: none;
-}
-
-.subnav > .active a {
-  text-decoration: underline;
-}
-
-.modal-lg {
-    width: 1000px;
-}
-
-.modal-md {
-    width: 500px !important;
-}
-
-.modal-rg {
-    width: 750px !important;
 }
 
 .tab-panel {
@@ -327,15 +332,6 @@ p.sequence {
     width: 100%;
 }
 
-@keyframes anim-rotate {
-	0% {
-		transform: rotate(0deg);
-	}
-	100% {
-		transform: rotate(360deg);
-	}
-}
-
 div.page-loading {
     display: flex;
     align-content: center;
@@ -464,10 +460,6 @@ table.cluster-table tbody tr {
     margin: -10px -15px 8px -15px;
 }
 
-.no-margin {
-    margin: 0;
-}
-
 .no-padding {
     margin: 0;
 }
@@ -549,22 +541,6 @@ div.toolbar > .btn-group {
     flex: 0 0 auto;
 }
 
-.pulsing {
-	animation: animate-pulse 1.2s infinite ease-in-out;
-}
-
-@keyframes animate-pulse {
-	0% {
-		opacity: 0.7;
-	}
-	50% {
-		opacity: 1;
-	}
-    100% {
-        opacity: 0.7;
-    }
-}
-
 .no-margin {
     margin: 0;
 }
@@ -578,20 +554,6 @@ hr {
     height: 0;
     border-top: 1px solid #ccc;
     border-bottom: 1px solid #ccc;
-}
-
-.divider {
-    display: flex;
-    align-items: center;
-}
-
-.divider hr {
-    flex: 1 1 auto;
-}
-
-.divider span {
-    color: #555555;
-    margin: 0 5px;
 }
 
 ul.tight-list {
@@ -609,54 +571,4 @@ ul.tight-list > li {
 
 .labelled-checkbox > i {
     margin-right: 5px;
-}
-
-/*!
- * Load Awesome v1.1.0 (http://github.danielcardoso.net/load-awesome/)
- * Copyright 2015 Daniel Cardoso <@DanielCardoso>
- * Licensed under MIT
- */
-.spinner, .spinner > div {
-    position: relative;
-    box-sizing: border-box;
-}
-
-.spinner {
-    display: inline-block;
-    font-size: 0;
-    color: #fff;
-}
-
-.spinner > div {
-    display: inline-block;
-    background-color: currentColor;
-    border: 0 solid currentColor;
-}
-
-.spinner {
-    display: inline;
-    width: 11px;
-    height: 11px;
-}
-
-.spinner > div {
-    width: 11px;
-    height: 11px;
-    background: transparent;
-    border-width: 2px;
-    border-bottom-color: transparent;
-    border-radius: 100%;
-    animation: ball-clip-rotate .75s linear infinite;
-}
-
-@keyframes ball-clip-rotate {
-    0% {
-        transform: rotate(0deg);
-    }
-    50% {
-        transform: rotate(180deg);
-    }
-    100% {
-        transform: rotate(360deg);
-    }
 }

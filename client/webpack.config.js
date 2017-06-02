@@ -33,6 +33,17 @@ module.exports = {
             },
 
             {
+                test: /\.less$/,
+                use: ExtractTextPlugin.extract({
+                    fallback: "style-loader",
+                    use: [
+                        {loader: "css-loader"},
+                        {loader: "less-loader"}
+                    ]
+                })
+            },
+
+            {
                 test: /\.woff$/,
                 use: {
                     loader: "url-loader?limit=100000"
