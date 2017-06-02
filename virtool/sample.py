@@ -11,6 +11,24 @@ import virtool.job
 PATHOSCOPE_TASK_NAMES = ["pathoscope_bowtie", "pathoscope_snap"]
 
 
+LIST_PROJECTION = [
+    "_id",
+    "name",
+    "added",
+    "user_id",
+    "imported",
+    "archived",
+    "pathoscope",
+    "nuvs"
+]
+
+
+def processor(document):
+    document = dict(document)
+    document["sample_id"] = document.pop("_id")
+    return document
+
+
 projector = [
     "_id",
     "_version",
@@ -27,37 +45,6 @@ projector = [
     "all_read",
     "all_write"
 ]
-
-
-async def processor(documents):
-    """
-    Redefined from superclass to prevent syncing of documents for which the requesting connection doesn't have read
-    rights.
-
-    :param documents: the documents to process
-    :type documents: list
-
-    :return: the processed documents
-    :rtype: list
-
-    """
-    documents = virtool.utils.coerce_list(documents)
-
-    to_send = list()
-
-    user = None
-
-    for document in documents:
-
-        send = user is None or (
-            document["group"] == "none" or document["all_read"] or user["_id"] == document["username"] or
-            document["group"] in user["groups"] or "administrator" in user["groups"]
-        )
-
-        if send:
-            to_send.append(document)
-
-    return to_send
 
 
 def calculate_algorithm_tags(analyses):

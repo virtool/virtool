@@ -1,12 +1,35 @@
+import re
 from pymongo import ReturnDocument
-from virtool.utils import timestamp
-from virtool.utils import get_new_id, coerce_list
+
+import virtool.utils
+import virtool.sample
 from virtool.handlers.utils import json_response, bad_request, not_found
-from virtool.sample import get_sample_owner, remove_samples
 
 
 async def find(req):
-    pass
+    """
+    List truncated virus documents. Will take filters in URL parameters eventually.
+
+    """
+    find_term = req.query.get("find", None)
+
+    query = dict()
+
+    if find_term:
+        regex = re.compile("{}".format(find_term), re.IGNORECASE)
+        query["$or"] = [{field: {"$regex": regex}} for field in ["name", "abbreviation"]]
+
+    documents = await req.app["db"].samples.find(
+        query,
+        virtool.sample.LIST_PROJECTION,
+        sort=[("name", 1)]
+    ).to_list(length=15)
+
+    processed = [virtool.sample.processor(document) for document in documents]
+
+    print(documents)
+
+    return json_response(processed)
 
 
 async def create(req):
@@ -30,7 +53,7 @@ async def create(req):
     if not data["subtraction"] or data["subtraction"] not in available_subtraction_hosts:
         return bad_request("Could not find subtraction host or none was provided.")
 
-    sample_id = await get_new_id(req.app["db"].samples)
+    sample_id = await virtool.utils.get_new_id(req.app["db"].samples)
 
     user_id = None
 
@@ -64,7 +87,7 @@ async def create(req):
     task_args = dict(data)
 
     data.update({
-        "added": timestamp(),
+        "added": virtool.utils.timestamp(),
         "format": "fastq",
         "imported": "ip",
         "quality": None,
@@ -163,7 +186,7 @@ async def set_rights(req):
     sample_id = req.match_info["sample_id"]
 
     # Only update the document if the connected user owns the samples or is an administrator.
-    if "administrator" in user_groups or user_id == await get_sample_owner(req.app["db"], sample_id):
+    if "administrator" in user_groups or user_id == await virtool.sample.get_sample_owner(req.app["db"], sample_id):
         valid_fields = ["all_read", "all_write", "group_read", "group_write"]
 
         # Make a dict for updating the rights fields. Fail the transaction if there is an unknown right key.
@@ -205,6 +228,6 @@ async def remove(req):
     Remove a sample document and all associated analyses.
 
     """
-    id_list = coerce_list(req.match_info["_id"])
+    id_list = virtool.utils.coerce_list(req.match_info["_id"])
 
-    result = await remove_samples(id_list)
+    result = await virtool.sample.remove_samples(id_list)
