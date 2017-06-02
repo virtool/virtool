@@ -1,6 +1,6 @@
 import React from "react";
 import { Provider, connect } from "react-redux";
-import { BrowserRouter, Route, withRouter } from "react-router-dom";
+import { BrowserRouter, Switch, Route, Redirect, withRouter } from "react-router-dom";
 
 import NavBar from "./nav/components/Bar";
 import Welcome from "./components/Home/Welcome";
@@ -14,14 +14,15 @@ const Inner = (props) => {
             <div>
                 <NavBar />
 
-                <div>
-                    <Route exact path="/" component={Welcome} />
+                <Switch>
+                    <Route path="/" component={Welcome} exact />
+                    <Route path="/home" component={Welcome} />
                     <Route path="/jobs" component={Welcome} />
                     <Route path="/samples" component={Samples} />
                     <Route path="/viruses" component={Viruses} />
                     <Route path="/subtraction" component={Welcome} />
                     <Route path="/settings" component={Settings} />
-                </div>
+                </Switch>
             </div>
         );
     }
