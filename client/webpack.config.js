@@ -2,6 +2,7 @@ var path = require("path");
 var HTMLPlugin = require("html-webpack-plugin");
 var CleanPlugin = require("clean-webpack-plugin");
 var ExtractTextPlugin = require("extract-text-webpack-plugin");
+var BundleAnalyzerPlugin = require("webpack-bundle-analyzer").BundleAnalyzerPlugin;
 
 module.exports = {
 
@@ -79,6 +80,12 @@ module.exports = {
 
         new CleanPlugin(["dist"], {
             verbose: true
+        }),
+
+        new BundleAnalyzerPlugin({
+            analyzerMode: "server",
+            analyzerHost: "localhost",
+            analyzerPort: 8890
         })
     ],
 
