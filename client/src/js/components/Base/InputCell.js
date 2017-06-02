@@ -87,7 +87,7 @@ const getInitialInputCellState = (props) => {
         // Show an error popover indicating that the saved value is invalid.
         showError: false
     };
-}
+};
 
 
 /**

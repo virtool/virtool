@@ -107,17 +107,8 @@ const mapStateToProps = (state) => {
     };
 };
 
-const mapDispatchToProps = () => {
-    return {
-        set: (key, value) => {
-            console.log(key, value);
-        }
-    };
-};
-
 const SettingsContainer = withRouter(connect(
-    mapStateToProps,
-    mapDispatchToProps
+    mapStateToProps
 )(Settings));
 
 export default SettingsContainer;

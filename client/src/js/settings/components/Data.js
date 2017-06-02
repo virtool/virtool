@@ -113,7 +113,6 @@ const mapStateToProps = (state) => {
 const mapDispatchToProps = (dispatch) => {
     return {
         onSave: (key, value) => {
-            console.log(key, value);
             let update = {};
             update[key] = value;
             dispatch(updateSettings(update));

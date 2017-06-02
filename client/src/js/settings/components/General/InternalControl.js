@@ -104,17 +104,8 @@ const mapStateToProps = (state) => {
     };
 };
 
-const mapDispatchToProps = () => {
-    return {
-        set: (key, value) => {
-            console.log(key, value);
-        }
-    };
-};
-
 const Container = connect(
-    mapStateToProps,
-    mapDispatchToProps
+    mapStateToProps
 )(InternalControl);
 
 export default Container;

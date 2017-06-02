@@ -18,8 +18,6 @@ const getFindParams = state => {
 };
 
 export function* watchViruses () {
-    console.log(CREATE_VIRUS);
-
     yield takeLatest(FIND_VIRUSES.REQUESTED, findViruses);
     yield takeEvery(CREATE_VIRUS.REQUESTED, createVirus);
 }
@@ -40,8 +38,7 @@ export function* createVirus (action) {
         const response = yield call(virusesAPI.create, action.name, action.abbreviation);
         yield put({type: CREATE_VIRUS.SUCCEEDED, data: response.body});
     } catch (error) {
-        console.log("ERROR", error);
-        yield put({type: CREATE_VIRUS.FAILED, error: res.body});
+        yield put({type: CREATE_VIRUS.FAILED, error: error});
     }
 }
 

@@ -1,6 +1,6 @@
 import React from "react";
 import { Provider, connect } from "react-redux";
-import { BrowserRouter, Switch, Route, Redirect, withRouter } from "react-router-dom";
+import { BrowserRouter, Switch, Route, withRouter } from "react-router-dom";
 
 import NavBar from "./nav/components/Bar";
 import Welcome from "./components/Home/Welcome";
