@@ -13,14 +13,7 @@ import {
     WS_REMOVE_VIRUS,
 
     FIND_VIRUSES,
-
-    CREATE_VIRUS_SET_NAME,
-    CREATE_VIRUS_SET_ABBREVIATION,
-    CREATE_VIRUS_CLEAR,
-    CREATE_VIRUS_REQUESTED,
-
-    EDIT_VIRUS_REQUESTED,
-    EDIT_VIRUS_FAILED,
+    CREATE_VIRUS,
 
     GET_VIRUS_REQUESTED,
     GET_VIRUS_SUCCEEDED,
@@ -35,11 +28,8 @@ const virusesInitialState = {
     modified: false,
     page: 1,
 
-    create: {
-        name: "",
-        abbreviation: "",
-        errors: []
-    },
+    createError: "",
+    createPending: false,
 
     pendingFind: false,
     pendingEdit: false,
@@ -94,51 +84,17 @@ export function virusesReducer (state = virusesInitialState, action) {
                 detailVisible: false
             });
 
-        case EDIT_VIRUS_REQUESTED:
+        case CREATE_VIRUS.REQUESTED:
             return assign({}, state, {
-                pendingEdit: true
+                pending: true
             });
 
-        case EDIT_VIRUS_FAILED:
+        case CREATE_VIRUS.FAILED:
             return assign({}, state, {
-                pendingEdit: false
+                createError: action.error
             });
 
         default:
             return state;
     }
-}
-
-const createVirusInitialState = {
-    name: "",
-    abbreviation: "",
-    errors: []
-};
-
-export function createVirusReducer (state = createVirusInitialState, action) {
-
-    switch (action.type) {
-
-        case CREATE_VIRUS_SET_NAME:
-            return assign({}, state, {
-                name: action.name
-            });
-
-        case CREATE_VIRUS_SET_ABBREVIATION:
-            return assign({}, state, {
-                abbreviation: action.abbreviation
-            });
-
-        case CREATE_VIRUS_CLEAR:
-            return assign({}, createVirusInitialState);
-
-        case CREATE_VIRUS_REQUESTED:
-            return assign({}, state, {
-                pending: true
-            });
-
-    }
-
-    return state;
-
 }

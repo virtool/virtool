@@ -141,7 +141,7 @@ async def create(req):
 
     complete = await virtool.virus.get_complete(db, virus_id)
 
-    req.app["dispatcher"].dispatch(
+    await req.app["dispatcher"].dispatch(
         "viruses",
         "update",
         virtool.virus.processor({key: joined[key] for key in virtool.virus.LIST_PROJECTION})

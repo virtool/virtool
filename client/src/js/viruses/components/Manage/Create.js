@@ -15,7 +15,7 @@ import { withRouter } from "react-router-dom";
 import { Row, Col, Modal, Alert, ButtonToolbar } from "react-bootstrap";
 
 import { Icon, Flex, FlexItem, Input, Button } from "virtool/js/components/Base";
-import { createVirusSetName, createVirusSetAbbreviation, createVirusClear } from "../../actions";
+import { createVirus } from "../../actions";
 
 /**
  * A form for adding a new virus, defining its name and abbreviation.
@@ -24,14 +24,15 @@ class CreateVirus extends React.Component {
 
     constructor (props) {
         super(props);
+        this.state = {
+            name: "",
+            abbreviation: ""
+        };
     }
 
     static propTypes = {
-        name: React.PropTypes.string,
-        abbreviation: React.PropTypes.string,
-        errors: React.PropTypes.arrayOf(React.PropTypes.string),
-        onSetName: React.PropTypes.func,
-        onSetAbbreviation: React.PropTypes.func,
+        error: React.PropTypes.string,
+        onSubmit: React.PropTypes.func,
         onHide: React.PropTypes.func
     };
 
@@ -39,35 +40,23 @@ class CreateVirus extends React.Component {
         this.inputNode.focus();
     }
 
+    modalExited = () => {
+        this.setState({
+            name: "",
+            abbreviation: ""
+        });
+    };
+
+    handleSubmit = (e) => {
+        e.preventDefault();
+        this.props.onSubmit(this.state.name, this.state.abbreviation);
+    };
+
     render () {
 
         let alert;
 
-        if (this.props.errors.length) {
-            let message;
-
-            // Show an error when no virus name is defined. Getting this error doesn't require a trip to the server.
-            if (this.props.errors.unnamed) {
-                message = "A virus name must be provided";
-            }
-
-            // Show an error when the provided name or abbreviation is already in use in the database. These errors are
-            // sent by the server.
-            else {
-                if (this.props.errors.name) {
-                    message = "Name is already in use";
-                }
-
-                if (this.state.error.abbreviation) {
-                    message = "Abbreviation is already in use";
-                }
-
-                if (this.state.error.name && this.state.error.abbreviation) {
-                    message = "Name and abbreviation are already in use";
-                }
-            }
-
-            // Construct the alert component. The component will be null if no errors are defined.
+        if (this.props.error) {
             alert = (
                 <Alert bsStyle="danger">
                     <Flex>
@@ -75,7 +64,7 @@ class CreateVirus extends React.Component {
                             <Icon name="warning" />
                         </FlexItem>
                         <FlexItem grow={1} shrink={0} pad>
-                            {message}
+                            {this.props.error}
                         </FlexItem>
                     </Flex>
                 </Alert>
@@ -101,16 +90,16 @@ class CreateVirus extends React.Component {
                                     {...inputProps}
                                     ref={(node) => this.inputNode = node}
                                     label="Name"
-                                    value={this.props.name}
-                                    onChange={(e) => {this.props.onSetName(e.target.value)}}
+                                    value={this.state.name}
+                                    onChange={(e) => this.setState({name: e.target.value})}
                                 />
                             </Col>
                             <Col md={3}>
                                 <Input
                                     {...inputProps}
                                     label="Abbreviation"
-                                    value={this.props.abbreviation}
-                                    onChange={(e) => {this.props.onSetAbbreviation(e.target.value)}}
+                                    value={this.state.abbreviation}
+                                    onChange={(e) => this.setState({abbreviation: e.target.value})}
                                 />
                             </Col>
                         </Row>
@@ -120,8 +109,8 @@ class CreateVirus extends React.Component {
 
                     <Modal.Footer>
                         <ButtonToolbar className="pull-right">
-                            <Button type="submit" bsStyle="primary">
-                                <Icon name="floppy"/> Save
+                            <Button icon="floppy" type="submit" bsStyle="primary">
+                                Save
                             </Button>
                         </ButtonToolbar>
                     </Modal.Footer>
@@ -133,22 +122,21 @@ class CreateVirus extends React.Component {
 }
 
 const mapStateToProps = (state) => {
-    return state.createVirus;
+    return {
+        error: state.viruses.createError,
+        pending: state.viruses.createPending
+    };
 };
 
 const mapDispatchToProps = (dispatch, ownProps) => {
     return {
-        onSetName: (name) => {
-            dispatch(createVirusSetName(name));
-        },
 
-        onSetAbbreviation: (abbreviation) => {
-            dispatch(createVirusSetAbbreviation(abbreviation));
+        onSubmit: (name, abbreviation) => {
+            dispatch(createVirus(name, abbreviation))
         },
 
         onHide: () => {
             ownProps.history.push("/viruses");
-            dispatch(createVirusClear());
         }
     };
 };

@@ -39,28 +39,30 @@ export default class VirusToolbar extends React.Component {
     render () {
 
         let menu;
+        let createButton;
 
         if (this.props.account.permissions.modify_virus) {
             menu = (
                 <DropdownButton id="virus-dropdown" title={<Icon name="menu" />} noCaret pullRight>
-                    <LinkContainer to="/viruses/create">
-                        <MenuItem>
-                            <Icon name="new-entry" /> Create
-                        </MenuItem>
-                    </LinkContainer>
-
                     <LinkContainer to="/viruses/export">
                         <MenuItem>
                             <Icon name="export" /> Export
                         </MenuItem>
                     </LinkContainer>
-
                     <LinkContainer to="/viruses/import">
                         <MenuItem>
                             <Icon name="new-entry" /> Import
                         </MenuItem>
                     </LinkContainer>
                 </DropdownButton>
+            );
+
+            createButton = (
+                <LinkContainer to="/viruses/create">
+                    <Button bsStyle="primary" tip="Create">
+                        <Icon name="new-entry" />
+                    </Button>
+                </LinkContainer>
             );
         }
 
@@ -90,6 +92,7 @@ export default class VirusToolbar extends React.Component {
                     tip="Modified Only"
                 />
 
+                {createButton}
                 {menu}
             </div>
         );

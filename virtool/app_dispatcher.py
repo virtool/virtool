@@ -41,7 +41,8 @@ class Dispatcher:
         """
         self.connections.remove(connection)
 
-    def dispatch(self, interface, operation, data, connections=None, conn_filter=None, conn_modifier=None, writer=None):
+    async def dispatch(self, interface, operation, data, connections=None, conn_filter=None, conn_modifier=None,
+                       writer=None):
         """
         Dispatch a ``message`` with a conserved format to a selection of active ``connections``.
         
@@ -100,4 +101,4 @@ class Dispatcher:
             return
 
         for connection in connections:
-            connection.send(message)
+            await connection.send(message)

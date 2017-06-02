@@ -8,17 +8,20 @@
  */
 
 import { pick } from "lodash";
-import { call, put, select, takeLatest } from "redux-saga/effects";
+import { call, put, select, takeEvery, takeLatest } from "redux-saga/effects";
 
 import virusesAPI from "./api";
-import { FIND_VIRUSES }  from "../actionTypes";
+import { FIND_VIRUSES, CREATE_VIRUS }  from "../actionTypes";
 
 const getFindParams = state => {
     return pick(state.viruses, ["find", "sort", "descending", "modified"]);
 };
 
 export function* watchViruses () {
+    console.log(CREATE_VIRUS);
+
     yield takeLatest(FIND_VIRUSES.REQUESTED, findViruses);
+    yield takeEvery(CREATE_VIRUS.REQUESTED, createVirus);
 }
 
 export function* findViruses () {
@@ -31,3 +34,14 @@ export function* findViruses () {
         yield put({type: FIND_VIRUSES.FAILED}, error);
     }
 }
+
+export function* createVirus (action) {
+    try {
+        const response = yield call(virusesAPI.create, action.name, action.abbreviation);
+        yield put({type: CREATE_VIRUS.SUCCEEDED, data: response.body});
+    } catch (error) {
+        console.log("ERROR", error);
+        yield put({type: CREATE_VIRUS.FAILED, error: res.body});
+    }
+}
+
