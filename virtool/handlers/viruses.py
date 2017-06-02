@@ -52,8 +52,6 @@ async def find(req):
     List truncated virus documents. Will take filters in URL parameters eventually.
      
     """
-    print(req.query)
-
     find_term = req.query.get("find", None)
     modified = virtool.utils.to_bool(req.query.get("modified", False))
     descending = virtool.utils.to_bool(req.query.get("descending", False))
