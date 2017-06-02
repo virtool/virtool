@@ -127,6 +127,12 @@ const CreateBasesChart = (element, data, width) => {
         .attr("transform", `translate(${width - 60}, 5)`)
         .call(legend);
 
+    svg.append("g")
+        .attr("class","legend")
+        .attr("transform","translate(50,30)")
+        .style("font-size","12px")
+        .call(legend);
+
     // Append the median line to the chart. Color is blue.
     svg.append("path")
         .attr("d", lineDrawer(data, "median"))

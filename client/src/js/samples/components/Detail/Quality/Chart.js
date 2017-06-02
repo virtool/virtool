@@ -9,7 +9,7 @@
  * @exports QualityChart
  */
 
-
+import "d3-transition";
 import React from "react";
 
 /**
