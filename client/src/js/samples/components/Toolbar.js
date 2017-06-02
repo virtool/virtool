@@ -3,7 +3,7 @@ import { connect } from "react-redux";
 import { LinkContainer } from "react-router-bootstrap";
 
 import { findSamples } from "../actions";
-import { FormGroup, InputGroup, FormControl, ButtonGroup } from "react-bootstrap";
+import { FormGroup, InputGroup, FormControl } from "react-bootstrap";
 import { Icon, Button } from "virtool/js/components/Base";
 
 class SampleToolbar extends React.Component {

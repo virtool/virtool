@@ -46,38 +46,6 @@ export default class SampleEntry extends React.Component {
         selecting: false
     };
 
-    quickAnalyze = (event) => {
-        event.stopPropagation();
-
-        if (dispatcher.user.settings.skip_quick_analyze_dialog) {
-            this.setState({pendingQuickAnalyze: true}, () => {
-                dispatcher.db.samples.request("analyze", {
-                    samples: [this.props._id],
-                    algorithm: dispatcher.user.settings.quick_analyze_algorithm,
-                    name: null
-                })
-                .success(() => {
-                    this.setState({pendingQuickAnalyze: false})
-                })
-                .failure(() => {
-                    this.setState({pendingQuickAnalyze: false})
-                })
-            });
-        } else {
-            window.router.setExtra(["quick-analyze", this.props._id]);
-        }
-    };
-
-    toggleSelect = (event) => {
-        event.stopPropagation();
-        this.props.toggleSelect(this.props._id);
-    };
-
-    archive = (event) => {
-        event.stopPropagation();
-        dispatcher.db.samples.request("archive", {_id: this.props._id});
-    };
-
     render () {
 
         const labels = mapValues({pathoscope: null, nuvs: null}, (value, key) =>

@@ -41,9 +41,6 @@ class ManageSamples extends React.Component {
                     sampleId={document.sample_id}
                     userId={document.user_id}
                     {...document}
-                    selecting={this.props.selecting}
-                    toggleSelect={this.props.toggleSelect}
-                    quickAnalyze={this.props.quickAnalyze}
                 />
             );
         } else {

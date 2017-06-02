@@ -20,6 +20,13 @@ import Quality from "./Detail/Quality/Quality";
 
 class SampleDetail extends React.Component {
 
+    static propTypes = {
+        detail: React.PropTypes.object,
+        match: React.PropTypes.object,
+        history: React.PropTypes.object,
+        getSample: React.PropTypes.func
+    };
+
     modalEnter = () => {
         this.props.getSample(this.props.match.params.sampleId);
     };
