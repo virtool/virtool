@@ -22,6 +22,7 @@ import {
 
 export function* watchAccount () {
     yield takeLatest(GET_ACCOUNT_REQUESTED, getAccount);
+    yield takeEvery(LOGOUT_REQUESTED, logout);
 }
 
 export function* getAccount () {
@@ -31,10 +32,6 @@ export function* getAccount () {
     } catch (error) {
         yield put({type: GET_ACCOUNT_FAILED}, error);
     }
-}
-
-export function* watchLogout () {
-    yield takeEvery(LOGOUT_REQUESTED, logout)
 }
 
 export function* logout () {
