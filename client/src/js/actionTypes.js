@@ -15,6 +15,7 @@ export const WS_UPDATE_SAMPLE = "WS_UPDATE_SAMPLE";
 export const WS_REMOVE_SAMPLE = "WS_REMOVE_SAMPLE";
 
 export const FIND_SAMPLES = createRequestActionType("FIND_SAMPLES");
+export const GET_SAMPLE = createRequestActionType("GET_SAMPLE");
 
 // Virus
 export const WS_UPDATE_VIRUS = "WS_UPDATE_VIRUS";

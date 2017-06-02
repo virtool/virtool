@@ -1,8 +1,10 @@
 import React from "react";
 import Moment from "moment";
 import Numeral from "numeral";
+import { connect } from "react-redux";
 import { capitalize } from "lodash";
 import { Panel } from "react-bootstrap";
+
 import { Icon, InputCell } from "virtool/js/components/Base";
 
 const SampleDetailGeneral = (props) => {
@@ -18,7 +20,6 @@ const SampleDetailGeneral = (props) => {
                     field={field}
                     value={props[field]}
                     className="col-sm-8"
-                    collection={dispatcher.db.samples}
                 />
             );
         } else {
@@ -34,6 +35,17 @@ const SampleDetailGeneral = (props) => {
 
     });
 
+    let idCell;
+
+    if (props.showIds) {
+        idCell = (
+            <tr>
+                <th>Database ID</th>
+                <td>{props.sampleId}</td>
+            </tr>
+        );
+    }
+
     return (
         <Panel className="tab-panel">
             <h5>
@@ -44,29 +56,14 @@ const SampleDetailGeneral = (props) => {
             <table className="table table-bordered">
               <tbody>
                 {cells}
-                {
-                    dispatcher.user.settings.show_ids ? (
-                        <tr>
-                            <th>Database ID</th>
-                            <td>{props._id}</td>
-                        </tr>
-                    ) : null
-                }
-                {
-                    dispatcher.user.settings.show_versions ? (
-                        <tr>
-                            <th>Database Version</th>
-                            <td>{props._version}</td>
-                        </tr>
-                    ) : null
-                }
+                {idCell}
                 <tr>
-                  <th>Added</th>
+                  <th>Created At</th>
                   <td>{Moment(props.added).calendar()}</td>
                 </tr>
                 <tr>
-                  <th>Added By</th>
-                  <td>{props.username}</td>
+                  <th>Created By</th>
+                  <td>{props.userId}</td>
                 </tr>
               </tbody>
             </table>
@@ -76,15 +73,15 @@ const SampleDetailGeneral = (props) => {
               <tbody>
                 <tr>
                   <th className="col-sm-4">Read Count</th>
-                  <td className="col-sm-8">{Numeral(props.quality.count).format("0.0 a")}</td>
+                  <td className="col-sm-8">{props.count}</td>
                 </tr>
                 <tr>
                   <th>Length Range</th>
-                  <td>{props.quality.length.join(" - ")}</td>
+                  <td>{props.lengthRange}</td>
                 </tr>
                 <tr>
                   <th>GC Content</th>
-                  <td>{Numeral(props.quality.gc / 100).format("0.0 %")}</td>
+                  <td>{props.gc}</td>
                 </tr>
                 <tr>
                   <th>Paired</th>
@@ -102,7 +99,7 @@ const SampleDetailGeneral = (props) => {
                 </tr>
                 <tr>
                   <th>Encoding</th>
-                  <td>{props.quality.encoding}</td>
+                  <td>{props.encoding}</td>
                 </tr>
               </tbody>
             </table>
@@ -111,16 +108,52 @@ const SampleDetailGeneral = (props) => {
 };
 
 SampleDetailGeneral.propTypes = {
-    _id: React.PropTypes.string.isRequired,
-    _version: React.PropTypes.number.isRequired,
+    showIds: React.PropTypes.bool,
+    canModify: React.PropTypes.bool,
+    sampleId: React.PropTypes.string,
     name: React.PropTypes.string,
     host: React.PropTypes.string,
     files: React.PropTypes.array,
     isolate: React.PropTypes.string,
-    paired: React.PropTypes.bool.isRequired,
-    username: React.PropTypes.string.isRequired,
-    added: React.PropTypes.string.isRequired,
-    quality: React.PropTypes.object.isRequired
+    lengthRange: React.PropTypes.string,
+    encoding: React.PropTypes.string,
+    gc: React.PropTypes.string,
+    count: React.PropTypes.string,
+    paired: React.PropTypes.bool,
+    userId: React.PropTypes.string,
+    added: React.PropTypes.string,
+    quality: React.PropTypes.object
 };
 
-export default SampleDetailGeneral;
+const mapStateToProps = (state) => {
+    const detail = state.samples.detail;
+
+    const isOwner = state.account.user_id === detail.user_id;
+
+    const canModify = (
+        detail.all_write ||
+        (detail.group_write && detail.account.groups.indexOf(detail.group) > -1) ||
+        isOwner
+    );
+
+    return {
+        canModify: canModify,
+        sampleId: detail.sample_id,
+        name: detail.name,
+        host: detail.host,
+        added: detail.added,
+        isolate: detail.isolate,
+        showIds: state.account.settings.show_ids,
+        files: detail.files,
+        paired: detail.paired,
+        gc: Numeral(detail.quality.gc / 100).format("0.0 %"),
+        count: Numeral(detail.quality.count).format("0.0 a"),
+        encoding: detail.quality.encoding,
+        lengthRange: detail.quality.length.join(" - "),
+        userId: detail.user_id
+    };
+};
+
+const Container = connect(mapStateToProps)(SampleDetailGeneral);
+
+export default Container;

@@ -7,11 +7,18 @@
  *
  */
 
-import { FIND_SAMPLES } from "../actionTypes";
+import { FIND_SAMPLES, GET_SAMPLE } from "../actionTypes";
 
 export const findSamples = (term) => {
     return {
         type: FIND_SAMPLES.REQUESTED,
         term: term
     };
+};
+
+export const getSample = (sampleId) => {
+    return {
+        type: GET_SAMPLE.REQUESTED,
+        sampleId: sampleId
+    }
 };

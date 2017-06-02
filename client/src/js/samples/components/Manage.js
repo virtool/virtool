@@ -2,10 +2,13 @@ import { connect } from "react-redux";
 
 import React from "react";
 import { ListGroup } from "react-bootstrap";
+import { Route } from "react-router-dom";
 
 import { findSamples } from "../actions";
 import { Icon, ListGroupItem } from "virtool/js/components/Base";
 import SampleEntry from "./Entry";
+import SampleToolbar from "./Toolbar";
+import SampleDetail from "./Detail";
 
 class ManageSamples extends React.Component {
 
@@ -34,7 +37,9 @@ class ManageSamples extends React.Component {
         if (this.props.samples && this.props.samples.length) {
             sampleComponents = this.props.samples.map((document) =>
                 <SampleEntry
-                    key={document._id}
+                    key={document.sample_id}
+                    sampleId={document.sample_id}
+                    userId={document.user_id}
                     {...document}
                     selecting={this.props.selecting}
                     toggleSelect={this.props.toggleSelect}
@@ -51,9 +56,13 @@ class ManageSamples extends React.Component {
 
         return (
             <div className="container">
+                <SampleToolbar />
+
                 <ListGroup>
                     {sampleComponents}
                 </ListGroup>
+
+                <Route path="/samples/detail/:sampleId" component={SampleDetail} />
             </div>
         );
     }

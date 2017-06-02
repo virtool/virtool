@@ -18,9 +18,12 @@ const samplesAPI = {
             params["find"] = term;
         }
 
-        return Request
-            .get("/api/samples")
+        return Request.get("/api/samples")
             .query(params);
+    },
+
+    get: (sampleId) => {
+        return Request.get(`/api/samples/${sampleId}`);
     }
 
 };
