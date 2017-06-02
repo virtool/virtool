@@ -10,6 +10,7 @@
 import { createStore, combineReducers, applyMiddleware } from "redux";
 import createSagaMiddleware from "redux-saga";
 
+import samplesReducer from "./samples/reducers";
 import { virusesReducer } from "./viruses/reducers";
 import { accountReducer } from "./nav/reducers";
 import settingsReducer from "./settings/reducers";
@@ -20,6 +21,7 @@ import { rootSaga } from "./sagas";
 const sagaMiddleware = createSagaMiddleware();
 
 const reducer = combineReducers({
+    samples: samplesReducer,
     viruses: virusesReducer,
     settings: settingsReducer,
     users: usersReducer,

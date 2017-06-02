@@ -227,22 +227,10 @@ export default class SampleController extends React.Component {
                     </div>
                 </FlipMove>
 
-                <CreateSample
-                    show={this.props.route.extra[0] === "create"}
-                    onHide={this.hideModal}
-                />
-
                 <QuickAnalyze
                     show={this.props.route.extra.length === 2 && this.props.route.extra[0] === "quick-analyze"}
                     sampleId={this.props.route.extra[1]}
                     onHide={this.hideModal}
-                />
-
-                <DetailModal
-                    target={detailTarget}
-                    onHide={this.hideModal}
-                    contentComponent={SampleDetail}
-                    collection={dispatcher.db.samples}
                 />
             </div>
         );
