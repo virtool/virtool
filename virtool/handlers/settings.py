@@ -34,10 +34,6 @@ async def update(req):
 
     settings.data.update(document)
 
-    import pprint
-
-    pprint.pprint(settings.data)
-
     await settings.write()
 
     return json_response(settings.data)

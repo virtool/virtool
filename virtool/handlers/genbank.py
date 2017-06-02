@@ -11,8 +11,6 @@ def get(req):
     """
     accession = req.match_info["accession"]
 
-    print(accession)
-
     Entrez.tool = "Virtool"
     Entrez.email = "dev@virtool.ca"
 

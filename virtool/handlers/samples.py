@@ -27,8 +27,6 @@ async def find(req):
 
     processed = [virtool.sample.processor(document) for document in documents]
 
-    print(documents)
-
     return json_response(processed)
 
 

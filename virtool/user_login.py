@@ -37,9 +37,6 @@ async def login_handler(req):
     authenticated = await virtool.user.validate_credentials(db, username, password)
 
     if authenticated:
-
-        print("AUTHENTICATED", authenticated)
-
         user_document = await db.users.find_one(username)
 
         await req.app["db"].sessions.update_one({"_id": session.id}, {
