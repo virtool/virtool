@@ -99,6 +99,10 @@ async def on_shutdown(app):
     :type app: :class:`aiohttp.web.Application`
     
     """
+    for conn in app["dispatcher"].connections:
+        await conn.close()
+        app["dispatcher"].remove_connection(conn)
+
     job_manager = app["job_manager"]
 
     for job_id in job_manager:
