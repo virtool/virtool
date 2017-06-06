@@ -179,3 +179,11 @@ def coerce_list(obj):
 
 def to_bool(obj):
     return str(obj).lower() in ["1", "true"]
+
+
+def get_static_hash():
+    client_files = os.listdir("./client/dist")
+
+    for file_name in client_files:
+        if "style." in file_name:
+            return file_name.split(".")[1]
