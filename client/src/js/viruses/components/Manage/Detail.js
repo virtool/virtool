@@ -17,12 +17,13 @@ import { Modal, Nav, NavItem, Panel } from "react-bootstrap";
 
 import { getVirus } from "../../actions";
 import { Spinner } from "virtool/js/components/Base";
-// import Isolates from "./Detail/Isolates";
+import IsolateEditor from "./Detail/Editor";
 import General from "./Detail/General";
 
-const VirusSection = () => (
+const VirusSection = (props) => (
     <div>
         <General />
+        <IsolateEditor />
     </div>
 );
 

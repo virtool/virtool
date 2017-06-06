@@ -97,16 +97,7 @@ export default class SequenceForm extends React.Component {
             onChange: this.handleChange
         };
 
-        let accession = (
-            <FormControl
-                {...sharedProps}
-                inputRef={(node) => this.accessionNode = node}
-                type="text"
-                name="sequenceId"
-                value={this.props.sequenceId}
-                readOnly={this.props.mode !== "add"}
-            />
-        );
+
 
         if (this.props.mode === "add") {
             accession = (

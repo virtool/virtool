@@ -10,6 +10,7 @@
  */
 
 import React from "react";
+import { LinkContainer } from "react-router-dom";
 import { map, difference, findIndex, find } from "lodash";
 import { Row, Col } from "react-bootstrap";
 
