@@ -25,6 +25,9 @@ export const FIND_VIRUSES = createRequestActionType("FIND_VIRUSES");
 export const GET_VIRUS = createRequestActionType("GET_VIRUS");
 export const CREATE_VIRUS = createRequestActionType("CREATE_VIRUS");
 
+export const TOGGLE_ISOLATE_EDITING = "TOGGLE_ISOLATE_EDITING";
+export const TOGGLE_SEQUENCE_EDITING = "TOGGLE_SEQUENCE_EDITING";
+
 // Account
 export const GET_ACCOUNT_REQUESTED = "GET_ACCOUNT_REQUESTED";
 export const GET_ACCOUNT_SUCCEEDED = "GET_ACCOUNT_SUCCEEDED";

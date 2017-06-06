@@ -12,7 +12,9 @@ import {
     WS_REMOVE_VIRUS,
     FIND_VIRUSES,
     GET_VIRUS,
-    CREATE_VIRUS
+    CREATE_VIRUS,
+    TOGGLE_ISOLATE_EDITING,
+    TOGGLE_SEQUENCE_EDITING
 } from "../actionTypes";
 
 
@@ -49,5 +51,17 @@ export function createVirus (name, abbreviation) {
         type: CREATE_VIRUS.REQUESTED,
         name,
         abbreviation
+    };
+}
+
+export function toggleIsolateEditing () {
+    return {
+        type: TOGGLE_ISOLATE_EDITING
+    };
+}
+
+export function toggleSequencEditing () {
+    return {
+        type: TOGGLE_SEQUENCE_EDITING
     };
 }

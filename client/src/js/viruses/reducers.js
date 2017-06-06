@@ -14,7 +14,9 @@ import {
 
     FIND_VIRUSES,
     GET_VIRUS,
-    CREATE_VIRUS
+    CREATE_VIRUS,
+    TOGGLE_ISOLATE_EDITING,
+    TOGGLE_SEQUENCE_EDITING
 } from "../actionTypes";
 
 const virusesInitialState = {
@@ -27,12 +29,19 @@ const virusesInitialState = {
 
     detail: null,
 
+    addingIsolate: false,
+    editingIsolate: false,
+
+    addingSequence: false,
+    editingSequence: false,
+
+    activeIsolateId: null,
+    activeSequenceId: null,
+
     createError: "",
     createPending: false,
 
-    pendingFind: false,
-    pendingEdit: false,
-    pendingRemove: false
+
 };
 
 export function virusesReducer (state = virusesInitialState, action) {
@@ -74,7 +83,8 @@ export function virusesReducer (state = virusesInitialState, action) {
 
         case GET_VIRUS.SUCCEEDED:
             return assign({}, state, {
-                detail: action.data
+                detail: action.data,
+                activeIsolateId: action.data.isolates[0].isolate_id
             });
 
         case CREATE_VIRUS.REQUESTED:
@@ -85,6 +95,16 @@ export function virusesReducer (state = virusesInitialState, action) {
         case CREATE_VIRUS.FAILED:
             return assign({}, state, {
                 createError: action.error
+            });
+
+        case TOGGLE_ISOLATE_EDITING:
+            return assign({}, state, {
+                editingIsolate: !state.editingIsolate
+            });
+
+        case TOGGLE_SEQUENCE_EDITING:
+            return assign({}, state, {
+                editingSequence: !state.editingSequence
             });
 
         default:
