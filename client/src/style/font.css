@@ -5,6 +5,8 @@
   font-style: normal;
 }
 
+
+
 i {
   /* use !important to prevent issues with browser extensions that change fonts */
   font-family: 'vtfont' !important;
@@ -20,6 +22,9 @@ i {
   -moz-osx-font-smoothing: grayscale;
 }
 
+.i-star:before {
+  content: "\e907";
+}
 .i-book:before {
   content: "\e906";
 }
