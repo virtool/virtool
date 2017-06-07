@@ -1,12 +1,13 @@
 from aiohttp import web
 
-from virtool.user_login import get_login_template, get_static_hash, generate_verification_keys, login_handler
+from virtool.utils import get_static_hash
+from virtool.user_login import get_login_template, generate_verification_keys, login_handler
 from virtool.handlers import root, jobs, samples, viruses, history, hmm, hosts, settings, account, groups, users, \
     genbank, status, lifecycle, websocket
 
 
 async def index_handler(req):
-    hash = get_static_hash()
+    static_hash = get_static_hash()
 
     if not req["session"].user_id:
         keys = generate_verification_keys()
@@ -19,7 +20,7 @@ async def index_handler(req):
             }
         })
 
-        html = get_login_template().render(key_1=keys[0], key_2=keys[1], key_3=keys[2], hash=hash)
+        html = get_login_template().render(key_1=keys[0], key_2=keys[1], key_3=keys[2], hash=static_hash)
 
         return web.Response(body=html, content_type="text/html")
 

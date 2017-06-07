@@ -14,6 +14,7 @@ import virtool.app_routes
 import virtool.app_dispatcher
 import virtool.job_manager
 import virtool.user_sessions
+import virtool.error_pages
 import virtool.app_settings
 
 logger = logging.getLogger(__name__)
@@ -123,7 +124,10 @@ def create_app(loop, db_name=None):
     - initializes all main Virtool objects during ``on_startup``
      
     """
-    app = web.Application(loop=loop, middlewares=[virtool.user_sessions.middleware_factory])
+    app = web.Application(loop=loop, middlewares=[
+        virtool.error_pages.middleware_factory,
+        virtool.user_sessions.middleware_factory
+    ])
 
     virtool.app_routes.setup_routes(app)
 
