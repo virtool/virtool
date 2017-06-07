@@ -9,7 +9,7 @@
 
 import React from "react";
 import { connect } from "react-redux";
-import { withRouter, Redirect, Route } from "react-router-dom";
+import { withRouter, Switch, Redirect, Route } from "react-router-dom";
 import { Nav, NavItem } from "react-bootstrap";
 import { LinkContainer } from "react-router-bootstrap";
 
@@ -52,8 +52,6 @@ const Jobs = () => (
 const Settings = () => {
     return (
         <div className="container">
-            <Redirect from="/settings" to="/settings/general"  />
-
             <Flex>
                 <FlexItem>
                     <Nav bsStyle="pills" stacked>
@@ -84,11 +82,14 @@ const Settings = () => {
                 </FlexItem>
 
                 <FlexItem grow={1} pad={15}>
-                    <Route path="/settings/general" component={General} />
-                    <Route path="/settings/server" component={Server} />
-                    <Route path="/settings/data" component={Data} />
-                    <Route path="/settings/jobs" component={Jobs} />
-                    <Route path="/settings/users" component={Users} />
+                    <Switch>
+                        <Redirect from="/settings" to="/settings/general" exact />
+                        <Route path="/settings/general" component={General} />
+                        <Route path="/settings/server" component={Server} />
+                        <Route path="/settings/data" component={Data} />
+                        <Route path="/settings/jobs" component={Jobs} />
+                        <Route path="/settings/users" component={Users} />
+                    </Switch>
                 </FlexItem>
             </Flex>
         </div>
