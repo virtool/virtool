@@ -14,7 +14,7 @@ import { connect } from "react-redux";
 import { withRouter, Switch, Redirect, Route } from "react-router-dom";
 import { LinkContainer } from "react-router-bootstrap";
 import { map, difference, findIndex, find } from "lodash";
-import { Row, Col, ListGroup } from "react-bootstrap";
+import { Panel, Row, Col, ListGroup } from "react-bootstrap";
 
 import { formatIsolateName } from "virtool/js/utils";
 import { Icon, ListGroupItem } from "virtool/js/components/Base";
@@ -72,7 +72,7 @@ class IsolateEditor extends React.Component {
             const isolateId = isolate.isolate_id;
 
             return (
-                <LinkContainer key={isolateId} to={`/viruses/detail/${this.props.virusId}/virus/${isolateId}`}>
+                <LinkContainer key={isolateId} to={`/viruses/${this.props.virusId}/virus/${isolateId}`}>
                     <ListGroupItem key={isolate.isolate_id} active={isolateId === activeIsolateId}>
                         {formatIsolateName({sourceType: isolate.source_type, sourceName: isolate.source_name})}
                         {isolate.default ? <Icon name="star" pullRight />: null}
@@ -84,28 +84,23 @@ class IsolateEditor extends React.Component {
         // Get the array of sequences from the isolate.
         // const sequenceData = activeIsolate && activeIsolate.hasOwnProperty("sequences") ? activeIsolate.sequences: [];
         return (
-            <div>
-                <h5>
-                    <strong>
-                        <Icon name="lab" /> Isolates
-                    </strong>
-                </h5>
-                <Row>
-                    <Col md={3}>
-                        <ListGroup>
+            <Row>
+                <Col md={3}>
+                    <Panel header="Isolates">
+                        <ListGroup style={{height: "100%"}} fill>
                             {isolateComponents}
                         </ListGroup>
-                    </Col>
-                    <Col md={9}>
-                        <Redirect
-                            from="/viruses/detail/:virusId/virus"
-                            to={`/viruses/detail/${this.props.virusId}/virus/${this.props.isolates[0].isolate_id}`}
-                        />
+                    </Panel>
+                </Col>
+                <Col md={9}>
+                    <Redirect
+                        from="/viruses/:virusId/virus"
+                        to={`/viruses/${this.props.virusId}/virus/${this.props.isolates[0].isolate_id}`}
+                    />
 
-                        <Route path="/viruses/detail/:virusId/virus/:isolateId" component={IsolateDetail} />
-                    </Col>
-                </Row>
-            </div>
+                    <Route path="/viruses/:virusId/virus/:isolateId" component={IsolateDetail} />
+                </Col>
+            </Row>
         );
     }
 

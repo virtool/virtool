@@ -19,7 +19,7 @@ import VirusToolbar from "./Toolbar";
 import VirusDetail from "./Detail";
 import CreateVirus from "./Create";
 
-class ManageViruses extends React.Component {
+class VirusesList extends React.Component {
 
     constructor (props) {
         super(props)
@@ -40,7 +40,7 @@ class ManageViruses extends React.Component {
 
         if (this.props.documents && this.props.documents.length > 0) {
             virusComponents = this.props.documents.map(document =>
-                <LinkContainer to={`/viruses/detail/${document.virus_id}`} key={document.virus_id} className="spaced">
+                <LinkContainer to={`/viruses/${document.virus_id}`} key={document.virus_id} className="spaced">
                     <ListGroupItem bsStyle={document.modified ? "warning": null}>
                         <Row>
                             <Col md={6}>
@@ -75,8 +75,6 @@ class ManageViruses extends React.Component {
                 <Route path="/viruses/create">
                     <CreateVirus {...this.props} />
                 </Route>
-
-                <Route path="/viruses/detail/:virusId" component={VirusDetail} />
             </div>
         );
 
@@ -110,6 +108,6 @@ const mapDispatchToProps = (dispatch, ownProps) => {
 const Container = connect(
     mapStateToProps,
     mapDispatchToProps
-)(ManageViruses);
+)(VirusesList);
 
 export default Container;

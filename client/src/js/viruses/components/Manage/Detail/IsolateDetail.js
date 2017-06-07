@@ -13,7 +13,7 @@ import React, { PropTypes } from "react";
 import { capitalize, find } from "lodash";
 import { connect } from "react-redux";
 import { Route, Redirect } from "react-router-dom";
-import { Alert, Label, Panel, ListGroup, ButtonToolbar, FormGroup, FormControl, ControlLabel } from "react-bootstrap";
+import { Label, Panel, Table, ListGroup, FormGroup, FormControl, ControlLabel } from "react-bootstrap";
 
 import { toggleIsolateEditing } from "../../../actions";
 import { formatIsolateName } from "virtool/js/utils";
@@ -134,37 +134,13 @@ class IsolateDetail extends React.Component {
             );
         }
 
-        let defaultLabel;
+        let defaultIsolateLabel;
 
         if (isolate.default) {
-            defaultLabel = (
-                <Label>
-                    <Icon name="star"/> <strong>Default</strong>
+            defaultIsolateLabel = (
+                <Label bsStyle="info">
+                    <Icon name="star" /> Default Isolate
                 </Label>
-            );
-        }
-
-        const header = (
-            <Flex alignItems="center" style={{fontSize: "14px"}}>
-                <FlexItem>
-                    {isolateName}
-                </FlexItem>
-                <FlexItem grow={1} pad={5}>
-                    {defaultLabel}
-                </FlexItem>
-                <FlexItem pad={5}>
-                    <Icon name="remove" bsStyle="danger" />
-                </FlexItem>
-            </Flex>
-        );
-
-        let defaultButton;
-
-        if (!isolate.default) {
-            defaultButton = (
-                <Button bsStyle="info" bsSize="small" icon="star">
-                    Set as Default
-                </Button>
             );
         }
 
@@ -177,26 +153,76 @@ class IsolateDetail extends React.Component {
         return (
             <div>
                 <Redirect
-                    from="/viruses/detail/:virusId/virus/:isolateId"
+                    from="/viruses/:virusId/virus/:isolateId"
                     to={`${this.props.match.url}/${isolate.sequences[0].accession}`}
                 />
 
-                <Route path="/viruses/detail/:virusId/virus/:isolateId/:accession" render={() => (
-                    <Panel bsStyle={this.props.editing ? "warning" : "default"} header={header}>
-                        {editForm}
-
+                <Route path="/viruses/:virusId/virus/:isolateId/:accession" render={() => (
+                    <Panel>
                         <ListGroup fill>
                             <ListGroupItem>
-                                <Flex>
-                                    {defaultButton}
-                                    <Button bsStyle="warning" bsSize="small" icon="pencil" active={this.props.editing}
-                                            onClick={this.props.toggleEditing}>
-                                        Edit
-                                    </Button>
-                                    <Button bsStyle="danger" bsSize="small" icon="remove">
-                                        Remove
-                                    </Button>
+                                <h5 style={{display: "flex", alignItems: "center", marginBottom: "15px"}}>
+                                    <strong style={{flex: "1 0 auto"}}>{isolateName}</strong>
+                                    {defaultIsolateLabel}
+                                </h5>
+
+                                <Flex style={{marginBottom: "15px"}}>
+                                    <FlexItem grow={1}>
+                                        <Button
+                                            bsStyle="warning"
+                                            bsSize="small"
+                                            icon="pencil"
+                                            active={this.props.editing}
+                                            onClick={this.props.toggleEditing}
+                                            block
+                                        >
+                                            Edit Name
+                                        </Button>
+                                    </FlexItem>
+
+                                    <FlexItem grow={1} pad={5}>
+                                        <Button
+                                            bsStyle="primary"
+                                            bsSize="small"
+                                            icon="new-entry"
+                                            block
+                                        >
+                                            Add Sequence
+                                        </Button>
+                                    </FlexItem>
+
+                                    <FlexItem grow={1} pad={5}>
+                                        <Button
+                                            bsStyle="danger"
+                                            bsSize="small"
+                                            icon="remove"
+                                            block
+                                        >
+                                            Remove
+                                        </Button>
+                                    </FlexItem>
                                 </Flex>
+
+                                <Table bordered>
+                                    <tbody>
+                                        <tr>
+                                            <th className="col-md-3">Name</th>
+                                            <td className="col-md-9">{isolateName}</td>
+                                        </tr>
+                                        <tr>
+                                            <th>Source Type</th>
+                                            <td>{capitalize(isolate.source_type)}</td>
+                                        </tr>
+                                        <tr>
+                                            <th>Source Name</th>
+                                            <td>{isolate.source_name}</td>
+                                        </tr>
+                                        <tr>
+                                            <th>Unique ID</th>
+                                            <td>{isolate.isolate_id}</td>
+                                        </tr>
+                                    </tbody>
+                                </Table>
                             </ListGroupItem>
 
                             {sequenceComponents}

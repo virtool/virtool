@@ -5,7 +5,7 @@ import { BrowserRouter, Switch, Route, withRouter } from "react-router-dom";
 import NavBar from "./nav/components/Bar";
 import Welcome from "./components/Home/Welcome";
 import Samples from "./samples/components/Manage";
-import Viruses from "./viruses/components/Manage/Manage";
+import Viruses from "./viruses/components/Viruses";
 import Settings from "./settings/components/Settings";
 
 const Inner = (props) => {

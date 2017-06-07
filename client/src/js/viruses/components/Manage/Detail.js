@@ -13,14 +13,14 @@ import React, { PropTypes } from "react";
 import { connect } from "react-redux";
 import { Switch, Route, Redirect } from "react-router-dom";
 import { LinkContainer } from "react-router-bootstrap";
-import { Modal, Nav, NavItem, Panel } from "react-bootstrap";
+import { Nav, NavItem, Panel } from "react-bootstrap";
 
 import { getVirus } from "../../actions";
-import { Spinner } from "virtool/js/components/Base";
+import { Flex, FlexItem, Spinner, Button } from "virtool/js/components/Base";
 import IsolateEditor from "./Detail/Editor";
 import General from "./Detail/General";
 
-const VirusSection = (props) => (
+const VirusSection = () => (
     <div>
         <General />
         <IsolateEditor />
@@ -36,13 +36,9 @@ class VirusDetail extends React.Component {
         getVirus: PropTypes.func
     };
 
-    modalEnter = () => {
-        this.props.getVirus(this.props.match.params.virusId);
-    };
-
-    hide = () => {
-        this.props.history.push("/viruses")
-    };
+    componentDidMount () {
+        this.props.getVirus(this.props.match.params.virusId)
+    }
 
     render = () => {
 
@@ -54,27 +50,60 @@ class VirusDetail extends React.Component {
 
             content = (
                 <div>
-                    <Nav bsStyle="tabs">
-                        <LinkContainer to={`/viruses/detail/${virusId}/virus`}>
-                            <NavItem>
-                                Virus
-                            </NavItem>
-                        </LinkContainer>
+                    <h4 style={{marginBottom: "20px"}}>
+                        <Flex alignItems="flex-end">
+                            <FlexItem grow={1}>
+                                <Flex alignItems="center">
+                                    <strong>
+                                        {this.props.detail.name}
+                                    </strong>
+                                    <FlexItem grow={1} pad={5}>
+                                        <small className="text-uppercase text-strong">
+                                            {this.props.detail.abbreviation}
+                                        </small>
+                                    </FlexItem>
+                                </Flex>
+                            </FlexItem>
 
-                        <LinkContainer to={`/viruses/detail/${virusId}/history`}>
-                            <NavItem>
-                                History
-                            </NavItem>
-                        </LinkContainer>
-                    </Nav>
+                            <FlexItem pad={5}>
+                                <Button bsStyle="primary" bsSize="small" icon="new-entry">
+                                    Add Isolate
+                                </Button>
+                            </FlexItem>
 
-                    <Panel className="tab-panel">
-                        <Switch>
-                            <Redirect from="/viruses/detail/:virusId" to={`/viruses/detail/${virusId}/virus`} exact />
-                            <Route path="/viruses/detail/:virusId/virus" component={VirusSection} />
-                            <Route path="/viruses/detail/:virusId/history" render={() => <div>History</div>} />
-                        </Switch>
-                    </Panel>
+                            <FlexItem pad={5}>
+                                <Button bsStyle="danger" bsSize="small" icon="remove">
+                                    Remove
+                                </Button>
+                            </FlexItem>
+                        </Flex>
+                    </h4>
+
+                    <Flex>
+                        <FlexItem>
+                            <Nav bsStyle="pills" stacked>
+                                <LinkContainer to={`/viruses/${virusId}/virus`}>
+                                    <NavItem>
+                                        Virus
+                                    </NavItem>
+                                </LinkContainer>
+
+                                <LinkContainer to={`/viruses/${virusId}/history`}>
+                                    <NavItem>
+                                        History
+                                    </NavItem>
+                                </LinkContainer>
+                            </Nav>
+                        </FlexItem>
+
+                        <FlexItem grow={1} pad={16}>
+                            <Switch>
+                                <Redirect from="/viruses/:virusId" to={`/viruses/${virusId}/virus`} exact />
+                                <Route path="/viruses/:virusId/virus" component={VirusSection} />
+                                <Route path="/viruses/:virusId/history" render={() => <div>History</div>} />
+                            </Switch>
+                        </FlexItem>
+                    </Flex>
                 </div>
             );
         } else {
@@ -86,21 +115,15 @@ class VirusDetail extends React.Component {
         }
 
         return (
-            <Modal bsSize="lg" show={true} onEnter={this.modalEnter} onHide={this.hide}>
-                <Modal.Header onHide={this.hide} closeButton>
-                    Virus Detail
-                </Modal.Header>
-                <Modal.Body>
-                    {content}
-                </Modal.Body>
-            </Modal>
+            <div>
+                {content}
+            </div>
         );
     };
 }
 
 const mapStateToProps = (state) => {
     return {
-        thing: "test",
         detail: state.viruses.detail
     };
 };

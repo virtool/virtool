@@ -12,7 +12,7 @@
 
 import React from "react";
 import { connect } from "react-redux";
-import { Table } from "react-bootstrap";
+import { Table, Panel } from "react-bootstrap";
 import { Icon, InputCell } from "virtool/js/components/Base";
 
 /**
@@ -50,35 +50,30 @@ const VirusGeneral = (props) => {
 
     const databaseIdRow = props.showIds ? (
         <tr>
-            <th>Database ID</th>
-            <td>{props.virusId}</td>
+            <th>Unique ID</th>
+            <td>{props.virusId.toUpperCase()}</td>
         </tr>
     ): null;
 
     return (
-        <div>
-            <h5>
-                <Icon name="file" /> <strong>General Information</strong>
-            </h5>
-            <Table bordered>
-                <tbody>
-                    <tr>
-                        <th className="col-sm-4">Name</th>
-                        {nameCell}
-                    </tr>
-                    <tr>
-                        <th>Abbreviation</th>
-                        {abbrCell}
-                    </tr>
-                    <tr>
-                        <th>Version</th>
-                        <td>{props.version}</td>
-                    </tr>
-                    {databaseIdRow}
-                </tbody>
-            </Table>
-        </div>
-    )
+        <Table bordered>
+            <tbody>
+                <tr>
+                    <th className="col-sm-4">Name</th>
+                    {nameCell}
+                </tr>
+                <tr>
+                    <th>Abbreviation</th>
+                    {abbrCell}
+                </tr>
+                <tr>
+                    <th>Version</th>
+                    <td>{props.version}</td>
+                </tr>
+                {databaseIdRow}
+            </tbody>
+        </Table>
+    );
 };
 
 VirusGeneral.propTypes = {
