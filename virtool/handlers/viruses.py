@@ -475,7 +475,7 @@ async def add_isolate(req):
         req["session"].user_id
     )
 
-    virtool.virus.dispatch_version_only(req, new)
+    await virtool.virus.dispatch_version_only(req, new)
 
     return json_response(dict(data, sequences=[]), status=201)
 
@@ -638,9 +638,12 @@ async def remove_isolate(req):
         req["session"].user_id
     )
 
-    virtool.virus.dispatch_version_only(req, new)
+    await virtool.virus.dispatch_version_only(req, new)
 
-    return web.Response(status=204)
+    return json_response({
+        "virus_id": virus_id,
+        "isolate_id": isolate_id
+    }, status=204)
 
 
 async def list_sequences(req):

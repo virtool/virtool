@@ -47,7 +47,7 @@ def processor(document):
     return virtool.utils.format_doc_id("virus", dict(document))
 
 
-def dispatch_version_only(req, new):
+async def dispatch_version_only(req, new):
     """
     Dispatch a virus update. Should be called when the document itself is not being modified.
     
@@ -57,7 +57,7 @@ def dispatch_version_only(req, new):
     :type new: dict
     
     """
-    req.app["dispatcher"].dispatch(
+    await req.app["dispatcher"].dispatch(
         "viruses",
         "update",
         processor({key: new[key] for key in LIST_PROJECTION})
