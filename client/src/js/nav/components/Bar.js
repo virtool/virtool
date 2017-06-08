@@ -10,14 +10,14 @@
  */
 
 import React from "react";
-import { startsWith } from "lodash";
+import { assign, startsWith } from "lodash";
 import { connect } from "react-redux";
 import { withRouter } from "react-router-dom";
 import { LinkContainer } from "react-router-bootstrap";
-import { Navbar, Nav, NavItem, NavDropdown, MenuItem } from "react-bootstrap";
+import { Navbar, Nav, NavItem, NavDropdown, MenuItem, ProgressBar } from "react-bootstrap";
 
 import { logout } from "../actions";
-import { Icon } from "virtool/js/components/Base"
+import { Icon, AutoProgressBar } from "virtool/js/components/Base"
 
 const isHomeActive = (match, location) => {
     return location.pathname === "/" || startsWith(location.pathname, "/home")
@@ -32,66 +32,68 @@ const Bar = (props) => {
         <span><Icon name="user" /> {props.user_id}</span>
     );
 
-
-
     return (
-        <Navbar fixedTop>
-            <Navbar.Header>
-                <Navbar.Brand>
-                    <Icon name="vtlogo" className="vtlogo"/>
-                </Navbar.Brand>
+        <div className="vt-header">
+            <Navbar fixedTop>
+                <Navbar.Header>
+                    <Navbar.Brand>
+                        <Icon name="vtlogo" className="vtlogo"/>
+                    </Navbar.Brand>
 
-                <Navbar.Toggle />
-            </Navbar.Header>
+                    <Navbar.Toggle />
+                </Navbar.Header>
 
-            <Navbar.Collapse>
+                <Navbar.Collapse>
 
-                <Nav>
-                    <LinkContainer to="/home" isActive={isHomeActive}>
-                        <NavItem>
-                            Home
-                        </NavItem>
-                    </LinkContainer>
+                    <Nav>
+                        <LinkContainer to="/home" isActive={isHomeActive}>
+                            <NavItem>
+                                Home
+                            </NavItem>
+                        </LinkContainer>
 
-                    <LinkContainer to="/jobs">
-                        <NavItem>
-                            Jobs
-                        </NavItem>
-                    </LinkContainer>
+                        <LinkContainer to="/jobs">
+                            <NavItem>
+                                Jobs
+                            </NavItem>
+                        </LinkContainer>
 
-                    <LinkContainer to="/samples">
-                        <NavItem>
-                            Samples
-                        </NavItem>
-                    </LinkContainer>
+                        <LinkContainer to="/samples">
+                            <NavItem>
+                                Samples
+                            </NavItem>
+                        </LinkContainer>
 
-                    <LinkContainer to="/viruses">
-                        <NavItem>
-                            Viruses
-                        </NavItem>
-                    </LinkContainer>
+                        <LinkContainer to="/viruses">
+                            <NavItem>
+                                Viruses
+                            </NavItem>
+                        </LinkContainer>
 
-                    <LinkContainer to="/subtraction">
-                        <NavItem>
-                            Subtraction
-                        </NavItem>
-                    </LinkContainer>
+                        <LinkContainer to="/subtraction">
+                            <NavItem>
+                                Subtraction
+                            </NavItem>
+                        </LinkContainer>
 
-                    <LinkContainer to="/settings">
-                        <NavItem>
-                            Settings
-                        </NavItem>
-                    </LinkContainer>
-                </Nav>
+                        <LinkContainer to="/settings">
+                            <NavItem>
+                                Settings
+                            </NavItem>
+                        </LinkContainer>
+                    </Nav>
 
-                <Nav pullRight>
-                    <NavDropdown id="account-dropdown" title={dropdownTitle}>
-                        <MenuItem>Settings</MenuItem>
-                        <MenuItem onClick={props.logout}>Logout</MenuItem>
-                    </NavDropdown>
-                </Nav>
-            </Navbar.Collapse>
-        </Navbar>
+                    <Nav pullRight>
+                        <NavDropdown id="account-dropdown" title={dropdownTitle}>
+                            <MenuItem>Settings</MenuItem>
+                            <MenuItem onClick={props.logout}>Logout</MenuItem>
+                        </NavDropdown>
+                    </Nav>
+                </Navbar.Collapse>
+            </Navbar>
+
+            <AutoProgressBar active={props.pending} affixed />
+        </div>
     );
 };
 
@@ -101,7 +103,7 @@ Bar.propTypes = {
 };
 
 const mapStateToProps = (state) => {
-    return state.account;
+    return assign({}, state.account, {pending: state.app.pending});
 };
 
 const mapDispatchToProps = (dispatch) => {
