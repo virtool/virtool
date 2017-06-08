@@ -10,6 +10,9 @@ const createRequestActionType = (root) => {
     };
 };
 
+export const SET_APP_PENDING = "SET_APP_PENDING";
+export const UNSET_APP_PENDING = "UNSET_APP_PENDING";
+
 // Samples
 export const WS_UPDATE_SAMPLE = "WS_UPDATE_SAMPLE";
 export const WS_REMOVE_SAMPLE = "WS_REMOVE_SAMPLE";
@@ -25,8 +28,14 @@ export const FIND_VIRUSES = createRequestActionType("FIND_VIRUSES");
 export const GET_VIRUS = createRequestActionType("GET_VIRUS");
 export const CREATE_VIRUS = createRequestActionType("CREATE_VIRUS");
 
-export const TOGGLE_ISOLATE_EDITING = "TOGGLE_ISOLATE_EDITING";
-export const TOGGLE_SEQUENCE_EDITING = "TOGGLE_SEQUENCE_EDITING";
+export const SHOW_ADD_ISOLATE = "SHOW_ADD_ISOLATE";
+export const SHOW_EDIT_ISOLATE = "SHOW_ADD_ISOLATE";
+export const SHOW_REMOVE_ISOLATE = "SHOW_ADD_ISOLATE";
+export const HIDE_VIRUS_MODAL = "HIDE_VIRUS_MODAL";
+
+export const ADD_ISOLATE = createRequestActionType("ADD_ISOLATE");
+export const EDIT_ISOLATE = createRequestActionType("EDIT_ISOLATE");
+export const REMOVE_ISOLATE = createRequestActionType("REMOVE_ISOLATE");
 
 // Account
 export const GET_ACCOUNT_REQUESTED = "GET_ACCOUNT_REQUESTED";
