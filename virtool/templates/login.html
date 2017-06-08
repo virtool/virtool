@@ -7,17 +7,17 @@
 
     <title>Virtool - Login</title>
 </head>
-<body>
+<body style="background-color: #3c8786">
 <div class="container">
     <div class="row" style="margin-top: 25px;">
         <div class="col-md-4 col-md-offset-4">
-            <div class="text-center" style="margin-bottom: 15px;">
+            <div class="text-center" style="margin-bottom: 15px; color: white">
                 <i class="i-vtlogo vtlogo"></i>
             </div>
             <div class="panel panel-default" style="box-shadow: rgba(0, 0, 0, 0.498039) 0px 5px 15px 0px;">
                 <div class="panel-body">
 
-                    <form method="post" action="login">
+                    <form method="post" action="/login">
                         <input type="text" name="login-1" style="display: none;" value="${key_1}">
 
                         <div class="form-group">
@@ -34,7 +34,12 @@
 
                         <input type="text" name="login-3" style="display: none;" value="${key_3}">
 
-                        <button type="submit" name="password" class="btn btn-primary btn-block">Login</button>
+                        <input type="hidden" name="location" value="${location}">
+
+                        <button type="submit" name="password" class="btn btn-primary btn-block" style="display: flex; justify-content: center; align-items: center">
+                            <i class="i-key"></i>
+                            <span style="margin-left: 5px">Login</span>
+                        </button>
                     </form>
                 </div>
             </div>

@@ -20,7 +20,16 @@ async def index_handler(req):
             }
         })
 
-        html = get_login_template().render(key_1=keys[0], key_2=keys[1], key_3=keys[2], hash=static_hash)
+        print(req.url)
+        print(req.path)
+
+        html = get_login_template().render(
+            key_1=keys[0],
+            key_2=keys[1],
+            key_3=keys[2],
+            hash=static_hash,
+            location=req.path
+        )
 
         return web.Response(body=html, content_type="text/html")
 

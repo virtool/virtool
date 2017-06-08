@@ -32,6 +32,7 @@ async def login_handler(req):
     key_one = form_data.get("login-1", "")
     key_two = form_data.get("login-2", "")
     key_three = form_data.get("login-3", "")
+    location = form_data.get("location", "/")
 
     authenticated = await virtool.user.validate_credentials(db, username, password)
 
@@ -50,7 +51,7 @@ async def login_handler(req):
         session.groups = user_document["groups"]
         session.permissions = user_document["permissions"]
 
-    return web.HTTPFound("/")
+    return web.HTTPFound(location)
 
 
 login_template = Template(filename="virtool/templates/login.html")
