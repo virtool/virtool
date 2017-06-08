@@ -9,75 +9,40 @@
  * @exports IsolateForm
  */
 
-import React from "react";
+import React, { PropTypes } from "react";
 import { capitalize } from "lodash";
 import { Row, Col } from "react-bootstrap";
+
+import { formatIsolateName } from "virtool/js/utils";
 import { Input } from "virtool/js/components/Base";
 
-/**
- * A form component used to edit and add isolates.
- *
- * @class
- */
 export default class IsolateForm extends React.Component {
 
-    constructor (props) {
-        super(props);
-        this.state = {
-            sourceType: this.props.sourceType,
-            sourceName: this.props.sourceName
-        };
-    }
-
     static propTypes = {
-        // These props inform initial state. If the form was mounted in order to edit an existing isolate, these props
-        // should be defined. Otherwise the will be set to the default "unamed isolate" values.
-        sourceType: React.PropTypes.string,
-        sourceName: React.PropTypes.string,
-
-        // These props provide the information necessary to show a restricted dropdown list of potential sourceTypes.
-        allowedSourceTypes: React.PropTypes.arrayOf(React.PropTypes.string),
-        restrictSourceTypes: React.PropTypes.bool,
-
-        onChange: React.PropTypes.func.isRequired,
-        onSubmit: React.PropTypes.func.isRequired
-    };
-
-    static defaultProps = {
-        sourceType: "unknown",
-        sourceName: "",
-        edit: true,
-        restrictSourceTypes: false
-    };
-
-    componentDidMount () {
-        // Focus on the source type input when the component mounts.
-        this.sourceTypeNode.focus();
-    }
-
-    /**
-     * Called when a change occurs in the sourceType input. Updates the sourceType state value. If the new value is
-     * "unknown", the sourceName is forced to an empty string.
-     *
-     * @func
-     */
-    handleChange = (event) => {
-        if (event.target.name === "sourceType") {
-            this.props.onChange({
-                sourceType: event.target.value.toLowerCase(),
-                sourceName: event.target.value === "unknown" ? "": this.props.sourceName
-            });
-        }
-
-        if (event.target.name === "sourceName") {
-            this.props.onChange({
-                sourceName: event.target.value
-            });
-        }
+        sourceType: PropTypes.string,
+        sourceName: PropTypes.string,
+        allowedSourceTypes: PropTypes.arrayOf(React.PropTypes.string),
+        restrictSourceTypes: PropTypes.bool,
+        onChange: PropTypes.func,
+        onSubmit: PropTypes.func
     };
 
     focus = () => {
         this.sourceTypeNode.focus();
+    };
+
+    changeSourceType = (event) => {
+        this.props.onChange({
+            sourceType: event.target.value.toLowerCase(),
+            sourceName: event.target.value === "unknown" ? "": this.props.sourceName
+        });
+    };
+
+    changeSourceName = (event) => {
+        this.props.onChange({
+            sourceName: event.target.value,
+            sourceType: this.props.sourceType
+        })
     };
 
     render () {
@@ -86,16 +51,17 @@ export default class IsolateForm extends React.Component {
 
         const sourceTypeInputProps = {
             ref: (node) => this.sourceTypeNode = node,
-            name: "sourceType",
             label: "Source Type",
             value: this.props.sourceType,
-            onChange: this.handleChange
+            onChange: this.changeSourceType
         };
 
         // If the is a restricted list of sourceTypes to choose from display a select field with the choices.
-        if (dispatcher.settings.get("restrict_source_types")) {
-            const optionComponents = dispatcher.settings.get("allowed_source_types").map((sourceType, index) =>
-                <option key={index} value={sourceType}>{capitalize(sourceType)}</option>
+        if (this.props.restrictSourceTypes) {
+            const optionComponents = this.props.allowedSourceTypes.map(sourceType =>
+                <option key={sourceType} value={sourceType}>
+                    {capitalize(sourceType)}
+                </option>
             );
 
             sourceTypeInput = (
@@ -116,13 +82,18 @@ export default class IsolateForm extends React.Component {
                     </Col>
                     <Col md={6}>
                         <Input
-                            type="text"
-                            name="sourceName"
                             label="Source Name"
                             value={this.props.sourceName}
-                            onChange={this.handleChange}
+                            onChange={this.changeSourceName}
                             disabled={this.props.sourceType === "unknown"}
                             spellCheck="off"
+                        />
+                    </Col>
+                    <Col md={12}>
+                        <Input
+                            label="Isolate Name"
+                            value={formatIsolateName(this.props)}
+                            readOnly
                         />
                     </Col>
                 </Row>

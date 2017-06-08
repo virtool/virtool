@@ -13,17 +13,19 @@ import React, { PropTypes } from "react";
 import { connect } from "react-redux";
 import { Switch, Route, Redirect } from "react-router-dom";
 import { LinkContainer } from "react-router-bootstrap";
-import { Nav, NavItem, Panel } from "react-bootstrap";
+import { Nav, NavItem } from "react-bootstrap";
 
 import { getVirus } from "../../actions";
-import { Flex, FlexItem, Spinner, Button } from "virtool/js/components/Base";
+import { Flex, FlexItem, Icon, Spinner, Button } from "virtool/js/components/Base";
 import IsolateEditor from "./Detail/Editor";
 import General from "./Detail/General";
+import AddIsolate from "./Detail/AddIsolate";
 
-const VirusSection = () => (
+const VirusSection = (props) => (
     <div>
         <General />
         <IsolateEditor />
+        <AddIsolate virusId={props.match.params.virusId} />
     </div>
 );
 
@@ -50,7 +52,7 @@ class VirusDetail extends React.Component {
 
             content = (
                 <div>
-                    <h4 style={{marginBottom: "20px"}}>
+                    <h3 style={{marginBottom: "20px"}}>
                         <Flex alignItems="flex-end">
                             <FlexItem grow={1}>
                                 <Flex alignItems="center">
@@ -65,19 +67,14 @@ class VirusDetail extends React.Component {
                                 </Flex>
                             </FlexItem>
 
-                            <FlexItem pad={5}>
-                                <Button bsStyle="primary" bsSize="small" icon="new-entry">
-                                    Add Isolate
-                                </Button>
-                            </FlexItem>
-
-                            <FlexItem pad={5}>
-                                <Button bsStyle="danger" bsSize="small" icon="remove">
-                                    Remove
-                                </Button>
-                            </FlexItem>
+                            <Icon
+                                bsStyle="danger"
+                                name="remove"
+                                style={{fontSize: "18px"}}
+                                onClick={() => console.log(this.props.detail.name)}
+                            />
                         </Flex>
-                    </h4>
+                    </h3>
 
                     <Flex>
                         <FlexItem>
@@ -85,6 +82,12 @@ class VirusDetail extends React.Component {
                                 <LinkContainer to={`/viruses/${virusId}/virus`}>
                                     <NavItem>
                                         Virus
+                                    </NavItem>
+                                </LinkContainer>
+
+                                <LinkContainer to={`/viruses/${virusId}/schema`}>
+                                    <NavItem>
+                                        Schema
                                     </NavItem>
                                 </LinkContainer>
 
@@ -100,6 +103,7 @@ class VirusDetail extends React.Component {
                             <Switch>
                                 <Redirect from="/viruses/:virusId" to={`/viruses/${virusId}/virus`} exact />
                                 <Route path="/viruses/:virusId/virus" component={VirusSection} />
+                                <Route path="/viruses/:virusId/schema" render={() => <div>Schema</div>} />
                                 <Route path="/viruses/:virusId/history" render={() => <div>History</div>} />
                             </Switch>
                         </FlexItem>

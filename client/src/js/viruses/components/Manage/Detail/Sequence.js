@@ -8,76 +8,66 @@
  */
 
 import React from "react";
-import { LinkContainer} from "react-router-bootstrap";
-import { Row, Col, ListGroup, FormGroup, FormControl, ControlLabel } from "react-bootstrap";
-import { ListGroupItem, Input } from "virtool/js/components/Base";
-import SequenceField from "./SequenceField";
+import { Table, Label, Collapse } from "react-bootstrap";
+import { Icon, ListGroupItem, Input } from "virtool/js/components/Base";
 
+class Sequence extends React.Component {
 
-const Sequence = (props) => {
-
-    const accession = props.accession;
-
-    console.log(props);
-
-    const item = (
-        <ListGroupItem key={accession}>
-            {accession} - {props.definition}
-
-            <form>
-                <Row>
-                    <Col md={6}>
-                        <FormGroup>
-                            <ControlLabel>Accession</ControlLabel>
-                            <FormControl
-                                type="text"
-                                name="sequenceId"
-                                value={props.accession}
-                                readOnly
-                            />
-                        </FormGroup>
-                    </Col>
-                    <Col md={6}>
-                        <Input
-                            type="text"
-                            name="host"
-                            label="Host"
-                            value={props.host}
-                            placeholder={false ? "eg. Ageratum conyzoides" : ""}
-                        />
-                    </Col>
-                </Row>
-                <Row>
-                    <Col md={12}>
-                        <Input
-                            type="text"
-                            name="definition"
-                            label="Definition"
-                            value={props.definition}
-                            placeholder="eg. Ageratum enation virus, complete genome"
-                        />
-                    </Col>
-                </Row>
-                <Row>
-                    <Col md={12}>
-                        <SequenceField
-                            sequence={props.sequence}
-                        />
-                    </Col>
-                </Row>
-            </form>
-        </ListGroupItem>
-    );
-
-    if (!props.active) {
-        return item;
+    constructor (props) {
+        super(props);
+        this.state = {
+            in: false
+        };
     }
 
-    return (
-        <LinkContainer key={accession} to={props.accession}>
-            {item}
-        </LinkContainer>
-    );
-};
+    render () {
+
+        const accession = this.props.accession;
+
+        return (
+            <ListGroupItem componentClass="div" key={accession} onClick={this.state.in ? null: () => this.setState({in: true})}>
+                <div>
+                    <Label>{accession}</Label> {this.props.definition}
+                    <Icon
+                        name="caret-right"
+                        onClick={() => this.setState({in: false})}
+                        pullRight
+                    />
+                </div>
+
+                <Collapse in={this.state.in}>
+                    <div>
+                        <Table style={{marginTop: "10px"}} condensed bordered>
+                            <tbody>
+                            <tr>
+                                <th>Accession</th>
+                                <td>{accession}</td>
+                            </tr>
+                            <tr>
+                                <th>Host</th>
+                                <td>{this.props.host}</td>
+                            </tr>
+                            <tr>
+                                <th>Definition</th>
+                                <td>{this.props.definition}</td>
+                            </tr>
+                            <tr>
+                                <th>Sequence</th>
+                                <td className="sequence-cell">
+                                    <textarea
+                                        rows="5"
+                                        value={this.props.sequence}
+                                        readOnly
+                                    />
+                                </td>
+                            </tr>
+                            </tbody>
+                        </Table>
+                    </div>
+                </Collapse>
+            </ListGroupItem>
+        );
+    }
+}
 
 export default Sequence;

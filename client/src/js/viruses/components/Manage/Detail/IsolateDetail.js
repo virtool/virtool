@@ -15,7 +15,7 @@ import { connect } from "react-redux";
 import { Route, Redirect } from "react-router-dom";
 import { Label, Panel, Table, ListGroup, FormGroup, FormControl, ControlLabel } from "react-bootstrap";
 
-import { toggleIsolateEditing } from "../../../actions";
+import { removeIsolate } from "../../../actions";
 import { formatIsolateName } from "virtool/js/utils";
 import { Flex, FlexItem, Button, Icon, Input, ListGroupItem } from "virtool/js/components/Base";
 import Sequence from "./Sequence";
@@ -134,15 +134,11 @@ class IsolateDetail extends React.Component {
             );
         }
 
-        let defaultIsolateLabel;
-
-        if (isolate.default) {
-            defaultIsolateLabel = (
-                <Label bsStyle="info">
-                    <Icon name="star" /> Default Isolate
-                </Label>
-            );
-        }
+        const defaultIsolateLabel = (
+            <Label bsStyle="info" style={{visibility: "vi"}}>
+                <Icon name="star" /> Default Isolate
+            </Label>
+        );
 
         const sequenceComponents = isolate.sequences.map((sequence) => {
             return (
@@ -151,85 +147,77 @@ class IsolateDetail extends React.Component {
         });
 
         return (
-            <div>
-                <Redirect
-                    from="/viruses/:virusId/virus/:isolateId"
-                    to={`${this.props.match.url}/${isolate.sequences[0].accession}`}
-                />
+            <Panel>
+                <ListGroup fill>
+                    <ListGroupItem>
+                        <h5 style={{display: "flex", alignItems: "center", marginBottom: "15px"}}>
+                            <strong style={{flex: "1 0 auto"}}>{isolateName}</strong>
+                            {defaultIsolateLabel}
+                        </h5>
 
-                <Route path="/viruses/:virusId/virus/:isolateId/:accession" render={() => (
-                    <Panel>
-                        <ListGroup fill>
-                            <ListGroupItem>
-                                <h5 style={{display: "flex", alignItems: "center", marginBottom: "15px"}}>
-                                    <strong style={{flex: "1 0 auto"}}>{isolateName}</strong>
-                                    {defaultIsolateLabel}
-                                </h5>
+                        <Flex style={{marginBottom: "15px"}}>
+                            <FlexItem grow={1}>
+                                <Button
+                                    bsStyle="warning"
+                                    bsSize="small"
+                                    icon="pencil"
+                                    active={this.props.editing}
+                                    onClick={this.props.toggleEditing}
+                                    block
+                                >
+                                    Edit Name
+                                </Button>
+                            </FlexItem>
 
-                                <Flex style={{marginBottom: "15px"}}>
-                                    <FlexItem grow={1}>
-                                        <Button
-                                            bsStyle="warning"
-                                            bsSize="small"
-                                            icon="pencil"
-                                            active={this.props.editing}
-                                            onClick={this.props.toggleEditing}
-                                            block
-                                        >
-                                            Edit Name
-                                        </Button>
-                                    </FlexItem>
+                            <FlexItem grow={1} pad={5}>
+                                <Button
+                                    bsStyle="primary"
+                                    bsSize="small"
+                                    icon="new-entry"
+                                    block
+                                >
+                                    Add Sequence
+                                </Button>
+                            </FlexItem>
 
-                                    <FlexItem grow={1} pad={5}>
-                                        <Button
-                                            bsStyle="primary"
-                                            bsSize="small"
-                                            icon="new-entry"
-                                            block
-                                        >
-                                            Add Sequence
-                                        </Button>
-                                    </FlexItem>
+                            <FlexItem grow={1} pad={5}>
+                                <Button
+                                    bsStyle="danger"
+                                    bsSize="small"
+                                    icon="remove"
+                                    onClick={() => this.props.remove(this.props.virusId, isolate.isolate_id)}
+                                    block
+                                >
+                                    Remove
+                                </Button>
+                            </FlexItem>
+                        </Flex>
 
-                                    <FlexItem grow={1} pad={5}>
-                                        <Button
-                                            bsStyle="danger"
-                                            bsSize="small"
-                                            icon="remove"
-                                            block
-                                        >
-                                            Remove
-                                        </Button>
-                                    </FlexItem>
-                                </Flex>
+                        <Table bordered>
+                            <tbody>
+                                <tr>
+                                    <th className="col-md-3">Name</th>
+                                    <td className="col-md-9">{isolateName}</td>
+                                </tr>
+                                <tr>
+                                    <th>Source Type</th>
+                                    <td>{capitalize(isolate.source_type)}</td>
+                                </tr>
+                                <tr>
+                                    <th>Source Name</th>
+                                    <td>{isolate.source_name}</td>
+                                </tr>
+                                <tr>
+                                    <th>Unique ID</th>
+                                    <td>{isolate.isolate_id}</td>
+                                </tr>
+                            </tbody>
+                        </Table>
+                    </ListGroupItem>
 
-                                <Table bordered>
-                                    <tbody>
-                                        <tr>
-                                            <th className="col-md-3">Name</th>
-                                            <td className="col-md-9">{isolateName}</td>
-                                        </tr>
-                                        <tr>
-                                            <th>Source Type</th>
-                                            <td>{capitalize(isolate.source_type)}</td>
-                                        </tr>
-                                        <tr>
-                                            <th>Source Name</th>
-                                            <td>{isolate.source_name}</td>
-                                        </tr>
-                                        <tr>
-                                            <th>Unique ID</th>
-                                            <td>{isolate.isolate_id}</td>
-                                        </tr>
-                                    </tbody>
-                                </Table>
-                            </ListGroupItem>
-
-                            {sequenceComponents}
-                        </ListGroup>
-                    </Panel>
-                )} />
-            </div>
+                    {sequenceComponents}
+                </ListGroup>
+            </Panel>
         );
     }
 }
@@ -255,8 +243,8 @@ const mapStateToProps = (state) => {
 
 const mapDispatchToProps = (dispatch) => {
     return {
-        toggleEditing: () => {
-            dispatch(toggleIsolateEditing());
+        remove: (virusId, isolateId) => {
+            dispatch(removeIsolate(virusId, isolateId));
         }
     };
 };
