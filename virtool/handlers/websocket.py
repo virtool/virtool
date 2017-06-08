@@ -19,6 +19,6 @@ async def root(req):
     async for msg in ws:
         pass
 
-    await connection.close()
+    req.app["dispatcher"].remove_connection(connection)
 
     return ws

@@ -39,7 +39,10 @@ class Dispatcher:
         :type connection: :class:`.SocketHandler`
 
         """
-        self.connections.remove(connection)
+        try:
+            self.connections.remove(connection)
+        except ValueError:
+            pass
 
     async def dispatch(self, interface, operation, data, connections=None, conn_filter=None, conn_modifier=None,
                        writer=None):
