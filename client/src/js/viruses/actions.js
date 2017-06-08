@@ -13,8 +13,12 @@ import {
     FIND_VIRUSES,
     GET_VIRUS,
     CREATE_VIRUS,
-    TOGGLE_ISOLATE_EDITING,
-    TOGGLE_SEQUENCE_EDITING
+    ADD_ISOLATE,
+    REMOVE_ISOLATE,
+    SHOW_ADD_ISOLATE,
+    SHOW_EDIT_ISOLATE,
+    SHOW_REMOVE_ISOLATE,
+    HIDE_VIRUS_MODAL
 } from "../actionTypes";
 
 
@@ -54,14 +58,48 @@ export function createVirus (name, abbreviation) {
     };
 }
 
-export function toggleIsolateEditing () {
+export function showAddIsolate () {
     return {
-        type: TOGGLE_ISOLATE_EDITING
+        type: SHOW_ADD_ISOLATE
     };
 }
 
-export function toggleSequencEditing () {
+export function addIsolate (virusId, sourceType, sourceName) {
     return {
-        type: TOGGLE_SEQUENCE_EDITING
+        type: ADD_ISOLATE.REQUESTED,
+        virusId,
+        sourceType,
+        sourceName
+    };
+}
+
+export function removeIsolate (virusId, isolateId) {
+    return {
+        type: REMOVE_ISOLATE.REQUESTED,
+        virusId,
+        isolateId
+    };
+}
+
+export function showEditIsolate (virusId, isolateId, sourceType, sourceName) {
+    return {
+        type: SHOW_EDIT_ISOLATE,
+        virusId,
+        isolateId,
+        sourceType,
+        sourceName
+    };
+}
+
+export function showRemoveIsolate (virusId) {
+    return {
+        type: SHOW_REMOVE_ISOLATE,
+        virusId
+    };
+}
+
+export function hideVirusModal () {
+    return {
+        type: HIDE_VIRUS_MODAL
     };
 }

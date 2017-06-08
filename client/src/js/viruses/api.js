@@ -21,6 +21,10 @@ const virusesAPI = {
             .query(findParams);
     },
 
+    get: (virusId) => {
+        return Request.get(`/api/viruses/${virusId}`);
+    },
+
     create: (name, abbreviation) => {
         return Request.post("/api/viruses")
             .send({
@@ -29,8 +33,16 @@ const virusesAPI = {
             });
     },
 
-    get: (virusId) => {
-        return Request.get(`/api/viruses/${virusId}`);
+    addIsolate: (virusId, sourceType, sourceName) => {
+        return Request.post(`/api/viruses/${virusId}/isolates`)
+            .send({
+                source_type: sourceType,
+                source_name: sourceName
+            });
+    },
+
+    removeIsolate: (virusId, isolateId) => {
+        return Request.delete(`/api/viruses/${virusId}/isolates/${isolateId}`);
     }
 
 };

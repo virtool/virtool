@@ -7,7 +7,7 @@
  *
  */
 
-import { assign, concat, find, reject } from "lodash";
+import { assign, concat, find, reject, findIndex } from "lodash";
 import {
     WS_UPDATE_VIRUS,
     WS_REMOVE_VIRUS,
@@ -15,8 +15,11 @@ import {
     FIND_VIRUSES,
     GET_VIRUS,
     CREATE_VIRUS,
-    TOGGLE_ISOLATE_EDITING,
-    TOGGLE_SEQUENCE_EDITING
+    ADD_ISOLATE,
+    REMOVE_ISOLATE,
+    SHOW_ADD_ISOLATE,
+    SHOW_EDIT_ISOLATE,
+    HIDE_VIRUS_MODAL
 } from "../actionTypes";
 
 const virusesInitialState = {
@@ -29,19 +32,17 @@ const virusesInitialState = {
 
     detail: null,
 
-    addingIsolate: false,
-    editingIsolate: false,
+    addIsolate: false,
+    addIsolatePending: false,
 
-    addingSequence: false,
-    editingSequence: false,
+    editIsolate: false,
+    editIsolatePending: false,
 
     activeIsolateId: null,
     activeSequenceId: null,
 
     createError: "",
-    createPending: false,
-
-
+    createPending: false
 };
 
 export function virusesReducer (state = virusesInitialState, action) {
@@ -97,15 +98,55 @@ export function virusesReducer (state = virusesInitialState, action) {
                 createError: action.error
             });
 
-        case TOGGLE_ISOLATE_EDITING:
+        case ADD_ISOLATE.REQUESTED:
             return assign({}, state, {
-                editingIsolate: !state.editingIsolate
+                addIsolatePending: true
             });
 
-        case TOGGLE_SEQUENCE_EDITING:
+        case ADD_ISOLATE.SUCCEEDED: {
+            let newState = assign({}, state, {
+                addIsolate: false,
+                addIsolatePending: false
+            });
+
+            newState.detail.isolates = state.detail.isolates.concat([action.data]);
+
+            return newState;
+        }
+
+        case REMOVE_ISOLATE.REQUESTED:
+            return assign({}, state, {
+                removeIsolatePending: true
+            });
+
+        case REMOVE_ISOLATE.SUCCEEDED: {
+
+            let newState = assign({}, state, {
+                removeIsolate: false,
+                removeIsolatePending: false
+            });
+
+            newState.detail.isolates = reject(newState.detail.isolates, {isolate_id: action.isolateId});
+
+            return newState;
+        }
+
+        case SHOW_ADD_ISOLATE:
+            return assign({}, state, {
+                addIsolate: true
+            });
+
+        case SHOW_EDIT_ISOLATE:
             return assign({}, state, {
                 editingSequence: !state.editingSequence
             });
+
+        case HIDE_VIRUS_MODAL:
+            return assign({}, state, {
+                addIsolate: false
+            });
+
+
 
         default:
             return state;
