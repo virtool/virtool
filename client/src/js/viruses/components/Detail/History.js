@@ -7,7 +7,7 @@
  *
  */
 import React, { PropTypes } from "react";
-import { sortBy, groupBy, filter, reject } from "lodash";
+import { sortBy, groupBy, startsWith } from "lodash";
 import { connect } from "react-redux";
 import { Row, Col, ListGroup, Label } from "react-bootstrap";
 
@@ -38,6 +38,20 @@ const formatChangeDescription = (change) => {
                     </span>
                 </span>
             );
+
+        case "edit_isolate":
+            if (startsWith(change.description, "Rename")) {
+                return (
+                    <span className="change-description">
+                        <Icon name="pencil" bsStyle="warning" />
+                        <span>
+                            {description[0]} <em>{description[1]}</em> to <em>{description[3]} ({description[4]})</em>
+                        </span>
+                    </span>
+                );
+            }
+
+            break;
 
         case "remove_isolate":
             return (
@@ -101,6 +115,11 @@ const HistoryList = (props) => {
             {changeComponents}
         </ListGroup>
     );
+};
+
+HistoryList.propTypes = {
+    history: PropTypes.arrayOf(React.PropTypes.object),
+    unbuilt: PropTypes.bool
 };
 
 class VirusHistory extends React.Component {
