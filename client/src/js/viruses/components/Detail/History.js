@@ -9,10 +9,54 @@
 import React, { PropTypes } from "react";
 import { sortBy, groupBy, filter, reject } from "lodash";
 import { connect } from "react-redux";
-import { Badge, Row, Col, ListGroup, Label } from "react-bootstrap";
+import { Row, Col, ListGroup, Label } from "react-bootstrap";
 
 import { getVirusHistory } from "../../actions";
 import { ListGroupItem, RelativeTime, Icon } from "virtool/js/components/Base";
+
+const formatChangeDescription = (change) => {
+
+    const description = change.description;
+
+    if (!description) {
+        return (
+            <span className="change-description">
+                <Icon name="warning" bsStyle="warning" />
+                <span>No Description</span>
+            </span>
+        );
+    }
+
+    switch (change.method_name) {
+
+        case "add_isolate":
+            return (
+                <span className="change-description">
+                    <Icon name="new-entry" bsStyle="primary" />
+                    <span>
+                        {description[0]} <em>{description[1]} ({description[2]})</em>
+                    </span>
+                </span>
+            );
+
+        case "remove_isolate":
+            return (
+                <span className="change-description">
+                    <Icon name="remove" bsStyle="danger" />
+                    <span>
+                        {description[0]} <em>{description[1]} ({description[2]})</em>
+                    </span>
+                </span>
+            );
+    }
+
+    return (
+        <span className="change-description">
+            <Icon name="warning" bsStyle="info" />
+            <span>{change.description.join(" ")}</span>
+        </span>
+    );
+};
 
 const HistoryList = (props) => {
 
@@ -38,10 +82,13 @@ const HistoryList = (props) => {
                     <Col md={1}>
                         <Label>{change.virus_version}</Label>
                     </Col>
+                    <Col md={6}>
+                        {formatChangeDescription(change)}
+                    </Col>
                     <Col md={4}>
                         <RelativeTime time={change.timestamp} />
                     </Col>
-                    <Col md={7}>
+                    <Col md={1}>
                         {revertIcon}
                     </Col>
                 </Row>
@@ -76,8 +123,6 @@ class VirusHistory extends React.Component {
         const changes = groupBy(this.props.history, change => {
             return change.index_version === "unbuilt" ? "unbuilt": "built";
         });
-
-        console.log(changes);
 
         let built;
         let unbuilt;
