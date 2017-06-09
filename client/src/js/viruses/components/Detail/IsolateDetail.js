@@ -36,11 +36,9 @@ class IsolateDetail extends React.Component {
             </Label>
         );
 
-        let sequenceComponents = isolate.sequences.map(sequence => {
-            return (
-                <Sequence key={sequence.accession} active={sequence.accession === activeAccession} {...sequence} />
-            );
-        });
+        let sequenceComponents = isolate.sequences.map(sequence =>
+            <Sequence key={sequence.accession} active={sequence.accession === activeAccession} {...sequence} />
+        );
 
         if (!sequenceComponents.length) {
             sequenceComponents = (
@@ -75,7 +73,7 @@ class IsolateDetail extends React.Component {
                                         icon="pencil"
                                         onClick={this.props.showEditIsolate}
                                     >
-                                        Edit Name
+                                        Edit
                                     </Button>
                                 </FlexItem>
 
