@@ -50,8 +50,10 @@ class ManageUsers extends React.Component {
 
     render () {
 
-        if (this.props.users === null) {
-            return <p className="text-center">Loading</p>
+        if (this.props.users === null || this.props.groups === null) {
+            return (
+                <div />
+            );
         }
 
         const userComponents = this.props.users.map((user) =>

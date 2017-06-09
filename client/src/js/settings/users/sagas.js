@@ -15,7 +15,9 @@ import {
     SET_FORCE_RESET,
     SET_PRIMARY_GROUP,
     ADD_USER_TO_GROUP,
-    REMOVE_USER_FROM_GROUP
+    REMOVE_USER_FROM_GROUP,
+    SET_APP_PENDING,
+    UNSET_APP_PENDING
 } from "../../actionTypes";
 
 export function* watchUsers () {
@@ -29,10 +31,13 @@ export function* watchUsers () {
 
 function* listUsers () {
     try {
+        yield put({type: SET_APP_PENDING});
         const response = yield call(usersAPI.list);
         yield put({type: LIST_USERS.SUCCEEDED, users: response.body});
+        yield put({type: UNSET_APP_PENDING});
     } catch (error) {
         yield put({type: LIST_USERS.FAILED}, error);
+        yield put({type: UNSET_APP_PENDING});
     }
 }
 
