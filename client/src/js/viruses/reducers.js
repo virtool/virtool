@@ -19,7 +19,8 @@ import {
     REMOVE_ISOLATE,
     SHOW_ADD_ISOLATE,
     SHOW_EDIT_ISOLATE,
-    HIDE_VIRUS_MODAL
+    HIDE_VIRUS_MODAL,
+    GET_VIRUS_HISTORY
 } from "../actionTypes";
 
 const virusesInitialState = {
@@ -31,6 +32,7 @@ const virusesInitialState = {
     page: 1,
 
     detail: null,
+    detailHistory: null,
 
     addIsolate: false,
     addIsolatePending: false,
@@ -130,6 +132,16 @@ export function virusesReducer (state = virusesInitialState, action) {
 
             return newState;
         }
+
+        case GET_VIRUS_HISTORY.REQUESTED:
+            return assign({}, state, {
+                detailHistory: null
+            });
+
+        case GET_VIRUS_HISTORY.SUCCEEDED:
+            return assign({}, state, {
+                detailHistory: action.data
+            });
 
         case SHOW_ADD_ISOLATE:
             return assign({}, state, {

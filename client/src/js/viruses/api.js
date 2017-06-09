@@ -25,6 +25,10 @@ const virusesAPI = {
         return Request.get(`/api/viruses/${virusId}`);
     },
 
+    getHistory: (virusId) => {
+        return Request.get(`/api/viruses/${virusId}/history`);
+    },
+
     create: (name, abbreviation) => {
         return Request.post("/api/viruses")
             .send({

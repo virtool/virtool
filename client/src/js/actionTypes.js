@@ -28,6 +28,8 @@ export const FIND_VIRUSES = createRequestActionType("FIND_VIRUSES");
 export const GET_VIRUS = createRequestActionType("GET_VIRUS");
 export const CREATE_VIRUS = createRequestActionType("CREATE_VIRUS");
 
+export const GET_VIRUS_HISTORY = createRequestActionType("GET_VIRUS_HISTORY");
+
 export const SHOW_ADD_ISOLATE = "SHOW_ADD_ISOLATE";
 export const SHOW_EDIT_ISOLATE = "SHOW_ADD_ISOLATE";
 export const SHOW_REMOVE_ISOLATE = "SHOW_ADD_ISOLATE";

@@ -12,6 +12,7 @@ import {
     WS_REMOVE_VIRUS,
     FIND_VIRUSES,
     GET_VIRUS,
+    GET_VIRUS_HISTORY,
     CREATE_VIRUS,
     ADD_ISOLATE,
     REMOVE_ISOLATE,
@@ -46,6 +47,13 @@ export function findViruses (terms) {
 export function getVirus (virusId) {
     return {
         type: GET_VIRUS.REQUESTED,
+        virusId: virusId
+    };
+}
+
+export function getVirusHistory (virusId) {
+    return {
+        type: GET_VIRUS_HISTORY.REQUESTED,
         virusId: virusId
     };
 }

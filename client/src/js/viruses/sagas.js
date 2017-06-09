@@ -14,6 +14,7 @@ import virusesAPI from "./api";
 import {
     FIND_VIRUSES,
     GET_VIRUS,
+    GET_VIRUS_HISTORY,
     CREATE_VIRUS,
     ADD_ISOLATE,
     REMOVE_ISOLATE,
@@ -34,6 +35,7 @@ const getFindParams = state => {
 export function* watchViruses () {
     yield takeLatest(FIND_VIRUSES.REQUESTED, findViruses);
     yield takeLatest(GET_VIRUS.REQUESTED, getVirus);
+    yield takeLatest(GET_VIRUS_HISTORY.REQUESTED, getVirusHistory);
     yield takeEvery(CREATE_VIRUS.REQUESTED, createVirus);
     yield takeEvery(ADD_ISOLATE.REQUESTED, addIsolate);
     yield takeEvery(REMOVE_ISOLATE.REQUESTED, removeIsolate);
@@ -60,6 +62,17 @@ export function* getVirus (action) {
             yield put({type: GET_VIRUS.SUCCEEDED, data: response.body});
         } catch (error) {
             yield put({type: GET_VIRUS.FAILED, error: error});
+        }
+    }, action);
+}
+
+export function* getVirusHistory (action) {
+    yield setPending(function* () {
+        try {
+            const response = yield call(virusesAPI.getHistory, action.virusId);
+            yield put({type: GET_VIRUS_HISTORY.SUCCEEDED, data: response.body});
+        } catch (error) {
+            yield put({type: GET_VIRUS_HISTORY.FAILED, error: error});
         }
     }, action);
 }
