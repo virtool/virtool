@@ -45,6 +45,14 @@ const virusesAPI = {
             });
     },
 
+    editIsolate: (virusId, isolateId, sourceType, sourceName) => {
+        return Request.patch(`/api/viruses/${virusId}/isolates/${isolateId}`)
+            .send({
+                source_type: sourceType,
+                source_name: sourceName
+            });
+    },
+
     removeIsolate: (virusId, isolateId) => {
         return Request.delete(`/api/viruses/${virusId}/isolates/${isolateId}`);
     }

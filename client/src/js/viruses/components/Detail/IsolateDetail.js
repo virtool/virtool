@@ -12,70 +12,15 @@
 import React, { PropTypes } from "react";
 import { capitalize, find } from "lodash";
 import { connect } from "react-redux";
-import { Label, Panel, Table, ListGroup, FormGroup, FormControl, ControlLabel } from "react-bootstrap";
+import { Label, Panel, Table, ListGroup } from "react-bootstrap";
 
-import { removeIsolate } from "../../actions";
+import { showEditIsolate, removeIsolate } from "../../actions";
 import { formatIsolateName } from "virtool/js/utils";
-import { Flex, FlexItem, Button, Icon, Input, ListGroupItem } from "virtool/js/components/Base";
+import { Flex, FlexItem, Button, Icon, ListGroupItem } from "virtool/js/components/Base";
 import Sequence from "./Sequence";
-
-const save = (event) => {
-
-    event.preventDefault();
-
-    const hadChange = (
-        this.state.sourceType !== this.props.sourceType ||
-        this.state.sourceName !== this.props.sourceName
-    );
-
-    // Only send an update to the server if there has been a change in the sourceType or sourceName.
-    if (hadChange) {
-        // Set pendingChange so the component is disabled and a spinner icon is displayed.
-        this.setState({pendingChange: true}, () => {
-            // Construct a replacement isolate object and send it to the server.
-            dispatcher.db.viruses.request("upsert_isolate", {
-                _id: this.props.virusId,
-                new: {
-                    isolate_id: this.props.isolateId,
-                    source_type: this.state.sourceType,
-                    source_name: this.state.sourceName
-                }
-            }).success(this.toggleEditing);
-        });
-    }
-
-    // If the data did not change, just close the form and save sending it to the server.
-    else {
-        this.toggleEditing();
-    }
-};
+import EditIsolate from "./EditIsolate";
 
 class IsolateDetail extends React.Component {
-
-    componentWillReceiveProps (nextProps) {
-        if (this.props.editing && !nextProps.editing) {
-            document.removeEventListener("keyup", this.handleKeyUp, true);
-            return;
-        }
-
-        if (!this.props.editing && nextProps.editing) {
-            document.addEventListener("keyup", this.handleKeyUp, true);
-        }
-    }
-
-    componentWillUnmount () {
-        document.removeEventListener("keyup", this.handleKeyUp, true);
-    }
-
-    handleKeyUp = (e) => {
-        if (e.keyCode === 27) {
-            e.stopImmediatePropagation();
-
-            if (this.props.editing) {
-                this.props.toggleEditing();
-            }
-        }
-    };
 
     render () {
 
@@ -85,138 +30,103 @@ class IsolateDetail extends React.Component {
 
         const activeAccession = this.props.match.params.accession;
 
-        let editForm;
-
-        if (this.props.editing) {
-            let sourceTypeInput;
-
-            if (this.props.restrictSourceTypes) {
-
-                const options = this.props.allowedSourceTypes.map(sourceType =>
-                    <option key={sourceType} value={sourceType}>
-                        {capitalize(sourceType)}
-                    </option>
-                );
-
-                sourceTypeInput = (
-                    <FormGroup>
-                        <ControlLabel>
-                            Source Type
-                        </ControlLabel>
-                        <FormControl componentClass="select" value={isolate.source_type}>
-                            <option key="unknown" value="unknown">Unknown</option>
-                            {options}
-                        </FormControl>
-                    </FormGroup>
-                )
-            } else {
-                sourceTypeInput = <Input label="Source Type" value={isolate.source_type}/>;
-            }
-
-            editForm = (
-                <form>
-                    <Flex alignItems="flex-end">
-                        <FlexItem grow={1}>
-                            {sourceTypeInput}
-                        </FlexItem>
-                        <FlexItem grow={1} pad={5}>
-                            <Input label="Source Name" value={isolate.source_name}/>
-                        </FlexItem>
-                        <FlexItem grow={1} pad={5}>
-                            <Input label="Isolate Name" value={isolateName} readOnly/>
-                        </FlexItem>
-                        <Button bsStyle="primary" icon="floppy" style={{marginLeft: "5px", marginBottom: "15px"}}>
-                            Save
-                        </Button>
-                    </Flex>
-                </form>
-            );
-        }
-
         const defaultIsolateLabel = (
             <Label bsStyle="info" style={{visibility: "vi"}}>
                 <Icon name="star" /> Default Isolate
             </Label>
         );
 
-        const sequenceComponents = isolate.sequences.map((sequence) => {
+        let sequenceComponents = isolate.sequences.map(sequence => {
             return (
                 <Sequence key={sequence.accession} active={sequence.accession === activeAccession} {...sequence} />
             );
         });
 
+        if (!sequenceComponents.length) {
+            sequenceComponents = (
+                <ListGroupItem className="text-center">
+                    <Icon name="info" /> No sequences added
+                </ListGroupItem>
+            )
+        }
+
         return (
-            <Panel>
-                <ListGroup fill>
-                    <ListGroupItem>
-                        <h5 style={{display: "flex", alignItems: "center", marginBottom: "15px"}}>
-                            <strong style={{flex: "1 0 auto"}}>{isolateName}</strong>
-                            {defaultIsolateLabel}
-                        </h5>
+            <div>
+                <EditIsolate
+                    virusId={this.props.virusId}
+                    isolateId={isolate.isolate_id}
+                    sourceType={isolate.source_type}
+                    sourceName={isolate.source_name}
+                />
 
-                        <Flex style={{marginBottom: "15px"}}>
-                            <FlexItem grow={1}>
-                                <Button
-                                    bsStyle="warning"
-                                    bsSize="small"
-                                    icon="pencil"
-                                    active={this.props.editing}
-                                    onClick={this.props.toggleEditing}
-                                    block
-                                >
-                                    Edit Name
-                                </Button>
-                            </FlexItem>
+                <Panel>
+                    <ListGroup fill>
+                        <ListGroupItem>
+                            <h5 style={{display: "flex", alignItems: "center", marginBottom: "15px"}}>
+                                <strong style={{flex: "1 0 auto"}}>{isolateName}</strong>
+                                {defaultIsolateLabel}
+                            </h5>
 
-                            <FlexItem grow={1} pad={5}>
-                                <Button
-                                    bsStyle="primary"
-                                    bsSize="small"
-                                    icon="new-entry"
-                                    block
-                                >
-                                    Add Sequence
-                                </Button>
-                            </FlexItem>
+                            <Flex style={{marginBottom: "15px"}}>
+                                <FlexItem>
+                                    <Button
+                                        bsStyle="warning"
+                                        bsSize="small"
+                                        icon="pencil"
+                                        onClick={this.props.showEditIsolate}
+                                    >
+                                        Edit Name
+                                    </Button>
+                                </FlexItem>
 
-                            <FlexItem grow={1} pad={5}>
-                                <Button
-                                    bsStyle="danger"
-                                    bsSize="small"
-                                    icon="remove"
-                                    onClick={() => this.props.remove(this.props.virusId, isolate.isolate_id)}
-                                    block
-                                >
-                                    Remove
-                                </Button>
-                            </FlexItem>
-                        </Flex>
+                                <FlexItem grow={1} pad={5}>
+                                    <Button
+                                        bsStyle="primary"
+                                        bsSize="small"
+                                        icon="new-entry"
+                                    >
+                                        Add Sequence
+                                    </Button>
+                                </FlexItem>
 
-                        <Table bordered>
-                            <tbody>
-                                <tr>
-                                    <th className="col-md-3">Name</th>
-                                    <td className="col-md-9">{isolateName}</td>
-                                </tr>
-                                <tr>
-                                    <th>Source Type</th>
-                                    <td>{capitalize(isolate.source_type)}</td>
-                                </tr>
-                                <tr>
-                                    <th>Source Name</th>
-                                    <td>{isolate.source_name}</td>
-                                </tr>
-                                <tr>
-                                    <th>Unique ID</th>
-                                    <td>{isolate.isolate_id}</td>
-                                </tr>
-                            </tbody>
-                        </Table>
-                    </ListGroupItem>
+                                <FlexItem>
+                                    <Button
+                                        bsStyle="danger"
+                                        bsSize="small"
+                                        icon="remove"
+                                        onClick={() => this.props.remove(this.props.virusId, isolate.isolate_id)}
+                                    >
+                                        Remove
+                                    </Button>
+                                </FlexItem>
+                            </Flex>
 
-                    {sequenceComponents}
-                </ListGroup>
-            </Panel>
+                            <Table bordered>
+                                <tbody>
+                                    <tr>
+                                        <th className="col-md-3">Name</th>
+                                        <td className="col-md-9">{isolateName}</td>
+                                    </tr>
+                                    <tr>
+                                        <th>Source Type</th>
+                                        <td>{capitalize(isolate.source_type)}</td>
+                                    </tr>
+                                    <tr>
+                                        <th>Source Name</th>
+                                        <td>{isolate.source_name}</td>
+                                    </tr>
+                                    <tr>
+                                        <th>Unique ID</th>
+                                        <td className="text-uppercase">{isolate.isolate_id}</td>
+                                    </tr>
+                                </tbody>
+                            </Table>
+                        </ListGroupItem>
+
+                        {sequenceComponents}
+                    </ListGroup>
+                </Panel>
+            </div>
         );
     }
 }
@@ -242,6 +152,10 @@ const mapStateToProps = (state) => {
 
 const mapDispatchToProps = (dispatch) => {
     return {
+        showEditIsolate: (virusId, isolateId, sourceType, sourceName) => {
+            dispatch(showEditIsolate(virusId, isolateId, sourceType, sourceName));
+        },
+
         remove: (virusId, isolateId) => {
             dispatch(removeIsolate(virusId, isolateId));
         }

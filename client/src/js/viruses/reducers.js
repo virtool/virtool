@@ -7,7 +7,7 @@
  *
  */
 
-import { assign, concat, find, reject, findIndex } from "lodash";
+import { merge, assign, concat, find, reject, findIndex } from "lodash";
 import {
     WS_UPDATE_VIRUS,
     WS_REMOVE_VIRUS,
@@ -16,6 +16,7 @@ import {
     GET_VIRUS,
     CREATE_VIRUS,
     ADD_ISOLATE,
+    EDIT_ISOLATE,
     REMOVE_ISOLATE,
     SHOW_ADD_ISOLATE,
     SHOW_EDIT_ISOLATE,
@@ -24,7 +25,7 @@ import {
 } from "../actionTypes";
 
 const virusesInitialState = {
-    documents: [],
+    documents: null,
     find: null,
     sort: "name",
     descending: false,
@@ -116,13 +117,33 @@ export function virusesReducer (state = virusesInitialState, action) {
             return newState;
         }
 
+        case EDIT_ISOLATE.REQUESTED:
+            return assign({}, state, {
+                editIsolateEnding: true
+            });
+
+        case EDIT_ISOLATE.SUCCEEDED: {
+            return merge({}, state, {
+                editIsolate: false,
+                editIsolatePending: false,
+                detail: {
+                    isolates: state.detail.isolates.map(isolate => {
+                        if (isolate.isolate_id !== action.data.isolate_id) {
+                            return isolate;
+                        } else {
+                            return assign({}, isolate, action.data);
+                        }
+                    })
+                }
+            });
+        }
+
         case REMOVE_ISOLATE.REQUESTED:
             return assign({}, state, {
                 removeIsolatePending: true
             });
 
         case REMOVE_ISOLATE.SUCCEEDED: {
-
             let newState = assign({}, state, {
                 removeIsolate: false,
                 removeIsolatePending: false
@@ -150,15 +171,14 @@ export function virusesReducer (state = virusesInitialState, action) {
 
         case SHOW_EDIT_ISOLATE:
             return assign({}, state, {
-                editingSequence: !state.editingSequence
+                editIsolate: true
             });
 
         case HIDE_VIRUS_MODAL:
             return assign({}, state, {
-                addIsolate: false
+                addIsolate: false,
+                editIsolate: false
             });
-
-
 
         default:
             return state;

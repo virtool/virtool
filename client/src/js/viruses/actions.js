@@ -15,6 +15,7 @@ import {
     GET_VIRUS_HISTORY,
     CREATE_VIRUS,
     ADD_ISOLATE,
+    EDIT_ISOLATE,
     REMOVE_ISOLATE,
     SHOW_ADD_ISOLATE,
     SHOW_EDIT_ISOLATE,
@@ -66,16 +67,20 @@ export function createVirus (name, abbreviation) {
     };
 }
 
-export function showAddIsolate () {
-    return {
-        type: SHOW_ADD_ISOLATE
-    };
-}
-
 export function addIsolate (virusId, sourceType, sourceName) {
     return {
         type: ADD_ISOLATE.REQUESTED,
         virusId,
+        sourceType,
+        sourceName
+    };
+}
+
+export function editIsolate (virusId, isolateId, sourceType, sourceName) {
+    return {
+        type: EDIT_ISOLATE.REQUESTED,
+        virusId,
+        isolateId,
         sourceType,
         sourceName
     };
@@ -86,6 +91,12 @@ export function removeIsolate (virusId, isolateId) {
         type: REMOVE_ISOLATE.REQUESTED,
         virusId,
         isolateId
+    };
+}
+
+export function showAddIsolate () {
+    return {
+        type: SHOW_ADD_ISOLATE
     };
 }
 

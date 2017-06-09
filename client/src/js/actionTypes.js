@@ -31,8 +31,8 @@ export const CREATE_VIRUS = createRequestActionType("CREATE_VIRUS");
 export const GET_VIRUS_HISTORY = createRequestActionType("GET_VIRUS_HISTORY");
 
 export const SHOW_ADD_ISOLATE = "SHOW_ADD_ISOLATE";
-export const SHOW_EDIT_ISOLATE = "SHOW_ADD_ISOLATE";
-export const SHOW_REMOVE_ISOLATE = "SHOW_ADD_ISOLATE";
+export const SHOW_EDIT_ISOLATE = "SHOW_EDIT_ISOLATE";
+export const SHOW_REMOVE_ISOLATE = "SHOW_REMOVE_ISOLATE";
 export const HIDE_VIRUS_MODAL = "HIDE_VIRUS_MODAL";
 
 export const ADD_ISOLATE = createRequestActionType("ADD_ISOLATE");

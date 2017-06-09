@@ -17,6 +17,7 @@ import {
     GET_VIRUS_HISTORY,
     CREATE_VIRUS,
     ADD_ISOLATE,
+    EDIT_ISOLATE,
     REMOVE_ISOLATE,
     SET_APP_PENDING,
     UNSET_APP_PENDING
@@ -38,6 +39,7 @@ export function* watchViruses () {
     yield takeLatest(GET_VIRUS_HISTORY.REQUESTED, getVirusHistory);
     yield takeEvery(CREATE_VIRUS.REQUESTED, createVirus);
     yield takeEvery(ADD_ISOLATE.REQUESTED, addIsolate);
+    yield takeEvery(EDIT_ISOLATE.REQUESTED, editIsolate);
     yield takeEvery(REMOVE_ISOLATE.REQUESTED, removeIsolate);
 }
 
@@ -95,6 +97,24 @@ export function* addIsolate (action) {
             yield put({type: ADD_ISOLATE.SUCCEEDED, data: response.body});
         } catch (error) {
             yield put({type: ADD_ISOLATE.FAILED, error: error});
+        }
+    }, action);
+}
+
+export function* editIsolate (action) {
+    yield setPending(function* (action) {
+        try {
+            const response = yield call(
+                virusesAPI.editIsolate,
+                action.virusId,
+                action.isolateId,
+                action.sourceType,
+                action.sourceName
+            );
+
+            yield put({type: EDIT_ISOLATE.SUCCEEDED, data: response.body});
+        } catch (error) {
+            yield put({type: EDIT_ISOLATE.FAILED, error: error});
         }
     }, action);
 }

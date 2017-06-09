@@ -30,7 +30,9 @@ class VirusesList extends React.Component {
     };
 
     componentDidMount () {
-        this.props.onFind(null);
+        if (this.props.documents === null) {
+            this.props.onFind(null);
+        }
     }
 
     render () {

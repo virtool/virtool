@@ -562,7 +562,7 @@ async def edit_isolate(req):
         req["session"].user_id
     )
 
-    virtool.virus.dispatch_version_only(req, new)
+    await virtool.virus.dispatch_version_only(req, new)
 
     return json_response(isolate, status=200)
 
