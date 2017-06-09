@@ -13,7 +13,7 @@ import React, { PropTypes } from "react";
 import { connect } from "react-redux";
 import { Modal } from "react-bootstrap";
 
-import { addIsolate, hideVirusModal } from "../../../actions";
+import { addIsolate, hideVirusModal } from "../../actions";
 import { Button } from "virtool/js/components/Base";
 import IsolateForm from "./IsolateForm";
 

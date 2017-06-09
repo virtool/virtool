@@ -12,8 +12,8 @@ import { connect } from "react-redux";
 import { Switch, Route } from "react-router-dom";
 
 import { findViruses } from "../actions";
-import VirusesList from "./Manage/List";
-import VirusDetail from "./Manage/Detail";
+import VirusesList from "./List";
+import VirusDetail from "./Detail/Detail";
 
 const Viruses = () => {
     return (

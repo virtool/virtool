@@ -15,7 +15,7 @@ import { withRouter } from "react-router-dom";
 import { Row, Col, Modal, Alert, ButtonToolbar } from "react-bootstrap";
 
 import { Icon, Flex, FlexItem, Input, Button } from "virtool/js/components/Base";
-import { createVirus } from "../../actions";
+import { createVirus } from "../actions";
 
 /**
  * A form for adding a new virus, defining its name and abbreviation.

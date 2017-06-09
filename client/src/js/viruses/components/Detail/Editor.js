@@ -16,7 +16,7 @@ import { LinkContainer } from "react-router-bootstrap";
 import { Badge, Row, Col, ListGroup } from "react-bootstrap";
 
 import { formatIsolateName } from "virtool/js/utils";
-import { showAddIsolate } from "../../../actions";
+import { showAddIsolate } from "../../actions";
 import { Flex, FlexItem, Icon, ListGroupItem } from "virtool/js/components/Base";
 import IsolateDetail from "./IsolateDetail";
 

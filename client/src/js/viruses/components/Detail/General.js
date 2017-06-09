@@ -12,8 +12,8 @@
 
 import React from "react";
 import { connect } from "react-redux";
-import { Table, Panel } from "react-bootstrap";
-import { Icon, InputCell } from "virtool/js/components/Base";
+import { Table } from "react-bootstrap";
+import { InputCell } from "virtool/js/components/Base";
 
 /**
  * Displays general information about the virus whose detail is displayed. Also provided some InputCell components to

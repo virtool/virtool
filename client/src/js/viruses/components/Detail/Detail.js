@@ -16,10 +16,11 @@ import { LinkContainer } from "react-router-bootstrap";
 import { Nav, NavItem } from "react-bootstrap";
 
 import { getVirus } from "../../actions";
-import { Flex, FlexItem, Icon, Spinner, Button } from "virtool/js/components/Base";
-import IsolateEditor from "./Detail/Editor";
-import General from "./Detail/General";
-import AddIsolate from "./Detail/AddIsolate";
+import { Flex, FlexItem, Icon, Spinner } from "virtool/js/components/Base";
+import IsolateEditor from "./Editor";
+import General from "./General";
+import AddIsolate from "./AddIsolate";
+import History from "./History";
 
 const VirusSection = (props) => (
     <div>
@@ -104,7 +105,7 @@ class VirusDetail extends React.Component {
                                 <Redirect from="/viruses/:virusId" to={`/viruses/${virusId}/virus`} exact />
                                 <Route path="/viruses/:virusId/virus" component={VirusSection} />
                                 <Route path="/viruses/:virusId/schema" render={() => <div>Schema</div>} />
-                                <Route path="/viruses/:virusId/history" render={() => <div>History</div>} />
+                                <Route path="/viruses/:virusId/history" component={History} />
                             </Switch>
                         </FlexItem>
                     </Flex>

@@ -12,10 +12,9 @@
 import React, { PropTypes } from "react";
 import { capitalize, find } from "lodash";
 import { connect } from "react-redux";
-import { Route, Redirect } from "react-router-dom";
 import { Label, Panel, Table, ListGroup, FormGroup, FormControl, ControlLabel } from "react-bootstrap";
 
-import { removeIsolate } from "../../../actions";
+import { removeIsolate } from "../../actions";
 import { formatIsolateName } from "virtool/js/utils";
 import { Flex, FlexItem, Button, Icon, Input, ListGroupItem } from "virtool/js/components/Base";
 import Sequence from "./Sequence";

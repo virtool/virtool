@@ -13,10 +13,9 @@ import { Route } from "react-router-dom";
 import { LinkContainer } from "react-router-bootstrap";
 import { Row, Col, ListGroup } from "react-bootstrap";
 
-import { findViruses } from "../../actions";
+import { findViruses } from "../actions";
 import { Icon, ListGroupItem } from "virtool/js/components/Base";
 import VirusToolbar from "./Toolbar";
-import VirusDetail from "./Detail";
 import CreateVirus from "./Create";
 
 class VirusesList extends React.Component {
@@ -43,10 +42,10 @@ class VirusesList extends React.Component {
                 <LinkContainer to={`/viruses/${document.virus_id}`} key={document.virus_id} className="spaced">
                     <ListGroupItem bsStyle={document.modified ? "warning": null}>
                         <Row>
-                            <Col md={6}>
+                            <Col sm={12} md={6}>
                                 <strong>{document.name}</strong>
                             </Col>
-                            <Col md={6}>
+                            <Col sm={12} md={6}>
                                 {document.abbreviation}
                                 <span className="pull-right">
                                     {document.modified ? <Icon bsStyle="warning" name="flag" />: null}
@@ -65,7 +64,7 @@ class VirusesList extends React.Component {
         }
 
         return (
-            <div className="container">
+            <div>
                 <VirusToolbar {...this.props} />
 
                 <ListGroup>
