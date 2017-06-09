@@ -92,7 +92,7 @@ const Bar = (props) => {
                 </Navbar.Collapse>
             </Navbar>
 
-            <AutoProgressBar active={props.pending} affixed />
+            <AutoProgressBar step={50} interval={80} active={props.pending} affixed />
         </div>
     );
 };
