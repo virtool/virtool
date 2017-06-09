@@ -524,6 +524,8 @@ async def edit_isolate(req):
 
     isolate = virtool.virus.find_isolate(isolates, isolate_id)
 
+    old_isolate_name = virtool.virus.format_isolate_name(isolate)
+
     isolate.update(data)
 
     old = await virtool.virus.join(db, virus_id)
@@ -545,10 +547,7 @@ async def edit_isolate(req):
     isolate_name = virtool.virus.format_isolate_name(isolate)
 
     if "source_type" in data or "source_name" in data:
-        description = ("Renamed isolate to", isolate_name, isolate_id)
-
-        if data.get("default", False):
-            description += tuple(("and set as default",))
+        description = ("Renamed", old_isolate_name, "to", isolate_name, isolate_id)
     else:
         description = ("Set", isolate_name, isolate_id, "as default")
 
