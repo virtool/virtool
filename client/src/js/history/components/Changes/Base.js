@@ -20,7 +20,7 @@ export const bothPropTypes = assign({}, changesPropTypes, annotationPropTypes);
 export const MethodBase = (props) => (
     <span>
         <Icon name={props.iconName} bsStyle={props.bsStyle} />
-        <span> {props.verb} virus <em>{props.changes.name} ({props.changes._id})</em></span>
+        <span> {props.verb} virus <em>{props.changes.name} ({props.changes.virusId})</em></span>
     </span>
 );
 

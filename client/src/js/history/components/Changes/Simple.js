@@ -20,11 +20,16 @@ import { MethodBase, changesPropTypes, annotationPropTypes } from "./Base";
  *
  * @class
  */
-export const AddMethod = (props) => (
-    <MethodBase {...props} iconName="new-entry" bsStyle="primary" verb="Added" />
+export const CreateVirusChange = (props) => (
+    <span style={{display: "flex", alignItems: "center"}}>
+        <Icon name="new-entry" bsStyle="success" />
+        <span>
+            Create virus {props.name} <em>{props.virusId}</em>
+        </span>
+    </span>
 );
 
-AddMethod.propTypes = changesPropTypes;
+CreateVirusMethod.propTypes = changesPropTypes;
 
 
 /**
