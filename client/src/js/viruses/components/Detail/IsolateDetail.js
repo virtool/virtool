@@ -45,8 +45,28 @@ class IsolateDetail extends React.Component {
                 <ListGroupItem className="text-center">
                     <Icon name="info" /> No sequences added
                 </ListGroupItem>
-            )
+            );
         }
+
+        let modifyIcons = (
+            <span>
+                <Icon
+                    name="pencil"
+                    bsStyle="warning"
+                    tip="Edit Name"
+                    onClick={this.props.showEditIsolate}
+                    style={{paddingLeft: "7px"}}
+                />
+
+                <Icon
+                    name="remove"
+                    bsStyle="danger"
+                    tip="Remove Isolate"
+                    onClick={this.props.showRemoveIsolate}
+                    style={{paddingLeft: "3px"}}
+                />
+            </span>
+        );
 
         return (
             <div>
@@ -63,41 +83,8 @@ class IsolateDetail extends React.Component {
                             <h5 style={{display: "flex", alignItems: "center", marginBottom: "15px"}}>
                                 <strong style={{flex: "1 0 auto"}}>{isolateName}</strong>
                                 {defaultIsolateLabel}
+                                {modifyIcons}
                             </h5>
-
-                            <Flex style={{marginBottom: "15px"}}>
-                                <FlexItem>
-                                    <Button
-                                        bsStyle="warning"
-                                        bsSize="small"
-                                        icon="pencil"
-                                        onClick={this.props.showEditIsolate}
-                                    >
-                                        Edit
-                                    </Button>
-                                </FlexItem>
-
-                                <FlexItem grow={1} pad={5}>
-                                    <Button
-                                        bsStyle="primary"
-                                        bsSize="small"
-                                        icon="new-entry"
-                                    >
-                                        Add Sequence
-                                    </Button>
-                                </FlexItem>
-
-                                <FlexItem>
-                                    <Button
-                                        bsStyle="danger"
-                                        bsSize="small"
-                                        icon="remove"
-                                        onClick={() => this.props.remove(this.props.virusId, isolate.isolate_id)}
-                                    >
-                                        Remove
-                                    </Button>
-                                </FlexItem>
-                            </Flex>
 
                             <Table bordered>
                                 <tbody>
@@ -119,6 +106,16 @@ class IsolateDetail extends React.Component {
                                     </tr>
                                 </tbody>
                             </Table>
+
+                            <div style={{marginTop: "45px", display: "flex", alignItems: "center"}}>
+                                <strong style={{flex: "1 0 auto"}}>Sequences</strong>
+                                <Icon
+                                    name="new-entry"
+                                    bsStyle="primary"
+                                    tip="Add Sequence"
+                                    pullRight
+                                />
+                            </div>
                         </ListGroupItem>
 
                         {sequenceComponents}

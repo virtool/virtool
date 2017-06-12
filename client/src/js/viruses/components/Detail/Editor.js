@@ -52,7 +52,7 @@ const IsolateEditor = (props) => {
                     </Badge>
                 </FlexItem>
 
-                <Icon bsStyle="primary" name="new-entry" onClick={props.showAddIsolate} />
+                <Icon bsStyle="primary" name="new-entry" tip="Add Isolate" onClick={props.showAddIsolate} />
             </h4>
 
             <Row>
