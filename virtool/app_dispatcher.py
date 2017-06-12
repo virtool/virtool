@@ -99,7 +99,7 @@ class Dispatcher:
                 raise TypeError("writer must be callable")
 
             for connection in connections:
-                writer(connection, deepcopy(message))
+                await writer(connection, deepcopy(message))
 
             return
 

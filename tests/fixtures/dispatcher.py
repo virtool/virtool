@@ -1,7 +1,7 @@
 import pytest
-
 from aiohttp import web
 
+import virtool.handlers.utils
 from virtool.app_dispatcher import Connection
 from virtool.user_sessions import Session
 
@@ -13,6 +13,24 @@ class MockWS:
 
     async def send_json(self, data):
         self.stub(data)
+
+
+@pytest.fixture
+def create_test_connection(mocker):
+    class TestConnection:
+
+        def __init__(self):
+            self.messages = list()
+            self.send_stub = mocker.stub()
+            self.close_stub = mocker.stub()
+
+        async def send(self, message):
+            self.send_stub(message)
+
+        async def close(self):
+            self.close_stub()
+
+    return TestConnection
 
 
 @pytest.fixture

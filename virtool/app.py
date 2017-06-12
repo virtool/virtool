@@ -9,7 +9,6 @@ import concurrent.futures
 from aiohttp import web
 from motor import motor_asyncio
 
-import virtool.jobs
 import virtool.app_routes
 import virtool.app_dispatcher
 import virtool.job_manager
