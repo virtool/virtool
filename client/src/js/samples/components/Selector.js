@@ -106,7 +106,6 @@ export default class SampleSelector extends React.Component {
                                 onChange={this.setAlgorithm}
                             >
                                 <option value="pathoscope_bowtie">PathoscopeBowtie</option>
-                                <option value="pathoscope_snap">PathoscopeSNAP</option>
                                 <option value="nuvs">NuVs</option>
                             </FormControl>
                             <InputGroup.Button>

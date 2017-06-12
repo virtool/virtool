@@ -140,8 +140,7 @@ class RebuildIndex(virtool.job.Job):
     1. mk_index_dir
     2. write_fasta
     3. bowtie_build
-    4. snap_build
-    5. replace_old
+    4. replace_old
 
 
     """
@@ -152,7 +151,6 @@ class RebuildIndex(virtool.job.Job):
             self.mk_index_dir,
             self.write_fasta,
             self.bowtie_build,
-            self.snap_build,
             self.replace_old
         ]
 
@@ -300,22 +298,6 @@ class RebuildIndex(virtool.job.Job):
             "-f",
             os.path.join(self.reference_path, "ref.fa"),
             os.path.join(self.reference_path, "reference")
-        ]
-
-        self.run_process(command)
-
-    def snap_build(self):
-        """
-        Run a standard snap build process using the previously generated FASTA reference.
-        The root name for the new reference is 'reference'
-
-        """
-        command = [
-            "snap",
-            "index",
-            os.path.join(self.reference_path, "ref.fa"),
-            self.reference_path + "/",
-            "-t" + str(self._proc)
         ]
 
         self.run_process(command)

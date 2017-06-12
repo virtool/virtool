@@ -35,9 +35,8 @@ class Base:
 
 class Lines(Base):
 
-    def __init__(self, snap=False):
+    def __init__(self):
         super().__init__()
-        self.snap = snap
 
     def add(self, line):
         # Store stripped header lines
@@ -66,7 +65,7 @@ class Lines(Base):
         pos = int(split[3])
         length = len(split[9])
 
-        a_score = get_score(split, snap=self.snap)
+        a_score = get_score(split)
 
         self._aligns[read_id][ref_id].append((
             pos,
@@ -136,7 +135,7 @@ def entry_score(line, score_cutoff):
     return score, skip
 
 
-def get_score(line, snap=False):
+def get_score(line):
     read_length = len(line[9])
     use_mapq = True
 
@@ -153,10 +152,7 @@ def get_score(line, snap=False):
             break
 
     if use_mapq:
-        if snap:
-            score = line[4]
-        else:
-            score = None
+        score = None
     else:
         score += read_length
 

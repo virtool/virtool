@@ -8,7 +8,7 @@ import virtool.utils
 import virtool.pathoscope
 import virtool.job
 
-PATHOSCOPE_TASK_NAMES = ["pathoscope_bowtie", "pathoscope_snap"]
+PATHOSCOPE_TASK_NAMES = ["pathoscope_bowtie"]
 
 
 LIST_PROJECTION = [

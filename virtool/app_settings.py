@@ -33,10 +33,6 @@ SCHEMA = {
     "pathoscope_bowtie_mem": DEFAULT_ANALYSIS_MEM,
     "pathoscope_bowtie_inst": DEFAULT_ANALYSIS_INST,
 
-    "pathoscope_snap_proc": DEFAULT_ANALYSIS_PROC,
-    "pathoscope_snap_mem": DEFAULT_ANALYSIS_MEM,
-    "pathoscope_snap_inst": DEFAULT_ANALYSIS_INST,
-
     "nuvs_proc": DEFAULT_ANALYSIS_PROC,
     "nuvs_mem": DEFAULT_ANALYSIS_MEM,
     "nuvs_inst": DEFAULT_ANALYSIS_INST,
