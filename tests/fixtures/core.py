@@ -1,3 +1,4 @@
+import types
 import pytest
 import datetime
 import virtool.app_dispatcher
@@ -51,7 +52,19 @@ def static_time(monkeypatch):
 
 @pytest.fixture
 def test_dispatch(mocker, monkeypatch):
+
     m = mocker.Mock(spec=virtool.app_dispatcher.Dispatcher())
+
+    m.connections = list()
+
+    m.dispatch_stub = mocker.stub(name="dispatch")
+
+    async def dispatch(self, *args, **kwargs):
+        self.dispatch_stub(*args, **kwargs)
+
+    dispatch.stub = m.dispatch_stub
+
+    m.dispatch = types.MethodType(dispatch, m)
 
     mock_class = mocker.Mock()
     mock_class.return_value = m

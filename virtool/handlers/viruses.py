@@ -208,7 +208,7 @@ async def edit(req):
         req["session"].user_id
     )
 
-    req.app["dispatcher"].dispatch(
+    await req.app["dispatcher"].dispatch(
         "viruses",
         "update",
         virtool.virus.processor({key: new[key] for key in virtool.virus.LIST_PROJECTION})
@@ -299,7 +299,7 @@ async def verify(req):
         req["session"].user_id
     )
 
-    req.app["dispatcher"].dispatch(
+    await req.app["dispatcher"].dispatch(
         "viruses",
         "update",
         virtool.virus.processor({key: new[key] for key in virtool.virus.LIST_PROJECTION})
@@ -347,7 +347,7 @@ async def remove(req):
         req["session"].user_id
     )
 
-    req.app["dispatcher"].dispatch(
+    await req.app["dispatcher"].dispatch(
         "viruses",
         "remove",
         {"virus_id": virus_id}
@@ -500,6 +500,9 @@ async def edit_isolate(req):
 
     if not v(data):
         return invalid_input(v.errors)
+
+    if (data.get("source_type", None) or data.get("source_name", None)) and data.get("default", None):
+        return bad_request("Can only edit one of 'source_type' and 'source_name' or 'default' at a time")
 
     data = v.document
 
@@ -736,7 +739,7 @@ async def create_sequence(req):
         req["session"].user_id
     )
 
-    virtool.virus.dispatch_version_only(req, new)
+    await virtool.virus.dispatch_version_only(req, new)
 
     return json_response(virtool.virus.sequence_processor(data))
 
@@ -784,7 +787,7 @@ async def edit_sequence(req):
         req["session"].user_id
     )
 
-    virtool.virus.dispatch_version_only(req, new)
+    await virtool.virus.dispatch_version_only(req, new)
 
     return json_response(virtool.virus.sequence_processor(new_sequence))
 
@@ -863,7 +866,7 @@ async def upload(req):
         }
     }, return_document=ReturnDocument.AFTER, upsert=True)
 
-    req.app["dispatcher"].dispatch("status", "update", document)
+    await req.app["dispatcher"].dispatch("status", "update", document)
 
     handle = tempfile.TemporaryFile()
 
@@ -879,7 +882,7 @@ async def upload(req):
             }
         }, return_document=ReturnDocument.AFTER, projection=["_id", "file_size"])
 
-        req.app["dispatcher"].dispatch("status", "update", document)
+        await req.app["dispatcher"].dispatch("status", "update", document)
 
         handle.write(chunk)
 

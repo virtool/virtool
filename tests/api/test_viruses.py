@@ -38,10 +38,10 @@ class TestFind:
 
         assert await resp.json() == [
             {
-                "abbreviation": "TyV_GV1 (not confirmed)",
+                "abbreviation": "EV_TF3-mycovirus",
                 "modified": False,
-                "name": "Tymovirus from Grapevine 1(not confirmed)",
-                "virus_id": "2f97f077"
+                "name": "Endornavirus of Tree Fruit #3",
+                "virus_id": "5350af44"
             },
             {
                 "abbreviation": "PVF",
@@ -50,10 +50,10 @@ class TestFind:
                 "virus_id": "6116cba1"
             },
             {
-                "abbreviation": "EV_TF3-mycovirus",
+                "abbreviation": "TyV_GV1 (not confirmed)",
                 "modified": False,
-                "name": "Endornavirus of Tree Fruit #3",
-                "virus_id": "5350af44"
+                "name": "Tymovirus from Grapevine 1(not confirmed)",
+                "virus_id": "2f97f077"
             }
         ]
 
@@ -212,7 +212,7 @@ class TestCreate:
             "test"
         )
 
-        assert test_dispatch.call_args[0] == (
+        assert test_dispatch.stub.call_args[0] == (
             "viruses",
             "update",
             {
@@ -350,7 +350,7 @@ class TestEdit:
 
         expected_dispatch.update(data)
 
-        assert test_dispatch.call_args[0] == (
+        assert test_dispatch.stub.call_args[0] == (
             "viruses",
             "update",
             expected_dispatch
@@ -561,7 +561,7 @@ class TestVerify:
             "test"
         )
 
-        assert test_dispatch.call_args[0] == (
+        assert test_dispatch.stub.call_args[0] == (
             "viruses",
             "update",
             {
@@ -597,7 +597,7 @@ class TestVerify:
         }
 
         assert not test_add_history.called
-        assert not test_dispatch.called
+        assert not test_dispatch.stub.called
 
     async def test_empty_isolate(self, test_db, do_put, test_virus, test_add_history, test_dispatch):
         """
@@ -621,7 +621,7 @@ class TestVerify:
         }
 
         assert not test_add_history.called
-        assert not test_dispatch.called
+        assert not test_dispatch.stub.called
 
     async def test_empty_sequence(self, test_db, do_put, test_virus, test_sequence, test_add_history, test_dispatch):
         """
@@ -649,7 +649,7 @@ class TestVerify:
         }
 
         assert not test_add_history.called
-        assert not test_dispatch.called
+        assert not test_dispatch.stub.called
 
     async def test_isolate_inconsistency(self, test_db, do_put, test_virus, test_sequence, test_add_history,
                                          test_dispatch):
@@ -686,7 +686,7 @@ class TestVerify:
         }
 
         assert not test_add_history.called
-        assert not test_dispatch.called
+        assert not test_dispatch.stub.called
 
     async def test_not_found(self, do_put):
         """
@@ -731,7 +731,7 @@ class TestRemove:
             "test"
         )
 
-        assert test_dispatch.call_args[0] == (
+        assert test_dispatch.stub.call_args[0] == (
             "viruses",
             "remove",
             {"virus_id": "6116cba1"}
@@ -910,7 +910,7 @@ class TestAddIsolate:
             "test"
         )
 
-        assert test_dispatch.call_args[0] == (
+        assert test_dispatch.stub.call_args[0] == (
             "viruses",
             "update",
             {
@@ -982,7 +982,7 @@ class TestAddIsolate:
             "test"
         )
 
-        assert test_dispatch.call_args[0] == (
+        assert test_dispatch.stub.call_args[0] == (
             "viruses",
             "update",
             {
@@ -1046,7 +1046,7 @@ class TestAddIsolate:
             "test"
         )
 
-        assert test_dispatch.call_args[0] == (
+        assert test_dispatch.stub.call_args[0] == (
             "viruses",
             "update",
             {
@@ -1105,7 +1105,7 @@ class TestAddIsolate:
             }
         ]
 
-        assert test_dispatch.call_args[0] == (
+        assert test_dispatch.stub.call_args[0] == (
             "viruses",
             "update",
             {
@@ -1157,7 +1157,7 @@ class TestAddIsolate:
             }
         ]
 
-        assert test_dispatch.call_args[0] == (
+        assert test_dispatch.stub.call_args[0] == (
             "viruses",
             "update",
             {
@@ -1174,19 +1174,10 @@ class TestEditIsolate:
 
     async def test_both(self, test_db, do_patch, test_virus, test_add_history, test_dispatch):
         """
-        Test that the isolate can be edited such that it is the default isolate and all other isolates are set with
-        ``default`` to ``False``.
+        Test that an error is returned when an attempt is made to change the default field and source type and source
+        name in the same request.
 
         """
-        test_virus["isolates"].append({
-            "isolate_id": "test",
-            "source_name": "b",
-            "source_type": "isolate",
-            "default": False
-        })
-
-        test_db.viruses.insert_one(test_virus)
-
         data = {
             "source_type": "variant",
             "default": True
@@ -1194,55 +1185,11 @@ class TestEditIsolate:
 
         resp = await do_patch("/api/viruses/6116cba1/isolates/test", data, authorize=True, permissions=["modify_virus"])
 
-        assert resp.status == 200
+        assert resp.status == 400
 
         assert await resp.json() == {
-            "source_type": "variant",
-            "isolate_id": "test",
-            "source_name": "b",
-            "default": True
+            "message": "Can only edit one of 'source_type' and 'source_name' or 'default' at a time"
         }
-
-        new = test_db.viruses.find_one("6116cba1")
-
-        assert new["isolates"] == [
-            {
-                "isolate_id": "cab8b360",
-                "default": False,
-                "source_type": "isolate",
-                "source_name": "8816-v2"
-            },
-            {
-                "isolate_id": "test",
-                "source_name": "b",
-                "source_type": "variant",
-                "default": True
-            }
-        ]
-
-        for joined in (test_virus, new):
-            for isolate in joined["isolates"]:
-                isolate["sequences"] = []
-
-        assert test_add_history.call_args[0][1:] == (
-            "edit_isolate",
-            test_virus,
-            new,
-            ("Renamed isolate to", "Variant b", "test", "and set as default"),
-            "test"
-        )
-
-        assert test_dispatch.call_args[0] == (
-            "viruses",
-            "update",
-            {
-                "virus_id": "6116cba1",
-                "name": "Prunus virus F",
-                "abbreviation": "PVF",
-                "modified": True,
-                "version": 1
-            }
-        )
 
     async def test_name(self, test_db, do_patch, test_virus, test_add_history, test_dispatch):
         """
@@ -1298,11 +1245,11 @@ class TestEditIsolate:
             "edit_isolate",
             test_virus,
             new,
-            ("Renamed isolate to", "Variant b", "test"),
+            ("Renamed", "Isolate b", "to", "Variant b", "test"),
             "test"
         )
 
-        assert test_dispatch.call_args[0] == (
+        assert test_dispatch.stub.call_args[0] == (
             "viruses",
             "update",
             {
@@ -1372,7 +1319,6 @@ class TestEditIsolate:
             "test"
         )
 
-
     async def test_unset_default(self, test_db, do_patch, test_virus, test_dispatch):
         """
         Test that attempting to set ``default`` to ``False`` for a default isolate results in a ``400`` response. The
@@ -1400,7 +1346,7 @@ class TestEditIsolate:
             }
         }
 
-        assert test_dispatch.call_args is None
+        assert test_dispatch.stub.call_args is None
 
     async def test_force_case(self, monkeypatch, test_db, do_patch, test_virus, test_dispatch):
         """
@@ -1434,7 +1380,7 @@ class TestEditIsolate:
 
         assert test_db.viruses.find_one("6116cba1", ["isolates"])["isolates"] == [expected]
 
-        assert test_dispatch.call_args[0] == (
+        assert test_dispatch.stub.call_args[0] == (
             "viruses",
             "update",
             {
@@ -1460,7 +1406,7 @@ class TestEditIsolate:
             "message": "Empty input"
         }
 
-        assert test_dispatch.call_args is None
+        assert test_dispatch.stub.call_args is None
 
 
 class TestRemoveIsolate:
@@ -1531,7 +1477,7 @@ class TestRemoveIsolate:
             "test"
         )
 
-        assert test_dispatch.call_args[0] == (
+        assert test_dispatch.stub.call_args[0] == (
             "viruses",
             "update",
             {
@@ -1634,7 +1580,7 @@ class TestRemoveIsolate:
             "test"
         )
 
-        assert test_dispatch.call_args[0] == (
+        assert test_dispatch.stub.call_args[0] == (
             "viruses",
             "update",
             {
@@ -1815,7 +1761,7 @@ class TestCreateSequence:
             "test"
         )
 
-        assert test_dispatch.call_args[0] == (
+        assert test_dispatch.stub.call_args[0] == (
             "viruses",
             "update",
             {
@@ -1981,7 +1927,7 @@ class TestEditSequence:
             "test"
         )
 
-        assert test_dispatch.call_args[0] == (
+        assert test_dispatch.stub.call_args[0] == (
             "viruses",
             "update",
             {
