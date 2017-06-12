@@ -19,7 +19,33 @@ class TestFind:
 
         assert resp.status == 200
 
-        assert set(await resp.json()) == set(user_ids + ["test"])
+        base_dict = {
+            "force_reset": False,
+            "groups": [],
+            "last_password_change": "2015-10-06T20:00:00Z",
+            "permissions": {
+                "add_host": False,
+                "add_sample": False,
+                "add_virus": False,
+                "archive_job": False,
+                "cancel_job": False,
+                "modify_hmm": False,
+                "manage_users": False,
+                "modify_options": False,
+                "modify_virus": False,
+                "rebuild_index": False,
+                "remove_host": False,
+                "remove_job": False,
+                "remove_virus": False
+            },
+            "primary_group": ""
+        }
+
+        expected = [dict(base_dict, user_id=user_id) for user_id in user_ids + ["test"]]
+
+        expected[3]["permissions"] = dict(base_dict["permissions"], manage_users=True)
+
+        assert await resp.json() == expected
 
     async def test_not_authorized(self, do_get):
         """
@@ -84,13 +110,7 @@ class TestGet:
                 "remove_job": False,
                 "remove_virus": False
             },
-            "primary_group": "",
-            "settings": {
-                "quick_analyze_algorithm": "pathoscope_bowtie",
-                "show_ids": True,
-                "show_versions": True,
-                "skip_quick_analyze_dialog": True
-            }
+            "primary_group": ""
         }
 
     async def test_does_not_exist(self, do_get):
@@ -176,13 +196,7 @@ class TestCreate:
                 "remove_job": False,
                 "remove_virus": False
             },
-            "primary_group": "",
-            "settings": {
-                "quick_analyze_algorithm": "pathoscope_bowtie",
-                "show_ids": True,
-                "show_versions": True,
-                "skip_quick_analyze_dialog": True
-            }
+            "primary_group": ""
         }
 
         assert await resp.json() == expected
