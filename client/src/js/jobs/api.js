@@ -17,6 +17,11 @@ const jobsAPI = {
 
     get: (jobId) => {
         return Request.get(`/api/jobs/${jobId}`);
+    },
+
+    test: (options = {}) => {
+        return Request.post("/api/jobs/test")
+            .send(options);
     }
 
 };

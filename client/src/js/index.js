@@ -9,10 +9,10 @@ import { getSettings } from "./settings/actions";
 
 export * from "../style/style.less";
 
-window.ws = new WSConnection();
-window.ws.establishConnection();
-
 window.store = store;
+
+window.ws = new WSConnection(store.dispatch);
+window.ws.establishConnection();
 
 window.store.dispatch(getAccount());
 window.store.dispatch(getSettings());

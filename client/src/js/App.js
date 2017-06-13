@@ -4,6 +4,7 @@ import { BrowserRouter, Switch, Route, withRouter } from "react-router-dom";
 
 import NavBar from "./nav/components/Bar";
 import Welcome from "./components/Home/Welcome";
+import Jobs from "./jobs/components/Jobs";
 import Samples from "./samples/components/Manage";
 import Viruses from "./viruses/components/Viruses";
 import Settings from "./settings/components/Settings";
@@ -17,7 +18,7 @@ const Inner = (props) => {
                 <Switch>
                     <Route path="/" component={Welcome} exact />
                     <Route path="/home" component={Welcome} />
-                    <Route path="/jobs" component={Welcome} />
+                    <Route path="/jobs" component={Jobs} />
                     <Route path="/samples" component={Samples} />
                     <Route path="/viruses" component={Viruses} />
                     <Route path="/subtraction" component={Welcome} />

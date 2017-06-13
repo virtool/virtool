@@ -12,6 +12,7 @@ import { createStore, combineReducers, applyMiddleware } from "redux";
 import createSagaMiddleware from "redux-saga";
 
 import { SET_APP_PENDING, UNSET_APP_PENDING } from "./actionTypes";
+import jobsReducer from "./jobs/reducers";
 import samplesReducer from "./samples/reducers";
 import { virusesReducer } from "./viruses/reducers";
 import { accountReducer } from "./nav/reducers";
@@ -43,6 +44,7 @@ const appReducer = (state = appInitialState, action) => {
 
 const reducer = combineReducers({
     app: appReducer,
+    jobs: jobsReducer,
     samples: samplesReducer,
     viruses: virusesReducer,
     settings: settingsReducer,

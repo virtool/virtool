@@ -23,29 +23,18 @@ export default class JobEntry extends React.Component {
     }
 
     static propTypes = {
-        _id: React.PropTypes.string.isRequired,
+        job_id: React.PropTypes.string.isRequired,
         task: React.PropTypes.string.isRequired,
         state: React.PropTypes.string.isRequired,
         progress: React.PropTypes.number.isRequired,
         added: React.PropTypes.string.isRequired,
-        username: React.PropTypes.string.isRequired,
-        canCancel: React.PropTypes.bool,
-        canRemove: React.PropTypes.bool
-    };
-
-    showDetail = () => window.router.setExtra(["detail", this.props._id]);
-
-    remove = (event) => {
-        event.stopPropagation();
-        dispatcher.db.jobs.request("remove_job", {_id: this.props._id});
-    };
-
-    cancel = (event) => {
-        event.stopPropagation();
-        dispatcher.db.jobs.request("cancel", {_id: this.props._id});
+        user_id: React.PropTypes.string.isRequired
     };
 
     render () {
+
+        const canCancel = true;
+        const canRemove = true;
 
         let iconArea = (
             <strong className="pull-right">
@@ -55,7 +44,7 @@ export default class JobEntry extends React.Component {
 
         let icon;
 
-        if ((this.props.state === "waiting" || this.props.state === "running") && this.props.canCancel) {
+        if ((this.props.state === "waiting" || this.props.state === "running") && canCancel) {
             icon = (
                 <Icon
                     bsStyle="danger"
@@ -63,7 +52,7 @@ export default class JobEntry extends React.Component {
                     onClick={this.cancel}
                 />
             );
-        } else if (this.props.canRemove) {
+        } else if (canRemove) {
             icon = (
                 <Icon
                     bsStyle="danger"
@@ -113,7 +102,7 @@ export default class JobEntry extends React.Component {
                         <strong>{getTaskDisplayName(this.props.task)}</strong>
                     </Col>
                     <Col md={5}>
-                         Started <RelativeTime time={this.props.added} /> by {this.props.username}
+                         Started <RelativeTime time={this.props.added} /> by {this.props.user_id}
                      </Col>
                     <Col md={3}>
                         {iconArea}

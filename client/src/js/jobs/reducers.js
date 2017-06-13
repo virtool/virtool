@@ -25,16 +25,23 @@ export default function reducer (state = initialState, action) {
     switch (action.type) {
 
         case WS_UPDATE_JOB:
+            console.log("UPDATE_JOB", action.data);
+
             return assign({}, state, {
-                viruses: concat(
-                    reject(state.viruses, {virus_id: action.virus_id}),
-                    assign({}, find(state.viruses, {virus_id: action.virus_id}), action.data)
-                )
+                list: state.list.map(doc => {
+                    if (doc.job_id !== action.data.job_id) {
+                        return doc;
+                    }
+
+                    console.log("ID MATCH");
+
+                    return assign({}, doc, action.data);
+                })
             });
 
         case WS_REMOVE_JOB:
             return assign({}, state, {
-                viruses: reject(state.viruses, {virus_id: action.virus_id})
+                list: reject(state.list, {job_id: action.jobId})
             });
 
         case FIND_JOBS.SUCCEEDED:
