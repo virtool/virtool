@@ -74,6 +74,7 @@ def setup_routes(app):
     # Jobs routes
     app.router.add_get("/api/jobs", jobs.find)
     app.router.add_get("/api/jobs/{job_id}", jobs.get)
+    app.router.add_post("/api/jobs/test", jobs.test_job)
 
     # Samples Routes
     app.router.add_get("/api/samples", samples.find)

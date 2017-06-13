@@ -37,12 +37,6 @@ class Manager:
         #: A :class:`dict` containing dicts describing each running or waiting job.
         self._jobs_dict = dict()
 
-        #: A :class:`dict` of callback functions that allow job process to interact with the main process.
-        self._callbacks = dict()
-
-        # Register the manager's :meth:`.update_status` method as a callback.
-        self.register_callback("update_status", self.update_status)
-
         #: Jobs are blocked from starting when this is ``True``. This cannot be changed without
         #: reinitializing the job manager.
         self.blocked = False

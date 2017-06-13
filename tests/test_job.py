@@ -1,3 +1,5 @@
+import time
+import psutil
 import pytest
 import datetime
 import multiprocessing
@@ -55,32 +57,122 @@ class TestDispatchProcessor:
 
 class TestJob:
 
-    def test(self, mocker):
-        job_id = "foobar"
+    def test_db_access(self, test_db, test_task_inst):
+        """
+        Test that the job process can write to the database.
 
-        settings = {
-            "db_name": "test",
-            "db_host": "localhost",
-            "db_port": 27017
-        }
-
-        queue = multiprocessing.Queue()
-
-        task = "foobar"
-        task_args = dict()
-        proc = 1
-        mem = 1
-
-        m = mocker.patch("setproctitle.setproctitle")
-
-        job = virtool.job.Job(job_id, settings, queue, task, task_args, proc, mem)
-
-        assert job._job_id == job_id
+        """
+        job = test_task_inst
 
         job.start()
 
-        print(queue.get())
-        print(queue.get())
+        while job.is_alive():
+            time.sleep(0.1)
+
+        assert [d for d in test_db.job_test.find({}, {"_id": False})] == [
+            {"message": "hello world"}
+        ]
+
+    def test_static_calls(self, test_task_inst):
+        """
+        Test that the process can correctly submit static calls to the job manager through the Queue.
+
+        """
+        job = test_task_inst
+
+        job.start()
+
+        while job.is_alive():
+            time.sleep(0.1)
+
+        static_calls = list()
+
+        while not job._queue.empty():
+            static_calls.append(job._queue.get())
+
+        assert static_calls == [
+            ("foobar", "add_status", ("foobar", 0, "running", None, None), {}),
+            ("foobar", "add_status", ("foobar", 0.33, "running", "say_message", None), {}),
+            ("foobar", "pass_message", ("hello world",), {}),
+            ('foobar', 'add_status', ('foobar', 0.67, 'running', 'do_db_op', None), {}),
+            ('foobar', 'add_status', ('foobar', 1, 'complete', 'do_db_op', None), {})
+        ]
+
+    def test_python_error(self, test_task_inst):
+        """
+        Test that the process can correctly report and internal Python error and terminate as a result of it.
+
+        """
+        job = test_task_inst
+
+        job.generate_python_error = True
+
+        job.start()
+
+        static_calls = list()
+
+        while job.is_alive():
+            while not job._queue.empty():
+                static_call = job._queue.get()
+
+                if static_call[2] == "error":
+                    job.terminate()
+
+                static_calls.append(static_call)
+
+        while not job._queue.empty():
+            static_calls.append(job._queue.get())
+
+        assert static_calls[:3] == [
+            ('foobar', 'add_status', ('foobar', 0, 'running', None, None), {}),
+            ('foobar', 'add_status', ('foobar', 0.33, 'running', 'say_message', None), {}),
+            ('foobar', 'pass_message', ('hello world',), {})
+        ]
+
+        assert static_calls[3][0] == "foobar"
+        assert static_calls[3][1] == "add_status"
+
+        args = static_calls[3][2]
+
+        assert args[:4] == ('foobar', 1, 'error', 'say_message')
+
+        assert args[4]["context"] == "Python Error"
+
+        error = args[4]["message"]
+
+        assert error["details"] == ["unsupported operand type(s) for +: 'int' and 'str'"]
+
+        assert error["type"] == "TypeError"
+
+    def test_process_error(self, test_task_inst):
+        """
+        Test that the process can correctly report an error in an external subprocess and terminate as a result of it.
+
+        """
+        job = test_task_inst
+
+        job.generate_process_error = True
+
+        job.start()
+
+        static_calls = list()
+
+        while job.is_alive():
+            while not job._queue.empty():
+                static_call = job._queue.get()
+
+                if static_call[2] == "error":
+                    job.terminate()
+
+                static_calls.append(static_call)
+
+        while not job._queue.empty():
+            static_calls.append(job._queue.get())
+
+        for l in static_calls:
+            print(l)
+
+        assert 0
 
 
 class TestTermination:

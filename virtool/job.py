@@ -124,6 +124,7 @@ class Job(multiprocessing.Process):
         signal.signal(signal.SIGTERM, handle_sigterm)
 
         was_cancelled = False
+        had_error = False
 
         try:
             # Tell the database that the job has started running
@@ -175,7 +176,11 @@ class Job(multiprocessing.Process):
             # by the user.
             was_cancelled = True
 
-            self._do_cleanup = True
+        except JobError:
+            had_error = True
+
+        if had_error or was_cancelled:
+            self.progress = 1
 
             # Terminate any owned subprocess and log the outcome.
             try:
@@ -183,27 +188,13 @@ class Job(multiprocessing.Process):
             except AttributeError:
                 pass
 
-        except JobError:
-
-            self.progress = 1
-            self.update_status(state="error", stage=self._stage, error=self._error)
-
-            try:
-                # Wait after the JobError exception while the server gets around to calling the terminate method.
-                while True:
-                    pass
-
-            except Termination:
-                # When it does, the Terminate exception will be raised and we will continue shutting down the job.
-                self._do_cleanup = True
-
-        # Clean-up intermediate files and database changes if the job is ending due to cancellation or and error.
-        if self._do_cleanup:
             self.cleanup()
 
         if was_cancelled:
-            self.progress = 1
             self.update_status(state="cancelled")
+
+        if had_error:
+            self.update_status(state="error", stage=self._stage, error=self._error)
 
     def run_process(self, cmd, stdout_handler=None, dont_read_stdout=False, no_output_failure=False, env=None):
         """

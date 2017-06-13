@@ -1,6 +1,12 @@
+import time
 import pytest
+import pprint
+import subprocess
 import collections
+import multiprocessing
 
+import virtool.job
+import virtool.job_test
 import virtool.job_manager
 
 
@@ -124,3 +130,30 @@ def test_job(static_time):
             }
         ]
     }
+
+
+@pytest.fixture
+def test_task_class(test_db):
+    return virtool.job_test.TestTask()
+
+
+@pytest.fixture
+def test_task_inst(test_task_class):
+    job_id = "foobar"
+
+    settings = {
+        "db_name": "test",
+        "db_host": "localhost",
+        "db_port": 27017
+    }
+
+    queue = multiprocessing.Queue()
+
+    task = "test_task"
+    task_args = dict(message="hello world")
+    proc = 1
+    mem = 1
+
+    job = test_task_class(job_id, settings, queue, task, task_args, proc, mem)
+
+    return job

@@ -91,3 +91,27 @@ async def remove(req):
     return json_response({
         "removed": job_id
     })
+
+
+async def test_job(req):
+    """
+    Submit a test job
+
+    """
+    db, data = await unpack_json_request(req)
+
+    job_manager = req.app["job_manager"]
+
+    task_args = {key: data.get(key, False) for key in ["generate_python_error", "generate_process_error", "long"]}
+
+    task_args["message"] = "hello world"
+
+    document = await job_manager.new(
+        "test_task",
+        task_args,
+        1,
+        4,
+        req.session.user_id or "test"
+    )
+
+    return json_response(document)
