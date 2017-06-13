@@ -1,5 +1,5 @@
 /**
- * Redux reducers for working with virus data.
+ * Redux reducers for working with job data.
  *
  * @copyright 2017 Government of Canada
  * @license MIT
@@ -9,10 +9,10 @@
 
 import { assign, concat, find, reject } from "lodash";
 import {
-    WS_UPDATE_SAMPLE,
-    WS_REMOVE_SAMPLE,
-    FIND_SAMPLES,
-    GET_SAMPLE
+    WS_UPDATE_JOB,
+    WS_REMOVE_JOB,
+    FIND_JOBS,
+    GET_JOB
 } from "../actionTypes";
 
 const initialState = {
@@ -24,7 +24,7 @@ export default function reducer (state = initialState, action) {
 
     switch (action.type) {
 
-        case WS_UPDATE_SAMPLE:
+        case WS_UPDATE_JOB:
             return assign({}, state, {
                 viruses: concat(
                     reject(state.viruses, {virus_id: action.virus_id}),
@@ -32,22 +32,22 @@ export default function reducer (state = initialState, action) {
                 )
             });
 
-        case WS_REMOVE_SAMPLE:
+        case WS_REMOVE_JOB:
             return assign({}, state, {
                 viruses: reject(state.viruses, {virus_id: action.virus_id})
             });
 
-        case FIND_SAMPLES.SUCCEEDED:
+        case FIND_JOBS.SUCCEEDED:
             return assign({}, state, {
                 list: action.data
             });
 
-        case GET_SAMPLE.REQUESTED:
+        case GET_JOB.REQUESTED:
             return assign({}, state, {
                 detail: null
             });
 
-        case GET_SAMPLE.SUCCEEDED:
+        case GET_JOB.SUCCEEDED:
             return assign({}, state, {
                 detail: action.data
             });
