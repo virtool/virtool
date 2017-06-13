@@ -13,6 +13,12 @@ const createRequestActionType = (root) => {
 export const SET_APP_PENDING = "SET_APP_PENDING";
 export const UNSET_APP_PENDING = "UNSET_APP_PENDING";
 
+// Jobs
+export const WS_UPDATE_JOB = "WS_UPDATE_JOB";
+export const WS_REMOVE_JOB = "WS_REMOVE_JOB";
+export const FIND_JOBS = createRequestActionType("FIND_JOBS");
+export const GET_JOB = createRequestActionType("GET_JOB");
+
 // Samples
 export const WS_UPDATE_SAMPLE = "WS_UPDATE_SAMPLE";
 export const WS_REMOVE_SAMPLE = "WS_REMOVE_SAMPLE";

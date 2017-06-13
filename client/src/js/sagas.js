@@ -8,6 +8,7 @@
  */
 
 import { fork } from "redux-saga/effects"
+import { watchJobs } from "./jobs/sagas";
 import { watchSamples } from "./samples/sagas"
 import { watchViruses } from "./viruses/sagas"
 import { watchAccount } from "./nav/sagas"
@@ -17,6 +18,7 @@ import { watchGroups } from "./settings/groups/sagas";
 
 export function* rootSaga () {
     yield [
+        fork(watchJobs),
         fork(watchSamples),
         fork(watchViruses),
         fork(watchAccount),
