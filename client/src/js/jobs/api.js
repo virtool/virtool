@@ -20,6 +20,8 @@ const jobsAPI = {
     },
 
     test: (options = {}) => {
+        console.log(options);
+
         return Request.post("/api/jobs/test")
             .send(options);
     }
