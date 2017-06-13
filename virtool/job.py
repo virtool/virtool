@@ -134,13 +134,14 @@ class Job(multiprocessing.Process):
                 for method in self._stage_list:
                     self.stage_counter += 1
 
-                    self.progress = round(self.stage_counter / (len(self._stage_list) + 2), 3)
+                    self.progress = round(self.stage_counter / (len(self._stage_list) + 1), 2)
 
                     # Get the function name and use it to tell the jobs collection that a new stage has been started.
                     self.update_status(stage=method.__name__)
 
                     # Run the command function
                     method()
+
             except:
                 # Handle exceptions in the Python code
                 exception = handle_exception()
