@@ -104,13 +104,15 @@ class Job(multiprocessing.Process):
         self._stage = None
         self._error = None
 
-        db_host = self._settings["db_host"]
-        db_port = self._settings["db_port"]
-        db_name = self._settings["db_name"]
+        self._db_host = self._settings["db_host"]
+        self._db_port = self._settings["db_port"]
+        self._db_name = self._settings["db_name"]
 
-        self.db = pymongo.MongoClient(host=db_host, port=db_port)[db_name]
+        self.db = None
 
     def run(self):
+
+        self.db = pymongo.MongoClient(host=self._db_host, port=self._db_port)[self._db_name]
 
         # Set the process title so that it is easily identifiable as a virtool job process.
         setproctitle.setproctitle("virtool-" + self._job_id)
