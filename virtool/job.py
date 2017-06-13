@@ -167,6 +167,7 @@ class Job(multiprocessing.Process):
 
             # Tell the database that the job has completed. This line is only reached if no error or cancellation
             # occurs.
+            self.progress = 1
             self.update_status(state="complete", stage=None)
 
         except Termination:
@@ -184,6 +185,7 @@ class Job(multiprocessing.Process):
 
         except JobError:
 
+            self.progress = 1
             self.update_status(state="error", stage=self._stage, error=self._error)
 
             try:
@@ -200,6 +202,7 @@ class Job(multiprocessing.Process):
             self.cleanup()
 
         if was_cancelled:
+            self.progress = 1
             self.update_status(state="cancelled")
 
     def run_process(self, cmd, stdout_handler=None, dont_read_stdout=False, no_output_failure=False, env=None):
