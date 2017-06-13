@@ -115,7 +115,7 @@ class Job(multiprocessing.Process):
         self.db = pymongo.MongoClient(host=self._db_host, port=self._db_port)[self._db_name]
 
         # Set the process title so that it is easily identifiable as a virtool job process.
-        setproctitle.setproctitle("virtool-" + self._job_id)
+        setproctitle.setproctitle("virtool-{}".format(self._job_id))
 
         # Ignore keyboard interrupts. The manager will deal with the signal and cancel jobs safely.
         signal.signal(signal.SIGINT, signal.SIG_IGN)
