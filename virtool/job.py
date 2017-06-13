@@ -266,20 +266,10 @@ class Job(multiprocessing.Process):
         self._stage = stage or self._stage
 
         # Instruct the manager to update the jobs database collection with the new status information.
-        self.collection_operation("jobs", "update_status", {
-            "_id": self._job_id,
-            "progress": self.progress,
-            "state": self._state,
-            "stage": self._stage,
-            "error": error
-        })
+        self.call_static("add_status", self._job_id, self.progress, self._state, self._stage, error)
 
-    def collection_operation(self, collection_name, operation, data=None):
-        self._queue.put({
-            "operation": operation,
-            "collection_name": collection_name,
-            "data": data
-        })
+    def call_static(self, method_name, *args, **kwargs):
+        self._queue.put((self._job_id, method_name, args, kwargs))
 
     def cleanup(self):
         pass
@@ -338,6 +328,7 @@ def write_log(path, log_list):
         with open(path, "w") as log_file:
             for line in log_list:
                 log_file.write(line + "\n")
+
     except IOError:
         os.makedirs(path)
         write_log(path, log_list)

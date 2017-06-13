@@ -96,12 +96,12 @@ class Manager:
 
                 message = self.queue.get()
 
-                callback = self.get_callback(message["cb_name"])
+                method = self.get_static_method(message["job_id"], message["func_name"])
 
-                if inspect.iscoroutinefunction(callback):
-                    await callback(*message["args"], **message["kwargs"])
+                if inspect.iscoroutinefunction(method):
+                    await method(*message["args"], **message["kwargs"])
                 else:
-                    callback(*message["args"], **message["kwargs"])
+                    method(*message["args"], **message["kwargs"])
 
             for job_id in list(self._jobs_dict.keys()):
                 # Get job data.
@@ -143,35 +143,8 @@ class Manager:
 
         self.alive = False
 
-    def register_callback(self, cb_name, func):
-        """
-        Register a callback function that can be called from the job process identified associated with ``job_id``. This
-        allows job processes to make database changes in the the main process.
-        
-        :param cb_name: the name to register the callback under
-        :type cb_name: str
-        
-        :param func: the callback function
-        :type func: func
-         
-        """
-        self._callbacks[cb_name] = func
-
-    def get_callback(self, cb_name):
-        """
-        Retrieve a registered callback function given the ``job_id`` and ``name`` it is registered under.
-        
-        :param cb_name: the callback name
-        :type cb_name: str
-         
-        :return: the matching callback function
-        :rtype: func
-        
-        """
-        try:
-            return self._callbacks[cb_name]
-        except KeyError:
-            raise KeyError("No callback with name '{}'".format(cb_name))
+    def get_static_method(self, job_id, func_name):
+        return getattr(self._jobs_dict[job_id]["obj"], func_name)
 
     async def resume(self):
         """
