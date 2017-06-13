@@ -111,7 +111,7 @@ async def test_job(req):
         task_args,
         1,
         4,
-        req.session.user_id or "test"
+        req["session"].user_id or "test"
     )
 
     return json_response(document)

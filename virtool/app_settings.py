@@ -29,6 +29,10 @@ SCHEMA = {
     "proc": get_default_integer(8),
     "mem": get_default_integer(16),
 
+    "test_task_proc": get_default_integer(1),
+    "test_task_mem": get_default_integer(1),
+    "test_task_inst": get_default_integer(5),
+
     "pathoscope_bowtie_proc": DEFAULT_ANALYSIS_PROC,
     "pathoscope_bowtie_mem": DEFAULT_ANALYSIS_MEM,
     "pathoscope_bowtie_inst": DEFAULT_ANALYSIS_INST,

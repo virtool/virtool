@@ -11,9 +11,9 @@ class TestTask(virtool.job.Job):
 
         self.message = self._task_args["message"]
 
-        self.generate_python_error = self._task_args("generate_python_error", False)
-        self.generate_process_error = self._task_args("generate_process_error", False)
-        self.long = self._task_args("long", False)
+        self.generate_python_error = self._task_args.get("generate_python_error", False)
+        self.generate_process_error = self._task_args.get("generate_process_error", False)
+        self.long = self._task_args.get("long", False)
 
         self._stage_list = [
             self.say_message,

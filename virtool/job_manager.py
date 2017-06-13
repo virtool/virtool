@@ -88,14 +88,17 @@ class Manager:
 
             while not self.queue.empty():
 
-                message = self.queue.get()
+                job_id, method_name, args, kwargs = self.queue.get()
 
-                method = self.get_static_method(message["job_id"], message["func_name"])
-
-                if inspect.iscoroutinefunction(method):
-                    await method(*message["args"], **message["kwargs"])
+                if method_name == "add_status":
+                    await self.add_status(*args, **kwargs)
                 else:
-                    method(*message["args"], **message["kwargs"])
+                    method = self.get_static_method(job_id, method_name)
+
+                    if inspect.iscoroutinefunction(method):
+                        await method(*args, **kwargs)
+                    else:
+                        method(*args, **kwargs)
 
             for job_id in list(self._jobs_dict.keys()):
                 # Get job data.
@@ -237,7 +240,7 @@ class Manager:
 
         document = await self.db.jobs.find_one(job_id, virtool.job.PROJECTION)
 
-        self.dispatch("jobs", "update", virtool.job.dispatch_processor(document))
+        await self.dispatch("jobs", "update", virtool.job.dispatch_processor(document))
 
         return virtool.job.processor(document)
 
@@ -272,7 +275,7 @@ class Manager:
 
             self._jobs_dict.pop(job_id)
 
-    async def update_status(self, job_id, progress, state, stage, error=None):
+    async def add_status(self, job_id, progress, state, stage, error=None):
         """
         Push a new entry to the ``status`` field for the document identified by the passed ``job_id``.
 
@@ -308,7 +311,7 @@ class Manager:
         if not document:
             raise virtool.errors.DatabaseError("Job does not exist: '{}'".format(job_id))
 
-        self.dispatch("jobs", "update", virtool.job.dispatch_processor(document))
+        await self.dispatch("jobs", "update", virtool.job.dispatch_processor(document))
 
     def release_resources(self, job_id):
         """
