@@ -3,6 +3,7 @@ from pymongo import ReturnDocument
 
 import virtool.utils
 import virtool.sample
+import virtool.analysis
 from virtool.handlers.utils import json_response, bad_request, not_found
 
 
@@ -199,6 +200,18 @@ async def set_rights(req):
         return json_response({field: document[field] for field in valid_fields})
 
     return json_response({"message": "Must be administrator or sample owner."}, status=403)
+
+
+async def find_analyses(req):
+    db = req.app["db"]
+
+    sample_id = req.match_info["sample_id"]
+
+    documents = await db.analyses.find({"sample_id": sample_id}, virtool.analysis.LIST_PROJECTION).to_list(None)
+
+    processed = [virtool.analysis.processor(doc) for doc in documents]
+
+    return json_response(processed, 200)
 
 
 async def analyze(req):
