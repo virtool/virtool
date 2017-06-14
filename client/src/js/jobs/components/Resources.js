@@ -26,7 +26,7 @@ import { getResources } from "../actions";
 class JobsResources extends React.Component {
 
     static propTypes = {
-        resources: PropTypes.arrayOf(PropTypes.number),
+        resources: PropTypes.object,
         onGet: PropTypes.func
     };
 
