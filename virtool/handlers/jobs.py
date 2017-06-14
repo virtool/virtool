@@ -70,13 +70,17 @@ async def remove(req):
 
     job_id = req.match_info["job_id"]
 
-    document = await db.find_one(job_id)
+    document = await db.jobs.find_one(job_id)
 
     if not document:
         return not_found()
 
+    '''
+
     if not document["status"][-1]["state"] in ["waiting", "running"]:
         return bad_request("Not cancellable")
+        
+    '''
 
     # Removed the documents associated with the job ids from the database.
     await db.jobs.delete_one({"_id": job_id})

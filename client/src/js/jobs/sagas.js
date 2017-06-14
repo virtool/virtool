@@ -7,14 +7,15 @@
  *
  */
 
-import { call, put, takeLatest } from "redux-saga/effects";
+import { call, put, takeEvery, takeLatest } from "redux-saga/effects";
 
 import jobsAPI from "./api";
-import { FIND_JOBS, GET_JOB, TEST_JOB, GET_RESOURCES }  from "../actionTypes";
+import { FIND_JOBS, GET_JOB, REMOVE_JOB, TEST_JOB, GET_RESOURCES }  from "../actionTypes";
 
 export function* watchJobs () {
     yield takeLatest(FIND_JOBS.REQUESTED, findJobs);
     yield takeLatest(GET_JOB.REQUESTED, getJob);
+    yield takeEvery(REMOVE_JOB.REQUESTED, removeJob);
     yield takeLatest(TEST_JOB.REQUESTED, testJob);
     yield takeLatest(GET_RESOURCES.REQUESTED, getResources);
 }
@@ -34,6 +35,15 @@ export function* getJob (action) {
         yield put({type: GET_JOB.SUCCEEDED, data: response.body});
     } catch (error) {
         yield put({type: GET_JOB.FAILED}, error);
+    }
+}
+
+export function* removeJob (action) {
+    try {
+        yield call(jobsAPI.remove, action.jobId);
+        yield put({type: REMOVE_JOB.SUCCEEDED, jobId: action.jobId});
+    } catch (error) {
+        yield put({type: REMOVE_JOB.FAILED}, error);
     }
 }
 

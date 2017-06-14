@@ -7,7 +7,7 @@
  *
  */
 
-import { WS_UPDATE_JOB, WS_REMOVE_JOB, FIND_JOBS, GET_JOB, TEST_JOB, GET_RESOURCES } from "../actionTypes";
+import { WS_UPDATE_JOB, WS_REMOVE_JOB, FIND_JOBS, GET_JOB, REMOVE_JOB, TEST_JOB, GET_RESOURCES } from "../actionTypes";
 
 export const wsUpdateJob = (data) => {
     return {
@@ -32,6 +32,13 @@ export const findJobs = () => {
 export const getJob = (jobId) => {
     return {
         type: GET_JOB.REQUESTED,
+        jobId
+    };
+};
+
+export const removeJob = (jobId) => {
+    return {
+        type: REMOVE_JOB.REQUESTED,
         jobId
     };
 };

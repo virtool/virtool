@@ -13,6 +13,7 @@ import {
     WS_REMOVE_JOB,
     FIND_JOBS,
     GET_JOB,
+    REMOVE_JOB,
     GET_RESOURCES
 } from "../actionTypes";
 
@@ -59,6 +60,11 @@ export default function reducer (state = initialState, action) {
         case GET_JOB.SUCCEEDED:
             return assign({}, state, {
                 detail: action.data
+            });
+
+        case REMOVE_JOB.SUCCEEDED:
+            return assign({}, state, {
+                list: reject(state.list, {job_id: action.jobId})
             });
 
         case GET_RESOURCES.SUCCEEDED:

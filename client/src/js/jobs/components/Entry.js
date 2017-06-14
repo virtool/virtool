@@ -18,29 +18,20 @@ import { getTaskDisplayName } from "virtool/js/utils";
 
 export default class JobEntry extends React.Component {
 
-    constructor (props) {
-        super(props);
-        this.state = {in: false};
-    }
-
     static propTypes = {
         job_id: React.PropTypes.string.isRequired,
         task: React.PropTypes.string.isRequired,
         state: React.PropTypes.string.isRequired,
         progress: React.PropTypes.number.isRequired,
         added: React.PropTypes.string.isRequired,
-        user_id: React.PropTypes.string.isRequired
+        user_id: React.PropTypes.string.isRequired,
+
+        remove: React.PropTypes.func
     };
 
     remove = (event) => {
-        console.log(event);
-
         event.stopPropagation();
-        console.log("REMOVE");
-    };
-
-    navigate = (event) => {
-        console.log("NAVIGATE");
+        this.props.remove(this.props.job_id);
     };
 
     render () {

@@ -19,6 +19,10 @@ const jobsAPI = {
         return Request.get(`/api/jobs/${jobId}`);
     },
 
+    remove: (jobId) => {
+        return Request.delete(`/api/jobs/${jobId}`);
+    },
+
     test: (options = {}) => {
         console.log(options);
 
