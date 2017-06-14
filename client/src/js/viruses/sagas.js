@@ -11,6 +11,7 @@ import { pick } from "lodash";
 import { call, put, select, takeEvery, takeLatest } from "redux-saga/effects";
 
 import virusesAPI from "./api";
+import { setPending } from "../wrappers";
 import {
     FIND_VIRUSES,
     GET_VIRUS,
@@ -22,12 +23,6 @@ import {
     SET_APP_PENDING,
     UNSET_APP_PENDING
 }  from "../actionTypes";
-
-function* setPending (generator, action) {
-    yield put({type: SET_APP_PENDING});
-    yield call(generator, action);
-    yield put({type: UNSET_APP_PENDING});
-}
 
 const getFindParams = state => {
     return pick(state.viruses, ["find", "sort", "descending", "modified"]);

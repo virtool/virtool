@@ -10,6 +10,7 @@
 import { call, put, takeEvery, takeLatest } from "redux-saga/effects";
 
 import jobsAPI from "./api";
+import { setPending } from "../wrappers";
 import { FIND_JOBS, GET_JOB, REMOVE_JOB, TEST_JOB, GET_RESOURCES }  from "../actionTypes";
 
 export function* watchJobs () {
@@ -20,7 +21,11 @@ export function* watchJobs () {
     yield takeLatest(GET_RESOURCES.REQUESTED, getResources);
 }
 
-export function* findJobs () {
+export function* findJobs (action) {
+    yield setPending(bgFindJobs, action);
+}
+
+export function* bgFindJobs (action) {
     try {
         const response = yield call(jobsAPI.find);
         yield put({type: FIND_JOBS.SUCCEEDED, data: response.body});
@@ -30,21 +35,25 @@ export function* findJobs () {
 }
 
 export function* getJob (action) {
-    try {
-        const response = yield call(jobsAPI.get, action.jobId);
-        yield put({type: GET_JOB.SUCCEEDED, data: response.body});
-    } catch (error) {
-        yield put({type: GET_JOB.FAILED}, error);
-    }
+    yield setPending(function* () {
+        try {
+            const response = yield call(jobsAPI.get, action.jobId);
+            yield put({type: GET_JOB.SUCCEEDED, data: response.body});
+        } catch (error) {
+            yield put({type: GET_JOB.FAILED}, error);
+        }
+    }, action);
 }
 
 export function* removeJob (action) {
-    try {
-        yield call(jobsAPI.remove, action.jobId);
-        yield put({type: REMOVE_JOB.SUCCEEDED, jobId: action.jobId});
-    } catch (error) {
-        yield put({type: REMOVE_JOB.FAILED}, error);
-    }
+    yield setPending(function* () {
+        try {
+            yield call(jobsAPI.remove, action.jobId);
+            yield put({type: REMOVE_JOB.SUCCEEDED, jobId: action.jobId});
+        } catch (error) {
+            yield put({type: REMOVE_JOB.FAILED}, error);
+        }
+    }, action);
 }
 
 export function* testJob (action) {
