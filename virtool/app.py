@@ -12,6 +12,7 @@ from motor import motor_asyncio
 import virtool.app_routes
 import virtool.app_dispatcher
 import virtool.job_manager
+import virtool.job_resources
 import virtool.user_sessions
 import virtool.error_pages
 import virtool.app_settings
@@ -31,6 +32,10 @@ def init_thread_pool_executor(app):
     executor = concurrent.futures.ThreadPoolExecutor(max_workers=5)
     app.loop.set_default_executor(executor)
     app["executor"] = executor
+
+
+def init_resources(app):
+    app.resources = virtool.job_resources.get()
 
 
 async def init_settings(app):
@@ -136,6 +141,7 @@ def create_app(loop, db_name=None):
     app.on_startup.append(init_settings)
     app.on_startup.append(init_dispatcher)
     app.on_startup.append(init_db)
+    app.on_startup.append(init_resources)
     app.on_startup.append(init_job_manager)
 
     app.on_shutdown.append(on_shutdown)
