@@ -28,15 +28,11 @@ export default function reducer (state = initialState, action) {
     switch (action.type) {
 
         case WS_UPDATE_JOB:
-            console.log("UPDATE_JOB", action.data);
-
             return assign({}, state, {
                 list: state.list.map(doc => {
                     if (doc.job_id !== action.data.job_id) {
                         return doc;
                     }
-
-                    console.log("ID MATCH");
 
                     return assign({}, doc, action.data);
                 })

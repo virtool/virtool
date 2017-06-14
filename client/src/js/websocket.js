@@ -13,7 +13,7 @@ export default function WSConnection (dispatch) {
 
         if (message.operation === "update") {
             if (message.interface === "jobs") {
-                dispatch(findJobs());
+                dispatch(wsUpdateJob(message.data));
             }
         }
 

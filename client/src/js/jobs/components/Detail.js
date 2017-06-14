@@ -8,11 +8,15 @@
  */
 
 import React, { PropTypes } from "react";
+import Moment from "moment";
+import { capitalize } from "lodash";
 import { connect } from "react-redux";
+import { Table } from "react-bootstrap";
 
 import { getJob } from "../actions";
 import { getTaskDisplayName } from "../../utils";
-import { Icon, Flex, FlexItem } from "virtool/js/components/Base";
+import { Flex, FlexItem, Icon, ProgressBar } from "virtool/js/components/Base";
+import TaskArgs from "./TaskArgs";
 
 
 class JobDetail extends React.Component {
@@ -35,7 +39,19 @@ class JobDetail extends React.Component {
 
         const detail = this.props.detail;
 
-        const state = detail.status[detail.status.length - 1].state;
+        const latest = detail.status[detail.status.length - 1];
+
+        let progressStyle = "primary";
+
+        if (latest.state === "running") {
+            progressStyle = "success";
+        }
+
+        if (latest.state === "error" || latest.state === "cancelled") {
+            progressStyle = "danger";
+        }
+
+        console.log(detail);
 
         return (
             <div>
@@ -46,9 +62,9 @@ class JobDetail extends React.Component {
                                 <strong>
                                     {getTaskDisplayName(detail.task)}
                                 </strong>
-                                <FlexItem grow={1} pad={5}>
-                                    <small className="text-uppercase text-strong">
-                                        {detail.job_id}
+                                <FlexItem grow={1} pad={7}>
+                                    <small className={`text-strong text-${progressStyle}`}>
+                                        {capitalize(latest.state)}
                                     </small>
                                 </FlexItem>
                             </Flex>
@@ -62,6 +78,40 @@ class JobDetail extends React.Component {
                         />
                     </Flex>
                 </h3>
+
+                <ProgressBar bsStyle={progressStyle} now={latest.progress * 100} />
+
+                <Table bordered>
+                    <tbody>
+                        <tr>
+                            <th>Cores</th>
+                            <td>{detail.proc}</td>
+                        </tr>
+                        <tr>
+                            <th>Memory</th>
+                            <td>{detail.mem} GB</td>
+                        </tr>
+                        <tr>
+                            <th>Started By</th>
+                            <td>{detail.user_id}</td>
+                        </tr>
+                        <tr>
+                            <th>Started At</th>
+                            <td>{Moment(detail.status[0].timestamp).format("YY/MM/DD")}</td>
+                        </tr>
+                        <tr>
+                            <th>Unique ID</th>
+                            <td className="text-uppercase">{detail.job_id}</td>
+                        </tr>
+                    </tbody>
+                </Table>
+
+                <h4>
+                    <strong>Task Arguments</strong>
+                </h4>
+
+                <TaskArgs taskType={detail.task} taskArgs={detail.args} />
+
             </div>
         );
     }
