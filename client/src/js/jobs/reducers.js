@@ -12,12 +12,14 @@ import {
     WS_UPDATE_JOB,
     WS_REMOVE_JOB,
     FIND_JOBS,
-    GET_JOB
+    GET_JOB,
+    GET_RESOURCES
 } from "../actionTypes";
 
 const initialState = {
     list: null,
-    detail: null
+    detail: null,
+    resources: null
 };
 
 export default function reducer (state = initialState, action) {
@@ -57,6 +59,11 @@ export default function reducer (state = initialState, action) {
         case GET_JOB.SUCCEEDED:
             return assign({}, state, {
                 detail: action.data
+            });
+
+        case GET_RESOURCES.SUCCEEDED:
+            return assign({}, state, {
+                resources: action.data
             });
 
         default:

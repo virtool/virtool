@@ -10,12 +10,13 @@
 import { call, put, takeLatest } from "redux-saga/effects";
 
 import jobsAPI from "./api";
-import { FIND_JOBS, GET_JOB, TEST_JOB }  from "../actionTypes";
+import { FIND_JOBS, GET_JOB, TEST_JOB, GET_RESOURCES }  from "../actionTypes";
 
 export function* watchJobs () {
     yield takeLatest(FIND_JOBS.REQUESTED, findJobs);
     yield takeLatest(GET_JOB.REQUESTED, getJob);
     yield takeLatest(TEST_JOB.REQUESTED, testJob);
+    yield takeLatest(GET_RESOURCES.REQUESTED, getResources);
 }
 
 export function* findJobs () {
@@ -42,5 +43,14 @@ export function* testJob (action) {
         yield put({type: TEST_JOB.SUCCEEDED, data: response.body});
     } catch (error) {
         yield put({type: TEST_JOB.FAILED}, error);
+    }
+}
+
+export function* getResources (action) {
+    try {
+        const response = yield call(jobsAPI.getResources, action);
+        yield put({type: GET_RESOURCES.SUCCEEDED, data: response.body});
+    } catch (error) {
+        yield put({type: GET_RESOURCES.FAILED}, error);
     }
 }

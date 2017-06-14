@@ -13,6 +13,7 @@ import { ListGroup } from "react-bootstrap";
 
 import { findJobs } from "../actions";
 import Job from "./Entry";
+import JobsToolbar from "./Toolbar";
 
 class JobsList extends React.Component {
 
@@ -36,9 +37,12 @@ class JobsList extends React.Component {
         );
 
         return (
-            <ListGroup>
-                {components}
-            </ListGroup>
+            <div>
+                <JobsToolbar />
+                <ListGroup>
+                    {components}
+                </ListGroup>
+            </div>
         );
     }
 }

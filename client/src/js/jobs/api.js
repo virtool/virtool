@@ -24,6 +24,10 @@ const jobsAPI = {
 
         return Request.post("/api/jobs/test")
             .send(options);
+    },
+
+    getResources: () => {
+        return Request.get(`/api/resources`);
     }
 
 };

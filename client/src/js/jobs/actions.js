@@ -7,7 +7,7 @@
  *
  */
 
-import { WS_UPDATE_JOB, WS_REMOVE_JOB, FIND_JOBS, GET_JOB, TEST_JOB } from "../actionTypes";
+import { WS_UPDATE_JOB, WS_REMOVE_JOB, FIND_JOBS, GET_JOB, TEST_JOB, GET_RESOURCES } from "../actionTypes";
 
 export const wsUpdateJob = (data) => {
     return {
@@ -40,5 +40,11 @@ export const test = () => {
     return {
         type: TEST_JOB.REQUESTED,
         long: true
+    };
+};
+
+export const getResources = () => {
+    return {
+        type: GET_RESOURCES.REQUESTED
     };
 };

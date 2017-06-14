@@ -13,12 +13,16 @@ import { Switch, Route } from "react-router-dom";
 
 import { findJobs } from "../actions";
 import JobsList from "./List";
+import JobDetail from "./Jobs";
+import JobsResources from "./Resources";
 
 const Jobs = () => {
     return (
         <div className="container">
             <Switch>
                 <Route path="/jobs" component={JobsList} exact />
+                <Route path="/jobs/resources" component={JobsResources} />
+                <Route path="/jobs/:jobId" component={JobDetail} />
             </Switch>
         </div>
     );
