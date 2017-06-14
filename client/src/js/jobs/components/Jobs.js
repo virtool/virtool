@@ -13,7 +13,7 @@ import { Switch, Route } from "react-router-dom";
 
 import { findJobs } from "../actions";
 import JobsList from "./List";
-import JobDetail from "./Jobs";
+import JobDetail from "./Detail";
 import JobsResources from "./Resources";
 
 const Jobs = () => {

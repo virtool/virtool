@@ -10,6 +10,7 @@
  */
 
 import React from "react";
+import { Link } from "react-redux";
 import { capitalize } from "lodash";
 import { Row, Col } from "react-bootstrap";
 import { Icon, RelativeTime, ListGroupItem, ProgressBar } from "virtool/js/components/Base";
@@ -31,16 +32,21 @@ export default class JobEntry extends React.Component {
         user_id: React.PropTypes.string.isRequired
     };
 
+    remove = (event) => {
+        console.log(event);
+
+        event.stopPropagation();
+        console.log("REMOVE");
+    };
+
+    navigate = (event) => {
+        console.log("NAVIGATE");
+    };
+
     render () {
 
         const canCancel = true;
         const canRemove = true;
-
-        let iconArea = (
-            <strong className="pull-right">
-                {capitalize(this.props.state)}
-            </strong>
-        );
 
         let icon;
 
@@ -50,6 +56,7 @@ export default class JobEntry extends React.Component {
                     bsStyle="danger"
                     name="cancel-circle"
                     onClick={this.cancel}
+                    pullRight
                 />
             );
         } else if (canRemove) {
@@ -58,42 +65,35 @@ export default class JobEntry extends React.Component {
                     bsStyle="danger"
                     name="remove"
                     onClick={this.remove}
+                    pullRight
                 />
-            );
-        }
-
-        if (icon) {
-            iconArea = (
-                <div>
-                    <div className="job-state-overlay">
-                        {iconArea}
-                    </div>
-                    <div className="job-icons pull-right">
-                        {icon}
-                    </div>
-                </div>
             );
         }
 
         let progressStyle;
         let progressValue = this.props.progress * 100;
 
-        if (this.props.state === "complete") {
-            progressValue = 100;
-        }
-
         if (this.props.state === "running") {
             progressStyle = "success";
         }
 
         if (this.props.state === "error" || this.props.state === "cancelled") {
-            progressValue = 100;
             progressStyle = "danger";
         }
 
         // Create the option components for the selected fields.
         return (
-            <ListGroupItem className="spaced job" onClick={this.showDetail}>
+            <div className="spaced job list-group-item" onClick={this.navigate}>
+
+                <div className="job-overlay">
+                    <Row>
+                        <Col md={3} mdOffset={9}>
+                            <strong className="pull-right">
+                                {capitalize(this.props.state)}
+                            </strong>
+                        </Col>
+                    </Row>
+                </div>
 
                 <ProgressBar now={progressValue} bsStyle={progressStyle} affixed />
 
@@ -105,10 +105,10 @@ export default class JobEntry extends React.Component {
                          Started <RelativeTime time={this.props.added} /> by {this.props.user_id}
                      </Col>
                     <Col md={3}>
-                        {iconArea}
+                        {icon}
                     </Col>
                 </Row>
-            </ListGroupItem>
+            </div>
         );
     }
 }
