@@ -10,7 +10,6 @@
  */
 
 import React from "react";
-import { Link } from "react-redux";
 import { capitalize } from "lodash";
 import { Row, Col } from "react-bootstrap";
 import { Icon, RelativeTime, ListGroupItem, ProgressBar } from "virtool/js/components/Base";
@@ -74,7 +73,7 @@ export default class JobEntry extends React.Component {
 
         // Create the option components for the selected fields.
         return (
-            <div className="spaced job list-group-item" onClick={this.navigate}>
+            <div className="spaced job list-group-item" onClick={this.props.navigate}>
 
                 <div className="job-overlay">
                     <Row>

@@ -18,6 +18,7 @@ import JobsToolbar from "./Toolbar";
 class JobsList extends React.Component {
 
     static propTypes = {
+        history: PropTypes.object,
         documents: PropTypes.arrayOf(PropTypes.object),
         onFind: PropTypes.func,
         onRemove: PropTypes.func
@@ -34,7 +35,12 @@ class JobsList extends React.Component {
         }
 
         const components = this.props.documents.map(doc =>
-            <Job key={doc.job_id} {...doc} remove={this.props.onRemove} />
+            <Job
+                key={doc.job_id}
+                {...doc}
+                remove={this.props.onRemove}
+                navigate={() => this.props.history.push(`/jobs/${doc.job_id}`)}
+            />
         );
 
         return (
