@@ -11,11 +11,13 @@ import { call, put, takeLatest } from "redux-saga/effects";
 
 import samplesAPI from "./api";
 import { setPending } from "../wrappers";
-import { FIND_SAMPLES, GET_SAMPLE }  from "../actionTypes";
+import { FIND_SAMPLES, GET_SAMPLE, FIND_ANALYSES, ANALYZE }  from "../actionTypes";
 
 export function* watchSamples () {
     yield takeLatest(FIND_SAMPLES.REQUESTED, findSamples);
     yield takeLatest(GET_SAMPLE.REQUESTED, getSample);
+    yield takeLatest(FIND_ANALYSES.REQUESTED, findAnalyses);
+    yield takeLatest(ANALYZE.REQUESTED, analyze);
 }
 
 export function* findSamples (action) {
@@ -24,7 +26,7 @@ export function* findSamples (action) {
             const response = yield call(samplesAPI.find, action.term);
             yield put({type: FIND_SAMPLES.SUCCEEDED, data: response.body});
         } catch (error) {
-            yield put({type: FIND_SAMPLES.FAILED}, error);
+            yield put({type: FIND_SAMPLES.FAILED, error});
         }
     }, action);
 }
@@ -34,6 +36,24 @@ export function* getSample (action) {
         const response = yield call(samplesAPI.get, action.sampleId);
         yield put({type: GET_SAMPLE.SUCCEEDED, data: response.body});
     } catch (error) {
-        yield put({type: GET_SAMPLE.FAILED}, error);
+        yield put({type: GET_SAMPLE.FAILED, error});
+    }
+}
+
+export function* findAnalyses (action) {
+    try {
+        const response = yield call(samplesAPI.findAnalyses, action.sampleId);
+        yield put({type: FIND_ANALYSES.SUCCEEDED, data: response.body});
+    } catch (error) {
+        yield put({type: FIND_ANALYSES.FAILED, error});
+    }
+}
+
+export function* analyze (action) {
+    try {
+        const response = yield call(samplesAPI.analyze, action.sampleId, action.algorithm);
+        yield put({type: ANALYZE.SUCCEEDED, data: response.body});
+    } catch (error) {
+        yield put({type: ANALYZE.FAILED, error});
     }
 }

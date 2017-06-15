@@ -12,12 +12,15 @@ import {
     WS_UPDATE_SAMPLE,
     WS_REMOVE_SAMPLE,
     FIND_SAMPLES,
-    GET_SAMPLE
+    GET_SAMPLE,
+    FIND_ANALYSES,
+    ANALYZE
 } from "../actionTypes";
 
 const initialState = {
     list: null,
-    detail: null
+    detail: null,
+    analyses: null
 };
 
 export default function reducer (state = initialState, action) {
@@ -50,6 +53,21 @@ export default function reducer (state = initialState, action) {
         case GET_SAMPLE.SUCCEEDED:
             return assign({}, state, {
                 detail: action.data
+            });
+
+        case FIND_ANALYSES.REQUESTED:
+            return assign({}, state, {
+                analyses: null
+            });
+
+        case FIND_ANALYSES.SUCCEEDED:
+            return assign({}, state, {
+                analyses: action.data
+            });
+
+        case ANALYZE.SUCCEEDED:
+            return assign({}, state, {
+                analyses: state.analyses.concat([action.data])
             });
 
         default:

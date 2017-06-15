@@ -24,6 +24,17 @@ const samplesAPI = {
 
     get: (sampleId) => {
         return Request.get(`/api/samples/${sampleId}`);
+    },
+
+    findAnalyses: (sampleId) => {
+        return Request.get(`/api/samples/${sampleId}/analyses`)
+    },
+
+    analyze: (sampleId, algorithm) => {
+        return Request.post(`/api/samples/${sampleId}/analyses`)
+            .send({
+                algorithm: algorithm
+            });
     }
 
 };
