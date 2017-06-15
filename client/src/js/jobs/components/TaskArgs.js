@@ -38,7 +38,11 @@ const TaskArgs = (props) => {
                         </tr>
                         <tr>
                             <th>Analysis ID</th>
-                            <td className="text-uppercase">{props.taskArgs.analysis_id}</td>
+                            <td className="text-uppercase">
+                                <Link to={`/samples/${props.taskArgs.sample_id}/analyses`} className="text-uppercase">
+                                    {props.taskArgs.analysis_id}
+                                </Link>
+                            </td>
                         </tr>
                     </tbody>
                 </Table>

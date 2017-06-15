@@ -1,72 +1,62 @@
 "use strict";
 
-import React from "react";
-import { omit, find } from "lodash";
-import { Panel } from "react-bootstrap";
+import React, { PropTypes } from "react";
+import { connect } from "react-redux";
+import { Switch, Route } from "react-router-dom";
 
-import AnalysisList from "./List";
-import AnalysisReport from "./Report";
+import { findAnalyses } from "../../actions";
+import AnalysesList from "./List";
+import AnalysisDetail from "./Detail";
 
-/**
- * The panel that is shown when the analysis tab is selected in the sample detail modal. Allows detailed viewing of
- * all analyses associated with a sample and for starting new analyses.
- *
- * @class
- */
-export default class AnalysisPanel extends React.PureComponent {
-
-    constructor (props) {
-        super(props);
-        this.state = {
-            activeAnalysisId: null
-        };
-    }
+class Analyses extends React.Component {
 
     static propTypes = {
-        _id: React.PropTypes.string,
-        analyses: React.PropTypes.array,
-        canModify: React.PropTypes.bool,
-        setProgress: React.PropTypes.func,
-        quality: React.PropTypes.object
+        match: PropTypes.object,
+        analyses: PropTypes.arrayOf(PropTypes.object),
+        findAnalyses: PropTypes.func
     };
 
-    selectAnalysis = (analysisId) => {
-        this.setState({activeAnalysisId: analysisId});
-    };
-
-    showListing = () => this.setState({activeAnalysisId: null});
+    componentDidMount () {
+        this.props.findAnalyses(this.props.match.params.sampleId);
+    }
 
     render () {
 
-        let content;
-
-        if (!this.state.activeAnalysisId) {
-            // Show the analysis listing if no activeAnalysisId is defined.
-            content = (
-                <AnalysisList
-                    {...omit(this.props, "_id")}
-                    sampleId={this.props._id}
-                    selectAnalysis={this.selectAnalysis}
-                />
-            );
-        } else {
-            // Get the analysis document that corresponds to the activeAnalysisId.
-            const analysisEntry = find(this.props.analyses, {_id: this.state.activeAnalysisId});
-
-            content = (
-                <AnalysisReport
-                    {...analysisEntry}
-                    readCount={this.props.quality.count}
-                    maxReadLength={this.props.quality.length[1]}
-                    onBack={this.showListing}
-                />
-            );
+        if (this.props.analyses === null) {
+            return <div />;
         }
 
         return (
-            <Panel className="tab-panel">
-                {content}
-            </Panel>
+            <Switch>
+                <Route path="/samples/:sampleId/analyses" component={AnalysesList} exact/>
+                <Route path="/samples/:sampleId/analyses/:analysisId" component={AnalysisDetail}/>
+            </Switch>
         );
     }
 }
+
+AnalysesList.propTypes = {
+    account: React.PropTypes.object,
+    detail: React.PropTypes.object,
+    analyses: React.PropTypes.arrayOf(React.PropTypes.object)
+};
+
+const mapStateToProps = (state) => {
+    return {
+        detail: state.samples.detail,
+        analyses: state.samples.analyses
+    };
+};
+
+const mapDispatchToProps = (dispatch) => {
+    return {
+        findAnalyses: (sampleId) => {
+            dispatch(findAnalyses(sampleId));
+        }
+    };
+};
+
+const Container = connect(mapStateToProps, mapDispatchToProps)(Analyses);
+
+export default Container;
+

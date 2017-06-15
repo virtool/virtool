@@ -223,7 +223,7 @@ class Pathoscope(Base):
 
             minimal_virus = self.db.viruses.find_one(
                 {"isolates.isolate_id": sequence_entry["isolate_id"]},
-                {"_id": True, "_version": True}
+                {"_id": True, "version": True}
             )
 
             cleaned[genome_id] = {key: final[key] for key in ["pi", "best", "reads"]}
@@ -265,7 +265,7 @@ class Pathoscope(Base):
                     except KeyError:
                         pass
 
-        self.call_static("set_analysis", self.analysis_id, self.results)
+        self.call_static("set_analysis", self.sample_id, self.analysis_id, self.results)
         self.call_static("cleanup_index_files")
 
     @stage_method
@@ -300,7 +300,7 @@ class Pathoscope(Base):
 
         await db.analyses.update({"_id": analysis_id}, {"$set": document})
 
-        await db.samples.update(sample_id, {
+        await db.samples.update({"_id": sample_id}, {
             "$set": {"analyzed": True}
         })
 

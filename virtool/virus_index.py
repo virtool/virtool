@@ -60,7 +60,7 @@ async def cleanup_index_files(db, settings):
     analyses.
 
     """
-    aggregation_cursor = await db.analyses.aggregate([
+    aggregation_cursor = db.analyses.aggregate([
         {"$match": {"ready": False}},
         {"$group": {"_id": "$index_id"}}
     ])

@@ -10,96 +10,35 @@
  */
 
 import React from "react";
-import FlipMove from "react-flip-move"
 import { sortBy } from "lodash";
-import { Alert } from "react-bootstrap";
-import { ListGroupItem, Icon, getFlipMoveProps } from "virtool/js/components/Base";
+import { connect } from "react-redux";
+import { LinkContainer } from "react-router-bootstrap";
+import { Row, Col, Label, ListGroup, FormGroup, InputGroup, FormControl } from "react-bootstrap";
 
-import AnalysisAdder from "./Adder";
-import AnalysisItem from "./Item";
+import { getTaskDisplayName } from "../../../utils";
+import { analyze } from "../../actions";
+import { Icon, Button, ListGroupItem, RelativeTime } from "virtool/js/components/Base";
+import CreateAnalysis from "./Create";
 
-const getInitialState = () => ({
-    name: "",
-    algorithm: "pathoscope_bowtie",
-    // True when an analysis request has been sent to the server, but the transaction has not returned.
-    pending: false
-});
-
-/**
- * A component that lists the analyses associated with a sample and contains a form to add new analyses.
- *
- * @class
- */
-export default class AnalysisList extends React.Component {
+class AnalysesList extends React.Component {
 
     constructor (props) {
         super(props);
-        this.state = getInitialState();
+
+        this.state = {
+            show: false
+        };
     }
-
-    static propTypes = {
-        sampleId: React.PropTypes.string.isRequired,
-        analyses: React.PropTypes.arrayOf(React.PropTypes.object),
-        canModify: React.PropTypes.bool,
-        setProgress: React.PropTypes.func,
-        selectAnalysis: React.PropTypes.func
-    };
-
-    handleChange = (event) => {
-        let data = {};
-        data[event.target.name] = event.target.value;
-        this.setState(data);
-    };
-
-    /**
-     * Handle submission of the new analysis form. Sends a request to the server.
-     *
-     * @param event {object} - the form submit event.
-     * @func
-     */
-    handleSubmit = (event) => {
-        event.preventDefault();
-
-        this.props.setProgress(true);
-
-        this.setState({pending: true}, () => {
-            dispatcher.db.samples.request("analyze", {
-                samples: [this.props.sampleId],
-                discovery: false,
-                algorithm: this.state.algorithm,
-                name: this.state.name || null
-            })
-                .success(() => this.onComplete())
-                .failure(() => this.onComplete());
-        });
-    };
-
-    onComplete = () => {
-        this.props.setProgress(false);
-        this.setState(getInitialState());
-    };
 
     render () {
 
-        let adder;
+        let count = 0;
 
-        if (this.props.canModify) {
-            if (dispatcher.db.indexes.count({ready: true}) === 0) {
-                adder = (
-                    <Alert bsStyle="warning">
-                        <Icon name="info"/> A virus index must be built before analyses can be run.
-                    </Alert>
-                );
-
-            } else {
-                adder = (
-                    <AnalysisAdder
-                        sampleId={this.props.sampleId}
-                        setProgress={this.props.setProgress}
-                    />
-                );
-            }
+        if (this.props.analyses === null) {
+            return <div />;
         }
+
+        const canModify = this.props.account.permissions.modify_sample;
 
         // The content that will be shown below the "New Analysis" form.
         let listContent;
@@ -110,16 +49,42 @@ export default class AnalysisList extends React.Component {
             // Sort by timestamp so the newest analyses are at the top.
             const sorted = sortBy(this.props.analyses, "timestamp").reverse();
 
+            count = sorted.length;
+
             // The components that detail individual analyses.
-            listContent = sorted.map((document) =>
-                <AnalysisItem
-                    key={document._id}
-                    {...document}
-                    canModify={this.props.canModify}
-                    setProgress={this.props.setProgress}
-                    selectAnalysis={this.props.selectAnalysis}
-                />
-            );
+            listContent = sorted.map(document => {
+
+                let end;
+
+                if (document.ready) {
+                    end = <Icon name="remove" bsStyle="danger" pullRight />;
+                } else {
+                    end = (
+                        <strong className="pull-right">
+                            Running
+                        </strong>
+                    )
+                }
+
+                return (
+                    <div className="list-group-item spaced" key={document.analysis_id}>
+                        <Row>
+                            <Col md={3}>
+                                {getTaskDisplayName(document.algorithm)}
+                            </Col>
+                            <Col md={4}>
+                                Started <RelativeTime time={document.timestamp}/> by {document.user_id}
+                            </Col>
+                            <Col md={1}>
+                                <Label>{document.index_version}</Label>
+                            </Col>
+                            <Col md={4}>
+                                {end}
+                            </Col>
+                        </Row>
+                    </div>
+                );
+            });
         }
 
         // If no analyses are associated with the sample, show a panel saying so.
@@ -133,11 +98,60 @@ export default class AnalysisList extends React.Component {
 
         return (
             <div>
-                {adder}
-                <FlipMove {...getFlipMoveProps({typeName: "ul"})}>
+                <div className="toolbar">
+                    <FormGroup>
+                        <InputGroup>
+                            <InputGroup.Addon>
+                                <Icon name="search" />
+                            </InputGroup.Addon>
+                            <FormControl type="text" />
+                        </InputGroup>
+                    </FormGroup>
+                    <Button
+                        icon="new-entry"
+                        tip="New Analysis"
+                        bsStyle="primary"
+                        onClick={() => this.setState({show: true})}
+                    />
+                </div>
+
+                <ListGroup>
                     {listContent}
-                </FlipMove>
+                </ListGroup>
+
+                <CreateAnalysis
+                    sampleId={this.props.detail.sample_id}
+                    show={this.state.show}
+                    onHide={() => this.setState({show: false})}
+                    onSubmit={this.props.onAnalyze}
+                />
             </div>
         );
     }
 }
+
+AnalysesList.propTypes = {
+    account: React.PropTypes.object,
+    detail: React.PropTypes.object,
+    analyses: React.PropTypes.arrayOf(React.PropTypes.object)
+};
+
+const mapStateToProps = (state) => {
+    return {
+        account: state.account,
+        detail: state.samples.detail,
+        analyses: state.samples.analyses
+    };
+};
+
+const mapDispatchToProps = (dispatch) => {
+    return {
+        onAnalyze: (sampleId, algorithm) => {
+            dispatch(analyze(sampleId, algorithm));
+        }
+    };
+};
+
+const Container = connect(mapStateToProps, mapDispatchToProps)(AnalysesList);
+
+export default Container;
