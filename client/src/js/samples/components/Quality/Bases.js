@@ -121,12 +121,6 @@ const CreateBasesChart = (element, data, width) => {
         .shapePadding(10)
         .scale(legendScale);
 
-    // Append the legend to the chart.
-    svg.append("g")
-        .attr("class", "legendOrdinal")
-        .attr("transform", `translate(${width - 60}, 5)`)
-        .call(legend);
-
     // Append the median line to the chart. Color is blue.
     svg.append("path")
         .attr("d", lineDrawer(data, "median"))
@@ -160,6 +154,12 @@ const CreateBasesChart = (element, data, width) => {
         .attr("y", 6)
         .style("text-anchor", "end")
         .attr("transform", "rotate(-90)");
+
+    // Append the legend to the chart.
+    svg.append("g")
+        .attr("class", "legendOrdinal")
+        .attr("transform", `translate(${width - 60}, 5)`)
+        .call(legend);
 };
 
 export default CreateBasesChart;
