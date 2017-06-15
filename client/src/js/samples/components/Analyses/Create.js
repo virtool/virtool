@@ -16,13 +16,14 @@ export default class CreateAnalysis extends React.Component {
     static propTypes = {
         show: PropTypes.bool,
         sampleId: PropTypes.string,
-        onSubmit: PropTypes.func
+        onSubmit: PropTypes.func,
+        onHide: PropTypes.func
     };
 
     handleSubmit = (event) => {
         event.preventDefault();
         this.props.onSubmit(this.props.sampleId, this.state.algorithm);
-        this.onHide();
+        this.props.onHide();
     };
 
     render = () => (
