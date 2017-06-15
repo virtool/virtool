@@ -22,7 +22,7 @@ def processor(document):
     return format_doc_id("analysis", document)
 
 
-async def new(db, settings, sample_id, name, user_id, algorithm):
+async def new(db, settings, manager, sample_id, user_id, algorithm):
     """
     Creates a new analysis. Ensures that a valid subtraction host was the submitted. Configures read and write
     permissions on the sample document and assigns it a creator username based on the requesting connection.
@@ -33,11 +33,12 @@ async def new(db, settings, sample_id, name, user_id, algorithm):
 
     data = {
         "sample_id": sample_id,
-        "name": name,
         "user_id": user_id,
         "algorithm": algorithm,
         "index_id": index_id
     }
+
+    sample = await db.samples.find_one(sample_id, ["name"])
 
     analysis_id = await get_new_id(db.analyses)
 
@@ -53,15 +54,13 @@ async def new(db, settings, sample_id, name, user_id, algorithm):
         "timestamp": timestamp()
     })
 
-    task_args = dict(data)
-
-    task_args["analysis_id"] = analysis_id
+    task_args = dict(data, analysis_id=analysis_id, sample_name=sample["name"])
 
     await db.analyses.insert(document)
 
     # Clone the arguments passed from the client and amend the resulting dictionary with the analysis entry
     # _id. This dictionary will be passed the the new analysis job.
-    await db.jobs.new(
+    await manager.new(
         data["algorithm"],
         task_args,
         settings.get(data["algorithm"] + "_proc"),
@@ -72,6 +71,8 @@ async def new(db, settings, sample_id, name, user_id, algorithm):
 
     await recalculate_algorithm_tags(db, sample_id)
 
+    return processor(document)
+
 
 async def remove_by_id(db, settings, analysis_id):
     """
@@ -79,20 +80,22 @@ async def remove_by_id(db, settings, analysis_id):
 
     """
     # Get the sample id for the analysis
-    sample_id = await db.analyses.find_one({"_id": analysis_id}, ["sample_id"])["sample_id"]
+    sample = await db.analyses.find_one({"_id": analysis_id}, ["sample_id"])
+
+    sample_id = sample["sample_id"]
 
     # Remove analysis entry from database
     await db.analyses.remove({"_id": analysis_id})
 
     # Remove the analysis directory
-    path = os.path.join(settings.get("data_path"), "samples/sample_{}".format(sample_id), "analysis", analysis_id)
+    path = os.path.join(settings.get("data_path"), "samples", "sample_{}".format(sample_id), "analysis", analysis_id)
 
     try:
-        await rm(path, recursive=True)
+        rm(path, recursive=True)
     except FileNotFoundError:
         pass
 
-    await db.samples.recalculate_algorithm_tags(sample_id)
+    await recalculate_algorithm_tags(db, sample_id)
 
 
 def initialize_blast(sequence):
