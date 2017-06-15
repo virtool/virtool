@@ -12,12 +12,11 @@
 import React from "react";
 import { sortBy } from "lodash";
 import { connect } from "react-redux";
-import { LinkContainer } from "react-router-bootstrap";
 import { Row, Col, Label, ListGroup, FormGroup, InputGroup, FormControl } from "react-bootstrap";
 
-import { getTaskDisplayName } from "../../../utils";
 import { analyze } from "../../actions";
 import { Icon, Button, ListGroupItem, RelativeTime } from "virtool/js/components/Base";
+import AnalysisItem from "./Item";
 import CreateAnalysis from "./Create";
 
 class AnalysesList extends React.Component {
@@ -31,8 +30,6 @@ class AnalysesList extends React.Component {
     }
 
     render () {
-
-        let count = 0;
 
         if (this.props.analyses === null) {
             return <div />;
@@ -49,42 +46,15 @@ class AnalysesList extends React.Component {
             // Sort by timestamp so the newest analyses are at the top.
             const sorted = sortBy(this.props.analyses, "timestamp").reverse();
 
-            count = sorted.length;
-
             // The components that detail individual analyses.
-            listContent = sorted.map(document => {
-
-                let end;
-
-                if (document.ready) {
-                    end = <Icon name="remove" bsStyle="danger" pullRight />;
-                } else {
-                    end = (
-                        <strong className="pull-right">
-                            Running
-                        </strong>
-                    )
-                }
-
-                return (
-                    <div className="list-group-item spaced" key={document.analysis_id}>
-                        <Row>
-                            <Col md={3}>
-                                {getTaskDisplayName(document.algorithm)}
-                            </Col>
-                            <Col md={4}>
-                                Started <RelativeTime time={document.timestamp}/> by {document.user_id}
-                            </Col>
-                            <Col md={1}>
-                                <Label>{document.index_version}</Label>
-                            </Col>
-                            <Col md={4}>
-                                {end}
-                            </Col>
-                        </Row>
-                    </div>
-                );
-            });
+            listContent = sorted.map(document =>
+                <AnalysisItem
+                    key={document.analysis_id}
+                    onClick={() => this.props.history.push(`/samples/${this.props.detail.sample_id}/analyses/${document.analysis_id}`)}
+                    canModify={canModify}
+                    {...document}
+                />
+            );
         }
 
         // If no analyses are associated with the sample, show a panel saying so.
@@ -133,7 +103,8 @@ class AnalysesList extends React.Component {
 AnalysesList.propTypes = {
     account: React.PropTypes.object,
     detail: React.PropTypes.object,
-    analyses: React.PropTypes.arrayOf(React.PropTypes.object)
+    analyses: React.PropTypes.arrayOf(React.PropTypes.object),
+    onAnalyze: React.PropTypes.func
 };
 
 const mapStateToProps = (state) => {
