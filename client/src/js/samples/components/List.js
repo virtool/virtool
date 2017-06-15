@@ -2,15 +2,13 @@ import { connect } from "react-redux";
 
 import React from "react";
 import { ListGroup } from "react-bootstrap";
-import { Route } from "react-router-dom";
 
 import { findSamples } from "../actions";
 import { Icon, ListGroupItem } from "virtool/js/components/Base";
 import SampleEntry from "./Entry";
 import SampleToolbar from "./Toolbar";
-import SampleDetail from "./Detail";
 
-class ManageSamples extends React.Component {
+class SamplesList extends React.Component {
 
     constructor (props) {
         super(props);
@@ -35,7 +33,7 @@ class ManageSamples extends React.Component {
         let sampleComponents;
 
         if (this.props.samples && this.props.samples.length) {
-            sampleComponents = this.props.samples.map((document) =>
+            sampleComponents = this.props.samples.map(document =>
                 <SampleEntry
                     key={document.sample_id}
                     sampleId={document.sample_id}
@@ -52,14 +50,12 @@ class ManageSamples extends React.Component {
         }
 
         return (
-            <div className="container">
+            <div>
                 <SampleToolbar />
 
                 <ListGroup>
                     {sampleComponents}
                 </ListGroup>
-
-                <Route path="/samples/detail/:sampleId" component={SampleDetail} />
             </div>
         );
     }
@@ -79,6 +75,6 @@ const mapDispatchToProps = (dispatch) => {
     };
 };
 
-const Container = connect(mapStateToProps, mapDispatchToProps)(ManageSamples);
+const Container = connect(mapStateToProps, mapDispatchToProps)(SamplesList);
 
 export default Container;

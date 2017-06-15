@@ -92,7 +92,7 @@ export default class SampleEntry extends React.Component {
         }
 
         return (
-            <LinkContainer className="spaced" to={`/samples/detail/${this.props.sampleId}`}>
+            <LinkContainer className="spaced" to={`/samples/${this.props.sampleId}`}>
                 <ListGroupItem  onClick={this.props.selecting ? this.toggleSelect: this.showDetail}>
                     <Row>
                         <Col md={4}>

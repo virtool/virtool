@@ -3,7 +3,6 @@ import Moment from "moment";
 import Numeral from "numeral";
 import { connect } from "react-redux";
 import { capitalize } from "lodash";
-import { Panel } from "react-bootstrap";
 
 import { Icon, InputCell } from "virtool/js/components/Base";
 
@@ -47,12 +46,12 @@ const SampleDetailGeneral = (props) => {
     }
 
     return (
-        <Panel className="tab-panel">
-            <h5>
+        <div>
+            <h4>
                 <span>
-                    <Icon name="tag" /> <strong>General</strong>
+                    <Icon name="tag" /> <strong>Annotation</strong>
                 </span>
-            </h5>
+            </h4>
             <table className="table table-bordered">
               <tbody>
                 {cells}
@@ -68,7 +67,9 @@ const SampleDetailGeneral = (props) => {
               </tbody>
             </table>
 
-            <h5><Icon name="table" /> <strong>Library Properties</strong></h5>
+            <h4>
+                <Icon name="table" /> <strong>Library Properties</strong>
+            </h4>
             <table className="table table-condensed table-bordered">
               <tbody>
                 <tr>
@@ -90,7 +91,9 @@ const SampleDetailGeneral = (props) => {
               </tbody>
             </table>
 
-            <h5><Icon name="file" /> <strong>Files</strong></h5>
+            <h4>
+                <Icon name="file" /> <strong>Files</strong>
+            </h4>
             <table className="table table-condensed table-bordered">
               <tbody>
                 <tr>
@@ -103,7 +106,7 @@ const SampleDetailGeneral = (props) => {
                 </tr>
               </tbody>
             </table>
-        </Panel>
+        </div>
     );
 };
 

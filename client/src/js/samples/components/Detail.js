@@ -11,12 +11,13 @@ import React from "react";
 import { Switch, Route, Redirect } from "react-router-dom";
 import { connect } from "react-redux";
 import { LinkContainer } from "react-router-bootstrap";
-import { Nav, NavItem, Modal } from "react-bootstrap";
+import { Nav, NavItem } from "react-bootstrap";
 
 import { getSample } from "../actions";
-import { Spinner } from "virtool/js/components/Base";
+import { Flex, FlexItem, Icon } from "virtool/js/components/Base";
 import General from "./General";
 import Quality from "./Quality/Quality";
+import Analyses from "./Analyses/Analyses";
 
 class SampleDetail extends React.Component {
 
@@ -27,64 +28,64 @@ class SampleDetail extends React.Component {
         getSample: React.PropTypes.func
     };
 
-    modalEnter = () => {
+    componentDidMount () {
         this.props.getSample(this.props.match.params.sampleId);
-    };
-
-    hide = () => {
-        this.props.history.push("/samples");
-    };
+    }
 
     render () {
 
-        const sampleId = this.props.match.params.sampleId;
-
-        let header;
-        let content;
-
         if (this.props.detail === null) {
-            content = (
-                <div className="text-center">
-                    <Spinner />
-                </div>
-            );
-        } else {
-            header = (
-                <Modal.Header onHide={this.hide}>
-                    {this.props.detail.name}
-                </Modal.Header>
-            );
-
-            content = (
-                <div>
-                    <Nav bsStyle="tabs">
-                        <LinkContainer to={`/samples/detail/${sampleId}/general`}>
-                            <NavItem>General</NavItem>
-                        </LinkContainer>
-                        <LinkContainer to={`/samples/detail/${sampleId}/quality`}>
-                            <NavItem>Quality</NavItem>
-                        </LinkContainer>
-                        <LinkContainer to={`/samples/detail/${sampleId}/analyses`}>
-                            <NavItem>Analyses</NavItem>
-                        </LinkContainer>
-                    </Nav>
-
-                    <Switch>
-                        <Redirect from="/samples/detail/:sampleId" to={`/samples/detail/${sampleId}/general`} exact />
-                        <Route path="/samples/detail/:sampleId/general" component={General} />
-                        <Route path="/samples/detail/:sampleId/quality" component={Quality} />
-                    </Switch>
-                </div>
-            );
+            return <div />;
         }
 
+        const detail = this.props.detail;
+        const sampleId = detail.sample_id;
+
         return (
-            <Modal bsSize="lg" show={true} onHide={this.hide} onEnter={this.modalEnter}>
-                {header}
-                <Modal.Body>
-                    {content}
-                </Modal.Body>
-            </Modal>
+            <div>
+                <h3 style={{marginBottom: "20px"}}>
+                    <Flex alignItems="flex-end">
+                        <FlexItem grow={1}>
+                            <strong>
+                                {detail.name}
+                            </strong>
+                        </FlexItem>
+
+                        <Icon
+                            bsStyle="danger"
+                            name="remove"
+                            tip="Remove Sample"
+                            style={{fontSize: "18px"}}
+                            onClick={() => console.log(detail.name)}
+                        />
+                    </Flex>
+                </h3>
+
+                <Flex>
+                    <FlexItem>
+                        <Nav bsStyle="pills" stacked>
+                            <LinkContainer to={`/samples/${sampleId}/general`}>
+                                <NavItem>General</NavItem>
+                            </LinkContainer>
+                            <LinkContainer to={`/samples/${sampleId}/quality`}>
+                                <NavItem>Quality</NavItem>
+                            </LinkContainer>
+                            <LinkContainer to={`/samples/${sampleId}/analyses`}>
+                                <NavItem>Analyses</NavItem>
+                            </LinkContainer>
+                        </Nav>
+                    </FlexItem>
+
+                    <FlexItem grow={1} pad={16}>
+                        <Switch>
+                            <Redirect from="/samples/:sampleId" to={`/samples/${sampleId}/general`} exact/>
+                            <Route path="/samples/:sampleId/general" component={General}/>
+                            <Route path="/samples/:sampleId/quality" component={Quality}/>
+                            <Route path="/samples/:sampleId/analyses" component={Analyses}/>
+                        </Switch>
+                    </FlexItem>
+                </Flex>
+            </div>
         );
     }
 }
