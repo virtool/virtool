@@ -8,26 +8,41 @@
  */
 
 import React, { PropTypes } from "react";
+import { Link } from "react-router-dom";
 import { mapValues, values } from "lodash";
 import { Table, Panel } from "react-bootstrap";
-
-const TestTask = (props) => (
-    <Panel>
-        Test
-        {JSON.stringify(props.taskArgs)}
-    </Panel>
-);
-
-TestTask.propTypes = {
-    args: PropTypes.object
-};
 
 const TaskArgs = (props) => {
 
     switch (props.taskType) {
 
-        case "rebuild":
-            return <TestTask {...props} />;
+        case "pathoscope_bowtie":
+            return (
+                <Table bordered>
+                    <tbody>
+                        <tr>
+                            <th>Sample Name</th>
+                            <td>
+                                <Link to={`/samples/${props.taskArgs.sample_id}`}>
+                                    {props.taskArgs.sample_name}
+                                </Link>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>Sample ID</th>
+                            <td>
+                                <Link to={`/samples/${props.taskArgs.sample_id}`} className="text-uppercase">
+                                    {props.taskArgs.sample_id}
+                                </Link>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>Analysis ID</th>
+                            <td className="text-uppercase">{props.taskArgs.analysis_id}</td>
+                        </tr>
+                    </tbody>
+                </Table>
+            );
 
 
 
