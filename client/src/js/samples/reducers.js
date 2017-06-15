@@ -14,13 +14,15 @@ import {
     FIND_SAMPLES,
     GET_SAMPLE,
     FIND_ANALYSES,
+    GET_ANALYSIS,
     ANALYZE
 } from "../actionTypes";
 
 const initialState = {
     list: null,
     detail: null,
-    analyses: null
+    analyses: null,
+    analysisDetail: null
 };
 
 export default function reducer (state = initialState, action) {
@@ -63,6 +65,16 @@ export default function reducer (state = initialState, action) {
         case FIND_ANALYSES.SUCCEEDED:
             return assign({}, state, {
                 analyses: action.data
+            });
+
+        case GET_ANALYSIS.REQUESTED:
+            return assign({}, state, {
+                analysisDetail: null
+            });
+
+        case GET_ANALYSIS.SUCCEEDED:
+            return assign({}, state, {
+                analysisDetail: action.data
             });
 
         case ANALYZE.SUCCEEDED:

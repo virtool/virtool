@@ -30,6 +30,10 @@ const samplesAPI = {
         return Request.get(`/api/samples/${sampleId}/analyses`)
     },
 
+    getAnalysis: (analysisId) => {
+        return Request.get(`/api/analyses/${analysisId}`);
+    },
+
     analyze: (sampleId, algorithm) => {
         return Request.post(`/api/samples/${sampleId}/analyses`)
             .send({

@@ -29,6 +29,7 @@ export const WS_REMOVE_SAMPLE = "WS_REMOVE_SAMPLE";
 export const FIND_SAMPLES = createRequestActionType("FIND_SAMPLES");
 export const GET_SAMPLE = createRequestActionType("GET_SAMPLE");
 export const FIND_ANALYSES = createRequestActionType("FIND_ANALYSES");
+export const GET_ANALYSIS = createRequestActionType("GET_ANALYSIS");
 export const ANALYZE = createRequestActionType("ANALYZE");
 
 // Virus
