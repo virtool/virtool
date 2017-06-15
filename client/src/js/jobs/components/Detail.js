@@ -17,6 +17,7 @@ import { getJob } from "../actions";
 import { getTaskDisplayName } from "../../utils";
 import { Flex, FlexItem, Icon, ProgressBar } from "virtool/js/components/Base";
 import TaskArgs from "./TaskArgs";
+import JobError from "./Error";
 
 
 class JobDetail extends React.Component {
@@ -51,7 +52,11 @@ class JobDetail extends React.Component {
             progressStyle = "danger";
         }
 
-        console.log(detail);
+        let errorAlert;
+
+        if (latest.error) {
+            errorAlert = <JobError error={latest.error} />
+        }
 
         return (
             <div>
@@ -80,6 +85,8 @@ class JobDetail extends React.Component {
                 </h3>
 
                 <ProgressBar bsStyle={progressStyle} now={latest.progress * 100} />
+
+                {errorAlert}
 
                 <Table bordered>
                     <tbody>
