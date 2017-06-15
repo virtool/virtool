@@ -38,5 +38,5 @@ class TestTask(virtool.job.Job):
         self.db.job_test.insert({"message": self.message})
 
     @staticmethod
-    def pass_message(message):
+    def pass_message(manager, message):
         pprint.pprint(message)

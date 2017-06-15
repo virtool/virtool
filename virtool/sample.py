@@ -108,25 +108,6 @@ async def set_quality(db, sample_id, quality):
     }, return_document=pymongo.ReturnDocument.AFTER)
 
 
-async def set_analysis(db, sample_id, analysis_id, analysis_data):
-    """
-    Update the analysis document identified using ``data``, which contains the analysis id and the update. Sets the
-    analysis' ``ready`` field to ``True``. Sets the parent sample's ``analyzed`` field to ``True`` and increments
-    its version by one.
-
-    """
-    document = await db.analyses.find_one({"_id": analysis_id})
-    document.update(analysis_data)
-    document["ready"] = True
-
-    await db.analyses.update({"_id": analysis_id}, {"$set": document})
-
-    await db.samples.update(sample_id, {
-        "$inc": {"_version": 1},
-        "$set": {"analyzed": True}
-    })
-
-
 async def remove_samples(db, settings, id_list):
     """
     Complete removes the samples identified by the document ids in ``id_list``. In order, it:

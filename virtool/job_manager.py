@@ -96,9 +96,9 @@ class Manager:
                     method = self.get_static_method(job_id, method_name)
 
                     if inspect.iscoroutinefunction(method):
-                        await method(*args, **kwargs)
+                        await method(self, *args, **kwargs)
                     else:
-                        method(*args, **kwargs)
+                        method(self, *args, **kwargs)
 
             for job_id in list(self._jobs_dict.keys()):
                 # Get job data.
