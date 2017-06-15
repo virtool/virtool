@@ -4,7 +4,8 @@ from pymongo import ReturnDocument
 import virtool.utils
 import virtool.sample
 import virtool.analysis
-from virtool.handlers.utils import json_response, bad_request, not_found
+import virtool.sample_analysis
+from virtool.handlers.utils import unpack_json_request, json_response, bad_request, not_found
 
 
 async def find(req):
@@ -219,19 +220,22 @@ async def analyze(req):
     Starts an analysis job for a given sample.
 
     """
+    db, data = await unpack_json_request(req)
+
     sample_id = req.match_info["sample_id"]
-    data = await req.json()
-    user_id = None
+    user_id = req["session"].user_id
 
     # Generate a unique _id for the analysis entry
-    analysis_id = await req.app["db"].analyses.new(
+    document = await virtool.sample_analysis.new(
+        db,
+        req.app["settings"],
+        req.app["job_manager"],
         sample_id,
-        data["name"],
         user_id,
         data["algorithm"]
     )
 
-    return json_response({"analysis_id": analysis_id})
+    return json_response(document)
 
 
 async def remove(req):
