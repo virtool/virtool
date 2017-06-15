@@ -31,7 +31,6 @@ def processor(document):
 
 projector = [
     "_id",
-    "_version",
     "name",
     "added",
     "username",

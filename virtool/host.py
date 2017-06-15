@@ -11,7 +11,6 @@ logger = logging.getLogger(__name__)
 
 projection = [
     "_id",
-    "_version",
     "description",
     "file_name",
     "ready",
