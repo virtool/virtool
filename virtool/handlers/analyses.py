@@ -1,22 +1,23 @@
 import asyncio
 
-from aiohttp import web
-from virtool.handlers.utils import not_found
+from virtool.handlers.utils import not_found, json_response
 from virtool.sample import recalculate_algorithm_tags
-from virtool.sample_analysis import format_analyses, remove_by_id, initialize_blast, check_rid, retrieve_blast_result
+from virtool.sample_analysis import format_analysis, remove_by_id, initialize_blast, check_rid, retrieve_blast_result
 
 
-async def get_analysis(req):
+async def get(req):
     """
     Get a complete analysis document.
     
     """
     analysis_id = req.match_info["analysis_id"]
 
-    document = await req.app["db"].find_one(analysis_id)
+    document = await req.app["db"].analyses.find_one(analysis_id)
+
+    formatted = await format_analysis(req.app["db"], document)
 
     if document:
-        return web.json_response(await format_analyses(document))
+        return json_response(formatted)
 
     return not_found()
 

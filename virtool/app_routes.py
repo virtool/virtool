@@ -3,7 +3,7 @@ from aiohttp import web
 from virtool.utils import get_static_hash
 from virtool.user_login import get_login_template, generate_verification_keys, login_handler
 from virtool.handlers import root, jobs, samples, viruses, history, hmm, hosts, settings, account, groups, users, \
-    genbank, status, lifecycle, websocket, resources
+    genbank, status, lifecycle, websocket, resources, analyses
 
 
 async def index_handler(req):
@@ -92,6 +92,9 @@ def setup_routes(app):
 
     app.router.add_put("/api/samples/{sample_id}/group", samples.set_owner_group)
     app.router.add_patch("/api/samples/{sample_id}/rights", samples.set_rights)
+
+    # Analyses Routes
+    app.router.add_get("/api/analyses/{analysis_id}", analyses.get)
 
     # Viruses Routes
     app.router.add_get("/api/viruses", viruses.find)

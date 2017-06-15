@@ -1,6 +1,8 @@
 import os
 import virtool.blast
 
+import virtool.virus
+import virtool.virus_history
 from virtool.utils import timestamp, rm
 from virtool.utils import get_new_id, format_doc_id
 from virtool.sample import recalculate_algorithm_tags
@@ -112,7 +114,7 @@ def check_rid(rid):
     return virtool.blast.check_rid(rid)
 
 
-async def format_analyses(db, analyses):
+async def format_analysis(db, analysis):
 
     isolate_fields = [
         "isolate_id",
@@ -126,82 +128,84 @@ async def format_analyses(db, analyses):
         "definition"
     ]
 
-    for analysis in analyses:
-        # Only included 'ready' analyses in the detail payload.
-        if analysis["ready"] is True:
-            if "pathoscope" in analysis["algorithm"]:
-                # Holds viruses that have already been fetched from the database. If another isolate of a previously
-                # fetched virus is found, there is no need for a round-trip back to the database.
-                fetched_viruses = dict()
+    # Only included 'ready' analyses in the detail payload.
+    if analysis["ready"] is True:
+        if "pathoscope" in analysis["algorithm"]:
+            # Holds viruses that have already been fetched from the database. If another isolate of a previously
+            # fetched virus is found, there is no need for a round-trip back to the database.
+            fetched_viruses = dict()
 
-                found_isolates = list()
+            found_isolates = list()
 
-                annotated = dict()
+            annotated = dict()
 
-                for accession, hit_document in analysis["diagnosis"].items():
+            for accession, hit_document in analysis["diagnosis"].items():
 
-                    virus_id = hit_document["virus_id"]
-                    virus_version = hit_document["virus_version"]
+                virus_id = hit_document["virus_id"]
+                virus_version = hit_document["virus_version"]
 
-                    if virus_id not in fetched_viruses:
-                        # Get the virus entry (patched to correct version).
-                        _, virus_document, _ = await db.history.get_versioned_document(
-                            virus_id,
-                            virus_version + 1
-                        )
+                if virus_id not in fetched_viruses:
+                    joined = await virtool.virus.join(db, virus_id)
 
-                        fetched_viruses[virus_id] = virus_document
+                    # Get the virus entry (patched to correct version).
+                    _, virus_document, _ = await virtool.virus_history.patch_virus_to_version(
+                        db,
+                        joined,
+                        virus_version
+                    )
 
-                        annotated[virus_id] = {
-                            "_id": virus_id,
-                            "name": virus_document["name"],
-                            "abbreviation": virus_document["abbreviation"],
-                            "isolates": dict(),
-                            "ref_length": 0
-                        }
+                    fetched_viruses[virus_id] = virus_document
 
-                    virus_document = fetched_viruses[virus_id]
+                    annotated[virus_id] = {
+                        "_id": virus_id,
+                        "name": virus_document["name"],
+                        "abbreviation": virus_document["abbreviation"],
+                        "isolates": dict(),
+                        "ref_length": 0
+                    }
 
-                    max_ref_length = 0
+                virus_document = fetched_viruses[virus_id]
 
-                    for isolate in virus_document["isolates"]:
+                max_ref_length = 0
 
-                        ref_length = 0
+                for isolate in virus_document["isolates"]:
 
-                        for sequence in isolate["sequences"]:
-                            if sequence["_id"] == accession:
-                                isolate_id = isolate["isolate_id"]
+                    ref_length = 0
 
-                                if isolate_id not in found_isolates:
-                                    reduced_isolate = {key: isolate[key] for key in isolate_fields}
-                                    reduced_isolate["hits"] = list()
-                                    annotated[virus_id]["isolates"][isolate_id] = reduced_isolate
-                                    found_isolates.append(isolate["isolate_id"])
+                    for sequence in isolate["sequences"]:
+                        if sequence["_id"] == accession:
+                            isolate_id = isolate["isolate_id"]
 
-                                hit = dict(hit_document)
-                                hit.update({key: sequence[key] for key in sequence_fields})
-                                hit["accession"] = accession
+                            if isolate_id not in found_isolates:
+                                reduced_isolate = {key: isolate[key] for key in isolate_fields}
+                                reduced_isolate["hits"] = list()
+                                annotated[virus_id]["isolates"][isolate_id] = reduced_isolate
+                                found_isolates.append(isolate["isolate_id"])
 
-                                annotated[virus_id]["isolates"][isolate_id]["hits"].append(hit)
+                            hit = dict(hit_document)
+                            hit.update({key: sequence[key] for key in sequence_fields})
+                            hit["accession"] = accession
 
-                                ref_length += len(sequence["sequence"])
+                            annotated[virus_id]["isolates"][isolate_id]["hits"].append(hit)
 
-                        if ref_length > max_ref_length:
-                            max_ref_length = ref_length
+                            ref_length += len(sequence["sequence"])
 
-                    annotated[virus_id]["ref_length"] = max_ref_length
+                    if ref_length > max_ref_length:
+                        max_ref_length = ref_length
 
-                analysis["diagnosis"] = [annotated[virus_id] for virus_id in annotated]
+                annotated[virus_id]["ref_length"] = max_ref_length
 
-            if analysis["algorithm"] == "nuvs":
-                for hmm_result in analysis["hmm"]:
-                    hmm = await self.collections["hmm"].find_one({"_id": hmm_result["hit"]}, {
-                        "cluster": True,
-                        "families": True,
-                        "definition": True,
-                        "label": True
-                    })
+            analysis["diagnosis"] = [annotated[virus_id] for virus_id in annotated]
 
-                    hmm_result.update(hmm)
+        if analysis["algorithm"] == "nuvs":
+            for hmm_result in analysis["hmm"]:
+                hmm = await db.hmm.find_one({"_id": hmm_result["hit"]}, [
+                    "cluster",
+                    "families",
+                    "definition",
+                    "label"
+                ])
 
-    return analyses
+                hmm_result.update(hmm)
+
+        return analysis
