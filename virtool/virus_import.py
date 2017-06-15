@@ -1,6 +1,5 @@
 import json
 import gzip
-from pprint import pprint
 from pymongo import ReturnDocument
 
 import virtool.virus
