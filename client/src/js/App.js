@@ -5,7 +5,7 @@ import { BrowserRouter, Switch, Route, withRouter } from "react-router-dom";
 import NavBar from "./nav/components/Bar";
 import Welcome from "./components/Home/Welcome";
 import Jobs from "./jobs/components/Jobs";
-import Samples from "./samples/components/Manage";
+import Samples from "./samples/components/Samples";
 import Viruses from "./viruses/components/Viruses";
 import Settings from "./settings/components/Settings";
 
