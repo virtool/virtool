@@ -101,9 +101,6 @@ const PathoscopeViewer = (props) => {
             <p>
                 <Icon name="notification" /> No virus sequences found in sample
             </p>
-            <Button bsSize="small" onClick={props.showListing}>
-                <Icon name="arrow-back" /> Back
-            </Button>
         </Alert>
     );
 

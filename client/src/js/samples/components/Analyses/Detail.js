@@ -16,8 +16,7 @@ class AnalysisDetail extends React.Component {
         algorithm: React.PropTypes.string,
         timestamp: React.PropTypes.string,
         username: React.PropTypes.string,
-        readCount: React.PropTypes.number,
-        onBack: React.PropTypes.func,
+        readCount: React.PropTypes.number
     };
 
     componentDidMount () {
@@ -31,9 +30,7 @@ class AnalysisDetail extends React.Component {
         }
 
         const detail = this.props.detail;
-
-        console.log(detail);
-
+        
         let content;
 
         if (detail.algorithm === "pathoscope_bowtie") {
@@ -74,10 +71,6 @@ class AnalysisDetail extends React.Component {
                 </Table>
 
                 {content}
-
-                <Button bsStyle="primary" onClick={this.props.onBack} block>
-                    <Icon name="arrow-back" /> Back
-                </Button>
             </div>
         );
     }
