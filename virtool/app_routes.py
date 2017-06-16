@@ -20,9 +20,6 @@ async def index_handler(req):
             }
         })
 
-        print(req.url)
-        print(req.path)
-
         html = get_login_template().render(
             key_1=keys[0],
             key_2=keys[1],
