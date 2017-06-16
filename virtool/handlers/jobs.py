@@ -35,18 +35,11 @@ async def cancel(req):
     Cancel a job.
 
     """
-    db, data = await unpack_json_request(req)
+    db = req.app["db"]
 
     job_id = req.match_info["job_id"]
 
-    v = Validator({
-        "cancel": {"type": "boolean", "allowed": [True]}
-    })
-
-    if not v(data):
-        return invalid_input("Expected {'cancel': true}")
-
-    document = await db.find_one(job_id)
+    document = await db.jobs.find_one(job_id, ["status"])
 
     if not document:
         return not_found()
@@ -56,7 +49,7 @@ async def cancel(req):
 
     await req.app["job_manager"].cancel(job_id)
 
-    document = await db.find_one(job_id)
+    document = await db.jobs.find_one(job_id, PROJECTION)
 
     return json_response(processor(document))
 

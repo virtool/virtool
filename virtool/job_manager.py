@@ -269,7 +269,7 @@ class Manager:
 
         # Just delete the job if it still waiting to be started
         else:
-            await self.update_status(job_id, 0, "cancelled", None)
+            await self.add_status(job_id, 1, "cancelled", None)
 
             job_dict["obj"].cleanup()
 
