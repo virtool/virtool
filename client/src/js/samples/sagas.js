@@ -51,12 +51,14 @@ export function* findAnalyses (action) {
 }
 
 export function* getAnalysis (action) {
-    try {
-        const response = yield call(samplesAPI.getAnalysis, action.analysisId);
-        yield put({type: GET_ANALYSIS.SUCCEEDED, data: response.body});
-    } catch (error) {
-        yield put({type: GET_ANALYSIS.FAILED, error});
-    }
+    yield setPending(function* (action) {
+        try {
+            const response = yield call(samplesAPI.getAnalysis, action.analysisId);
+            yield put({type: GET_ANALYSIS.SUCCEEDED, data: response.body});
+        } catch (error) {
+            yield put({type: GET_ANALYSIS.FAILED, error});
+        }
+    }, action);
 }
 
 export function* analyze (action) {
