@@ -7,7 +7,7 @@ import { formatIsolateName } from "virtool/js/utils";
 
 import PathoscopeController from "./Controller";
 
-const PathoscopeReport = (props) => {
+const PathoscopeViewer = (props) => {
 
     if (props.diagnosis.length > 0) {
 
@@ -109,11 +109,11 @@ const PathoscopeReport = (props) => {
 
 };
 
-PathoscopeReport.propTypes = {
+PathoscopeViewer.propTypes = {
     diagnosis: React.PropTypes.arrayOf(React.PropTypes.object),
     showListing: React.PropTypes.bool,
     read_count: React.PropTypes.number,
     maxReadLength: React.PropTypes.number
 };
 
-export default PathoscopeReport;
+export default PathoscopeViewer;

@@ -41,22 +41,25 @@ export default class PathoscopeIsolate extends React.Component {
     render () {
 
         const chartContainerStyle = {
-            overflowX: "scroll",
-            whiteSpace: "nowrap"
+            overflowX: "scroll"
         };
 
-        const sorted = sortBy(this.props.hits, hit => hit.align.length);
+        const hitContainerStyle = {
+            minWidth: "100%",
+            width: 0
+        };
 
-        const hitComponents = sorted.map((hit, i) =>
-            <Coverage
-                key={hit.accession}
-                data={hit.align}
-                accession={hit.accession}
-                definition={hit.definition}
-                yMax={this.props.maxDepth}
-                showYAxis={i === 0}
-                isolateComponent={this}
-            />
+        const hitComponents = sortBy(this.props.hits, hit => hit.align.length).map((hit, i) =>
+            <div key={hit.accession} style={hitContainerStyle}>
+                <Coverage
+                    data={hit.align}
+                    accession={hit.accession}
+                    definition={hit.definition}
+                    yMax={this.props.maxDepth}
+                    showYAxis={i === 0}
+                    isolateComponent={this}
+                />
+            </div>
         );
 
         const piValue = this.props.showReads ? this.props.reads: toScientificNotation(this.props.pi);
