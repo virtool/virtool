@@ -11,3 +11,14 @@ async def get(req):
     req.app["resources"] = resources
     
     return json_response(resources)
+
+
+async def get_cuda(req):
+    """
+    Get a list describing CUDA-capable devices on the host system.
+
+    """
+    cuda_devices = virtool.job_resources.get_cuda_devices()
+    req.app["resources"]["cuda"] = cuda_devices
+
+    return json_response(req.app["resources"]["cuda"])

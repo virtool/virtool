@@ -35,7 +35,8 @@ def init_thread_pool_executor(app):
 
 
 def init_resources(app):
-    app.resources = virtool.job_resources.get()
+    app["resources"] = virtool.job_resources.get()
+    app["resources"]["cuda"] = virtool.job_resources.get_cuda_devices()
 
 
 async def init_settings(app):
