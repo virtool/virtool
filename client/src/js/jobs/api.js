@@ -32,6 +32,10 @@ const jobsAPI = {
 
     getResources: () => {
         return Request.get(`/api/resources`);
+    },
+
+    getCUDA: () => {
+        return Request.get("/api/resources/cuda");
     }
 
 };

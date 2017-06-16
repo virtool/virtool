@@ -7,20 +7,22 @@
  *
  */
 
-import { assign, concat, find, reject } from "lodash";
+import { assign, reject } from "lodash";
 import {
     WS_UPDATE_JOB,
     WS_REMOVE_JOB,
     FIND_JOBS,
     GET_JOB,
     REMOVE_JOB,
-    GET_RESOURCES
+    GET_RESOURCES,
+    GET_CUDA
 } from "../actionTypes";
 
 const initialState = {
     list: null,
     detail: null,
-    resources: null
+    resources: null,
+    cuda: null
 };
 
 export default function reducer (state = initialState, action) {
@@ -66,6 +68,16 @@ export default function reducer (state = initialState, action) {
         case GET_RESOURCES.SUCCEEDED:
             return assign({}, state, {
                 resources: action.data
+            });
+
+        case GET_CUDA.REQUESTED:
+            return assign({}, state, {
+                cuda: null
+            });
+
+        case GET_CUDA.SUCCEEDED:
+            return assign({}, state, {
+                cuda: action.data
             });
 
         default:

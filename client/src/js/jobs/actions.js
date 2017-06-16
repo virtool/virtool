@@ -7,7 +7,16 @@
  *
  */
 
-import { WS_UPDATE_JOB, WS_REMOVE_JOB, FIND_JOBS, GET_JOB, REMOVE_JOB, TEST_JOB, GET_RESOURCES } from "../actionTypes";
+import {
+    WS_UPDATE_JOB,
+    WS_REMOVE_JOB,
+    FIND_JOBS,
+    GET_JOB,
+    REMOVE_JOB,
+    TEST_JOB,
+    GET_RESOURCES,
+    GET_CUDA
+} from "../actionTypes";
 
 export const wsUpdateJob = (data) => {
     return {
@@ -53,5 +62,11 @@ export const test = () => {
 export const getResources = () => {
     return {
         type: GET_RESOURCES.REQUESTED
+    };
+};
+
+export const getCUDA = () => {
+    return {
+        type: GET_CUDA.REQUESTED
     };
 };

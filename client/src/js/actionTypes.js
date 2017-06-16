@@ -21,6 +21,7 @@ export const GET_JOB = createRequestActionType("GET_JOB");
 export const REMOVE_JOB = createRequestActionType("REMOVE_JOB");
 export const TEST_JOB = createRequestActionType("TEST_JOB");
 export const GET_RESOURCES = createRequestActionType("GET_RESOURCES");
+export const GET_CUDA = createRequestActionType("GET_CUDA");
 
 // Samples
 export const WS_UPDATE_SAMPLE = "WS_UPDATE_SAMPLE";

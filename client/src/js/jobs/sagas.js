@@ -11,7 +11,7 @@ import { call, put, select, takeEvery, takeLatest } from "redux-saga/effects";
 
 import jobsAPI from "./api";
 import { setPending } from "../wrappers";
-import { WS_UPDATE_JOB, FIND_JOBS, GET_JOB, REMOVE_JOB, TEST_JOB, GET_RESOURCES }  from "../actionTypes";
+import { WS_UPDATE_JOB, FIND_JOBS, GET_JOB, REMOVE_JOB, TEST_JOB, GET_RESOURCES, GET_CUDA }  from "../actionTypes";
 
 export function* watchJobs () {
     yield takeLatest(WS_UPDATE_JOB, wsUpdateJob);
@@ -20,6 +20,7 @@ export function* watchJobs () {
     yield takeEvery(REMOVE_JOB.REQUESTED, removeJob);
     yield takeLatest(TEST_JOB.REQUESTED, testJob);
     yield takeLatest(GET_RESOURCES.REQUESTED, getResources);
+    yield takeLatest(GET_CUDA.REQUESTED, getCUDA);
 }
 
 export function* wsUpdateJob (action) {
@@ -83,5 +84,14 @@ export function* getResources (action) {
         yield put({type: GET_RESOURCES.SUCCEEDED, data: response.body});
     } catch (error) {
         yield put({type: GET_RESOURCES.FAILED}, error);
+    }
+}
+
+export function* getCUDA (action) {
+    try {
+        const response = yield call(jobsAPI.getCUDA, action);
+        yield put({type: GET_CUDA.SUCCEEDED, data: response.body});
+    } catch (error) {
+        yield put({type: GET_CUDA.FAILED}, error);
     }
 }

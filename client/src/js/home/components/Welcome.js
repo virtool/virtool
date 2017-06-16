@@ -12,6 +12,7 @@
 import React from "react";
 import { Panel, ButtonToolbar } from "react-bootstrap";
 import { Icon } from "virtool/js/components/Base"
+import CUDA from "./CUDA";
 
 const Welcome  = () => (
     <div className="container">
@@ -30,6 +31,8 @@ const Welcome  = () => (
                 </a>
             </ButtonToolbar>
         </Panel>
+
+        <CUDA />
     </div>
 );
 

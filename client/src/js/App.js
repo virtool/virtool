@@ -3,7 +3,7 @@ import { Provider, connect } from "react-redux";
 import { BrowserRouter, Switch, Route, withRouter } from "react-router-dom";
 
 import NavBar from "./nav/components/Bar";
-import Welcome from "./components/Home/Welcome";
+import Welcome from "./home/components/Welcome";
 import Jobs from "./jobs/components/Jobs";
 import Samples from "./samples/components/Samples";
 import Viruses from "./viruses/components/Viruses";
