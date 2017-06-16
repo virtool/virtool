@@ -25,7 +25,13 @@ export default class JobEntry extends React.Component {
         added: React.PropTypes.string.isRequired,
         user_id: React.PropTypes.string.isRequired,
 
+        cancel: React.PropTypes.func,
         remove: React.PropTypes.func
+    };
+
+    cancel = (event) => {
+        event.stopPropagation();
+        this.props.cancel(this.props.job_id);
     };
 
     remove = (event) => {

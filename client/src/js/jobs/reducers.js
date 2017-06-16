@@ -13,6 +13,7 @@ import {
     WS_REMOVE_JOB,
     FIND_JOBS,
     GET_JOB,
+    CANCEL_JOB,
     REMOVE_JOB,
     GET_RESOURCES,
     GET_CUDA
@@ -25,20 +26,24 @@ const initialState = {
     cuda: null
 };
 
+const updateJob = (state, action) => {
+    return assign({}, state, {
+        list: state.list.map(doc => {
+            if (doc.job_id !== action.data.job_id) {
+                return doc;
+            }
+
+            return assign({}, doc, action.data);
+        })
+    });
+};
+
 export default function reducer (state = initialState, action) {
 
     switch (action.type) {
 
         case WS_UPDATE_JOB:
-            return assign({}, state, {
-                list: state.list.map(doc => {
-                    if (doc.job_id !== action.data.job_id) {
-                        return doc;
-                    }
-
-                    return assign({}, doc, action.data);
-                })
-            });
+            return updateJob(state, action);
 
         case WS_REMOVE_JOB:
             return assign({}, state, {
@@ -59,6 +64,9 @@ export default function reducer (state = initialState, action) {
             return assign({}, state, {
                 detail: action.data
             });
+
+        case CANCEL_JOB.SUCCEEDED:
+            return updateJob(state, action);
 
         case REMOVE_JOB.SUCCEEDED:
             return assign({}, state, {

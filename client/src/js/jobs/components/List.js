@@ -11,7 +11,7 @@ import React, { PropTypes } from "react";
 import { connect } from "react-redux";
 import { ListGroup } from "react-bootstrap";
 
-import { findJobs, removeJob } from "../actions";
+import { findJobs, cancelJob, removeJob } from "../actions";
 import Job from "./Entry";
 import JobsToolbar from "./Toolbar";
 
@@ -21,6 +21,7 @@ class JobsList extends React.Component {
         history: PropTypes.object,
         documents: PropTypes.arrayOf(PropTypes.object),
         onFind: PropTypes.func,
+        onCancel: PropTypes.func,
         onRemove: PropTypes.func
     };
 
@@ -38,6 +39,7 @@ class JobsList extends React.Component {
             <Job
                 key={doc.job_id}
                 {...doc}
+                cancel={this.props.onCancel}
                 remove={this.props.onRemove}
                 navigate={() => this.props.history.push(`/jobs/${doc.job_id}`)}
             />
@@ -64,6 +66,10 @@ const mapDispatchToProps = (dispatch) => {
     return {
         onFind: () => {
             dispatch(findJobs());
+        },
+
+        onCancel: (jobId) => {
+            dispatch(cancelJob(jobId));
         },
 
         onRemove: (jobId) => {

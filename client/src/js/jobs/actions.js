@@ -12,6 +12,7 @@ import {
     WS_REMOVE_JOB,
     FIND_JOBS,
     GET_JOB,
+    CANCEL_JOB,
     REMOVE_JOB,
     TEST_JOB,
     GET_RESOURCES,
@@ -44,6 +45,13 @@ export const getJob = (jobId) => {
         jobId
     };
 };
+
+export const cancelJob = (jobId) => {
+    return {
+        type: CANCEL_JOB.REQUESTED,
+        jobId
+    };
+}
 
 export const removeJob = (jobId) => {
     return {

@@ -19,13 +19,15 @@ const jobsAPI = {
         return Request.get(`/api/jobs/${jobId}`);
     },
 
+    cancel: (jobId) => {
+        return Request.post(`/api/jobs/${jobId}/cancel`);
+    },
+
     remove: (jobId) => {
         return Request.delete(`/api/jobs/${jobId}`);
     },
 
     test: (options = {}) => {
-        console.log(options);
-
         return Request.post("/api/jobs/test")
             .send(options);
     },

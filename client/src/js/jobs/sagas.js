@@ -11,12 +11,22 @@ import { call, put, select, takeEvery, takeLatest } from "redux-saga/effects";
 
 import jobsAPI from "./api";
 import { setPending } from "../wrappers";
-import { WS_UPDATE_JOB, FIND_JOBS, GET_JOB, REMOVE_JOB, TEST_JOB, GET_RESOURCES, GET_CUDA }  from "../actionTypes";
+import {
+    WS_UPDATE_JOB,
+    FIND_JOBS,
+    GET_JOB,
+    CANCEL_JOB,
+    REMOVE_JOB,
+    TEST_JOB,
+    GET_RESOURCES,
+    GET_CUDA
+} from "../actionTypes";
 
 export function* watchJobs () {
     yield takeLatest(WS_UPDATE_JOB, wsUpdateJob);
     yield takeLatest(FIND_JOBS.REQUESTED, findJobs);
     yield takeLatest(GET_JOB.REQUESTED, getJob);
+    yield takeEvery(CANCEL_JOB.REQUESTED, cancelJob);
     yield takeEvery(REMOVE_JOB.REQUESTED, removeJob);
     yield takeLatest(TEST_JOB.REQUESTED, testJob);
     yield takeLatest(GET_RESOURCES.REQUESTED, getResources);
@@ -56,6 +66,17 @@ export function* bgGetJob (action) {
     } catch (error) {
         yield put({type: GET_JOB.FAILED}, error);
     }
+}
+
+export function* cancelJob (action) {
+    yield setPending(function* () {
+        try {
+            const response = yield call(jobsAPI.cancel, action.jobId);
+            yield put({type: CANCEL_JOB.SUCCEEDED, data: response.body});
+        } catch (error) {
+            yield put({type: CANCEL_JOB.FAILED}, error);
+        }
+    }, action);
 }
 
 export function* removeJob (action) {
