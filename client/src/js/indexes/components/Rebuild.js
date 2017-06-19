@@ -14,62 +14,71 @@ import { Alert, Collapse } from "react-bootstrap";
 
 import { Flex, FlexItem, Icon, Button } from "virtool/js/components/Base";
 
-const RebuildIndex = (props) => {
-
-    console.log(props);
+const RebuildAlert = (props) => {
 
     let button;
-    let message;
+
+    if (props.canRebuild) {
+        button = (
+            <FlexItem pad={20}>
+                <Button
+                    bsStyle="warning"
+                    icon="hammer"
+                    onClick={props.rebuild}
+                    pullRight
+                >
+                    Rebuild
+                </Button>
+            </FlexItem>
+        );
+    }
+
+    return (
+        <Alert bsStyle="warning">
+            <Flex alignItems="center">
+                <FlexItem grow={1}>
+                    <Flex alignItems="center">
+                        <Icon name="notification" />
+                        <FlexItem pad={10}>
+                            The virus reference database has changed and the index must be rebuilt before the new
+                            information will be included in future analyses.
+                        </FlexItem>
+                    </Flex>
+                </FlexItem>
+                {button}
+            </Flex>
+        </Alert>
+    );
+};
+
+RebuildAlert.propTypes = {
+    canRebuild: PropTypes.bool,
+    rebuild: PropTypes.func
+};
+
+const RebuildIndex = (props) => {
+
+    let alert;
 
     // Show a notification
     if (props.modifiedCount > 0) {
-        message = (
-            <Flex alignItems="center">
-                <Icon name="notification" />
-                <FlexItem pad={10}>
-                    The virus reference database has changed and the index must be rebuilt before the new
-                    information will be included in future analyses.
-                </FlexItem>
-            </Flex>
-        );
-
-        if (props.canRebuild) {
-            button = (
-                <FlexItem pad={20}>
-                    <Button
-                        bsStyle="info"
-                        icon="hammer"
-                        onClick={props.rebuild}
-                        pullRight
-                    >
-                        Rebuild
-                    </Button>
-                </FlexItem>
-            );
-        }
-
+        alert = <RebuildAlert {...props} />;
     } else {
-        message = (
-            <Flex alignItems="center">
-                <Icon name="info" />
-                <FlexItem pad={5}>
-                    No viruses have been modified since the last index build.
-                </FlexItem>
-            </Flex>
+        alert = (
+            <Alert bsStyle="success">
+                <Flex alignItems="center">
+                    <Icon name="info" />
+                    <FlexItem pad={5}>
+                        No viruses have been modified since the last index build.
+                    </FlexItem>
+                </Flex>
+            </Alert>
         );
     }
 
     return (
         <div>
-            <Alert bsStyle="info">
-                <Flex alignItems="center">
-                    <FlexItem grow={1}>
-                        {message}
-                    </FlexItem>
-                    {button}
-                </Flex>
-            </Alert>
-
+            {alert}
             <Collapse in={props.error}>
                 <div>
                     <Alert bsStyle="danger" onDismiss={props.dismissError}>
