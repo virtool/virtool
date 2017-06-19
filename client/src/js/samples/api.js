@@ -26,6 +26,11 @@ const samplesAPI = {
         return Request.get(`/api/samples/${sampleId}`);
     },
 
+    update: (sampleId, update) => {
+        return Request.patch(`/api/samples/${sampleId}`)
+            .send(update);
+    },
+
     findAnalyses: (sampleId) => {
         return Request.get(`/api/samples/${sampleId}/analyses`)
     },

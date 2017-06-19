@@ -7,7 +7,7 @@
  *
  */
 
-import { FIND_SAMPLES, GET_SAMPLE, FIND_ANALYSES, GET_ANALYSIS, ANALYZE } from "../actionTypes";
+import { FIND_SAMPLES, GET_SAMPLE, UPDATE_SAMPLE, FIND_ANALYSES, GET_ANALYSIS, ANALYZE } from "../actionTypes";
 
 export const findSamples = (term) => {
     return {
@@ -21,6 +21,14 @@ export const getSample = (sampleId) => {
         type: GET_SAMPLE.REQUESTED,
         sampleId: sampleId
     }
+};
+
+export const updateSample = (sampleId, update) => {
+    return {
+        type: UPDATE_SAMPLE.REQUESTED,
+        sampleId,
+        update
+    };
 };
 
 export const findAnalyses = (sampleId) => {

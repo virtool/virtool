@@ -13,6 +13,7 @@ import {
     WS_REMOVE_SAMPLE,
     FIND_SAMPLES,
     GET_SAMPLE,
+    UPDATE_SAMPLE,
     FIND_ANALYSES,
     GET_ANALYSIS,
     ANALYZE
@@ -21,6 +22,8 @@ import {
 const initialState = {
     list: null,
     detail: null,
+    pendingUpdate: null,
+
     analyses: null,
     analysisDetail: null
 };
@@ -56,6 +59,30 @@ export default function reducer (state = initialState, action) {
             return assign({}, state, {
                 detail: action.data
             });
+
+        case UPDATE_SAMPLE.SUCCEEDED: {
+            let newState = {};
+
+            if (state.list !== null) {
+                assign(newState, state, {
+                    list: state.list.map(doc => {
+                        if (doc.sample_id !== action.data.sample_id) {
+                            return doc;
+                        }
+
+                        return assign({}, doc, action.data);
+                    })
+                });
+            }
+
+            if (state.detail && state.detail.sample_id === action.data.sample_id) {
+                assign(newState, {
+                    detail: assign({}, state.detail, action.data)
+                });
+            }
+
+            return newState;
+        }
 
         case FIND_ANALYSES.REQUESTED:
             return assign({}, state, {

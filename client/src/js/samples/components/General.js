@@ -4,11 +4,12 @@ import Numeral from "numeral";
 import { connect } from "react-redux";
 import { capitalize } from "lodash";
 
+import { updateSample } from "../actions";
 import { Icon, InputCell } from "virtool/js/components/Base";
 
 const SampleDetailGeneral = (props) => {
 
-    const cells = ["name", "host", "isolate"].map((field) => {
+    const cells = ["name", "host", "isolate"].map(field => {
 
         let inputCell;
 
@@ -19,6 +20,7 @@ const SampleDetailGeneral = (props) => {
                     field={field}
                     value={props[field]}
                     className="col-sm-8"
+                    onSave={(key, value) => props.onChangeValue(props.sampleId, key, value)}
                 />
             );
         } else {
@@ -125,7 +127,8 @@ SampleDetailGeneral.propTypes = {
     paired: React.PropTypes.bool,
     userId: React.PropTypes.string,
     added: React.PropTypes.string,
-    quality: React.PropTypes.object
+    quality: React.PropTypes.object,
+    onChangeValue: React.PropTypes.func
 };
 
 const mapStateToProps = (state) => {
@@ -157,6 +160,16 @@ const mapStateToProps = (state) => {
     };
 };
 
-const Container = connect(mapStateToProps)(SampleDetailGeneral);
+const mapDispatchToProps = (dispatch) => {
+    return {
+        onChangeValue: (sampleId, field, value) => {
+            let update = {};
+            update[field] = value;
+            dispatch(updateSample(sampleId, update));
+        }
+    };
+};
+
+const Container = connect(mapStateToProps, mapDispatchToProps)(SampleDetailGeneral);
 
 export default Container;
