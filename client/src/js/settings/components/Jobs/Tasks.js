@@ -18,7 +18,7 @@ import { Flex, FlexItem, ListGroupItem, Icon } from "virtool/js/components/Base"
 
 import Task from "./Task";
 
-const taskNames = ["import_reads", "rebuild_index", "add_host", "pathoscope_bowtie", "pathoscope_snap", "nuvs"];
+const taskNames = ["import_reads", "rebuild_index", "add_host", "pathoscope_bowtie", "nuvs"];
 
 const TasksFooter = () => (
     <small>
