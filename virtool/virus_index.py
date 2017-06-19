@@ -6,7 +6,7 @@ import virtool.job
 import virtool.virus
 import virtool.utils
 
-projection = [
+PROJECTION = [
     "_id",
     "timestamp",
     "virus_count",
@@ -21,7 +21,9 @@ projection = [
 
 
 def processor(document):
-    document["index_id"] = document["_id"]
+    document = dict(document)
+    document["index_id"] = document.pop("_id")
+
     return document
 
 

@@ -3,7 +3,7 @@ from pymongo import ReturnDocument
 from virtool.handlers.utils import unpack_json_request, json_response, bad_request, not_found, protected
 from virtool.utils import timestamp
 from virtool.utils import get_new_id
-from virtool.virus_index import get_current_index_version, projection, processor
+from virtool.virus_index import get_current_index_version, PROJECTION, processor
 
 
 async def find(req):
@@ -11,7 +11,18 @@ async def find(req):
     Return a list of recorded indexes.
     
     """
-    return json_response(await req["db"].indexes.find().to_list(10))
+    db = req.app["db"]
+
+    documents = await db.indexes.find({}, PROJECTION, sort=[("index_version", -1)]).to_list(15)
+
+    modified_virus_count = await db.viruses.count({"modified": True})
+    total_virus_count = await db.viruses.count()
+
+    return json_response({
+        "documents": [processor(document) for document in documents],
+        "modified_virus_count": modified_virus_count,
+        "total_virus_count": total_virus_count
+    })
 
 
 async def get(req):
