@@ -54,6 +54,14 @@ export const ADD_ISOLATE = createRequestActionType("ADD_ISOLATE");
 export const EDIT_ISOLATE = createRequestActionType("EDIT_ISOLATE");
 export const REMOVE_ISOLATE = createRequestActionType("REMOVE_ISOLATE");
 
+// Indexes
+export const WS_UPDATE_INDEX = "WS_UPDATE_INDEX";
+
+export const FIND_INDEXES = createRequestActionType("FIND_INDEXES");
+export const GET_INDEX = createRequestActionType("GET_INDEX");
+export const CREATE_INDEX = createRequestActionType("CREATE_INDEX");
+export const CLEAR_INDEX_ERROR = "CLEAR_INDEX_ERROR";
+
 // Account
 export const GET_ACCOUNT_REQUESTED = "GET_ACCOUNT_REQUESTED";
 export const GET_ACCOUNT_SUCCEEDED = "GET_ACCOUNT_SUCCEEDED";

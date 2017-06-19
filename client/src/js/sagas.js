@@ -11,6 +11,7 @@ import { fork } from "redux-saga/effects"
 import { watchJobs } from "./jobs/sagas";
 import { watchSamples } from "./samples/sagas"
 import { watchViruses } from "./viruses/sagas"
+import { watchIndexes } from "./indexes/sagas"
 import { watchAccount } from "./nav/sagas"
 import { watchSettings, watchUpdateSettings } from "./settings/sagas"
 import { watchUsers } from "./settings/users/sagas";
@@ -21,6 +22,7 @@ export function* rootSaga () {
         fork(watchJobs),
         fork(watchSamples),
         fork(watchViruses),
+        fork(watchIndexes),
         fork(watchAccount),
         fork(watchSettings),
         fork(watchUpdateSettings),

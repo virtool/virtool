@@ -83,6 +83,9 @@ export default class VirusToolbar extends React.Component {
                     </div>
                 </div>
 
+
+
+
                 <Button
                     onClick={this.props.onToggleModifiedOnly}
                     active={this.props.modifiedOnly}
@@ -90,6 +93,13 @@ export default class VirusToolbar extends React.Component {
                     iconStyle="warning"
                     tip="Modified Only"
                 />
+
+                <LinkContainer to="/viruses/indexes">
+                    <Button
+                        icon="filing"
+                        tip="Indexes"
+                    />
+                </LinkContainer>
 
                 {createButton}
                 {menu}

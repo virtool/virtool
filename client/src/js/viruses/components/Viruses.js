@@ -14,6 +14,7 @@ import { Switch, Route } from "react-router-dom";
 import { findViruses } from "../actions";
 import VirusesList from "./List";
 import VirusDetail from "./Detail/Detail";
+import Indexes from "../../indexes/components/Indexes";
 
 const Viruses = () => {
     return (
@@ -21,6 +22,7 @@ const Viruses = () => {
             <Switch>
                 <Route path="/viruses" component={VirusesList} exact />
                 <Route path="/viruses/create" component={VirusesList} />
+                <Route path="/viruses/indexes" component={Indexes} />
                 <Route path="/viruses/:virusId" component={VirusDetail} />
             </Switch>
         </div>
@@ -30,7 +32,6 @@ const Viruses = () => {
 const mapStateToProps = (state) => {
     return {
         documents: state.viruses.documents,
-        finding: state.viruses.finding,
         find: state.viruses.find,
         sort: state.viruses.sort,
         descending: state.viruses.descending,
