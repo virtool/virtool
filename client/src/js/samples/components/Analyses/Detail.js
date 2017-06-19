@@ -30,7 +30,7 @@ class AnalysisDetail extends React.Component {
         }
 
         const detail = this.props.detail;
-        
+
         let content;
 
         if (detail.algorithm === "pathoscope_bowtie") {

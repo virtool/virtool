@@ -12,7 +12,6 @@
 import React from "react";
 import { pick } from "lodash";
 import { connect } from "react-redux";
-import { Panel } from "react-bootstrap";
 
 import { Button } from "virtool/js/components/Base";
 import Chart from "./Chart";
@@ -24,7 +23,7 @@ const SampleDetailQuality = (props) => (
     <div className="printable-quality">
         <h5>
             <strong>Quality Distribution at Read Positions</strong>
-            <Button type="button" bsStyle="info" bsSize="xsmall" icon="print" pullRight>
+            <Button type="button" bsStyle="info" bsSize="xsmall" icon="print" onClick={() => window.print()} pullRight>
                 Print
             </Button>
         </h5>

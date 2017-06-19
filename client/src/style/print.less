@@ -1,0 +1,13 @@
+@media print {
+  .vtheader, h3, .nav, .btn  {
+    display: none;
+  }
+
+  @page {
+    size: A4 landscape;
+  }
+
+  .chart-container {
+    page-break-after: always;
+  }
+}
