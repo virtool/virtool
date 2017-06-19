@@ -31,13 +31,13 @@ const Resources = (props) => (
                 <InputSave
                     label="CPU Limit"
                     type="number"
-                    onSave={(event) => props.onChangeProc("proc", event.value)}
+                    onSave={(event) => props.onChangeProc(event.value)}
                     initialValue={props.proc}
                 />
                 <InputSave
                     label="Memory Limit (GB)"
                     type="number"
-                    onSave={(event) => props.onChangeMem("mem", event.value)}
+                    onSave={(event) => props.onChangeMem(event.value)}
                     initialValue={props.mem}
                 />
             </Panel>
@@ -67,6 +67,7 @@ const mapStateToProps = (state) => {
 const mapDispatchToProps = (dispatch) => {
     return {
         onChangeProc: (proc) => {
+
             dispatch(updateSettings({proc: proc}));
         },
 
