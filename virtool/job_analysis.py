@@ -301,7 +301,7 @@ class Pathoscope(Base):
         await db.analyses.update({"_id": analysis_id}, {"$set": document})
 
         await db.samples.update({"_id": sample_id}, {
-            "$set": {"analyzed": True}
+            "$set": {"pathoscope": True}
         })
 
     @staticmethod
@@ -313,7 +313,7 @@ class PathoscopeBowtie(Pathoscope):
 
     """
     A Pathoscope analysis job that uses Bowtie2 to map reads to viral and host references. The ad-hoc isolate index
-    is build using ``bowtie2-build``.
+    is built using ``bowtie2-build``.
 
     """
     def __init__(self, *args, **kwargs):
@@ -769,9 +769,29 @@ class NuVs(Base):
 
         self.results["orfs"] = [orf for orf in self.results["orfs"] if orf["index"] in retained]
 
-        self.collection_operation("analyses", "set_analysis", {
-            "analysis_id": self.analysis_id,
-            "analysis": self.results
+        self.call_static("set_analysis", self.sample_id, self.analysis_id, self.results)
+
+        self.call_static("cleanup_index_files")
+
+    @staticmethod
+    async def set_analysis(manager, sample_id, analysis_id, data):
+        """
+        Update the analysis document identified using ``data``, which contains the analysis id and the update. Sets the
+        analysis' ``ready`` field to ``True``. Sets the parent sample's ``analyzed`` field to ``True`` and increments
+        its version by one.
+
+        """
+        db = manager.db
+
+        document = await db.analyses.find_one({"_id": analysis_id})
+        document.update(dict(data, ready=True))
+
+        await db.analyses.update({"_id": analysis_id}, {"$set": document})
+
+        await db.samples.update({"_id": sample_id}, {
+            "$set": {"nuvs": True}
         })
 
-        self.collection_operation("indexes", "cleanup_index_files")
+    @staticmethod
+    async def cleanup_index_files(manager):
+        await virtool.virus_index.cleanup_index_files(manager.db, manager.settings)
