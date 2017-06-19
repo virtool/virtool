@@ -1,11 +1,12 @@
 import re
 from pymongo import ReturnDocument
+from cerberus import Validator
 
 import virtool.utils
 import virtool.sample
 import virtool.analysis
 import virtool.sample_analysis
-from virtool.handlers.utils import unpack_json_request, json_response, bad_request, not_found
+from virtool.handlers.utils import unpack_json_request, json_response, bad_request, not_found, invalid_input
 
 
 async def find(req):
@@ -131,16 +132,24 @@ async def update(req):
     """
     data = await req.json()
 
-    valid_fields = ["name", "host", "isolate"]
+    v = Validator({
+        "name": {"type": "string"},
+        "host": {"type": "string"},
+        "isolate": {"type": "string"}
+    })
 
-    if not all(field in valid_fields for field in data.keys()):
-        return bad_request("Invalid field provided")
+    if not v(data):
+        return invalid_input(v.errors)
 
-    document = await req.app["db"].find_one_and_update({"_id": req.match_info["sample_id"]}, {
-        "$set": {field: data[field] for field in valid_fields}
-    }, return_document=ReturnDocument.AFTER)
+    document = await req.app["db"].samples.find_one_and_update({"_id": req.match_info["sample_id"]}, {
+        "$set": v.document
+    }, return_document=ReturnDocument.AFTER, projection=virtool.sample.LIST_PROJECTION)
 
-    return json_response(document)
+    processed = virtool.sample.processor(document)
+
+    await req.app["dispatcher"].dispatch("sample", "update", processed)
+
+    return json_response(processed)
 
 
 async def set_owner_group(req):

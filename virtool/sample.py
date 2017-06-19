@@ -14,6 +14,8 @@ PATHOSCOPE_TASK_NAMES = ["pathoscope_bowtie"]
 LIST_PROJECTION = [
     "_id",
     "name",
+    "host",
+    "isolate",
     "added",
     "user_id",
     "imported",
