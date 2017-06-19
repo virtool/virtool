@@ -23,6 +23,8 @@ async def update(req):
     """
     data = await req.json()
 
+    keys = data.keys()
+
     settings = req.app["settings"]
 
     v = Validator(SCHEMA)
@@ -30,7 +32,9 @@ async def update(req):
     if not v.validate(data):
         return invalid_input(v.errors)
 
-    document = v.document
+    document = {key: v.document[key] for key in keys}
+
+    print(document)
 
     settings.data.update(document)
 
