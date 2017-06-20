@@ -14,7 +14,7 @@ import { Row, Col, ListGroup, Label } from "react-bootstrap";
 import { getVirusHistory } from "../../actions";
 import { ListGroupItem, RelativeTime, Icon } from "virtool/js/components/Base";
 
-const formatChangeDescription = (change) => {
+export const formatChangeDescription = (change) => {
 
     const description = change.description;
 
