@@ -9,12 +9,12 @@
  * @exports Bar
  */
 
-import React from "react";
+import React, { PropTypes } from "react";
 import { assign, startsWith } from "lodash";
 import { connect } from "react-redux";
 import { withRouter } from "react-router-dom";
 import { LinkContainer } from "react-router-bootstrap";
-import { Navbar, Nav, NavItem, NavDropdown, MenuItem, ProgressBar } from "react-bootstrap";
+import { Navbar, Nav, NavItem, NavDropdown, MenuItem } from "react-bootstrap";
 
 import { logout } from "../actions";
 import { Icon, AutoProgressBar } from "virtool/js/components/Base"
@@ -98,8 +98,9 @@ const Bar = (props) => {
 };
 
 Bar.propTypes = {
-    user_id: React.PropTypes.string,
-    logout: React.PropTypes.func
+    pending: PropTypes.bool,
+    user_id: PropTypes.string,
+    logout: PropTypes.func
 };
 
 const mapStateToProps = (state) => {

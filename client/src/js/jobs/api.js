@@ -47,7 +47,7 @@ const jobsAPI = {
     },
 
     getResources: () => {
-        return Request.get(`/api/resources`);
+        return Request.get("/api/resources");
     },
 
     getCUDA: () => {

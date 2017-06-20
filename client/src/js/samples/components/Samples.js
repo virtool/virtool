@@ -1,5 +1,3 @@
-import { connect } from "react-redux";
-
 import React from "react";
 import { Switch, Route } from "react-router-dom";
 

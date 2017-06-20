@@ -1,8 +1,8 @@
-import React from "react";
+import React, { PropTypes } from "react";
 import Numeral from "numeral";
 import { connect } from "react-redux";
 import { Label, Table } from "react-bootstrap";
-import { Icon, Button, RelativeTime } from "virtool/js/components/Base";
+import { RelativeTime } from "virtool/js/components/Base";
 
 import { getAnalysis } from "../../actions";
 import { getTaskDisplayName } from "../../../utils";
@@ -12,11 +12,10 @@ import NuVsViewer from "./NuVs/Viewer";
 class AnalysisDetail extends React.Component {
 
     static propTypes = {
-        name: React.PropTypes.string,
-        algorithm: React.PropTypes.string,
-        timestamp: React.PropTypes.string,
-        username: React.PropTypes.string,
-        readCount: React.PropTypes.number
+        match: PropTypes.object,
+        name: PropTypes.string,
+        detail: PropTypes.object,
+        getAnalysis: PropTypes.func
     };
 
     componentDidMount () {

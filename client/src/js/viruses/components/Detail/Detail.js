@@ -30,6 +30,10 @@ const VirusSection = (props) => (
     </div>
 );
 
+VirusSection.propTypes = {
+    match: PropTypes.object
+};
+
 class VirusDetail extends React.Component {
 
     static propTypes = {
@@ -72,7 +76,7 @@ class VirusDetail extends React.Component {
                                 bsStyle="danger"
                                 name="remove"
                                 style={{fontSize: "18px"}}
-                                onClick={() => console.log(this.props.detail.name)}
+                                onClick={() => window.console.log(this.props.detail.name)}
                             />
                         </Flex>
                     </h3>

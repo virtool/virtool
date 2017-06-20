@@ -9,15 +9,15 @@
  * exports Isolates
  */
 
-import React from "react";
+import React, { PropTypes } from "react";
 import { connect } from "react-redux";
-import { withRouter, Switch, Redirect, Route } from "react-router-dom";
+import { withRouter, Redirect, Route } from "react-router-dom";
 import { LinkContainer } from "react-router-bootstrap";
 import { Badge, Row, Col, ListGroup } from "react-bootstrap";
 
 import { formatIsolateName } from "virtool/js/utils";
 import { showAddIsolate } from "../../actions";
-import { Flex, FlexItem, Icon, ListGroupItem } from "virtool/js/components/Base";
+import { FlexItem, Icon, ListGroupItem } from "virtool/js/components/Base";
 import IsolateDetail from "./IsolateDetail";
 
 const IsolateEditor = (props) => {
@@ -37,11 +37,13 @@ const IsolateEditor = (props) => {
         );
     });
 
+
+
     // Get the array of sequences from the isolate.
     // const sequenceData = activeIsolate && activeIsolate.hasOwnProperty("sequences") ? activeIsolate.sequences: [];
     return (
         <div>
-            <h4 style={{display: "flex", alignItems: "center", borderBottom: "1px solid #ddd", paddingBottom: "5px", marginBottom: "10px"}}>
+            <h4 style={{display: "flex", alignItems: "center"}} className="section-header">
                 <strong>
                     Isolates
                 </strong>
@@ -71,6 +73,13 @@ const IsolateEditor = (props) => {
             </Row>
         </div>
     );
+};
+
+IsolateEditor.propTypes = {
+    match: PropTypes.object,
+    virusId: PropTypes.string,
+    isolates: PropTypes.arrayOf(PropTypes.object),
+    showAddIsolate: PropTypes.func
 };
 
 const mapStateToProps = (state) => {

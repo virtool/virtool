@@ -79,7 +79,7 @@ class JobDetail extends React.Component {
                             bsStyle="danger"
                             name="remove"
                             style={{fontSize: "18px"}}
-                            onClick={() => console.log(detail.job_id)}
+                            onClick={() => window.console.log(detail.job_id)}
                         />
                     </Flex>
                 </h3>

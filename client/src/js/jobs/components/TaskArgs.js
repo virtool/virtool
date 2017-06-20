@@ -10,7 +10,7 @@
 import React, { PropTypes } from "react";
 import { Link } from "react-router-dom";
 import { mapValues, values } from "lodash";
-import { Table, Panel } from "react-bootstrap";
+import { Table } from "react-bootstrap";
 
 const TaskArgs = (props) => {
 
@@ -47,9 +47,6 @@ const TaskArgs = (props) => {
                     </tbody>
                 </Table>
             );
-
-
-
     }
 
     const rowComponents = values(mapValues(props.taskArgs, (value, key) =>
@@ -71,6 +68,7 @@ const TaskArgs = (props) => {
 
 TaskArgs.propTypes = {
     taskType: PropTypes.string,
+    taskArgs: PropTypes.object,
     args: PropTypes.object
 };
 

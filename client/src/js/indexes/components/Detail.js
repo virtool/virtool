@@ -14,7 +14,7 @@ import { Badge, ListGroup, ListGroupItem, PanelGroup, Panel, Table } from "react
 
 import { getIndex } from "../actions";
 import { formatChangeDescription } from "../../viruses/components/Detail/History";
-import { Flex, FlexItem, RelativeTime } from "virtool/js/components/Base";
+import { RelativeTime } from "virtool/js/components/Base";
 
 class IndexDetail extends React.Component {
 
@@ -60,7 +60,7 @@ class IndexDetail extends React.Component {
                 </Panel>
             );
         }, []);
-        
+
         return (
             <div>
                 <h3 className="view-header">
@@ -114,7 +114,6 @@ const mapStateToProps = (state) => {
 const mapDispatchToProps = (dispatch) => {
     return {
         onGet: (indexVersion) => {
-            console.log(indexVersion);
             dispatch(getIndex(indexVersion));
         }
     };

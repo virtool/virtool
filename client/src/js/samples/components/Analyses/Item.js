@@ -58,10 +58,12 @@ const AnalysisItem = (props) => {
 
 AnalysisItem.propTypes = {
     index_version: PropTypes.number,
+    user_id: PropTypes.string,
     algorithm: PropTypes.string,
     timestamp: PropTypes.string,
     userId: PropTypes.string,
     ready: PropTypes.bool,
+    canModify: PropTypes.bool,
     onClick: PropTypes.func
 };
 

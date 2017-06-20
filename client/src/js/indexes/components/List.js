@@ -24,6 +24,7 @@ class IndexesList extends React.Component {
         documents: PropTypes.arrayOf(PropTypes.object),
         totalCount: PropTypes.number,
         modifiedCount: PropTypes.number,
+        canRebuild: PropTypes.bool,
 
         onFind: PropTypes.func,
         onCreate: PropTypes.func

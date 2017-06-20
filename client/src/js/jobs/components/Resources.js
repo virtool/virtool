@@ -71,7 +71,7 @@ class JobsResources extends React.Component {
                     System Resources
                 </h3>
 
-                <h4 style={{display: "flex", alignItems: "center", borderBottom: "1px solid #ddd", paddingBottom: "5px", marginTop: "20px", marginBottom: "20px"}}>
+                <h4 style={{display: "flex", alignItems: "center", marginTop: "20px"}} className="section-header">
                     <strong>CPU Utilization</strong>
                 </h4>
 
@@ -94,7 +94,7 @@ class JobsResources extends React.Component {
                     </FlexItem>
                 </Flex>
 
-                <h4 style={{display: "flex", alignItems: "center", borderBottom: "1px solid #ddd", paddingBottom: "5px", marginTop: "20px", marginBottom: "20px"}}>
+                <h4 style={{display: "flex", alignItems: "center", marginTop: "20px"}} className="section-header">
                     <strong>Memory Utilization (GB)</strong>
                 </h4>
 

@@ -56,7 +56,7 @@ class SampleDetail extends React.Component {
                             name="remove"
                             tip="Remove Sample"
                             style={{fontSize: "18px"}}
-                            onClick={() => console.log(detail.name)}
+                            onClick={() => window.console.log(detail.name)}
                         />
                     </Flex>
                 </h3>

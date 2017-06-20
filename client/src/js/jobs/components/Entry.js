@@ -9,24 +9,25 @@
  * @exports JobEntry
  */
 
-import React from "react";
+import React, { PropTypes } from "react";
 import { capitalize } from "lodash";
 import { Row, Col } from "react-bootstrap";
-import { Icon, RelativeTime, ListGroupItem, ProgressBar } from "virtool/js/components/Base";
+import { Icon, RelativeTime, ProgressBar } from "virtool/js/components/Base";
 import { getTaskDisplayName } from "virtool/js/utils";
 
 export default class JobEntry extends React.Component {
 
     static propTypes = {
-        job_id: React.PropTypes.string.isRequired,
-        task: React.PropTypes.string.isRequired,
-        state: React.PropTypes.string.isRequired,
-        progress: React.PropTypes.number.isRequired,
-        added: React.PropTypes.string.isRequired,
-        user_id: React.PropTypes.string.isRequired,
+        job_id: PropTypes.string.isRequired,
+        task: PropTypes.string.isRequired,
+        state: PropTypes.string.isRequired,
+        progress: PropTypes.number.isRequired,
+        added: PropTypes.string.isRequired,
+        user_id: PropTypes.string.isRequired,
 
-        cancel: React.PropTypes.func,
-        remove: React.PropTypes.func
+        navigate: PropTypes.func,
+        cancel: PropTypes.func,
+        remove: PropTypes.func
     };
 
     cancel = (event) => {

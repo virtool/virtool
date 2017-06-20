@@ -37,6 +37,7 @@ class EditIsolate extends React.Component {
 
     static propTypes = {
         virusId: PropTypes.string,
+        isolateId: PropTypes.string,
         allowedSourceTypes: PropTypes.array,
         restrictSourceTypes: PropTypes.bool,
         show: PropTypes.bool,

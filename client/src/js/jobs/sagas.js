@@ -48,7 +48,7 @@ export function* findJobs (action) {
     yield setPending(bgFindJobs, action);
 }
 
-export function* bgFindJobs (action) {
+export function* bgFindJobs () {
     try {
         const response = yield call(jobsAPI.find);
         yield put({type: FIND_JOBS.SUCCEEDED, data: response.body});

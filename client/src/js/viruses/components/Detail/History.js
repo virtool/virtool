@@ -84,7 +84,7 @@ const HistoryList = (props) => {
                     name="undo"
                     bsStyle="primary"
                     tip="Revert"
-                    onClick={() => console.log("REVERT")}
+                    onClick={() => window.console.log("REVERT")}
                     pullRight
                 />
             );

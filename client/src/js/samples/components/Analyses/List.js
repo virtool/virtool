@@ -9,13 +9,13 @@
  * @exports AnalysisList
  */
 
-import React from "react";
+import React, { PropTypes } from "react";
 import { sortBy } from "lodash";
 import { connect } from "react-redux";
-import { Row, Col, Label, ListGroup, FormGroup, InputGroup, FormControl } from "react-bootstrap";
+import { ListGroup, FormGroup, InputGroup, FormControl } from "react-bootstrap";
 
 import { analyze } from "../../actions";
-import { Icon, Button, ListGroupItem, RelativeTime } from "virtool/js/components/Base";
+import { Icon, Button, ListGroupItem } from "virtool/js/components/Base";
 import AnalysisItem from "./Item";
 import CreateAnalysis from "./Create";
 
@@ -28,6 +28,14 @@ class AnalysesList extends React.Component {
             show: false
         };
     }
+
+    static propTypes = {
+        history: PropTypes.object,
+        account: PropTypes.object,
+        detail: PropTypes.object,
+        analyses: PropTypes.arrayOf(React.PropTypes.object),
+        onAnalyze: PropTypes.func
+    };
 
     render () {
 
@@ -46,11 +54,13 @@ class AnalysesList extends React.Component {
             // Sort by timestamp so the newest analyses are at the top.
             const sorted = sortBy(this.props.analyses, "timestamp").reverse();
 
+            const url = `/samples/${this.props.detail.sample_id}/analyses/${document.analysis_id}`;
+
             // The components that detail individual analyses.
             listContent = sorted.map(document =>
                 <AnalysisItem
                     key={document.analysis_id}
-                    onClick={() => this.props.history.push(`/samples/${this.props.detail.sample_id}/analyses/${document.analysis_id}`)}
+                    onClick={() => this.props.history.push(url)}
                     canModify={canModify}
                     {...document}
                 />
@@ -99,13 +109,6 @@ class AnalysesList extends React.Component {
         );
     }
 }
-
-AnalysesList.propTypes = {
-    account: React.PropTypes.object,
-    detail: React.PropTypes.object,
-    analyses: React.PropTypes.arrayOf(React.PropTypes.object),
-    onAnalyze: React.PropTypes.func
-};
 
 const mapStateToProps = (state) => {
     return {

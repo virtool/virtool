@@ -7,7 +7,7 @@
  *
  */
 
-import React from "react";
+import React, { PropTypes } from "react";
 import { connect } from "react-redux";
 import { Link, Route } from "react-router-dom";
 import { LinkContainer } from "react-router-bootstrap";
@@ -25,8 +25,9 @@ class VirusesList extends React.Component {
     }
 
     static propTypes = {
-        documents: React.PropTypes.arrayOf(React.PropTypes.object),
-        onFind: React.PropTypes.func
+        documents: PropTypes.arrayOf(React.PropTypes.object),
+        modifiedCount: PropTypes.number,
+        onFind: PropTypes.func
     };
 
     componentDidMount () {

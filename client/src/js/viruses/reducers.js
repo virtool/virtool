@@ -7,7 +7,7 @@
  *
  */
 
-import { merge, assign, concat, find, reject, findIndex } from "lodash";
+import { merge, assign, concat, find, reject } from "lodash";
 import {
     WS_UPDATE_VIRUS,
     WS_REMOVE_VIRUS,

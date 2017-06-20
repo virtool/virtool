@@ -9,8 +9,7 @@
  * @exports VirusGeneral
  */
 
-
-import React from "react";
+import React, { PropTypes } from "react";
 import { connect } from "react-redux";
 import { Table } from "react-bootstrap";
 import { InputCell } from "virtool/js/components/Base";
@@ -77,11 +76,14 @@ const VirusGeneral = (props) => {
 };
 
 VirusGeneral.propTypes = {
-    virusId: React.PropTypes.string.isRequired,
-    version: React.PropTypes.number.isRequired,
-    name: React.PropTypes.string.isRequired,
-    abbreviation: React.PropTypes.string,
-    canModify: React.PropTypes.bool
+    virusId: PropTypes.string.isRequired,
+    version: PropTypes.number.isRequired,
+    name: PropTypes.string.isRequired,
+    abbreviation: PropTypes.string,
+    canModify: PropTypes.bool,
+    showIds: PropTypes.bool,
+
+    onSave: PropTypes.func
 };
 
 const mapStateToProps = (state) => {
@@ -97,10 +99,10 @@ const mapStateToProps = (state) => {
     };
 };
 
-const mapDispatchToProps = (dispatch) => {
+const mapDispatchToProps = () => {
     return {
         onSave: (key, value) => {
-            console.log(key, value);
+            window.console.log(key, value);
         }
     };
 };

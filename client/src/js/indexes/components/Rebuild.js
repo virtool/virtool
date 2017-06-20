@@ -11,7 +11,6 @@
 
 import React, { PropTypes } from "react";
 import { Alert, Collapse } from "react-bootstrap";
-import { LinkContainer } from "react-router-bootstrap";
 
 import { Flex, FlexItem, Icon, Button } from "virtool/js/components/Base";
 

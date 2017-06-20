@@ -7,9 +7,9 @@
  *
  */
 
-import React from "react";
+import React, { PropTypes } from "react";
 import { Table, Label, Collapse } from "react-bootstrap";
-import { Icon, ListGroupItem, Input } from "virtool/js/components/Base";
+import { Icon, ListGroupItem } from "virtool/js/components/Base";
 
 class Sequence extends React.Component {
 
@@ -20,12 +20,23 @@ class Sequence extends React.Component {
         };
     }
 
+    static propTypes = {
+        accession: PropTypes.string,
+        definition: PropTypes.string,
+        host: PropTypes.string,
+        sequence: PropTypes.string
+    };
+
     render () {
 
         const accession = this.props.accession;
 
         return (
-            <ListGroupItem componentClass="div" key={accession} onClick={this.state.in ? null: () => this.setState({in: true})}>
+            <ListGroupItem
+                componentClass="div"
+                key={accession}
+                onClick={this.state.in ? null: () => this.setState({in: true})}
+            >
                 <div>
                     <Label>{accession}</Label> {this.props.definition}
                     <Icon

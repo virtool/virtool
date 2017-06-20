@@ -1,4 +1,4 @@
-import { wsUpdateJob, wsRemoveJob, findJobs } from "./jobs/actions";
+import { wsUpdateJob, wsRemoveJob } from "./jobs/actions";
 
 
 export default function WSConnection (dispatch) {
