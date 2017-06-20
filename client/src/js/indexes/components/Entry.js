@@ -61,12 +61,22 @@ export default class IndexEntry extends React.PureComponent {
         }
 
         return (
-            <ListGroupItem>
+            <ListGroupItem className="spaced">
                 <Row>
-                    <Col md={3}><Label>Version {this.props.index_version}</Label></Col>
-                    <Col md={3}>Created <RelativeTime time={this.props.timestamp} /></Col>
-                    <Col md={4}>{changeDescription}</Col>
-                    <Col md={2}>{ready}</Col>
+                    <Col md={3}>
+                        <Label>
+                            Version {this.props.index_version}
+                        </Label>
+                    </Col>
+                    <Col md={3}>
+                        Created <RelativeTime time={this.props.timestamp} />
+                    </Col>
+                    <Col md={4}>
+                        {changeDescription}
+                    </Col>
+                    <Col md={2}>
+                        {ready}
+                    </Col>
                 </Row>
             </ListGroupItem>
         );
