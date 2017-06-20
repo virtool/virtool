@@ -11,6 +11,7 @@
 
 
 import React from "react";
+import { LinkContainer } from "react-router-bootstrap";
 import { Row, Col, Label } from "react-bootstrap";
 import { Icon, RelativeTime, ListGroupItem } from "virtool/js/components/Base";
 
@@ -61,25 +62,26 @@ export default class IndexEntry extends React.PureComponent {
         }
 
         return (
-            <ListGroupItem className="spaced">
-                <Row>
-                    <Col md={3}>
-                        <Label>
-                            Version {this.props.index_version}
-                        </Label>
-                    </Col>
-                    <Col md={3}>
-                        Created <RelativeTime time={this.props.timestamp} />
-                    </Col>
-                    <Col md={4}>
-                        {changeDescription}
-                    </Col>
-                    <Col md={2}>
-                        {ready}
-                    </Col>
-                </Row>
-            </ListGroupItem>
+            <LinkContainer to={`/viruses/indexes/${this.props.index_version}`} className="spaced">
+                <ListGroupItem>
+                    <Row>
+                        <Col md={3}>
+                            <Label>
+                                Version {this.props.index_version}
+                            </Label>
+                        </Col>
+                        <Col md={3}>
+                            Created <RelativeTime time={this.props.timestamp} />
+                        </Col>
+                        <Col md={4}>
+                            {changeDescription}
+                        </Col>
+                        <Col md={2}>
+                            {ready}
+                        </Col>
+                    </Row>
+                </ListGroupItem>
+            </LinkContainer>
         );
     }
-
 }
