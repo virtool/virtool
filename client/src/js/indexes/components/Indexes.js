@@ -16,7 +16,7 @@ import { Alert } from "react-bootstrap";
 import { Flex, FlexItem, Icon } from "virtool/js/components/Base";
 import { findIndexes, createIndex } from "../actions";
 import IndexEntry from "./Entry";
-import RebuildIndex from "./Rebuild";
+import { RebuildIndex } from "./Rebuild";
 
 class Indexes extends React.Component {
 
@@ -65,6 +65,7 @@ class Indexes extends React.Component {
                     <RebuildIndex
                         canRebuild={this.props.canRebuild}
                         modifiedCount={this.props.modifiedCount}
+                        rebuild={this.props.onCreate}
                     />
 
                     <div className="list-group">
@@ -87,6 +88,10 @@ class Indexes extends React.Component {
 
         return (
             <div>
+                <h3>
+                    <strong>Indexes</strong>
+                </h3>
+
                 {content}
             </div>
         );
