@@ -7,7 +7,7 @@
  *
  */
 
-import { WS_UPDATE_INDEX, FIND_INDEXES, CREATE_INDEX, CLEAR_INDEX_ERROR } from "../actionTypes";
+import { WS_UPDATE_INDEX, FIND_INDEXES, GET_INDEX, CREATE_INDEX, CLEAR_INDEX_ERROR } from "../actionTypes";
 
 
 export function wsUpdateIndex (update) {
@@ -20,6 +20,13 @@ export function wsUpdateIndex (update) {
 export function findIndexes () {
     return {
         type: FIND_INDEXES.REQUESTED
+    };
+}
+
+export function getIndex (indexVersion) {
+    return {
+        type: GET_INDEX.REQUESTED,
+        indexVersion
     };
 }
 

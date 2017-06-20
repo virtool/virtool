@@ -7,13 +7,15 @@
  */
 
 import { assign, concat, find, reject } from "lodash";
-import { WS_UPDATE_INDEX, FIND_INDEXES, CREATE_INDEX, CLEAR_INDEX_ERROR } from "../actionTypes";
+import { WS_UPDATE_INDEX, FIND_INDEXES, GET_INDEX, CREATE_INDEX, CLEAR_INDEX_ERROR } from "../actionTypes";
 
 const initialState = {
     documents: null,
     modifiedCount: 0,
     totalCount: 0,
-    error: false
+    error: false,
+
+    detail: null
 };
 
 const indexesReducer = (state = initialState, action) => {
@@ -33,6 +35,16 @@ const indexesReducer = (state = initialState, action) => {
                 documents: action.data.documents,
                 modifiedCount: action.data.modified_virus_count,
                 totalCount: action.data.total_virus_count
+            });
+
+        case GET_INDEX.REQUESTED:
+            return assign({}, state, {
+                detail: null
+            });
+
+        case GET_INDEX.SUCCEEDED:
+            return assign({}, state, {
+                detail: action.data
             });
 
         case CREATE_INDEX.FAILED:

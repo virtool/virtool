@@ -11,10 +11,11 @@ import { call, put, takeEvery, takeLatest } from "redux-saga/effects";
 
 import indexesAPI from "./api";
 import { setPending } from "../wrappers";
-import { FIND_INDEXES, CREATE_INDEX }  from "../actionTypes";
+import { FIND_INDEXES, GET_INDEX, CREATE_INDEX }  from "../actionTypes";
 
 export function* watchIndexes () {
     yield takeLatest(FIND_INDEXES.REQUESTED, findIndexes);
+    yield takeLatest(GET_INDEX.REQUESTED, getIndex);
     yield takeEvery(CREATE_INDEX.REQUESTED, createIndex);
 }
 
@@ -25,6 +26,17 @@ export function* findIndexes (action) {
             yield put({type: FIND_INDEXES.SUCCEEDED, data: response.body});
         } catch (error) {
             yield put({type: FIND_INDEXES.FAILED}, error);
+        }
+    }, action);
+}
+
+export function* getIndex (action) {
+    yield setPending(function* (action) {
+        try {
+            const response = yield call(indexesAPI.get, action.indexVersion);
+            yield put({type: GET_INDEX.SUCCEEDED, data: response.body});
+        } catch (error) {
+            yield put({type: GET_INDEX.FAILED}, error);
         }
     }, action);
 }

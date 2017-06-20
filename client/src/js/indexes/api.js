@@ -15,6 +15,10 @@ const indexesAPI = {
         return Request.get("/api/indexes")
     },
 
+    get: (indexVersion) => {
+        return Request.get(`/api/indexes/${indexVersion}`);
+    },
+
     create: () => {
         return Request.post("/api/indexes");
     }
