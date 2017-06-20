@@ -14,7 +14,7 @@ VIRUS_PROJECTION = [
     "timestamp",
 ]
 
-DISPATCH_PROJECTION = [
+LIST_PROJECTION = [
     "_id",
     "description",
     "method_name",
@@ -27,7 +27,7 @@ DISPATCH_PROJECTION = [
     "index_version"
 ]
 
-PROJECTION = DISPATCH_PROJECTION + [
+PROJECTION = LIST_PROJECTION + [
     "diff"
 ]
 
