@@ -295,8 +295,7 @@ class Manager:
         :type error: dict or None
 
         """
-
-        document = await self.db.jobs.find_one_and_update({"_id": job_id}, {
+        update = {
             "$push": {
                 "status": {
                     "state": state,
@@ -306,7 +305,15 @@ class Manager:
                     "error": error
                 }
             }
-        }, return_document=ReturnDocument.AFTER, projection=virtool.job.PROJECTION)
+        }
+
+        if state in ["complete", "error", "cancelled"]:
+            update["$set"] = {
+                "finished": True
+            }
+
+        document = await self.db.jobs.find_one_and_update({"_id": job_id}, update, return_document=ReturnDocument.AFTER,
+                                                          projection=virtool.job.PROJECTION)
 
         if not document:
             raise virtool.errors.DatabaseError("Job does not exist: '{}'".format(job_id))

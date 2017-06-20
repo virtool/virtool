@@ -1,5 +1,4 @@
 import os
-from cerberus import Validator
 
 import virtool.utils
 from virtool.job import PROJECTION, processor, dispatch_processor
@@ -68,13 +67,6 @@ async def remove(req):
     if not document:
         return not_found()
 
-    '''
-
-    if not document["status"][-1]["state"] in ["waiting", "running"]:
-        return bad_request("Not cancellable")
-        
-    '''
-
     # Removed the documents associated with the job ids from the database.
     await db.jobs.delete_one({"_id": job_id})
 
@@ -87,6 +79,29 @@ async def remove(req):
 
     return json_response({
         "removed": job_id
+    })
+
+
+async def clear(req):
+    db = req.app["db"]
+
+    query = {
+        "finished": True
+    }
+
+    if req.path == "/api/jobs/complete":
+        query["status.state"] = "complete"
+
+    if req.path == "/api/jobs/failed":
+        query["$or"] = [
+            {"status.state": "error"},
+            {"status.state": "cancelled"}
+        ]
+
+    response = await db.jobs.delete_many(query)
+
+    return json_response({
+        "deleted_count": response.deleted_count
     })
 
 
