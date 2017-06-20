@@ -17,6 +17,7 @@ import {
     GET_JOB,
     CANCEL_JOB,
     REMOVE_JOB,
+    CLEAR_JOBS,
     TEST_JOB,
     GET_RESOURCES,
     GET_CUDA
@@ -28,6 +29,7 @@ export function* watchJobs () {
     yield takeLatest(GET_JOB.REQUESTED, getJob);
     yield takeEvery(CANCEL_JOB.REQUESTED, cancelJob);
     yield takeEvery(REMOVE_JOB.REQUESTED, removeJob);
+    yield takeLatest(CLEAR_JOBS.REQUESTED, clearJobs);
     yield takeLatest(TEST_JOB.REQUESTED, testJob);
     yield takeLatest(GET_RESOURCES.REQUESTED, getResources);
     yield takeLatest(GET_CUDA.REQUESTED, getCUDA);
@@ -84,6 +86,18 @@ export function* removeJob (action) {
         try {
             yield call(jobsAPI.remove, action.jobId);
             yield put({type: REMOVE_JOB.SUCCEEDED, jobId: action.jobId});
+        } catch (error) {
+            yield put({type: REMOVE_JOB.FAILED}, error);
+        }
+    }, action);
+}
+
+export function* clearJobs (action) {
+    yield setPending(function* (action) {
+        try {
+            yield call(jobsAPI.clear, action.scope);
+            yield put({type: REMOVE_JOB.SUCCEEDED});
+            yield put({type: FIND_JOBS.REQUESTED});
         } catch (error) {
             yield put({type: REMOVE_JOB.FAILED}, error);
         }

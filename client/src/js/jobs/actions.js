@@ -14,6 +14,7 @@ import {
     GET_JOB,
     CANCEL_JOB,
     REMOVE_JOB,
+    CLEAR_JOBS,
     TEST_JOB,
     GET_RESOURCES,
     GET_CUDA
@@ -51,12 +52,19 @@ export const cancelJob = (jobId) => {
         type: CANCEL_JOB.REQUESTED,
         jobId
     };
-}
+};
 
 export const removeJob = (jobId) => {
     return {
         type: REMOVE_JOB.REQUESTED,
         jobId
+    };
+};
+
+export const clearJobs = (scope) => {
+    return {
+        type: CLEAR_JOBS.REQUESTED,
+        scope
     };
 };
 

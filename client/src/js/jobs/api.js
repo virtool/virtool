@@ -27,6 +27,20 @@ const jobsAPI = {
         return Request.delete(`/api/jobs/${jobId}`);
     },
 
+    clear: (scope) => {
+        let url = "/api/jobs";
+
+        if (scope === "complete") {
+            url = "/api/jobs/complete";
+        }
+
+        if (scope === "failed") {
+            url = "/api/jobs/failed";
+        }
+
+        return Request.delete(url)
+    },
+
     test: (options = {}) => {
         return Request.post("/api/jobs/test")
             .send(options);

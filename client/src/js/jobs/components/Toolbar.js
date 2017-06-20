@@ -9,62 +9,79 @@
  * @exports JobsToolbar
  */
 
-import React from "react";
+import React, { PropTypes } from "react";
 import { connect } from "react-redux";
 import { LinkContainer } from "react-router-bootstrap";
 import {InputGroup, FormGroup, FormControl, Dropdown, MenuItem} from "react-bootstrap";
 
-import { test } from "../actions";
+import { test, clearJobs } from "../actions";
 import { Icon, Button } from "virtool/js/components/Base";
 
-class JobsToolbar extends React.Component {
+const JobsToolbar = (props) => {
 
-    render () {
+    let removalDropdown;
 
-        let removalDropdown;
-
+    if (props.canRemove) {
         removalDropdown = (
-            <Dropdown id="job-clear-dropdown" onSelect={this.handleSelect} className="split-dropdown" pullRight>
-                <Button onClick={this.clear} tip="Clear Finished">
-                    <Icon name="remove" />
+            <Dropdown id="job-clear-dropdown" className="split-dropdown" pullRight>
+                <Button onClick={() => props.onClear()} tip="Clear Finished">
+                    <Icon name="remove"/>
                 </Button>
                 <Dropdown.Toggle />
                 <Dropdown.Menu>
-                    <MenuItem eventKey="removeFailed">Failed</MenuItem>
-                    <MenuItem eventKey="removeComplete">Complete</MenuItem>
+                    <MenuItem eventKey="removeFailed" onClick={() => props.onClear("failed")}>
+                        Failed
+                    </MenuItem>
+                    <MenuItem eventKey="removeComplete" onClick={() => props.onClear("complete")}>
+                        Complete
+                    </MenuItem>
                 </Dropdown.Menu>
             </Dropdown>
         );
-
-        return (
-            <div className="toolbar">
-                <FormGroup>
-                    <InputGroup>
-                        <InputGroup.Addon>
-                            <Icon name="search" />
-                        </InputGroup.Addon>
-                        <FormControl />
-                    </InputGroup>
-                </FormGroup>
-
-                <Button icon="lab" onClick={this.props.onTest} tip="Run Test" />
-
-                <LinkContainer to="/jobs/resources">
-                    <Button icon="meter" tip="Resources" />
-                </LinkContainer>
-            </div>
-        );
     }
-}
+
+    return (
+        <div className="toolbar">
+            <FormGroup>
+                <InputGroup>
+                    <InputGroup.Addon>
+                        <Icon name="search" />
+                    </InputGroup.Addon>
+                    <FormControl />
+                </InputGroup>
+            </FormGroup>
+
+            <Button icon="lab" onClick={props.onTest} tip="Run Test" />
+
+            <LinkContainer to="/jobs/resources">
+                <Button icon="meter" tip="Resources" />
+            </LinkContainer>
+
+            {removalDropdown}
+        </div>
+    );
+};
+
+JobsToolbar.propTypes = {
+    canRemove: PropTypes.bool,
+    onClear: PropTypes.func,
+    onTest: PropTypes.func
+};
 
 const mapStateToProps = (state) => {
-    return {};
+    return {
+        canRemove: state.account.permissions.remove_job
+    };
 };
 
 const mapDispatchToProps = (dispatch) => {
     return {
         onTest: () => {
             dispatch(test({long: true}));
+        },
+
+        onClear: (scope) => {
+            dispatch(clearJobs(scope));
         }
     };
 };
