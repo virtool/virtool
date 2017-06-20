@@ -51,6 +51,12 @@ class SamplesList extends React.Component {
 
         return (
             <div>
+                <h3 className="view-header">
+                    <strong>
+                        Samples
+                    </strong>
+                </h3>
+
                 <SampleToolbar />
 
                 <ListGroup>

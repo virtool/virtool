@@ -9,9 +9,10 @@
 
 import React, { PropTypes } from "react";
 import { connect } from "react-redux";
-import { ListGroup } from "react-bootstrap";
+import { ListGroup, ListGroupItem } from "react-bootstrap";
 
 import { findJobs, cancelJob, removeJob } from "../actions";
+import { Flex, FlexItem, Icon } from "virtool/js/components/Base";
 import Job from "./Entry";
 import JobsToolbar from "./Toolbar";
 
@@ -35,7 +36,7 @@ class JobsList extends React.Component {
             return <div />;
         }
 
-        const components = this.props.documents.map(doc =>
+        let components = this.props.documents.map(doc =>
             <Job
                 key={doc.job_id}
                 {...doc}
@@ -45,9 +46,27 @@ class JobsList extends React.Component {
             />
         );
 
+        if (!components.length) {
+            components = (
+                <ListGroupItem>
+                    <Flex justifyContent="center" alignItems="center">
+                        <Icon name="info" />
+                        <FlexItem pad={5}>
+                            No Jobs Found
+                        </FlexItem>
+                    </Flex>
+                </ListGroupItem>
+            )
+        }
+
         return (
             <div>
+                <h3 className="view-header">
+                    <strong>Jobs</strong>
+                </h3>
+
                 <JobsToolbar />
+
                 <ListGroup>
                     {components}
                 </ListGroup>

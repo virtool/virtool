@@ -84,7 +84,7 @@ class VirusesList extends React.Component {
 
         return (
             <div>
-                <h3>
+                <h3 className="view-header">
                     <strong>
                         Viruses
                     </strong>

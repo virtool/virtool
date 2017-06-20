@@ -88,8 +88,8 @@ class Indexes extends React.Component {
 
         return (
             <div>
-                <h3>
-                    <strong>Indexes</strong>
+                <h3 className="view-header">
+                    <strong>Virus Indexes</strong>
                 </h3>
 
                 {content}
