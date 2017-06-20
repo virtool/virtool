@@ -1,9 +1,10 @@
 from pymongo import ReturnDocument
 
+import virtool.virus_history
 from virtool.handlers.utils import unpack_json_request, json_response, bad_request, not_found, protected
-from virtool.utils import timestamp
-from virtool.utils import get_new_id
+from virtool.utils import get_new_id, timestamp
 from virtool.virus_index import get_current_index_version, PROJECTION, processor
+
 
 
 async def find(req):
@@ -30,14 +31,30 @@ async def get(req):
     Get the complete document for a given index.
     
     """
-    index_id = req.match_info["index_id"]
+    db = req.app["db"]
 
-    document = await req["db"].find_one(index_id, projection=projection)
+    index_id_or_version = req.match_info["index_id_or_version"]
+
+    try:
+        document = await db.indexes.find_one({"index_version": int(index_id_or_version)})
+    except ValueError:
+        document = await db.indexes.find_one(index_id_or_version)
 
     if not document:
         return not_found()
 
-    return json_response(processor(document))
+    document = processor(document)
+
+    changes = await db.history.find(
+        {"index_id": document["index_id"]},
+        virtool.virus_history.LIST_PROJECTION
+    ).to_list(length=15)
+
+    changes = [virtool.virus_history.processor(c) for c in changes]
+
+    document["changes "] = changes
+
+    return json_response(document)
 
 
 @protected("rebuild_index")

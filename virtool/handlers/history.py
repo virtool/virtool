@@ -12,7 +12,7 @@ async def find(req):
     """
     db = req.app["db"]
 
-    documents = await db.history.find({}, virtool.virus_history.DISPATCH_PROJECTION).to_list(length=15)
+    documents = await db.history.find({}, virtool.virus_history.LIST_PROJECTION).to_list(length=15)
 
     return json_response([virtool.virus_history.processor(document) for document in documents])
 
