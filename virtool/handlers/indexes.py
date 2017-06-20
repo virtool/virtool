@@ -52,7 +52,7 @@ async def get(req):
 
     changes = [virtool.virus_history.processor(c) for c in changes]
 
-    document["changes "] = changes
+    document["changes"] = changes
 
     return json_response(document)
 
