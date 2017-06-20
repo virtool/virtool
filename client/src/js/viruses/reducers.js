@@ -66,18 +66,19 @@ export function virusesReducer (state = virusesInitialState, action) {
             });
 
         case FIND_VIRUSES.REQUESTED:
-            return assign({}, state, assign({finding: true}, action.terms));
+            return assign({}, state, action.terms);
 
         case FIND_VIRUSES.SUCCEEDED:
             return assign({}, state, {
-                documents: action.data,
-                finding: false
+                documents: action.data.documents,
+                page: action.data.page,
+                modifiedCount: action.data.modified_count,
+                count: action.data.count
             });
 
         case FIND_VIRUSES.FAILED:
             return assign({}, state, {
-                viruses: [],
-                finding: false
+                viruses: []
             });
 
         case GET_VIRUS.REQUESTED:
