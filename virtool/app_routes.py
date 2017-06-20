@@ -124,6 +124,7 @@ def setup_routes(app):
 
     # Indexes Routes
     app.router.add_get("/api/indexes", indexes.find)
+    app.router.add_get("/api/indexes/{index_id_or_version}", indexes.get)
 
     # History Routes
     app.router.add_get("/api/history", history.find)

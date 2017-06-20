@@ -78,7 +78,9 @@ async def init_db(app):
     app["db"] = motor_asyncio.AsyncIOMotorClient(io_loop=app.loop)[app["db_name"]]
 
     await app["db"].viruses.create_index("modified")
+    await app["db"].indexes.create_index("index_version", unique=True)
     await app["db"].history.create_index("virus_id")
+    await app["db"].history.create_index("index_id")
 
 
 async def init_job_manager(app):
