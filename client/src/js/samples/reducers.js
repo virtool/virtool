@@ -20,9 +20,8 @@ import {
 } from "../actionTypes";
 
 const initialState = {
-    list: null,
+    documents: null,
     detail: null,
-    pendingUpdate: null,
 
     analyses: null,
     analysisDetail: null
@@ -47,7 +46,11 @@ export default function reducer (state = initialState, action) {
 
         case FIND_SAMPLES.SUCCEEDED:
             return assign({}, state, {
-                list: action.data
+                documents: action.data.documents,
+                totalCount: action.data.total_count,
+                foundCount: action.data.found_count,
+                pageCount: action.data.page_count,
+                page: action.data.page
             });
 
         case GET_SAMPLE.REQUESTED:

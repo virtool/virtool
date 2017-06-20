@@ -1,38 +1,68 @@
+import React, { PropTypes } from "react";
+import URI from "urijs";
 import { connect } from "react-redux";
-
-import React from "react";
-import { ListGroup } from "react-bootstrap";
+import { Badge, ListGroup, Pagination } from "react-bootstrap";
 
 import { findSamples } from "../actions";
-import { Icon, ListGroupItem } from "virtool/js/components/Base";
+import { Flex, FlexItem, Icon, ListGroupItem } from "virtool/js/components/Base";
 import SampleEntry from "./Entry";
 import SampleToolbar from "./Toolbar";
 
 class SamplesList extends React.Component {
 
-    constructor (props) {
-        super(props);
-        this.state = {
-            term: ""
-        };
-    }
-
     static propTypes = {
-        samples: React.PropTypes.arrayOf(React.PropTypes.object),
-        findSamples: React.PropTypes.func
+        match: PropTypes.object,
+        location: PropTypes.object,
+        history: PropTypes.object,
+        samples: PropTypes.arrayOf(React.PropTypes.object),
+        totalCount: PropTypes.number,
+        foundCount: PropTypes.number,
+        page: PropTypes.number,
+        onFind: PropTypes.func
     };
 
     componentDidMount () {
-        if (this.props.samples === null) {
-            this.props.findSamples(this.state.term);
+        this.props.onFind(this.props.location);
+    }
+
+    componentDidUpdate (prevProps) {
+        if (prevProps.location !== this.props.location) {
+            this.props.onFind(this.props.location);
         }
     }
 
+    handleTermChange = (value) => {
+        const url = new URI(this.props.location.pathname + this.props.location.search);
+
+        if (value) {
+            url.setSearch("find", value);
+        } else {
+            url.removeSearch("find");
+        }
+
+        this.props.history.push(url.toString());
+    };
+
+    handleSelect = (eventKey) => {
+        const url = new URI(this.props.location.pathname + this.props.location.search);
+        url.setSearch({page: eventKey});
+
+        this.props.history.push(url.toString());
+    };
+
     render () {
+
+        if (this.props.samples === null) {
+            return <div />;
+        }
+
+        const term = this.props.match.params.term;
+
+        const samplesCount = this.props.samples.length;
 
         let sampleComponents;
 
-        if (this.props.samples && this.props.samples.length) {
+        if (samplesCount) {
             sampleComponents = this.props.samples.map(document =>
                 <SampleEntry
                     key={document.sample_id}
@@ -49,19 +79,42 @@ class SamplesList extends React.Component {
             );
         }
 
+        const first = 1 + (this.props.page - 1) * 15;
+        const last = first + (samplesCount < 15 ? samplesCount - 1: 14);
+
         return (
             <div>
                 <h3 className="view-header">
-                    <strong>
-                        Samples
-                    </strong>
+                    <Flex alignItems="flex-end">
+                        <FlexItem grow={1}>
+                            <strong>
+                                Samples <Badge>{this.props.totalCount}</Badge>
+                            </strong>
+                        </FlexItem>
+
+                        <span className="text-muted pull-right" style={{fontSize: "12px"}}>
+                            Viewing {first} - {last} of {this.props.foundCount}
+                        </span>
+                    </Flex>
                 </h3>
 
-                <SampleToolbar />
+                <SampleToolbar term={term} onTermChange={this.handleTermChange} />
 
                 <ListGroup>
                     {sampleComponents}
                 </ListGroup>
+
+                <div className="text-center">
+                    <Pagination
+                        onSelect={this.handleSelect}
+                        items={this.props.pageCount}
+                        activePage={this.props.page}
+                        first
+                        last
+                        next
+                        prev
+                    />
+                </div>
             </div>
         );
     }
@@ -69,14 +122,22 @@ class SamplesList extends React.Component {
 
 const mapStateToProps = (state) => {
     return {
-        samples: state.samples.list
+        term: state.samples.term,
+        samples: state.samples.documents,
+        totalCount: state.samples.totalCount,
+        foundCount: state.samples.foundCount,
+        pageCount: state.samples.pageCount,
+        page: state.samples.page
     };
 };
 
 const mapDispatchToProps = (dispatch) => {
     return {
-        findSamples: (term) => {
-            dispatch(findSamples(term));
+        onFind: (location) => {
+            const uri = new URI(location.search);
+            const query = uri.search(true);
+
+            dispatch(findSamples(query.find, query.page));
         }
     };
 };

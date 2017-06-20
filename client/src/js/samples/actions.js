@@ -9,10 +9,11 @@
 
 import { FIND_SAMPLES, GET_SAMPLE, UPDATE_SAMPLE, FIND_ANALYSES, GET_ANALYSIS, ANALYZE } from "../actionTypes";
 
-export const findSamples = (term) => {
+export const findSamples = (term, page) => {
     return {
         type: FIND_SAMPLES.REQUESTED,
-        term: term
+        term,
+        page
     };
 };
 

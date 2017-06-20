@@ -7,14 +7,14 @@
  *
  */
 
-import { call, put, takeEvery, takeLatest } from "redux-saga/effects";
+import { call, put, takeEvery, takeLatest, throttle } from "redux-saga/effects";
 
 import samplesAPI from "./api";
 import { setPending } from "../wrappers";
 import { FIND_SAMPLES, GET_SAMPLE, UPDATE_SAMPLE, FIND_ANALYSES, GET_ANALYSIS, ANALYZE }  from "../actionTypes";
 
 export function* watchSamples () {
-    yield takeLatest(FIND_SAMPLES.REQUESTED, findSamples);
+    yield throttle(500, FIND_SAMPLES.REQUESTED, findSamples);
     yield takeLatest(GET_SAMPLE.REQUESTED, getSample);
     yield takeEvery(UPDATE_SAMPLE.REQUESTED, updateSample);
     yield takeLatest(FIND_ANALYSES.REQUESTED, findAnalyses);
@@ -25,7 +25,7 @@ export function* watchSamples () {
 export function* findSamples (action) {
     yield setPending(function* (action) {
         try {
-            const response = yield call(samplesAPI.find, action.term);
+            const response = yield call(samplesAPI.find, action.term, action.page);
             yield put({type: FIND_SAMPLES.SUCCEEDED, data: response.body});
         } catch (error) {
             yield put({type: FIND_SAMPLES.FAILED, error});

@@ -11,12 +11,14 @@ import Request from "superagent";
 
 const samplesAPI = {
 
-    find: (term) => {
+    find: (term, page) => {
         const params = {};
 
         if (term) {
             params["find"] = term;
         }
+
+        params["page"] = page;
 
         return Request.get("/api/samples")
             .query(params);
