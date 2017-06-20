@@ -52,6 +52,8 @@ async def find(req):
     List truncated virus documents. Will take filters in URL parameters eventually.
 
     """
+    db = req.app["db"]
+
     page = req.query.get("page", 1)
     find_term = req.query.get("find", None)
     modified = virtool.utils.to_bool(req.query.get("modified", False))
@@ -73,7 +75,10 @@ async def find(req):
     if descending:
         sort_direction = -1
 
-    cursor = req.app["db"].viruses.find(
+    count = await db.viruses.count()
+    modified_count = await db.viruses.count({"modified": True})
+
+    cursor = db.viruses.find(
         query,
         virtool.virus.LIST_PROJECTION,
         sort=[(sort_term, sort_direction)]
@@ -81,7 +86,12 @@ async def find(req):
 
     documents = await cursor.to_list(length=15)
 
-    return json_response([virtool.virus.processor(document) for document in documents])
+    return json_response({
+        "documents": [virtool.virus.processor(document) for document in documents],
+        "count": count,
+        "modified_count": modified_count,
+        "page": page
+    })
 
 
 async def get(req):
