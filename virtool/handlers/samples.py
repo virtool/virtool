@@ -1,4 +1,5 @@
 import re
+import math
 from pymongo import ReturnDocument
 from cerberus import Validator
 
@@ -11,10 +12,13 @@ from virtool.handlers.utils import unpack_json_request, json_response, bad_reque
 
 async def find(req):
     """
-    List truncated virus documents. Will take filters in URL parameters eventually.
+    List truncated virus documents.
 
     """
+    db = req.app["db"]
+
     find_term = req.query.get("find", None)
+    page = int(req.query.get("page", 1))
 
     query = dict()
 
@@ -22,15 +26,28 @@ async def find(req):
         regex = re.compile("{}".format(find_term), re.IGNORECASE)
         query["$or"] = [{field: {"$regex": regex}} for field in ["name", "abbreviation"]]
 
-    documents = await req.app["db"].samples.find(
+    total_count = await db.samples.count()
+
+    cursor = db.samples.find(
         query,
         virtool.sample.LIST_PROJECTION,
         sort=[("name", 1)]
-    ).to_list(length=15)
+    )
 
-    processed = [virtool.sample.processor(document) for document in documents]
+    found_count = await cursor.count()
 
-    return json_response(processed)
+    if page > 1:
+        cursor.skip((page - 1) * 15)
+
+    documents = [virtool.sample.processor(document) for document in await cursor.to_list(15)]
+
+    return json_response({
+        "documents": documents,
+        "total_count": total_count,
+        "found_count": found_count,
+        "page": page,
+        "page_count": int(math.ceil(found_count / 15))
+    })
 
 
 async def create(req):
