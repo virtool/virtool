@@ -11,22 +11,18 @@
 
 import React, { PropTypes } from "react";
 import { Alert, Collapse } from "react-bootstrap";
+import { LinkContainer } from "react-router-bootstrap";
 
 import { Flex, FlexItem, Icon, Button } from "virtool/js/components/Base";
 
-const RebuildAlert = (props) => {
+export const RebuildAlert = (props) => {
 
     let button;
 
     if (props.canRebuild) {
         button = (
             <FlexItem pad={20}>
-                <Button
-                    bsStyle="warning"
-                    icon="hammer"
-                    onClick={props.rebuild}
-                    pullRight
-                >
+                <Button bsStyle="warning" icon="hammer" onClick={props.rebuild} pullRight>
                     Rebuild
                 </Button>
             </FlexItem>
@@ -53,14 +49,13 @@ const RebuildAlert = (props) => {
 
 RebuildAlert.propTypes = {
     canRebuild: PropTypes.bool,
-    rebuild: PropTypes.func
+    rebuild: PropTypes.func.isRequired
 };
 
-const RebuildIndex = (props) => {
+export const RebuildIndex = (props) => {
 
     let alert;
 
-    // Show a notification
     if (props.modifiedCount > 0) {
         alert = <RebuildAlert {...props} />;
     } else {
@@ -79,6 +74,7 @@ const RebuildIndex = (props) => {
     return (
         <div>
             {alert}
+
             <Collapse in={props.error}>
                 <div>
                     <Alert bsStyle="danger" onDismiss={props.dismissError}>
@@ -101,5 +97,3 @@ RebuildIndex.propTypes = {
     dismissError: PropTypes.func,
     rebuild: PropTypes.func
 };
-
-export default RebuildIndex;

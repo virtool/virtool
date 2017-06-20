@@ -9,12 +9,12 @@
 
 import React from "react";
 import { connect } from "react-redux";
-import { Route } from "react-router-dom";
+import { Link, Route } from "react-router-dom";
 import { LinkContainer } from "react-router-bootstrap";
-import { Row, Col, ListGroup } from "react-bootstrap";
+import { Row, Col, Alert, ListGroup } from "react-bootstrap";
 
 import { findViruses } from "../actions";
-import { Icon, ListGroupItem } from "virtool/js/components/Base";
+import { Flex, FlexItem, Icon, ListGroupItem } from "virtool/js/components/Base";
 import VirusToolbar from "./Toolbar";
 import CreateVirus from "./Create";
 
@@ -65,8 +65,33 @@ class VirusesList extends React.Component {
             );
         }
 
+        let alert;
+
+        if (this.props.modifiedCount) {
+            alert = (
+                <Alert bsStyle="warning">
+                    <Flex alignItems="center">
+                        <Icon name="info" />
+                        <FlexItem pad={5}>
+                            <span>The virus database has changed. </span>
+                            <Link to="/viruses/indexes">Rebuild the index</Link>
+                            <span> to use the changes in further analyses.</span>
+                        </FlexItem>
+                    </Flex>
+                </Alert>
+            );
+        }
+
         return (
             <div>
+                <h3>
+                    <strong>
+                        Viruses
+                    </strong>
+                </h3>
+
+                {alert}
+
                 <VirusToolbar {...this.props} />
 
                 <ListGroup>
@@ -90,6 +115,7 @@ const mapStateToProps = (state) => {
         sort: state.viruses.sort,
         descending: state.viruses.descending,
         modified: state.viruses.modified,
+        modifiedCount: state.viruses.modifiedCount,
         account: state.account
     };
 };
