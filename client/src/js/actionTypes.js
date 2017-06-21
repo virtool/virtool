@@ -64,13 +64,13 @@ export const GET_INDEX = createRequestActionType("GET_INDEX");
 export const CREATE_INDEX = createRequestActionType("CREATE_INDEX");
 export const CLEAR_INDEX_ERROR = "CLEAR_INDEX_ERROR";
 
-// Hosts
-export const WS_UPDATE_HOST = "WS_UPDATE_HOST";
-export const WS_REMOVE_HOST = "WS_REMOVE_HOST";
+// Subtraction
+export const WS_UPDATE_SUBTRACTION = "WS_UPDATE_SUBTRACTION";
+export const WS_REMOVE_SUBTRACTION = "WS_REMOVE_SUBTRACTION";
 
-export const FIND_HOSTS = createRequestActionType("FIND_HOSTS");
-export const GET_HOST = createRequestActionType("GET_HOST");
-export const REMOVE_HOST = createRequestActionType("REMOVE_HOST");
+export const FIND_SUBTRACTIONS = createRequestActionType("FIND_SUBTRACTIONS");
+export const GET_SUBTRACTION = createRequestActionType("GET_SUBTRACTION");
+export const REMOVE_SUBTRACTION = createRequestActionType("REMOVE_SUBTRACTION");
 
 // Account
 export const GET_ACCOUNT_REQUESTED = "GET_ACCOUNT_REQUESTED";

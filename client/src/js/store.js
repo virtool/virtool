@@ -16,6 +16,7 @@ import jobsReducer from "./jobs/reducers";
 import samplesReducer from "./samples/reducers";
 import indexesReducer from "./indexes/reducers";
 import virusesReducer from "./viruses/reducers";
+import subtractionReducer from "./subtraction/reducers";
 import accountReducer from "./nav/reducers";
 import settingsReducer from "./settings/reducers";
 import usersReducer from "./settings/users/reducers";
@@ -49,6 +50,7 @@ const reducer = combineReducers({
     samples: samplesReducer,
     viruses: virusesReducer,
     indexes: indexesReducer,
+    subtraction: subtractionReducer,
     settings: settingsReducer,
     users: usersReducer,
     groups: groupsReducer,

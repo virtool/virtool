@@ -12,6 +12,7 @@ import { watchJobs } from "./jobs/sagas";
 import { watchSamples } from "./samples/sagas"
 import { watchViruses } from "./viruses/sagas"
 import { watchIndexes } from "./indexes/sagas"
+import { watchSubtraction } from "./subtraction/sagas"
 import { watchAccount } from "./nav/sagas"
 import { watchSettings, watchUpdateSettings } from "./settings/sagas"
 import { watchUsers } from "./settings/users/sagas";
@@ -23,6 +24,7 @@ export default function* rootSaga () {
         fork(watchSamples),
         fork(watchViruses),
         fork(watchIndexes),
+        fork(watchSubtraction),
         fork(watchAccount),
         fork(watchSettings),
         fork(watchUpdateSettings),
