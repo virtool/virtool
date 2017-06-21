@@ -1,7 +1,6 @@
 import React, { PropTypes } from "react";
 import { LinkContainer } from "react-router-bootstrap";
 
-import { findSamples } from "../actions";
 import { FormGroup, InputGroup, FormControl } from "react-bootstrap";
 import { Icon, Button } from "virtool/js/components/Base";
 

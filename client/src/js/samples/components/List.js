@@ -17,6 +17,7 @@ class SamplesList extends React.Component {
         samples: PropTypes.arrayOf(React.PropTypes.object),
         totalCount: PropTypes.number,
         foundCount: PropTypes.number,
+        pageCount: PropTypes.number,
         page: PropTypes.number,
         onFind: PropTypes.func
     };
