@@ -28,6 +28,11 @@ class VirusesList extends React.Component {
     static propTypes = {
         history: PropTypes.object,
         location: PropTypes.object,
+        account: PropTypes.object,
+        page: PropTypes.number,
+        pageCount: PropTypes.number,
+        totalCount: PropTypes.number,
+        foundCount: PropTypes.number,
         documents: PropTypes.arrayOf(React.PropTypes.object),
         modifiedCount: PropTypes.number,
         onFind: PropTypes.func

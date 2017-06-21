@@ -7,8 +7,7 @@
  *
  */
 
-import { pick } from "lodash";
-import { call, put, select, takeEvery, takeLatest } from "redux-saga/effects";
+import { call, put, takeEvery, takeLatest } from "redux-saga/effects";
 
 import virusesAPI from "./api";
 import { setPending } from "../wrappers";
@@ -23,10 +22,6 @@ import {
     SET_APP_PENDING,
     UNSET_APP_PENDING
 }  from "../actionTypes";
-
-const getFindParams = state => {
-    return pick(state.viruses, ["find", "sort", "descending", "modified"]);
-};
 
 export function* watchViruses () {
     yield takeLatest(FIND_VIRUSES.REQUESTED, findViruses);
