@@ -1,4 +1,4 @@
-import virtool.host
+import virtool.subtraction
 import virtool.virus_index
 import virtool.sample
 import virtool.job_analysis
@@ -10,7 +10,7 @@ TASK_CLASSES = {
     "rebuild_index": virtool.virus_index.RebuildIndex,
     "pathoscope_bowtie": virtool.job_analysis.PathoscopeBowtie,
     "nuvs": virtool.job_analysis.NuVs,
-    "add_host": virtool.host.AddHost,
+    "add_subtraction": virtool.subtraction.AddHost,
     "import_reads": virtool.sample.ImportReads,
     "test_task": virtool.job_test.TestTask
 }

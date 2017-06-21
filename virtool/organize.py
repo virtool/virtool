@@ -8,6 +8,42 @@ from virtool.virus import merge_virus
 from virtool.sample import calculate_algorithm_tags
 
 
+async def rename_username_to_user_id(collection):
+    await collection.update_many({"username": {"$exists": ""}}, {
+        "$rename": {
+            "username": "user_id"
+        }
+    })
+
+
+async def unset_version_field(collection):
+    await collection.update_many({"_version": {"$exists": ""}}, {
+        "$unset": {
+            "_version": ""
+        }
+    })
+
+
+async def organize_subtraction(db):
+    collection_names = await db.collection_names()
+
+    if "hosts" in collection_names and "subtraction" not in collection_names:
+        # Get all documents from the hosts collection.
+        documents = await db.hosts.find().to_list(None)
+
+        for document in documents:
+            document["is_host"] = True
+
+        # Copy the documents to a new subtraction collection.
+        await db.subtraction.insert_many(documents)
+
+        # Remove the old hosts collection
+        await db.drop_collection("hosts")
+
+    await rename_username_to_user_id(db.hosts)
+    await unset_version_field(db.hosts)
+
+
 def organize_analyses(database):
 
     # Make sure all NuVs analysis records reference HMMs in the database rather than storing the HMM data

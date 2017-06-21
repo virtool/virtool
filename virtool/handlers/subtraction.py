@@ -1,12 +1,30 @@
-import virtool.host
-
+import virtool.subtraction
 from virtool.utils import get_new_id
 from virtool.handlers.utils import unpack_json_request, json_response, bad_request, not_found
 
 
 async def find(req):
-    documents = await req.app["db"].hosts.find({}).to_list(length=10)
-    return json_response(documents)
+    db = req.app["db"]
+
+    total_count = await db.subtraction.count()
+
+    host_count = await db.subtraction.count({"is_host": True})
+
+    ready_host_count = await db.subtraction.count({"is_host": True, "ready": True})
+
+    cursor = req.app["db"].subtraction.find({})
+
+    found_count = await cursor.count()
+
+    documents = [virtool.subtraction.processor(d) for d in await cursor.to_list(length=15)]
+
+    return json_response({
+        "documents": documents,
+        "host_count": host_count,
+        "total_count": total_count,
+        "found_count": found_count,
+        "ready_host_count": ready_host_count
+    })
 
 
 async def create(req):

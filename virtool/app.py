@@ -11,11 +11,13 @@ from motor import motor_asyncio
 
 import virtool.app_routes
 import virtool.app_dispatcher
+import virtool.app_settings
 import virtool.job_manager
 import virtool.job_resources
+import virtool.organize
 import virtool.user_sessions
 import virtool.error_pages
-import virtool.app_settings
+
 
 logger = logging.getLogger(__name__)
 
@@ -76,6 +78,8 @@ async def init_db(app):
     app["db_name"] = app.get("db_name", None) or app["settings"].get("db_name")
 
     app["db"] = motor_asyncio.AsyncIOMotorClient(io_loop=app.loop)[app["db_name"]]
+
+    await virtool.organize.organize_subtraction(app["db"])
 
     await app["db"].viruses.create_index("name")
     await app["db"].viruses.create_index("abbreviation")

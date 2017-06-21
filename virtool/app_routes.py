@@ -2,7 +2,7 @@ from aiohttp import web
 
 from virtool.utils import get_static_hash
 from virtool.user_login import get_login_template, generate_verification_keys, login_handler
-from virtool.handlers import root, jobs, samples, viruses, history, hmm, hosts, settings, account, groups, users, \
+from virtool.handlers import root, jobs, samples, viruses, history, hmm, subtraction, settings, account, groups, users,\
     genbank, status, lifecycle, websocket, resources, analyses, indexes
 
 
@@ -143,12 +143,10 @@ def setup_routes(app):
     app.router.add_get("/api/hmm/check", hmm.check)
     app.router.add_get("/api/hmm/clean", hmm.clean)
 
-    # Hosts Routes
-    app.router.add_get("/api/hosts", hosts.find)
-    app.router.add_post("/api/hosts", hosts.create)
-
-    app.router.add_get("/api/hosts/{host_id}", hosts.get)
-    app.router.add_delete("/api/hosts/{host_id}", hosts.remove)
+    # Subtraction Routes
+    app.router.add_get("/api/subtraction", subtraction.find)
+    app.router.add_get("/api/subtraction/{subtraction_id}", subtraction.get)
+    app.router.add_post("/api/subtraction", subtraction.create)
 
     app.router.add_get("/api/settings", settings.get_all)
     app.router.add_patch("/api/settings", settings.update)

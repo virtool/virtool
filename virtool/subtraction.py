@@ -3,13 +3,12 @@ import pymongo
 import logging
 import subprocess
 
-import virtool.job
 import virtool.utils
 
 logger = logging.getLogger(__name__)
 
 
-projection = [
+LIST_PROJECTION = [
     "_id",
     "description",
     "file_name",
@@ -18,30 +17,9 @@ projection = [
 ]
 
 
-def to_client(document):
-    document["host_id"] = document.pop("_id")
+def processor(document):
+    document["subtraction_id"] = document.pop("_id")
     return document
-
-
-async def remove(db, settings, host_id):
-    """
-    Removes the host document and Bowtie2 index files identified by the passed host id.
-
-    """
-    # Don't remove the host if it is referenced by a sample.
-    if await db.samples.find({"subtraction": host_id}).count():
-        raise HostInUseError
-
-    if not await db.hosts.find({"_id": host_id}).count():
-        raise HostNotFoundError
-
-    # Build the host index directory path from the host _id.
-    index_path = os.path.join(settings.get("data_path"), "reference/hosts", host_id.lower().replace(" ", "_"))
-
-    # Remove the host index directory.
-    await virtool.utils.rm(index_path, recursive=True)
-
-    await db.hosts.remove({"_id": host_id})
 
 
 async def set_stats(db, host_id, stats):
@@ -50,24 +28,16 @@ async def set_stats(db, host_id, stats):
     })
 
 
-async def set_ready(db, host_id):
+async def set_ready(db, subtraction_id):
     """
     Sets the ``ready`` field to ``True`` for a host document.
 
     """
-    await db.hosts.update_one({"_id": host_id}, {
+    await db.subtraction.update_one({"_id": subtraction_id}, {
         "$set": {
             "ready": True
         }
     })
-
-
-class HostNotFoundError:
-    pass
-
-
-class HostInUseError:
-    pass
 
 
 def get_bowtie2_index_names(index_path):
