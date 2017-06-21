@@ -92,7 +92,7 @@ export default class PathoscopeController extends React.Component {
                     <FormGroup>
                         <InputGroup>
                             <InputGroup.Addon>
-                                <Icon name="search" /> Find
+                                <Icon name="search" />
                             </InputGroup.Addon>
                             <FormControl value={this.state.findTerm} onChange={this.setFindTerm} />
                         </InputGroup>
