@@ -56,8 +56,12 @@ const SampleToolbar = (props) => (
 
         */}
 
+        <LinkContainer to="/samples/files">
+            <Button tip="Read Files" icon="folder-open" />
+        </LinkContainer>
+
         <LinkContainer to="/samples/create">
-            <Button tip="Create" icon="new-entry" bsStyle="primary" />
+            <Button tip="Create Sample" icon="new-entry" bsStyle="primary" />
         </LinkContainer>
     </div>
 );
