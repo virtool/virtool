@@ -12,7 +12,7 @@ import URI from "urijs";
 import { connect } from "react-redux";
 import { Link, Route } from "react-router-dom";
 import { LinkContainer } from "react-router-bootstrap";
-import { Row, Col, Alert, ListGroup, Pagination } from "react-bootstrap";
+import { Alert, Badge, Row, Col, ListGroup, Pagination } from "react-bootstrap";
 
 import { findViruses } from "../actions";
 import { Flex, FlexItem, Icon, ListGroupItem } from "virtool/js/components/Base";
@@ -66,7 +66,13 @@ class VirusesList extends React.Component {
 
         let virusComponents;
 
-        if (this.props.documents && this.props.documents.length > 0) {
+        if (this.props.documents === null) {
+            return <div />;
+        }
+
+        const virusCount = this.props.documents.length;
+
+        if (virusCount > 0) {
             virusComponents = this.props.documents.map(document =>
                 <LinkContainer to={`/viruses/${document.virus_id}`} key={document.virus_id} className="spaced">
                     <ListGroupItem bsStyle={document.modified ? "warning": null}>
@@ -109,12 +115,23 @@ class VirusesList extends React.Component {
             );
         }
 
+        const first = 1 + (this.props.page - 1) * 15;
+        const last = first + (virusCount < 15 ? virusCount - 1: 14);
+
         return (
             <div>
                 <h3 className="view-header">
-                    <strong>
-                        Viruses
-                    </strong>
+                    <Flex alignItems="flex-end">
+                        <FlexItem grow={1}>
+                            <strong>
+                                Viruses <Badge>{this.props.totalCount}</Badge>
+                            </strong>
+                        </FlexItem>
+
+                        <span className="text-muted pull-right" style={{fontSize: "12px"}}>
+                            Viewing {first} - {last} of {this.props.foundCount}
+                        </span>
+                    </Flex>
                 </h3>
 
                 {alert}
@@ -157,6 +174,7 @@ const mapStateToProps = (state) => {
         page: state.viruses.page,
         pageCount: state.viruses.pageCount,
         totalCount: state.viruses.totalCount,
+        foundCount: state.viruses.foundCount,
         modifiedCount: state.viruses.modifiedCount,
         account: state.account
     };
