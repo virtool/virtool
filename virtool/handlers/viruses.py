@@ -54,15 +54,14 @@ async def find(req):
     """
     db = req.app["db"]
 
-    page = req.query.get("page", 1)
-    find_term = req.query.get("find", None)
+    page = int(req.query.get("page", 1))
+    term = req.query.get("find", None)
     modified = virtool.utils.to_bool(req.query.get("modified", False))
-    descending = virtool.utils.to_bool(req.query.get("descending", False))
 
     query = dict()
 
-    if find_term:
-        regex = re.compile("{}".format(find_term), re.IGNORECASE)
+    if term:
+        regex = re.compile("{}".format(term), re.IGNORECASE)
         query["$or"] = [{field: {"$regex": regex}} for field in ["name", "abbreviation"]]
 
     if modified:
@@ -70,26 +69,31 @@ async def find(req):
 
     sort_term = req.query.get("sort", "name")
 
-    sort_direction = 1
+    total_count = await db.viruses.count()
 
-    if descending:
-        sort_direction = -1
-
-    count = await db.viruses.count()
     modified_count = await db.viruses.count({"modified": True})
 
     cursor = db.viruses.find(
         query,
         virtool.virus.LIST_PROJECTION,
-        sort=[(sort_term, sort_direction)]
+        sort=[(sort_term, 1)]
     )
 
-    documents = await cursor.to_list(length=15)
+    found_count = await cursor.count()
+
+    page_count = int(math.ceil(found_count / 15))
+
+    if page > 1:
+        cursor.skip((page - 1) * 15)
+
+    documents = [virtool.virus.processor(document) for document in await cursor.to_list(length=15)]
 
     return json_response({
-        "documents": [virtool.virus.processor(document) for document in documents],
-        "count": count,
+        "documents": documents,
+        "total_count": total_count,
+        "found_count": found_count,
         "modified_count": modified_count,
+        "page_count": page_count,
         "page": page
     })
 
