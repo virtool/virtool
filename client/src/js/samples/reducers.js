@@ -55,7 +55,9 @@ export default function reducer (state = initialState, action) {
 
         case GET_SAMPLE.REQUESTED:
             return assign({}, state, {
-                detail: null
+                detail: null,
+                analyses: null,
+                analysisDetail: null
             });
 
         case GET_SAMPLE.SUCCEEDED:
@@ -89,7 +91,8 @@ export default function reducer (state = initialState, action) {
 
         case FIND_ANALYSES.REQUESTED:
             return assign({}, state, {
-                analyses: null
+                analyses: null,
+                analysisDetail: null
             });
 
         case FIND_ANALYSES.SUCCEEDED:

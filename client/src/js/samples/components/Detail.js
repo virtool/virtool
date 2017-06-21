@@ -39,7 +39,7 @@ class SampleDetail extends React.Component {
         }
 
         const detail = this.props.detail;
-        const sampleId = detail.sample_id;
+        const sampleId = this.props.match.params.sampleId;
 
         return (
             <div>

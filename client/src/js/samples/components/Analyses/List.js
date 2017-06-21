@@ -53,17 +53,19 @@ class AnalysesList extends React.Component {
             // Sort by timestamp so the newest analyses are at the top.
             const sorted = sortBy(this.props.analyses, "timestamp").reverse();
 
-            const url = `/samples/${this.props.detail.sample_id}/analyses/${document.analysis_id}`;
-
             // The components that detail individual analyses.
-            listContent = sorted.map(document =>
-                <AnalysisItem
-                    key={document.analysis_id}
-                    onClick={() => this.props.history.push(url)}
-                    canModify={canModify}
-                    {...document}
-                />
-            );
+            listContent = sorted.map(document => {
+                const url = `/samples/${this.props.detail.sample_id}/analyses/${document.analysis_id}`;
+
+                return (
+                    <AnalysisItem
+                        key={document.analysis_id}
+                        onClick={() => this.props.history.push(url)}
+                        canModify={canModify}
+                        {...document}
+                    />
+                );
+            });
         }
 
         // If no analyses are associated with the sample, show a panel saying so.
