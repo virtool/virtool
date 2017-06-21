@@ -109,6 +109,7 @@ class SamplesList extends React.Component {
                     <Pagination
                         onSelect={this.handleSelect}
                         items={this.props.pageCount}
+                        maxButtons={10}
                         activePage={this.props.page}
                         first
                         last

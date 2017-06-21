@@ -38,11 +38,12 @@ export function wsRemoveVirus (virusId) {
     }
 }
 
-export function findViruses (terms) {
+export function findViruses (term, page) {
     return {
         type: FIND_VIRUSES.REQUESTED,
-        terms
-    }
+        term,
+        page
+    };
 }
 
 export function getVirus (virusId) {

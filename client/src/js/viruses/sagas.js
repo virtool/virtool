@@ -38,18 +38,17 @@ export function* watchViruses () {
     yield takeEvery(REMOVE_ISOLATE.REQUESTED, removeIsolate);
 }
 
-export function* findViruses () {
-    try {
-        yield put({type: SET_APP_PENDING});
-        const findParams = yield select(getFindParams);
-        const response = yield call(virusesAPI.find, findParams);
+export function* findViruses (action) {
+    yield put({type: SET_APP_PENDING});
 
+    try {
+        const response = yield call(virusesAPI.find, action.term, action.page);
         yield put({type: FIND_VIRUSES.SUCCEEDED, data: response.body});
-        yield put({type: UNSET_APP_PENDING});
     } catch (error) {
         yield put({type: FIND_VIRUSES.FAILED}, error);
-        yield put({type: UNSET_APP_PENDING});
     }
+
+    yield put({type: UNSET_APP_PENDING});
 }
 
 export function* getVirus (action) {

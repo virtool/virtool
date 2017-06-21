@@ -8,10 +8,11 @@
  */
 
 import React, { PropTypes } from "react";
+import URI from "urijs";
 import { connect } from "react-redux";
 import { Link, Route } from "react-router-dom";
 import { LinkContainer } from "react-router-bootstrap";
-import { Row, Col, Alert, ListGroup } from "react-bootstrap";
+import { Row, Col, Alert, ListGroup, Pagination } from "react-bootstrap";
 
 import { findViruses } from "../actions";
 import { Flex, FlexItem, Icon, ListGroupItem } from "virtool/js/components/Base";
@@ -25,16 +26,41 @@ class VirusesList extends React.Component {
     }
 
     static propTypes = {
+        history: PropTypes.object,
+        location: PropTypes.object,
         documents: PropTypes.arrayOf(React.PropTypes.object),
         modifiedCount: PropTypes.number,
         onFind: PropTypes.func
     };
 
     componentDidMount () {
-        if (this.props.documents === null) {
-            this.props.onFind(null);
+        this.props.onFind(this.props.location);
+    }
+
+    componentDidUpdate (prevProps) {
+        if (prevProps.location !== this.props.location) {
+            this.props.onFind(this.props.location);
         }
     }
+
+    handleChangeTerm = (term) => {
+        const uri = new URI(this.props.location.pathname + this.props.location.search);
+
+        if (term) {
+            uri.setSearch({find: term});
+        } else {
+            uri.removeSearch("find");
+        }
+
+        this.props.history.push(uri.toString());
+    };
+
+    handlePage = (page) => {
+        const uri = new URI(this.props.location.pathname + this.props.location.search);
+        uri.setSearch({page: page});
+
+        this.props.history.push(uri.toString());
+    };
 
     render () {
 
@@ -93,11 +119,27 @@ class VirusesList extends React.Component {
 
                 {alert}
 
-                <VirusToolbar {...this.props} />
+                <VirusToolbar
+                    canModify={this.props.account.permissions.modify_virus}
+                    onChangeTerm={this.handleChangeTerm}
+                />
 
                 <ListGroup>
                     {virusComponents}
                 </ListGroup>
+
+                <div className="text-center">
+                    <Pagination
+                        items={this.props.pageCount}
+                        maxButtons={10}
+                        activePage={this.props.page}
+                        onSelect={this.handlePage}
+                        first
+                        last
+                        next
+                        prev
+                    />
+                </div>
 
                 <Route path="/viruses/create">
                     <CreateVirus {...this.props} />
@@ -111,11 +153,10 @@ class VirusesList extends React.Component {
 const mapStateToProps = (state) => {
     return {
         documents: state.viruses.documents,
-        finding: state.viruses.finding,
-        find: state.viruses.find,
-        sort: state.viruses.sort,
-        descending: state.viruses.descending,
         modified: state.viruses.modified,
+        page: state.viruses.page,
+        pageCount: state.viruses.pageCount,
+        totalCount: state.viruses.totalCount,
         modifiedCount: state.viruses.modifiedCount,
         account: state.account
     };
@@ -123,8 +164,11 @@ const mapStateToProps = (state) => {
 
 const mapDispatchToProps = (dispatch, ownProps) => {
     return {
-        onFind: (term) => {
-            dispatch(findViruses({find: term || null}));
+        onFind: (location) => {
+            const uri = new URI(location.search);
+            const query = uri.search(true);
+
+            dispatch(findViruses(query.find, query.page));
         },
 
         onToggleModifiedOnly: () => {

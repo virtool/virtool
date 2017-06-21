@@ -11,14 +11,18 @@ import Request from "superagent";
 
 const virusesAPI = {
 
-    find: (findParams) => {
-        if (!findParams.find) {
-            delete findParams["find"];
+    find: (term, page) => {
+        let query = {};
+
+        if (term) {
+            query.find = term;
         }
+
+        query.page = page;
 
         return Request
             .get("/api/viruses")
-            .query(findParams);
+            .query(query);
     },
 
     get: (virusId) => {

@@ -26,11 +26,6 @@ import {
 
 const virusesInitialState = {
     documents: null,
-    find: null,
-    sort: "name",
-    descending: false,
-    modified: false,
-    page: 1,
 
     detail: null,
     detailHistory: null,
@@ -72,8 +67,10 @@ export function virusesReducer (state = virusesInitialState, action) {
             return assign({}, state, {
                 documents: action.data.documents,
                 page: action.data.page,
-                modifiedCount: action.data.modified_count,
-                count: action.data.count
+                pageCount: action.data.page_count,
+                totalCount: action.data.total_count,
+                foundCount: action.data.found_count,
+                modifiedCount: action.data.modified_count
             });
 
         case FIND_VIRUSES.FAILED:

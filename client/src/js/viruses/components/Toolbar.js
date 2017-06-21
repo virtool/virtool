@@ -23,7 +23,7 @@ const VirusToolbar = (props) => {
     let menu;
     let createButton;
 
-    if (props.account.permissions.modify_virus) {
+    if (props.canModify) {
         menu = (
             <DropdownButton id="virus-dropdown" title={<Icon name="menu" />} noCaret pullRight>
                 <LinkContainer to="/viruses/export">
@@ -60,7 +60,7 @@ const VirusToolbar = (props) => {
                         className="form-control"
                         type="text"
                         placeholder="Name or abbreviation"
-                        onChange={(e) => {props.onFind(e.target.value)}}
+                        onChange={e => {props.onChangeTerm(e.target.value)}}
                     />
                 </div>
             </div>
@@ -87,9 +87,9 @@ const VirusToolbar = (props) => {
 };
 
 VirusToolbar.propTypes = {
-    account: PropTypes.object,
-    onFind: PropTypes.func,
+    canModify: PropTypes.bool,
     modifiedOnly: PropTypes.bool,
+    onChangeTerm: PropTypes.func,
     onToggleModifiedOnly: PropTypes.func
 };
 
