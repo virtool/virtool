@@ -49,8 +49,7 @@ class AnalysesList extends React.Component {
         let listContent;
 
         // Show a list of analyses if there are any.
-        if (this.props.analyses) {
-
+        if (this.props.analyses.length) {
             // Sort by timestamp so the newest analyses are at the top.
             const sorted = sortBy(this.props.analyses, "timestamp").reverse();
 
