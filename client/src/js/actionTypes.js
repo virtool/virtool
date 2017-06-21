@@ -43,6 +43,7 @@ export const WS_REMOVE_VIRUS = "WS_REMOVE_VIRUS";
 export const FIND_VIRUSES = createRequestActionType("FIND_VIRUSES");
 export const GET_VIRUS = createRequestActionType("GET_VIRUS");
 export const CREATE_VIRUS = createRequestActionType("CREATE_VIRUS");
+export const REMOVE_VIRUS = createRequestActionType("REMOVE_VIRUS");
 
 export const GET_VIRUS_HISTORY = createRequestActionType("GET_VIRUS_HISTORY");
 

@@ -17,7 +17,7 @@ import { watchSettings, watchUpdateSettings } from "./settings/sagas"
 import { watchUsers } from "./settings/users/sagas";
 import { watchGroups } from "./settings/groups/sagas";
 
-export function* rootSaga () {
+export default function* rootSaga () {
     yield [
         fork(watchJobs),
         fork(watchSamples),

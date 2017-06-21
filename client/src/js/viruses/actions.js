@@ -87,11 +87,12 @@ export function editIsolate (virusId, isolateId, sourceType, sourceName) {
     };
 }
 
-export function removeIsolate (virusId, isolateId) {
+export function removeIsolate (virusId, isolateId, onSuccess) {
     return {
         type: REMOVE_ISOLATE.REQUESTED,
         virusId,
-        isolateId
+        isolateId,
+        onSuccess
     };
 }
 
@@ -111,10 +112,9 @@ export function showEditIsolate (virusId, isolateId, sourceType, sourceName) {
     };
 }
 
-export function showRemoveIsolate (virusId) {
+export function showRemoveIsolate () {
     return {
-        type: SHOW_REMOVE_ISOLATE,
-        virusId
+        type: SHOW_REMOVE_ISOLATE
     };
 }
 

@@ -10,15 +10,17 @@
  */
 
 import React, { PropTypes } from "react";
+import URI from "urijs";
 import { capitalize, find } from "lodash";
 import { connect } from "react-redux";
 import { Label, Panel, Table, ListGroup } from "react-bootstrap";
 
-import { showEditIsolate, removeIsolate } from "../../actions";
+import { showEditIsolate, showRemoveIsolate } from "../../actions";
 import { formatIsolateName } from "virtool/js/utils";
 import { Icon, ListGroupItem } from "virtool/js/components/Base";
 import Sequence from "./Sequence";
 import EditIsolate from "./EditIsolate";
+import RemoveIsolate from "./RemoveIsolate";
 
 const IsolateDetail = (props) => {
 
@@ -29,7 +31,7 @@ const IsolateDetail = (props) => {
     const activeAccession = props.match.params.accession;
 
     const defaultIsolateLabel = (
-        <Label bsStyle="info" style={{visibility: "vi"}}>
+        <Label bsStyle="info" style={{visibility: props.default ? "visible": "hidden"}}>
             <Icon name="star" /> Default Isolate
         </Label>
     );
@@ -66,6 +68,14 @@ const IsolateDetail = (props) => {
         </span>
     );
 
+    const nextURI = URI(props.location.pathname + props.location.search);
+
+    if (props.isolates.length) {
+        nextURI.segment(3, props.isolates[0].isolate_id);
+    } else {
+        nextURI.segment(3, "");
+    }
+
     return (
         <div>
             <EditIsolate
@@ -73,6 +83,13 @@ const IsolateDetail = (props) => {
                 isolateId={isolate.isolate_id}
                 sourceType={isolate.source_type}
                 sourceName={isolate.source_name}
+            />
+
+            <RemoveIsolate
+                virusId={props.virusId}
+                isolateId={isolate.isolate_id}
+                isolateName={formatIsolateName(isolate)}
+                onSuccess={() => props.history.push(nextURI.toString())}
             />
 
             <Panel>
@@ -151,8 +168,8 @@ const mapDispatchToProps = (dispatch) => {
             dispatch(showEditIsolate(virusId, isolateId, sourceType, sourceName));
         },
 
-        remove: (virusId, isolateId) => {
-            dispatch(removeIsolate(virusId, isolateId));
+        showRemoveIsolate: () => {
+            dispatch(showRemoveIsolate());
         }
     };
 };

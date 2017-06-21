@@ -15,12 +15,12 @@ import { SET_APP_PENDING, UNSET_APP_PENDING } from "./actionTypes";
 import jobsReducer from "./jobs/reducers";
 import samplesReducer from "./samples/reducers";
 import indexesReducer from "./indexes/reducers";
-import { virusesReducer } from "./viruses/reducers";
-import { accountReducer } from "./nav/reducers";
+import virusesReducer from "./viruses/reducers";
+import accountReducer from "./nav/reducers";
 import settingsReducer from "./settings/reducers";
 import usersReducer from "./settings/users/reducers";
 import groupsReducer from "./settings/groups/reducers";
-import { rootSaga } from "./sagas";
+import rootSaga from "./sagas";
 
 const sagaMiddleware = createSagaMiddleware();
 

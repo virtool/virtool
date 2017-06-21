@@ -14,7 +14,7 @@ const initialState = {
     ready: false
 };
 
-export function accountReducer (state = initialState, action) {
+export default function accountReducer (state = initialState, action) {
 
     switch (action.type) {
 

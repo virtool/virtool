@@ -20,6 +20,7 @@ import {
     REMOVE_ISOLATE,
     SHOW_ADD_ISOLATE,
     SHOW_EDIT_ISOLATE,
+    SHOW_REMOVE_ISOLATE,
     HIDE_VIRUS_MODAL,
     GET_VIRUS_HISTORY
 } from "../actionTypes";
@@ -36,6 +37,9 @@ const virusesInitialState = {
     editIsolate: false,
     editIsolatePending: false,
 
+    removeIsolate: false,
+    removeIsolatePending: false,
+
     activeIsolateId: null,
     activeSequenceId: null,
 
@@ -43,7 +47,7 @@ const virusesInitialState = {
     createPending: false
 };
 
-export function virusesReducer (state = virusesInitialState, action) {
+export default function virusesReducer (state = virusesInitialState, action) {
 
     switch (action.type) {
 
@@ -104,23 +108,21 @@ export function virusesReducer (state = virusesInitialState, action) {
                 addIsolatePending: true
             });
 
-        case ADD_ISOLATE.SUCCEEDED: {
-            let newState = assign({}, state, {
+        case ADD_ISOLATE.SUCCEEDED:
+            return merge({}, state, {
                 addIsolate: false,
-                addIsolatePending: false
+                addIsolatePending: false,
+                detail: {
+                    isolates: state.detail.isolates.concat([action.data])
+                }
             });
-
-            newState.detail.isolates = state.detail.isolates.concat([action.data]);
-
-            return newState;
-        }
 
         case EDIT_ISOLATE.REQUESTED:
             return assign({}, state, {
                 editIsolateEnding: true
             });
 
-        case EDIT_ISOLATE.SUCCEEDED: {
+        case EDIT_ISOLATE.SUCCEEDED:
             return merge({}, state, {
                 editIsolate: false,
                 editIsolatePending: false,
@@ -134,23 +136,21 @@ export function virusesReducer (state = virusesInitialState, action) {
                     })
                 }
             });
-        }
 
         case REMOVE_ISOLATE.REQUESTED:
             return assign({}, state, {
+                removeIsolate: true,
                 removeIsolatePending: true
             });
 
-        case REMOVE_ISOLATE.SUCCEEDED: {
-            let newState = assign({}, state, {
+        case REMOVE_ISOLATE.SUCCEEDED:
+            return assign({}, state, {
                 removeIsolate: false,
-                removeIsolatePending: false
+                removeIsolatePending: false,
+                detail: assign({}, state.detail, {
+                    isolates: reject(state.detail.isolates, {isolate_id: action.isolateId})
+                })
             });
-
-            newState.detail.isolates = reject(newState.detail.isolates, {isolate_id: action.isolateId});
-
-            return newState;
-        }
 
         case GET_VIRUS_HISTORY.REQUESTED:
             return assign({}, state, {
@@ -172,10 +172,16 @@ export function virusesReducer (state = virusesInitialState, action) {
                 editIsolate: true
             });
 
+        case SHOW_REMOVE_ISOLATE:
+            return assign({}, state, {
+                removeIsolate: true
+            });
+
         case HIDE_VIRUS_MODAL:
             return assign({}, state, {
                 addIsolate: false,
-                editIsolate: false
+                editIsolate: false,
+                removeIsolate: false
             });
 
         default:
