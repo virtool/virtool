@@ -7,6 +7,7 @@ import Welcome from "./home/components/Welcome";
 import Jobs from "./jobs/components/Jobs";
 import Samples from "./samples/components/Samples";
 import Viruses from "./viruses/components/Viruses";
+import Subtraction from "./subtraction/components/Subtraction";
 import Settings from "./settings/components/Settings";
 
 const Inner = (props) => {
@@ -21,7 +22,7 @@ const Inner = (props) => {
                     <Route path="/jobs" component={Jobs} />
                     <Route path="/samples" component={Samples} />
                     <Route path="/viruses" component={Viruses} />
-                    <Route path="/subtraction" component={Welcome} />
+                    <Route path="/subtraction" component={Subtraction} />
                     <Route path="/settings" component={Settings} />
                 </Switch>
             </div>

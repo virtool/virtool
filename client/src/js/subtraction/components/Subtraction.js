@@ -9,58 +9,34 @@
  * @exports ManageHosts
  */
 
-import React from "react";
-import FlipMove from "react-flip-move";
+import React, { PropTypes } from "react";
+import { connect } from "react-redux";
 import { Row, Col, Alert, FormGroup, InputGroup, FormControl } from "react-bootstrap";
-import { Flex, FlexItem, Icon, DetailModal, Button, ListGroupItem, getFlipMoveProps } from "virtool/js/components/Base";
 
-import AddHost from "./Hosts/Add";
-import HostDetail from "./Hosts/Detail";
+import { findSubtractions } from "../actions";
+import { Flex, FlexItem, Icon, Button, ListGroupItem } from "virtool/js/components/Base";
 
-const getHosts = () => dispatcher.db.hosts.chain();
 
-/**
- * A component that renders a table of imported hosts and a list of available FASTA files that could be imported as
- * hosts.
- */
-export default class SubtractionHosts extends React.Component {
 
-    constructor (props) {
-        super(props);
-
-        this.state = {
-            hosts: getHosts(),
-            findTerm: ""
-        };
-    }
+class SubtractionHosts extends React.Component {
 
     static propTypes = {
-        route: React.PropTypes.object.isRequired
+        documents: PropTypes.arrayOf(PropTypes.object)
     };
 
     componentDidMount () {
-        dispatcher.db.hosts.on("change", this.update);
+        this.props.onFind()
     }
-
-    componentWillUnmount () {
-        dispatcher.db.hosts.off("change", this.update);
-    }
-
-    hideModal = () => {
-        window.router.clearExtra();
-    };
-
-    update = () => {
-        this.setState({
-            hosts: getHosts()
-        });
-    };
 
     render () {
 
+        if (this.props.documents === null) {
+            return <div />;
+        }
+
         let alert;
 
-        if (dispatcher.db.hosts.count({ready: true}) === 0) {
+        if (!this.props.readyCount) {
             alert = (
                 <Alert>
                     <Flex alignItems="center">
@@ -73,19 +49,7 @@ export default class SubtractionHosts extends React.Component {
             );
         }
 
-        let detailTarget;
-
-        if (this.props.route.extra[0] === "detail") {
-            detailTarget = dispatcher.db.hosts.findOne({_id: this.props.route.extra[1]});
-        }
-
-        let query = {};
-
-        if (this.state.findTerm) {
-            query["_id"] = {$regex: [this.state.findTerm, "i"]};
-        }
-
-        let hostComponents = this.state.hosts.branch().find(query).data().map((host) => {
+        let hostComponents = this.props.documents.map((host) => {
 
             let statusComponent = "Adding";
 
@@ -101,14 +65,10 @@ export default class SubtractionHosts extends React.Component {
             }
 
             return (
-                <ListGroupItem
-                    key={host._id}
-                    className="spaced"
-                    onClick={() => window.router.setExtra(["detail", host._id])}
-                >
+                <ListGroupItem key={host.host_id} className="spaced">
                     <Row>
                         <Col md={4}>
-                            <strong>{host._id}</strong>
+                            <strong>{host.host_id}</strong>
                         </Col>
                         <Col md={3} className="text-muted">
                             {host.description}
@@ -121,7 +81,7 @@ export default class SubtractionHosts extends React.Component {
             );
         });
 
-        if (hostComponents.length === 0) {
+        if (!hostComponents.length) {
             hostComponents = (
                 <ListGroupItem key="noSample" className="text-center">
                     <Icon name="info" /> No hosts found
@@ -141,8 +101,7 @@ export default class SubtractionHosts extends React.Component {
                             </InputGroup.Addon>
                             <FormControl
                                 type="text"
-                                inputRef={(node) => this.nameNode = node}
-                                onChange={(event) => this.setState({findTerm: event.target.value})}
+                                onChange={(event) => console.log(event.target.value)}
                                 placeholder="Host name"
                             />
                         </InputGroup>
@@ -153,20 +112,29 @@ export default class SubtractionHosts extends React.Component {
                     </Button>
                 </div>
 
-                <FlipMove {...getFlipMoveProps}>
+                <div className="list-group">
                     {hostComponents}
-                </FlipMove>
-
-                <AddHost show={this.props.route.extra[0] === "add"} onHide={this.hideModal} />
-
-                <DetailModal
-                    target={detailTarget}
-                    contentComponent={HostDetail}
-                    collection={dispatcher.db.hosts}
-                    onHide={this.hideModal}
-                    dialogClassName="modal-md"
-                />
+                </div>
             </div>
         );
     }
 }
+
+const mapStateToProps = (state) => {
+    return {
+        documents: state.subtraction.documents,
+        readyHostCount: state.subtraction.readyHostCount
+    };
+};
+
+const mapDispatchToProps = (dispatch) => {
+    return {
+        onFind: () => {
+            dispatch(findSubtractions())
+        }
+    };
+};
+
+const Container = connect(mapStateToProps, mapDispatchToProps)(SubtractionHosts);
+
+export default Container;
