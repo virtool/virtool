@@ -72,6 +72,10 @@ export const FIND_SUBTRACTIONS = createRequestActionType("FIND_SUBTRACTIONS");
 export const GET_SUBTRACTION = createRequestActionType("GET_SUBTRACTION");
 export const REMOVE_SUBTRACTION = createRequestActionType("REMOVE_SUBTRACTION");
 
+// Filex
+export const FIND_FILES = createRequestActionType("FIND_FILES");
+export const REMOVE_FILE = createRequestActionType("REMOVE_FILE");
+
 // Account
 export const GET_ACCOUNT_REQUESTED = "GET_ACCOUNT_REQUESTED";
 export const GET_ACCOUNT_SUCCEEDED = "GET_ACCOUNT_SUCCEEDED";
