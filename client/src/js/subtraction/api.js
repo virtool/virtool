@@ -15,8 +15,8 @@ const subtractionAPI = {
         return Request.get("/api/subtraction");
     },
 
-    get: (subId) => {
-        return Request.get(`/api/subtraction/${subId}`);
+    get: (subtractionId) => {
+        return Request.get(`/api/subtraction/${subtractionId}`);
     },
 
     remove: (subId) => {

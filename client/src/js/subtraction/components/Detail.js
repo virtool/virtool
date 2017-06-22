@@ -6,164 +6,107 @@
  * @author
  * Ian Boyes
  *
- * @exports HostDetail
+ * @exports SubtractionDetail
  */
 
-import React from "react";
+import React, { PropTypes } from "react";
 import Numeral from "numeral";
-import { toScientificNotation } from "virtool/js/utils";
-import { Modal, Table, Alert } from "react-bootstrap";
-import { Icon, ConfirmFooter } from "virtool/js/components/Base";
+import { connect } from "react-redux";
+import { LinkContainer } from "react-router-bootstrap";
+import { Alert, Badge, Table } from "react-bootstrap";
 
-export class HostDetailFooter extends React.Component {
+import { getSubtraction } from "../actions";
+import { Icon, Button } from "virtool/js/components/Base";
 
-    static propTypes = {
-        _id: React.PropTypes.string.isRequired,
-        onError: React.PropTypes.func
-    };
+const calculateGC = (nucleotides) => {
+    return Numeral(1 - nucleotides.a - nucleotides.t - nucleotides.n).format("0.000")
+};
 
-    /**
-     * Remove the host associated with the host id. Triggered by clicking the confirm button in the active
-     * ConfirmFooter.
-     *
-     * @func
-     */
-    remove = () => {
-        dispatcher.db.hosts.request("remove_host", {_id: this.props._id})
-            .failure(this.props.onError);
-    };
+class SubtractionDetail extends React.Component {
+
+    componentDidMount () {
+        this.props.onGet(this.props.match.params.subtractionId);
+    }
 
     render () {
 
-        const buttonContent = (
-            <span>
-                <Icon name="remove"/> Remove
-            </span>
-        );
-
-        return (
-            <ConfirmFooter
-                {...this.props}
-                callback={this.remove}
-                buttonContent={buttonContent}
-                closeOnConfirm={false}
-                message="Do you really want to delete this host?"
-            />
-        );
-    }
-}
-
-export default class HostDetail extends React.Component {
-
-    constructor (props) {
-        super(props);
-
-        this.state = {
-            error: false
-        };
-    }
-
-    static propTypes = {
-        detail: React.PropTypes.object,
-        onHide: React.PropTypes.func
-    };
-
-    showError = () => {
-        this.setState({
-            error: true
-        });
-    };
-
-    render () {
+        if (this.props.detail === null) {
+            return <div />;
+        }
 
         const data = this.props.detail;
-        const nucs = data.nucleotides;
-        const gc = Numeral(1 - nucs.a - nucs.t - nucs.n).format("0.000");
 
-        let alert;
-        let footer;
+        const alert = (
+            <Alert bsStyle="danger">
+                <Icon name="warning" /> Host could not be removed because it is referenced by at least one sample.
+            </Alert>
+        );
 
-        if (this.state.error) {
-            alert = (
-                <Alert bsStyle="danger">
-                    <Icon name="warning" /> Host could not be removed because it is referenced by at least one sample.
-                </Alert>
-            );
-        }
-        
-        if (dispatcher.user.permissions.remove_host && !this.state.error) {
-            footer = (
-                <HostDetailFooter
-                    onHide={this.props.onHide}
-                    onError={this.showError}
-                    error={this.state.error}
-                    {...data}
-                />
-            );
-        }
+        const linkedSampleComponents = data.linked_samples.map(sample =>
+            <LinkContainer key={sample.sample_id} to={`/samples/${sample.sample_id}`}>
+                <Button>
+                    {sample.name}
+                </Button>
+            </LinkContainer>
+        );
 
         return (
             <div>
-                <Modal.Header onHide={this.props.onHide} closeButton>
-                    Host Detail
-                </Modal.Header>
-                <Modal.Body>
-                    <h5>
-                        <strong><Icon name="tag" /> General</strong>
-                    </h5>
-                    <Table condensed bordered>
-                        <tbody>
-                            <tr>
-                                <th className="col-sm-3">Organism</th>
-                                <td><em>{data._id}</em></td>
-                            </tr>
+                <h3 className="view-header">
+                    <strong>{data.subtraction_id}</strong>
+                </h3>
 
-                            <tr>
-                                <th>Description</th>
-                                <td>{data.description}</td>
-                            </tr>
+                <Table condensed bordered>
+                    <tbody>
+                        <tr>
+                            <th>Description</th>
+                            <td>{data.description}</td>
+                        </tr>
 
-                            <tr>
-                                <th>File</th>
-                                <td>{data.file}</td>
-                            </tr>
+                        <tr>
+                            <th>File</th>
+                            <td>{data.file_name}</td>
+                        </tr>
 
-                            <tr>
-                                <th>GC Estimate</th>
-                                <td>{gc}</td>
-                            </tr>
-                        </tbody>
-                    </Table>
+                        <tr>
+                            <th>GC Estimate</th>
+                            <td>{calculateGC(data.nucleotides)}</td>
+                        </tr>
+                    </tbody>
+                </Table>
 
-                    <h5>
-                        <strong><Icon name="ruler" /> Length Distribution</strong>
-                    </h5>
-                    <Table condensed bordered>
-                        <tbody>
-                            <tr>
-                                <th className="col-sm-3">Mean</th>
-                                <td>{toScientificNotation(data.lengths.mean)}</td>
-                            </tr>
-                            <tr>
-                                <th>Max</th>
-                                <td>{toScientificNotation(data.lengths.max)}</td>
-                            </tr>
-                            <tr>
-                                <th>Min</th>
-                                <td>{toScientificNotation(data.lengths.min)}</td>
-                            </tr>
-                            <tr>
-                                <th>Total</th>
-                                <td>{toScientificNotation(data.lengths.total)}</td>
-                            </tr>
-                        </tbody>
-                    </Table>
+                <h4 className="section-header">
+                    <strong>Linked Samples</strong> <Badge>{linkedSampleComponents.length}</Badge>
+                </h4>
 
-                    {alert}
-                </Modal.Body>
-                {footer}
+                <div className="linked-sample-container">
+                    {linkedSampleComponents}
+                </div>
             </div>
         )
     }
-
 }
+
+SubtractionDetail.propTypes = {
+    match: PropTypes.object,
+    detail: PropTypes.object,
+    onHide: PropTypes.func
+};
+
+const mapStateToProps = (state) => {
+    return {
+        detail: state.subtraction.detail
+    };
+};
+
+const mapDispatchToProps = (dispatch) => {
+    return {
+        onGet: (subtractionId) => {
+            dispatch(getSubtraction(subtractionId));
+        }
+    };
+};
+
+const Container = connect(mapStateToProps, mapDispatchToProps)(SubtractionDetail);
+
+export default Container;

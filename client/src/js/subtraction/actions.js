@@ -34,10 +34,10 @@ export const findSubtractions = () => {
     };
 };
 
-export const getSubtraction = (hostId) => {
+export const getSubtraction = (subtractionId) => {
     return {
         type: GET_SUBTRACTION.REQUESTED,
-        hostId
+        subtractionId
     };
 };
 
