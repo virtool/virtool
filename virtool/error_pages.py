@@ -9,17 +9,19 @@ template_500 = Template(filename="virtool/templates/error_500.html")
 
 async def middleware_factory(app, handler):
     async def middleware_handler(request):
+        is_api_call = request.path.startswith("/api")
+
         try:
             response = await handler(request)
 
-            if not request.path.startswith("/api"):
+            if not is_api_call:
                 if response.status == 404:
                     return handle_404()
 
             return response
 
         except web.HTTPException as ex:
-            if ex.status == 404:
+            if not is_api_call and ex.status == 404:
                 return handle_404()
 
             raise
