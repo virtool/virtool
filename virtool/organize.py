@@ -43,6 +43,12 @@ async def organize_subtraction(db):
     await rename_username_to_user_id(db.hosts)
     await unset_version_field(db.hosts)
 
+    await db.subtraction.update_many({"lengths": {"$exists": ""}}, {
+        "$unset": {
+            "lengths": ""
+        }
+    })
+
 
 def organize_analyses(database):
 
