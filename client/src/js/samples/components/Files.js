@@ -1,49 +1,43 @@
-import React from "react";
+import React, { PropTypes } from "react";
+import { connect } from "react-redux";
+
+import { findFiles } from "../../files/actions";
 import { Uploader } from "virtool/js/components/Base";
 
-const getFiles = () => dispatcher.db.files.chain().find({file_type: "reads"});
-
-export default class ReadFiles extends React.Component {
-
-    constructor (props) {
-        super(props);
-        this.state = {
-            documents: getFiles()
-        };
-    }
+class ReadFiles extends React.Component {
 
     static propTypes = {
-        route: React.PropTypes.object
+        documents: PropTypes.arrayOf(PropTypes.object),
+        onFind: PropTypes.func
     };
 
     componentDidMount () {
-        dispatcher.db.files.on("change", this.update);
+        this.props.onFind();
     }
-
-    componentWillUnmount () {
-        dispatcher.db.files.off("change", this.update);
-    }
-
-    upload = (files) => {
-        files.forEach(file => {
-            dispatcher.db.samples.request("authorize_upload", {name: file.name, size: file.size })
-        });
-    };
-
-    remove = (file_id) => {
-        dispatcher.db.files.request("remove_file", {
-            "file_id": file_id
-        });
-    };
-
-    update = () => {
-        this.setState({
-            documents: getFiles()
-        });
-    };
 
     render () {
+        if (this.props.documents === null) {
+            return <div />;
+        }
+
         return <Uploader fileDocuments={this.state.documents} onDrop={this.upload} onRemove={this.remove}/>;
     }
-
 }
+
+const mapStateToProps = (state) => {
+    return {
+        documents: state.files.documents
+    };
+};
+
+const mapDispatchProps = (dispatch) => {
+    return {
+        onFind: () => {
+            dispatch(findFiles());
+        }
+    };
+};
+
+const Container = connect(mapStateToProps, mapDispatchProps)(ReadFiles);
+
+export default Container;
