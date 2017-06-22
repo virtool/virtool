@@ -1,3 +1,4 @@
+import virtool.sample
 import virtool.subtraction
 from virtool.utils import get_new_id
 from virtool.handlers.utils import unpack_json_request, json_response, bad_request, not_found
@@ -25,6 +26,26 @@ async def find(req):
         "found_count": found_count,
         "ready_host_count": ready_host_count
     })
+
+
+async def get(req):
+    """
+    Get a complete host document.
+
+    """
+    db = req.app["db"]
+
+    subtraction_id = req.match_info["subtraction_id"]
+
+    document = await db.subtraction.find_one(subtraction_id)
+
+    if document:
+        linked_samples = await db.samples.find({"subtraction": subtraction_id}, ["name"]).to_list(None)
+        document["linked_samples"] = [virtool.sample.processor(d) for d in linked_samples]
+
+        return json_response(virtool.subtraction.processor(document))
+
+    return not_found()
 
 
 async def create(req):
@@ -58,19 +79,6 @@ async def create(req):
     )
 
     return json_response(virtool.host.to_client(data))
-
-
-async def get(req):
-    """
-    Get a complete host document.
-
-    """
-    document = await req.app["db"].hosts.find_one({"_id": req.match_info["host_id"]})
-
-    if document:
-        return json_response(document)
-
-    return not_found()
 
 
 async def remove(req):
