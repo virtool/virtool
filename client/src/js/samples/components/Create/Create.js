@@ -11,17 +11,14 @@
  */
 
 import React from "react";
-import { Row, Col, Overlay, Popover, FormGroup, ControlLabel, FormControl, InputGroup,
-    Modal, Alert } from "react-bootstrap";
+import { connect } from "react-redux";
+import { Row, Col, Overlay, Popover, FormGroup, ControlLabel, FormControl, InputGroup } from "react-bootstrap";
 import { capitalize, pick, assign } from "lodash";
-import { Icon, Input, Button, AutoProgressBar } from "virtool/js/components/Base";
+import { Icon, Input, Button } from "virtool/js/components/Base";
 
 import ReadSelector from "./ReadSelector";
 
 const getInitialState = () => {
-
-    const readyHosts = dispatcher.db.hosts.find({ready: true});
-
     return {
         selected: [],
         name: "",
@@ -37,7 +34,6 @@ const getInitialState = () => {
         readError: false,
         pending: false
     };
-
 };
 
 const getForceGroupChoice = () => dispatcher.settings.get("sample_group") == "force_choice";
@@ -59,18 +55,9 @@ export default class CreateSample extends React.Component {
         onHide: React.PropTypes.func.isRequired
     };
 
-    modalEntered = () => {
-        dispatcher.settings.on("change", this.onSettingsChange);
-
-        if (this.state.readyHosts.length > 0) {
-            this.nameNode.focus();
-        }
-    };
-
-    modalWillExit = () => {
-        dispatcher.settings.off("change", this.onSettingsChange);
-        this.setState(getInitialState);
-    };
+    componentDidMount () {
+        this.props.onFindHosts();
+    }
 
     handleChange = (event) => {
         let data = {};
@@ -138,15 +125,13 @@ export default class CreateSample extends React.Component {
 
     render () {
 
-        let modalBody;
+
 
         if (this.state.readyHosts.length === 0) {
             modalBody = (
                 <Modal.Body>
-                    <Alert bsStyle="warning" className="text-center">
                         <Icon name="notification" />
                         <span> A host genome must be added to Virtool before samples can be created and analyzed.</span>
-                    </Alert>
                 </Modal.Body>
             );
         } else {
@@ -313,21 +298,9 @@ export default class CreateSample extends React.Component {
                 </div>
             );
         }
-
-        return (
-            <Modal
-                dialogClassName="modal-lg"
-                show={this.props.show}
-                onHide={this.props.onHide}
-                onEntered={this.modalEntered}
-                onExit={this.modalWillExit}
-            >
-                <Modal.Header onHide={this.props.onHide} closeButton>
-                    Create Sample
-                </Modal.Header>
-
-                {modalBody}
-            </Modal>
-        );
     }
 }
+
+const mapStateToProps = (props) => {
+
+};
