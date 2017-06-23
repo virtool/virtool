@@ -295,8 +295,8 @@ class TestFileManager:
             m(*args, **kwargs)
 
         test_db.files.insert_many([
-            {"_id": "test.dat"},
-            {"_id": "invalid.dat"}
+            {"_id": "test.dat", "created": True},
+            {"_id": "invalid.dat", "created": True}
         ])
 
         file_a = tmpdir.join("test.dat")
@@ -308,4 +308,4 @@ class TestFileManager:
 
         await manager.close()
 
-        assert list(test_db.files.find()) == [{"_id": "test.dat"}]
+        assert list(test_db.files.find()) == [{"_id": "test.dat", "created": True}]

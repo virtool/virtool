@@ -56,9 +56,11 @@ class Manager:
                 if filename not in db_list:
                     os.remove(os.path.join(self.path, filename))
 
+            db_created_list = await self.db.files.find({"created": True}).distinct("_id")
+
             await self.db.files.delete_many({
                 "_id": {
-                    "$in": [filename for filename in db_list if filename not in dir_list]
+                    "$in": [filename for filename in db_created_list if filename not in dir_list]
                 }
             })
 
