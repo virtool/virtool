@@ -118,7 +118,7 @@ class TestFileManager:
             }
         })
 
-        manager = virtool.file_manager.Manager(loop, test_motor, dispatch, str(tmpdir))
+        manager = virtool.file_manager.Manager(loop, test_motor, dispatch, str(tmpdir), clean_interval=None)
 
         await manager.start()
         await manager.close()
@@ -155,7 +155,7 @@ class TestFileManager:
             }
         })
 
-        manager = virtool.file_manager.Manager(loop, test_motor, dispatch, str(tmpdir))
+        manager = virtool.file_manager.Manager(loop, test_motor, dispatch, str(tmpdir), clean_interval=None)
 
         await manager.start()
         await manager.close()
@@ -192,7 +192,7 @@ class TestFileManager:
             }
         })
 
-        manager = virtool.file_manager.Manager(loop, test_motor, dispatch, str(tmpdir))
+        manager = virtool.file_manager.Manager(loop, test_motor, dispatch, str(tmpdir), clean_interval=None)
 
         await manager.start()
         await manager.close()
@@ -231,7 +231,7 @@ class TestFileManager:
             }
         })
 
-        manager = virtool.file_manager.Manager(loop, test_motor, dispatch, str(tmpdir))
+        manager = virtool.file_manager.Manager(loop, test_motor, dispatch, str(tmpdir), clean_interval=None)
 
         await manager.start()
         await manager.close()
@@ -252,7 +252,7 @@ class TestFileManager:
         async def dispatch(*args, **kwargs):
             m(*args, **kwargs)
 
-        manager = virtool.file_manager.Manager(loop, test_motor, dispatch, str(tmpdir))
+        manager = virtool.file_manager.Manager(loop, test_motor, dispatch, str(tmpdir), clean_interval=None)
 
         assert manager.alive is None
 
@@ -263,3 +263,49 @@ class TestFileManager:
         await manager.close()
 
         assert manager.alive is False
+
+    async def test_clean_dir(self, mocker, tmpdir, loop, test_db, test_motor):
+        m = mocker.stub(name="dispatch")
+
+        async def dispatch(*args, **kwargs):
+            m(*args, **kwargs)
+
+        test_db.files.insert_one({
+            "_id": "test.dat"
+        })
+
+        file_a = tmpdir.join("test.dat")
+        file_a.write("hello world")
+
+        file_b = tmpdir.join("invalid.dat")
+        file_b.write("foo bar")
+
+        manager = virtool.file_manager.Manager(loop, test_motor, dispatch, str(tmpdir))
+
+        await manager.start()
+
+        await manager.close()
+
+        assert os.listdir(str(tmpdir)) == ["test.dat"]
+
+    async def test_clean_db(self, mocker, tmpdir, loop, test_db, test_motor):
+        m = mocker.stub(name="dispatch")
+
+        async def dispatch(*args, **kwargs):
+            m(*args, **kwargs)
+
+        test_db.files.insert_many([
+            {"_id": "test.dat"},
+            {"_id": "invalid.dat"}
+        ])
+
+        file_a = tmpdir.join("test.dat")
+        file_a.write("hello world")
+
+        manager = virtool.file_manager.Manager(loop, test_motor, dispatch, str(tmpdir))
+
+        await manager.start()
+
+        await manager.close()
+
+        assert list(test_db.files.find()) == [{"_id": "test.dat"}]

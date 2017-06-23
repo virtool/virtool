@@ -21,24 +21,50 @@ TYPE_NAME_DICT = {
 
 class Manager:
 
-    def __init__(self, loop, db, dispatch, path):
+    def __init__(self, loop, db, dispatch, path, clean_interval=20):
         self.loop = loop
         self.db = db
         self.dispatch = dispatch
+        self.path = path
+        self.clean_interval = clean_interval
 
         self.queue = multiprocessing.Queue()
-        self.watcher = Watcher(path, self.queue)
+        self.watcher = Watcher(self.path, self.queue)
         self.watcher.start()
 
         self._kill = False
         self.alive = None
 
     async def start(self):
+        if self.clean_interval is not None:
+            self.loop.create_task(self.clean())
+
         self.loop.create_task(self.run())
         msg = self.queue.get(block=True, timeout=3)
 
         assert msg == "alive"
         self.alive = True
+
+    async def clean(self):
+        looped_once = False
+
+        while not (self._kill and looped_once):
+            dir_list = os.listdir(self.path)
+            db_list = await self.db.files.distinct("_id")
+
+            for filename in dir_list:
+                if filename not in db_list:
+                    os.remove(os.path.join(self.path, filename))
+
+            await self.db.files.delete_many({
+                "_id": {
+                    "$in": [filename for filename in db_list if filename not in dir_list]
+                }
+            })
+
+            await asyncio.sleep(self.clean_interval, loop=self.loop)
+
+            looped_once = True
 
     async def run(self):
         looped_once = False
