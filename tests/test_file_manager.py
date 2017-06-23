@@ -1,6 +1,4 @@
 import os
-import time
-import asyncio
 import multiprocessing
 import virtool.file_manager
 
@@ -254,7 +252,7 @@ class TestFileManager:
 
         manager = virtool.file_manager.Manager(loop, test_motor, dispatch, str(tmpdir), clean_interval=None)
 
-        assert manager.alive is None
+        assert manager.alive is False
 
         await manager.start()
 

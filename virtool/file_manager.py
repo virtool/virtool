@@ -128,6 +128,10 @@ class Manager:
 
         logging.debug("Stopped file manager")
 
+    @property
+    def alive(self):
+        return self._run_alive or self._clean_alive
+
     async def wait_for_dead(self):
         while self._run_alive or self._clean_alive:
             await asyncio.sleep(0.1, loop=self.loop)
@@ -135,6 +139,8 @@ class Manager:
     async def close(self):
         self._kill = True
         await self.wait_for_dead()
+
+
 
 
 class Watcher(multiprocessing.Process):
