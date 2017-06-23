@@ -33,7 +33,8 @@ class Manager:
         self.watcher.start()
 
         self._kill = False
-        self.alive = None
+        self._clean_alive = False
+        self._run_alive = False
 
     async def start(self):
         if self.clean_interval is not None:
@@ -43,9 +44,11 @@ class Manager:
         msg = self.queue.get(block=True, timeout=3)
 
         assert msg == "alive"
-        self.alive = True
+        self._run_alive = True
 
     async def clean(self):
+        self._clean_alive = True
+
         looped_once = False
 
         while not (self._kill and looped_once):
@@ -64,9 +67,15 @@ class Manager:
                 }
             })
 
-            await asyncio.sleep(self.clean_interval, loop=self.loop)
+            count = 0
+            threshold = self.clean_interval / 0.3
+
+            while not self._kill and count < threshold:
+                await asyncio.sleep(0.3, loop=self.loop)
 
             looped_once = True
+
+        self._clean_alive = False
 
     async def run(self):
         looped_once = False
@@ -115,12 +124,12 @@ class Manager:
             pass
 
         self.watcher.terminate()
-        self.alive = False
+        self._run_alive = False
 
-        logging.debug("Stopped file watcher")
+        logging.debug("Stopped file manager")
 
     async def wait_for_dead(self):
-        while self.alive:
+        while self._run_alive or self._clean_alive:
             await asyncio.sleep(0.1, loop=self.loop)
 
     async def close(self):

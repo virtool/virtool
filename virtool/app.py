@@ -14,6 +14,7 @@ import virtool.app_dispatcher
 import virtool.app_settings
 import virtool.job_manager
 import virtool.job_resources
+import virtool.file_manager
 import virtool.organize
 import virtool.user_sessions
 import virtool.error_pages
@@ -106,6 +107,20 @@ async def init_job_manager(app):
     )
 
 
+async def init_file_manager(app):
+    data_path = os.path.join(app["settings"].get("data_path"), "files")
+
+    app["file_manager"] = virtool.file_manager.Manager(
+        app.loop,
+        app["db"],
+        app["dispatcher"].dispatch,
+        data_path,
+        clean_interval=20
+    )
+
+    await app["file_manager"].start()
+
+
 async def on_shutdown(app):
     """
     A function called when the app is shutting down.
@@ -127,6 +142,8 @@ async def on_shutdown(app):
         asyncio.sleep(0.1, loop=app.loop)
 
     await job_manager.close()
+
+    await app["file_manager"].close()
 
 
 def create_app(loop, db_name=None):
@@ -153,6 +170,7 @@ def create_app(loop, db_name=None):
     app.on_startup.append(init_db)
     app.on_startup.append(init_resources)
     app.on_startup.append(init_job_manager)
+    app.on_startup.append(init_file_manager)
 
     app.on_shutdown.append(on_shutdown)
 
