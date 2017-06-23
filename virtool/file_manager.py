@@ -1,5 +1,6 @@
 import os
 import time
+import queue
 import asyncio
 import logging
 import setproctitle
@@ -26,51 +27,61 @@ class Manager:
         self.dispatch = dispatch
 
         self.queue = multiprocessing.Queue()
-        self.watcher = multiprocessing.Process(target=watch, name="virtool-inotify", args=[path, self.queue])
+        self.watcher = Watcher(path, self.queue)
         self.watcher.start()
 
-        self.loop.create_task(self.run())
         self._kill = False
         self.alive = None
 
-    async def run(self):
+    async def start(self):
+        self.loop.create_task(self.run())
+        msg = self.queue.get(block=True, timeout=3)
+
+        assert msg == "alive"
         self.alive = True
 
+    async def run(self):
+        looped_once = False
+
         try:
-            while not self._kill:
-                while not self.queue.empty():
+            while not (self._kill and looped_once):
+                while True:
+                    try:
+                        event = self.queue.get(block=False)
 
-                    event = self.queue.get()
+                        filename = event["file"]["filename"]
 
-                    print(event)
+                        if event["action"] == "create":
+                            await self.db.files.update_one({"_id": filename}, {
+                                "$set": {
+                                    "created": True
+                                }
+                            })
 
-                    filename = event["file"]["filename"]
+                        elif event["action"] == "modify":
+                            await self.db.files.update_one({"_id": filename}, {
+                                "$set": {
+                                    "size_now": event["file"]["size"]
+                                }
+                            })
 
-                    if event["action"] == "create":
-                        await self.db.files.update_one({"_id": filename}, {
-                            "$set": {
-                                "created": True
-                            }
-                        })
+                        elif event["action"] == "close":
+                            await self.db.files.update_one({"_id": filename}, {
+                                "$set": {
+                                    "eof": True,
+                                    "size_now": event["file"]["size"]
+                                }
+                            })
 
-                    elif event["action"] == "modify":
-                        await self.db.files.update_one({"_id": filename}, {
-                            "$set": {
-                                "size_now": event["file"]["size"]
-                            }
-                        })
+                        elif event["action"] == "delete":
+                            await self.db.files.delete_one({"_id": filename})
 
-                    elif event["action"] == "close":
-                        await self.db.files.update_one({"_id": filename}, {
-                            "$set": {
-                                "eof": True
-                            }
-                        })
-
-                    elif event["action"] == "delete":
-                        await self.db.files.delete_one({"_id": filename})
+                    except queue.Empty:
+                        break
 
                 await asyncio.sleep(0.1, loop=self.loop)
+
+                looped_once = True
 
         except KeyboardInterrupt:
             pass
@@ -89,57 +100,70 @@ class Manager:
         await self.wait_for_dead()
 
 
-def watch(path, queue):
-    setproctitle.setproctitle("virtool-inotify")
+class Watcher(multiprocessing.Process):
 
-    interval = 0.300
+    def __init__(self, path, queue):
+        super().__init__()
 
-    notifier = inotify.adapters.Inotify()
+        self.path = path
+        self.queue = queue
 
-    notifier.add_watch(bytes(path, encoding="utf-8"))
+    def run(self):
+        setproctitle.setproctitle("virtool-inotify")
 
-    last_modification = time.time()
+        interval = 0.300
 
-    try:
-        for event in notifier.event_gen():
-            if event is not None:
-                _, type_names, _, filename = event
+        notifier = inotify.adapters.Inotify()
 
-                if filename and type_names[0] in TYPE_NAME_DICT:
-                    assert len(type_names) == 1
+        notifier.add_watch(bytes(self.path, encoding="utf-8"))
 
-                    action = TYPE_NAME_DICT[type_names[0]]
+        last_modification = time.time()
 
-                    filename = filename.decode()
+        try:
+            self.queue.put("alive")
 
-                    now = time.time()
+            for event in notifier.event_gen():
+                if event is not None:
 
-                    if action in ["create", "modify", "close"]:
-                        file_entry = file_stats(os.path.join(path, filename))
-                        file_entry["filename"] = filename
+                    _, type_names, _, filename = event
 
-                        if action == "modify" and (now - last_modification) > interval:
-                            queue.put({
-                                "action": action,
-                                "file": file_entry
+                    if filename and type_names[0] in TYPE_NAME_DICT:
+                        assert len(type_names) == 1
+
+                        action = TYPE_NAME_DICT[type_names[0]]
+
+                        filename = filename.decode()
+
+                        now = time.time()
+
+                        if action in ["create", "modify", "close"]:
+                            file_entry = file_stats(os.path.join(self.path, filename))
+                            file_entry["filename"] = filename
+
+                            if action == "modify" and (now - last_modification) > interval:
+                                self.queue.put({
+                                    "action": action,
+                                    "file": file_entry
+                                })
+
+                                last_modification = now
+
+                            else:
+                                self.queue.put({
+                                    "action": action,
+                                    "file": file_entry
+                                })
+
+                        if action == "delete":
+                            self.queue.put({
+                                "action": "delete",
+                                "file": {
+                                    "filename": filename
+                                }
                             })
 
-                            last_modification = now
-
-                        else:
-                            queue.put({
-                                "action": action,
-                                "file": file_entry
-                            })
-
-                    if action == "delete":
-                        queue.put({
-                            "action": "delete",
-                            "file": filename
-                        })
-
-    except KeyboardInterrupt:
-        logging.debug("Stopped file watcher")
+        except KeyboardInterrupt:
+            logging.debug("Stopped file watcher")
 
 
 

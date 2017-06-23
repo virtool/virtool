@@ -1,4 +1,5 @@
 import time
+import queue
 import pytest
 import pprint
 import subprocess
@@ -18,8 +19,25 @@ class MockQueue:
     def put(self, message):
         self.messages.append(message)
 
-    def get(self):
-        return self.messages.popleft()
+    def get(self, block=False, timeout=3):
+        elapsed = 0
+
+        if block:
+            while elapsed < timeout:
+                try:
+                    return self.messages.popleft()
+                except IndexError:
+                    pass
+
+                time.sleep(0.3)
+                elapsed += 0.3
+        else:
+            try:
+                return self.messages.popleft()
+            except IndexError:
+                pass
+
+        raise queue.Empty()
 
     def empty(self):
         return len(self.messages) == 0
