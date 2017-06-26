@@ -72,9 +72,14 @@ export const FIND_SUBTRACTIONS = createRequestActionType("FIND_SUBTRACTIONS");
 export const GET_SUBTRACTION = createRequestActionType("GET_SUBTRACTION");
 export const REMOVE_SUBTRACTION = createRequestActionType("REMOVE_SUBTRACTION");
 
-// Filex
+// Files
 export const FIND_FILES = createRequestActionType("FIND_FILES");
 export const REMOVE_FILE = createRequestActionType("REMOVE_FILE");
+export const UPLOAD_READS = createRequestActionType("UPLOAD_READS");
+export const UPLOAD_PROGRESS = "UPLOAD_PROGRESS";
+export const HIDE_UPLOAD_OVERLAY = "HIDE_UPLOAD_OVERLAY";
+
+
 
 // Account
 export const GET_ACCOUNT_REQUESTED = "GET_ACCOUNT_REQUESTED";

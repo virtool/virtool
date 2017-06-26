@@ -13,8 +13,16 @@ const filesAPI = {
 
     find: () => {
         return Request.get("/api/files");
-    }
+    },
 
+    uploadReads: (file, onProgress) => {
+        return Request.post("/api/upload/reads")
+            .query({name: file.name})
+            .attach("file", file)
+            .on("progress", onProgress);
+    }
 };
+
+
 
 export default filesAPI;

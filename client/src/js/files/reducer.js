@@ -7,12 +7,19 @@
  *
  */
 
-import { assign } from "lodash";
+import { assign, every } from "lodash";
 
-import { FIND_FILES, REMOVE_FILE } from "../actionTypes";
+import { FIND_FILES, REMOVE_FILE, UPLOAD_READS, UPLOAD_PROGRESS, HIDE_UPLOAD_OVERLAY } from "../actionTypes";
 
 const initialState = {
-    documents: null
+    documents: null,
+    uploads: [],
+    uploadsComplete: true,
+    showUploadOverlay: false
+};
+
+const assignUploadsComplete = (newState) => {
+    return assign({}, newState, {uploadsComplete: every(newState.uploads, {progress: 100})});
 };
 
 export default function reducer (state = initialState, action) {
@@ -20,10 +27,43 @@ export default function reducer (state = initialState, action) {
     switch (action.type) {
 
         case FIND_FILES.SUCCEEDED:
-            console.log(action);
             return assign({}, state, {
-                documents: action.data
+                documents: action.data.documents
             });
+
+        case UPLOAD_READS.REQUESTED: {
+            const fileMeta = {
+                name: action.file.name,
+                size: action.file.size,
+                type: action.file.type
+            };
+
+            const newState = assign({}, state, {
+                uploads: state.uploads.concat([assign({}, {localId: action.localId}, {progress: 0}, fileMeta)]),
+                showUploadsOverlay: true
+            });
+
+            return assignUploadsComplete(newState);
+        }
+
+        case UPLOAD_PROGRESS: {
+            const newState = assign({}, state, {
+                uploads: state.uploads.map(upload => {
+                    if (upload.localId !== action.localId) {
+                        return upload;
+                    }
+
+                    return assign({}, upload, {
+                        progress: action.progress
+                    });
+                })
+            });
+
+            return assignUploadsComplete(newState);
+        }
+
+        case HIDE_UPLOAD_OVERLAY:
+            return assign({}, state, {showUploadOverlay: false});
 
     }
 

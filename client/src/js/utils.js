@@ -1,5 +1,5 @@
 import Numeral from "numeral";
-import { get, startCase, capitalize } from "lodash";
+import { sampleSize, get, startCase, capitalize } from "lodash";
 
 export const taskDisplayNames = {
     nuvs: "NuVs",
@@ -20,6 +20,12 @@ export const numberDictionary = {
     7: "seven",
     8: "eight",
     9: "nine"
+};
+
+const alphanumeric = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+
+export const createRandomString = (length=8) => {
+    return sampleSize(alphanumeric, length).join("")
 };
 
 export const numberToWord = (number) => numberDictionary[Number(number)] || number;

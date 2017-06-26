@@ -9,6 +9,7 @@ import Samples from "./samples/components/Samples";
 import Viruses from "./viruses/components/Viruses";
 import Subtraction from "./subtraction/components/Subtraction";
 import Settings from "./settings/components/Settings";
+import UploadOverlay from "./files/components/UploadOverlay";
 
 const Inner = (props) => {
     if (props.ready) {
@@ -25,6 +26,8 @@ const Inner = (props) => {
                     <Route path="/subtraction" component={Subtraction} />
                     <Route path="/settings" component={Settings} />
                 </Switch>
+
+                <UploadOverlay />
             </div>
         );
     }
