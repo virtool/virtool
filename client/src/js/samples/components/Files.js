@@ -1,7 +1,7 @@
 import React, { PropTypes } from "react";
 import { connect } from "react-redux";
 import Dropzone from "react-dropzone";
-import { Row, Col, ListGroup } from "react-bootstrap";
+import { Badge, Row, Col, ListGroup } from "react-bootstrap";
 
 import { byteSize } from "virtool/js/utils";
 import { findFiles, removeFile } from "../../files/actions";
@@ -73,6 +73,10 @@ class ReadFiles extends React.Component {
 
         return (
             <div>
+                <h3 className="view-header">
+                    <strong>Read Files</strong> <Badge>{fileComponents.length}</Badge>
+                </h3>
+
                 <div className="toolbar">
                     <Dropzone
                         ref={(node) => this.dropzone = node}
