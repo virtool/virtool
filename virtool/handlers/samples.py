@@ -1,3 +1,4 @@
+import os
 import re
 import math
 from pymongo import ReturnDocument
@@ -48,6 +49,50 @@ async def find(req):
         "page": page,
         "page_count": int(math.ceil(found_count / 15))
     })
+
+
+async def upload(req):
+
+    reader = await req.multipart()
+    fastq = await reader.next()
+
+    filename = req.query["name"]
+
+    file_id = "{}-{}".format(await virtool.utils.get_new_id(req.app["db"].files), filename)
+
+    while file_id in await req.app["db"].files.distinct("_id"):
+        file_id = "{}-{}".format(await virtool.utils.get_new_id(req.app["db"].files), filename)
+
+    file_path = os.path.join(req.app["settings"].get("data_path"), "files", file_id)
+
+    await req.app["db"].files.insert_one({
+        "_id": file_id,
+        "name": filename,
+        "type": "reads",
+        "user_id": req["session"].user_id,
+        "uploaded_at": virtool.utils.timestamp(),
+        "created": False,
+        "ready": False,
+        "eof": False
+    })
+
+    size = 0
+
+    with open(file_path, "wb") as handle:
+        while True:
+            chunk = await fastq.read_chunk()
+            if not chunk:
+                break
+            size += len(chunk)
+            handle.write(chunk)
+
+    await req.app["db"].files.update_one({"_id": file_id}, {
+        "$set": {
+            "ready": True
+        }
+    })
+
+    return json_response({"complete": True})
 
 
 async def create(req):

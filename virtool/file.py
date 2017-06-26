@@ -13,11 +13,15 @@ logger = logging.getLogger(__name__)
 LIST_PROJECTION = [
     "_id",
     "name",
-    "size_end",
-    "size_now",
+    "size",
+    "user_id",
     "timestamp",
-    "file_type",
-    "created",
-    "reserved",
+    "type",
     "ready"
 ]
+
+
+def processor(document):
+    document = dict(document)
+    document["file_id"] = document.pop("_id")
+    return document

@@ -3,7 +3,7 @@ from aiohttp import web
 from virtool.utils import get_static_hash
 from virtool.user_login import get_login_template, generate_verification_keys, login_handler
 from virtool.handlers import root, jobs, samples, viruses, history, hmm, subtraction, settings, account, groups, users,\
-    genbank, status, lifecycle, websocket, resources, analyses, indexes
+    genbank, status, lifecycle, websocket, resources, analyses, indexes, files
 
 
 async def index_handler(req):
@@ -83,6 +83,7 @@ def setup_routes(app):
 
     # Samples Routes
     app.router.add_get("/api/samples", samples.find)
+    app.router.add_post("/api/upload/reads", samples.upload)
     app.router.add_post("/api/samples", samples.create)
 
     app.router.add_get("/api/samples/{sample_id}", samples.get)
@@ -150,6 +151,9 @@ def setup_routes(app):
 
     app.router.add_get("/api/settings", settings.get_all)
     app.router.add_patch("/api/settings", settings.update)
+
+    # Files Routes
+    app.router.add_get("/api/files", files.find)
 
     # Account Routes
     app.router.add_get("/api/account", account.get)

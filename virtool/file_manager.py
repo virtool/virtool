@@ -98,7 +98,7 @@ class Manager:
                         elif event["action"] == "modify":
                             await self.db.files.update_one({"_id": filename}, {
                                 "$set": {
-                                    "size_now": event["file"]["size"]
+                                    "size": event["file"]["size"]
                                 }
                             })
 
@@ -106,7 +106,7 @@ class Manager:
                             await self.db.files.update_one({"_id": filename}, {
                                 "$set": {
                                     "eof": True,
-                                    "size_now": event["file"]["size"]
+                                    "size": event["file"]["size"]
                                 }
                             })
 
