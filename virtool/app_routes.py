@@ -154,6 +154,7 @@ def setup_routes(app):
 
     # Files Routes
     app.router.add_get("/api/files", files.find)
+    app.router.add_delete("/api/files/{file_id}", files.remove)
 
     # Account Routes
     app.router.add_get("/api/account", account.get)
