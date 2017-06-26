@@ -15,6 +15,10 @@ const filesAPI = {
         return Request.get("/api/files");
     },
 
+    remove: (fileId) => {
+        return Request.delete(`/api/files/${fileId}`);
+    },
+
     uploadReads: (file, onProgress) => {
         return Request.post("/api/upload/reads")
             .query({name: file.name})

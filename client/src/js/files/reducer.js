@@ -7,9 +7,17 @@
  *
  */
 
-import { assign, every } from "lodash";
+import { assign, every, reject } from "lodash";
 
-import { FIND_FILES, REMOVE_FILE, UPLOAD_READS, UPLOAD_PROGRESS, HIDE_UPLOAD_OVERLAY } from "../actionTypes";
+import {
+    WS_UPDATE_FILE,
+    WS_REMOVE_FILE,
+    FIND_FILES,
+    REMOVE_FILE,
+    UPLOAD_READS,
+    UPLOAD_PROGRESS,
+    HIDE_UPLOAD_OVERLAY
+} from "../actionTypes";
 
 const initialState = {
     documents: null,
@@ -31,6 +39,11 @@ export default function reducer (state = initialState, action) {
                 documents: action.data.documents
             });
 
+        case REMOVE_FILE.SUCCEEDED:
+            return assign({}, state, {
+                documents: reject(state.documents, {file_id: action.data.file_id})
+            });
+
         case UPLOAD_READS.REQUESTED: {
             const fileMeta = {
                 name: action.file.name,
@@ -40,7 +53,7 @@ export default function reducer (state = initialState, action) {
 
             const newState = assign({}, state, {
                 uploads: state.uploads.concat([assign({}, {localId: action.localId}, {progress: 0}, fileMeta)]),
-                showUploadsOverlay: true
+                showUploadOverlay: true
             });
 
             return assignUploadsComplete(newState);

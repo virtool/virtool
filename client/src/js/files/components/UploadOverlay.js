@@ -13,14 +13,13 @@ import { connect } from "react-redux";
 import { Badge, ListGroup } from "react-bootstrap";
 
 import { byteSize } from "virtool/js/utils";
+import { hideUploadOverlay } from "../actions";
 import { Flex, FlexItem, ListGroupItem, ProgressBar } from "virtool/js/components/Base";
 
 const UploadOverlay = (props) => {
 
-    console.log(props);
-
     const classNames = CX("upload-overlay", {
-        "hidden": props.uploadsComplete
+        "hidden": !props.showUploadOverlay
     });
 
     const uploadComponents = sortBy(props.uploads, "progress").reverse().map(upload =>
@@ -41,7 +40,12 @@ const UploadOverlay = (props) => {
         <div className={classNames}>
             <div className="upload-overlay-content">
                 <h5>
-                    <strong>Uploads</strong> <Badge>{uploadComponents.length}</Badge>
+                    <span>
+                        <strong>Uploads</strong> <Badge>{uploadComponents.length}</Badge>
+                    </span>
+                    <button type="button" className="close pullRight" onClick={props.onClose}>
+                        <span>&times;</span>
+                    </button>
                 </h5>
                 <ListGroup>
                     {uploadComponents}
@@ -53,7 +57,7 @@ const UploadOverlay = (props) => {
 
 UploadOverlay.propTypes = {
     uploads: PropTypes.arrayOf(PropTypes.object),
-    showUploadsOverlay: PropTypes.bool,
+    showUploadOverlay: PropTypes.bool,
     uploadsComplete: PropTypes.bool
 };
 
@@ -61,10 +65,18 @@ const mapStateToProps = (state) => {
     return {
         uploads: state.files.uploads,
         uploadsComplete: state.files.uploadsComplete,
-        showUploadsOverlay: state.files.showUploadsOverlay
+        showUploadOverlay: state.files.showUploadOverlay
     };
 };
 
-const Container = connect(mapStateToProps)(UploadOverlay);
+const mapDispatchToProps = (dispatch) => {
+    return {
+        onClose: () => {
+            dispatch(hideUploadOverlay())
+        }
+    };
+};
+
+const Container = connect(mapStateToProps, mapDispatchToProps)(UploadOverlay);
 
 export default Container;
