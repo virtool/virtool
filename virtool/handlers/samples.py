@@ -4,6 +4,7 @@ import math
 from pymongo import ReturnDocument
 from cerberus import Validator
 
+import virtool.file
 import virtool.utils
 import virtool.sample
 import virtool.analysis
@@ -65,16 +66,23 @@ async def upload(req):
 
     file_path = os.path.join(req.app["settings"].get("data_path"), "files", file_id)
 
-    await req.app["db"].files.insert_one({
+    document = {
         "_id": file_id,
         "name": filename,
         "type": "reads",
         "user_id": req["session"].user_id,
         "uploaded_at": virtool.utils.timestamp(),
         "created": False,
-        "ready": False,
-        "eof": False
-    })
+        "ready": False
+    }
+
+    await req.app["db"].files.insert_one(document)
+
+    await req.app["dispatcher"].dispatch(
+        "files",
+        "update",
+        virtool.file.processor({key: document[key] for key in virtool.file.LIST_PROJECTION if document.get(key, False)})
+    )
 
     size = 0
 
@@ -85,12 +93,6 @@ async def upload(req):
                 break
             size += len(chunk)
             handle.write(chunk)
-
-    await req.app["db"].files.update_one({"_id": file_id}, {
-        "$set": {
-            "ready": True
-        }
-    })
 
     return json_response({"complete": True})
 
