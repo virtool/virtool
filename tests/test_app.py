@@ -124,7 +124,7 @@ class TestInitDispatcher:
 
 class TestInitJobManager:
 
-    async def test(self, mocker, loop, test_dispatch):
+    async def test(self, mocker, loop):
         app = web.Application(loop=loop)
 
         app["db"] = None
