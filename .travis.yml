@@ -12,7 +12,7 @@ env:
 
 before_install:
 - sudo apt-get -qq update
-- sudo apt-get install nvidia-cuda-dev libcuda1-375 libboost-dev
+- sudo apt-get install nvidia-cuda-dev nvidia-cuda-toolkit libboost-python-dev libboost-dev
 - pip install numpy
 - pip install codecov
 - wget http://eddylab.org/software/hmmer3/3.1b2/hmmer-3.1b2-linux-intel-x86_64.tar.gz
