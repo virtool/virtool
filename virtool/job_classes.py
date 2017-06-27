@@ -1,6 +1,6 @@
 import virtool.subtraction
 import virtool.virus_index
-import virtool.sample
+import virtool.sample_create
 import virtool.job_analysis
 import virtool.job_test
 
@@ -11,6 +11,6 @@ TASK_CLASSES = {
     "pathoscope_bowtie": virtool.job_analysis.PathoscopeBowtie,
     "nuvs": virtool.job_analysis.NuVs,
     "add_subtraction": virtool.subtraction.AddHost,
-    "import_reads": virtool.sample.ImportReads,
+    "create_sample": virtool.sample_create.CreateSample,
     "test_task": virtool.job_test.TestTask
 }
