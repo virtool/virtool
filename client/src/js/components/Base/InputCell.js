@@ -87,7 +87,7 @@ const getInitialInputCellState = (props) => {
         // Show an error popover indicating that the saved value is invalid.
         showError: false
     };
-}
+};
 
 
 /**
@@ -106,12 +106,12 @@ export class InputCell extends React.Component {
         _id: PropTypes.string,
         field: PropTypes.string,
         value: PropTypes.string,
-        collection: PropTypes.object
+        onSave: React.PropTypes.func.isRequired
     };
 
     componentDidUpdate = (nextProps) => {
         if (nextProps.value !== this.props.value) {
-            this.setState({pending: false}, () =>this.toggleEditing(null, false));
+            this.setState({pending: false}, () => this.toggleEditing(null, false));
         }
     };
 
@@ -177,35 +177,13 @@ export class InputCell extends React.Component {
      * @func
      */
     save = () => {
-        this.setState({pending: true}, () => {
-            //
-            if (this.state.value !== this.props.value) {
-                this.props.collection.request("set_field", {
-                    _id: this.props._id,
-                    field: this.props.field,
-                    value: this.state.value
-                }).failure(() => {
-                    this.setState({
-                        showError: true,
-                        editing: true,
-                        pending: false
-                    });
-                });
-            }
-
+        if (this.state.value !== this.props.value) {
+            this.props.onSave(this.props.field, this.state.value);
+        } else {
             // Save was clicked, but the value didn't change from the original static value. Toggle editing off but
             // don't send any data to the server.
-            else {
-                this.setState({pending: false}, () => this.toggleEditing(null, false));
-            }
-        });
-    };
-
-    /**
-     * Dismiss any errors. Called as the error popover's 'onHide' function.
-     */
-    dismissError = () => {
-        this.setState({showError: false});
+            this.setState({pending: false}, () => this.toggleEditing(null, false));
+        }
     };
 
     render () {
