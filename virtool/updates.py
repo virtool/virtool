@@ -6,10 +6,7 @@ import logging
 import requests
 import tempfile
 import urllib.request
-import tornado.ioloop
-import tornado.gen
 
-import virtool.gen
 import virtool.database
 import virtool.utils
 

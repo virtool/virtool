@@ -1,98 +1,127 @@
 import os
 import sys
 import signal
+import pymongo
 import traceback
 import multiprocessing
 import subprocess
-
-from setproctitle import setproctitle
-from virtool import utils
+import setproctitle
 
 
-class Termination(Exception):
+PROJECTION = [
+    "_id",
+    "task",
+    "status",
+    "proc",
+    "mem",
+    "user_id"
+]
+
+
+def processor(document):
     """
-    Exception raised when a Job handles SIGTERM.
+    Process a job document for transmission to a client.
+    
+    :param document: a job document
+    :type document: dict
+    
+    :return: a processed job document
+    :rtype: dict
+    
+    """
+    document = dict(document)
+    document["job_id"] = document.pop("_id")
+    return document
+
+
+def dispatch_processor(document):
+    """
+    Removes the ``status`` and ``args`` fields from the job document.
+
+    Adds a ``username`` field, an ``added`` date taken from the first status entry in the job document, and
+    ``state`` and ``progress`` fields taken from the most recent status entry in the job document.
+
+    :param document: a document to process.
+    :type document: dict
+
+    :return: a processed documents.
+    :rtype: dict
 
     """
-    pass
+    document = processor(document)
 
+    status = document.pop("status")
 
-class JobError(Exception):
-    """
-    Exception raised when a Job encounters and error in a subprocess or stage method."
+    last_update = status[-1]
 
-    """
-    pass
+    document.update({
+        "state": last_update["state"],
+        "stage": last_update["stage"],
+        "added": status[0]["timestamp"],
+        "progress": status[-1]["progress"]
+    })
+
+    return document
 
 
 class Job(multiprocessing.Process):
 
-    def __init__(self, _id, settings, message_queue, task, task_args, proc, mem):
+    def __init__(self, job_id, settings, message_queue, task, task_args, proc, mem):
         super().__init__()
 
-        #: A dictionary of server settings.
-        self.settings = settings
-
-        #: A instance of MongoClient for Virtool's database. Assigned after forking.
-        self.db = None
-
-        #: Used to communicate with the server.
-        self.queue = message_queue
-
         #: The job's database id.
-        self._id = _id
+        self._job_id = job_id
+
+        #: A dict of server settings.
+        self._settings = settings
+
+        #: Used to communicate with the main process.
+        self._queue = message_queue
 
         #: The task name.
-        self.task = task
+        self._task = task
 
         #: The task args passed from the :meth:`.jobs.Collection.new` method.
-        self.task_args = task_args
+        self._task_args = task_args
 
         #: The number of cores the job is allowed to use.
-        self.proc = proc
+        self._proc = proc
 
         #: The amount of memory in GB that the job is allowed to use.
-        self.mem = mem
-        self.log_list = []
+        self._mem = mem
 
         # If the job owns an external subprocess, the subprocess.Popen object will be referred to by this attribute. If
         # no process is open, the attribute is set to None.
-        self.process = None
+        self._process = None
 
-        self.stage_list = list()
+        self._stage_list = list()
         self.stage_counter = 0
         self.progress = 0
-        self.stage_progress = 0
 
-        self.do_cleanup = False
+        self._do_cleanup = False
 
-        self.state = "waiting"
-        self.stage = None
-        self.error = None
+        self._state = "waiting"
+        self._stage = None
+        self._error = None
 
-    def log(self, line, timestamp=None):
-        if timestamp is None:
-            timestamp = str(utils.timestamp())
+        self._db_host = self._settings["db_host"]
+        self._db_port = self._settings["db_port"]
+        self._db_name = self._settings["db_name"]
 
-        self.log_list.append(timestamp + "\t" + str(line))
-
-    def on_db(self):
-        pass
+        self.db = None
 
     def run(self):
+
+        self.db = pymongo.MongoClient(host=self._db_host, port=self._db_port)[self._db_name]
+
         # Set the process title so that it is easily identifiable as a virtool job process.
-        setproctitle("virtool-" + self._id)
+        setproctitle.setproctitle("virtool-{}".format(self._job_id))
 
         # Ignore keyboard interrupts. The manager will deal with the signal and cancel jobs safely.
         signal.signal(signal.SIGINT, signal.SIG_IGN)
 
-        # When the manager terminates jobs, run the get_term method.
-        signal.signal(signal.SIGTERM, self.handle_sigterm)
-
-        #: A synchronous connection to the Virtool database.
-        self.db = self.settings.get_db_client(sync=True)
-
-        self.on_db()
+        # When the manager terminates jobs, call :meth:`.handle_sigterm`.
+        signal.signal(signal.SIGTERM, handle_sigterm)
 
         was_cancelled = False
         had_error = False
@@ -103,17 +132,17 @@ class Job(multiprocessing.Process):
 
             try:
                 # Run the commands in the command list
-                for stage_method in self.stage_list:
+                for method in self._stage_list:
                     self.stage_counter += 1
-                    self.stage_progress = 0
 
-                    self.progress = round(self.stage_counter / (len(self.stage_list) + 2), 3)
+                    self.progress = round(self.stage_counter / (len(self._stage_list) + 1), 2)
 
                     # Get the function name and use it to tell the jobs collection that a new stage has been started.
-                    self.update_status(stage=stage_method.__name__)
+                    self.update_status(stage=method.__name__)
 
                     # Run the command function
-                    stage_method()
+                    method()
+
             except:
                 # Handle exceptions in the Python code
                 exception = handle_exception()
@@ -131,7 +160,7 @@ class Job(multiprocessing.Process):
 
                 # An error has occurred. Handle and parse the error and traceback using the handle_error method.
                 else:
-                    self.error = {
+                    self._error = {
                         "message": exception,
                         "context": "Python Error"
                     }
@@ -139,6 +168,7 @@ class Job(multiprocessing.Process):
 
             # Tell the database that the job has completed. This line is only reached if no error or cancellation
             # occurs.
+            self.progress = 1
             self.update_status(state="complete", stage=None)
 
         except Termination:
@@ -146,47 +176,25 @@ class Job(multiprocessing.Process):
             # by the user.
             was_cancelled = True
 
-            self.do_cleanup = True
+        except JobError:
+            had_error = True
+
+        if had_error or was_cancelled:
+            self.progress = 1
 
             # Terminate any owned subprocess and log the outcome.
             try:
-                self.log("Terminated an external subprocess.")
-                self.process.terminate()
+                self._process.terminate()
             except AttributeError:
-                self.log("Did not find an external subprocess to terminate.")
                 pass
 
-        except JobError:
-            # When an error occurs in the job the JobError exception is raised immediately to stop all execution of task
-            # code. A message is sent to the job manager detailing the error. In response, the manager calls the Job's
-            # terminate method. The SIGTERM is caught and the handle_sigterm method is called to cleanly kill the job.
-            had_error = True
-
-            self.update_status(state="error", stage=self.stage, error=self.error)
-
-            try:
-                # Wait after the JobError exception while the server gets around to calling the terminate method.
-                while True:
-                    pass
-
-            except Termination:
-                # When it does, the Terminate exception will be raised and we will continue shutting down the job.
-                self.do_cleanup = True
-
-        # Clean-up intermediate files and database changes if the job is ending due to cancellation or and error.
-        self.log("Cleaning up")
-        if self.do_cleanup:
             self.cleanup()
-
-        # Write the job log to file and clear the log data from the database to save memory.
-        write_log(self.settings.get("data_path") + "/logs/jobs/" + self._id + ".log", self.log_list)
 
         if was_cancelled:
             self.update_status(state="cancelled")
 
-    def handle_sigterm(self, *args, **kwargs):
-        self.log("Got a termination signal. Raising Termination exception. {} {}".format(repr(args), repr(kwargs)))
-        raise Termination
+        if had_error:
+            self.update_status(state="error", stage=self._stage, error=self._error)
 
     def run_process(self, cmd, stdout_handler=None, dont_read_stdout=False, no_output_failure=False, env=None):
         """
@@ -219,22 +227,22 @@ class Job(multiprocessing.Process):
                 stderr = process.stderr.read()
 
         except subprocess.CalledProcessError:
-            self.error = {
-                "message": ["Returned " + str(self.process.returncode), "Check log."],
+            self._error = {
+                "message": ["Returned " + str(self._process.returncode), "Check log."],
                 "context": "External Process Error"
             }
 
         if no_output_failure and not output:
-            self.error = {
+            self._error = {
                 "message": stderr.split("\n"),
                 "context": "External Process Error"
             }
 
-        if self.error:
+        if self._error:
             raise JobError
 
         # Set the process attribute to None, indicating that there is no running external process.
-        self.process = None
+        self._process = None
 
         return output
 
@@ -245,42 +253,37 @@ class Job(multiprocessing.Process):
 
         """
         # Set the state and stage attributes if they are changed by this status update.
-        self.state = state if state else self.state
-        self.stage = stage if stage else self.stage
-
-        # Write to the job log.
-        if not error:
-            if not state or state != "complete":
-                self.log("status_change: State='" + str(self.state) + "', Stage='" + str(self.stage) + "'")
-            elif state == "complete":
-                self.log("job complete.")
-        else:
-            self.log("an error occurred")
+        self._state = state or self._state
+        self._stage = stage or self._stage
 
         # Instruct the manager to update the jobs database collection with the new status information.
-        self.collection_operation("jobs", "update_status", {
-            "_id": self._id,
-            "progress": self.progress + self.stage_progress,
-            "state": self.state,
-            "stage": self.stage,
-            "error": error
-        })
+        self.call_static("add_status", self._job_id, self.progress, self._state, self._stage, error)
 
-    def update_stage_progress(self, stage_progress):
-        stage_weight = round(1 / (len(self.stage_list) + 2), 3)
-
-        self.stage_progress = stage_weight * stage_progress
-        self.update_status()
-
-    def collection_operation(self, collection_name, operation, data=None):
-        self.queue.put({
-            "operation": operation,
-            "collection_name": collection_name,
-            "data": data
-        })
+    def call_static(self, method_name, *args, **kwargs):
+        self._queue.put((self._job_id, method_name, args, kwargs))
 
     def cleanup(self):
         pass
+
+
+class Termination(Exception):
+    """
+    Exception raised when a Job handles SIGTERM.
+
+    """
+    pass
+
+
+class JobError(Exception):
+    """
+    Exception raised when a Job encounters and error in a subprocess or stage method."
+
+    """
+    pass
+
+
+def handle_sigterm(*args, **kwargs):
+    raise Termination
 
 
 def handle_exception(max_tb=50, print_message=False):
@@ -316,6 +319,7 @@ def write_log(path, log_list):
         with open(path, "w") as log_file:
             for line in log_list:
                 log_file.write(line + "\n")
+
     except IOError:
         os.makedirs(path)
         write_log(path, log_list)
@@ -334,5 +338,4 @@ def stage_method(func):
 
     """
     func.is_stage_method = True
-
     return func

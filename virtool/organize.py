@@ -1,12 +1,53 @@
 import os
 import subprocess
-import virtool.utils
 
-from virtool.permissions import PERMISSIONS
-from virtool.groups import merge_group_permissions
-from virtool.history import get_default_isolate
-from virtool.virusutils import merge_virus
-from virtool.sampleutils import calculate_algorithm_tags
+from virtool.user_permissions import PERMISSIONS
+from virtool.user_groups import merge_group_permissions
+from virtool.virus import get_default_isolate
+from virtool.virus import merge_virus
+from virtool.sample import calculate_algorithm_tags
+
+
+async def rename_username_to_user_id(collection):
+    await collection.update_many({"username": {"$exists": ""}}, {
+        "$rename": {
+            "username": "user_id"
+        }
+    })
+
+
+async def unset_version_field(collection):
+    await collection.update_many({"_version": {"$exists": ""}}, {
+        "$unset": {
+            "_version": ""
+        }
+    })
+
+
+async def organize_subtraction(db):
+    collection_names = await db.collection_names()
+
+    if "hosts" in collection_names and "subtraction" not in collection_names:
+        # Get all documents from the hosts collection.
+        documents = await db.hosts.find().to_list(None)
+
+        for document in documents:
+            document["is_host"] = True
+
+        # Copy the documents to a new subtraction collection.
+        await db.subtraction.insert_many(documents)
+
+        # Remove the old hosts collection
+        await db.drop_collection("hosts")
+
+    await rename_username_to_user_id(db.hosts)
+    await unset_version_field(db.hosts)
+
+    await db.subtraction.update_many({"lengths": {"$exists": ""}}, {
+        "$unset": {
+            "lengths": ""
+        }
+    })
 
 
 def organize_analyses(database):
@@ -179,7 +220,7 @@ def organize_viruses(database):
                 required_unbuilt_change_count = int(virus["_version"] - virus["last_indexed_version"])
 
                 # Count the number of history entries containing unbuilt changes for this virus.
-                recent_history = virtool.utils.where(history, lambda x: x["index_version"] == x["unbuilt"])
+                recent_history = [doc for doc in history if doc["index_version"] == "unbuilt"]
 
                 # The two previously assigned variables must be equal. Otherwise the virus_id will be added to the
                 # missing_recent_history list in the response dict returned by this function.

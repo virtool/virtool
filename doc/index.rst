@@ -18,5 +18,5 @@ Documentation
 .. toctree::
     :hidden:
 
-    server/server
-    client/client
+    installation/index
+    api/index
