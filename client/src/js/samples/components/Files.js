@@ -22,7 +22,12 @@ const File = (props) => (
                 Uploaded <RelativeTime time={props.uploaded_at} /> by {props.user_id}
             </Col>
             <Col md={1}>
-                <Icon name="remove" bsStyle="danger" pullRight onClick={() => props.onRemove(props.file_id)} />
+                <Icon
+                    name="remove"
+                    bsStyle="danger"
+                    style={{fontSize: "17px"}}
+                    pullRight onClick={() => props.onRemove(props.file_id)}
+                />
             </Col>
         </Row>
     </ListGroupItem>
