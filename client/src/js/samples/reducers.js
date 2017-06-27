@@ -15,6 +15,7 @@ import {
     GET_SAMPLE,
     UPDATE_SAMPLE,
     FIND_ANALYSES,
+    FIND_READY_HOSTS,
     GET_ANALYSIS,
     ANALYZE
 } from "../actionTypes";
@@ -24,7 +25,9 @@ const initialState = {
     detail: null,
 
     analyses: null,
-    analysisDetail: null
+    analysisDetail: null,
+
+    readyHosts: null
 };
 
 export default function reducer (state = initialState, action) {
@@ -51,6 +54,11 @@ export default function reducer (state = initialState, action) {
                 foundCount: action.data.found_count,
                 pageCount: action.data.page_count,
                 page: action.data.page
+            });
+
+        case FIND_READY_HOSTS.SUCCEEDED:
+            return assign({}, state, {
+                readyHosts: action.data.documents
             });
 
         case GET_SAMPLE.REQUESTED:

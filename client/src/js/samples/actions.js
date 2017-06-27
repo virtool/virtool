@@ -7,13 +7,28 @@
  *
  */
 
-import { FIND_SAMPLES, GET_SAMPLE, UPDATE_SAMPLE, FIND_ANALYSES, GET_ANALYSIS, ANALYZE } from "../actionTypes";
+import {
+    FIND_SAMPLES,
+    FIND_READY_HOSTS,
+    FIND_READY_READS,
+    GET_SAMPLE,
+    UPDATE_SAMPLE,
+    FIND_ANALYSES,
+    GET_ANALYSIS,
+    ANALYZE
+} from "../actionTypes";
 
 export const findSamples = (term, page) => {
     return {
         type: FIND_SAMPLES.REQUESTED,
         term,
         page
+    };
+};
+
+export const findReadyHosts = () => {
+    return {
+        type: FIND_READY_HOSTS.REQUESTED
     };
 };
 
