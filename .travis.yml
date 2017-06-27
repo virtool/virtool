@@ -11,6 +11,8 @@ env:
 - TRAVIS_NODE_VERSION="6"
 
 install:
+- sudo apt-get -qq update
+- sudo apt-get install nvidia-cuda-dev
 - pip install -r requirements.txt
 - rm -rf ~/.nvm
 - git clone https://github.com/creationix/nvm.git ~/.nvm
