@@ -36,26 +36,34 @@ class TestFind:
 
         assert resp.status == 200
 
-        assert await resp.json() == [
-            {
-                "abbreviation": "EV_TF3-mycovirus",
-                "modified": False,
-                "name": "Endornavirus of Tree Fruit #3",
-                "virus_id": "5350af44"
-            },
-            {
-                "abbreviation": "PVF",
-                "modified": False,
-                "name": "Prunus virus F",
-                "virus_id": "6116cba1"
-            },
-            {
-                "abbreviation": "TyV_GV1 (not confirmed)",
-                "modified": False,
-                "name": "Tymovirus from Grapevine 1(not confirmed)",
-                "virus_id": "2f97f077"
-            }
-        ]
+        assert await resp.json() == {
+            "modified_count": 0,
+            "found_count": 3,
+            "total_count": 3,
+            "page_count": 1,
+            "page": 1,
+
+            "documents": [
+                {
+                    "abbreviation": "EV_TF3-mycovirus",
+                    "modified": False,
+                    "name": "Endornavirus of Tree Fruit #3",
+                    "virus_id": "5350af44"
+                },
+                {
+                    "abbreviation": "PVF",
+                    "modified": False,
+                    "name": "Prunus virus F",
+                    "virus_id": "6116cba1"
+                },
+                {
+                    "abbreviation": "TyV_GV1 (not confirmed)",
+                    "modified": False,
+                    "name": "Tymovirus from Grapevine 1(not confirmed)",
+                    "virus_id": "2f97f077"
+                }
+            ]
+        }
 
 
 class TestGet:

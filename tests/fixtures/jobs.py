@@ -1,8 +1,6 @@
 import time
 import queue
 import pytest
-import pprint
-import subprocess
 import collections
 import multiprocessing
 
@@ -75,7 +73,7 @@ def test_job_manager(mocker, loop, test_motor):
 
     yield manager
 
-    manager.close()
+    loop.run_until_complete(manager.close())
 
 
 @pytest.fixture
