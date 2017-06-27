@@ -11,7 +11,7 @@ import virtool.app_dispatcher
 import virtool.job_manager
 
 
-class TestInitDb:
+class TestInitDB:
 
     async def test(self, loop):
         """
@@ -124,12 +124,12 @@ class TestInitDispatcher:
 
 class TestInitJobManager:
 
-    async def test(self, loop, test_dispatch):
+    async def test(self, mocker, loop, test_dispatch):
         app = web.Application(loop=loop)
 
         app["db"] = None
         app["settings"] = None
-        app["dispatcher"] = test_dispatch
+        app["dispatcher"] = mocker.MagicMock()
 
         await virtool.app.init_job_manager(app)
 
@@ -138,7 +138,7 @@ class TestInitJobManager:
         assert app["job_manager"].loop == loop
         assert app["job_manager"].db is None
         assert app["job_manager"].settings is None
-        assert app["job_manager"].dispatch == test_dispatch.dispatch
+        assert app["job_manager"].dispatch == app["dispatcher"].dispatch
 
 
 class TestConfigureSSL:
