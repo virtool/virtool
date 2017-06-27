@@ -1,12 +1,14 @@
 import React, { PropTypes } from "react";
 import URI from "urijs";
 import { connect } from "react-redux";
+import { Route } from "react-router-dom";
 import { Badge, ListGroup, Pagination } from "react-bootstrap";
 
 import { findSamples } from "../actions";
 import { Flex, FlexItem, Icon, ListGroupItem } from "virtool/js/components/Base";
 import SampleEntry from "./Entry";
 import SampleToolbar from "./Toolbar";
+import CreateSample from "./Create/Create";
 
 class SamplesList extends React.Component {
 
@@ -57,6 +59,8 @@ class SamplesList extends React.Component {
             return <div />;
         }
 
+        const showCreateModal = this.props.location.state && this.props.location.state.create;
+
         const term = this.props.match.params.term;
 
         const samplesCount = this.props.samples.length;
@@ -99,7 +103,12 @@ class SamplesList extends React.Component {
                     </Flex>
                 </h3>
 
-                <SampleToolbar term={term} onTermChange={this.handleTermChange} />
+                <SampleToolbar
+                    term={term}
+                    onTermChange={this.handleTermChange}
+                    history={this.props.history}
+                    location={this.props.location}
+                />
 
                 <ListGroup>
                     {sampleComponents}
@@ -117,6 +126,13 @@ class SamplesList extends React.Component {
                         prev
                     />
                 </div>
+
+                <CreateSample
+                    show={showCreateModal}
+                    onHide={
+                        () => this.props.history.push(this.props.location.pathname + this.props.location.search, {})
+                    }
+                />
             </div>
         );
     }
