@@ -20,7 +20,9 @@ before_install:
 - export PATH=${PATH}:${PWD}/hmmer-3.1b2-linux-intel-x86_64/binaries
 
 install:
+- grep -iv pycuda requirements.txt
 - pip install -r requirements.txt
+- pip install pycuda
 - rm -rf ~/.nvm
 - git clone https://github.com/creationix/nvm.git ~/.nvm
 - cd ~/.nvm
