@@ -30,6 +30,8 @@ export const WS_UPDATE_SAMPLE = "WS_UPDATE_SAMPLE";
 export const WS_REMOVE_SAMPLE = "WS_REMOVE_SAMPLE";
 
 export const FIND_SAMPLES = createRequestActionType("FIND_SAMPLES");
+export const FIND_READY_HOSTS = createRequestActionType("FIND_READY_HOSTS");
+export const FIND_READY_READS = createRequestActionType("FIND_READY_READS");
 export const GET_SAMPLE = createRequestActionType("GET_SAMPLE");
 export const UPDATE_SAMPLE = createRequestActionType("UPDATE_SAMPLE");
 export const FIND_ANALYSES = createRequestActionType("FIND_ANALYSES");
