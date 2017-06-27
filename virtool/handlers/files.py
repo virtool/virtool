@@ -8,7 +8,16 @@ from virtool.handlers.utils import json_response, not_found
 async def find(req):
     db = req.app["db"]
 
-    cursor = db.files.find({"ready": True}, virtool.file.LIST_PROJECTION)
+    query = {
+        "ready": True
+    }
+
+    file_type = req.query.get("type", None)
+
+    if file_type:
+        query["type"] = file_type
+
+    cursor = db.files.find(query, virtool.file.LIST_PROJECTION)
 
     found_count = await cursor.count()
 
