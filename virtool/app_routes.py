@@ -1,3 +1,4 @@
+import os
 from aiohttp import web
 
 from virtool.utils import get_static_hash
@@ -48,9 +49,9 @@ def setup_routes(app):
     # Other routes
     app.router.add_post("/login", login_handler)
 
-    try:
+    if os.path.exists("client/dist"):
         app.router.add_static("/static", "client/dist")
-    except (ValueError, FileNotFoundError):
+    else:
         raise Warning("Could not locate client static files")
 
     # Websocket route
