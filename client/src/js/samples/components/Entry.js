@@ -71,6 +71,7 @@ export default class SampleEntry extends React.Component {
                         tipPlacement="left"
                         bsStyle="success"
                         onClick={this.quickAnalyze}
+                        style={{fontSize: "17px"}}
                     />
                 </FlexItem>
             );
@@ -84,6 +85,7 @@ export default class SampleEntry extends React.Component {
                             tipPlacement="top"
                             bsStyle="info"
                             onClick={this.archive}
+                            style={{fontSize: "17px"}}
                         />
                     </FlexItem>
                 );

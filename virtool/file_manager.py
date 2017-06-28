@@ -6,7 +6,9 @@ import logging
 import setproctitle
 import multiprocessing
 import inotify.adapters
+from pymongo import ReturnDocument
 
+import virtool.file
 from virtool.utils import file_stats
 
 
@@ -95,23 +97,31 @@ class Manager:
                                 }
                             })
 
-                        elif event["action"] == "modify":
-                            await self.db.files.update_one({"_id": filename}, {
-                                "$set": {
-                                    "size": event["file"]["size"]
-                                }
-                            })
-
                         elif event["action"] == "close":
-                            await self.db.files.update_one({"_id": filename}, {
+                            document = await self.db.files.find_one_and_update({"_id": filename}, {
                                 "$set": {
-                                    "eof": True,
-                                    "size": event["file"]["size"]
+                                    "size": event["file"]["size"],
+                                    "ready": True
                                 }
-                            })
+                            }, return_document=ReturnDocument.AFTER, projection=virtool.file.LIST_PROJECTION)
+
+                            await self.dispatch(
+                                "files",
+                                "update",
+                                virtool.file.processor(document)
+                            )
 
                         elif event["action"] == "delete":
-                            await self.db.files.delete_one({"_id": filename})
+                            document = await self.db.files.find_one({"_id": filename})
+
+                            if document:
+                                await self.db.files.delete_one({"_id": filename})
+
+                                await self.dispatch(
+                                    "files",
+                                    "remove",
+                                    {"removed": [document["_id"]]}
+                                )
 
                     except queue.Empty:
                         break
@@ -139,8 +149,6 @@ class Manager:
     async def close(self):
         self._kill = True
         await self.wait_for_dead()
-
-
 
 
 class Watcher(multiprocessing.Process):

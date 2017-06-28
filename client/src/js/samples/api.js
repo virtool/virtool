@@ -24,6 +24,11 @@ const samplesAPI = {
             .query(params);
     },
 
+    findReadyHosts: () => {
+        return Request.get("/api/subtraction")
+            .query({"ready": true, "is_host": true});
+    },
+
     get: (sampleId) => {
         return Request.get(`/api/samples/${sampleId}`);
     },

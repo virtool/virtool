@@ -1,9 +1,14 @@
+import os
+import logging
 from aiohttp import web
 
 from virtool.utils import get_static_hash
 from virtool.user_login import get_login_template, generate_verification_keys, login_handler
 from virtool.handlers import root, jobs, samples, viruses, history, hmm, subtraction, settings, account, groups, users,\
     genbank, status, lifecycle, websocket, resources, analyses, indexes, files
+
+
+logger = logging.getLogger(__name__)
 
 
 async def index_handler(req):
@@ -47,7 +52,11 @@ def setup_routes(app):
 
     # Other routes
     app.router.add_post("/login", login_handler)
-    app.router.add_static("/static", "client/dist")
+
+    if os.path.exists("client/dist"):
+        app.router.add_static("/static", "client/dist")
+    else:
+        logger.warning("Could not locate client static files")
 
     # Websocket route
     app.router.add_get("/ws", websocket.root)
@@ -154,6 +163,7 @@ def setup_routes(app):
 
     # Files Routes
     app.router.add_get("/api/files", files.find)
+    app.router.add_delete("/api/files/{file_id}", files.remove)
 
     # Account Routes
     app.router.add_get("/api/account", account.get)

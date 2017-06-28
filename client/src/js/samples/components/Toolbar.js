@@ -60,9 +60,12 @@ const SampleToolbar = (props) => (
             <Button tip="Read Files" icon="folder-open" />
         </LinkContainer>
 
-        <LinkContainer to="/samples/create">
-            <Button tip="Create Sample" icon="new-entry" bsStyle="primary" />
-        </LinkContainer>
+        <Button
+            tip="Create Sample"
+            icon="new-entry"
+            bsStyle="primary"
+            onClick={() => props.history.replace(props.location.pathname + props.location.search, {create: true})}
+        />
     </div>
 );
 

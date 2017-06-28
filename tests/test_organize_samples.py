@@ -103,37 +103,11 @@ class TestBowtieTags:
 
         assert test_db.samples.find_one(2)["pathoscope"] is True
 
-    def test_snap_in_progress(self, test_db, samples, pathoscope_analyses):
-        test_db.samples.insert_many(samples)
-
-        pathoscope_analyses[1]["algorithm"] = "pathoscope_snap"
-
-        test_db.analyses.insert_many(pathoscope_analyses)
-
-        organize_samples(test_db)
-
-        assert test_db.samples.find_one(2)["pathoscope"] == "ip"
-
-    def test_snap_ready(self, test_db, samples, pathoscope_analyses):
-        test_db.samples.insert_many(samples)
-
-        pathoscope_analyses[2].update({
-            "algorithm": "pathoscope_snap",
-            "ready": True
-        })
-
-        test_db.analyses.insert_many(pathoscope_analyses)
-
-        organize_samples(test_db)
-
-        assert test_db.samples.find_one(2)["pathoscope"] is True
-
     def test_both_ready(self, test_db, samples, pathoscope_analyses):
         test_db.samples.insert_many(samples)
 
         test_db.analyses.insert_many([
             {"_id": 1, "ready": True, "sample_id": 1, "algorithm": "pathoscope_bowtie"},
-            {"_id": 2, "ready": True, "sample_id": 2, "algorithm": "pathoscope_snap"},
             {"_id": 3, "ready": True, "sample_id": 2, "algorithm": "pathoscope_bowtie"}
         ])
 

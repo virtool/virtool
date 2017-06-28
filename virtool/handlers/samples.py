@@ -4,6 +4,7 @@ import math
 from pymongo import ReturnDocument
 from cerberus import Validator
 
+import virtool.file
 import virtool.utils
 import virtool.sample
 import virtool.analysis
@@ -65,16 +66,23 @@ async def upload(req):
 
     file_path = os.path.join(req.app["settings"].get("data_path"), "files", file_id)
 
-    await req.app["db"].files.insert_one({
+    document = {
         "_id": file_id,
         "name": filename,
         "type": "reads",
         "user_id": req["session"].user_id,
         "uploaded_at": virtool.utils.timestamp(),
         "created": False,
-        "ready": False,
-        "eof": False
-    })
+        "ready": False
+    }
+
+    await req.app["db"].files.insert_one(document)
+
+    await req.app["dispatcher"].dispatch(
+        "files",
+        "update",
+        virtool.file.processor({key: document[key] for key in virtool.file.LIST_PROJECTION if document.get(key, False)})
+    )
 
     size = 0
 
@@ -86,31 +94,18 @@ async def upload(req):
             size += len(chunk)
             handle.write(chunk)
 
-    await req.app["db"].files.update_one({"_id": file_id}, {
-        "$set": {
-            "ready": True
-        }
-    })
-
     return json_response({"complete": True})
 
 
 async def create(req):
-    """
-    Creates a new sample based on the data in ``transaction`` and starts a sample import job.
-
-    Ensures that a valid subtraction host was the submitted. Configures read and write permissions on the sample
-    document and assigns it a creator username based on the connection attached to the transaction.
-
-    """
     data = await req.json()
 
     # Check if the submitted sample name is unique if unique sample names are being enforced.
-    if req["settings"].get("sample_unique_names") and await req.app["db"].samples.find({"name": data["name"]}).count():
+    if req["settings"].get("sample_unique_names") and await req.app["db"].samples.count({"name": data["name"]}):
         return bad_request("Sample name already exists")
 
     # Get a list of the subtraction hosts in MongoDB that are ready for use during analysis.
-    available_subtraction_hosts = await req.app["db"].hosts.find().distinct("_id")
+    available_subtraction_hosts = await req.app["db"].hosts.distinct("_id")
 
     # Make sure a subtraction host was submitted and it exists.
     if not data["subtraction"] or data["subtraction"] not in available_subtraction_hosts:
@@ -159,15 +154,17 @@ async def create(req):
         "archived": False
     })
 
-    await req.app["db"].samples.insert(data)
+    await req.app["db"].samples.insert_one(data)
 
-    await req.app["db"].files.reserve_files(data["files"])
+    await virtool.file.reserve(req.app["db"], data["files"])
 
     proc, mem = 2, 6
 
-    await req["jobs"].new("import_reads", task_args, proc, mem, data["username"])
+    # await req["jobs"].new("import_reads", task_args, proc, mem, data["username"])
 
     data["sample_id"] = data.pop("sample_id")
+
+    print(data)
 
     return json_response(data)
 

@@ -10,6 +10,13 @@ cache:
 env:
 - TRAVIS_NODE_VERSION="6"
 
+before_install:
+- sudo apt-get install nvidia-cuda-toolkit
+- pip install codecov
+- wget http://eddylab.org/software/hmmer3/3.1b2/hmmer-3.1b2-linux-intel-x86_64.tar.gz
+- tar -xf hmmer-3.1b2-linux-intel-x86_64.tar.gz
+- export PATH=${PATH}:${PWD}/hmmer-3.1b2-linux-intel-x86_64/binaries
+
 install:
 - pip install -r requirements.txt
 - rm -rf ~/.nvm
@@ -23,13 +30,7 @@ install:
 - cd $TRAVIS_BUILD_DIR
 
 script:
-- pytest --cov
-
-before_install:
-- pip install codecov
-- wget http://eddylab.org/software/hmmer3/3.1b2/hmmer-3.1b2-linux-intel-x86_64.tar.gz
-- tar -xf hmmer-3.1b2-linux-intel-x86_64.tar.gz
-- export PATH=${PATH}:${PWD}/hmmer-3.1b2-linux-intel-x86_64/binaries 
+- pytest --cov -vv
 
 after_success:
 - codecov

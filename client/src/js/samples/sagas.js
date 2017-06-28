@@ -7,14 +7,24 @@
  *
  */
 
-import { call, put, takeEvery, takeLatest, throttle } from "redux-saga/effects";
+import { call, put, takeEvery, takeLatest } from "redux-saga/effects";
 
 import samplesAPI from "./api";
+import filesAPI from "../files/api";
 import { setPending } from "../wrappers";
-import { FIND_SAMPLES, GET_SAMPLE, UPDATE_SAMPLE, FIND_ANALYSES, GET_ANALYSIS, ANALYZE }  from "../actionTypes";
+import {
+    FIND_SAMPLES,
+    FIND_READY_HOSTS,
+    GET_SAMPLE,
+    UPDATE_SAMPLE,
+    FIND_ANALYSES,
+    GET_ANALYSIS,
+    ANALYZE
+}  from "../actionTypes";
 
 export function* watchSamples () {
-    yield throttle(500, FIND_SAMPLES.REQUESTED, findSamples);
+    yield takeLatest(FIND_SAMPLES.REQUESTED, findSamples);
+    yield takeLatest(FIND_READY_HOSTS.REQUESTED, findReadyHosts);
     yield takeLatest(GET_SAMPLE.REQUESTED, getSample);
     yield takeEvery(UPDATE_SAMPLE.REQUESTED, updateSample);
     yield takeLatest(FIND_ANALYSES.REQUESTED, findAnalyses);
@@ -31,6 +41,15 @@ export function* findSamples (action) {
             yield put({type: FIND_SAMPLES.FAILED, error});
         }
     }, action);
+}
+
+export function* findReadyHosts () {
+    try {
+        const response = yield call(samplesAPI.findReadyHosts);
+        yield put({type: FIND_READY_HOSTS.SUCCEEDED, data: response.body});
+    } catch (error) {
+        yield put({type: FIND_READY_HOSTS.FAILED, error});
+    }
 }
 
 export function* getSample (action) {

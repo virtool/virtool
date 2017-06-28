@@ -144,36 +144,6 @@ class TestJob:
 
         assert error["type"] == "TypeError"
 
-    def test_process_error(self, test_task_inst):
-        """
-        Test that the process can correctly report an error in an external subprocess and terminate as a result of it.
-
-        """
-        job = test_task_inst
-
-        job.generate_process_error = True
-
-        job.start()
-
-        static_calls = list()
-
-        while job.is_alive():
-            while not job._queue.empty():
-                static_call = job._queue.get()
-
-                if static_call[2] == "error":
-                    job.terminate()
-
-                static_calls.append(static_call)
-
-        while not job._queue.empty():
-            static_calls.append(job._queue.get())
-
-        for l in static_calls:
-            print(l)
-
-        assert 0
-
 
 class TestTermination:
 

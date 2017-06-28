@@ -78,7 +78,7 @@ async def remove(req):
         pass
 
     return json_response({
-        "removed": job_id
+        "removed": [job_id]
     })
 
 
@@ -98,10 +98,14 @@ async def clear(req):
             {"status.state": "cancelled"}
         ]
 
-    response = await db.jobs.delete_many(query)
+    removed = await db.jobs.find(query).distinct("_id")
+
+    await db.jobs.delete_many(query)
+
+
 
     return json_response({
-        "deleted_count": response.deleted_count
+        "removed": removed
     })
 
 

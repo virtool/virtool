@@ -30,6 +30,7 @@ export const WS_UPDATE_SAMPLE = "WS_UPDATE_SAMPLE";
 export const WS_REMOVE_SAMPLE = "WS_REMOVE_SAMPLE";
 
 export const FIND_SAMPLES = createRequestActionType("FIND_SAMPLES");
+export const FIND_READY_HOSTS = createRequestActionType("FIND_READY_HOSTS");
 export const GET_SAMPLE = createRequestActionType("GET_SAMPLE");
 export const UPDATE_SAMPLE = createRequestActionType("UPDATE_SAMPLE");
 export const FIND_ANALYSES = createRequestActionType("FIND_ANALYSES");
@@ -73,13 +74,13 @@ export const GET_SUBTRACTION = createRequestActionType("GET_SUBTRACTION");
 export const REMOVE_SUBTRACTION = createRequestActionType("REMOVE_SUBTRACTION");
 
 // Files
+export const WS_UPDATE_FILE = "WS_UPDATE_FILE";
+export const WS_REMOVE_FILE = "WS_REMOVE_FILE";
 export const FIND_FILES = createRequestActionType("FIND_FILES");
 export const REMOVE_FILE = createRequestActionType("REMOVE_FILE");
 export const UPLOAD_READS = createRequestActionType("UPLOAD_READS");
 export const UPLOAD_PROGRESS = "UPLOAD_PROGRESS";
 export const HIDE_UPLOAD_OVERLAY = "HIDE_UPLOAD_OVERLAY";
-
-
 
 // Account
 export const GET_ACCOUNT_REQUESTED = "GET_ACCOUNT_REQUESTED";

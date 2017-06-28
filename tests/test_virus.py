@@ -232,9 +232,7 @@ class TestUpdateLastIndexedVersion:
 
         await test_motor.viruses.insert_many([virus_1, virus_2])
 
-        result = await virtool.virus.update_last_indexed_version(test_motor, ["foobar"], 5)
-
-        assert result == {"updatedExisting": True, "nModified": 1, "ok": 1.0, "n": 1}
+        await virtool.virus.update_last_indexed_version(test_motor, ["foobar"], 5)
 
         virus_1 = await test_motor.viruses.find_one({"_id": "6116cba1"})
         virus_2 = await test_motor.viruses.find_one({"_id": "foobar"})

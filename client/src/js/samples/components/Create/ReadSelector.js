@@ -9,152 +9,122 @@
  * @exports ReadSelector
  */
 
-import React from "react";
-import FlipMove from "react-flip-move"
-import { some, includes, pull, intersection, filter, endsWith, sortBy } from "lodash";
-import { Overlay, Popover, Panel, Label } from "react-bootstrap";
-import { Icon, Input, Button, getFlipMoveProps } from "virtool/js/components/Base";
+import React, { PropTypes } from "react";
+import { Link } from "react-router-dom";
+import { includes, without, intersection, filter, sortBy } from "lodash";
+import { Overlay, Popover, Panel } from "react-bootstrap";
 
+import { Icon, Input, Button, ListGroupItem } from "virtool/js/components/Base";
 import ReadItem from "./ReadItem";
 
-const suffixes = [".fastq", ".fq", ".fastq.gz", ".fq.gz"];
-
-const getAvailableFiles = () => {
-    let files = dispatcher.db.files.chain().find({
-        $and: [
-            {file_type: "reads"},
-            {ready: true}
-    ]}).data();
-
-    return filter(files, {reserved: false});
-};
-
-/**
- * A main view for importing samples from FASTQ files. Importing starts an import job on the server.
- *
- * @class
- */
 export default class ReadSelector extends React.PureComponent {
 
     constructor (props) {
         super(props);
         this.state = {
-            files: getAvailableFiles(),
-            filter: "",
-            showAll: false
+            filter: ""
         };
     }
 
     static propTypes = {
-        select: React.PropTypes.func,
-        selected: React.PropTypes.arrayOf(React.PropTypes.string),
-        readError: React.PropTypes.bool
+        files: PropTypes.arrayOf(PropTypes.object),
+        error: PropTypes.bool,
+        selected: PropTypes.arrayOf(PropTypes.string),
+        onSelect: PropTypes.func
     };
 
-    componentDidMount () {
-        dispatcher.db.files.on("change", this.update);
-    }
-
-    componentWillUnmount () {
-        dispatcher.db.files.off("change", this.update);
+    componentWillReceiveProps (nextProps) {
+        if (nextProps.files !== this.props.files) {
+            this.props.onSelect(intersection(this.props.selected, nextProps.files.map(f => f["file_id"])));
+        }
     }
 
     handleSelect = (selectedId) => {
-        let selected = this.props.selected.slice(0);
+        let selected;
 
-        if (includes(selected, selectedId)) {
-            pull(selected, selectedId);
+        if (includes(this.props.selected, selectedId)) {
+            selected = without(this.props.selected, selectedId);
         } else {
-            if (this.props.selected.length === 2) selected.shift();
-            selected.push(selectedId);
+            selected = this.props.selected.concat([selectedId]);
+
+            if (selected.length === 3) {
+                selected.shift();
+            }
         }
 
-        this.props.select(selected);
+        this.props.onSelect(selected);
     };
 
-    handleChange = (event) => this.setState({filter: event.target.value});
-
-    reset = () => this.setState({filter: ""}, () => this.props.select([]));
-
-    toggleShowAll = () => this.setState({showAll: !this.state.showAll});
-
-    update = () => {
-        const files = getAvailableFiles();
-
-        this.setState({files: files}, () => {
-            this.props.select(intersection(this.props.selected, files.map(f => f["_id"])));
-        });
+    reset = (event) => {
+        event.preventDefault();
+        this.setState({filter: ""}, () => this.props.onSelect([]));
     };
 
     render () {
 
         const loweredFilter = this.state.filter.toLowerCase();
 
-        const files = filter(this.state.files, file =>
-            (this.state.showAll || some(suffixes.map(suffix => endsWith(file.name, suffix)))) &&
-            (!this.state.filter || includes(file.name.toLowerCase(), loweredFilter))
+        const files = filter(this.props.files, file =>
+            !this.state.filter || includes(file.name.toLowerCase(), loweredFilter)
         );
 
-        const fileComponents = sortBy(files, "timestamp").reverse().map((file) =>
+        let fileComponents = sortBy(files, "timestamp").reverse().map((file) =>
             <ReadItem
-                key={file._id}
+                key={file.file_id}
                 {...file}
-                selected={includes(this.props.selected, file._id)}
+                selected={includes(this.props.selected, file.file_id)}
                 onSelect={this.handleSelect}
             />
         );
 
+        if (!fileComponents.length) {
+            fileComponents = (
+                <ListGroupItem className="text-center">
+                    <Icon name="info" /> No read files found. <Link to="samples/files">Upload some</Link>.
+                </ListGroupItem>
+            );
+        }
+
         let overlay;
 
-        if (this.props.readError) {
+        if (this.props.error) {
             overlay = (
-                <Overlay target={this.panelNode} placement="top" show={true}>
+                <Overlay container={this} target={this.panelNode} placement="top" show={true}>
                     <Popover id="read-error-popover" {...this.props}>
                         <span className="text-danger">At least one read file must be attached to the sample</span>
                     </Popover>
                 </Overlay>
             );
         }
-        
+
         return (
             <div>
                 {overlay}
 
-                <label className="control-label">
-                    Read Files <Label>{this.props.selected.length}/{fileComponents.length} selected</Label>
-                </label>
+                <h5 style={{display: "flex", alignItems: "center"}}>
+                    <strong style={{flex: "1 0 auto"}}>Read Files</strong>
+                    <small className="text-muted pull-right">
+                        {this.props.selected.length} of {fileComponents.length} selected
+                    </small>
+                </h5>
 
                 <Panel ref={(node) => this.panelNode = node}>
-                    <div style={{display: "flex"}}>
-                        <div style={{flex: "1 1 auto"}}>
-                            <Input
-                                type="text"
-                                onChange={this.handleChange}
-                                value={this.state.filter}
-                                placeholder="Filename"
-                            />
-                        </div>
-                        <div style={{flex: "0 0 auto", paddingLeft: "5px"}}>
-                            <Button onClick={this.reset}>
-                                <Icon name="reset" /> Clear
-                            </Button>
-                        </div>
-                        <div style={{flex: "0 0 auto", paddingLeft: "5px"}}>
-                            <Button onClick={this.toggleShowAll} active={this.state.showAll}>
-                                <Icon name="eye" /> Show All
-                            </Button>
-                        </div>
+                    <div className="toolbar">
+                        <Input
+                            type="text"
+                            placeholder="Filename"
+                            value={this.state.filter}
+                            onChange={(e) => this.setState({filter: e.target.value})}
+                        />
+                        <Button type="button" tip="Clear" onClick={this.reset}>
+                            <Icon name="reset" />
+                        </Button>
                     </div>
 
                     <div className="panel panel-default">
-                        <FlipMove
-                            {...getFlipMoveProps()}
-                            enterAnimation="fade"
-                            className="list-group"
-                            style={{minHeight: "420px", maxHeight: "420px", overflowY: "scroll"}}
-                        >
+                        <div className="list-group">
                             {fileComponents}
-                        </FlipMove>
+                        </div>
                     </div>
                 </Panel>
             </div>

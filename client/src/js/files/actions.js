@@ -7,7 +7,27 @@
  *
  */
 
-import { FIND_FILES, REMOVE_FILE, UPLOAD_READS, UPLOAD_PROGRESS, HIDE_UPLOAD_OVERLAY } from "../actionTypes";
+import {
+    WS_UPDATE_FILE,
+    WS_REMOVE_FILE,
+    FIND_FILES,
+    REMOVE_FILE,
+    UPLOAD_READS,
+    UPLOAD_PROGRESS,
+    HIDE_UPLOAD_OVERLAY
+} from "../actionTypes";
+
+export function wsUpdateFile () {
+    return {
+        type: WS_UPDATE_FILE
+    };
+}
+
+export function wsRemoveFile () {
+    return {
+        type: WS_REMOVE_FILE
+    };
+}
 
 export function findFiles () {
     return {
@@ -26,7 +46,7 @@ export function uploadReads (localId, file, onProgress) {
 
 export function removeFile (fileId) {
     return {
-        type: REMOVE_FILE,
+        type: REMOVE_FILE.REQUESTED,
         fileId
     };
 }

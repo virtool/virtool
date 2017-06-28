@@ -126,44 +126,6 @@ class TestFileManager:
             "created": True
         }
 
-    async def test_modify(self, mocker, tmpdir, loop, test_db, test_motor, test_queue):
-        """
-        Test that a ``modify`` action results in the ``size`` field being updated on the matching file document in the
-        database.
-
-        """
-
-        m = mocker.stub(name="dispatch")
-
-        async def dispatch(*args, **kwargs):
-            m(*args, **kwargs)
-
-        test_db.files.insert_one({
-            "_id": "test.dat",
-            "created": True
-        })
-
-        test_queue.put("alive")
-
-        test_queue.put({
-            "action": "modify",
-            "file": {
-                "filename": "test.dat",
-                "size": 50
-            }
-        })
-
-        manager = virtool.file_manager.Manager(loop, test_motor, dispatch, str(tmpdir), clean_interval=None)
-
-        await manager.start()
-        await manager.close()
-
-        assert test_db.files.find_one() == {
-            "_id": "test.dat",
-            "created": True,
-            "size_now": 50
-        }
-
     async def test_close(self, mocker, tmpdir, loop, test_db, test_motor, test_queue):
         """
         Test that a ``close`` action results in ``eof`` being set to ``True`` on the matching file document in the
@@ -198,8 +160,8 @@ class TestFileManager:
         assert test_db.files.find_one() == {
             "_id": "test.dat",
             "created": True,
-            "eof": True,
-            "size_now": 100
+            "ready": True,
+            "size": 100
         }
 
     async def test_delete(self, mocker, tmpdir, loop, test_db, test_motor, test_queue):
@@ -216,8 +178,8 @@ class TestFileManager:
         test_db.files.insert_one({
             "_id": "test.dat",
             "created": True,
-            "eof": True,
-            "size_now": 100
+            "ready": True,
+            "size": 100
         })
 
         test_queue.put("alive")

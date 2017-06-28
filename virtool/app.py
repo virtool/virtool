@@ -12,12 +12,14 @@ from motor import motor_asyncio
 import virtool.app_routes
 import virtool.app_dispatcher
 import virtool.app_settings
+
 import virtool.job_manager
 import virtool.job_resources
 import virtool.file_manager
 import virtool.organize
 import virtool.user_sessions
 import virtool.error_pages
+import virtool.nvstat
 
 
 logger = logging.getLogger(__name__)
@@ -39,7 +41,15 @@ def init_thread_pool_executor(app):
 
 def init_resources(app):
     app["resources"] = virtool.job_resources.get()
-    app["resources"]["cuda"] = virtool.job_resources.get_cuda_devices()
+
+    try:
+        cuda = virtool.job_resources.get_cuda_devices()
+    except FileNotFoundError:
+        cuda = "Could not call nvidia-smi"
+    except virtool.nvstat.NVDriverError:
+        cuda = "Could not communicate with Nvidia driver"
+
+    app["resources"]["cuda"] = cuda
 
 
 async def init_settings(app):
@@ -108,17 +118,22 @@ async def init_job_manager(app):
 
 
 async def init_file_manager(app):
-    data_path = os.path.join(app["settings"].get("data_path"), "files")
+    files_path = os.path.join(app["settings"].get("data_path"), "files")
 
-    app["file_manager"] = virtool.file_manager.Manager(
-        app.loop,
-        app["db"],
-        app["dispatcher"].dispatch,
-        data_path,
-        clean_interval=20
-    )
+    if os.path.isdir(files_path):
+        app["file_manager"] = virtool.file_manager.Manager(
+            app.loop,
+            app["db"],
+            app["dispatcher"].dispatch,
+            files_path,
+            clean_interval=20
+        )
 
-    await app["file_manager"].start()
+        await app["file_manager"].start()
+
+    else:
+        logger.warning("Did not initialize file manager. Path does not exist: {}".format(files_path))
+        app["file_manager"] = None
 
 
 async def on_shutdown(app):
@@ -143,7 +158,8 @@ async def on_shutdown(app):
 
     await job_manager.close()
 
-    await app["file_manager"].close()
+    if app["file_manager"]:
+        await app["file_manager"].close()
 
 
 def create_app(loop, db_name=None):
