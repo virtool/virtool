@@ -5,8 +5,18 @@ BASE_COMMAND = ["nvidia-smi"]
 
 
 def convert_memory_value(value_string):
+    """
+    Convert a memory value from nvidia-smi into a value in bytes.
+
+    :param value_string: the memory value (eg. 100 MiB)
+    :type value_string: str
+
+    :return: a memory value in bytes
+    :rtype: int
+
+    """
     value, unit = value_string.split(" ")
-    value = int(value)
+    value = float(value)
 
     if unit == "KiB":
         return value * 1024
@@ -18,8 +28,18 @@ def convert_memory_value(value_string):
 
 
 def convert_clock_value(value_string):
+    """
+    Convert a clock value from nvidia-smi into a value in hertz.
+
+    :param value_string: the clock value (eg. 100 KHz)
+    :type value_string: str
+
+    :return: a clock value in hertz
+    :rtype: int
+
+    """
     value, unit = value_string.split(" ")
-    value = int(value)
+    value = float(value)
 
     if unit == "KHz":
         return value * 1000
@@ -34,6 +54,13 @@ def convert_clock_value(value_string):
 
 
 def driver_version():
+    """
+    Get the installed Nvidia driver version.
+
+    :return: the driver version
+    :rtype: str
+
+    """
     try:
         output = subprocess.check_output(BASE_COMMAND).decode("utf-8").rstrip().split("\n")
     except FileNotFoundError:
@@ -49,6 +76,14 @@ def driver_version():
 
 
 def list_devices():
+    """
+    List the Nvidia devices on the system. The result will be a :class:`list` of :class:`dict`s describing the devices
+    on the system.
+
+    :return: a list of descriptive dicts
+    :rtype: list
+
+    """
     try:
         output = subprocess.check_output(BASE_COMMAND + ["-L"]).decode("utf-8").rstrip().split("\n")
     except FileNotFoundError:
@@ -80,6 +115,16 @@ def list_devices():
 
 
 def device_memory(index):
+    """
+    Returns a description of the memory on the device. This includes PCI bar and frame buffer memory.
+
+    :param index: the index of the device to query
+    :type index: int
+
+    :return: a description of the memory on the device
+    :rtype: dict
+
+    """
     command = BASE_COMMAND + ["-i", str(index), "-d", "MEMORY", "-q"]
 
     try:
@@ -118,6 +163,16 @@ def device_memory(index):
 
 
 def device_clock(index):
+    """
+    Returns a description of the clocks on the device. This includes the base and maximum memory and GPU clock values.s
+
+    :param index: the index of the device to query
+    :type index: int
+
+    :return: a description of the clocks on the device
+    :rtype: dict
+
+    """
     try:
         output = subprocess.check_output(BASE_COMMAND + ["-i", str(index), "-d", "CLOCK", "-q"])
     except FileNotFoundError:

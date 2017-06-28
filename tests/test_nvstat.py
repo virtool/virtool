@@ -1,10 +1,58 @@
 import pytest
+import subprocess
+
 import virtool.nvstat
+
+
+class TestConvertMemoryValue:
+
+    @pytest.mark.parametrize("value_string,expected", [("526 KiB", 538624), ("124 MiB", 130023424)])
+    def test(self, value_string, expected):
+        """
+        Test that a memory size string as expected from nvidia-smi can be parsed to an ``int`` bytes value.
+
+        """
+        assert virtool.nvstat.convert_memory_value(value_string) == expected
+
+    def test_unknown_unit(self):
+        """
+        Test that an unknown unit suffix results in a TypeError.
+
+        """
+        with pytest.raises(ValueError) as err:
+            virtool.nvstat.convert_memory_value("201 FooB")
+
+        assert "Could not parse memory value 201 FooB" in str(err)
+
+
+class TestConvertClockValue:
+
+    @pytest.mark.parametrize("value_string,expected", [("5 KHz", 5000), ("1.2 MHz", 1200000), ("1.1 GHz", 1100000000)])
+    def test(self, value_string, expected):
+        """
+        Test that a clock value string as expected from nvidia-smi can be parsed to an ``int`` hertz value.
+
+        """
+        assert virtool.nvstat.convert_clock_value(value_string) == expected
+
+    def test_unknown_unit(self):
+        """
+        Test that an unknown unit suffix results in a TypeError.
+
+        """
+        with pytest.raises(ValueError) as err:
+            virtool.nvstat.convert_clock_value("1.5 FooHz")
+
+        assert "Could not parse clock value 1.5 FooHz" in str(err)
 
 
 class TestDriverVersion:
 
     def test(self, mocker):
+        """
+        Test that the driver version can be parsed out if everything is working properly.
+
+        """
         return_value = bytes((
             "Wed Jun 28 10:15:13 2017\n"
             "+-----------------------------------------------------------------------------+\n"
@@ -32,21 +80,42 @@ class TestDriverVersion:
 
         assert virtool.nvstat.driver_version() == "555.55"
 
-    def test_no_smi(self, mocker):
-        def raise_not_found_error(*args, **kwargs):
-            raise FileNotFoundError
+    def test_no_smi(self, no_smi):
+        """
+        Test the a FileNotFound exception is raised is nvidia-smi is not available.
 
-        mocker.patch("subprocess.check_output", new=raise_not_found_error)
-
+        """
         with pytest.raises(FileNotFoundError) as err:
             virtool.nvstat.driver_version()
 
-        assert "nvidia-smi could not be called" in str(err)
+        assert no_smi(err)
+
+    def test_no_driver(self, no_driver):
+        """
+        Test the NVDriverError is raised the driver can't be found.
+
+        """
+        with pytest.raises(virtool.nvstat.NVDriverError) as err:
+            virtool.nvstat.driver_version()
+
+        assert no_driver(err)
+
+    def test_process_error(self, nv_unhandled_error):
+        """
+        Test that unhandled ``CalledProcessErrors`` can still be raised.
+
+        """
+        with pytest.raises(subprocess.CalledProcessError) as err:
+            virtool.nvstat.driver_version()
 
 
 class TestListDevices:
 
     def test(self, mocker):
+        """
+        Test that a device list can be parsed from valid nvidia-smi output.
+
+        """
         return_value = bytes((
             "GPU 0: GeForce GTX 1080 (UUID: GPU-b334763a-21fa-1302-5dff-1eaecd0f5428)\n"
             "GPU 1: GeForce GTX 1080 (UUID: GPU-b334763a-21fa-1302-5dff-1skjlekas980)\n"
@@ -63,21 +132,42 @@ class TestListDevices:
             {"uuid": "GPU-b334763a-21fa-1302-5dff-9djaskkn2l31", "model": "GeForce GTX 1080", "index": 2}
         ]
 
-    def test_no_smi(self, mocker):
-        def raise_not_found_error(*args, **kwargs):
-            raise FileNotFoundError
+    def test_no_smi(self, no_smi):
+        """
+        Test the a FileNotFound exception is raised is nvidia-smi is not available.
 
-        mocker.patch("subprocess.check_output", new=raise_not_found_error)
-
+        """
         with pytest.raises(FileNotFoundError) as err:
-            virtool.nvstat.driver_version()
+            virtool.nvstat.list_devices()
 
-        assert "nvidia-smi could not be called" in str(err)
+        assert no_smi(err)
+
+    def test_no_driver(self, no_driver):
+        """
+        Test the NVDriverError is raised the driver can't be found.
+
+        """
+        with pytest.raises(virtool.nvstat.NVDriverError) as err:
+            virtool.nvstat.list_devices()
+
+        assert no_driver(err)
+
+    def test_process_error(self, nv_unhandled_error):
+        """
+        Test that unhandled ``CalledProcessErrors`` can still be raised.
+
+        """
+        with pytest.raises(subprocess.CalledProcessError) as err:
+            virtool.nvstat.list_devices()
 
 
 class TestDeviceMemory:
 
     def test(self, mocker):
+        """
+        Test that the device memory can be parsed from nvidia-smi when provided a valid device index.
+
+        """
         return_value = bytes((
             "==============NVSMI LOG==============\n"
             "\n"
@@ -115,6 +205,10 @@ class TestDeviceMemory:
         }
 
     def test_no_device(self, mocker):
+        """
+        Test that an IndexError is raised when the passed device index does not exist.
+
+        """
         m = mocker.Mock(return_value="No devices were found")
 
         mocker.patch("subprocess.check_output", new=m)
@@ -124,21 +218,42 @@ class TestDeviceMemory:
 
         assert "No device with index 5" in str(err)
 
-    def test_no_smi(self, mocker):
-        def raise_not_found_error(*args, **kwargs):
-            raise FileNotFoundError
+    def test_no_smi(self, no_smi):
+        """
+        Test the a FileNotFound exception is raised is nvidia-smi is not available.
 
-        mocker.patch("subprocess.check_output", new=raise_not_found_error)
-
+        """
         with pytest.raises(FileNotFoundError) as err:
-            virtool.nvstat.driver_version()
+            virtool.nvstat.device_memory(0)
 
-        assert "nvidia-smi could not be called" in str(err)
+        assert no_smi(err)
+
+    def test_no_driver(self, no_driver):
+        """
+        Test the NVDriverError is raised the driver can't be found.
+
+        """
+        with pytest.raises(virtool.nvstat.NVDriverError) as err:
+            virtool.nvstat.device_memory(0)
+
+        assert no_driver(err)
+
+    def test_process_error(self, nv_unhandled_error):
+        """
+        Test that unhandled ``CalledProcessErrors`` can still be raised.
+
+        """
+        with pytest.raises(subprocess.CalledProcessError) as err:
+            virtool.nvstat.device_memory(0)
 
 
 class TestDeviceClock:
 
     def test(self, mocker):
+        """
+        Test that the device clocks can be parsed from nvidia-smi when provided a valid device index.
+
+        """
         return_value = bytes((
             "==============NVSMI LOG==============\n"
             "\n"
@@ -198,3 +313,45 @@ class TestDeviceClock:
                 "video": 1708000000
             }
         }
+
+    def test_no_device(self, mocker):
+        """
+        Test that an IndexError is raised when the passed device index does not exist.
+
+        """
+        m = mocker.Mock(return_value="No devices were found")
+
+        mocker.patch("subprocess.check_output", new=m)
+
+        with pytest.raises(IndexError) as err:
+            virtool.nvstat.device_clock(5)
+
+        assert "No device with index 5" in str(err)
+
+    def test_no_smi(self, no_smi):
+        """
+        Test the a FileNotFound exception is raised is nvidia-smi is not available.
+
+        """
+        with pytest.raises(FileNotFoundError) as err:
+            virtool.nvstat.device_clock(0)
+
+        assert no_smi(err)
+
+    def test_no_driver(self, no_driver):
+        """
+        Test the NVDriverError is raised the driver can't be found.
+
+        """
+        with pytest.raises(virtool.nvstat.NVDriverError) as err:
+            virtool.nvstat.device_clock(0)
+
+        assert no_driver(err)
+
+    def test_process_error(self, nv_unhandled_error):
+        """
+        Test that unhandled ``CalledProcessErrors`` can still be raised.
+
+        """
+        with pytest.raises(subprocess.CalledProcessError) as err:
+            virtool.nvstat.device_clock(0)

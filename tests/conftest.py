@@ -8,6 +8,7 @@ from .fixtures.users import *
 from .fixtures.viruses import *
 from .fixtures.jobs import *
 from .fixtures.dispatcher import *
+from .fixtures.nv import *
 
 
 def pytest_addoption(parser):
