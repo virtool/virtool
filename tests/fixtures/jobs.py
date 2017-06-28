@@ -149,8 +149,8 @@ def test_job(static_time):
 
 
 @pytest.fixture
-def test_task_class(test_db):
-    return virtool.job_test.TestTask()
+def test_task_class():
+    return
 
 
 @pytest.fixture
@@ -170,6 +170,6 @@ def test_task_inst(test_task_class):
     proc = 1
     mem = 1
 
-    job = test_task_class(job_id, settings, queue, task, task_args, proc, mem)
+    job = virtool.job_test.TestTask(job_id, settings, queue, task, task_args, proc, mem)
 
     return job
