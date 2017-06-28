@@ -118,17 +118,22 @@ async def init_job_manager(app):
 
 
 async def init_file_manager(app):
-    data_path = os.path.join(app["settings"].get("data_path"), "files")
+    files_path = os.path.join(app["settings"].get("data_path"), "files")
 
-    app["file_manager"] = virtool.file_manager.Manager(
-        app.loop,
-        app["db"],
-        app["dispatcher"].dispatch,
-        data_path,
-        clean_interval=20
-    )
+    if os.path.isdir(files_path):
+        app["file_manager"] = virtool.file_manager.Manager(
+            app.loop,
+            app["db"],
+            app["dispatcher"].dispatch,
+            files_path,
+            clean_interval=20
+        )
 
-    await app["file_manager"].start()
+        await app["file_manager"].start()
+
+    else:
+        logger.warning("Did not initialize file manager. Path does not exist: {}".format(files_path))
+        app["file_manager"] = None
 
 
 async def on_shutdown(app):
@@ -153,7 +158,8 @@ async def on_shutdown(app):
 
     await job_manager.close()
 
-    await app["file_manager"].close()
+    if app["file_manager"]:
+        await app["file_manager"].close()
 
 
 def create_app(loop, db_name=None):
