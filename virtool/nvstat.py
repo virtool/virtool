@@ -38,6 +38,10 @@ def driver_version():
         output = subprocess.check_output(BASE_COMMAND).decode("utf-8").rstrip().split("\n")
     except FileNotFoundError:
         raise FileNotFoundError("nvidia-smi could not be called. Make sure it is installed")
+    except subprocess.CalledProcessError as err:
+        if "couldn't communicate with NVIDIA driver" in err.output:
+            raise NVDriverError("Couldn't communicate with NVIDIA driver")
+        raise
 
     for line in output:
         if "Driver Version" in line:
@@ -49,6 +53,10 @@ def list_devices():
         output = subprocess.check_output(BASE_COMMAND + ["-L"]).decode("utf-8").rstrip().split("\n")
     except FileNotFoundError:
         raise FileNotFoundError("nvidia-smi could not be called. Make sure it is installed")
+    except subprocess.CalledProcessError as err:
+        if "couldn't communicate with NVIDIA driver" in err.output:
+            raise NVDriverError("Couldn't communicate with NVIDIA driver")
+        raise
 
     device_list = list()
 
@@ -72,10 +80,16 @@ def list_devices():
 
 
 def device_memory(index):
+    command = BASE_COMMAND + ["-i", str(index), "-d", "MEMORY", "-q"]
+
     try:
-        output = subprocess.check_output(BASE_COMMAND + ["-i", str(index), "-d", "MEMORY", "-q"])
+        output = subprocess.check_output(command, stderr=subprocess.STDOUT)
     except FileNotFoundError:
         raise FileNotFoundError("nvidia-smi could not be called. Make sure it is installed")
+    except subprocess.CalledProcessError as err:
+        if "couldn't communicate with NVIDIA driver" in err.output:
+            raise NVDriverError("Couldn't communicate with NVIDIA driver")
+        raise
 
     if output == "No devices were found":
         raise IndexError("No device with index {}".format(index))
@@ -108,6 +122,10 @@ def device_clock(index):
         output = subprocess.check_output(BASE_COMMAND + ["-i", str(index), "-d", "CLOCK", "-q"])
     except FileNotFoundError:
         raise FileNotFoundError("nvidia-smi could not be called. Make sure it is installed")
+    except subprocess.CalledProcessError as err:
+        if "couldn't communicate with NVIDIA driver" in err.output:
+            raise NVDriverError("Couldn't communicate with NVIDIA driver")
+        raise
 
     if output == "No devices were found":
         raise IndexError("No device with index {}".format(index))
@@ -137,3 +155,7 @@ def device_clock(index):
             mode = False
 
     return result
+
+
+class NVDriverError(Exception):
+    pass
