@@ -23,7 +23,7 @@ async def get_cuda(req):
         cuda_devices = virtool.job_resources.get_cuda_devices()
     except virtool.nvstat.NVDriverError:
         return json_response({
-            "message": "Could not communicate with nVidia driver"
+            "message": "Could not communicate with Nvidia driver"
         })
     except FileNotFoundError:
         return json_response({
