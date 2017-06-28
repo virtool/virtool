@@ -39,7 +39,7 @@ def driver_version():
     except FileNotFoundError:
         raise FileNotFoundError("nvidia-smi could not be called. Make sure it is installed")
     except subprocess.CalledProcessError as err:
-        if "couldn't communicate with NVIDIA driver" in err.output:
+        if bytes("couldn't communicate with NVIDIA driver", encoding="utf-8") in str(err.output):
             raise NVDriverError("Couldn't communicate with NVIDIA driver")
         raise
 
@@ -54,7 +54,7 @@ def list_devices():
     except FileNotFoundError:
         raise FileNotFoundError("nvidia-smi could not be called. Make sure it is installed")
     except subprocess.CalledProcessError as err:
-        if "couldn't communicate with NVIDIA driver" in err.output:
+        if bytes("couldn't communicate with NVIDIA driver", encoding="utf-8") in str(err.output):
             raise NVDriverError("Couldn't communicate with NVIDIA driver")
         raise
 
@@ -87,7 +87,7 @@ def device_memory(index):
     except FileNotFoundError:
         raise FileNotFoundError("nvidia-smi could not be called. Make sure it is installed")
     except subprocess.CalledProcessError as err:
-        if "couldn't communicate with NVIDIA driver" in err.output:
+        if bytes("couldn't communicate with NVIDIA driver", encoding="utf-8") in str(err.output):
             raise NVDriverError("Couldn't communicate with NVIDIA driver")
         raise
 
@@ -123,7 +123,7 @@ def device_clock(index):
     except FileNotFoundError:
         raise FileNotFoundError("nvidia-smi could not be called. Make sure it is installed")
     except subprocess.CalledProcessError as err:
-        if "couldn't communicate with NVIDIA driver" in err.output:
+        if bytes("couldn't communicate with NVIDIA driver", encoding="utf-8") in str(err.output):
             raise NVDriverError("Couldn't communicate with NVIDIA driver")
         raise
 
