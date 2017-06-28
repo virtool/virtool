@@ -22,13 +22,13 @@ def convert_clock_value(value_string):
     value = int(value)
 
     if unit == "KHz":
-        return value * 1024
+        return value * 1000
 
     if unit == "MHz":
-        return value * 1024 * 1024
+        return value * 1000000
 
     if unit == "GHz":
-        return value * 1024 * 1024 * 1024
+        return value * 1000000000
 
     raise ValueError("Could not parse clock value {}".format(value_string))
 

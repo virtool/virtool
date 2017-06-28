@@ -180,15 +180,15 @@ class TestDeviceClock:
 
         assert virtool.nvstat.device_clock(0) == {
             "base": {
-                "graphics": 1751121920,
-                "memory": 5248122880,
-                "sm": 1751121920,
-                "video": 1565523968
+                "graphics": 1670000000,
+                "memory": 5005000000,
+                "sm": 1670000000,
+                "video": 1493000000
             },
             "max": {
-                "graphics": 2069889024,
-                "memory": 5248122880,
-                "sm": 2069889024,
-                "video": 1790967808
+                "graphics": 1974000000,
+                "memory": 5005000000,
+                "sm": 1974000000,
+                "video": 1708000000
             }
         }
