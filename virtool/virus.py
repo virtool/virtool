@@ -250,7 +250,7 @@ async def update_last_indexed_version(db, virus_ids, version):
     :rtype: :class:`~pymongo.results.UpdateResult`
 
     """
-    result = await db.viruses.update({"_id": {"$in": virus_ids}}, {
+    result = await db.viruses.update_many({"_id": {"$in": virus_ids}}, {
         "$set": {
             "last_indexed_version": version,
             "version": version
