@@ -30,7 +30,7 @@ install:
 - cd $TRAVIS_BUILD_DIR
 
 script:
-- pytest --cov
+- pytest --cov -vv
 
 after_success:
 - codecov
