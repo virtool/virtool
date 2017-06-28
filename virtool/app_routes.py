@@ -47,7 +47,11 @@ def setup_routes(app):
 
     # Other routes
     app.router.add_post("/login", login_handler)
-    app.router.add_static("/static", "client/dist")
+
+    try:
+        app.router.add_static("/static", "client/dist")
+    except FileNotFoundError:
+        raise Warning("Could not locate client static files")
 
     # Websocket route
     app.router.add_get("/ws", websocket.root)
