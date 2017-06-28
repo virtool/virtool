@@ -12,6 +12,7 @@ import { connect } from "react-redux";
 import { Row, Col, ListGroup, ListGroupItem } from "react-bootstrap";
 
 import { getCUDA } from "../../jobs/actions";
+import { byteSize } from "virtool/js/utils";
 import { Flex, FlexItem, Icon } from "virtool/js/components/Base";
 
 class CUDAList extends React.Component {
@@ -45,7 +46,7 @@ class CUDAList extends React.Component {
                         {device.clock} MHz
                     </Col>
                     <Col md={5}>
-                        {device.total_memory} GB VRAM @ {device.memory_clock} MHz
+                        {byteSize(device.total_memory)} VRAM @ {device.memory_clock} MHz
                     </Col>
                 </Row>
             </ListGroupItem>
