@@ -1,22 +1,21 @@
 import psutil
-import pycuda.driver
+
+import virtool.nvstat
 
 
 def get_cuda_devices():
-    pycuda.driver.init()
-    count = pycuda.driver.Device.count()
+    dev_list = virtool.nvstat.list_devices()
 
-    dev_list = list()
+    for device in dev_list:
+        index = device["index"]
 
-    for i in range(count):
-        dev = pycuda.driver.Device(i)
+        memory = virtool.nvstat.device_memory(index)
+        clock = virtool.nvstat.device_clock(index)
 
-        dev_list.append({
-            "index": i,
-            "name": dev.name(),
-            "total_memory": round(dev.total_memory() / 1073741824),
-            "clock": round(dev.CLOCK_RATE / 1000, 3),
-            "memory_clock": round(dev.MEMORY_CLOCK_RATE / 500, 3)
+        device.update({
+            "total_memory": memory["FB"]["total"],
+            "memory_clock": clock["max"]["memory"] / 1000000,
+            "clock": clock["max"]["graphics"] / 1000000
         })
 
     return dev_list

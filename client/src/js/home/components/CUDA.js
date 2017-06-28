@@ -37,7 +37,7 @@ class CUDAList extends React.Component {
                         <Flex alignItems="center">
                             <Icon name="vga" style={{fontSize: "21px"}} />
                             <FlexItem pad={5}>
-                                {device.name}
+                                {device.model}
                             </FlexItem>
                         </Flex>
                     </Col>
