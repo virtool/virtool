@@ -97,7 +97,9 @@ class TestDeviceMemory:
             ""
         ), encoding="utf-8")
 
-        mocker.patch("subprocess.check_output", new=lambda x: return_value)
+        m = mocker.Mock(return_value=return_value)
+
+        mocker.patch("subprocess.check_output", new=m)
 
         assert virtool.nvstat.device_memory(0) == {
             "FB": {
@@ -113,7 +115,9 @@ class TestDeviceMemory:
         }
 
     def test_no_device(self, mocker):
-        mocker.patch("subprocess.check_output", new=lambda x: "No devices were found")
+        m = mocker.Mock(return_value="No devices were found")
+
+        mocker.patch("subprocess.check_output", new=m)
 
         with pytest.raises(IndexError) as err:
             virtool.nvstat.device_memory(5)
@@ -176,7 +180,9 @@ class TestDeviceClock:
             "        Auto Boost Default          : N/A"
         ), encoding="utf-8")
 
-        mocker.patch("subprocess.check_output", new=lambda x: return_value)
+        m = mocker.Mock(return_value=return_value)
+
+        mocker.patch("subprocess.check_output", new=m)
 
         assert virtool.nvstat.device_clock(0) == {
             "base": {
