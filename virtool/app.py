@@ -12,12 +12,14 @@ from motor import motor_asyncio
 import virtool.app_routes
 import virtool.app_dispatcher
 import virtool.app_settings
+
 import virtool.job_manager
 import virtool.job_resources
 import virtool.file_manager
 import virtool.organize
 import virtool.user_sessions
 import virtool.error_pages
+import virtool.nvstat
 
 
 logger = logging.getLogger(__name__)
@@ -39,7 +41,15 @@ def init_thread_pool_executor(app):
 
 def init_resources(app):
     app["resources"] = virtool.job_resources.get()
-    app["resources"]["cuda"] = virtool.job_resources.get_cuda_devices()
+
+    try:
+        cuda = virtool.job_resources.get_cuda_devices()
+    except FileNotFoundError:
+        cuda = "Could not call nvidia-smi"
+    except virtool.nvstat.NVDriverError:
+        cuda = "Could not communicate with Nvidia driver"
+
+    app["resources"]["cuda"] = cuda
 
 
 async def init_settings(app):
