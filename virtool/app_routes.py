@@ -50,7 +50,7 @@ def setup_routes(app):
 
     try:
         app.router.add_static("/static", "client/dist")
-    except FileNotFoundError:
+    except (ValueError, FileNotFoundError):
         raise Warning("Could not locate client static files")
 
     # Websocket route
