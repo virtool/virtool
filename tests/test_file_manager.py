@@ -29,7 +29,7 @@ class TestWatch:
         with open(path, "w") as handle:
             handle.write("hello world")
 
-        first_message = queue.get(block=True, timeout=2)
+        first_message = queue.get(block=True, timeout=3)
 
         assert first_message["action"] == "create"
 
@@ -45,7 +45,7 @@ class TestWatch:
         next_message = None
 
         while action == "modify":
-            next_message = queue.get(block=True, timeout=2)
+            next_message = queue.get(block=True, timeout=3)
             action = next_message["action"]
 
         assert next_message["action"] == "close"
