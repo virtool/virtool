@@ -2,7 +2,7 @@ import asyncio
 
 from virtool.handlers.utils import not_found, json_response
 from virtool.sample import recalculate_algorithm_tags
-from virtool.sample_analysis import format_analysis, remove_by_id, initialize_blast, check_rid, retrieve_blast_result
+from virtool.sample_analysis import format_analysis, initialize_blast, check_rid, retrieve_blast_result
 
 
 async def get(req):
@@ -10,11 +10,13 @@ async def get(req):
     Get a complete analysis document.
     
     """
+    db = req.app["db"]
+
     analysis_id = req.match_info["analysis_id"]
 
-    document = await req.app["db"].analyses.find_one(analysis_id)
+    document = await db.analyses.find_one(analysis_id)
 
-    formatted = await format_analysis(req.app["db"], document)
+    formatted = await format_analysis(db, document)
 
     if document:
         return json_response(formatted)
@@ -81,20 +83,3 @@ async def blast_nuvs_sequence(req):
     })
 
     return True, response
-
-
-async def remove_analysis(req):
-    """
-    Remove an analysis document
-
-    """
-    analysis_id = req.match_info["analysis_id"]
-
-    document = await req.app["db"].analyses.find_one({"_id": analysis_id}, ["sample_id"])
-
-    if not document:
-        return not_found()
-
-    await recalculate_algorithm_tags(req.app["db"], document["sample_id"])
-
-    await remove_by_id(req.app["db"], analysis_id)
