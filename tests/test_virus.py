@@ -1,7 +1,6 @@
 import os
 import pytest
 
-from unittest import mock
 from string import ascii_lowercase, digits
 from pprint import pprint
 from copy import deepcopy
@@ -45,17 +44,6 @@ def iresine_sequence():
 @pytest.fixture
 def duplicate_result():
     return {"isolate_id": [], "_id": [], "name": [], "sequence_id": [], "abbreviation": []}
-
-
-class TestProcessor:
-
-    def test(self, test_virus):
-        expected = deepcopy(test_virus)
-        expected["virus_id"] = expected.pop("_id")
-
-        processed = virtool.virus.processor(test_virus)
-
-        assert processed == expected
 
 
 class TestJoin:
