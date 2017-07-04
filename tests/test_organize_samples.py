@@ -43,7 +43,6 @@ class TestBowtieTags:
         sample_two = test_db.samples.find_one(2)
 
         assert sample_two["pathoscope"] is False
-        assert sample_two["_version"] == 1
 
     def test_bowtie_in_progress(self, test_db, samples, pathoscope_analyses):
         test_db.samples.insert_many(samples)
