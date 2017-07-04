@@ -118,6 +118,14 @@ async def init_job_manager(app):
 
 
 async def init_file_manager(app):
+    """
+    An application ``on_startup`` callback that initializes a Virtool :class:`virtool.file_manager.Manager` object and
+    attaches it to the ``app`` object.
+
+    :param app: the app object
+    :type app: :class:`aiohttp.web.Application`
+
+    """
     files_path = os.path.join(app["settings"].get("data_path"), "files")
 
     if os.path.isdir(files_path):
@@ -130,7 +138,6 @@ async def init_file_manager(app):
         )
 
         await app["file_manager"].start()
-
     else:
         logger.warning("Did not initialize file manager. Path does not exist: {}".format(files_path))
         app["file_manager"] = None

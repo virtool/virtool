@@ -28,7 +28,6 @@ def get_args():
         action="store_true",
         default=False,
         help="log debug messages"
-
     )
 
     parser.add_argument(

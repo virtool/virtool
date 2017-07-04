@@ -34,8 +34,6 @@ async def update(req):
 
     document = {key: v.document[key] for key in keys}
 
-    print(document)
-
     settings.data.update(document)
 
     await settings.write()
