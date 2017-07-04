@@ -1,9 +1,11 @@
+import re
 import json
 import datetime
-
 from aiohttp import web
 from cerberus import Validator
-from virtool.user_permissions import PERMISSIONS
+
+import virtool.utils
+import virtool.user_permissions
 
 
 class CustomEncoder(json.JSONEncoder):
@@ -32,6 +34,22 @@ def dumps(obj):
      
     """
     return json.dumps(obj, indent=4, sort_keys=False, cls=CustomEncoder)
+
+
+def compose_regex_query(term, fields):
+    if not isinstance(fields, (list, tuple)):
+        raise TypeError("Type of 'fields' must be one of 'list' or 'tuple'")
+
+    # Stringify fields.
+    fields = [str(field) for field in virtool.utils.coerce_list(fields)]
+
+    # Compile regex, making is case-insensitive.
+    regex = re.compile(str(term), re.IGNORECASE)
+
+    # Compose and return $or-based query.
+    return {
+        "$or": [{field: {"$regex": regex}} for field in fields]
+    }
 
 
 def json_response(data, status=200):
@@ -105,11 +123,34 @@ def invalid_input(errors):
     :rtype: :class:`aiohttp.Response`
 
     """
-    return json_response({"message": "Invalid input", "errors": errors}, status=422)
+    return json_response({
+        "id": "invalid_input",
+        "message": "Invalid input",
+        "errors": errors
+    }, status=422)
+
+
+def invalid_query(errors):
+    """
+    A shortcut for creating a :class:`~aiohttp.web.Response` object with a ``422`` status the JSON body
+    ``{"message": "Invalid query", "errors": <errors>}``.
+
+    :param errors: error output from a :class:`cerberus.Validator` that led to the error response
+    :type errors: dict
+
+    :return: the response
+    :rtype: :class:`aiohttp.Response`
+
+    """
+    return json_response({
+        "id": "invalid_query",
+        "message": "Invalid query",
+        "errors": errors
+    }, status=422)
 
 
 def protected(required_perm=None):
-    if required_perm and required_perm not in PERMISSIONS:
+    if required_perm and required_perm not in virtool.user_permissions.PERMISSIONS:
         raise ValueError("Permission {} is not valid".format(required_perm))
 
     def decorator(handler):

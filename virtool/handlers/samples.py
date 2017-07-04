@@ -1,5 +1,4 @@
 import os
-import re
 import math
 from pymongo import ReturnDocument
 from cerberus import Validator
@@ -9,7 +8,8 @@ import virtool.utils
 import virtool.sample
 import virtool.analysis
 import virtool.sample_analysis
-from virtool.handlers.utils import unpack_json_request, json_response, bad_request, not_found, invalid_input
+from virtool.handlers.utils import unpack_json_request, json_response, bad_request, not_found, invalid_input, \
+    invalid_query, compose_regex_query
 
 
 async def find(req):
@@ -19,19 +19,30 @@ async def find(req):
     """
     db = req.app["db"]
 
-    find_term = req.query.get("find", None)
-    page = int(req.query.get("page", 1))
+    # Validator for URL query.
+    v = Validator({
+        "term": {"type": "string", "default": "", "coerce": str},
+        "page": {"type": "integer", "coerce": int, "default": 1, "min": 1},
+        "per_page": {"type": "integer", "coerce": int, "default": 15, "min": 1, "max": 100}
+    })
 
-    query = dict()
+    if not v(dict(req.query)):
+        return invalid_query(v.errors)
 
-    if find_term:
-        regex = re.compile("{}".format(find_term), re.IGNORECASE)
-        query["$or"] = [{field: {"$regex": regex}} for field in ["name", "abbreviation"]]
+    query = v.document
+
+    page = query["page"]
+    per_page = query["per_page"]
+
+    db_query = dict()
+
+    if query["term"]:
+        db_query.update(compose_regex_query(query["term"], ["name", "abbreviation"]))
 
     total_count = await db.samples.count()
 
     cursor = db.samples.find(
-        query,
+        db_query,
         virtool.sample.LIST_PROJECTION,
         sort=[("name", 1)]
     )
@@ -39,16 +50,17 @@ async def find(req):
     found_count = await cursor.count()
 
     if page > 1:
-        cursor.skip((page - 1) * 15)
+        cursor.skip((page - 1) * per_page)
 
-    documents = [virtool.sample.processor(document) for document in await cursor.to_list(15)]
+    documents = [virtool.sample.processor(document) for document in await cursor.to_list(per_page)]
 
     return json_response({
         "documents": documents,
         "total_count": total_count,
         "found_count": found_count,
         "page": page,
-        "page_count": int(math.ceil(found_count / 15))
+        "per_page": per_page,
+        "page_count": int(math.ceil(found_count / per_page))
     })
 
 
