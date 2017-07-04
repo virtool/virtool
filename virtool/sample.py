@@ -1,5 +1,4 @@
 import os
-import pymongo
 
 import virtool.utils
 import virtool.pathoscope
