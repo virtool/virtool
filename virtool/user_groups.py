@@ -60,4 +60,4 @@ async def update_member_users(db, group_id, remove=False):
                 "groups": group_id
             }
 
-        await db.users.update(user["_id"], update_dict)
+        await db.users.update_one(user["_id"], update_dict)

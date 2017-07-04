@@ -54,7 +54,7 @@ async def check(db, settings):
     else:
         errors["hmm_file"] = True
 
-    await db.status.update("hmm", {
+    await db.status.update_one("hmm", {
         "$set": errors
     }, upsert=True)
 

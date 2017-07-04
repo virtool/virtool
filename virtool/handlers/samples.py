@@ -232,7 +232,7 @@ async def set_owner_group(req):
     if data["group_id"] not in existing_group_ids:
         return not_found("Group does not exist")
 
-    await req.app["db"].samples.update({"_id": sample_id}, {
+    await req.app["db"].samples.update_one({"_id": sample_id}, {
         "$set": {
             "group_id": data["group_id"]
         }

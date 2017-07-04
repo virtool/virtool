@@ -37,7 +37,9 @@ async def set_stats(db, index_id, data):
     * virus_count - Number of viruses now present in the viruses collection.
 
     """
-    return await db.indexes.update(index_id, {"$set": data})
+    return await db.indexes.update_one(index_id, {
+        "$set": data
+    })
 
 
 async def set_ready(db, index_id):
@@ -45,7 +47,7 @@ async def set_ready(db, index_id):
     Updates the index document described by the passed index id to show whether it is ready or not.
 
     """
-    return await db.indexes.update({"_id": index_id}, {
+    return await db.indexes.update_one({"_id": index_id}, {
         "$set": {
             "ready": True
         }
@@ -90,7 +92,7 @@ async def cleanup_index_files(db, settings):
 
     active_indexes = list(set(active_indexes))
 
-    await db.indexes.update({"_id": {"$in": active_indexes}}, {
+    await db.indexes.update_many({"_id": {"$in": active_indexes}}, {
         "$set": {
             "has_files": False
         }

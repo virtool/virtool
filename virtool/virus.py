@@ -35,7 +35,7 @@ SEQUENCE_PROJECTION = [
 
 def processor(document):
     """
-    The base processor for virus documents. Calls :func:`~.format_doc_id` and returns the result.
+    The base processor for virus documents. Renames ``_id`` field to ``id``.
     
     :param document: the document to process
     :type document: dict
@@ -44,7 +44,7 @@ def processor(document):
     :rtype: dict
          
     """
-    return virtool.utils.format_doc_id("virus", dict(document))
+    return virtool.utils.base_processor(document)
 
 
 async def dispatch_version_only(req, new):

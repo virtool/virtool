@@ -81,6 +81,6 @@ async def revert(req):
     else:
         await db.viruses.delete_one({"_id": virus_id})
 
-    await db.history.remove(history_to_delete)
+    await db.history.delete_many(history_to_delete)
 
     return json_response(virtool.virus.processor(patched))

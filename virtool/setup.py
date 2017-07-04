@@ -72,7 +72,7 @@ def save_setup(handler, data):
     except FileExistsError:
         pass
 
-    yield db.groups.update({"_id": "administrator"}, {
+    yield db.groups.update_one({"_id": "administrator"}, {
         "$set": {
             "permissions": {permission: True for permission in virtool.groups.PERMISSIONS}
         }

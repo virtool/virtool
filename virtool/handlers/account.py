@@ -113,7 +113,7 @@ async def change_password(req):
 
     # Update the user document. Remove all sessions so those clients will have to authenticate with the new
     # password.
-    await db.users.update({"_id": user_id}, {
+    await db.users.update_one({"_id": user_id}, {
         "$set": {
             "password": hashed,
             "invalidate_sessions": False,

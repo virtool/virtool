@@ -25,7 +25,7 @@ for document in db.history.find({}, ["virus_id"]):
 
 
 for change_id, virus_name in updates:
-    db.history.update({"_id": change_id}, {
+    db.history.update_one({"_id": change_id}, {
         "$set": {
             "virus_name": virus_name
         }

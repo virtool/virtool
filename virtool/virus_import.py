@@ -179,7 +179,7 @@ async def import_file(loop, db, dispatch, handle, user_id, replace=False):
             )
 
             # Remove all sequence documents associated with the existing virus.
-            await db.sequences.remove({"_id": {
+            await db.sequences.delete_many({"_id": {
                 "$in": virtool.virus.extract_isolate_ids(existing_virus)
             }})
 

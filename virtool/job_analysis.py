@@ -298,10 +298,14 @@ class Pathoscope(Base):
         document = await db.analyses.find_one({"_id": analysis_id})
         document.update(dict(data, ready=True))
 
-        await db.analyses.update({"_id": analysis_id}, {"$set": document})
+        await db.analyses.update_one({"_id": analysis_id}, {
+            "$set": document
+        })
 
-        await db.samples.update({"_id": sample_id}, {
-            "$set": {"pathoscope": True}
+        await db.samples.update_one({"_id": sample_id}, {
+            "$set": {
+                "pathoscope": True
+            }
         })
 
     @staticmethod
@@ -786,9 +790,11 @@ class NuVs(Base):
         document = await db.analyses.find_one({"_id": analysis_id})
         document.update(dict(data, ready=True))
 
-        await db.analyses.update({"_id": analysis_id}, {"$set": document})
+        await db.analyses.update_one({"_id": analysis_id}, {
+            "$set": document
+        })
 
-        await db.samples.update({"_id": sample_id}, {
+        await db.samples.update_one({"_id": sample_id}, {
             "$set": {"nuvs": True}
         })
 

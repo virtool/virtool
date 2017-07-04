@@ -70,7 +70,7 @@ async def clean(req):
             "$in": errors["not_in_file"]
         }}).distinct("_id")
 
-        await db.hmm.remove({"_id": {"$in": hmm_ids}})
+        await db.hmm.delete_many({"_id": {"$in": hmm_ids}})
 
         return json_response(await virtool.virus_hmm.check(db, settings))
 
@@ -89,7 +89,7 @@ async def import_hmm(req):
 
     result = await virtool.virus_hmm.check(db, settings)
 
-    await db.status.update("hmm", {
+    await db.status.update_one("hmm", {
         "$set": result
     }, upsert=True)
 

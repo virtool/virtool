@@ -274,7 +274,7 @@ async def remove(req):
     if user_id == req["session"].user_id:
         return bad_request("Cannot remove own account")
 
-    result = await req.app["db"].users.remove({"_id": user_id})
+    result = await req.app["db"].users.delete_one({"_id": user_id})
 
     if result["n"] == 0:
         return not_found("User does not exist")
