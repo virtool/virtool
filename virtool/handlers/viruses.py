@@ -49,7 +49,7 @@ EDIT_SEQUENCE_SCHEMA = {
 
 async def find(req):
     """
-    List truncated virus documents. Will take filters in URL parameters eventually.
+    List truncated virus documents.
 
     """
     db = req.app["db"]
