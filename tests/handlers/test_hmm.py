@@ -14,7 +14,7 @@ class TestFind:
         assert await resp.json() == [
             {
                 "label": "ORF-63",
-                "hmm_id": "f8666902",
+                "id": "f8666902",
                 "cluster": 3463,
                 "count": 4,
                 "families": {
@@ -38,7 +38,7 @@ class TestGet:
 
         assert resp.status == 200
 
-        expected = dict(hmm_document, hmm_id=hmm_document["_id"])
+        expected = dict(hmm_document, id=hmm_document["_id"])
         expected.pop("_id")
 
         assert await resp.json() == expected
@@ -77,7 +77,7 @@ class TestUpdate:
 
         assert resp.status == 200
 
-        expected = dict(hmm_document, hmm_id=hmm_document["_id"], label="Hypothetical protein")
+        expected = dict(hmm_document, id=hmm_document["_id"], label="Hypothetical protein")
         expected.pop("_id")
 
         assert await resp.json() == expected
@@ -114,6 +114,7 @@ class TestUpdate:
         assert resp.status == 422
 
         assert await resp.json() == {
+            "id": "invalid_input",
             "message": "Invalid input",
             "errors": {
                 "name": ["unknown field"],
