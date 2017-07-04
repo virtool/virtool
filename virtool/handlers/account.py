@@ -76,7 +76,9 @@ async def update_settings(req):
 
     user_id = req["session"].user_id
 
-    settings = (await db.users.find_one({"_id": user_id}))["settings"]
+    document = await db.users.find_one(user_id, ["settings"])
+
+    settings = document["settings"]
 
     settings.update(data)
 
@@ -113,7 +115,7 @@ async def change_password(req):
 
     # Update the user document. Remove all sessions so those clients will have to authenticate with the new
     # password.
-    await db.users.update({"_id": user_id}, {
+    await db.users.update_one({"_id": user_id}, {
         "$set": {
             "password": hashed,
             "invalidate_sessions": False,

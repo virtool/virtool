@@ -12,15 +12,6 @@ projection = [
 ]
 
 
-def to_client(document):
-    document["hmm_id"] = document.pop("_id")
-    return document
-
-
-def to_dispatcher(document):
-    return to_client(document)
-
-
 async def check(db, settings):
 
     hmm_dir_path = os.path.join(settings.get("data_path"), "hmm")
@@ -54,7 +45,7 @@ async def check(db, settings):
     else:
         errors["hmm_file"] = True
 
-    await db.status.update("hmm", {
+    await db.status.update_one("hmm", {
         "$set": errors
     }, upsert=True)
 

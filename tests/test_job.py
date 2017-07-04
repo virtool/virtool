@@ -1,26 +1,9 @@
 import time
-import psutil
 import pytest
 import datetime
-import multiprocessing
 from copy import deepcopy
-from pprint import pprint
 
 import virtool.job
-
-
-class TestProcessor:
-
-    def test(self, test_job):
-        """
-        Test that the processor changes the ``_id`` field to ``job_id``.
-         
-        """
-        processed = virtool.job.processor(deepcopy(test_job))
-
-        test_job["job_id"] = test_job.pop("_id")
-
-        assert processed == test_job
 
 
 class TestDispatchProcessor:
@@ -35,7 +18,8 @@ class TestDispatchProcessor:
         document = test_db.jobs.find_one()
 
         assert virtool.job.dispatch_processor(document) == {
-            "added": datetime.datetime(2017, 10, 6, 20, 0),
+            "id": "4c530449",
+            "created_at": datetime.datetime(2017, 10, 6, 20, 0),
             "args": {
                 "algorithm": "nuvs",
                 "analysis_id": "e410429b",
@@ -44,14 +28,15 @@ class TestDispatchProcessor:
                 "sample_id": "1e01a382",
                 "username": "igboyes"
             },
-            "job_id": "4c530449",
             "mem": 16,
             "proc": 10,
             "progress": 1.0,
             "stage": "import_results",
             "state": "complete",
             "task": "rebuild_index",
-            "user_id": "igboyes"
+            "user": {
+                "id": "igboyes"
+            }
         }
 
 

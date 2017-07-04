@@ -17,11 +17,6 @@ LIST_PROJECTION = [
 ]
 
 
-def processor(document):
-    document["subtraction_id"] = document.pop("_id")
-    return document
-
-
 async def set_stats(db, host_id, stats):
     await db.hosts.update_one({"_id": host_id}, {
         "$set": {key: stats[key] for key in ["count", "lengths", "nucleotides"]}

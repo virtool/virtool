@@ -1,5 +1,4 @@
 import os
-import pymongo
 
 import virtool.utils
 import virtool.pathoscope
@@ -39,12 +38,6 @@ PROJECTION = [
 ]
 
 
-def processor(document):
-    document = dict(document)
-    document["sample_id"] = document.pop("_id")
-    return document
-
-
 def calculate_algorithm_tags(analyses):
     update = {
         "pathoscope": False,
@@ -75,7 +68,7 @@ async def recalculate_algorithm_tags(db, sample_id):
 
     update = calculate_algorithm_tags(analyses)
 
-    await db.samples.update({"_id": sample_id}, {
+    await db.samples.update_one({"_id": sample_id}, {
         "$set": update
     })
 
@@ -106,12 +99,12 @@ async def remove_samples(db, settings, id_list):
 
     """
     # Remove all analysis documents associated with the sample.
-    db.analyses.remove({"_id": {
+    await db.analyses.delete_many({"_id": {
         "$in": id_list
     }})
 
     # Remove the samples described by id_list from the database.
-    result = await db.samples.remove({"_id": {
+    result = await db.samples.delete_many({"_id": {
         "$in": id_list
     }})
 

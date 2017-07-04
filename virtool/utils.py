@@ -6,6 +6,20 @@ from random import choice
 from string import ascii_letters, ascii_lowercase, digits
 
 
+def base_processor(document):
+    document = dict(document)
+    document["id"] = document.pop("_id")
+
+    user_id = document.pop("user_id", None)
+
+    if user_id:
+        document["user"] = {
+            "id": user_id
+        }
+
+    return document
+
+
 def rm(path, recursive=False):
     """
     A function that removes files or directories in a separate thread. Wraps :func:`os.remove` and func:`shutil.rmtree`.

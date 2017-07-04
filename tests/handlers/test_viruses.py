@@ -9,7 +9,7 @@ FIXTURE_DIR = os.path.join(os.path.dirname(os.path.realpath(__file__)), "test_fi
 class TestFind:
 
     async def test(self, test_db, do_get):
-        documents = [
+        test_db.viruses.insert_many([
             {
                 "abbreviation": "TyV_GV1 (not confirmed)",
                 "modified": False,
@@ -28,9 +28,7 @@ class TestFind:
                 "name": "Endornavirus of Tree Fruit #3",
                 "_id": "5350af44"
             }
-        ]
-
-        test_db.viruses.insert_many(documents)
+        ])
 
         resp = await do_get("/api/viruses")
 
@@ -48,19 +46,19 @@ class TestFind:
                     "abbreviation": "EV_TF3-mycovirus",
                     "modified": False,
                     "name": "Endornavirus of Tree Fruit #3",
-                    "virus_id": "5350af44"
+                    "id": "5350af44"
                 },
                 {
                     "abbreviation": "PVF",
                     "modified": False,
                     "name": "Prunus virus F",
-                    "virus_id": "6116cba1"
+                    "id": "6116cba1"
                 },
                 {
                     "abbreviation": "TyV_GV1 (not confirmed)",
                     "modified": False,
                     "name": "Tymovirus from Grapevine 1(not confirmed)",
-                    "virus_id": "2f97f077"
+                    "id": "2f97f077"
                 }
             ]
         }
@@ -76,7 +74,7 @@ class TestGet:
         test_db.viruses.insert_one(test_virus)
         test_db.sequences.insert_one(test_sequence)
 
-        resp = await do_get("/api/viruses/" + test_virus["_id"])
+        resp = await do_get("/api/viruses/{}".format(test_virus["_id"]))
 
         assert resp.status == 200
 
@@ -88,7 +86,7 @@ class TestGet:
             "most_recent_change": None,
             "name": "Prunus virus F",
             "version": 0,
-            "virus_id": "6116cba1",
+            "id": "6116cba1",
             "isolates": [
                 {
                     "isolate_id": "cab8b360",
@@ -130,7 +128,7 @@ class TestGet:
             "most_recent_change": None,
             "name": "Prunus virus F",
             "version": 0,
-            "virus_id": "6116cba1",
+            "id": "6116cba1",
             "isolates": [
                 {
                     "isolate_id": "cab8b360",
@@ -185,7 +183,7 @@ class TestCreate:
             "most_recent_change": None,
             "name": "Tobacco mosaic virus",
             "version": 0,
-            "virus_id": "test"
+            "id": "test"
         }
 
         assert test_db.viruses.find_one() == {
@@ -228,7 +226,7 @@ class TestCreate:
                 "modified": True,
                 "version": 0,
                 "name": "Tobacco mosaic virus",
-                "virus_id": "test",
+                "id": "test",
             }
         )
 
@@ -247,6 +245,7 @@ class TestCreate:
         assert resp.status == 422
 
         assert await resp.json() == {
+            "id": "invalid_input",
             "message": "Invalid input",
             "errors": {
                 "virus_name": ["unknown field"],
@@ -311,7 +310,7 @@ class TestEdit:
         assert resp.status == 200
 
         expected = {
-            "virus_id": "6116cba1",
+            "id": "6116cba1",
             "abbreviation": "PVF",
             "imported": True,
             "isolates": [
@@ -338,7 +337,7 @@ class TestEdit:
 
         expected.update({
             "lower_name": expected["name"].lower(),
-            "_id": expected.pop("virus_id")
+            "_id": expected.pop("id")
         })
 
         expected.pop("most_recent_change")
@@ -349,7 +348,7 @@ class TestEdit:
         assert test_db.viruses.find_one() == expected
 
         expected_dispatch = {
-            "virus_id": "6116cba1",
+            "id": "6116cba1",
             "name": "Prunus virus F",
             "abbreviation": "PVF",
             "modified": True,
@@ -365,7 +364,7 @@ class TestEdit:
         )
 
         old.update({
-            "_id": old.pop("virus_id"),
+            "_id": old.pop("id"),
             "modified": False,
             "lower_name": old["name"].lower(),
             "version": 0
@@ -399,6 +398,7 @@ class TestEdit:
         assert resp.status == 422
 
         assert await resp.json() == {
+            "id": "invalid_input",
             "message": "Invalid input",
             "errors": {
                 "virus_name": ["unknown field"],
@@ -481,7 +481,7 @@ class TestEdit:
 
 class TestVerify:
 
-    async def test_valid(self, test_db, do_put, test_virus, test_sequence, test_add_history, test_dispatch):
+    async def test(self, test_db, do_put, test_virus, test_sequence, test_add_history, test_dispatch):
         """
         Test that a complete virus document is returned in a ``200`` response when verification is successful. Check
         that history is updated and dispatches are made. 
@@ -497,7 +497,7 @@ class TestVerify:
         assert resp.status == 200
 
         expected = {
-            "virus_id": "6116cba1",
+            "id": "6116cba1",
             "name": "Prunus virus F",
             "abbreviation": "PVF",
             "imported": True,
@@ -553,7 +553,7 @@ class TestVerify:
         new = deepcopy(expected)
 
         new.update({
-            "_id": new.pop("virus_id"),
+            "_id": new.pop("id"),
             "lower_name": new["name"].lower()
         })
 
@@ -573,7 +573,7 @@ class TestVerify:
             "viruses",
             "update",
             {
-                "virus_id": "6116cba1",
+                "id": "6116cba1",
                 "name": "Prunus virus F",
                 "abbreviation": "PVF",
                 "modified": False,
@@ -742,7 +742,7 @@ class TestRemove:
         assert test_dispatch.stub.call_args[0] == (
             "viruses",
             "remove",
-            {"virus_id": "6116cba1"}
+            {"id": "6116cba1"}
         )
 
     async def test_does_not_exist(self, do_delete):
@@ -922,7 +922,7 @@ class TestAddIsolate:
             "viruses",
             "update",
             {
-                "virus_id": "6116cba1",
+                "id": "6116cba1",
                 "name": "Prunus virus F",
                 "abbreviation": "PVF",
                 "modified": True,
@@ -994,7 +994,7 @@ class TestAddIsolate:
             "viruses",
             "update",
             {
-                "virus_id": "6116cba1",
+                "id": "6116cba1",
                 "name": "Prunus virus F",
                 "abbreviation": "PVF",
                 "modified": True,
@@ -1058,7 +1058,7 @@ class TestAddIsolate:
             "viruses",
             "update",
             {
-                "virus_id": "6116cba1",
+                "id": "6116cba1",
                 "name": "Prunus virus F",
                 "abbreviation": "PVF",
                 "modified": True,
@@ -1117,7 +1117,7 @@ class TestAddIsolate:
             "viruses",
             "update",
             {
-                "virus_id": "6116cba1",
+                "id": "6116cba1",
                 "name": "Prunus virus F",
                 "abbreviation": "PVF",
                 "modified": True,
@@ -1169,7 +1169,7 @@ class TestAddIsolate:
             "viruses",
             "update",
             {
-                "virus_id": "6116cba1",
+                "id": "6116cba1",
                 "name": "Prunus virus F",
                 "abbreviation": "PVF",
                 "modified": True,
@@ -1261,7 +1261,7 @@ class TestEditIsolate:
             "viruses",
             "update",
             {
-                "virus_id": "6116cba1",
+                "id": "6116cba1",
                 "name": "Prunus virus F",
                 "abbreviation": "PVF",
                 "modified": True,
@@ -1348,6 +1348,7 @@ class TestEditIsolate:
         assert resp.status == 422
 
         assert await resp.json() == {
+            "id": "invalid_input",
             "message": "Invalid input",
             "errors": {
                 "default": ["unallowed value False"]
@@ -1392,7 +1393,7 @@ class TestEditIsolate:
             "viruses",
             "update",
             {
-                "virus_id": "6116cba1",
+                "id": "6116cba1",
                 "name": "Prunus virus F",
                 "abbreviation": "PVF",
                 "modified": True,
@@ -1489,7 +1490,7 @@ class TestRemoveIsolate:
             "viruses",
             "update",
             {
-                "virus_id": "6116cba1",
+                "id": "6116cba1",
                 "name": "Prunus virus F",
                 "abbreviation": "PVF",
                 "modified": True,
@@ -1592,7 +1593,7 @@ class TestRemoveIsolate:
             "viruses",
             "update",
             {
-                "virus_id": "6116cba1",
+                "id": "6116cba1",
                 "name": "Prunus virus F",
                 "abbreviation": "PVF",
                 "modified": True,
@@ -1630,7 +1631,7 @@ class TestListSequences:
         test_sequence["accession"] = test_sequence.pop("_id")
 
         assert await resp.json() == [{
-            "accession": "KX269872",
+            "id": "KX269872",
             "definition": "Prunus virus F isolate 8816-s2 segment RNA2 polyprotein 2 gene, complete cds.",
             "host": "sweet cherry",
             "sequence": "TGTTTAAGAGATTAAACAACCGCTTTC"
@@ -1660,7 +1661,7 @@ class TestGetSequence:
 
         assert resp.status == 200
 
-        test_sequence["accession"] = test_sequence.pop("_id")
+        test_sequence["id"] = test_sequence.pop("_id")
 
         assert await resp.json() == test_sequence
 
@@ -1707,7 +1708,7 @@ class TestCreateSequence:
         assert resp.status == 200
 
         assert await resp.json() == {
-            "accession": "FOOBAR",
+            "id": "FOOBAR",
             "definition": "A made up sequence",
             "virus_id": "6116cba1",
             "isolate_id": "cab8b360",
@@ -1759,8 +1760,6 @@ class TestCreateSequence:
             "version": 1
         })
 
-        document = test_db.sequences.find_one("FOOBAR")
-
         assert test_add_history.call_args[0][1:] == (
             "create_sequence",
             old,
@@ -1773,7 +1772,7 @@ class TestCreateSequence:
             "viruses",
             "update",
             {
-                "virus_id": "6116cba1",
+                "id": "6116cba1",
                 "abbreviation": "PVF",
                 "modified": True,
                 "name": "Prunus virus F",
@@ -1825,6 +1824,7 @@ class TestCreateSequence:
         assert resp.status == 422
 
         assert await resp.json() == {
+            "id": "invalid_input",
             "message": "Invalid input",
             "errors": {
                 "accession": ["must be of string type"],
@@ -1883,7 +1883,7 @@ class TestEditSequence:
         assert resp.status == 200
 
         assert await resp.json() == {
-            "accession": "KX269872",
+            "id": "KX269872",
             "definition": "A made up sequence",
             "host": "Grapevine",
             "virus_id": "6116cba1",
@@ -1939,7 +1939,7 @@ class TestEditSequence:
             "viruses",
             "update",
             {
-                "virus_id": "6116cba1",
+                "id": "6116cba1",
                 "abbreviation": "PVF",
                 "modified": True,
                 "name": "Prunus virus F",
@@ -1962,6 +1962,7 @@ class TestEditSequence:
         assert resp.status == 422
 
         assert await resp.json() == {
+            "id": "invalid_input",
             "message": "Invalid input",
             "errors": {
                 "definition": ["must be of string type"],

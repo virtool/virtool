@@ -1,8 +1,9 @@
 import logging
 import pymongo.errors
-
 from pymongo import ReturnDocument
-from virtool.user_groups import projection, processor, update_member_users
+
+import virtool.utils
+import virtool.user_groups
 from virtool.user_permissions import PERMISSIONS
 from virtool.handlers.utils import json_response, bad_request, not_found, protected, validation
 
@@ -15,9 +16,9 @@ async def find(req):
     Get a list of all existing group documents.
      
     """
-    documents = await req.app["db"].groups.find({}, projection).to_list(None)
+    documents = await req.app["db"].groups.find({}).to_list(None)
 
-    return json_response([processor(d) for d in documents])
+    return json_response([virtool.utils.base_processor(d) for d in documents])
 
 
 @protected("manage_users")
@@ -44,7 +45,7 @@ async def create(req):
     except pymongo.errors.DuplicateKeyError:
         return json_response({"message": "Group already exists"}, status=409)
 
-    return json_response(processor(document))
+    return json_response(virtool.utils.base_processor(document))
 
 
 @protected("manage_users")
@@ -53,10 +54,10 @@ async def get(req):
     Gets a complete group document.
     
     """
-    document = await req.app["db"].groups.find_one(req.match_info["group_id"], projection)
+    document = await req.app["db"].groups.find_one(req.match_info["group_id"])
 
     if document:
-        return json_response(processor(document))
+        return json_response(virtool.utils.base_processor(document))
 
     return not_found()
 
@@ -86,9 +87,7 @@ async def update_permissions(req):
         }
     }, return_document=ReturnDocument.AFTER)
 
-    document["group_id"] = document.pop("_id")
-
-    return json_response(document)
+    return json_response(virtool.utils.base_processor(document))
 
 
 @protected("manage_users")
@@ -97,6 +96,8 @@ async def remove(req):
     Remove a group.
 
     """
+    db = req.app["db"]
+
     group_id = req.match_info["group_id"]
 
     # Only accept single id strings.
@@ -107,11 +108,11 @@ async def remove(req):
     if group_id == "administrator":
         return bad_request("Cannot remove administrator group")
 
-    document = await req.app["db"].groups.find_one_and_delete({"_id": group_id})
+    document = await db.groups.find_one_and_delete({"_id": group_id})
 
     if not document:
         return not_found()
 
-    await update_member_users(req.app["db"], group_id, remove=True)
+    await virtool.user_groups.update_member_users(db, group_id, remove=True)
 
     return json_response({"removed": group_id})

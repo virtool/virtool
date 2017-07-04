@@ -5,8 +5,8 @@ import shutil
 from collections import Counter
 from pymongo import ReturnDocument
 
+import virtool.utils
 import virtool.virus_hmm
-from virtool.utils import get_new_id
 from virtool.handlers.utils import unpack_json_request, json_response, not_found, validation, protected
 
 
@@ -17,7 +17,7 @@ async def find(req):
     """
     documents = await req.app["db"].hmm.find({}, projection=virtool.virus_hmm.projection).to_list(length=10)
 
-    return json_response([virtool.virus_hmm.to_client(document) for document in documents])
+    return json_response([virtool.utils.base_processor(d) for d in documents])
 
 
 async def get(req):
@@ -28,7 +28,7 @@ async def get(req):
     document = await req.app["db"].hmm.find_one({"_id": req.match_info["hmm_id"]})
 
     if document:
-        return json_response(virtool.virus_hmm.to_client(document))
+        return json_response(virtool.utils.base_processor(document))
 
     return not_found()
 
@@ -51,7 +51,7 @@ async def update(req):
         "$set": data
     }, return_document=ReturnDocument.AFTER)
 
-    return json_response(virtool.virus_hmm.to_client(document))
+    return json_response(virtool.utils.base_processor(document))
 
 
 async def check(req):
@@ -70,7 +70,7 @@ async def clean(req):
             "$in": errors["not_in_file"]
         }}).distinct("_id")
 
-        await db.hmm.remove({"_id": {"$in": hmm_ids}})
+        await db.hmm.delete_many({"_id": {"$in": hmm_ids}})
 
         return json_response(await virtool.virus_hmm.check(db, settings))
 
@@ -89,7 +89,7 @@ async def import_hmm(req):
 
     result = await virtool.virus_hmm.check(db, settings)
 
-    await db.status.update("hmm", {
+    await db.status.update_one("hmm", {
         "$set": result
     }, upsert=True)
 
@@ -107,14 +107,6 @@ async def import_annotations(req):
     with gzip.open(os.path.join(settings.get("data_path"), "files", data["file_id"]), "rt") as input_file:
         annotations_to_import = json.load(input_file)
 
-    # The number of annotation documents that will be imported.
-    count = len(annotations_to_import)
-
-    # transaction.update({"count": count})
-
-    # The number of documents to insert at a time.
-    # chunk_size = int(math.ceil(count * 0.03))
-
     # A list of documents that have to be inserted when chunk_size is met.
     cache = list()
 
@@ -122,7 +114,7 @@ async def import_annotations(req):
         top_three = Counter([entry["name"] for entry in annotation["entries"]]).most_common(3)
         top_names = [entry[0] for entry in top_three]
 
-        new_id = await get_new_id(db.hmm)
+        new_id = await virtool.utils.get_new_id(db.hmm)
 
         annotation.update({
             "_id": new_id,

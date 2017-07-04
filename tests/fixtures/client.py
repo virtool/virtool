@@ -37,7 +37,7 @@ def do_get(test_client, authorize_client):
             self.server = None
 
         async def init_client(self):
-            self.client = await test_client(create_app, "test")
+            self.client = await test_client(create_app, "test", disable_job_manager=True, disable_file_manager=True)
             self.server = self.client.server
 
         async def __call__(self, url, authorize=False, groups=None, permissions=None):
@@ -56,9 +56,16 @@ def do_get(test_client, authorize_client):
 def do_post(test_client, authorize_client):
     client = None
 
-    async def func(url, data, authorize=False, groups=None, permissions=None):
+    async def func(url, data, authorize=False, groups=None, permissions=None, job_manager=False, file_manager=False):
         nonlocal client
-        client = client or await test_client(create_app, "test")
+
+        if not client:
+            client = await test_client(
+                create_app,
+                "test",
+                disable_job_manager=(not job_manager),
+                disable_file_manager=(not file_manager)
+            )
 
         if authorize:
             await authorize_client(client, groups, permissions)
@@ -72,9 +79,16 @@ def do_post(test_client, authorize_client):
 def do_upload(test_client, authorize_client):
     client = None
 
-    async def func(url, data, authorize=False, groups=None, permissions=None):
+    async def func(url, data, authorize=False, groups=None, permissions=None, job_manager=False, file_manager=False):
         nonlocal client
-        client = client or await test_client(create_app, "test")
+
+        if not client:
+            client = await test_client(
+                create_app,
+                "test",
+                disable_job_manager=(not job_manager),
+                disable_file_manager=(not file_manager)
+            )
 
         if authorize:
             await authorize_client(client, groups, permissions)
@@ -88,10 +102,16 @@ def do_upload(test_client, authorize_client):
 def do_put(test_client, authorize_client):
     client = None
 
-    async def func(url, data, authorize=False, groups=None, permissions=None):
+    async def func(url, data, authorize=False, groups=None, permissions=None, job_manager=False, file_manager=False):
         nonlocal client
 
-        client = client or await test_client(create_app, "test")
+        if not client:
+            client = await test_client(
+                create_app,
+                "test",
+                disable_job_manager=(not job_manager),
+                disable_file_manager=(not file_manager)
+            )
 
         if authorize:
             await authorize_client(client, groups, permissions)

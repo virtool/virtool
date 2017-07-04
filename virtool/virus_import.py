@@ -179,7 +179,7 @@ async def import_file(loop, db, dispatch, handle, user_id, replace=False):
             )
 
             # Remove all sequence documents associated with the existing virus.
-            await db.sequences.remove({"_id": {
+            await db.sequences.delete_many({"_id": {
                 "$in": virtool.virus.extract_isolate_ids(existing_virus)
             }})
 
@@ -373,7 +373,7 @@ async def check_import_abbreviation(db, virus_document, lower_name=None):
 
     # Don't count empty strings as duplicate abbreviations!
     if virus_document["abbreviation"]:
-        virus_with_abbreviation = await db.viruses.find_one({"abbreviation": virus["abbreviation"]})
+        virus_with_abbreviation = await db.viruses.find_one({"abbreviation": virus_document["abbreviation"]})
 
     if virus_with_abbreviation and virus_with_abbreviation["lower_name"] != lower_name:
         # Remove the imported virus's abbreviation because it is already assigned to an existing virus.
@@ -381,7 +381,7 @@ async def check_import_abbreviation(db, virus_document, lower_name=None):
 
         # Record a message for the user.
         return "Abbreviation {} already existed for virus {} and was not assigned to new virus {}.".format(
-            virus_with_abbreviation["abbreviation"], virus_with_abbreviation["name"], virus["name"]
+            virus_with_abbreviation["abbreviation"], virus_with_abbreviation["name"], virus_document["name"]
         )
 
     return None
@@ -448,7 +448,7 @@ async def insert_from_import(db, virus_document, user_id):
     # Perform the actual database insert operation, retaining the response.
     await db.viruses.insert(virus_document)
 
-    to_dispatch = virtool.virus.processor({key: virus_document[key] for key in virtool.virus.LIST_PROJECTION})
+    to_dispatch = virtool.utils.base_processor({key: virus_document[key] for key in virtool.virus.LIST_PROJECTION})
 
     joined = await virtool.virus.join(db, virus_document["_id"])
 

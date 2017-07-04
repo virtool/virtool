@@ -1,7 +1,7 @@
 import virtool.sample
 import virtool.subtraction
-from virtool.utils import get_new_id
-from virtool.handlers.utils import unpack_json_request, json_response, bad_request, not_found
+import virtool.utils
+from virtool.handlers.utils import unpack_json_request, json_response, not_found
 
 
 async def find(req):
@@ -17,7 +17,7 @@ async def find(req):
 
     found_count = await cursor.count()
 
-    documents = [virtool.subtraction.processor(d) for d in await cursor.to_list(length=15)]
+    documents = [virtool.utils.base_processor(d) for d in await cursor.to_list(length=15)]
 
     return json_response({
         "documents": documents,
@@ -41,9 +41,9 @@ async def get(req):
 
     if document:
         linked_samples = await db.samples.find({"subtraction": subtraction_id}, ["name"]).to_list(None)
-        document["linked_samples"] = [virtool.sample.processor(d) for d in linked_samples]
+        document["linked_samples"] = [virtool.utils.base_processor(d) for d in linked_samples]
 
-        return json_response(virtool.subtraction.processor(document))
+        return json_response(virtool.utils.base_processor(document))
 
     return not_found()
 
@@ -57,7 +57,7 @@ async def create(req):
 
     user_id = req["session"]["user_id"]
 
-    job_id = await get_new_id(db.jobs)
+    job_id = await virtool.utils.get_new_id(db.jobs)
 
     data.update({
         "_id": data.pop("organism"),
@@ -78,24 +78,7 @@ async def create(req):
         job_id=job_id
     )
 
-    return json_response(virtool.host.to_client(data))
-
-
-async def remove(req):
-    """
-    Removes a host document its associated files.
-
-    """
-    host_id = req.match_info["host_id"]
-
-    try:
-        await virtool.host.remove(req.app["db"], req.app["settings"], host_id)
-    except virtool.host.HostInUseError:
-        return bad_request("Host is in use")
-    except virtool.host.HostNotFoundError:
-        return not_found()
-
-    return json_response({"removed": host_id})
+    return json_response(virtool.utils.base_processor(data))
 
 
 async def authorize_upload(req):

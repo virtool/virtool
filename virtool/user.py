@@ -3,7 +3,7 @@ import hashlib
 
 from pymongo import ReturnDocument
 
-projection = [
+PROJECTION = [
     "_id",
     "groups",
     "force_reset",
@@ -11,11 +11,6 @@ projection = [
     "permissions",
     "primary_group"
 ]
-
-
-def processor(document):
-    document["user_id"] = document.pop("_id")
-    return document
 
 
 async def user_exists(db, user_id):

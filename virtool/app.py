@@ -118,6 +118,14 @@ async def init_job_manager(app):
 
 
 async def init_file_manager(app):
+    """
+    An application ``on_startup`` callback that initializes a Virtool :class:`virtool.file_manager.Manager` object and
+    attaches it to the ``app`` object.
+
+    :param app: the app object
+    :type app: :class:`aiohttp.web.Application`
+
+    """
     files_path = os.path.join(app["settings"].get("data_path"), "files")
 
     if os.path.isdir(files_path):
@@ -130,7 +138,6 @@ async def init_file_manager(app):
         )
 
         await app["file_manager"].start()
-
     else:
         logger.warning("Did not initialize file manager. Path does not exist: {}".format(files_path))
         app["file_manager"] = None
@@ -148,21 +155,24 @@ async def on_shutdown(app):
         await conn.close()
         app["dispatcher"].remove_connection(conn)
 
-    job_manager = app["job_manager"]
+    if "job_manager" in app:
+        job_manager = app["job_manager"]
 
-    for job_id in job_manager:
-        await job_manager.cancel(job_id)
+        for job_id in job_manager:
+            await job_manager.cancel(job_id)
 
-    while job_manager:
-        asyncio.sleep(0.1, loop=app.loop)
+        while job_manager:
+            asyncio.sleep(0.1, loop=app.loop)
 
-    await job_manager.close()
+        await job_manager.close()
 
-    if app["file_manager"]:
-        await app["file_manager"].close()
+    file_manager = app.get("file_manager", None)
+
+    if file_manager is not None:
+        await file_manager.close()
 
 
-def create_app(loop, db_name=None):
+def create_app(loop, db_name=None, disable_job_manager=False, disable_file_manager=False):
     """
     Creates the Virtool application.
     
@@ -185,8 +195,12 @@ def create_app(loop, db_name=None):
     app.on_startup.append(init_dispatcher)
     app.on_startup.append(init_db)
     app.on_startup.append(init_resources)
-    app.on_startup.append(init_job_manager)
-    app.on_startup.append(init_file_manager)
+
+    if not disable_job_manager:
+        app.on_startup.append(init_job_manager)
+
+    if not disable_file_manager:
+        app.on_startup.append(init_file_manager)
 
     app.on_shutdown.append(on_shutdown)
 

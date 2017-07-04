@@ -77,43 +77,43 @@ def organize_analyses(database):
                     hit["hit"] = hmm["_id"]
 
                 # Commit the new hit entries to the database.
-                database.analyses.update({"_id": analysis["_id"]}, {
+                database.analyses.update_one({"_id": analysis["_id"]}, {
                     "$set": {
                         "hmm": hits
                     }
                 })
 
-    database.analyses.update({"comments": {"$exists": True}}, {
+    database.analyses.update_many({"comments": {"$exists": True}}, {
         "$rename": {
             "comments": "name"
         }
-    }, multi=True)
+    })
 
-    database.analyses.update({"discovery": {"$exists": True}}, {
+    database.analyses.update_many({"discovery": {"$exists": True}}, {
         "$unset": {
             "discovery": ""
         }
-    }, multi=True)
+    })
 
-    database.analyses.update({"_version": {"$exists": False}}, {
+    database.analyses.update_many({"_version": {"$exists": False}}, {
         "$set": {
             "_version": 0
         }
-    }, multi=True)
+    })
 
-    database.analyses.update({"sample": {"$exists": True}}, {
+    database.analyses.update_many({"sample": {"$exists": True}}, {
         "$rename": {
             "sample": "sample_id"
         }
     })
 
-    database.analyses.update({"algorithm": {"$exists": False}}, {
+    database.analyses.update_many({"algorithm": {"$exists": False}}, {
         "$set": {
             "algorithm": "pathoscope_bowtie"
         }
-    }, multi=True)
+    })
 
-    database.analyses.remove({"ready": False})
+    database.analyses.delete_many({"ready": False})
 
 
 def get_bowtie2_index_names(index_path):
@@ -153,13 +153,13 @@ def extract_sequence_ids(joined_virus):
 
 
 def organize_viruses(database):
-    database.viruses.update({}, {
+    database.viruses.update_many({}, {
         "$unset": {
             "segments": "",
             "abbrevation": "",
             "new": ""
         }
-    }, multi=True)
+    })
 
     indexes_path = os.path.join(data_path, "reference/viruses/")
 
@@ -245,7 +245,7 @@ def organize_viruses(database):
 
 
 def organize_sequences(database):
-    database.sequences.update({}, {
+    database.sequences.update_many({}, {
         "$unset": {
             "neighbours": "",
             "proteins": "",
@@ -256,11 +256,11 @@ def organize_sequences(database):
 
 
 def organize_hosts(database):
-    database.hosts.update({"job": {"$exists": False}}, {
+    database.hosts.update_many({"job": {"$exists": False}}, {
         "$set": {
             "job": None
         }
-    }, multi=True)
+    })
 
     for host in database.hosts.find():
         if "ready" not in host:
@@ -282,17 +282,17 @@ def organize_hosts(database):
 
 def organize_users(database):
     # If any users lack the ``primary_group`` field or it is None, add it with a value of "".
-    database.users.update({"$or": [
+    database.users.update_many({"$or": [
         {"primary_group": {"$exists": False}},
         {"primary_group": None}
     ]}, {
         "$set": {"primary_group": ""}
-    }, multi=True)
+    })
 
     # Assign default user settings to users without defined settings.
-    database.users.update({"settings": {}}, {
+    database.users.update_many({"settings": {}}, {
         "$set": {"settings": {"show_ids": False, "show_versions": False}}
-    }, multi=True)
+    })
 
     # Make sure permissions are correct for all users.
     for user in database.users.find():
@@ -300,11 +300,12 @@ def organize_users(database):
             "$in": user["groups"]
         }})
 
-        database.users.update({"_id": user["_id"]}, {
+        database.users.update_one({"_id": user["_id"]}, {
             "$set": {
                 "permissions": merge_group_permissions(list(groups))
             }
         })
+
 
 def organize_groups(database):
 
@@ -319,7 +320,7 @@ def organize_groups(database):
             except KeyError:
                 pass
 
-        database.groups.update({"_id": group["_id"]}, {
+        database.groups.update_one({"_id": group["_id"]}, {
             "$set": {
                 "permissions": permissions
             }
@@ -327,26 +328,25 @@ def organize_groups(database):
 
 
 def organize_jobs(database):
-    database.jobs.update({}, {
+    database.jobs.update_many({}, {
         "$unset": {
             "archived": ""
         }
     })
 
 
-def organize_samples(database):
-    for sample in database.samples.find({}):
-        analyses = list(database.analyses.find({"sample_id": sample["_id"]}, ["ready", "algorithm"]))
+def organize_samples(db):
+    for sample in db.samples.find({}):
+        analyses = list(db.analyses.find({"sample_id": sample["_id"]}, ["ready", "algorithm"]))
 
-        database.samples.update({"_id": sample["_id"]}, {
-            "$set": calculate_algorithm_tags(analyses),
-            "$inc": {"_version": 1}
+        db.samples.update_one({"_id": sample["_id"]}, {
+            "$set": calculate_algorithm_tags(analyses)
         })
 
 
 def organize_files(database):
-    database.files.update({"reserved": {"$exists": False}}, {
+    database.files.update_many({"reserved": {"$exists": False}}, {
         "$set": {
             "reserved": False
         }
-    }, multi=True)
+    })

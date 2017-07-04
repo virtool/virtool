@@ -1,3 +1,6 @@
+import virtool.utils
+
+
 LIST_PROJECTION = [
     "_id",
     "name",
@@ -12,7 +15,4 @@ LIST_PROJECTION = [
 
 
 def processor(document):
-    document = dict(document)
-    document["analysis_id"] = document.pop("_id")
-
-    return document
+    return virtool.utils.base_processor(document)

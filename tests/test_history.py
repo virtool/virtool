@@ -7,17 +7,6 @@ from copy import deepcopy
 import virtool.virus_history
 
 
-class TestProcessor:
-
-    def test(self, test_change):
-        processed = virtool.virus_history.processor(deepcopy(test_change))
-
-        expected = dict(test_change)
-        expected["change_id"] = expected.pop("_id")
-
-        assert processed == expected
-
-
 class TestAdd:
 
     async def test(self, test_motor, static_time, test_virus_edit, test_change):

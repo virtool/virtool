@@ -41,7 +41,7 @@ class TestFind:
             "primary_group": ""
         }
 
-        expected = [dict(base_dict, user_id=user_id) for user_id in user_ids + ["test"]]
+        expected = [dict(base_dict, id=user_id) for user_id in user_ids + ["test"]]
 
         expected[3]["permissions"] = dict(base_dict["permissions"], manage_users=True)
 
@@ -91,7 +91,7 @@ class TestGet:
         assert resp.status == 200
 
         assert await resp.json() == {
-            "user_id": "fred",
+            "id": "fred",
             "force_reset": False,
             "groups": [],
             "last_password_change": "2015-10-06T20:00:00Z",
@@ -155,7 +155,7 @@ class TestGet:
 
 class TestCreate:
 
-    async def test_valid(self, monkeypatch, static_time, do_post, test_db):
+    async def test(self, monkeypatch, static_time, do_post, test_db):
         """
         Test that a valid request results in a user document being properly inserted.
         
@@ -177,7 +177,7 @@ class TestCreate:
         assert resp.status == 200
 
         expected = {
-            "user_id": "bob",
+            "id": "bob",
             "force_reset": False,
             "groups": [],
             "last_password_change": "2017-10-06T20:00:00Z",
@@ -202,7 +202,7 @@ class TestCreate:
         assert await resp.json() == expected
 
         expected.update({
-            "_id": expected.pop("user_id"),
+            "_id": expected.pop("id"),
             "last_password_change": datetime.datetime(2017, 10, 6, 20, 0)
         })
 
@@ -228,6 +228,7 @@ class TestCreate:
         assert resp.status == 422
 
         assert await resp.json() == {
+            "id": "invalid_input",
             "message": "Invalid input",
             "errors": {
                 "username": ["unknown field"],
@@ -306,9 +307,26 @@ class TestSetPassword:
         assert resp.status == 200
 
         assert await resp.json() == {
-            "last_password_change": "2017-10-06T20:00:00Z",
             "force_reset": False,
-            "user_id": "bob"
+            "groups": [],
+            "id": "bob",
+            "last_password_change": "2017-10-06T20:00:00Z",
+            "permissions": {
+                "add_host": False,
+                "add_sample": False,
+                "add_virus": False,
+                "archive_job": False,
+                "cancel_job": False,
+                "manage_users": False,
+                "modify_hmm": False,
+                "modify_options": False,
+                "modify_virus": False,
+                "rebuild_index": False,
+                "remove_host": False,
+                "remove_job": False,
+                "remove_virus": False
+            },
+            "primary_group": ""
         }
 
     async def test_does_not_exist(self, do_put):
@@ -338,6 +356,7 @@ class TestSetPassword:
         assert resp.status == 422
 
         assert await resp.json() == {
+            "id": "invalid_input",
             "message": "Invalid input",
             "errors": {
                 "password": ["required field"],
@@ -374,7 +393,7 @@ class TestSetPassword:
 
 class TestSetForceReset:
 
-    async def test_valid(self, do_put, test_db, create_user):
+    async def test(self, do_put, test_db, create_user):
         """
         Test that a valid request results in a password change.
 
@@ -389,9 +408,30 @@ class TestSetForceReset:
 
         assert resp.status == 200
 
+        import pprint
+        pprint.pprint(await resp.json())
+
         assert await resp.json() == {
-            "user_id": "bob",
-            "force_reset": True
+            "force_reset": True,
+            "groups": [],
+            "id": "bob",
+            "last_password_change": "2015-10-06T20:00:00Z",
+            "permissions": {
+                "add_host": False,
+                "add_sample": False,
+                "add_virus": False,
+                "archive_job": False,
+                "cancel_job": False,
+                "manage_users": False,
+                "modify_hmm": False,
+                "modify_options": False,
+                "modify_virus": False,
+                "rebuild_index": False,
+                "remove_host": False,
+                "remove_job": False,
+                "remove_virus": False
+            },
+            "primary_group": ""
         }
 
     async def test_invalid_input(self, do_put, test_db, create_user):
@@ -411,6 +451,7 @@ class TestSetForceReset:
         assert resp.status == 422
 
         assert await resp.json() == {
+            "id": "invalid_input",
             "message": "Invalid input",
             "errors": {
                 "unwanted": ["unknown field"],
@@ -551,6 +592,7 @@ class TestAddGroup:
         assert resp.status == 422
 
         assert await resp.json() == {
+            "id": "invalid_input",
             "message": "Invalid input",
             "errors": {
                 "group": ["unknown field"],

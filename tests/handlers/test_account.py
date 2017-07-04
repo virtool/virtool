@@ -53,6 +53,7 @@ class TestUpdateSettings:
         assert resp.status == 422
 
         assert await resp.json() == {
+            "id": "invalid_input",
             "message": "Invalid input",
             "errors": {
                 "show_ids": ["must be of boolean type"],
@@ -107,6 +108,7 @@ class TestChangePassword:
         assert resp.status == 422
 
         assert await resp.json() == {
+            "id": "invalid_input",
             "message": "Invalid input",
             "errors": {
                 "old_password": ["required field"],

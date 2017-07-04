@@ -49,7 +49,7 @@ EDIT_SEQUENCE_SCHEMA = {
 
 async def find(req):
     """
-    List truncated virus documents. Will take filters in URL parameters eventually.
+    List truncated virus documents.
 
     """
     db = req.app["db"]
@@ -86,7 +86,7 @@ async def find(req):
     if page > 1:
         cursor.skip((page - 1) * 15)
 
-    documents = [virtool.virus.processor(document) for document in await cursor.to_list(length=15)]
+    documents = [virtool.utils.base_processor(d) for d in await cursor.to_list(length=15)]
 
     return json_response({
         "documents": documents,
@@ -159,7 +159,7 @@ async def create(req):
     await req.app["dispatcher"].dispatch(
         "viruses",
         "update",
-        virtool.virus.processor({key: joined[key] for key in virtool.virus.LIST_PROJECTION})
+        virtool.utils.base_processor({key: joined[key] for key in virtool.virus.LIST_PROJECTION})
     )
 
     return json_response(complete, status=201)
@@ -228,7 +228,7 @@ async def edit(req):
     await req.app["dispatcher"].dispatch(
         "viruses",
         "update",
-        virtool.virus.processor({key: new[key] for key in virtool.virus.LIST_PROJECTION})
+        virtool.utils.base_processor({key: new[key] for key in virtool.virus.LIST_PROJECTION})
     )
 
     return json_response(await virtool.virus.get_complete(db, virus_id))
@@ -319,7 +319,7 @@ async def verify(req):
     await req.app["dispatcher"].dispatch(
         "viruses",
         "update",
-        virtool.virus.processor({key: new[key] for key in virtool.virus.LIST_PROJECTION})
+        virtool.utils.base_processor({key: new[key] for key in virtool.virus.LIST_PROJECTION})
     )
 
     to_return = deepcopy(new)
@@ -330,7 +330,7 @@ async def verify(req):
         for sequence in isolate["sequences"]:
             sequence["accession"] = sequence.pop("_id")
 
-    return json_response(virtool.virus.processor(to_return))
+    return json_response(virtool.utils.base_processor(to_return))
 
 
 @protected("modify_virus")
@@ -367,7 +367,7 @@ async def remove(req):
     await req.app["dispatcher"].dispatch(
         "viruses",
         "remove",
-        {"virus_id": virus_id}
+        {"id": virus_id}
     )
 
     return web.Response(status=204)
@@ -681,7 +681,7 @@ async def list_sequences(req):
 
     documents = await db.sequences.find({"isolate_id": isolate_id}, projection).to_list(None)
 
-    return json_response([virtool.virus.sequence_processor(d) for d in documents])
+    return json_response([virtool.utils.base_processor(d) for d in documents])
 
 
 async def get_sequence(req):
@@ -698,7 +698,7 @@ async def get_sequence(req):
     if not document:
         return not_found()
 
-    return json_response(virtool.virus.sequence_processor(document))
+    return json_response(virtool.utils.base_processor(document))
 
 
 @protected("modify_virus")
@@ -758,7 +758,7 @@ async def create_sequence(req):
 
     await virtool.virus.dispatch_version_only(req, new)
 
-    return json_response(virtool.virus.sequence_processor(data))
+    return json_response(virtool.utils.base_processor(data))
 
 
 @protected("modify_virus")
@@ -806,7 +806,7 @@ async def edit_sequence(req):
 
     await virtool.virus.dispatch_version_only(req, new)
 
-    return json_response(virtool.virus.sequence_processor(new_sequence))
+    return json_response(virtool.utils.base_processor(new_sequence))
 
 
 async def remove_sequence(req):
@@ -823,7 +823,7 @@ async def remove_sequence(req):
     if not document:
         return not_found()
 
-    return json_response(virtool.virus.sequence_processor(document))
+    return json_response(virtool.utils.base_processor(document))
 
 
 async def list_history(req):
@@ -843,7 +843,6 @@ async def get_history(req):
     db = req.app["db"]
 
     virus_id = req.match_info["virus_id"]
-    version = req.match_info["version"]
 
     if not await db.viruses.find({"_id": virus_id}).count():
         return not_found("Virus not found")

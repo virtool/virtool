@@ -87,7 +87,7 @@ async def remove_by_id(db, settings, analysis_id):
     sample_id = sample["sample_id"]
 
     # Remove analysis entry from database
-    await db.analyses.remove({"_id": analysis_id})
+    await db.analyses.delete_one({"_id": analysis_id})
 
     # Remove the analysis directory
     path = os.path.join(settings.get("data_path"), "samples", "sample_{}".format(sample_id), "analysis", analysis_id)
