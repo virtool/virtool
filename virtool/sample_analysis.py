@@ -116,8 +116,6 @@ def check_rid(rid):
 
 async def format_analysis(db, analysis):
 
-
-
     isolate_fields = [
         "isolate_id",
         "default",
