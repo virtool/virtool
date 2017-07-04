@@ -1,10 +1,9 @@
 from pymongo import ReturnDocument
 
+import virtool.utils
+import virtool.virus_index
 import virtool.virus_history
 from virtool.handlers.utils import unpack_json_request, json_response, bad_request, not_found, protected
-from virtool.utils import get_new_id, timestamp
-from virtool.virus_index import get_current_index_version, PROJECTION, processor
-
 
 
 async def find(req):
@@ -14,13 +13,13 @@ async def find(req):
     """
     db = req.app["db"]
 
-    documents = await db.indexes.find({}, PROJECTION, sort=[("index_version", -1)]).to_list(15)
+    documents = await db.indexes.find({}, virtool.virus_index.PROJECTION, sort=[("index_version", -1)]).to_list(15)
 
     modified_virus_count = await db.viruses.count({"modified": True})
     total_virus_count = await db.viruses.count()
 
     return json_response({
-        "documents": [processor(document) for document in documents],
+        "documents": [virtool.utils.base_processor(d) for d in documents],
         "modified_virus_count": modified_virus_count,
         "total_virus_count": total_virus_count
     })
@@ -43,7 +42,7 @@ async def get(req):
     if not document:
         return not_found()
 
-    document = processor(document)
+    document = virtool.utils.base_processor(document)
 
     changes = await db.history.find(
         {"index_id": document["index_id"]},
@@ -69,15 +68,15 @@ async def create(req):
     if await db.viruses.find({"modified": True}).count():
         return bad_request("There are unverified viruses")
 
-    index_id = await get_new_id(db.indexes)
-    index_version = await get_current_index_version(db) + 1
+    index_id = await virtool.utils.get_new_id(db.indexes)
+    index_version = await virtool.virus_index.get_current_index_version(db) + 1
 
     user_id = req["session"].user_id
 
     await db.indexes.insert_one({
         "_id": index_id,
         "index_version": index_version,
-        "timestamp": timestamp(),
+        "timestamp": virtool.utils.timestamp(),
         "ready": False,
         "has_files": True,
         "user_id": user_id,
@@ -119,5 +118,5 @@ async def create(req):
     }, return_document=ReturnDocument.AFTER)
 
     return {
-        processor(document)
+        virtool.utils.base_processor(document)
     }

@@ -1,8 +1,7 @@
-import virtool.virus_history
-
+import virtool.utils
 import virtool.virus
-from virtool.virus import join, extract_isolate_ids
-from virtool.handlers.utils import unpack_json_request, json_response, not_found
+import virtool.virus_history
+from virtool.handlers.utils import json_response, not_found
 
 
 async def find(req):
@@ -14,7 +13,7 @@ async def find(req):
 
     documents = await db.history.find({}, virtool.virus_history.LIST_PROJECTION).to_list(length=15)
 
-    return json_response([virtool.virus_history.processor(document) for document in documents])
+    return json_response([virtool.virus_history.processor(d) for d in documents])
 
 
 async def get(req):
@@ -55,7 +54,7 @@ async def revert(req):
     current_document = await db.viruses.find_one(virus_id)
 
     if current_document:
-        current_document = await join(db, virus_id, current_document)
+        current_document = await virtool.virus.join(db, virus_id, current_document)
     else:
         current_document = {"_id": virus_id}
 
@@ -83,4 +82,4 @@ async def revert(req):
 
     await db.history.delete_many(history_to_delete)
 
-    return json_response(virtool.virus.processor(patched))
+    return json_response(virtool.utils.base_processor(patched))

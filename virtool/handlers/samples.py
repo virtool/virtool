@@ -52,7 +52,7 @@ async def find(req):
     if page > 1:
         cursor.skip((page - 1) * per_page)
 
-    documents = [virtool.sample.processor(document) for document in await cursor.to_list(per_page)]
+    documents = [virtool.utils.base_processor(d) for d in await cursor.to_list(per_page)]
 
     return json_response({
         "documents": documents,
@@ -191,9 +191,7 @@ async def get(req):
     if not document:
         return not_found()
 
-    document["sample_id"] = document.pop("_id")
-
-    return json_response(document)
+    return json_response(virtool.utils.base_processor(document))
 
 
 async def update(req):

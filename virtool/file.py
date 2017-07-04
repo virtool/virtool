@@ -18,9 +18,7 @@ LIST_PROJECTION = [
 
 
 def processor(document):
-    document = dict(document)
-    document["file_id"] = document.pop("_id")
-    return document
+    return virtool.utils.base_processor(document)
 
 
 async def reserve(db, file_ids):

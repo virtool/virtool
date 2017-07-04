@@ -76,7 +76,9 @@ async def update_settings(req):
 
     user_id = req["session"].user_id
 
-    settings = (await db.users.find_one({"_id": user_id}))["settings"]
+    document = await db.users.find_one(user_id, ["settings"])
+
+    settings = document["settings"]
 
     settings.update(data)
 

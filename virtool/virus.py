@@ -2,8 +2,8 @@ import re
 import logging
 from copy import deepcopy
 
-import virtool.virus_history
 import virtool.utils
+import virtool.virus_history
 
 
 logger = logging.getLogger(__name__)
@@ -33,20 +33,6 @@ SEQUENCE_PROJECTION = [
 ]
 
 
-def processor(document):
-    """
-    The base processor for virus documents. Renames ``_id`` field to ``id``.
-    
-    :param document: the document to process
-    :type document: dict
-    
-    :return: the processed document
-    :rtype: dict
-         
-    """
-    return virtool.utils.base_processor(document)
-
-
 async def dispatch_version_only(req, new):
     """
     Dispatch a virus update. Should be called when the document itself is not being modified.
@@ -60,25 +46,8 @@ async def dispatch_version_only(req, new):
     await req.app["dispatcher"].dispatch(
         "viruses",
         "update",
-        processor({key: new[key] for key in LIST_PROJECTION})
+        virtool.utils.base_processor({key: new[key] for key in LIST_PROJECTION})
     )
-
-
-def sequence_processor(document):
-    """
-    Process a sequence document to send it to a client.
-    
-    :param document: the document to process
-    :type document: dict
-    
-    :return: the processed document
-    :rtype: dict
-     
-    """
-    document = dict(document)
-    document["accession"] = document.pop("_id")
-
-    return document
 
 
 async def join(db, virus_id, document=None):
@@ -118,7 +87,7 @@ async def get_complete(db, virus_id):
     if not joined:
         return None
 
-    joined = processor(joined)
+    joined = virtool.utils.base_processor(joined)
 
     joined.pop("lower_name")
 

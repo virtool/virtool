@@ -7,8 +7,10 @@ import multiprocessing
 import subprocess
 import setproctitle
 
+import virtool.utils
 
-PROJECTION = [
+
+LIST_PROJECTION = [
     "_id",
     "task",
     "status",
@@ -29,9 +31,7 @@ def processor(document):
     :rtype: dict
     
     """
-    document = dict(document)
-    document["job_id"] = document.pop("_id")
-    return document
+    return virtool.utils.base_processor(document)
 
 
 def dispatch_processor(document):
@@ -57,7 +57,7 @@ def dispatch_processor(document):
     document.update({
         "state": last_update["state"],
         "stage": last_update["stage"],
-        "added": status[0]["timestamp"],
+        "created_at": status[0]["timestamp"],
         "progress": status[-1]["progress"]
     })
 

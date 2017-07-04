@@ -86,7 +86,7 @@ async def find(req):
     if page > 1:
         cursor.skip((page - 1) * 15)
 
-    documents = [virtool.virus.processor(document) for document in await cursor.to_list(length=15)]
+    documents = [virtool.utils.base_processor(d) for d in await cursor.to_list(length=15)]
 
     return json_response({
         "documents": documents,

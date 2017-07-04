@@ -38,12 +38,6 @@ PROJECTION = [
 ]
 
 
-def processor(document):
-    document = dict(document)
-    document["sample_id"] = document.pop("_id")
-    return document
-
-
 def calculate_algorithm_tags(analyses):
     update = {
         "pathoscope": False,

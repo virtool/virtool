@@ -1,12 +1,9 @@
+import virtool.utils
 from virtool.user_permissions import PERMISSIONS
 
 
-projection = ["_id", "permissions"]
-
-
 def processor(document):
-    document["group_id"] = document.pop("_id")
-    return document
+    return virtool.utils.base_processor(document)
 
 
 def merge_group_permissions(groups):

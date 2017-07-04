@@ -33,17 +33,19 @@ PROJECTION = LIST_PROJECTION + [
 
 
 def processor(document):
-    """
-    Process a history change document for transmission to a client.
-    
-    :param document: the document to process
-    :type document: dict
-    
-    :return: the processed document
-    :rtype: dict
-    
-    """
-    document["change_id"] = document.pop("_id")
+    document = virtool.utils.base_processor(document)
+
+    document["virus"] = {
+        "id": document.pop("virus_id"),
+        "version": document.pop("virus_version"),
+        "name": document.pop("virus_name")
+    }
+
+    document["index"] = {
+        "id": document.pop("index_id"),
+        "version": document.pop("index_version")
+    }
+
     return document
 
 
