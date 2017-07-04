@@ -810,20 +810,26 @@ class TestInsertFromImport:
             "modified": False,
             "name": "Prunus virus F",
             "version": 0,
-            "virus_id": "6116cba1"
+            "id": "6116cba1"
         }
 
         assert change == {
-            "change_id": "6116cba1.0",
+            "id": "6116cba1.0",
             "description": ("Created virus ", "Prunus virus F", "6116cba1"),
-            "index_id": "unbuilt",
-            "index_version": "unbuilt",
+            "index": {
+                "id": "unbuilt",
+                "version": "unbuilt"
+            },
             "method_name": "create",
             "timestamp": static_time,
-            "user_id": "test",
-            "virus_id": "6116cba1",
-            "virus_name": "Prunus virus F",
-            "virus_version": 0
+            "user": {
+                "id": "test"
+            },
+            "virus": {
+                "id": "6116cba1",
+                "name": "Prunus virus F",
+                "version": 0
+            }
         }
 
 
@@ -842,14 +848,20 @@ class TestDeleteForImport:
         assert virus_id == test_virus["_id"]
 
         assert change == {
-            "change_id": "6116cba1.removed",
+            "id": "6116cba1.removed",
             "description": ("Removed virus", "Prunus virus F", "6116cba1"),
-            "index_id": "unbuilt",
-            "index_version": "unbuilt",
+            "index": {
+                "id": "unbuilt",
+                "version": "unbuilt"
+            },
             "method_name": "remove",
             "timestamp": static_time,
-            "user_id": "test",
-            "virus_id": "6116cba1",
-            "virus_name": "Prunus virus F",
-            "virus_version": "removed"
+            "user": {
+                "id": "test"
+            },
+            "virus": {
+                "id": "6116cba1",
+                "name": "Prunus virus F",
+                "version": "removed"
+            }
         }
