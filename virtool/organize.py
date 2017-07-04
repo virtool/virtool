@@ -87,19 +87,19 @@ def organize_analyses(database):
         "$rename": {
             "comments": "name"
         }
-    }, multi=True)
+    })
 
     database.analyses.update_many({"discovery": {"$exists": True}}, {
         "$unset": {
             "discovery": ""
         }
-    }, multi=True)
+    })
 
     database.analyses.update_many({"_version": {"$exists": False}}, {
         "$set": {
             "_version": 0
         }
-    }, multi=True)
+    })
 
     database.analyses.update_many({"sample": {"$exists": True}}, {
         "$rename": {
@@ -111,7 +111,7 @@ def organize_analyses(database):
         "$set": {
             "algorithm": "pathoscope_bowtie"
         }
-    }, multi=True)
+    })
 
     database.analyses.delete_many({"ready": False})
 
@@ -159,7 +159,7 @@ def organize_viruses(database):
             "abbrevation": "",
             "new": ""
         }
-    }, multi=True)
+    })
 
     indexes_path = os.path.join(data_path, "reference/viruses/")
 
@@ -260,7 +260,7 @@ def organize_hosts(database):
         "$set": {
             "job": None
         }
-    }, multi=True)
+    })
 
     for host in database.hosts.find():
         if "ready" not in host:
@@ -287,12 +287,12 @@ def organize_users(database):
         {"primary_group": None}
     ]}, {
         "$set": {"primary_group": ""}
-    }, multi=True)
+    })
 
     # Assign default user settings to users without defined settings.
     database.users.update_many({"settings": {}}, {
         "$set": {"settings": {"show_ids": False, "show_versions": False}}
-    }, multi=True)
+    })
 
     # Make sure permissions are correct for all users.
     for user in database.users.find():
@@ -305,6 +305,7 @@ def organize_users(database):
                 "permissions": merge_group_permissions(list(groups))
             }
         })
+
 
 def organize_groups(database):
 
@@ -334,13 +335,12 @@ def organize_jobs(database):
     })
 
 
-def organize_samples(database):
-    for sample in database.samples.find({}):
-        analyses = list(database.analyses.find({"sample_id": sample["_id"]}, ["ready", "algorithm"]))
+def organize_samples(db):
+    for sample in db.samples.find({}):
+        analyses = list(db.analyses.find({"sample_id": sample["_id"]}, ["ready", "algorithm"]))
 
-        database.samples.update_one({"_id": sample["_id"]}, {
-            "$set": calculate_algorithm_tags(analyses),
-            "$inc": {"_version": 1}
+        db.samples.update_one({"_id": sample["_id"]}, {
+            "$set": calculate_algorithm_tags(analyses)
         })
 
 
@@ -349,4 +349,4 @@ def organize_files(database):
         "$set": {
             "reserved": False
         }
-    }, multi=True)
+    })
