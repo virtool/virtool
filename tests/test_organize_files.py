@@ -30,4 +30,4 @@ class TestOrganizeFiles:
 
         organize_files(test_db)
 
-        assert [document["reserved"] for document in test_db.files.find()] == [True, True, False, False]
+        assert [d["reserved"] for d in test_db.files.find()] == [True, True, False, False]
