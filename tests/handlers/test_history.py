@@ -16,13 +16,63 @@ class TestFind:
 
         assert resp.status == 200
 
-        expected = [dict(d, timestamp="2017-10-06T20:00:00Z", change_id=d.pop("_id")) for d in test_changes]
-
-        for d in expected:
-            d.pop("diff")
-
-        assert await resp.json() == expected
-
+        assert await resp.json() == [
+            {
+                "description": ["Edited virus", "Prunus virus E"],
+                "id": "6116cba1.1",
+                "index": {
+                    "id": "unbuilt",
+                    "version": "unbuilt"
+                },
+                "method_name": "edit",
+                "timestamp": "2017-10-06T20:00:00Z",
+                "user": {
+                    "id": "test"
+                },
+                "virus": {
+                    "id": "6116cba1",
+                    "name": "Prunus virus F",
+                    "version": 1
+                }
+            },
+            {
+                "description": ["Edited virus", "Prunus virus E"],
+                "id": "foobar.1",
+                "index": {
+                    "id": "unbuilt",
+                    "version": "unbuilt"
+                },
+                "method_name": "edit",
+                "timestamp": "2017-10-06T20:00:00Z",
+                "user": {
+                    "id": "test"
+                },
+                "virus": {
+                    "id": "6116cba1",
+                    "name": "Prunus virus F",
+                    "version": 1
+                }
+            },
+            {
+                "description": ["Edited virus", "Prunus virus E"],
+                "id": "foobar.2",
+                "index": {
+                    "id": "unbuilt",
+                    "version": "unbuilt"
+                },
+                "method_name": "edit",
+                "timestamp": "2017-10-06T20:00:00Z",
+                "user": {
+                    "id": "test"
+                },
+                "virus": {
+                    "id": "6116cba1",
+                    "name": "Prunus virus F",
+                    "version": 1
+                }
+            }
+        ]
+        
 
 class TestGet:
 
@@ -37,9 +87,29 @@ class TestGet:
 
         assert resp.status == 200
 
-        expected = dict(test_changes[0], change_id=test_changes[0].pop("_id"), timestamp="2017-10-06T20:00:00Z")
-
-        assert await resp.json() == expected
+        assert await resp.json() == {
+            "description": ["Edited virus", "Prunus virus E"],
+            "diff": [
+                ["change", "abbreviation", ["PVF", ""]],
+                ["change", "name", ["Prunus virus F", "Prunus virus E"]],
+                ["change", "version", [0, 1]]
+            ],
+            "id": "6116cba1.1",
+            "index": {
+                "id": "unbuilt",
+                "version": "unbuilt"
+            },
+            "method_name": "edit",
+            "timestamp": "2017-10-06T20:00:00Z",
+            "user": {
+                "id": "test"
+            },
+            "virus": {
+                "id": "6116cba1",
+                "name": "Prunus virus F",
+                "version": 1
+            }
+        }
 
     async def test_not_found(self, do_get):
         """
