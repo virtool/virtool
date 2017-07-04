@@ -155,21 +155,22 @@ async def on_shutdown(app):
         await conn.close()
         app["dispatcher"].remove_connection(conn)
 
-    job_manager = app["job_manager"]
+    if "job_manager" in app:
+        job_manager = app["job_manager"]
 
-    for job_id in job_manager:
-        await job_manager.cancel(job_id)
+        for job_id in job_manager:
+            await job_manager.cancel(job_id)
 
-    while job_manager:
-        asyncio.sleep(0.1, loop=app.loop)
+        while job_manager:
+            asyncio.sleep(0.1, loop=app.loop)
 
-    await job_manager.close()
+        await job_manager.close()
 
-    if app["file_manager"]:
+    if "file_manager" in app:
         await app["file_manager"].close()
 
 
-def create_app(loop, db_name=None):
+def create_app(loop, db_name=None, disable_job_manager=False, disable_file_manager=False):
     """
     Creates the Virtool application.
     
@@ -192,8 +193,12 @@ def create_app(loop, db_name=None):
     app.on_startup.append(init_dispatcher)
     app.on_startup.append(init_db)
     app.on_startup.append(init_resources)
-    app.on_startup.append(init_job_manager)
-    app.on_startup.append(init_file_manager)
+
+    if not disable_job_manager:
+        app.on_startup.append(init_job_manager)
+
+    if not disable_file_manager:
+        app.on_startup.append(init_file_manager)
 
     app.on_shutdown.append(on_shutdown)
 
