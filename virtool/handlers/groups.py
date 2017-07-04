@@ -2,6 +2,7 @@ import logging
 import pymongo.errors
 from pymongo import ReturnDocument
 
+import virtool.utils
 import virtool.user_groups
 from virtool.user_permissions import PERMISSIONS
 from virtool.handlers.utils import json_response, bad_request, not_found, protected, validation
@@ -17,7 +18,7 @@ async def find(req):
     """
     documents = await req.app["db"].groups.find({}).to_list(None)
 
-    return json_response([virtool.user_groups.processor(d) for d in documents])
+    return json_response([virtool.utils.base_processor(d) for d in documents])
 
 
 @protected("manage_users")
@@ -44,7 +45,7 @@ async def create(req):
     except pymongo.errors.DuplicateKeyError:
         return json_response({"message": "Group already exists"}, status=409)
 
-    return json_response(virtool.user_groups.processor(document))
+    return json_response(virtool.utils.base_processor(document))
 
 
 @protected("manage_users")
@@ -56,7 +57,7 @@ async def get(req):
     document = await req.app["db"].groups.find_one(req.match_info["group_id"])
 
     if document:
-        return json_response(virtool.user_groups.processor(document))
+        return json_response(virtool.utils.base_processor(document))
 
     return not_found()
 
@@ -86,9 +87,7 @@ async def update_permissions(req):
         }
     }, return_document=ReturnDocument.AFTER)
 
-    document["group_id"] = document.pop("_id")
-
-    return json_response(document)
+    return json_response(virtool.utils.base_processor(document))
 
 
 @protected("manage_users")

@@ -21,11 +21,11 @@ class TestFind:
 
         assert await resp.json() == [
             {
-                "group_id": "test",
+                "id": "test",
                 "permissions": all_permissions
             },
             {
-                "group_id": "limited",
+                "id": "limited",
                 "permissions": no_permissions
             }
         ]
@@ -45,7 +45,7 @@ class TestCreate:
         assert resp.status == 200
 
         assert await resp.json() == {
-            "group_id": "test",
+            "id": "test",
             "permissions": no_permissions
         }
 
@@ -85,6 +85,7 @@ class TestCreate:
         assert resp.status == 422
 
         assert await resp.json() == {
+            "id": "invalid_input",
             "message": "Invalid input",
             "errors": {
                 "test": ["unknown field"],
@@ -100,6 +101,7 @@ class TestCreate:
         assert resp.status == 422
 
         assert await resp.json() == {
+            "id": "invalid_input",
             "message": "Invalid input",
             "errors": {
                 "group_id": ["must be of string type"]
@@ -122,7 +124,7 @@ class TestGet:
         resp = await do_get("/api/groups/test", authorize=True, permissions=["manage_users"])
 
         assert await resp.json() == {
-            "group_id": "test",
+            "id": "test",
             "permissions": all_permissions
         }
 
@@ -161,7 +163,7 @@ class TestUpdatePermissions:
         no_permissions["modify_virus"] = True
 
         assert await resp.json() == {
-            "group_id": "test",
+            "id": "test",
             "permissions": no_permissions
         }
 
@@ -187,6 +189,7 @@ class TestUpdatePermissions:
         assert resp.status == 422
 
         assert await resp.json() == {
+            "id": "invalid_input",
             "message": "Invalid input",
             "errors": {
                 "foo_bar": ["unknown field"]
