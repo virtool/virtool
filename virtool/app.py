@@ -166,8 +166,10 @@ async def on_shutdown(app):
 
         await job_manager.close()
 
-    if "file_manager" in app:
-        await app["file_manager"].close()
+    file_manager = app.get("file_manager", None)
+
+    if file_manager is not None:
+        await file_manager.close()
 
 
 def create_app(loop, db_name=None, disable_job_manager=False, disable_file_manager=False):
