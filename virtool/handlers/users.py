@@ -14,9 +14,9 @@ async def find(req):
     Get a list of all user documents in the database.
      
     """
-    users = await req.app["db"].users.find({}, virtool.user.projection).to_list(length=None)
+    users = await req.app["db"].users.find({}, virtool.user.PROJECTION).to_list(length=None)
 
-    return json_response([virtool.user.processor(user) for user in users])
+    return json_response([virtool.utils.base_processor(user) for user in users])
 
 
 @protected("manage_users")
@@ -25,12 +25,12 @@ async def get(req):
     Get a near-complete user document. Password data are removed.
      
     """
-    document = await req.app["db"].users.find_one(req.match_info["user_id"], virtool.user.projection)
+    document = await req.app["db"].users.find_one(req.match_info["user_id"], virtool.user.PROJECTION)
 
     if not document:
         return not_found()
 
-    return json_response(virtool.user.processor(document))
+    return json_response(virtool.utils.base_processor(document))
 
 
 @protected("manage_users")
@@ -79,7 +79,7 @@ async def create(req):
 
     await db.users.insert(document)
     
-    return json_response(virtool.user.processor({key: document[key] for key in virtool.user.projection}))
+    return json_response(virtool.utils.base_processor({key: document[key] for key in virtool.user.PROJECTION}))
 
 
 @protected("manage_users")
@@ -108,9 +108,9 @@ async def set_password(req):
             "last_password_change": virtool.utils.timestamp(),
             "invalidate_sessions": True
         }
-    }, return_document=ReturnDocument.AFTER, projection=["force_reset", "last_password_change"])
+    }, return_document=ReturnDocument.AFTER, projection=virtool.user.PROJECTION)
 
-    return json_response(virtool.user.processor(document))
+    return json_response(virtool.utils.base_processor(document))
 
 
 @protected("manage_users")
@@ -138,11 +138,9 @@ async def set_force_reset(req):
             "force_reset": data["force_reset"],
             "invalidate_sessions": True
         }
-    }, return_document=ReturnDocument.AFTER, projection=["force_reset"])
+    }, return_document=ReturnDocument.AFTER, projection=virtool.user.PROJECTION)
 
-    document["user_id"] = document.pop("_id")
-
-    return json_response(document)
+    return json_response(virtool.utils.base_processor(document))
 
 
 @protected("manage_users")
@@ -176,9 +174,9 @@ async def set_primary_group(req):
         "$set": {
             "primary_group": data["primary_group"]
         }
-    }, return_document=ReturnDocument.AFTER, projection=["primary_group"])
+    }, return_document=ReturnDocument.AFTER, projection=virtool.user.PROJECTION)
 
-    return json_response(virtool.user.processor(document))
+    return json_response(virtool.utils.base_processor(document))
 
 
 @protected("manage_users")
@@ -274,9 +272,9 @@ async def remove(req):
     if user_id == req["session"].user_id:
         return bad_request("Cannot remove own account")
 
-    result = await req.app["db"].users.delete_one({"_id": user_id})
+    delete_result = await req.app["db"].users.delete_one({"_id": user_id})
 
-    if result["n"] == 0:
+    if delete_result.deleted_count == 0:
         return not_found("User does not exist")
 
     return json_response({"removed": user_id})
