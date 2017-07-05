@@ -57,9 +57,22 @@ async def organize_samples(db):
 
 
 async def organize_analyses(db):
+    """
+    Bring analysis documents up-to-date by doing the following:
 
-    # Make sure all NuVs analysis records reference HMMs in the database rather than storing the HMM data
-    # themselves. Only do this if HMM records are defined in the database.
+        - unset many deprecated fields
+        - make sure all NuVs analysis records reference HMMs in the database rather than storing the HMM data themselves
+        - rename ``timestamp`` field to ``created_at``
+        - use new ``user`` subdocument structure
+        - use ``sample`` subdocument structure instead of flat ``sample_id`` field
+        - set ``algorithm`` field to ``pathoscope_bowtie`` if the field is unset
+        - delete any analyses with the ``ready`` field set to ``False``
+
+    """
+    await virtool.organize_utils.unset_version_field(db.analyses)
+    await virtool.organize_utils.update_user_field(db.analyses)
+
+    # Only do this if HMM records are defined in the database.
     if await db.hmm.count() > 0:
         async for analysis in db.analyses.find({"algorithm": "nuvs"}):
             # If the definition key is defined, the record is storing the information for each HMM and must be
@@ -136,6 +149,19 @@ async def organize_viruses(db):
         }
     })
 
+
+def organize_sequences(database):
+    database.sequences.update_many({}, {
+        "$unset": {
+            "neighbours": "",
+            "proteins": "",
+            "molecule_type": "",
+            "molecular_structure": ""
+        }
+    })
+
+
+async def organize_indexes(db):
     indexes_path = os.path.join(data_path, "reference/viruses/")
 
     response = {
@@ -170,68 +196,13 @@ async def organize_viruses(db):
         # Get the FASTA headers of all the sequences used to build the reference.
         ref_names = get_bowtie2_index_names(os.path.join(active_index_path, "reference"))
 
-    sequence_ids = list()
 
-    async for virus in db.viruses.find():
-        default_isolate = virtool.virus.get_default_isolate(virus)
+async def organize_history(db):
+    """
+    For now, just rename the ``timestamp`` field to ``created_at``.
 
-        sequences = await db.sequences.find({"isolate_id": default_isolate["isolate_id"]}).to_list(None)
-
-        patched_and_joined = virtool.virus.merge_virus(virus, sequences)
-
-        if virus["_version"] > 0:
-            # Get all history entries associated with the virus entry.
-            history = list(db.history.find({"entry_id": virus["_id"]}).sort("entry_version", -1))
-
-            # If this tests true, the virus has a greater version number than can be accounted for by the history. This
-            # is not a fatal problem.
-            if virus["_version"] > len(history):
-                response["missing_history"].append(virus["_id"])
-
-            # If the virus entry version is higher than the last_indexed_version, check that the unbuilt changes are
-            # stored in history. Also patch the virus back to its last_index_version state and store in patched_viruses.
-            if virus["last_indexed_version"] != virus["_version"]:
-                # The number of virus entry versions between the current version and the last_indexed_version.
-                required_unbuilt_change_count = int(virus["_version"] - virus["last_indexed_version"])
-
-                # Count the number of history entries containing unbuilt changes for this virus.
-                recent_history = [doc for doc in history if doc["index_version"] == "unbuilt"]
-
-                # The two previously assigned variables must be equal. Otherwise the virus_id will be added to the
-                # missing_recent_history list in the response dict returned by this function.
-                if required_unbuilt_change_count != len(recent_history):
-                    response["missing_recent_history"].append(virus["_id"])
-
-                _, patched_and_joined, _ = virus(patched_and_joined, recent_history)
-
-        sequence_ids += virtool.virus.extract_sequence_ids(patched_and_joined)
-
-    sequence_id_set = set(sequence_ids)
-
-    response["duplicate_sequence_ids"] = len(sequence_id_set) < len(sequence_ids)
-
-    if ref_names:
-        response["mismatched_index"] = sequence_id_set != set(ref_names)
-
-    response["failed"] = response["missing_index"] or response["mismatched_index"] or response[
-        "missing_recent_history"]
-
-    return response
-
-
-def organize_sequences(database):
-    database.sequences.update_many({}, {
-        "$unset": {
-            "neighbours": "",
-            "proteins": "",
-            "molecule_type": "",
-            "molecular_structure": ""
-        }
-    })
-
-
-def organize_history(db):
-    db.history.update_many({}, {
+    """
+    await db.history.update_many({}, {
         "$rename": {
             "timestamp": "created_at"
         }
