@@ -1,4 +1,5 @@
 import pytest
+from operator import itemgetter
 
 from virtool.organize import organize_samples
 
@@ -41,10 +42,10 @@ class TestAddedCreatedAt:
 
         print(await test_motor.samples.find().to_list(None))
 
-        assert await test_motor.samples.find().to_list(None) == [
+        assert await test_motor.samples.find(sort=[("_id", 1)]).to_list(None) == sorted([
             {"pathoscope": False, "created_at": "now", "nuvs": False, "_id": 1},
             {"pathoscope": False, "created_at": "then", "nuvs": False, "_id": 2}
-        ]
+        ], key=itemgetter("_id"))
 
 
 

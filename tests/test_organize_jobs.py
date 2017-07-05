@@ -1,3 +1,5 @@
+from operator import itemgetter
+
 import virtool.organize
 
 
@@ -20,7 +22,7 @@ class TestOrganizeJobs:
 
         await virtool.organize.organize_jobs(test_motor)
 
-        assert await test_motor.jobs.find().to_list(None) == [
+        assert await test_motor.jobs.find(sort=[("_id", 1)]).to_list(None) == sorted([
             {
                 "_id": 1
             },
@@ -30,4 +32,4 @@ class TestOrganizeJobs:
             {
                 "_id": 3
             }
-        ]
+        ], key=itemgetter("_id"))
