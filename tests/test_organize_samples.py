@@ -1,4 +1,5 @@
 import pytest
+from operator import itemgetter
 
 from virtool.organize import organize_samples
 
@@ -14,69 +15,86 @@ def samples():
 @pytest.fixture
 def pathoscope_analyses():
     return [
-        {"_id": 1, "ready": True, "sample_id": 1, "algorithm": "pathoscope_bowtie"},
-        {"_id": 2, "ready": False, "sample_id": 1, "algorithm": "pathoscope_bowtie"},
-        {"_id": 3, "ready": False, "sample_id": 2, "algorithm": "pathoscope_bowtie"}
+        {"_id": 1, "ready": True, "sample": {"id": 1}, "algorithm": "pathoscope_bowtie"},
+        {"_id": 2, "ready": False, "sample": {"id": 1}, "algorithm": "pathoscope_bowtie"},
+        {"_id": 3, "ready": False, "sample": {"id": 2}, "algorithm": "pathoscope_bowtie"}
     ]
 
 
 @pytest.fixture
 def nuvs_analyses():
     return [
-        {"_id": 1, "ready": True, "sample_id": 1, "algorithm": "nuvs"},
-        {"_id": 2, "ready": False, "sample_id": 1, "algorithm": "nuvs"},
-        {"_id": 3, "ready": False, "sample_id": 2, "algorithm": "nuvs"}
+        {"_id": 1, "ready": True, "sample": {"id": 1}, "algorithm": "nuvs"},
+        {"_id": 2, "ready": False, "sample": {"id": 1}, "algorithm": "nuvs"},
+        {"_id": 3, "ready": False, "sample": {"id": 2}, "algorithm": "nuvs"}
     ]
+
+
+class TestAddedCreatedAt:
+
+    async def test(self, test_motor):
+        await test_motor.samples.insert_many([
+            {"_id": 1, "added": "now"},
+            {"_id": 2, "created_at": "then"}
+        ])
+
+        await organize_samples(test_motor)
+
+        print(await test_motor.samples.find().to_list(None))
+
+        assert await test_motor.samples.find(sort=[("_id", 1)]).to_list(None) == sorted([
+            {"pathoscope": False, "created_at": "now", "nuvs": False, "_id": 1},
+            {"pathoscope": False, "created_at": "then", "nuvs": False, "_id": 2}
+        ], key=itemgetter("_id"))
+
 
 
 class TestBowtieTags:
 
-    def test_no_analyses(self, test_db, samples, pathoscope_analyses):
-        test_db.samples.insert_many(samples)
+    async def test_no_analyses(self, test_motor, samples, pathoscope_analyses):
+        await test_motor.samples.insert_many(samples)
 
-        pathoscope_analyses[2]["sample_id"] = 1
+        pathoscope_analyses[2]["sample"]["id"] = 1
 
-        test_db.analyses.insert_many(pathoscope_analyses)
+        await test_motor.analyses.insert_many(pathoscope_analyses)
 
-        organize_samples(test_db)
+        await organize_samples(test_motor)
 
-        sample_two = test_db.samples.find_one(2)
+        assert (await test_motor.samples.find_one(2))["pathoscope"] is False
 
-        assert sample_two["pathoscope"] is False
+    async def test_bowtie_in_progress(self, test_motor, samples, pathoscope_analyses):
+        await test_motor.samples.insert_many(samples)
 
-    def test_bowtie_in_progress(self, test_db, samples, pathoscope_analyses):
-        test_db.samples.insert_many(samples)
+        await test_motor.analyses.insert_many(pathoscope_analyses)
 
-        test_db.analyses.insert_many(pathoscope_analyses)
+        await organize_samples(test_motor)
 
-        organize_samples(test_db)
+        assert (await test_motor.samples.find_one(2))["pathoscope"] == "ip"
 
-        assert test_db.samples.find_one(2)["pathoscope"] == "ip"
-
-    def test_bowtie_multi_in_progress(self, test_db, samples, pathoscope_analyses):
-        test_db.samples.insert_many(samples)
+    async def test_bowtie_multi_in_progress(self, test_motor, samples, pathoscope_analyses):
+        await test_motor.samples.insert_many(samples)
 
         pathoscope_analyses[1]["sample_id"] = 2
 
-        test_db.analyses.insert_many(pathoscope_analyses)
+        await test_motor.analyses.insert_many(pathoscope_analyses)
 
-        organize_samples(test_db)
+        await organize_samples(test_motor)
 
-        assert test_db.samples.find_one(2)["pathoscope"] == "ip"
+        assert (await test_motor.samples.find_one(2))["pathoscope"] == "ip"
 
-    def test_bowtie_one_ready(self, test_db, samples, pathoscope_analyses):
-        test_db.samples.insert_many(samples)
+    async def test_bowtie_one_ready(self, test_motor, samples, pathoscope_analyses):
+        await test_motor.samples.insert_many(samples)
 
         pathoscope_analyses[2]["ready"] = True
 
-        test_db.analyses.insert_many(pathoscope_analyses)
+        await test_motor.analyses.insert_many(pathoscope_analyses)
 
-        organize_samples(test_db)
+        await organize_samples(test_motor)
 
-        assert test_db.samples.find_one(2)["pathoscope"] is True
+        assert (await test_motor.samples.find_one(2))["pathoscope"] is True
 
-    def test_bowtie_multi_ready(self, test_db, samples, pathoscope_analyses):
-        test_db.samples.insert_many(samples)
+    async def test_bowtie_multi_ready(self, test_motor, samples, pathoscope_analyses):
+        await test_motor.samples.insert_many(samples)
 
         pathoscope_analyses[2].update({
             "ready": True,
@@ -85,94 +103,94 @@ class TestBowtieTags:
 
         pathoscope_analyses[2]["ready"] = True
 
-        test_db.analyses.insert_many(pathoscope_analyses)
+        await test_motor.analyses.insert_many(pathoscope_analyses)
 
-        organize_samples(test_db)
+        await organize_samples(test_motor)
 
-        assert test_db.samples.find_one(2)["pathoscope"] is True
+        assert (await test_motor.samples.find_one(2))["pathoscope"] is True
 
-    def test_bowtie_mixed_ready(self, test_db, samples, pathoscope_analyses):
-        test_db.samples.insert_many(samples)
+    async def test_bowtie_mixed_ready(self, test_motor, samples, pathoscope_analyses):
+        await test_motor.samples.insert_many(samples)
 
         pathoscope_analyses[2]["ready"] = True
 
-        test_db.analyses.insert_many(pathoscope_analyses)
+        await test_motor.analyses.insert_many(pathoscope_analyses)
 
-        organize_samples(test_db)
+        await organize_samples(test_motor)
 
-        assert test_db.samples.find_one(2)["pathoscope"] is True
+        assert (await test_motor.samples.find_one(2))["pathoscope"] is True
 
-    def test_both_ready(self, test_db, samples, pathoscope_analyses):
-        test_db.samples.insert_many(samples)
+    async def test_both_ready(self, test_motor, samples):
+        await test_motor.samples.insert_many(samples)
 
-        test_db.analyses.insert_many([
-            {"_id": 1, "ready": True, "sample_id": 1, "algorithm": "pathoscope_bowtie"},
-            {"_id": 3, "ready": True, "sample_id": 2, "algorithm": "pathoscope_bowtie"}
+        await test_motor.analyses.insert_many([
+            {"_id": 1, "ready": True, "sample": {"id": 1}, "algorithm": "pathoscope_bowtie"},
+            {"_id": 3, "ready": True, "sample": {"id": 2}, "algorithm": "pathoscope_bowtie"}
         ])
 
-        organize_samples(test_db)
+        await organize_samples(test_motor)
 
-        assert test_db.samples.find_one(2)["pathoscope"] is True
+        assert (await test_motor.samples.find_one(2))["pathoscope"] is True
 
 
 class TestNuVsTags:
 
-    def test_no_analyses(self, test_db, samples, nuvs_analyses):
-        test_db.samples.insert_many(samples)
+    async def test_no_analyses(self, test_motor, samples, nuvs_analyses):
+        await test_motor.samples.insert_many(samples)
 
-        nuvs_analyses[2]["sample_id"] = 1
+        nuvs_analyses[2]["sample"]["id"] = 1
 
-        test_db.analyses.insert_many(nuvs_analyses)
+        await test_motor.analyses.insert_many(nuvs_analyses)
 
-        organize_samples(test_db)
+        await organize_samples(test_motor)
 
-        assert test_db.samples.find_one(2)["nuvs"] is False
+        assert (await test_motor.samples.find_one(2))["nuvs"] is False
 
-    def test_one_in_progress(self, test_db, samples, nuvs_analyses):
-        test_db.samples.insert_many(samples)
+    async def test_one_in_progress(self, test_motor, samples, nuvs_analyses):
+        await test_motor.samples.insert_many(samples)
 
-        test_db.analyses.insert_many(nuvs_analyses)
+        await test_motor.analyses.insert_many(nuvs_analyses)
 
-        organize_samples(test_db)
+        await organize_samples(test_motor)
 
-        assert test_db.samples.find_one(2)["nuvs"] == "ip"
+        assert (await test_motor.samples.find_one(2))["nuvs"] == "ip"
 
-    def test_multi_in_progress(self, test_db, samples, nuvs_analyses):
-        test_db.samples.insert_many(samples)
+    async def test_multi_in_progress(self, test_motor, samples, nuvs_analyses):
+        await test_motor.samples.insert_many(samples)
 
-        nuvs_analyses[1]["sample_id"] = 2
+        nuvs_analyses[1]["sample"]["id"] = 2
 
-        test_db.analyses.insert_many(nuvs_analyses)
+        await test_motor.analyses.insert_many(nuvs_analyses)
 
-        organize_samples(test_db)
+        await organize_samples(test_motor)
 
-        assert test_db.samples.find_one(2)["nuvs"] == "ip"
+        assert (await test_motor.samples.find_one(2))["nuvs"] == "ip"
 
-    def test_one_ready(self, test_db, samples, nuvs_analyses):
-        test_db.samples.insert_many(samples)
+    async def test_one_ready(self, test_motor, samples, nuvs_analyses):
+        await test_motor.samples.insert_many(samples)
 
         nuvs_analyses[1].update({
-            "sample_id": 2,
+            "sample": {"id": 2},
             "ready": True
         })
 
-        test_db.analyses.insert_many(nuvs_analyses)
+        await test_motor.analyses.insert_many(nuvs_analyses)
 
-        organize_samples(test_db)
+        await organize_samples(test_motor)
 
-        assert test_db.samples.find_one(2)["nuvs"] is True
+        assert (await test_motor.samples.find_one(2))["nuvs"] is True
 
-    def test_multi_ready(self, test_db, samples, nuvs_analyses):
-        test_db.samples.insert_many(samples)
+    async def test_multi_ready(self, test_motor, samples, nuvs_analyses):
+        await test_motor.samples.insert_many(samples)
 
         for i in [1, 2]:
             nuvs_analyses[i].update({
-                "sample_id": 2,
+                "sample": {"id": 2},
                 "ready": True
             })
 
-        test_db.analyses.insert_many(nuvs_analyses)
+        await test_motor.analyses.insert_many(nuvs_analyses)
 
-        organize_samples(test_db)
+        await organize_samples(test_motor)
 
-        assert test_db.samples.find_one(2)["nuvs"] is True
+        assert (await test_motor.samples.find_one(2))["nuvs"] is True

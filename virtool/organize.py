@@ -1,159 +1,147 @@
 import os
-import subprocess
 
+import virtool.virus
+import virtool.virus_index
+import virtool.sample
+import virtool.organize_utils
 from virtool.user_permissions import PERMISSIONS
 from virtool.user_groups import merge_group_permissions
-from virtool.virus import get_default_isolate
-from virtool.virus import merge_virus
-from virtool.sample import calculate_algorithm_tags
 
 
-async def rename_username_to_user_id(collection):
-    await collection.update_many({"username": {"$exists": ""}}, {
+async def organize_jobs(db):
+    """
+    Unset deprecated fields ``_version`` and ``archived``. Update document to use new ``user`` subdocument structure.
+
+    :param db: a Motor connection to the database to update
+    :type db: :class:`motor.motor_asyncio.AsyncIOMotorCollection`
+
+    """
+    await virtool.organize_utils.update_user_field(db.jobs)
+    await virtool.organize_utils.unset_version_field(db.jobs)
+
+    await db.jobs.update_many({}, {
+        "$unset": {
+            "archived": ""
+        }
+    })
+
+
+async def organize_samples(db):
+    """
+    Bring sample documents up-to-date by doing the following:
+
+        - rename ``added`` field to ``created_at``
+        - unset deprecated ``_version`` field
+        - update documents to use new ``user`` subdocument structure
+        - update algorithm tags to reflect status of associated analyses (ie. which ones are complete)
+
+    :param db: a Motor connection to the database to update
+    :type db: :class:`motor.motor_asyncio.AsyncIOMotorCollection`
+
+    """
+    await virtool.organize_utils.update_user_field(db.samples)
+    await virtool.organize_utils.unset_version_field(db.samples)
+
+    await db.samples.update_many({}, {
         "$rename": {
-            "username": "user_id"
+            "added": "created_at"
         }
     })
 
+    async for sample in db.samples.find({}, ["_id"]):
+        analyses = await db.analyses.find({"sample.id": sample["_id"]}, ["ready", "algorithm"]).to_list(None)
 
-async def unset_version_field(collection):
-    await collection.update_many({"_version": {"$exists": ""}}, {
-        "$unset": {
-            "_version": ""
-        }
-    })
-
-
-async def organize_subtraction(db):
-    collection_names = await db.collection_names()
-
-    if "hosts" in collection_names and "subtraction" not in collection_names:
-        # Get all documents from the hosts collection.
-        documents = await db.hosts.find().to_list(None)
-
-        for document in documents:
-            document["is_host"] = True
-
-        # Copy the documents to a new subtraction collection.
-        await db.subtraction.insert_many(documents)
-
-        # Remove the old hosts collection
-        await db.drop_collection("hosts")
-
-    await rename_username_to_user_id(db.hosts)
-    await unset_version_field(db.hosts)
-
-    await db.subtraction.update_many({"lengths": {"$exists": ""}}, {
-        "$unset": {
-            "lengths": ""
-        }
-    })
+        await db.samples.update_one({"_id": sample["_id"]}, {
+            "$set": virtool.sample.calculate_algorithm_tags(analyses)
+        })
 
 
-def organize_analyses(database):
+async def organize_analyses(db):
+    """
+    Bring analysis documents up-to-date by doing the following:
 
-    # Make sure all NuVs analysis records reference HMMs in the database rather than storing the HMM data
-    # themselves. Only do this if HMM records are defined in the database.
-    if database.hmm.count() > 0:
+        - unset many deprecated fields
+        - make sure all NuVs analysis records reference HMMs in the database rather than storing the HMM data themselves
+        - rename ``timestamp`` field to ``created_at``
+        - use new ``user`` subdocument structure
+        - use ``sample`` subdocument structure instead of flat ``sample_id`` field
+        - set ``algorithm`` field to ``pathoscope_bowtie`` if the field is unset
+        - delete any analyses with the ``ready`` field set to ``False``
 
-        for analysis in database.analyses.find({"algorithm": "nuvs"}):
+    """
+    await virtool.organize_utils.unset_version_field(db.analyses)
+    await virtool.organize_utils.update_user_field(db.analyses)
+
+    # Only do this if HMM records are defined in the database.
+    if await db.hmm.count() > 0:
+        async for analysis in db.analyses.find({"algorithm": "nuvs"}):
             # If the definition key is defined, the record is storing the information for each HMM and must be
             # updated.
             if "definition" in analysis["hmm"][0]:
-
                 hits = analysis["hmm"]
 
                 # Fix up the HMM hit entries for the analysis.
                 for hit in hits:
                     # Get the database id for the HMM the hit should be linked to.
                     cluster = int(hit["hit"].split("_")[1])
-                    hmm = database.hmm.find_one({"cluster": cluster}, {"_id": True})
+                    hmm = await db.hmm.find_one({"cluster": cluster}, {"_id": True})
 
                     # Get rid of the unnecessary fields.
-                    hit.pop("definition")
-                    hit.pop("families")
+                    del hit["definition"]
+                    del hit["families"]
 
-                    # Change the hit field rto the id for the HMM record instead of vFam_###.
+                    # Change the hit field to the id for the HMM record instead of vFam_###.
                     hit["hit"] = hmm["_id"]
 
                 # Commit the new hit entries to the database.
-                database.analyses.update_one({"_id": analysis["_id"]}, {
+                await db.analyses.update_one({"_id": analysis["_id"]}, {
                     "$set": {
                         "hmm": hits
                     }
                 })
 
-    database.analyses.update_many({"comments": {"$exists": True}}, {
-        "$rename": {
-            "comments": "name"
-        }
-    })
-
-    database.analyses.update_many({"discovery": {"$exists": True}}, {
+    # Unset or rename a bunch of fields.
+    await db.analyses.update_many({}, {
         "$unset": {
-            "discovery": ""
-        }
-    })
-
-    database.analyses.update_many({"_version": {"$exists": False}}, {
-        "$set": {
-            "_version": 0
-        }
-    })
-
-    database.analyses.update_many({"sample": {"$exists": True}}, {
+            "discovery": "",
+            "_version": "",
+            "name": "",
+            "comments": ""
+        },
         "$rename": {
-            "sample": "sample_id"
+            "timestamp": "created_at"
         }
     })
 
-    database.analyses.update_many({"algorithm": {"$exists": False}}, {
+    # Implement subdocument structure for ``sample`` field.
+    async for document in db.analyses.find({}, ["sample", "sample_id"]):
+        sample_id = document.get("sample_id", None) or document.get("sample", None)
+
+        if isinstance(sample_id, str):
+            await db.analyses.update_one({"_id": document["_id"]}, {
+                "$set": {
+                    "sample": {
+                        "id": sample_id
+                    }
+                },
+                "$unset": {
+                    "sample_id": ""
+                }
+            })
+
+    # If the algorithm field is unset, set it to ``pathoscope_bowtie``.
+    await db.analyses.update_many({"algorithm": {"$exists": False}}, {
         "$set": {
             "algorithm": "pathoscope_bowtie"
         }
     })
 
-    database.analyses.delete_many({"ready": False})
+    # Delete any unfinished analyses.
+    await db.analyses.delete_many({"ready": False})
 
 
-def get_bowtie2_index_names(index_path):
-    """
-    Get the headers of all the FASTA sequences used to build the Bowtie2 index in *index_path*.
-    *Requires Bowtie2 in path.*
-
-    :param index_path: the patch to the Bowtie2 index.
-    :return: list of FASTA headers.
-    """
-    try:
-        inspect = subprocess.check_output(["bowtie2-inspect", "-n", index_path], stderr=subprocess.DEVNULL)
-    except subprocess.CalledProcessError:
-        return None
-
-    inspect_list = str(inspect, "utf-8").split("\n")
-    inspect_list.remove("")
-
-    return inspect_list
-
-
-def extract_sequence_ids(joined_virus):
-    """
-    Get the ids of all sequences in a joined virus.
-
-    :param joined_virus: a joined virus comprising the virus document and its associated sequences.
-    :return: a list of sequence ids.
-
-    """
-    sequence_ids = list()
-
-    for isolate in joined_virus["isolates"]:
-        for sequence in isolate["sequences"]:
-            sequence_ids.append(sequence["_id"])
-
-    return sequence_ids
-
-
-def organize_viruses(database):
-    database.viruses.update_many({}, {
+async def organize_viruses(db):
+    await db.viruses.update_many({}, {
         "$unset": {
             "segments": "",
             "abbrevation": "",
@@ -161,6 +149,19 @@ def organize_viruses(database):
         }
     })
 
+
+def organize_sequences(database):
+    database.sequences.update_many({}, {
+        "$unset": {
+            "neighbours": "",
+            "proteins": "",
+            "molecule_type": "",
+            "molecular_structure": ""
+        }
+    })
+
+
+async def organize_indexes(db):
     indexes_path = os.path.join(data_path, "reference/viruses/")
 
     response = {
@@ -195,89 +196,83 @@ def organize_viruses(database):
         # Get the FASTA headers of all the sequences used to build the reference.
         ref_names = get_bowtie2_index_names(os.path.join(active_index_path, "reference"))
 
-    sequence_ids = list()
 
-    for virus in database.viruses.find({}):
-        default_isolate = get_default_isolate(virus)
+async def organize_history(db):
+    """
+    For now, just rename the ``timestamp`` field to ``created_at``.
 
-        sequences = list(database.sequences.find({"isolate_id": default_isolate["isolate_id"]}))
-
-        patched_and_joined = merge_virus(virus, sequences)
-
-        if virus["_version"] > 0:
-            # Get all history entries associated with the virus entry.
-            history = list(db.history.find({"entry_id": virus["_id"]}).sort("entry_version", -1))
-
-            # If this tests true, the virus has a greater version number than can be accounted for by the history. This
-            # is not a fatal problem.
-            if virus["_version"] > len(history):
-                response["missing_history"].append(virus["_id"])
-
-            # If the virus entry version is higher than the last_indexed_version, check that the unbuilt changes are
-            # stored in history. Also patch the virus back to its last_index_version state and store in patched_viruses.
-            if virus["last_indexed_version"] != virus["_version"]:
-                # The number of virus entry versions between the current version and the last_indexed_version.
-                required_unbuilt_change_count = int(virus["_version"] - virus["last_indexed_version"])
-
-                # Count the number of history entries containing unbuilt changes for this virus.
-                recent_history = [doc for doc in history if doc["index_version"] == "unbuilt"]
-
-                # The two previously assigned variables must be equal. Otherwise the virus_id will be added to the
-                # missing_recent_history list in the response dict returned by this function.
-                if required_unbuilt_change_count != len(recent_history):
-                    response["missing_recent_history"].append(virus["_id"])
-
-                _, patched_and_joined, _ = virus(patched_and_joined, recent_history)
-
-        sequence_ids += extract_sequence_ids(patched_and_joined)
-
-    sequence_id_set = set(sequence_ids)
-
-    response["duplicate_sequence_ids"] = len(sequence_id_set) < len(sequence_ids)
-
-    if ref_names:
-        response["mismatched_index"] = sequence_id_set != set(ref_names)
-
-    response["failed"] = response["missing_index"] or response["mismatched_index"] or response[
-        "missing_recent_history"]
-
-    return response
+    """
+    await db.history.update_many({}, {
+        "$rename": {
+            "timestamp": "created_at"
+        }
+    })
 
 
-def organize_sequences(database):
-    database.sequences.update_many({}, {
+async def organize_subtraction(db):
+    await virtool.organize_utils.update_user_field(db.hosts)
+    await virtool.organize_utils.unset_version_field(db.hosts)
+
+    collection_names = await db.collection_names()
+
+    if "hosts" in collection_names and "subtraction" not in collection_names:
+        # Get all documents from the hosts collection.
+        documents = await db.hosts.find().to_list(None)
+
+        for document in documents:
+            document["is_host"] = True
+
+        # Copy the documents to a new subtraction collection.
+        await db.subtraction.insert_many(documents)
+
+    # Remove the old hosts collection
+    await db.drop_collection("hosts")
+
+    await db.subtraction.update_many({}, {
         "$unset": {
-            "neighbours": "",
-            "proteins": "",
-            "molecule_type": "",
-            "molecular_structure": ""
+            "lengths": ""
         }
     })
 
+    async for subtraction in db.subtraction.find({}, ["job"]):
+        job_field = subtraction.get("job", None) or subtraction.get("job_id", None)
 
-def organize_hosts(database):
-    database.hosts.update_many({"job": {"$exists": False}}, {
-        "$set": {
-            "job": None
-        }
-    })
+        if isinstance(job_field, str):
+            job_field = {
+                "id": job_field
+            }
 
-    for host in database.hosts.find():
-        if "ready" not in host:
-            try:
-                ready = host["added"]
-            except KeyError:
-                ready = True
+        await db.subtraction.update_one({"_id": subtraction["_id"]}, {
+            "$set": {
+                "job": job_field
+            }
+        })
 
-            database.hosts.update_one({"_id": host["_id"]}, {
-                "$unset": {
-                    "added": ""
-                },
+    async for host in db.subtraction.find({}, ["file", "file_id", "file_name"]):
+        file_id = host.get("file_id", None) or host.get("file", None)
 
+        if isinstance(file_id, str):
+            await db.subtraction.update_one({"_id": host["_id"]}, {
                 "$set": {
-                    "ready": ready
+                    "file": {
+                        "id": file_id,
+                        "name": host.get("file_name", None)
+                    }
                 }
             })
+
+    async for host in db.subtraction.find({"ready": {"$exists": False}}, ["ready"]):
+        await db.subtraction.update_one({"_id": host["_id"]}, {
+            "$set": {
+                "ready": host.get("added", True)
+            }
+        })
+
+    await db.subtraction.update_many({}, {
+        "$unset": {
+            "added": ""
+        }
+    })
 
 
 def organize_users(database):
@@ -287,12 +282,12 @@ def organize_users(database):
         {"primary_group": None}
     ]}, {
         "$set": {"primary_group": ""}
-    })
+    }, multi=True)
 
     # Assign default user settings to users without defined settings.
     database.users.update_many({"settings": {}}, {
         "$set": {"settings": {"show_ids": False, "show_versions": False}}
-    })
+    }, multi=True)
 
     # Make sure permissions are correct for all users.
     for user in database.users.find():
@@ -307,9 +302,8 @@ def organize_users(database):
         })
 
 
-def organize_groups(database):
-
-    for group in database.groups.find():
+async def organize_groups(db):
+    async for group in await db.groups.find():
         default_setting = True if group["_id"] == "administrator" else False
 
         permissions = {perm: default_setting for perm in PERMISSIONS}
@@ -320,32 +314,15 @@ def organize_groups(database):
             except KeyError:
                 pass
 
-        database.groups.update_one({"_id": group["_id"]}, {
+        await db.groups.update_one({"_id": group["_id"]}, {
             "$set": {
                 "permissions": permissions
             }
         })
 
 
-def organize_jobs(database):
-    database.jobs.update_many({}, {
-        "$unset": {
-            "archived": ""
-        }
-    })
-
-
-def organize_samples(db):
-    for sample in db.samples.find({}):
-        analyses = list(db.analyses.find({"sample_id": sample["_id"]}, ["ready", "algorithm"]))
-
-        db.samples.update_one({"_id": sample["_id"]}, {
-            "$set": calculate_algorithm_tags(analyses)
-        })
-
-
-def organize_files(database):
-    database.files.update_many({"reserved": {"$exists": False}}, {
+def organize_files(db):
+    db.files.update_many({"reserved": {"$exists": False}}, {
         "$set": {
             "reserved": False
         }

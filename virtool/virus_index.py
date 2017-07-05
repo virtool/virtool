@@ -137,6 +137,25 @@ async def get_current_index(db):
     return index_id, current_index_version
 
 
+def get_bowtie2_index_names(index_path):
+    """
+    Get the headers of all the FASTA sequences used to build the Bowtie2 index in *index_path*.
+    *Requires Bowtie2 in path.*
+
+    :param index_path: the patch to the Bowtie2 index.
+    :return: list of FASTA headers.
+    """
+    try:
+        inspect = subprocess.check_output(["bowtie2-inspect", "-n", index_path], stderr=subprocess.DEVNULL)
+    except subprocess.CalledProcessError:
+        return None
+
+    inspect_list = str(inspect, "utf-8").split("\n")
+    inspect_list.remove("")
+
+    return inspect_list
+
+
 class RebuildIndex(virtool.job.Job):
     """
     Job object that rebuilds the viral Bowtie2 index from the viral sequence database. Job stages are:
@@ -347,3 +366,5 @@ class RebuildIndex(virtool.job.Job):
             "index_id": self.index_id,
             "index_version": self._task_args["index_version"]
         })
+
+

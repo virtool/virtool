@@ -19,7 +19,7 @@ env:
 - TRAVIS_NODE_VERSION="6"
 
 before_install:
-- pip install codecov
+- pip install codacy-coverage
 - wget http://eddylab.org/software/hmmer3/3.1b2/hmmer-3.1b2-linux-intel-x86_64.tar.gz
 - tar -xf hmmer-3.1b2-linux-intel-x86_64.tar.gz
 - export PATH=${PATH}:${PWD}/hmmer-3.1b2-linux-intel-x86_64/binaries
@@ -37,10 +37,10 @@ install:
 - cd $TRAVIS_BUILD_DIR
 
 script:
-- pytest --cov -vv
+- pytest --cov --cov-report xml -vv
 
 after_success:
-- codecov
+- python-codacy-coverage -r coverage.xml
 - mkdir build
 - mkdir build/virtool
 - cd client
