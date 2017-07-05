@@ -73,8 +73,8 @@ async def organize_analyses(db):
                     hmm = await db.hmm.find_one({"cluster": cluster}, {"_id": True})
 
                     # Get rid of the unnecessary fields.
-                    hit.pop("definition")
-                    hit.pop("families")
+                    del hit["definition"]
+                    del hit["families"]
 
                     # Change the hit field to the id for the HMM record instead of vFam_###.
                     hit["hit"] = hmm["_id"]
