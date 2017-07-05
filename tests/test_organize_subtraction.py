@@ -1,5 +1,5 @@
 import pytest
-import operator
+from operator import itemgetter
 
 import virtool.organize
 
@@ -28,7 +28,7 @@ class TestJobId:
 
         subtractions = await test_motor.subtraction.find().to_list(None)
 
-        assert sorted([s["job"] for s in subtractions], key=operator.itemgetter("id")) == [
+        assert sorted([s["job"] for s in subtractions], key=itemgetter("id")) == [
             {"id": "345asd"},
             {"id": "3i4l1s"},
             {"id": "8jj3lq"}
@@ -48,7 +48,7 @@ class TestJobId:
 
         subtractions = await test_motor.subtraction.find().to_list(None)
 
-        assert [s["job"] for s in subtractions] == [None, {"id": "3i4l1s"}, None]
+        assert sorted([s["job"] for s in subtractions], key=bool) == sorted([None, {"id": "3i4l1s"}, None], key=bool)
 
     async def test_no_change(self, test_motor, subtraction_documents):
         """
@@ -61,11 +61,11 @@ class TestJobId:
 
         subtractions = await test_motor.subtraction.find().to_list(None)
 
-        assert [s["job"] for s in subtractions] == [
+        assert sorted([s["job"] for s in subtractions], key=itemgetter("id")) == sorted([
             {"id": "345asd"},
             {"id": "3i4l1s"},
             {"id": "8jj3lq"}
-        ]
+        ], key=itemgetter("id"))
 
 
 class TestAddedReady:
