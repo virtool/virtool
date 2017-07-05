@@ -1,6 +1,7 @@
 import os
 
 import virtool.virus
+import virtool.virus_index
 import virtool.sample
 import virtool.organize_utils
 from virtool.user_permissions import PERMISSIONS
@@ -126,14 +127,14 @@ async def organize_analyses(db):
     await db.analyses.delete_many({"ready": False})
 
 
-def organize_viruses(db):
-    db.viruses.update_many({}, {
+async def organize_viruses(db):
+    await db.viruses.update_many({}, {
         "$unset": {
             "segments": "",
             "abbrevation": "",
             "new": ""
         }
-    }, multi=True)
+    })
 
     indexes_path = os.path.join(data_path, "reference/viruses/")
 
@@ -171,10 +172,10 @@ def organize_viruses(db):
 
     sequence_ids = list()
 
-    for virus in database.viruses.find({}):
+    async for virus in db.viruses.find():
         default_isolate = virtool.virus.get_default_isolate(virus)
 
-        sequences = list(database.sequences.find({"isolate_id": default_isolate["isolate_id"]}))
+        sequences = await db.sequences.find({"isolate_id": default_isolate["isolate_id"]}).to_list(None)
 
         patched_and_joined = virtool.virus.merge_virus(virus, sequences)
 
@@ -203,7 +204,7 @@ def organize_viruses(db):
 
                 _, patched_and_joined, _ = virus(patched_and_joined, recent_history)
 
-        sequence_ids += extract_sequence_ids(patched_and_joined)
+        sequence_ids += virtool.virus.extract_sequence_ids(patched_and_joined)
 
     sequence_id_set = set(sequence_ids)
 
@@ -238,6 +239,9 @@ def organize_history(db):
 
 
 async def organize_subtraction(db):
+    await virtool.organize_utils.update_user_field(db.hosts)
+    await virtool.organize_utils.unset_version_field(db.hosts)
+
     collection_names = await db.collection_names()
 
     if "hosts" in collection_names and "subtraction" not in collection_names:
@@ -250,40 +254,54 @@ async def organize_subtraction(db):
         # Copy the documents to a new subtraction collection.
         await db.subtraction.insert_many(documents)
 
-        # Remove the old hosts collection
-        await db.drop_collection("hosts")
+    # Remove the old hosts collection
+    await db.drop_collection("hosts")
 
-    await virtool.organize_utils.update_user_field(db.hosts)
-    await virtool.organize_utils.unset_version_field(db.hosts)
-
-    await db.subtraction.update_many({"lengths": {"$exists": ""}}, {
+    await db.subtraction.update_many({}, {
         "$unset": {
             "lengths": ""
         }
     })
 
-    await db.subtraction.update_many({"job": {"$exists": False}}, {
-        "$set": {
-            "job": None
-        }
-    }, multi=True)
+    async for subtraction in db.subtraction.find({}, ["job"]):
+        job_field = subtraction.get("job", None) or subtraction.get("job_id", None)
 
-    for host in database.hosts.find():
-        if "ready" not in host:
-            try:
-                ready = host["added"]
-            except KeyError:
-                ready = True
+        if isinstance(job_field, str):
+            job_field = {
+                "id": job_field
+            }
 
-            database.hosts.update_one({"_id": host["_id"]}, {
-                "$unset": {
-                    "added": ""
-                },
+        await db.subtraction.update_one({"_id": subtraction["_id"]}, {
+            "$set": {
+                "job": job_field
+            }
+        })
 
+    async for host in db.subtraction.find({}, ["file", "file_id", "file_name"]):
+        file_id = host.get("file_id", None) or host.get("file", None)
+
+        if isinstance(file_id, str):
+            await db.subtraction.update_one({"_id": host["_id"]}, {
                 "$set": {
-                    "ready": ready
+                    "file": {
+                        "id": file_id,
+                        "name": host.get("file_name", None)
+                    }
                 }
             })
+
+    async for host in db.subtraction.find({"ready": {"$exists": False}}, ["ready"]):
+        await db.subtraction.update_one({"_id": host["_id"]}, {
+            "$set": {
+                "ready": host.get("added", True)
+            }
+        })
+
+    await db.subtraction.update_many({}, {
+        "$unset": {
+            "added": ""
+        }
+    })
 
 
 def organize_users(database):
