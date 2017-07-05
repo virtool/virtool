@@ -71,20 +71,28 @@ class TestJobId:
 class TestAddedReady:
 
     async def test_only_ready(self, test_motor, subtraction_documents):
+        """
+        Test that conversion of the ``added`` field to ``ready`` does not corrupt documents that already have the
+        ``ready`` field set.
+
+        """
         await test_motor.subtraction.insert_many(subtraction_documents)
 
         await virtool.organize.organize_subtraction(test_motor)
 
         docs = await test_motor.subtraction.find({}, ["ready", "added"]).to_list(None)
 
-        import pprint
-        pprint.pprint(docs)
-
         assert all(["added" not in d for d in docs])
 
         assert {d["ready"] for d in docs} == {True, False, True}
 
     async def test_has_ready(self, test_motor, subtraction_documents):
+        """
+        Test that conversion of the ``added`` field to ``ready`` is successful when some documents are using the
+        ``added`` field.
+
+        """
+
         del subtraction_documents[0]["ready"]
         subtraction_documents[0]["added"] = True
 
@@ -99,6 +107,11 @@ class TestAddedReady:
         assert {d["ready"] for d in docs} == {True, False, True}
 
     async def test_neither(self, test_motor, subtraction_documents):
+        """
+        Test that documents with no ``ready`` or ``added`` field will have their ``ready`` fields set to ``True`` by
+        default.
+
+        """
         del subtraction_documents[1]["ready"]
 
         await test_motor.subtraction.insert_many(subtraction_documents)
