@@ -1,14 +1,14 @@
-from .fixtures.db import *
-from .fixtures.documents import *
-from .fixtures.client import *
-from .fixtures.core import *
-from .fixtures.history import *
-from .fixtures.hmm import *
-from .fixtures.users import *
-from .fixtures.viruses import *
-from .fixtures.jobs import *
-from .fixtures.dispatcher import *
-from .fixtures.nv import *
+from tests.fixtures.db import *
+from tests.fixtures.documents import *
+from tests.fixtures.client import *
+from tests.fixtures.core import *
+from tests.fixtures.history import *
+from tests.fixtures.hmm import *
+from tests.fixtures.users import *
+from tests.fixtures.viruses import *
+from tests.fixtures.jobs import *
+from tests.fixtures.dispatcher import *
+from tests.fixtures.nv import *
 
 
 def pytest_addoption(parser):
