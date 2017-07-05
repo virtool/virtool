@@ -40,7 +40,7 @@ script:
 - pytest --cov --cov-report xml -vv
 
 after_success:
-- python-codacy-coverage coverage.xml
+- python-codacy-coverage -r coverage.xml
 - mkdir build
 - mkdir build/virtool
 - cd client
