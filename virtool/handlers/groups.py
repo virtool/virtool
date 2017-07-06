@@ -100,10 +100,6 @@ async def remove(req):
 
     group_id = req.match_info["group_id"]
 
-    # Only accept single id strings.
-    if not isinstance(group_id, str):
-        return bad_request("Invalid type")
-
     # The administrator is not permitted to be removed.
     if group_id == "administrator":
         return bad_request("Cannot remove administrator group")
