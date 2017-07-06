@@ -89,19 +89,16 @@ class TestGet:
             "id": "6116cba1",
             "isolates": [
                 {
-                    "isolate_id": "cab8b360",
+                    "id": "cab8b360",
                     "source_type": "isolate",
                     "source_name": "8816-v2",
                     "default": True,
                     "sequences": [
                         {
-                            "accession": "KX269872",
+                            "id": "KX269872",
                             "definition": "Prunus virus F isolate 8816-s2 "
-                            "segment RNA2 polyprotein 2 gene, "
-                            "complete cds.",
+                            "segment RNA2 polyprotein 2 gene, complete cds.",
                             "host": "sweet cherry",
-                            "isolate_id": "cab8b360",
-                            "virus_id": "6116cba1",
                             "sequence": "TGTTTAAGAGATTAAACAACCGCTTTC"
                         }
                     ]
@@ -131,7 +128,7 @@ class TestGet:
             "id": "6116cba1",
             "isolates": [
                 {
-                    "isolate_id": "cab8b360",
+                    "id": "cab8b360",
                     "source_type": "isolate",
                     "source_name": "8816-v2",
                     "default": True,
@@ -316,7 +313,7 @@ class TestEdit:
             "isolates": [
                 {
                     "default": True,
-                    "isolate_id": "cab8b360",
+                    "id": "cab8b360",
                     "sequences": [],
                     "source_name": "8816-v2",
                     "source_type": "isolate"
@@ -489,8 +486,8 @@ class TestVerify:
         """
         test_virus["modified"] = True
 
-        test_db.viruses.insert(test_virus)
-        test_db.sequences.insert(test_sequence)
+        test_db.viruses.insert_one(test_virus)
+        test_db.sequences.insert_one(test_sequence)
 
         resp = await do_put("/api/viruses/6116cba1/verify", {}, authorize=True, permissions=["modify_virus"])
 
@@ -504,19 +501,18 @@ class TestVerify:
             "modified": False,
             "last_indexed_version": 0,
             "version": 1,
+            "most_recent_change": None,
             "isolates": [
                 {
                     "default": True,
-                    "isolate_id": "cab8b360",
+                    "id": "cab8b360",
                     "sequences": [
                         {
                             "sequence": "TGTTTAAGAGATTAAACAACCGCTTTC",
                             "host": "sweet cherry",
                             "definition": "Prunus virus F isolate 8816-s2 segment RNA2 polyprotein 2 gene, complete "
                                           "cds.",
-                            "accession": "KX269872",
-                            "virus_id": "6116cba1",
-                            "isolate_id": "cab8b360"
+                            "id": "KX269872",
                         }
                     ],
                     "source_name": "8816-v2",
@@ -534,7 +530,7 @@ class TestVerify:
             "isolates": [
                 {
                     "default": True,
-                    "isolate_id": "cab8b360",
+                    "id": "cab8b360",
                     "source_name": "8816-v2",
                     "source_type": "isolate"
                 }
@@ -557,9 +553,16 @@ class TestVerify:
             "lower_name": new["name"].lower()
         })
 
+        del new["most_recent_change"]
+
         for isolate in new["isolates"]:
             for sequence in isolate["sequences"]:
-                sequence["_id"] = sequence.pop("accession")
+                sequence.update({
+                    "_id": sequence.pop("id"),
+                    "virus_id": "6116cba1",
+                    "isolate_id": "cab8b360"
+                })
+
 
         assert test_add_history.call_args[0][1:] == (
             "verify",
@@ -769,7 +772,7 @@ class TestListIsolates:
             "default": False,
             "source_type": "isolate",
             "source_name": "7865",
-            "isolate_id": "bcb9b352"
+            "id": "bcb9b352"
         })
 
         test_db.viruses.insert_one(test_virus)
@@ -783,13 +786,13 @@ class TestListIsolates:
                 "default": True,
                 "source_type": "isolate",
                 "source_name": "8816-v2",
-                "isolate_id": "cab8b360"
+                "id": "cab8b360"
             },
             {
                 "default": False,
                 "source_type": "isolate",
                 "source_name": "7865",
-                "isolate_id": "bcb9b352"
+                "id": "bcb9b352"
             }
         ]
 
@@ -821,14 +824,19 @@ class TestGetIsolate:
 
         assert resp.status == 200
 
-        test_sequence["accession"] = test_sequence.pop("_id")
-        test_sequence.pop("isolate_id")
+        test_sequence["id"] = test_sequence.pop("_id")
+        del test_sequence["virus_id"]
+        del test_sequence["isolate_id"]
+
+        import pprint
+
+        pprint.pprint(await resp.json())
 
         assert await resp.json() == {
             "default": True,
             "source_type": "isolate",
             "source_name": "8816-v2",
-            "isolate_id": "cab8b360",
+            "id": "cab8b360",
             "sequences": [test_sequence]
         }
 
@@ -881,7 +889,7 @@ class TestAddIsolate:
         assert resp.status == 201
 
         assert await resp.json() == {
-            "isolate_id": "test",
+            "id": "test",
             "source_type": "isolate",
             "source_name": "b",
             "default": True,
@@ -892,13 +900,13 @@ class TestAddIsolate:
 
         assert new["isolates"] == [
             {
-                "isolate_id": "cab8b360",
+                "id": "cab8b360",
                 "default": False,
                 "source_type": "isolate",
                 "source_name": "8816-v2"
             },
             {
-                "isolate_id": "test",
+                "id": "test",
                 "source_name": "b",
                 "source_type": "isolate",
                 "default": True
@@ -955,7 +963,7 @@ class TestAddIsolate:
         assert await resp.json() == {
             "source_name": "b",
             "source_type": "isolate",
-            "isolate_id": "test",
+            "id": "test",
             "default": False,
             "sequences": []
         }
@@ -964,13 +972,13 @@ class TestAddIsolate:
 
         assert new["isolates"] == [
             {
-                "isolate_id": "cab8b360",
+                "id": "cab8b360",
                 "source_type": "isolate",
                 "source_name": "8816-v2",
                 "default": True
             },
             {
-                "isolate_id": "test",
+                "id": "test",
                 "source_name": "b",
                 "source_type": "isolate",
                 "default": False
@@ -1030,7 +1038,7 @@ class TestAddIsolate:
         assert await resp.json() == {
             "source_name": "b",
             "source_type": "isolate",
-            "isolate_id": "test",
+            "id": "test",
             "default": True,
             "sequences": []
         }
@@ -1038,7 +1046,7 @@ class TestAddIsolate:
         new = test_db.viruses.find_one("6116cba1")
 
         assert new["isolates"] == [{
-                "isolate_id": "test",
+                "id": "test",
                 "default": True,
                 "source_type": "isolate",
                 "source_name": "b"
@@ -1091,7 +1099,7 @@ class TestAddIsolate:
         assert await resp.json() == {
             "source_name": "Beta",
             "source_type": "isolate",
-            "isolate_id": "test",
+            "id": "test",
             "default": False,
             "sequences": []
         }
@@ -1100,13 +1108,13 @@ class TestAddIsolate:
 
         assert document["isolates"] == [
             {
-                "isolate_id": "cab8b360",
+                "id": "cab8b360",
                 "default": True,
                 "source_type": "isolate",
                 "source_name": "8816-v2"
             },
             {
-                "isolate_id": "test",
+                "id": "test",
                 "source_name": "Beta",
                 "source_type": "isolate",
                 "default": False
@@ -1143,7 +1151,7 @@ class TestAddIsolate:
         assert resp.status == 201
 
         assert await resp.json() == {
-            "isolate_id": "test",
+            "id": "test",
             "source_name": "",
             "source_type": "",
             "default": False,
@@ -1152,13 +1160,13 @@ class TestAddIsolate:
 
         assert test_db.viruses.find_one("6116cba1", ["isolates"])["isolates"] == [
             {
-                "isolate_id": "cab8b360",
+                "id": "cab8b360",
                 "default": True,
                 "source_type": "isolate",
                 "source_name": "8816-v2"
             },
             {
-                "isolate_id": "test",
+                "id": "test",
                 "source_name": "",
                 "source_type": "",
                 "default": False
@@ -1205,7 +1213,7 @@ class TestEditIsolate:
 
         """
         test_virus["isolates"].append({
-            "isolate_id": "test",
+            "id": "test",
             "source_name": "b",
             "source_type": "isolate",
             "default": False
@@ -1223,7 +1231,7 @@ class TestEditIsolate:
 
         assert await resp.json() == {
             "source_type": "variant",
-            "isolate_id": "test",
+            "id": "test",
             "source_name": "b",
             "default": False
         }
@@ -1232,13 +1240,13 @@ class TestEditIsolate:
 
         assert new["isolates"] == [
             {
-                "isolate_id": "cab8b360",
+                "id": "cab8b360",
                 "default": True,
                 "source_type": "isolate",
                 "source_name": "8816-v2"
             },
             {
-                "isolate_id": "test",
+                "id": "test",
                 "source_name": "b",
                 "source_type": "variant",
                 "default": False
@@ -1275,7 +1283,7 @@ class TestEditIsolate:
 
         """
         test_virus["isolates"].append({
-            "isolate_id": "test",
+            "id": "test",
             "source_name": "b",
             "source_type": "isolate",
             "default": False
@@ -1293,7 +1301,7 @@ class TestEditIsolate:
 
         assert await resp.json() == {
             "source_type": "isolate",
-            "isolate_id": "test",
+            "id": "test",
             "source_name": "b",
             "default": True
         }
@@ -1302,13 +1310,13 @@ class TestEditIsolate:
 
         assert new["isolates"] == [
             {
-                "isolate_id": "cab8b360",
+                "id": "cab8b360",
                 "default": False,
                 "source_type": "isolate",
                 "source_name": "8816-v2"
             },
             {
-                "isolate_id": "test",
+                "id": "test",
                 "source_name": "b",
                 "source_type": "isolate",
                 "default": True
@@ -1379,7 +1387,7 @@ class TestEditIsolate:
         assert resp.status == 200
 
         expected = {
-            "isolate_id": "cab8b360",
+            "id": "cab8b360",
             "default": True,
             "source_type": "variant",
             "source_name": "8816-v2"
@@ -1429,13 +1437,13 @@ class TestRemoveIsolate:
         test_db.viruses.insert_one(test_virus)
         test_db.sequences.insert_one(test_sequence)
 
-        assert test_db.viruses.find({"isolates.isolate_id": "cab8b360"}).count() == 1
+        assert test_db.viruses.find({"isolates.id": "cab8b360"}).count() == 1
 
         resp = await do_delete("/api/viruses/6116cba1/isolates/cab8b360", authorize=True, permissions=["modify_virus"])
 
         assert resp.status == 204
 
-        assert test_db.viruses.find({"isolates.isolate_id": "cab8b360"}).count() == 0
+        assert test_db.viruses.find({"isolates.id": "cab8b360"}).count() == 0
 
         assert test_db.sequences.count() == 0
 
@@ -1445,7 +1453,7 @@ class TestRemoveIsolate:
             "imported": True,
             "isolates": [
                 {
-                    "isolate_id": "cab8b360",
+                    "id": "cab8b360",
                     "source_type": "isolate",
                     "source_name": "8816-v2",
                     "default": True,
@@ -1507,7 +1515,7 @@ class TestRemoveIsolate:
             "default": False,
             "source_type": "isolate",
             "source_name": "7865",
-            "isolate_id": "bcb9b352"
+            "id": "bcb9b352"
         })
 
         test_db.viruses.insert_one(test_virus)
@@ -1517,9 +1525,9 @@ class TestRemoveIsolate:
 
         assert resp.status == 204
 
-        assert test_db.viruses.find({"isolates.isolate_id": "cab8b360"}).count() == 0
+        assert test_db.viruses.find({"isolates.id": "cab8b360"}).count() == 0
 
-        assert test_db.viruses.find_one({"isolates.isolate_id": "bcb9b352"}, ["isolates"])["isolates"][0]["default"]
+        assert test_db.viruses.find_one({"isolates.id": "bcb9b352"}, ["isolates"])["isolates"][0]["default"]
 
         assert test_db.sequences.count() == 0
 
@@ -1529,7 +1537,7 @@ class TestRemoveIsolate:
             "imported": True,
             "isolates": [
                 {
-                    "isolate_id": "cab8b360",
+                    "id": "cab8b360",
                     "source_type": "isolate",
                     "source_name": "8816-v2",
                     "default": True,
@@ -1550,7 +1558,7 @@ class TestRemoveIsolate:
                     "default": False,
                     "source_type": "isolate",
                     "source_name": "7865",
-                    "isolate_id": "bcb9b352",
+                    "id": "bcb9b352",
                     "sequences": []
                 }
             ],
@@ -1570,7 +1578,7 @@ class TestRemoveIsolate:
                     "default": True,
                     "source_type": "isolate",
                     "source_name": "7865",
-                    "isolate_id": "bcb9b352",
+                    "id": "bcb9b352",
                     "sequences": []
                 }
             ],
@@ -1731,7 +1739,7 @@ class TestCreateSequence:
             "isolates": [
                 {
                     "default": True,
-                    "isolate_id": "cab8b360",
+                    "id": "cab8b360",
                     "sequences": [],
                     "source_name": "8816-v2",
                     "source_type": "isolate"
@@ -1898,7 +1906,7 @@ class TestEditSequence:
             "isolates": [
                 {
                     "default": True,
-                    "isolate_id": "cab8b360",
+                    "id": "cab8b360",
                     "sequences": [dict(test_sequence, virus_id="6116cba1")],
                     "source_name": "8816-v2",
                     "source_type": "isolate"

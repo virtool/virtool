@@ -342,7 +342,7 @@ def find_isolate(isolates, isolate_id):
     :rtype: dict
     
     """
-    return next((isolate for isolate in isolates if isolate["isolate_id"] == isolate_id), None)
+    return next((isolate for isolate in isolates if isolate["id"] == isolate_id), None)
 
 
 def extract_sequence_ids(virus):
