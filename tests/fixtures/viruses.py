@@ -18,7 +18,7 @@ def test_virus():
         "isolates": [
             {
                 "default": True,
-                "isolate_id": "cab8b360",
+                "id": "cab8b360",
                 "source_name": "8816-v2",
                 "source_type": "isolate"
             }
@@ -34,8 +34,8 @@ def test_virus():
 @pytest.fixture
 def test_isolate():
     return {
+        "id": "cab8b360",
         "default": True,
-        "isolate_id": "cab8b360",
         "source_name": "8816-v2",
         "source_type": "isolate"
     }
@@ -62,7 +62,7 @@ def test_merged_virus():
         "isolates": [
             {
                 "default": True,
-                "isolate_id": "cab8b360",
+                "id": "cab8b360",
                 "sequences": [
                     {
                         "_id": "KX269872",

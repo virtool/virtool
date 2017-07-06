@@ -1,4 +1,3 @@
-import re
 import json
 import gzip
 import math
@@ -264,7 +263,7 @@ async def verify(req):
 
     isolate_sequence_counts = list()
 
-    # Append the isolate_ids of any isolates without sequences to empty_isolate. Append the isolate_id and sequence
+    # Append the ids of any isolates without sequences to empty_isolate. Append the isolate id and sequence
     # id of any sequences that have an empty sequence.
     for isolate in joined["isolates"]:
         isolate_sequence_count = len(isolate["sequences"])
@@ -272,7 +271,7 @@ async def verify(req):
         isolate_sequence_counts.append(isolate_sequence_count)
 
         if isolate_sequence_count == 0:
-            errors["empty_isolate"].append(isolate["isolate_id"])
+            errors["empty_isolate"].append(isolate["id"])
 
         errors["empty_sequence"] += [seq["_id"] for seq in isolate["sequences"] if len(seq["sequence"]) == 0]
 
@@ -315,21 +314,15 @@ async def verify(req):
         req["session"].user_id
     )
 
+    complete = await virtool.virus.get_complete(db, virus_id)
+
     await req.app["dispatcher"].dispatch(
         "viruses",
         "update",
         virtool.utils.base_processor({key: new[key] for key in virtool.virus.LIST_PROJECTION})
     )
 
-    to_return = deepcopy(new)
-
-    to_return.pop("lower_name")
-
-    for isolate in to_return["isolates"]:
-        for sequence in isolate["sequences"]:
-            sequence["accession"] = sequence.pop("_id")
-
-    return json_response(virtool.utils.base_processor(to_return))
+    return json_response(complete)
 
 
 @protected("modify_virus")
@@ -399,17 +392,16 @@ async def get_isolate(req):
     virus_id = req.match_info["virus_id"]
     isolate_id = req.match_info["isolate_id"]
 
-    document = await db.viruses.find_one({"_id": virus_id, "isolates.isolate_id": isolate_id}, ["isolates"])
+    document = await db.viruses.find_one({"_id": virus_id, "isolates.id": isolate_id}, ["isolates"])
 
     if not document:
         return not_found()
 
-    isolate = virtool.virus.find_isolate(document["isolates"], isolate_id)
+    isolate = dict(virtool.virus.find_isolate(document["isolates"], isolate_id), sequences=[])
 
-    isolate["sequences"] = await db.sequences.find({"isolate_id": isolate_id}, {"isolate_id": False}).to_list(None)
-
-    for sequence in isolate["sequences"]:
-        sequence["accession"] = sequence.pop("_id")
+    async for sequence in db.sequences.find({"isolate_id": isolate_id}, {"virus_id": False, "isolate_id": False}):
+        sequence["id"] = sequence.pop("_id")
+        isolate["sequences"].append(sequence)
 
     return json_response(isolate)
 
@@ -456,7 +448,7 @@ async def add_isolate(req):
     # Set the isolate as the default isolate if it is the first one.
     data.update({
         "default": will_be_default,
-        "isolate_id": isolate_id
+        "id": isolate_id
     })
 
     isolates.append(data)
@@ -637,13 +629,13 @@ async def remove_isolate(req):
     description = (
         "Removed isolate",
         virtool.virus.format_isolate_name(isolate_to_remove),
-        isolate_to_remove["isolate_id"]
+        isolate_to_remove["id"]
     )
 
     if isolate_to_remove["default"] and new_default:
         description += (
             "and set",
-            virtool.virus.format_isolate_name(new_default), new_default["isolate_id"],
+            virtool.virus.format_isolate_name(new_default), new_default["id"],
             "as default"
         )
 
@@ -670,7 +662,7 @@ async def list_sequences(req):
     virus_id = req.match_info["virus_id"]
     isolate_id = req.match_info["isolate_id"]
 
-    if not await db.viruses.find({"_id": virus_id}, {"isolates.isolate_id": isolate_id}).count():
+    if not await db.viruses.find({"_id": virus_id}, {"isolates.id": isolate_id}).count():
         return not_found()
 
     projection = list(virtool.virus.SEQUENCE_PROJECTION)
@@ -721,7 +713,7 @@ async def create_sequence(req):
     })
 
     # Get the subject virus document. Will be ``None`` if it doesn't exist. This will result in a ``404`` response.
-    document = await db.viruses.find_one({"_id": virus_id, "isolates.isolate_id": isolate_id})
+    document = await db.viruses.find_one({"_id": virus_id, "isolates.id": isolate_id})
 
     if not document:
         return not_found()
@@ -767,7 +759,7 @@ async def edit_sequence(req):
 
     virus_id, isolate_id, accession = (req.match_info[key] for key in ["virus_id", "isolate_id", "accession"])
 
-    document = await db.viruses.find_one({"_id": virus_id, "isolates.isolate_id": isolate_id})
+    document = await db.viruses.find_one({"_id": virus_id, "isolates.id": isolate_id})
 
     if not document:
         return not_found("Virus or isolate not found")
