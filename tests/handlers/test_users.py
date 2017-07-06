@@ -728,11 +728,7 @@ class TestRemove:
 
         resp = await do_delete("/api/users/bob", authorize=True, permissions=["manage_users"])
 
-        assert resp.status == 200
-
-        assert await resp.json() == {
-            "removed": "bob"
-        }
+        assert resp.status == 204
 
     async def test_does_not_exist(self, do_delete):
         """
