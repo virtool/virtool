@@ -35,12 +35,12 @@ class TestFind:
         assert resp.status == 200
 
         assert await resp.json() == {
-            "modified_count": 0,
+            "page": 1,
+            "per_page": 15,
+            "page_count": 1,
             "found_count": 3,
             "total_count": 3,
-            "page_count": 1,
-            "page": 1,
-
+            "modified_count": 0,
             "documents": [
                 {
                     "abbreviation": "EV_TF3-mycovirus",
