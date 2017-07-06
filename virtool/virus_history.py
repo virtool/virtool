@@ -18,35 +18,15 @@ LIST_PROJECTION = [
     "_id",
     "description",
     "method_name",
-    "timestamp",
-    "virus_id",
-    "virus_name",
-    "virus_version",
-    "user_id",
-    "index_id",
-    "index_version"
+    "created_at",
+    "virus",
+    "index",
+    "user"
 ]
 
 PROJECTION = LIST_PROJECTION + [
     "diff"
 ]
-
-
-def processor(document):
-    document = virtool.utils.base_processor(document)
-
-    document["virus"] = {
-        "id": document.pop("virus_id"),
-        "version": document.pop("virus_version"),
-        "name": document.pop("virus_name")
-    }
-
-    document["index"] = {
-        "id": document.pop("index_id"),
-        "version": document.pop("index_version")
-    }
-
-    return document
 
 
 async def add(db, method_name, old, new, description, user_id):
@@ -225,7 +205,7 @@ async def set_index_as_unbuilt(db, index_id):
      
     :param index_id: the ``index_id`` to replace
     :type index_id: str
-     
+
     """
     await db.history.update_many({"index_id": index_id}, {
         "$set": {
@@ -233,3 +213,4 @@ async def set_index_as_unbuilt(db, index_id):
             "index_version": "unbuilt"
         }
     })
+
