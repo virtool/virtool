@@ -3,9 +3,10 @@ from cerberus import Validator
 
 import virtool.user
 import virtool.utils
-from virtool.handlers.utils import protected, bad_request, invalid_input, unpack_json_request, json_response, not_found
+import virtool.user_groups
 from virtool.user_permissions import PERMISSIONS
-from virtool.user_groups import merge_group_permissions
+from virtool.handlers.utils import protected, no_content, bad_request, invalid_input, unpack_json_request, \
+    json_response, not_found
 
 
 @protected("manage_users")
@@ -210,7 +211,7 @@ async def add_group(req):
 
     groups = await db.groups.find({"_id": {"$in": document["groups"]}}).to_list(None)
 
-    new_permissions = merge_group_permissions(groups)
+    new_permissions = virtool.user_groups.merge_group_permissions(groups)
 
     document = await db.users.find_one_and_update({"_id": user_id}, {
         "$set": {
@@ -252,7 +253,7 @@ async def remove_group(req):
 
     document = await db.users.find_one_and_update({"_id": user_id}, {
         "$set": {
-            "permissions": merge_group_permissions(list(groups))
+            "permissions": virtool.user_groups.merge_group_permissions(list(groups))
         }
     }, return_document=ReturnDocument.AFTER, projection=["groups", "permissions"])
 
