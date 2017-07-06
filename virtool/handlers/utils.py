@@ -1,4 +1,5 @@
 import re
+import math
 import json
 import datetime
 from aiohttp import web
@@ -202,3 +203,36 @@ async def unpack_json_request(req):
 
     """
     return req.app["db"], await req.json()
+
+
+async def paginate(collection, db_query, url_query, sort_by, projection=None, processor=virtool.utils.base_processor):
+    print(url_query)
+
+    page = int(url_query.get("page", 1))
+    per_page = int(url_query.get("per_page", 15))
+
+    total_count = await collection.count()
+
+    cursor = collection.find(
+        db_query,
+        projection,
+        sort=[(sort_by, 1)]
+    )
+
+    found_count = await cursor.count()
+
+    page_count = int(math.ceil(found_count / per_page))
+
+    if page > 1:
+        cursor.skip((page - 1) * per_page)
+
+    documents = [processor(d) for d in await cursor.to_list(length=per_page)]
+
+    return {
+        "documents": documents,
+        "total_count": total_count,
+        "found_count": found_count,
+        "page_count": page_count,
+        "per_page": per_page,
+        "page": page
+    }
