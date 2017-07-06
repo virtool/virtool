@@ -17,7 +17,7 @@ import virtool.virus_import
 import virtool.virus_history
 
 from virtool.handlers.utils import unpack_json_request, json_response, bad_request, not_found, invalid_input, \
-    protected, validation
+    protected, validation, compose_regex_query
 
 
 CREATE_SCHEMA = {
@@ -54,39 +54,37 @@ async def find(req):
     """
     db = req.app["db"]
 
+    term = req.query.get("term", None)
     page = int(req.query.get("page", 1))
-    term = req.query.get("find", None)
+    per_page = int(req.query.get("per_page", 15))
     modified = virtool.utils.to_bool(req.query.get("modified", False))
 
-    query = dict()
+    db_query = dict()
 
     if term:
-        regex = re.compile("{}".format(term), re.IGNORECASE)
-        query["$or"] = [{field: {"$regex": regex}} for field in ["name", "abbreviation"]]
+        db_query.update(compose_regex_query(term, ["name", "abbreviation"]))
 
     if modified:
-        query["modified"] = True
-
-    sort_term = req.query.get("sort", "name")
+        db_query["modified"] = True
 
     total_count = await db.viruses.count()
 
     modified_count = await db.viruses.count({"modified": True})
 
     cursor = db.viruses.find(
-        query,
+        db_query,
         virtool.virus.LIST_PROJECTION,
-        sort=[(sort_term, 1)]
+        sort=[("name", 1)]
     )
 
     found_count = await cursor.count()
 
-    page_count = int(math.ceil(found_count / 15))
+    page_count = int(math.ceil(found_count / per_page))
 
     if page > 1:
-        cursor.skip((page - 1) * 15)
+        cursor.skip((page - 1) * per_page)
 
-    documents = [virtool.utils.base_processor(d) for d in await cursor.to_list(length=15)]
+    documents = [virtool.utils.base_processor(d) for d in await cursor.to_list(length=per_page)]
 
     return json_response({
         "documents": documents,
@@ -94,6 +92,7 @@ async def find(req):
         "found_count": found_count,
         "modified_count": modified_count,
         "page_count": page_count,
+        "per_page": per_page,
         "page": page
     })
 

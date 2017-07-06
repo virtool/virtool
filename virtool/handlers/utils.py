@@ -69,6 +69,17 @@ def json_response(data, status=200):
     return web.json_response(data, status=status, dumps=dumps)
 
 
+def no_content():
+    """
+    A shortcut for creating a :class:`~aiohttp.web.Response` object with a ``204`` status and no body.
+
+    :return: the response
+    :rtype: :class:`aiohttp.Response`
+
+    """
+    return web.Response(status=204)
+
+
 def bad_request(message="Bad request"):
     """
     A shortcut for creating a :class:`~aiohttp.web.Response` object with a ``400`` status the JSON body
