@@ -90,6 +90,8 @@ async def init_db(app):
 
     db = motor_asyncio.AsyncIOMotorClient(io_loop=app.loop)[app["db_name"]]
 
+    await virtool.organize.organize_samples(db)
+    await virtool.organize.organize_viruses(db)
     await virtool.organize.organize_subtraction(db)
     await virtool.organize.organize_users(db)
 
