@@ -224,11 +224,35 @@ async def organize_history(db):
     For now, just rename the ``timestamp`` field to ``created_at``.
 
     """
+    await virtool.organize_utils.update_user_field(db.history)
+
     await db.history.update_many({}, {
         "$rename": {
             "timestamp": "created_at"
         }
     })
+
+    async for change in db.history.find({"virus_id": {"$exists": True}}):
+        await db.history.update_one({"_id": change["_id"]}, {
+            "$set": {
+                "virus": {
+                    "id": change["virus_id"],
+                    "version": change["virus_version"],
+                    "name": change["virus_name"]
+                },
+                "index": {
+                    "id": change["index_id"],
+                    "version": change["index_version"]
+                }
+            },
+            "$unset": {
+                "virus_id": "",
+                "virus_version": "",
+                "virus_name": "",
+                "index_id": "",
+                "index_version": ""
+            }
+        })
 
 
 async def organize_subtraction(db):
