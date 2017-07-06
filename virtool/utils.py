@@ -10,13 +10,6 @@ def base_processor(document):
     document = dict(document)
     document["id"] = document.pop("_id")
 
-    user_id = document.pop("user_id", None)
-
-    if user_id:
-        document["user"] = {
-            "id": user_id
-        }
-
     return document
 
 
