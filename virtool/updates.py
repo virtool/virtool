@@ -114,7 +114,7 @@ class Collection(virtool.database.Collection):
         release = yield self.find_one({"name": transaction.data["name"]})
 
         # Insert the new software update document, which contains information about the install process.
-        yield self.insert({
+        yield self.insert_one({
             "_id": "software_install",
             "name": transaction.data["name"],
             "type": "software_install",

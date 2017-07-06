@@ -55,7 +55,7 @@ async def new(db, settings, manager, sample_id, user_id, algorithm):
 
     task_args = dict(data, analysis_id=analysis_id, sample_name=sample["name"])
 
-    await db.analyses.insert(document)
+    await db.analyses.insert_one(document)
 
     # Clone the arguments passed from the client and amend the resulting dictionary with the analysis entry
     # _id. This dictionary will be passed the the new analysis job.

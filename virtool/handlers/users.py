@@ -77,7 +77,7 @@ async def create(req):
         "invalidate_sessions": False
     }
 
-    await db.users.insert(document)
+    await db.users.insert_one(document)
     
     return json_response(virtool.utils.base_processor({key: document[key] for key in virtool.user.PROJECTION}))
 

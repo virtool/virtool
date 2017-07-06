@@ -446,7 +446,7 @@ async def insert_from_import(db, virus_document, user_id):
     })
 
     # Perform the actual database insert operation, retaining the response.
-    await db.viruses.insert(virus_document)
+    await db.viruses.insert_one(virus_document)
 
     to_dispatch = virtool.utils.base_processor({key: virus_document[key] for key in virtool.virus.LIST_PROJECTION})
 
