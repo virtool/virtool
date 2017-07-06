@@ -110,18 +110,6 @@ def not_found(message="Not found"):
     return json_response({"message": message}, status=404)
 
 
-def requires_login():
-    """
-    A shortcut for creating a :class:`~aiohttp.web.Response` object with a ``400`` status the JSON body
-    ``{"message": "Requires login"}``.    
-
-    :return: the response
-    :rtype: :class:`aiohttp.Response`
-
-    """
-    return json_response({"message": "Requires login"}, status=400)
-
-
 def invalid_input(errors):
     """
     A shortcut for creating a :class:`~aiohttp.web.Response` object with a ``422`` status the JSON body
@@ -167,7 +155,10 @@ def protected(required_perm=None):
     def decorator(handler):
         async def wrapped(req):
             if not req["session"].user_id:
-                return json_response({"message": "Not authorized"}, status=403)
+                return json_response({
+                    "id": "requires_authorization",
+                    "message": "Requires authorization"
+                }, status=401)
 
             if required_perm and not req["session"].permissions[required_perm]:
                 return json_response({"message": "Not permitted"}, status=403)

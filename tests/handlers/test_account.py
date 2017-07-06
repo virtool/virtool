@@ -1,9 +1,10 @@
+import pytest
 from virtool.user import check_password
 
 
 class TestGet:
 
-    async def test(self, test_motor, do_get, create_user):
+    async def test(self, do_get):
         resp = await do_get("/api/account", authorize=True)
 
         assert resp.status == 200
@@ -152,3 +153,54 @@ class TestChangePassword:
                 "new_password": ["must be of string type"]
             }
         }
+
+
+class TestLogout:
+
+    async def test(self, do_get):
+        """
+        Test that calling the logout endpoint results in the current session being removed and the user being logged
+        out.
+
+        """
+        # Authorize the session
+        resp = await do_get("/api/account", authorize=True)
+        assert resp.status == 200
+
+        # Make sure the session is still authorized
+        resp = await do_get("/api/account")
+        assert resp.status == 200
+
+        # Logout
+        resp = await do_get("/api/account/logout")
+        assert resp.status == 204
+
+        # Make sure that the session is no longer authorized
+        resp = await do_get("/api/account")
+        assert resp.status == 401
+
+
+@pytest.mark.parametrize("method,path", [
+    ("GET", "/api/account"),
+    ("GET", "/api/account/settings"),
+    ("PATCH", "/api/account/settings"),
+    ("PUT", "/api/account/password"),
+])
+async def test_requires_authorization(method, path, do_get, do_patch, do_put):
+    """
+    Test that a requires authorization 401 response is sent when the session is not authenticated.
+
+    """
+    if method == "GET":
+        resp = await do_get(path)
+    elif method == "PATCH":
+        resp = await do_patch(path, {})
+    else:
+        resp = await do_put(path, {})
+
+    assert await resp.json() == {
+        "id": "requires_authorization",
+        "message": "Requires authorization"
+    }
+
+    assert resp.status == 401
