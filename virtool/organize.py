@@ -1,4 +1,5 @@
 import os
+import arrow
 
 import virtool.virus
 import virtool.virus_index
@@ -48,13 +49,19 @@ async def organize_samples(db):
         }
     })
 
-    async for sample in db.samples.find({}, ["_id"]):
+    async for sample in db.samples.find({}, ["_id", "created_at"]):
         analyses = await db.analyses.find({"sample.id": sample["_id"]}, ["ready", "algorithm"]).to_list(None)
 
         await db.samples.update_one({"_id": sample["_id"]}, {
             "$set": virtool.sample.calculate_algorithm_tags(analyses)
         })
 
+        if isinstance(sample["created_at"], str):
+            await db.samples.update_one({"_id": sample["_id"]}, {
+                "$set": {
+                    "created_at": arrow.get(sample["created_at"]).datetime
+                }
+            })
 
 async def organize_analyses(db):
     """
@@ -145,9 +152,24 @@ async def organize_viruses(db):
         "$unset": {
             "segments": "",
             "abbrevation": "",
-            "new": ""
+            "new": "",
+            "username": "",
+            "user_id": ""
         }
     })
+
+    async for document in db.viruses.find({"isolates.isolate_id": {"$exists": True}}, ["isolates"]):
+        for isolate in document["isolates"]:
+            try:
+                isolate["id"] = isolate["isolate_id"]
+            except KeyError:
+                pass
+
+        await db.viruses.update_one({"_id": document["_id"]}, {
+            "$set": {
+                "isolates": document["isolates"]
+            }
+        })
 
 
 def organize_sequences(database):
