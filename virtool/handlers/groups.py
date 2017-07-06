@@ -5,7 +5,7 @@ from pymongo import ReturnDocument
 import virtool.utils
 import virtool.user_groups
 from virtool.user_permissions import PERMISSIONS
-from virtool.handlers.utils import json_response, bad_request, not_found, protected, validation
+from virtool.handlers.utils import json_response, bad_request, no_content, not_found, protected, validation
 
 logger = logging.getLogger(__name__)
 
@@ -45,7 +45,7 @@ async def create(req):
     except pymongo.errors.DuplicateKeyError:
         return json_response({"message": "Group already exists"}, status=409)
 
-    return json_response(virtool.utils.base_processor(document))
+    return json_response(virtool.utils.base_processor(document), status=201)
 
 
 @protected("manage_users")
@@ -111,4 +111,4 @@ async def remove(req):
 
     await virtool.user_groups.update_member_users(db, group_id, remove=True)
 
-    return json_response({"removed": group_id})
+    return no_content()
