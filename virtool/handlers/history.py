@@ -1,7 +1,7 @@
 import virtool.utils
 import virtool.virus
 import virtool.virus_history
-from virtool.handlers.utils import json_response, not_found
+from virtool.handlers.utils import json_response, not_found, paginate
 
 
 async def find(req):
@@ -11,9 +11,16 @@ async def find(req):
     """
     db = req.app["db"]
 
-    documents = await db.history.find({}, virtool.virus_history.LIST_PROJECTION).to_list(length=15)
+    data = await paginate(
+        db.history,
+        {},
+        req.query,
+        "created_at",
+        projection=virtool.virus_history.LIST_PROJECTION,
+        reverse=True
+    )
 
-    return json_response([virtool.virus_history.processor(d) for d in documents])
+    return json_response(data)
 
 
 async def get(req):
