@@ -1,6 +1,43 @@
 from virtool.user import check_password
 
 
+class TestGet:
+
+    async def test(self, test_motor, do_get, create_user):
+        resp = await do_get("/api/account", authorize=True)
+
+        assert resp.status == 200
+
+        assert await resp.json() == {
+            "force_reset": False,
+            "groups": [],
+            "id": "test",
+            "last_password_change": "2015-10-06T20:00:00Z",
+            "permissions": {
+                "add_host": False,
+                "add_sample": False,
+                "add_virus": False,
+                "archive_job": False,
+                "cancel_job": False,
+                "manage_users": False,
+                "modify_hmm": False,
+                "modify_options": False,
+                "modify_virus": False,
+                "rebuild_index": False,
+                "remove_host": False,
+                "remove_job": False,
+                "remove_virus": False
+            },
+            "primary_group": "",
+            "settings": {
+                "quick_analyze_algorithm": "pathoscope_bowtie",
+                "show_ids": True,
+                "show_versions": True,
+                "skip_quick_analyze_dialog": True
+            }
+        }
+
+
 class TestGetSettings:
 
     async def test(self, do_get):

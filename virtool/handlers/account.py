@@ -44,9 +44,10 @@ async def get(req):
 
     document = await req.app["db"].users.find_one(user_id)
 
-    document["user_id"] = document.pop("_id")
+    for key in ["salt", "password", "invalidate_sessions"]:
+        document.pop(key, None)
 
-    return json_response(document)
+    return json_response(virtool.utils.base_processor(document))
 
 
 @protected()
