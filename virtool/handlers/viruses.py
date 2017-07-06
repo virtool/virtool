@@ -16,7 +16,7 @@ import virtool.virus_import
 import virtool.virus_history
 
 from virtool.handlers.utils import unpack_json_request, json_response, bad_request, not_found, invalid_input, \
-    protected, validation, compose_regex_query
+    protected, validation, compose_regex_query, paginate
 
 
 CREATE_SCHEMA = {
@@ -54,8 +54,6 @@ async def find(req):
     db = req.app["db"]
 
     term = req.query.get("term", None)
-    page = int(req.query.get("page", 1))
-    per_page = int(req.query.get("per_page", 15))
     modified = virtool.utils.to_bool(req.query.get("modified", False))
 
     db_query = dict()
@@ -66,34 +64,11 @@ async def find(req):
     if modified:
         db_query["modified"] = True
 
-    total_count = await db.viruses.count()
+    data = await paginate(db.viruses, db_query, req.query, "name", projection=virtool.virus.LIST_PROJECTION)
 
-    modified_count = await db.viruses.count({"modified": True})
+    data["modified_count"] = await db.viruses.count({"modified": True})
 
-    cursor = db.viruses.find(
-        db_query,
-        virtool.virus.LIST_PROJECTION,
-        sort=[("name", 1)]
-    )
-
-    found_count = await cursor.count()
-
-    page_count = int(math.ceil(found_count / per_page))
-
-    if page > 1:
-        cursor.skip((page - 1) * per_page)
-
-    documents = [virtool.utils.base_processor(d) for d in await cursor.to_list(length=per_page)]
-
-    return json_response({
-        "documents": documents,
-        "total_count": total_count,
-        "found_count": found_count,
-        "modified_count": modified_count,
-        "page_count": page_count,
-        "per_page": per_page,
-        "page": page
-    })
+    return json_response(data)
 
 
 async def get(req):
