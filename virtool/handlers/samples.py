@@ -6,7 +6,6 @@ from cerberus import Validator
 import virtool.file
 import virtool.utils
 import virtool.sample
-import virtool.analysis
 import virtool.sample_analysis
 from virtool.handlers.utils import unpack_json_request, json_response, bad_request, not_found, invalid_input, \
     invalid_query, compose_regex_query
@@ -214,7 +213,7 @@ async def update(req):
         "$set": v.document
     }, return_document=ReturnDocument.AFTER, projection=virtool.sample.LIST_PROJECTION)
 
-    processed = virtool.sample.processor(document)
+    processed = virtool.utils.base_processor(document)
 
     await req.app["dispatcher"].dispatch("sample", "update", processed)
 
@@ -286,9 +285,9 @@ async def find_analyses(req):
 
     sample_id = req.match_info["sample_id"]
 
-    documents = await db.analyses.find({"sample_id": sample_id}, virtool.analysis.LIST_PROJECTION).to_list(None)
+    documents = await db.analyses.find({"sample_id": sample_id}, virtool.sample_analysis.LIST_PROJECTION).to_list(None)
 
-    processed = [virtool.analysis.processor(doc) for doc in documents]
+    processed = [virtool.utils.base_processor(d) for d in documents]
 
     return json_response(processed, 200)
 

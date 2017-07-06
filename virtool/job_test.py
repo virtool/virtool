@@ -35,7 +35,7 @@ class TestTask(virtool.job.Job):
             print(out)
 
     def do_db_op(self):
-        self.db.job_test.insert({"message": self.message})
+        self.db.job_test.insert_one({"message": self.message})
 
     @staticmethod
     def pass_message(manager, message):
