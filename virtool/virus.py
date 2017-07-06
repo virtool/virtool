@@ -93,7 +93,9 @@ async def get_complete(db, virus_id):
 
     for isolate in joined["isolates"]:
         for sequence in isolate["sequences"]:
-            sequence["accession"] = sequence.pop("_id")
+            del sequence["virus_id"]
+            del sequence["isolate_id"]
+            sequence["id"] = sequence.pop("_id")
 
     most_recent_change = await virtool.virus_history.get_most_recent_change(db, virus_id)
 
@@ -288,7 +290,7 @@ def merge_virus(virus, sequences):
 
     """
     for isolate in virus["isolates"]:
-        isolate["sequences"] = [sequence for sequence in sequences if sequence["isolate_id"] == isolate["isolate_id"]]
+        isolate["sequences"] = [s for s in sequences if s["isolate_id"] == isolate["id"]]
 
     return virus
 
