@@ -205,8 +205,8 @@ async def unpack_json_request(req):
     return req.app["db"], await req.json()
 
 
-async def paginate(collection, db_query, url_query, sort_by, projection=None, processor=virtool.utils.base_processor):
-    print(url_query)
+async def paginate(collection, db_query, url_query, sort_by, projection=None, processor=virtool.utils.base_processor,
+                   reverse=False):
 
     page = int(url_query.get("page", 1))
     per_page = int(url_query.get("per_page", 15))
@@ -216,7 +216,7 @@ async def paginate(collection, db_query, url_query, sort_by, projection=None, pr
     cursor = collection.find(
         db_query,
         projection,
-        sort=[(sort_by, 1)]
+        sort=[(sort_by, -1 if reverse else 1)]
     )
 
     found_count = await cursor.count()
