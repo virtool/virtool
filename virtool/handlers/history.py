@@ -37,7 +37,7 @@ async def get(req):
     if not document:
         return not_found()
 
-    return json_response(virtool.virus_history.processor(document))
+    return json_response(virtool.utils.base_processor(document))
 
 
 async def revert(req):
