@@ -16,7 +16,6 @@ MOST_RECENT_PROJECTION = [
 LIST_PROJECTION = [
     "_id",
     "description",
-    "annotation",
     "method_name",
     "created_at",
     "virus",
@@ -29,7 +28,7 @@ PROJECTION = LIST_PROJECTION + [
 ]
 
 
-async def add(db, method_name, old, new, description, annotation, user_id):
+async def add(db, method_name, old, new, description, user_id):
     """
     Add a change document to the history collection.
     
@@ -74,7 +73,6 @@ async def add(db, method_name, old, new, description, annotation, user_id):
         "_id": ".".join([str(virus_id), str(virus_version)]),
         "method_name": method_name,
         "description": description,
-        "annotation": annotation,
         "timestamp": virtool.utils.timestamp(),
         "virus": {
             "id": virus_id,

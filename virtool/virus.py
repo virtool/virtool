@@ -120,13 +120,18 @@ async def check_name_and_abbreviation(db, name=None, abbreviation=None):
     
     :param abbreviation: a virus abbreviation
     :type abbreviation: str
-     
-    :return: a message or ``False``
-    :rtype: str or bool
     
     """
-    unique_name = not (name and await db.viruses.find({"name": re.compile(name, re.IGNORECASE)}).count())
-    unique_abbreviation = not (abbreviation and await db.viruses.find({"abbreviation": abbreviation}).count())
+    # Check if the name already exists.
+    name_count = await db.viruses.find({"name": re.compile(name, re.IGNORECASE)}).count()
+
+    abbr_count = 0
+
+    if abbreviation:
+        abbr_count = await db.viruses.find({"abbreviation": abbreviation}).count()
+
+    unique_name = not name or not name_count
+    unique_abbreviation = not abbreviation or not abbr_count
 
     if not unique_name and not unique_abbreviation:
         return "Name and abbreviation already exist"
