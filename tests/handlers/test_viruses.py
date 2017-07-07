@@ -153,16 +153,23 @@ class TestGet:
 
 class TestCreate:
 
-    async def test(self, monkeypatch, test_db, do_post, test_add_history, test_dispatch):
+    @pytest.mark.parametrize("data,description,annotation", [
+        (
+            {"name": "Tobacco mosaic virus", "abbreviation": "TMV"},
+            "Created Tobacco mosaic virus (TMV)",
+            {"name": "Tobacco mosaic virus", "abbreviation": "TMV"}
+        ),
+        (
+            {"name": "Tobacco mosaic virus"},
+            "Created Tobacco mosaic virus",
+            {"name": "Tobacco mosaic virus", "abbreviation": ""}
+        )
+    ])
+    async def test(self, data, description, annotation, monkeypatch, test_db, do_post, test_add_history, test_dispatch):
         """
         Test that a valid request results in the creation of a virus document and a ``201`` response.
          
         """
-        data = {
-            "name": "Tobacco mosaic virus",
-            "abbreviation": "TMV"
-        }
-
         async def get_fake_id(*args):
             return "test"
 
@@ -172,8 +179,10 @@ class TestCreate:
 
         assert resp.status == 201
 
+        expected_abbreviation = data.get("abbreviation", "") or ""
+
         assert await resp.json() == {
-            "abbreviation": "TMV",
+            "abbreviation": expected_abbreviation,
             "isolates": [],
             "last_indexed_version": None,
             "modified": True,
@@ -190,7 +199,7 @@ class TestCreate:
             "isolates": [],
             "last_indexed_version": None,
             "modified": True,
-            "abbreviation": "TMV",
+            "abbreviation": expected_abbreviation,
             "version": 0
         }
 
@@ -200,18 +209,15 @@ class TestCreate:
             {
                 "isolates": [],
                 "name": "Tobacco mosaic virus",
+                "abbreviation": expected_abbreviation,
                 "lower_name": "tobacco mosaic virus",
                 "_id": "test",
                 "version": 0,
                 "modified": True,
-                "abbreviation": "TMV",
                 "last_indexed_version": None
             },
-            (
-                "Created virus ",
-                "Tobacco mosaic virus",
-                "test"
-            ),
+            description,
+            annotation,
             "test"
         )
 
@@ -219,7 +225,7 @@ class TestCreate:
             "viruses",
             "update",
             {
-                "abbreviation": "TMV",
+                "abbreviation": expected_abbreviation,
                 "modified": True,
                 "version": 0,
                 "name": "Tobacco mosaic virus",

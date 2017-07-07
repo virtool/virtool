@@ -77,8 +77,8 @@ async def get(req):
 
 @protected("modify_virus")
 @validation({
-    "name": {"type": "string", "required": True},
-    "abbreviation": {"type": "string"}
+    "name": {"type": "string", "required": True, "min": 1},
+    "abbreviation": {"type": "string", "min": 1}
 })
 async def create(req):
     """
@@ -88,19 +88,21 @@ async def create(req):
     """
     db, data = req.app["db"], req["data"]
 
-    abbreviation = data.get("abbreviation", None)
+    # Abbreviation defaults to empty string if not provided.
+    abbreviation = data.get("abbreviation", "")
 
+    # Check if either the name or abbreviation are already in use. Send a ``409`` to the client if there is a conflict.
     message = await virtool.virus.check_name_and_abbreviation(db, data["name"], abbreviation)
-
-    print(message)
 
     if message:
         return json_response({"message": message},  status=409)
 
     virus_id = await virtool.utils.get_new_id(db.viruses)
 
+    # Start building a virus document.
     data.update({
         "_id": virus_id,
+        "abbreviation": abbreviation,
         "last_indexed_version": None,
         "modified": True,
         "lower_name": data["name"].lower(),
@@ -108,18 +110,16 @@ async def create(req):
         "version": 0
     })
 
+    # Insert the virus document.
     await db.viruses.insert_one(data)
 
+    # Join the virus document into a complete virus record. This will be used for recording history.
     joined = await virtool.virus.join(db, virus_id, data)
 
+    # Build a ``description`` field for the virus creation change document.
     description = "Created {}".format(data["name"])
-    annotation = {
-        "name": data["name"],
-        "abbreviation": abbreviation
-    }
 
-    print(description)
-
+    # Add the abbreviation to the description if there is one.
     if abbreviation:
         description += " ({})".format(abbreviation)
 
@@ -129,7 +129,6 @@ async def create(req):
         None,
         joined,
         description,
-        annotation,
         req["session"].user_id
     )
 
@@ -159,6 +158,7 @@ async def edit(req):
 
     virus_id = req.match_info["virus_id"]
 
+    # Get existing complete virus record, at the same time ensuring it exists. Send a ``404`` if not.
     old = await virtool.virus.join(db, virus_id)
 
     if not old:
@@ -166,20 +166,24 @@ async def edit(req):
 
     name_change, abbreviation_change = data.get("name", None), data.get("abbreviation", None)
 
-    message = await virtool.virus.check_name_and_abbreviation(
-        db,
-        name_change,
-        abbreviation_change
-    )
+    # Sent back ``200`` with the existing virus record if no change will be made.
+    if not name_change and not abbreviation_change:
+        return json_response(await virtool.virus.get_complete(db, virus_id))
+
+    # Update the ``modified`` field in the virus document now, because we are definitely going to modify the virus.
+    data["modified"] = True
+
+    # Make sure new name and/or abbreviation are not already in use.
+    message = await virtool.virus.check_name_and_abbreviation(db, name_change, abbreviation_change)
 
     if message:
         return json_response({"message": message}, status=409)
 
+    # If the name is changing, update the ``lower_name`` field in the virus document.
     if name_change:
         data["lower_name"] = data["name"].lower()
 
-    data["modified"] = True
-
+    # Update the database collection.
     document = await db.viruses.find_one_and_update({"_id": virus_id}, {
         "$set": data,
         "$inc": {
@@ -187,28 +191,25 @@ async def edit(req):
         }
     }, return_document=ReturnDocument.AFTER)
 
+    # Get a joined version of the new document for recording history.
     new = await virtool.virus.join(db, virus_id, document)
 
     description = None
-    annotation = None
 
     if name_change:
         description = "Changed name to {}".format(new["name"])
-        annotation = {
-            "name": new["name"],
-            "abbreviation": None
-        }
 
         if abbreviation_change:
-            description += " and abbreviation to {}".format(new["abbreviation"])
-            annotation["abbreviation"] = new["abbreviation"]
+            if abbreviation_change == "":
+                description += " and removed abbreviation {}".format(new["abbreviation"])
+            else:
+                description += " and removed abbreviation {}".format(new["abbreviation"])
 
     elif abbreviation_change:
-        description = "Changed abbreviation to {}".format(new["abbreviation"])
-        annotation = {
-            "name": None,
-            "abbreviation": new["abbreviation"]
-        }
+        if abbreviation_change == "":
+            description += "Removed abbreviation {}".format(new["abbreviation"])
+        else:
+            description = "Changed abbreviation to {}".format(new["abbreviation"])
 
     await virtool.virus_history.add(
         db,
@@ -216,7 +217,6 @@ async def edit(req):
         old,
         new,
         description,
-        annotation,
         req["session"].user_id
     )
 
@@ -346,13 +346,9 @@ async def remove(req):
     await db.viruses.delete_one({"_id": virus_id})
 
     description = "Removed {}".format(joined["name"])
-    annotation = {
-        "name": joined["name"]
-    }
 
     if joined["abbreviation"]:
         description += " ({})".format(joined["abbreviation"]),
-        annotation["abbreviation"] = joined["abbreviation"]
 
     await virtool.virus_history.add(
         db,
@@ -360,7 +356,6 @@ async def remove(req):
         joined,
         None,
         description,
-        annotation,
         req["session"].user_id
     )
 
@@ -478,11 +473,6 @@ async def add_isolate(req):
     isolate_name = virtool.virus.format_isolate_name(data)
 
     description = "Added isolate {}".format(isolate_name)
-    annotation = {
-        "id": isolate_id,
-        "name": isolate_name,
-        "default": will_be_default
-    }
 
     if will_be_default:
         description += " as default"
@@ -493,7 +483,6 @@ async def add_isolate(req):
         old,
         new,
         description,
-        annotation,
         req["session"].user_id
     )
 
