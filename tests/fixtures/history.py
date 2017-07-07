@@ -12,19 +12,20 @@ def test_change():
     return {
         "_id": "6116cba1.1",
         "description": ["Edited virus", "Prunus virus E"],
-        "diff": [
-            ["change", "abbreviation", ["PVF", ""]],
-            ["change", "name", ["Prunus virus F", "Prunus virus E"]],
-            ["change", "version", [0, 1]]
-        ],
-        "index_id": "unbuilt",
-        "index_version": "unbuilt",
+        "index": {
+            "id": "unbuilt",
+            "version": "unbuilt"
+        },
         "method_name": "edit",
-        "timestamp": datetime.datetime(2017, 10, 6, 20, 0, 0),
-        "user_id": "test",
-        "virus_id": "6116cba1",
-        "virus_name": "Prunus virus F",
-        "virus_version": 1
+        "created_at": "2017-10-06T20:00:00Z",
+        "user": {
+            "id": "test"
+        },
+        "virus": {
+            "id": "6116cba1",
+            "name": "Prunus virus F",
+            "version": 1
+        }
     }
 
 
