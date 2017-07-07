@@ -217,7 +217,6 @@ class TestCreate:
                 "last_indexed_version": None
             },
             description,
-            annotation,
             "test"
         )
 
