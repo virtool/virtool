@@ -1,6 +1,5 @@
 import json
 import gzip
-import math
 import pymongo
 import pymongo.errors
 import tempfile
@@ -15,20 +14,8 @@ import virtool.virus
 import virtool.virus_import
 import virtool.virus_history
 
-from virtool.handlers.utils import unpack_json_request, json_response, bad_request, not_found, invalid_input, \
-    protected, validation, compose_regex_query, paginate
-
-
-CREATE_SCHEMA = {
-    "name": {"type": "string", "required": True},
-    "abbreviation": {"type": "string"}
-}
-
-
-EDIT_SCHEMA = {
-    "name": {"type": "string"},
-    "abbreviation": {"type": "string"}
-}
+from virtool.handlers.utils import unpack_json_request, json_response, not_found, invalid_input, protected, validation,\
+    compose_regex_query, paginate
 
 
 CREATE_SEQUENCE_SCHEMA = {
@@ -48,7 +35,7 @@ EDIT_SEQUENCE_SCHEMA = {
 
 async def find(req):
     """
-    List truncated virus documents.
+    Find viruses.
 
     """
     db = req.app["db"]
@@ -89,7 +76,10 @@ async def get(req):
 
 
 @protected("modify_virus")
-@validation(CREATE_SCHEMA)
+@validation({
+    "name": {"type": "string", "required": True},
+    "abbreviation": {"type": "string"}
+})
 async def create(req):
     """
     Add a new virus to the collection. Checks to make sure the supplied virus name and abbreviation are not already in
@@ -98,7 +88,11 @@ async def create(req):
     """
     db, data = req.app["db"], req["data"]
 
-    message = await virtool.virus.check_name_and_abbreviation(db, data["name"], data.get("abbreviation", None))
+    abbreviation = data.get("abbreviation", None)
+
+    message = await virtool.virus.check_name_and_abbreviation(db, data["name"], abbreviation)
+
+    print(message)
 
     if message:
         return json_response({"message": message},  status=409)
@@ -118,12 +112,24 @@ async def create(req):
 
     joined = await virtool.virus.join(db, virus_id, data)
 
+    description = "Created {}".format(data["name"])
+    annotation = {
+        "name": data["name"],
+        "abbreviation": abbreviation
+    }
+
+    print(description)
+
+    if abbreviation:
+        description += " ({})".format(abbreviation)
+
     await virtool.virus_history.add(
         db,
         "create",
         None,
         joined,
-        ("Created virus ", data["name"], virus_id),
+        description,
+        annotation,
         req["session"].user_id
     )
 
@@ -139,7 +145,10 @@ async def create(req):
 
 
 @protected("modify_virus")
-@validation(EDIT_SCHEMA)
+@validation({
+    "name": {"type": "string"},
+    "abbreviation": {"type": "string"}
+})
 async def edit(req):
     """
     Edit an existing new virus. Checks to make sure the supplied virus name and abbreviation are not already in use in
@@ -181,13 +190,25 @@ async def edit(req):
     new = await virtool.virus.join(db, virus_id, document)
 
     description = None
+    annotation = None
 
-    if name_change and abbreviation_change:
-        description = ("Changed name and abbreviation to", new["name"], new["abbreviation"])
-    elif name_change:
-        description = ("Changed name to", new["name"])
+    if name_change:
+        description = "Changed name to {}".format(new["name"])
+        annotation = {
+            "name": new["name"],
+            "abbreviation": None
+        }
+
+        if abbreviation_change:
+            description += " and abbreviation to {}".format(new["abbreviation"])
+            annotation["abbreviation"] = new["abbreviation"]
+
     elif abbreviation_change:
-        description = ("Changed abbreviation to", new["abbreviation"])
+        description = "Changed abbreviation to {}".format(new["abbreviation"])
+        annotation = {
+            "name": None,
+            "abbreviation": new["abbreviation"]
+        }
 
     await virtool.virus_history.add(
         db,
@@ -195,6 +216,7 @@ async def edit(req):
         old,
         new,
         description,
+        annotation,
         req["session"].user_id
     )
 
@@ -285,7 +307,8 @@ async def verify(req):
         "verify",
         joined,
         new,
-        ("Verified",),
+        "Verified",
+        None,
         req["session"].user_id
     )
 
@@ -322,12 +345,22 @@ async def remove(req):
     # Remove the virus document itself.
     await db.viruses.delete_one({"_id": virus_id})
 
+    description = "Removed {}".format(joined["name"])
+    annotation = {
+        "name": joined["name"]
+    }
+
+    if joined["abbreviation"]:
+        description += " ({})".format(joined["abbreviation"]),
+        annotation["abbreviation"] = joined["abbreviation"]
+
     await virtool.virus_history.add(
         db,
         "remove",
         joined,
         None,
-        ("Removed virus", joined["name"], joined["_id"]),
+        description,
+        annotation,
         req["session"].user_id
     )
 
@@ -444,10 +477,15 @@ async def add_isolate(req):
 
     isolate_name = virtool.virus.format_isolate_name(data)
 
-    description = ("Added isolate", isolate_name, isolate_id)
+    description = "Added isolate {}".format(isolate_name)
+    annotation = {
+        "id": isolate_id,
+        "name": isolate_name,
+        "default": will_be_default
+    }
 
     if will_be_default:
-        description += tuple(("as default",))
+        description += " as default"
 
     await virtool.virus_history.add(
         db,
@@ -455,6 +493,7 @@ async def add_isolate(req):
         old,
         new,
         description,
+        annotation,
         req["session"].user_id
     )
 
@@ -472,20 +511,13 @@ async def edit_isolate(req):
     """
     db, data = await unpack_json_request(req)
 
-    if not data:
-        return bad_request("Empty input")
-
     v = Validator({
         "source_type": {"type": "string"},
-        "source_name": {"type": "string"},
-        "default": {"type": "boolean", "allowed": [True]}
+        "source_name": {"type": "string"}
     })
 
     if not v(data):
         return invalid_input(v.errors)
-
-    if (data.get("source_type", None) or data.get("source_name", None)) and data.get("default", None):
-        return bad_request("Can only edit one of 'source_type' and 'source_name' or 'default' at a time")
 
     data = v.document
 
@@ -503,11 +535,6 @@ async def edit_isolate(req):
 
     isolates = deepcopy(document["isolates"])
 
-    # Set ``default`` to ``False`` for all existing isolates if the new one should be default.
-    if data.get("default", False):
-        for isolate in isolates:
-            isolate["default"] = False
-
     isolate = virtool.virus.find_isolate(isolates, isolate_id)
 
     old_isolate_name = virtool.virus.format_isolate_name(isolate)
@@ -516,7 +543,7 @@ async def edit_isolate(req):
 
     old = await virtool.virus.join(db, virus_id)
 
-    # Push the new isolate to the database.
+    # Replace the isolates list with the update one.
     document = await db.viruses.find_one_and_update({"_id": virus_id}, {
         "$set": {
             "isolates": isolates,
@@ -532,24 +559,78 @@ async def edit_isolate(req):
 
     isolate_name = virtool.virus.format_isolate_name(isolate)
 
-    if "source_type" in data or "source_name" in data:
-        description = ("Renamed", old_isolate_name, "to", isolate_name, isolate_id)
-    else:
-        description = ("Set", isolate_name, isolate_id, "as default")
-
     # Use the old and new entry to add a new history document for the change.
     await virtool.virus_history.add(
         db,
         "edit_isolate",
         old,
         new,
-        description,
+        "Renamed isolate {} to {}".format(old_isolate_name, isolate_name),
+        {
+            "id": isolate_id,
+            "name": isolate_name
+        },
         req["session"].user_id
     )
 
     await virtool.virus.dispatch_version_only(req, new)
 
     return json_response(isolate, status=200)
+
+
+@protected("modify_virus")
+async def set_default(req):
+    """
+    Set an isolate as default.
+
+    """
+    db, data = await unpack_json_request(req)
+
+    virus_id = req.match_info["virus_id"]
+    isolate_id = req.match_info["isolate_id"]
+
+    document = await db.viruses.find_one(virus_id)
+
+    isolates = deepcopy(document["isolates"])
+
+    # Set ``default`` to ``False`` for all existing isolates if the new one should be default.
+    if data.get("default", False):
+        for isolate in isolates:
+            isolate["default"] = False
+
+    isolate = virtool.virus.find_isolate(isolates, isolate_id)
+
+    isolate_name = virtool.virus.format_isolate_name(isolate)
+
+    old = await virtool.virus.join(db, virus_id)
+
+    # Replace the isolates list with the update one.
+    document = await db.viruses.find_one_and_update({"_id": virus_id}, {
+        "$set": {
+            "isolates": isolates,
+            "modified": True
+        },
+        "$inc": {
+            "version": 1
+        }
+    }, return_document=ReturnDocument.AFTER)
+
+    # Get the joined entry now that it has been updated.
+    new = await virtool.virus.join(db, virus_id, document)
+
+    # Use the old and new entry to add a new history document for the change.
+    await virtool.virus_history.add(
+        db,
+        "set_default",
+        old,
+        new,
+        "Set isolate {} as default".format(isolate_name),
+        {
+            "id": isolate_id,
+            "name": isolate_name
+        },
+        req["session"].user_id
+    )
 
 
 @protected("modify_virus")
