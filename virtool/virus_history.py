@@ -1,22 +1,22 @@
-import pymongo
 import dictdiffer
 from copy import deepcopy
 
 import virtool.utils
 
 
-VIRUS_PROJECTION = [
+MOST_RECENT_PROJECTION = [
     "_id",
     "description",
     "method_name",
-    "user_id",
-    "virus_version",
+    "user",
+    "virus",
     "timestamp",
 ]
 
 LIST_PROJECTION = [
     "_id",
     "description",
+    "annotation",
     "method_name",
     "created_at",
     "virus",
@@ -29,7 +29,7 @@ PROJECTION = LIST_PROJECTION + [
 ]
 
 
-async def add(db, method_name, old, new, description, user_id):
+async def add(db, method_name, old, new, description, annotation, user_id):
     """
     Add a change document to the history collection.
     
@@ -74,13 +74,20 @@ async def add(db, method_name, old, new, description, user_id):
         "_id": ".".join([str(virus_id), str(virus_version)]),
         "method_name": method_name,
         "description": description,
+        "annotation": annotation,
         "timestamp": virtool.utils.timestamp(),
-        "virus_id": virus_id,
-        "virus_name": virus_name,
-        "virus_version": virus_version,
-        "user_id": user_id,
-        "index_id": "unbuilt",
-        "index_version": "unbuilt"
+        "virus": {
+            "id": virus_id,
+            "name": virus_name,
+            "version": virus_version
+        },
+        "index": {
+            "id": "unbuilt",
+            "version": "unbuilt"
+        },
+        "user": {
+            "id": user_id
+        }
     }
 
     if method_name == "create":
@@ -131,7 +138,7 @@ async def get_most_recent_change(db, virus_id):
     return await db.history.find_one({
         "virus_id": virus_id,
         "index_id": "unbuilt"
-    }, VIRUS_PROJECTION, sort=[("_id", pymongo.DESCENDING)])
+    }, MOST_RECENT_PROJECTION, sort=[("created_at", -1)])
 
 
 async def patch_virus_to_version(db, joined_virus, version, inclusive=False):
@@ -165,7 +172,7 @@ async def patch_virus_to_version(db, joined_virus, version, inclusive=False):
     comparator = get_version_comparator(inclusive)
 
     # Sort the changes by descending timestamp.
-    async for change in db.history.find({"virus_id": joined_virus["_id"]}, sort=[("_id", pymongo.DESCENDING)]):
+    async for change in db.history.find({"virus_id": joined_virus["_id"]}, sort=[("created_at", -1)]):
         if change["virus_version"] == "removed" or comparator(change, version):
             reverted_history_ids.append(change["_id"])
 
