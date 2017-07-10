@@ -329,7 +329,6 @@ async def verify(req):
         joined,
         new,
         "Verified",
-        None,
         req["session"].user_id
     )
 
@@ -369,7 +368,7 @@ async def remove(req):
     description = "Removed {}".format(joined["name"])
 
     if joined["abbreviation"]:
-        description += " ({})".format(joined["abbreviation"]),
+        description += " ({})".format(joined["abbreviation"])
 
     await virtool.virus_history.add(
         db,
@@ -383,7 +382,7 @@ async def remove(req):
     await req.app["dispatcher"].dispatch(
         "viruses",
         "remove",
-        {"id": virus_id}
+        [virus_id]
     )
 
     return web.Response(status=204)
