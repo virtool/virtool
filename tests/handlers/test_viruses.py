@@ -1753,8 +1753,6 @@ class TestListSequences:
 
         assert resp.status == 200
 
-        test_sequence["accession"] = test_sequence.pop("_id")
-
         assert await resp.json() == [{
             "id": "KX269872",
             "definition": "Prunus virus F isolate 8816-s2 segment RNA2 polyprotein 2 gene, complete cds.",
@@ -1767,6 +1765,10 @@ class TestListSequences:
         "/api/viruses/foobar/isolates/cab8b360/sequences"
     ])
     async def test_not_found(self, url, do_get):
+        """
+        Test that ``404`` is returned when the isolate id or sequence id do not exist.
+
+        """
         resp = await do_get(url)
 
         assert resp.status == 404
@@ -1812,7 +1814,7 @@ class TestCreateSequence:
         test_db.viruses.insert(test_virus)
 
         data = {
-            "accession": "FOOBAR",
+            "id": "foobar",
             "host": "Plant",
             "sequence": "ATGCGTGTACTG",
             "definition": "A made up sequence"
@@ -1833,21 +1835,13 @@ class TestCreateSequence:
         assert resp.status == 200
 
         assert await resp.json() == {
-            "id": "FOOBAR",
+            "id": "foobar",
             "definition": "A made up sequence",
             "virus_id": "6116cba1",
             "isolate_id": "cab8b360",
             "host": "Plant",
             "sequence": "ATGCGTGTACTG"
         }
-
-        description = (
-            "Created new sequence",
-            "FOOBAR",
-            "in isolate",
-            "Isolate 8816-v2",
-            "cab8b360"
-        )
 
         old = {
             "_id": "6116cba1",
@@ -1872,7 +1866,7 @@ class TestCreateSequence:
         new = deepcopy(old)
 
         new["isolates"][0]["sequences"] = [{
-            "_id": "FOOBAR",
+            "_id": "foobar",
             "definition": "A made up sequence",
             "virus_id": "6116cba1",
             "isolate_id": "cab8b360",
@@ -1889,7 +1883,7 @@ class TestCreateSequence:
             "create_sequence",
             old,
             new,
-            description,
+            "Created new sequence foobar in Isolate 8816-v2",
             "test"
         )
 
@@ -1910,7 +1904,7 @@ class TestCreateSequence:
         test_db.sequences.insert(test_sequence)
 
         data = {
-            "accession": "KX269872",
+            "id": "KX269872",
             "sequence": "ATGCGTGTACTG",
             "definition": "An already existing sequence"
         }
@@ -1925,7 +1919,7 @@ class TestCreateSequence:
         assert resp.status == 409
 
         assert await resp.json() == {
-            "message": "Accession already exists"
+            "message": "Sequence id already exists"
         }
 
     async def test_invalid_input(self, do_post):
@@ -1934,7 +1928,7 @@ class TestCreateSequence:
          
         """
         data = {
-            "accession": 2016,
+            "id": 2016,
             "seq": "ATGCGTGTACTG",
             "definition": "A made up sequence"
         }
@@ -1952,7 +1946,7 @@ class TestCreateSequence:
             "id": "invalid_input",
             "message": "Invalid input",
             "errors": {
-                "accession": ["must be of string type"],
+                "id": ["must be of string type"],
                 "sequence": ["required field"],
                 "seq": ["unknown field"]
             }
@@ -1969,7 +1963,7 @@ class TestCreateSequence:
          
         """
         data = {
-            "accession": "FOOBAR",
+            "id": "FOOBAR",
             "host": "Plant",
             "sequence": "ATGCGTGTACTG",
             "definition": "A made up sequence"

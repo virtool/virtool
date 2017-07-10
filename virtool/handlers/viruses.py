@@ -767,7 +767,12 @@ async def get_sequence(req):
 
 
 @protected("modify_virus")
-@validation(CREATE_SEQUENCE_SCHEMA)
+@validation({
+    "id": {"type": "string", "required": True},
+    "definition": {"type": "string", "required": True},
+    "host": {"type": "string"},
+    "sequence": {"type": "string", "required": True}
+})
 async def create_sequence(req):
     """
     Create a new sequence record for the given isolate.
@@ -780,7 +785,7 @@ async def create_sequence(req):
 
     # Update POST data to make sequence document.
     data.update({
-        "_id": data.pop("accession"),
+        "_id": data.pop("id"),
         "virus_id": virus_id,
         "isolate_id": isolate_id,
         "host": data.get("host", "")
@@ -797,7 +802,7 @@ async def create_sequence(req):
     try:
         await db.sequences.insert_one(data)
     except pymongo.errors.DuplicateKeyError:
-        return json_response({"message": "Accession already exists"}, status=409)
+        return json_response({"message": "Sequence id already exists"}, status=409)
 
     document = await db.viruses.find_one_and_update({"_id": virus_id}, {
         "$set": {
@@ -817,7 +822,7 @@ async def create_sequence(req):
         "create_sequence",
         old,
         new,
-        ("Created new sequence", data["_id"], "in isolate", virtool.virus.format_isolate_name(isolate), isolate_id),
+        "Created new sequence {} in {}".format(data["_id"], virtool.virus.format_isolate_name(isolate)),
         req["session"].user_id
     )
 
