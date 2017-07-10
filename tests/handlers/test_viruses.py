@@ -468,11 +468,20 @@ class TestEdit:
         Test that the request fails with ``409 Conflict`` if the requested virus name already exists.
 
         """
-        test_db.viruses.insert_one({
-            "_id": "test",
-            "name": "Tobacco mosaic virus",
-            "isolates": []
-        })
+        test_db.viruses.insert_many([
+            {
+                "_id": "test",
+                "name": "Prunus virus F",
+                "lower_name": "prunus virus f",
+                "isolates": []
+            },
+            {
+                "_id": "conflict",
+                "name": "Tobacco mosaic virus",
+                "lower_name": "tobacco mosaic virus",
+                "isolates": []
+            }
+        ])
 
         data = {
             "name": "Tobacco mosaic virus",
@@ -492,11 +501,22 @@ class TestEdit:
         Test that the request fails with ``409 Conflict`` if the requested abbreviation already exists.
 
         """
-        test_db.viruses.insert_one({
-            "_id": "test",
-            "abbreviation": "TMV",
-            "isolates": []
-        })
+        test_db.viruses.insert_many([
+            {
+                "_id": "test",
+                "name": "Prunus virus F",
+                "lower_name": "prunus virus f",
+                "abbreviation": "PVF",
+                "isolates": []
+            },
+            {
+                "_id": "conflict",
+                "name": "Tobacco mosaic virus",
+                "lower_name": "tobacco mosaic virus",
+                "abbreviation": "TMV",
+                "isolates": []
+            }
+        ])
 
         data = {
             "abbreviation": "TMV"
@@ -515,12 +535,22 @@ class TestEdit:
         Test that the request fails with ``409 Conflict`` if the requested name and abbreviation already exist.
 
         """
-        test_db.viruses.insert_one({
-            "_id": "test",
-            "name": "Tobacco mosaic virus",
-            "abbreviation": "TMV",
-            "isolates": []
-        })
+        test_db.viruses.insert_many([
+            {
+                "_id": "test",
+                "name": "Prunus virus F",
+                "lower_name": "prunus virus f",
+                "abbreviation": "PVF",
+                "isolates": []
+            },
+            {
+                "_id": "conflict",
+                "name": "Tobacco mosaic virus",
+                "lower_name": "tobacco mosaic virus",
+                "abbreviation": "TMV",
+                "isolates": []
+            }
+        ])
 
         data = {
             "name": "Tobacco mosaic virus",
