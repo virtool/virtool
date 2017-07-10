@@ -520,6 +520,9 @@ async def edit_isolate(req):
     """
     db, data = await unpack_json_request(req)
 
+    if not len(data):
+        return bad_request("Empty input")
+
     v = Validator({
         "source_type": {"type": "string"},
         "source_name": {"type": "string"}
@@ -574,11 +577,7 @@ async def edit_isolate(req):
         "edit_isolate",
         old,
         new,
-        "Renamed isolate {} to {}".format(old_isolate_name, isolate_name),
-        {
-            "id": isolate_id,
-            "name": isolate_name
-        },
+        "Renamed {} to {}".format(old_isolate_name, isolate_name),
         req["session"].user_id
     )
 
