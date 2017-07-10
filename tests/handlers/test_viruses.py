@@ -284,27 +284,78 @@ class TestCreate:
 
 class TestEdit:
 
-    @pytest.mark.parametrize("data, description", [
-        (
-            {"name": "Tobacco mosaic virus", "abbreviation": "TMV"},
-            ("Changed name and abbreviation to", "Tobacco mosaic virus", "TMV")
-        ),
+    @pytest.mark.parametrize("data, existing_abbreviation, description", [
+        # Name, ONLY.
         (
             {"name": "Tobacco mosaic virus"},
-            ("Changed name to", "Tobacco mosaic virus")
+            "TMV",
+            "Changed name to Tobacco mosaic virus"
         ),
+        # Name and abbreviation, BOTH CHANGE.
+        (
+            {"name": "Tobacco mosaic virus", "abbreviation": "TMV"},
+            "PVF",
+            "Changed name to Tobacco mosaic virus and abbreviation to TMV"
+        ),
+        # Name and abbreviation, NO NAME CHANGE because old is same as new.
+        (
+            {"name": "Prunus virus F", "abbreviation": "TMV"},
+            "PVF",
+            "Changed abbreviation to TMV"
+        ),
+        # Name and abbreviation, NO ABBR CHANGE because old is same as new.
+        (
+            {"name": "Tobacco mosaic virus", "abbreviation": "TMV"},
+            "TMV",
+            "Changed name to Tobacco mosaic virus"
+        ),
+        # Name and abbreviation, ABBR REMOVED because old is "TMV" and new is "".
+        (
+            {"name": "Tobacco mosaic virus", "abbreviation": ""},
+            "TMV",
+            "Changed name to Tobacco mosaic virus and removed abbreviation TMV"
+        ),
+        # Name and abbreviation, ABBR ADDED because old is "" and new is "TMV".
+        (
+            {"name": "Tobacco mosaic virus", "abbreviation": "TMV"},
+            "",
+            "Changed name to Tobacco mosaic virus and added abbreviation TMV"
+        ),
+        # Abbreviation, ONLY.
         (
             {"abbreviation": "TMV"},
-            ("Changed abbreviation to", "TMV")
+            "PVF",
+            "Changed abbreviation to TMV"
+        ),
+        # Abbreviation, ONLY because old name is same as new.
+        (
+            {"name": "Prunus virus F", "abbreviation": "TMV"},
+            "PVF",
+            "Changed abbreviation to TMV"
+        ),
+        # Abbreviation, ADDED.
+        (
+            {"abbreviation": "TMV"},
+            "",
+            "Added abbreviation TMV"
+        ),
+        # Abbreviation, REMOVED.
+        (
+            {"abbreviation": ""},
+            "TMV",
+            "Removed abbreviation TMV"
         )
     ])
-    async def test(self, data, description, test_db, do_patch, test_virus, test_add_history, test_dispatch):
+    async def test(self, data, existing_abbreviation, description, test_db, do_patch, test_virus, test_add_history,
+                   test_dispatch):
         """
         Test that changing the name and abbreviation results in changes to the virus document and a new change
         document in history. The that change both fields or one or the other results in the correct changes and
         history record.
 
         """
+        test_virus["abbreviation"] = existing_abbreviation
+
         test_db.viruses.insert_one(test_virus)
 
         resp = await do_patch("/api/viruses/6116cba1", data, authorize=True, permissions=["modify_virus"])
@@ -313,7 +364,7 @@ class TestEdit:
 
         expected = {
             "id": "6116cba1",
-            "abbreviation": "PVF",
+            "abbreviation": existing_abbreviation,
             "imported": True,
             "isolates": [
                 {
@@ -352,12 +403,16 @@ class TestEdit:
         expected_dispatch = {
             "id": "6116cba1",
             "name": "Prunus virus F",
-            "abbreviation": "PVF",
+            "abbreviation": existing_abbreviation,
             "modified": True,
             "version": 1
         }
 
         expected_dispatch.update(data)
+
+        import pprint
+
+        pprint.pprint(expected_dispatch)
 
         assert test_dispatch.stub.call_args[0] == (
             "viruses",
