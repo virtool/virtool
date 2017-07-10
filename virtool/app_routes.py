@@ -126,10 +126,10 @@ def setup_routes(app):
 
     app.router.add_get("/api/viruses/{virus_id}/isolates/{isolate_id}/sequences", viruses.list_sequences)
     app.router.add_post("/api/viruses/{virus_id}/isolates/{isolate_id}/sequences", viruses.create_sequence)
-    app.router.add_get("/api/viruses/{virus_id}/isolates/{isolate_id}/sequences/{accession}", viruses.get_sequence)
-    app.router.add_patch("/api/viruses/{virus_id}/isolates/{isolate_id}/sequences/{accession}", viruses.edit_sequence)
+    app.router.add_get("/api/viruses/{virus_id}/isolates/{isolate_id}/sequences/{sequence_id}", viruses.get_sequence)
+    app.router.add_patch("/api/viruses/{virus_id}/isolates/{isolate_id}/sequences/{sequence_id}", viruses.edit_sequence)
 
-    app.router.add_delete("/api/viruses/{virus_id}/isolates/{isolate_id}/sequences/{accession}",
+    app.router.add_delete("/api/viruses/{virus_id}/isolates/{isolate_id}/sequences/{sequence_id}",
                           viruses.remove_sequence)
 
     app.router.add_get("/api/viruses/{virus_id}/history", viruses.list_history)

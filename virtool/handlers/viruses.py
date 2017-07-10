@@ -756,9 +756,9 @@ async def get_sequence(req):
     """
     db = req.app["db"]
 
-    accession = req.match_info["accession"]
+    sequence_id = req.match_info["sequence_id"]
 
-    document = await db.sequences.find_one(accession, virtool.virus.SEQUENCE_PROJECTION)
+    document = await db.sequences.find_one(sequence_id, virtool.virus.SEQUENCE_PROJECTION)
 
     if not document:
         return not_found()
@@ -836,7 +836,10 @@ async def create_sequence(req):
 async def edit_sequence(req):
     db, data = req.app["db"], req["data"]
 
-    virus_id, isolate_id, accession = (req.match_info[key] for key in ["virus_id", "isolate_id", "accession"])
+    if not len(data):
+        return bad_request("Empty input")
+
+    virus_id, isolate_id, sequence_id = (req.match_info[key] for key in ["virus_id", "isolate_id", "sequence_id"])
 
     document = await db.viruses.find_one({"_id": virus_id, "isolates.id": isolate_id})
 
@@ -845,7 +848,7 @@ async def edit_sequence(req):
 
     old = await virtool.virus.join(db, virus_id, document)
 
-    new_sequence = await db.sequences.find_one_and_update({"_id": accession}, {
+    updated_sequence = await db.sequences.find_one_and_update({"_id": sequence_id}, {
         "$set": data
     }, return_document=ReturnDocument.AFTER)
 
