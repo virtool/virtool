@@ -169,22 +169,23 @@ async def edit(req):
     if name_change == old["name"]:
         name_change = None
 
-    if abbreviation_change == old["abbreviation"]:
+    old_abbreviation = old.get("abbreviation", "")
+
+    if abbreviation_change == old_abbreviation:
         abbreviation_change = None
 
     # Sent back ``200`` with the existing virus record if no change will be made.
     if name_change is None and abbreviation_change is None:
-        print("SKIPPING", (name_change, old["name"]), (abbreviation_change, old["abbreviation"]))
         return json_response(await virtool.virus.get_complete(db, virus_id))
-
-    # Update the ``modified`` field in the virus document now, because we are definitely going to modify the virus.
-    data["modified"] = True
 
     # Make sure new name and/or abbreviation are not already in use.
     message = await virtool.virus.check_name_and_abbreviation(db, name_change, abbreviation_change)
 
     if message:
         return json_response({"message": message}, status=409)
+
+    # Update the ``modified`` field in the virus document now, because we are definitely going to modify the virus.
+    data["modified"] = True
 
     # If the name is changing, update the ``lower_name`` field in the virus document.
     if name_change:
@@ -208,13 +209,13 @@ async def edit(req):
 
         if abbreviation_change is not None:
             # New abbreviation value is same as old
-            if abbreviation_change == old["abbreviation"]:
+            if abbreviation_change == old_abbreviation:
                 pass
             # Abbreviation is being removed.
-            elif abbreviation_change == "" and old["abbreviation"]:
+            elif abbreviation_change == "" and old_abbreviation:
                 description += " and removed abbreviation {}".format(old["abbreviation"])
             # Abbreviation is being added where one didn't exist before
-            elif abbreviation_change and not old["abbreviation"]:
+            elif abbreviation_change and not old_abbreviation:
                 description += " and added abbreviation {}".format(new["abbreviation"])
             # Abbreviation is being changed from one value to another.
             else:
@@ -223,9 +224,9 @@ async def edit(req):
     elif abbreviation_change is not None:
         # Abbreviation is being removed.
         if abbreviation_change == "" and old["abbreviation"]:
-            description = "Removed abbreviation {}".format(old["abbreviation"])
+            description = "Removed abbreviation {}".format(old_abbreviation)
         # Abbreviation is being added where one didn't exist before
-        elif abbreviation_change and not old["abbreviation"]:
+        elif abbreviation_change and not old.get("abbreviation", ""):
             description = "Added abbreviation {}".format(new["abbreviation"])
         # Abbreviation is being changed from one value to another.
         else:
