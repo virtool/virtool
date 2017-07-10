@@ -912,24 +912,6 @@ async def list_history(req):
     return json_response(documents)
 
 
-async def get_history(req):
-    db = req.app["db"]
-
-    virus_id = req.match_info["virus_id"]
-
-    if not await db.viruses.find({"_id": virus_id}).count():
-        return not_found("Virus not found")
-
-    documents = await db.history.find({"virus_id": virus_id}).to_list(None)
-
-    return json_response(documents)
-
-
-@protected("modify_virus")
-async def revert_history(req):
-    return not_found()
-
-
 @protected("modify_virus")
 async def upload(req):
     db = req.app["db"]
