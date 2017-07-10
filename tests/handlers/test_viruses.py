@@ -1,7 +1,9 @@
 import os
 import pytest
-
 from copy import deepcopy
+
+import virtool.virus
+
 
 FIXTURE_DIR = os.path.join(os.path.dirname(os.path.realpath(__file__)), "test_files")
 
@@ -410,10 +412,6 @@ class TestEdit:
 
         expected_dispatch.update(data)
 
-        import pprint
-
-        pprint.pprint(expected_dispatch)
-
         assert test_dispatch.stub.call_args[0] == (
             "viruses",
             "update",
@@ -653,7 +651,6 @@ class TestVerify:
                     "isolate_id": "cab8b360"
                 })
 
-
         assert test_add_history.call_args[0][1:] == (
             "verify",
             old,
@@ -882,13 +879,15 @@ class TestListIsolates:
                 "default": True,
                 "source_type": "isolate",
                 "source_name": "8816-v2",
-                "id": "cab8b360"
+                "id": "cab8b360",
+                "sequences": []
             },
             {
                 "default": False,
                 "source_type": "isolate",
                 "source_name": "7865",
-                "id": "bcb9b352"
+                "id": "bcb9b352",
+                "sequences": []
             }
         ]
 
@@ -923,10 +922,6 @@ class TestGetIsolate:
         test_sequence["id"] = test_sequence.pop("_id")
         del test_sequence["virus_id"]
         del test_sequence["isolate_id"]
-
-        import pprint
-
-        pprint.pprint(await resp.json())
 
         assert await resp.json() == {
             "default": True,
@@ -1142,10 +1137,10 @@ class TestAddIsolate:
         new = test_db.viruses.find_one("6116cba1")
 
         assert new["isolates"] == [{
-                "id": "test",
-                "default": True,
-                "source_type": "isolate",
-                "source_name": "b"
+            "id": "test",
+            "default": True,
+            "source_type": "isolate",
+            "source_name": "b"
         }]
 
         new["isolates"][0]["sequences"] = []
@@ -1312,7 +1307,7 @@ class TestEditIsolate:
 
         expected.update(data)
 
-        assert await resp.json() == expected
+        assert await resp.json() == dict(expected, sequences=[])
 
         new = test_db.viruses.find_one("6116cba1")
 
@@ -1375,10 +1370,13 @@ class TestEditIsolate:
             "id": "cab8b360",
             "default": True,
             "source_type": "variant",
-            "source_name": "8816-v2"
+            "source_name": "8816-v2",
+            "sequences": []
         }
 
         assert await resp.json() == expected
+
+        del expected["sequences"]
 
         assert test_db.viruses.find_one("6116cba1", ["isolates"])["isolates"] == [expected]
 
@@ -1413,9 +1411,9 @@ class TestEditIsolate:
 
 class TestSetAsDefault:
 
-    async def test_to_default(self, test_db, do_patch, test_virus, test_add_history, test_dispatch):
+    async def test(self, test_motor, do_put, test_virus, test_add_history, test_dispatch):
         """
-        Test that a change to the isolate name results in the correct changes, history, and response.
+        Test changing the default isolate results in the correct changes, history, and response.
 
         """
         test_virus["isolates"].append({
@@ -1425,37 +1423,41 @@ class TestSetAsDefault:
             "default": False
         })
 
-        test_db.viruses.insert_one(test_virus)
+        await test_motor.viruses.insert_one(test_virus)
 
-        data = {
-            "default": True
-        }
-
-        resp = await do_patch("/api/viruses/6116cba1/isolates/test", data, authorize=True, permissions=["modify_virus"])
+        resp = await do_put(
+            "/api/viruses/6116cba1/isolates/test/default",
+            {},
+            authorize=True,
+            permissions=["modify_virus"]
+        )
 
         assert resp.status == 200
 
         assert await resp.json() == {
-            "source_type": "isolate",
             "id": "test",
+            "source_type": "isolate",
             "source_name": "b",
-            "default": True
+            "default": True,
+            "sequences": []
         }
 
-        new = test_db.viruses.find_one("6116cba1")
+        new = await virtool.virus.join(test_motor, "6116cba1")
 
         assert new["isolates"] == [
             {
                 "id": "cab8b360",
                 "default": False,
                 "source_type": "isolate",
-                "source_name": "8816-v2"
+                "source_name": "8816-v2",
+                "sequences": []
             },
             {
                 "id": "test",
                 "source_name": "b",
                 "source_type": "isolate",
-                "default": True
+                "default": True,
+                "sequences": []
             }
         ]
 
@@ -1464,74 +1466,12 @@ class TestSetAsDefault:
                 isolate["sequences"] = []
 
         assert test_add_history.call_args[0][1:] == (
-            "edit_isolate",
+            "set_as_default",
             test_virus,
             new,
-            ("Set", "Isolate b", "test", "as default"),
+            "Set Isolate b as default",
             "test"
         )
-
-    async def test_unset_default(self, test_db, do_patch, test_virus, test_dispatch):
-        """
-        Test that attempting to set ``default`` to ``False`` for a default isolate results in a ``400`` response. The
-        appropriate way to change the default isolate is to set ``default`` to ``True`` on another isolate.
-
-        """
-        test_db.viruses.insert_one(test_virus)
-
-        data = {
-            "default": False
-        }
-
-        async def get_fake_id(*args):
-            return "test"
-
-        resp = await do_patch("/api/viruses/6116cba1/isolates/cab8b360", data, authorize=True,
-                              permissions=["modify_virus"])
-
-        assert resp.status == 422
-
-        assert await resp.json() == {
-            "id": "invalid_input",
-            "message": "Invalid input",
-            "errors": {
-                "default": ["unallowed value False"]
-            }
-        }
-
-        assert test_dispatch.stub.call_args is None
-
-    async def test_force_case(self, monkeypatch, test_db, do_patch, test_virus, test_dispatch):
-        """
-        Test that the ``source_type`` value is forced to lower case.
-
-        """
-        test_db.viruses.insert_one(test_virus)
-
-        data = {
-            "source_type": "Variant",
-        }
-
-        async def get_fake_id(*args):
-            return "test"
-
-        monkeypatch.setattr("virtool.virus.get_new_isolate_id", get_fake_id)
-
-        resp = await do_patch("/api/viruses/6116cba1/isolates/cab8b360", data, authorize=True,
-                              permissions=["modify_virus"])
-
-        assert resp.status == 200
-
-        expected = {
-            "id": "cab8b360",
-            "default": True,
-            "source_type": "variant",
-            "source_name": "8816-v2"
-        }
-
-        assert await resp.json() == expected
-
-        assert test_db.viruses.find_one("6116cba1", ["isolates"])["isolates"] == [expected]
 
         assert test_dispatch.stub.call_args[0] == (
             "viruses",
@@ -1545,21 +1485,60 @@ class TestSetAsDefault:
             }
         )
 
-    async def test_empty(self, do_patch, test_dispatch):
+    async def test_no_change(self, test_motor, do_put, test_virus, test_add_history, test_dispatch):
         """
-        Test that an empty data input results in a ``400`` response.
+        Test that a call resulting in no change (calling endpoint on an already default isolate) results in no change.
+        Specifically no increment in version and no dispatch.
 
         """
-        resp = await do_patch("/api/viruses/6116cba1/isolates/cab8b360", {}, authorize=True,
-                              permissions=["modify_virus"])
+        test_virus["isolates"].append({
+            "id": "test",
+            "source_name": "b",
+            "source_type": "isolate",
+            "default": False
+        })
 
-        assert resp.status == 400
+        await test_motor.viruses.insert_one(test_virus)
+
+        resp = await do_put(
+            "/api/viruses/6116cba1/isolates/cab8b360/default",
+            {},
+            authorize=True,
+            permissions=["modify_virus"]
+        )
+
+        assert resp.status == 200
 
         assert await resp.json() == {
-            "message": "Empty input"
+            "id": "cab8b360",
+            "default": True,
+            "source_type": "isolate",
+            "source_name": "8816-v2",
+            "sequences": []
         }
 
-        assert test_dispatch.stub.call_args is None
+        new = await virtool.virus.join(test_motor, "6116cba1")
+
+        assert new["isolates"] == [
+            {
+                "id": "cab8b360",
+                "default": True,
+                "source_type": "isolate",
+                "source_name": "8816-v2",
+                "sequences": []
+            },
+            {
+                "id": "test",
+                "source_name": "b",
+                "source_type": "isolate",
+                "default": False,
+                "sequences": []
+            }
+        ]
+
+        assert not test_add_history.called
+
+        assert not test_dispatch.stub.called
 
 
 class TestRemoveIsolate:
