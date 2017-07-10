@@ -1304,20 +1304,15 @@ class TestEditIsolate:
 
         test_db.viruses.insert_one(test_virus)
 
-        data = {
-            "source_type": "variant"
-        }
-
         resp = await do_patch("/api/viruses/6116cba1/isolates/test", data, authorize=True, permissions=["modify_virus"])
 
         assert resp.status == 200
 
-        assert await resp.json() == {
-            "source_type": "variant",
-            "id": "test",
-            "source_name": "b",
-            "default": False
-        }
+        expected = dict(test_virus["isolates"][1])
+
+        expected.update(data)
+
+        assert await resp.json() == expected
 
         new = test_db.viruses.find_one("6116cba1")
 
@@ -1328,12 +1323,7 @@ class TestEditIsolate:
                 "source_type": "isolate",
                 "source_name": "8816-v2"
             },
-            {
-                "id": "test",
-                "source_name": "b",
-                "source_type": "variant",
-                "default": False
-            }
+            expected
         ]
 
         for joined in (test_virus, new):
@@ -1344,7 +1334,7 @@ class TestEditIsolate:
             "edit_isolate",
             test_virus,
             new,
-            ("Renamed", "Isolate b", "to", "Variant b", "test"),
+            description,
             "test"
         )
 
@@ -1359,6 +1349,69 @@ class TestEditIsolate:
                 "version": 1
             }
         )
+
+    async def test_force_case(self, monkeypatch, test_db, do_patch, test_virus, test_dispatch, test_add_history):
+        """
+        Test that the ``source_type`` value is forced to lower case.
+
+        """
+        test_db.viruses.insert_one(test_virus)
+
+        data = {
+            "source_type": "Variant",
+        }
+
+        async def get_fake_id(*args):
+            return "test"
+
+        monkeypatch.setattr("virtool.virus.get_new_isolate_id", get_fake_id)
+
+        resp = await do_patch("/api/viruses/6116cba1/isolates/cab8b360", data, authorize=True,
+                              permissions=["modify_virus"])
+
+        assert resp.status == 200
+
+        expected = {
+            "id": "cab8b360",
+            "default": True,
+            "source_type": "variant",
+            "source_name": "8816-v2"
+        }
+
+        assert await resp.json() == expected
+
+        assert test_db.viruses.find_one("6116cba1", ["isolates"])["isolates"] == [expected]
+
+        assert test_dispatch.stub.call_args[0] == (
+            "viruses",
+            "update",
+            {
+                "id": "6116cba1",
+                "name": "Prunus virus F",
+                "abbreviation": "PVF",
+                "modified": True,
+                "version": 1
+            }
+        )
+
+    async def test_empty(self, do_patch, test_dispatch):
+        """
+        Test that an empty data input results in a ``400`` response.
+
+        """
+        resp = await do_patch("/api/viruses/6116cba1/isolates/cab8b360", {}, authorize=True,
+                              permissions=["modify_virus"])
+
+        assert resp.status == 400
+
+        assert await resp.json() == {
+            "message": "Empty input"
+        }
+
+        assert test_dispatch.stub.call_args is None
+
+
+class TestSetAsDefault:
 
     async def test_to_default(self, test_db, do_patch, test_virus, test_add_history, test_dispatch):
         """
