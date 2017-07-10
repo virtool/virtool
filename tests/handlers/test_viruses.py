@@ -1018,7 +1018,7 @@ class TestAddIsolate:
             "add_isolate",
             test_virus,
             new,
-            ("Added isolate", "Isolate b", "test", "as default"),
+            "Added isolate Isolate b as default",
             "test"
         )
 
@@ -1090,7 +1090,7 @@ class TestAddIsolate:
             "add_isolate",
             test_virus,
             new,
-            ("Added isolate", "Isolate b", "test"),
+            "Added isolate Isolate b",
             "test"
         )
 
@@ -1154,7 +1154,7 @@ class TestAddIsolate:
             "add_isolate",
             test_virus,
             new,
-            ("Added isolate", "Isolate b", "test", "as default"),
+            "Added isolate Isolate b as default",
             "test"
         )
 
@@ -1284,26 +1284,13 @@ class TestAddIsolate:
 
 class TestEditIsolate:
 
-    async def test_both(self, test_db, do_patch, test_virus, test_add_history, test_dispatch):
-        """
-        Test that an error is returned when an attempt is made to change the default field and source type and source
-        name in the same request.
-
-        """
-        data = {
-            "source_type": "variant",
-            "default": True
-        }
-
-        resp = await do_patch("/api/viruses/6116cba1/isolates/test", data, authorize=True, permissions=["modify_virus"])
-
-        assert resp.status == 400
-
-        assert await resp.json() == {
-            "message": "Can only edit one of 'source_type' and 'source_name' or 'default' at a time"
-        }
-
-    async def test_name(self, test_db, do_patch, test_virus, test_add_history, test_dispatch):
+    @pytest.mark.parametrize("data,description", [
+        ({"source_type": "variant"}, "Renamed Isolate b to Variant b"),
+        ({"source_type": "variant"}, "Renamed Isolate b to Variant b"),
+        ({"source_type": "variant", "source_name": "A"}, "Renamed Isolate b to Variant A"),
+        ({"source_name": "A"}, "Renamed Isolate b to Isolate A")
+    ])
+    async def test(self, data, description, test_db, do_patch, test_virus, test_add_history, test_dispatch):
         """
         Test that a change to the isolate name results in the correct changes, history, and response.
 
