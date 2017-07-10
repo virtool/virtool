@@ -18,14 +18,6 @@ from virtool.handlers.utils import unpack_json_request, json_response, not_found
     compose_regex_query, paginate, bad_request
 
 
-CREATE_SEQUENCE_SCHEMA = {
-    "accession": {"type": "string", "required": True},
-    "definition": {"type": "string", "required": True},
-    "host": {"type": "string"},
-    "sequence": {"type": "string", "required": True}
-}
-
-
 EDIT_SEQUENCE_SCHEMA = {
     "host": {"type": "string"},
     "definition": {"type": "string"},

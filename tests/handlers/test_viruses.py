@@ -1519,6 +1519,8 @@ class TestSetAsDefault:
 
         new = await virtool.virus.join(test_motor, "6116cba1")
 
+        assert new["version"] == 0
+
         assert new["isolates"] == [
             {
                 "id": "cab8b360",
@@ -1605,7 +1607,7 @@ class TestRemoveIsolate:
             "remove_isolate",
             old,
             new,
-            ("Removed isolate", "Isolate 8816-v2", "cab8b360"),
+            "Removed Isolate 8816-v2",
             "test"
         )
 
@@ -1708,7 +1710,7 @@ class TestRemoveIsolate:
             "remove_isolate",
             old,
             new,
-            ("Removed isolate", "Isolate 8816-v2", "cab8b360", "and set", "Isolate 7865", "bcb9b352", "as default"),
+            "Removed Isolate 8816-v2 and set Isolate 7865 as default",
             "test"
         )
 
