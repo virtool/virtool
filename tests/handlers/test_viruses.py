@@ -805,11 +805,17 @@ class TestVerify:
 
 class TestRemove:
 
-    async def test(self, test_db, do_delete, test_virus, test_add_history, test_dispatch):
+    @pytest.mark.parametrize("abbreviation,description", [
+        ("", "Removed Prunus virus F"),
+        ("PVF", "Removed Prunus virus F (PVF)")
+    ])
+    async def test(self, abbreviation, description, test_db, do_delete, test_virus, test_add_history, test_dispatch):
         """
         Test that an existing virus can be removed.        
          
         """
+        test_virus["abbreviation"] = abbreviation
+
         test_db.viruses.insert_one(test_virus)
 
         old = test_db.viruses.find_one("6116cba1")
@@ -828,14 +834,14 @@ class TestRemove:
             "remove",
             old,
             None,
-            ("Removed virus", old["name"], old["_id"]),
+            description,
             "test"
         )
 
         assert test_dispatch.stub.call_args[0] == (
             "viruses",
             "remove",
-            {"id": "6116cba1"}
+            ["6116cba1"]
         )
 
     async def test_does_not_exist(self, do_delete):
