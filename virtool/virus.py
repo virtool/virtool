@@ -122,8 +122,6 @@ async def check_name_and_abbreviation(db, name=None, abbreviation=None):
     :type abbreviation: str
     
     """
-    print(name, abbreviation)
-
     name_count = 0
 
     if name:

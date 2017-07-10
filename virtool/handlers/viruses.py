@@ -15,7 +15,7 @@ import virtool.virus_import
 import virtool.virus_history
 
 from virtool.handlers.utils import unpack_json_request, json_response, not_found, invalid_input, protected, validation,\
-    compose_regex_query, paginate
+    compose_regex_query, paginate, bad_request
 
 
 CREATE_SEQUENCE_SCHEMA = {
@@ -397,7 +397,7 @@ async def list_isolates(req):
 
     virus_id = req.match_info["virus_id"]
 
-    document = await db.viruses.find_one(virus_id, ["isolates"])
+    document = await virtool.virus.get_complete(db, virus_id)
 
     if not document:
         return not_found()
@@ -583,11 +583,15 @@ async def edit_isolate(req):
 
     await virtool.virus.dispatch_version_only(req, new)
 
-    return json_response(isolate, status=200)
+    complete = await virtool.virus.get_complete(db, virus_id)
+
+    for isolate in complete["isolates"]:
+        if isolate["id"] == isolate_id:
+            return json_response(isolate, status=200)
 
 
 @protected("modify_virus")
-async def set_default(req):
+async def set_as_default(req):
     """
     Set an isolate as default.
 
@@ -597,22 +601,30 @@ async def set_default(req):
     virus_id = req.match_info["virus_id"]
     isolate_id = req.match_info["isolate_id"]
 
-    document = await db.viruses.find_one(virus_id)
+    document = await db.viruses.find_one({"_id": virus_id, "isolates.id": isolate_id})
+
+    if not document:
+        return not_found()
 
     isolates = deepcopy(document["isolates"])
 
     # Set ``default`` to ``False`` for all existing isolates if the new one should be default.
-    if data.get("default", False):
-        for isolate in isolates:
-            isolate["default"] = False
+    for isolate in isolates:
+        isolate["default"] = False
 
     isolate = virtool.virus.find_isolate(isolates, isolate_id)
 
-    isolate_name = virtool.virus.format_isolate_name(isolate)
+    isolate["default"] = True
+
+    if isolates == document["isolates"]:
+        complete = await virtool.virus.get_complete(db, virus_id)
+        for isolate in complete["isolates"]:
+            if isolate["id"] == isolate_id:
+                return json_response(isolate)
 
     old = await virtool.virus.join(db, virus_id)
 
-    # Replace the isolates list with the update one.
+    # Replace the isolates list with the updated one.
     document = await db.viruses.find_one_and_update({"_id": virus_id}, {
         "$set": {
             "isolates": isolates,
@@ -626,19 +638,25 @@ async def set_default(req):
     # Get the joined entry now that it has been updated.
     new = await virtool.virus.join(db, virus_id, document)
 
+    isolate_name = virtool.virus.format_isolate_name(isolate)
+
     # Use the old and new entry to add a new history document for the change.
     await virtool.virus_history.add(
         db,
-        "set_default",
+        "set_as_default",
         old,
         new,
-        "Set isolate {} as default".format(isolate_name),
-        {
-            "id": isolate_id,
-            "name": isolate_name
-        },
+        "Set {} as default".format(isolate_name),
         req["session"].user_id
     )
+
+    await virtool.virus.dispatch_version_only(req, new)
+
+    complete = await virtool.virus.get_complete(db, virus_id)
+
+    for isolate in complete["isolates"]:
+        if isolate["id"] == isolate_id:
+            return json_response(isolate)
 
 
 @protected("modify_virus")
