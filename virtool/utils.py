@@ -1,6 +1,7 @@
 import os
 import arrow
 import shutil
+import datetime
 
 from random import choice
 from string import ascii_letters, ascii_lowercase, digits
@@ -100,19 +101,35 @@ def file_stats(path):
 
 def timestamp():
     """
-    Returns and ISO format timestamp. Generates one for the current time if no ``time`` argument is passed.
+    Returns a datetime object representing the current UTC time. The last 3 digits of the microsecond frame are set
+    to zero.
 
     :return: a UTC timestamp
     :rtype: datetime.datetime
 
     """
     # Get tz-aware datetime object.
-    dt = arrow.utcnow().datetime
+    dt = arrow.utcnow().naive
 
     # Set the last three ms digits to 0.
     dt = dt.replace(microsecond=int(str(dt.microsecond)[0:3] + "000"))
 
     return dt
+
+
+def to_isoformat(dt):
+    """
+    Returns the ISO formatted string for the passed datetime object. Uses Z at the end of the string instead of +00:00.
+    Suitable for sending to clients.
+
+    :param dt: the time to format
+    :type dt: the :class:`datetime.datetime`
+
+    :return: an ISO formatted time string
+    :rtype: str
+
+    """
+    return dt.replace(tzinfo=datetime.timezone.utc).isoformat().replace("+00:00", "Z")
 
 
 def random_alphanumeric(length=6, mixed_case=False, excluded=None):
