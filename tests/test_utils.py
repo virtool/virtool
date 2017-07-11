@@ -1,5 +1,8 @@
 import os
+import arrow
 import pytest
+import datetime
+
 import virtool.utils
 
 
@@ -142,6 +145,25 @@ class TestListFiles:
     def test_excluded(self, fake_dir):
         file_list = virtool.utils.list_files(str(fake_dir), excluded=["world.txt"])
         assert "world.txt" not in file_list.keys()
+
+
+class TestTimestamp:
+
+    def test(self, mocker):
+        """
+        Test that the timestamp util returns a datetime object with the last 3 digits of the microsecond frame set to
+        zero.
+
+        """
+        m = mocker.Mock(return_value=arrow.Arrow(2017, 10, 6, 20, 0, 0, 612304))
+
+        mocker.patch("arrow.utcnow", new=m)
+
+        timestamp = virtool.utils.timestamp()
+
+        assert isinstance(timestamp, datetime.datetime)
+
+        assert timestamp == arrow.arrow.Arrow(2017, 10, 6, 20, 0, 0, 612000).datetime
 
 
 class TestRandomAlphanumeric:
