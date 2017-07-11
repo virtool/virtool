@@ -1,23 +1,27 @@
 import pytest
-import datetime
 from copy import deepcopy
 
-import virtool.virus_history
+import virtool.utils
 import virtool.virus
-from .viruses import test_merged_virus
+import virtool.virus_history
 
 
 @pytest.fixture
-def test_change():
+def test_change(static_time):
     return {
         "_id": "6116cba1.1",
-        "description": ["Edited virus", "Prunus virus E"],
+        "method_name": "edit",
+        "description": "Edited virus Prunus virus E",
+        "created_at": static_time,
+        "diff": [
+            ["change", "abbreviation", ["PVF", ""]],
+            ["change", "name", ["Prunus virus F", "Prunus virus E"]],
+            ["change", "version", [0, 1]]
+        ],
         "index": {
             "id": "unbuilt",
             "version": "unbuilt"
         },
-        "method_name": "edit",
-        "created_at": "2017-10-06T20:00:00Z",
         "user": {
             "id": "test"
         },
@@ -36,63 +40,6 @@ def test_changes(test_change):
         dict(test_change, _id="foobar.1"),
         dict(test_change, _id="foobar.2")
     ]
-
-
-@pytest.fixture
-def setup_test_history(test_motor, test_merged_virus):
-
-    async def func(remove=False):
-
-        nonlocal test_merged_virus
-
-        # Apply a series of changes to a test virus document to build up a history.
-        await virtool.virus_history.add(test_motor, "create", None, test_merged_virus, "Description", "test")
-
-        old = deepcopy(test_merged_virus)
-
-        test_merged_virus.update({
-            "abbreviation": "TST",
-            "version": 1
-        })
-
-        await virtool.virus_history.add(test_motor, "update", old, test_merged_virus, "Description", "test")
-
-        old = deepcopy(test_merged_virus)
-
-        # We will try to patch to this version of the joined virus.
-        expected = deepcopy(old)
-
-        test_merged_virus.update({
-            "name": "Test Virus",
-            "version": 2
-        })
-
-        await virtool.virus_history.add(test_motor, "update", old, test_merged_virus, "Description", "test")
-
-        old = deepcopy(test_merged_virus)
-
-        test_merged_virus.update({
-            "isolates": [],
-            "version": 3
-        })
-
-        await virtool.virus_history.add(test_motor, "remove_isolate", old, test_merged_virus, "Description", "test")
-
-        if remove:
-            old = deepcopy(test_merged_virus)
-
-            test_merged_virus = {
-                "_id": "6116cba1"
-            }
-
-            await virtool.virus_history.add(test_motor, "remove", old, test_merged_virus, "Description", "test")
-        else:
-            virus, sequences = virtool.virus.split_virus(test_merged_virus)
-            await test_motor.viruses.insert_one(virus)
-
-        return expected
-
-    return func
 
 
 @pytest.fixture

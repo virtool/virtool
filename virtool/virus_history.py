@@ -10,7 +10,7 @@ MOST_RECENT_PROJECTION = [
     "method_name",
     "user",
     "virus",
-    "timestamp",
+    "created_at"
 ]
 
 LIST_PROJECTION = [
@@ -134,8 +134,8 @@ async def get_most_recent_change(db, virus_id):
     
     """
     return await db.history.find_one({
-        "virus_id": virus_id,
-        "index_id": "unbuilt"
+        "virus.id": virus_id,
+        "index.id": "unbuilt"
     }, MOST_RECENT_PROJECTION, sort=[("created_at", -1)])
 
 
@@ -170,8 +170,8 @@ async def patch_virus_to_version(db, joined_virus, version, inclusive=False):
     comparator = get_version_comparator(inclusive)
 
     # Sort the changes by descending timestamp.
-    async for change in db.history.find({"virus_id": joined_virus["_id"]}, sort=[("created_at", -1)]):
-        if change["virus_version"] == "removed" or comparator(change, version):
+    async for change in db.history.find({"virus.id": joined_virus["_id"]}, sort=[("created_at", -1)]):
+        if change["virus"]["version"] == "removed" or comparator(change, version):
             reverted_history_ids.append(change["_id"])
 
             if change["method_name"] == "remove":
@@ -192,10 +192,10 @@ async def patch_virus_to_version(db, joined_virus, version, inclusive=False):
 def get_version_comparator(inclusive):
     if inclusive:
         def func(change, version):
-            return change["virus_version"] >= version
+            return change["virus"]["version"] >= version
     else:
         def func(change, version):
-            return change["virus_version"] > version
+            return change["virus"]["version"] > version
 
     return func
 
@@ -212,10 +212,12 @@ async def set_index_as_unbuilt(db, index_id):
     :type index_id: str
 
     """
-    await db.history.update_many({"index_id": index_id}, {
+    await db.history.update_many({"index.id": index_id}, {
         "$set": {
-            "index_id": "unbuilt",
-            "index_version": "unbuilt"
+            "index": {
+                "id": "unbuilt",
+                "version": "unbuilt"
+            }
         }
     })
 
