@@ -1,6 +1,6 @@
 import os
+import arrow
 import shutil
-import datetime
 
 from random import choice
 from string import ascii_letters, ascii_lowercase, digits
@@ -94,7 +94,7 @@ def file_stats(path):
     # Append file entry to reply list
     return {
         "size": stats.st_size,
-        "modify": datetime.datetime.fromtimestamp(stats.st_mtime)
+        "modify": arrow.get(stats.st_mtime).datetime
     }
 
 
@@ -106,7 +106,13 @@ def timestamp():
     :rtype: datetime.datetime
 
     """
-    return datetime.datetime.now(tz=datetime.timezone.utc)
+    # Get tz-aware datetime object.
+    dt = arrow.utcnow().datetime
+
+    # Set the last three ms digits to 0.
+    dt = dt.replace(microsecond=int(str(dt.microsecond)[0:3] + "000"))
+
+    return dt
 
 
 def random_alphanumeric(length=6, mixed_case=False, excluded=None):
