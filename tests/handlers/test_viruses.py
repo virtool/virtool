@@ -1,22 +1,82 @@
-import os
 import pytest
 from copy import deepcopy
 
 import virtool.virus
 
 
-FIXTURE_DIR = os.path.join(os.path.dirname(os.path.realpath(__file__)), "test_files")
-
-
 class TestFind:
 
-    async def test(self, test_db, do_get):
+    @pytest.mark.parametrize("term,modified,per_page,page,d_range,add_modified,meta", [
+        (None, None, None, None, range(0, 3), False, {
+            "page": 1,
+            "per_page": 15,
+            "page_count": 1,
+            "found_count": 3,
+            "total_count": 3,
+            "modified_count": 0,
+        }),
+        # Test ``per_page`` query param.
+        (None, None, 2, 1, range(0, 2), False, {
+            "page": 1,
+            "per_page": 2,
+            "page_count": 2,
+            "found_count": 3,
+            "total_count": 3,
+            "modified_count": 0,
+        }),
+        # Test ``per_page`` and ``page`` query param.
+        (None, None, 2, 2, range(2, 3), False, {
+            "page": 2,
+            "per_page": 2,
+            "page_count": 2,
+            "found_count": 3,
+            "total_count": 3,
+            "modified_count": 0,
+        }),
+        # Test ``term`` query param and ``found_count`` response field.
+        ("pvf", None, None, None, range(1, 2), False, {
+            "page": 1,
+            "per_page": 15,
+            "page_count": 1,
+            "found_count": 1,
+            "total_count": 3,
+            "modified_count": 0,
+        }),
+        # Test ``modified`` query param when set to ``True``. Should only return modified viruses.
+        (None, True, None, None, range(2, 3), True, {
+            "page": 1,
+            "per_page": 15,
+            "page_count": 1,
+            "found_count": 1,
+            "total_count": 3,
+            "modified_count": 1,
+        }),
+        # Test ``modified`` query param when set to ``False``. Should only return unmodified viruses.
+        (None, False, None, None, range(0, 2), True, {
+            "page": 1,
+            "per_page": 15,
+            "page_count": 1,
+            "found_count": 2,
+            "total_count": 3,
+            "modified_count": 1,
+        }),
+        # Test ``modified_count`` calculation.
+        (None, None, 15, 1, range(0, 3), True, {
+            "page": 1,
+            "per_page": 15,
+            "page_count": 1,
+            "found_count": 3,
+            "total_count": 3,
+            "modified_count": 1,
+        })
+    ])
+    async def test(self, term, modified, per_page, page, d_range, meta, add_modified, test_db, do_get):
         test_db.viruses.insert_many([
             {
-                "abbreviation": "TyV_GV1 (not confirmed)",
+                "abbreviation": "EV_TF3-mycovirus",
                 "modified": False,
-                "name": "Tymovirus from Grapevine 1(not confirmed)",
-                "_id": "2f97f077"
+                "name": "Endornavirus of Tree Fruit #3",
+                "_id": "5350af44"
             },
             {
                 "abbreviation": "PVF",
@@ -25,45 +85,64 @@ class TestFind:
                 "_id": "6116cba1"
             },
             {
-                "abbreviation": "EV_TF3-mycovirus",
+                "abbreviation": "TyV_GV1 (not confirmed)",
                 "modified": False,
-                "name": "Endornavirus of Tree Fruit #3",
-                "_id": "5350af44"
+                "name": "Tymovirus from Grapevine 1(not confirmed)",
+                "_id": "2f97f077"
             }
         ])
 
-        resp = await do_get("/api/viruses")
+        if add_modified:
+            test_db.viruses.update_one({"_id": "2f97f077"}, {
+                "$set": {
+                    "modified": True
+                }
+            })
+
+        path = "/api/viruses"
+        query = list()
+
+        if term is not None:
+            query.append("term={}".format(term))
+
+        if modified is not None:
+            query.append("modified={}".format(str(modified).lower()))
+
+        if per_page is not None:
+            query.append("per_page={}".format(per_page))
+
+        if page is not None:
+            query.append("page={}".format(page))
+
+        if len(query):
+            path += "?{}".format("&".join(query))
+
+        resp = await do_get(path)
 
         assert resp.status == 200
 
-        assert await resp.json() == {
-            "page": 1,
-            "per_page": 15,
-            "page_count": 1,
-            "found_count": 3,
-            "total_count": 3,
-            "modified_count": 0,
-            "documents": [
-                {
-                    "abbreviation": "EV_TF3-mycovirus",
-                    "modified": False,
-                    "name": "Endornavirus of Tree Fruit #3",
-                    "id": "5350af44"
-                },
-                {
-                    "abbreviation": "PVF",
-                    "modified": False,
-                    "name": "Prunus virus F",
-                    "id": "6116cba1"
-                },
-                {
-                    "abbreviation": "TyV_GV1 (not confirmed)",
-                    "modified": False,
-                    "name": "Tymovirus from Grapevine 1(not confirmed)",
-                    "id": "2f97f077"
-                }
-            ]
-        }
+        expected_documents = [
+            {
+                "abbreviation": "EV_TF3-mycovirus",
+                "modified": False,
+                "name": "Endornavirus of Tree Fruit #3",
+                "id": "5350af44"
+            },
+            {
+                "abbreviation": "PVF",
+                "modified": False,
+                "name": "Prunus virus F",
+                "id": "6116cba1"
+            },
+            {
+                "abbreviation": "TyV_GV1 (not confirmed)",
+                "modified": add_modified,
+                "name": "Tymovirus from Grapevine 1(not confirmed)",
+                "id": "2f97f077"
+            }
+        ]
+
+        assert await resp.json() == dict(meta, documents=[expected_documents[i] for i in d_range])
 
 
 class TestGet:
@@ -149,25 +228,24 @@ class TestGet:
         assert resp.status == 404
 
         assert await resp.json() == {
+            "id": "not_found",
             "message": "Not found"
         }
 
 
 class TestCreate:
 
-    @pytest.mark.parametrize("data,description,annotation", [
+    @pytest.mark.parametrize("data,description", [
         (
             {"name": "Tobacco mosaic virus", "abbreviation": "TMV"},
-            "Created Tobacco mosaic virus (TMV)",
-            {"name": "Tobacco mosaic virus", "abbreviation": "TMV"}
+            "Created Tobacco mosaic virus (TMV)"
         ),
         (
             {"name": "Tobacco mosaic virus"},
-            "Created Tobacco mosaic virus",
-            {"name": "Tobacco mosaic virus", "abbreviation": ""}
+            "Created Tobacco mosaic virus"
         )
     ])
-    async def test(self, data, description, annotation, monkeypatch, test_db, do_post, test_add_history, test_dispatch):
+    async def test(self, data, description, monkeypatch, test_db, do_post, test_add_history, test_dispatch):
         """
         Test that a valid request results in the creation of a virus document and a ``201`` response.
          
@@ -563,6 +641,47 @@ class TestEdit:
             "message": "Name and abbreviation already exist"
         }
 
+    @pytest.mark.parametrize("old_name,old_abbr,data", [
+        ("Tobacco mosaic virus", "TMV", {"name": "Tobacco mosaic virus", "abbreviation": "TMV"}),
+        ("Tobacco mosaic virus", "TMV", {"name": "Tobacco mosaic virus"}),
+        ("Tobacco mosaic virus", "TMV", {"abbreviation": "TMV"})
+    ])
+    async def test_no_change(self, old_name, old_abbr, data, test_db, do_patch):
+        test_db.viruses.insert_one({
+            "_id": "test",
+            "name": old_name,
+            "lower_name": "tobacco mosaic virus",
+            "abbreviation": old_abbr,
+            "isolates": []
+        })
+
+        resp = await do_patch("/api/viruses/test", data, authorize=True, permissions=["modify_virus"])
+
+        assert resp.status == 200
+        
+        assert await resp.json() == {
+            "abbreviation": "TMV",
+            "id": "test",
+            "isolates": [],
+            "most_recent_change": None,
+            "name": "Tobacco mosaic virus"
+        }
+
+    async def test_not_found(self, do_patch):
+        data = {
+            "name": "Tobacco mosaic virus",
+            "abbreviation": "TMV"
+        }
+
+        resp = await do_patch("/api/viruses/test", data, authorize=True, permissions=["modify_virus"])
+
+        assert resp.status == 404
+
+        assert await resp.json() == {
+            "id": "not_found",
+            "message": "Not found"
+        }
+
 
 class TestVerify:
 
@@ -655,7 +774,7 @@ class TestVerify:
             "verify",
             old,
             new,
-            ("Verified",),
+            "Verified",
             "test"
         )
 
@@ -796,6 +915,7 @@ class TestVerify:
         assert resp.status == 404
 
         assert await resp.json() == {
+            "id": "not_found",
             "message": "Not found"
         }
 
@@ -850,6 +970,7 @@ class TestRemove:
         assert resp.status == 404
 
         assert await resp.json() == {
+            "id": "not_found",
             "message": "Not found"
         }
 
@@ -901,6 +1022,7 @@ class TestListIsolates:
         assert resp.status == 404
 
         assert await resp.json() == {
+            "id": "not_found",
             "message": "Not found"
         }
 
@@ -941,6 +1063,7 @@ class TestGetIsolate:
         assert resp.status == 404
 
         assert await resp.json() == {
+            "id": "not_found",
             "message": "Not found"
         }
 
@@ -950,6 +1073,7 @@ class TestGetIsolate:
         assert resp.status == 404
 
         assert await resp.json() == {
+            "id": "not_found",
             "message": "Not found"
         }
 
@@ -1165,7 +1289,7 @@ class TestAddIsolate:
             }
         )
 
-    async def test_force_case(self, monkeypatch, test_db, do_post, test_virus, test_add_history, test_dispatch):
+    async def test_force_case(self, monkeypatch, test_db, do_post, test_virus, test_dispatch):
         """
         Test that the ``source_type`` value is forced to lower case.
          
@@ -1275,6 +1399,22 @@ class TestAddIsolate:
                 "version": 1
             }
         )
+
+    async def test_not_found(self, do_post):
+        data = {
+            "source_name": "Beta",
+            "source_type": "Isolate",
+            "default": False
+        }
+
+        resp = await do_post("/api/viruses/6116cba1/isolates", data, authorize=True, permissions=["modify_virus"])
+
+        assert resp.status == 404
+
+        assert await resp.json() == {
+            "id": "not_found",
+            "message": "Not found"
+        }
 
 
 class TestEditIsolate:
@@ -1407,6 +1547,66 @@ class TestEditIsolate:
         }
 
         assert test_dispatch.stub.call_args is None
+
+    async def test_invalid_input(self, test_db, do_patch, test_virus):
+        """
+        Test that invalid input results in a ``422`` response and a list of errors.
+
+        """
+
+        test_db.viruses.insert_one(test_virus)
+
+        data = {
+            "source_type": {"key": "variant"},
+            "source_name": "A"
+        }
+
+        resp = await do_patch(
+            "/api/viruses/6116cba1/isolates/cab8b360", data,
+            authorize=True,
+            permissions=["modify_virus"]
+        )
+
+        assert resp.status == 422
+
+        assert await resp.json() == {
+            "id": "invalid_input",
+            "message": "Invalid input",
+            "errors": {
+                "source_type": ["must be of string type"]
+            }
+        }
+
+    @pytest.mark.parametrize("virus_id,isolate_id", [
+        ("6116cba1", "test"),
+        ("test", "cab8b360"),
+        ("test", "test")
+    ])
+    async def test_not_found(self, virus_id, isolate_id, test_db, do_patch, test_virus):
+        """
+        Test that a request for a non-existent virus or isolate results in a ``404`` response.
+
+        """
+        test_db.viruses.insert_one(test_virus)
+
+        data = {
+            "source_type": "variant",
+            "source_name": "A"
+        }
+
+        resp = await do_patch(
+            "/api/viruses/{}/isolates/{}".format(virus_id, isolate_id),
+            data,
+            authorize=True,
+            permissions=["modify_virus"]
+        )
+
+        assert resp.status == 404
+
+        assert await resp.json() == {
+            "id": "not_found",
+            "message": "Not found"
+        }
 
 
 class TestSetAsDefault:
@@ -1541,6 +1741,32 @@ class TestSetAsDefault:
         assert not test_add_history.called
 
         assert not test_dispatch.stub.called
+
+    @pytest.mark.parametrize("virus_id,isolate_id", [
+        ("6116cba1", "test"),
+        ("test", "cab8b360"),
+        ("test", "test")
+    ])
+    async def test_not_found(self, virus_id, isolate_id, test_db, do_put, test_virus):
+        """
+        Test that ``404 Not found`` is returned if the virus or isolate does not exist
+
+        """
+        test_db.viruses.insert_one(test_virus)
+
+        resp = await do_put(
+            "/api/viruses/{}/isolates/{}/default".format(virus_id, isolate_id),
+            {},
+            authorize=True,
+            permissions=["modify_virus"]
+        )
+
+        assert resp.status == 404
+
+        assert await resp.json() == {
+            "id": "not_found",
+            "message": "Not found"
+        }
 
 
 class TestRemoveIsolate:
@@ -1739,6 +1965,7 @@ class TestRemoveIsolate:
         assert resp.status == 404
 
         assert await resp.json() == {
+            "id": "not_found",
             "message": "Not found"
         }
 
@@ -1774,6 +2001,7 @@ class TestListSequences:
         assert resp.status == 404
 
         assert await resp.json() == {
+            "id": "not_found",
             "message": "Not found"
         }
 
@@ -1804,6 +2032,7 @@ class TestGetSequence:
         assert resp.status == 404
 
         assert await resp.json() == {
+            "id": "not_found",
             "message": "Not found"
         }
 
@@ -1976,6 +2205,7 @@ class TestCreateSequence:
         assert resp.status == 404
 
         assert await resp.json() == {
+            "id": "not_found",
             "message": "Not found"
         }
 
@@ -2050,7 +2280,7 @@ class TestEditSequence:
             "edit_sequence",
             old,
             new,
-            ("Edited sequence", "KX269872", "in isolate", "Isolate 8816-v2", "cab8b360"),
+            "Edited sequence KX269872 in Isolate 8816-v2",
             "test"
         )
 
@@ -2065,6 +2295,20 @@ class TestEditSequence:
                 "version": 1
             }
         )
+
+    async def test_empty_input(self, do_patch):
+        resp = await do_patch(
+            "/api/viruses/6116cba1/isolates/cab8b360/sequences/KX269872",
+            {},
+            authorize=True,
+            permissions=["modify_virus"]
+        )
+
+        assert resp.status == 400
+
+        assert await resp.json() == {
+            "message": "Empty input"
+        }
 
     async def test_invalid_input(self, do_patch):
         resp = await do_patch(
@@ -2115,10 +2359,83 @@ class TestEditSequence:
 
         if foobar == "sequence_id":
             assert await resp.json() == {
+                "id": "not_found",
                 "message": "Sequence not found"
             }
 
         else:
             assert await resp.json() == {
+                "id": "not_found",
                 "message": "Virus or isolate not found"
             }
+
+
+class TestRemoveSequence:
+
+    async def test(self, do_delete, test_motor, test_virus, test_sequence, test_add_history, test_dispatch):
+        await test_motor.viruses.insert_one(test_virus)
+        await test_motor.sequences.insert_one(test_sequence)
+
+        old = await virtool.virus.join(test_motor, test_virus["_id"])
+
+        resp = await do_delete(
+            "/api/viruses/6116cba1/isolates/cab8b360/sequences/KX269872",
+            authorize=True,
+            permissions=["modify_virus"]
+        )
+
+        new = await virtool.virus.join(test_motor, test_virus["_id"])
+
+        assert test_add_history.call_args[0][1:] == (
+            "remove_sequence",
+            old,
+            new,
+            "Removed sequence KX269872 from Isolate 8816-v2",
+            "test"
+        )
+
+        assert test_dispatch.stub.call_args[0] == (
+            "viruses",
+            "update",
+            {
+                "id": "6116cba1",
+                "abbreviation": "PVF",
+                "modified": True,
+                "name": "Prunus virus F",
+                "version": 1
+            }
+        )
+
+        assert resp.status == 204
+
+    async def test_sequence_not_found(self, test_db, test_virus, do_delete):
+        test_db.sequences.insert_one(test_virus)
+
+        resp = await do_delete(
+            "/api/viruses/6116cba1/isolates/cab8b360/sequences/KX269872",
+            authorize=True,
+            permissions=["modify_virus"]
+        )
+
+        assert resp.status == 404
+
+        assert await resp.json() == {
+            "id": "not_found",
+            "message": "Not found"
+        }
+
+    async def test_virus_not_found(self, test_db, test_sequence, do_delete):
+        test_db.viruses.insert_one(test_sequence)
+
+        resp = await do_delete(
+            "/api/viruses/6116cba1/isolates/cab8b360/sequences/KX269872",
+            authorize=True,
+            permissions=["modify_virus"]
+        )
+
+        assert resp.status == 404
+
+        assert await resp.json() == {
+            "id": "not_found",
+            "message": "Not found"
+        }
