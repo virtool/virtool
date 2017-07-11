@@ -463,7 +463,7 @@ async def insert_from_import(db, virus_document, user_id):
 
     change_to_dispatch = {key: change[key] for key in virtool.virus_history.LIST_PROJECTION}
 
-    change_to_dispatch = virtool.virus_history.processor(change_to_dispatch)
+    change_to_dispatch = virtool.utils.base_processor(change_to_dispatch)
 
     return to_dispatch, change_to_dispatch
 
@@ -504,6 +504,6 @@ async def delete_for_import(db, virus_id, user_id):
 
     change_to_dispatch = {key: change[key] for key in virtool.virus_history.LIST_PROJECTION}
 
-    change_to_dispatch = virtool.virus_history.processor(change_to_dispatch)
+    change_to_dispatch = virtool.utils.base_processor(change_to_dispatch)
 
     return virus_id, change_to_dispatch
