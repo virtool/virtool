@@ -138,6 +138,7 @@ class TestGet:
         assert resp.status == 404
 
         assert await resp.json() == {
+            "id": "not_found",
             "message": "Not found"
         }
 
@@ -208,6 +209,7 @@ class TestUpdatePermissions:
         assert resp.status == 404
 
         assert await resp.json() == {
+            "id": "not_found",
             "message": "Not found"
         }
 
@@ -238,6 +240,7 @@ class TestRemove:
         resp = await do_delete("/api/groups/test", authorize=True, permissions=["manage_users"])
 
         assert await resp.json() == {
+            "id": "not_found",
             "message": "Not found"
         }
 

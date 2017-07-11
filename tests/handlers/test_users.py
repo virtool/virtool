@@ -47,32 +47,6 @@ class TestFind:
 
         assert await resp.json() == expected
 
-    async def test_not_authorized(self, do_get):
-        """
-        Test that a request from an unauthorized session results in a ``403`` response. 
-
-        """
-        resp = await do_get("/api/users")
-
-        assert resp.status == 403
-
-        assert await resp.json() == {
-            "message": "Not authorized"
-        }
-
-    async def test_not_permitted(self, do_get):
-        """
-        Test that a request from a session with inadequate permissions results in a ``403`` response. 
-
-        """
-        resp = await do_get("/api/users", authorize=True)
-
-        assert resp.status == 403
-
-        assert await resp.json() == {
-            "message": "Not permitted"
-        }
-
 
 class TestGet:
 
@@ -123,33 +97,8 @@ class TestGet:
         assert resp.status == 404
 
         assert await resp.json() == {
+            "id": "not_found",
             "message": "Not found"
-        }
-
-    async def test_not_authorized(self, do_get):
-        """
-        Test that a request from an unauthorized session results in a ``403`` response. 
-
-        """
-        resp = await do_get("/api/users/bob")
-
-        assert resp.status == 403
-
-        assert await resp.json() == {
-            "message": "Not authorized"
-        }
-
-    async def test_not_permitted(self, do_get):
-        """
-        Test that a request from a session with inadequate permissions results in a ``403`` response. 
-
-        """
-        resp = await do_get("/api/users/bob", authorize=True)
-
-        assert resp.status == 403
-
-        assert await resp.json() == {
-            "message": "Not permitted"
         }
 
 
@@ -256,32 +205,6 @@ class TestCreate:
             "message": "User already exists"
         }
 
-    async def test_not_authorized(self, do_post):
-        """
-        Test that a request from an unauthorized session results in a ``403`` response. 
-
-        """
-        resp = await do_post("/api/users", {})
-
-        assert resp.status == 403
-
-        assert await resp.json() == {
-            "message": "Not authorized"
-        }
-
-    async def test_not_permitted(self, do_post):
-        """
-        Test that a request from a session with inadequate permissions results in a ``403`` response. 
-
-        """
-        resp = await do_post("/api/users", {}, authorize=True)
-
-        assert resp.status == 403
-
-        assert await resp.json() == {
-            "message": "Not permitted"
-        }
-
 
 class TestSetPassword:
 
@@ -343,6 +266,7 @@ class TestSetPassword:
         assert resp.status == 404
 
         assert await resp.json() == {
+            "id": "not_found",
             "message": "Not found"
         }
 
@@ -362,32 +286,6 @@ class TestSetPassword:
                 "password": ["required field"],
                 "reset": ["unknown field"]
             }
-        }
-
-    async def test_not_authorized(self, do_put):
-        """
-        Test that a request from an unauthorized session results in a ``403`` response. 
-
-        """
-        resp = await do_put("/api/users/bob/password", {})
-
-        assert resp.status == 403
-
-        assert await resp.json() == {
-            "message": "Not authorized"
-        }
-
-    async def test_not_permitted(self, do_put):
-        """
-        Test that a request from a session with inadequate permissions results in a ``403`` response. 
-
-        """
-        resp = await do_put("/api/users/bob/password", {}, authorize=True)
-
-        assert resp.status == 403
-
-        assert await resp.json() == {
-            "message": "Not permitted"
         }
 
 
@@ -473,33 +371,8 @@ class TestSetForceReset:
         assert resp.status == 404
 
         assert await resp.json() == {
+            "id": "not_found",
             "message": "User does not exist"
-        }
-
-    async def test_not_authorized(self, do_put):
-        """
-        Test that a request from an unauthorized session results in a ``403`` response. 
-
-        """
-        resp = await do_put("/api/users/bob/reset", {})
-
-        assert resp.status == 403
-
-        assert await resp.json() == {
-            "message": "Not authorized"
-        }
-
-    async def test_not_permitted(self, do_put):
-        """
-        Test that a request from a session with inadequate permissions results in a ``403`` response. 
-
-        """
-        resp = await do_put("/api/users/bob/reset", {}, authorize=True)
-
-        assert resp.status == 403
-
-        assert await resp.json() == {
-            "message": "Not permitted"
         }
 
 
@@ -556,6 +429,7 @@ class TestAddGroup:
         assert resp.status == 404
 
         assert await resp.json() == {
+            "id": "not_found",
             "message": "User does not exist"
         }
 
@@ -575,6 +449,7 @@ class TestAddGroup:
         assert resp.status == 404
 
         assert await resp.json() == {
+            "id": "not_found",
             "message": "Group does not exist"
         }
 
@@ -598,32 +473,6 @@ class TestAddGroup:
                 "group": ["unknown field"],
                 "group_id": ["required field"]
             }
-        }
-
-    async def test_not_authorized(self, do_post):
-        """
-        Test that a request from an unauthorized session results in a ``403`` response. 
-
-        """
-        resp = await do_post("/api/users/bob/groups", {})
-
-        assert resp.status == 403
-
-        assert await resp.json() == {
-            "message": "Not authorized"
-        }
-
-    async def test_not_permitted(self, do_post):
-        """
-        Test that a request from a session with inadequate permissions results in a ``403`` response. 
-
-        """
-        resp = await do_post("/api/users/bob/groups", {}, authorize=True)
-
-        assert resp.status == 403
-
-        assert await resp.json() == {
-            "message": "Not permitted"
         }
 
 
@@ -687,33 +536,8 @@ class TestRemoveGroup:
         assert resp.status == 404
 
         assert await resp.json() == {
+            "id": "not_found",
             "message": "User does not exist"
-        }
-
-    async def test_not_authorized(self, do_delete):
-        """
-        Test that a request from an unauthorized session results in a ``403`` response. 
-
-        """
-        resp = await do_delete("/api/users/bob/groups/tech")
-
-        assert resp.status == 403
-
-        assert await resp.json() == {
-            "message": "Not authorized"
-        }
-
-    async def test_not_permitted(self, do_delete):
-        """
-        Test that a request from a session with inadequate permissions results in a ``403`` response. 
-
-        """
-        resp = await do_delete("/api/users/bob/groups/tech", authorize=True)
-
-        assert resp.status == 403
-
-        assert await resp.json() == {
-            "message": "Not permitted"
         }
 
 
@@ -740,31 +564,6 @@ class TestRemove:
         assert resp.status == 404
 
         assert await resp.json() == {
+            "id": "not_found",
             "message": "User does not exist"
-        }
-
-    async def test_not_authorized(self, do_delete):
-        """
-        Test that a request from an unauthorized session results in a ``403`` response. 
-         
-        """
-        resp = await do_delete("/api/users/bob")
-
-        assert resp.status == 403
-
-        assert await resp.json() == {
-            "message": "Not authorized"
-        }
-
-    async def test_not_permitted(self, do_delete):
-        """
-        Test that a request from a session with inadequate permissions results in a ``403`` response. 
-
-        """
-        resp = await do_delete("/api/users/bob", authorize=True)
-
-        assert resp.status == 403
-
-        assert await resp.json() == {
-            "message": "Not permitted"
         }

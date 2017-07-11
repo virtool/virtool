@@ -278,4 +278,4 @@ async def remove(req):
     if delete_result.deleted_count == 0:
         return not_found("User does not exist")
 
-    return json_response({"removed": user_id})
+    return no_content()

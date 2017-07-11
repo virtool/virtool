@@ -165,7 +165,10 @@ def protected(required_perm=None):
                 }, status=401)
 
             if required_perm and not req["session"].permissions[required_perm]:
-                return json_response({"message": "Not permitted"}, status=403)
+                return json_response({
+                    "id": "not_permitted",
+                    "message": "Not permitted"
+                }, status=403)
 
             return await handler(req)
 
