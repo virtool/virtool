@@ -65,7 +65,7 @@ def test_merged_virus():
                 "id": "cab8b360",
                 "sequences": [
                     {
-                        "id": "KX269872",
+                        "_id": "KX269872",
                         "virus_id": "6116cba1",
                         "isolate_id": "cab8b360",
                         "definition": "Prunus virus F isolate 8816-s2 segment RNA2 polyprotein 2 gene, complete cds.",

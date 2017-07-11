@@ -163,7 +163,7 @@ class TestTimestamp:
 
         assert isinstance(timestamp, datetime.datetime)
 
-        assert timestamp == arrow.arrow.Arrow(2017, 10, 6, 20, 0, 0, 612000).datetime
+        assert timestamp == arrow.arrow.Arrow(2017, 10, 6, 20, 0, 0, 612000).naive
 
 
 class TestRandomAlphanumeric:

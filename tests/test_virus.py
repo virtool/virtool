@@ -21,7 +21,7 @@ def iresine():
         "isolates": [
             {
                 "source_name": "",
-                "isolate_id": "6kplarn7",
+                "id": "6kplarn7",
                 "source_type": "unknown",
                 "default": True
             }
@@ -182,7 +182,7 @@ class TestCheckVirus:
         Test that isolates in a single virus with disparate sequence counts are detected. 
          
         """
-        test_virus["isolates"].append(dict(test_virus["isolates"][0], isolate_id="foobar"))
+        test_virus["isolates"].append(dict(test_virus["isolates"][0], id="foobar"))
 
         sequences = [
             test_sequence,
@@ -319,7 +319,7 @@ class TestGetNewIsolateId:
 
         expected = test_random_alphanumeric.choices[1][:8].lower()
 
-        test_virus["isolates"][0]["isolate_id"] = next_choice
+        test_virus["isolates"][0]["id"] = next_choice
 
         await test_motor.viruses.insert(test_virus)
 
@@ -347,7 +347,7 @@ class TestGetNewIsolateId:
         """
         excluded = [test_random_alphanumeric.choices[2][:8].lower()]
 
-        test_virus["isolates"][0]["isolate_id"] = test_random_alphanumeric.choices[1][:8].lower()
+        test_virus["isolates"][0]["id"] = test_random_alphanumeric.choices[1][:8].lower()
 
         await test_motor.viruses.insert(test_virus)
 
@@ -389,7 +389,7 @@ class TestExtractIsolateIds:
         test_virus["isolates"].append({
             "source_type": "isolate",
             "source_name": "b",
-            "isolate_id": "foobar",
+            "id": "foobar",
             "default": False
         })
 
@@ -407,7 +407,7 @@ class TestExtractIsolateIds:
 class TestFindIsolate:
 
     def test(self, test_virus, test_isolate):
-        new_isolate = dict(test_isolate, isolate_id="foobar", source_type="isolate", source_name="b")
+        new_isolate = dict(test_isolate, id="foobar", source_type="isolate", source_name="b")
 
         test_virus["isolates"].append(new_isolate)
 

@@ -1,3 +1,4 @@
+import arrow
 import pytest
 from operator import itemgetter
 
@@ -5,10 +6,10 @@ from virtool.organize import organize_samples
 
 
 @pytest.fixture
-def samples():
+def samples(static_time):
     return [
-        {"_id": 1, "name": "sample 1"},
-        {"_id": 2, "name": "sample 2"}
+        {"_id": 1, "name": "sample 1", "created_at": static_time},
+        {"_id": 2, "name": "sample 2", "created_at": static_time}
     ]
 
 
@@ -34,19 +35,16 @@ class TestAddedCreatedAt:
 
     async def test(self, test_motor):
         await test_motor.samples.insert_many([
-            {"_id": 1, "added": "now"},
-            {"_id": 2, "created_at": "then"}
+            {"_id": 1, "added": "2017-07-11T22:07:22.106000"},
+            {"_id": 2, "created_at": "2017-07-11T22:07:24.239000"}
         ])
 
         await organize_samples(test_motor)
 
-        print(await test_motor.samples.find().to_list(None))
-
         assert await test_motor.samples.find(sort=[("_id", 1)]).to_list(None) == sorted([
-            {"pathoscope": False, "created_at": "now", "nuvs": False, "_id": 1},
-            {"pathoscope": False, "created_at": "then", "nuvs": False, "_id": 2}
+            {"pathoscope": False, "created_at": arrow.get("2017-07-11T22:07:22.106000").naive, "nuvs": False, "_id": 1},
+            {"pathoscope": False, "created_at": arrow.get("2017-07-11T22:07:24.239000").naive, "nuvs": False, "_id": 2}
         ], key=itemgetter("_id"))
-
 
 
 class TestBowtieTags:
