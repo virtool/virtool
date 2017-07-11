@@ -103,7 +103,9 @@ def mock_job_class(monkeypatch, mocker):
 def test_job(static_time):
     return {
         "_id": "4c530449",
-        "user_id": "igboyes",
+        "user": {
+            "id": "igboyes"
+        },
         "proc": 10,
         "mem": 16,
         "task": "rebuild_index",
