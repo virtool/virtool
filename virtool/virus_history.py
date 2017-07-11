@@ -73,7 +73,7 @@ async def add(db, method_name, old, new, description, user_id):
         "_id": ".".join([str(virus_id), str(virus_version)]),
         "method_name": method_name,
         "description": description,
-        "timestamp": virtool.utils.timestamp(),
+        "created_at": virtool.utils.timestamp(),
         "virus": {
             "id": virus_id,
             "name": virus_name,
