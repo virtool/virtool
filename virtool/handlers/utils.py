@@ -108,7 +108,10 @@ def not_found(message="Not found"):
     :rtype: :class:`aiohttp.Response`
 
     """
-    return json_response({"message": message}, status=404)
+    return json_response({
+        "id": "not_found",
+        "message": message
+    }, status=404)
 
 
 def invalid_input(errors):

@@ -15,14 +15,7 @@ import virtool.virus_import
 import virtool.virus_history
 
 from virtool.handlers.utils import unpack_json_request, json_response, not_found, invalid_input, protected, validation,\
-    compose_regex_query, paginate, bad_request
-
-
-EDIT_SEQUENCE_SCHEMA = {
-    "host": {"type": "string"},
-    "definition": {"type": "string"},
-    "sequence": {"type": "string"}
-}
+    compose_regex_query, paginate, bad_request, no_content
 
 
 async def find(req):
@@ -33,15 +26,16 @@ async def find(req):
     db = req.app["db"]
 
     term = req.query.get("term", None)
-    modified = virtool.utils.to_bool(req.query.get("modified", False))
+    modified = req.query.get("modified", None)
 
     db_query = dict()
 
     if term:
         db_query.update(compose_regex_query(term, ["name", "abbreviation"]))
 
-    if modified:
-        db_query["modified"] = True
+    if modified is not None:
+        modded = virtool.utils.to_bool(modified)
+        db_query["modified"] = modded
 
     data = await paginate(db.viruses, db_query, req.query, "name", projection=virtool.virus.LIST_PROJECTION)
 
@@ -200,11 +194,8 @@ async def edit(req):
         description = "Changed name to {}".format(new["name"])
 
         if abbreviation_change is not None:
-            # New abbreviation value is same as old
-            if abbreviation_change == old_abbreviation:
-                pass
             # Abbreviation is being removed.
-            elif abbreviation_change == "" and old_abbreviation:
+            if abbreviation_change == "" and old_abbreviation:
                 description += " and removed abbreviation {}".format(old["abbreviation"])
             # Abbreviation is being added where one didn't exist before
             elif abbreviation_change and not old_abbreviation:
@@ -504,7 +495,6 @@ async def add_isolate(req):
 
 
 @protected("modify_virus")
-@validation(virtool.virus.ISOLATE_SCHEMA)
 async def edit_isolate(req):
     """
     Edit an existing isolate.
@@ -528,18 +518,18 @@ async def edit_isolate(req):
     virus_id = req.match_info["virus_id"]
     isolate_id = req.match_info["isolate_id"]
 
-    document = await db.viruses.find_one(virus_id)
+    document = await db.viruses.find_one({"_id": virus_id, "isolates.id": isolate_id})
 
     if not document:
         return not_found()
 
-    # All source types are stored in lower case.
-    if "source_type" in data:
-        data["source_type"] = data["source_type"].lower()
-
     isolates = deepcopy(document["isolates"])
 
     isolate = virtool.virus.find_isolate(isolates, isolate_id)
+
+    # All source types are stored in lower case.
+    if "source_type" in data:
+        data["source_type"] = data["source_type"].lower()
 
     old_isolate_name = virtool.virus.format_isolate_name(isolate)
 
@@ -700,18 +690,10 @@ async def remove_isolate(req):
     # Remove any sequences associated with the removed isolate.
     await db.sequences.delete_many({"isolate_id": isolate_id})
 
-    description = (
-        "Removed isolate",
-        virtool.virus.format_isolate_name(isolate_to_remove),
-        isolate_to_remove["id"]
-    )
+    description = "Removed {}".format(virtool.virus.format_isolate_name(isolate_to_remove))
 
     if isolate_to_remove["default"] and new_default:
-        description += (
-            "and set",
-            virtool.virus.format_isolate_name(new_default), new_default["id"],
-            "as default"
-        )
+        description += " and set {} as default".format(virtool.virus.format_isolate_name(new_default))
 
     await virtool.virus_history.add(
         db,
@@ -832,7 +814,11 @@ async def create_sequence(req):
 
 
 @protected("modify_virus")
-@validation(EDIT_SEQUENCE_SCHEMA)
+@validation({
+    "host": {"type": "string"},
+    "definition": {"type": "string"},
+    "sequence": {"type": "string"}
+})
 async def edit_sequence(req):
     db, data = req.app["db"], req["data"]
 
@@ -852,7 +838,7 @@ async def edit_sequence(req):
         "$set": data
     }, return_document=ReturnDocument.AFTER)
 
-    if not new_sequence:
+    if not updated_sequence:
         return not_found("Sequence not found")
 
     document = await db.viruses.find_one_and_update({"_id": virus_id}, {
@@ -873,13 +859,13 @@ async def edit_sequence(req):
         "edit_sequence",
         old,
         new,
-        ("Edited sequence", accession, "in isolate", virtool.virus.format_isolate_name(isolate), isolate_id),
+        "Edited sequence {} in {}".format(sequence_id, virtool.virus.format_isolate_name(isolate)),
         req["session"].user_id
     )
 
     await virtool.virus.dispatch_version_only(req, new)
 
-    return json_response(virtool.utils.base_processor(new_sequence))
+    return json_response(virtool.utils.base_processor(updated_sequence))
 
 
 async def remove_sequence(req):
@@ -889,14 +875,46 @@ async def remove_sequence(req):
     """
     db = req.app["db"]
 
-    accession = req.match_info["accession"]
+    virus_id = req.match_info["virus_id"]
+    sequence_id = req.match_info["sequence_id"]
 
-    document = await db.sequences.find_one(accession, virtool.virus.SEQUENCE_PROJECTION)
+    document = await db.sequences.find_one(sequence_id, ["isolate_id"])
 
     if not document:
         return not_found()
 
-    return json_response(virtool.utils.base_processor(document))
+    old = await virtool.virus.join(db, virus_id)
+
+    if not old:
+        return not_found()
+
+    isolate = virtool.virus.find_isolate(old["isolates"], document["isolate_id"])
+
+    await db.viruses.update_one({"_id": virus_id}, {
+        "$set": {
+            "modified": True
+        },
+        "$inc": {
+            "version": 1
+        }
+    })
+
+    new = await virtool.virus.join(db, virus_id)
+
+    isolate_name = virtool.virus.format_isolate_name(isolate)
+
+    await virtool.virus_history.add(
+        db,
+        "remove_sequence",
+        old,
+        new,
+        "Removed sequence {} from {}".format(sequence_id, isolate_name),
+        req["session"].user_id
+    )
+
+    await virtool.virus.dispatch_version_only(req, new)
+
+    return no_content()
 
 
 async def list_history(req):
@@ -907,7 +925,7 @@ async def list_history(req):
     if not await db.viruses.find({"_id": virus_id}).count():
         return not_found()
 
-    documents = await db.history.find({"virus_id": virus_id}).to_list(None)
+    documents = await db.history.find({"virus.id": virus_id}).to_list(None)
 
     return json_response(documents)
 
