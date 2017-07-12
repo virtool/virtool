@@ -993,22 +993,16 @@ async def export(req):
     # A list of joined viruses.
     virus_list = list()
 
-    cursor = db.viruses.find()
+    async for document in db.viruses.find({"last_indexed_version": {"ne": None}}):
+        # If the virus has been changed since the last index rebuild, patch it to its last indexed version.
+        if document["version"] != document["last_indexed_version"]:
+            _, joined, _ = await virtool.virus_history.patch_virus_to_version(
+                db,
+                document["_id"],
+                document["last_indexed_version"]
+            )
 
-    async for document in cursor:
-        if document["last_indexed_version"] is not None:
-            # Join the virus document with its associated sequence documents.
-            joined = await virtool.virus.join(db, document["_id"], document)
-
-            # If the virus has been changed since the last index rebuild, patch it to its last indexed version.
-            if document["version"] != document["last_indexed_version"]:
-                _, joined, _ = await virtool.virus_history.patch_virus_to_version(
-                    db,
-                    joined,
-                    document["last_indexed_version"]
-                )
-
-            virus_list.append(joined)
+        virus_list.append(joined)
 
     # Convert the list of viruses to a JSON-formatted string.
     json_string = json.dumps(virus_list)

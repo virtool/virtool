@@ -2,7 +2,7 @@ import dictdiffer
 from copy import deepcopy
 
 import virtool.utils
-
+import virtool.virus
 
 MOST_RECENT_PROJECTION = [
     "_id",
@@ -139,7 +139,7 @@ async def get_most_recent_change(db, virus_id):
     }, MOST_RECENT_PROJECTION, sort=[("created_at", -1)])
 
 
-async def patch_virus_to_version(db, joined_virus, version, inclusive=False):
+async def patch_virus_to_version(db, virus_id, version):
     """
     Take a joined virus back in time to the passed ``version``. Uses the diffs in the change documents associated with
     the virus.    
@@ -147,14 +147,11 @@ async def patch_virus_to_version(db, joined_virus, version, inclusive=False):
     :param db: the application database client
     :type db: :class:`~motor.motor_asyncio.AsyncIOMotorClient`
      
-    :param joined_virus: the joined virus to patch
-    :type joined_virus: dict
+    :param virus_id: the id of the virus to patch
+    :type virus_id: dict
     
     :param version: the version to patch to
     :type version: str or int
-    
-    :param inclusive: also remove the passed ``version``
-    :type inclusive: bool
     
     :return: the current joined virus, patched virus, and the ids of changes reverted in the process
     :rtype: tuple
@@ -163,15 +160,13 @@ async def patch_virus_to_version(db, joined_virus, version, inclusive=False):
     # A list of history_ids reverted to produce the patched entry.
     reverted_history_ids = list()
 
-    current = joined_virus or dict()
+    current = await virtool.virus.join(db, virus_id) or dict()
 
     patched = deepcopy(current)
 
-    comparator = get_version_comparator(inclusive)
-
     # Sort the changes by descending timestamp.
-    async for change in db.history.find({"virus.id": joined_virus["_id"]}, sort=[("created_at", -1)]):
-        if change["virus"]["version"] == "removed" or comparator(change, version):
+    async for change in db.history.find({"virus.id": virus_id}, sort=[("created_at", -1)]):
+        if change["virus"]["version"] == "removed" or change["virus"]["version"] > version:
             reverted_history_ids.append(change["_id"])
 
             if change["method_name"] == "remove":
@@ -186,18 +181,10 @@ async def patch_virus_to_version(db, joined_virus, version, inclusive=False):
         else:
             break
 
+    if current == {}:
+        current = None
+
     return current, patched, reverted_history_ids
-
-
-def get_version_comparator(inclusive):
-    if inclusive:
-        def func(change, version):
-            return change["virus"]["version"] >= version
-    else:
-        def func(change, version):
-            return change["virus"]["version"] > version
-
-    return func
 
 
 async def set_index_as_unbuilt(db, index_id):

@@ -57,18 +57,10 @@ async def revert(req):
     if virus_version != "removed":
         virus_version = int(virus_version)
 
-    # Try to find the current document for the given virus_id. If it has been deleted, use an empty dict.
-    current_document = await db.viruses.find_one(virus_id)
-
-    if current_document:
-        current_document = await virtool.virus.join(db, virus_id, current_document)
-    else:
-        current_document = {"_id": virus_id}
-
     _, patched, history_to_delete = await virtool.virus_history.patch_virus_to_version(
         db,
-        current_document,
-        virus_version,
+        virus_id,
+        virus_version - 1,
         inclusive=True
     )
 

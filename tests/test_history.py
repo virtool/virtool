@@ -220,60 +220,18 @@ class TestGetMostRecentChange:
 class TestPatchVirusToVersion:
 
     @pytest.mark.parametrize("remove", [True, False])
-    async def test(self, remove, test_motor, test_merged_virus):
+    async def test(self, remove, test_motor, test_merged_virus, create_mock_history):
+        expected_current = await create_mock_history(remove)
 
-        # Apply a series of changes to a test virus document to build up a history.
-        await virtool.virus_history.add(test_motor, "create", None, test_merged_virus, "Description", "test")
+        current, patched, reverted_change_ids = await virtool.virus_history.patch_virus_to_version(
+            test_motor,
+            "6116cba1",
+            1
+        )
 
-        old = deepcopy(test_merged_virus)
+        assert current == expected_current
 
-        test_merged_virus.update({
-            "abbreviation": "TST",
-            "version": 1
-        })
-
-        await virtool.virus_history.add(test_motor, "update", old, test_merged_virus, "Description", "test")
-
-        old = deepcopy(test_merged_virus)
-
-        # We will try to patch to this version of the joined virus.
-        expected = deepcopy(old)
-
-        test_merged_virus.update({
-            "name": "Test Virus",
-            "version": 2
-        })
-
-        await virtool.virus_history.add(test_motor, "update", old, test_merged_virus, "Description", "test")
-
-        old = deepcopy(test_merged_virus)
-
-        test_merged_virus.update({
-            "isolates": [],
-            "version": 3
-        })
-
-        await virtool.virus_history.add(test_motor, "remove_isolate", old, test_merged_virus, "Description", "test")
-
-        if remove:
-            old = deepcopy(test_merged_virus)
-
-            test_merged_virus = {
-                "_id": "6116cba1"
-            }
-
-            await virtool.virus_history.add(test_motor, "remove", old, test_merged_virus, "Description", "test")
-        else:
-            virus, sequences = virtool.virus.split_virus(test_merged_virus)
-            await test_motor.viruses.insert_one(virus)
-
-        return_value = await virtool.virus_history.patch_virus_to_version(test_motor, test_merged_virus, 1)
-
-        current, patched, reverted_change_ids = return_value
-
-        assert current == test_merged_virus
-
-        assert patched == expected
+        assert patched == dict(test_merged_virus, abbreviation="TST", version=1)
 
         expected_reverted_change_ids = ["6116cba1.3", "6116cba1.2"]
 

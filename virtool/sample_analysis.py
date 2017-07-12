@@ -142,12 +142,10 @@ async def format_analysis(db, analysis):
                 virus_version = hit_document["virus_version"]
 
                 if virus_id not in fetched_viruses:
-                    joined = await virtool.virus.join(db, virus_id)
-
                     # Get the virus entry (patched to correct version).
                     _, virus_document, _ = await virtool.virus_history.patch_virus_to_version(
                         db,
-                        joined,
+                        virus_id,
                         virus_version
                     )
 
