@@ -56,7 +56,7 @@ class TestCreate:
             "permissions": no_permissions
         }
 
-    async def test_exists(self, do_post, test_db, all_permissions):
+    async def test_exists(self, do_post, test_db, resp_is, all_permissions):
         """
         Test that a 409 is returned when attempting to create a new group at ``POST /api/groups/:group_id`` when the
         ``group_id`` already exists.
@@ -71,42 +71,26 @@ class TestCreate:
             "group_id": "test"
         }, authorize=True, permissions=["manage_users"])
 
-        assert resp.status == 409
+        assert await resp_is.conflict(resp, "Group already exists")
 
-        assert await resp.json() == {
-            "message": "Group already exists"
-        }
-
-    async def test_missing(self, do_post):
+    async def test_missing(self, do_post, resp_is):
         resp = await do_post("/api/groups", data={
             "test": "test"
         }, authorize=True, permissions=["manage_users"])
 
-        assert resp.status == 422
+        assert await resp_is.invalid_input(resp, {
+            "test": ["unknown field"],
+            "group_id": ["required field"]
+        })
 
-        assert await resp.json() == {
-            "id": "invalid_input",
-            "message": "Invalid input",
-            "errors": {
-                "test": ["unknown field"],
-                "group_id": ["required field"]
-            }
-        }
-
-    async def test_wrong_type(self, do_post):
+    async def test_wrong_type(self, do_post, resp_is):
         resp = await do_post("/api/groups", data={
             "group_id": 1
         }, authorize=True, permissions=["manage_users"])
 
-        assert resp.status == 422
-
-        assert await resp.json() == {
-            "id": "invalid_input",
-            "message": "Invalid input",
-            "errors": {
-                "group_id": ["must be of string type"]
-            }
-        }
+        assert await resp_is.invalid_input(resp, {
+            "group_id": ["must be of string type"]
+        })
 
 
 class TestGet:
@@ -128,19 +112,14 @@ class TestGet:
             "permissions": all_permissions
         }
 
-    async def test_not_found(self, do_get):
+    async def test_not_found(self, do_get, resp_is):
         """
         Test that a ``GET /api/groups/:group_id`` returns 404 for a non-existent ``group_id``.
          
         """
         resp = await do_get("/api/groups/foo", authorize=True, permissions=["manage_users"])
 
-        assert resp.status == 404
-
-        assert await resp.json() == {
-            "id": "not_found",
-            "message": "Not found"
-        }
+        assert await resp_is.not_found(resp)
 
 
 class TestUpdatePermissions:
@@ -173,7 +152,7 @@ class TestUpdatePermissions:
             "permissions": no_permissions
         }
 
-    async def test_invalid_input(self, do_patch, test_db, no_permissions):
+    async def test_invalid_input(self, do_patch, test_db, resp_is, no_permissions):
         """
         Test that an invalid permission key results in a ``422`` response.
          
@@ -187,17 +166,11 @@ class TestUpdatePermissions:
             "foo_bar": True
         }, authorize=True, permissions=["manage_users"])
 
-        assert resp.status == 422
+        assert await resp_is.invalid_input(resp, {
+            "foo_bar": ["unknown field"]
+        })
 
-        assert await resp.json() == {
-            "id": "invalid_input",
-            "message": "Invalid input",
-            "errors": {
-                "foo_bar": ["unknown field"]
-            }
-        }
-
-    async def test_not_found(self, do_patch):
+    async def test_not_found(self, do_patch, resp_is):
         """
         Test that updating an non-existent group results in a ``404`` response.
          
@@ -206,12 +179,7 @@ class TestUpdatePermissions:
             "modify_virus": True
         }, authorize=True, permissions=["manage_users"])
 
-        assert resp.status == 404
-
-        assert await resp.json() == {
-            "id": "not_found",
-            "message": "Not found"
-        }
+        assert await resp_is.not_found(resp)
 
 
 class TestRemove:
@@ -232,29 +200,22 @@ class TestRemove:
 
         assert test_db.groups.count({"_id": "test"}) == 0
 
-    async def test_not_found(self, do_delete):
+    async def test_not_found(self, do_delete, resp_is):
         """
         Test that 404 is returned for non-existent group.
          
         """
         resp = await do_delete("/api/groups/test", authorize=True, permissions=["manage_users"])
 
-        assert await resp.json() == {
-            "id": "not_found",
-            "message": "Not found"
-        }
+        assert await resp_is.not_found(resp)
 
         assert resp.status == 404
 
-    async def test_administrator(self, do_delete):
+    async def test_administrator(self, do_delete, resp_is):
         """
         Test that the administrator group cannot be removed (400).
          
         """
         resp = await do_delete("/api/groups/administrator", authorize=True, permissions=["manage_users"])
 
-        assert await resp.json() == {
-            "message": "Cannot remove administrator group"
-        }
-
-        assert resp.status == 400
+        assert await resp_is.bad_request(resp, "Cannot remove administrator group")

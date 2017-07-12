@@ -81,7 +81,7 @@ def no_content():
     return web.Response(status=204)
 
 
-def bad_request(message="Bad request"):
+def bad_request(message="Bad Request"):
     """
     A shortcut for creating a :class:`~aiohttp.web.Response` object with a ``400`` status the JSON body
     ``{"message": "Bad request"}``.
@@ -93,14 +93,17 @@ def bad_request(message="Bad request"):
     :rtype: :class:`aiohttp.Response`
 
     """
-    return json_response({"message": message}, status=400)
+    return json_response({
+        "id": "bad_request",
+        "message": message
+    }, status=400)
 
 
-def not_found(message="Not found"):
+def not_found(message="Not Found"):
     """
     A shortcut for creating a :class:`~aiohttp.web.Response` object with a ``404`` status the JSON body
     ``{"message": "Not found"}``.
-     
+
     :param message: text to send instead of 'Not found'
     :type message: str
 
@@ -128,7 +131,7 @@ def invalid_input(errors):
     """
     return json_response({
         "id": "invalid_input",
-        "message": "Invalid input",
+        "message": "Invalid Input",
         "errors": errors
     }, status=422)
 
@@ -147,7 +150,7 @@ def invalid_query(errors):
     """
     return json_response({
         "id": "invalid_query",
-        "message": "Invalid query",
+        "message": "Invalid Query",
         "errors": errors
     }, status=422)
 

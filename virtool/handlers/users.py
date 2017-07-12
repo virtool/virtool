@@ -5,8 +5,8 @@ import virtool.user
 import virtool.utils
 import virtool.user_groups
 from virtool.user_permissions import PERMISSIONS
-from virtool.handlers.utils import protected, no_content, bad_request, invalid_input, unpack_json_request, \
-    json_response, not_found
+from virtool.handlers.utils import protected, no_content, bad_request, invalid_input, unpack_request, json_response,\
+    not_found
 
 
 @protected("manage_users")
@@ -40,7 +40,7 @@ async def create(req):
     Add a new user to the user database.
 
     """
-    db, data = await unpack_json_request(req)
+    db, data = await unpack_request(req)
 
     v = Validator({
         "user_id": {"type": "string", "required": True},
@@ -53,7 +53,10 @@ async def create(req):
 
     # Check if the username is already taken. Fail if it does.
     if await virtool.user.user_exists(db, data["user_id"]):
-        return bad_request("User already exists")
+        return json_response({
+            "id": "conflict",
+            "message": "User already exists"
+        }, status=409)
 
     document = {
         "_id": data["user_id"],
@@ -89,7 +92,7 @@ async def set_password(req):
     Used by users with the *modify_options* permission to change other users passwords.
 
     """
-    data = await req.json()
+    db, data = await unpack_request(req)
 
     v = Validator({
         "password": {"type": "string", "required": True}
@@ -100,10 +103,10 @@ async def set_password(req):
 
     user_id = req.match_info["user_id"]
 
-    if not await virtool.user.user_exists(req.app["db"], user_id):
+    if not await virtool.user.user_exists(db, user_id):
         return not_found()
 
-    document = await req.app["db"].users.find_one_and_update({"_id": user_id}, {
+    document = await db.users.find_one_and_update({"_id": user_id}, {
         "$set": {
             "password": virtool.user.hash_password(data["password"]),
             "last_password_change": virtool.utils.timestamp(),
@@ -120,9 +123,9 @@ async def set_force_reset(req):
     Set the ``force_reset`` field on user document.
 
     """
-    user_id = req.match_info["user_id"]
+    db, data = await unpack_request(req)
 
-    data = await req.json()
+    user_id = req.match_info["user_id"]
 
     v = Validator({
         "force_reset": {"type": "boolean", "required": True}
@@ -131,10 +134,10 @@ async def set_force_reset(req):
     if not v(data):
         return invalid_input(v.errors)
 
-    if not await virtool.user.user_exists(req.app["db"], user_id):
-        return not_found("User does not exist")
+    if not await virtool.user.user_exists(db, user_id):
+        return not_found()
 
-    document = await req.app["db"].users.find_one_and_update({"_id": user_id}, {
+    document = await db.users.find_one_and_update({"_id": user_id}, {
         "$set": {
             "force_reset": data["force_reset"],
             "invalidate_sessions": True
@@ -150,9 +153,9 @@ async def set_primary_group(req):
     Set a user's primary group.
 
     """
-    user_id = req.match_info["user_id"]
+    db, data = unpack_request(req)
 
-    data = await req.json()
+    user_id = req.match_info["user_id"]
 
     v = Validator({
         "primary_group": {"type": "string", "required": True}
@@ -161,17 +164,14 @@ async def set_primary_group(req):
     if not v(data):
         return invalid_input(v.errors)
 
-    if not await virtool.user.user_exists(req.app["db"], user_id):
-        return not_found("User does not exist")
+    if not await virtool.user.user_exists(db, user_id):
+        return not_found()
 
     if data["primary_group"] != "none":
-        if not await req.app["db"].groups.count({"_id": data["primary_group"]}):
-            return not_found("Group does not exist")
-
-        if not await req.app["db"].users.count({"_id": user_id, "groups": data["primary_group"]}):
+        if not await db.users.count({"_id": user_id, "groups": data["primary_group"]}):
             return bad_request("User is not member of group {}".format(data["primary_group"]))
 
-    document = await req.app["db"].users.find_one_and_update({"_id": user_id}, {
+    document = await db.users.find_one_and_update({"_id": user_id}, {
         "$set": {
             "primary_group": data["primary_group"]
         }
@@ -186,7 +186,7 @@ async def add_group(req):
     Enable membership in a group for the given user.
 
     """
-    db, data = await unpack_json_request(req)
+    db, data = await unpack_request(req)
 
     user_id = req.match_info["user_id"]
 
@@ -198,10 +198,10 @@ async def add_group(req):
         return invalid_input(v.errors)
 
     if not await virtool.user.user_exists(db, user_id):
-        return not_found("User does not exist")
+        return not_found("User not found")
 
     if data["group_id"] not in await db.groups.distinct("_id"):
-        return not_found("Group does not exist")
+        return not_found("Group not found")
 
     document = await db.users.find_one_and_update({"_id": user_id}, {
         "$addToSet": {
@@ -236,7 +236,7 @@ async def remove_group(req):
     group_id = req.match_info["group_id"]
 
     if not await virtool.user.user_exists(db, user_id):
-        return not_found("User does not exist")
+        return not_found()
 
     if group_id == "administrator" and user_id == req["session"].user_id:
         return bad_request("Administrators cannot remove themselves from the administrator group")
@@ -257,9 +257,7 @@ async def remove_group(req):
         }
     }, return_document=ReturnDocument.AFTER, projection=["groups", "permissions"])
 
-    document["user_id"] = document.pop("_id")
-
-    return json_response(document)
+    return json_response(virtool.utils.base_processor(document))
 
 
 @protected("manage_users")
@@ -276,6 +274,6 @@ async def remove(req):
     delete_result = await req.app["db"].users.delete_one({"_id": user_id})
 
     if delete_result.deleted_count == 0:
-        return not_found("User does not exist")
+        return not_found()
 
     return no_content()

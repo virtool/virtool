@@ -43,7 +43,10 @@ async def create(req):
     try:
         await db.groups.insert_one(document)
     except pymongo.errors.DuplicateKeyError:
-        return json_response({"message": "Group already exists"}, status=409)
+        return json_response({
+            "id": "conflict",
+            "message": "Group already exists"
+        }, status=409)
 
     return json_response(virtool.utils.base_processor(document), status=201)
 
