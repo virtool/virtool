@@ -41,10 +41,11 @@ async def test_not_authorized(method, args, do_get, do_post, do_patch, do_put, d
 
     resp = await doer(*args)
 
-    assert resp.status == 403
+    assert resp.status == 401
 
     assert await resp.json() == {
-        "message": "Not authorized"
+        "id": "requires_authorization",
+        "message": "Requires authorization"
     }
 
 
@@ -63,5 +64,6 @@ async def test_not_permitted(method, args, do_get, do_post, do_patch, do_put, do
     assert resp.status == 403
 
     assert await resp.json() == {
+        "id": "not_permitted",
         "message": "Not permitted"
     }

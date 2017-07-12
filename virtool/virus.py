@@ -93,7 +93,9 @@ async def get_complete(db, virus_id):
 
     for isolate in joined["isolates"]:
         for sequence in isolate["sequences"]:
-            sequence["accession"] = sequence.pop("_id")
+            del sequence["virus_id"]
+            del sequence["isolate_id"]
+            sequence["id"] = sequence.pop("_id")
 
     most_recent_change = await virtool.virus_history.get_most_recent_change(db, virus_id)
 
@@ -118,13 +120,20 @@ async def check_name_and_abbreviation(db, name=None, abbreviation=None):
     
     :param abbreviation: a virus abbreviation
     :type abbreviation: str
-     
-    :return: a message or ``False``
-    :rtype: str or bool
     
     """
-    unique_name = not (name and await db.viruses.find({"name": re.compile(name, re.IGNORECASE)}).count())
-    unique_abbreviation = not (abbreviation and await db.viruses.find({"abbreviation": abbreviation}).count())
+    name_count = 0
+
+    if name:
+        name_count = await db.viruses.find({"name": re.compile(name, re.IGNORECASE)}).count()
+
+    abbr_count = 0
+
+    if abbreviation:
+        abbr_count = await db.viruses.find({"abbreviation": abbreviation}).count()
+
+    unique_name = not name or not name_count
+    unique_abbreviation = not abbreviation or not abbr_count
 
     if not unique_name and not unique_abbreviation:
         return "Name and abbreviation already exist"
@@ -169,11 +178,11 @@ def check_virus(virus, sequences):
     # Append the isolate_ids of any isolates without sequences to empty_isolate. Append the isolate_id and sequence
     # id of any sequences that have an empty sequence.
     for isolate in virus["isolates"]:
-        isolate_sequences = [sequence for sequence in sequences if sequence["isolate_id"] == isolate["isolate_id"]]
+        isolate_sequences = [sequence for sequence in sequences if sequence["isolate_id"] == isolate["id"]]
         isolate_sequence_count = len(isolate_sequences)
 
         if isolate_sequence_count == 0:
-            errors["empty_isolate"].append(isolate["isolate_id"])
+            errors["empty_isolate"].append(isolate["id"])
 
         isolate_sequence_counts.append(isolate_sequence_count)
 
@@ -267,7 +276,7 @@ async def get_new_isolate_id(db, excluded=None):
     """
     used_isolate_ids = excluded or list()
 
-    used_isolate_ids += await db.viruses.distinct("isolates.isolate_id")
+    used_isolate_ids += await db.viruses.distinct("isolates.id")
 
     return virtool.utils.random_alphanumeric(8, excluded=set(used_isolate_ids))
 
@@ -288,7 +297,7 @@ def merge_virus(virus, sequences):
 
     """
     for isolate in virus["isolates"]:
-        isolate["sequences"] = [sequence for sequence in sequences if sequence["isolate_id"] == isolate["isolate_id"]]
+        isolate["sequences"] = [s for s in sequences if s["isolate_id"] == isolate["id"]]
 
     return virus
 
@@ -323,7 +332,7 @@ def extract_isolate_ids(virus):
     :return: a list of isolate ids.
 
     """
-    return [isolate["isolate_id"] for isolate in virus["isolates"]]
+    return [isolate["id"] for isolate in virus["isolates"]]
 
 
 def find_isolate(isolates, isolate_id):
@@ -340,7 +349,7 @@ def find_isolate(isolates, isolate_id):
     :rtype: dict
     
     """
-    return next((isolate for isolate in isolates if isolate["isolate_id"] == isolate_id), None)
+    return next((isolate for isolate in isolates if isolate["id"] == isolate_id), None)
 
 
 def extract_sequence_ids(virus):

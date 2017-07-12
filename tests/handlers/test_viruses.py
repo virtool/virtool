@@ -1,20 +1,82 @@
-import os
 import pytest
-
 from copy import deepcopy
 
-FIXTURE_DIR = os.path.join(os.path.dirname(os.path.realpath(__file__)), "test_files")
+import virtool.virus
 
 
 class TestFind:
 
-    async def test(self, test_db, do_get):
+    @pytest.mark.parametrize("term,modified,per_page,page,d_range,add_modified,meta", [
+        (None, None, None, None, range(0, 3), False, {
+            "page": 1,
+            "per_page": 15,
+            "page_count": 1,
+            "found_count": 3,
+            "total_count": 3,
+            "modified_count": 0,
+        }),
+        # Test ``per_page`` query param.
+        (None, None, 2, 1, range(0, 2), False, {
+            "page": 1,
+            "per_page": 2,
+            "page_count": 2,
+            "found_count": 3,
+            "total_count": 3,
+            "modified_count": 0,
+        }),
+        # Test ``per_page`` and ``page`` query param.
+        (None, None, 2, 2, range(2, 3), False, {
+            "page": 2,
+            "per_page": 2,
+            "page_count": 2,
+            "found_count": 3,
+            "total_count": 3,
+            "modified_count": 0,
+        }),
+        # Test ``term`` query param and ``found_count`` response field.
+        ("pvf", None, None, None, range(1, 2), False, {
+            "page": 1,
+            "per_page": 15,
+            "page_count": 1,
+            "found_count": 1,
+            "total_count": 3,
+            "modified_count": 0,
+        }),
+        # Test ``modified`` query param when set to ``True``. Should only return modified viruses.
+        (None, True, None, None, range(2, 3), True, {
+            "page": 1,
+            "per_page": 15,
+            "page_count": 1,
+            "found_count": 1,
+            "total_count": 3,
+            "modified_count": 1,
+        }),
+        # Test ``modified`` query param when set to ``False``. Should only return unmodified viruses.
+        (None, False, None, None, range(0, 2), True, {
+            "page": 1,
+            "per_page": 15,
+            "page_count": 1,
+            "found_count": 2,
+            "total_count": 3,
+            "modified_count": 1,
+        }),
+        # Test ``modified_count`` calculation.
+        (None, None, 15, 1, range(0, 3), True, {
+            "page": 1,
+            "per_page": 15,
+            "page_count": 1,
+            "found_count": 3,
+            "total_count": 3,
+            "modified_count": 1,
+        })
+    ])
+    async def test(self, term, modified, per_page, page, d_range, meta, add_modified, test_db, do_get):
         test_db.viruses.insert_many([
             {
-                "abbreviation": "TyV_GV1 (not confirmed)",
+                "abbreviation": "EV_TF3-mycovirus",
                 "modified": False,
-                "name": "Tymovirus from Grapevine 1(not confirmed)",
-                "_id": "2f97f077"
+                "name": "Endornavirus of Tree Fruit #3",
+                "_id": "5350af44"
             },
             {
                 "abbreviation": "PVF",
@@ -23,45 +85,64 @@ class TestFind:
                 "_id": "6116cba1"
             },
             {
-                "abbreviation": "EV_TF3-mycovirus",
+                "abbreviation": "TyV_GV1 (not confirmed)",
                 "modified": False,
-                "name": "Endornavirus of Tree Fruit #3",
-                "_id": "5350af44"
+                "name": "Tymovirus from Grapevine 1(not confirmed)",
+                "_id": "2f97f077"
             }
         ])
 
-        resp = await do_get("/api/viruses")
+        if add_modified:
+            test_db.viruses.update_one({"_id": "2f97f077"}, {
+                "$set": {
+                    "modified": True
+                }
+            })
+
+        path = "/api/viruses"
+        query = list()
+
+        if term is not None:
+            query.append("term={}".format(term))
+
+        if modified is not None:
+            query.append("modified={}".format(str(modified).lower()))
+
+        if per_page is not None:
+            query.append("per_page={}".format(per_page))
+
+        if page is not None:
+            query.append("page={}".format(page))
+
+        if len(query):
+            path += "?{}".format("&".join(query))
+
+        resp = await do_get(path)
 
         assert resp.status == 200
 
-        assert await resp.json() == {
-            "modified_count": 0,
-            "found_count": 3,
-            "total_count": 3,
-            "page_count": 1,
-            "page": 1,
+        expected_documents = [
+            {
+                "abbreviation": "EV_TF3-mycovirus",
+                "modified": False,
+                "name": "Endornavirus of Tree Fruit #3",
+                "id": "5350af44"
+            },
+            {
+                "abbreviation": "PVF",
+                "modified": False,
+                "name": "Prunus virus F",
+                "id": "6116cba1"
+            },
+            {
+                "abbreviation": "TyV_GV1 (not confirmed)",
+                "modified": add_modified,
+                "name": "Tymovirus from Grapevine 1(not confirmed)",
+                "id": "2f97f077"
+            }
+        ]
 
-            "documents": [
-                {
-                    "abbreviation": "EV_TF3-mycovirus",
-                    "modified": False,
-                    "name": "Endornavirus of Tree Fruit #3",
-                    "id": "5350af44"
-                },
-                {
-                    "abbreviation": "PVF",
-                    "modified": False,
-                    "name": "Prunus virus F",
-                    "id": "6116cba1"
-                },
-                {
-                    "abbreviation": "TyV_GV1 (not confirmed)",
-                    "modified": False,
-                    "name": "Tymovirus from Grapevine 1(not confirmed)",
-                    "id": "2f97f077"
-                }
-            ]
-        }
+        assert await resp.json() == dict(meta, documents=[expected_documents[i] for i in d_range])
 
 
 class TestGet:
@@ -89,19 +170,16 @@ class TestGet:
             "id": "6116cba1",
             "isolates": [
                 {
-                    "isolate_id": "cab8b360",
+                    "id": "cab8b360",
                     "source_type": "isolate",
                     "source_name": "8816-v2",
                     "default": True,
                     "sequences": [
                         {
-                            "accession": "KX269872",
+                            "id": "KX269872",
                             "definition": "Prunus virus F isolate 8816-s2 "
-                            "segment RNA2 polyprotein 2 gene, "
-                            "complete cds.",
+                            "segment RNA2 polyprotein 2 gene, complete cds.",
                             "host": "sweet cherry",
-                            "isolate_id": "cab8b360",
-                            "virus_id": "6116cba1",
                             "sequence": "TGTTTAAGAGATTAAACAACCGCTTTC"
                         }
                     ]
@@ -131,7 +209,7 @@ class TestGet:
             "id": "6116cba1",
             "isolates": [
                 {
-                    "isolate_id": "cab8b360",
+                    "id": "cab8b360",
                     "source_type": "isolate",
                     "source_name": "8816-v2",
                     "default": True,
@@ -150,22 +228,28 @@ class TestGet:
         assert resp.status == 404
 
         assert await resp.json() == {
+            "id": "not_found",
             "message": "Not found"
         }
 
 
 class TestCreate:
 
-    async def test(self, monkeypatch, test_db, do_post, test_add_history, test_dispatch):
+    @pytest.mark.parametrize("data,description", [
+        (
+            {"name": "Tobacco mosaic virus", "abbreviation": "TMV"},
+            "Created Tobacco mosaic virus (TMV)"
+        ),
+        (
+            {"name": "Tobacco mosaic virus"},
+            "Created Tobacco mosaic virus"
+        )
+    ])
+    async def test(self, data, description, monkeypatch, test_db, do_post, test_add_history, test_dispatch):
         """
         Test that a valid request results in the creation of a virus document and a ``201`` response.
          
         """
-        data = {
-            "name": "Tobacco mosaic virus",
-            "abbreviation": "TMV"
-        }
-
         async def get_fake_id(*args):
             return "test"
 
@@ -175,8 +259,10 @@ class TestCreate:
 
         assert resp.status == 201
 
+        expected_abbreviation = data.get("abbreviation", "") or ""
+
         assert await resp.json() == {
-            "abbreviation": "TMV",
+            "abbreviation": expected_abbreviation,
             "isolates": [],
             "last_indexed_version": None,
             "modified": True,
@@ -193,7 +279,7 @@ class TestCreate:
             "isolates": [],
             "last_indexed_version": None,
             "modified": True,
-            "abbreviation": "TMV",
+            "abbreviation": expected_abbreviation,
             "version": 0
         }
 
@@ -203,18 +289,14 @@ class TestCreate:
             {
                 "isolates": [],
                 "name": "Tobacco mosaic virus",
+                "abbreviation": expected_abbreviation,
                 "lower_name": "tobacco mosaic virus",
                 "_id": "test",
                 "version": 0,
                 "modified": True,
-                "abbreviation": "TMV",
                 "last_indexed_version": None
             },
-            (
-                "Created virus ",
-                "Tobacco mosaic virus",
-                "test"
-            ),
+            description,
             "test"
         )
 
@@ -222,7 +304,7 @@ class TestCreate:
             "viruses",
             "update",
             {
-                "abbreviation": "TMV",
+                "abbreviation": expected_abbreviation,
                 "modified": True,
                 "version": 0,
                 "name": "Tobacco mosaic virus",
@@ -282,27 +364,78 @@ class TestCreate:
 
 class TestEdit:
 
-    @pytest.mark.parametrize("data, description", [
-        (
-            {"name": "Tobacco mosaic virus", "abbreviation": "TMV"},
-            ("Changed name and abbreviation to", "Tobacco mosaic virus", "TMV")
-        ),
+    @pytest.mark.parametrize("data, existing_abbreviation, description", [
+        # Name, ONLY.
         (
             {"name": "Tobacco mosaic virus"},
-            ("Changed name to", "Tobacco mosaic virus")
+            "TMV",
+            "Changed name to Tobacco mosaic virus"
         ),
+        # Name and abbreviation, BOTH CHANGE.
+        (
+            {"name": "Tobacco mosaic virus", "abbreviation": "TMV"},
+            "PVF",
+            "Changed name to Tobacco mosaic virus and abbreviation to TMV"
+        ),
+        # Name and abbreviation, NO NAME CHANGE because old is same as new.
+        (
+            {"name": "Prunus virus F", "abbreviation": "TMV"},
+            "PVF",
+            "Changed abbreviation to TMV"
+        ),
+        # Name and abbreviation, NO ABBR CHANGE because old is same as new.
+        (
+            {"name": "Tobacco mosaic virus", "abbreviation": "TMV"},
+            "TMV",
+            "Changed name to Tobacco mosaic virus"
+        ),
+        # Name and abbreviation, ABBR REMOVED because old is "TMV" and new is "".
+        (
+            {"name": "Tobacco mosaic virus", "abbreviation": ""},
+            "TMV",
+            "Changed name to Tobacco mosaic virus and removed abbreviation TMV"
+        ),
+        # Name and abbreviation, ABBR ADDED because old is "" and new is "TMV".
+        (
+            {"name": "Tobacco mosaic virus", "abbreviation": "TMV"},
+            "",
+            "Changed name to Tobacco mosaic virus and added abbreviation TMV"
+        ),
+        # Abbreviation, ONLY.
         (
             {"abbreviation": "TMV"},
-            ("Changed abbreviation to", "TMV")
+            "PVF",
+            "Changed abbreviation to TMV"
+        ),
+        # Abbreviation, ONLY because old name is same as new.
+        (
+            {"name": "Prunus virus F", "abbreviation": "TMV"},
+            "PVF",
+            "Changed abbreviation to TMV"
+        ),
+        # Abbreviation, ADDED.
+        (
+            {"abbreviation": "TMV"},
+            "",
+            "Added abbreviation TMV"
+        ),
+        # Abbreviation, REMOVED.
+        (
+            {"abbreviation": ""},
+            "TMV",
+            "Removed abbreviation TMV"
         )
     ])
-    async def test(self, data, description, test_db, do_patch, test_virus, test_add_history, test_dispatch):
+    async def test(self, data, existing_abbreviation, description, test_db, do_patch, test_virus, test_add_history,
+                   test_dispatch):
         """
         Test that changing the name and abbreviation results in changes to the virus document and a new change
         document in history. The that change both fields or one or the other results in the correct changes and
         history record.
 
         """
+        test_virus["abbreviation"] = existing_abbreviation
+
         test_db.viruses.insert_one(test_virus)
 
         resp = await do_patch("/api/viruses/6116cba1", data, authorize=True, permissions=["modify_virus"])
@@ -311,12 +444,12 @@ class TestEdit:
 
         expected = {
             "id": "6116cba1",
-            "abbreviation": "PVF",
+            "abbreviation": existing_abbreviation,
             "imported": True,
             "isolates": [
                 {
                     "default": True,
-                    "isolate_id": "cab8b360",
+                    "id": "cab8b360",
                     "sequences": [],
                     "source_name": "8816-v2",
                     "source_type": "isolate"
@@ -350,7 +483,7 @@ class TestEdit:
         expected_dispatch = {
             "id": "6116cba1",
             "name": "Prunus virus F",
-            "abbreviation": "PVF",
+            "abbreviation": existing_abbreviation,
             "modified": True,
             "version": 1
         }
@@ -411,11 +544,20 @@ class TestEdit:
         Test that the request fails with ``409 Conflict`` if the requested virus name already exists.
 
         """
-        test_db.viruses.insert_one({
-            "_id": "test",
-            "name": "Tobacco mosaic virus",
-            "isolates": []
-        })
+        test_db.viruses.insert_many([
+            {
+                "_id": "test",
+                "name": "Prunus virus F",
+                "lower_name": "prunus virus f",
+                "isolates": []
+            },
+            {
+                "_id": "conflict",
+                "name": "Tobacco mosaic virus",
+                "lower_name": "tobacco mosaic virus",
+                "isolates": []
+            }
+        ])
 
         data = {
             "name": "Tobacco mosaic virus",
@@ -435,11 +577,22 @@ class TestEdit:
         Test that the request fails with ``409 Conflict`` if the requested abbreviation already exists.
 
         """
-        test_db.viruses.insert_one({
-            "_id": "test",
-            "abbreviation": "TMV",
-            "isolates": []
-        })
+        test_db.viruses.insert_many([
+            {
+                "_id": "test",
+                "name": "Prunus virus F",
+                "lower_name": "prunus virus f",
+                "abbreviation": "PVF",
+                "isolates": []
+            },
+            {
+                "_id": "conflict",
+                "name": "Tobacco mosaic virus",
+                "lower_name": "tobacco mosaic virus",
+                "abbreviation": "TMV",
+                "isolates": []
+            }
+        ])
 
         data = {
             "abbreviation": "TMV"
@@ -458,12 +611,22 @@ class TestEdit:
         Test that the request fails with ``409 Conflict`` if the requested name and abbreviation already exist.
 
         """
-        test_db.viruses.insert_one({
-            "_id": "test",
-            "name": "Tobacco mosaic virus",
-            "abbreviation": "TMV",
-            "isolates": []
-        })
+        test_db.viruses.insert_many([
+            {
+                "_id": "test",
+                "name": "Prunus virus F",
+                "lower_name": "prunus virus f",
+                "abbreviation": "PVF",
+                "isolates": []
+            },
+            {
+                "_id": "conflict",
+                "name": "Tobacco mosaic virus",
+                "lower_name": "tobacco mosaic virus",
+                "abbreviation": "TMV",
+                "isolates": []
+            }
+        ])
 
         data = {
             "name": "Tobacco mosaic virus",
@@ -478,6 +641,47 @@ class TestEdit:
             "message": "Name and abbreviation already exist"
         }
 
+    @pytest.mark.parametrize("old_name,old_abbr,data", [
+        ("Tobacco mosaic virus", "TMV", {"name": "Tobacco mosaic virus", "abbreviation": "TMV"}),
+        ("Tobacco mosaic virus", "TMV", {"name": "Tobacco mosaic virus"}),
+        ("Tobacco mosaic virus", "TMV", {"abbreviation": "TMV"})
+    ])
+    async def test_no_change(self, old_name, old_abbr, data, test_db, do_patch):
+        test_db.viruses.insert_one({
+            "_id": "test",
+            "name": old_name,
+            "lower_name": "tobacco mosaic virus",
+            "abbreviation": old_abbr,
+            "isolates": []
+        })
+
+        resp = await do_patch("/api/viruses/test", data, authorize=True, permissions=["modify_virus"])
+
+        assert resp.status == 200
+        
+        assert await resp.json() == {
+            "abbreviation": "TMV",
+            "id": "test",
+            "isolates": [],
+            "most_recent_change": None,
+            "name": "Tobacco mosaic virus"
+        }
+
+    async def test_not_found(self, do_patch):
+        data = {
+            "name": "Tobacco mosaic virus",
+            "abbreviation": "TMV"
+        }
+
+        resp = await do_patch("/api/viruses/test", data, authorize=True, permissions=["modify_virus"])
+
+        assert resp.status == 404
+
+        assert await resp.json() == {
+            "id": "not_found",
+            "message": "Not found"
+        }
+
 
 class TestVerify:
 
@@ -489,8 +693,8 @@ class TestVerify:
         """
         test_virus["modified"] = True
 
-        test_db.viruses.insert(test_virus)
-        test_db.sequences.insert(test_sequence)
+        test_db.viruses.insert_one(test_virus)
+        test_db.sequences.insert_one(test_sequence)
 
         resp = await do_put("/api/viruses/6116cba1/verify", {}, authorize=True, permissions=["modify_virus"])
 
@@ -504,19 +708,18 @@ class TestVerify:
             "modified": False,
             "last_indexed_version": 0,
             "version": 1,
+            "most_recent_change": None,
             "isolates": [
                 {
                     "default": True,
-                    "isolate_id": "cab8b360",
+                    "id": "cab8b360",
                     "sequences": [
                         {
                             "sequence": "TGTTTAAGAGATTAAACAACCGCTTTC",
                             "host": "sweet cherry",
                             "definition": "Prunus virus F isolate 8816-s2 segment RNA2 polyprotein 2 gene, complete "
                                           "cds.",
-                            "accession": "KX269872",
-                            "virus_id": "6116cba1",
-                            "isolate_id": "cab8b360"
+                            "id": "KX269872",
                         }
                     ],
                     "source_name": "8816-v2",
@@ -534,7 +737,7 @@ class TestVerify:
             "isolates": [
                 {
                     "default": True,
-                    "isolate_id": "cab8b360",
+                    "id": "cab8b360",
                     "source_name": "8816-v2",
                     "source_type": "isolate"
                 }
@@ -557,15 +760,21 @@ class TestVerify:
             "lower_name": new["name"].lower()
         })
 
+        del new["most_recent_change"]
+
         for isolate in new["isolates"]:
             for sequence in isolate["sequences"]:
-                sequence["_id"] = sequence.pop("accession")
+                sequence.update({
+                    "_id": sequence.pop("id"),
+                    "virus_id": "6116cba1",
+                    "isolate_id": "cab8b360"
+                })
 
         assert test_add_history.call_args[0][1:] == (
             "verify",
             old,
             new,
-            ("Verified",),
+            "Verified",
             "test"
         )
 
@@ -706,17 +915,24 @@ class TestVerify:
         assert resp.status == 404
 
         assert await resp.json() == {
+            "id": "not_found",
             "message": "Not found"
         }
 
 
 class TestRemove:
 
-    async def test(self, test_db, do_delete, test_virus, test_add_history, test_dispatch):
+    @pytest.mark.parametrize("abbreviation,description", [
+        ("", "Removed Prunus virus F"),
+        ("PVF", "Removed Prunus virus F (PVF)")
+    ])
+    async def test(self, abbreviation, description, test_db, do_delete, test_virus, test_add_history, test_dispatch):
         """
         Test that an existing virus can be removed.        
          
         """
+        test_virus["abbreviation"] = abbreviation
+
         test_db.viruses.insert_one(test_virus)
 
         old = test_db.viruses.find_one("6116cba1")
@@ -735,14 +951,14 @@ class TestRemove:
             "remove",
             old,
             None,
-            ("Removed virus", old["name"], old["_id"]),
+            description,
             "test"
         )
 
         assert test_dispatch.stub.call_args[0] == (
             "viruses",
             "remove",
-            {"id": "6116cba1"}
+            ["6116cba1"]
         )
 
     async def test_does_not_exist(self, do_delete):
@@ -754,6 +970,7 @@ class TestRemove:
         assert resp.status == 404
 
         assert await resp.json() == {
+            "id": "not_found",
             "message": "Not found"
         }
 
@@ -769,7 +986,7 @@ class TestListIsolates:
             "default": False,
             "source_type": "isolate",
             "source_name": "7865",
-            "isolate_id": "bcb9b352"
+            "id": "bcb9b352"
         })
 
         test_db.viruses.insert_one(test_virus)
@@ -783,13 +1000,15 @@ class TestListIsolates:
                 "default": True,
                 "source_type": "isolate",
                 "source_name": "8816-v2",
-                "isolate_id": "cab8b360"
+                "id": "cab8b360",
+                "sequences": []
             },
             {
                 "default": False,
                 "source_type": "isolate",
                 "source_name": "7865",
-                "isolate_id": "bcb9b352"
+                "id": "bcb9b352",
+                "sequences": []
             }
         ]
 
@@ -803,6 +1022,7 @@ class TestListIsolates:
         assert resp.status == 404
 
         assert await resp.json() == {
+            "id": "not_found",
             "message": "Not found"
         }
 
@@ -821,14 +1041,15 @@ class TestGetIsolate:
 
         assert resp.status == 200
 
-        test_sequence["accession"] = test_sequence.pop("_id")
-        test_sequence.pop("isolate_id")
+        test_sequence["id"] = test_sequence.pop("_id")
+        del test_sequence["virus_id"]
+        del test_sequence["isolate_id"]
 
         assert await resp.json() == {
             "default": True,
             "source_type": "isolate",
             "source_name": "8816-v2",
-            "isolate_id": "cab8b360",
+            "id": "cab8b360",
             "sequences": [test_sequence]
         }
 
@@ -842,6 +1063,7 @@ class TestGetIsolate:
         assert resp.status == 404
 
         assert await resp.json() == {
+            "id": "not_found",
             "message": "Not found"
         }
 
@@ -851,6 +1073,7 @@ class TestGetIsolate:
         assert resp.status == 404
 
         assert await resp.json() == {
+            "id": "not_found",
             "message": "Not found"
         }
 
@@ -881,7 +1104,7 @@ class TestAddIsolate:
         assert resp.status == 201
 
         assert await resp.json() == {
-            "isolate_id": "test",
+            "id": "test",
             "source_type": "isolate",
             "source_name": "b",
             "default": True,
@@ -892,13 +1115,13 @@ class TestAddIsolate:
 
         assert new["isolates"] == [
             {
-                "isolate_id": "cab8b360",
+                "id": "cab8b360",
                 "default": False,
                 "source_type": "isolate",
                 "source_name": "8816-v2"
             },
             {
-                "isolate_id": "test",
+                "id": "test",
                 "source_name": "b",
                 "source_type": "isolate",
                 "default": True
@@ -914,7 +1137,7 @@ class TestAddIsolate:
             "add_isolate",
             test_virus,
             new,
-            ("Added isolate", "Isolate b", "test", "as default"),
+            "Added isolate Isolate b as default",
             "test"
         )
 
@@ -955,7 +1178,7 @@ class TestAddIsolate:
         assert await resp.json() == {
             "source_name": "b",
             "source_type": "isolate",
-            "isolate_id": "test",
+            "id": "test",
             "default": False,
             "sequences": []
         }
@@ -964,13 +1187,13 @@ class TestAddIsolate:
 
         assert new["isolates"] == [
             {
-                "isolate_id": "cab8b360",
+                "id": "cab8b360",
                 "source_type": "isolate",
                 "source_name": "8816-v2",
                 "default": True
             },
             {
-                "isolate_id": "test",
+                "id": "test",
                 "source_name": "b",
                 "source_type": "isolate",
                 "default": False
@@ -986,7 +1209,7 @@ class TestAddIsolate:
             "add_isolate",
             test_virus,
             new,
-            ("Added isolate", "Isolate b", "test"),
+            "Added isolate Isolate b",
             "test"
         )
 
@@ -1030,7 +1253,7 @@ class TestAddIsolate:
         assert await resp.json() == {
             "source_name": "b",
             "source_type": "isolate",
-            "isolate_id": "test",
+            "id": "test",
             "default": True,
             "sequences": []
         }
@@ -1038,10 +1261,10 @@ class TestAddIsolate:
         new = test_db.viruses.find_one("6116cba1")
 
         assert new["isolates"] == [{
-                "isolate_id": "test",
-                "default": True,
-                "source_type": "isolate",
-                "source_name": "b"
+            "id": "test",
+            "default": True,
+            "source_type": "isolate",
+            "source_name": "b"
         }]
 
         new["isolates"][0]["sequences"] = []
@@ -1050,7 +1273,7 @@ class TestAddIsolate:
             "add_isolate",
             test_virus,
             new,
-            ("Added isolate", "Isolate b", "test", "as default"),
+            "Added isolate Isolate b as default",
             "test"
         )
 
@@ -1066,7 +1289,7 @@ class TestAddIsolate:
             }
         )
 
-    async def test_force_case(self, monkeypatch, test_db, do_post, test_virus, test_add_history, test_dispatch):
+    async def test_force_case(self, monkeypatch, test_db, do_post, test_virus, test_dispatch):
         """
         Test that the ``source_type`` value is forced to lower case.
          
@@ -1091,7 +1314,7 @@ class TestAddIsolate:
         assert await resp.json() == {
             "source_name": "Beta",
             "source_type": "isolate",
-            "isolate_id": "test",
+            "id": "test",
             "default": False,
             "sequences": []
         }
@@ -1100,13 +1323,13 @@ class TestAddIsolate:
 
         assert document["isolates"] == [
             {
-                "isolate_id": "cab8b360",
+                "id": "cab8b360",
                 "default": True,
                 "source_type": "isolate",
                 "source_name": "8816-v2"
             },
             {
-                "isolate_id": "test",
+                "id": "test",
                 "source_name": "Beta",
                 "source_type": "isolate",
                 "default": False
@@ -1143,7 +1366,7 @@ class TestAddIsolate:
         assert resp.status == 201
 
         assert await resp.json() == {
-            "isolate_id": "test",
+            "id": "test",
             "source_name": "",
             "source_type": "",
             "default": False,
@@ -1152,13 +1375,13 @@ class TestAddIsolate:
 
         assert test_db.viruses.find_one("6116cba1", ["isolates"])["isolates"] == [
             {
-                "isolate_id": "cab8b360",
+                "id": "cab8b360",
                 "default": True,
                 "source_type": "isolate",
                 "source_name": "8816-v2"
             },
             {
-                "isolate_id": "test",
+                "id": "test",
                 "source_name": "",
                 "source_type": "",
                 "default": False
@@ -1177,35 +1400,38 @@ class TestAddIsolate:
             }
         )
 
+    async def test_not_found(self, do_post):
+        data = {
+            "source_name": "Beta",
+            "source_type": "Isolate",
+            "default": False
+        }
+
+        resp = await do_post("/api/viruses/6116cba1/isolates", data, authorize=True, permissions=["modify_virus"])
+
+        assert resp.status == 404
+
+        assert await resp.json() == {
+            "id": "not_found",
+            "message": "Not found"
+        }
+
 
 class TestEditIsolate:
 
-    async def test_both(self, test_db, do_patch, test_virus, test_add_history, test_dispatch):
-        """
-        Test that an error is returned when an attempt is made to change the default field and source type and source
-        name in the same request.
-
-        """
-        data = {
-            "source_type": "variant",
-            "default": True
-        }
-
-        resp = await do_patch("/api/viruses/6116cba1/isolates/test", data, authorize=True, permissions=["modify_virus"])
-
-        assert resp.status == 400
-
-        assert await resp.json() == {
-            "message": "Can only edit one of 'source_type' and 'source_name' or 'default' at a time"
-        }
-
-    async def test_name(self, test_db, do_patch, test_virus, test_add_history, test_dispatch):
+    @pytest.mark.parametrize("data,description", [
+        ({"source_type": "variant"}, "Renamed Isolate b to Variant b"),
+        ({"source_type": "variant"}, "Renamed Isolate b to Variant b"),
+        ({"source_type": "variant", "source_name": "A"}, "Renamed Isolate b to Variant A"),
+        ({"source_name": "A"}, "Renamed Isolate b to Isolate A")
+    ])
+    async def test(self, data, description, test_db, do_patch, test_virus, test_add_history, test_dispatch):
         """
         Test that a change to the isolate name results in the correct changes, history, and response.
 
         """
         test_virus["isolates"].append({
-            "isolate_id": "test",
+            "id": "test",
             "source_name": "b",
             "source_type": "isolate",
             "default": False
@@ -1213,36 +1439,26 @@ class TestEditIsolate:
 
         test_db.viruses.insert_one(test_virus)
 
-        data = {
-            "source_type": "variant"
-        }
-
         resp = await do_patch("/api/viruses/6116cba1/isolates/test", data, authorize=True, permissions=["modify_virus"])
 
         assert resp.status == 200
 
-        assert await resp.json() == {
-            "source_type": "variant",
-            "isolate_id": "test",
-            "source_name": "b",
-            "default": False
-        }
+        expected = dict(test_virus["isolates"][1])
+
+        expected.update(data)
+
+        assert await resp.json() == dict(expected, sequences=[])
 
         new = test_db.viruses.find_one("6116cba1")
 
         assert new["isolates"] == [
             {
-                "isolate_id": "cab8b360",
+                "id": "cab8b360",
                 "default": True,
                 "source_type": "isolate",
                 "source_name": "8816-v2"
             },
-            {
-                "isolate_id": "test",
-                "source_name": "b",
-                "source_type": "variant",
-                "default": False
-            }
+            expected
         ]
 
         for joined in (test_virus, new):
@@ -1253,7 +1469,7 @@ class TestEditIsolate:
             "edit_isolate",
             test_virus,
             new,
-            ("Renamed", "Isolate b", "to", "Variant b", "test"),
+            description,
             "test"
         )
 
@@ -1269,95 +1485,7 @@ class TestEditIsolate:
             }
         )
 
-    async def test_to_default(self, test_db, do_patch, test_virus, test_add_history, test_dispatch):
-        """
-        Test that a change to the isolate name results in the correct changes, history, and response.
-
-        """
-        test_virus["isolates"].append({
-            "isolate_id": "test",
-            "source_name": "b",
-            "source_type": "isolate",
-            "default": False
-        })
-
-        test_db.viruses.insert_one(test_virus)
-
-        data = {
-            "default": True
-        }
-
-        resp = await do_patch("/api/viruses/6116cba1/isolates/test", data, authorize=True, permissions=["modify_virus"])
-
-        assert resp.status == 200
-
-        assert await resp.json() == {
-            "source_type": "isolate",
-            "isolate_id": "test",
-            "source_name": "b",
-            "default": True
-        }
-
-        new = test_db.viruses.find_one("6116cba1")
-
-        assert new["isolates"] == [
-            {
-                "isolate_id": "cab8b360",
-                "default": False,
-                "source_type": "isolate",
-                "source_name": "8816-v2"
-            },
-            {
-                "isolate_id": "test",
-                "source_name": "b",
-                "source_type": "isolate",
-                "default": True
-            }
-        ]
-
-        for joined in (test_virus, new):
-            for isolate in joined["isolates"]:
-                isolate["sequences"] = []
-
-        assert test_add_history.call_args[0][1:] == (
-            "edit_isolate",
-            test_virus,
-            new,
-            ("Set", "Isolate b", "test", "as default"),
-            "test"
-        )
-
-    async def test_unset_default(self, test_db, do_patch, test_virus, test_dispatch):
-        """
-        Test that attempting to set ``default`` to ``False`` for a default isolate results in a ``400`` response. The
-        appropriate way to change the default isolate is to set ``default`` to ``True`` on another isolate.
-
-        """
-        test_db.viruses.insert_one(test_virus)
-
-        data = {
-            "default": False
-        }
-
-        async def get_fake_id(*args):
-            return "test"
-
-        resp = await do_patch("/api/viruses/6116cba1/isolates/cab8b360", data, authorize=True,
-                              permissions=["modify_virus"])
-
-        assert resp.status == 422
-
-        assert await resp.json() == {
-            "id": "invalid_input",
-            "message": "Invalid input",
-            "errors": {
-                "default": ["unallowed value False"]
-            }
-        }
-
-        assert test_dispatch.stub.call_args is None
-
-    async def test_force_case(self, monkeypatch, test_db, do_patch, test_virus, test_dispatch):
+    async def test_force_case(self, monkeypatch, test_db, do_patch, test_virus, test_dispatch, test_add_history):
         """
         Test that the ``source_type`` value is forced to lower case.
 
@@ -1379,13 +1507,16 @@ class TestEditIsolate:
         assert resp.status == 200
 
         expected = {
-            "isolate_id": "cab8b360",
+            "id": "cab8b360",
             "default": True,
             "source_type": "variant",
-            "source_name": "8816-v2"
+            "source_name": "8816-v2",
+            "sequences": []
         }
 
         assert await resp.json() == expected
+
+        del expected["sequences"]
 
         assert test_db.viruses.find_one("6116cba1", ["isolates"])["isolates"] == [expected]
 
@@ -1417,6 +1548,226 @@ class TestEditIsolate:
 
         assert test_dispatch.stub.call_args is None
 
+    async def test_invalid_input(self, test_db, do_patch, test_virus):
+        """
+        Test that invalid input results in a ``422`` response and a list of errors.
+
+        """
+
+        test_db.viruses.insert_one(test_virus)
+
+        data = {
+            "source_type": {"key": "variant"},
+            "source_name": "A"
+        }
+
+        resp = await do_patch(
+            "/api/viruses/6116cba1/isolates/cab8b360", data,
+            authorize=True,
+            permissions=["modify_virus"]
+        )
+
+        assert resp.status == 422
+
+        assert await resp.json() == {
+            "id": "invalid_input",
+            "message": "Invalid input",
+            "errors": {
+                "source_type": ["must be of string type"]
+            }
+        }
+
+    @pytest.mark.parametrize("virus_id,isolate_id", [
+        ("6116cba1", "test"),
+        ("test", "cab8b360"),
+        ("test", "test")
+    ])
+    async def test_not_found(self, virus_id, isolate_id, test_db, do_patch, test_virus):
+        """
+        Test that a request for a non-existent virus or isolate results in a ``404`` response.
+
+        """
+        test_db.viruses.insert_one(test_virus)
+
+        data = {
+            "source_type": "variant",
+            "source_name": "A"
+        }
+
+        resp = await do_patch(
+            "/api/viruses/{}/isolates/{}".format(virus_id, isolate_id),
+            data,
+            authorize=True,
+            permissions=["modify_virus"]
+        )
+
+        assert resp.status == 404
+
+        assert await resp.json() == {
+            "id": "not_found",
+            "message": "Not found"
+        }
+
+
+class TestSetAsDefault:
+
+    async def test(self, test_motor, do_put, test_virus, test_add_history, test_dispatch):
+        """
+        Test changing the default isolate results in the correct changes, history, and response.
+
+        """
+        test_virus["isolates"].append({
+            "id": "test",
+            "source_name": "b",
+            "source_type": "isolate",
+            "default": False
+        })
+
+        await test_motor.viruses.insert_one(test_virus)
+
+        resp = await do_put(
+            "/api/viruses/6116cba1/isolates/test/default",
+            {},
+            authorize=True,
+            permissions=["modify_virus"]
+        )
+
+        assert resp.status == 200
+
+        assert await resp.json() == {
+            "id": "test",
+            "source_type": "isolate",
+            "source_name": "b",
+            "default": True,
+            "sequences": []
+        }
+
+        new = await virtool.virus.join(test_motor, "6116cba1")
+
+        assert new["isolates"] == [
+            {
+                "id": "cab8b360",
+                "default": False,
+                "source_type": "isolate",
+                "source_name": "8816-v2",
+                "sequences": []
+            },
+            {
+                "id": "test",
+                "source_name": "b",
+                "source_type": "isolate",
+                "default": True,
+                "sequences": []
+            }
+        ]
+
+        for joined in (test_virus, new):
+            for isolate in joined["isolates"]:
+                isolate["sequences"] = []
+
+        assert test_add_history.call_args[0][1:] == (
+            "set_as_default",
+            test_virus,
+            new,
+            "Set Isolate b as default",
+            "test"
+        )
+
+        assert test_dispatch.stub.call_args[0] == (
+            "viruses",
+            "update",
+            {
+                "id": "6116cba1",
+                "name": "Prunus virus F",
+                "abbreviation": "PVF",
+                "modified": True,
+                "version": 1
+            }
+        )
+
+    async def test_no_change(self, test_motor, do_put, test_virus, test_add_history, test_dispatch):
+        """
+        Test that a call resulting in no change (calling endpoint on an already default isolate) results in no change.
+        Specifically no increment in version and no dispatch.
+
+        """
+        test_virus["isolates"].append({
+            "id": "test",
+            "source_name": "b",
+            "source_type": "isolate",
+            "default": False
+        })
+
+        await test_motor.viruses.insert_one(test_virus)
+
+        resp = await do_put(
+            "/api/viruses/6116cba1/isolates/cab8b360/default",
+            {},
+            authorize=True,
+            permissions=["modify_virus"]
+        )
+
+        assert resp.status == 200
+
+        assert await resp.json() == {
+            "id": "cab8b360",
+            "default": True,
+            "source_type": "isolate",
+            "source_name": "8816-v2",
+            "sequences": []
+        }
+
+        new = await virtool.virus.join(test_motor, "6116cba1")
+
+        assert new["version"] == 0
+
+        assert new["isolates"] == [
+            {
+                "id": "cab8b360",
+                "default": True,
+                "source_type": "isolate",
+                "source_name": "8816-v2",
+                "sequences": []
+            },
+            {
+                "id": "test",
+                "source_name": "b",
+                "source_type": "isolate",
+                "default": False,
+                "sequences": []
+            }
+        ]
+
+        assert not test_add_history.called
+
+        assert not test_dispatch.stub.called
+
+    @pytest.mark.parametrize("virus_id,isolate_id", [
+        ("6116cba1", "test"),
+        ("test", "cab8b360"),
+        ("test", "test")
+    ])
+    async def test_not_found(self, virus_id, isolate_id, test_db, do_put, test_virus):
+        """
+        Test that ``404 Not found`` is returned if the virus or isolate does not exist
+
+        """
+        test_db.viruses.insert_one(test_virus)
+
+        resp = await do_put(
+            "/api/viruses/{}/isolates/{}/default".format(virus_id, isolate_id),
+            {},
+            authorize=True,
+            permissions=["modify_virus"]
+        )
+
+        assert resp.status == 404
+
+        assert await resp.json() == {
+            "id": "not_found",
+            "message": "Not found"
+        }
+
 
 class TestRemoveIsolate:
 
@@ -1429,13 +1780,13 @@ class TestRemoveIsolate:
         test_db.viruses.insert_one(test_virus)
         test_db.sequences.insert_one(test_sequence)
 
-        assert test_db.viruses.find({"isolates.isolate_id": "cab8b360"}).count() == 1
+        assert test_db.viruses.find({"isolates.id": "cab8b360"}).count() == 1
 
         resp = await do_delete("/api/viruses/6116cba1/isolates/cab8b360", authorize=True, permissions=["modify_virus"])
 
         assert resp.status == 204
 
-        assert test_db.viruses.find({"isolates.isolate_id": "cab8b360"}).count() == 0
+        assert test_db.viruses.find({"isolates.id": "cab8b360"}).count() == 0
 
         assert test_db.sequences.count() == 0
 
@@ -1445,7 +1796,7 @@ class TestRemoveIsolate:
             "imported": True,
             "isolates": [
                 {
-                    "isolate_id": "cab8b360",
+                    "id": "cab8b360",
                     "source_type": "isolate",
                     "source_name": "8816-v2",
                     "default": True,
@@ -1482,7 +1833,7 @@ class TestRemoveIsolate:
             "remove_isolate",
             old,
             new,
-            ("Removed isolate", "Isolate 8816-v2", "cab8b360"),
+            "Removed Isolate 8816-v2",
             "test"
         )
 
@@ -1507,7 +1858,7 @@ class TestRemoveIsolate:
             "default": False,
             "source_type": "isolate",
             "source_name": "7865",
-            "isolate_id": "bcb9b352"
+            "id": "bcb9b352"
         })
 
         test_db.viruses.insert_one(test_virus)
@@ -1517,9 +1868,9 @@ class TestRemoveIsolate:
 
         assert resp.status == 204
 
-        assert test_db.viruses.find({"isolates.isolate_id": "cab8b360"}).count() == 0
+        assert test_db.viruses.find({"isolates.id": "cab8b360"}).count() == 0
 
-        assert test_db.viruses.find_one({"isolates.isolate_id": "bcb9b352"}, ["isolates"])["isolates"][0]["default"]
+        assert test_db.viruses.find_one({"isolates.id": "bcb9b352"}, ["isolates"])["isolates"][0]["default"]
 
         assert test_db.sequences.count() == 0
 
@@ -1529,7 +1880,7 @@ class TestRemoveIsolate:
             "imported": True,
             "isolates": [
                 {
-                    "isolate_id": "cab8b360",
+                    "id": "cab8b360",
                     "source_type": "isolate",
                     "source_name": "8816-v2",
                     "default": True,
@@ -1550,7 +1901,7 @@ class TestRemoveIsolate:
                     "default": False,
                     "source_type": "isolate",
                     "source_name": "7865",
-                    "isolate_id": "bcb9b352",
+                    "id": "bcb9b352",
                     "sequences": []
                 }
             ],
@@ -1570,7 +1921,7 @@ class TestRemoveIsolate:
                     "default": True,
                     "source_type": "isolate",
                     "source_name": "7865",
-                    "isolate_id": "bcb9b352",
+                    "id": "bcb9b352",
                     "sequences": []
                 }
             ],
@@ -1585,7 +1936,7 @@ class TestRemoveIsolate:
             "remove_isolate",
             old,
             new,
-            ("Removed isolate", "Isolate 8816-v2", "cab8b360", "and set", "Isolate 7865", "bcb9b352", "as default"),
+            "Removed Isolate 8816-v2 and set Isolate 7865 as default",
             "test"
         )
 
@@ -1614,6 +1965,7 @@ class TestRemoveIsolate:
         assert resp.status == 404
 
         assert await resp.json() == {
+            "id": "not_found",
             "message": "Not found"
         }
 
@@ -1628,8 +1980,6 @@ class TestListSequences:
 
         assert resp.status == 200
 
-        test_sequence["accession"] = test_sequence.pop("_id")
-
         assert await resp.json() == [{
             "id": "KX269872",
             "definition": "Prunus virus F isolate 8816-s2 segment RNA2 polyprotein 2 gene, complete cds.",
@@ -1642,11 +1992,16 @@ class TestListSequences:
         "/api/viruses/foobar/isolates/cab8b360/sequences"
     ])
     async def test_not_found(self, url, do_get):
+        """
+        Test that ``404`` is returned when the isolate id or sequence id do not exist.
+
+        """
         resp = await do_get(url)
 
         assert resp.status == 404
 
         assert await resp.json() == {
+            "id": "not_found",
             "message": "Not found"
         }
 
@@ -1677,6 +2032,7 @@ class TestGetSequence:
         assert resp.status == 404
 
         assert await resp.json() == {
+            "id": "not_found",
             "message": "Not found"
         }
 
@@ -1687,7 +2043,7 @@ class TestCreateSequence:
         test_db.viruses.insert(test_virus)
 
         data = {
-            "accession": "FOOBAR",
+            "id": "foobar",
             "host": "Plant",
             "sequence": "ATGCGTGTACTG",
             "definition": "A made up sequence"
@@ -1708,21 +2064,13 @@ class TestCreateSequence:
         assert resp.status == 200
 
         assert await resp.json() == {
-            "id": "FOOBAR",
+            "id": "foobar",
             "definition": "A made up sequence",
             "virus_id": "6116cba1",
             "isolate_id": "cab8b360",
             "host": "Plant",
             "sequence": "ATGCGTGTACTG"
         }
-
-        description = (
-            "Created new sequence",
-            "FOOBAR",
-            "in isolate",
-            "Isolate 8816-v2",
-            "cab8b360"
-        )
 
         old = {
             "_id": "6116cba1",
@@ -1731,7 +2079,7 @@ class TestCreateSequence:
             "isolates": [
                 {
                     "default": True,
-                    "isolate_id": "cab8b360",
+                    "id": "cab8b360",
                     "sequences": [],
                     "source_name": "8816-v2",
                     "source_type": "isolate"
@@ -1747,7 +2095,7 @@ class TestCreateSequence:
         new = deepcopy(old)
 
         new["isolates"][0]["sequences"] = [{
-            "_id": "FOOBAR",
+            "_id": "foobar",
             "definition": "A made up sequence",
             "virus_id": "6116cba1",
             "isolate_id": "cab8b360",
@@ -1764,7 +2112,7 @@ class TestCreateSequence:
             "create_sequence",
             old,
             new,
-            description,
+            "Created new sequence foobar in Isolate 8816-v2",
             "test"
         )
 
@@ -1785,7 +2133,7 @@ class TestCreateSequence:
         test_db.sequences.insert(test_sequence)
 
         data = {
-            "accession": "KX269872",
+            "id": "KX269872",
             "sequence": "ATGCGTGTACTG",
             "definition": "An already existing sequence"
         }
@@ -1800,7 +2148,7 @@ class TestCreateSequence:
         assert resp.status == 409
 
         assert await resp.json() == {
-            "message": "Accession already exists"
+            "message": "Sequence id already exists"
         }
 
     async def test_invalid_input(self, do_post):
@@ -1809,7 +2157,7 @@ class TestCreateSequence:
          
         """
         data = {
-            "accession": 2016,
+            "id": 2016,
             "seq": "ATGCGTGTACTG",
             "definition": "A made up sequence"
         }
@@ -1827,7 +2175,7 @@ class TestCreateSequence:
             "id": "invalid_input",
             "message": "Invalid input",
             "errors": {
-                "accession": ["must be of string type"],
+                "id": ["must be of string type"],
                 "sequence": ["required field"],
                 "seq": ["unknown field"]
             }
@@ -1844,7 +2192,7 @@ class TestCreateSequence:
          
         """
         data = {
-            "accession": "FOOBAR",
+            "id": "FOOBAR",
             "host": "Plant",
             "sequence": "ATGCGTGTACTG",
             "definition": "A made up sequence"
@@ -1857,6 +2205,7 @@ class TestCreateSequence:
         assert resp.status == 404
 
         assert await resp.json() == {
+            "id": "not_found",
             "message": "Not found"
         }
 
@@ -1898,7 +2247,7 @@ class TestEditSequence:
             "isolates": [
                 {
                     "default": True,
-                    "isolate_id": "cab8b360",
+                    "id": "cab8b360",
                     "sequences": [dict(test_sequence, virus_id="6116cba1")],
                     "source_name": "8816-v2",
                     "source_type": "isolate"
@@ -1931,7 +2280,7 @@ class TestEditSequence:
             "edit_sequence",
             old,
             new,
-            ("Edited sequence", "KX269872", "in isolate", "Isolate 8816-v2", "cab8b360"),
+            "Edited sequence KX269872 in Isolate 8816-v2",
             "test"
         )
 
@@ -1946,6 +2295,20 @@ class TestEditSequence:
                 "version": 1
             }
         )
+
+    async def test_empty_input(self, do_patch):
+        resp = await do_patch(
+            "/api/viruses/6116cba1/isolates/cab8b360/sequences/KX269872",
+            {},
+            authorize=True,
+            permissions=["modify_virus"]
+        )
+
+        assert resp.status == 400
+
+        assert await resp.json() == {
+            "message": "Empty input"
+        }
 
     async def test_invalid_input(self, do_patch):
         resp = await do_patch(
@@ -1996,10 +2359,83 @@ class TestEditSequence:
 
         if foobar == "sequence_id":
             assert await resp.json() == {
+                "id": "not_found",
                 "message": "Sequence not found"
             }
 
         else:
             assert await resp.json() == {
+                "id": "not_found",
                 "message": "Virus or isolate not found"
             }
+
+
+class TestRemoveSequence:
+
+    async def test(self, do_delete, test_motor, test_virus, test_sequence, test_add_history, test_dispatch):
+        await test_motor.viruses.insert_one(test_virus)
+        await test_motor.sequences.insert_one(test_sequence)
+
+        old = await virtool.virus.join(test_motor, test_virus["_id"])
+
+        resp = await do_delete(
+            "/api/viruses/6116cba1/isolates/cab8b360/sequences/KX269872",
+            authorize=True,
+            permissions=["modify_virus"]
+        )
+
+        new = await virtool.virus.join(test_motor, test_virus["_id"])
+
+        assert test_add_history.call_args[0][1:] == (
+            "remove_sequence",
+            old,
+            new,
+            "Removed sequence KX269872 from Isolate 8816-v2",
+            "test"
+        )
+
+        assert test_dispatch.stub.call_args[0] == (
+            "viruses",
+            "update",
+            {
+                "id": "6116cba1",
+                "abbreviation": "PVF",
+                "modified": True,
+                "name": "Prunus virus F",
+                "version": 1
+            }
+        )
+
+        assert resp.status == 204
+
+    async def test_sequence_not_found(self, test_db, test_virus, do_delete):
+        test_db.sequences.insert_one(test_virus)
+
+        resp = await do_delete(
+            "/api/viruses/6116cba1/isolates/cab8b360/sequences/KX269872",
+            authorize=True,
+            permissions=["modify_virus"]
+        )
+
+        assert resp.status == 404
+
+        assert await resp.json() == {
+            "id": "not_found",
+            "message": "Not found"
+        }
+
+    async def test_virus_not_found(self, test_db, test_sequence, do_delete):
+        test_db.viruses.insert_one(test_sequence)
+
+        resp = await do_delete(
+            "/api/viruses/6116cba1/isolates/cab8b360/sequences/KX269872",
+            authorize=True,
+            permissions=["modify_virus"]
+        )
+
+        assert resp.status == 404
+
+        assert await resp.json() == {
+            "id": "not_found",
+            "message": "Not found"
+        }

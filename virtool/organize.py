@@ -1,4 +1,5 @@
 import os
+import arrow
 
 import virtool.virus
 import virtool.virus_index
@@ -48,13 +49,19 @@ async def organize_samples(db):
         }
     })
 
-    async for sample in db.samples.find({}, ["_id"]):
+    async for sample in db.samples.find({}, ["_id", "created_at"]):
         analyses = await db.analyses.find({"sample.id": sample["_id"]}, ["ready", "algorithm"]).to_list(None)
 
         await db.samples.update_one({"_id": sample["_id"]}, {
             "$set": virtool.sample.calculate_algorithm_tags(analyses)
         })
 
+        if isinstance(sample["created_at"], str):
+            await db.samples.update_one({"_id": sample["_id"]}, {
+                "$set": {
+                    "created_at": arrow.get(sample["created_at"]).datetime
+                }
+            })
 
 async def organize_analyses(db):
     """
@@ -145,9 +152,24 @@ async def organize_viruses(db):
         "$unset": {
             "segments": "",
             "abbrevation": "",
-            "new": ""
+            "new": "",
+            "username": "",
+            "user_id": ""
         }
     })
+
+    async for document in db.viruses.find({"isolates.isolate_id": {"$exists": True}}, ["isolates"]):
+        for isolate in document["isolates"]:
+            try:
+                isolate["id"] = isolate["isolate_id"]
+            except KeyError:
+                pass
+
+        await db.viruses.update_one({"_id": document["_id"]}, {
+            "$set": {
+                "isolates": document["isolates"]
+            }
+        })
 
 
 def organize_sequences(database):
@@ -202,11 +224,35 @@ async def organize_history(db):
     For now, just rename the ``timestamp`` field to ``created_at``.
 
     """
+    await virtool.organize_utils.update_user_field(db.history)
+
     await db.history.update_many({}, {
         "$rename": {
             "timestamp": "created_at"
         }
     })
+
+    async for change in db.history.find({"virus_id": {"$exists": True}}):
+        await db.history.update_one({"_id": change["_id"]}, {
+            "$set": {
+                "virus": {
+                    "id": change["virus_id"],
+                    "version": change["virus_version"],
+                    "name": change["virus_name"]
+                },
+                "index": {
+                    "id": change["index_id"],
+                    "version": change["index_version"]
+                }
+            },
+            "$unset": {
+                "virus_id": "",
+                "virus_version": "",
+                "virus_name": "",
+                "index_id": "",
+                "index_version": ""
+            }
+        })
 
 
 async def organize_subtraction(db):
@@ -275,27 +321,31 @@ async def organize_subtraction(db):
     })
 
 
-def organize_users(database):
+async def organize_users(db):
+    await virtool.organize_utils.unset_version_field(db.users)
+
+    # Unset sessions field. These are stored in a separate collection now.
+    await db.users.update_many({}, {
+        "$unset": {
+            "sessions": ""
+        }
+    })
+
     # If any users lack the ``primary_group`` field or it is None, add it with a value of "".
-    database.users.update_many({"$or": [
+    await db.users.update_many({"$or": [
         {"primary_group": {"$exists": False}},
         {"primary_group": None}
     ]}, {
         "$set": {"primary_group": ""}
-    }, multi=True)
-
-    # Assign default user settings to users without defined settings.
-    database.users.update_many({"settings": {}}, {
-        "$set": {"settings": {"show_ids": False, "show_versions": False}}
-    }, multi=True)
+    })
 
     # Make sure permissions are correct for all users.
-    for user in database.users.find():
-        groups = database.groups.find({"_id": {
+    async for user in db.users.find():
+        groups = await db.groups.find({"_id": {
             "$in": user["groups"]
-        }})
+        }}).to_list(None)
 
-        database.users.update_one({"_id": user["_id"]}, {
+        await db.users.update_one({"_id": user["_id"]}, {
             "$set": {
                 "permissions": merge_group_permissions(list(groups))
             }

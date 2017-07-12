@@ -88,16 +88,26 @@ async def init_db(app):
     """
     app["db_name"] = app.get("db_name", None) or app["settings"].get("db_name")
 
-    app["db"] = motor_asyncio.AsyncIOMotorClient(io_loop=app.loop)[app["db_name"]]
+    db = motor_asyncio.AsyncIOMotorClient(io_loop=app.loop)[app["db_name"]]
 
-    await virtool.organize.organize_subtraction(app["db"])
+    # Create indexes.
+    await db.viruses.create_index("name")
+    await db.viruses.create_index("abbreviation")
+    await db.viruses.create_index("modified")
+    await db.sequences.create_index("virus_id")
+    await db.indexes.create_index("index_version", unique=True)
+    await db.history.create_index("virus.id")
+    await db.history.create_index("index.id")
+    await db.history.create_index("created_at")
 
-    await app["db"].viruses.create_index("name")
-    await app["db"].viruses.create_index("abbreviation")
-    await app["db"].viruses.create_index("modified")
-    await app["db"].indexes.create_index("index_version", unique=True)
-    await app["db"].history.create_index("virus_id")
-    await app["db"].history.create_index("index_id")
+    # Organize collections.
+    await virtool.organize.organize_samples(db)
+    await virtool.organize.organize_viruses(db)
+    await virtool.organize.organize_history(db)
+    await virtool.organize.organize_subtraction(db)
+    await virtool.organize.organize_users(db)
+
+    app["db"] = db
 
 
 async def init_job_manager(app):

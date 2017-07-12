@@ -81,7 +81,7 @@ def save_setup(handler, data):
     username = data["username"]
 
     if username:
-        db.users.insert({
+        db.users.insert_one({
             "_id": username,
             # A list of group _ids the user is associated with.
             "groups": ["administrator"],

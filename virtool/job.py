@@ -16,7 +16,7 @@ LIST_PROJECTION = [
     "status",
     "proc",
     "mem",
-    "user_id"
+    "user"
 ]
 
 

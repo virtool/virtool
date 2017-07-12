@@ -3,7 +3,7 @@ from pymongo import ReturnDocument
 import virtool.utils
 import virtool.user
 
-from virtool.handlers.utils import json_response, bad_request, requires_login, protected, validation
+from virtool.handlers.utils import json_response, no_content, bad_request, protected, validation
 
 SETTINGS_SCHEMA = {
     "show_ids": {
@@ -39,26 +39,21 @@ async def get(req):
     """
     user_id = req["session"].user_id
 
-    if not user_id:
-        return requires_login()
-
     document = await req.app["db"].users.find_one(user_id)
 
-    document["user_id"] = document.pop("_id")
+    for key in ["salt", "password", "invalidate_sessions"]:
+        document.pop(key, None)
 
-    return json_response(document)
+    return json_response(virtool.utils.base_processor(document))
 
 
 @protected()
 async def get_settings(req):
     """
     Get account settings
-    
+
     """
     user_id = req["session"].user_id
-
-    if not user_id:
-        return requires_login()
 
     document = await req.app["db"].users.find_one(user_id)
 
@@ -124,7 +119,7 @@ async def change_password(req):
         }
     })
 
-    return json_response({"timestamp": last_password_change})
+    return json_response({"last_password_change": last_password_change})
 
 
 @protected()
@@ -137,6 +132,6 @@ async def logout(req):
 
     session_id = req["session"].id
 
-    response = await db.sessions.delete_one({"_id": session_id})
+    await db.sessions.delete_one({"_id": session_id})
 
-    return json_response({"session_id": session_id})
+    return no_content()

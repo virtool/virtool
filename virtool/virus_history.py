@@ -1,52 +1,31 @@
-import pymongo
 import dictdiffer
 from copy import deepcopy
 
 import virtool.utils
+import virtool.virus
 
-
-VIRUS_PROJECTION = [
+MOST_RECENT_PROJECTION = [
     "_id",
     "description",
     "method_name",
-    "user_id",
-    "virus_version",
-    "timestamp",
+    "user",
+    "virus",
+    "created_at"
 ]
 
 LIST_PROJECTION = [
     "_id",
     "description",
     "method_name",
-    "timestamp",
-    "virus_id",
-    "virus_name",
-    "virus_version",
-    "user_id",
-    "index_id",
-    "index_version"
+    "created_at",
+    "virus",
+    "index",
+    "user"
 ]
 
 PROJECTION = LIST_PROJECTION + [
     "diff"
 ]
-
-
-def processor(document):
-    document = virtool.utils.base_processor(document)
-
-    document["virus"] = {
-        "id": document.pop("virus_id"),
-        "version": document.pop("virus_version"),
-        "name": document.pop("virus_name")
-    }
-
-    document["index"] = {
-        "id": document.pop("index_id"),
-        "version": document.pop("index_version")
-    }
-
-    return document
 
 
 async def add(db, method_name, old, new, description, user_id):
@@ -94,13 +73,19 @@ async def add(db, method_name, old, new, description, user_id):
         "_id": ".".join([str(virus_id), str(virus_version)]),
         "method_name": method_name,
         "description": description,
-        "timestamp": virtool.utils.timestamp(),
-        "virus_id": virus_id,
-        "virus_name": virus_name,
-        "virus_version": virus_version,
-        "user_id": user_id,
-        "index_id": "unbuilt",
-        "index_version": "unbuilt"
+        "created_at": virtool.utils.timestamp(),
+        "virus": {
+            "id": virus_id,
+            "name": virus_name,
+            "version": virus_version
+        },
+        "index": {
+            "id": "unbuilt",
+            "version": "unbuilt"
+        },
+        "user": {
+            "id": user_id
+        }
     }
 
     if method_name == "create":
@@ -149,12 +134,12 @@ async def get_most_recent_change(db, virus_id):
     
     """
     return await db.history.find_one({
-        "virus_id": virus_id,
-        "index_id": "unbuilt"
-    }, VIRUS_PROJECTION, sort=[("_id", pymongo.DESCENDING)])
+        "virus.id": virus_id,
+        "index.id": "unbuilt"
+    }, MOST_RECENT_PROJECTION, sort=[("created_at", -1)])
 
 
-async def patch_virus_to_version(db, joined_virus, version, inclusive=False):
+async def patch_virus_to_version(db, virus_id, version):
     """
     Take a joined virus back in time to the passed ``version``. Uses the diffs in the change documents associated with
     the virus.    
@@ -162,14 +147,11 @@ async def patch_virus_to_version(db, joined_virus, version, inclusive=False):
     :param db: the application database client
     :type db: :class:`~motor.motor_asyncio.AsyncIOMotorClient`
      
-    :param joined_virus: the joined virus to patch
-    :type joined_virus: dict
+    :param virus_id: the id of the virus to patch
+    :type virus_id: dict
     
     :param version: the version to patch to
     :type version: str or int
-    
-    :param inclusive: also remove the passed ``version``
-    :type inclusive: bool
     
     :return: the current joined virus, patched virus, and the ids of changes reverted in the process
     :rtype: tuple
@@ -178,15 +160,13 @@ async def patch_virus_to_version(db, joined_virus, version, inclusive=False):
     # A list of history_ids reverted to produce the patched entry.
     reverted_history_ids = list()
 
-    current = joined_virus or dict()
+    current = await virtool.virus.join(db, virus_id) or dict()
 
     patched = deepcopy(current)
 
-    comparator = get_version_comparator(inclusive)
-
     # Sort the changes by descending timestamp.
-    async for change in db.history.find({"virus_id": joined_virus["_id"]}, sort=[("_id", pymongo.DESCENDING)]):
-        if change["virus_version"] == "removed" or comparator(change, version):
+    async for change in db.history.find({"virus.id": virus_id}, sort=[("created_at", -1)]):
+        if change["virus"]["version"] == "removed" or change["virus"]["version"] > version:
             reverted_history_ids.append(change["_id"])
 
             if change["method_name"] == "remove":
@@ -201,18 +181,10 @@ async def patch_virus_to_version(db, joined_virus, version, inclusive=False):
         else:
             break
 
+    if current == {}:
+        current = None
+
     return current, patched, reverted_history_ids
-
-
-def get_version_comparator(inclusive):
-    if inclusive:
-        def func(change, version):
-            return change["virus_version"] >= version
-    else:
-        def func(change, version):
-            return change["virus_version"] > version
-
-    return func
 
 
 async def set_index_as_unbuilt(db, index_id):
@@ -225,11 +197,14 @@ async def set_index_as_unbuilt(db, index_id):
      
     :param index_id: the ``index_id`` to replace
     :type index_id: str
-     
+
     """
-    await db.history.update_many({"index_id": index_id}, {
+    await db.history.update_many({"index.id": index_id}, {
         "$set": {
-            "index_id": "unbuilt",
-            "index_version": "unbuilt"
+            "index": {
+                "id": "unbuilt",
+                "version": "unbuilt"
+            }
         }
     })
+

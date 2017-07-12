@@ -2,29 +2,35 @@ import pytest
 import datetime
 from copy import deepcopy
 
-import virtool.virus_history
+import virtool.utils
 import virtool.virus
-from .viruses import test_merged_virus
+import virtool.virus_history
 
 
 @pytest.fixture
-def test_change():
+def test_change(static_time):
     return {
         "_id": "6116cba1.1",
-        "description": ["Edited virus", "Prunus virus E"],
+        "method_name": "edit",
+        "description": "Edited virus Prunus virus E",
+        "created_at": static_time,
         "diff": [
             ["change", "abbreviation", ["PVF", ""]],
             ["change", "name", ["Prunus virus F", "Prunus virus E"]],
             ["change", "version", [0, 1]]
         ],
-        "index_id": "unbuilt",
-        "index_version": "unbuilt",
-        "method_name": "edit",
-        "timestamp": datetime.datetime(2017, 10, 6, 20, 0, 0),
-        "user_id": "test",
-        "virus_id": "6116cba1",
-        "virus_name": "Prunus virus F",
-        "virus_version": 1
+        "index": {
+            "id": "unbuilt",
+            "version": "unbuilt"
+        },
+        "user": {
+            "id": "test"
+        },
+        "virus": {
+            "id": "6116cba1",
+            "name": "Prunus virus F",
+            "version": 1
+        }
     }
 
 
@@ -35,63 +41,6 @@ def test_changes(test_change):
         dict(test_change, _id="foobar.1"),
         dict(test_change, _id="foobar.2")
     ]
-
-
-@pytest.fixture
-def setup_test_history(test_motor, test_merged_virus):
-
-    async def func(remove=False):
-
-        nonlocal test_merged_virus
-
-        # Apply a series of changes to a test virus document to build up a history.
-        await virtool.virus_history.add(test_motor, "create", None, test_merged_virus, "Description", "test")
-
-        old = deepcopy(test_merged_virus)
-
-        test_merged_virus.update({
-            "abbreviation": "TST",
-            "version": 1
-        })
-
-        await virtool.virus_history.add(test_motor, "update", old, test_merged_virus, "Description", "test")
-
-        old = deepcopy(test_merged_virus)
-
-        # We will try to patch to this version of the joined virus.
-        expected = deepcopy(old)
-
-        test_merged_virus.update({
-            "name": "Test Virus",
-            "version": 2
-        })
-
-        await virtool.virus_history.add(test_motor, "update", old, test_merged_virus, "Description", "test")
-
-        old = deepcopy(test_merged_virus)
-
-        test_merged_virus.update({
-            "isolates": [],
-            "version": 3
-        })
-
-        await virtool.virus_history.add(test_motor, "remove_isolate", old, test_merged_virus, "Description", "test")
-
-        if remove:
-            old = deepcopy(test_merged_virus)
-
-            test_merged_virus = {
-                "_id": "6116cba1"
-            }
-
-            await virtool.virus_history.add(test_motor, "remove", old, test_merged_virus, "Description", "test")
-        else:
-            virus, sequences = virtool.virus.split_virus(test_merged_virus)
-            await test_motor.viruses.insert_one(virus)
-
-        return expected
-
-    return func
 
 
 @pytest.fixture
@@ -158,3 +107,192 @@ def test_virus_edit():
             "version": 1
         }
     )
+
+
+@pytest.fixture
+def create_mock_history(test_motor):
+    async def func(remove):
+        documents = [
+            {
+                "_id": "6116cba1.0",
+                "created_at": datetime.datetime(2017, 7, 12, 16, 0, 50, 495000),
+                "description": "Description",
+                "diff": {
+                    "_id": "6116cba1",
+                    "abbreviation": "PVF",
+                    "imported": True,
+                    "isolates": [
+                        {
+                            "source_name": "8816-v2",
+                            "source_type": "isolate",
+                            "default": True,
+                            "id": "cab8b360",
+                            "sequences": [
+                                {
+                                    "_id": "KX269872",
+                                    "definition": "Prunus virus F isolate "
+                                    "8816-s2 segment RNA2 "
+                                    "polyprotein 2 gene, "
+                                    "complete cds.",
+                                    "host": "sweet cherry",
+                                    "isolate_id": "cab8b360",
+                                    "sequence": "TGTTTAAGAGATTAAACAACCGCTTTC",
+                                    "virus_id": "6116cba1"
+                                }
+                            ]
+                        }
+                    ],
+                    "last_indexed_version": 0,
+                    "lower_name": "prunus virus f",
+                    "modified": False,
+                    "name": "Prunus virus F",
+                    "version": 0
+                },
+                "index": {
+                    "id": "unbuilt",
+                    "version": "unbuilt"
+                },
+                "method_name": "create",
+                "user": {
+                    "id": "test"
+                },
+                "virus": {
+                    "id": "6116cba1",
+                    "name": "Prunus virus F",
+                    "version": 0
+                }
+            },
+            {
+                "_id": "6116cba1.1",
+                "created_at": datetime.datetime(2017, 7, 12, 16, 0, 50, 600000),
+                "description": "Description",
+                "diff": [
+                    ["change", "version", [0, 1]],
+                    ["change", "abbreviation", ["PVF", "TST"]]
+                ],
+                "index": {
+                    "id": "unbuilt",
+                    "version": "unbuilt"
+                },
+                "method_name": "update",
+                "user": {
+                    "id": "test"
+                },
+                "virus": {
+                    "id": "6116cba1",
+                    "name": "Prunus virus F",
+                    "version": 1
+                }
+            },
+            {
+                "_id": "6116cba1.2",
+                "created_at": datetime.datetime(2017, 7, 12, 16, 0, 50, 602000),
+                "description": "Description",
+                "diff": [
+                    ["change", "version", [1, 2]],
+                    ["change", "name", ["Prunus virus F", "Test Virus"]]
+                ],
+                "index": {
+                    "id": "unbuilt",
+                    "version": "unbuilt"
+                },
+                "method_name": "update",
+                "user": {
+                    "id": "test"
+                },
+                "virus": {
+                    "id": "6116cba1",
+                    "name": "Prunus virus F",
+                    "version": 2
+                }
+            },
+            {
+                "_id": "6116cba1.3",
+                "created_at": datetime.datetime(2017, 7, 12, 16, 0, 50, 603000),
+                "description": "Description",
+                "diff": [
+                    ["change", "version", [2, 3]],
+                    ["remove", "isolates", [[0, {
+                        "default": True,
+                        "id": "cab8b360",
+                        "sequences": [{
+                            "_id": "KX269872",
+                            "definition": "Prunus virus F isolate 8816-s2 segment RNA2 polyprotein 2 gene, complete "
+                                          "cds.",
+                            "host": "sweet cherry",
+                            "isolate_id": "cab8b360",
+                            "sequence": "TGTTTAAGAGATTAAACAACCGCTTTC",
+                            "virus_id": "6116cba1"
+                        }],
+                        "source_name": "8816-v2",
+                        "source_type": "isolate"}]
+                    ]]],
+                "index": {
+                    "id": "unbuilt",
+                    "version": "unbuilt"
+                },
+                "method_name": "remove_isolate",
+                "user": {
+                    "id": "test"
+                },
+                "virus": {
+                    "id": "6116cba1",
+                    "name": "Test Virus",
+                    "version": 3
+                }
+            }
+        ]
+
+        virus = None
+
+        if remove:
+            documents.append({
+                "_id": "6116cba1.removed",
+                "created_at": datetime.datetime(2017, 7, 12, 16, 0, 50, 605000),
+                "description": "Description",
+                "diff": {
+                    "_id": "6116cba1",
+                    "abbreviation": "TST",
+                    "imported": True,
+                    "isolates": [],
+                    "last_indexed_version": 0,
+                    "lower_name": "prunus virus f",
+                    "modified": False,
+                    "name": "Test Virus",
+                    "version": 3
+                },
+                "index": {
+                    "id": "unbuilt",
+                    "version": "unbuilt"
+                },
+                "method_name": "remove",
+                "user": {
+                    "id": "test"
+                },
+                "virus": {
+                    "id": "6116cba1",
+                    "name": "Test Virus",
+                    "version": "removed"
+                }
+            })
+        else:
+            virus = {
+                "_id": "6116cba1",
+                "abbreviation": "TST",
+                "imported": True,
+                "isolates": [],
+                "last_indexed_version": 0,
+                "lower_name": "prunus virus f",
+                "modified": False,
+                "name": "Test Virus",
+                "version": 3
+            }
+
+            await test_motor.viruses.insert_one(virus)
+
+        await test_motor.history.insert_many(documents)
+
+        return virus
+
+    return func
+

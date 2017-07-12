@@ -1,4 +1,5 @@
 import re
+import math
 import json
 import datetime
 from aiohttp import web
@@ -12,7 +13,7 @@ class CustomEncoder(json.JSONEncoder):
 
     def default(self, obj):
         if isinstance(obj, datetime.datetime):
-            return obj.replace(tzinfo=datetime.timezone.utc).isoformat().replace("+00:00", "Z")
+            return virtool.utils.to_isoformat(obj)
 
         return json.JSONEncoder.default(self, obj)
 
@@ -69,6 +70,17 @@ def json_response(data, status=200):
     return web.json_response(data, status=status, dumps=dumps)
 
 
+def no_content():
+    """
+    A shortcut for creating a :class:`~aiohttp.web.Response` object with a ``204`` status and no body.
+
+    :return: the response
+    :rtype: :class:`aiohttp.Response`
+
+    """
+    return web.Response(status=204)
+
+
 def bad_request(message="Bad request"):
     """
     A shortcut for creating a :class:`~aiohttp.web.Response` object with a ``400`` status the JSON body
@@ -96,19 +108,10 @@ def not_found(message="Not found"):
     :rtype: :class:`aiohttp.Response`
 
     """
-    return json_response({"message": message}, status=404)
-
-
-def requires_login():
-    """
-    A shortcut for creating a :class:`~aiohttp.web.Response` object with a ``400`` status the JSON body
-    ``{"message": "Requires login"}``.    
-
-    :return: the response
-    :rtype: :class:`aiohttp.Response`
-
-    """
-    return json_response({"message": "Requires login"}, status=400)
+    return json_response({
+        "id": "not_found",
+        "message": message
+    }, status=404)
 
 
 def invalid_input(errors):
@@ -156,10 +159,16 @@ def protected(required_perm=None):
     def decorator(handler):
         async def wrapped(req):
             if not req["session"].user_id:
-                return json_response({"message": "Not authorized"}, status=403)
+                return json_response({
+                    "id": "requires_authorization",
+                    "message": "Requires authorization"
+                }, status=401)
 
             if required_perm and not req["session"].permissions[required_perm]:
-                return json_response({"message": "Not permitted"}, status=403)
+                return json_response({
+                    "id": "not_permitted",
+                    "message": "Not permitted"
+                }, status=403)
 
             return await handler(req)
 
@@ -200,3 +209,36 @@ async def unpack_json_request(req):
 
     """
     return req.app["db"], await req.json()
+
+
+async def paginate(collection, db_query, url_query, sort_by, projection=None, processor=virtool.utils.base_processor,
+                   reverse=False):
+
+    page = int(url_query.get("page", 1))
+    per_page = int(url_query.get("per_page", 15))
+
+    total_count = await collection.count()
+
+    cursor = collection.find(
+        db_query,
+        projection,
+        sort=[(sort_by, -1 if reverse else 1)]
+    )
+
+    found_count = await cursor.count()
+
+    page_count = int(math.ceil(found_count / per_page))
+
+    if page > 1:
+        cursor.skip((page - 1) * per_page)
+
+    documents = [processor(d) for d in await cursor.to_list(length=per_page)]
+
+    return {
+        "documents": documents,
+        "total_count": total_count,
+        "found_count": found_count,
+        "page_count": page_count,
+        "per_page": per_page,
+        "page": page
+    }

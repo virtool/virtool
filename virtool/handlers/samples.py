@@ -6,10 +6,9 @@ from cerberus import Validator
 import virtool.file
 import virtool.utils
 import virtool.sample
-import virtool.analysis
 import virtool.sample_analysis
 from virtool.handlers.utils import unpack_json_request, json_response, bad_request, not_found, invalid_input, \
-    invalid_query, compose_regex_query
+    invalid_query, compose_regex_query, paginate
 
 
 async def find(req):
@@ -31,37 +30,14 @@ async def find(req):
 
     query = v.document
 
-    page = query["page"]
-    per_page = query["per_page"]
-
     db_query = dict()
 
     if query["term"]:
         db_query.update(compose_regex_query(query["term"], ["name", "abbreviation"]))
 
-    total_count = await db.samples.count()
+    data = await paginate(db.samples, db_query, req.query, "name", projection=virtool.sample.LIST_PROJECTION)
 
-    cursor = db.samples.find(
-        db_query,
-        virtool.sample.LIST_PROJECTION,
-        sort=[("name", 1)]
-    )
-
-    found_count = await cursor.count()
-
-    if page > 1:
-        cursor.skip((page - 1) * per_page)
-
-    documents = [virtool.utils.base_processor(d) for d in await cursor.to_list(per_page)]
-
-    return json_response({
-        "documents": documents,
-        "total_count": total_count,
-        "found_count": found_count,
-        "page": page,
-        "per_page": per_page,
-        "page_count": int(math.ceil(found_count / per_page))
-    })
+    return json_response(data)
 
 
 async def upload(req):
@@ -214,7 +190,7 @@ async def update(req):
         "$set": v.document
     }, return_document=ReturnDocument.AFTER, projection=virtool.sample.LIST_PROJECTION)
 
-    processed = virtool.sample.processor(document)
+    processed = virtool.utils.base_processor(document)
 
     await req.app["dispatcher"].dispatch("sample", "update", processed)
 
@@ -286,9 +262,9 @@ async def find_analyses(req):
 
     sample_id = req.match_info["sample_id"]
 
-    documents = await db.analyses.find({"sample_id": sample_id}, virtool.analysis.LIST_PROJECTION).to_list(None)
+    documents = await db.analyses.find({"sample_id": sample_id}, virtool.sample_analysis.LIST_PROJECTION).to_list(None)
 
-    processed = [virtool.analysis.processor(doc) for doc in documents]
+    processed = [virtool.utils.base_processor(d) for d in documents]
 
     return json_response(processed, 200)
 

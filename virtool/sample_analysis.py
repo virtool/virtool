@@ -1,27 +1,24 @@
 import os
 import virtool.blast
 
+import virtool.utils
 import virtool.virus
 import virtool.virus_history
-from virtool.utils import timestamp, rm
-from virtool.utils import get_new_id, format_doc_id
 from virtool.sample import recalculate_algorithm_tags
 from virtool.virus_index import get_current_index
 
 
-projector = [
+LIST_PROJECTION = [
     "_id",
     "name",
     "algorithm",
-    "sample_id",
+    "timestamp",
+    "ready",
+    "job",
     "index_version",
-    "username",
-    "timestamp"
+    "user_id",
+    "sample_id"
 ]
-
-
-def processor(document):
-    return format_doc_id("analysis", document)
 
 
 async def new(db, settings, manager, sample_id, user_id, algorithm):
@@ -42,9 +39,9 @@ async def new(db, settings, manager, sample_id, user_id, algorithm):
 
     sample = await db.samples.find_one(sample_id, ["name"])
 
-    analysis_id = await get_new_id(db.analyses)
+    analysis_id = await virtool.utils.get_new_id(db.analyses)
 
-    job_id = await get_new_id(db.jobs)
+    job_id = await virtool.utils.get_new_id(db.jobs)
 
     document = dict(data)
 
@@ -53,12 +50,12 @@ async def new(db, settings, manager, sample_id, user_id, algorithm):
         "job": job_id,
         "ready": False,
         "index_version": index_version,
-        "timestamp": timestamp()
+        "timestamp": virtool.utils.timestamp()
     })
 
     task_args = dict(data, analysis_id=analysis_id, sample_name=sample["name"])
 
-    await db.analyses.insert(document)
+    await db.analyses.insert_one(document)
 
     # Clone the arguments passed from the client and amend the resulting dictionary with the analysis entry
     # _id. This dictionary will be passed the the new analysis job.
@@ -93,7 +90,7 @@ async def remove_by_id(db, settings, analysis_id):
     path = os.path.join(settings.get("data_path"), "samples", "sample_{}".format(sample_id), "analysis", analysis_id)
 
     try:
-        rm(path, recursive=True)
+        virtool.utils.rm(path, recursive=True)
     except FileNotFoundError:
         pass
 
@@ -145,12 +142,10 @@ async def format_analysis(db, analysis):
                 virus_version = hit_document["virus_version"]
 
                 if virus_id not in fetched_viruses:
-                    joined = await virtool.virus.join(db, virus_id)
-
                     # Get the virus entry (patched to correct version).
                     _, virus_document, _ = await virtool.virus_history.patch_virus_to_version(
                         db,
-                        joined,
+                        virus_id,
                         virus_version
                     )
 

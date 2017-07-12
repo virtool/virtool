@@ -56,6 +56,7 @@ class TestGet:
         assert resp.status == 404
 
         assert await resp.json() == {
+            "id": "not_found",
             "message": "Not found"
         }
 
@@ -96,6 +97,7 @@ class TestUpdate:
         assert resp.status == 404
 
         assert await resp.json() == {
+            "id": "not_found",
             "message": "Not found"
         }
 

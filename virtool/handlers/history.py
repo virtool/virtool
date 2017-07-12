@@ -1,7 +1,7 @@
 import virtool.utils
 import virtool.virus
 import virtool.virus_history
-from virtool.handlers.utils import json_response, not_found
+from virtool.handlers.utils import json_response, not_found, paginate
 
 
 async def find(req):
@@ -11,9 +11,16 @@ async def find(req):
     """
     db = req.app["db"]
 
-    documents = await db.history.find({}, virtool.virus_history.LIST_PROJECTION).to_list(length=15)
+    data = await paginate(
+        db.history,
+        {},
+        req.query,
+        "created_at",
+        projection=virtool.virus_history.LIST_PROJECTION,
+        reverse=True
+    )
 
-    return json_response([virtool.virus_history.processor(d) for d in documents])
+    return json_response(data)
 
 
 async def get(req):
@@ -30,7 +37,7 @@ async def get(req):
     if not document:
         return not_found()
 
-    return json_response(virtool.virus_history.processor(document))
+    return json_response(virtool.utils.base_processor(document))
 
 
 async def revert(req):
@@ -50,18 +57,10 @@ async def revert(req):
     if virus_version != "removed":
         virus_version = int(virus_version)
 
-    # Try to find the current document for the given virus_id. If it has been deleted, use an empty dict.
-    current_document = await db.viruses.find_one(virus_id)
-
-    if current_document:
-        current_document = await virtool.virus.join(db, virus_id, current_document)
-    else:
-        current_document = {"_id": virus_id}
-
     _, patched, history_to_delete = await virtool.virus_history.patch_virus_to_version(
         db,
-        current_document,
-        virus_version,
+        virus_id,
+        virus_version - 1,
         inclusive=True
     )
 

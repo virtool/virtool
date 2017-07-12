@@ -10,7 +10,7 @@ import virtool.virus_import
 
 FIXTURE_DIR = os.path.join(os.path.dirname(os.path.realpath(__file__)), "test_files")
 
-
+'''
 @pytest.fixture
 def iresine():
     return {
@@ -195,8 +195,6 @@ class TestImportFile:
             "skipped": 0,
             "warnings": []
         }
-
-    '''
 
     @pytest.mark.gen_test
     def test_empty_collection(self, monkeypatch, mock_pymongo, import_transaction, viruses_collection, import_report,
@@ -441,7 +439,6 @@ class TestImportFile:
             True,
             {"added": 3, "replaced": 0, "skipped": 1, "warnings": [], "progress": 1}
         )
-    '''
 
 
 class TestVerifyVirusList:
@@ -821,7 +818,7 @@ class TestInsertFromImport:
                 "version": "unbuilt"
             },
             "method_name": "create",
-            "timestamp": static_time,
+            "created_at": static_time,
             "user": {
                 "id": "test"
             },
@@ -855,7 +852,7 @@ class TestDeleteForImport:
                 "version": "unbuilt"
             },
             "method_name": "remove",
-            "timestamp": static_time,
+            "created_at": static_time,
             "user": {
                 "id": "test"
             },
@@ -865,3 +862,4 @@ class TestDeleteForImport:
                 "version": "removed"
             }
         }
+'''
