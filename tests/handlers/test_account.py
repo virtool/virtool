@@ -78,7 +78,7 @@ class TestUpdateSettings:
             "quick_analyze_algorithm": "pathoscope_bowtie"
         }
 
-    async def test_invalid_input(self, do_patch):
+    async def test_invalid_input(self, do_patch, resp_is):
         """
         Test that requests to ``POST /account/settings`` return 422 for invalid JSON fields.
 
@@ -88,16 +88,10 @@ class TestUpdateSettings:
             "foo_bar": True
         }, authorize=True)
 
-        assert resp.status == 422
-
-        assert await resp.json() == {
-            "id": "invalid_input",
-            "message": "Invalid input",
-            "errors": {
-                "show_ids": ["must be of boolean type"],
-                "foo_bar": ["unknown field"]
-            }
-        }
+        assert await resp_is.invalid_input(resp,  {
+            "show_ids": ["must be of boolean type"],
+            "foo_bar": ["unknown field"]
+        })
 
 
 class TestChangePassword:
@@ -118,7 +112,7 @@ class TestChangePassword:
 
         assert check_password("foo_bar", document["password"])
 
-    async def test_invalid_credentials(self, do_put):
+    async def test_invalid_credentials(self, do_put, resp_is):
         """
         Test that request to ``PUT /account/password`` return 400 for wrong ``old_password`` values.
          
@@ -128,13 +122,9 @@ class TestChangePassword:
             "new_password": "foo_bar"
         }, authorize=True)
 
-        assert resp.status == 400
+        assert await resp_is.bad_request(resp, "Invalid credentials")
 
-        assert await resp.json() == {
-            "message": "Invalid credentials"
-        }
-
-    async def test_invalid_input(self, do_put):
+    async def test_invalid_input(self, do_put, resp_is):
         """
         Test that requests to ``PUT /account/password`` return 422 for invalid fields.
 
@@ -143,16 +133,10 @@ class TestChangePassword:
             "new_password": 1234
         }, authorize=True)
 
-        assert resp.status == 422
-
-        assert await resp.json() == {
-            "id": "invalid_input",
-            "message": "Invalid input",
-            "errors": {
-                "old_password": ["required field"],
-                "new_password": ["must be of string type"]
-            }
-        }
+        assert await resp_is.invalid_input(resp, {
+            "old_password": ["required field"],
+            "new_password": ["must be of string type"]
+        })
 
 
 class TestLogout:

@@ -43,7 +43,7 @@ class TestGet:
 
         assert await resp.json() == expected
 
-    async def test_does_not_exist(self, test_db, do_get, hmm_document):
+    async def test_does_not_exist(self, test_db, do_get, resp_is, hmm_document):
         """
         Check that a ``GET`` request for a valid annotation document results in a response containing that complete
         document.
@@ -53,12 +53,7 @@ class TestGet:
 
         resp = await do_get("/api/hmm/annotations/foobar")
 
-        assert resp.status == 404
-
-        assert await resp.json() == {
-            "id": "not_found",
-            "message": "Not found"
-        }
+        assert await resp_is.not_found(resp)
 
 
 class TestUpdate:
@@ -83,7 +78,7 @@ class TestUpdate:
 
         assert await resp.json() == expected
 
-    async def test_not_found(self, do_patch):
+    async def test_not_found(self, do_patch, resp_is):
         """
         Test that a request to update a non-existent annotation results in a ``404`` response.
          
@@ -94,14 +89,9 @@ class TestUpdate:
 
         resp = await do_patch("/api/hmm/annotations/f8666902", data, authorize=True, permissions=["modify_hmm"])
 
-        assert resp.status == 404
+        assert await resp_is.not_found(resp)
 
-        assert await resp.json() == {
-            "id": "not_found",
-            "message": "Not found"
-        }
-
-    async def test_invalid_input(self, do_patch):
+    async def test_invalid_input(self, do_patch, resp_is):
         """
         Test that invalid input results in a ``422`` response including error data.
          
@@ -113,16 +103,10 @@ class TestUpdate:
 
         resp = await do_patch("/api/hmm/annotations/f8666902", data, authorize=True, permissions=["modify_hmm"])
 
-        assert resp.status == 422
-
-        assert await resp.json() == {
-            "id": "invalid_input",
-            "message": "Invalid input",
-            "errors": {
-                "name": ["unknown field"],
-                "label": ["must be of string type"]
-            }
-        }
+        assert await resp_is.invalid_input(resp, {
+            "name": ["unknown field"],
+            "label": ["must be of string type"]
+        })
 
 '''
 class TestImport:

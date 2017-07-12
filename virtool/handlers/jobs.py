@@ -5,7 +5,7 @@ from cerberus import Validator
 import virtool.utils
 import virtool.job
 from virtool.handlers.utils import unpack_json_request, json_response, bad_request, not_found, invalid_query, \
-    compose_regex_query
+    compose_regex_query, no_content
 
 
 async def find(req):
@@ -113,6 +113,14 @@ async def remove(req):
     if not document:
         return not_found()
 
+    latest_state = document["status"][-1]["state"]
+
+    if latest_state in ["running", "waiting"]:
+        return json_response({
+            "id": "conflict",
+            "message": "Job is running or waiting and cannot be removed"
+        }, status=409)
+
     # Removed the documents associated with the job ids from the database.
     await db.jobs.delete_one({"_id": job_id})
 
@@ -123,9 +131,7 @@ async def remove(req):
     except OSError:
         pass
 
-    return json_response({
-        "removed": [job_id]
-    })
+    return no_content()
 
 
 async def clear(req):
@@ -142,6 +148,13 @@ async def clear(req):
         query["$or"] = [
             {"status.state": "error"},
             {"status.state": "cancelled"}
+        ]
+
+    if req.path == "/api/jobs/finished":
+        query["$or"] = [
+            {"status.state": "error"},
+            {"status.state": "cancelled"},
+            {"status.state": "complete"}
         ]
 
     removed = await db.jobs.find(query).distinct("_id")

@@ -87,19 +87,14 @@ class TestGet:
             "primary_group": ""
         }
 
-    async def test_does_not_exist(self, do_get):
+    async def test_not_found(self, do_get, resp_is):
         """
         Test that a ``GET /api/users/:user_id`` for a non-existent ``user_id`` results in a ``404`` response.
         
         """
         resp = await do_get("/api/users/fred", authorize=True, permissions=["manage_users"])
 
-        assert resp.status == 404
-
-        assert await resp.json() == {
-            "id": "not_found",
-            "message": "Not found"
-        }
+        assert await resp_is.not_found(resp)
 
 
 class TestCreate:
@@ -161,7 +156,7 @@ class TestCreate:
 
         assert check_password("hello_world", document["password"])
 
-    async def test_invalid_input(self, do_post):
+    async def test_invalid_input(self, do_post, resp_is):
         """
         Test that invalid and missing input data result in a ``422`` response with detailed error data.
          
@@ -176,17 +171,13 @@ class TestCreate:
 
         assert resp.status == 422
 
-        assert await resp.json() == {
-            "id": "invalid_input",
-            "message": "Invalid input",
-            "errors": {
-                "username": ["unknown field"],
-                "password": ["must be of string type"],
-                "user_id": ["required field"]
-            }
-        }
+        assert await resp_is.invalid_input(resp, {
+            "username": ["unknown field"],
+            "password": ["must be of string type"],
+            "user_id": ["required field"]
+        })
 
-    async def test_user_exists(self, do_post):
+    async def test_user_exists(self, do_post, resp_is):
         """
         Test that an input ``user_id`` that already exists results in a ``400`` response with informative error message.
 
@@ -199,11 +190,7 @@ class TestCreate:
 
         resp = await do_post("/api/users", data, authorize=True, permissions=["manage_users"])
 
-        assert resp.status == 400
-
-        assert await resp.json() == {
-            "message": "User already exists"
-        }
+        assert await resp_is.conflict(resp, "User already exists")
 
 
 class TestSetPassword:
@@ -252,7 +239,7 @@ class TestSetPassword:
             "primary_group": ""
         }
 
-    async def test_does_not_exist(self, do_put):
+    async def test_not_found(self, do_put, resp_is):
         """
         Test that a ``404`` response results when the ``user_id`` does not exist.
         
@@ -263,14 +250,9 @@ class TestSetPassword:
 
         resp = await do_put("/api/users/fred/password", data, authorize=True, permissions=["manage_users"])
 
-        assert resp.status == 404
+        assert await resp_is.not_found(resp)
 
-        assert await resp.json() == {
-            "id": "not_found",
-            "message": "Not found"
-        }
-
-    async def test_invalid_input(self, do_put):
+    async def test_invalid_input(self, do_put, resp_is):
         """
         Test that a valid request results in a password change.
 
@@ -279,14 +261,10 @@ class TestSetPassword:
 
         assert resp.status == 422
 
-        assert await resp.json() == {
-            "id": "invalid_input",
-            "message": "Invalid input",
-            "errors": {
-                "password": ["required field"],
-                "reset": ["unknown field"]
-            }
-        }
+        assert await resp_is.invalid_input(resp, {
+            "password": ["required field"],
+            "reset": ["unknown field"]
+        })
 
 
 class TestSetForceReset:
@@ -305,9 +283,6 @@ class TestSetForceReset:
         resp = await do_put("/api/users/bob/reset", data, authorize=True, permissions=["manage_users"])
 
         assert resp.status == 200
-
-        import pprint
-        pprint.pprint(await resp.json())
 
         assert await resp.json() == {
             "force_reset": True,
@@ -332,7 +307,20 @@ class TestSetForceReset:
             "primary_group": ""
         }
 
-    async def test_invalid_input(self, do_put, test_db, create_user):
+    async def test_not_found(self, do_put, resp_is):
+        """
+        Test that a ``404`` response results when the ``user_id`` does not exist.
+
+        """
+        data = {
+            "force_reset": False
+        }
+
+        resp = await do_put("/api/users/fred/reset", data, authorize=True, permissions=["manage_users"])
+
+        assert await resp_is.not_found(resp)
+
+    async def test_invalid_input(self, do_put, test_db, create_user, resp_is):
         """
         Test that a valid request results in a change to the ``force_reset`` field.
 
@@ -346,34 +334,10 @@ class TestSetForceReset:
 
         resp = await do_put("/api/users/bob/reset", data, authorize=True, permissions=["manage_users"])
 
-        assert resp.status == 422
-
-        assert await resp.json() == {
-            "id": "invalid_input",
-            "message": "Invalid input",
-            "errors": {
-                "unwanted": ["unknown field"],
-                "force_reset": ["must be of boolean type"]
-            }
-        }
-
-    async def test_does_not_exist(self, do_put):
-        """
-        Test that a ``404`` response results when the ``user_id`` does not exist.
-
-        """
-        data = {
-            "force_reset": False
-        }
-
-        resp = await do_put("/api/users/fred/reset", data, authorize=True, permissions=["manage_users"])
-
-        assert resp.status == 404
-
-        assert await resp.json() == {
-            "id": "not_found",
-            "message": "User does not exist"
-        }
+        assert await resp_is.invalid_input(resp, {
+            "unwanted": ["unknown field"],
+            "force_reset": ["must be of boolean type"]
+        })
 
 
 class TestAddGroup:
@@ -410,7 +374,7 @@ class TestAddGroup:
             "permissions": dict(no_permissions, modify_virus=True)
         }
 
-    async def test_user_does_not_exist(self, test_db, do_post, no_permissions):
+    async def test_user_not_found(self, test_db, do_post, no_permissions, resp_is):
         """
         Test that a request to remove a group from a non-existent user results in a ``404`` response.
          
@@ -426,14 +390,9 @@ class TestAddGroup:
 
         resp = await do_post("/api/users/bob/groups", data, authorize=True, permissions=["manage_users"])
 
-        assert resp.status == 404
+        assert await resp_is.not_found(resp, "User not found")
 
-        assert await resp.json() == {
-            "id": "not_found",
-            "message": "User does not exist"
-        }
-
-    async def test_group_does_not_exist(self, test_db, do_post, create_user):
+    async def test_group_not_found(self, test_db, do_post, resp_is, create_user):
         """
         Test that a request to delete an non-existent group results in a ``404`` response.
          
@@ -441,19 +400,14 @@ class TestAddGroup:
         test_db.users.insert(create_user("bob"))
 
         data = {
-            "group_id": "unknown"
+            "group_id": "foobar"
         }
 
         resp = await do_post("/api/users/bob/groups", data, authorize=True, permissions=["manage_users"])
 
-        assert resp.status == 404
+        assert await resp_is.not_found(resp, "Group not found")
 
-        assert await resp.json() == {
-            "id": "not_found",
-            "message": "Group does not exist"
-        }
-
-    async def test_invalid_input(self, do_post):
+    async def test_invalid_input(self, do_post, resp_is):
         """
         Test that problems in the request input result in a ``422`` response with the appropriate error data attached. 
 
@@ -464,16 +418,10 @@ class TestAddGroup:
 
         resp = await do_post("/api/users/bob/groups", data, authorize=True, permissions=["manage_users"])
 
-        assert resp.status == 422
-
-        assert await resp.json() == {
-            "id": "invalid_input",
-            "message": "Invalid input",
-            "errors": {
-                "group": ["unknown field"],
-                "group_id": ["required field"]
-            }
-        }
+        assert await resp_is.invalid_input(resp, {
+            "group": ["unknown field"],
+            "group_id": ["required field"]
+        })
 
 
 class TestRemoveGroup:
@@ -512,12 +460,12 @@ class TestRemoveGroup:
         assert resp.status == 200
 
         assert await resp.json() == {
-            "user_id": "bob",
+            "id": "bob",
             "groups": ["test"],
             "permissions": dict(no_permissions, rebuild_index=True)
         }
 
-    async def test_user_does_not_exist(self, test_db, do_post, no_permissions):
+    async def test_user_does_not_exist(self, test_db, do_post, resp_is, no_permissions):
         """
         Test that a ``404`` response results if the ``user_id`` does not exist.
         
@@ -533,12 +481,7 @@ class TestRemoveGroup:
 
         resp = await do_post("/api/users/bob/groups", data, authorize=True, permissions=["manage_users"])
 
-        assert resp.status == 404
-
-        assert await resp.json() == {
-            "id": "not_found",
-            "message": "User does not exist"
-        }
+        assert await resp_is.not_found(resp, "User not found")
 
 
 class TestRemove:
@@ -554,16 +497,11 @@ class TestRemove:
 
         assert resp.status == 204
 
-    async def test_does_not_exist(self, do_delete):
+    async def test_does_not_exist(self, do_delete, resp_is):
         """
         Test that a request to remove a non-existent user results in a ``404`` response.
                  
         """
         resp = await do_delete("/api/users/bob", authorize=True, permissions=["manage_users"])
 
-        assert resp.status == 404
-
-        assert await resp.json() == {
-            "id": "not_found",
-            "message": "User does not exist"
-        }
+        assert await resp_is.not_found(resp)

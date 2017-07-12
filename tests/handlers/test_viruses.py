@@ -218,19 +218,14 @@ class TestGet:
              ]
         }
 
-    async def test_not_found(self, do_get):
+    async def test_not_found(self, do_get, resp_is):
         """
         Test that a request for a non-existent virus results in a ``404`` response.
          
         """
         resp = await do_get("/api/viruses/foobar")
 
-        assert resp.status == 404
-
-        assert await resp.json() == {
-            "id": "not_found",
-            "message": "Not found"
-        }
+        assert await resp_is.not_found(resp)
 
 
 class TestCreate:
@@ -312,7 +307,7 @@ class TestCreate:
             }
         )
 
-    async def test_invalid_input(self, do_post):
+    async def test_invalid_input(self, do_post, resp_is):
         """
         Test that invalid input results in a ``422`` response with error data.
          
@@ -326,15 +321,11 @@ class TestCreate:
 
         assert resp.status == 422
 
-        assert await resp.json() == {
-            "id": "invalid_input",
-            "message": "Invalid input",
-            "errors": {
-                "virus_name": ["unknown field"],
-                "abbreviation": ["must be of string type"],
-                "name": ["required field"]
-            }
-        }
+        assert await resp_is.invalid_input(resp, {
+            "virus_name": ["unknown field"],
+            "abbreviation": ["must be of string type"],
+            "name": ["required field"]
+        })
 
     @pytest.mark.parametrize("existing,message", [
         ({"name": "Tobacco mosaic virus"}, "Name already exists"),
@@ -516,7 +507,7 @@ class TestEdit:
             "test"
         )
 
-    async def test_invalid_input(self, do_patch):
+    async def test_invalid_input(self, do_patch, resp_is):
         """
         Test that invalid input results in a ``422`` response with error data.
 
@@ -530,14 +521,10 @@ class TestEdit:
 
         assert resp.status == 422
 
-        assert await resp.json() == {
-            "id": "invalid_input",
-            "message": "Invalid input",
-            "errors": {
-                "virus_name": ["unknown field"],
-                "abbreviation": ["must be of string type"]
-            }
-        }
+        assert await resp_is.invalid_input(resp, {
+            "virus_name": ["unknown field"],
+            "abbreviation": ["must be of string type"]
+        })
 
     async def test_name_exists(self, test_db, do_patch):
         """
@@ -667,7 +654,7 @@ class TestEdit:
             "name": "Tobacco mosaic virus"
         }
 
-    async def test_not_found(self, do_patch):
+    async def test_not_found(self, do_patch, resp_is):
         data = {
             "name": "Tobacco mosaic virus",
             "abbreviation": "TMV"
@@ -675,12 +662,7 @@ class TestEdit:
 
         resp = await do_patch("/api/viruses/test", data, authorize=True, permissions=["modify_virus"])
 
-        assert resp.status == 404
-
-        assert await resp.json() == {
-            "id": "not_found",
-            "message": "Not found"
-        }
+        assert await resp_is.not_found(resp)
 
 
 class TestVerify:
@@ -905,7 +887,7 @@ class TestVerify:
         assert not test_add_history.called
         assert not test_dispatch.stub.called
 
-    async def test_not_found(self, do_put):
+    async def test_not_found(self, do_put, resp_is):
         """
         Test that an isolate consistency can be detected and be reported by the handler in a ``400`` response.
 
@@ -914,10 +896,7 @@ class TestVerify:
 
         assert resp.status == 404
 
-        assert await resp.json() == {
-            "id": "not_found",
-            "message": "Not found"
-        }
+        assert await resp_is.not_found(resp)
 
 
 class TestRemove:
@@ -961,18 +940,13 @@ class TestRemove:
             ["6116cba1"]
         )
 
-    async def test_does_not_exist(self, do_delete):
+    async def test_not_found(self, do_delete, resp_is):
         """
         Test that attempting to remove a non-existent virus results in a ``404`` response. 
         """
         resp = await do_delete("/api/viruses/6116cba1", authorize=True, permissions=["modify_virus"])
 
-        assert resp.status == 404
-
-        assert await resp.json() == {
-            "id": "not_found",
-            "message": "Not found"
-        }
+        assert await resp_is.not_found(resp)
 
 
 class TestListIsolates:
@@ -1012,19 +986,14 @@ class TestListIsolates:
             }
         ]
 
-    async def test_not_found(self, do_get):
+    async def test_not_found(self, do_get, resp_is):
         """
         Test that a request for a non-existent virus returns a ``404`` response.
          
         """
         resp = await do_get("/api/viruses/6116cba1/isolates")
 
-        assert resp.status == 404
-
-        assert await resp.json() == {
-            "id": "not_found",
-            "message": "Not found"
-        }
+        assert await resp_is.not_found(resp)
 
 
 class TestGetIsolate:
@@ -1053,29 +1022,19 @@ class TestGetIsolate:
             "sequences": [test_sequence]
         }
 
-    async def test_virus_not_found(self, do_get):
+    @pytest.mark.parametrize("virus_id,isolate_id", [
+        ("foobar", "cab8b360"),
+        ("6116cba1", "foobar"),
+        ("6116cba1", "cab8b360")
+    ])
+    async def test_not_found(self, virus_id, isolate_id, do_get, resp_is):
         """
-        Test that a ``404`` response results for a non-existent virus.
+        Test that a ``404`` response results for a non-existent virus and/or isolate.
          
         """
-        resp = await do_get("/api/viruses/foobar/isolates/cab8b360")
+        resp = await do_get("/api/viruses/{}/isolates/{}".format(virus_id, isolate_id))
 
-        assert resp.status == 404
-
-        assert await resp.json() == {
-            "id": "not_found",
-            "message": "Not found"
-        }
-
-    async def test_isolate_not_found(self, do_get):
-        resp = await do_get("/api/viruses/6116cba1/isolates/foobar")
-
-        assert resp.status == 404
-
-        assert await resp.json() == {
-            "id": "not_found",
-            "message": "Not found"
-        }
+        assert await resp_is.not_found(resp)
 
 
 class TestAddIsolate:
@@ -1400,7 +1359,7 @@ class TestAddIsolate:
             }
         )
 
-    async def test_not_found(self, do_post):
+    async def test_not_found(self, do_post, resp_is):
         data = {
             "source_name": "Beta",
             "source_type": "Isolate",
@@ -1409,12 +1368,7 @@ class TestAddIsolate:
 
         resp = await do_post("/api/viruses/6116cba1/isolates", data, authorize=True, permissions=["modify_virus"])
 
-        assert resp.status == 404
-
-        assert await resp.json() == {
-            "id": "not_found",
-            "message": "Not found"
-        }
+        assert await resp_is.not_found(resp)
 
 
 class TestEditIsolate:
@@ -1532,7 +1486,7 @@ class TestEditIsolate:
             }
         )
 
-    async def test_empty(self, do_patch, test_dispatch):
+    async def test_empty(self, do_patch, test_dispatch, resp_is):
         """
         Test that an empty data input results in a ``400`` response.
 
@@ -1542,13 +1496,11 @@ class TestEditIsolate:
 
         assert resp.status == 400
 
-        assert await resp.json() == {
-            "message": "Empty input"
-        }
+        assert await resp_is.bad_request(resp, "Empty Input")
 
         assert test_dispatch.stub.call_args is None
 
-    async def test_invalid_input(self, test_db, do_patch, test_virus):
+    async def test_invalid_input(self, test_db, do_patch, test_virus, resp_is):
         """
         Test that invalid input results in a ``422`` response and a list of errors.
 
@@ -1567,22 +1519,16 @@ class TestEditIsolate:
             permissions=["modify_virus"]
         )
 
-        assert resp.status == 422
-
-        assert await resp.json() == {
-            "id": "invalid_input",
-            "message": "Invalid input",
-            "errors": {
-                "source_type": ["must be of string type"]
-            }
-        }
+        assert await resp_is.invalid_input(resp, {
+            "source_type": ["must be of string type"]
+        })
 
     @pytest.mark.parametrize("virus_id,isolate_id", [
         ("6116cba1", "test"),
         ("test", "cab8b360"),
         ("test", "test")
     ])
-    async def test_not_found(self, virus_id, isolate_id, test_db, do_patch, test_virus):
+    async def test_not_found(self, virus_id, isolate_id, test_db, do_patch, test_virus, resp_is):
         """
         Test that a request for a non-existent virus or isolate results in a ``404`` response.
 
@@ -1601,12 +1547,7 @@ class TestEditIsolate:
             permissions=["modify_virus"]
         )
 
-        assert resp.status == 404
-
-        assert await resp.json() == {
-            "id": "not_found",
-            "message": "Not found"
-        }
+        assert await resp_is.not_found(resp)
 
 
 class TestSetAsDefault:
@@ -1747,7 +1688,7 @@ class TestSetAsDefault:
         ("test", "cab8b360"),
         ("test", "test")
     ])
-    async def test_not_found(self, virus_id, isolate_id, test_db, do_put, test_virus):
+    async def test_not_found(self, virus_id, isolate_id, test_db, do_put, test_virus, resp_is):
         """
         Test that ``404 Not found`` is returned if the virus or isolate does not exist
 
@@ -1761,12 +1702,7 @@ class TestSetAsDefault:
             permissions=["modify_virus"]
         )
 
-        assert resp.status == 404
-
-        assert await resp.json() == {
-            "id": "not_found",
-            "message": "Not found"
-        }
+        assert await resp_is.not_found(resp)
 
 
 class TestRemoveIsolate:
@@ -1953,7 +1889,7 @@ class TestRemoveIsolate:
         )
 
     @pytest.mark.parametrize("url", ["/api/viruses/foobar/isolates/cab8b360", "/api/viruses/test/isolates/foobar"])
-    async def test_not_found(self, url, do_delete, test_db, test_virus):
+    async def test_not_found(self, url, do_delete, test_db, test_virus, resp_is):
         """
         Test that removal fails with ``404`` if the virus does not exist.
          
@@ -1962,12 +1898,7 @@ class TestRemoveIsolate:
 
         resp = await do_delete(url, authorize=True, permissions=["modify_virus"])
 
-        assert resp.status == 404
-
-        assert await resp.json() == {
-            "id": "not_found",
-            "message": "Not found"
-        }
+        assert await resp_is.not_found(resp)
 
 
 class TestListSequences:
@@ -1991,19 +1922,14 @@ class TestListSequences:
         "/api/viruses/6116cba1/isolates/foobar/sequences",
         "/api/viruses/foobar/isolates/cab8b360/sequences"
     ])
-    async def test_not_found(self, url, do_get):
+    async def test_not_found(self, url, do_get, resp_is):
         """
         Test that ``404`` is returned when the isolate id or sequence id do not exist.
 
         """
         resp = await do_get(url)
 
-        assert resp.status == 404
-
-        assert await resp.json() == {
-            "id": "not_found",
-            "message": "Not found"
-        }
+        assert await resp_is.not_found(resp)
 
 
 class TestGetSequence:
@@ -2026,15 +1952,10 @@ class TestGetSequence:
         "/api/viruses/6116cba1/isolates/foobar/sequences/KX269872",
         "/api/viruses/foobar/isolates/cab8b360/sequences/KX269872",
     ])
-    async def test_not_found(self, url, do_get):
+    async def test_not_found(self, url, do_get, resp_is):
         resp = await do_get(url)
 
-        assert resp.status == 404
-
-        assert await resp.json() == {
-            "id": "not_found",
-            "message": "Not found"
-        }
+        assert await resp_is.not_found(resp)
 
 
 class TestCreateSequence:
@@ -2128,7 +2049,7 @@ class TestCreateSequence:
             }
         )
 
-    async def test_exists(self, do_post, test_db, test_virus, test_sequence):
+    async def test_exists(self, do_post, test_db, test_virus, test_sequence, resp_is):
         test_db.viruses.insert(test_virus)
         test_db.sequences.insert(test_sequence)
 
@@ -2145,13 +2066,9 @@ class TestCreateSequence:
             permissions=["modify_virus"]
         )
 
-        assert resp.status == 409
+        assert await resp_is.conflict(resp, "Sequence id already exists")
 
-        assert await resp.json() == {
-            "message": "Sequence id already exists"
-        }
-
-    async def test_invalid_input(self, do_post):
+    async def test_invalid_input(self, do_post, resp_is):
         """
         Test that invalid input results in a ``422`` response with error information.
          
@@ -2169,24 +2086,18 @@ class TestCreateSequence:
             permissions=["modify_virus"]
         )
 
-        assert resp.status == 422
-
-        assert await resp.json() == {
-            "id": "invalid_input",
-            "message": "Invalid input",
-            "errors": {
-                "id": ["must be of string type"],
-                "sequence": ["required field"],
-                "seq": ["unknown field"]
-            }
-        }
+        assert await resp_is.invalid_input(resp, {
+            "id": ["must be of string type"],
+            "sequence": ["required field"],
+            "seq": ["unknown field"]
+        })
 
     @pytest.mark.parametrize("virus_id, isolate_id", [
         ("6116cba1", "cab8b360"),
         ("6116cba1", "foobar"),
         ("foobar", "cab8b360")
     ])
-    async def test_not_found(self, virus_id, isolate_id, do_post):
+    async def test_not_found(self, virus_id, isolate_id, do_post, resp_is):
         """
         Test that non-existent virus or isolate ids in the URL result in a ``404`` response.
          
@@ -2202,12 +2113,7 @@ class TestCreateSequence:
 
         resp = await do_post(url, data, authorize=True, permissions=["modify_virus"])
 
-        assert resp.status == 404
-
-        assert await resp.json() == {
-            "id": "not_found",
-            "message": "Not found"
-        }
+        assert await resp_is.not_found(resp)
 
 
 class TestEditSequence:
@@ -2296,7 +2202,7 @@ class TestEditSequence:
             }
         )
 
-    async def test_empty_input(self, do_patch):
+    async def test_empty_input(self, do_patch, resp_is):
         resp = await do_patch(
             "/api/viruses/6116cba1/isolates/cab8b360/sequences/KX269872",
             {},
@@ -2306,11 +2212,9 @@ class TestEditSequence:
 
         assert resp.status == 400
 
-        assert await resp.json() == {
-            "message": "Empty input"
-        }
+        assert await resp_is.bad_request(resp, "Empty Input")
 
-    async def test_invalid_input(self, do_patch):
+    async def test_invalid_input(self, do_patch, resp_is):
         resp = await do_patch(
             "/api/viruses/6116cba1/isolates/cab8b360/sequences/KX269872",
             {
@@ -2324,17 +2228,13 @@ class TestEditSequence:
 
         assert resp.status == 422
 
-        assert await resp.json() == {
-            "id": "invalid_input",
-            "message": "Invalid input",
-            "errors": {
-                "definition": ["must be of string type"],
-                "plant": ["unknown field"]
-            }
-        }
+        assert await resp_is.invalid_input(resp, {
+            "definition": ["must be of string type"],
+            "plant": ["unknown field"]
+        })
 
     @pytest.mark.parametrize("foobar", ["virus_id", "isolate_id", "sequence_id"])
-    async def test_not_found(self, foobar, do_patch, test_db, test_virus, test_sequence):
+    async def test_not_found(self, foobar, do_patch, test_db, test_virus, test_sequence, resp_is):
         test_db.viruses.insert(test_virus)
         test_db.sequences.insert(test_sequence)
 
@@ -2358,16 +2258,9 @@ class TestEditSequence:
         assert resp.status == 404
 
         if foobar == "sequence_id":
-            assert await resp.json() == {
-                "id": "not_found",
-                "message": "Sequence not found"
-            }
-
+            assert await resp_is.not_found(resp, "Sequence not found")
         else:
-            assert await resp.json() == {
-                "id": "not_found",
-                "message": "Virus or isolate not found"
-            }
+            assert await resp_is.not_found(resp, "Virus or isolate not found")
 
 
 class TestRemoveSequence:
@@ -2408,34 +2301,24 @@ class TestRemoveSequence:
 
         assert resp.status == 204
 
-    async def test_sequence_not_found(self, test_db, test_virus, do_delete):
+    @pytest.mark.parametrize("virus_id,isolate_id,sequence_id", [
+        ("test", "cab8b360", "KX269872"),
+        ("6116cba1", "test", "KX269872"),
+        ("6116cba1", "cab8b360", "test"),
+        ("test", "test", "KX269872"),
+        ("6116cba1", "test", "test"),
+        ("test", "test", "test")
+    ])
+    async def test_virus_not_found(self, virus_id, isolate_id, sequence_id, test_db, test_virus, test_sequence,
+                                   do_delete, resp_is):
+
         test_db.sequences.insert_one(test_virus)
-
-        resp = await do_delete(
-            "/api/viruses/6116cba1/isolates/cab8b360/sequences/KX269872",
-            authorize=True,
-            permissions=["modify_virus"]
-        )
-
-        assert resp.status == 404
-
-        assert await resp.json() == {
-            "id": "not_found",
-            "message": "Not found"
-        }
-
-    async def test_virus_not_found(self, test_db, test_sequence, do_delete):
         test_db.viruses.insert_one(test_sequence)
 
         resp = await do_delete(
-            "/api/viruses/6116cba1/isolates/cab8b360/sequences/KX269872",
+            "/api/viruses/{}/isolates/{}/sequences/{}".format(virus_id, isolate_id, sequence_id),
             authorize=True,
             permissions=["modify_virus"]
         )
 
-        assert resp.status == 404
-
-        assert await resp.json() == {
-            "id": "not_found",
-            "message": "Not found"
-        }
+        await resp_is.not_found(resp)

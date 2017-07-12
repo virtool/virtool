@@ -503,7 +503,7 @@ async def edit_isolate(req):
     db, data = await unpack_json_request(req)
 
     if not len(data):
-        return bad_request("Empty input")
+        return bad_request("Empty Input")
 
     v = Validator({
         "source_type": {"type": "string"},
@@ -784,7 +784,10 @@ async def create_sequence(req):
     try:
         await db.sequences.insert_one(data)
     except pymongo.errors.DuplicateKeyError:
-        return json_response({"message": "Sequence id already exists"}, status=409)
+        return json_response({
+            "id": "conflict",
+            "message": "Sequence id already exists"
+        }, status=409)
 
     document = await db.viruses.find_one_and_update({"_id": virus_id}, {
         "$set": {
@@ -823,7 +826,7 @@ async def edit_sequence(req):
     db, data = req.app["db"], req["data"]
 
     if not len(data):
-        return bad_request("Empty input")
+        return bad_request("Empty Input")
 
     virus_id, isolate_id, sequence_id = (req.match_info[key] for key in ["virus_id", "isolate_id", "sequence_id"])
 

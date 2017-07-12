@@ -125,19 +125,14 @@ class TestGet:
             }
         }
 
-    async def test_not_found(self, do_get):
+    async def test_not_found(self, do_get, resp_is):
         """
         Test that a specific history change can be retrieved by its change_id.
 
         """
         resp = await do_get("/api/history/foobar.1")
 
-        assert resp.status == 404
-
-        assert await resp.json() == {
-            "id": "not_found",
-            "message": "Not found"
-        }
+        assert await resp_is.not_found(resp)
 
 
 class TestRemove:
@@ -156,16 +151,11 @@ class TestRemove:
 
         assert joined == expected
 
-    async def test_not_found(self, do_delete):
+    async def test_not_found(self, do_delete, resp_is):
         """
         Test that a request for a non-existent ``change_id`` results in a ``404`` response.
          
         """
         resp = await do_delete("/api/history/6116cba1.1")
 
-        assert resp.status == 404
-
-        assert await resp.json() == {
-            "id": "not_found",
-            "message": "Not found"
-        }
+        assert await resp_is.not_found(resp)
