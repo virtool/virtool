@@ -1,12 +1,17 @@
 language: python
-
+sudo: false
 python: "3.5"
 
-services: mongodb
+# services: mongodb
 
 addons:
   apt:
+    sources:
+      - mongodb-upstart
+      - mongodb-3.0-precise
     packages:
+      - mongodb-org-server
+      - mongodb-org-shell
       - nvidia-cuda-toolkit
 
 cache:
@@ -43,6 +48,9 @@ install:
 - npm install -g yarn
 - npm install -g webpack
 - cd $TRAVIS_BUILD_DIR
+
+before_script:
+- sleep 15
 
 script:
 - pytest --cov --cov-report xml -vv
