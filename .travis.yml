@@ -19,10 +19,18 @@ env:
 - TRAVIS_NODE_VERSION="6"
 
 before_install:
+# Codacy coverage reporter
 - pip install codacy-coverage
+
+# HMMER
 - wget http://eddylab.org/software/hmmer3/3.1b2/hmmer-3.1b2-linux-intel-x86_64.tar.gz
 - tar -xf hmmer-3.1b2-linux-intel-x86_64.tar.gz
 - export PATH=${PATH}:${PWD}/hmmer-3.1b2-linux-intel-x86_64/binaries
+
+# Bowtie2
+- wget https://github.com/BenLangmead/bowtie2/releases/download/v2.3.2/bowtie2-2.3.2-linux-x86_64.zip
+- tar -xf bowtie2-2.3.2-linux-x86_64.zip
+- export PATH=${PATH}:${PWD}/bowtie2-2.3.2
 
 install:
 - pip install -r requirements.txt
