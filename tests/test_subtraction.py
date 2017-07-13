@@ -88,6 +88,3 @@ class TestBowtie2IndexNames:
             virtool.subtraction.get_bowtie2_index_names(index_path)
 
         assert "Index not found at {}".format(index_path) in str(err)
-
-
-class
