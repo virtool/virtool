@@ -1,12 +1,18 @@
 language: python
-
+sudo: false
 python: "3.5"
 
-services: mongodb
+# services: mongodb
 
 addons:
   apt:
+    sources:
+      - mongodb-upstart
+      - mongodb-3.0-precise
     packages:
+      - libtbb-dev
+      - mongodb-org-server
+      - mongodb-org-shell
       - nvidia-cuda-toolkit
 
 cache:
@@ -19,10 +25,19 @@ env:
 - TRAVIS_NODE_VERSION="6"
 
 before_install:
+# Codacy coverage reporter
 - pip install codacy-coverage
+
+# HMMER
 - wget http://eddylab.org/software/hmmer3/3.1b2/hmmer-3.1b2-linux-intel-x86_64.tar.gz
 - tar -xf hmmer-3.1b2-linux-intel-x86_64.tar.gz
 - export PATH=${PATH}:${PWD}/hmmer-3.1b2-linux-intel-x86_64/binaries
+
+# Bowtie2
+- wget https://github.com/BenLangmead/bowtie2/releases/download/v2.3.2/bowtie2-2.3.2-linux-x86_64.zip
+- unzip bowtie2-2.3.2-linux-x86_64.zip
+- export PATH=${PATH}:${PWD}/bowtie2-2.3.2
+- bowtie2-inspect --version
 
 install:
 - pip install -r requirements.txt
@@ -35,6 +50,9 @@ install:
 - npm install -g yarn
 - npm install -g webpack
 - cd $TRAVIS_BUILD_DIR
+
+before_script:
+- sleep 15
 
 script:
 - pytest --cov --cov-report xml -vv
