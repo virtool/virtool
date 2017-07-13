@@ -4,7 +4,10 @@ import virtool.utils
 import virtool.pathoscope
 import virtool.job
 
-PATHOSCOPE_TASK_NAMES = ["pathoscope_bowtie"]
+PATHOSCOPE_TASK_NAMES = [
+    "pathoscope_bowtie",
+    "pathoscope_barracuda"
+]
 
 
 LIST_PROJECTION = [
@@ -39,31 +42,48 @@ PROJECTION = [
 
 
 def calculate_algorithm_tags(analyses):
-    update = {
-        "pathoscope": False,
-        "nuvs": False
-    }
+    """
+    Calculate the algorithm tags (eg. "ip", True) that should be applied to a sample document based on a list of its
+    associated analyses.
 
-    pathoscope = list()
-    nuvs = list()
+    :param analyses: the analyses to calculate tags for
+    :type analyses: list
+
+    :return: algorithm tags to apply to the sample document
+    :rtype: dict
+
+    """
+    pathoscope = False
+    nuvs = False
 
     for analysis in analyses:
-        if analysis["algorithm"] in PATHOSCOPE_TASK_NAMES:
-            pathoscope.append(analysis)
+        if pathoscope is not True and analysis["algorithm"] in PATHOSCOPE_TASK_NAMES:
+            pathoscope = analysis["ready"] or "ip" or pathoscope
 
-        if analysis["algorithm"] == "nuvs":
-            nuvs.append(analysis)
+        if nuvs is not True and analysis["algorithm"] == "nuvs":
+            nuvs = analysis["ready"] or "ip" or nuvs
 
-    if len(pathoscope) > 0:
-        update["pathoscope"] = any([document["ready"] for document in pathoscope]) or "ip"
+        if pathoscope is True and nuvs is True:
+            break
 
-    if len(nuvs) > 0:
-        update["nuvs"] = any([document["ready"] for document in nuvs]) or "ip"
-
-    return update
+    return {
+        "pathoscope": pathoscope,
+        "nuvs": nuvs
+    }
 
 
 async def recalculate_algorithm_tags(db, sample_id):
+    """
+    Recalculate and apply algorithm tags (eg. "ip", True) for a given sample. Finds the associated analyses and calls
+    :func:`calculate_algorithm_tags`, then applies the update to the sample document.
+
+    :param db: the application database client
+    :type db: :class:`~motor.motor_asyncio.AsyncIOMotorClient`
+
+    :param sample_id: the id of the sample to recalculate tags for
+    :type sample_id: str
+
+    """
     analyses = await db.analyses.find({"sample_id": sample_id}, ["ready", "algorithm"]).to_list(None)
 
     update = calculate_algorithm_tags(analyses)
@@ -74,7 +94,24 @@ async def recalculate_algorithm_tags(db, sample_id):
 
 
 async def get_sample_owner(db, sample_id):
-    return (await db.users.find_one(sample_id, "user_id"))["user_id"]
+    """
+    A Shortcut function for getting the owner (``user_id``) of a sample given its ``sample_id``.
+
+    :param db: the application database client
+    :type db: :class:`~motor.motor_asyncio.AsyncIOMotorClient`
+
+    :param sample_id: the id of the sample to get the owner for
+    :type sample_id: str
+
+    :return: the id of the owner user
+
+    """
+    document = await db.samples.find_one(sample_id, ["user_id"])
+
+    if document:
+        return document["user_id"]
+
+    return None
 
 
 async def remove_samples(db, settings, id_list):
@@ -98,8 +135,11 @@ async def remove_samples(db, settings, id_list):
     :rtype: dict
 
     """
+    if not isinstance(id_list, list):
+        raise TypeError("id_list must be a list")
+
     # Remove all analysis documents associated with the sample.
-    await db.analyses.delete_many({"_id": {
+    await db.analyses.delete_many({"sample_id": {
         "$in": id_list
     }})
 
