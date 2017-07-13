@@ -267,11 +267,12 @@ async def list_analyses(req):
 
     sample_id = req.match_info["sample_id"]
 
+    if not await db.samples.count({"_id": sample_id}):
+        return not_found()
+
     documents = await db.analyses.find({"sample_id": sample_id}, virtool.sample_analysis.LIST_PROJECTION).to_list(None)
 
-    processed = [virtool.utils.base_processor(d) for d in documents]
-
-    return json_response(processed, 200)
+    return json_response([virtool.utils.base_processor(d) for d in documents])
 
 
 async def analyze(req):
