@@ -73,6 +73,8 @@ def get_bowtie2_index_names(index_path):
         if "Could not locate a Bowtie index" in err.output.decode():
             raise FileNotFoundError("Index not found at {}".format(index_path))
 
+        print(err.output.decode())
+
         raise
 
     inspect_list = str(result, "utf-8").split("\n")

@@ -36,6 +36,7 @@ before_install:
 - wget https://github.com/BenLangmead/bowtie2/releases/download/v2.3.2/bowtie2-2.3.2-linux-x86_64.zip
 - unzip bowtie2-2.3.2-linux-x86_64.zip
 - export PATH=${PATH}:${PWD}/bowtie2-2.3.2
+- bowtie2-inspect --version
 
 install:
 - pip install -r requirements.txt
