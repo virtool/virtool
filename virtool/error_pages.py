@@ -31,4 +31,4 @@ async def middleware_factory(app, handler):
 
 def handle_404():
     html = Template(filename="virtool/templates/error_404.html").render(hash=get_static_hash())
-    return web.Response(body=html, content_type="text/html")
+    return web.Response(body=html, content_type="text/html", status=404)

@@ -1,5 +1,4 @@
 import os
-import math
 from pymongo import ReturnDocument
 from cerberus import Validator
 
@@ -7,13 +6,13 @@ import virtool.file
 import virtool.utils
 import virtool.sample
 import virtool.sample_analysis
-from virtool.handlers.utils import unpack_json_request, json_response, bad_request, not_found, invalid_input, \
+from virtool.handlers.utils import unpack_request, json_response, bad_request, not_found, invalid_input, \
     invalid_query, compose_regex_query, paginate
 
 
 async def find(req):
     """
-    List truncated virus documents.
+    Find samples, filtering by data passed as URL parameters.
 
     """
     db = req.app["db"]
@@ -33,7 +32,7 @@ async def find(req):
     db_query = dict()
 
     if query["term"]:
-        db_query.update(compose_regex_query(query["term"], ["name", "abbreviation"]))
+        db_query.update(compose_regex_query(query["term"], ["name", "user.id"]))
 
     data = await paginate(db.samples, db_query, req.query, "name", projection=virtool.sample.LIST_PROJECTION)
 
@@ -58,7 +57,9 @@ async def upload(req):
         "_id": file_id,
         "name": filename,
         "type": "reads",
-        "user_id": req["session"].user_id,
+        "user": {
+            "id": req["session"].user_id
+        },
         "uploaded_at": virtool.utils.timestamp(),
         "created": False,
         "ready": False
