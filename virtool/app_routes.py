@@ -99,7 +99,7 @@ def setup_routes(app):
     app.router.add_patch("/api/samples/{sample_id}", samples.update)
     app.router.add_delete("/api/samples/{sample_id}", samples.remove)
 
-    app.router.add_get("/api/samples/{sample_id}/analyses", samples.find_analyses)
+    app.router.add_get("/api/samples/{sample_id}/analyses", samples.list_analyses)
     app.router.add_post("/api/samples/{sample_id}/analyses", samples.analyze)
 
     app.router.add_put("/api/samples/{sample_id}/group", samples.set_owner_group)

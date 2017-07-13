@@ -258,7 +258,11 @@ async def set_rights(req):
     return json_response({"message": "Must be administrator or sample owner."}, status=403)
 
 
-async def find_analyses(req):
+async def list_analyses(req):
+    """
+    List the analyses associated with the given ``sample_id``.
+
+    """
     db = req.app["db"]
 
     sample_id = req.match_info["sample_id"]
