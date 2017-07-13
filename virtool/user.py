@@ -1,8 +1,6 @@
 import bcrypt
 import hashlib
 
-from pymongo import ReturnDocument
-
 PROJECTION = [
     "_id",
     "groups",
@@ -14,27 +12,19 @@ PROJECTION = [
 
 
 async def user_exists(db, user_id):
-    return await db.users.find({"_id": user_id}).count() == 1
-
-
-async def set_primary_group(db, user_id, group_id):
     """
-    Set the primary group for a given user.
+    Check if the user with the passed ``user_id`` exists in the database.
+
+    :param db: a application database client
+    :type db: :class:`~motor.motor_asyncio.AsyncIOMotorClient`
+
+    :param user_id: the user id to check for
+    :type user_id: str
+
+    :return: ``bool`` indicating if the user exists
 
     """
-    if not await user_exists(db, user_id):
-        raise UserNotFoundError
-
-    if group_id not in await db.groups.distinct("_id"):
-        raise GroupNotFoundError
-
-    document = await db.users.find_one_and_update({"_id": user_id}, {
-        "$set": {
-            "primary_group": group_id
-        }
-    }, return_document=ReturnDocument.AFTER)
-
-    return document
+    return await db.users.count({"_id": user_id}) == 1
 
 
 async def validate_credentials(db, user_id, password):
@@ -55,7 +45,7 @@ async def validate_credentials(db, user_id, password):
     :rtype: bool
 
     """
-    document = await db.users.find_one({"_id": user_id}, ["password", "salt"])
+    document = await db.users.find_one(user_id, ["password", "salt"])
 
     # First, check if the user exists in the database. Return False if the user does not exist.
     if not document:
@@ -124,11 +114,3 @@ def check_legacy_password(password, salt, hashed):
      
     """
     return hashed == hashlib.sha512(salt.encode("utf-8") + password.encode("utf-8")).hexdigest()
-
-
-class UserNotFoundError(Exception):
-    pass
-
-
-class GroupNotFoundError(Exception):
-    pass
