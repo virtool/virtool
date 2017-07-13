@@ -3,7 +3,9 @@ import pymongo
 import logging
 import subprocess
 
+import virtool.job
 import virtool.utils
+import virtool.errors
 
 logger = logging.getLogger(__name__)
 
@@ -17,10 +19,26 @@ LIST_PROJECTION = [
 ]
 
 
-async def set_stats(db, host_id, stats):
-    await db.hosts.update_one({"_id": host_id}, {
-        "$set": {key: stats[key] for key in ["count", "lengths", "nucleotides"]}
+async def set_stats(db, subtraction_id, stats):
+    """
+    Set the stats field for the subtraction with the passed ``subtraction_id`` using the data in ``stats``.
+
+    :param db: the application database client
+    :type db: :class:`~motor.motor_asyncio.AsyncIOMotorClient`
+
+    :param subtraction_id: the id of the sample to recalculate tags for
+    :type subtraction_id: str
+
+    :param stats: the data to add to the subtraction document
+    :type stats: dict
+
+    """
+    update_result = await db.subtraction.update_one({"_id": subtraction_id}, {
+        "$set": {key: stats[key] for key in ["count", "nucleotides"]}
     })
+
+    if not update_result.modified_count:
+        raise virtool.errors.DatabaseError("No subtraction with id '{}'".format(subtraction_id))
 
 
 async def set_ready(db, subtraction_id):
@@ -28,11 +46,14 @@ async def set_ready(db, subtraction_id):
     Sets the ``ready`` field to ``True`` for a host document.
 
     """
-    await db.subtraction.update_one({"_id": subtraction_id}, {
+    update_result = await db.subtraction.update_one({"_id": subtraction_id}, {
         "$set": {
             "ready": True
         }
     })
+
+    if not update_result.modified_count:
+        raise virtool.errors.DatabaseError("No subtraction with id '{}'".format(subtraction_id))
 
 
 def get_bowtie2_index_names(index_path):
@@ -44,50 +65,23 @@ def get_bowtie2_index_names(index_path):
 
     :return: a list of sequence id strings.
     :rtype: list
+
     """
     try:
-        inspect = subprocess.check_output(["bowtie2-inspect", "-n", index_path], stderr=subprocess.DEVNULL)
-    except subprocess.CalledProcessError:
-        return None
+        result = subprocess.check_output(["bowtie2-inspect", "-n", index_path], stderr=subprocess.STDOUT)
+    except subprocess.CalledProcessError as err:
+        if "Could not locate a Bowtie index" in err.output.decode():
+            raise FileNotFoundError("Index not found at {}".format(index_path))
 
-    inspect_list = str(inspect, "utf-8").split("\n")
+        raise
+
+    inspect_list = str(result, "utf-8").split("\n")
     inspect_list.remove("")
 
     return inspect_list
 
 
-def check_collection(db_name, data_path, host="localhost", port=27017):
-    db = pymongo.MongoClient(host, port)[db_name]
-
-    response = {
-        "orphaned": list(),
-        "missing": list(),
-        "mismatched": list()
-    }
-
-    db_hosts = db.hosts.find({}, {"count": True, "file": True})
-
-    index_path = os.path.join(data_path, "reference/hosts")
-
-    for host in db_hosts:
-        index_ref_count = len(get_bowtie2_index_names(os.path.join(
-            index_path,
-            host["_id"].lower().replace(" ", "_"),
-            "reference"
-        )))
-
-        if index_ref_count is None:
-            response["missing"].append(host["_id"])
-
-        elif index_ref_count != host["count"]:
-            response["mismatched"].append(host["_id"])
-
-    response["failed"] = response["missing"] or response["mismatched"]
-
-    return response
-
-
-class AddHost(virtool.job.Job):
+class CreateSubtraction(virtool.job.Job):
 
     """
     A subclass of :class:`.Job` that adds a new host to Virtool from a passed FASTA file. Job stages are:
@@ -100,7 +94,7 @@ class AddHost(virtool.job.Job):
     """
 
     def __init__(self, *args, **task_args):
-        super(AddHost, self).__init__(*args, **task_args)
+        super().__init__(*args, **task_args)
 
         #: The id of the host being added. Extracted from :attr:`~.virtool.job.Job.task_args`.
         self.host_id = self._task_args["_id"]
