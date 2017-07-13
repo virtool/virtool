@@ -45,7 +45,7 @@ async def validate_credentials(db, user_id, password):
     :rtype: bool
 
     """
-    document = await db.users.find_one({"_id": user_id}, ["password", "salt"])
+    document = await db.users.find_one(user_id, ["password", "salt"])
 
     # First, check if the user exists in the database. Return False if the user does not exist.
     if not document:
