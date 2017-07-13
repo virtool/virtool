@@ -275,7 +275,7 @@ async def analyze(req):
     Starts an analysis job for a given sample.
 
     """
-    db, data = await unpack_json_request(req)
+    db, data = await unpack_request(req)
 
     sample_id = req.match_info["sample_id"]
     user_id = req["session"].user_id

@@ -3,7 +3,7 @@ from pymongo import ReturnDocument
 import virtool.utils
 import virtool.virus_index
 import virtool.virus_history
-from virtool.handlers.utils import unpack_json_request, json_response, bad_request, not_found, protected
+from virtool.handlers.utils import unpack_request, json_response, bad_request, not_found, protected
 
 
 async def find(req):
@@ -63,7 +63,7 @@ async def create(req):
     viruses in the collection and updates virus history to show the version and id of the new index.
 
     """
-    db, data = await unpack_json_request(req)
+    db, data = await unpack_request(req)
 
     if await db.viruses.find({"modified": True}).count():
         return bad_request("There are unverified viruses")

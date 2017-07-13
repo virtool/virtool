@@ -1,7 +1,7 @@
 import virtool.sample
 import virtool.subtraction
 import virtool.utils
-from virtool.handlers.utils import unpack_json_request, json_response, not_found
+from virtool.handlers.utils import unpack_request, json_response, not_found
 
 
 async def find(req):
@@ -53,7 +53,7 @@ async def create(req):
     Adds a new host described by the transaction. Starts an :class:`.AddHost` job process.
 
     """
-    db, data = await unpack_json_request(req)
+    db, data = await unpack_request(req)
 
     user_id = req["session"]["user_id"]
 
@@ -82,7 +82,7 @@ async def create(req):
 
 
 async def authorize_upload(req):
-    db, data = await unpack_json_request(req)
+    db, data = await unpack_request(req)
 
     file_id = await db.files.register(
         name=data["name"],

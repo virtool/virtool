@@ -7,7 +7,7 @@ from pymongo import ReturnDocument
 
 import virtool.utils
 import virtool.virus_hmm
-from virtool.handlers.utils import unpack_json_request, json_response, not_found, validation, protected
+from virtool.handlers.utils import unpack_request, json_response, not_found, validation, protected
 
 
 async def find(req):
@@ -78,7 +78,7 @@ async def clean(req):
 
 
 async def import_hmm(req):
-    db, data = unpack_json_request(req)
+    db, data = unpack_request(req)
 
     settings = req.app["settings"]
 
@@ -97,7 +97,7 @@ async def import_hmm(req):
 
 
 async def import_annotations(req):
-    db, data = unpack_json_request(req)
+    db, data = unpack_request(req)
 
     settings = req.app["settings"]
 
