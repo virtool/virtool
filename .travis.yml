@@ -10,6 +10,7 @@ addons:
       - mongodb-upstart
       - mongodb-3.0-precise
     packages:
+      - libtbb-dev
       - mongodb-org-server
       - mongodb-org-shell
       - nvidia-cuda-toolkit
