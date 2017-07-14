@@ -102,6 +102,7 @@ async def init_db(app):
 
     # Organize collections.
     await virtool.organize.organize_samples(db)
+    await virtool.organize.organize_analyses(db)
     await virtool.organize.organize_viruses(db)
     await virtool.organize.organize_history(db)
     await virtool.organize.organize_subtraction(db)

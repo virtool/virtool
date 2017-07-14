@@ -75,7 +75,7 @@ class TestUnset:
         ]
 
 
-class TestRenameTimeStamp:
+class TestRenameTimestamp:
 
     async def test(self, test_motor):
         """
@@ -91,6 +91,31 @@ class TestRenameTimeStamp:
 
         assert await test_motor.analyses.find().to_list(None) == [
             {"_id": 1, "algorithm": "pathoscope_bowtie", "created_at": "now"}
+        ]
+
+
+class TestIndexField:
+
+    @pytest.mark.parametrize("document", [
+        # Needs correction
+        {"_id": "test", "index_id": "foobar", "index_version": 2},
+        # No change
+        {"_id": "test", "index": {"id": "foobar", "version": 2}}
+    ])
+    async def test(self, document, test_motor):
+        await test_motor.analyses.insert_one(document)
+
+        await virtool.organize.organize_analyses(test_motor)
+
+        assert await test_motor.analyses.find().to_list(None) == [
+            {
+                "_id": "test",
+                "algorithm": "pathoscope_bowtie",
+                "index": {
+                    "id": "foobar",
+                    "version": 2
+                }
+            }
         ]
 
 
@@ -117,42 +142,49 @@ class TestSampleField:
         ]
 
 
-class TestAlgorithmField:
+class TestJobField:
 
-    async def test(self, test_motor):
-        """
-        Test that documents with no ``algorithm`` field have that field set to a default value of ``pathoscope_bowtie``.
-
-        """
-        await test_motor.analyses.insert_one({
-            "_id": 1
-        })
+    @pytest.mark.parametrize("document", [
+        # Needs correction
+        ({"_id": "test", "job": "abc123"}),
+        # No change - pathoscope
+        ({"_id": "test", "job": {"id": "abc123"}})
+    ])
+    async def test(self, document, test_motor):
+        await test_motor.analyses.insert_one(document)
 
         await virtool.organize.organize_analyses(test_motor)
 
         assert await test_motor.analyses.find().to_list(None) == [
             {
-                "_id": 1,
-                "algorithm": "pathoscope_bowtie"
+                "_id": "test",
+                "algorithm": "pathoscope_bowtie",
+                "job": {
+                    "id": "abc123"
+                }
             }
         ]
 
-    async def test_no_change(self, test_motor):
-        """
-        Test that existing ``algorithm`` fields are not erroneously overwritten.
 
-        """
-        await test_motor.analyses.insert_one({
-            "_id": 1,
-            "algorithm": "nuvs"
-        })
+class TestAlgorithmField:
+
+    @pytest.mark.parametrize("document,algorithm", [
+        # Needs correction
+        ({"_id": "test"}, "pathoscope_bowtie"),
+        # No change - pathoscope
+        ({"_id": "test", "algorithm": "pathoscope_bowtie"}, "pathoscope_bowtie"),
+        # No change - nuvs
+        ({"_id": "test", "algorithm": "nuvs"}, "nuvs")
+    ])
+    async def test(self, document, algorithm, test_motor):
+        await test_motor.analyses.insert_one(document)
 
         await virtool.organize.organize_analyses(test_motor)
 
         assert await test_motor.analyses.find().to_list(None) == [
             {
-                "_id": 1,
-                "algorithm": "nuvs"
+                "_id": "test",
+                "algorithm": algorithm
             }
         ]
 
