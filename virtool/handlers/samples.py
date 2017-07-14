@@ -1,5 +1,4 @@
 import os
-import math
 from pymongo import ReturnDocument
 from cerberus import Validator
 
@@ -7,13 +6,13 @@ import virtool.file
 import virtool.utils
 import virtool.sample
 import virtool.sample_analysis
-from virtool.handlers.utils import unpack_json_request, json_response, bad_request, not_found, invalid_input, \
+from virtool.handlers.utils import unpack_request, json_response, bad_request, not_found, invalid_input, \
     invalid_query, compose_regex_query, paginate
 
 
 async def find(req):
     """
-    List truncated virus documents.
+    Find samples, filtering by data passed as URL parameters.
 
     """
     db = req.app["db"]
@@ -33,7 +32,7 @@ async def find(req):
     db_query = dict()
 
     if query["term"]:
-        db_query.update(compose_regex_query(query["term"], ["name", "abbreviation"]))
+        db_query.update(compose_regex_query(query["term"], ["name", "user.id"]))
 
     data = await paginate(db.samples, db_query, req.query, "name", projection=virtool.sample.LIST_PROJECTION)
 
@@ -58,7 +57,9 @@ async def upload(req):
         "_id": file_id,
         "name": filename,
         "type": "reads",
-        "user_id": req["session"].user_id,
+        "user": {
+            "id": req["session"].user_id
+        },
         "uploaded_at": virtool.utils.timestamp(),
         "created": False,
         "ready": False
@@ -257,16 +258,21 @@ async def set_rights(req):
     return json_response({"message": "Must be administrator or sample owner."}, status=403)
 
 
-async def find_analyses(req):
+async def list_analyses(req):
+    """
+    List the analyses associated with the given ``sample_id``.
+
+    """
     db = req.app["db"]
 
     sample_id = req.match_info["sample_id"]
 
-    documents = await db.analyses.find({"sample_id": sample_id}, virtool.sample_analysis.LIST_PROJECTION).to_list(None)
+    if not await db.samples.count({"_id": sample_id}):
+        return not_found()
 
-    processed = [virtool.utils.base_processor(d) for d in documents]
+    documents = await db.analyses.find({"sample.id": sample_id}, virtool.sample_analysis.LIST_PROJECTION).to_list(None)
 
-    return json_response(processed, 200)
+    return json_response([virtool.utils.base_processor(d) for d in documents])
 
 
 async def analyze(req):
@@ -274,18 +280,15 @@ async def analyze(req):
     Starts an analysis job for a given sample.
 
     """
-    db, data = await unpack_json_request(req)
-
-    sample_id = req.match_info["sample_id"]
-    user_id = req["session"].user_id
+    db, data = await unpack_request(req)
 
     # Generate a unique _id for the analysis entry
     document = await virtool.sample_analysis.new(
         db,
         req.app["settings"],
         req.app["job_manager"],
-        sample_id,
-        user_id,
+        req.match_info["sample_id"],
+        req["session"].user_id,
         data["algorithm"]
     )
 

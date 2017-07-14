@@ -79,53 +79,25 @@ async def organize_analyses(db):
     await virtool.organize_utils.unset_version_field(db.analyses)
     await virtool.organize_utils.update_user_field(db.analyses)
 
-    # Only do this if HMM records are defined in the database.
-    if await db.hmm.count() > 0:
-        async for analysis in db.analyses.find({"algorithm": "nuvs"}):
-            # If the definition key is defined, the record is storing the information for each HMM and must be
-            # updated.
-            if "definition" in analysis["hmm"][0]:
-                hits = analysis["hmm"]
+    async for analysis in db.analyses.find({"index_id": {"$exists": True}}, ["index_id", "index_version"]):
+        await db.analyses.update_one({"_id": analysis["_id"]}, {
+            "$set": {
+                "index": {
+                    "id": analysis["index_id"],
+                    "version": analysis["index_version"]
+                }
+            },
+            "$unset": {
+                "index_id": "",
+                "index_version": ""
+            }
+        })
 
-                # Fix up the HMM hit entries for the analysis.
-                for hit in hits:
-                    # Get the database id for the HMM the hit should be linked to.
-                    cluster = int(hit["hit"].split("_")[1])
-                    hmm = await db.hmm.find_one({"cluster": cluster}, {"_id": True})
-
-                    # Get rid of the unnecessary fields.
-                    del hit["definition"]
-                    del hit["families"]
-
-                    # Change the hit field to the id for the HMM record instead of vFam_###.
-                    hit["hit"] = hmm["_id"]
-
-                # Commit the new hit entries to the database.
-                await db.analyses.update_one({"_id": analysis["_id"]}, {
-                    "$set": {
-                        "hmm": hits
-                    }
-                })
-
-    # Unset or rename a bunch of fields.
-    await db.analyses.update_many({}, {
-        "$unset": {
-            "discovery": "",
-            "_version": "",
-            "name": "",
-            "comments": ""
-        },
-        "$rename": {
-            "timestamp": "created_at"
-        }
-    })
-
-    # Implement subdocument structure for ``sample`` field.
-    async for document in db.analyses.find({}, ["sample", "sample_id"]):
-        sample_id = document.get("sample_id", None) or document.get("sample", None)
+    async for analysis in db.analyses.find({}, ["sample_id", "sample"]):
+        sample_id = analysis.get("sample_id", None) or analysis.get("sample", None)
 
         if isinstance(sample_id, str):
-            await db.analyses.update_one({"_id": document["_id"]}, {
+            await db.analyses.update_one({"_id": analysis["_id"]}, {
                 "$set": {
                     "sample": {
                         "id": sample_id
@@ -136,10 +108,56 @@ async def organize_analyses(db):
                 }
             })
 
+    async for analysis in db.analyses.find({"job": {"$exists": True}}, ["job"]):
+        if isinstance(analysis["job"], str):
+            await db.analyses.update_one({"_id": analysis["_id"]}, {
+                "$set": {
+                    "job": {
+                        "id": analysis["job"]
+                    }
+                }
+            })
+
     # If the algorithm field is unset, set it to ``pathoscope_bowtie``.
     await db.analyses.update_many({"algorithm": {"$exists": False}}, {
         "$set": {
             "algorithm": "pathoscope_bowtie"
+        }
+    })
+
+    async for analysis in db.analyses.find({"algorithm": "nuvs", "hmm": {"$exists": True}}, ["hmm"]):
+        # If the definition key is defined, the record is storing the information for each HMM and must be
+        # updated.
+        if "definition" in analysis["hmm"][0]:
+            hits = analysis["hmm"]
+
+            # Fix up the HMM hit entries for the analysis.
+            for hit in hits:
+                # Get the database id for the HMM the hit should be linked to.
+                cluster = int(hit["hit"].split("_")[1])
+                hmm = await db.hmm.find_one({"cluster": cluster}, {"_id": True})
+
+                # Get rid of the unnecessary fields.
+                del hit["definition"]
+                del hit["families"]
+
+                # Change the hit field to the id for the HMM record instead of vFam_###.
+                hit["hit"] = hmm["_id"]
+
+            await db.analyses.update_one({"_id": analysis["_id"]}, {
+                "$set": {
+                    "hmm": hits
+                }
+            })
+
+    await db.analyses.update_many({}, {
+        "$unset": {
+            "name": "",
+            "discovery": "",
+            "comments": ""
+        },
+        "$rename": {
+            "timestamp": "created_at"
         }
     })
 

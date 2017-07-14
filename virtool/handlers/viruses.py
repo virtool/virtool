@@ -14,7 +14,7 @@ import virtool.virus
 import virtool.virus_import
 import virtool.virus_history
 
-from virtool.handlers.utils import unpack_json_request, json_response, not_found, invalid_input, protected, validation,\
+from virtool.handlers.utils import unpack_request, json_response, not_found, invalid_input, protected, validation,\
     compose_regex_query, paginate, bad_request, no_content
 
 
@@ -500,7 +500,7 @@ async def edit_isolate(req):
     Edit an existing isolate.
 
     """
-    db, data = await unpack_json_request(req)
+    db, data = await unpack_request(req)
 
     if not len(data):
         return bad_request("Empty Input")
@@ -578,7 +578,7 @@ async def set_as_default(req):
     Set an isolate as default.
 
     """
-    db, data = await unpack_json_request(req)
+    db, data = await unpack_request(req)
 
     virus_id = req.match_info["virus_id"]
     isolate_id = req.match_info["isolate_id"]

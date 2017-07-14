@@ -18,10 +18,6 @@ class CustomEncoder(json.JSONEncoder):
         return json.JSONEncoder.default(self, obj)
 
 
-async def unpack_request(request):
-    return request.app["db"], await request.json()
-
-
 def dumps(obj):
     """
     A wrapper for :func:`json.dumps` that applies pretty formatting to the output. Used as ``dumps`` argument for
@@ -35,6 +31,21 @@ def dumps(obj):
      
     """
     return json.dumps(obj, indent=4, sort_keys=False, cls=CustomEncoder)
+
+
+async def unpack_request(req):
+    """
+    A shortcut for pulling the app database reference and the request JSON body from a :class:`~aiohttp.web.Request`
+    object.
+
+    :param req: a request
+    :type req: :class:`~aiohttp.web.Request`
+
+    :return: the app DB connection and the request JSON body
+    :rtype: tuple
+
+    """
+    return req.app["db"], await req.json()
 
 
 def compose_regex_query(term, fields):
@@ -197,21 +208,6 @@ def validation(schema):
         return wrapped
 
     return decorator
-
-
-async def unpack_json_request(req):
-    """
-    A shortcut for pulling the app database reference and the request JSON body from a :class:`~aiohttp.web.Request`
-    object.
-
-    :param req: a request
-    :type req: :class:`~aiohttp.web.Request`
-
-    :return: the app DB connection and the request JSON body
-    :rtype: tuple
-
-    """
-    return req.app["db"], await req.json()
 
 
 async def paginate(collection, db_query, url_query, sort_by, projection=None, processor=virtool.utils.base_processor,

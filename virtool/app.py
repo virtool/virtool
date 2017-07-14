@@ -91,6 +91,7 @@ async def init_db(app):
     db = motor_asyncio.AsyncIOMotorClient(io_loop=app.loop)[app["db_name"]]
 
     # Create indexes.
+    await db.analyses.create_index("sample.id")
     await db.viruses.create_index("name")
     await db.viruses.create_index("abbreviation")
     await db.viruses.create_index("modified")
@@ -102,6 +103,7 @@ async def init_db(app):
 
     # Organize collections.
     await virtool.organize.organize_samples(db)
+    await virtool.organize.organize_analyses(db)
     await virtool.organize.organize_viruses(db)
     await virtool.organize.organize_history(db)
     await virtool.organize.organize_subtraction(db)

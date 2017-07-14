@@ -1,6 +1,6 @@
 from cerberus import Validator
 from virtool.app_settings import SCHEMA
-from virtool.handlers.utils import unpack_json_request, json_response, not_found, invalid_input
+from virtool.handlers.utils import json_response, not_found, invalid_input
 
 
 async def get_all(req):

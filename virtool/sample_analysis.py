@@ -10,14 +10,13 @@ from virtool.virus_index import get_current_index
 
 LIST_PROJECTION = [
     "_id",
-    "name",
     "algorithm",
-    "timestamp",
+    "created_at",
     "ready",
     "job",
-    "index_version",
-    "user_id",
-    "sample_id"
+    "index",
+    "user",
+    "sample"
 ]
 
 
@@ -31,10 +30,17 @@ async def new(db, settings, manager, sample_id, user_id, algorithm):
     index_id, index_version = await get_current_index(db)
 
     data = {
-        "sample_id": sample_id,
-        "user_id": user_id,
         "algorithm": algorithm,
-        "index_id": index_id
+        "sample": {
+            "id": sample_id
+        },
+        "index": {
+            "id": index_id,
+            "version": index_version
+        },
+        "user": {
+            "id": user_id,
+        }
     }
 
     sample = await db.samples.find_one(sample_id, ["name"])
@@ -47,10 +53,11 @@ async def new(db, settings, manager, sample_id, user_id, algorithm):
 
     document.update({
         "_id": analysis_id,
-        "job": job_id,
         "ready": False,
-        "index_version": index_version,
-        "timestamp": virtool.utils.timestamp()
+        "created_at": virtool.utils.timestamp(),
+        "job": {
+            "id": job_id
+        }
     })
 
     task_args = dict(data, analysis_id=analysis_id, sample_name=sample["name"])
@@ -62,15 +69,15 @@ async def new(db, settings, manager, sample_id, user_id, algorithm):
     await manager.new(
         data["algorithm"],
         task_args,
-        settings.get(data["algorithm"] + "_proc"),
-        settings.get(data["algorithm"] + "_mem"),
+        settings.get("{}_proc".format(algorithm)),
+        settings.get("{}_mem".format(algorithm)),
         user_id,
         job_id=job_id
     )
 
     await recalculate_algorithm_tags(db, sample_id)
 
-    return processor(document)
+    return virtool.utils.base_processor(document)
 
 
 async def remove_by_id(db, settings, analysis_id):
