@@ -173,3 +173,76 @@ class TestFind:
         assert await resp_is.invalid_query(resp, {
             "per_pag": ["unknown field"]
         })
+
+
+class TestListAnalyses:
+
+    async def test(self, test_motor, do_get, static_time):
+        await test_motor.samples.insert_one({
+            "_id": "test"
+        })
+
+        analyses = [
+            {
+                "_id": "test_1",
+                "algorithm": "pathopscope_bowtie",
+                "created_at": static_time,
+                "ready": True,
+                "job": {
+                    "id": "test"
+                },
+                "index": {
+                    "version": 2,
+                    "id": "foo"
+                },
+                "user": {
+                    "id": "fred"
+                },
+                "sample": {
+                    "id": "test"
+                }
+            },
+            {
+                "_id": "test_2",
+                "algorithm": "pathopscope_bowtie",
+                "created_at": static_time,
+                "ready": True,
+                "job": {
+                    "id": "test"
+                },
+                "index": {
+                    "version": 2,
+                    "id": "foo"
+                },
+                "user": {
+                    "id": "fred"
+                },
+                "sample": {
+                    "id": "test"
+                }
+            },
+            {
+                "_id": "test_3",
+                "algorithm": "pathopscope_bowtie",
+                "created_at": static_time,
+                "ready": True,
+                "job": {
+                    "id": "test"
+                },
+                "index": {
+                    "version": 2,
+                    "id": "foo"
+                },
+                "user": {
+                    "id": "fred"
+                },
+                "sample": {
+                    "id": "test"
+                }
+            },
+        ]
+
+    async def test_not_found(self, do_get, resp_is):
+        resp = await do_get("/api/samples/foobar/analyses")
+
+        assert await resp_is.not_found(resp)

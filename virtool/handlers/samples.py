@@ -270,7 +270,7 @@ async def list_analyses(req):
     if not await db.samples.count({"_id": sample_id}):
         return not_found()
 
-    documents = await db.analyses.find({"sample_id": sample_id}, virtool.sample_analysis.LIST_PROJECTION).to_list(None)
+    documents = await db.analyses.find({"sample.id": sample_id}, virtool.sample_analysis.LIST_PROJECTION).to_list(None)
 
     return json_response([virtool.utils.base_processor(d) for d in documents])
 
@@ -282,16 +282,13 @@ async def analyze(req):
     """
     db, data = await unpack_request(req)
 
-    sample_id = req.match_info["sample_id"]
-    user_id = req["session"].user_id
-
     # Generate a unique _id for the analysis entry
     document = await virtool.sample_analysis.new(
         db,
         req.app["settings"],
         req.app["job_manager"],
-        sample_id,
-        user_id,
+        req.match_info["sample_id"],
+        req["session"].user_id,
         data["algorithm"]
     )
 
