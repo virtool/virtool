@@ -64,7 +64,7 @@ def compose_regex_query(term, fields):
     }
 
 
-def json_response(data, status=200):
+def json_response(data, status=200, headers=None):
     """
     A wrapper for ``aiohttp.web.json_response`` that uses :func:``.dumps`` to pretty format the JSON response.
     
@@ -78,7 +78,9 @@ def json_response(data, status=200):
     :rtype: :class:`aiohttp.web.Response`
       
     """
-    return web.json_response(data, status=status, dumps=dumps)
+    headers = headers or {}
+
+    return web.json_response(data, status=status, headers=headers, dumps=dumps)
 
 
 def no_content():
