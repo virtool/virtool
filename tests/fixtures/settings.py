@@ -41,7 +41,6 @@ class MockSettings:
             "sample_group_write": bool,
             "sample_all_read": bool,
             "sample_all_write": bool,
-            "sample_unique_names": bool,
 
             "db_name": str,
             "db_host": str,
@@ -99,7 +98,6 @@ class MockSettings:
             "sample_group_write": False,
             "sample_all_read": True,
             "sample_all_write": False,
-            "sample_unique_names": True,
 
             "db_name": "virtool",
             "db_host": "localhost",
