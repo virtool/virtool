@@ -175,14 +175,110 @@ class TestFind:
         })
 
 
+class TestGet:
+
+    async def test(self, test_motor, do_get, static_time):
+        await test_motor.samples.insert_one({
+            "_id": "test",
+            "created_at": static_time
+        })
+
+        resp = await do_get("api/samples/test")
+
+        assert resp.status == 200
+
+        assert await resp.json() == {
+            "id": "test",
+            "created_at": "2017-10-06T20:00:00Z",
+            "nuvs": False,
+            "pathoscope": False
+        }
+
+    async def test_not_found(self, do_get, resp_is):
+        resp = await do_get("/api/samples/foobar")
+        assert await resp_is.not_found(resp)
+
+
+class TestCreate:
+
+    """
+
+    @pytest.mark.parametrize("sample_group_setting", [
+        "users_primary_group",
+        "none"
+    ])
+    async def test(self, tmpdir, sample_group_setting, mocker, test_motor, do_post, static_time):
+        await do_post.init_client(True, True)
+
+        m_new = mocker.stub(name="new")
+
+        async def mock_new(*args, **kwargs):
+            return m_new(*args, **kwargs)
+
+        mocker.patch.object(do_post.server.app["job_manager"], "new", mock_new)
+
+        m_reserve = mocker.stub(name="new")
+
+        async def mock_reserve(*args, **kwargs):
+            return m_reserve(*args, **kwargs)
+
+        mocker.patch.object(do_post.server.app["file_manager"], "reserve", mock_reserve)
+
+        await test_motor.subtraction.insert_one({
+            "_id": "apple",
+            "is_host": True
+        })
+
+        await do_post("/api/samples", {
+            "name": "Foobar",
+            "subtraction": "apple"
+        }, authorize=True, permissions=["create_sample"])
+
+    """
+
+    async def test_already_exists(self, test_motor, do_post, static_time, resp_is):
+        await test_motor.samples.insert_one({
+            "_id": "foobar",
+            "name": "Foobar",
+            "created_at": static_time,
+            "nuvs": False,
+            "pathoscope": False
+        })
+
+        resp = await do_post("/api/samples", {
+            "name": "Foobar",
+            "subtraction": "apple"
+        }, authorize=True, permissions=["create_sample"])
+
+        assert await resp_is.conflict(resp, "Sample name 'Foobar' already exists")
+
+    @pytest.mark.parametrize("in_db", [True, False])
+    async def test_subtraction_dne(self, in_db, test_motor, do_post, resp_is):
+        resp = await do_post("/api/samples", {
+            "name": "Foobar",
+            "subtraction": "apple"
+        }, authorize=True, permissions=["create_sample"])
+
+        if in_db:
+            await test_motor.subtraction.insert_one({
+                "_id": "apple",
+                "is_host": False
+            })
+
+        print(await resp.json())
+
+        assert await resp_is.not_found(resp, "Subtraction host 'apple' not found")
+
+
 class TestListAnalyses:
 
     async def test(self, test_motor, do_get, static_time):
         await test_motor.samples.insert_one({
-            "_id": "test"
+            "_id": "test",
+            "created_at": static_time
         })
 
-        analyses = [
+        await test_motor.analyses.insert_many([
             {
                 "_id": "test_1",
                 "algorithm": "pathopscope_bowtie",
@@ -200,7 +296,8 @@ class TestListAnalyses:
                 },
                 "sample": {
                     "id": "test"
-                }
+                },
+                "foobar": True
             },
             {
                 "_id": "test_2",
@@ -219,7 +316,8 @@ class TestListAnalyses:
                 },
                 "sample": {
                     "id": "test"
-                }
+                },
+                "foobar": True
             },
             {
                 "_id": "test_3",
@@ -238,11 +336,168 @@ class TestListAnalyses:
                 },
                 "sample": {
                     "id": "test"
-                }
+                },
+                "foobar": False
             },
-        ]
+        ])
+
+        resp = await do_get("/api/samples/test/analyses")
+
+        assert resp.status == 200
+
+        assert await resp.json() == {
+            "total_count": 3,
+            "documents": [
+                {
+                    "id": "test_1",
+                    "algorithm": "pathopscope_bowtie",
+                    "created_at": "2017-10-06T20:00:00Z",
+                    "ready": True,
+                    "job": {
+                        "id": "test"
+                    },
+                    "index": {
+                        "version": 2,
+                        "id": "foo"
+                    },
+                    "user": {
+                        "id": "fred"
+                    },
+                    "sample": {
+                        "id": "test"
+                    }
+                },
+                {
+                    "id": "test_2",
+                    "algorithm": "pathopscope_bowtie",
+                    "created_at": "2017-10-06T20:00:00Z",
+                    "ready": True,
+                    "job": {
+                        "id": "test"
+                    },
+                    "index": {
+                        "version": 2,
+                        "id": "foo"
+                    },
+                    "user": {
+                        "id": "fred"
+                    },
+                    "sample": {
+                        "id": "test"
+                    }
+                },
+                {
+                    "id": "test_3",
+                    "algorithm": "pathopscope_bowtie",
+                    "created_at": "2017-10-06T20:00:00Z",
+                    "ready": True,
+                    "job": {
+                        "id": "test"
+                    },
+                    "index": {
+                        "version": 2,
+                        "id": "foo"
+                    },
+                    "user": {
+                        "id": "fred"
+                    },
+                    "sample": {
+                        "id": "test"
+                    }
+                }
+            ]
+        }
 
     async def test_not_found(self, do_get, resp_is):
-        resp = await do_get("/api/samples/foobar/analyses")
+        resp = await do_get("/api/samples/test/analyses")
+
+        assert await resp_is.not_found(resp)
+
+
+class TestAnalyze:
+
+    async def test(self, mocker, test_motor, do_post, static_time):
+        m = mocker.Mock(return_value={
+            "_id": "test_analysis",
+            "ready": False,
+            "created_at": static_time,
+            "job": {
+                "id": "baz"
+            },
+            "algorithm": "pathoscope_bowtie",
+            "sample": {
+                "id": "test"
+            },
+            "index": {
+                "id": "foobar",
+                "version": 3
+            },
+            "user": {
+                "id": "test",
+            }
+        })
+
+        async def mock_new(*args, **kwargs):
+            return m(*args, **kwargs)
+
+        await test_motor.samples.insert_one({
+            "_id": "test",
+            "created_at": static_time
+        })
+
+        mocker.patch("virtool.sample_analysis.new", new=mock_new)
+
+        resp = await do_post("/api/samples/test/analyses", data={
+            "algorithm": "pathoscope_bowtie"
+        }, job_manager=True)
+
+        assert resp.status == 201
+
+        assert resp.headers.get("Location") == "/api/analyses/test_analysis"
+
+        assert await resp.json() == {
+            "id": "test_analysis",
+            "ready": False,
+            "algorithm": "pathoscope_bowtie",
+            "created_at": "2017-10-06T20:00:00Z",
+            "sample": {
+                "id": "test"
+            },
+            "index": {
+                "id": "foobar",
+                "version": 3
+            },
+
+            "user": {
+                "id": "test"
+            },
+
+            "job": {
+                "id": "baz"
+            }
+        }
+
+        assert m.call_args[0] == (
+            test_motor,
+            do_post.server.app["settings"],
+            do_post.server.app["job_manager"],
+            "test",
+            None,
+            "pathoscope_bowtie"
+        )
+
+    async def test_invalid_input(self, do_post, resp_is):
+        resp = await do_post("/api/samples/test/analyses", data={
+            "foobar": True
+        })
+
+        assert await resp_is.invalid_input(resp, {
+            "algorithm": ["required field"], "foobar": ["unknown field"]
+        })
+
+    async def test_not_found(self, do_post, resp_is):
+        resp = await do_post("/api/samples/test/analyses", data={
+            "algorithm": "pathoscope_bowtie"
+        })
 
         assert await resp_is.not_found(resp)

@@ -7,7 +7,7 @@ import virtool.utils
 import virtool.sample
 import virtool.sample_analysis
 from virtool.handlers.utils import unpack_request, json_response, bad_request, not_found, invalid_input, \
-    invalid_query, compose_regex_query, paginate
+    invalid_query, compose_regex_query, paginate, protected, validation
 
 
 async def find(req):
@@ -37,6 +37,19 @@ async def find(req):
     data = await paginate(db.samples, db_query, req.query, "name", projection=virtool.sample.LIST_PROJECTION)
 
     return json_response(data)
+
+
+async def get(req):
+    """
+    Get a complete sample document.
+
+    """
+    document = await req.app["db"].samples.find_one(req.match_info["sample_id"])
+
+    if not document:
+        return not_found()
+
+    return json_response(virtool.utils.base_processor(document))
 
 
 async def upload(req):
@@ -86,55 +99,64 @@ async def upload(req):
     return json_response({"complete": True})
 
 
+@protected("create_sample")
+@validation({
+    "name": {"type": "string", "required": True},
+    "subtraction": {"type": "string", "required": True}
+})
 async def create(req):
-    data = await req.json()
+    db, data = await unpack_request(req)
 
     # Check if the submitted sample name is unique if unique sample names are being enforced.
-    if req["settings"].get("sample_unique_names") and await req.app["db"].samples.count({"name": data["name"]}):
-        return bad_request("Sample name already exists")
-
-    # Get a list of the subtraction hosts in MongoDB that are ready for use during analysis.
-    available_subtraction_hosts = await req.app["db"].hosts.distinct("_id")
+    if await db.samples.count({"name": data["name"]}):
+        return json_response({
+            "id": "conflict",
+            "message": "Sample name '{}' already exists".format(data["name"])
+        }, status=409)
 
     # Make sure a subtraction host was submitted and it exists.
-    if not data["subtraction"] or data["subtraction"] not in available_subtraction_hosts:
-        return bad_request("Could not find subtraction host or none was provided.")
+    if data["subtraction"] not in await db.subtraction.find({"is_host": True}).distinct("_id"):
+        return not_found("Subtraction host '{}' not found".format(data["subtraction"]))
 
-    sample_id = await virtool.utils.get_new_id(req.app["db"].samples)
+    sample_id = await virtool.utils.get_new_id(db.samples)
 
-    user_id = None
+    user_id = req["session"].user_id
 
     # Construct a new sample entry.
     data.update({
         "_id": sample_id,
-        "user_id": user_id,
         "nuvs": False,
-        "pathoscope": False
+        "pathoscope": False,
+        "user": {
+            "id": user_id
+        }
     })
 
-    sample_group_setting = req["settings"].get("sample_group")
+    settings = req.app["settings"]
+
+    sample_group_setting = settings.get("sample_group")
 
     # Assign the user"s primary group as the sample owner group if the ``sample_group`` settings is
     # ``users_primary_group``.
     if sample_group_setting == "users_primary_group":
-        data["group"] = (await req.app["db"].users.find_one({"_id": user_id}))["primary_group"]
+        data["group"] = (await db.users.find_one(user_id))["primary_group"]
 
     # Make the owner group none if the setting is none.
-    if sample_group_setting == "none":
+    elif sample_group_setting == "none":
         data["group"] = "none"
 
     # Add the default sample right fields to the sample document.
     data.update({
-        "group_read": req["settings"].get("sample_group_read"),
-        "group_write": req["settings"].get("sample_group_write"),
-        "all_read": req["settings"].get("sample_all_read"),
-        "all_write": req["settings"].get("sample_all_write")
+        "group_read": settings.get("sample_group_read"),
+        "group_write": settings.get("sample_group_write"),
+        "all_read": settings.get("sample_all_read"),
+        "all_write": settings.get("sample_all_write")
     })
 
     task_args = dict(data)
 
     data.update({
-        "added": virtool.utils.timestamp(),
+        "created_at": virtool.utils.timestamp(),
         "format": "fastq",
         "imported": "ip",
         "quality": None,
@@ -143,40 +165,24 @@ async def create(req):
         "archived": False
     })
 
-    await req.app["db"].samples.insert_one(data)
+    await db.samples.insert_one(data)
 
-    await virtool.file.reserve(req.app["db"], data["files"])
+    await virtool.file.reserve(db, data["files"])
 
     proc, mem = 2, 6
 
-    # await req["jobs"].new("import_reads", task_args, proc, mem, data["username"])
+    await req["job_manager"].new("create_sample", task_args, proc, mem, data["username"])
 
-    data["sample_id"] = data.pop("sample_id")
-
-    print(data)
-
-    return json_response(data)
+    return json_response(virtool.utils.base_processor(data))
 
 
-async def get(req):
-    """
-    Get a complete sample document.
-    
-    """
-    document = await req.app["db"].samples.find_one({"_id": req.match_info["sample_id"]})
-
-    if not document:
-        return not_found()
-
-    return json_response(virtool.utils.base_processor(document))
-
-
+@protected("create_sample")
 async def update(req):
     """
     Update specific fields in the sample document.
 
     """
-    data = await req.json()
+    db, data = await unpack_request(req)
 
     v = Validator({
         "name": {"type": "string"},
@@ -187,7 +193,7 @@ async def update(req):
     if not v(data):
         return invalid_input(v.errors)
 
-    document = await req.app["db"].samples.find_one_and_update({"_id": req.match_info["sample_id"]}, {
+    document = await db.samples.find_one_and_update({"_id": req.match_info["sample_id"]}, {
         "$set": v.document
     }, return_document=ReturnDocument.AFTER, projection=virtool.sample.LIST_PROJECTION)
 
@@ -203,18 +209,18 @@ async def set_owner_group(req):
     Set the owner group for the sample.
 
     """
+    db, data = await unpack_request(req)
+
     sample_id = req.match_info["sample_id"]
 
-    sample_owner = (await req.app["db"].users.find_one(sample_id, "user_id"))["user_id"]
+    sample_owner = (await db.users.find_one(sample_id, "user_id"))["user_id"]
 
     requesting_user = None
 
     if "administrator" not in requesting_user["groups"] and requesting_user["_id"] != sample_owner:
         return json_response({"message": "Must be administrator or sample owner."}, status=403)
 
-    existing_group_ids = await req.app["db"].groups.distinct("_id")
-
-    data = await req.json()
+    existing_group_ids = await db.groups.distinct("_id")
 
     if data["group_id"] not in existing_group_ids:
         return not_found("Group does not exist")
@@ -272,9 +278,15 @@ async def list_analyses(req):
 
     documents = await db.analyses.find({"sample.id": sample_id}, virtool.sample_analysis.LIST_PROJECTION).to_list(None)
 
-    return json_response([virtool.utils.base_processor(d) for d in documents])
+    return json_response({
+        "total_count": len(documents),
+        "documents": [virtool.utils.base_processor(d) for d in documents]
+    })
 
 
+@validation({
+    "algorithm": {"type": "string", "required": True}
+})
 async def analyze(req):
     """
     Starts an analysis job for a given sample.
@@ -282,17 +294,28 @@ async def analyze(req):
     """
     db, data = await unpack_request(req)
 
+    sample_id = req.match_info["sample_id"]
+
+    if not await db.samples.count({"_id": sample_id}):
+        return not_found()
+
     # Generate a unique _id for the analysis entry
     document = await virtool.sample_analysis.new(
         db,
         req.app["settings"],
         req.app["job_manager"],
-        req.match_info["sample_id"],
+        sample_id,
         req["session"].user_id,
         data["algorithm"]
     )
 
-    return json_response(document)
+    return json_response(
+        virtool.utils.base_processor(document),
+        status=201,
+        headers={
+            "Location": "/api/analyses/{}".format(document["_id"])
+        }
+    )
 
 
 async def remove(req):
@@ -302,4 +325,4 @@ async def remove(req):
     """
     id_list = virtool.utils.coerce_list(req.match_info["_id"])
 
-    result = await virtool.sample.remove_samples(id_list)
+    delete_result = await virtool.sample.remove_samples(id_list)
