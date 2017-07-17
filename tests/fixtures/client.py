@@ -54,25 +54,33 @@ def do_get(test_client, authorize_client):
 
 @pytest.fixture
 def do_post(test_client, authorize_client):
-    client = None
+    class DoPost:
 
-    async def func(url, data, authorize=False, groups=None, permissions=None, job_manager=False, file_manager=False):
-        nonlocal client
+        def __init__(self):
+            self.client = None
+            self.server = None
 
-        if not client:
-            client = await test_client(
+        async def init_client(self, job_manager, file_manager):
+            self.client = await test_client(
                 create_app,
                 "test",
-                disable_job_manager=(not job_manager),
-                disable_file_manager=(not file_manager)
+                disable_job_manager=not job_manager,
+                disable_file_manager=not file_manager
             )
+            self.server = self.client.server
 
-        if authorize:
-            await authorize_client(client, groups, permissions)
+        async def __call__(self, url, data, authorize=False, groups=None, permissions=None, job_manager=False,
+                           file_manager=False):
 
-        return await client.post(url, data=json.dumps(data))
+            if not self.client:
+                await self.init_client(job_manager, file_manager)
 
-    return func
+            if authorize:
+                await authorize_client(self.client, groups, permissions)
+
+            return await self.client.post(url, data=json.dumps(data))
+
+    return DoPost()
 
 
 @pytest.fixture
