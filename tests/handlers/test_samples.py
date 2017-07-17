@@ -201,41 +201,6 @@ class TestGet:
 
 class TestCreate:
 
-    """
-
-    @pytest.mark.parametrize("sample_group_setting", [
-        "users_primary_group",
-        "none"
-    ])
-    async def test(self, tmpdir, sample_group_setting, mocker, test_motor, do_post, static_time):
-        await do_post.init_client(True, True)
-
-        m_new = mocker.stub(name="new")
-
-        async def mock_new(*args, **kwargs):
-            return m_new(*args, **kwargs)
-
-        mocker.patch.object(do_post.server.app["job_manager"], "new", mock_new)
-
-        m_reserve = mocker.stub(name="new")
-
-        async def mock_reserve(*args, **kwargs):
-            return m_reserve(*args, **kwargs)
-
-        mocker.patch.object(do_post.server.app["file_manager"], "reserve", mock_reserve)
-
-        await test_motor.subtraction.insert_one({
-            "_id": "apple",
-            "is_host": True
-        })
-
-        await do_post("/api/samples", {
-            "name": "Foobar",
-            "subtraction": "apple"
-        }, authorize=True, permissions=["add_sample"])
-
-    """
-
     async def test_already_exists(self, test_motor, do_post, static_time, resp_is):
         await test_motor.samples.insert_one({
             "_id": "foobar",
@@ -264,8 +229,6 @@ class TestCreate:
                 "_id": "apple",
                 "is_host": False
             })
-
-        print(await resp.json())
 
         assert await resp_is.not_found(resp, "Subtraction host 'apple' not found")
 

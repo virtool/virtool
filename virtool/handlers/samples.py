@@ -176,19 +176,17 @@ async def create(req):
     return json_response(virtool.utils.base_processor(data))
 
 
-@protected("add_sample")
+@validation({
+    "name": {"type": "string"},
+    "host": {"type": "string"},
+    "isolate": {"type": "string"}
+})
 async def update(req):
     """
     Update specific fields in the sample document.
 
     """
     db, data = await unpack_request(req)
-
-    v = Validator({
-        "name": {"type": "string"},
-        "host": {"type": "string"},
-        "isolate": {"type": "string"}
-    })
 
     if not v(data):
         return invalid_input(v.errors)
