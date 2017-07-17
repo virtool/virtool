@@ -77,7 +77,7 @@ async def new(db, settings, manager, sample_id, user_id, algorithm):
 
     await recalculate_algorithm_tags(db, sample_id)
 
-    return virtool.utils.base_processor(document)
+    return document
 
 
 async def remove_by_id(db, settings, analysis_id):
