@@ -232,7 +232,7 @@ class TestCreate:
         await do_post("/api/samples", {
             "name": "Foobar",
             "subtraction": "apple"
-        }, authorize=True, permissions=["create_sample"])
+        }, authorize=True, permissions=["add_sample"])
 
     """
 
@@ -248,7 +248,7 @@ class TestCreate:
         resp = await do_post("/api/samples", {
             "name": "Foobar",
             "subtraction": "apple"
-        }, authorize=True, permissions=["create_sample"])
+        }, authorize=True, permissions=["add_sample"])
 
         assert await resp_is.conflict(resp, "Sample name 'Foobar' already exists")
 
@@ -257,7 +257,7 @@ class TestCreate:
         resp = await do_post("/api/samples", {
             "name": "Foobar",
             "subtraction": "apple"
-        }, authorize=True, permissions=["create_sample"])
+        }, authorize=True, permissions=["add_sample"])
 
         if in_db:
             await test_motor.subtraction.insert_one({

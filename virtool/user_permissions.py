@@ -4,7 +4,7 @@ PERMISSIONS = [
     "modify_virus",
     "remove_virus",
     "modify_hmm",
-    "create_sample",
+    "add_sample",
     "add_host",
     "remove_host",
     "cancel_job",

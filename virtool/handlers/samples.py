@@ -99,7 +99,7 @@ async def upload(req):
     return json_response({"complete": True})
 
 
-@protected("create_sample")
+@protected("add_sample")
 @validation({
     "name": {"type": "string", "required": True},
     "subtraction": {"type": "string", "required": True}
@@ -176,7 +176,7 @@ async def create(req):
     return json_response(virtool.utils.base_processor(data))
 
 
-@protected("create_sample")
+@protected("add_sample")
 async def update(req):
     """
     Update specific fields in the sample document.
