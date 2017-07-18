@@ -22,7 +22,6 @@ DEFAULT_ANALYSIS_INST = get_default_integer(6)
 
 
 SCHEMA = {
-
     "data_path": {"type": "string", "default": "data"},
     "watch_path": {"type": "string", "default": "watch"},
 
