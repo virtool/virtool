@@ -1,3 +1,5 @@
+import os
+import sys
 import random
 from aiohttp import web
 from mako.template import Template
@@ -7,7 +9,7 @@ import virtool.utils
 
 
 def get_login_template():
-    return Template(filename="virtool/templates/login.html")
+    return Template(filename=os.path.join(sys.path[0], "virtool", "templates", "login.html"))
 
 
 def generate_verification_keys():
@@ -52,6 +54,3 @@ async def login_handler(req):
         session.permissions = user_document["permissions"]
 
     return web.HTTPFound(location)
-
-
-login_template = Template(filename="virtool/templates/login.html")

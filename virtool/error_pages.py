@@ -1,10 +1,9 @@
+import os
+import sys
 from aiohttp import web
 from mako.template import Template
 
 from virtool.utils import get_static_hash
-
-
-template_500 = Template(filename="virtool/templates/error_500.html")
 
 
 async def middleware_factory(app, handler):
@@ -30,5 +29,6 @@ async def middleware_factory(app, handler):
 
 
 def handle_404():
-    html = Template(filename="virtool/templates/error_404.html").render(hash=get_static_hash())
+    path = os.path.join(sys.path[0],"virtool", "templates", "error_404.html")
+    html = Template(filename=path).render(hash=get_static_hash())
     return web.Response(body=html, content_type="text/html", status=404)

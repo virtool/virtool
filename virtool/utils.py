@@ -1,4 +1,5 @@
 import os
+import sys
 import arrow
 import shutil
 import datetime
@@ -212,8 +213,7 @@ def to_bool(obj):
 
 
 def get_static_hash():
-    client_files = os.listdir("./client/dist")
+    client_files = os.listdir(os.path.join(sys.path[0], "client", "dist"))
 
     for file_name in client_files:
         if "style." in file_name:
-            return file_name.split(".")[1]
