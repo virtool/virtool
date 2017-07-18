@@ -1,4 +1,5 @@
 import os
+import sys
 import logging
 from aiohttp import web
 
@@ -40,8 +41,27 @@ async def index_handler(req):
 
 
 def setup_routes(app):
+    setup_basic_routes(app)
+    setup_file_routes(app)
+    setup_basic_api_routes(app)
+    setup_jobs_routes(app)
+    setup_samples_routes(app)
+    setup_analyses_routes(app)
+    setup_viruses_routes(app)
+    setup_ncbi_routes(app)
+    setup_indexes_routes(app)
+    setup_history_routes(app)
+    setup_hmm_routes(app)
+    setup_hmm_routes(app)
+    setup_subtraction_routes(app)
+    setup_settings_routes(),
+    setup_files_routes(app),
+    setup_account_routes(app),
+    setup_users_routes(app),
+    setup_groups_routes(app)
 
-    # Index routes
+
+def setup_basic_routes(app):
     app.router.add_get("/", index_handler)
     app.router.add_get(r"/home{suffix:.*}", index_handler)
     app.router.add_get(r"/jobs{suffix:.*}", index_handler)
@@ -49,34 +69,27 @@ def setup_routes(app):
     app.router.add_get(r"/viruses{suffix:.*}", index_handler)
     app.router.add_get(r"/subtraction{suffix:.*}", index_handler)
     app.router.add_get(r"/settings{suffix:.*}", index_handler)
-
-    # Other routes
+    app.router.add_get("/ws", websocket.root)
     app.router.add_post("/login", login_handler)
 
     if os.path.exists("client/dist"):
-        app.router.add_static("/static", "client/dist")
+        app.router.add_static("/static", os.path.join(sys.path[0], "client", "dist"))
     else:
         logger.warning("Could not locate client static files")
 
-    # Websocket route
-    app.router.add_get("/ws", websocket.root)
 
-    # Upload Routes
+def setup_file_routes(app):
     app.router.add_post("/upload/viruses", viruses.upload)
-
-    # Download Routes
     app.router.add_get("/download/viruses", viruses.export)
 
-    # API Root
+
+def setup_basic_api_routes(app):
     app.router.add_get("/api", root.get)
-
-    # Lifecycle routes
     app.router.add_get("/api/lifecycle/shutdown", lifecycle.shutdown)
-
-    # Status Routes
     app.router.add_get("/api/status", status.list_status)
-    # app.router.add_get("/api/status/import_viruses")
 
+
+def setup_jobs_routes(app):
     # Jobs routes
     app.router.add_get("/api/jobs", jobs.find)
     app.router.add_get("/api/jobs/{job_id}", jobs.get)
@@ -86,66 +99,66 @@ def setup_routes(app):
     app.router.add_post("/api/jobs/{job_id}/cancel", jobs.cancel)
     app.router.add_delete("/api/jobs/{job_id}", jobs.remove)
     app.router.add_post("/api/jobs/test", jobs.test_job)
-
     app.router.add_get("/api/resources", resources.get)
     app.router.add_get("/api/resources/cuda", resources.get_cuda)
 
+
+def setup_samples_routes(app):
     # Samples Routes
     app.router.add_get("/api/samples", samples.find)
     app.router.add_post("/api/upload/reads", samples.upload)
     app.router.add_post("/api/samples", samples.create)
-
     app.router.add_get("/api/samples/{sample_id}", samples.get)
     app.router.add_patch("/api/samples/{sample_id}", samples.update)
     app.router.add_delete("/api/samples/{sample_id}", samples.remove)
-
     app.router.add_get("/api/samples/{sample_id}/analyses", samples.list_analyses)
     app.router.add_post("/api/samples/{sample_id}/analyses", samples.analyze)
-
     app.router.add_put("/api/samples/{sample_id}/group", samples.set_owner_group)
     app.router.add_patch("/api/samples/{sample_id}/rights", samples.set_rights)
 
-    # Analyses Routes
+
+def setup_analyses_routes(app):
     app.router.add_get("/api/analyses/{analysis_id}", analyses.get)
 
-    # Viruses Routes
+
+def setup_viruses_routes(app):
     app.router.add_get("/api/viruses", viruses.find)
     app.router.add_get("/api/viruses/{virus_id}", viruses.get)
     app.router.add_post("/api/viruses", viruses.create)
     app.router.add_patch("/api/viruses/{virus_id}", viruses.edit)
     app.router.add_delete("/api/viruses/{virus_id}", viruses.remove)
-
     app.router.add_put("/api/viruses/{virus_id}/verify", viruses.verify)
-
     app.router.add_get("/api/viruses/{virus_id}/isolates", viruses.list_isolates)
     app.router.add_get("/api/viruses/{virus_id}/isolates/{isolate_id}", viruses.get_isolate)
     app.router.add_post("/api/viruses/{virus_id}/isolates", viruses.add_isolate)
     app.router.add_patch("/api/viruses/{virus_id}/isolates/{isolate_id}", viruses.edit_isolate)
     app.router.add_put("/api/viruses/{virus_id}/isolates/{isolate_id}/default", viruses.set_as_default)
     app.router.add_delete("/api/viruses/{virus_id}/isolates/{isolate_id}", viruses.remove_isolate)
-
     app.router.add_get("/api/viruses/{virus_id}/isolates/{isolate_id}/sequences", viruses.list_sequences)
     app.router.add_post("/api/viruses/{virus_id}/isolates/{isolate_id}/sequences", viruses.create_sequence)
     app.router.add_get("/api/viruses/{virus_id}/isolates/{isolate_id}/sequences/{sequence_id}", viruses.get_sequence)
     app.router.add_patch("/api/viruses/{virus_id}/isolates/{isolate_id}/sequences/{sequence_id}", viruses.edit_sequence)
-
     app.router.add_delete("/api/viruses/{virus_id}/isolates/{isolate_id}/sequences/{sequence_id}",
                           viruses.remove_sequence)
-
     app.router.add_get("/api/viruses/{virus_id}/history", viruses.list_history)
 
+
+def setup_ncbi_routes(app):
     app.router.add_get("/api/genbank/{accession}", genbank.get)
 
-    # Indexes Routes
+
+def setup_indexes_routes(app):
     app.router.add_get("/api/indexes", indexes.find)
     app.router.add_get("/api/indexes/{index_id_or_version}", indexes.get)
 
-    # History Routes
+
+def setup_history_routes(app):
     app.router.add_get("/api/history", history.find)
     app.router.add_get("/api/history/{change_id}", history.get)
     app.router.add_delete("/api/history/{change_id}", history.revert)
 
-    # HMM Routes
+
+def setup_hmm_routes(app):
     app.router.add_get("/api/hmm/annotations", hmm.find)
 
     app.router.add_get("/api/hmm/annotations/{hmm_id}", hmm.get)
@@ -154,44 +167,46 @@ def setup_routes(app):
     app.router.add_get("/api/hmm/check", hmm.check)
     app.router.add_get("/api/hmm/clean", hmm.clean)
 
-    # Subtraction Routes
+
+def setup_subtraction_routes(app):
     app.router.add_get("/api/subtraction", subtraction.find)
     app.router.add_get("/api/subtraction/{subtraction_id}", subtraction.get)
     app.router.add_post("/api/subtraction", subtraction.create)
 
+
+def setup_settings_routes(app):
     app.router.add_get("/api/settings", settings.get_all)
     app.router.add_patch("/api/settings", settings.update)
 
-    # Files Routes
+
+def setup_files_routes(app):
     app.router.add_get("/api/files", files.find)
     app.router.add_delete("/api/files/{file_id}", files.remove)
 
-    # Account Routes
+
+def setup_account_routes(app):
     app.router.add_get("/api/account", account.get)
     app.router.add_get("/api/account/settings", account.get_settings)
     app.router.add_patch("/api/account/settings", account.update_settings)
     app.router.add_get("/api/account/logout", account.logout)
-
     app.router.add_put("/api/account/password", account.change_password)
 
-    # Users routes
+
+def setup_users_routes(app):
     app.router.add_get("/api/users", users.find)
     app.router.add_post("/api/users", users.create)
-
     app.router.add_get("/api/users/{user_id}", users.get)
     app.router.add_delete("/api/users/{user_id}", users.remove)
-
     app.router.add_put("/api/users/{user_id}/password", users.set_password)
     app.router.add_put("/api/users/{user_id}/reset", users.set_force_reset)
     app.router.add_put("/api/users/{user_id}/primary", users.set_primary_group)
-
     app.router.add_post("/api/users/{user_id}/groups", users.add_group)
     app.router.add_delete("/api/users/{user_id}/groups/{group_id}", users.remove_group)
 
-    # Groups Routes
+
+def setup_groups_routes(app):
     app.router.add_get("/api/groups", groups.find)
     app.router.add_post("/api/groups", groups.create)
-
     app.router.add_get("/api/groups/{group_id}", groups.get)
     app.router.add_patch("/api/groups/{group_id}", groups.update_permissions)
     app.router.add_delete("/api/groups/{group_id}", groups.remove)
