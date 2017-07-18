@@ -217,3 +217,16 @@ def get_static_hash():
 
     for file_name in client_files:
         if "style." in file_name:
+            return file_name.split(".")[1]
+
+
+def reload():
+    exe = sys.executable
+
+    if exe.endswith("python") or "python3" in exe:
+        os.execl(exe, exe, *sys.argv)
+
+    if exe.endswith("run"):
+        os.execv(exe, sys.argv)
+
+    raise SystemError("Could not determine executable type")
