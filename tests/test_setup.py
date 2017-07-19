@@ -134,3 +134,69 @@ class TestSetupGet:
 
         assert '''<input type="password" class="form-control" name="password_confirm"''' \
                ''' id="password_confirm" value='dummy password'>''' in text
+
+
+class TestSetupDB:
+
+    async def test(self, do_post, mock_setup):
+        update = {
+            "db_host": "192.168.20.170",
+            "db_port": 9950,
+            "db_name": "virtool"
+        }
+
+        resp = await do_post("/server/db", update)
+
+        assert resp.status == 200
+
+        expected = dict(mock_setup)
+
+        expected.update(update)
+
+        assert do_post.server.app["setup"] == expected
+
+
+
+
+class TestClear:
+
+    async def test(self, do_get, mock_setup):
+        mock_setup.update({
+            "db_host": "192.168.20.170",
+            "db_port": 9950,
+            "db_name": "virtool"
+        })
+
+        await do_get.init_client()
+
+        do_get.server.app["setup"] = mock_setup
+
+        resp = await do_get("/setup/clear")
+
+        assert resp.status == 200
+
+        assert do_get.server.app["setup"] == {
+            "db_host": None,
+            "db_port": None,
+            "db_name": None,
+
+            "first_user_id": None,
+            "first_user_password": None,
+
+            "data_path": None,
+            "watch_path": None,
+
+            "errors": {
+                "db_exists_error": False,
+                "db_connection_error": False,
+                "password_confirmation_error": False,
+                "data_not_empty_error": False,
+                "data_not_found_error": False,
+                "data_permission_error": False,
+                "watch_not_empty_error": False,
+                "watch_not_found_error": False,
+                "watch_permission_error": False
+            }
+        }
+
+
