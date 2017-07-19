@@ -25,12 +25,7 @@ def setup_routes(app):
     app.router.add_post(r"/setup/watch", setup_watch)
     app.router.add_get(r"/setup/clear", clear)
     app.router.add_get(r"/setup/save", save_and_reload)
-
-    if os.path.exists(os.path.join(sys.path[0], "client", "dist")):
-        app.router.add_static("/static", os.path.join(sys.path[0], "client", "dist"))
-    else:
-        logger.warning("Could not locate client static files")
-
+    app.router.add_static("/static", os.path.join(sys.path[0], "client", "dist"))
     app.router.add_get(r"/{suffix:.*}", setup_redirect)
 
 
@@ -80,6 +75,7 @@ async def setup_db(req):
     try:
         # Try to make a connection to the Mongo instance. This will throw a ConnectionFailure exception if it fails
         connection = motor.motor_asyncio.AsyncIOMotorClient(
+            io_loop=req.app.loop,
             host=data["db_host"],
             port=int(data["db_port"]),
             serverSelectionTimeoutMS=1500
@@ -101,7 +97,7 @@ async def setup_db(req):
                 "db_connection_error": False
             })
 
-    except (pymongo.errors.ConnectionFailure, TypeError, ValueError):
+    except (pymongo.errors.ConnectionFailure, TypeError, ValueError) as err:
         req.app["setup"].update(clear_update)
         req.app["setup"]["errors"].update({
             "db_exists_error": False,
@@ -260,12 +256,17 @@ async def clear(req):
     return web.HTTPFound("/setup")
 
 async def save_and_reload(req):
+    data = req.app["setup"]
+
     connection = motor.motor_asyncio.AsyncIOMotorClient(
+        io_loop=req.app.loop,
         host=req.app["setup"]["db_host"],
         port=int(req.app["setup"]["db_port"])
     )
 
-    document = {
+    db_name = data["db_name"]
+
+    await connection[db_name].users.insert_one({
         "_id": req.app["setup"]["first_user_id"],
         # A list of group _ids the user is associated with.
         "groups": list(),
@@ -275,7 +276,6 @@ async def save_and_reload(req):
             "show_versions": False,
             "quick_analyze_algorithm": "pathoscope_bowtie"
         },
-        "sessions": [],
         "permissions": {permission: True for permission in virtool.user_permissions.PERMISSIONS},
         "password": req.app["setup"]["first_user_password"],
         "primary_group": "",
@@ -286,7 +286,7 @@ async def save_and_reload(req):
         # Should all of the user's sessions be invalidated so that they are forced to login next time they
         # download the client.
         "invalidate_sessions": False
-    }
+    })
 
     subdirs = [
         "files",
@@ -297,14 +297,16 @@ async def save_and_reload(req):
         "logs/jobs"
     ]
 
-    '''
+    data_path = data["data_path"]
 
-    os.makedir(data_path)
+    for path in [data_path, data["watch_path"]]:
+        try:
+            os.mkdir(path)
+        except FileExistsError:
+            pass
 
     for subdir in subdirs:
         os.makedirs(os.path.join(data_path, subdir))
-        
-    '''
 
     virtool.utils.reload()
 
