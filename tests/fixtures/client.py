@@ -1,163 +1,73 @@
 import json
 import pytest
-import pymongo
 
-from virtool.app import create_app
+import virtool.app
+import virtool.user
 
 
-@pytest.fixture
-def authorize_client(test_db, create_user):
-    async def func(client, groups, permissions):
-        resp = await client.get("/api")
+class VTClient:
 
-        user_document = create_user("test", groups, permissions)
+    def __init__(self, test_client, create_user):
+        self._test_client = test_client
+        self._create_user = create_user
+        self._client = None
 
-        test_db.users.insert(user_document)
+        self.server = None
+        self.app = None
+        self.db = None
 
-        test_db.sessions.find_one_and_update({"_id": resp.cookies["session_id"].value}, {
-            "$set": {
+    async def connect(self, authorize=False, groups=None, permissions=None, job_manager=False, file_manager=False,
+                      setup_mode=False):
+
+        self._client = await self._test_client(
+            virtool.app.create_app,
+            "test",
+            disable_job_manager=not job_manager,
+            disable_file_manager=not file_manager,
+            skip_setup=not setup_mode
+        )
+
+        self._client.session.cookie_jar.update_cookies({
+            "session_id": "foobar"
+        })
+
+        self.server = self._client.server
+        self.app = self.server.app
+        self.db = self.app["db"]
+
+        if authorize:
+            user_document = self._create_user("test", groups, permissions)
+
+            await self.db.users.insert_one(user_document)
+
+            await self.db.sessions.insert_one({
+                "_id": "foobar",
+                "ip": "127.0.0.1",
+                "user_agent": "Python/3.5 aiohttp/2.2.3",
                 "user_id": "test",
                 "groups": user_document["groups"],
                 "permissions": user_document["permissions"]
-            }
-        }, return_document=pymongo.ReturnDocument.AFTER)
+            })
 
-        return client
+        return self
 
-    return func
+    async def get(self, url):
+        return await self._client.get(url)
 
+    async def post(self, url, data):
+        return await self._client.post(url, data=json.dumps(data))
 
-@pytest.fixture
-def do_get(test_client, authorize_client):
+    async def patch(self, url, data):
+        return await self._client.patch(url, data=json.dumps(data))
 
-    class DoGet:
+    async def put(self, url, data):
+        return await self._client.put(url, data=json.dumps(data))
 
-        def __init__(self):
-            self.client = None
-            self.server = None
-
-        async def init_client(self):
-            self.client = await test_client(create_app, "test", disable_job_manager=True, disable_file_manager=True)
-            self.server = self.client.server
-
-        async def __call__(self, url, authorize=False, groups=None, permissions=None):
-            if not self.client:
-                await self.init_client()
-
-            if authorize:
-                await authorize_client(self.client, groups, permissions)
-
-            return await self.client.get(url)
-
-    return DoGet()
+    async def delete(self, url):
+        return await self._client.delete(url)
 
 
 @pytest.fixture
-def do_post(test_client, authorize_client):
-    class DoPost:
-
-        def __init__(self):
-            self.client = None
-            self.server = None
-
-        async def init_client(self, job_manager, file_manager):
-            self.client = await test_client(
-                create_app,
-                "test",
-                disable_job_manager=not job_manager,
-                disable_file_manager=not file_manager
-            )
-            self.server = self.client.server
-
-        async def __call__(self, url, data, authorize=False, groups=None, permissions=None, job_manager=False,
-                           file_manager=False):
-
-            if not self.client:
-                await self.init_client(job_manager, file_manager)
-
-            if authorize:
-                await authorize_client(self.client, groups, permissions)
-
-            return await self.client.post(url, data=json.dumps(data))
-
-    return DoPost()
-
-
-@pytest.fixture
-def do_upload(test_client, authorize_client):
-    client = None
-
-    async def func(url, data, authorize=False, groups=None, permissions=None, job_manager=False, file_manager=False):
-        nonlocal client
-
-        if not client:
-            client = await test_client(
-                create_app,
-                "test",
-                disable_job_manager=(not job_manager),
-                disable_file_manager=(not file_manager)
-            )
-
-        if authorize:
-            await authorize_client(client, groups, permissions)
-
-        return await client.post(url, data=data)
-
-    return func
-
-
-@pytest.fixture
-def do_put(test_client, authorize_client):
-    client = None
-
-    async def func(url, data, authorize=False, groups=None, permissions=None, job_manager=False, file_manager=False):
-        nonlocal client
-
-        if not client:
-            client = await test_client(
-                create_app,
-                "test",
-                disable_job_manager=(not job_manager),
-                disable_file_manager=(not file_manager)
-            )
-
-        if authorize:
-            await authorize_client(client, groups, permissions)
-
-        return await client.put(url, data=json.dumps(data))
-
-    return func
-
-
-@pytest.fixture
-def do_patch(test_client, authorize_client):
-    client = None
-
-    async def func(url, data, authorize=False, groups=None, permissions=None):
-        nonlocal client
-
-        client = client or await test_client(create_app, "test")
-
-        if authorize:
-            await authorize_client(client, groups, permissions)
-
-        return await client.patch(url, data=json.dumps(data))
-
-    return func
-
-
-@pytest.fixture
-def do_delete(test_client, authorize_client):
-    client = None
-
-    async def func(url, authorize=False, groups=None, permissions=None):
-        nonlocal client
-
-        client = client or await test_client(create_app, "test")
-
-        if authorize:
-            await authorize_client(client, groups, permissions)
-
-        return await client.delete(url)
-
-    return func
+def spawn_client(test_client, test_motor, create_user):
+    client = VTClient(test_client, create_user)
+    return client.connect
