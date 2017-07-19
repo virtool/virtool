@@ -33,7 +33,7 @@ class VTClient:
 
         self.server = self._client.server
         self.app = self.server.app
-        self.db = self.app["db"]
+        self.db = self.app.get("db", None)
 
         if authorize:
             user_document = self._create_user("test", groups, permissions)
@@ -56,6 +56,9 @@ class VTClient:
 
     async def post(self, url, data):
         return await self._client.post(url, data=json.dumps(data))
+
+    async def post_form(self, url, data):
+        return await self._client.post(url, data=data)
 
     async def patch(self, url, data):
         return await self._client.patch(url, data=json.dumps(data))

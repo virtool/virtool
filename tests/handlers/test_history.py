@@ -8,14 +8,16 @@ import virtool.virus_history
 
 class TestFind:
 
-    async def test(self, test_db, do_get, test_changes):
+    async def test(self, spawn_client, test_changes):
         """
         Test that a list of processed change documents are returned with a ``200`` status.
          
         """
-        test_db.history.insert_many(test_changes)
+        client = await spawn_client()
 
-        resp = await do_get("/api/history")
+        await client.db.history.insert_many(test_changes)
+
+        resp = await client.get("/api/history")
 
         assert resp.status == 200
 
@@ -90,14 +92,16 @@ class TestFind:
 
 class TestGet:
 
-    async def test(self, test_db, do_get, test_changes):
+    async def test(self, spawn_client, test_changes):
         """
         Test that a specific history change can be retrieved by its change_id.
          
         """
-        test_db.history.insert_many(test_changes)
+        client = await spawn_client()
 
-        resp = await do_get("/api/history/6116cba1.1")
+        await client.db.history.insert_many(test_changes)
+
+        resp = await client.get("/api/history/6116cba1.1")
 
         assert resp.status == 200
 
@@ -125,12 +129,14 @@ class TestGet:
             }
         }
 
-    async def test_not_found(self, do_get, resp_is):
+    async def test_not_found(self, spawn_client, resp_is):
         """
         Test that a specific history change can be retrieved by its change_id.
 
         """
-        resp = await do_get("/api/history/foobar.1")
+        client = await spawn_client()
+
+        resp = await client.get("/api/history/foobar.1")
 
         assert await resp_is.not_found(resp)
 
@@ -138,24 +144,28 @@ class TestGet:
 class TestRemove:
 
     @pytest.mark.parametrize("remove", [True, False])
-    async def test(self, remove, test_motor, do_delete, create_mock_history):
+    async def test(self, remove, spawn_client, create_mock_history):
         """
         Test that a valid request results in a reversion and a ``204`` response.
          
         """
+        client = await spawn_client(authorize=True, permissions=["modify_virus"])
+
         expected = await create_mock_history(remove)
 
-        await do_delete("/api/history/6116cba1.2")
+        await client.delete("/api/history/6116cba1.2")
 
-        joined = await virtool.virus.join(test_motor, "6116cba1")
+        joined = await virtool.virus.join(client.db, "6116cba1")
 
         assert joined == expected
 
-    async def test_not_found(self, do_delete, resp_is):
+    async def test_not_found(self, spawn_client, resp_is):
         """
         Test that a request for a non-existent ``change_id`` results in a ``404`` response.
          
         """
-        resp = await do_delete("/api/history/6116cba1.1")
+        client = await spawn_client()
+
+        resp = await client.delete("/api/history/6116cba1.1")
 
         assert await resp_is.not_found(resp)

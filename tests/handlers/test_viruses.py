@@ -70,8 +70,10 @@ class TestFind:
             "modified_count": 1,
         })
     ])
-    async def test(self, term, modified, per_page, page, d_range, meta, add_modified, test_db, do_get):
-        test_db.viruses.insert_many([
+    async def test(self, term, modified, per_page, page, d_range, meta, add_modified, spawn_client):        
+        client = await spawn_client()
+        
+        await client.db.viruses.insert_many([
             {
                 "abbreviation": "EV_TF3-mycovirus",
                 "modified": False,
@@ -93,7 +95,7 @@ class TestFind:
         ])
 
         if add_modified:
-            test_db.viruses.update_one({"_id": "2f97f077"}, {
+            await client.db.viruses.update_one({"_id": "2f97f077"}, {
                 "$set": {
                     "modified": True
                 }
@@ -117,7 +119,7 @@ class TestFind:
         if len(query):
             path += "?{}".format("&".join(query))
 
-        resp = await do_get(path)
+        resp = await client.get(path)
 
         assert resp.status == 200
 
@@ -147,15 +149,17 @@ class TestFind:
 
 class TestGet:
 
-    async def test(self, test_db, do_get, test_virus, test_sequence):
+    async def test(self, spawn_client, test_virus, test_sequence):
         """
         Test that a valid request returns a complete virus document. 
          
         """
-        test_db.viruses.insert_one(test_virus)
-        test_db.sequences.insert_one(test_sequence)
+        client = await spawn_client()
 
-        resp = await do_get("/api/viruses/{}".format(test_virus["_id"]))
+        await client.db.viruses.insert_one(test_virus)
+        await client.db.sequences.insert_one(test_sequence)
+
+        resp = await client.get("/api/viruses/{}".format(test_virus["_id"]))
 
         assert resp.status == 200
 
@@ -187,14 +191,16 @@ class TestGet:
              ]
         }
 
-    async def test_no_sequences(self, test_db, do_get, test_virus):
+    async def test_no_sequences(self, spawn_client, test_virus):
         """
         Test that a valid request returns an empty sequence list for a virus with no associated sequences.
          
         """
-        test_db.viruses.insert_one(test_virus)
+        client = await spawn_client()
 
-        resp = await do_get("/api/viruses/" + test_virus["_id"])
+        await client.db.viruses.insert_one(test_virus)
+
+        resp = await client.get("/api/viruses/" + test_virus["_id"])
 
         assert resp.status == 200
 
@@ -218,12 +224,14 @@ class TestGet:
              ]
         }
 
-    async def test_not_found(self, do_get, resp_is):
+    async def test_not_found(self, spawn_client, resp_is):
         """
         Test that a request for a non-existent virus results in a ``404`` response.
          
         """
-        resp = await do_get("/api/viruses/foobar")
+        client = await spawn_client()
+
+        resp = await client.get("/api/viruses/foobar")
 
         assert await resp_is.not_found(resp)
 
@@ -240,17 +248,19 @@ class TestCreate:
             "Created Tobacco mosaic virus"
         )
     ])
-    async def test(self, data, description, monkeypatch, test_db, do_post, test_add_history, test_dispatch):
+    async def test(self, data, description, monkeypatch, spawn_client, test_add_history, test_dispatch):
         """
         Test that a valid request results in the creation of a virus document and a ``201`` response.
          
         """
+        client = await spawn_client(authorize=True, permissions=["modify_virus"])
+
         async def get_fake_id(*args):
             return "test"
 
         monkeypatch.setattr("virtool.utils.get_new_id", get_fake_id)
 
-        resp = await do_post("/api/viruses", data, authorize=True, permissions=["modify_virus"])
+        resp = await client.post("/api/viruses", data)
 
         assert resp.status == 201
 
@@ -267,7 +277,7 @@ class TestCreate:
             "id": "test"
         }
 
-        assert test_db.viruses.find_one() == {
+        assert await client.db.viruses.find_one() == {
             "_id": "test",
             "lower_name": "tobacco mosaic virus",
             "name": "Tobacco mosaic virus",
@@ -307,17 +317,19 @@ class TestCreate:
             }
         )
 
-    async def test_invalid_input(self, do_post, resp_is):
+    async def test_invalid_input(self, spawn_client, resp_is):
         """
         Test that invalid input results in a ``422`` response with error data.
          
         """
+        client = await spawn_client(authorize=True, permissions=["modify_virus"])
+
         data = {
             "virus_name": "Tobacco mosaic virus",
             "abbreviation": 123
         }
 
-        resp = await do_post("/api/viruses", data, authorize=True, permissions=["modify_virus"])
+        resp = await client.post("/api/viruses", data)
 
         assert resp.status == 422
 
@@ -332,19 +344,21 @@ class TestCreate:
         ({"abbreviation": "TMV"}, "Abbreviation already exists"),
         ({"name": "Tobacco mosaic virus", "abbreviation": "TMV"}, "Name and abbreviation already exist")
     ])
-    async def test_field_exists(self, existing, message, test_db, do_post):
+    async def test_field_exists(self, existing, message, spawn_client):
         """
         Test that the request fails with ``409 Conflict`` if the requested virus name already exists.
          
         """
-        test_db.viruses.insert_one(existing)
+        client = await spawn_client(authorize=True, permissions=["modify_virus"])
+
+        await client.db.viruses.insert_one(existing)
 
         data = {
             "name": "Tobacco mosaic virus",
             "abbreviation": "TMV"
         }
 
-        resp = await do_post("/api/viruses", data, authorize=True, permissions=["modify_virus"])
+        resp = await client.post("/api/viruses", data)
 
         assert resp.status == 409
 
@@ -417,7 +431,7 @@ class TestEdit:
             "Removed abbreviation TMV"
         )
     ])
-    async def test(self, data, existing_abbreviation, description, test_db, do_patch, test_virus, test_add_history,
+    async def test(self, data, existing_abbreviation, description, spawn_client, test_virus, test_add_history,
                    test_dispatch):
         """
         Test that changing the name and abbreviation results in changes to the virus document and a new change
@@ -425,11 +439,13 @@ class TestEdit:
         history record.
 
         """
+        client = await spawn_client(authorize=True, permissions=["modify_virus"])
+
         test_virus["abbreviation"] = existing_abbreviation
 
-        test_db.viruses.insert_one(test_virus)
+        await client.db.viruses.insert_one(test_virus)
 
-        resp = await do_patch("/api/viruses/6116cba1", data, authorize=True, permissions=["modify_virus"])
+        resp = await client.patch("/api/viruses/6116cba1", data)
 
         assert resp.status == 200
 
@@ -469,7 +485,7 @@ class TestEdit:
         for isolate in expected["isolates"]:
             isolate.pop("sequences")
 
-        assert test_db.viruses.find_one() == expected
+        assert await client.db.viruses.find_one() == expected
 
         expected_dispatch = {
             "id": "6116cba1",
@@ -507,17 +523,19 @@ class TestEdit:
             "test"
         )
 
-    async def test_invalid_input(self, do_patch, resp_is):
+    async def test_invalid_input(self, spawn_client, resp_is):
         """
         Test that invalid input results in a ``422`` response with error data.
 
         """
+        client = await spawn_client(authorize=True, permissions=["modify_virus"])
+
         data = {
             "virus_name": "Tobacco mosaic virus",
             "abbreviation": 123
         }
 
-        resp = await do_patch("/api/viruses/test", data, authorize=True, permissions=["modify_virus"])
+        resp = await client.patch("/api/viruses/test", data)
 
         assert resp.status == 422
 
@@ -526,12 +544,14 @@ class TestEdit:
             "abbreviation": ["must be of string type"]
         })
 
-    async def test_name_exists(self, test_db, do_patch):
+    async def test_name_exists(self, spawn_client):
         """
         Test that the request fails with ``409 Conflict`` if the requested virus name already exists.
 
         """
-        test_db.viruses.insert_many([
+        client = await spawn_client(authorize=True, permissions=["modify_virus"])
+
+        await client.db.viruses.insert_many([
             {
                 "_id": "test",
                 "name": "Prunus virus F",
@@ -551,7 +571,7 @@ class TestEdit:
             "abbreviation": "TMV"
         }
 
-        resp = await do_patch("/api/viruses/test", data, authorize=True, permissions=["modify_virus"])
+        resp = await client.patch("/api/viruses/test", data)
 
         assert resp.status == 409
 
@@ -559,12 +579,14 @@ class TestEdit:
             "message": "Name already exists"
         }
 
-    async def test_abbreviation_exists(self, test_db, do_patch):
+    async def test_abbreviation_exists(self, spawn_client):
         """
         Test that the request fails with ``409 Conflict`` if the requested abbreviation already exists.
 
         """
-        test_db.viruses.insert_many([
+        client = await spawn_client(authorize=True, permissions=["modify_virus"])
+
+        await client.db.viruses.insert_many([
             {
                 "_id": "test",
                 "name": "Prunus virus F",
@@ -585,7 +607,7 @@ class TestEdit:
             "abbreviation": "TMV"
         }
 
-        resp = await do_patch("/api/viruses/test", data, authorize=True, permissions=["modify_virus"])
+        resp = await client.patch("/api/viruses/test", data)
 
         assert resp.status == 409
 
@@ -593,12 +615,14 @@ class TestEdit:
             "message": "Abbreviation already exists"
         }
 
-    async def test_both_exist(self, test_db, do_patch):
+    async def test_both_exist(self, spawn_client):
         """
         Test that the request fails with ``409 Conflict`` if the requested name and abbreviation already exist.
 
         """
-        test_db.viruses.insert_many([
+        client = await spawn_client(authorize=True, permissions=["modify_virus"])
+
+        await client.db.viruses.insert_many([
             {
                 "_id": "test",
                 "name": "Prunus virus F",
@@ -620,7 +644,7 @@ class TestEdit:
             "abbreviation": "TMV"
         }
 
-        resp = await do_patch("/api/viruses/test", data, authorize=True, permissions=["modify_virus"])
+        resp = await client.patch("/api/viruses/test", data)
 
         assert resp.status == 409
 
@@ -633,8 +657,10 @@ class TestEdit:
         ("Tobacco mosaic virus", "TMV", {"name": "Tobacco mosaic virus"}),
         ("Tobacco mosaic virus", "TMV", {"abbreviation": "TMV"})
     ])
-    async def test_no_change(self, old_name, old_abbr, data, test_db, do_patch):
-        test_db.viruses.insert_one({
+    async def test_no_change(self, old_name, old_abbr, data, spawn_client):
+        client = await spawn_client(authorize=True, permissions=["modify_virus"])
+
+        await client.db.viruses.insert_one({
             "_id": "test",
             "name": old_name,
             "lower_name": "tobacco mosaic virus",
@@ -642,7 +668,7 @@ class TestEdit:
             "isolates": []
         })
 
-        resp = await do_patch("/api/viruses/test", data, authorize=True, permissions=["modify_virus"])
+        resp = await client.patch("/api/viruses/test", data)
 
         assert resp.status == 200
         
@@ -654,31 +680,35 @@ class TestEdit:
             "name": "Tobacco mosaic virus"
         }
 
-    async def test_not_found(self, do_patch, resp_is):
+    async def test_not_found(self, spawn_client, resp_is):
+        client = await spawn_client(authorize=True, permissions=["modify_virus"])
+
         data = {
             "name": "Tobacco mosaic virus",
             "abbreviation": "TMV"
         }
 
-        resp = await do_patch("/api/viruses/test", data, authorize=True, permissions=["modify_virus"])
+        resp = await client.patch("/api/viruses/test", data)
 
         assert await resp_is.not_found(resp)
 
 
 class TestVerify:
 
-    async def test(self, test_db, do_put, test_virus, test_sequence, test_add_history, test_dispatch):
+    async def test(self, spawn_client, test_virus, test_sequence, test_add_history, test_dispatch):
         """
         Test that a complete virus document is returned in a ``200`` response when verification is successful. Check
         that history is updated and dispatches are made. 
 
         """
+        client = await spawn_client(authorize=True, permissions=["modify_virus"])
+
         test_virus["modified"] = True
 
-        test_db.viruses.insert_one(test_virus)
-        test_db.sequences.insert_one(test_sequence)
+        await client.db.viruses.insert_one(test_virus)
+        await client.db.sequences.insert_one(test_sequence)
 
-        resp = await do_put("/api/viruses/6116cba1/verify", {}, authorize=True, permissions=["modify_virus"])
+        resp = await client.put("/api/viruses/6116cba1/verify", {})
 
         assert resp.status == 200
 
@@ -712,7 +742,7 @@ class TestVerify:
 
         assert await resp.json() == expected
 
-        assert test_db.viruses.find_one() == {
+        assert await client.db.viruses.find_one() == {
             "_id": "6116cba1",
             "abbreviation": "PVF",
             "imported": True,
@@ -772,16 +802,18 @@ class TestVerify:
             }
         )
 
-    async def test_empty_virus(self, test_db, do_put, test_virus, test_add_history, test_dispatch):
+    async def test_empty_virus(self, spawn_client, test_virus, test_add_history, test_dispatch):
         """
         Test that a virus with no isolates can be detected and be reported by the handler in a ``400`` response.
 
         """
+        client = await spawn_client(authorize=True, permissions=["modify_virus"])
+
         test_virus["isolates"] = []
 
-        test_db.viruses.insert(test_virus)
+        await client.db.viruses.insert(test_virus)
 
-        resp = await do_put("/api/viruses/6116cba1/verify", {}, authorize=True, permissions=["modify_virus"])
+        resp = await client.put("/api/viruses/6116cba1/verify", {})
 
         assert resp.status == 400
 
@@ -798,14 +830,16 @@ class TestVerify:
         assert not test_add_history.called
         assert not test_dispatch.stub.called
 
-    async def test_empty_isolate(self, test_db, do_put, test_virus, test_add_history, test_dispatch):
+    async def test_empty_isolate(self, spawn_client, test_virus, test_add_history, test_dispatch):
         """
         Test that an isolate with no sequences can be detected and be reported by the handler in a ``400`` response.
 
         """
-        test_db.viruses.insert(test_virus)
+        client = await spawn_client(authorize=True, permissions=["modify_virus"])
 
-        resp = await do_put("/api/viruses/6116cba1/verify", {}, authorize=True, permissions=["modify_virus"])
+        await client.db.viruses.insert(test_virus)
+
+        resp = await client.put("/api/viruses/6116cba1/verify", {})
 
         assert resp.status == 400
 
@@ -822,18 +856,20 @@ class TestVerify:
         assert not test_add_history.called
         assert not test_dispatch.stub.called
 
-    async def test_empty_sequence(self, test_db, do_put, test_virus, test_sequence, test_add_history, test_dispatch):
+    async def test_empty_sequence(self, spawn_client, test_virus, test_sequence, test_add_history, test_dispatch):
         """
         Test that an empty sequence field can be detected and be reported by the handler in a ``400`` response.
 
         """
-        test_db.viruses.insert(test_virus)
+        client = await spawn_client(authorize=True, permissions=["modify_virus"])
+
+        await client.db.viruses.insert(test_virus)
 
         test_sequence["sequence"] = ""
 
-        test_db.sequences.insert(test_sequence)
+        await client.db.sequences.insert(test_sequence)
 
-        resp = await do_put("/api/viruses/6116cba1/verify", {}, authorize=True, permissions=["modify_virus"])
+        resp = await client.put("/api/viruses/6116cba1/verify", {})
 
         assert resp.status == 400
 
@@ -850,27 +886,30 @@ class TestVerify:
         assert not test_add_history.called
         assert not test_dispatch.stub.called
 
-    async def test_isolate_inconsistency(self, test_db, do_put, test_virus, test_sequence, test_add_history,
+    async def test_isolate_inconsistency(self, spawn_client, test_virus, test_sequence, test_add_history,
                                          test_dispatch):
         """
         Test that an isolate consistency can be detected and be reported by the handler in a ``400`` response.
          
         """
+        client = await spawn_client(authorize=True, permissions=["modify_virus"])
 
         test_virus["isolates"].append({
-            "isolate_id": "foobar",
+            "id": "foobar",
             "source_type": "isolate",
             "source_name": "b",
             "default": False
         })
 
         # Make database changes so that one isolate has one more sequence than the other isolate.
-        test_db.viruses.insert(test_virus)
-        test_db.sequences.insert(test_sequence)
-        test_db.sequences.insert(dict(test_sequence, _id="a", isolate_id="foobar"))
-        test_db.sequences.insert(dict(test_sequence, _id="b", isolate_id="foobar"))
+        await client.db.viruses.insert_one(test_virus)
+        await client.db.sequences.insert_one(test_sequence)
+        await client.db.sequences.insert_many([
+            dict(test_sequence, _id="a", isolate_id="foobar"),
+            dict(test_sequence, _id="b", isolate_id="foobar")
+        ])
 
-        resp = await do_put("/api/viruses/6116cba1/verify", {}, authorize=True, permissions=["modify_virus"])
+        resp = await client.put("/api/viruses/6116cba1/verify", {})
 
         assert resp.status == 400
 
@@ -887,12 +926,14 @@ class TestVerify:
         assert not test_add_history.called
         assert not test_dispatch.stub.called
 
-    async def test_not_found(self, do_put, resp_is):
+    async def test_not_found(self, spawn_client, resp_is):
         """
         Test that an isolate consistency can be detected and be reported by the handler in a ``400`` response.
 
         """
-        resp = await do_put("/api/viruses/foobar/verify", {}, authorize=True, permissions=["modify_virus"])
+        client = await spawn_client(authorize=True, permissions=["modify_virus"])
+
+        resp = await client.put("/api/viruses/foobar/verify", {})
 
         assert resp.status == 404
 
@@ -905,24 +946,26 @@ class TestRemove:
         ("", "Removed Prunus virus F"),
         ("PVF", "Removed Prunus virus F (PVF)")
     ])
-    async def test(self, abbreviation, description, test_db, do_delete, test_virus, test_add_history, test_dispatch):
+    async def test(self, abbreviation, description, spawn_client, test_virus, test_add_history, test_dispatch):
         """
         Test that an existing virus can be removed.        
          
         """
+        client = await spawn_client(authorize=True, permissions=["modify_virus"])
+
         test_virus["abbreviation"] = abbreviation
 
-        test_db.viruses.insert_one(test_virus)
+        await client.db.viruses.insert_one(test_virus)
 
-        old = test_db.viruses.find_one("6116cba1")
+        old = await client.db.viruses.find_one("6116cba1")
 
         assert old
 
-        resp = await do_delete("/api/viruses/6116cba1", authorize=True, permissions=["modify_virus"])
+        resp = await client.delete("/api/viruses/6116cba1")
 
         assert resp.status == 204
 
-        assert test_db.viruses.find({"_id": "6116cba1"}).count() == 0
+        assert await client.db.viruses.find({"_id": "6116cba1"}).count() == 0
 
         old["isolates"][0]["sequences"] = []
 
@@ -940,22 +983,27 @@ class TestRemove:
             ["6116cba1"]
         )
 
-    async def test_not_found(self, do_delete, resp_is):
+    async def test_not_found(self, spawn_client, resp_is):
         """
-        Test that attempting to remove a non-existent virus results in a ``404`` response. 
+        Test that attempting to remove a non-existent virus results in a ``404`` response.
+
         """
-        resp = await do_delete("/api/viruses/6116cba1", authorize=True, permissions=["modify_virus"])
+        client = await spawn_client(authorize=True, permissions=["modify_virus"])
+
+        resp = await client.delete("/api/viruses/6116cba1")
 
         assert await resp_is.not_found(resp)
 
 
 class TestListIsolates:
 
-    async def test(self, test_db, do_get, test_virus):
+    async def test(self, spawn_client, test_virus):
         """
         Test the isolates are properly listed and formatted for an existing virus.
          
         """
+        client = await spawn_client()
+
         test_virus["isolates"].append({
             "default": False,
             "source_type": "isolate",
@@ -963,9 +1011,9 @@ class TestListIsolates:
             "id": "bcb9b352"
         })
 
-        test_db.viruses.insert_one(test_virus)
+        await client.db.viruses.insert_one(test_virus)
 
-        resp = await do_get("/api/viruses/6116cba1/isolates")
+        resp = await client.get("/api/viruses/6116cba1/isolates")
 
         assert resp.status == 200
 
@@ -986,27 +1034,31 @@ class TestListIsolates:
             }
         ]
 
-    async def test_not_found(self, do_get, resp_is):
+    async def test_not_found(self, spawn_client, resp_is):
         """
         Test that a request for a non-existent virus returns a ``404`` response.
          
         """
-        resp = await do_get("/api/viruses/6116cba1/isolates")
+        client = await spawn_client()
+
+        resp = await client.get("/api/viruses/6116cba1/isolates")
 
         assert await resp_is.not_found(resp)
 
 
 class TestGetIsolate:
 
-    async def test(self, test_db, do_get, test_virus, test_sequence):
+    async def test(self, spawn_client, test_virus, test_sequence):
         """
         Test that an existing isolate is successfully returned.
          
         """
-        test_db.viruses.insert_one(test_virus)
-        test_db.sequences.insert_one(test_sequence)
+        client = await spawn_client()
 
-        resp = await do_get("/api/viruses/6116cba1/isolates/cab8b360")
+        await client.db.viruses.insert_one(test_virus)
+        await client.db.sequences.insert_one(test_sequence)
+
+        resp = await client.get("/api/viruses/6116cba1/isolates/cab8b360")
 
         assert resp.status == 200
 
@@ -1027,25 +1079,29 @@ class TestGetIsolate:
         ("6116cba1", "foobar"),
         ("6116cba1", "cab8b360")
     ])
-    async def test_not_found(self, virus_id, isolate_id, do_get, resp_is):
+    async def test_not_found(self, virus_id, isolate_id, spawn_client, resp_is):
         """
         Test that a ``404`` response results for a non-existent virus and/or isolate.
          
         """
-        resp = await do_get("/api/viruses/{}/isolates/{}".format(virus_id, isolate_id))
+        client = await spawn_client()
+
+        resp = await client.get("/api/viruses/{}/isolates/{}".format(virus_id, isolate_id))
 
         assert await resp_is.not_found(resp)
 
 
 class TestAddIsolate:
 
-    async def test_is_default(self, monkeypatch, test_db, do_post, test_virus, test_add_history, test_dispatch):
+    async def test_is_default(self, monkeypatch, spawn_client, test_virus, test_add_history, test_dispatch):
         """
         Test that a new default isolate can be added, setting ``default`` to ``False`` on all other isolates in the
         process.
          
         """
-        test_db.viruses.insert_one(test_virus)
+        client = await spawn_client(authorize=True, permissions=["modify_virus"])
+
+        await client.db.viruses.insert_one(test_virus)
 
         data = {
             "source_name": "b",
@@ -1058,7 +1114,7 @@ class TestAddIsolate:
 
         monkeypatch.setattr("virtool.virus.get_new_isolate_id", get_fake_id)
 
-        resp = await do_post("/api/viruses/6116cba1/isolates", data, authorize=True, permissions=["modify_virus"])
+        resp = await client.post("/api/viruses/6116cba1/isolates", data)
 
         assert resp.status == 201
 
@@ -1070,7 +1126,7 @@ class TestAddIsolate:
             "sequences": []
         }
 
-        new = test_db.viruses.find_one("6116cba1")
+        new = await client.db.viruses.find_one("6116cba1")
 
         assert new["isolates"] == [
             {
@@ -1112,12 +1168,14 @@ class TestAddIsolate:
             }
         )
 
-    async def test_not_default(self, monkeypatch, test_db, do_post, test_virus, test_add_history, test_dispatch):
+    async def test_not_default(self, monkeypatch, spawn_client, test_virus, test_add_history, test_dispatch):
         """
         Test that a non-default isolate can be properly added
         
         """
-        test_db.viruses.insert_one(test_virus)
+        client = await spawn_client(authorize=True, permissions=["modify_virus"])
+
+        await client.db.viruses.insert_one(test_virus)
 
         data = {
             "source_name": "b",
@@ -1130,7 +1188,7 @@ class TestAddIsolate:
 
         monkeypatch.setattr("virtool.virus.get_new_isolate_id", get_fake_id)
 
-        resp = await do_post("/api/viruses/6116cba1/isolates", data, authorize=True, permissions=["modify_virus"])
+        resp = await client.post("/api/viruses/6116cba1/isolates", data)
 
         assert resp.status == 201
 
@@ -1142,7 +1200,7 @@ class TestAddIsolate:
             "sequences": []
         }
 
-        new = test_db.viruses.find_one("6116cba1")
+        new = await client.db.viruses.find_one("6116cba1")
 
         assert new["isolates"] == [
             {
@@ -1184,15 +1242,17 @@ class TestAddIsolate:
             }
         )
 
-    async def test_first(self, monkeypatch, test_db, do_post, test_virus, test_add_history, test_dispatch):
+    async def test_first(self, monkeypatch, spawn_client, test_virus, test_add_history, test_dispatch):
         """
         Test that the first isolate for a virus is set as the ``default`` virus even if ``default`` is set to ``False``
         in the POST input.
 
         """
+        client = await spawn_client(authorize=True, permissions=["modify_virus"])
+
         test_virus["isolates"] = []
 
-        test_db.viruses.insert_one(test_virus)
+        await client.db.viruses.insert_one(test_virus)
 
         async def get_fake_id(*args):
             return "test"
@@ -1205,7 +1265,7 @@ class TestAddIsolate:
 
         monkeypatch.setattr("virtool.virus.get_new_isolate_id", get_fake_id)
 
-        resp = await do_post("/api/viruses/6116cba1/isolates", data, authorize=True, permissions=["modify_virus"])
+        resp = await client.post("/api/viruses/6116cba1/isolates", data)
 
         assert resp.status == 201
 
@@ -1217,7 +1277,7 @@ class TestAddIsolate:
             "sequences": []
         }
 
-        new = test_db.viruses.find_one("6116cba1")
+        new = await client.db.viruses.find_one("6116cba1")
 
         assert new["isolates"] == [{
             "id": "test",
@@ -1248,12 +1308,14 @@ class TestAddIsolate:
             }
         )
 
-    async def test_force_case(self, monkeypatch, test_db, do_post, test_virus, test_dispatch):
+    async def test_force_case(self, monkeypatch, spawn_client, test_virus, test_dispatch):
         """
         Test that the ``source_type`` value is forced to lower case.
          
         """
-        test_db.viruses.insert_one(test_virus)
+        client = await spawn_client(authorize=True, permissions=["modify_virus"])
+
+        await client.db.viruses.insert_one(test_virus)
 
         data = {
             "source_name": "Beta",
@@ -1266,7 +1328,7 @@ class TestAddIsolate:
 
         monkeypatch.setattr("virtool.virus.get_new_isolate_id", get_fake_id)
 
-        resp = await do_post("/api/viruses/6116cba1/isolates", data, authorize=True, permissions=["modify_virus"])
+        resp = await client.post("/api/viruses/6116cba1/isolates", data)
 
         assert resp.status == 201
 
@@ -1278,7 +1340,7 @@ class TestAddIsolate:
             "sequences": []
         }
 
-        document = test_db.viruses.find_one("6116cba1")
+        document = await client.db.viruses.find_one("6116cba1")
 
         assert document["isolates"] == [
             {
@@ -1307,20 +1369,22 @@ class TestAddIsolate:
             }
         )
 
-    async def test_empty(self, monkeypatch, test_db, do_post, test_virus, test_dispatch):
+    async def test_empty(self, monkeypatch, spawn_client, test_virus, test_dispatch):
         """
         Test that an isolate can be added without any POST input. The resulting document should contain the defined
         default values.
          
         """
-        test_db.viruses.insert_one(test_virus)
+        client = await spawn_client(authorize=True, permissions=["modify_virus"])
+
+        await client.db.viruses.insert_one(test_virus)
 
         async def get_fake_id(*args):
             return "test"
 
         monkeypatch.setattr("virtool.virus.get_new_isolate_id", get_fake_id)
 
-        resp = await do_post("/api/viruses/6116cba1/isolates", {}, authorize=True, permissions=["modify_virus"])
+        resp = await client.post("/api/viruses/6116cba1/isolates", {})
 
         assert resp.status == 201
 
@@ -1332,7 +1396,7 @@ class TestAddIsolate:
             "sequences": []
         }
 
-        assert test_db.viruses.find_one("6116cba1", ["isolates"])["isolates"] == [
+        assert (await client.db.viruses.find_one("6116cba1", ["isolates"]))["isolates"] == [
             {
                 "id": "cab8b360",
                 "default": True,
@@ -1359,14 +1423,16 @@ class TestAddIsolate:
             }
         )
 
-    async def test_not_found(self, do_post, resp_is):
+    async def test_not_found(self, spawn_client, resp_is):
+        client = await spawn_client(authorize=True, permissions=["modify_virus"])
+
         data = {
             "source_name": "Beta",
             "source_type": "Isolate",
             "default": False
         }
 
-        resp = await do_post("/api/viruses/6116cba1/isolates", data, authorize=True, permissions=["modify_virus"])
+        resp = await client.post("/api/viruses/6116cba1/isolates", data)
 
         assert await resp_is.not_found(resp)
 
@@ -1379,11 +1445,13 @@ class TestEditIsolate:
         ({"source_type": "variant", "source_name": "A"}, "Renamed Isolate b to Variant A"),
         ({"source_name": "A"}, "Renamed Isolate b to Isolate A")
     ])
-    async def test(self, data, description, test_db, do_patch, test_virus, test_add_history, test_dispatch):
+    async def test(self, data, description, spawn_client, test_virus, test_add_history, test_dispatch):
         """
         Test that a change to the isolate name results in the correct changes, history, and response.
 
         """
+        client = await spawn_client(authorize=True, permissions=["modify_virus"])
+
         test_virus["isolates"].append({
             "id": "test",
             "source_name": "b",
@@ -1391,9 +1459,9 @@ class TestEditIsolate:
             "default": False
         })
 
-        test_db.viruses.insert_one(test_virus)
+        await client.db.viruses.insert_one(test_virus)
 
-        resp = await do_patch("/api/viruses/6116cba1/isolates/test", data, authorize=True, permissions=["modify_virus"])
+        resp = await client.patch("/api/viruses/6116cba1/isolates/test", data)
 
         assert resp.status == 200
 
@@ -1403,7 +1471,7 @@ class TestEditIsolate:
 
         assert await resp.json() == dict(expected, sequences=[])
 
-        new = test_db.viruses.find_one("6116cba1")
+        new = await client.db.viruses.find_one("6116cba1")
 
         assert new["isolates"] == [
             {
@@ -1439,12 +1507,14 @@ class TestEditIsolate:
             }
         )
 
-    async def test_force_case(self, monkeypatch, test_db, do_patch, test_virus, test_dispatch, test_add_history):
+    async def test_force_case(self, monkeypatch, spawn_client, test_virus, test_dispatch):
         """
         Test that the ``source_type`` value is forced to lower case.
 
         """
-        test_db.viruses.insert_one(test_virus)
+        client = await spawn_client(authorize=True, permissions=["modify_virus"])
+
+        await client.db.viruses.insert_one(test_virus)
 
         data = {
             "source_type": "Variant",
@@ -1455,8 +1525,7 @@ class TestEditIsolate:
 
         monkeypatch.setattr("virtool.virus.get_new_isolate_id", get_fake_id)
 
-        resp = await do_patch("/api/viruses/6116cba1/isolates/cab8b360", data, authorize=True,
-                              permissions=["modify_virus"])
+        resp = await client.patch("/api/viruses/6116cba1/isolates/cab8b360", data)
 
         assert resp.status == 200
 
@@ -1472,7 +1541,7 @@ class TestEditIsolate:
 
         del expected["sequences"]
 
-        assert test_db.viruses.find_one("6116cba1", ["isolates"])["isolates"] == [expected]
+        assert (await client.db.viruses.find_one("6116cba1", ["isolates"]))["isolates"] == [expected]
 
         assert test_dispatch.stub.call_args[0] == (
             "viruses",
@@ -1486,13 +1555,14 @@ class TestEditIsolate:
             }
         )
 
-    async def test_empty(self, do_patch, test_dispatch, resp_is):
+    async def test_empty(self, spawn_client, test_dispatch, resp_is):
         """
         Test that an empty data input results in a ``400`` response.
 
         """
-        resp = await do_patch("/api/viruses/6116cba1/isolates/cab8b360", {}, authorize=True,
-                              permissions=["modify_virus"])
+        client = await spawn_client(authorize=True, permissions=["modify_virus"])
+
+        resp = await client.patch("/api/viruses/6116cba1/isolates/cab8b360", {})
 
         assert resp.status == 400
 
@@ -1500,24 +1570,21 @@ class TestEditIsolate:
 
         assert test_dispatch.stub.call_args is None
 
-    async def test_invalid_input(self, test_db, do_patch, test_virus, resp_is):
+    async def test_invalid_input(self, spawn_client, test_virus, resp_is):
         """
         Test that invalid input results in a ``422`` response and a list of errors.
 
         """
+        client = await spawn_client(authorize=True, permissions=["modify_virus"])
 
-        test_db.viruses.insert_one(test_virus)
+        await client.db.viruses.insert_one(test_virus)
 
         data = {
             "source_type": {"key": "variant"},
             "source_name": "A"
         }
 
-        resp = await do_patch(
-            "/api/viruses/6116cba1/isolates/cab8b360", data,
-            authorize=True,
-            permissions=["modify_virus"]
-        )
+        resp = await client.patch("/api/viruses/6116cba1/isolates/cab8b360", data)
 
         assert await resp_is.invalid_input(resp, {
             "source_type": ["must be of string type"]
@@ -1528,35 +1595,34 @@ class TestEditIsolate:
         ("test", "cab8b360"),
         ("test", "test")
     ])
-    async def test_not_found(self, virus_id, isolate_id, test_db, do_patch, test_virus, resp_is):
+    async def test_not_found(self, virus_id, isolate_id, spawn_client, test_virus, resp_is):
         """
         Test that a request for a non-existent virus or isolate results in a ``404`` response.
 
         """
-        test_db.viruses.insert_one(test_virus)
+        client = await spawn_client(authorize=True, permissions=["modify_virus"])
+
+        await client.db.viruses.insert_one(test_virus)
 
         data = {
             "source_type": "variant",
             "source_name": "A"
         }
 
-        resp = await do_patch(
-            "/api/viruses/{}/isolates/{}".format(virus_id, isolate_id),
-            data,
-            authorize=True,
-            permissions=["modify_virus"]
-        )
+        resp = await client.patch("/api/viruses/{}/isolates/{}".format(virus_id, isolate_id), data)
 
         assert await resp_is.not_found(resp)
 
 
 class TestSetAsDefault:
 
-    async def test(self, test_motor, do_put, test_virus, test_add_history, test_dispatch):
+    async def test(self, spawn_client, test_virus, test_add_history, test_dispatch):
         """
         Test changing the default isolate results in the correct changes, history, and response.
 
         """
+        client = await spawn_client(authorize=True, permissions=["modify_virus"])
+        
         test_virus["isolates"].append({
             "id": "test",
             "source_name": "b",
@@ -1564,14 +1630,9 @@ class TestSetAsDefault:
             "default": False
         })
 
-        await test_motor.viruses.insert_one(test_virus)
+        await client.db.viruses.insert_one(test_virus)
 
-        resp = await do_put(
-            "/api/viruses/6116cba1/isolates/test/default",
-            {},
-            authorize=True,
-            permissions=["modify_virus"]
-        )
+        resp = await client.put("/api/viruses/6116cba1/isolates/test/default", {})
 
         assert resp.status == 200
 
@@ -1583,7 +1644,7 @@ class TestSetAsDefault:
             "sequences": []
         }
 
-        new = await virtool.virus.join(test_motor, "6116cba1")
+        new = await virtool.virus.join(client.db, "6116cba1")
 
         assert new["isolates"] == [
             {
@@ -1626,12 +1687,14 @@ class TestSetAsDefault:
             }
         )
 
-    async def test_no_change(self, test_motor, do_put, test_virus, test_add_history, test_dispatch):
+    async def test_no_change(self, spawn_client, test_virus, test_add_history, test_dispatch):
         """
         Test that a call resulting in no change (calling endpoint on an already default isolate) results in no change.
         Specifically no increment in version and no dispatch.
 
         """
+        client = await spawn_client(authorize=True, permissions=["modify_virus"])
+        
         test_virus["isolates"].append({
             "id": "test",
             "source_name": "b",
@@ -1639,14 +1702,9 @@ class TestSetAsDefault:
             "default": False
         })
 
-        await test_motor.viruses.insert_one(test_virus)
+        await client.db.viruses.insert_one(test_virus)
 
-        resp = await do_put(
-            "/api/viruses/6116cba1/isolates/cab8b360/default",
-            {},
-            authorize=True,
-            permissions=["modify_virus"]
-        )
+        resp = await client.put("/api/viruses/6116cba1/isolates/cab8b360/default", {})
 
         assert resp.status == 200
 
@@ -1658,7 +1716,7 @@ class TestSetAsDefault:
             "sequences": []
         }
 
-        new = await virtool.virus.join(test_motor, "6116cba1")
+        new = await virtool.virus.join(client.db, "6116cba1")
 
         assert new["version"] == 0
 
@@ -1688,43 +1746,42 @@ class TestSetAsDefault:
         ("test", "cab8b360"),
         ("test", "test")
     ])
-    async def test_not_found(self, virus_id, isolate_id, test_db, do_put, test_virus, resp_is):
+    async def test_not_found(self, virus_id, isolate_id, spawn_client, test_virus, resp_is):
         """
         Test that ``404 Not found`` is returned if the virus or isolate does not exist
 
         """
-        test_db.viruses.insert_one(test_virus)
+        client = await spawn_client(authorize=True, permissions=["modify_virus"])
 
-        resp = await do_put(
-            "/api/viruses/{}/isolates/{}/default".format(virus_id, isolate_id),
-            {},
-            authorize=True,
-            permissions=["modify_virus"]
-        )
+        await client.db.viruses.insert_one(test_virus)
+
+        resp = await client.put("/api/viruses/{}/isolates/{}/default".format(virus_id, isolate_id), {})
 
         assert await resp_is.not_found(resp)
 
 
 class TestRemoveIsolate:
 
-    async def test(self, test_db, do_delete, test_virus, test_sequence, test_add_history, test_dispatch):
+    async def test(self, spawn_client, test_virus, test_sequence, test_add_history, test_dispatch):
         """
         Test that a valid request results in a ``204`` response and the isolate and sequence data is removed from the
         database.
          
         """
-        test_db.viruses.insert_one(test_virus)
-        test_db.sequences.insert_one(test_sequence)
+        client = await spawn_client(authorize=True, permissions=["modify_virus"])
 
-        assert test_db.viruses.find({"isolates.id": "cab8b360"}).count() == 1
+        await client.db.viruses.insert_one(test_virus)
+        await client.db.sequences.insert_one(test_sequence)
 
-        resp = await do_delete("/api/viruses/6116cba1/isolates/cab8b360", authorize=True, permissions=["modify_virus"])
+        assert await client.db.viruses.find({"isolates.id": "cab8b360"}).count() == 1
+
+        resp = await client.delete("/api/viruses/6116cba1/isolates/cab8b360")
 
         assert resp.status == 204
 
-        assert test_db.viruses.find({"isolates.id": "cab8b360"}).count() == 0
+        assert await client.db.viruses.find({"isolates.id": "cab8b360"}).count() == 0
 
-        assert test_db.sequences.count() == 0
+        assert await client.db.sequences.count() == 0
 
         old = {
             "_id": "6116cba1",
@@ -1785,11 +1842,13 @@ class TestRemoveIsolate:
             }
         )
 
-    async def test_change_default(self, test_db, do_delete, test_virus, test_sequence, test_add_history, test_dispatch):
+    async def test_change_default(self, spawn_client, test_virus, test_sequence, test_add_history, test_dispatch):
         """
         Test that a valid request results in a ``204`` response and ``default`` status is reassigned correctly.
 
         """
+        client = await spawn_client(authorize=True, permissions=["modify_virus"])
+
         test_virus["isolates"].append({
             "default": False,
             "source_type": "isolate",
@@ -1797,18 +1856,18 @@ class TestRemoveIsolate:
             "id": "bcb9b352"
         })
 
-        test_db.viruses.insert_one(test_virus)
-        test_db.sequences.insert_one(test_sequence)
+        await client.db.viruses.insert_one(test_virus)
+        await client.db.sequences.insert_one(test_sequence)
 
-        resp = await do_delete("/api/viruses/6116cba1/isolates/cab8b360", authorize=True, permissions=["modify_virus"])
+        resp = await client.delete("/api/viruses/6116cba1/isolates/cab8b360")
 
         assert resp.status == 204
 
-        assert test_db.viruses.find({"isolates.id": "cab8b360"}).count() == 0
+        assert await client.db.viruses.find({"isolates.id": "cab8b360"}).count() == 0
 
-        assert test_db.viruses.find_one({"isolates.id": "bcb9b352"}, ["isolates"])["isolates"][0]["default"]
+        assert (await client.db.viruses.find_one({"isolates.id": "bcb9b352"}, ["isolates"]))["isolates"][0]["default"]
 
-        assert test_db.sequences.count() == 0
+        assert not await client.db.sequences.count()
 
         old = {
             "_id": "6116cba1",
@@ -1889,25 +1948,29 @@ class TestRemoveIsolate:
         )
 
     @pytest.mark.parametrize("url", ["/api/viruses/foobar/isolates/cab8b360", "/api/viruses/test/isolates/foobar"])
-    async def test_not_found(self, url, do_delete, test_db, test_virus, resp_is):
+    async def test_not_found(self, url, spawn_client, test_virus, resp_is):
         """
         Test that removal fails with ``404`` if the virus does not exist.
          
         """
-        test_db.viruses.insert(test_virus)
+        client = await spawn_client(authorize=True, permissions=["modify_virus"])
 
-        resp = await do_delete(url, authorize=True, permissions=["modify_virus"])
+        await client.db.viruses.insert_one(test_virus)
+
+        resp = await client.delete(url)
 
         assert await resp_is.not_found(resp)
 
 
 class TestListSequences:
 
-    async def test(self, do_get, test_db, test_virus, test_sequence):
-        test_db.viruses.insert(test_virus)
-        test_db.sequences.insert(test_sequence)
+    async def test(self, spawn_client, test_virus, test_sequence):
+        client = await spawn_client()
 
-        resp = await do_get("/api/viruses/6116cba1/isolates/cab8b360/sequences")
+        await client.db.viruses.insert(test_virus)
+        await client.db.sequences.insert(test_sequence)
+
+        resp = await client.get("/api/viruses/6116cba1/isolates/cab8b360/sequences")
 
         assert resp.status == 200
 
@@ -1922,23 +1985,27 @@ class TestListSequences:
         "/api/viruses/6116cba1/isolates/foobar/sequences",
         "/api/viruses/foobar/isolates/cab8b360/sequences"
     ])
-    async def test_not_found(self, url, do_get, resp_is):
+    async def test_not_found(self, url, spawn_client, resp_is):
         """
         Test that ``404`` is returned when the isolate id or sequence id do not exist.
 
         """
-        resp = await do_get(url)
+        client = await spawn_client()
+
+        resp = await client.get(url)
 
         assert await resp_is.not_found(resp)
 
 
 class TestGetSequence:
 
-    async def test(self, do_get, test_db, test_virus, test_sequence):
-        test_db.viruses.insert(test_virus)
-        test_db.sequences.insert(test_sequence)
+    async def test(self, spawn_client, test_virus, test_sequence):
+        client = await spawn_client()
 
-        resp = await do_get("/api/viruses/6116cba1/isolates/cab8b360/sequences/KX269872")
+        await client.db.viruses.insert(test_virus)
+        await client.db.sequences.insert(test_sequence)
+
+        resp = await client.get("/api/viruses/6116cba1/isolates/cab8b360/sequences/KX269872")
 
         assert resp.status == 200
 
@@ -1952,16 +2019,20 @@ class TestGetSequence:
         "/api/viruses/6116cba1/isolates/foobar/sequences/KX269872",
         "/api/viruses/foobar/isolates/cab8b360/sequences/KX269872",
     ])
-    async def test_not_found(self, url, do_get, resp_is):
-        resp = await do_get(url)
+    async def test_not_found(self, url, spawn_client, resp_is):
+        client = await spawn_client()
+
+        resp = await client.get(url)
 
         assert await resp_is.not_found(resp)
 
 
 class TestCreateSequence:
 
-    async def test(self, do_post, test_db, test_virus, test_add_history, test_dispatch):
-        test_db.viruses.insert(test_virus)
+    async def test(self, spawn_client, test_virus, test_add_history, test_dispatch):
+        client = await spawn_client(authorize=True, permissions=["modify_virus"])
+
+        await client.db.viruses.insert_one(test_virus)
 
         data = {
             "id": "foobar",
@@ -1970,12 +2041,7 @@ class TestCreateSequence:
             "definition": "A made up sequence"
         }
 
-        resp = await do_post(
-            "/api/viruses/6116cba1/isolates/cab8b360/sequences",
-            data,
-            authorize=True,
-            permissions=["modify_virus"]
-        )
+        resp = await client.post("/api/viruses/6116cba1/isolates/cab8b360/sequences", data)
 
         data.update({
             "isolate_id": "cab8b360",
@@ -2049,42 +2115,32 @@ class TestCreateSequence:
             }
         )
 
-    async def test_exists(self, do_post, test_db, test_virus, test_sequence, resp_is):
-        test_db.viruses.insert(test_virus)
-        test_db.sequences.insert(test_sequence)
+    async def test_exists(self, spawn_client, test_virus, test_sequence, resp_is):
+        client = await spawn_client(authorize=True, permissions=["modify_virus"])
 
-        data = {
+        await client.db.viruses.insert(test_virus)
+        await client.db.sequences.insert(test_sequence)
+
+        resp = await client.post("/api/viruses/6116cba1/isolates/cab8b360/sequences", {
             "id": "KX269872",
             "sequence": "ATGCGTGTACTG",
             "definition": "An already existing sequence"
-        }
-
-        resp = await do_post(
-            "/api/viruses/6116cba1/isolates/cab8b360/sequences",
-            data,
-            authorize=True,
-            permissions=["modify_virus"]
-        )
+        })
 
         assert await resp_is.conflict(resp, "Sequence id already exists")
 
-    async def test_invalid_input(self, do_post, resp_is):
+    async def test_invalid_input(self, spawn_client, resp_is):
         """
         Test that invalid input results in a ``422`` response with error information.
          
         """
-        data = {
+        client = await spawn_client(authorize=True, permissions=["modify_virus"])
+
+        resp = await client.post("/api/viruses/6116cba1/isolates/cab8b360/sequences", {
             "id": 2016,
             "seq": "ATGCGTGTACTG",
             "definition": "A made up sequence"
-        }
-
-        resp = await do_post(
-            "/api/viruses/6116cba1/isolates/cab8b360/sequences",
-            data,
-            authorize=True,
-            permissions=["modify_virus"]
-        )
+        })
 
         assert await resp_is.invalid_input(resp, {
             "id": ["must be of string type"],
@@ -2097,11 +2153,13 @@ class TestCreateSequence:
         ("6116cba1", "foobar"),
         ("foobar", "cab8b360")
     ])
-    async def test_not_found(self, virus_id, isolate_id, do_post, resp_is):
+    async def test_not_found(self, virus_id, isolate_id, spawn_client, resp_is):
         """
         Test that non-existent virus or isolate ids in the URL result in a ``404`` response.
          
         """
+        client = await spawn_client(authorize=True, permissions=["modify_virus"])
+
         data = {
             "id": "FOOBAR",
             "host": "Plant",
@@ -2111,16 +2169,18 @@ class TestCreateSequence:
 
         url = "/api/viruses/{}/isolates/{}/sequences".format(virus_id, isolate_id)
 
-        resp = await do_post(url, data, authorize=True, permissions=["modify_virus"])
+        resp = await client.post(url, data)
 
         assert await resp_is.not_found(resp)
 
 
 class TestEditSequence:
 
-    async def test(self, do_patch, test_db, test_virus, test_sequence, test_add_history, test_dispatch):
-        test_db.viruses.insert(test_virus)
-        test_db.sequences.insert(test_sequence)
+    async def test(self, spawn_client, test_virus, test_sequence, test_add_history, test_dispatch):
+        client = await spawn_client(authorize=True, permissions=["modify_virus"])
+
+        await client.db.viruses.insert(test_virus)
+        await client.db.sequences.insert(test_sequence)
 
         data = {
             "host": "Grapevine",
@@ -2128,12 +2188,7 @@ class TestEditSequence:
             "definition": "A made up sequence"
         }
 
-        resp = await do_patch(
-            "/api/viruses/6116cba1/isolates/cab8b360/sequences/KX269872",
-            data,
-            authorize=True,
-            permissions=["modify_virus"]
-        )
+        resp = await client.patch("/api/viruses/6116cba1/isolates/cab8b360/sequences/KX269872", data)
 
         assert resp.status == 200
 
@@ -2202,29 +2257,23 @@ class TestEditSequence:
             }
         )
 
-    async def test_empty_input(self, do_patch, resp_is):
-        resp = await do_patch(
-            "/api/viruses/6116cba1/isolates/cab8b360/sequences/KX269872",
-            {},
-            authorize=True,
-            permissions=["modify_virus"]
-        )
+    async def test_empty_input(self, spawn_client, resp_is):
+        client = await spawn_client(authorize=True, permissions=["modify_virus"])
+
+        resp = await client.patch("/api/viruses/6116cba1/isolates/cab8b360/sequences/KX269872", {})
 
         assert resp.status == 400
 
         assert await resp_is.bad_request(resp, "Empty Input")
 
-    async def test_invalid_input(self, do_patch, resp_is):
-        resp = await do_patch(
-            "/api/viruses/6116cba1/isolates/cab8b360/sequences/KX269872",
-            {
-                "plant": "Grapevine",
-                "sequence": "ATGCGTGTACTG",
-                "definition": 123
-            },
-            authorize=True,
-            permissions=["modify_virus"]
-        )
+    async def test_invalid_input(self, spawn_client, resp_is):
+        client = await spawn_client(authorize=True, permissions=["modify_virus"])
+
+        resp = await client.patch("/api/viruses/6116cba1/isolates/cab8b360/sequences/KX269872", {
+            "plant": "Grapevine",
+            "sequence": "ATGCGTGTACTG",
+            "definition": 123
+        })
 
         assert resp.status == 422
 
@@ -2234,9 +2283,11 @@ class TestEditSequence:
         })
 
     @pytest.mark.parametrize("foobar", ["virus_id", "isolate_id", "sequence_id"])
-    async def test_not_found(self, foobar, do_patch, test_db, test_virus, test_sequence, resp_is):
-        test_db.viruses.insert(test_virus)
-        test_db.sequences.insert(test_sequence)
+    async def test_not_found(self, foobar, spawn_client, test_virus, test_sequence, resp_is):
+        client = await spawn_client(authorize=True, permissions=["modify_virus"])
+
+        await client.db.viruses.insert(test_virus)
+        await client.db.sequences.insert(test_sequence)
 
         url = "/api/viruses/{}/isolates/{}/sequences/{}".format(
             "foobar" if foobar == "virus_id" else "6116cba1",
@@ -2244,16 +2295,11 @@ class TestEditSequence:
             "foobar" if foobar == "sequence_id" else "KX269872"
         )
 
-        resp = await do_patch(
-            url,
-            {
-                "host": "Grapevine",
-                "sequence": "ATGCGTGTACTG",
-                "definition": "A made up sequence"
-            },
-            authorize=True,
-            permissions=["modify_virus"]
-        )
+        resp = await client.patch(url, {
+            "host": "Grapevine",
+            "sequence": "ATGCGTGTACTG",
+            "definition": "A made up sequence"
+        })
 
         assert resp.status == 404
 
@@ -2265,19 +2311,17 @@ class TestEditSequence:
 
 class TestRemoveSequence:
 
-    async def test(self, do_delete, test_motor, test_virus, test_sequence, test_add_history, test_dispatch):
-        await test_motor.viruses.insert_one(test_virus)
-        await test_motor.sequences.insert_one(test_sequence)
+    async def test(self, spawn_client, test_virus, test_sequence, test_add_history, test_dispatch):
+        client = await spawn_client(authorize=True, permissions=["modify_virus"])
 
-        old = await virtool.virus.join(test_motor, test_virus["_id"])
+        await client.db.viruses.insert_one(test_virus)
+        await client.db.sequences.insert_one(test_sequence)
 
-        resp = await do_delete(
-            "/api/viruses/6116cba1/isolates/cab8b360/sequences/KX269872",
-            authorize=True,
-            permissions=["modify_virus"]
-        )
+        old = await virtool.virus.join(client.db, test_virus["_id"])
 
-        new = await virtool.virus.join(test_motor, test_virus["_id"])
+        resp = await client.delete("/api/viruses/6116cba1/isolates/cab8b360/sequences/KX269872")
+
+        new = await virtool.virus.join(client.db, test_virus["_id"])
 
         assert test_add_history.call_args[0][1:] == (
             "remove_sequence",
@@ -2309,16 +2353,14 @@ class TestRemoveSequence:
         ("6116cba1", "test", "test"),
         ("test", "test", "test")
     ])
-    async def test_virus_not_found(self, virus_id, isolate_id, sequence_id, test_db, test_virus, test_sequence,
-                                   do_delete, resp_is):
+    async def test_virus_not_found(self, virus_id, isolate_id, sequence_id, test_virus, test_sequence,
+                                   spawn_client, resp_is):
 
-        test_db.sequences.insert_one(test_virus)
-        test_db.viruses.insert_one(test_sequence)
+        client = await spawn_client(authorize=True, permissions=["modify_virus"])
 
-        resp = await do_delete(
-            "/api/viruses/{}/isolates/{}/sequences/{}".format(virus_id, isolate_id, sequence_id),
-            authorize=True,
-            permissions=["modify_virus"]
-        )
+        await client.db.sequences.insert_one(test_virus)
+        await client.db.viruses.insert_one(test_sequence)
+
+        resp = await client.delete("/api/viruses/{}/isolates/{}/sequences/{}".format(virus_id, isolate_id, sequence_id))
 
         await resp_is.not_found(resp)

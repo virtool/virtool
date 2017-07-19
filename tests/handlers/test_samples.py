@@ -49,9 +49,10 @@ class TestFind:
             "total_count": 3
         })
     ])
-    async def test(self, term, per_page, page, d_range, meta, test_motor, do_get, static_time):
+    async def test(self, term, per_page, page, d_range, meta, spawn_client, static_time):
+        client = await spawn_client()
 
-        await test_motor.samples.insert_many([
+        await client.db.samples.insert_many([
             {
                 "user": {
                     "id": "bob"
@@ -114,7 +115,7 @@ class TestFind:
         if len(query):
             path += "?{}".format("&".join(query))
         
-        resp = await do_get(path)
+        resp = await client.get(path)
 
         assert resp.status == 200
 
@@ -165,8 +166,10 @@ class TestFind:
 
         assert await resp.json() == dict(meta, documents=[expected_documents[i] for i in d_range])
 
-    async def test_invalid_query(self, do_get, resp_is):
-        resp = await do_get("/api/samples?per_pag=12")
+    async def test_invalid_query(self, spawn_client, resp_is):
+        client = await spawn_client()
+
+        resp = await client.get("/api/samples?per_pag=12")
 
         assert resp.status == 422
 
@@ -177,32 +180,36 @@ class TestFind:
 
 class TestGet:
 
-    async def test(self, test_motor, do_get, static_time):
-        await test_motor.samples.insert_one({
+    async def test(self, spawn_client, static_time):
+        client = await spawn_client()
+
+        await client.db.samples.insert_one({
             "_id": "test",
             "created_at": static_time
         })
 
-        resp = await do_get("api/samples/test")
+        resp = await client.get("api/samples/test")
 
         assert resp.status == 200
 
         assert await resp.json() == {
             "id": "test",
-            "created_at": "2017-10-06T20:00:00Z",
-            "nuvs": False,
-            "pathoscope": False
+            "created_at": "2017-10-06T20:00:00Z"
         }
 
-    async def test_not_found(self, do_get, resp_is):
-        resp = await do_get("/api/samples/foobar")
+    async def test_not_found(self, spawn_client, resp_is):
+        client = await spawn_client()
+
+        resp = await client.get("/api/samples/foobar")
         assert await resp_is.not_found(resp)
 
 
 class TestCreate:
 
-    async def test_already_exists(self, test_motor, do_post, static_time, resp_is):
-        await test_motor.samples.insert_one({
+    async def test_already_exists(self, spawn_client, static_time, resp_is):
+        client = await spawn_client(authorize=True, permissions=["add_sample"])
+
+        await client.db.samples.insert_one({
             "_id": "foobar",
             "name": "Foobar",
             "created_at": static_time,
@@ -210,22 +217,24 @@ class TestCreate:
             "pathoscope": False
         })
 
-        resp = await do_post("/api/samples", {
+        resp = await client.post("/api/samples", {
             "name": "Foobar",
             "subtraction": "apple"
-        }, authorize=True, permissions=["add_sample"])
+        })
 
         assert await resp_is.conflict(resp, "Sample name 'Foobar' already exists")
 
     @pytest.mark.parametrize("in_db", [True, False])
-    async def test_subtraction_dne(self, in_db, test_motor, do_post, resp_is):
-        resp = await do_post("/api/samples", {
+    async def test_subtraction_dne(self, in_db, spawn_client, resp_is):
+        client = await spawn_client(authorize=True, permissions=["add_sample"])
+
+        resp = await client.post("/api/samples", {
             "name": "Foobar",
             "subtraction": "apple"
-        }, authorize=True, permissions=["add_sample"])
+        })
 
         if in_db:
-            await test_motor.subtraction.insert_one({
+            await client.db.subtraction.insert_one({
                 "_id": "apple",
                 "is_host": False
             })
@@ -235,13 +244,15 @@ class TestCreate:
 
 class TestListAnalyses:
 
-    async def test(self, test_motor, do_get, static_time):
-        await test_motor.samples.insert_one({
+    async def test(self, spawn_client, static_time):
+        client = await spawn_client()
+
+        await client.db.samples.insert_one({
             "_id": "test",
             "created_at": static_time
         })
 
-        await test_motor.analyses.insert_many([
+        await client.db.analyses.insert_many([
             {
                 "_id": "test_1",
                 "algorithm": "pathopscope_bowtie",
@@ -304,7 +315,7 @@ class TestListAnalyses:
             },
         ])
 
-        resp = await do_get("/api/samples/test/analyses")
+        resp = await client.get("/api/samples/test/analyses")
 
         assert resp.status == 200
 
@@ -371,15 +382,19 @@ class TestListAnalyses:
             ]
         }
 
-    async def test_not_found(self, do_get, resp_is):
-        resp = await do_get("/api/samples/test/analyses")
+    async def test_not_found(self, spawn_client, resp_is):
+        client = await spawn_client()
+
+        resp = await client.get("/api/samples/test/analyses")
 
         assert await resp_is.not_found(resp)
 
 
 class TestAnalyze:
 
-    async def test(self, mocker, test_motor, do_post, static_time):
+    async def test(self, mocker, spawn_client, static_time):
+        client = await spawn_client(job_manager=True)
+
         m = mocker.Mock(return_value={
             "_id": "test_analysis",
             "ready": False,
@@ -403,16 +418,16 @@ class TestAnalyze:
         async def mock_new(*args, **kwargs):
             return m(*args, **kwargs)
 
-        await test_motor.samples.insert_one({
+        await client.db.samples.insert_one({
             "_id": "test",
             "created_at": static_time
         })
 
         mocker.patch("virtool.sample_analysis.new", new=mock_new)
 
-        resp = await do_post("/api/samples/test/analyses", data={
+        resp = await client.post("/api/samples/test/analyses", data={
             "algorithm": "pathoscope_bowtie"
-        }, job_manager=True)
+        })
 
         assert resp.status == 201
 
@@ -441,16 +456,18 @@ class TestAnalyze:
         }
 
         assert m.call_args[0] == (
-            test_motor,
-            do_post.server.app["settings"],
-            do_post.server.app["job_manager"],
+            client.db,
+            client.app["settings"],
+            client.app["job_manager"],
             "test",
             None,
             "pathoscope_bowtie"
         )
 
-    async def test_invalid_input(self, do_post, resp_is):
-        resp = await do_post("/api/samples/test/analyses", data={
+    async def test_invalid_input(self, spawn_client, resp_is):
+        client = await spawn_client()
+
+        resp = await client.post("/api/samples/test/analyses", data={
             "foobar": True
         })
 
@@ -458,8 +475,10 @@ class TestAnalyze:
             "algorithm": ["required field"], "foobar": ["unknown field"]
         })
 
-    async def test_not_found(self, do_post, resp_is):
-        resp = await do_post("/api/samples/test/analyses", data={
+    async def test_not_found(self, spawn_client, resp_is):
+        client = await spawn_client()
+
+        resp = await client.post("/api/samples/test/analyses", data={
             "algorithm": "pathoscope_bowtie"
         })
 
