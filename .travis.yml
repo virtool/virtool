@@ -52,7 +52,7 @@ install:
 - cd $TRAVIS_BUILD_DIR
 - cd client
 - yarn install
-- webpack --config webpack.config.js
+- webpack --config webpack.production.config.js
 - cd $TRAVIS_BUILD_DIR
 
 
