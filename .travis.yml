@@ -49,10 +49,12 @@ install:
 - nvm install $TRAVIS_NODE_VERSION
 - npm install -g yarn
 - npm install -g webpack
-- cd ../client
+- cd $TRAVIS_BUILD_DIR
+- cd client
 - yarn install
 - webpack --config webpack.production.config.js
 - cd $TRAVIS_BUILD_DIR
+
 
 before_script:
 - sleep 15
