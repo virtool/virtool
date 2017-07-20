@@ -12,7 +12,7 @@
 import React, { PropTypes } from "react";
 import { connect } from "react-redux";
 import { LinkContainer } from "react-router-bootstrap";
-import { Row, Col, Alert, FormGroup, InputGroup, FormControl, ButtonGroup } from "react-bootstrap";
+import { Row, Col, Alert, FormGroup, InputGroup, FormControl } from "react-bootstrap";
 
 import { findSubtractions } from "../actions";
 import { Flex, FlexItem, Icon, Button, ListGroupItem } from "virtool/js/components/Base";
@@ -20,7 +20,9 @@ import { Flex, FlexItem, Icon, Button, ListGroupItem } from "virtool/js/componen
 class SubtractionList extends React.Component {
 
     static propTypes = {
-        documents: PropTypes.arrayOf(PropTypes.object)
+        documents: PropTypes.arrayOf(PropTypes.object),
+        readyHostCount: PropTypes.number,
+        onFind: PropTypes.func
     };
 
     componentDidMount () {
@@ -28,8 +30,6 @@ class SubtractionList extends React.Component {
     }
 
     render () {
-
-        console.log(this.props);
 
         if (this.props.documents === null) {
             return <div />;

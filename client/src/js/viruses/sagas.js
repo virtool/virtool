@@ -7,7 +7,7 @@
  *
  */
 
-import { call, put, select, takeEvery, takeLatest } from "redux-saga/effects";
+import { call, put, takeEvery, takeLatest } from "redux-saga/effects";
 
 import virusesAPI from "./api";
 import { setPending } from "../wrappers";

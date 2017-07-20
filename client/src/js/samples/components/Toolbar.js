@@ -71,7 +71,9 @@ const SampleToolbar = (props) => (
 
 SampleToolbar.propTypes = {
     term: PropTypes.string,
-    onTermChange: PropTypes.func
+    onTermChange: PropTypes.func,
+    location: PropTypes.object,
+    history: PropTypes.object,
 };
 
 export default SampleToolbar;

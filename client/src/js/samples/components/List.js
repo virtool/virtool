@@ -1,7 +1,6 @@
 import React, { PropTypes } from "react";
 import URI from "urijs";
 import { connect } from "react-redux";
-import { Route } from "react-router-dom";
 import { Badge, ListGroup, Pagination } from "react-bootstrap";
 
 import { findSamples } from "../actions";

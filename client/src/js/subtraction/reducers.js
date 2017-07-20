@@ -8,7 +8,7 @@
  */
 
 import { assign, } from "lodash";
-import { WS_UPDATE_SUBTRACTION, WS_REMOVE_SUBTRACTION, FIND_SUBTRACTIONS, GET_SUBTRACTION } from "../actionTypes";
+import { FIND_SUBTRACTIONS, GET_SUBTRACTION } from "../actionTypes";
 
 const initialState = {
     documents: null,

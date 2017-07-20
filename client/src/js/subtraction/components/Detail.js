@@ -13,10 +13,10 @@ import React, { PropTypes } from "react";
 import Numeral from "numeral";
 import { connect } from "react-redux";
 import { LinkContainer } from "react-router-bootstrap";
-import { Alert, Badge, Table } from "react-bootstrap";
+import { Badge, Table } from "react-bootstrap";
 
 import { getSubtraction } from "../actions";
-import { Icon, Button } from "virtool/js/components/Base";
+import { Button } from "virtool/js/components/Base";
 
 const calculateGC = (nucleotides) => {
     return Numeral(1 - nucleotides.a - nucleotides.t - nucleotides.n).format("0.000")
@@ -35,12 +35,6 @@ class SubtractionDetail extends React.Component {
         }
 
         const data = this.props.detail;
-
-        const alert = (
-            <Alert bsStyle="danger">
-                <Icon name="warning" /> Host could not be removed because it is referenced by at least one sample.
-            </Alert>
-        );
 
         const linkedSampleComponents = data.linked_samples.map(sample =>
             <LinkContainer key={sample.sample_id} to={`/samples/${sample.sample_id}`}>
@@ -90,7 +84,8 @@ class SubtractionDetail extends React.Component {
 SubtractionDetail.propTypes = {
     match: PropTypes.object,
     detail: PropTypes.object,
-    onHide: PropTypes.func
+    onHide: PropTypes.func,
+    onGet: PropTypes.func
 };
 
 const mapStateToProps = (state) => {
