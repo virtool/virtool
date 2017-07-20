@@ -10,7 +10,6 @@
 import { call, put, takeEvery, takeLatest } from "redux-saga/effects";
 
 import samplesAPI from "./api";
-import filesAPI from "../files/api";
 import { setPending } from "../wrappers";
 import {
     FIND_SAMPLES,

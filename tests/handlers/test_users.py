@@ -1,21 +1,23 @@
 import datetime
+from operator import itemgetter
 
 from virtool.user import check_password
 
 
 class TestFind:
 
-    async def test_valid(self, do_get, test_db, create_user):
+    async def test_valid(self, spawn_client, create_user):
         """
         Test that a ``GET /users`` returns a list of users.
 
         """
+        client = await spawn_client(authorize=True, permissions=["manage_users"])
+
         user_ids = ["bob", "fred", "john"]
 
-        for user_id in user_ids:
-            test_db.users.insert(create_user(user_id))
+        await client.db.users.insert_many([create_user(user_id) for user_id in user_ids])
 
-        resp = await do_get("/api/users", authorize=True, permissions=["manage_users"])
+        resp = await client.get("/api/users")
 
         assert resp.status == 200
 
@@ -45,22 +47,23 @@ class TestFind:
 
         expected[3]["permissions"] = dict(base_dict["permissions"], manage_users=True)
 
-        assert await resp.json() == expected
+        assert sorted(await resp.json(), key=itemgetter("id")) == sorted(expected, key=itemgetter("id"))
 
 
 class TestGet:
 
-    async def test_exists(self, do_get, test_db, create_user):
+    async def test_exists(self, spawn_client, create_user):
         """
         Test that a ``GET /api/users`` returns a list of users.
 
         """
+        client = await spawn_client(authorize=True, permissions=["manage_users"])
+
         user_ids = ["bob", "fred"]
 
-        for user_id in user_ids:
-            test_db.users.insert(create_user(user_id))
+        await client.db.users.insert_many([create_user(user_id) for user_id in user_ids])
 
-        resp = await do_get("/api/users/fred", authorize=True, permissions=["manage_users"])
+        resp = await client.get("/api/users/fred")
 
         assert resp.status == 200
 
@@ -87,19 +90,21 @@ class TestGet:
             "primary_group": ""
         }
 
-    async def test_not_found(self, do_get, resp_is):
+    async def test_not_found(self, spawn_client, resp_is):
         """
         Test that a ``GET /api/users/:user_id`` for a non-existent ``user_id`` results in a ``404`` response.
         
         """
-        resp = await do_get("/api/users/fred", authorize=True, permissions=["manage_users"])
+        client = await spawn_client(authorize=True, permissions=["manage_users"])
+
+        resp = await client.get("/api/users/fred")
 
         assert await resp_is.not_found(resp)
 
 
 class TestCreate:
 
-    async def test(self, monkeypatch, static_time, do_post, test_db):
+    async def test(self, monkeypatch, spawn_client, static_time):
         """
         Test that a valid request results in a user document being properly inserted.
         
@@ -108,6 +113,8 @@ class TestCreate:
         - check password
          
         """
+        client = await spawn_client(authorize=True, permissions=["manage_users"])
+
         data = {
             "user_id": "bob",
             "password": "hello_world",
@@ -116,7 +123,7 @@ class TestCreate:
 
         monkeypatch.setattr("virtool.utils.timestamp", lambda: static_time)
 
-        resp = await do_post("/api/users", data, authorize=True, permissions=["manage_users"])
+        resp = await client.post("/api/users", data)
 
         assert resp.status == 200
 
@@ -150,24 +157,26 @@ class TestCreate:
             "last_password_change": datetime.datetime(2017, 10, 6, 20, 0)
         })
 
-        assert test_db.users.find_one("bob", list(expected.keys())) == expected
+        assert await client.db.users.find_one("bob", list(expected.keys())) == expected
 
-        document = test_db.users.find_one("bob", ["password"])
+        document = await client.db.users.find_one("bob", ["password"])
 
         assert check_password("hello_world", document["password"])
 
-    async def test_invalid_input(self, do_post, resp_is):
+    async def test_invalid_input(self, spawn_client, resp_is):
         """
         Test that invalid and missing input data result in a ``422`` response with detailed error data.
          
         """
+        client = await spawn_client(authorize=True, permissions=["manage_users"])
+
         data = {
             "username": "bob",
             "password": 1234,
             "force_reset": False
         }
 
-        resp = await do_post("/api/users", data, authorize=True, permissions=["manage_users"])
+        resp = await client.post("/api/users", data)
 
         assert resp.status == 422
 
@@ -177,34 +186,36 @@ class TestCreate:
             "user_id": ["required field"]
         })
 
-    async def test_user_exists(self, do_post, resp_is):
+    async def test_user_exists(self, spawn_client, resp_is):
         """
         Test that an input ``user_id`` that already exists results in a ``400`` response with informative error message.
 
         """
+        client = await spawn_client(authorize=True, permissions=["manage_users"])
+
         data = {
             "user_id": "test",
             "password": "hello_world",
             "force_reset": False
         }
 
-        resp = await do_post("/api/users", data, authorize=True, permissions=["manage_users"])
+        resp = await client.post("/api/users", data)
 
         assert await resp_is.conflict(resp, "User already exists")
 
 
 class TestSetPassword:
 
-    async def test_valid(self, monkeypatch, do_put, test_db, static_time, create_user):
+    async def test_valid(self, monkeypatch, spawn_client, static_time, create_user):
         """
         Test that a valid request results in a password change.
 
         """
-        bob = create_user("bob")
+        client = await spawn_client(authorize=True, permissions=["manage_users"])
 
-        bob["last_password_change"] = None
+        bob = dict(create_user("bob"), last_password_change=None)
 
-        test_db.users.insert(bob)
+        await client.db.users.insert_one(bob)
 
         data = {
             "password": "foo_bar"
@@ -212,7 +223,7 @@ class TestSetPassword:
 
         monkeypatch.setattr("virtool.utils.timestamp", lambda: static_time)
 
-        resp = await do_put("/api/users/bob/password", data, authorize=True, permissions=["manage_users"])
+        resp = await client.put("/api/users/bob/password", data)
 
         assert resp.status == 200
 
@@ -239,25 +250,29 @@ class TestSetPassword:
             "primary_group": ""
         }
 
-    async def test_not_found(self, do_put, resp_is):
+    async def test_not_found(self, spawn_client, resp_is):
         """
         Test that a ``404`` response results when the ``user_id`` does not exist.
         
         """
+        client = await spawn_client(authorize=True, permissions=["manage_users"])
+
         data = {
             "password": "foo_bar"
         }
 
-        resp = await do_put("/api/users/fred/password", data, authorize=True, permissions=["manage_users"])
+        resp = await client.put("/api/users/fred/password", data)
 
         assert await resp_is.not_found(resp)
 
-    async def test_invalid_input(self, do_put, resp_is):
+    async def test_invalid_input(self, spawn_client, resp_is):
         """
         Test that a valid request results in a password change.
 
         """
-        resp = await do_put("/api/users/test/password", {"reset": False}, authorize=True, permissions=["manage_users"])
+        client = await spawn_client(authorize=True, permissions=["manage_users"])
+
+        resp = await client.put("/api/users/test/password", {"reset": False})
 
         assert resp.status == 422
 
@@ -269,18 +284,20 @@ class TestSetPassword:
 
 class TestSetForceReset:
 
-    async def test(self, do_put, test_db, create_user):
+    async def test(self, spawn_client, create_user):
         """
         Test that a valid request results in a password change.
 
         """
-        test_db.users.insert(create_user("bob"))
+        client = await spawn_client(authorize=True, permissions=["manage_users"])
+
+        await client.db.users.insert_one(create_user("bob"))
 
         data = {
             "force_reset": True
         }
 
-        resp = await do_put("/api/users/bob/reset", data, authorize=True, permissions=["manage_users"])
+        resp = await client.put("/api/users/bob/reset", data)
 
         assert resp.status == 200
 
@@ -307,32 +324,36 @@ class TestSetForceReset:
             "primary_group": ""
         }
 
-    async def test_not_found(self, do_put, resp_is):
+    async def test_not_found(self, spawn_client, resp_is):
         """
         Test that a ``404`` response results when the ``user_id`` does not exist.
 
         """
+        client = await spawn_client(authorize=True, permissions=["manage_users"])
+
         data = {
             "force_reset": False
         }
 
-        resp = await do_put("/api/users/fred/reset", data, authorize=True, permissions=["manage_users"])
+        resp = await client.put("/api/users/fred/reset", data)
 
         assert await resp_is.not_found(resp)
 
-    async def test_invalid_input(self, do_put, test_db, create_user, resp_is):
+    async def test_invalid_input(self, spawn_client, create_user, resp_is):
         """
         Test that a valid request results in a change to the ``force_reset`` field.
 
         """
-        test_db.users.insert(create_user("bob"))
+        client = await spawn_client(authorize=True, permissions=["manage_users"])
+
+        await client.db.users.insert_one(create_user("bob"))
 
         data = {
             "unwanted": True,
             "force_reset": "False"
         }
 
-        resp = await do_put("/api/users/bob/reset", data, authorize=True, permissions=["manage_users"])
+        resp = await client.put("/api/users/bob/reset", data)
 
         assert await resp_is.invalid_input(resp, {
             "unwanted": ["unknown field"],
@@ -342,12 +363,14 @@ class TestSetForceReset:
 
 class TestAddGroup:
 
-    async def test_valid(self, test_db, do_post, create_user, no_permissions):
+    async def test_valid(self, spawn_client, create_user, no_permissions):
         """
         Test that a valid request results in the addition of a group to a user document.
          
         """
-        test_db.groups.insert_many([
+        client = await spawn_client(authorize=True, permissions=["manage_users"])
+
+        await client.db.groups.insert_many([
             {
                 "_id": "tech",
                 "permissions": dict(no_permissions, modify_virus=True)
@@ -358,13 +381,13 @@ class TestAddGroup:
             }
         ])
 
-        test_db.users.insert(create_user("bob"))
+        await client.db.users.insert(create_user("bob"))
 
         data = {
             "group_id": "tech"
         }
 
-        resp = await do_post("/api/users/bob/groups", data, authorize=True, permissions=["manage_users"])
+        resp = await client.post("/api/users/bob/groups", data)
 
         assert resp.status == 200
 
@@ -374,12 +397,14 @@ class TestAddGroup:
             "permissions": dict(no_permissions, modify_virus=True)
         }
 
-    async def test_user_not_found(self, test_db, do_post, no_permissions, resp_is):
+    async def test_user_not_found(self, spawn_client, no_permissions, resp_is):
         """
         Test that a request to remove a group from a non-existent user results in a ``404`` response.
          
         """
-        test_db.groups.insert_one({
+        client = await spawn_client(authorize=True, permissions=["manage_users"])
+
+        await client.db.groups.insert_one({
             "_id": "tech",
             "permissions": dict(no_permissions, modify_virus=True)
         })
@@ -388,35 +413,39 @@ class TestAddGroup:
             "group_id": "tech"
         }
 
-        resp = await do_post("/api/users/bob/groups", data, authorize=True, permissions=["manage_users"])
+        resp = await client.post("/api/users/bob/groups", data)
 
         assert await resp_is.not_found(resp, "User not found")
 
-    async def test_group_not_found(self, test_db, do_post, resp_is, create_user):
+    async def test_group_not_found(self, spawn_client, resp_is, create_user):
         """
         Test that a request to delete an non-existent group results in a ``404`` response.
          
         """
-        test_db.users.insert(create_user("bob"))
+        client = await spawn_client(authorize=True, permissions=["manage_users"])
+
+        await client.db.users.insert_one(create_user("bob"))
 
         data = {
             "group_id": "foobar"
         }
 
-        resp = await do_post("/api/users/bob/groups", data, authorize=True, permissions=["manage_users"])
+        resp = await client.post("/api/users/bob/groups", data)
 
         assert await resp_is.not_found(resp, "Group not found")
 
-    async def test_invalid_input(self, do_post, resp_is):
+    async def test_invalid_input(self, spawn_client, resp_is):
         """
         Test that problems in the request input result in a ``422`` response with the appropriate error data attached. 
 
         """
+        client = await spawn_client(authorize=True, permissions=["manage_users"])
+
         data = {
             "group": "tech"
         }
 
-        resp = await do_post("/api/users/bob/groups", data, authorize=True, permissions=["manage_users"])
+        resp = await client.post("/api/users/bob/groups", data)
 
         assert await resp_is.invalid_input(resp, {
             "group": ["unknown field"],
@@ -426,13 +455,15 @@ class TestAddGroup:
 
 class TestRemoveGroup:
 
-    async def test_valid(self, test_db, do_delete, create_user, no_permissions):
+    async def test_valid(self, spawn_client, create_user, no_permissions):
         """
         Test that a valid request can result in removal of a group from a user and recalculation of the user's
         permissions.
         
         """
-        test_db.groups.insert_many([
+        client = await spawn_client(authorize=True, permissions=["manage_users"])
+
+        await client.db.groups.insert_many([
             {
                 "_id": "tech",
                 "permissions": dict(no_permissions, modify_virus=True)
@@ -443,19 +474,19 @@ class TestRemoveGroup:
             }
         ])
 
-        test_db.users.insert(create_user(
+        await client.db.users.insert_one(create_user(
             "bob",
             groups=["tech", "test"],
             permissions=["modify_virus", "rebuild_index"]
         ))
 
-        assert test_db.users.find_one("bob", ["_id", "groups", "permissions"]) == {
+        assert await client.db.users.find_one("bob", ["_id", "groups", "permissions"]) == {
             "_id": "bob",
             "groups": ["tech", "test"],
             "permissions": dict(no_permissions, modify_virus=True, rebuild_index=True)
         }
 
-        resp = await do_delete("/api/users/bob/groups/tech", authorize=True, permissions=["manage_users"])
+        resp = await client.delete("/api/users/bob/groups/tech")
 
         assert resp.status == 200
 
@@ -465,12 +496,14 @@ class TestRemoveGroup:
             "permissions": dict(no_permissions, rebuild_index=True)
         }
 
-    async def test_user_does_not_exist(self, test_db, do_post, resp_is, no_permissions):
+    async def test_user_does_not_exist(self, spawn_client, resp_is, no_permissions):
         """
         Test that a ``404`` response results if the ``user_id`` does not exist.
         
         """
-        test_db.groups.insert_one({
+        client = await spawn_client(authorize=True, permissions=["manage_users"])
+
+        await client.db.groups.insert_one({
             "_id": "tech",
             "permissions": dict(no_permissions, modify_virus=True)
         })
@@ -479,29 +512,33 @@ class TestRemoveGroup:
             "group_id": "tech"
         }
 
-        resp = await do_post("/api/users/bob/groups", data, authorize=True, permissions=["manage_users"])
+        resp = await client.post("/api/users/bob/groups", data)
 
         assert await resp_is.not_found(resp, "User not found")
 
 
 class TestRemove:
 
-    async def test_valid(self, test_db, do_delete, create_user):
+    async def test_valid(self, spawn_client, create_user):
         """
         Test that a group is removed from the user for a valid request.
          
         """
-        test_db.users.insert(create_user("bob"))
+        client = await spawn_client(authorize=True, permissions=["manage_users"])
 
-        resp = await do_delete("/api/users/bob", authorize=True, permissions=["manage_users"])
+        await client.db.users.insert_one(create_user("bob"))
+
+        resp = await client.delete("/api/users/bob")
 
         assert resp.status == 204
 
-    async def test_does_not_exist(self, do_delete, resp_is):
+    async def test_does_not_exist(self, spawn_client, resp_is):
         """
         Test that a request to remove a non-existent user results in a ``404`` response.
                  
         """
-        resp = await do_delete("/api/users/bob", authorize=True, permissions=["manage_users"])
+        client = await spawn_client(authorize=True, permissions=["manage_users"])
+
+        resp = await client.delete("/api/users/bob")
 
         assert await resp_is.not_found(resp)

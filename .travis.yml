@@ -50,6 +50,11 @@ install:
 - npm install -g yarn
 - npm install -g webpack
 - cd $TRAVIS_BUILD_DIR
+- cd client
+- yarn install
+- webpack --config webpack.production.config.js
+- cd $TRAVIS_BUILD_DIR
+
 
 before_script:
 - sleep 15
@@ -61,10 +66,6 @@ after_success:
 - python-codacy-coverage -r coverage.xml
 - mkdir build
 - mkdir build/virtool
-- cd client
-- yarn install
-- webpack --config webpack.production.config.js
-- cd ..
 - pyinstaller -F --hidden-import=tkinter --hidden-import=tkinter.filedialog --distpath build/virtool run.py
 - cp -rv assets build/virtool
 - cp -rv client/dist build/virtool/client

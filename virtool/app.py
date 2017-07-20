@@ -20,6 +20,8 @@ import virtool.organize
 import virtool.user_sessions
 import virtool.error_pages
 import virtool.nvstat
+import virtool.setup
+import virtool.utils
 
 
 logger = logging.getLogger(__name__)
@@ -155,6 +157,32 @@ async def init_file_manager(app):
         app["file_manager"] = None
 
 
+def init_setup(app):
+    app["setup"] = {
+        "db_host": None,
+        "db_port": None,
+        "db_name": None,
+
+        "first_user_id": None,
+        "first_user_password": None,
+
+        "data_path": None,
+        "watch_path": None,
+
+        "errors": {
+            "db_exists_error": False,
+            "db_connection_error": False,
+            "password_confirmation_error": False,
+            "data_not_empty_error": False,
+            "data_not_found_error": False,
+            "data_permission_error": False,
+            "watch_not_empty_error": False,
+            "watch_not_found_error": False,
+            "watch_permission_error": False
+        }
+    }
+
+
 async def on_shutdown(app):
     """
     A function called when the app is shutting down.
@@ -184,7 +212,7 @@ async def on_shutdown(app):
         await file_manager.close()
 
 
-def create_app(loop, db_name=None, disable_job_manager=False, disable_file_manager=False):
+def create_app(loop, db_name=None, disable_job_manager=False, disable_file_manager=False, skip_setup=False):
     """
     Creates the Virtool application.
     
@@ -193,28 +221,42 @@ def create_app(loop, db_name=None, disable_job_manager=False, disable_file_manag
     - initializes all main Virtool objects during ``on_startup``
      
     """
-    app = web.Application(loop=loop, middlewares=[
-        virtool.error_pages.middleware_factory,
-        virtool.user_sessions.middleware_factory
-    ])
+    middlewares = [
+        virtool.error_pages.middleware_factory
+    ]
 
-    virtool.app_routes.setup_routes(app)
+    exec_path = os.path.dirname(os.path.realpath(__file__))
+
+    settings_path = os.path.join(exec_path, "settings.json")
+
+    requires_setup = not skip_setup and not os.path.isfile(settings_path)
+
+    if not requires_setup:
+        middlewares.append(virtool.user_sessions.middleware_factory)
+
+    app = web.Application(loop=loop, middlewares=middlewares)
 
     app["db_name"] = db_name
 
-    app.on_startup.append(init_thread_pool_executor)
-    app.on_startup.append(init_settings)
-    app.on_startup.append(init_dispatcher)
-    app.on_startup.append(init_db)
-    app.on_startup.append(init_resources)
+    if requires_setup:
+        virtool.setup.setup_routes(app)
+        app.on_startup.append(init_setup)
+    else:
+        virtool.app_routes.setup_routes(app)
 
-    if not disable_job_manager:
-        app.on_startup.append(init_job_manager)
+        app.on_startup.append(init_thread_pool_executor)
+        app.on_startup.append(init_settings)
+        app.on_startup.append(init_dispatcher)
+        app.on_startup.append(init_db)
+        app.on_startup.append(init_resources)
 
-    if not disable_file_manager:
-        app.on_startup.append(init_file_manager)
+        if not disable_job_manager:
+            app.on_startup.append(init_job_manager)
 
-    app.on_shutdown.append(on_shutdown)
+        if not disable_file_manager:
+            app.on_startup.append(init_file_manager)
+
+        app.on_shutdown.append(on_shutdown)
 
     return app
 
@@ -237,18 +279,6 @@ def configure_ssl(cert_path, key_path):
     ssl_ctx.load_cert_chain(cert_path, keyfile=key_path)
 
     return ssl_ctx
-
-
-def reload():
-    exe = sys.executable
-
-    if exe.endswith("python") or "python3" in exe:
-        os.execl(exe, exe, *sys.argv)
-
-    if exe.endswith("run"):
-        os.execv(exe, sys.argv)
-
-    raise SystemError("Could not determine executable type")
 
 
 def find_server_version(install_path="."):

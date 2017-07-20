@@ -30,14 +30,10 @@ authorized_only = [
 
 
 @pytest.mark.parametrize("method, args", parameters + authorized_only)
-async def test_not_authorized(method, args, do_get, do_post, do_patch, do_put, do_delete):
-    doer = {
-        "get": do_get,
-        "post": do_post,
-        "patch": do_patch,
-        "put": do_put,
-        "delete": do_delete
-    }[method]
+async def test_not_authorized(method, args, spawn_client):
+    client = await spawn_client()
+
+    doer = getattr(client, method)
 
     resp = await doer(*args)
 
@@ -50,16 +46,12 @@ async def test_not_authorized(method, args, do_get, do_post, do_patch, do_put, d
 
 
 @pytest.mark.parametrize("method, args", parameters)
-async def test_not_permitted(method, args, do_get, do_post, do_patch, do_put, do_delete):
-    doer = {
-        "get": do_get,
-        "post": do_post,
-        "patch": do_patch,
-        "put": do_put,
-        "delete": do_delete
-    }[method]
+async def test_not_permitted(method, args, spawn_client):
+    client = await spawn_client(authorize=True)
 
-    resp = await doer(*args, authorize=True)
+    doer = getattr(client, method)
+
+    resp = await doer(*args)
 
     assert resp.status == 403
 

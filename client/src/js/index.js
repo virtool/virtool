@@ -1,6 +1,5 @@
 import React from "react";
 import ReactDOM from "react-dom";
-import { every } from "lodash";
 
 import App from "./App";
 import WSConnection from "virtool/js/websocket";

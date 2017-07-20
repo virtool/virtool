@@ -1,4 +1,5 @@
 import os
+import sys
 import arrow
 import shutil
 import datetime
@@ -212,8 +213,20 @@ def to_bool(obj):
 
 
 def get_static_hash():
-    client_files = os.listdir("./client/dist")
+    client_files = os.listdir(os.path.join(sys.path[0], "client", "dist"))
 
     for file_name in client_files:
         if "style." in file_name:
             return file_name.split(".")[1]
+
+
+def reload():
+    exe = sys.executable
+
+    if exe.endswith("python") or "python3" in exe:
+        os.execl(exe, exe, *sys.argv)
+
+    if exe.endswith("run"):
+        os.execv(exe, sys.argv)
+
+    raise SystemError("Could not determine executable type")

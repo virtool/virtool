@@ -10,8 +10,6 @@
 import { assign, every, reject } from "lodash";
 
 import {
-    WS_UPDATE_FILE,
-    WS_REMOVE_FILE,
     FIND_FILES,
     REMOVE_FILE,
     UPLOAD_READS,

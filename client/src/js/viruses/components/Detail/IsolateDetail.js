@@ -142,7 +142,11 @@ const IsolateDetail = (props) => {
 
 IsolateDetail.propTypes = {
     match: PropTypes.object,
+    history: PropTypes.object,
+    location: PropTypes.object,
+
     virusId: PropTypes.string,
+    default: PropTypes.string,
     isolates: PropTypes.arrayOf(PropTypes.object),
 
     allowedSourceTypes: PropTypes.arrayOf(PropTypes.string),

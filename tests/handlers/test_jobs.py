@@ -1,9 +1,11 @@
 class TestGet:
 
-    async def test(self, test_motor, do_get, test_job):
-        await test_motor.jobs.insert_one(test_job)
+    async def test(self, spawn_client, test_job):
+        client = await spawn_client()
 
-        resp = await do_get("/api/jobs/4c530449")
+        await client.db.jobs.insert_one(test_job)
+
+        resp = await client.get("/api/jobs/4c530449")
 
         assert await resp.json() == {
             "task": "rebuild_index",
@@ -53,7 +55,9 @@ class TestGet:
             ]
         }
 
-    async def test_not_found(self, do_get, resp_is):
-        resp = await do_get("/api/jobs/4c530449")
+    async def test_not_found(self, spawn_client, resp_is):
+        client = await spawn_client()
+
+        resp = await client.get("/api/jobs/4c530449")
 
         assert await resp_is.not_found(resp)

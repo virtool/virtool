@@ -2,21 +2,54 @@ var path = require("path");
 var webpack = require("webpack");
 var HTMLPlugin = require("html-webpack-plugin");
 var CleanPlugin = require("clean-webpack-plugin");
+var ExtractTextPlugin = require("extract-text-webpack-plugin");
 
-var config = {
+module.exports = {
 
-    entry: "./src/js/app.js",
+    entry: ["babel-polyfill", "./src/js/index.js"],
 
     module: {
-        loaders: [
+        rules: [
             {
                 test: /\.js$/,
                 exclude: /(node_modules)/,
-                loaders: ["babel-loader", "eslint-loader"]
+                use: [
+                    "babel-loader",
+                    {
+                        loader: "eslint-loader",
+                        options: {
+                            configFile: path.resolve(__dirname, "./.eslintrc")
+                        }
+
+                    }
+                ]
             },
 
-            {test: /\.css$/, loader: "style!css"},
-            {test: /\.woff$/, loader: "url?limit=100000"}
+            {
+                test: /\.css$/,
+                use: ExtractTextPlugin.extract({
+                    fallback: "style-loader",
+                    use: "css-loader"
+                })
+            },
+
+            {
+                test: /\.less$/,
+                use: ExtractTextPlugin.extract({
+                    fallback: "style-loader",
+                    use: [
+                        {loader: "css-loader"},
+                        {loader: "less-loader"}
+                    ]
+                })
+            },
+
+            {
+                test: /\.woff$/,
+                use: {
+                    loader: "url-loader?limit=100000"
+                }
+            }
         ]
     },
 
@@ -29,8 +62,9 @@ var config = {
     },
 
     output: {
-        path: "dist",
-        filename: "app.[hash].js"
+        path: path.resolve(__dirname, "./dist"),
+        filename: "app.[hash:8].js",
+        publicPath: "/static/"
     },
 
     plugins: [
@@ -48,6 +82,8 @@ var config = {
             comments: false
         }),
 
+        new ExtractTextPlugin("style.[hash:8].css"),
+
         new HTMLPlugin({
             filename: "index.html",
             title: "Virtool",
@@ -59,10 +95,5 @@ var config = {
         new CleanPlugin(["dist"], {
             verbose: true
         })
-    ],
-
-    progress: true,
-    colors: true
+    ]
 };
-
-module.exports = config;

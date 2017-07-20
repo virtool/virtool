@@ -58,7 +58,8 @@ const UploadOverlay = (props) => {
 UploadOverlay.propTypes = {
     uploads: PropTypes.arrayOf(PropTypes.object),
     showUploadOverlay: PropTypes.bool,
-    uploadsComplete: PropTypes.bool
+    uploadsComplete: PropTypes.bool,
+    onClose: PropTypes.func
 };
 
 const mapStateToProps = (state) => {

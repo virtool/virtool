@@ -56,6 +56,8 @@ class CreateSample extends React.Component {
     static propTypes = {
         show: PropTypes.bool,
         onHide: PropTypes.func,
+        groups: PropTypes.array,
+        readyReads: PropTypes.array,
         readFiles: PropTypes.arrayOf(PropTypes.object),
         readyHosts: PropTypes.arrayOf(PropTypes.object),
         onFindFiles: PropTypes.func,
@@ -83,8 +85,6 @@ class CreateSample extends React.Component {
 
     handleSubmit = (event) => {
         event.preventDefault();
-
-        console.log(this.state);
 
         this.props.onCreate(
             this.state.name,

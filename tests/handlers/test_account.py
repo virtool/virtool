@@ -4,8 +4,10 @@ from virtool.user import check_password
 
 class TestGet:
 
-    async def test(self, do_get):
-        resp = await do_get("/api/account", authorize=True)
+    async def test(self, spawn_client):
+        client = await spawn_client(authorize=True)
+
+        resp = await client.get("/api/account")
 
         assert resp.status == 200
 
@@ -41,12 +43,14 @@ class TestGet:
 
 class TestGetSettings:
 
-    async def test(self, do_get):
+    async def test(self, spawn_client):
         """
         Test that a ``GET /account/settings`` returns the settings for the session user.
 
         """
-        resp = await do_get("/api/account/settings", authorize=True)
+        client = await spawn_client(authorize=True)
+
+        resp = await client.get("/api/account/settings")
 
         assert resp.status == 200
 
@@ -60,14 +64,16 @@ class TestGetSettings:
 
 class TestUpdateSettings:
 
-    async def test(self, do_patch):
+    async def test(self, spawn_client):
         """
         Test that account settings can be updated at ``POST /account/settings``.
 
         """
-        resp = await do_patch("/api/account/settings", {
+        client = await spawn_client(authorize=True)
+
+        resp = await client.patch("/api/account/settings", {
             "show_ids": False
-        }, authorize=True)
+        })
 
         assert resp.status == 200
 
@@ -78,15 +84,17 @@ class TestUpdateSettings:
             "quick_analyze_algorithm": "pathoscope_bowtie"
         }
 
-    async def test_invalid_input(self, do_patch, resp_is):
+    async def test_invalid_input(self, spawn_client, resp_is):
         """
         Test that requests to ``POST /account/settings`` return 422 for invalid JSON fields.
 
         """
-        resp = await do_patch("/api/account/settings", {
+        client = await spawn_client(authorize=True)
+
+        resp = await client.patch("/api/account/settings", {
             "show_ids": "yes",
             "foo_bar": True
-        }, authorize=True)
+        })
 
         assert await resp_is.invalid_input(resp,  {
             "show_ids": ["must be of boolean type"],
@@ -96,42 +104,43 @@ class TestUpdateSettings:
 
 class TestChangePassword:
 
-    async def test(self, test_db, do_put):
+    async def test(self, spawn_client):
         """
         Test that requests to ``PUT /account/password`` return 400 for unauthorized sessions.
 
         """
-        resp = await do_put("/api/account/password", {
-            "old_password": "hello_world",
-            "new_password": "foo_bar"
-        }, authorize=True)
+        client = await spawn_client(authorize=True)
+
+        resp = await client.put("/api/account/password", {"old_password": "hello_world", "new_password": "foo_bar"})
 
         assert resp.status == 200
 
-        document = test_db.users.find_one({"_id": "test"}, ["password"])
+        document = await client.db.users.find_one({"_id": "test"}, ["password"])
 
         assert check_password("foo_bar", document["password"])
 
-    async def test_invalid_credentials(self, do_put, resp_is):
+    async def test_invalid_credentials(self, spawn_client, resp_is):
         """
         Test that request to ``PUT /account/password`` return 400 for wrong ``old_password`` values.
          
         """
-        resp = await do_put("/api/account/password", {
+        client = await spawn_client(authorize=True)
+
+        resp = await client.put("/api/account/password", {
             "old_password": "not_right",
             "new_password": "foo_bar"
-        }, authorize=True)
+        })
 
         assert await resp_is.bad_request(resp, "Invalid credentials")
 
-    async def test_invalid_input(self, do_put, resp_is):
+    async def test_invalid_input(self, spawn_client, resp_is):
         """
         Test that requests to ``PUT /account/password`` return 422 for invalid fields.
 
         """
-        resp = await do_put("/api/account/password", {
-            "new_password": 1234
-        }, authorize=True)
+        client = await spawn_client(authorize=True)
+
+        resp = await client.put("/api/account/password", {"new_password": 1234})
 
         assert await resp_is.invalid_input(resp, {
             "old_password": ["required field"],
@@ -141,26 +150,24 @@ class TestChangePassword:
 
 class TestLogout:
 
-    async def test(self, do_get):
+    async def test(self, spawn_client):
         """
         Test that calling the logout endpoint results in the current session being removed and the user being logged
         out.
 
         """
-        # Authorize the session
-        resp = await do_get("/api/account", authorize=True)
-        assert resp.status == 200
+        client = await spawn_client(authorize=True)
 
-        # Make sure the session is still authorized
-        resp = await do_get("/api/account")
+        # Make sure the session is authorized
+        resp = await client.get("/api/account")
         assert resp.status == 200
 
         # Logout
-        resp = await do_get("/api/account/logout")
+        resp = await client.get("/api/account/logout")
         assert resp.status == 204
 
         # Make sure that the session is no longer authorized
-        resp = await do_get("/api/account")
+        resp = await client.get("/api/account")
         assert resp.status == 401
 
 
@@ -170,17 +177,19 @@ class TestLogout:
     ("PATCH", "/api/account/settings"),
     ("PUT", "/api/account/password"),
 ])
-async def test_requires_authorization(method, path, do_get, do_patch, do_put):
+async def test_requires_authorization(method, path, spawn_client):
     """
     Test that a requires authorization 401 response is sent when the session is not authenticated.
 
     """
+    client = await spawn_client()
+
     if method == "GET":
-        resp = await do_get(path)
+        resp = await client.get(path)
     elif method == "PATCH":
-        resp = await do_patch(path, {})
+        resp = await client.patch(path, {})
     else:
-        resp = await do_put(path, {})
+        resp = await client.put(path, {})
 
     assert await resp.json() == {
         "id": "requires_authorization",

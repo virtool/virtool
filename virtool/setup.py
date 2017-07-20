@@ -1,201 +1,303 @@
 import os
-import motor
+import sys
+import copy
+import motor.motor_asyncio
+import logging
 import pymongo.errors
+from aiohttp import web
+from mako.template import Template
+from cerberus import Validator
 
 import virtool.user
-import virtool.user_groups
+import virtool.user_permissions
 import virtool.utils
-import virtool.virus
-import virtool.sample
-import virtool.hosts
+from virtool.handlers.utils import json_response
+
+logger = logging.getLogger(__name__)
 
 
-@virtool.gen.coroutine
-def handle_request(handler, data):
-    try:
-        operation = data["operation"]
-    except tornado.web.MissingArgumentError:
-        raise NameError("No setup operation specified.")
+def setup_routes(app):
+    app.router.add_route("*", r"/api{suffix:.*}", unavailable)
+    app.router.add_get(r"/setup", setup_get)
+    app.router.add_post(r"/setup/db", setup_db)
+    app.router.add_post(r"/setup/user", setup_user)
+    app.router.add_post(r"/setup/data", setup_data)
+    app.router.add_post(r"/setup/watch", setup_watch)
+    app.router.add_get(r"/setup/clear", clear)
+    app.router.add_get(r"/setup/save", save_and_reload)
 
-    # Get the function that should be called with the RequestHandler object.
-    try:
-        function = globals()[operation]
-    except KeyError:
-        raise KeyError("Could not find specified operation function: " + operation)
+    static_path = os.path.join(sys.path[0], "client", "dist")
 
-    response = yield function(handler, data)
+    if os.path.isdir(static_path):
+        app.router.add_static("/static", static_path)
 
-    return response
-
-
-@virtool.gen.coroutine
-def check_ready(handler, data):
-    return {"serverReady": handler.server_settings.get("server_ready")}
+    app.router.add_get(r"/{suffix:.*}", setup_redirect)
 
 
-@virtool.gen.coroutine
-def save_setup(handler, data):
-    host = handler.get_body_argument('host')
-    port = int(handler.get_body_argument('port'))
-    name = handler.get_body_argument('name')
-    new_server = handler.get_body_argument("new_server") == 'true'
+async def unavailable(req):
+    return json_response({
+        "id": "requires_setup",
+        "message": "Server is not configured"
+    }, status=503, headers={"Location": "/setup"})
 
-    db = motor.MotorClient(data["host"], int(data["port"]))[name]
 
-    settings = {
-        "db_host": host,
-        "db_port": int(port),
-        "db_name": name,
-        "data_path": data["dataPath"],
-        "watch_path": data["watchPath"],
-        "server_ready": True
+async def setup_redirect(req):
+    return web.HTTPFound("/setup")
+
+
+async def setup_get(req):
+    template = Template(filename=os.path.join(sys.path[0], "virtool", "templates", "setup.html"))
+
+    setup = copy.deepcopy(req.app["setup"])
+
+    if setup["first_user_password"]:
+        setup["first_user_password"] = "dummy password"
+
+    html = template.render(hash=virtool.utils.get_static_hash(), setup=setup)
+
+    return web.Response(body=html, content_type="text/html")
+
+
+async def setup_db(req):
+    data = await req.post()
+
+    v = Validator({
+        "db_host": {"type": "string", "coerce": lambda x: x if x else "localhost", "required": True, "empty": False},
+        "db_port": {"type": "integer", "coerce": lambda x: int(x) if x else 27017, "required": True, "empty": False},
+        "db_name": {"type": "string", "coerce": lambda x: x if x else "virtool", "required": True, "empty": False}
+    }, allow_unknown=False)
+
+    v(dict(data))
+
+    data = v.document
+
+    clear_update = {
+        "db_host": None,
+        "db_port": None,
+        "db_name": None
     }
-
-    if new_server:
-        collection_names = [
-            "jobs",
-            "samples",
-            "analyses",
-            "viruses",
-            "indexes",
-            "history",
-            "hosts",
-            "sequences",
-            "users",
-            "groups"
-        ]
-
-        for collection_name in collection_names:
-            yield db.create_collection(collection_name)
-    try:
-        yield virtool.gen.THREAD_POOL.submit(os.makedirs, settings["watch_path"])
-    except FileExistsError:
-        pass
-
-    yield db.groups.update_one({"_id": "administrator"}, {
-        "$set": {
-            "permissions": {permission: True for permission in virtool.groups.PERMISSIONS}
-        }
-    }, upsert=True)
-
-    username = data["username"]
-
-    if username:
-        db.users.insert_one({
-            "_id": username,
-            # A list of group _ids the user is associated with.
-            "groups": ["administrator"],
-            "primary_group": "administrator",
-            "settings": {},
-            "sessions": [],
-            "password": virtool.users.hash_password(data["password"]),
-            "permissions": {permission: True for permission in virtool.groups.PERMISSIONS},
-            # Should the user be forced to reset their password on their next login?
-            "force_reset": False,
-            # A timestamp taken at the last password change.
-            "last_password_change": virtool.utils.timestamp(),
-            # Should all of the user's sessions be invalidated so that they are forced to login next time they
-            # download the client.
-            "invalidate_sessions": False
-        })
-
-    handler.server_settings.update(settings)
-
-    response = yield handler.reload()
-
-    return response
-
-
-@virtool.gen.coroutine
-def connect(handler, data):
-    # The response to send to the client. If the connection fails, the names property is set to None. This is
-    # interpreted as a failed connection by the client.
-    names = None
 
     try:
         # Try to make a connection to the Mongo instance. This will throw a ConnectionFailure exception if it fails
-        connection = motor.MotorClient(host=data["host"], port=int(data["port"]), serverSelectionTimeoutMS=2000)
+        connection = motor.motor_asyncio.AsyncIOMotorClient(
+            io_loop=req.app.loop,
+            host=data["db_host"],
+            port=int(data["db_port"]),
+            serverSelectionTimeoutMS=1500
+        )
 
         # Succeeds if the connection was successful. Names will always contain at least the 'local' database.
-        names = yield connection.database_names()
+        names = await connection.database_names()
 
-        # Remove the local database that is always present in the list of databases if a connection was made.
-        names.remove("local")
+        if data["db_name"] in names:
+            req.app["setup"].update(clear_update)
+            req.app["setup"]["errors"].update({
+                "db_exists_error": True,
+                "db_connection_error": False
+            })
+        else:
+            req.app["setup"].update(data)
+            req.app["setup"]["errors"].update({
+                "db_exists_error": False,
+                "db_connection_error": False
+            })
 
     except (pymongo.errors.ConnectionFailure, TypeError, ValueError):
-        pass
-
-    return {"names": names}
-
-
-@virtool.gen.coroutine
-def check_db(handler, data):
-    response = {
-        "exists": False,
-        "admin": False,
-        "collections": False,
-        "error": None
-    }
-
-    # Try to make a connection to the Mongo instance. This will throw a ConnectionFailure exception if it fails.
-    client = motor.MotorClient(host=data["host"], port=int(data["port"]), serverSelectionTimeoutMS=2000)
-
-    # Check if the passed db_name exists.
-    try:
-        names = yield client.database_names()
-    except pymongo.errors.ConnectionFailure:
-        response["error"] = "Could not connect to MongoDB instance."
-        return response
-
-    response["exists"] = data["name"] in names
-
-    # Immediately return the response if the database specified by db_name does not exist.
-    if not response["exists"]:
-        return response
-
-    database = client[data["name"]]
-
-    # Check if there are any administrator users in the database.
-    administrator_count = yield database["users"].find({"groups": "administrator"}).count()
-    response["admin"] = administrator_count > 0
-
-    # Check if any important collections already exist. A warning will be displayed to the user if so.
-    record_counts = 0
-
-    for collection_name in ["samples", "viruses", "jobs", "hosts"]:
-        record_counts += yield database[collection_name].count()
-
-    response["collections"] = record_counts > 0
-
-    return response
-
-
-@virtool.gen.coroutine
-def set_data_path(handler, data):
-    new_server = data["new_server"] == 'true'
-
-    response = yield virtool.gen.THREAD_POOL.submit(ensure_path, data["path"], new_server)
-
-    if not response["failed"] and not new_server:
-
-        host = handler.get_body_argument('host')
-        port = int(handler.get_body_argument('port'))
-        name = handler.get_body_argument('name')
-
-        response.update({
-            "viruses": virtool.viruses.check_collection(name, data["path"], host, port),
-            "samples": virtool.samples.check_collection(name, data["path"], host, port),
-            "hosts": virtool.hosts.check_collection(name, data["path"], host, port)
+        req.app["setup"].update(clear_update)
+        req.app["setup"]["errors"].update({
+            "db_exists_error": False,
+            "db_connection_error": True
         })
 
-    return response
+    return web.HTTPFound("/setup")
 
 
-def ensure_path(path, new_server):
-    response = {
-        "failed": False,
-        "message": None
+async def setup_user(req):
+    data = await req.post()
+
+    v = Validator({
+        "user_id": {"type": "string", "required": True},
+        "password": {"type": "string", "required": True},
+        "password_confirm": {"type": "string", "required": True},
+    }, allow_unknown=False)
+
+    v(dict(data))
+
+    data = v.document
+
+    if data["password"] == data["password_confirm"]:
+        req.app["setup"]["errors"]["password_confirmation_error"] = False
+        req.app["setup"].update({
+            "first_user_id": data["user_id"],
+            "first_user_password": virtool.user.hash_password(data["password"])
+        })
+    else:
+        req.app["setup"]["errors"]["password_confirmation_error"] = True
+        req.app["setup"].update({
+            "first_user_id": None,
+            "first_user_password": None
+        })
+
+    return web.HTTPFound("/setup")
+
+
+async def setup_data(req):
+    data = await req.post()
+
+    v = Validator({
+        "data_path": {"type": "string", "coerce": lambda x: x if x else "data", "required": True}
+    }, allow_unknown=False)
+
+    v(dict(data))
+
+    data_path = v.document["data_path"]
+
+    req.app["setup"]["data_path"] = None
+
+    req.app["setup"]["errors"].update({
+        "data_not_found_error": False,
+        "data_not_empty_error": False,
+        "data_permission_error": False
+    })
+
+    joined_path = str(data_path)
+
+    if not joined_path.startswith("/"):
+        joined_path = os.path.join(sys.path[0], joined_path)
+
+    try:
+        os.mkdir(joined_path)
+        os.rmdir(joined_path)
+        req.app["setup"]["data_path"] = data_path
+    except FileNotFoundError:
+        req.app["setup"]["errors"]["data_not_found_error"] = True
+    except FileExistsError:
+        try:
+            if len(os.listdir(data_path)):
+                req.app["setup"]["errors"]["data_not_empty_error"] = True
+            else:
+                test_path = os.path.join(joined_path, "test")
+                try:
+                    os.mkdir(test_path)
+                except PermissionError:
+                    req.app["setup"]["errors"]["data_permission_error"] = True
+        except PermissionError:
+            req.app["setup"]["errors"]["data_permission_error"] = True
+
+    except PermissionError:
+        req.app["setup"]["errors"]["data_permission_error"] = True
+
+    return web.HTTPFound("/setup")
+
+
+async def setup_watch(req):
+    data = await req.post()
+
+    v = Validator({
+        "watch_path": {"type": "string", "coerce": lambda x: x if x else "watch", "required": True}
+    }, allow_unknown=False)
+
+    v(dict(data))
+
+    watch_path = v.document["watch_path"]
+
+    req.app["setup"]["watch_path"] = None
+
+    req.app["setup"]["errors"].update({
+        "watch_not_found_error": False,
+        "watch_not_empty_error": False,
+        "watch_permission_error": False
+    })
+
+    joined_path = str(watch_path)
+
+    if not joined_path.startswith("/"):
+        joined_path = os.path.join(sys.path[0], joined_path)
+
+    try:
+        os.mkdir(joined_path)
+        os.rmdir(joined_path)
+        req.app["setup"]["watch_path"] = watch_path
+    except FileNotFoundError:
+        req.app["setup"]["errors"]["watch_not_found_error"] = True
+    except FileExistsError:
+        try:
+            if len(os.listdir(watch_path)):
+                req.app["setup"]["errors"]["watch_not_empty_error"] = True
+            else:
+                test_path = os.path.join(joined_path, "test")
+                try:
+                    os.mkdir(test_path)
+                except PermissionError:
+                    req.app["setup"]["errors"]["watch_permission_error"] = True
+        except PermissionError:
+            req.app["setup"]["errors"]["watch_permission_error"] = True
+
+    except PermissionError:
+        req.app["setup"]["errors"]["watch_permission_error"] = True
+
+    return web.HTTPFound("/setup")
+
+
+async def clear(req):
+    req.app["setup"] = {
+        "db_host": None,
+        "db_port": None,
+        "db_name": None,
+
+        "first_user_id": None,
+        "first_user_password": None,
+
+        "data_path": None,
+        "watch_path": None,
+
+        "errors": {
+            "db_exists_error": False,
+            "db_connection_error": False,
+            "password_confirmation_error": False,
+            "data_not_empty_error": False,
+            "data_not_found_error": False,
+            "data_permission_error": False,
+            "watch_not_empty_error": False,
+            "watch_not_found_error": False,
+            "watch_permission_error": False
+        }
     }
+
+    return web.HTTPFound("/setup")
+
+async def save_and_reload(req):
+    data = req.app["setup"]
+
+    connection = motor.motor_asyncio.AsyncIOMotorClient(
+        io_loop=req.app.loop,
+        host=req.app["setup"]["db_host"],
+        port=int(req.app["setup"]["db_port"])
+    )
+
+    db_name = data["db_name"]
+
+    await connection[db_name].users.insert_one({
+        "_id": req.app["setup"]["first_user_id"],
+        # A list of group _ids the user is associated with.
+        "groups": list(),
+        "settings": {
+            "skip_quick_analyze_dialog": True,
+            "show_ids": False,
+            "show_versions": False,
+            "quick_analyze_algorithm": "pathoscope_bowtie"
+        },
+        "permissions": {permission: True for permission in virtool.user_permissions.PERMISSIONS},
+        "password": req.app["setup"]["first_user_password"],
+        "primary_group": "",
+        # Should the user be forced to reset their password on their next login?
+        "force_reset": False,
+        # A timestamp taken at the last password change.
+        "last_password_change": virtool.utils.timestamp(),
+        # Should all of the user's sessions be invalidated so that they are forced to login next time they
+        # download the client.
+        "invalidate_sessions": False
+    })
 
     subdirs = [
         "files",
@@ -206,35 +308,17 @@ def ensure_path(path, new_server):
         "logs/jobs"
     ]
 
-    if new_server:
+    data_path = data["data_path"]
+
+    for path in [data_path, data["watch_path"]]:
         try:
-            os.makedirs(path)
-        except OSError:
-            # The path already exists. Check if it is empty. If it isn't, send a failure message to the user.
-            if len(os.listdir(path)) > 0:
-                response.update({
-                    "failed": True,
-                    "message": "Path exists already and is not empty. Please remove or empty this directory before "
-                               "setting up Virtool"
-                })
+            os.mkdir(path)
+        except FileExistsError:
+            pass
 
-        # If the data path is created and empty, make all of the required subdirs.
-        if not response["failed"]:
-            for subdir in subdirs:
-                os.makedirs(os.path.join(path, subdir))
+    for subdir in subdirs:
+        os.makedirs(os.path.join(data_path, subdir))
 
-    else:
-        if not os.path.exists(path):
-            response.update({
-                "failed": True,
-                "message": "Path does not exist. Choose a path containing an existing Virtool data set."
-            })
-        else:
-            for subpath in os.listdir(path):
-                if subpath not in ["reference", "samples", "logs", "download", "upload"]:
-                    return {
-                        "failed": True,
-                        "message": "Found unknown subpath " + os.path.join(path, subpath)
-                    }
+    virtool.utils.reload()
 
-    return response
+    return web.HTTPFound("/")

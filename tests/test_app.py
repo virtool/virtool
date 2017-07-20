@@ -156,25 +156,3 @@ class TestConfigureSSL:
         ctx = virtool.app.configure_ssl(cert_path, key_path)
 
         assert isinstance(ctx, ssl.SSLContext)
-
-
-class TestReload:
-
-    @pytest.mark.parametrize("method", ["execl", "execv"])
-    def test(self, method, monkeypatch, mocker):
-        monkeypatch.setattr("sys.executable", "python" if method == "execl" else "run")
-
-        execl = mocker.patch("os.execl")
-        execv = mocker.patch("os.execv")
-
-        with pytest.raises(SystemError):
-            virtool.app.reload()
-
-        assert execl.called is (method == "execl")
-        assert execv.called is (method == "execv")
-
-    def test_error(self, monkeypatch):
-        monkeypatch.setattr("sys.executable", "foobar")
-
-        with pytest.raises(SystemError):
-            virtool.app.reload()
