@@ -29,7 +29,7 @@ def setup_routes(app):
     static_path = os.path.join(sys.path[0], "client", "dist")
 
     if os.path.isdir(static_path):
-        app.router.add_static("/static", )
+        app.router.add_static("/static", static_path)
 
     app.router.add_get(r"/{suffix:.*}", setup_redirect)
 
