@@ -6,10 +6,7 @@ import logging
 import requests
 import tempfile
 import urllib.request
-import tornado.ioloop
-import tornado.gen
 
-import virtool.gen
 import virtool.database
 import virtool.utils
 
@@ -77,7 +74,7 @@ class Collection(virtool.database.Collection):
 
         # Upsert the releases. Remove upserted document ids from the ``to_remove`` list.
         for release in releases:
-            yield self.update({"_id": release["_id"]}, {
+            yield self.update_one({"_id": release["_id"]}, {
                 "$set": release,
                 "$inc": {"_version": 1}
             }, upsert=True, increment_version=False)
@@ -89,7 +86,7 @@ class Collection(virtool.database.Collection):
 
         # Remove any documents whose ids are still in the ``to_remove`` list.
         if to_remove:
-            yield self.remove(to_remove)
+            yield self.delete_many(to_remove)
 
     @virtool.gen.exposed_method(["modify_options"])
     def upgrade_to_latest(self, transaction):
@@ -111,13 +108,13 @@ class Collection(virtool.database.Collection):
         self.collections["jobs"].blocked = True
 
         # Update any pre-existing software_update document.
-        yield self.remove(["software_install"])
+        yield self.delete_one(["software_install"])
 
         # Get the latest release document from the updates collection.
         release = yield self.find_one({"name": transaction.data["name"]})
 
         # Insert the new software update document, which contains information about the install process.
-        yield self.insert({
+        yield self.insert_one({
             "_id": "software_install",
             "name": transaction.data["name"],
             "type": "software_install",
@@ -162,7 +159,7 @@ class Collection(virtool.database.Collection):
             yield self.update_software_step(0, "check_tree")
             good_tree = yield check_software_tree(decompressed_path)
 
-            yield self.update({"_id": "software_install"}, {
+            yield self.update_one({"_id": "software_install"}, {
                 "$set": {
                     "good_tree": good_tree
                 }
@@ -172,7 +169,7 @@ class Collection(virtool.database.Collection):
             yield self.update_software_step(0, "copy_files")
             yield copy_software_files(decompressed_path, INSTALL_PATH)
 
-            yield self.remove(["software_install"])
+            yield self.delete_one(["software_install"])
 
             yield tornado.gen.sleep(1.5)
 
@@ -185,7 +182,7 @@ class Collection(virtool.database.Collection):
         if step:
             set_dict["step"] = step
 
-        yield self.update({"_id": "software_install"}, {
+        yield self.update_one({"_id": "software_install"}, {
             "$set": set_dict
         })
 
