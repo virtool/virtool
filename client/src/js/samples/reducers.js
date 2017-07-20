@@ -37,14 +37,14 @@ export default function reducer (state = initialState, action) {
         case WS_UPDATE_SAMPLE:
             return assign({}, state, {
                 viruses: concat(
-                    reject(state.viruses, {virus_id: action.virus_id}),
-                    assign({}, find(state.viruses, {virus_id: action.virus_id}), action.data)
+                    reject(state.viruses, {id: action.virus_id}),
+                    assign({}, find(state.viruses, {id: action.virus_id}), action.data)
                 )
             });
 
         case WS_REMOVE_SAMPLE:
             return assign({}, state, {
-                viruses: reject(state.viruses, {virus_id: action.virus_id})
+                viruses: reject(state.viruses, {id: action.virus_id})
             });
 
         case FIND_SAMPLES.SUCCEEDED:
@@ -79,7 +79,7 @@ export default function reducer (state = initialState, action) {
             if (state.list !== null) {
                 assign(newState, state, {
                     list: state.list.map(doc => {
-                        if (doc.sample_id !== action.data.sample_id) {
+                        if (doc.id !== action.data.sample_id) {
                             return doc;
                         }
 
@@ -88,7 +88,7 @@ export default function reducer (state = initialState, action) {
                 });
             }
 
-            if (state.detail && state.detail.sample_id === action.data.sample_id) {
+            if (state.detail && state.detail.id === action.data.sample_id) {
                 assign(newState, {
                     detail: assign({}, state.detail, action.data)
                 });
