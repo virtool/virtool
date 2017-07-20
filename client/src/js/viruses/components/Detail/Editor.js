@@ -24,20 +24,32 @@ const IsolateEditor = (props) => {
 
     const activeIsolateId = props.match.params.isolateId;
 
-    const isolateComponents = props.isolates.map(isolate => {
-        const isolateId = isolate.isolate_id;
+    const isolateComponents = props.isolates.map(isolate =>
+        <LinkContainer key={isolate.id} to={`/viruses/${props.virusId}/virus/${isolate.id}`}>
+            <ListGroupItem key={isolate.id} active={isolate.id === activeIsolateId}>
+                {formatIsolateName(isolate)}
+                {isolate.default ? <Icon name="star" pullRight />: null}
+            </ListGroupItem>
+        </LinkContainer>
+    );
 
-        return (
-            <LinkContainer key={isolateId} to={`/viruses/${props.virusId}/virus/${isolateId}`}>
-                <ListGroupItem key={isolate.isolate_id} active={isolateId === activeIsolateId}>
-                    {formatIsolateName({sourceType: isolate.source_type, sourceName: isolate.source_name})}
-                    {isolate.default ? <Icon name="star" pullRight />: null}
+    let noIsolatesFound;
+
+    if (!isolateComponents.length) {
+        noIsolatesFound = (
+            <Col md={12}>
+                <ListGroupItem className="text-center">
+                    <Icon name="info" /> No isolates found
                 </ListGroupItem>
-            </LinkContainer>
+            </Col>
         );
-    });
+    }
 
+    let firstIsolateId = props.isolates[0] ? props.isolates[0].id: "";
 
+    if (firstIsolateId) {
+        firstIsolateId = "/" + firstIsolateId;
+    }
 
     // Get the array of sequences from the isolate.
     // const sequenceData = activeIsolate && activeIsolate.hasOwnProperty("sequences") ? activeIsolate.sequences: [];
@@ -58,6 +70,7 @@ const IsolateEditor = (props) => {
             </h4>
 
             <Row>
+                {noIsolatesFound}
                 <Col md={3}>
                     <ListGroup style={{height: "100%"}} fill>
                         {isolateComponents}
@@ -66,7 +79,7 @@ const IsolateEditor = (props) => {
                 <Col md={9}>
                     <Redirect
                         from="/viruses/:virusId/virus"
-                        to={`/viruses/${props.virusId}/virus/${props.isolates[0].isolate_id}`}
+                        to={`/viruses/${props.virusId}/virus${firstIsolateId}`}
                     />
                     <Route path="/viruses/:virusId/virus/:isolateId" component={IsolateDetail} />
                 </Col>
@@ -84,7 +97,7 @@ IsolateEditor.propTypes = {
 
 const mapStateToProps = (state) => {
     return {
-        virusId: state.viruses.detail.virus_id,
+        virusId: state.viruses.detail.id,
         isolates: state.viruses.detail.isolates
     };
 };

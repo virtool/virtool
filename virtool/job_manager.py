@@ -208,7 +208,9 @@ class Manager:
             "args": task_args,
             "proc": proc,
             "mem": mem,
-            "user_id": user_id,
+            "user": {
+                "id": user_id
+            },
             "status": [{
                 "state": "waiting",
                 "stage": None,
@@ -238,7 +240,7 @@ class Manager:
             "mem": mem
         }
 
-        document = await self.db.jobs.find_one(job_id, virtool.job.PROJECTION)
+        document = await self.db.jobs.find_one(job_id, virtool.job.LIST_PROJECTION)
 
         await self.dispatch("jobs", "update", virtool.job.dispatch_processor(document))
 
@@ -313,7 +315,7 @@ class Manager:
             }
 
         document = await self.db.jobs.find_one_and_update({"_id": job_id}, update, return_document=ReturnDocument.AFTER,
-                                                          projection=virtool.job.PROJECTION)
+                                                          projection=virtool.job.LIST_PROJECTION)
 
         if not document:
             raise virtool.errors.DatabaseError("Job does not exist: '{}'".format(job_id))

@@ -28,7 +28,7 @@ export default class SampleEntry extends React.Component {
     }
 
     static propTypes = {
-        sampleId: React.PropTypes.string.isRequired,
+        id: React.PropTypes.string.isRequired,
         name: React.PropTypes.string.isRequired,
         added: React.PropTypes.string.isRequired,
         userId: React.PropTypes.string.isRequired,
@@ -47,6 +47,8 @@ export default class SampleEntry extends React.Component {
     };
 
     render () {
+
+        console.log(this.props);
 
         const labels = mapValues({pathoscope: null, nuvs: null}, (value, key) =>
             <FlexItem className={CX("sample-label", {"bg-primary": this.props[key]})} pad>
@@ -94,7 +96,7 @@ export default class SampleEntry extends React.Component {
         }
 
         return (
-            <LinkContainer className="spaced" to={`/samples/${this.props.sampleId}`}>
+            <LinkContainer className="spaced" to={`/samples/${this.props.id}`}>
                 <ListGroupItem  onClick={this.props.selecting ? this.toggleSelect: this.showDetail}>
                     <Row>
                         <Col md={4}>

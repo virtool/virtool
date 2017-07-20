@@ -29,7 +29,7 @@ async def login_handler(req):
     form_data = await req.post()
 
     username = form_data.get("username", None)
-    password = form_data.get("username", None)
+    password = form_data.get("password", None)
 
     key_one = form_data.get("login-1", "")
     key_two = form_data.get("login-2", "")

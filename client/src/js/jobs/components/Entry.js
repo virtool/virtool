@@ -18,12 +18,12 @@ import { getTaskDisplayName } from "virtool/js/utils";
 export default class JobEntry extends React.Component {
 
     static propTypes = {
-        job_id: PropTypes.string.isRequired,
+        id: PropTypes.string.isRequired,
         task: PropTypes.string.isRequired,
         state: PropTypes.string.isRequired,
         progress: PropTypes.number.isRequired,
-        added: PropTypes.string.isRequired,
-        user_id: PropTypes.string.isRequired,
+        created_at: PropTypes.string.isRequired,
+        user: PropTypes.object.isRequired,
 
         navigate: PropTypes.func,
         cancel: PropTypes.func,
@@ -32,12 +32,12 @@ export default class JobEntry extends React.Component {
 
     cancel = (event) => {
         event.stopPropagation();
-        this.props.cancel(this.props.job_id);
+        this.props.cancel(this.props.id);
     };
 
     remove = (event) => {
         event.stopPropagation();
-        this.props.remove(this.props.job_id);
+        this.props.remove(this.props.id);
     };
 
     render () {
@@ -99,7 +99,7 @@ export default class JobEntry extends React.Component {
                         <strong>{getTaskDisplayName(this.props.task)}</strong>
                     </Col>
                     <Col md={5}>
-                         Started <RelativeTime time={this.props.added} /> by {this.props.user_id}
+                         Started <RelativeTime time={this.props.created_at} /> by {this.props.user.id}
                      </Col>
                     <Col md={3}>
                         {icon}

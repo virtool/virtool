@@ -1,6 +1,7 @@
 import os
 import sys
 import copy
+import json
 import motor.motor_asyncio
 import logging
 import pymongo.errors
@@ -8,6 +9,7 @@ from aiohttp import web
 from mako.template import Template
 from cerberus import Validator
 
+import virtool.app_settings
 import virtool.user
 import virtool.user_permissions
 import virtool.utils
@@ -318,6 +320,15 @@ async def save_and_reload(req):
 
     for subdir in subdirs:
         os.makedirs(os.path.join(data_path, subdir))
+
+    v = Validator(virtool.app_settings.SCHEMA)
+
+    v({key: data[key] for key in ["db_host", "db_port", "db_name", "data_path", "watch_path"]})
+
+    settings_path = os.path.join(sys.path[0], "settings.json")
+
+    with open(settings_path, "w") as settings_file:
+        json.dump(v.document, settings_file, indent=4, sort_keys=True)
 
     virtool.utils.reload()
 

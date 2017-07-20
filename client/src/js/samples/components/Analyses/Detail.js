@@ -52,7 +52,7 @@ class AnalysisDetail extends React.Component {
                         </tr>
                         <tr>
                             <th>Index Version</th>
-                            <td><Label>{detail.index_version}</Label></td>
+                            <td><Label>{detail.index.version}</Label></td>
                         </tr>
                         <tr>
                             <th>Library Read Count</th>
@@ -60,7 +60,7 @@ class AnalysisDetail extends React.Component {
                         </tr>
                         <tr>
                             <th>Added</th>
-                            <td><RelativeTime time={detail.timestamp} /></td>
+                            <td><RelativeTime time={detail.created_at} /></td>
                         </tr>
                         <tr>
                             <th>User</th>

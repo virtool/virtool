@@ -7,74 +7,16 @@
  *
  */
 import React, { PropTypes } from "react";
-import { sortBy, groupBy, startsWith } from "lodash";
+import { sortBy, groupBy } from "lodash";
 import { connect } from "react-redux";
 import { Row, Col, ListGroup, Label } from "react-bootstrap";
 
 import { getVirusHistory } from "../../actions";
 import { ListGroupItem, RelativeTime, Icon } from "virtool/js/components/Base";
 
-export const formatChangeDescription = (change) => {
-
-    const description = change.description;
-
-    if (!description) {
-        return (
-            <span className="change-description">
-                <Icon name="warning" bsStyle="warning" />
-                <span>No Description</span>
-            </span>
-        );
-    }
-
-    switch (change.method_name) {
-
-        case "add_isolate":
-            return (
-                <span className="change-description">
-                    <Icon name="new-entry" bsStyle="primary" />
-                    <span>
-                        {description[0]} <em>{description[1]} ({description[2]})</em>
-                    </span>
-                </span>
-            );
-
-        case "edit_isolate":
-            if (startsWith(change.description, "Rename")) {
-                return (
-                    <span className="change-description">
-                        <Icon name="pencil" bsStyle="warning" />
-                        <span>
-                            {description[0]} <em>{description[1]}</em> to <em>{description[3]} ({description[4]})</em>
-                        </span>
-                    </span>
-                );
-            }
-
-            break;
-
-        case "remove_isolate":
-            return (
-                <span className="change-description">
-                    <Icon name="remove" bsStyle="danger" />
-                    <span>
-                        {description[0]} <em>{description[1]} ({description[2]})</em>
-                    </span>
-                </span>
-            );
-    }
-
-    return (
-        <span className="change-description">
-            <Icon name="warning" bsStyle="info" />
-            <span>{change.description.join(" ")}</span>
-        </span>
-    );
-};
-
 const HistoryList = (props) => {
 
-    const changeComponents = sortBy(props.history, "virus_version").reverse().map((change, index) => {
+    const changeComponents = sortBy(props.history, "virus.version").reverse().map((change, index) => {
 
         let revertIcon;
 
@@ -94,13 +36,13 @@ const HistoryList = (props) => {
             <ListGroupItem key={index}>
                 <Row>
                     <Col md={1}>
-                        <Label>{change.virus_version}</Label>
+                        <Label>{change.virus.version}</Label>
                     </Col>
                     <Col md={6}>
-                        {formatChangeDescription(change)}
+                        {change.description}
                     </Col>
                     <Col md={4}>
-                        <RelativeTime time={change.timestamp} />
+                        <RelativeTime time={change.created_at} />
                     </Col>
                     <Col md={1}>
                         {revertIcon}
@@ -140,7 +82,7 @@ class VirusHistory extends React.Component {
         }
 
         const changes = groupBy(this.props.history, change => {
-            return change.index_version === "unbuilt" ? "unbuilt": "built";
+            return change.index.version === "unbuilt" ? "unbuilt": "built";
         });
 
         let built;
@@ -176,7 +118,7 @@ class VirusHistory extends React.Component {
 
 const mapStateToProps = (state) => {
     return {
-        virusId: state.viruses.detail.virus_id,
+        virusId: state.viruses.detail.id,
         history: state.viruses.detailHistory
     };
 };

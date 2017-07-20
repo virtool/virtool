@@ -69,9 +69,9 @@ class SamplesList extends React.Component {
         if (samplesCount) {
             sampleComponents = this.props.samples.map(document =>
                 <SampleEntry
-                    key={document.sample_id}
-                    sampleId={document.sample_id}
-                    userId={document.user_id}
+                    key={document.id}
+                    id={document.id}
+                    userId={document.user.id}
                     {...document}
                 />
             );

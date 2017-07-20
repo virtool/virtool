@@ -110,6 +110,7 @@ async def init_db(app):
     await virtool.organize.organize_history(db)
     await virtool.organize.organize_subtraction(db)
     await virtool.organize.organize_users(db)
+    await virtool.organize.organize_groups(db)
 
     app["db"] = db
 
@@ -225,11 +226,9 @@ def create_app(loop, db_name=None, disable_job_manager=False, disable_file_manag
         virtool.error_pages.middleware_factory
     ]
 
-    exec_path = os.path.dirname(os.path.realpath(__file__))
+    settings_path = os.path.join(sys.path[0], "settings.json")
 
-    settings_path = os.path.join(exec_path, "settings.json")
-
-    requires_setup = not skip_setup and not os.path.isfile(settings_path)
+    requires_setup = not skip_setup or not os.path.isfile(settings_path)
 
     if not requires_setup:
         middlewares.append(virtool.user_sessions.middleware_factory)

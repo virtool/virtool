@@ -19,14 +19,14 @@ const File = (props) => (
                 {byteSize(props.size)}
             </Col>
             <Col md={4}>
-                Uploaded <RelativeTime time={props.uploaded_at} /> by {props.user_id}
+                Uploaded <RelativeTime time={props.uploaded_at} /> by {props.user.id}
             </Col>
             <Col md={1}>
                 <Icon
                     name="remove"
                     bsStyle="danger"
                     style={{fontSize: "17px"}}
-                    pullRight onClick={() => props.onRemove(props.file_id)}
+                    pullRight onClick={() => props.onRemove(props.id)}
                 />
             </Col>
         </Row>
@@ -34,11 +34,12 @@ const File = (props) => (
 );
 
 File.propTypes = {
+    id: PropTypes.string,
     name: PropTypes.string,
     size: PropTypes.number,
-    file_id: PropTypes.string,
+    file: PropTypes.object,
     uploaded_at: PropTypes.string,
-    user_id: PropTypes.string,
+    user: PropTypes.object,
     onRemove: PropTypes.func
 };
 
@@ -62,7 +63,7 @@ class ReadFiles extends React.Component {
 
         let fileComponents = this.props.documents.map(document =>
             <File
-                key={document.file_id}
+                key={document.id}
                 {...document}
                 onRemove={this.props.onRemove}
             />

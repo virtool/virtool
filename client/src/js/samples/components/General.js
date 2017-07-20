@@ -134,7 +134,7 @@ SampleDetailGeneral.propTypes = {
 const mapStateToProps = (state) => {
     const detail = state.samples.detail;
 
-    const isOwner = state.account.user_id === detail.user_id;
+    const isOwner = state.account.id === detail.user.id;
 
     const canModify = (
         detail.all_write ||
@@ -144,7 +144,7 @@ const mapStateToProps = (state) => {
 
     return {
         canModify: canModify,
-        sampleId: detail.sample_id,
+        sampleId: detail.id,
         name: detail.name,
         host: detail.host,
         added: detail.added,
@@ -156,7 +156,7 @@ const mapStateToProps = (state) => {
         count: Numeral(detail.quality.count).format("0.0 a"),
         encoding: detail.quality.encoding,
         lengthRange: detail.quality.length.join(" - "),
-        userId: detail.user_id
+        userId: detail.user.id
     };
 };
 

@@ -371,7 +371,12 @@ async def organize_users(db):
 
 
 async def organize_groups(db):
-    async for group in await db.groups.find():
+    if not await db.groups.count({"_id": "administrator"}):
+        await db.groups.insert_one({
+            "_id": "administrator"
+        })
+
+    async for group in db.groups.find():
         default_setting = True if group["_id"] == "administrator" else False
 
         permissions = {perm: default_setting for perm in PERMISSIONS}

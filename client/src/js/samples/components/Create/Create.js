@@ -29,19 +29,22 @@ import {
 
 import { findReadyHosts } from "../../actions";
 import { findFiles } from "../../../files/actions";
-import { Icon, Input, Button } from "virtool/js/components/Base";
+import { Flex, FlexItem, Icon, Input, Button } from "virtool/js/components/Base";
 import ReadSelector from "./ReadSelector";
 
-const getInitialState = (props) => {
-    console.log(props.readyHosts);
 
+const getReadyHosts = (props) => {
+    return props.readyHosts && props.readyHosts.length ? (props.readyHosts[0].id || ""): "";
+};
+
+const getInitialState = (props) => {
     return {
         selected: [],
         name: "",
         host: "",
         isolate: "",
         locale: "",
-        subtraction: props.readyHosts ? props.readyHosts[0].subtraction_id || "": "",
+        subtraction: getReadyHosts(props),
         group: props.forceGroupChoice ? "none": ""
     };
 };
@@ -73,7 +76,7 @@ class CreateSample extends React.Component {
     componentWillReceiveProps (nextProps) {
         if (nextProps.readyHosts !== this.props.readyHosts) {
             this.setState({
-                subtraction: nextProps.readyHosts ? (nextProps.readyHosts[0].subtraction_id || ""): "",
+                subtraction: getReadyHosts(nextProps),
             });
         }
     }
@@ -117,7 +120,7 @@ class CreateSample extends React.Component {
         }
 
         const hostComponents = this.props.readyHosts.map(host =>
-            <option key={host.subtraction_id}>{host.subtraction_id}</option>
+            <option key={host.id}>{host.id}</option>
         );
 
         let noHostsAlert;
@@ -125,8 +128,12 @@ class CreateSample extends React.Component {
         if (!hostComponents.length) {
             noHostsAlert = (
                 <Alert bsStyle="danger">
-                    <Icon name="warning" />
-                    <span> A host genome must be added to Virtool before samples can be created and analyzed.</span>
+                    <Flex alignItems="center">
+                        <Icon name="warning" />
+                        <FlexItem pad={5}>
+                            A host genome must be added to Virtool before samples can be created and analyzed.
+                        </FlexItem>
+                    </Flex>
                 </Alert>
             );
         }

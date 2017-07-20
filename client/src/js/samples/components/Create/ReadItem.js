@@ -7,7 +7,7 @@ import { Icon, ListGroupItem } from "virtool/js/components/Base";
 export default class ReadItem extends React.PureComponent {
 
     static propTypes = {
-        file_id: React.PropTypes.string.isRequired,
+        id: React.PropTypes.string.isRequired,
         name: React.PropTypes.string.isRequired,
         size: React.PropTypes.number.isRequired,
         onSelect: React.PropTypes.func.isRequired,
@@ -19,7 +19,7 @@ export default class ReadItem extends React.PureComponent {
     };
 
     render = () => (
-        <ListGroupItem onClick={() => this.props.onSelect(this.props.file_id)} active={this.props.selected}>
+        <ListGroupItem onClick={() => this.props.onSelect(this.props.id)} active={this.props.selected}>
             <Row>
                 <Col md={8}>
                     <Icon name="file" /> {this.props.name}

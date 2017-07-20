@@ -6,7 +6,7 @@ import { Input } from "virtool/js/components/Base";
 export default class SampleDetailRights extends React.PureComponent {
 
     static propTypes = {
-        _id: React.PropTypes.string,
+        id: React.PropTypes.string,
         group: React.PropTypes.string,
         group_read: React.PropTypes.bool,
         group_write: React.PropTypes.bool,
@@ -16,7 +16,7 @@ export default class SampleDetailRights extends React.PureComponent {
 
     changeGroup = (event) => {
         dispatcher.db.samples.request("set_group", {
-            _id: this.props._id,
+            _id: this.props.id,
             group_id: event.target.value
         });
     };
