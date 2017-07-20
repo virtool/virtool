@@ -225,9 +225,7 @@ def create_app(loop, db_name=None, disable_job_manager=False, disable_file_manag
         virtool.error_pages.middleware_factory
     ]
 
-    exec_path = os.path.dirname(os.path.realpath(__file__))
-
-    settings_path = os.path.join(exec_path, "settings.json")
+    settings_path = os.path.join(sys.path[0], "settings.json")
 
     requires_setup = not skip_setup and not os.path.isfile(settings_path)
 
