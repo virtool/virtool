@@ -35,7 +35,7 @@ export default class ReadSelector extends React.PureComponent {
 
     componentWillReceiveProps (nextProps) {
         if (nextProps.files !== this.props.files) {
-            this.props.onSelect(intersection(this.props.selected, nextProps.files.map(f => f["file_id"])));
+            this.props.onSelect(intersection(this.props.selected, nextProps.files.map(f => f["id"])));
         }
     }
 
@@ -68,11 +68,11 @@ export default class ReadSelector extends React.PureComponent {
             !this.state.filter || includes(file.name.toLowerCase(), loweredFilter)
         );
 
-        let fileComponents = sortBy(files, "timestamp").reverse().map((file) =>
+        let fileComponents = sortBy(files, "uploaded_at").reverse().map((file) =>
             <ReadItem
-                key={file.file_id}
+                key={file.id}
                 {...file}
-                selected={includes(this.props.selected, file.file_id)}
+                selected={includes(this.props.selected, file.id)}
                 onSelect={this.handleSelect}
             />
         );
