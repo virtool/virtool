@@ -110,6 +110,7 @@ async def init_db(app):
     await virtool.organize.organize_history(db)
     await virtool.organize.organize_subtraction(db)
     await virtool.organize.organize_users(db)
+    await virtool.organize.organize_groups(db)
 
     app["db"] = db
 
