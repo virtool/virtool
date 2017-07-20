@@ -10,7 +10,7 @@ LIST_PROJECTION = [
     "_id",
     "name",
     "size",
-    "user_id",
+    "user",
     "uploaded_at",
     "type",
     "ready"

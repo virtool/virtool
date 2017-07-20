@@ -39,7 +39,7 @@ export default function reducer (state = initialState, action) {
 
         case REMOVE_FILE.SUCCEEDED:
             return assign({}, state, {
-                documents: reject(state.documents, {file_id: action.data.file_id})
+                documents: reject(state.documents, {id: action.data.file_id})
             });
 
         case UPLOAD_READS.REQUESTED: {
