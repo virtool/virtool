@@ -25,7 +25,7 @@ import RemoveIsolate from "./RemoveIsolate";
 const IsolateDetail = (props) => {
 
     const activeIsolateId = props.match.params.isolateId;
-    const isolate = find(props.isolates, {isolate_id: activeIsolateId});
+    const isolate = find(props.isolates, {id: activeIsolateId});
     const isolateName = formatIsolateName(isolate);
 
     const activeAccession = props.match.params.accession;
@@ -71,7 +71,7 @@ const IsolateDetail = (props) => {
     const nextURI = URI(props.location.pathname + props.location.search);
 
     if (props.isolates.length) {
-        nextURI.segment(3, props.isolates[0].isolate_id);
+        nextURI.segment(3, props.isolates[0].id);
     } else {
         nextURI.segment(3, "");
     }
@@ -80,14 +80,14 @@ const IsolateDetail = (props) => {
         <div>
             <EditIsolate
                 virusId={props.virusId}
-                isolateId={isolate.isolate_id}
+                isolateId={isolate.id}
                 sourceType={isolate.source_type}
                 sourceName={isolate.source_name}
             />
 
             <RemoveIsolate
                 virusId={props.virusId}
-                isolateId={isolate.isolate_id}
+                isolateId={isolate.id}
                 isolateName={formatIsolateName(isolate)}
                 onSuccess={() => props.history.push(nextURI.toString())}
             />
@@ -117,7 +117,7 @@ const IsolateDetail = (props) => {
                                 </tr>
                                 <tr>
                                     <th>Unique ID</th>
-                                    <td className="text-uppercase">{isolate.isolate_id}</td>
+                                    <td className="text-uppercase">{isolate.id}</td>
                                 </tr>
                             </tbody>
                         </Table>
@@ -159,7 +159,7 @@ IsolateDetail.propTypes = {
 const mapStateToProps = (state) => {
     return {
         isolates: state.viruses.detail.isolates,
-        virusId: state.viruses.detail.virus_id,
+        virusId: state.viruses.detail.id,
         editing: state.viruses.editingIsolate,
         allowedSourceTypes: state.settings.data.allowed_source_types,
         restrictSourceTypes: state.settings.data.restrict_source_types

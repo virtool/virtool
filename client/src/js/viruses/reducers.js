@@ -54,14 +54,14 @@ export default function virusesReducer (state = virusesInitialState, action) {
         case WS_UPDATE_VIRUS:
             return assign({}, state, {
                 viruses: concat(
-                    reject(state.viruses, {virus_id: action.virus_id}),
-                    assign({}, find(state.viruses, {virus_id: action.virus_id}), action.data)
+                    reject(state.viruses, {id: action.virus_id}),
+                    assign({}, find(state.viruses, {id: action.virus_id}), action.data)
                 )
             });
 
         case WS_REMOVE_VIRUS:
             return assign({}, state, {
-                viruses: reject(state.viruses, {virus_id: action.virus_id})
+                viruses: reject(state.viruses, {id: action.virus_id})
             });
 
         case FIND_VIRUSES.REQUESTED:
@@ -90,7 +90,7 @@ export default function virusesReducer (state = virusesInitialState, action) {
         case GET_VIRUS.SUCCEEDED:
             return assign({}, state, {
                 detail: action.data,
-                activeIsolateId: action.data.isolates[0].isolate_id
+                activeIsolateId: action.data.isolates.length ? action.data.isolates[0].id: null
             });
 
         case CREATE_VIRUS.REQUESTED:
@@ -128,7 +128,7 @@ export default function virusesReducer (state = virusesInitialState, action) {
                 editIsolatePending: false,
                 detail: {
                     isolates: state.detail.isolates.map(isolate => {
-                        if (isolate.isolate_id !== action.data.isolate_id) {
+                        if (isolate.id !== action.data.isolate_id) {
                             return isolate;
                         } else {
                             return assign({}, isolate, action.data);
@@ -148,7 +148,7 @@ export default function virusesReducer (state = virusesInitialState, action) {
                 removeIsolate: false,
                 removeIsolatePending: false,
                 detail: assign({}, state.detail, {
-                    isolates: reject(state.detail.isolates, {isolate_id: action.isolateId})
+                    isolates: reject(state.detail.isolates, {id: action.isolateId})
                 })
             });
 

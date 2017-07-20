@@ -79,7 +79,7 @@ class VirusesList extends React.Component {
 
         if (virusCount > 0) {
             virusComponents = this.props.documents.map(document =>
-                <LinkContainer to={`/viruses/${document.virus_id}`} key={document.virus_id} className="spaced">
+                <LinkContainer to={`/viruses/${document.id}`} key={document.id} className="spaced">
                     <ListGroupItem bsStyle={document.modified ? "warning": null}>
                         <Row>
                             <Col sm={12} md={6}>

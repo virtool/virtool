@@ -92,7 +92,7 @@ const mapStateToProps = (state) => {
     return {
         showIds: state.account.settings.show_ids,
         canModify: state.account.permissions.modify_virus,
-        virusId: detail.virus_id,
+        virusId: detail.id,
         name: detail.name,
         abbreviation: detail.abbreviation,
         version: detail.version,

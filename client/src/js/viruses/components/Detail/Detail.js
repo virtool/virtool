@@ -52,8 +52,7 @@ class VirusDetail extends React.Component {
         let content;
 
         if (this.props.detail) {
-
-            const virusId = this.props.match.params.virusId;
+            const virusId = this.props.detail.id;
 
             content = (
                 <div>
