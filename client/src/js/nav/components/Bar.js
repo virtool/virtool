@@ -29,7 +29,7 @@ const isHomeActive = (match, location) => {
 const Bar = (props) => {
 
     const dropdownTitle = (
-        <span><Icon name="user" /> {props.user_id}</span>
+        <span><Icon name="user" /> {props.id}</span>
     );
 
     return (
@@ -99,7 +99,7 @@ const Bar = (props) => {
 
 Bar.propTypes = {
     pending: PropTypes.bool,
-    user_id: PropTypes.string,
+    id: PropTypes.string,
     logout: PropTypes.func
 };
 
