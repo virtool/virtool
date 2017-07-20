@@ -39,8 +39,8 @@ export function* wsUpdateJob (action) {
     yield bgFindJobs(action);
     const detail = yield select(state => state.jobs.detail);
 
-    if (detail !== null && detail.job_id === action.data.job_id) {
-        yield bgGetJob({jobId: detail.job_id});
+    if (detail !== null && detail.id === action.data.id) {
+        yield bgGetJob({id: detail.id});
     }
 }
 

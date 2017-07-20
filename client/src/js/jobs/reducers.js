@@ -20,7 +20,7 @@ import {
 } from "../actionTypes";
 
 const initialState = {
-    list: null,
+    documents: null,
     detail: null,
     resources: null,
     cuda: null
@@ -28,8 +28,8 @@ const initialState = {
 
 const updateJob = (state, action) => {
     return assign({}, state, {
-        list: state.list.map(doc => {
-            if (doc.job_id !== action.data.job_id) {
+        documents: state.documents.map(doc => {
+            if (doc.id !== action.data.id) {
                 return doc;
             }
 
@@ -47,12 +47,19 @@ export default function reducer (state = initialState, action) {
 
         case WS_REMOVE_JOB:
             return assign({}, state, {
-                list: reject(state.list, {job_id: action.jobId})
+                documents: reject(state.documents, {id: action.jobId})
             });
 
         case FIND_JOBS.SUCCEEDED:
+            console.log(action.data);
+
             return assign({}, state, {
-                list: action.data
+                foundCount: action.data.found_count,
+                page: action.data.page,
+                pageCount: action.data.page_count,
+                perPage: action.data.per_page,
+                totalCount: action.data.total_count,
+                documents: action.data.documents
             });
 
         case GET_JOB.REQUESTED:
@@ -70,7 +77,7 @@ export default function reducer (state = initialState, action) {
 
         case REMOVE_JOB.SUCCEEDED:
             return assign({}, state, {
-                list: reject(state.list, {job_id: action.jobId})
+                documents: reject(state.documents, {id: action.jobId})
             });
 
         case GET_RESOURCES.SUCCEEDED:

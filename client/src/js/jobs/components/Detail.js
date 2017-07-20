@@ -79,7 +79,7 @@ class JobDetail extends React.Component {
                             bsStyle="danger"
                             name="remove"
                             style={{fontSize: "18px"}}
-                            onClick={() => window.console.log(detail.job_id)}
+                            onClick={() => window.console.log(detail.id)}
                         />
                     </Flex>
                 </h3>
@@ -100,7 +100,7 @@ class JobDetail extends React.Component {
                         </tr>
                         <tr>
                             <th>Started By</th>
-                            <td>{detail.user_id}</td>
+                            <td>{detail.user.id}</td>
                         </tr>
                         <tr>
                             <th>Started At</th>
@@ -108,7 +108,7 @@ class JobDetail extends React.Component {
                         </tr>
                         <tr>
                             <th>Unique ID</th>
-                            <td className="text-uppercase">{detail.job_id}</td>
+                            <td className="text-uppercase">{detail.id}</td>
                         </tr>
                     </tbody>
                 </Table>

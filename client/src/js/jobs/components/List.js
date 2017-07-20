@@ -38,11 +38,11 @@ class JobsList extends React.Component {
 
         let components = this.props.documents.map(doc =>
             <Job
-                key={doc.job_id}
+                key={doc.id}
                 {...doc}
                 cancel={this.props.onCancel}
                 remove={this.props.onRemove}
-                navigate={() => this.props.history.push(`/jobs/${doc.job_id}`)}
+                navigate={() => this.props.history.push(`/jobs/${doc.id}`)}
             />
         );
 
@@ -77,7 +77,7 @@ class JobsList extends React.Component {
 
 const mapStateToProps = (state) => {
     return {
-        documents: state.jobs.list
+        documents: state.jobs.documents
     };
 };
 
