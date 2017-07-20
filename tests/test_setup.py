@@ -1,5 +1,4 @@
 import os
-import sys
 import pytest
 import motor.motor_asyncio
 
@@ -273,7 +272,7 @@ class TestSetupPaths:
                 handle.write("hello world")
 
         if issue == "permission":
-            os.chmod(path, 440)
+            os.chmod(path, 000)
 
         resp = await client.post_form("/setup/{}".format(prefix), update)
 

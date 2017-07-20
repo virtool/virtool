@@ -1,5 +1,4 @@
 import os
-import sys
 import logging
 from aiohttp import web
 
@@ -54,10 +53,10 @@ def setup_routes(app):
     setup_hmm_routes(app)
     setup_hmm_routes(app)
     setup_subtraction_routes(app)
-    setup_settings_routes(app),
-    setup_files_routes(app),
-    setup_account_routes(app),
-    setup_users_routes(app),
+    setup_settings_routes(app)
+    setup_files_routes(app)
+    setup_account_routes(app)
+    setup_users_routes(app)
     setup_groups_routes(app)
 
 
@@ -73,7 +72,7 @@ def setup_basic_routes(app):
     app.router.add_post("/login", login_handler)
 
     if os.path.exists("client/dist"):
-        app.router.add_static("/static", os.path.join(sys.path[0], "client", "dist"))
+        app.router.add_static("/static", "client/dist")
     else:
         logger.warning("Could not locate client static files")
 

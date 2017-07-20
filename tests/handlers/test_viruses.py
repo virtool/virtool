@@ -70,7 +70,7 @@ class TestFind:
             "modified_count": 1,
         })
     ])
-    async def test(self, term, modified, per_page, page, d_range, meta, add_modified, spawn_client):        
+    async def test(self, term, modified, per_page, page, d_range, meta, add_modified, spawn_client):
         client = await spawn_client()
         
         await client.db.viruses.insert_many([

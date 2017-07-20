@@ -102,7 +102,7 @@ async def setup_db(req):
                 "db_connection_error": False
             })
 
-    except (pymongo.errors.ConnectionFailure, TypeError, ValueError) as err:
+    except (pymongo.errors.ConnectionFailure, TypeError, ValueError):
         req.app["setup"].update(clear_update)
         req.app["setup"]["errors"].update({
             "db_exists_error": False,
