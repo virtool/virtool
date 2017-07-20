@@ -24,6 +24,10 @@ class TestFind:
 
         assert await resp.json() == [
             {
+                "id": "administrator",
+                "permissions": all_permissions
+            },
+            {
                 "id": "test",
                 "permissions": all_permissions
             },
@@ -54,7 +58,7 @@ class TestCreate:
             "permissions": no_permissions
         }
 
-        assert await client.db.groups.find_one() == {
+        assert await client.db.groups.find_one("test") == {
             "_id": "test",
             "permissions": no_permissions
         }

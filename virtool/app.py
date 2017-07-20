@@ -228,7 +228,7 @@ def create_app(loop, db_name=None, disable_job_manager=False, disable_file_manag
 
     settings_path = os.path.join(sys.path[0], "settings.json")
 
-    requires_setup = not skip_setup and not os.path.isfile(settings_path)
+    requires_setup = not skip_setup or not os.path.isfile(settings_path)
 
     if not requires_setup:
         middlewares.append(virtool.user_sessions.middleware_factory)
