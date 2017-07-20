@@ -172,14 +172,17 @@ async def setup_data(req):
     except FileNotFoundError:
         req.app["setup"]["errors"]["data_not_found_error"] = True
     except FileExistsError:
-        if len(os.listdir(data_path)):
-            req.app["setup"]["errors"]["data_not_empty_error"] = True
-        else:
-            test_path = os.path.join(joined_path, "test")
-            try:
-                os.mkdir(test_path)
-            except PermissionError:
-                req.app["setup"]["errors"]["data_permission_error"] = True
+        try:
+            if len(os.listdir(data_path)):
+                req.app["setup"]["errors"]["data_not_empty_error"] = True
+            else:
+                test_path = os.path.join(joined_path, "test")
+                try:
+                    os.mkdir(test_path)
+                except PermissionError:
+                    req.app["setup"]["errors"]["data_permission_error"] = True
+        except PermissionError:
+            req.app["setup"]["errors"]["data_permission_error"] = True
 
     except PermissionError:
         req.app["setup"]["errors"]["data_permission_error"] = True
@@ -218,14 +221,17 @@ async def setup_watch(req):
     except FileNotFoundError:
         req.app["setup"]["errors"]["watch_not_found_error"] = True
     except FileExistsError:
-        if len(os.listdir(watch_path)):
-            req.app["setup"]["errors"]["watch_not_empty_error"] = True
-        else:
-            test_path = os.path.join(joined_path, "test")
-            try:
-                os.mkdir(test_path)
-            except PermissionError:
-                req.app["setup"]["errors"]["watch_permission_error"] = True
+        try:
+            if len(os.listdir(watch_path)):
+                req.app["setup"]["errors"]["watch_not_empty_error"] = True
+            else:
+                test_path = os.path.join(joined_path, "test")
+                try:
+                    os.mkdir(test_path)
+                except PermissionError:
+                    req.app["setup"]["errors"]["watch_permission_error"] = True
+        except PermissionError:
+            req.app["setup"]["errors"]["watch_permission_error"] = True
 
     except PermissionError:
         req.app["setup"]["errors"]["watch_permission_error"] = True
