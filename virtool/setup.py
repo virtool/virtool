@@ -25,7 +25,12 @@ def setup_routes(app):
     app.router.add_post(r"/setup/watch", setup_watch)
     app.router.add_get(r"/setup/clear", clear)
     app.router.add_get(r"/setup/save", save_and_reload)
-    app.router.add_static("/static", os.path.join(sys.path[0], "client", "dist"))
+
+    static_path = os.path.join(sys.path[0], "client", "dist")
+
+    if os.path.isdir(static_path):
+        app.router.add_static("/static", )
+
     app.router.add_get(r"/{suffix:.*}", setup_redirect)
 
 
