@@ -128,7 +128,7 @@ export default function virusesReducer (state = virusesInitialState, action) {
                 editIsolatePending: false,
                 detail: {
                     isolates: state.detail.isolates.map(isolate => {
-                        if (isolate.id !== action.data.isolate_id) {
+                        if (isolate.id !== action.data.id) {
                             return isolate;
                         } else {
                             return assign({}, isolate, action.data);
