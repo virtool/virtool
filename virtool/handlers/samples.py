@@ -181,7 +181,7 @@ async def create(req):
     "host": {"type": "string"},
     "isolate": {"type": "string"}
 })
-async def update(req):
+async def edit(req):
     """
     Update specific fields in the sample document.
 

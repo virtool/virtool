@@ -108,7 +108,7 @@ def setup_samples_routes(app):
     app.router.add_post("/api/upload/reads", samples.upload)
     app.router.add_post("/api/samples", samples.create)
     app.router.add_get("/api/samples/{sample_id}", samples.get)
-    app.router.add_patch("/api/samples/{sample_id}", samples.update)
+    app.router.add_patch("/api/samples/{sample_id}", samples.edit)
     app.router.add_delete("/api/samples/{sample_id}", samples.remove)
     app.router.add_get("/api/samples/{sample_id}/analyses", samples.list_analyses)
     app.router.add_post("/api/samples/{sample_id}/analyses", samples.analyze)
