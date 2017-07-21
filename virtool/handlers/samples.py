@@ -52,53 +52,6 @@ async def get(req):
     return json_response(virtool.utils.base_processor(document))
 
 
-async def upload(req):
-
-    reader = await req.multipart()
-    fastq = await reader.next()
-
-    filename = req.query["name"]
-
-    file_id = "{}-{}".format(await virtool.utils.get_new_id(req.app["db"].files), filename)
-
-    while file_id in await req.app["db"].files.distinct("_id"):
-        file_id = "{}-{}".format(await virtool.utils.get_new_id(req.app["db"].files), filename)
-
-    file_path = os.path.join(req.app["settings"].get("data_path"), "files", file_id)
-
-    document = {
-        "_id": file_id,
-        "name": filename,
-        "type": "reads",
-        "user": {
-            "id": req["session"].user_id
-        },
-        "uploaded_at": virtool.utils.timestamp(),
-        "created": False,
-        "ready": False
-    }
-
-    await req.app["db"].files.insert_one(document)
-
-    await req.app["dispatcher"].dispatch(
-        "files",
-        "update",
-        virtool.file.processor({key: document[key] for key in virtool.file.LIST_PROJECTION if document.get(key, False)})
-    )
-
-    size = 0
-
-    with open(file_path, "wb") as handle:
-        while True:
-            chunk = await fastq.read_chunk()
-            if not chunk:
-                break
-            size += len(chunk)
-            handle.write(chunk)
-
-    return json_response({"complete": True})
-
-
 @protected("add_sample")
 @validation({
     "name": {"type": "string", "required": True},
