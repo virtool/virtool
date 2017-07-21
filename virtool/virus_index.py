@@ -8,15 +8,15 @@ import virtool.utils
 
 PROJECTION = [
     "_id",
-    "timestamp",
+    "version",
+    "created_at",
     "virus_count",
     "modification_count",
     "modified_virus_count",
-    "username",
-    "index_version",
+    "user",
     "ready",
     "has_files",
-    "job_id"
+    "job"
 ]
 
 

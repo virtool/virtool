@@ -3,17 +3,17 @@ from pymongo import ReturnDocument
 import virtool.utils
 import virtool.virus_index
 import virtool.virus_history
-from virtool.handlers.utils import unpack_request, json_response, bad_request, not_found, protected
+from virtool.handlers.utils import json_response, bad_request, not_found, protected
 
 
 async def find(req):
     """
-    Return a list of recorded indexes.
+    Return a list of indexes.
     
     """
     db = req.app["db"]
 
-    documents = await db.indexes.find({}, virtool.virus_index.PROJECTION, sort=[("index_version", -1)]).to_list(15)
+    documents = await db.indexes.find({}, virtool.virus_index.PROJECTION, sort=[("index.version", -1)]).to_list(None)
 
     modified_virus_count = await db.viruses.count({"modified": True})
     total_virus_count = await db.viruses.count()
@@ -35,7 +35,7 @@ async def get(req):
     index_id_or_version = req.match_info["index_id_or_version"]
 
     try:
-        document = await db.indexes.find_one({"index_version": int(index_id_or_version)})
+        document = await db.indexes.find_one({"version": int(index_id_or_version)})
     except ValueError:
         document = await db.indexes.find_one(index_id_or_version)
 
@@ -44,14 +44,9 @@ async def get(req):
 
     document = virtool.utils.base_processor(document)
 
-    changes = await db.history.find(
-        {"index_id": document["index_id"]},
-        virtool.virus_history.LIST_PROJECTION
-    ).to_list(length=15)
+    changes = await db.history.find({"index.id": document["id"]}, virtool.virus_history.LIST_PROJECTION).to_list(None)
 
-    changes = [virtool.virus_history.processor(c) for c in changes]
-
-    document["changes"] = changes
+    document["changes"] = [virtool.utils.base_processor(c) for c in changes]
 
     return json_response(document)
 
@@ -63,7 +58,7 @@ async def create(req):
     viruses in the collection and updates virus history to show the version and id of the new index.
 
     """
-    db, data = await unpack_request(req)
+    db = req.app["db"]
 
     if await db.viruses.find({"modified": True}).count():
         return bad_request("There are unverified viruses")
@@ -75,30 +70,36 @@ async def create(req):
 
     await db.indexes.insert_one({
         "_id": index_id,
-        "index_version": index_version,
-        "timestamp": virtool.utils.timestamp(),
-        "ready": False,
-        "has_files": True,
-        "user_id": user_id,
-        "job_id": None,
+        "version": index_version,
+        "created_at": virtool.utils.timestamp(),
         "virus_count": None,
         "modification_count": None,
         "modified_virus_count": None,
+        "ready": False,
+        "has_files": True,
+        "user": {
+            "id": user_id
+        },
+        "job": {
+            "id": None
+        }
     })
 
     # Update all history entries with no index_version to the new index version.
     await db.history.update_many({"index": "unbuilt"}, {
         "$set": {
-            "index": index_id,
-            "index_version": index_version
+            "index": {
+                "id": index_id,
+                "version": index_version
+            }
         }
     })
 
     # Generate a dict of virus document version numbers keyed by the document id.
     virus_manifest = dict()
 
-    async for document in db.viruses.find({}, ["_id", "_version"]):
-        virus_manifest[document["_id"]] = document["_version"]
+    async for document in db.viruses.find({}, ["_id", "version"]):
+        virus_manifest[document["_id"]] = document["version"]
 
     # A dict of task_args for the rebuild job.
     task_args = {
@@ -113,10 +114,14 @@ async def create(req):
 
     document = await db.indexes.find_one_and_update({"_id": index_id}, {
         "$set": {
-            "job_id": job_id
+            "job": job_id
         }
     }, return_document=ReturnDocument.AFTER)
 
     return {
         virtool.utils.base_processor(document)
     }
+
+
+def find_history(req):
+    pass
