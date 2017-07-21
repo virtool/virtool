@@ -208,39 +208,27 @@ def organize_sequences(database):
 
 
 async def organize_indexes(db):
-    indexes_path = os.path.join(data_path, "reference/viruses/")
+    await db.indexes.update_many({}, {
+        "$unset": {
+            "_version": ""
+        },
+        "$rename": {
+            "index_version": "version",
+            "timestamp": "created_at"
+        }
+    })
 
-    response = {
-        "missing_index": False,
-        "mismatched_index": False,
-        "missing_history": list(),
-        "missing_recent_history": list(),
-        "orphaned_analyses": os.listdir(indexes_path)
-    }
-
-    ref_names = None
-
-    # Get the entry describing the most recently built (active) index from the DB.
-    try:
-        active_index = database.indexes.find({"ready": True}).sort("index_version", -1)[0]
-    except IndexError:
-        active_index = None
-
-    # Check that there is an active index.
-    if active_index:
-        active_index_path = os.path.join(indexes_path, active_index["_id"])
-
-        # Set missing index to True if we can find the directory for the active index on disk.
-        response["missing_index"] = not os.path.exists(active_index_path)
-
-        # This key-value is initially a list of all indexes on disk. Remove the index_id of the active index.
-        try:
-            response["orphaned_analyses"].remove(active_index["_id"])
-        except ValueError:
-            pass
-
-        # Get the FASTA headers of all the sequences used to build the reference.
-        ref_names = get_bowtie2_index_names(os.path.join(active_index_path, "reference"))
+    async for document in db.indexes.find({"username": {"$exists": True}}, ["username"]):
+        await db.indexes.update_one({"_id": document["_id"]}, {
+            "$set": {
+                "user": {
+                    "id": document["username"]
+                },
+            },
+            "$unset": {
+                "username": ""
+            }
+        })
 
 
 async def organize_history(db):
@@ -252,9 +240,41 @@ async def organize_history(db):
 
     await db.history.update_many({}, {
         "$rename": {
-            "timestamp": "created_at"
+            "timestamp": "created_at",
+            "entry_id": "virus_id",
+            "entry_version": "virus_version"
+        },
+        "$unset": {
+            "annotation": "",
+            "_version": ""
         }
     })
+
+    async for change in db.history.find({}, ["index", "index_id", "index_version"]):
+        index = None
+
+        if "index" in change:
+            if isinstance(change["index"], str):
+                index = {
+                    "id": change["index"],
+                    "version": change["index_version"]
+                }
+        else:
+            index = {
+                "id": change["index_id"],
+                "version": change["index_version"]
+            }
+
+        if index:
+            await db.history.update_one({"_id": change["_id"]}, {
+                "$set": {
+                    "index": index
+                },
+                "$unset": {
+                    "index_id": "",
+                    "index_version": ""
+                }
+            })
 
     async for change in db.history.find({"virus_id": {"$exists": True}}):
         await db.history.update_one({"_id": change["_id"]}, {
@@ -262,19 +282,13 @@ async def organize_history(db):
                 "virus": {
                     "id": change["virus_id"],
                     "version": change["virus_version"],
-                    "name": change["virus_name"]
-                },
-                "index": {
-                    "id": change["index_id"],
-                    "version": change["index_version"]
+                    "name": change.get("virus_name", None)
                 }
             },
             "$unset": {
                 "virus_id": "",
                 "virus_version": "",
-                "virus_name": "",
-                "index_id": "",
-                "index_version": ""
+                "virus_name": ""
             }
         })
 
