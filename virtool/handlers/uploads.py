@@ -1,9 +1,10 @@
 import os
 from aiohttp import web
+from cerberus import Validator
 
 import virtool.file
 import virtool.utils
-from virtool.handlers.utils import json_response
+from virtool.handlers.utils import json_response, not_found, invalid_query
 
 FILE_TYPES = {
     "/upload/viruses": "viruses",
@@ -15,15 +16,22 @@ FILE_TYPES = {
 
 
 async def upload(req):
-    db = req.app["db"]
-
     try:
         file_type = FILE_TYPES[req.path]
     except KeyError:
-        return web.Response(status=404)
+        return not_found()
+
+    v = Validator({
+        "name": {"type": "string", "required": True}
+    })
+
+    if not v(dict(req.query)):
+        return invalid_query(v.errors)
 
     reader = await req.multipart()
     file = await reader.next()
+
+    db = req.app["db"]
 
     filename = req.query["name"]
 
@@ -59,8 +67,6 @@ async def upload(req):
     )
 
     size = 0
-
-    print(file_path)
 
     with open(file_path, "wb") as handle:
         while True:
