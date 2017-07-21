@@ -254,6 +254,7 @@ async def organize_history(db):
 
     await db.history.update_many({}, {
         "$rename": {
+            "changes": "diff",
             "timestamp": "created_at",
             "entry_id": "virus_id",
             "entry_version": "virus_version"
