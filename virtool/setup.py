@@ -1,7 +1,6 @@
 import os
 import sys
 import copy
-import json
 import motor.motor_asyncio
 import logging
 import pymongo.errors

@@ -1,7 +1,6 @@
 import time
 import pytest
 import datetime
-from copy import deepcopy
 
 import virtool.job
 

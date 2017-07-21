@@ -1,5 +1,4 @@
 import os
-import sys
 import ssl
 import asyncio
 import logging
