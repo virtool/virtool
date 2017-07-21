@@ -1226,7 +1226,7 @@ class TestAddIsolate:
             "add_isolate",
             test_virus,
             new,
-            "Added isolate Isolate b",
+            "Added Isolate b",
             "test"
         )
 
@@ -1292,7 +1292,7 @@ class TestAddIsolate:
             "add_isolate",
             test_virus,
             new,
-            "Added isolate Isolate b as default",
+            "Added Isolate b as default",
             "test"
         )
 
