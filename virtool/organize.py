@@ -196,9 +196,11 @@ async def organize_viruses(db):
         })
 
 
-def organize_sequences(database):
-    database.sequences.update_many({}, {
+async def organize_sequences(database):
+    await database.sequences.update_many({}, {
         "$unset": {
+            "length": "",
+            "annotated": "",
             "neighbours": "",
             "proteins": "",
             "molecule_type": "",
@@ -206,6 +208,18 @@ def organize_sequences(database):
         }
     })
 
+    async for document in database.sequences.find({"virus_id": {"$exists": False}}, ["isolate_id"]):
+        virus = await database.viruses.find_one({"isolates.id": document["isolate_id"]}, ["_id"])
+
+        if not virus:
+            await database.viruses.delete_one({"_id": document["_id"]})
+            continue
+        else:
+            await database.sequences.update_one({"_id": document["_id"]}, {
+                "$set": {
+                    "virus_id": virus["_id"]
+                }
+            })
 
 async def organize_indexes(db):
     await db.indexes.update_many({}, {
