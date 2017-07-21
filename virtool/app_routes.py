@@ -5,7 +5,7 @@ from aiohttp import web
 from virtool.utils import get_static_hash
 from virtool.user_login import get_login_template, generate_verification_keys, login_handler
 from virtool.handlers import root, jobs, samples, viruses, history, hmm, subtraction, settings, account, groups, users,\
-    genbank, status, lifecycle, websocket, resources, analyses, indexes, files
+    genbank, status, lifecycle, websocket, resources, analyses, indexes, files, uploads
 
 
 logger = logging.getLogger(__name__)
@@ -78,7 +78,12 @@ def setup_basic_routes(app):
 
 
 def setup_file_routes(app):
-    app.router.add_post("/upload/viruses", viruses.upload)
+    app.router.add_post("/upload/viruses", uploads.upload)
+    app.router.add_post("/upload/reads", uploads.upload)
+    app.router.add_post("/upload/hmm/profiles", uploads.upload)
+    app.router.add_post("/upload/hmm/annotations", uploads.upload)
+    app.router.add_post("/upload/host", uploads.upload)
+
     app.router.add_get("/download/viruses", viruses.export)
 
 
@@ -89,7 +94,6 @@ def setup_basic_api_routes(app):
 
 
 def setup_jobs_routes(app):
-    # Jobs routes
     app.router.add_get("/api/jobs", jobs.find)
     app.router.add_get("/api/jobs/{job_id}", jobs.get)
     app.router.add_delete("/api/jobs", jobs.clear)
@@ -103,12 +107,10 @@ def setup_jobs_routes(app):
 
 
 def setup_samples_routes(app):
-    # Samples Routes
     app.router.add_get("/api/samples", samples.find)
-    app.router.add_post("/api/upload/reads", samples.upload)
     app.router.add_post("/api/samples", samples.create)
     app.router.add_get("/api/samples/{sample_id}", samples.get)
-    app.router.add_patch("/api/samples/{sample_id}", samples.update)
+    app.router.add_patch("/api/samples/{sample_id}", samples.edit)
     app.router.add_delete("/api/samples/{sample_id}", samples.remove)
     app.router.add_get("/api/samples/{sample_id}/analyses", samples.list_analyses)
     app.router.add_post("/api/samples/{sample_id}/analyses", samples.analyze)

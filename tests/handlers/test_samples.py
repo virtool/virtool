@@ -242,6 +242,27 @@ class TestCreate:
         assert await resp_is.not_found(resp, "Subtraction host 'apple' not found")
 
 
+class TestRemove:
+
+    @pytest.mark.parametrize("delete_result,resp_is_attr", [(1, "no_content"), (0, "not_found")])
+    async def test(self, delete_result, resp_is_attr, mocker, spawn_client, resp_is, create_delete_result):
+        client = await spawn_client(authorize=True)
+
+        m = mocker.stub(name="remove_samples")
+
+        async def mock_remove_samples(*args, **kwargs):
+            m(*args, **kwargs)
+            return create_delete_result(delete_result)
+
+        mocker.patch("virtool.sample.remove_samples", new=mock_remove_samples)
+
+        resp = await client.delete("/api/samples/foobar")
+
+        assert m.call_args[0][0] == ["foobar"]
+
+        assert await getattr(resp_is, resp_is_attr)(resp)
+
+
 class TestListAnalyses:
 
     async def test(self, spawn_client, static_time):

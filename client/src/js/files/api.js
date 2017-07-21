@@ -20,7 +20,7 @@ const filesAPI = {
     },
 
     uploadReads: (file, onProgress) => {
-        return Request.post("/api/upload/reads")
+        return Request.post("/upload/reads")
             .query({name: file.name})
             .attach("file", file)
             .on("progress", onProgress);

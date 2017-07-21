@@ -475,7 +475,7 @@ async def add_isolate(req):
 
     isolate_name = virtool.virus.format_isolate_name(data)
 
-    description = "Added isolate {}".format(isolate_name)
+    description = "Added {}".format(isolate_name)
 
     if will_be_default:
         description += " as default"

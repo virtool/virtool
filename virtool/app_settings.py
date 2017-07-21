@@ -1,3 +1,5 @@
+import os
+import sys
 import json
 import logging
 from cerberus import Validator
@@ -115,15 +117,17 @@ class Settings:
             raise ValueError("Could not validate settings file", v.errors)
 
         self.data = v.document
-        self.write_to_file()
+        write_to_file(self.data, self.path)
 
     async def write(self):
-        await self.loop.run_in_executor(None, self.write_to_file)
-
-    def write_to_file(self):
-        """ Write self.data dictionary to a formatted JSON file """
-        with open(self.path, "w") as settings_file:
-            json.dump(self.data, settings_file, indent=4, sort_keys=True)
+        await self.loop.run_in_executor(None, write_to_file, self.data, self.path)
 
     def as_dict(self):
         return dict(self.data)
+
+
+def write_to_file(settings_dict, path=None):
+    path = path or os.path.join(sys.path[0], "settings.json")
+
+    with open(path, "w") as settings_file:
+        json.dump(settings_dict, settings_file, indent=4, sort_keys=True)

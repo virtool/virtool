@@ -3,6 +3,12 @@ import pymongo
 import motor.motor_asyncio
 
 
+class MockDeleteResult:
+
+    def __init__(self, deleted_count):
+        self.deleted_count = deleted_count
+
+
 @pytest.fixture
 def test_db():
     client = pymongo.MongoClient()
@@ -14,3 +20,8 @@ def test_db():
 def test_motor(test_db, loop):
     client = motor.motor_asyncio.AsyncIOMotorClient(io_loop=loop)
     yield client["test"]
+
+
+@pytest.fixture
+def create_delete_result():
+    return MockDeleteResult
