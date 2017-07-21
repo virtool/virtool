@@ -15,7 +15,7 @@ def get_login_template():
 def generate_verification_keys():
     keys = list()
 
-    for i in range(3):
+    for _ in range(3):
         key = random.choice(["", virtool.utils.random_alphanumeric(12, mixed_case=True)])
         keys.append(key)
 
@@ -30,10 +30,6 @@ async def login_handler(req):
 
     username = form_data.get("username", None)
     password = form_data.get("password", None)
-
-    key_one = form_data.get("login-1", "")
-    key_two = form_data.get("login-2", "")
-    key_three = form_data.get("login-3", "")
     location = form_data.get("location", "/")
 
     authenticated = await virtool.user.validate_credentials(db, username, password)

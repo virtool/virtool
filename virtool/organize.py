@@ -167,6 +167,12 @@ async def organize_analyses(db):
 
 async def organize_viruses(db):
     await db.viruses.update_many({}, {
+        "$rename": {
+            "_version": "version"
+        }
+    })
+
+    await db.viruses.update_many({}, {
         "$unset": {
             "segments": "",
             "abbrevation": "",

@@ -1,12 +1,4 @@
 import os
-import pytest
-
-from unittest import mock
-from pprint import pprint
-from copy import deepcopy
-
-import virtool.virus
-import virtool.virus_import
 
 FIXTURE_DIR = os.path.join(os.path.dirname(os.path.realpath(__file__)), "test_files")
 
