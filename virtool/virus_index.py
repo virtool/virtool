@@ -20,13 +20,6 @@ PROJECTION = [
 ]
 
 
-def processor(document):
-    document = dict(document)
-    document["index_id"] = document.pop("_id")
-
-    return document
-
-
 async def set_stats(db, index_id, data):
     """
     Updates the index document with data describing the changes made to the virus reference since the last index
@@ -37,7 +30,7 @@ async def set_stats(db, index_id, data):
     * virus_count - Number of viruses now present in the viruses collection.
 
     """
-    return await db.indexes.update_one(index_id, {
+    return await db.indexes.update_one({"_id": index_id}, {
         "$set": data
     })
 
@@ -72,12 +65,10 @@ async def cleanup_index_files(db, settings):
     # The indexes (_ids) currently in use by running analysis jobs.
     active_indexes = list()
 
-    while await aggregation_cursor.fetch_next:
-        active_indexes.append(aggregation_cursor.next_object()["_id"])
+    async for a in aggregation_cursor:
+        active_indexes.append(a["_id"])
 
-    # The newest index version.
-    current_index_id, _ = await get_current_index(db)
-    active_indexes.append(current_index_id)
+    active_indexes.append(await get_current_index(db))
 
     # Any rebuilding index
     unready_index = await db.indexes.find_one({"ready": False}, ["_id"])
