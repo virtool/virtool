@@ -13,7 +13,7 @@ import React, { PropTypes } from "react";
 import { connect } from "react-redux";
 import { Alert } from "react-bootstrap";
 
-import { Flex, FlexItem, Icon } from "virtool/js/components/Base";
+import { Flex, FlexItem, Icon, ListGroupItem } from "virtool/js/components/Base";
 import { findIndexes, createIndex } from "../actions";
 import IndexEntry from "./Entry";
 import { RebuildIndex } from "./Rebuild";
@@ -51,7 +51,7 @@ class IndexesList extends React.Component {
 
             // Render a ListGroupItem for each index version. Mark the first ready index with a checkmark by setting the
             // showReady prop to true.
-            const indexComponents = this.props.documents.map(doc => {
+            let indexComponents = this.props.documents.map(doc => {
                 const entry = <IndexEntry key={doc.index_id} showReady={!doc.ready || !haveSeenReady} {...doc} />;
 
                 if (doc.ready) {
@@ -60,6 +60,14 @@ class IndexesList extends React.Component {
 
                 return entry;
             });
+
+            if (!indexComponents.length) {
+                indexComponents = (
+                    <ListGroupItem className="text-center">
+                        <p><Icon name="info" /> No indexes have been built</p>
+                    </ListGroupItem>
+                );
+            }
 
             content = (
                 <div>
