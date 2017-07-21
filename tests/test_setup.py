@@ -1,6 +1,10 @@
 import os
+import sys
 import pytest
 import motor.motor_asyncio
+from cerberus import Validator
+
+import virtool.app_settings
 
 
 @pytest.fixture
@@ -331,7 +335,8 @@ class TestSaveAndReload:
     async def test(self, mocker, tmpdir, spawn_client, mock_setup, static_time):
         client = await spawn_client(setup_mode=True)
 
-        m = mocker.patch("virtool.utils.reload")
+        m_reload = mocker.patch("virtool.utils.reload")
+        m_write_to_file = mocker.patch("virtool.app_settings.write_to_file")
 
         data = tmpdir.mkdir("data")
         watch = tmpdir.mkdir("watch")
@@ -414,4 +419,16 @@ class TestSaveAndReload:
         for sub in subdirs:
             assert os.path.isdir(os.path.join(str(data), sub))
 
-        assert m.called
+        assert m_reload.called
+
+        v = Validator(virtool.app_settings.SCHEMA)
+
+        v({
+            'db_host': "localhost",
+            'db_port': 27017,
+            'db_name': "foobar",
+            'data_path': str(data),
+            'watch_path': str(watch)
+        })
+
+        assert m_write_to_file.call_args[0] == (v.document, os.path.join(sys.path[0], "settings.json"))

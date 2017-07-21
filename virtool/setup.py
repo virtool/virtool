@@ -327,8 +327,7 @@ async def save_and_reload(req):
 
     settings_path = os.path.join(sys.path[0], "settings.json")
 
-    with open(settings_path, "w") as settings_file:
-        json.dump(v.document, settings_file, indent=4, sort_keys=True)
+    virtool.app_settings.write_to_file(v.document, settings_path)
 
     virtool.utils.reload()
 
