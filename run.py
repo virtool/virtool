@@ -34,6 +34,10 @@ asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
 
 loop = asyncio.get_event_loop()
 
+settings_path = os.path.join(sys.path[0], "settings.json")
+
+skip_setup = os.path.isfile(settings_path)
+
 if __name__ == "__main__":
-    app = create_app(loop)
+    app = create_app(loop, skip_setup=skip_setup)
     web.run_app(app, host="localhost", port=9950)

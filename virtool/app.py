@@ -226,18 +226,14 @@ def create_app(loop, db_name=None, disable_job_manager=False, disable_file_manag
         virtool.error_pages.middleware_factory
     ]
 
-    settings_path = os.path.join(sys.path[0], "settings.json")
-
-    requires_setup = not skip_setup or not os.path.isfile(settings_path)
-
-    if not requires_setup:
+    if skip_setup:
         middlewares.append(virtool.user_sessions.middleware_factory)
 
     app = web.Application(loop=loop, middlewares=middlewares)
 
     app["db_name"] = db_name
 
-    if requires_setup:
+    if not skip_setup:
         virtool.setup.setup_routes(app)
         app.on_startup.append(init_setup)
     else:
