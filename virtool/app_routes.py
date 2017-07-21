@@ -89,7 +89,6 @@ def setup_basic_api_routes(app):
 
 
 def setup_jobs_routes(app):
-    # Jobs routes
     app.router.add_get("/api/jobs", jobs.find)
     app.router.add_get("/api/jobs/{job_id}", jobs.get)
     app.router.add_delete("/api/jobs", jobs.clear)
@@ -103,7 +102,6 @@ def setup_jobs_routes(app):
 
 
 def setup_samples_routes(app):
-    # Samples Routes
     app.router.add_get("/api/samples", samples.find)
     app.router.add_post("/api/upload/reads", samples.upload)
     app.router.add_post("/api/samples", samples.create)
