@@ -105,7 +105,7 @@ export default function reducer (state = initialState, action) {
 
         case FIND_ANALYSES.SUCCEEDED:
             return assign({}, state, {
-                analyses: action.data
+                analyses: action.data.documents
             });
 
         case GET_ANALYSIS.REQUESTED:

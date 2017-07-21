@@ -30,7 +30,7 @@ export default class SampleEntry extends React.Component {
     static propTypes = {
         id: React.PropTypes.string.isRequired,
         name: React.PropTypes.string.isRequired,
-        added: React.PropTypes.string.isRequired,
+        created_at: React.PropTypes.string.isRequired,
         userId: React.PropTypes.string.isRequired,
         imported: stringOrBool.isRequired,
         pathoscope: stringOrBool.isRequired,
@@ -47,8 +47,6 @@ export default class SampleEntry extends React.Component {
     };
 
     render () {
-
-        console.log(this.props);
 
         const labels = mapValues({pathoscope: null, nuvs: null}, (value, key) =>
             <FlexItem className={CX("sample-label", {"bg-primary": this.props[key]})} pad>
@@ -124,7 +122,7 @@ export default class SampleEntry extends React.Component {
                             </Flex>
                         </Col>
                         <Col md={3}>
-                            Created <RelativeTime time={this.props.added} /> by {this.props.userId}
+                            Created <RelativeTime time={this.props.created_at} /> by {this.props.userId}
                         </Col>
                         <Col md={2}>
                             <Flex className="pull-right">

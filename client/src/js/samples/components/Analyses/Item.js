@@ -43,10 +43,10 @@ const AnalysisItem = (props) => {
                     {getTaskDisplayName(props.algorithm)}
                 </Col>
                 <Col md={4}>
-                    Started <RelativeTime time={props.created_at}/> by {props.user_id}
+                    Started <RelativeTime time={props.created_at}/> by {props.user.id}
                 </Col>
                 <Col md={1}>
-                    <Label>{props.index_version}</Label>
+                    <Label>{props.index.version}</Label>
                 </Col>
                 <Col md={4}>
                     {end}
@@ -57,11 +57,10 @@ const AnalysisItem = (props) => {
 };
 
 AnalysisItem.propTypes = {
-    index_version: PropTypes.number,
-    user_id: PropTypes.string,
+    index: PropTypes.object,
+    user: PropTypes.object,
     algorithm: PropTypes.string,
     created_at: PropTypes.string,
-    userId: PropTypes.string,
     ready: PropTypes.bool,
     canModify: PropTypes.bool,
     onClick: PropTypes.func

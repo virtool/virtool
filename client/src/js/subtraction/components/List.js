@@ -108,7 +108,7 @@ class SubtractionList extends React.Component {
                             </InputGroup.Addon>
                             <FormControl
                                 type="text"
-                                onChange={(event) => console.log(event.target.value)}
+                                onChange={(event) => window.console.log(event.target.value)}
                                 placeholder="Host name"
                             />
                         </InputGroup>

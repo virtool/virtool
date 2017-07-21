@@ -55,11 +55,11 @@ class AnalysesList extends React.Component {
 
             // The components that detail individual analyses.
             listContent = sorted.map(document => {
-                const url = `/samples/${this.props.detail.sample_id}/analyses/${document.analysis_id}`;
+                const url = `/samples/${this.props.detail.id}/analyses/${document.id}`;
 
                 return (
                     <AnalysisItem
-                        key={document.analysis_id}
+                        key={document.id}
                         onClick={() => this.props.history.push(url)}
                         canModify={canModify}
                         {...document}

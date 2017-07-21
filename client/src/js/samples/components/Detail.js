@@ -61,30 +61,24 @@ class SampleDetail extends React.Component {
                     </Flex>
                 </h3>
 
-                <Flex>
-                    <FlexItem>
-                        <Nav bsStyle="pills" stacked>
-                            <LinkContainer to={`/samples/${sampleId}/general`}>
-                                <NavItem>General</NavItem>
-                            </LinkContainer>
-                            <LinkContainer to={`/samples/${sampleId}/quality`}>
-                                <NavItem>Quality</NavItem>
-                            </LinkContainer>
-                            <LinkContainer to={`/samples/${sampleId}/analyses`}>
-                                <NavItem>Analyses</NavItem>
-                            </LinkContainer>
-                        </Nav>
-                    </FlexItem>
+                <Nav bsStyle="tabs">
+                    <LinkContainer to={`/samples/${sampleId}/general`}>
+                        <NavItem>General</NavItem>
+                    </LinkContainer>
+                    <LinkContainer to={`/samples/${sampleId}/quality`}>
+                        <NavItem>Quality</NavItem>
+                    </LinkContainer>
+                    <LinkContainer to={`/samples/${sampleId}/analyses`}>
+                        <NavItem>Analyses</NavItem>
+                    </LinkContainer>
+                </Nav>
 
-                    <FlexItem grow={1} pad={16}>
-                        <Switch>
-                            <Redirect from="/samples/:sampleId" to={`/samples/${sampleId}/general`} exact/>
-                            <Route path="/samples/:sampleId/general" component={General}/>
-                            <Route path="/samples/:sampleId/quality" component={Quality}/>
-                            <Route path="/samples/:sampleId/analyses" component={Analyses}/>
-                        </Switch>
-                    </FlexItem>
-                </Flex>
+                <Switch>
+                    <Redirect from="/samples/:sampleId" to={`/samples/${sampleId}/general`} exact/>
+                    <Route path="/samples/:sampleId/general" component={General}/>
+                    <Route path="/samples/:sampleId/quality" component={Quality}/>
+                    <Route path="/samples/:sampleId/analyses" component={Analyses}/>
+                </Switch>
             </div>
         );
     }
