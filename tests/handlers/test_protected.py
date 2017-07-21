@@ -2,8 +2,6 @@ import pytest
 
 
 parameters = [
-    ("post", ("/upload/viruses", {})),
-
     ("post", ("/api/viruses", {})),
     ("patch", ("/api/viruses/foobar", {})),
     ("delete", ("/api/viruses/foobar",)),
