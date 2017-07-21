@@ -7,7 +7,7 @@ import virtool.utils
 import virtool.sample
 import virtool.sample_analysis
 from virtool.handlers.utils import unpack_request, json_response, bad_request, not_found, invalid_input, \
-    invalid_query, compose_regex_query, paginate, protected, validation
+    invalid_query, compose_regex_query, paginate, protected, validation, no_content
 
 
 async def find(req):
@@ -262,6 +262,19 @@ async def set_rights(req):
     return json_response({"message": "Must be administrator or sample owner."}, status=403)
 
 
+async def remove(req):
+    """
+    Remove a sample document and all associated analyses.
+
+    """
+    delete_result = await virtool.sample.remove_samples([req.match_info["sample_id"]])
+
+    if not delete_result.deleted_count:
+        return not_found()
+
+    return no_content()
+
+
 async def list_analyses(req):
     """
     List the analyses associated with the given ``sample_id``.
@@ -314,13 +327,3 @@ async def analyze(req):
             "Location": "/api/analyses/{}".format(document["_id"])
         }
     )
-
-
-async def remove(req):
-    """
-    Remove a sample document and all associated analyses.
-
-    """
-    id_list = virtool.utils.coerce_list(req.match_info["_id"])
-
-    delete_result = await virtool.sample.remove_samples(id_list)
