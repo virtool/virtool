@@ -78,28 +78,36 @@ class TestRecalculateAlgorithmTags:
         analysis_documents = [
             {
                 "_id": "test_1",
-                "sample_id": "test",
                 "algorithm": "pathoscope_bowtie",
-                "ready": "ip"
+                "ready": "ip",
+                "sample": {
+                    "id": "test"
+                }
             },
             {
                 "_id": "test_2",
-                "sample_id": "test",
                 "algorithm": "pathoscope_bowtie",
-                "ready": True
+                "ready": True,
+                "sample": {
+                    "id": "test"
+                }
             },
             {
                 "_id": "test_3",
-                "sample_id": "test",
                 "algorithm": "nuvs",
-                "ready": True
+                "ready": True,
+                "sample": {
+                    "id": "test"
+                }
             }
         ]
 
         await test_motor.analyses.insert_many(analysis_documents + [
             {
                 "_id": "test_4",
-                "sample_id": "foobar",
+                "sample": {
+                    "id": "foobar"
+                },
                 "algorithm": "pathoscope_bowtie",
                 "ready": True
             }
@@ -113,7 +121,7 @@ class TestRecalculateAlgorithmTags:
         await virtool.sample.recalculate_algorithm_tags(test_motor, "test")
 
         for document in analysis_documents:
-            del document["sample_id"]
+            del document["sample"]
 
         assert m.call_args[0][0] == analysis_documents
 
@@ -134,11 +142,15 @@ class TestGetSampleOwner:
         await test_motor.samples.insert_many([
             {
                 "_id": "test",
-                "user_id": "foobar"
+                "user": {
+                    "id": "foobar"
+                }
             },
             {
                 "_id": "baz",
-                "user_id": "fred"
+                "user": {
+                    "id": "fred"
+                }
             },
         ])
 
@@ -160,13 +172,13 @@ class TestRemoveSamples:
             ["sample_test_2", "sample_test_3"],
             [{"_id": "test_2"}, {"_id": "test_3"}],
             [
-                {"_id": "a_3", "sample_id": "test_2"},
-                {"_id": "a_4", "sample_id": "test_2"},
-                {"_id": "a_5", "sample_id": "test_2"},
-                {"_id": "a_6", "sample_id": "test_3"},
-                {"_id": "a_7", "sample_id": "test_3"},
-                {"_id": "a_8", "sample_id": "test_3"},
-                {"_id": "a_9", "sample_id": "test_3"}
+                {"_id": "a_3", "sample": {"id": "test_2"}},
+                {"_id": "a_4", "sample": {"id": "test_2"}},
+                {"_id": "a_5", "sample": {"id": "test_2"}},
+                {"_id": "a_6", "sample": {"id": "test_3"}},
+                {"_id": "a_7", "sample": {"id": "test_3"}},
+                {"_id": "a_8", "sample": {"id": "test_3"}},
+                {"_id": "a_9", "sample": {"id": "test_3"}}
             ]
         ),
         (
@@ -174,10 +186,10 @@ class TestRemoveSamples:
             ["sample_test_3"],
             [{"_id": "test_3"}],
             [
-                {"_id": "a_6", "sample_id": "test_3"},
-                {"_id": "a_7", "sample_id": "test_3"},
-                {"_id": "a_8", "sample_id": "test_3"},
-                {"_id": "a_9", "sample_id": "test_3"}
+                {"_id": "a_6", "sample": {"id": "test_3"}},
+                {"_id": "a_7", "sample": {"id": "test_3"}},
+                {"_id": "a_8", "sample": {"id": "test_3"}},
+                {"_id": "a_9", "sample": {"id": "test_3"}}
             ]
         )
     ])
@@ -202,15 +214,15 @@ class TestRemoveSamples:
         ])
 
         await test_motor.analyses.insert_many([
-            {"_id": "a_1", "sample_id": "test_1"},
-            {"_id": "a_2", "sample_id": "test_1"},
-            {"_id": "a_3", "sample_id": "test_2"},
-            {"_id": "a_4", "sample_id": "test_2"},
-            {"_id": "a_5", "sample_id": "test_2"},
-            {"_id": "a_6", "sample_id": "test_3"},
-            {"_id": "a_7", "sample_id": "test_3"},
-            {"_id": "a_8", "sample_id": "test_3"},
-            {"_id": "a_9", "sample_id": "test_3"}
+            {"_id": "a_1", "sample": {"id": "test_1"}},
+            {"_id": "a_2", "sample": {"id": "test_1"}},
+            {"_id": "a_3", "sample": {"id": "test_2"}},
+            {"_id": "a_4", "sample": {"id": "test_2"}},
+            {"_id": "a_5", "sample": {"id": "test_2"}},
+            {"_id": "a_6", "sample": {"id": "test_3"}},
+            {"_id": "a_7", "sample": {"id": "test_3"}},
+            {"_id": "a_8", "sample": {"id": "test_3"}},
+            {"_id": "a_9", "sample": {"id": "test_3"}}
         ])
 
         settings = {
