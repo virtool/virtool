@@ -26,6 +26,18 @@ async def organize_jobs(db):
         }
     })
 
+    async for document in db.jobs.find({"status.date": {"$exists": True}}, ["status"]):
+        status = document["status"]
+
+        for s in status:
+            s["timestamp"] = s.pop("date")
+
+        await db.jobs.update_one({"_id": document["_id"]}, {
+            "$set": {
+                "status": status
+            }
+        })
+
 
 async def organize_samples(db):
     """

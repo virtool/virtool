@@ -93,6 +93,7 @@ async def init_db(app):
 
     logger.info("Organizing database...")
 
+    await virtool.organize.organize_jobs(db)
     await virtool.organize.organize_samples(db)
     await virtool.organize.organize_analyses(db)
     await virtool.organize.organize_viruses(db)
