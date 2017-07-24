@@ -50,7 +50,7 @@ class SubtractionDetail extends React.Component {
                     <strong>{data.id}</strong>
                 </h3>
 
-                <Table condensed bordered>
+                <Table bordered>
                     <tbody>
                         <tr>
                             <th>Description</th>

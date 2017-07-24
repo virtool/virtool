@@ -9,10 +9,7 @@ import { Icon, InputCell } from "virtool/js/components/Base";
 
 const SampleDetailGeneral = (props) => {
 
-    console.log(props.created_at)
-
     const cells = ["name", "host", "isolate"].map(field => {
-
         let inputCell;
 
         if (props.canModify) {
@@ -74,7 +71,7 @@ const SampleDetailGeneral = (props) => {
             <h4>
                 <Icon name="table" /> <strong>Library Properties</strong>
             </h4>
-            <table className="table table-condensed table-bordered">
+            <table className="table table-bordered">
               <tbody>
                 <tr>
                   <th className="col-sm-4">Read Count</th>
@@ -98,7 +95,7 @@ const SampleDetailGeneral = (props) => {
             <h4>
                 <Icon name="file" /> <strong>Files</strong>
             </h4>
-            <table className="table table-condensed table-bordered">
+            <table className="table table-bordered">
               <tbody>
                 <tr>
                   <th className="col-sm-4">Original Files</th>
@@ -128,7 +125,7 @@ SampleDetailGeneral.propTypes = {
     count: React.PropTypes.string,
     paired: React.PropTypes.bool,
     userId: React.PropTypes.string,
-    added: React.PropTypes.string,
+    createdAt: React.PropTypes.string,
     quality: React.PropTypes.object,
     onChangeValue: React.PropTypes.func
 };
@@ -140,7 +137,7 @@ const mapStateToProps = (state) => {
 
     const canModify = (
         detail.all_write ||
-        (detail.group_write && detail.account.groups.indexOf(detail.group) > -1) ||
+        (detail.group_write && state.account.groups.indexOf(detail.group) > -1) ||
         isOwner
     );
 

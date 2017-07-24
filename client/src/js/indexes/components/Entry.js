@@ -20,8 +20,8 @@ export default class IndexEntry extends React.PureComponent {
     static propTypes = {
         ready: React.PropTypes.bool,
         showReady: React.PropTypes.bool,
-        timestamp: React.PropTypes.string,
-        index_version: React.PropTypes.oneOfType([React.PropTypes.number, React.PropTypes.string]),
+        created_at: React.PropTypes.string,
+        version: React.PropTypes.oneOfType([React.PropTypes.number, React.PropTypes.string]),
         modification_count: React.PropTypes.number,
         modified_virus_count: React.PropTypes.number
     };
@@ -62,16 +62,16 @@ export default class IndexEntry extends React.PureComponent {
         }
 
         return (
-            <LinkContainer to={`/viruses/indexes/${this.props.index_version}`} className="spaced">
+            <LinkContainer to={`/viruses/indexes/${this.props.version}`} className="spaced">
                 <ListGroupItem>
                     <Row>
                         <Col md={3}>
                             <Label>
-                                Version {this.props.index_version}
+                                Version {this.props.version}
                             </Label>
                         </Col>
                         <Col md={3}>
-                            Created <RelativeTime time={this.props.timestamp} />
+                            Created <RelativeTime time={this.props.created_at} />
                         </Col>
                         <Col md={4}>
                             {changeDescription}
