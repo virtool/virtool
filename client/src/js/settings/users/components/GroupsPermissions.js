@@ -83,12 +83,12 @@ GroupsPermissions.propTypes = {
 
 const mapStateToProps = (state) => {
 
-    const activeData = find(state.users.list, {user_id: state.users.activeId});
+    const activeData = find(state.users.list, {id: state.users.activeId});
 
     return {
-        userId: activeData.user_id,
-        accountUserId: state.account.user_id,
-        allGroups: state.groups.list.map(group => group.group_id),
+        userId: activeData.id,
+        accountUserId: state.account.id,
+        allGroups: state.groups.list.map(group => group.id),
         memberGroups: activeData.groups,
         permissions: activeData.permissions
     };

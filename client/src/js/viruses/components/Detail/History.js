@@ -32,6 +32,11 @@ const HistoryList = (props) => {
             );
         }
 
+        const description = {change.description || "No Description"};
+
+        let iconName = "warning";
+        let iconStyle = "warning";
+
         return (
             <ListGroupItem key={index}>
                 <Row>
@@ -39,7 +44,8 @@ const HistoryList = (props) => {
                         <Label>{change.virus.version}</Label>
                     </Col>
                     <Col md={6}>
-                        {change.description}
+                        <Icon name={iconName} bsStyle=
+
                     </Col>
                     <Col md={4}>
                         <RelativeTime time={change.created_at} />

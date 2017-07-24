@@ -62,10 +62,10 @@ PrimaryGroup.propTypes = {
 };
 
 const mapStateToProps = (state) => {
-    const activeData = find(state.users.list, {user_id: state.users.activeId});
+    const activeData = find(state.users.list, {id: state.users.activeId});
 
     return {
-        userId: activeData.user_id,
+        userId: activeData.id,
         primaryGroup: activeData.primary_group,
         groups: activeData.groups
     };

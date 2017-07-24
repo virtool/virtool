@@ -20,6 +20,7 @@ import { Flex, FlexItem, Icon, Spinner } from "virtool/js/components/Base";
 import IsolateEditor from "./Editor";
 import General from "./General";
 import AddIsolate from "./AddIsolate";
+import Schema from "./Schema";
 import History from "./History";
 
 const VirusSection = (props) => (
@@ -80,38 +81,32 @@ class VirusDetail extends React.Component {
                         </Flex>
                     </h3>
 
-                    <Flex>
-                        <FlexItem>
-                            <Nav bsStyle="pills" stacked>
-                                <LinkContainer to={`/viruses/${virusId}/virus`}>
-                                    <NavItem>
-                                        Virus
-                                    </NavItem>
-                                </LinkContainer>
+                    <Nav bsStyle="tabs">
+                        <LinkContainer to={`/viruses/${virusId}/virus`}>
+                            <NavItem>
+                                Virus
+                            </NavItem>
+                        </LinkContainer>
 
-                                <LinkContainer to={`/viruses/${virusId}/schema`}>
-                                    <NavItem>
-                                        Schema
-                                    </NavItem>
-                                </LinkContainer>
+                        <LinkContainer to={`/viruses/${virusId}/schema`}>
+                            <NavItem>
+                                Schema
+                            </NavItem>
+                        </LinkContainer>
 
-                                <LinkContainer to={`/viruses/${virusId}/history`}>
-                                    <NavItem>
-                                        History
-                                    </NavItem>
-                                </LinkContainer>
-                            </Nav>
-                        </FlexItem>
+                        <LinkContainer to={`/viruses/${virusId}/history`}>
+                            <NavItem>
+                                History
+                            </NavItem>
+                        </LinkContainer>
+                    </Nav>
 
-                        <FlexItem grow={1} pad={16}>
-                            <Switch>
-                                <Redirect from="/viruses/:virusId" to={`/viruses/${virusId}/virus`} exact />
-                                <Route path="/viruses/:virusId/virus" component={VirusSection} />
-                                <Route path="/viruses/:virusId/schema" render={() => <div>Schema</div>} />
-                                <Route path="/viruses/:virusId/history" component={History} />
-                            </Switch>
-                        </FlexItem>
-                    </Flex>
+                    <Switch>
+                        <Redirect from="/viruses/:virusId" to={`/viruses/${virusId}/virus`} exact />
+                        <Route path="/viruses/:virusId/virus" component={VirusSection} />
+                        <Route path="/viruses/:virusId/schema" component={Schema} />
+                        <Route path="/viruses/:virusId/history" component={History} />
+                    </Switch>
                 </div>
             );
         } else {

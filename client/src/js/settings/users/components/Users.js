@@ -58,11 +58,11 @@ class ManageUsers extends React.Component {
 
         const userComponents = this.props.users.map((user) =>
             <ListGroupItem
-                key={user.user_id}
-                active={user.user_id === this.props.activeId}
-                onClick={() => this.props.onSelectUser(user.user_id)}
+                key={user.id}
+                active={user.id === this.props.activeId}
+                onClick={() => this.props.onSelectUser(user.id)}
             >
-                {user.user_id}
+                {user.id}
             </ListGroupItem>
         );
 

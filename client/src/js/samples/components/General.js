@@ -9,6 +9,8 @@ import { Icon, InputCell } from "virtool/js/components/Base";
 
 const SampleDetailGeneral = (props) => {
 
+    console.log(props.created_at)
+
     const cells = ["name", "host", "isolate"].map(field => {
 
         let inputCell;
@@ -41,7 +43,7 @@ const SampleDetailGeneral = (props) => {
     if (props.showIds) {
         idCell = (
             <tr>
-                <th>Database ID</th>
+                <th>Unique ID</th>
                 <td>{props.sampleId}</td>
             </tr>
         );
@@ -59,8 +61,8 @@ const SampleDetailGeneral = (props) => {
                 {cells}
                 {idCell}
                 <tr>
-                  <th>Created At</th>
-                  <td>{Moment(props.added).calendar()}</td>
+                  <th>Created</th>
+                  <td>{Moment(props.createdAt).calendar()}</td>
                 </tr>
                 <tr>
                   <th>Created By</th>
@@ -147,7 +149,7 @@ const mapStateToProps = (state) => {
         sampleId: detail.id,
         name: detail.name,
         host: detail.host,
-        added: detail.added,
+        createdAt: detail.created_at,
         isolate: detail.isolate,
         showIds: state.account.settings.show_ids,
         files: detail.files,
