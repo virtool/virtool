@@ -47,22 +47,6 @@ class TestFind:
                 {
                     "created_at": "2017-10-06T20:00:00Z",
                     "has_files": True,
-                    "id": "foo",
-                    "job": {
-                        "id": "abh675"
-                    },
-                    "modification_count": 29,
-                    "modified_virus_count": 22,
-                    "ready": True,
-                    "user": {
-                        "id": "test"
-                    },
-                    "version": 0,
-                    "virus_count": 231
-                },
-                {
-                    "created_at": "2017-10-06T20:00:00Z",
-                    "has_files": True,
                     "id": "bar",
                     "job": {
                         "id": "sj82la"
@@ -75,6 +59,22 @@ class TestFind:
                     },
                     "version": 1,
                     "virus_count": 232
+                },
+                {
+                    "created_at": "2017-10-06T20:00:00Z",
+                    "has_files": True,
+                    "id": "foo",
+                    "job": {
+                        "id": "abh675"
+                    },
+                    "modification_count": 29,
+                    "modified_virus_count": 22,
+                    "ready": True,
+                    "user": {
+                        "id": "test"
+                    },
+                    "version": 0,
+                    "virus_count": 231
                 }
             ],
             "modified_virus_count": 0,
