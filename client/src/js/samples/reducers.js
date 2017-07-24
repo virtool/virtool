@@ -14,6 +14,10 @@ import {
     FIND_SAMPLES,
     GET_SAMPLE,
     UPDATE_SAMPLE,
+    REMOVE_SAMPLE,
+    SHOW_EDIT_SAMPLE,
+    SHOW_REMOVE_SAMPLE,
+    HIDE_SAMPLE_MODAL,
     FIND_ANALYSES,
     FIND_READY_HOSTS,
     GET_ANALYSIS,
@@ -26,6 +30,9 @@ const initialState = {
 
     analyses: null,
     analysisDetail: null,
+
+    showEdit: false,
+    showRemove: false,
 
     readyHosts: null
 };
@@ -97,6 +104,30 @@ export default function reducer (state = initialState, action) {
             return newState;
         }
 
+        case REMOVE_SAMPLE.SUCCEEDED:
+            return assign({}, state, {
+                analyses: reject(state.analyses, {id: action.id}),
+                analysisDetail: state.analysisDetail.id === action.id ? null: state.analysisDetail
+            });
+
+        case SHOW_EDIT_SAMPLE:
+            return assign({}, state, {
+                showEdit: true,
+                showRemove: false
+            });
+
+        case SHOW_REMOVE_SAMPLE:
+            return assign({}, state, {
+                showEdit: false,
+                showRemove: true
+            });
+
+        case HIDE_SAMPLE_MODAL:
+            return assign({}, state, {
+                showEdit: false,
+                showRemove: false
+            });
+
         case FIND_ANALYSES.REQUESTED:
             return assign({}, state, {
                 analyses: null,
@@ -105,7 +136,7 @@ export default function reducer (state = initialState, action) {
 
         case FIND_ANALYSES.SUCCEEDED:
             return assign({}, state, {
-                analyses: action.data
+                analyses: action.data.documents
             });
 
         case GET_ANALYSIS.REQUESTED:

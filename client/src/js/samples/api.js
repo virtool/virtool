@@ -15,7 +15,7 @@ const samplesAPI = {
         const params = {};
 
         if (term) {
-            params["find"] = term;
+            params["term"] = term;
         }
 
         params["page"] = page;

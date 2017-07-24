@@ -15,7 +15,7 @@ const virusesAPI = {
         let query = {};
 
         if (term) {
-            query.find = term;
+            query.term = term;
         }
 
         query.page = page;

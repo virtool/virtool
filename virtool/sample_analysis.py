@@ -60,7 +60,13 @@ async def new(db, settings, manager, sample_id, user_id, algorithm):
         }
     })
 
-    task_args = dict(data, analysis_id=analysis_id, sample_name=sample["name"])
+    task_args = dict(
+        data,
+        analysis_id=analysis_id,
+        sample_id=sample_id,
+        sample_name=sample["name"],
+        index_id=index_id
+    )
 
     await db.analyses.insert_one(document)
 
@@ -86,9 +92,9 @@ async def remove_by_id(db, settings, analysis_id):
 
     """
     # Get the sample id for the analysis
-    sample = await db.analyses.find_one({"_id": analysis_id}, ["sample_id"])
+    sample = await db.analyses.find_one({"_id": analysis_id}, ["sample"])
 
-    sample_id = sample["sample_id"]
+    sample_id = sample["sample"]["id"]
 
     # Remove analysis entry from database
     await db.analyses.delete_one({"_id": analysis_id})

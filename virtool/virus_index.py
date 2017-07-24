@@ -1,4 +1,5 @@
 import os
+import subprocess
 import dictdiffer
 import collections
 
@@ -59,7 +60,7 @@ async def cleanup_index_files(db, settings):
     """
     aggregation_cursor = db.analyses.aggregate([
         {"$match": {"ready": False}},
-        {"$group": {"_id": "$index_id"}}
+        {"$group": {"_id": "index.id"}}
     ])
 
     # The indexes (_ids) currently in use by running analysis jobs.
@@ -123,7 +124,7 @@ async def get_current_index(db):
     if current_index_version == -1:
         return None
 
-    index_id = (await db.indexes.find_one({"index_version": current_index_version}))["_id"]
+    index_id = (await db.indexes.find_one({"version": current_index_version}))["_id"]
 
     return index_id, current_index_version
 
@@ -258,7 +259,7 @@ class RebuildIndex(virtool.job.Job):
 
         total_found_sequences = 0
 
-        modification_count = self.db.history.find({"index": self.index_id}).count()
+        modification_count = self.db.history.find({"index.id": self.index_id}).count()
 
         for virus_id, virus_version in self._task_args["virus_manifest"].items():
             current, sequences = self.get_joined_virus(virus_id) or dict()
@@ -354,8 +355,8 @@ class RebuildIndex(virtool.job.Job):
         self.collection_operation("indexes", "remove", [self.index_id])
 
         self.collection_operation("history", "set_index_as_unbuilt", {
-            "index_id": self.index_id,
-            "index_version": self._task_args["index_version"]
+            "index.id": self.index_id,
+            "index.version": self._task_args["index_version"]
         })
 
 

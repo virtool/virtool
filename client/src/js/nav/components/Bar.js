@@ -29,7 +29,9 @@ const isHomeActive = (match, location) => {
 const Bar = (props) => {
 
     const dropdownTitle = (
-        <span><Icon name="user" /> {props.id}</span>
+        <span>
+            <Icon name="user" /> {props.id}
+        </span>
     );
 
     return (
@@ -44,7 +46,6 @@ const Bar = (props) => {
                 </Navbar.Header>
 
                 <Navbar.Collapse>
-
                     <Nav>
                         <LinkContainer to="/home" isActive={isHomeActive}>
                             <NavItem>
@@ -84,6 +85,10 @@ const Bar = (props) => {
                     </Nav>
 
                     <Nav pullRight>
+                        <NavItem target="_blank" href="https://docs.virtool.ca">
+                            <Icon name="book" />
+                        </NavItem>
+
                         <NavDropdown id="account-dropdown" title={dropdownTitle}>
                             <MenuItem>Settings</MenuItem>
                             <MenuItem onClick={props.logout}>Logout</MenuItem>

@@ -29,7 +29,7 @@ class Base(Job):
         super().__init__(*args, **kwargs)
 
         #: The document id for the sample being analyzed. and the analysis document the results will be committed to.
-        self.sample_id = self._task_args["sample_id"]
+        self.sample_id = self._task_args["sample"]
 
         #: The document id for the analysis being run.
         self.analysis_id = self._task_args["analysis_id"]

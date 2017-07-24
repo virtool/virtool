@@ -129,7 +129,7 @@ class Password extends React.PureComponent {
 
 const mapStateToProps = (state) => {
 
-    const activeData = find(state.users.list, {user_id: state.users.activeId});
+    const activeData = find(state.users.list, {id: state.users.activeId});
 
     return {
         userId: state.users.activeId,

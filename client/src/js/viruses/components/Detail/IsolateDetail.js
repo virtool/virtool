@@ -37,7 +37,7 @@ const IsolateDetail = (props) => {
     );
 
     let sequenceComponents = isolate.sequences.map(sequence =>
-        <Sequence key={sequence.accession} active={sequence.accession === activeAccession} {...sequence} />
+        <Sequence key={sequence.id} active={sequence.accession === activeAccession} {...sequence} />
     );
 
     if (!sequenceComponents.length) {

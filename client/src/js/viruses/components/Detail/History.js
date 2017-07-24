@@ -12,7 +12,45 @@ import { connect } from "react-redux";
 import { Row, Col, ListGroup, Label } from "react-bootstrap";
 
 import { getVirusHistory } from "../../actions";
-import { ListGroupItem, RelativeTime, Icon } from "virtool/js/components/Base";
+import { Flex, FlexItem, ListGroupItem, RelativeTime, Icon } from "virtool/js/components/Base"
+
+
+const getMethodIcon = (change) => {
+    switch (change.method_name) {
+        case "create":
+            return <Icon name="new-entry" bsStyle="primary" />;
+
+        case "edit":
+            return <Icon name="pencil" bsStyle="warning" />;
+
+        case "remove":
+            return <Icon name="remove" bsStyle="danger" />;
+
+        case "add_isolate":
+            return <Icon name="lab" bsStyle="primary" />;
+
+        case "edit_isolate":
+            return <Icon name="lab" bsStyle="warning" />;
+
+        case "set_default_isolate":
+            return <Icon name="lab" bsStyle="warning" />;
+
+        case "remove_isolate":
+            return <Icon name="lab" bsStyle="danger" />;
+
+        case "add_sequence":
+            return <Icon name="dna" bsStyle="primary" />;
+
+        case "edit_sequence":
+            return <Icon name="dna" bsStyle="warning" />;
+
+        case "remove_sequence":
+            return <Icon name="dna" bsStyle="danger" />;
+
+        default:
+            return <Icon name="warning" bsStyle="danger" />;
+    }
+};
 
 const HistoryList = (props) => {
 
@@ -39,10 +77,15 @@ const HistoryList = (props) => {
                         <Label>{change.virus.version}</Label>
                     </Col>
                     <Col md={6}>
-                        {change.description}
+                        <Flex alignItems="center">
+                            {getMethodIcon(change)}
+                            <FlexItem pad={5}>
+                                {change.description || "No Description"}
+                            </FlexItem>
+                        </Flex>
                     </Col>
                     <Col md={4}>
-                        <RelativeTime time={change.created_at} />
+                        <RelativeTime time={change.created_at} /> by {change.user.id}
                     </Col>
                     <Col md={1}>
                         {revertIcon}

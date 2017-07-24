@@ -91,7 +91,21 @@ async def init_db(app):
 
     db = motor_asyncio.AsyncIOMotorClient(io_loop=app.loop)[app["db_name"]]
 
-    # Create indexes.
+    logger.info("Organizing database...")
+
+    await virtool.organize.organize_jobs(db)
+    await virtool.organize.organize_samples(db)
+    await virtool.organize.organize_analyses(db)
+    await virtool.organize.organize_viruses(db)
+    await virtool.organize.organize_sequences(db)
+    await virtool.organize.organize_indexes(db)
+    await virtool.organize.organize_history(db)
+    await virtool.organize.organize_subtraction(db)
+    await virtool.organize.organize_users(db)
+    await virtool.organize.organize_groups(db)
+
+    logger.info("Creating database indexes...")
+
     await db.analyses.create_index("sample.id")
     await db.viruses.create_index("name")
     await db.viruses.create_index("abbreviation")
@@ -101,15 +115,6 @@ async def init_db(app):
     await db.history.create_index("virus.id")
     await db.history.create_index("index.id")
     await db.history.create_index("created_at")
-
-    # Organize collections.
-    await virtool.organize.organize_samples(db)
-    await virtool.organize.organize_analyses(db)
-    await virtool.organize.organize_viruses(db)
-    await virtool.organize.organize_history(db)
-    await virtool.organize.organize_subtraction(db)
-    await virtool.organize.organize_users(db)
-    await virtool.organize.organize_groups(db)
 
     app["db"] = db
 

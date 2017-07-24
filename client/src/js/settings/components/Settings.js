@@ -13,8 +13,6 @@ import { withRouter, Switch, Redirect, Route } from "react-router-dom";
 import { Nav, NavItem } from "react-bootstrap";
 import { LinkContainer } from "react-router-bootstrap";
 
-import { Flex, FlexItem } from "virtool/js/components/Base";
-
 import SourceTypes from "./General/SourceTypes";
 import InternalControl from "./General/InternalControl";
 import UniqueNames from "./General/UniqueNames";
@@ -52,46 +50,36 @@ const Jobs = () => (
 const Settings = () => {
     return (
         <div className="container">
-            <Flex>
-                <FlexItem>
-                    <Nav bsStyle="pills" stacked>
-                        <LinkContainer to="/settings/general">
-                            <NavItem>General</NavItem>
-                        </LinkContainer>
+            <Nav bsStyle="tabs">
+                <LinkContainer to="/settings/general">
+                    <NavItem>General</NavItem>
+                </LinkContainer>
 
-                        <LinkContainer to="/settings/server">
-                            <NavItem>Server</NavItem>
-                        </LinkContainer>
+                <LinkContainer to="/settings/server">
+                    <NavItem>Server</NavItem>
+                </LinkContainer>
 
-                        <LinkContainer to="/settings/data">
-                            <NavItem>Data</NavItem>
-                        </LinkContainer>
+                <LinkContainer to="/settings/data">
+                    <NavItem>Data</NavItem>
+                </LinkContainer>
 
-                        <LinkContainer to="/settings/jobs">
-                            <NavItem>Jobs</NavItem>
-                        </LinkContainer>
+                <LinkContainer to="/settings/jobs">
+                    <NavItem>Jobs</NavItem>
+                </LinkContainer>
 
-                        <LinkContainer to="/settings/users">
-                            <NavItem>Users</NavItem>
-                        </LinkContainer>
-                    </Nav>
-                </FlexItem>
+                <LinkContainer to="/settings/users">
+                    <NavItem>Users</NavItem>
+                </LinkContainer>
+            </Nav>
 
-                <FlexItem pad={15}>
-                    <div style={{borderRight: "1px solid #e5e5e5", height: "100%"}} />
-                </FlexItem>
-
-                <FlexItem grow={1} pad={15}>
-                    <Switch>
-                        <Redirect from="/settings" to="/settings/general" exact />
-                        <Route path="/settings/general" component={General} />
-                        <Route path="/settings/server" component={Server} />
-                        <Route path="/settings/data" component={Data} />
-                        <Route path="/settings/jobs" component={Jobs} />
-                        <Route path="/settings/users" component={Users} />
-                    </Switch>
-                </FlexItem>
-            </Flex>
+            <Switch>
+                <Redirect from="/settings" to="/settings/general" exact />
+                <Route path="/settings/general" component={General} />
+                <Route path="/settings/server" component={Server} />
+                <Route path="/settings/data" component={Data} />
+                <Route path="/settings/jobs" component={Jobs} />
+                <Route path="/settings/users" component={Users} />
+            </Switch>
         </div>
     );
 };

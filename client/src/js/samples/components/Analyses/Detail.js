@@ -64,7 +64,7 @@ class AnalysisDetail extends React.Component {
                         </tr>
                         <tr>
                             <th>User</th>
-                            <td>{detail.user_id}</td>
+                            <td>{detail.user.id}</td>
                         </tr>
                     </tbody>
                 </Table>

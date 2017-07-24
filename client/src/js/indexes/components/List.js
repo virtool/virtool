@@ -52,12 +52,8 @@ class IndexesList extends React.Component {
             // Render a ListGroupItem for each index version. Mark the first ready index with a checkmark by setting the
             // showReady prop to true.
             let indexComponents = this.props.documents.map(doc => {
-                const entry = <IndexEntry key={doc.index_id} showReady={!doc.ready || !haveSeenReady} {...doc} />;
-
-                if (doc.ready) {
-                    haveSeenReady = true;
-                }
-
+                const entry = <IndexEntry key={doc.id} showReady={!doc.ready || !haveSeenReady} {...doc} />;
+                haveSeenReady = haveSeenReady || doc.ready;
                 return entry;
             });
 
