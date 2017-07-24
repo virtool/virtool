@@ -12,9 +12,14 @@ import {
     FIND_READY_HOSTS,
     GET_SAMPLE,
     UPDATE_SAMPLE,
+    REMOVE_SAMPLE,
     FIND_ANALYSES,
     GET_ANALYSIS,
-    ANALYZE
+    ANALYZE,
+
+    SHOW_EDIT_SAMPLE,
+    SHOW_REMOVE_SAMPLE,
+    HIDE_SAMPLE_MODAL
 } from "../actionTypes";
 
 export const findSamples = (term, page) => {
@@ -43,6 +48,31 @@ export const updateSample = (sampleId, update) => {
         type: UPDATE_SAMPLE.REQUESTED,
         sampleId,
         update
+    };
+};
+
+export const removeSample = (sampleId) => {
+    return {
+        type: REMOVE_SAMPLE.REQUESTED,
+        sampleId
+    };
+};
+
+export const showEditSample = () => {
+    return {
+        type: SHOW_EDIT_SAMPLE
+    };
+};
+
+export const showRemoveSample = () => {
+    return {
+        type: SHOW_REMOVE_SAMPLE
+    };
+};
+
+export const hideSampleModal = () => {
+    return {
+        type: HIDE_SAMPLE_MODAL
     };
 };
 

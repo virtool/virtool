@@ -33,9 +33,14 @@ export const FIND_SAMPLES = createRequestActionType("FIND_SAMPLES");
 export const FIND_READY_HOSTS = createRequestActionType("FIND_READY_HOSTS");
 export const GET_SAMPLE = createRequestActionType("GET_SAMPLE");
 export const UPDATE_SAMPLE = createRequestActionType("UPDATE_SAMPLE");
+export const REMOVE_SAMPLE = createRequestActionType("REMOVE_SAMPLE");
 export const FIND_ANALYSES = createRequestActionType("FIND_ANALYSES");
 export const GET_ANALYSIS = createRequestActionType("GET_ANALYSIS");
 export const ANALYZE = createRequestActionType("ANALYZE");
+
+export const SHOW_EDIT_SAMPLE = "SHOW_EDIT_SAMPLE";
+export const SHOW_REMOVE_SAMPLE = "SHOW_REMOVE_SAMPLE";
+export const HIDE_SAMPLE_MODAL = "HIDE_SAMPLE_MODAL";
 
 // Virus
 export const WS_UPDATE_VIRUS = "WS_UPDATE_VIRUS";

@@ -13,11 +13,12 @@ import { connect } from "react-redux";
 import { LinkContainer } from "react-router-bootstrap";
 import { Nav, NavItem } from "react-bootstrap";
 
-import { getSample } from "../actions";
+import { getSample, showRemoveSample } from "../actions";
 import { Flex, FlexItem, Icon } from "virtool/js/components/Base";
 import General from "./General";
 import Quality from "./Quality/Quality";
 import Analyses from "./Analyses/Analyses";
+import RemoveSample from "./Remove";
 
 class SampleDetail extends React.Component {
 
@@ -25,7 +26,9 @@ class SampleDetail extends React.Component {
         detail: React.PropTypes.object,
         match: React.PropTypes.object,
         history: React.PropTypes.object,
-        getSample: React.PropTypes.func
+        getSample: React.PropTypes.func,
+        showRemove: React.PropTypes.func,
+        remove: React.PropTypes.func
     };
 
     componentDidMount () {
@@ -56,7 +59,7 @@ class SampleDetail extends React.Component {
                             name="remove"
                             tip="Remove Sample"
                             style={{fontSize: "18px"}}
-                            onClick={() => window.console.log(detail.name)}
+                            onClick={() => this.props.showRemove(sampleId, detail.name)}
                         />
                     </Flex>
                 </h3>
@@ -79,6 +82,8 @@ class SampleDetail extends React.Component {
                     <Route path="/samples/:sampleId/quality" component={Quality}/>
                     <Route path="/samples/:sampleId/analyses" component={Analyses}/>
                 </Switch>
+
+                <RemoveSample name={detail.name} />
             </div>
         );
     }
@@ -94,6 +99,10 @@ const mapDispatchToProps = (dispatch) => {
     return {
         getSample: (sampleId) => {
             dispatch(getSample(sampleId));
+        },
+
+        showRemove: (sampleId, sampleName) => {
+            dispatch(showRemoveSample(sampleId, sampleName));
         }
     };
 };
