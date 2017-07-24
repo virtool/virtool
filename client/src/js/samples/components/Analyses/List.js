@@ -101,7 +101,7 @@ class AnalysesList extends React.Component {
                 </ListGroup>
 
                 <CreateAnalysis
-                    sampleId={this.props.detail.sample_id}
+                    id={this.props.detail.id}
                     show={this.state.show}
                     onHide={() => this.setState({show: false})}
                     onSubmit={this.props.onAnalyze}
