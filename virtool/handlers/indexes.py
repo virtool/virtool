@@ -13,7 +13,7 @@ async def find(req):
     """
     db = req.app["db"]
 
-    documents = await db.indexes.find({}, virtool.virus_index.PROJECTION, sort=[("index.version", -1)]).to_list(None)
+    documents = await db.indexes.find({}, virtool.virus_index.PROJECTION, sort=[("version", -1)]).to_list(None)
 
     modified_virus_count = await db.viruses.count({"modified": True})
     total_virus_count = await db.viruses.count()
