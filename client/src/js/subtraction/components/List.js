@@ -10,6 +10,7 @@
  */
 
 import React, { PropTypes } from "react";
+import { some } from "lodash";
 import { connect } from "react-redux";
 import { LinkContainer } from "react-router-bootstrap";
 import { Row, Col, Alert, FormGroup, InputGroup, FormControl } from "react-bootstrap";
@@ -35,21 +36,6 @@ class SubtractionList extends React.Component {
             return <div />;
         }
 
-        let alert;
-
-        if (!this.props.readyHostCount) {
-            alert = (
-                <Alert bsStyle="warning">
-                    <Flex alignItems="center">
-                        <Icon name="notification" />
-                        <FlexItem pad={5}>
-                            A host genome must be added to Virtool before samples can be created and analyzed.
-                        </FlexItem>
-                    </Flex>
-                </Alert>
-            );
-        }
-
         let hostComponents = this.props.documents.map((document) => {
 
             let statusComponent = "Adding";
@@ -66,11 +52,11 @@ class SubtractionList extends React.Component {
             }
 
             return (
-                <LinkContainer key={document.subtraction_id} to={`/subtraction/${document.subtraction_id}`}>
-                    <ListGroupItem className="spaced">
+                <LinkContainer key={document.id} className="spaced" to={`/subtraction/${document.id}`}>
+                    <ListGroupItem>
                         <Row>
                             <Col md={4}>
-                                <strong>{document.subtraction_id}</strong>
+                                <strong>{document.id}</strong>
                             </Col>
                             <Col md={3} className="text-muted">
                                 {document.description}
@@ -89,6 +75,21 @@ class SubtractionList extends React.Component {
                 <ListGroupItem key="noSample" className="text-center">
                     <Icon name="info" /> No hosts found
                 </ListGroupItem>
+            );
+        }
+
+        let alert;
+
+        if (!some(this.props.documents, {"ready": true})) {
+            alert = (
+                <Alert bsStyle="warning">
+                    <Flex alignItems="center">
+                        <Icon name="notification" />
+                        <FlexItem pad={5}>
+                            A host genome must be added to Virtool before samples can be created and analyzed.
+                        </FlexItem>
+                    </Flex>
+                </Alert>
             );
         }
 
@@ -129,8 +130,7 @@ class SubtractionList extends React.Component {
 
 const mapStateToProps = (state) => {
     return {
-        documents: state.subtraction.documents,
-        readyHostCount: state.subtraction.readyHostCount
+        documents: state.subtraction.documents
     };
 };
 

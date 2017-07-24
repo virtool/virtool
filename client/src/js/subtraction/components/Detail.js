@@ -37,7 +37,7 @@ class SubtractionDetail extends React.Component {
         const data = this.props.detail;
 
         const linkedSampleComponents = data.linked_samples.map(sample =>
-            <LinkContainer key={sample.sample_id} to={`/samples/${sample.sample_id}`}>
+            <LinkContainer key={sample.id} to={`/samples/${sample.id}`}>
                 <Button>
                     {sample.name}
                 </Button>
@@ -47,7 +47,7 @@ class SubtractionDetail extends React.Component {
         return (
             <div>
                 <h3 className="view-header">
-                    <strong>{data.subtraction_id}</strong>
+                    <strong>{data.id}</strong>
                 </h3>
 
                 <Table condensed bordered>
