@@ -319,6 +319,16 @@ async def organize_history(db):
             }
         })
 
+    async for change in db.history.find({"virus.name": None}, ["virus"]):
+        virus = await db.viruses.find_one(change["virus"]["id"], ["name"])
+
+        if virus:
+            await db.history.update_one({"_id": change["_id"]}, {
+                "$set": {
+                    "virus.name": virus["name"]
+                }
+            })
+
 
 async def organize_subtraction(db):
     await virtool.organize_utils.update_user_field(db.hosts)
