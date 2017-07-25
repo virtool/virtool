@@ -44,9 +44,39 @@ async def get(req):
 
     document = virtool.utils.base_processor(document)
 
-    changes = await db.history.find({"index.id": document["id"]}, virtool.virus_history.LIST_PROJECTION).to_list(None)
+    contributors = await db.history.aggregate([
+        {"$match": {
+            "index.id": document["id"]
+        }},
+        {"$group": {
+            "_id": "$user.id",
+            "count": {"$sum": 1}
+        }}
+    ]).to_list(None)
 
-    document["changes"] = [virtool.utils.base_processor(c) for c in changes]
+    document["contributors"] = {c["_id"]: c["count"] for c in contributors}
+
+    viruses = await db.history.aggregate([
+        {"$match": {
+            "index.id": document["id"]
+        }},
+        {"$sort": {
+            "virus.id": 1,
+            "virus.version": -1
+        }},
+        {"$group": {
+            "_id": "$virus.id",
+            "name": {"$first": "$virus.name"},
+            "count": {"$sum": 1}
+        }}
+    ]).to_list(None)
+
+    document["viruses"] = {v["_id"]: {"name": v["name"], "change_count": v["count"]} for v in viruses}
+
+    document["change_count"] = sum(v["count"] for v in viruses)
+
+    del document["modified_virus_count"]
+    del document["modification_count"]
 
     return json_response(document)
 
@@ -98,7 +128,7 @@ async def create(req):
     # Generate a dict of virus document version numbers keyed by the document id.
     virus_manifest = dict()
 
-    async for document in db.viruses.find({}, ["_id", "version"]):
+    async for document in db.viruses.find({}, ["version"]):
         virus_manifest[document["_id"]] = document["version"]
 
     # A dict of task_args for the rebuild job.
