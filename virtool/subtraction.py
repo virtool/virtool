@@ -1,6 +1,5 @@
 import os
 import logging
-import subprocess
 
 import virtool.job
 import virtool.utils
@@ -53,33 +52,6 @@ async def set_ready(db, subtraction_id):
 
     if not update_result.modified_count:
         raise virtool.errors.DatabaseError("No subtraction with id '{}'".format(subtraction_id))
-
-
-def get_bowtie2_index_names(index_path):
-    """
-    Returns a list of sequence ids used to generate the Bowtie2 index located at ``index_path``.
-
-    :param index_path: the path of the Bowtie2 index to inspect.
-    :type index_path: str
-
-    :return: a list of sequence id strings.
-    :rtype: list
-
-    """
-    try:
-        result = subprocess.check_output(["bowtie2-inspect", "-n", index_path], stderr=subprocess.STDOUT)
-    except subprocess.CalledProcessError as err:
-        if "Could not locate a Bowtie index" in err.output.decode():
-            raise FileNotFoundError("Index not found at {}".format(index_path))
-
-        print(err.output.decode())
-
-        raise
-
-    inspect_list = str(result, "utf-8").split("\n")
-    inspect_list.remove("")
-
-    return inspect_list
 
 
 class CreateSubtraction(virtool.job.Job):
