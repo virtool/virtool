@@ -1,11 +1,12 @@
 import os
-import subprocess
 import dictdiffer
 import collections
+from cerberus import Validator
 
 import virtool.job
 import virtool.virus
 import virtool.utils
+import virtool.errors
 
 PROJECTION = [
     "_id",
@@ -31,9 +32,23 @@ async def set_stats(db, index_id, data):
     * virus_count - Number of viruses now present in the viruses collection.
 
     """
-    return await db.indexes.update_one({"_id": index_id}, {
+    v = Validator({
+        "modification_count": {"type": "integer", "required": True},
+        "modified_virus_count": {"type": "integer", "required": True},
+        "virus_count": {"type": "integer", "required": True}
+    })
+
+    if not v(data):
+        raise ValueError("data could not be validated")
+
+    update_result = await db.indexes.update_one({"_id": index_id}, {
         "$set": data
     })
+
+    if not update_result.modified_count:
+        raise virtool.errors.DatabaseError("Could not find index '{}'".format(index_id))
+
+    return update_result
 
 
 async def set_ready(db, index_id):
@@ -41,11 +56,16 @@ async def set_ready(db, index_id):
     Updates the index document described by the passed index id to show whether it is ready or not.
 
     """
-    return await db.indexes.update_one({"_id": index_id}, {
+    update_result = await db.indexes.update_one({"_id": index_id}, {
         "$set": {
             "ready": True
         }
     })
+
+    if not update_result.modified_count:
+        raise virtool.errors.DatabaseError("Could not find index '{}'".format(index_id))
+
+    return update_result
 
 
 async def cleanup_index_files(db, settings):
@@ -58,44 +78,44 @@ async def cleanup_index_files(db, settings):
     analyses.
 
     """
+    # The indexes (_ids) currently in use by running analysis jobs.
+    retained = set()
+
     aggregation_cursor = db.analyses.aggregate([
         {"$match": {"ready": False}},
-        {"$group": {"_id": "index.id"}}
+        {"$group": {"_id": "$index.id"}}
     ])
 
-    # The indexes (_ids) currently in use by running analysis jobs.
-    active_indexes = list()
-
     async for a in aggregation_cursor:
-        active_indexes.append(a["_id"])
+        retained.add(a["_id"])
 
-    active_indexes.append(await get_current_index(db))
+    current_id, _ = await get_current_index(db)
+
+    retained.add(current_id)
 
     # Any rebuilding index
     unready_index = await db.indexes.find_one({"ready": False}, ["_id"])
 
     if unready_index:
-        active_indexes.append(unready_index["_id"])
+        retained.add(unready_index["_id"])
 
     try:
-        active_indexes.remove("unbuilt")
-    except ValueError:
+        retained.remove("unbuilt")
+    except KeyError:
         pass
 
-    active_indexes = list(set(active_indexes))
-
-    await db.indexes.update_many({"_id": {"$in": active_indexes}}, {
+    await db.indexes.update_many({"_id": {"$in": list(retained)}}, {
         "$set": {
             "has_files": False
         }
     })
 
-    base_path = os.path.join(settings.get("data_path"), "reference/viruses")
+    base_path = os.path.join(settings.get("data_path"), "reference", "viruses")
 
     for dir_name in os.listdir(base_path):
-        if dir_name not in active_indexes:
+        if dir_name not in retained:
             try:
-                await virtool.utils.rm(os.path.join(base_path, dir_name), recursive=True)
+                virtool.utils.rm(os.path.join(base_path, dir_name), recursive=True)
             except OSError:
                 pass
 
@@ -107,8 +127,6 @@ async def get_current_index_version(db):
     """
     # Make sure only one index is in the 'ready' state.
     index_count = await db.indexes.find({"ready": True}).count()
-
-    assert index_count > -1
 
     # Index versions start at 0. Returns -1 if no indexes exist.
     return index_count - 1
@@ -127,25 +145,6 @@ async def get_current_index(db):
     index_id = (await db.indexes.find_one({"version": current_index_version}))["_id"]
 
     return index_id, current_index_version
-
-
-def get_bowtie2_index_names(index_path):
-    """
-    Get the headers of all the FASTA sequences used to build the Bowtie2 index in *index_path*.
-    *Requires Bowtie2 in path.*
-
-    :param index_path: the patch to the Bowtie2 index.
-    :return: list of FASTA headers.
-    """
-    try:
-        inspect = subprocess.check_output(["bowtie2-inspect", "-n", index_path], stderr=subprocess.DEVNULL)
-    except subprocess.CalledProcessError:
-        return None
-
-    inspect_list = str(inspect, "utf-8").split("\n")
-    inspect_list.remove("")
-
-    return inspect_list
 
 
 class RebuildIndex(virtool.job.Job):

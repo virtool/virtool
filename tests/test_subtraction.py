@@ -59,32 +59,3 @@ class TestSetReady:
             await virtool.subtraction.set_ready(test_motor, "test")
 
         assert "No subtraction with id 'test'" in str(err)
-
-
-class TestBowtie2IndexNames:
-
-    def test(self, tmpdir, test_files_path):
-        index_dir_path = os.path.join(str(tmpdir), "index")
-
-        shutil.copytree(os.path.join(test_files_path, "index"), index_dir_path)
-
-        result = virtool.subtraction.get_bowtie2_index_names(os.path.join(index_dir_path, "test"))
-
-        assert result == [
-            "test_1",
-            "test_2",
-            "test_3",
-            "test_4"
-        ]
-
-    def test_file_not_found(self, tmpdir, test_files_path):
-        index_dir_path = os.path.join(str(tmpdir), "index")
-
-        shutil.copytree(os.path.join(test_files_path, "index"), index_dir_path)
-
-        index_path = os.path.join(index_dir_path, "foobar")
-
-        with pytest.raises(FileNotFoundError) as err:
-            virtool.subtraction.get_bowtie2_index_names(index_path)
-
-        assert "Index not found at {}".format(index_path) in str(err)

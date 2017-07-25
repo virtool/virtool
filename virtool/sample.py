@@ -84,7 +84,7 @@ async def recalculate_algorithm_tags(db, sample_id):
     :type sample_id: str
 
     """
-    analyses = await db.analyses.find({"sample_id": sample_id}, ["ready", "algorithm"]).to_list(None)
+    analyses = await db.analyses.find({"sample.id": sample_id}, ["ready", "algorithm"]).to_list(None)
 
     update = calculate_algorithm_tags(analyses)
 
@@ -95,7 +95,7 @@ async def recalculate_algorithm_tags(db, sample_id):
 
 async def get_sample_owner(db, sample_id):
     """
-    A Shortcut function for getting the owner (``user_id``) of a sample given its ``sample_id``.
+    A Shortcut function for getting the owner user id of a sample given its ``sample_id``.
 
     :param db: the application database client
     :type db: :class:`~motor.motor_asyncio.AsyncIOMotorClient`
@@ -106,10 +106,10 @@ async def get_sample_owner(db, sample_id):
     :return: the id of the owner user
 
     """
-    document = await db.samples.find_one(sample_id, ["user_id"])
+    document = await db.samples.find_one(sample_id, ["user"])
 
     if document:
-        return document["user_id"]
+        return document["user"]["id"]
 
     return None
 
@@ -139,7 +139,7 @@ async def remove_samples(db, settings, id_list):
         raise TypeError("id_list must be a list")
 
     # Remove all analysis documents associated with the sample.
-    await db.analyses.delete_many({"sample_id": {
+    await db.analyses.delete_many({"sample.id": {
         "$in": id_list
     }})
 
@@ -152,7 +152,7 @@ async def remove_samples(db, settings, id_list):
 
     for sample_id in id_list:
         try:
-            virtool.utils.rm(os.path.join(samples_path, "sample_" + sample_id), recursive=True)
+            virtool.utils.rm(os.path.join(samples_path, "sample_{}".format(sample_id)), recursive=True)
         except FileNotFoundError:
             pass
 
