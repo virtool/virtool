@@ -23,6 +23,9 @@ const getMethodIcon = (change) => {
         case "edit":
             return <Icon name="pencil" bsStyle="warning" />;
 
+        case "verify":
+            return <Icon name="checkmark" bsStyle="success" />;
+
         case "remove":
             return <Icon name="remove" bsStyle="danger" />;
 
