@@ -20,7 +20,8 @@ LIST_PROJECTION = [
     "name",
     "abbreviation",
     "version",
-    "modified"
+    "modified",
+    "verified"
 ]
 
 SEQUENCE_PROJECTION = [
