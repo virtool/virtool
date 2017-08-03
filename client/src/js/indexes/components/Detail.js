@@ -87,7 +87,7 @@ class IndexDetail extends React.Component {
                         </tr>
                         <tr>
                             <th>Unique ID</th>
-                            <td className="text-uppercase">{detail.index_id}</td>
+                            <td>{detail.index_id}</td>
                         </tr>
                     </tbody>
                 </Table>

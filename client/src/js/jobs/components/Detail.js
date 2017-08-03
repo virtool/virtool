@@ -108,7 +108,7 @@ class JobDetail extends React.Component {
                         </tr>
                         <tr>
                             <th>Unique ID</th>
-                            <td className="text-uppercase">{detail.id}</td>
+                            <td>{detail.id}</td>
                         </tr>
                     </tbody>
                 </Table>
