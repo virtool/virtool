@@ -50,6 +50,12 @@ const Jobs = () => (
 const Settings = () => {
     return (
         <div className="container">
+            <h3 className="view-header">
+                <strong>
+                    Settings
+                </strong>
+            </h3>
+
             <Nav bsStyle="tabs">
                 <LinkContainer to="/settings/general">
                     <NavItem>General</NavItem>
