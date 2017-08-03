@@ -65,7 +65,7 @@ class VirusDetail extends React.Component {
                                         {this.props.detail.name}
                                     </strong>
                                     <FlexItem grow={1} pad={5}>
-                                        <small className="text-uppercase text-strong">
+                                        <small className="text-strong">
                                             {this.props.detail.abbreviation}
                                         </small>
                                     </FlexItem>
