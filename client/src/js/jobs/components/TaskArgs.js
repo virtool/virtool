@@ -31,15 +31,15 @@ const TaskArgs = (props) => {
                         <tr>
                             <th>Sample ID</th>
                             <td>
-                                <Link to={`/samples/${props.taskArgs.sample_id}`} className="text-uppercase">
+                                <Link to={`/samples/${props.taskArgs.sample_id}`}>
                                     {props.taskArgs.sample_id}
                                 </Link>
                             </td>
                         </tr>
                         <tr>
                             <th>Analysis ID</th>
-                            <td className="text-uppercase">
-                                <Link to={`/samples/${props.taskArgs.sample_id}/analyses`} className="text-uppercase">
+                            <td>
+                                <Link to={`/samples/${props.taskArgs.sample_id}/analyses`}>
                                     {props.taskArgs.analysis_id}
                                 </Link>
                             </td>

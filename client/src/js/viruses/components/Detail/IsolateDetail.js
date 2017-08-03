@@ -117,7 +117,7 @@ const IsolateDetail = (props) => {
                                 </tr>
                                 <tr>
                                     <th>Unique ID</th>
-                                    <td className="text-uppercase">{isolate.id}</td>
+                                    <td>{isolate.id}</td>
                                 </tr>
                             </tbody>
                         </Table>
