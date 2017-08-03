@@ -15,6 +15,8 @@ def test_random_alphanumeric(monkeypatch):
                 "kl84Fg067jJa109lmQ021"
             ]
 
+            self.history = list()
+
             self.last_choice = None
 
         def __call__(self, length=6, mixed_case=False, excluded=None):
@@ -26,6 +28,7 @@ def test_random_alphanumeric(monkeypatch):
             if string in excluded:
                 string = self.__call__(length, mixed_case, excluded)
 
+            self.history.append(string)
             self.last_choice = string
 
             return string
