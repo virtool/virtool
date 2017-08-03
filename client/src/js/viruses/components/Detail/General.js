@@ -50,7 +50,7 @@ const VirusGeneral = (props) => {
     const databaseIdRow = props.showIds ? (
         <tr>
             <th>Unique ID</th>
-            <td>{props.virusId.toUpperCase()}</td>
+            <td>{props.virusId}</td>
         </tr>
     ): null;
 
