@@ -95,7 +95,8 @@ VirusGeneral.propTypes = {
     abbreviation: PropTypes.string,
     canModify: PropTypes.bool,
     showIds: PropTypes.bool,
-
+    issues: PropTypes.object,
+    isolates: PropTypes.arrayOf(PropTypes.object),
     onSave: PropTypes.func
 };
 
