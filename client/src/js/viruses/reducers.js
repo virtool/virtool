@@ -112,9 +112,7 @@ export default function virusesReducer (state = virusesInitialState, action) {
             return merge({}, state, {
                 addIsolate: false,
                 addIsolatePending: false,
-                detail: {
-                    isolates: state.detail.isolates.concat([action.data])
-                }
+                detail: action.data
             });
 
         case EDIT_ISOLATE.REQUESTED:
@@ -126,15 +124,7 @@ export default function virusesReducer (state = virusesInitialState, action) {
             return merge({}, state, {
                 editIsolate: false,
                 editIsolatePending: false,
-                detail: {
-                    isolates: state.detail.isolates.map(isolate => {
-                        if (isolate.id !== action.data.id) {
-                            return isolate;
-                        } else {
-                            return assign({}, isolate, action.data);
-                        }
-                    })
-                }
+                detail: action.data
             });
 
         case REMOVE_ISOLATE.REQUESTED:
@@ -147,9 +137,7 @@ export default function virusesReducer (state = virusesInitialState, action) {
             return assign({}, state, {
                 removeIsolate: false,
                 removeIsolatePending: false,
-                detail: assign({}, state.detail, {
-                    isolates: reject(state.detail.isolates, {id: action.isolateId})
-                })
+                detail: action.data
             });
 
         case GET_VIRUS_HISTORY.REQUESTED:

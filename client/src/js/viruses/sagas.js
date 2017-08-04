@@ -82,7 +82,8 @@ export function* createVirus (action) {
 export function* addIsolate (action) {
     yield setPending(function* (action) {
         try {
-            const response = yield call(virusesAPI.addIsolate, action.virusId, action.sourceType, action.sourceName);
+            yield call(virusesAPI.addIsolate, action.virusId, action.sourceType, action.sourceName);
+            const response = yield call(virusesAPI.get, action.virusId);
             yield put({type: ADD_ISOLATE.SUCCEEDED, data: response.body});
         } catch (error) {
             yield put({type: ADD_ISOLATE.FAILED, error: error});
@@ -93,14 +94,8 @@ export function* addIsolate (action) {
 export function* editIsolate (action) {
     yield setPending(function* (action) {
         try {
-            const response = yield call(
-                virusesAPI.editIsolate,
-                action.virusId,
-                action.isolateId,
-                action.sourceType,
-                action.sourceName
-            );
-
+            yield call(virusesAPI.editIsolate, action.virusId, action.isolateId, action.sourceType, action.sourceName);
+            const response = yield call(virusesAPI.get, action.virusId);
             yield put({type: EDIT_ISOLATE.SUCCEEDED, data: response.body});
         } catch (error) {
             yield put({type: EDIT_ISOLATE.FAILED, error: error});
@@ -113,7 +108,8 @@ export function* removeIsolate (action) {
         try {
             yield call(virusesAPI.removeIsolate, action.virusId, action.isolateId);
             yield call(action.onSuccess);
-            yield put({type: REMOVE_ISOLATE.SUCCEEDED, virusId: action.virusId, isolateId: action.isolateId});
+            const response = yield call(virusesAPI.get, action.virusId);
+            yield put({type: REMOVE_ISOLATE.SUCCEEDED, data: response.body});
         } catch (error) {
             yield put({type: REMOVE_ISOLATE.FAILED, error: error});
         }
