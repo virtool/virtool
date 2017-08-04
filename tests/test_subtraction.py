@@ -1,5 +1,3 @@
-import os
-import shutil
 import pytest
 
 import virtool.errors

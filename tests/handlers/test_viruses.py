@@ -72,7 +72,7 @@ class TestFind:
     ])
     async def test(self, term, modified, per_page, page, d_range, meta, add_modified, spawn_client):
         client = await spawn_client()
-        
+
         await client.db.viruses.insert_many([
             {
                 "abbreviation": "EV_TF3-mycovirus",
@@ -948,7 +948,7 @@ class TestRemove:
     ])
     async def test(self, abbreviation, description, spawn_client, test_virus, test_add_history, test_dispatch):
         """
-        Test that an existing virus can be removed.        
+        Test that an existing virus can be removed.
          
         """
         client = await spawn_client(authorize=True, permissions=["modify_virus"])

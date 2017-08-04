@@ -169,7 +169,7 @@ class TestTimestamp:
 class TestRandomAlphanumeric:
 
     def test_default(self, alphanumeric):
-        for i in range(0, 10):
+        for _ in range(0, 10):
             an = virtool.utils.random_alphanumeric()
             assert len(an) == 6
             assert all(l in alphanumeric for l in an)
@@ -181,7 +181,7 @@ class TestRandomAlphanumeric:
             assert all(l in alphanumeric for l in an)
 
     def test_excluded(self, alphanumeric):
-        for i in range(0, 5):
+        for _ in range(0, 5):
             an = virtool.utils.random_alphanumeric(excluded=["87e9wa"])
             assert an != "87e9wa"
             assert len(an) == 6

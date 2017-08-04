@@ -148,7 +148,7 @@ def test_sequences_list():
 @pytest.fixture
 def test_virus_list(test_merged_virus):
     first_virus = test_merged_virus
-    second_virus, third_virus, fourth_virus = (copy.deepcopy(test_merged_virus) for i in range(3))
+    second_virus, third_virus, fourth_virus = (copy.deepcopy(test_merged_virus) for _ in range(3))
 
     second_virus.update({
         "_id": "067jz0t3",

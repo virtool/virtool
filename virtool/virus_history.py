@@ -31,7 +31,7 @@ PROJECTION = LIST_PROJECTION + [
 async def add(db, method_name, old, new, description, user_id):
     """
     Add a change document to the history collection.
-    
+
     :param db: the application database client
     :type db: :class:`~motor.motor_asyncio.AsyncIOMotorClient`
     
@@ -47,7 +47,7 @@ async def add(db, method_name, old, new, description, user_id):
     :param description: a human readable description of the change
     :type description: str 
     
-    :param user_id: 
+    :param user_id: the id of the requesting user
     :type user_id: str
     
     :return: the change document
@@ -190,7 +190,7 @@ async def patch_virus_to_version(db, virus_id, version):
 async def set_index_as_unbuilt(db, index_id):
     """
     Set the ``index_id`` and ``index_version`` fields to "unbuilt" for all change documents with the passed
-    ``index_id``. This is called in the event that a index rebuild process fails. 
+    ``index_id``. This is called in the event that a index rebuild process fails.
     
     :param db: the application database client
     :type db: :class:`~motor.motor_asyncio.AsyncIOMotorClient`

@@ -4,7 +4,7 @@ from virtool.handlers.utils import json_response
 async def get(req):
     """
     Returns a generic message. Used during testing for acquiring a ``session_id``.
-         
+
     """
     return json_response({
         "endpoints": {

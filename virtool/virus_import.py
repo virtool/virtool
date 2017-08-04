@@ -398,7 +398,7 @@ def send_import_dispatches(dispatch, insertions, replacements, flush=False):
     :param insertions: a list of tuples describing insertions
     :type insertions: list
     
-    :param replacements: a list of tuples describing replacements and their component removals and an insertions 
+    :param replacements: a list of tuples describing replacements and their component removals and an insertions
     :type replacements: list
     
     :param flush: override the length check and flush all data to the dispatcher

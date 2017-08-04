@@ -1,10 +1,5 @@
 import pytest
 import datetime
-from copy import deepcopy
-
-import virtool.utils
-import virtool.virus
-import virtool.virus_history
 
 
 @pytest.fixture

@@ -1,5 +1,4 @@
 import os
-from aiohttp import web
 from cerberus import Validator
 
 import virtool.file

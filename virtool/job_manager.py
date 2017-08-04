@@ -146,7 +146,7 @@ class Manager:
     async def resume(self):
         """
         Resume preserved waiting jobs. This is be called immediately after the Manager has been instantiated.
-         
+
         """
         async for document in self.db.jobs.find({"status.1": {"$exists": False}}):
             job_id, task, proc, mem = itemgetter("job_id", "task", "proc", "mem")(virtool.job.processor(document))

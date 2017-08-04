@@ -286,7 +286,7 @@ class TestGetDefaultIsolate:
 
     def test_multiple_defaults(self, test_virus, test_isolate):
         """
-        Test that a ``ValueError`` is raised when the virus contains more than one default isolate. 
+        Test that a ``ValueError`` is raised when the virus contains more than one default isolate.
 
         """
         extra_isolate = dict(test_isolate, isolate_id="foobar3", default=True)
@@ -312,8 +312,8 @@ class TestGetNewIsolateId:
 
     async def test_exists(self, test_motor, test_virus, test_random_alphanumeric):
         """
-        Test that a different ``isolate_id`` is generated if the first generated one already exists in the database.        
-         
+        Test that a different ``isolate_id`` is generated if the first generated one already exists in the database.
+
         """
         next_choice = test_random_alphanumeric.next_choice[:8].lower()
 

@@ -93,7 +93,6 @@ class TestGet:
     async def test_not_found(self, spawn_client, resp_is):
         """
         Test that a ``GET /api/users/:user_id`` for a non-existent ``user_id`` results in a ``404`` response.
-        
         """
         client = await spawn_client(authorize=True, permissions=["manage_users"])
 
@@ -436,7 +435,7 @@ class TestAddGroup:
 
     async def test_invalid_input(self, spawn_client, resp_is):
         """
-        Test that problems in the request input result in a ``422`` response with the appropriate error data attached. 
+        Test that problems in the request input result in a ``422`` response with the appropriate error data attached.
 
         """
         client = await spawn_client(authorize=True, permissions=["manage_users"])

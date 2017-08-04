@@ -1,7 +1,7 @@
 import pytest
 
 import virtool.handlers.utils
-from virtool.app_dispatcher import Dispatcher, Connection
+from virtool.app_dispatcher import Dispatcher
 
 
 class TestConnection:
@@ -9,7 +9,7 @@ class TestConnection:
     def test_init(self, test_ws_connection):
         """
         Test that :meth:`.Connection.__init__` draws attributes from the passed session and websocket handler.
-         
+
         """
         assert test_ws_connection.user_id == "test"
         assert test_ws_connection.groups == ["admin", "test"]

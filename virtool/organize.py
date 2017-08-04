@@ -1,4 +1,3 @@
-import os
 import arrow
 
 import virtool.virus

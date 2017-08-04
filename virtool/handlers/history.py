@@ -7,7 +7,7 @@ from virtool.handlers.utils import json_response, not_found, paginate
 async def find(req):
     """
     Get a list of change documents.
-     
+
     """
     db = req.app["db"]
 

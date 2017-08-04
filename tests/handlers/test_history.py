@@ -10,7 +10,7 @@ class TestFind:
     async def test(self, spawn_client, test_changes):
         """
         Test that a list of processed change documents are returned with a ``200`` status.
-         
+
         """
         client = await spawn_client()
 

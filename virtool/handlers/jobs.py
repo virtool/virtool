@@ -171,15 +171,13 @@ async def test_job(req):
     Submit a test job
 
     """
-    db, data = await unpack_request(req)
-
-    job_manager = req.app["job_manager"]
+    data = await req.json()
 
     task_args = {key: data.get(key, False) for key in ["generate_python_error", "generate_process_error", "long"]}
 
     task_args["message"] = "hello world"
 
-    document = await job_manager.new(
+    document = await req.app["job_manager"].new(
         "test_task",
         task_args,
         1,
