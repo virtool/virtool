@@ -83,8 +83,8 @@ async def join(db, virus_id, document=None):
     return merge_virus(document, sequences)
 
 
-async def get_complete(db, virus_id):
-    joined = await join(db, virus_id)
+async def get_complete(db, virus_id, joined=None):
+    joined = joined or await join(db, virus_id)
 
     if not joined:
         return None
