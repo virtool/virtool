@@ -80,7 +80,27 @@ async def join(db, virus_id, document=None):
     return merge_virus(document, sequences)
 
 
-async def get_complete(db, virus_id, joined=None):
+async def join_and_format(db, virus_id, joined=None, issues=False):
+    """
+    Join the virus identified by the passed ``virus_id`` or use the ``joined`` virus document if available. Then, format
+    the joined virus into a format that can be directly returned to API clients.
+
+    :param db: the application database client
+    :type db: :class:`~motor.motor_asyncio.AsyncIOMotorClient`
+
+    :param virus_id: the id of the virus to join
+    :type virus_id: str
+
+    :param joined:
+    :type joined: Union[dict, NoneType]
+
+    :param issues: an object describing issues in the virus
+    :type issues: Union[dict, NoneType, bool]
+
+    :return: a joined and formatted virus
+    :rtype: Coroutine[dict]
+
+    """
     joined = joined or await join(db, virus_id)
 
     if not joined:
@@ -101,7 +121,13 @@ async def get_complete(db, virus_id, joined=None):
     if most_recent_change:
         most_recent_change["change_id"] = most_recent_change.pop("_id")
 
-    joined["most_recent_change"] = most_recent_change
+    joined.update({
+        "most_recent_change": most_recent_change,
+        "issues": issues
+    })
+
+    if issues is False:
+        joined["issues"] = await verify(db, virus_id)
 
     return joined
 
@@ -146,7 +172,7 @@ async def check_name_and_abbreviation(db, name=None, abbreviation=None):
     return False
 
 
-def check_virus(virus, sequences):
+def check_virus(joined):
     """
     Checks that the passed virus and sequences constitute valid Virtool records and can be included in a virus
     index. Error fields are:
@@ -163,7 +189,7 @@ def check_virus(virus, sequences):
     
     """
     errors = {
-        "empty_virus": len(virus["isolates"]) == 0,
+        "empty_virus": len(joined["isolates"]) == 0,
         "empty_isolate": list(),
         "empty_sequence": list(),
         "isolate_inconsistency": False
@@ -173,10 +199,11 @@ def check_virus(virus, sequences):
 
     # Append the isolate_ids of any isolates without sequences to empty_isolate. Append the isolate_id and sequence
     # id of any sequences that have an empty sequence.
-    for isolate in virus["isolates"]:
-        isolate_sequences = [sequence for sequence in sequences if sequence["isolate_id"] == isolate["id"]]
+    for isolate in joined["isolates"]:
+        isolate_sequences = [sequence for sequence in isolate["sequences"] if sequence["isolate_id"] == isolate["id"]]
         isolate_sequence_count = len(isolate_sequences)
 
+        # If there are no sequences attached to the isolate it gets an empty_isolate error.
         if isolate_sequence_count == 0:
             errors["empty_isolate"].append(isolate["id"])
 
@@ -206,21 +233,19 @@ def check_virus(virus, sequences):
     return None
 
 
-async def verify(db, virus_id):
+async def verify(db, virus_id, joined=None):
     """
     Verifies that the associated virus is ready to be included in an index rebuild. Returns verification errors if
     necessary.
 
     """
     # Get the virus document of interest.
-    virus = await db.viruses.find_one(virus_id)
+    joined = joined or await join(db, virus_id)
 
-    if not virus:
+    if not joined:
         raise virtool.errors.DatabaseError("Could not find virus '{}'".format(virus_id))
 
-    sequences = await db.sequences.find({"virus_id": virus_id}).to_list(None)
-
-    return check_virus(virus, sequences)
+    return check_virus(joined)
 
 
 async def update_last_indexed_version(db, virus_ids, version):

@@ -53,12 +53,10 @@ async def get(req):
 
     virus_id = req.match_info["virus_id"]
 
-    complete = await virtool.virus.get_complete(db, virus_id)
+    complete = await virtool.virus.join_and_format(db, virus_id)
 
     if not complete:
         return not_found()
-
-    complete["issues"] = await virtool.virus.verify(db, virus_id)
 
     return json_response(complete)
 
@@ -121,7 +119,7 @@ async def create(req):
         req["session"].user_id
     )
 
-    complete = await virtool.virus.get_complete(db, virus_id)
+    complete = await virtool.virus.join_and_format(db, virus_id, joined=joined)
 
     await req.app["dispatcher"].dispatch(
         "viruses",
@@ -165,7 +163,7 @@ async def edit(req):
 
     # Sent back ``200`` with the existing virus record if no change will be made.
     if name_change is None and abbreviation_change is None:
-        return json_response(await virtool.virus.get_complete(db, virus_id))
+        return json_response(await virtool.virus.join_and_format(db, virus_id))
 
     # Make sure new name and/or abbreviation are not already in use.
     message = await virtool.virus.check_name_and_abbreviation(db, name_change, abbreviation_change)
@@ -177,7 +175,7 @@ async def edit(req):
     # modify the virus.
     data.update({
         "modified": True,
-        "verified": True
+        "verified": False
     })
 
     # If the name is changing, update the ``lower_name`` field in the virus document.
@@ -192,8 +190,18 @@ async def edit(req):
         }
     }, return_document=ReturnDocument.AFTER)
 
-    # Get a joined version of the new document for recording history.
     new = await virtool.virus.join(db, virus_id, document)
+
+    issues = await virtool.virus.verify(db, virus_id, new)
+
+    if issues is None:
+        document = await db.viruses.update_one({"_id": virus_id}, {
+            "$set": {
+                "verified": True
+            }
+        })
+
+        new["verified"] = True
 
     description = None
 
@@ -237,7 +245,7 @@ async def edit(req):
         virtool.utils.base_processor({key: new[key] for key in virtool.virus.LIST_PROJECTION})
     )
 
-    return json_response(await virtool.virus.get_complete(db, virus_id))
+    return json_response(await virtool.virus.join_and_format(db, virus_id, joined=new, issues=issues))
 
 
 @protected("modify_virus")
@@ -294,7 +302,7 @@ async def list_isolates(req):
 
     virus_id = req.match_info["virus_id"]
 
-    document = await virtool.virus.get_complete(db, virus_id)
+    document = await virtool.virus.join_and_format(db, virus_id)
 
     if not document:
         return not_found()
@@ -392,6 +400,17 @@ async def add_isolate(req):
     # Get the joined entry now that it has been updated.
     new = await virtool.virus.join(db, virus_id, document)
 
+    issues = await virtool.virus.verify(db, virus_id, joined=new)
+
+    if issues is None:
+        await db.viruses.update_one({"_id": virus_id}, {
+            "$set": {
+                "verified": True
+            }
+        })
+
+        new["verified"] = True
+
     isolate_name = virtool.virus.format_isolate_name(data)
 
     description = "Added {}".format(isolate_name)
@@ -485,7 +504,7 @@ async def edit_isolate(req):
 
     await virtool.virus.dispatch_version_only(req, new)
 
-    complete = await virtool.virus.get_complete(db, virus_id)
+    complete = await virtool.virus.join_and_format(db, virus_id, joined=new)
 
     for isolate in complete["isolates"]:
         if isolate["id"] == isolate_id:
@@ -519,7 +538,7 @@ async def set_as_default(req):
     isolate["default"] = True
 
     if isolates == document["isolates"]:
-        complete = await virtool.virus.get_complete(db, virus_id)
+        complete = await virtool.virus.join_and_format(db, virus_id)
         for isolate in complete["isolates"]:
             if isolate["id"] == isolate_id:
                 return json_response(isolate)
@@ -555,7 +574,7 @@ async def set_as_default(req):
 
     await virtool.virus.dispatch_version_only(req, new)
 
-    complete = await virtool.virus.get_complete(db, virus_id)
+    complete = await virtool.virus.join_and_format(db, virus_id, new)
 
     for isolate in complete["isolates"]:
         if isolate["id"] == isolate_id:
@@ -609,6 +628,17 @@ async def remove_isolate(req):
 
     new = await virtool.virus.join(db, virus_id, document)
 
+    issues = await virtool.virus.verify(db, virus_id, joined=new)
+
+    if issues is None:
+        await db.viruses.update_one({"_id": virus_id}, {
+            "$set": {
+                "verified": True
+            }
+        })
+
+        new["verified"] = True
+
     # Remove any sequences associated with the removed isolate.
     await db.sequences.delete_many({"isolate_id": isolate_id})
 
@@ -628,10 +658,7 @@ async def remove_isolate(req):
 
     await virtool.virus.dispatch_version_only(req, new)
 
-    return json_response({
-        "virus_id": virus_id,
-        "isolate_id": isolate_id
-    }, status=204)
+    return no_content()
 
 
 async def list_sequences(req):
