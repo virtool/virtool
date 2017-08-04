@@ -327,7 +327,11 @@ async def get_isolate(req):
 
 
 @protected("modify_virus")
-@validation(virtool.virus.ISOLATE_SCHEMA)
+@validation({
+    "source_type": {"type": "string", "default": ""},
+    "source_name": {"type": "string", "default": ""},
+    "default": {"type": "boolean", "default": False}
+})
 async def add_isolate(req):
     """
     Add a new isolate to a virus.

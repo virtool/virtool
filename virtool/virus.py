@@ -6,15 +6,7 @@ import virtool.utils
 import virtool.errors
 import virtool.virus_history
 
-
 logger = logging.getLogger(__name__)
-
-
-ISOLATE_SCHEMA = {
-    "source_type": {"type": "string", "default": ""},
-    "source_name": {"type": "string", "default": ""},
-    "default": {"type": "boolean", "default": False}
-}
 
 LIST_PROJECTION = [
     "_id",
