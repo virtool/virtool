@@ -237,10 +237,6 @@ def load_import_file(handle):
 
 
 def verify_virus_list(viruses):
-    """
-        
-     
-    """
     fields = ["_id", "name", "abbreviation"]
 
     seen = {field: set() for field in fields + ["isolate_id", "sequence_id"]}

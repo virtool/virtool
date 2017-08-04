@@ -22,7 +22,7 @@ def dumps(obj):
     """
     A wrapper for :func:`json.dumps` that applies pretty formatting to the output. Used as ``dumps`` argument for
     :func:`.json_response`.
-    
+
     :param obj: a JSON-serializable object    
     :type obj: object
     
@@ -42,7 +42,7 @@ async def unpack_request(req):
     :type req: :class:`~aiohttp.web.Request`
 
     :return: the app DB connection and the request JSON body
-    :rtype: tuple
+    :rtype: Coroutine[tuple]
 
     """
     return req.app["db"], await req.json()

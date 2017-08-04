@@ -51,7 +51,7 @@ async def add(db, method_name, old, new, description, user_id):
     :type user_id: str
     
     :return: the change document
-    :rtype: dict
+    :rtype: Coroutine[dict]
     
     """
     try:
@@ -130,7 +130,7 @@ async def get_most_recent_change(db, virus_id):
     :type virus_id: str
     
     :return: the most recent change document
-    :rtype: dict
+    :rtype: Coroutine[dict]
     
     """
     return await db.history.find_one({
@@ -154,7 +154,7 @@ async def patch_virus_to_version(db, virus_id, version):
     :type version: str or int
     
     :return: the current joined virus, patched virus, and the ids of changes reverted in the process
-    :rtype: tuple
+    :rtype: Coroutine[tuple]
     
     """
     # A list of history_ids reverted to produce the patched entry.

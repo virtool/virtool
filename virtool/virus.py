@@ -1,3 +1,8 @@
+"""
+Functions for working with virus documents.
+
+"""
+
 import re
 import logging
 from copy import deepcopy
@@ -34,7 +39,7 @@ async def dispatch_version_only(req, new):
     :param req: the request object
     
     :param new: the virus document
-    :type new: dict
+    :type new: Coroutine[dict]
     
     """
     await req.app["dispatcher"].dispatch(
@@ -59,7 +64,7 @@ async def join(db, virus_id, document=None):
     :type document: dict
 
     :return: the joined virus document
-    :rtype: dict
+    :rtype: Coroutine[dict]
 
     """
     # Get the virus entry if a virus parameter was not passed.
@@ -150,14 +155,11 @@ def check_virus(virus, sequences):
     * empty_sequence - sequences that have a zero length sequence field.
     * isolate_inconsistency - virus has isolates containing different numbers of sequences.
     
-    :param virus: the virus document
-    :type virus: dict
-    
-    :param sequences: a list of sequence documents associated with the virus.
-    :type sequences: list
+    :param joined: a joined virus
+    :type joined: dict
     
     :return: return any errors or False if there are no errors.
-    :rtype: dict or NoneType
+    :rtype: Union[dict, None]
     
     """
     errors = {
@@ -283,6 +285,15 @@ def get_default_isolate(virus, isolate_processor=None):
 async def get_new_isolate_id(db, excluded=None):
     """
     Generates a unique isolate id.
+
+    :param db: the application database client
+    :type db: :class:`~motor.motor_asyncio.AsyncIOMotorClient`
+
+    :param excluded: a list or set of strings that may not be returned.
+    :type excluded: Union[list, set]
+
+    :return: a new unique isolate id
+    :rtype: Coroutine[str]
     
     """
     used_isolate_ids = excluded or list()
