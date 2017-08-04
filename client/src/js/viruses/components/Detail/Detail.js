@@ -13,7 +13,7 @@ import React, { PropTypes } from "react";
 import { connect } from "react-redux";
 import { Switch, Route, Redirect } from "react-router-dom";
 import { LinkContainer } from "react-router-bootstrap";
-import { Nav, NavItem } from "react-bootstrap";
+import { Label, Nav, NavItem } from "react-bootstrap";
 
 import { getVirus } from "../../actions";
 import { Flex, FlexItem, Icon, Spinner } from "virtool/js/components/Base";
@@ -72,10 +72,17 @@ class VirusDetail extends React.Component {
                                 </Flex>
                             </FlexItem>
 
+                            <small>
+                                <Label bsStyle="warning" className="with-icon">
+                                    <Icon name="flag" />
+                                    Modified
+                                </Label>
+                            </small>
+
                             <Icon
                                 bsStyle="danger"
                                 name="remove"
-                                style={{fontSize: "18px"}}
+                                style={{fontSize: "18px", paddingLeft: "5px"}}
                                 onClick={() => window.console.log(this.props.detail.name)}
                             />
                         </Flex>
