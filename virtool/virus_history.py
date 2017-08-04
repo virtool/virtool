@@ -39,10 +39,10 @@ async def add(db, method_name, old, new, description, user_id):
     :type method_name: str
     
     :param old: the virus document prior to the change
-    :type old: dict
+    :type new: Union[dict, None]
     
     :param new: the virus document after the change
-    :type new: dict
+    :type new: Union[dict, None]
     
     :param description: a human readable description of the change
     :type description: str 
@@ -148,7 +148,7 @@ async def patch_virus_to_version(db, virus_id, version):
     :type db: :class:`~motor.motor_asyncio.AsyncIOMotorClient`
      
     :param virus_id: the id of the virus to patch
-    :type virus_id: dict
+    :type virus_id: str
     
     :param version: the version to patch to
     :type version: str or int
