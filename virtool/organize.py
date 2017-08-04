@@ -205,6 +205,7 @@ async def organize_viruses(db):
         for isolate in document["isolates"]:
             try:
                 isolate["id"] = isolate["isolate_id"]
+                del isolate["isolate_id"]
             except KeyError:
                 pass
 
