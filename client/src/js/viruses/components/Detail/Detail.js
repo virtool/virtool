@@ -55,6 +55,19 @@ class VirusDetail extends React.Component {
         if (this.props.detail) {
             const virusId = this.props.detail.id;
 
+            let modifiedLabel;
+
+            if (this.props.detail.modified) {
+                modifiedLabel = (
+                    <small>
+                        <Label bsStyle="warning" className="with-icon">
+                            <Icon name="flag" />
+                            Modified
+                        </Label>
+                    </small>
+                );
+            }
+
             content = (
                 <div>
                     <h3 style={{marginBottom: "20px"}}>
@@ -72,12 +85,7 @@ class VirusDetail extends React.Component {
                                 </Flex>
                             </FlexItem>
 
-                            <small>
-                                <Label bsStyle="warning" className="with-icon">
-                                    <Icon name="flag" />
-                                    Modified
-                                </Label>
-                            </small>
+                            {modifiedLabel}
 
                             <Icon
                                 bsStyle="danger"
