@@ -3,6 +3,7 @@ import logging
 from copy import deepcopy
 
 import virtool.utils
+import virtool.errors
 import virtool.virus_history
 
 
@@ -209,6 +210,23 @@ def check_virus(virus, sequences):
         return errors
 
     return None
+
+
+async def verify(db, virus_id):
+    """
+    Verifies that the associated virus is ready to be included in an index rebuild. Returns verification errors if
+    necessary.
+
+    """
+    # Get the virus document of interest.
+    virus = await db.viruses.find_one(virus_id)
+
+    if not virus:
+        raise virtool.errors.DatabaseError("Could not find virus '{}'".format(virus_id))
+
+    sequences = await db.sequences.find({"virus_id": virus_id}).to_list(None)
+
+    return check_virus(virus, sequences)
 
 
 async def update_last_indexed_version(db, virus_ids, version):

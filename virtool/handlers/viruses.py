@@ -58,6 +58,8 @@ async def get(req):
     if not complete:
         return not_found()
 
+    complete["issues"] = await virtool.virus.verify(db, virus_id)
+
     return json_response(complete)
 
 
@@ -236,104 +238,6 @@ async def edit(req):
     )
 
     return json_response(await virtool.virus.get_complete(db, virus_id))
-
-
-@protected("modify_virus")
-async def verify(req):
-    """
-    Verifies that the associated virus is ready to be included in an index rebuild. Returns verification errors if
-    necessary.
-
-    * emtpy_virus - virus has no isolates associated with it.
-    * empty_isolate - isolates that have no sequences associated with them.
-    * empty_sequence - sequences that have a zero length sequence field.
-    * isolate_inconsistency - virus has isolates containing different numbers of sequences.
-
-    """
-    db, data = await unpack_request(req)
-
-    virus_id = req.match_info["virus_id"]
-
-    # Get the virus document of interest.
-    joined = await virtool.virus.join(db, virus_id)
-
-    if not joined:
-        return not_found()
-
-    errors = {
-        "empty_virus": len(joined["isolates"]) == 0,  #
-        "empty_isolate": list(),
-        "empty_sequence": list(),
-        "isolate_inconsistency": False
-    }
-
-    isolate_sequence_counts = list()
-
-    # Append the ids of any isolates without sequences to empty_isolate. Append the isolate id and sequence
-    # id of any sequences that have an empty sequence.
-    for isolate in joined["isolates"]:
-        isolate_sequence_count = len(isolate["sequences"])
-
-        isolate_sequence_counts.append(isolate_sequence_count)
-
-        if isolate_sequence_count == 0:
-            errors["empty_isolate"].append(isolate["id"])
-
-        errors["empty_sequence"] += [seq["_id"] for seq in isolate["sequences"] if len(seq["sequence"]) == 0]
-
-    # Give an isolate_inconsistency error the number of sequences is not the same for every isolate. Only give the
-    # error if the virus is not also emtpy (empty_virus error).
-    errors["isolate_inconsistency"] = (
-        len(set(isolate_sequence_counts)) != 1 and not
-        (errors["empty_virus"] or errors["empty_isolate"])
-    )
-
-    # If there is an error in the virus, return the errors object. Otherwise return False.
-    has_errors = False
-
-    for key, value in errors.items():
-        if value:
-            has_errors = True
-        else:
-            errors[key] = False
-
-    if has_errors:
-        return json_response({
-            "id": "virus_verification_error",
-            "message": "Virus Verification Error",
-            "errors": errors
-        }, status=400)
-
-    document = await db.viruses.find_one_and_update({"_id": virus_id}, {
-        "$set": {
-            "modified": True,
-            "verified": True
-        },
-        "$inc": {
-            "version": 1
-        }
-    }, return_document=ReturnDocument.AFTER)
-
-    new = await virtool.virus.join(db, virus_id, document)
-
-    await virtool.virus_history.add(
-        db,
-        "verify",
-        joined,
-        new,
-        "Verified",
-        req["session"].user_id
-    )
-
-    complete = await virtool.virus.get_complete(db, virus_id)
-
-    await req.app["dispatcher"].dispatch(
-        "viruses",
-        "update",
-        virtool.utils.base_processor({key: new[key] for key in virtool.virus.LIST_PROJECTION})
-    )
-
-    return json_response(complete)
 
 
 @protected("modify_virus")
