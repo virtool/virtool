@@ -116,20 +116,22 @@ class TestCheckNameAndAbbreviation:
 
 class TestCheckVirus:
 
-    def test_pass(self, test_virus, test_sequence):
+    def test_pass(self, test_merged_virus):
         """
         Test that a valid virus and sequence list results in return value of ``None``.
          
         """
-        result = virtool.virus.check_virus(test_virus, [test_sequence])
+        result = virtool.virus.check_virus(test_merged_virus)
         assert result is None
 
-    def test_empty_isolate(self, test_virus):
+    def test_empty_isolate(self, test_merged_virus):
         """
         Test that an isolate with no sequences is detected.
          
         """
-        result = virtool.virus.check_virus(test_virus, [])
+        test_merged_virus["isolates"][0]["sequences"] = list()
+
+        result = virtool.virus.check_virus(test_merged_virus)
 
         assert result == {
             "empty_isolate": ["cab8b360"],
@@ -138,14 +140,14 @@ class TestCheckVirus:
             "isolate_inconsistency": False
         }
 
-    def test_empty_sequence(self, test_virus, test_sequence):
+    def test_empty_sequence(self, test_merged_virus):
         """
         Test that a sequence with an empty ``sequence`` field is detected.
          
         """
-        test_sequence["sequence"] = ""
+        test_merged_virus["isolates"][0]["sequences"][0]["sequence"] = ""
 
-        result = virtool.virus.check_virus(test_virus, [test_sequence])
+        result = virtool.virus.check_virus(test_merged_virus)
 
         assert result == {
             "empty_isolate": False,
@@ -161,14 +163,14 @@ class TestCheckVirus:
             "isolate_inconsistency": False
         }
 
-    def test_empty_virus(self, test_virus):
+    def test_empty_virus(self, test_merged_virus):
         """
         Test that an virus with no isolates is detected.
          
         """
-        test_virus["isolates"] = []
+        test_merged_virus["isolates"] = []
 
-        result = virtool.virus.check_virus(test_virus, [])
+        result = virtool.virus.check_virus(test_merged_virus)
 
         assert result == {
             "empty_isolate": False,
@@ -177,24 +179,19 @@ class TestCheckVirus:
             "isolate_inconsistency": False
         }
 
-    def test_isolate_inconsistency(self, test_virus, test_sequence):
+    def test_isolate_inconsistency(self, test_merged_virus, test_sequence):
         """
         Test that isolates in a single virus with disparate sequence counts are detected. 
          
         """
-        test_virus["isolates"].append(dict(test_virus["isolates"][0], id="foobar"))
+        test_merged_virus["isolates"].append(dict(test_merged_virus["isolates"][0], id="foobar"))
 
-        sequences = [
-            test_sequence,
-            dict(test_sequence, _id="foobar_1", isolate_id="foobar"),
-            dict(test_sequence, _id="foobar_2", isolate_id="foobar")
+        test_merged_virus["isolates"][1]["sequences"] = [
+            dict(test_sequence, _id="foobar_1"),
+            dict(test_sequence, _id="foobar_2")
         ]
 
-        pprint(test_virus)
-
-        pprint(sequences)
-
-        result = virtool.virus.check_virus(test_virus, sequences)
+        result = virtool.virus.check_virus(test_merged_virus)
 
         assert result == {
             "empty_isolate": False,

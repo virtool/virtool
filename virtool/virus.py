@@ -200,7 +200,7 @@ def check_virus(joined):
     # Append the isolate_ids of any isolates without sequences to empty_isolate. Append the isolate_id and sequence
     # id of any sequences that have an empty sequence.
     for isolate in joined["isolates"]:
-        isolate_sequences = [sequence for sequence in isolate["sequences"] if sequence["isolate_id"] == isolate["id"]]
+        isolate_sequences = isolate["sequences"]
         isolate_sequence_count = len(isolate_sequences)
 
         # If there are no sequences attached to the isolate it gets an empty_isolate error.
