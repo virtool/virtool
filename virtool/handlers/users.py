@@ -13,7 +13,7 @@ from virtool.handlers.utils import protected, no_content, bad_request, invalid_i
 async def find(req):
     """
     Get a list of all user documents in the database.
-     
+
     """
     users = await req.app["db"].users.find({}, virtool.user.PROJECTION).to_list(length=None)
 

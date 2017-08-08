@@ -1,10 +1,5 @@
 import pytest
 import datetime
-from copy import deepcopy
-
-import virtool.utils
-import virtool.virus
-import virtool.virus_history
 
 
 @pytest.fixture
@@ -145,6 +140,7 @@ def create_mock_history(test_motor):
                     "last_indexed_version": 0,
                     "lower_name": "prunus virus f",
                     "modified": False,
+                    "verified": False,
                     "name": "Prunus virus F",
                     "version": 0
                 },
@@ -258,6 +254,7 @@ def create_mock_history(test_motor):
                     "last_indexed_version": 0,
                     "lower_name": "prunus virus f",
                     "modified": False,
+                    "verified": False,
                     "name": "Test Virus",
                     "version": 3
                 },
@@ -284,6 +281,7 @@ def create_mock_history(test_motor):
                 "last_indexed_version": 0,
                 "lower_name": "prunus virus f",
                 "modified": False,
+                "verified": False,
                 "name": "Test Virus",
                 "version": 3
             }

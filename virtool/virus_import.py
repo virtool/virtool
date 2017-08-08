@@ -237,10 +237,6 @@ def load_import_file(handle):
 
 
 def verify_virus_list(viruses):
-    """
-        
-     
-    """
     fields = ["_id", "name", "abbreviation"]
 
     seen = {field: set() for field in fields + ["isolate_id", "sequence_id"]}
@@ -248,17 +244,15 @@ def verify_virus_list(viruses):
 
     errors = dict()
 
-    for virus in viruses:
-
-        virus_document, sequences = virtool.virus.split_virus(virus)
+    for joined in viruses:
 
         # Check for problems local to the virus document.
-        errors[virus["name"].lower()] = virtool.virus.check_virus(virus_document, sequences)
+        errors[joined["name"].lower()] = virtool.virus.check_virus(joined)
 
         # Check for problems in the list as a whole.
         for field in fields:
 
-            value = virus[field]
+            value = joined[field]
 
             if field == "abbreviation" and value == "":
                 continue
@@ -271,8 +265,8 @@ def verify_virus_list(viruses):
             else:
                 seen[field].add(value)
 
-        for isolate in virus["isolates"]:
-            isolate_id = isolate["isolate_id"]
+        for isolate in joined["isolates"]:
+            isolate_id = isolate["id"]
 
             if isolate_id in seen:
                 duplicates["isolate_id"].add(isolate_id)
@@ -398,7 +392,7 @@ def send_import_dispatches(dispatch, insertions, replacements, flush=False):
     :param insertions: a list of tuples describing insertions
     :type insertions: list
     
-    :param replacements: a list of tuples describing replacements and their component removals and an insertions 
+    :param replacements: a list of tuples describing replacements and their component removals and an insertions
     :type replacements: list
     
     :param flush: override the length check and flush all data to the dispatcher
@@ -457,7 +451,7 @@ async def insert_from_import(db, virus_document, user_id):
         "create",
         None,
         joined,
-        ("Created virus ", virus_document["name"], virus_document["_id"]),
+        "Created {}".format(virus_document["name"]),
         user_id
     )
 
@@ -498,7 +492,7 @@ async def delete_for_import(db, virus_id, user_id):
         "remove",
         joined,
         None,
-        ("Removed virus", joined["name"], joined["_id"]),
+        "Removed",
         user_id
     )
 

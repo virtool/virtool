@@ -5,7 +5,7 @@ import pytest
 import operator
 import subprocess
 
-from virtool.virus_hmm import hmmstat, hmmpress, vfam_text_to_json
+from virtool.virus_hmm import hmmstat, vfam_text_to_json
 
 
 class TestHMMStat:

@@ -141,7 +141,7 @@ def random_alphanumeric(length=6, mixed_case=False, excluded=None):
     :type length: int
 
     :param excluded: strings that may not be returned.
-    :type excluded: list
+    :type excluded: Union[list, set]
 
     :return: a random alphanumeric string.
     :rtype: string

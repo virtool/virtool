@@ -12,7 +12,10 @@
 import React, { PropTypes } from "react";
 import { connect } from "react-redux";
 import { Table } from "react-bootstrap";
+
 import { InputCell } from "virtool/js/components/Base";
+import Issues from "./Issues";
+
 
 /**
  * Displays general information about the virus whose detail is displayed. Also provided some InputCell components to
@@ -50,28 +53,38 @@ const VirusGeneral = (props) => {
     const databaseIdRow = props.showIds ? (
         <tr>
             <th>Unique ID</th>
-            <td>{props.virusId.toUpperCase()}</td>
+            <td>{props.virusId}</td>
         </tr>
     ): null;
 
+    let issues;
+
+    if (props.issues) {
+        issues = <Issues issues={props.issues} isolates={props.isolates} />
+    }
+
     return (
-        <Table bordered>
-            <tbody>
-                <tr>
-                    <th className="col-sm-4">Name</th>
-                    {nameCell}
-                </tr>
-                <tr>
-                    <th>Abbreviation</th>
-                    {abbrCell}
-                </tr>
-                <tr>
-                    <th>Version</th>
-                    <td>{props.version}</td>
-                </tr>
-                {databaseIdRow}
-            </tbody>
-        </Table>
+        <div>
+            {issues}
+
+            <Table bordered>
+                <tbody>
+                    <tr>
+                        <th className="col-sm-4">Name</th>
+                        {nameCell}
+                    </tr>
+                    <tr>
+                        <th>Abbreviation</th>
+                        {abbrCell}
+                    </tr>
+                    <tr>
+                        <th>Version</th>
+                        <td>{props.version}</td>
+                    </tr>
+                    {databaseIdRow}
+                </tbody>
+            </Table>
+        </div>
     );
 };
 
@@ -82,7 +95,8 @@ VirusGeneral.propTypes = {
     abbreviation: PropTypes.string,
     canModify: PropTypes.bool,
     showIds: PropTypes.bool,
-
+    issues: PropTypes.object,
+    isolates: PropTypes.arrayOf(PropTypes.object),
     onSave: PropTypes.func
 };
 
@@ -96,6 +110,8 @@ const mapStateToProps = (state) => {
         name: detail.name,
         abbreviation: detail.abbreviation,
         version: detail.version,
+        issues: detail.issues,
+        isolates: detail.isolates
     };
 };
 

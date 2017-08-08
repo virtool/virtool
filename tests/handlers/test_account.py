@@ -122,7 +122,7 @@ class TestChangePassword:
     async def test_invalid_credentials(self, spawn_client, resp_is):
         """
         Test that request to ``PUT /account/password`` return 400 for wrong ``old_password`` values.
-         
+
         """
         client = await spawn_client(authorize=True)
 

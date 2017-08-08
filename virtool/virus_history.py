@@ -31,7 +31,7 @@ PROJECTION = LIST_PROJECTION + [
 async def add(db, method_name, old, new, description, user_id):
     """
     Add a change document to the history collection.
-    
+
     :param db: the application database client
     :type db: :class:`~motor.motor_asyncio.AsyncIOMotorClient`
     
@@ -39,19 +39,19 @@ async def add(db, method_name, old, new, description, user_id):
     :type method_name: str
     
     :param old: the virus document prior to the change
-    :type old: dict
+    :type new: Union[dict, None]
     
     :param new: the virus document after the change
-    :type new: dict
+    :type new: Union[dict, None]
     
     :param description: a human readable description of the change
     :type description: str 
     
-    :param user_id: 
+    :param user_id: the id of the requesting user
     :type user_id: str
     
     :return: the change document
-    :rtype: dict
+    :rtype: Coroutine[dict]
     
     """
     try:
@@ -130,7 +130,7 @@ async def get_most_recent_change(db, virus_id):
     :type virus_id: str
     
     :return: the most recent change document
-    :rtype: dict
+    :rtype: Coroutine[dict]
     
     """
     return await db.history.find_one({
@@ -148,13 +148,13 @@ async def patch_virus_to_version(db, virus_id, version):
     :type db: :class:`~motor.motor_asyncio.AsyncIOMotorClient`
      
     :param virus_id: the id of the virus to patch
-    :type virus_id: dict
+    :type virus_id: str
     
     :param version: the version to patch to
     :type version: str or int
     
     :return: the current joined virus, patched virus, and the ids of changes reverted in the process
-    :rtype: tuple
+    :rtype: Coroutine[tuple]
     
     """
     # A list of history_ids reverted to produce the patched entry.
@@ -190,7 +190,7 @@ async def patch_virus_to_version(db, virus_id, version):
 async def set_index_as_unbuilt(db, index_id):
     """
     Set the ``index_id`` and ``index_version`` fields to "unbuilt" for all change documents with the passed
-    ``index_id``. This is called in the event that a index rebuild process fails. 
+    ``index_id``. This is called in the event that a index rebuild process fails.
     
     :param db: the application database client
     :type db: :class:`~motor.motor_asyncio.AsyncIOMotorClient`

@@ -26,6 +26,7 @@ def test_virus():
         "last_indexed_version": 0,
         "lower_name": "prunus virus f",
         "modified": False,
+        "verified": False,
         "name": "Prunus virus F",
         "_id": "6116cba1"
     }
@@ -80,6 +81,7 @@ def test_merged_virus():
         "last_indexed_version": 0,
         "lower_name": "prunus virus f",
         "modified": False,
+        "verified": False,
         "name": "Prunus virus F",
         "_id": "6116cba1"
     }
@@ -148,7 +150,7 @@ def test_sequences_list():
 @pytest.fixture
 def test_virus_list(test_merged_virus):
     first_virus = test_merged_virus
-    second_virus, third_virus, fourth_virus = (copy.deepcopy(test_merged_virus) for i in range(3))
+    second_virus, third_virus, fourth_virus = (copy.deepcopy(test_merged_virus) for _ in range(3))
 
     second_virus.update({
         "_id": "067jz0t3",

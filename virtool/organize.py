@@ -1,4 +1,3 @@
-import os
 import arrow
 
 import virtool.virus
@@ -194,10 +193,18 @@ async def organize_viruses(db):
         }
     })
 
+    async for document in db.viruses.find({"verified": {"$exists": False}}, ["modified"]):
+        await db.viruses.update_one({"_id": document["_id"]}, {
+            "$set": {
+                "verified": not document["modified"]
+            }
+        })
+
     async for document in db.viruses.find({"isolates.isolate_id": {"$exists": True}}, ["isolates"]):
         for isolate in document["isolates"]:
             try:
                 isolate["id"] = isolate["isolate_id"]
+                del isolate["isolate_id"]
             except KeyError:
                 pass
 

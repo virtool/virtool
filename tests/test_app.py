@@ -16,7 +16,6 @@ class TestInitDB:
     async def test(self, loop):
         """
         Test that the ``db_name`` and ``db`` keys and values are added to the ``app`` object.
-        
         """
         app = web.Application(loop=loop)
 
@@ -33,8 +32,7 @@ class TestInitDB:
     async def test_override(self, loop):
         """
         Test that a ``db_name`` value from Virtool settings is overridden by one assigned to ``app`` state with the
-        key ``db_name``. This would be used for passing a ``db_name`` from the CLI.        
-         
+        key ``db_name``. This would be used for passing a ``db_name`` from the CLI.
         """
         app = web.Application(loop=loop)
 
@@ -56,7 +54,6 @@ class TestInitThreadPoolExecutor:
     async def test(self, loop):
         """
         Test that an instance of :class:`.ThreadPoolExecutor` is added to ``app`` state and that it works.
-         
         """
         app = web.Application(loop=loop)
 
@@ -77,7 +74,6 @@ class TestInitSettings:
     async def test_is_instance(self, loop):
         """
         Test that the state value at ``settings`` is an instance of :class:``virtool.app_settings.Settings``.
-        
         """
         app = web.Application(loop=loop)
 
@@ -88,7 +84,6 @@ class TestInitSettings:
     async def test_load_called(self, monkeypatch, mocker, loop):
         """
         Test that the :meth:`virtool.app_settings.Settings.load` method is called after the settings object is created.
-         
         """
         class MockSettings:
 

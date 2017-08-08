@@ -1,4 +1,3 @@
-import os
 from pymongo import ReturnDocument
 from cerberus import Validator
 

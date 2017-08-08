@@ -148,7 +148,8 @@ class TestGetMostRecentChange:
 
     async def test(self, test_motor, static_time):
         """
-        Test that the most recent change document is returned for the given ``virus_id``. 
+        Test that the most recent change document is returned for the given ``virus_id``.
+
         """
         # First change is 3 days before the second
         delta = datetime.timedelta(3)

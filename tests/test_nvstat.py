@@ -105,7 +105,7 @@ class TestDriverVersion:
         Test that unhandled ``CalledProcessErrors`` can still be raised.
 
         """
-        with pytest.raises(subprocess.CalledProcessError) as err:
+        with pytest.raises(subprocess.CalledProcessError):
             virtool.nvstat.driver_version()
 
 

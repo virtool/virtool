@@ -72,7 +72,7 @@ class TestFind:
     ])
     async def test(self, term, modified, per_page, page, d_range, meta, add_modified, spawn_client):
         client = await spawn_client()
-        
+
         await client.db.viruses.insert_many([
             {
                 "abbreviation": "EV_TF3-mycovirus",
@@ -168,6 +168,7 @@ class TestGet:
             "imported": True,
             "last_indexed_version": 0,
             "modified": False,
+            "verified": False,
             "most_recent_change": None,
             "name": "Prunus virus F",
             "version": 0,
@@ -188,19 +189,22 @@ class TestGet:
                         }
                     ]
                 }
-             ]
+            ],
+            "issues": None
         }
 
-    async def test_no_sequences(self, spawn_client, test_virus):
+    async def test_empty_virus(self, spawn_client, test_virus):
         """
-        Test that a valid request returns an empty sequence list for a virus with no associated sequences.
-         
+        Test that a virus with no isolates can be detected and be reported by the handler in a ``400`` response.
+
         """
-        client = await spawn_client()
+        client = await spawn_client(authorize=True, permissions=["modify_virus"])
 
-        await client.db.viruses.insert_one(test_virus)
+        test_virus["isolates"] = []
 
-        resp = await client.get("/api/viruses/" + test_virus["_id"])
+        await client.db.viruses.insert(test_virus)
+
+        resp = await client.get("/api/viruses/6116cba1")
 
         assert resp.status == 200
 
@@ -209,6 +213,39 @@ class TestGet:
             "imported": True,
             "last_indexed_version": 0,
             "modified": False,
+            "verified": False,
+            "most_recent_change": None,
+            "name": "Prunus virus F",
+            "version": 0,
+            "id": "6116cba1",
+            "isolates": [],
+            "issues": {
+                "empty_isolate": False,
+                "empty_sequence": False,
+                "empty_virus": True,
+                "isolate_inconsistency": False
+            }
+        }
+
+    async def test_empty_isolate(self, spawn_client, test_virus):
+        """
+        Test that an isolate with no sequences can be detected and be reported by the handler in a ``400`` response.
+
+        """
+        client = await spawn_client(authorize=True, permissions=["modify_virus"])
+
+        await client.db.viruses.insert(test_virus)
+
+        resp = await client.get("/api/viruses/6116cba1")
+
+        assert resp.status == 200
+
+        assert await resp.json() == {
+            "abbreviation": "PVF",
+            "imported": True,
+            "last_indexed_version": 0,
+            "modified": False,
+            "verified": False,
             "most_recent_change": None,
             "name": "Prunus virus F",
             "version": 0,
@@ -221,7 +258,157 @@ class TestGet:
                     "default": True,
                     "sequences": []
                 }
-             ]
+            ],
+            "issues": {
+                "empty_isolate": ["cab8b360"],
+                "empty_sequence": False,
+                "empty_virus": False,
+                "isolate_inconsistency": False
+            }
+        }
+
+    async def test_empty_sequence(self, spawn_client, test_virus, test_sequence):
+        """
+        Test that an empty sequence field can be detected and be reported by the handler in a ``400`` response.
+
+        """
+        client = await spawn_client(authorize=True, permissions=["modify_virus"])
+
+        await client.db.viruses.insert(test_virus)
+
+        test_sequence["sequence"] = ""
+
+        await client.db.sequences.insert(test_sequence)
+
+        resp = await client.get("/api/viruses/6116cba1")
+
+        assert resp.status == 200
+
+        assert await resp.json() == {
+            "abbreviation": "PVF",
+            "imported": True,
+            "last_indexed_version": 0,
+            "modified": False,
+            "verified": False,
+            "most_recent_change": None,
+            "name": "Prunus virus F",
+            "version": 0,
+            "id": "6116cba1",
+            "isolates": [
+                {
+                    "id": "cab8b360",
+                    "source_type": "isolate",
+                    "source_name": "8816-v2",
+                    "default": True,
+                    "sequences": [
+                        {
+                            "id": "KX269872",
+                            "definition": "Prunus virus F isolate 8816-s2 "
+                                          "segment RNA2 polyprotein 2 gene, complete cds.",
+                            "host": "sweet cherry",
+                            "sequence": ""
+                        }
+                    ]
+                }
+            ],
+            "issues": {
+                "empty_isolate": False,
+                "empty_sequence": [
+                    {
+                        "_id": "KX269872",
+                        "definition": "Prunus virus F isolate 8816-s2 segment RNA2 polyprotein 2 gene, complete cds.",
+                        "host": "sweet cherry",
+                        "isolate_id": "cab8b360",
+                        "virus_id": "6116cba1",
+                        "sequence": ""
+                    }
+                ],
+                "empty_virus": False,
+                "isolate_inconsistency": False
+            }
+        }
+
+    async def test_isolate_inconsistency(self, spawn_client, test_virus, test_sequence):
+        """
+        Test that an isolate consistency can be detected and be reported by the handler in a ``400`` response.
+
+        """
+        client = await spawn_client(authorize=True, permissions=["modify_virus"])
+
+        test_virus["isolates"].append({
+            "id": "foobar",
+            "source_type": "isolate",
+            "source_name": "b",
+            "default": False
+        })
+
+        # Make database changes so that one isolate has one more sequence than the other isolate.
+        await client.db.viruses.insert_one(test_virus)
+        await client.db.sequences.insert_one(test_sequence)
+        await client.db.sequences.insert_many([
+            dict(test_sequence, _id="a", isolate_id="foobar"),
+            dict(test_sequence, _id="b", isolate_id="foobar")
+        ])
+
+        resp = await client.get("/api/viruses/6116cba1")
+
+        assert resp.status == 200
+
+        assert await resp.json() == {
+            "abbreviation": "PVF",
+            "imported": True,
+            "last_indexed_version": 0,
+            "modified": False,
+            "verified": False,
+            "most_recent_change": None,
+            "name": "Prunus virus F",
+            "version": 0,
+            "id": "6116cba1",
+            "isolates": [
+                {
+                    "id": "cab8b360",
+                    "source_type": "isolate",
+                    "source_name": "8816-v2",
+                    "default": True,
+                    "sequences": [
+                        {
+                            "id": "KX269872",
+                            "definition": "Prunus virus F isolate 8816-s2 "
+                                          "segment RNA2 polyprotein 2 gene, complete cds.",
+                            "host": "sweet cherry",
+                            "sequence": "TGTTTAAGAGATTAAACAACCGCTTTC"
+                        }
+                    ]
+                },
+                {
+                    "id": "foobar",
+                    "source_type": "isolate",
+                    "source_name": "b",
+                    "default": False,
+                    "sequences": [
+                        {
+                            "id": "a",
+                            "definition": "Prunus virus F isolate 8816-s2 "
+                                          "segment RNA2 polyprotein 2 gene, complete cds.",
+                            "host": "sweet cherry",
+                            "sequence": "TGTTTAAGAGATTAAACAACCGCTTTC"
+                        },
+                        {
+                            "id": "b",
+                            "definition": "Prunus virus F isolate 8816-s2 "
+                                          "segment RNA2 polyprotein 2 gene, complete cds.",
+                            "host": "sweet cherry",
+                            "sequence": "TGTTTAAGAGATTAAACAACCGCTTTC"
+                        }
+                    ]
+                }
+            ],
+            "issues": {
+                "empty_isolate": False,
+                "empty_sequence": False,
+                "empty_virus": False,
+                "isolate_inconsistency": True
+            }
         }
 
     async def test_not_found(self, spawn_client, resp_is):
@@ -271,10 +458,18 @@ class TestCreate:
             "isolates": [],
             "last_indexed_version": None,
             "modified": True,
+            "verified": False,
             "most_recent_change": None,
             "name": "Tobacco mosaic virus",
             "version": 0,
-            "id": "test"
+            "id": "test",
+            "issues": {
+                "empty_virus": True,
+                "empty_isolate": False,
+                "empty_sequence": False,
+                "isolate_inconsistency": False
+            }
+
         }
 
         assert await client.db.viruses.find_one() == {
@@ -284,6 +479,7 @@ class TestCreate:
             "isolates": [],
             "last_indexed_version": None,
             "modified": True,
+            "verified": False,
             "abbreviation": expected_abbreviation,
             "version": 0
         }
@@ -299,6 +495,7 @@ class TestCreate:
                 "_id": "test",
                 "version": 0,
                 "modified": True,
+                "verified": False,
                 "last_indexed_version": None
             },
             description,
@@ -311,6 +508,7 @@ class TestCreate:
             {
                 "abbreviation": expected_abbreviation,
                 "modified": True,
+                "verified": False,
                 "version": 0,
                 "name": "Tobacco mosaic virus",
                 "id": "test",
@@ -464,9 +662,16 @@ class TestEdit:
             ],
             "last_indexed_version": 0,
             "modified": True,
+            "verified": False,
             "most_recent_change": None,
             "name": "Prunus virus F",
-            "version": 1
+            "version": 1,
+            "issues": {
+                "empty_virus": False,
+                "empty_sequence": False,
+                "isolate_inconsistency": False,
+                "empty_isolate": ["cab8b360"]
+            }
         }
 
         old = deepcopy(expected)
@@ -475,12 +680,14 @@ class TestEdit:
 
         assert await resp.json() == expected
 
+
         expected.update({
             "lower_name": expected["name"].lower(),
             "_id": expected.pop("id")
         })
 
         expected.pop("most_recent_change")
+        expected.pop("issues")
 
         for isolate in expected["isolates"]:
             isolate.pop("sequences")
@@ -492,6 +699,7 @@ class TestEdit:
             "name": "Prunus virus F",
             "abbreviation": existing_abbreviation,
             "modified": True,
+            "verified": False,
             "version": 1
         }
 
@@ -502,6 +710,8 @@ class TestEdit:
             "update",
             expected_dispatch
         )
+
+        old.pop("issues")
 
         old.update({
             "_id": old.pop("id"),
@@ -677,7 +887,13 @@ class TestEdit:
             "id": "test",
             "isolates": [],
             "most_recent_change": None,
-            "name": "Tobacco mosaic virus"
+            "name": "Tobacco mosaic virus",
+            "issues": {
+                "empty_virus": True,
+                "empty_sequence": False,
+                "isolate_inconsistency": False,
+                "empty_isolate": False
+            }
         }
 
     async def test_not_found(self, spawn_client, resp_is):
@@ -693,253 +909,6 @@ class TestEdit:
         assert await resp_is.not_found(resp)
 
 
-class TestVerify:
-
-    async def test(self, spawn_client, test_virus, test_sequence, test_add_history, test_dispatch):
-        """
-        Test that a complete virus document is returned in a ``200`` response when verification is successful. Check
-        that history is updated and dispatches are made. 
-
-        """
-        client = await spawn_client(authorize=True, permissions=["modify_virus"])
-
-        test_virus["modified"] = True
-
-        await client.db.viruses.insert_one(test_virus)
-        await client.db.sequences.insert_one(test_sequence)
-
-        resp = await client.put("/api/viruses/6116cba1/verify", {})
-
-        assert resp.status == 200
-
-        expected = {
-            "id": "6116cba1",
-            "name": "Prunus virus F",
-            "abbreviation": "PVF",
-            "imported": True,
-            "modified": False,
-            "last_indexed_version": 0,
-            "version": 1,
-            "most_recent_change": None,
-            "isolates": [
-                {
-                    "default": True,
-                    "id": "cab8b360",
-                    "sequences": [
-                        {
-                            "sequence": "TGTTTAAGAGATTAAACAACCGCTTTC",
-                            "host": "sweet cherry",
-                            "definition": "Prunus virus F isolate 8816-s2 segment RNA2 polyprotein 2 gene, complete "
-                                          "cds.",
-                            "id": "KX269872",
-                        }
-                    ],
-                    "source_name": "8816-v2",
-                    "source_type": "isolate"
-                }
-            ]
-        }
-
-        assert await resp.json() == expected
-
-        assert await client.db.viruses.find_one() == {
-            "_id": "6116cba1",
-            "abbreviation": "PVF",
-            "imported": True,
-            "isolates": [
-                {
-                    "default": True,
-                    "id": "cab8b360",
-                    "source_name": "8816-v2",
-                    "source_type": "isolate"
-                }
-            ],
-            "last_indexed_version": 0,
-            "lower_name": "prunus virus f",
-            "modified": False,
-            "name": "Prunus virus F",
-            "version": 1
-        }
-
-        old = deepcopy(test_virus)
-
-        old["isolates"][0]["sequences"] = [test_sequence]
-
-        new = deepcopy(expected)
-
-        new.update({
-            "_id": new.pop("id"),
-            "lower_name": new["name"].lower()
-        })
-
-        del new["most_recent_change"]
-
-        for isolate in new["isolates"]:
-            for sequence in isolate["sequences"]:
-                sequence.update({
-                    "_id": sequence.pop("id"),
-                    "virus_id": "6116cba1",
-                    "isolate_id": "cab8b360"
-                })
-
-        assert test_add_history.call_args[0][1:] == (
-            "verify",
-            old,
-            new,
-            "Verified",
-            "test"
-        )
-
-        assert test_dispatch.stub.call_args[0] == (
-            "viruses",
-            "update",
-            {
-                "id": "6116cba1",
-                "name": "Prunus virus F",
-                "abbreviation": "PVF",
-                "modified": False,
-                "version": 1
-            }
-        )
-
-    async def test_empty_virus(self, spawn_client, test_virus, test_add_history, test_dispatch):
-        """
-        Test that a virus with no isolates can be detected and be reported by the handler in a ``400`` response.
-
-        """
-        client = await spawn_client(authorize=True, permissions=["modify_virus"])
-
-        test_virus["isolates"] = []
-
-        await client.db.viruses.insert(test_virus)
-
-        resp = await client.put("/api/viruses/6116cba1/verify", {})
-
-        assert resp.status == 400
-
-        assert await resp.json() == {
-            "message": "Verification errors",
-            "errors": {
-                "empty_isolate": False,
-                "empty_sequence": False,
-                "empty_virus": True,
-                "isolate_inconsistency": False
-            }
-        }
-
-        assert not test_add_history.called
-        assert not test_dispatch.stub.called
-
-    async def test_empty_isolate(self, spawn_client, test_virus, test_add_history, test_dispatch):
-        """
-        Test that an isolate with no sequences can be detected and be reported by the handler in a ``400`` response.
-
-        """
-        client = await spawn_client(authorize=True, permissions=["modify_virus"])
-
-        await client.db.viruses.insert(test_virus)
-
-        resp = await client.put("/api/viruses/6116cba1/verify", {})
-
-        assert resp.status == 400
-
-        assert await resp.json() == {
-            "message": "Verification errors",
-            "errors": {
-                "empty_isolate": ["cab8b360"],
-                "empty_sequence": False,
-                "empty_virus": False,
-                "isolate_inconsistency": False
-            }
-        }
-
-        assert not test_add_history.called
-        assert not test_dispatch.stub.called
-
-    async def test_empty_sequence(self, spawn_client, test_virus, test_sequence, test_add_history, test_dispatch):
-        """
-        Test that an empty sequence field can be detected and be reported by the handler in a ``400`` response.
-
-        """
-        client = await spawn_client(authorize=True, permissions=["modify_virus"])
-
-        await client.db.viruses.insert(test_virus)
-
-        test_sequence["sequence"] = ""
-
-        await client.db.sequences.insert(test_sequence)
-
-        resp = await client.put("/api/viruses/6116cba1/verify", {})
-
-        assert resp.status == 400
-
-        assert await resp.json() == {
-            "message": "Verification errors",
-            "errors": {
-                "empty_isolate": False,
-                "empty_sequence": ["KX269872"],
-                "empty_virus": False,
-                "isolate_inconsistency": False
-            }
-        }
-
-        assert not test_add_history.called
-        assert not test_dispatch.stub.called
-
-    async def test_isolate_inconsistency(self, spawn_client, test_virus, test_sequence, test_add_history,
-                                         test_dispatch):
-        """
-        Test that an isolate consistency can be detected and be reported by the handler in a ``400`` response.
-         
-        """
-        client = await spawn_client(authorize=True, permissions=["modify_virus"])
-
-        test_virus["isolates"].append({
-            "id": "foobar",
-            "source_type": "isolate",
-            "source_name": "b",
-            "default": False
-        })
-
-        # Make database changes so that one isolate has one more sequence than the other isolate.
-        await client.db.viruses.insert_one(test_virus)
-        await client.db.sequences.insert_one(test_sequence)
-        await client.db.sequences.insert_many([
-            dict(test_sequence, _id="a", isolate_id="foobar"),
-            dict(test_sequence, _id="b", isolate_id="foobar")
-        ])
-
-        resp = await client.put("/api/viruses/6116cba1/verify", {})
-
-        assert resp.status == 400
-
-        assert await resp.json() == {
-            "message": "Verification errors",
-            "errors": {
-                "empty_isolate": False,
-                "empty_sequence": False,
-                "empty_virus": False,
-                "isolate_inconsistency": True
-            }
-        }
-
-        assert not test_add_history.called
-        assert not test_dispatch.stub.called
-
-    async def test_not_found(self, spawn_client, resp_is):
-        """
-        Test that an isolate consistency can be detected and be reported by the handler in a ``400`` response.
-
-        """
-        client = await spawn_client(authorize=True, permissions=["modify_virus"])
-
-        resp = await client.put("/api/viruses/foobar/verify", {})
-
-        assert resp.status == 404
-
-        assert await resp_is.not_found(resp)
-
-
 class TestRemove:
 
     @pytest.mark.parametrize("abbreviation,description", [
@@ -948,7 +917,7 @@ class TestRemove:
     ])
     async def test(self, abbreviation, description, spawn_client, test_virus, test_add_history, test_dispatch):
         """
-        Test that an existing virus can be removed.        
+        Test that an existing virus can be removed.
          
         """
         client = await spawn_client(authorize=True, permissions=["modify_virus"])
@@ -1164,6 +1133,7 @@ class TestAddIsolate:
                 "name": "Prunus virus F",
                 "abbreviation": "PVF",
                 "modified": True,
+                "verified": False,
                 "version": 1
             }
         )
@@ -1238,6 +1208,7 @@ class TestAddIsolate:
                 "name": "Prunus virus F",
                 "abbreviation": "PVF",
                 "modified": True,
+                "verified": False,
                 "version": 1
             }
         )
@@ -1304,6 +1275,7 @@ class TestAddIsolate:
                 "name": "Prunus virus F",
                 "abbreviation": "PVF",
                 "modified": True,
+                "verified": False,
                 "version": 1
             }
         )
@@ -1365,6 +1337,7 @@ class TestAddIsolate:
                 "name": "Prunus virus F",
                 "abbreviation": "PVF",
                 "modified": True,
+                "verified": False,
                 "version": 1
             }
         )
@@ -1419,6 +1392,7 @@ class TestAddIsolate:
                 "name": "Prunus virus F",
                 "abbreviation": "PVF",
                 "modified": True,
+                "verified": False,
                 "version": 1
             }
         )
@@ -1503,6 +1477,7 @@ class TestEditIsolate:
                 "name": "Prunus virus F",
                 "abbreviation": "PVF",
                 "modified": True,
+                "verified": False,
                 "version": 1
             }
         )
@@ -1551,6 +1526,7 @@ class TestEditIsolate:
                 "name": "Prunus virus F",
                 "abbreviation": "PVF",
                 "modified": True,
+                "verified": False,
                 "version": 1
             }
         )
@@ -1683,6 +1659,7 @@ class TestSetAsDefault:
                 "name": "Prunus virus F",
                 "abbreviation": "PVF",
                 "modified": True,
+                "verified": False,
                 "version": 1
             }
         )
@@ -1810,6 +1787,7 @@ class TestRemoveIsolate:
             "last_indexed_version": 0,
             "lower_name": "prunus virus f",
             "modified": False,
+            "verified": False,
             "name": "Prunus virus F",
             "version": 0
         }
@@ -1838,6 +1816,7 @@ class TestRemoveIsolate:
                 "name": "Prunus virus F",
                 "abbreviation": "PVF",
                 "modified": True,
+                "verified": False,
                 "version": 1
             }
         )
@@ -1903,6 +1882,7 @@ class TestRemoveIsolate:
             "last_indexed_version": 0,
             "lower_name": "prunus virus f",
             "modified": False,
+            "verified": False,
             "name": "Prunus virus F",
             "version": 0
         }
@@ -1923,6 +1903,7 @@ class TestRemoveIsolate:
             "last_indexed_version": 0,
             "lower_name": "prunus virus f",
             "modified": True,
+            "verified": False,
             "name": "Prunus virus F",
             "version": 1
         }
@@ -1943,6 +1924,7 @@ class TestRemoveIsolate:
                 "name": "Prunus virus F",
                 "abbreviation": "PVF",
                 "modified": True,
+                "verified": False,
                 "version": 1
             }
         )
@@ -2075,6 +2057,7 @@ class TestCreateSequence:
             "last_indexed_version": 0,
             "lower_name": "prunus virus f",
             "modified": False,
+            "verified": False,
             "name": "Prunus virus F",
             "version": 0
         }
@@ -2110,6 +2093,7 @@ class TestCreateSequence:
                 "id": "6116cba1",
                 "abbreviation": "PVF",
                 "modified": True,
+                "verified": False,
                 "name": "Prunus virus F",
                 "version": 1
             }
@@ -2217,6 +2201,7 @@ class TestEditSequence:
             "last_indexed_version": 0,
             "lower_name": "prunus virus f",
             "modified": False,
+            "verified": False,
             "name": "Prunus virus F",
             "version": 0
         }
@@ -2252,6 +2237,7 @@ class TestEditSequence:
                 "id": "6116cba1",
                 "abbreviation": "PVF",
                 "modified": True,
+                "verified": False,
                 "name": "Prunus virus F",
                 "version": 1
             }
@@ -2338,6 +2324,7 @@ class TestRemoveSequence:
                 "id": "6116cba1",
                 "abbreviation": "PVF",
                 "modified": True,
+                "verified": False,
                 "name": "Prunus virus F",
                 "version": 1
             }

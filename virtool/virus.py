@@ -1,26 +1,25 @@
+"""
+Functions for working with virus documents.
+
+"""
+
 import re
 import logging
 from copy import deepcopy
 
 import virtool.utils
+import virtool.errors
 import virtool.virus_history
 
-
 logger = logging.getLogger(__name__)
-
-
-ISOLATE_SCHEMA = {
-    "source_type": {"type": "string", "default": ""},
-    "source_name": {"type": "string", "default": ""},
-    "default": {"type": "boolean", "default": False}
-}
 
 LIST_PROJECTION = [
     "_id",
     "name",
     "abbreviation",
     "version",
-    "modified"
+    "modified",
+    "verified"
 ]
 
 SEQUENCE_PROJECTION = [
@@ -40,7 +39,7 @@ async def dispatch_version_only(req, new):
     :param req: the request object
     
     :param new: the virus document
-    :type new: dict
+    :type new: Coroutine[dict]
     
     """
     await req.app["dispatcher"].dispatch(
@@ -65,7 +64,7 @@ async def join(db, virus_id, document=None):
     :type document: dict
 
     :return: the joined virus document
-    :rtype: dict
+    :rtype: Coroutine[dict]
 
     """
     # Get the virus entry if a virus parameter was not passed.
@@ -81,8 +80,28 @@ async def join(db, virus_id, document=None):
     return merge_virus(document, sequences)
 
 
-async def get_complete(db, virus_id):
-    joined = await join(db, virus_id)
+async def join_and_format(db, virus_id, joined=None, issues=False):
+    """
+    Join the virus identified by the passed ``virus_id`` or use the ``joined`` virus document if available. Then, format
+    the joined virus into a format that can be directly returned to API clients.
+
+    :param db: the application database client
+    :type db: :class:`~motor.motor_asyncio.AsyncIOMotorClient`
+
+    :param virus_id: the id of the virus to join
+    :type virus_id: str
+
+    :param joined:
+    :type joined: Union[dict, NoneType]
+
+    :param issues: an object describing issues in the virus
+    :type issues: Union[dict, NoneType, bool]
+
+    :return: a joined and formatted virus
+    :rtype: Coroutine[dict]
+
+    """
+    joined = joined or await join(db, virus_id)
 
     if not joined:
         return None
@@ -102,7 +121,13 @@ async def get_complete(db, virus_id):
     if most_recent_change:
         most_recent_change["change_id"] = most_recent_change.pop("_id")
 
-    joined["most_recent_change"] = most_recent_change
+    joined.update({
+        "most_recent_change": most_recent_change,
+        "issues": issues
+    })
+
+    if issues is False:
+        joined["issues"] = await verify(db, virus_id)
 
     return joined
 
@@ -147,7 +172,7 @@ async def check_name_and_abbreviation(db, name=None, abbreviation=None):
     return False
 
 
-def check_virus(virus, sequences):
+def check_virus(joined):
     """
     Checks that the passed virus and sequences constitute valid Virtool records and can be included in a virus
     index. Error fields are:
@@ -156,18 +181,15 @@ def check_virus(virus, sequences):
     * empty_sequence - sequences that have a zero length sequence field.
     * isolate_inconsistency - virus has isolates containing different numbers of sequences.
     
-    :param virus: the virus document
-    :type virus: dict
-    
-    :param sequences: a list of sequence documents associated with the virus.
-    :type sequences: list
+    :param joined: a joined virus
+    :type joined: dict
     
     :return: return any errors or False if there are no errors.
-    :rtype: dict or NoneType
+    :rtype: Union[dict, None]
     
     """
     errors = {
-        "empty_virus": len(virus["isolates"]) == 0,
+        "empty_virus": len(joined["isolates"]) == 0,
         "empty_isolate": list(),
         "empty_sequence": list(),
         "isolate_inconsistency": False
@@ -177,10 +199,11 @@ def check_virus(virus, sequences):
 
     # Append the isolate_ids of any isolates without sequences to empty_isolate. Append the isolate_id and sequence
     # id of any sequences that have an empty sequence.
-    for isolate in virus["isolates"]:
-        isolate_sequences = [sequence for sequence in sequences if sequence["isolate_id"] == isolate["id"]]
+    for isolate in joined["isolates"]:
+        isolate_sequences = isolate["sequences"]
         isolate_sequence_count = len(isolate_sequences)
 
+        # If there are no sequences attached to the isolate it gets an empty_isolate error.
         if isolate_sequence_count == 0:
             errors["empty_isolate"].append(isolate["id"])
 
@@ -208,6 +231,21 @@ def check_virus(virus, sequences):
         return errors
 
     return None
+
+
+async def verify(db, virus_id, joined=None):
+    """
+    Verifies that the associated virus is ready to be included in an index rebuild. Returns verification errors if
+    necessary.
+
+    """
+    # Get the virus document of interest.
+    joined = joined or await join(db, virus_id)
+
+    if not joined:
+        raise virtool.errors.DatabaseError("Could not find virus '{}'".format(virus_id))
+
+    return check_virus(joined)
 
 
 async def update_last_indexed_version(db, virus_ids, version):
@@ -272,6 +310,15 @@ def get_default_isolate(virus, isolate_processor=None):
 async def get_new_isolate_id(db, excluded=None):
     """
     Generates a unique isolate id.
+
+    :param db: the application database client
+    :type db: :class:`~motor.motor_asyncio.AsyncIOMotorClient`
+
+    :param excluded: a list or set of strings that may not be returned.
+    :type excluded: Union[list, set]
+
+    :return: a new unique isolate id
+    :rtype: Coroutine[str]
     
     """
     used_isolate_ids = excluded or list()
