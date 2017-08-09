@@ -65,19 +65,25 @@ class AddSequence extends React.Component {
                                 <FormGroup>
                                     <ControlLabel>Accession (ID)</ControlLabel>
                                     <InputGroup>
-                                        <FormControl />
+                                        <FormControl
+                                            value={this.state.id}
+                                            onChange={(e) => this.setState({id: e.target.value})}
+                                        />
                                         <InputGroup.Button>
                                             <Button>
                                                 <Icon name="wand" />
                                             </Button>
-                                        </InputGroup.Button>q
+                                        </InputGroup.Button>
                                     </InputGroup>
                                 </FormGroup>
                             </Col>
                             <Col sm={12} md={6}>
                                 <FormGroup>
                                     <ControlLabel>Host</ControlLabel>
-                                    <FormControl />
+                                    <FormControl
+                                        value={this.state.host}
+                                        onChange={(e) => this.setState({host: e.target.value})}
+                                    />
                                 </FormGroup>
                             </Col>
                         </Row>
@@ -85,7 +91,10 @@ class AddSequence extends React.Component {
                             <Col sm={12}>
                                 <FormGroup>
                                     <ControlLabel>Definition</ControlLabel>
-                                    <FormControl />
+                                    <FormControl
+                                        value={this.state.definition}
+                                        onChange={(e) => this.setState({definition: e.target.value})}
+                                    />
                                 </FormGroup>
                             </Col>
                         </Row>
@@ -126,8 +135,6 @@ const mapDispatchToProps = (dispatch) => {
         }
     };
 };
-
-
 
 const Container = connect(mapStateToProps, mapDispatchToProps)(AddSequence);
 
