@@ -20,18 +20,11 @@ i {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
-
-.i-vga:before {
-  content: "\e908";
+.i-download:before {
+  content: "\e913";
 }
-.i-ruler:before {
-  content: "\e90e";
-}
-.i-lock:before {
-  content: "\e90c";
-}
-.i-key:before {
-  content: "\e911";
+.i-upload:before {
+  content: "\e90d";
 }
 .i-star:before {
   content: "\e907";
@@ -242,6 +235,18 @@ i {
 }
 .i-new-tab:before {
   content: "\ea7e";
+}
+.i-vga:before {
+  content: "\e908";
+}
+.i-ruler:before {
+  content: "\e90e";
+}
+.i-lock:before {
+  content: "\e90c";
+}
+.i-key:before {
+  content: "\e911";
 }
 .i-vtlogo:before {
   content: "\e67a";
