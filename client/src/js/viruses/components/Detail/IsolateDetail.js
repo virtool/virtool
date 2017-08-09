@@ -13,14 +13,15 @@ import React, { PropTypes } from "react";
 import URI from "urijs";
 import { capitalize, find } from "lodash";
 import { connect } from "react-redux";
-import { Label, Panel, Table, ListGroup } from "react-bootstrap";
+import { Badge, Label, Panel, Table, ListGroup } from "react-bootstrap";
 
-import { showEditIsolate, showRemoveIsolate } from "../../actions";
+import { showEditIsolate, showRemoveIsolate, showAddSequence } from "../../actions";
 import { formatIsolateName } from "virtool/js/utils";
 import { Icon, ListGroupItem } from "virtool/js/components/Base";
 import Sequence from "./Sequence";
 import EditIsolate from "./EditIsolate";
 import RemoveIsolate from "./RemoveIsolate";
+import AddSequence from "./AddSequence";
 
 const IsolateDetail = (props) => {
 
@@ -92,6 +93,11 @@ const IsolateDetail = (props) => {
                 onSuccess={() => props.history.push(nextURI.toString())}
             />
 
+            <AddSequence
+                virusId={props.virusId}
+                isolateId={isolate.id}
+            />
+
             <Panel>
                 <ListGroup fill>
                     <ListGroupItem>
@@ -123,11 +129,15 @@ const IsolateDetail = (props) => {
                         </Table>
 
                         <div style={{marginTop: "45px", display: "flex", alignItems: "center"}}>
-                            <strong style={{flex: "1 0 auto"}}>Sequences</strong>
+                            <strong style={{flex: "0 1 auto"}}>Sequences</strong>
+                            <span style={{flex: "1 0 auto", marginLeft: "5px"}}>
+                                <Badge>{isolate.sequences.length}</Badge>
+                            </span>
                             <Icon
                                 name="new-entry"
                                 bsStyle="primary"
                                 tip="Add Sequence"
+                                onClick={() => props.showAddSequence()}
                                 pullRight
                             />
                         </div>
@@ -153,6 +163,7 @@ IsolateDetail.propTypes = {
     restrictSourceTypes: PropTypes.bool,
     showEditIsolate: PropTypes.func,
     showRemoveIsolate: PropTypes.func,
+    showAddSequence: PropTypes.func
 
 };
 
@@ -170,6 +181,10 @@ const mapDispatchToProps = (dispatch) => {
     return {
         showEditIsolate: (virusId, isolateId, sourceType, sourceName) => {
             dispatch(showEditIsolate(virusId, isolateId, sourceType, sourceName));
+        },
+
+        showAddSequence: (virusId, isolateId) => {
+            dispatch(showAddSequence(virusId, isolateId));
         },
 
         showRemoveIsolate: () => {

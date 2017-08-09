@@ -56,12 +56,14 @@ const IsolateEditor = (props) => {
     return (
         <div>
             <h4 style={{display: "flex", alignItems: "center"}} className="section-header">
-                <strong>
-                    Isolates
-                </strong>
+                <FlexItem grow={0} shrink={0}>
+                    <strong>
+                        Isolates
+                    </strong>
+                </FlexItem>
 
-                <FlexItem grow={1}>
-                    <Badge style={{marginLeft: "5px", flex: "1 0 auto"}}>
+                <FlexItem grow={1} pad={5}>
+                    <Badge>
                         {isolateComponents.length}
                     </Badge>
                 </FlexItem>

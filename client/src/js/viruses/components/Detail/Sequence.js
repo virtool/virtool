@@ -9,7 +9,7 @@
 
 import React, { PropTypes } from "react";
 import { Table, Label, Collapse } from "react-bootstrap";
-import { Icon, ListGroupItem } from "virtool/js/components/Base";
+import { Flex, FlexItem, ListGroupItem } from "virtool/js/components/Base";
 
 class Sequence extends React.Component {
 
@@ -29,7 +29,17 @@ class Sequence extends React.Component {
 
     render () {
 
-        const accession = this.props.accession;
+        const accession = this.props.id;
+
+        let closeButton;
+
+        if (this.state.in) {
+            closeButton = (
+                <button type="button" className="close" onClick={() => this.setState({in: false})}>
+                    <span>×</span>
+                </button>
+            );
+        }
 
         return (
             <ListGroupItem
@@ -38,40 +48,54 @@ class Sequence extends React.Component {
                 onClick={this.state.in ? null: () => this.setState({in: true})}
             >
                 <div>
-                    <Label>{accession}</Label> {this.props.definition}
-                    <Icon
-                        name="caret-right"
-                        onClick={() => this.setState({in: false})}
-                        pullRight
-                    />
+                    <Flex alignItems="center">
+                        <FlexItem grow={0} shrink={0}>
+                            <Label>{accession}</Label>
+                        </FlexItem>
+                        <FlexItem grow={1} shrink={0} pad={5}>
+                            {this.props.definition}
+                        </FlexItem>
+                        <FlexItem grow={0} shrin={0} pad={3}>
+                            <Icon name="pencil" bsStyle="warning" tip="Edit Sequence" />
+                        </FlexItem>
+                        <FlexItem grow={0} shrin={0} pad={3}>
+                            <Icon name="remove" bsStyle="danger" tip="Remove Sequence" />
+                        </FlexItem>
+                        <FlexItem grow={0} shrin={0} pad={3}>
+                            <Icon name="remove" bsStyle="danger" tip="Remove Sequence" />
+                        </FlexItem>
+                        <FlexItem>
+                            {closeButton}
+                        </FlexItem>
+                    </Flex>
                 </div>
 
                 <Collapse in={this.state.in}>
                     <div>
-                        <Table style={{marginTop: "10px"}} condensed bordered>
+                        <Table style={{marginTop: "10px"}} bordered>
                             <tbody>
-                            <tr>
-                                <th>Accession</th>
-                                <td>{accession}</td>
-                            </tr>
-                            <tr>
-                                <th>Host</th>
-                                <td>{this.props.host}</td>
-                            </tr>
-                            <tr>
-                                <th>Definition</th>
-                                <td>{this.props.definition}</td>
-                            </tr>
-                            <tr>
-                                <th>Sequence</th>
-                                <td className="sequence-cell">
-                                    <textarea
-                                        rows="5"
-                                        value={this.props.sequence}
-                                        readOnly
-                                    />
-                                </td>
-                            </tr>
+                                <tr>
+                                    <th>Accession</th>
+                                    <td>{accession}</td>
+                                </tr>
+                                <tr>
+                                    <th>Host</th>
+                                    <td>{this.props.host}</td>
+                                </tr>
+                                <tr>
+                                    <th>Definition</th>
+                                    <td>{this.props.definition}</td>
+                                </tr>
+                                <tr>
+                                    <th>Sequence</th>
+                                    <td className="sequence-cell">
+                                        <textarea
+                                            rows="5"
+                                            value={this.props.sequence}
+                                            readOnly
+                                        />
+                                    </td>
+                                </tr>
                             </tbody>
                         </Table>
                     </div>
