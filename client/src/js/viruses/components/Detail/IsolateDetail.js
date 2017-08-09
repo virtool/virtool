@@ -18,6 +18,7 @@ import { Badge, Label, Panel, Table, ListGroup } from "react-bootstrap";
 import { showEditIsolate, showRemoveIsolate, showAddSequence } from "../../actions";
 import { formatIsolateName } from "virtool/js/utils";
 import { Icon, ListGroupItem } from "virtool/js/components/Base";
+import { followDownload } from "virtool/js/utils";
 import Sequence from "./Sequence";
 import EditIsolate from "./EditIsolate";
 import RemoveIsolate from "./RemoveIsolate";
@@ -64,6 +65,13 @@ const IsolateDetail = (props) => {
                 bsStyle="danger"
                 tip="Remove Isolate"
                 onClick={props.showRemoveIsolate}
+                style={{paddingLeft: "3px"}}
+            />
+
+            <Icon
+                name="download"
+                tip="Download FASTA"
+                onClick={() => followDownload(`/download/viruses/${props.virusId}/isolates/${isolate.id}`)}
                 style={{paddingLeft: "3px"}}
             />
         </span>
