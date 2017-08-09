@@ -53,14 +53,21 @@ export const REMOVE_VIRUS = createRequestActionType("REMOVE_VIRUS");
 
 export const GET_VIRUS_HISTORY = createRequestActionType("GET_VIRUS_HISTORY");
 
-export const SHOW_ADD_ISOLATE = "SHOW_ADD_ISOLATE";
-export const SHOW_EDIT_ISOLATE = "SHOW_EDIT_ISOLATE";
-export const SHOW_REMOVE_ISOLATE = "SHOW_REMOVE_ISOLATE";
-export const HIDE_VIRUS_MODAL = "HIDE_VIRUS_MODAL";
-
 export const ADD_ISOLATE = createRequestActionType("ADD_ISOLATE");
 export const EDIT_ISOLATE = createRequestActionType("EDIT_ISOLATE");
 export const REMOVE_ISOLATE = createRequestActionType("REMOVE_ISOLATE");
+
+export const ADD_SEQUENCE = createRequestActionType("ADD_SEQUENCE");
+export const EDIT_SEQUENCE = createRequestActionType("EDIT_SEQUENCE");
+export const REMOVE_SEQUENCE = createRequestActionType("REMOVE_SEQUENCE");
+
+export const SHOW_ADD_ISOLATE = "SHOW_ADD_ISOLATE";
+export const SHOW_EDIT_ISOLATE = "SHOW_EDIT_ISOLATE";
+export const SHOW_REMOVE_ISOLATE = "SHOW_REMOVE_ISOLATE";
+export const SHOW_ADD_SEQUENCE = "SHOW_ADD_SEQUENCE";
+export const SHOW_EDIT_SEQUENCE = "SHOW_EDIT_SEQUENCE";
+export const SHOW_REMOVE_SEQUENCE = "SHOW_REMOVE_SEQUENCE";
+export const HIDE_VIRUS_MODAL = "HIDE_VIRUS_MODAL";
 
 // Indexes
 export const WS_UPDATE_INDEX = "WS_UPDATE_INDEX";

@@ -19,6 +19,7 @@ import {
     ADD_ISOLATE,
     EDIT_ISOLATE,
     REMOVE_ISOLATE,
+    ADD_SEQUENCE,
     SET_APP_PENDING,
     UNSET_APP_PENDING
 }  from "../actionTypes";
@@ -31,6 +32,7 @@ export function* watchViruses () {
     yield takeEvery(ADD_ISOLATE.REQUESTED, addIsolate);
     yield takeEvery(EDIT_ISOLATE.REQUESTED, editIsolate);
     yield takeEvery(REMOVE_ISOLATE.REQUESTED, removeIsolate);
+    yield takeEvery(ADD_SEQUENCE.REQUESTED, addSequence);
 }
 
 export function* findViruses (action) {
@@ -116,3 +118,22 @@ export function* removeIsolate (action) {
     }, action);
 }
 
+export function* addSequence (action) {
+    yield setPending(function* (action) {
+        try {
+            yield call(
+                virusesAPI.addSequence,
+                action.virusId,
+                action.isolateId,
+                action.sequenceId,
+                action.definition,
+                action.host,
+                action.sequence
+            );
+            const response = yield call(virusesAPI.get, action.virusId);
+            yield put({type: ADD_SEQUENCE.SUCCEEDED, data: response.body});
+        } catch (error) {
+            yield put({type: ADD_SEQUENCE.FAILED, error: error});
+        }
+    }, action);
+}
