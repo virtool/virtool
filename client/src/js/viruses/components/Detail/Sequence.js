@@ -82,7 +82,7 @@ class Sequence extends React.Component {
                         <FlexItem grow={0} shrink={0}>
                             <Label>{accession}</Label>
                         </FlexItem>
-                        <FlexItem grow={1} shrink={0} pad={5}>
+                        <FlexItem className="sequence-header-definition" grow={1} shrink={1} pad={5}>
                             {this.props.definition}
                         </FlexItem>
                         {buttons}
