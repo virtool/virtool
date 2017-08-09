@@ -10,6 +10,7 @@
  */
 
 import React, { PropTypes } from "react";
+import { Helmet } from "react-helmet";
 import { connect } from "react-redux";
 import { Switch, Route, Redirect } from "react-router-dom";
 import { LinkContainer } from "react-router-bootstrap";
@@ -53,6 +54,7 @@ class VirusDetail extends React.Component {
         let content;
 
         if (this.props.detail) {
+
             const virusId = this.props.detail.id;
 
             let modifiedLabel;
@@ -70,6 +72,10 @@ class VirusDetail extends React.Component {
 
             content = (
                 <div>
+                    <Helmet>
+                        <title>{this.props.detail.name}</title>
+                    </Helmet>
+
                     <h3 style={{marginBottom: "20px"}}>
                         <Flex alignItems="flex-end">
                             <FlexItem grow={1}>
