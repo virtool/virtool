@@ -9,7 +9,8 @@
 
 import React, { PropTypes } from "react";
 import { Table, Label, Collapse } from "react-bootstrap";
-import { Flex, FlexItem, ListGroupItem } from "virtool/js/components/Base";
+import { Icon, Flex, FlexItem, ListGroupItem } from "virtool/js/components/Base";
+import { followDownload } from "virtool/js/utils";
 
 class Sequence extends React.Component {
 
@@ -21,7 +22,7 @@ class Sequence extends React.Component {
     }
 
     static propTypes = {
-        accession: PropTypes.string,
+        id: PropTypes.string,
         definition: PropTypes.string,
         host: PropTypes.string,
         sequence: PropTypes.string
@@ -31,13 +32,42 @@ class Sequence extends React.Component {
 
         const accession = this.props.id;
 
-        let closeButton;
+        let buttons;
 
         if (this.state.in) {
-            closeButton = (
-                <button type="button" className="close" onClick={() => this.setState({in: false})}>
-                    <span>×</span>
-                </button>
+            buttons = (
+                <FlexItem>
+                    <Flex alignItem="center">
+                        <FlexItem grow={0} shrink={0}>
+                            <Icon
+                                name="pencil"
+                                bsStyle="warning"
+                                tip="Edit Sequence"
+                                onClick={() => console.log("EDIT")}
+                            />
+                        </FlexItem>
+                        <FlexItem grow={0} shrink={0} pad={3}>
+                            <Icon
+                                name="remove"
+                                bsStyle="danger"
+                                tip="Remove Sequence"
+                                onClick={() => console.log("REMOVE")}
+                            />
+                        </FlexItem>
+                        <FlexItem grow={0} shrink={0} pad={3}>
+                            <Icon
+                                name="download"
+                                tip="Download FASTA"
+                                onClick={() => followDownload(`/download/sequences/${this.props.id}`)}
+                            />
+                        </FlexItem>
+                        <FlexItem pad={5}>
+                            <button type="button" className="close" onClick={() => this.setState({in: false})}>
+                                <span>×</span>
+                            </button>
+                        </FlexItem>
+                    </Flex>
+                </FlexItem>
             );
         }
 
@@ -55,18 +85,7 @@ class Sequence extends React.Component {
                         <FlexItem grow={1} shrink={0} pad={5}>
                             {this.props.definition}
                         </FlexItem>
-                        <FlexItem grow={0} shrin={0} pad={3}>
-                            <Icon name="pencil" bsStyle="warning" tip="Edit Sequence" />
-                        </FlexItem>
-                        <FlexItem grow={0} shrin={0} pad={3}>
-                            <Icon name="remove" bsStyle="danger" tip="Remove Sequence" />
-                        </FlexItem>
-                        <FlexItem grow={0} shrin={0} pad={3}>
-                            <Icon name="remove" bsStyle="danger" tip="Remove Sequence" />
-                        </FlexItem>
-                        <FlexItem>
-                            {closeButton}
-                        </FlexItem>
+                        {buttons}
                     </Flex>
                 </div>
 

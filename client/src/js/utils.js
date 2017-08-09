@@ -55,3 +55,12 @@ export const formatIsolateName = (isolate) => {
 
     return "Unnamed";
 };
+
+export const followDownload = (path) => {
+    const a = document.createElement('A');
+    a.href = path;
+    a.download = path.substr(path.lastIndexOf("/") + 1);
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+}
