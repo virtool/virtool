@@ -128,7 +128,7 @@ export function editSequence (virusId, isolateId, sequenceId, definition, host, 
 
 export function removeSequence (virusId, isolateId, sequenceId) {
     return {
-        type: ADD_SEQUENCE.REQUESTED,
+        type: REMOVE_SEQUENCE.REQUESTED,
         virusId,
         isolateId,
         sequenceId
@@ -157,23 +157,23 @@ export function showRemoveIsolate () {
     };
 }
 
-export function showAddSequence (virusId, isolateId) {
+export function showAddSequence () {
     return {
-        type: SHOW_ADD_SEQUENCE,
-        virusId,
-        isolateId
+        type: SHOW_ADD_SEQUENCE
     };
 }
 
-export function showEditSequence () {
+export function showEditSequence (sequenceId) {
     return {
-        type: SHOW_EDIT_SEQUENCE
+        type: SHOW_EDIT_SEQUENCE,
+        sequenceId
     };
 }
 
-export function showRemoveSequence () {
+export function showRemoveSequence (sequenceId) {
     return {
-        type: SHOW_REMOVE_SEQUENCE
+        type: SHOW_REMOVE_SEQUENCE,
+        sequenceId
     };
 }
 

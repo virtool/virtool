@@ -15,7 +15,7 @@ import { capitalize, find } from "lodash";
 import { connect } from "react-redux";
 import { Badge, Label, Panel, Table, ListGroup } from "react-bootstrap";
 
-import { showEditIsolate, showRemoveIsolate, showAddSequence } from "../../actions";
+import { showEditIsolate, showRemoveIsolate, showAddSequence, showEditSequence, showRemoveSequence } from "../../actions";
 import { formatIsolateName } from "virtool/js/utils";
 import { Icon, ListGroupItem } from "virtool/js/components/Base";
 import { followDownload } from "virtool/js/utils";
@@ -23,6 +23,8 @@ import Sequence from "./Sequence";
 import EditIsolate from "./EditIsolate";
 import RemoveIsolate from "./RemoveIsolate";
 import AddSequence from "./AddSequence";
+import EditSequence from "./EditSequence";
+import RemoveSequence from "./RemoveSequence";
 
 const IsolateDetail = (props) => {
 
@@ -39,7 +41,13 @@ const IsolateDetail = (props) => {
     );
 
     let sequenceComponents = isolate.sequences.map(sequence =>
-        <Sequence key={sequence.id} active={sequence.accession === activeAccession} {...sequence} />
+        <Sequence
+            key={sequence.id}
+            active={sequence.accession === activeAccession}
+            showEditSequence={props.showEditSequence}
+            showRemoveSequence={props.showRemoveSequence}
+            {...sequence}
+        />
     );
 
     if (!sequenceComponents.length) {
@@ -97,13 +105,24 @@ const IsolateDetail = (props) => {
             <RemoveIsolate
                 virusId={props.virusId}
                 isolateId={isolate.id}
-                isolateName={formatIsolateName(isolate)}
+                isolateName={isolateName}
                 onSuccess={() => props.history.push(nextURI.toString())}
             />
 
             <AddSequence
                 virusId={props.virusId}
                 isolateId={isolate.id}
+            />
+
+            <EditSequence
+                virusId={props.virusId}
+                isolateId={isolate.id}
+            />
+
+            <RemoveSequence
+                virusId={props.virusId}
+                isolateId={isolate.id}
+                isolateName={isolateName}
             />
 
             <Panel>
@@ -171,7 +190,8 @@ IsolateDetail.propTypes = {
     restrictSourceTypes: PropTypes.bool,
     showEditIsolate: PropTypes.func,
     showRemoveIsolate: PropTypes.func,
-    showAddSequence: PropTypes.func
+    showAddSequence: PropTypes.func,
+    showEditSequence: PropTypes.func
 
 };
 
@@ -180,6 +200,7 @@ const mapStateToProps = (state) => {
         isolates: state.viruses.detail.isolates,
         virusId: state.viruses.detail.id,
         editing: state.viruses.editingIsolate,
+        editingSequence: state.viruses.editSequence,
         allowedSourceTypes: state.settings.data.allowed_source_types,
         restrictSourceTypes: state.settings.data.restrict_source_types
     };
@@ -191,13 +212,21 @@ const mapDispatchToProps = (dispatch) => {
             dispatch(showEditIsolate(virusId, isolateId, sourceType, sourceName));
         },
 
-        showAddSequence: (virusId, isolateId) => {
-            dispatch(showAddSequence(virusId, isolateId));
-        },
-
         showRemoveIsolate: () => {
             dispatch(showRemoveIsolate());
-        }
+        },
+
+        showAddSequence: () => {
+            dispatch(showAddSequence());
+        },
+
+        showEditSequence: (sequenceId) => {
+            dispatch(showEditSequence(sequenceId));
+        },
+
+        showRemoveSequence: (sequenceId) => {
+            dispatch(showRemoveSequence(sequenceId));
+        },
     };
 };
 

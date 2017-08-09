@@ -25,7 +25,9 @@ class Sequence extends React.Component {
         id: PropTypes.string,
         definition: PropTypes.string,
         host: PropTypes.string,
-        sequence: PropTypes.string
+        sequence: PropTypes.string,
+        showEditSequence: PropTypes.func,
+        showRemoveSequence: PropTypes.func
     };
 
     render () {
@@ -43,7 +45,7 @@ class Sequence extends React.Component {
                                 name="pencil"
                                 bsStyle="warning"
                                 tip="Edit Sequence"
-                                onClick={() => console.log("EDIT")}
+                                onClick={() => this.props.showEditSequence(this.props.id)}
                             />
                         </FlexItem>
                         <FlexItem grow={0} shrink={0} pad={3}>
@@ -51,7 +53,7 @@ class Sequence extends React.Component {
                                 name="remove"
                                 bsStyle="danger"
                                 tip="Remove Sequence"
-                                onClick={() => console.log("REMOVE")}
+                                onClick={() => this.props.showRemoveSequence(this.props.id)}
                             />
                         </FlexItem>
                         <FlexItem grow={0} shrink={0} pad={3}>
