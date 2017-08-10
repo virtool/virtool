@@ -60,7 +60,8 @@ async def revert(req):
     _, patched, history_to_delete = await virtool.virus_history.patch_virus_to_version(
         db,
         virus_id,
-        virus_version - 1
+        virus_version - 1,
+        inclusive=True
     )
 
     # Remove the old sequences from the collection.

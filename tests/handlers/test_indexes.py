@@ -197,20 +197,28 @@ class TestGet:
             "version": 0,
             "virus_count": 232,
             "change_count": 4,
-            "viruses": {
-                "zxbbvngc": {
-                    "name": "Test",
-                    "change_count": 3
-                },
-                "kjs8sa99": {
+            "viruses": [
+                {
+                    "id": "kjs8sa99",
                     "name": "Foo",
                     "change_count": 1
                 },
-            },
-            "contributors": {
-                "igboyes": 3,
-                "fred": 1
-            },
+                {
+                    "id": "zxbbvngc",
+                    "name": "Test",
+                    "change_count": 3
+                }
+            ],
+            "contributors": [
+                {
+                    "id": "fred",
+                    "count": 1
+                },
+                {
+                    "id": "igboyes",
+                    "count": 3
+                }
+            ],
             "ready": False,
             "job": {
                 "id": "sj82la"
