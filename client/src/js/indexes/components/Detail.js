@@ -8,17 +8,18 @@
  */
 
 import React, { PropTypes } from "react";
-import { groupBy, keys, transform } from "lodash";
 import { connect } from "react-redux";
-import { Badge, ListGroup, ListGroupItem, PanelGroup, Panel, Table } from "react-bootstrap";
+import { Switch, Redirect, Route } from "react-router-dom";
+import { LinkContainer } from "react-router-bootstrap";
+import { Nav, NavItem } from "react-bootstrap";
+import IndexGeneral from "./General";
+import IndexChanges from "./Changes";
 
 import { getIndex } from "../actions";
-import { formatChangeDescription } from "../../viruses/components/Detail/History";
-import { RelativeTime } from "virtool/js/components/Base";
 
 class IndexDetail extends React.Component {
 
-    componentDidMount () {
+    componentWillMount () {
         this.props.onGet(this.props.match.params.indexVersion);
     }
 
@@ -34,71 +35,28 @@ class IndexDetail extends React.Component {
             return <div />;
         }
 
-        const detail = this.props.detail;
-
-        const grouped = groupBy(detail.changes, "virus_name");
-
-        const historyComponents = transform(grouped, (result, changes, virusName) => {
-            const changeComponents = changes.map(change =>
-                <ListGroupItem key={change.change_id}>
-                    {formatChangeDescription(change)}
-                </ListGroupItem>
-            );
-
-            const header = (
-                <div>
-                    <span className="pointer">{virusName}</span>
-                    <Badge className="pull-right">{changeComponents.length}</Badge>
-                </div>
-            );
-
-            result.push(
-                <Panel key={virusName} eventKey={virusName} header={header}>
-                    <ListGroup fill>
-                        {changeComponents}
-                    </ListGroup>
-                </Panel>
-            );
-        }, []);
+        const indexVersion = this.props.match.params.indexVersion;
 
         return (
             <div>
                 <h3 className="view-header">
-                    <strong>Virus Index {this.props.detail.index_version}</strong>
+                    <strong>Virus Index {indexVersion}</strong>
                 </h3>
 
-                <Table bordered>
-                    <tbody>
-                        <tr>
-                            <th>Summary</th>
-                            <td>{detail.changes.length} changes in {keys(grouped).length} viruses</td>
-                        </tr>
-                        <tr>
-                            <th>Virus Count</th>
-                            <td>{detail.virus_count}</td>
-                        </tr>
-                        <tr>
-                            <th>Created</th>
-                            <td><RelativeTime time={detail.timestamp} /></td>
-                        </tr>
-                        <tr>
-                            <th>Created By</th>
-                            <td>{detail.user_id}</td>
-                        </tr>
-                        <tr>
-                            <th>Unique ID</th>
-                            <td>{detail.index_id}</td>
-                        </tr>
-                    </tbody>
-                </Table>
+                <Nav bsStyle="tabs">
+                    <LinkContainer to={`/viruses/indexes/${indexVersion}/general`}>
+                        <NavItem>General</NavItem>
+                    </LinkContainer>
+                    <LinkContainer to={`/viruses/indexes/${indexVersion}/changes`}>
+                        <NavItem>Changes</NavItem>
+                    </LinkContainer>
+                </Nav>
 
-                <h4 className="section-header">
-                    Changes <Badge>{detail.changes.length}</Badge>
-                </h4>
-
-                <PanelGroup accordion>
-                    {historyComponents}
-                </PanelGroup>
+                <Switch>
+                    <Redirect from="/viruses/indexes/:indexVersion" to={`/viruses/indexes/${indexVersion}/general`} exact />
+                    <Route path="/viruses/indexes/:indexVersion/general" component={IndexGeneral} />
+                    <Route path="/viruses/indexes/:indexVersion/changes" component={IndexChanges} />
+                </Switch>
             </div>
         );
     }
