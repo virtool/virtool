@@ -9,6 +9,7 @@
 
 import React, { PropTypes } from "react";
 import { connect } from "react-redux";
+import { Link } from "react-router-dom";
 import { Badge, Panel, ListGroup, ListGroupItem, Table } from "react-bootstrap";
 
 import { Flex, FlexItem, RelativeTime } from "virtool/js/components/Base";
@@ -23,7 +24,12 @@ const IndexGeneral = (props) => {
 
     const viruses = props.detail.viruses.map(virus =>
         <ListGroupItem key={virus.id}>
-            {virus.name} <Badge>{virus.change_count} {`change${virus.change_count > 1 ? "s": ""}`}</Badge>
+            <Link to={`/viruses/${virus.id}`}>
+                {virus.name}
+            </Link>
+            <Badge>
+                {virus.change_count} {`change${virus.change_count > 1 ? "s": ""}`}
+            </Badge>
         </ListGroupItem>
     );
 
