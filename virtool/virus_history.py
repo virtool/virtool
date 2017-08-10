@@ -23,10 +23,6 @@ LIST_PROJECTION = [
     "user"
 ]
 
-PROJECTION = LIST_PROJECTION + [
-    "diff"
-]
-
 
 async def add(db, method_name, old, new, description, user_id):
     """

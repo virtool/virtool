@@ -9,6 +9,7 @@
 
 import React, { PropTypes } from "react";
 import { connect } from "react-redux";
+import { Row, Col, ListGroup, ListGroupItem, Pagination } from "react-bootstrap";
 
 import { getIndexHistory } from "../actions";
 
@@ -22,6 +23,8 @@ class IndexChanges extends React.Component {
         match: PropTypes.object,
         detail: PropTypes.object,
         history: PropTypes.object,
+        page: PropTypes.number,
+        pageCount: PropTypes.number,
         onGet: PropTypes.func
     };
 
@@ -35,11 +38,42 @@ class IndexChanges extends React.Component {
             return <div />;
         }
 
-        const detail = this.props.detail;
         const history = this.props.history;
 
+        const changeComponents = history.documents.map(change => {
+            return (
+                <ListGroupItem key={change.id} className="spaced">
+                    <Row>
+                        <Col sm={12} md={6}>
+                            <strong>{change.virus.name}</strong>
+                        </Col>
+                        <Col sm={12} md={6}>
+                            {change.description}
+                        </Col>
+                    </Row>
+                </ListGroupItem>
+            );
+        });
+
         return (
-            <div>History - Yes</div>
+            <div>
+                <ListGroup>
+                    {changeComponents}
+                </ListGroup>
+
+                <div className="text-center">
+                    <Pagination
+                        items={history.pageCount}
+                        maxButtons={10}
+                        activePage={history.page}
+                        onSelect={this.handlePage}
+                        first
+                        last
+                        next
+                        prev
+                    />
+                </div>
+            </div>
         );
     }
 }
@@ -51,7 +85,8 @@ IndexChanges.propTypes = {
 const mapStateToProps = (state) => {
     return {
         detail: state.indexes.detail,
-        history: state.indexes.history
+        history: state.indexes.history,
+
     };
 };
 

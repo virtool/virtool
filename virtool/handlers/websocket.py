@@ -16,7 +16,7 @@ async def root(req):
 
     await ws.prepare(req)
 
-    async for msg in ws:
+    async for _ in ws:
         pass
 
     req.app["dispatcher"].remove_connection(connection)

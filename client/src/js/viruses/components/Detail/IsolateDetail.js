@@ -15,7 +15,13 @@ import { capitalize, find } from "lodash";
 import { connect } from "react-redux";
 import { Badge, Label, Panel, Table, ListGroup } from "react-bootstrap";
 
-import { showEditIsolate, showRemoveIsolate, showAddSequence, showEditSequence, showRemoveSequence } from "../../actions";
+import {
+    showEditIsolate,
+    showRemoveIsolate,
+    showAddSequence,
+    showEditSequence,
+    showRemoveSequence
+} from "../../actions";
 import { formatIsolateName } from "virtool/js/utils";
 import { Icon, ListGroupItem } from "virtool/js/components/Base";
 import { followDownload } from "virtool/js/utils";
@@ -191,7 +197,8 @@ IsolateDetail.propTypes = {
     showEditIsolate: PropTypes.func,
     showRemoveIsolate: PropTypes.func,
     showAddSequence: PropTypes.func,
-    showEditSequence: PropTypes.func
+    showEditSequence: PropTypes.func,
+    showRemoveSequence: PropTypes.func
 
 };
 

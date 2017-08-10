@@ -3,7 +3,7 @@ class TestFind:
     async def test_no_params(self, spawn_client, hmm_document):
         """
         Check that a request with no URL parameters returns a list of HMM annotation documents.        
-         
+
         """
         client = await spawn_client()
 
@@ -32,7 +32,7 @@ class TestGet:
         """
         Check that a ``GET`` request for a valid annotation document results in a response containing that complete
         document.
-         
+
         """
         client = await spawn_client()
 
@@ -89,7 +89,7 @@ class TestUpdate:
     async def test_not_found(self, spawn_client, resp_is):
         """
         Test that a request to update a non-existent annotation results in a ``404`` response.
-         
+
         """
         client = await spawn_client(authorize=True, permissions=["modify_hmm"])
 
@@ -104,7 +104,7 @@ class TestUpdate:
     async def test_invalid_input(self, spawn_client, resp_is):
         """
         Test that invalid input results in a ``422`` response including error data.
-         
+
         """
         client = await spawn_client(authorize=True, permissions=["modify_hmm"])
 

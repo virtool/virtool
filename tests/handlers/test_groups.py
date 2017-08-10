@@ -3,7 +3,7 @@ class TestFind:
     async def test_no_params(self, spawn_client, all_permissions, no_permissions):
         """
         Test that a ``GET /api/groups`` return a complete list of groups.
-         
+
         """
         client = await spawn_client(authorize=True, permissions=["manage_users"])
 
@@ -43,7 +43,7 @@ class TestCreate:
     async def test_valid(self, spawn_client, no_permissions):
         """
         Test that a group can be added to the database at ``POST /api/groups/:group_id``.
-         
+
         """
         client = await spawn_client(authorize=True, permissions=["manage_users"])
 
@@ -67,7 +67,7 @@ class TestCreate:
         """
         Test that a 409 is returned when attempting to create a new group at ``POST /api/groups/:group_id`` when the
         ``group_id`` already exists.
-         
+
         """
         client = await spawn_client(authorize=True, permissions=["manage_users"])
 
@@ -144,7 +144,7 @@ class TestUpdatePermissions:
     async def test(self, spawn_client, no_permissions):
         """
         Test that a valid request results in permission changes.
-         
+
         """
         client = await spawn_client(authorize=True, permissions=["manage_users"])
 
@@ -174,7 +174,7 @@ class TestUpdatePermissions:
     async def test_invalid_input(self, spawn_client, resp_is, no_permissions):
         """
         Test that an invalid permission key results in a ``422`` response.
-         
+
         """
         client = await spawn_client(authorize=True, permissions=["manage_users"])
 
@@ -194,7 +194,7 @@ class TestUpdatePermissions:
     async def test_not_found(self, spawn_client, resp_is):
         """
         Test that updating an non-existent group results in a ``404`` response.
-         
+
         """
         client = await spawn_client(authorize=True, permissions=["manage_users"])
 
@@ -210,7 +210,7 @@ class TestRemove:
     async def test_valid(self, spawn_client, no_permissions):
         """
         Test that an existing document can be removed at ``DELETE /api/groups/:group_id``.
-         
+
         """
         client = await spawn_client(authorize=True, permissions=["manage_users"])
 
@@ -228,7 +228,7 @@ class TestRemove:
     async def test_not_found(self, spawn_client, resp_is):
         """
         Test that 404 is returned for non-existent group.
-         
+
         """
         client = await spawn_client(authorize=True, permissions=["manage_users"])
 
@@ -241,7 +241,7 @@ class TestRemove:
     async def test_administrator(self, spawn_client, resp_is):
         """
         Test that the administrator group cannot be removed (400).
-         
+
         """
         client = await spawn_client(authorize=True, permissions=["manage_users"])
 

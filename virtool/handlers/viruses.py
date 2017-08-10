@@ -517,7 +517,7 @@ async def set_as_default(req):
     Set an isolate as default.
 
     """
-    db, data = await unpack_request(req)
+    db = req.app["db"]
 
     virus_id = req.match_info["virus_id"]
     isolate_id = req.match_info["isolate_id"]
@@ -932,7 +932,12 @@ async def upload(req):
 
     handle.seek(0)
 
-    await virtool.virus_import.import_file(req.app["db"], req.app["settings"], handle)
+    await virtool.virus_import.import_file(
+        db,
+        req.app["dispatcher"].dispatch,
+        req.app["settings"],
+        handle
+    )
 
     return json_response({"message": "Accepted. Check '/api/status' for more info."}, status=202)
 
@@ -957,7 +962,7 @@ async def export(req):
                 document["last_indexed_version"]
             )
 
-        virus_list.append(joined)
+            virus_list.append(joined)
 
     # Convert the list of viruses to a JSON-formatted string.
     json_string = json.dumps(virus_list)

@@ -51,7 +51,7 @@ class TestJoin:
     async def test(self, test_motor, test_virus, test_sequence, test_merged_virus):
         """
         Test that a virus is properly joined when only a ``virus_id`` is provided.
-        
+
         """
         await test_motor.viruses.insert(test_virus)
         await test_motor.sequences.insert(test_sequence)
@@ -182,7 +182,7 @@ class TestCheckVirus:
     def test_isolate_inconsistency(self, test_merged_virus, test_sequence):
         """
         Test that isolates in a single virus with disparate sequence counts are detected. 
-         
+
         """
         test_merged_virus["isolates"].append(dict(test_merged_virus["isolates"][0], id="foobar"))
 
@@ -271,8 +271,8 @@ class TestGetDefaultIsolate:
 
     def test_no_default(self, test_virus):
         """
-        Test that a ``ValueError`` is raised when the virus contains not default isolates. 
-         
+        Test that a ``ValueError`` is raised when the virus contains not default isolates.
+
         """
         test_virus["isolates"][0]["default"] = False
 

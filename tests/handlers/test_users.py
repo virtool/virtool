@@ -106,11 +106,11 @@ class TestCreate:
     async def test(self, monkeypatch, spawn_client, static_time):
         """
         Test that a valid request results in a user document being properly inserted.
-        
-        - check response        
-        - check database        
+
+        - check response
+        - check database
         - check password
-         
+
         """
         client = await spawn_client(authorize=True, permissions=["manage_users"])
 

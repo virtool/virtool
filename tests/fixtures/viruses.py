@@ -184,7 +184,7 @@ def get_test_insertions(test_virus, test_change):
     def func(length=30):
         insertions = []
 
-        for i in range(length):
+        for _ in range(length):
             virus = dict(test_virus, name=random_alphanumeric(7), _id=random_alphanumeric(7), abbreviation="")
             insertions.append((virus, test_change))
 
@@ -194,7 +194,7 @@ def get_test_insertions(test_virus, test_change):
 
 
 @pytest.fixture
-def get_test_replacements(get_test_insertions, test_change):
+def get_test_replacements(get_test_insertions):
     def func(length=30):
         insertions = get_test_insertions(length)
         removals = [(virus["_id"], change) for virus, change in get_test_insertions(length)]
@@ -205,7 +205,7 @@ def get_test_replacements(get_test_insertions, test_change):
 
 
 @pytest.fixture
-def test_import_handle(mocker, monkeypatch, test_db, test_sequence, test_merged_virus):
+def test_import_handle(mocker, monkeypatch, test_db, test_merged_virus):
     test_db.status.insert_one({
         "_id": "import_viruses",
         "file_name": "viruses.json.gz",

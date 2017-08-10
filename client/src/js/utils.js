@@ -57,7 +57,7 @@ export const formatIsolateName = (isolate) => {
 };
 
 export const followDownload = (path) => {
-    const a = document.createElement('A');
+    const a = document.createElement("A");
     a.href = path;
     a.download = path.substr(path.lastIndexOf("/") + 1);
     document.body.appendChild(a);

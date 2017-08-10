@@ -278,7 +278,7 @@ class Pathoscope(Base):
         **Directly modifies the *to_viruses* :class:`.pathoscope.sam.Lines` object.**
 
         """
-        subtraction_count = virtool.pathoscope.subtract.run(
+        virtool.pathoscope.subtract.run(
             self.intermediate["to_viruses"],
             self.intermediate["to_host"]
         )
@@ -576,7 +576,7 @@ class NuVs(Base):
                 "-s", os.path.join(self.paths["analysis"], "unmapped_hosts.fq"),
             ]
 
-        command +=[
+        command += [
             "-o", os.path.join(self.paths["analysis"], "spades"),
             "-k", "21,33,55,75"
         ]

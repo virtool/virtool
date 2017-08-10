@@ -14,7 +14,7 @@ logger = logging.getLogger(__name__)
 async def find(req):
     """
     Get a list of all existing group documents.
-     
+
     """
     documents = await req.app["db"].groups.find({}).to_list(None)
 

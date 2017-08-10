@@ -26,7 +26,7 @@ async def find(req):
 async def get(req):
     """
     Get a specific change document by its ``change_id``.
-     
+
     """
     db = req.app["db"]
 
@@ -60,8 +60,7 @@ async def revert(req):
     _, patched, history_to_delete = await virtool.virus_history.patch_virus_to_version(
         db,
         virus_id,
-        virus_version - 1,
-        inclusive=True
+        virus_version - 1
     )
 
     # Remove the old sequences from the collection.

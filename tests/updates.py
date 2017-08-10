@@ -113,7 +113,7 @@ class TestDownloadRelease:
                 "http://www.virtool.ca/test.tar.gz",
                 INSTALL_FILE_SIZE,
                 target_path,
-                lambda x: progress.append(x)
+                progress.append
             )
 
 

@@ -11,7 +11,7 @@ import React, { PropTypes } from "react";
 import { connect } from "react-redux";
 import { Switch, Redirect, Route } from "react-router-dom";
 import { LinkContainer } from "react-router-bootstrap";
-import { Nav, NavItem } from "react-bootstrap";
+import { Badge, Nav, NavItem } from "react-bootstrap";
 import IndexGeneral from "./General";
 import IndexChanges from "./Changes";
 
@@ -48,12 +48,16 @@ class IndexDetail extends React.Component {
                         <NavItem>General</NavItem>
                     </LinkContainer>
                     <LinkContainer to={`/viruses/indexes/${indexVersion}/changes`}>
-                        <NavItem>Changes</NavItem>
+                        <NavItem>Changes  <Badge>{this.props.detail.change_count}</Badge></NavItem>
                     </LinkContainer>
                 </Nav>
 
                 <Switch>
-                    <Redirect from="/viruses/indexes/:indexVersion" to={`/viruses/indexes/${indexVersion}/general`} exact />
+                    <Redirect
+                        from="/viruses/indexes/:indexVersion"
+                        to={`/viruses/indexes/${indexVersion}/general`}
+                        exact
+                    />
                     <Route path="/viruses/indexes/:indexVersion/general" component={IndexGeneral} />
                     <Route path="/viruses/indexes/:indexVersion/changes" component={IndexChanges} />
                 </Switch>

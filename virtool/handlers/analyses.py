@@ -1,7 +1,6 @@
 import asyncio
 
 from virtool.handlers.utils import not_found, json_response
-from virtool.sample import recalculate_algorithm_tags
 from virtool.sample_analysis import format_analysis, initialize_blast, check_rid, retrieve_blast_result
 
 
