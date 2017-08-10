@@ -23,7 +23,7 @@ const indexesAPI = {
         return Request.post("/api/indexes");
     },
 
-    getIndexHistory: (indexVersion) => {
+    getHistory: (indexVersion) => {
         return Request.get(`/api/indexes/${indexVersion}/history`);
     }
 };
