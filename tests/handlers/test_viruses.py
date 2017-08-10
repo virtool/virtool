@@ -151,8 +151,8 @@ class TestGet:
 
     async def test(self, spawn_client, test_virus, test_sequence):
         """
-        Test that a valid request returns a complete virus document. 
-         
+        Test that a valid request returns a complete virus document.
+        
         """
         client = await spawn_client()
 

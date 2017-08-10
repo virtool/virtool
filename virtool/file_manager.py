@@ -153,11 +153,11 @@ class Manager:
 
 class Watcher(multiprocessing.Process):
 
-    def __init__(self, path, queue):
+    def __init__(self, path, q):
         super().__init__()
 
         self.path = path
-        self.queue = queue
+        self.queue = q
 
     def run(self):
         setproctitle.setproctitle("virtool-inotify")

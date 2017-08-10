@@ -59,7 +59,17 @@ const virusesAPI = {
 
     removeIsolate: (virusId, isolateId) => {
         return Request.delete(`/api/viruses/${virusId}/isolates/${isolateId}`);
-    }
+    },
+
+    addSequence: (virusId, isolateId, sequenceId, definition, host, sequence) => {
+        return Request.post(`/api/viruses/${virusId}/isolates/${isolateId}/sequences`)
+            .send({
+                id: sequenceId,
+                definition,
+                host,
+                sequence
+            });
+    },
 
 };
 

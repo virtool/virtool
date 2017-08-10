@@ -26,7 +26,7 @@ async def find(req):
 async def get(req):
     """
     Get a specific change document by its ``change_id``.
-     
+
     """
     db = req.app["db"]
 

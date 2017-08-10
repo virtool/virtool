@@ -1,7 +1,6 @@
 import pytest
 from aiohttp import web
 
-import virtool.handlers.utils
 from virtool.app_dispatcher import Connection
 from virtool.user_sessions import Session
 

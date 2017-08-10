@@ -23,10 +23,10 @@ def dumps(obj):
     A wrapper for :func:`json.dumps` that applies pretty formatting to the output. Used as ``dumps`` argument for
     :func:`.json_response`.
 
-    :param obj: a JSON-serializable object    
+    :param obj: a JSON-serializable object
     :type obj: object
-    
-    :return: a JSON string    
+
+    :return: a JSON string
     :rtype: str
      
     """
@@ -73,6 +73,9 @@ def json_response(data, status=200, headers=None):
     
     :param status: the HTTP status code for the response
     :type status: int
+
+    :param headers: HTTP response headers
+    :type headers: dict
     
     :return: the response
     :rtype: :class:`aiohttp.web.Response`

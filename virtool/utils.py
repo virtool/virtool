@@ -140,6 +140,9 @@ def random_alphanumeric(length=6, mixed_case=False, excluded=None):
     :param length: the length of the string.
     :type length: int
 
+    :param mixed_case: included alpha characters will be mixed case instead of lowercase
+    :type mixed_case: bool
+
     :param excluded: strings that may not be returned.
     :type excluded: Union[list, set]
 

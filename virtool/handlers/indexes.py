@@ -53,7 +53,7 @@ async def get(req):
         }}
     ]).to_list(None)
 
-    document["contributors"] = {c["_id"]: c["count"] for c in contributors}
+    document["contributors"] = [{"id": c["_id"], "count": c["count"]} for c in contributors]
 
     viruses = await db.history.aggregate([
         {"$match": {
@@ -67,10 +67,16 @@ async def get(req):
             "_id": "$virus.id",
             "name": {"$first": "$virus.name"},
             "count": {"$sum": 1}
+        }},
+        {"$match": {
+            "name": {"$ne": None}
+        }},
+        {"$sort": {
+            "name": 1
         }}
     ]).to_list(None)
 
-    document["viruses"] = {v["_id"]: {"name": v["name"], "change_count": v["count"]} for v in viruses}
+    document["viruses"] = [{"id": v["_id"], "name": v["name"], "change_count": v["count"]} for v in viruses]
 
     document["change_count"] = sum(v["count"] for v in viruses)
 

@@ -17,9 +17,15 @@ import {
     ADD_ISOLATE,
     EDIT_ISOLATE,
     REMOVE_ISOLATE,
+    ADD_SEQUENCE,
+    EDIT_SEQUENCE,
+    REMOVE_SEQUENCE,
     SHOW_ADD_ISOLATE,
     SHOW_EDIT_ISOLATE,
     SHOW_REMOVE_ISOLATE,
+    SHOW_ADD_SEQUENCE,
+    SHOW_EDIT_SEQUENCE,
+    SHOW_REMOVE_SEQUENCE,
     HIDE_VIRUS_MODAL
 } from "../actionTypes";
 
@@ -96,6 +102,39 @@ export function removeIsolate (virusId, isolateId, onSuccess) {
     };
 }
 
+export function addSequence (virusId, isolateId, sequenceId, definition, host, sequence) {
+    return {
+        type: ADD_SEQUENCE.REQUESTED,
+        virusId,
+        isolateId,
+        sequenceId,
+        definition,
+        host,
+        sequence
+    };
+}
+
+export function editSequence (virusId, isolateId, sequenceId, definition, host, sequence) {
+    return {
+        type: EDIT_SEQUENCE.REQUESTED,
+        virusId,
+        isolateId,
+        sequenceId,
+        definition,
+        host,
+        sequence
+    };
+}
+
+export function removeSequence (virusId, isolateId, sequenceId) {
+    return {
+        type: REMOVE_SEQUENCE.REQUESTED,
+        virusId,
+        isolateId,
+        sequenceId
+    };
+}
+
 export function showAddIsolate () {
     return {
         type: SHOW_ADD_ISOLATE
@@ -117,6 +156,27 @@ export function showRemoveIsolate () {
         type: SHOW_REMOVE_ISOLATE
     };
 }
+
+export function showAddSequence () {
+    return {
+        type: SHOW_ADD_SEQUENCE
+    };
+}
+
+export function showEditSequence (sequenceId) {
+    return {
+        type: SHOW_EDIT_SEQUENCE,
+        sequenceId
+    };
+}
+
+export function showRemoveSequence (sequenceId) {
+    return {
+        type: SHOW_REMOVE_SEQUENCE,
+        sequenceId
+    };
+}
+
 
 export function hideVirusModal () {
     return {

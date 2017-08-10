@@ -18,9 +18,13 @@ import {
     ADD_ISOLATE,
     EDIT_ISOLATE,
     REMOVE_ISOLATE,
+    ADD_SEQUENCE,
     SHOW_ADD_ISOLATE,
     SHOW_EDIT_ISOLATE,
     SHOW_REMOVE_ISOLATE,
+    SHOW_ADD_SEQUENCE,
+    SHOW_EDIT_SEQUENCE,
+    SHOW_REMOVE_SEQUENCE,
     HIDE_VIRUS_MODAL,
     GET_VIRUS_HISTORY
 } from "../actionTypes";
@@ -39,6 +43,10 @@ const virusesInitialState = {
 
     removeIsolate: false,
     removeIsolatePending: false,
+
+    addSequence: false,
+    editSequence: false,
+    removeSequence: false,
 
     activeIsolateId: null,
     activeSequenceId: null,
@@ -140,6 +148,12 @@ export default function virusesReducer (state = virusesInitialState, action) {
                 detail: action.data
             });
 
+        case ADD_SEQUENCE.SUCCEEDED:
+            return assign({}, state, {
+                detail: action.data,
+                addSequence: false
+            });
+
         case GET_VIRUS_HISTORY.REQUESTED:
             return assign({}, state, {
                 detailHistory: null
@@ -165,11 +179,29 @@ export default function virusesReducer (state = virusesInitialState, action) {
                 removeIsolate: true
             });
 
+        case SHOW_ADD_SEQUENCE:
+            return assign({}, state, {
+                addSequence: true
+            });
+
+        case SHOW_EDIT_SEQUENCE:
+            return assign({}, state, {
+                editSequence: action.sequenceId
+            });
+
+        case SHOW_REMOVE_SEQUENCE:
+            return assign({}, state, {
+                removeSequence: action.sequenceId
+            });
+
         case HIDE_VIRUS_MODAL:
             return assign({}, state, {
                 addIsolate: false,
                 editIsolate: false,
-                removeIsolate: false
+                removeIsolate: false,
+                addSequence: false,
+                editSequence: false,
+                removeSequence: false
             });
 
         default:

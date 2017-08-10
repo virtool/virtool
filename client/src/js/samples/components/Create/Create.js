@@ -326,7 +326,7 @@ const mapDispatchToProps = (dispatch) => {
         },
 
         onCreate: (name, isolate, host, locale, subtraction, selected) => {
-            console.log(name, isolate, host, locale, subtraction, selected);
+            window.console.log(name, isolate, host, locale, subtraction, selected);
         }
     };
 };

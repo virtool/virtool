@@ -23,7 +23,7 @@ LIST_PROJECTION = [
 def processor(document):
     """
     Process a job document for transmission to a client.
-    
+
     :param document: a job document
     :type document: dict
     
@@ -217,7 +217,14 @@ class Job(multiprocessing.Process):
                 stdout_handler = output.append
 
         try:
-            with subprocess.Popen(cmd, stdout=stdout_handle, stderr=subprocess.PIPE, env=env, universal_newlines=True) as process:
+            with subprocess.Popen(
+                    cmd,
+                    stdout=stdout_handle,
+                    stderr=subprocess.PIPE,
+                    env=env,
+                    universal_newlines=True
+            ) as process:
+                
                 if not dont_read_stdout:
                     for line in process.stdout:
                         stdout_handler(line.rstrip())

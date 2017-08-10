@@ -13,7 +13,7 @@ from virtool.handlers.utils import unpack_request, json_response, not_found, val
 async def find(req):
     """
     Find HMM annotation documents.
-     
+
     """
     documents = await req.app["db"].hmm.find({}, projection=virtool.virus_hmm.projection).to_list(length=10)
 

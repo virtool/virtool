@@ -17,7 +17,7 @@ import { Badge, Row, Col, ListGroup } from "react-bootstrap";
 
 import { formatIsolateName } from "virtool/js/utils";
 import { showAddIsolate } from "../../actions";
-import { FlexItem, Icon, ListGroupItem } from "virtool/js/components/Base";
+import { Flex, FlexItem, Icon, ListGroupItem } from "virtool/js/components/Base";
 import IsolateDetail from "./IsolateDetail";
 
 const IsolateEditor = (props) => {
@@ -27,8 +27,10 @@ const IsolateEditor = (props) => {
     const isolateComponents = props.isolates.map(isolate =>
         <LinkContainer key={isolate.id} to={`/viruses/${props.virusId}/virus/${isolate.id}`}>
             <ListGroupItem key={isolate.id} active={isolate.id === activeIsolateId}>
-                {formatIsolateName(isolate)}
-                {isolate.default ? <Icon name="star" pullRight />: null}
+                <Flex alignItems="center">
+                    <FlexItem grow={1} shrink={0}>{formatIsolateName(isolate)}</FlexItem>
+                    {isolate.default ? <Icon name="star" />: null}
+                </Flex>
             </ListGroupItem>
         </LinkContainer>
     );
@@ -56,12 +58,14 @@ const IsolateEditor = (props) => {
     return (
         <div>
             <h4 style={{display: "flex", alignItems: "center"}} className="section-header">
-                <strong>
-                    Isolates
-                </strong>
+                <FlexItem grow={0} shrink={0}>
+                    <strong>
+                        Isolates
+                    </strong>
+                </FlexItem>
 
-                <FlexItem grow={1}>
-                    <Badge style={{marginLeft: "5px", flex: "1 0 auto"}}>
+                <FlexItem grow={1} pad={5}>
+                    <Badge>
                         {isolateComponents.length}
                     </Badge>
                 </FlexItem>

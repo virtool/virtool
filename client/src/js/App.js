@@ -1,4 +1,5 @@
 import React from "react";
+import { Helmet } from "react-helmet";
 import { Provider, connect } from "react-redux";
 import { BrowserRouter, Switch, Route, withRouter } from "react-router-dom";
 
@@ -15,6 +16,8 @@ const Inner = (props) => {
     if (props.ready) {
         return (
             <div>
+                <Helmet titleTemplate="Virtool - %s" defaultTitle="Virtool" />
+
                 <NavBar />
 
                 <Switch>

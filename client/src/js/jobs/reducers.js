@@ -51,8 +51,6 @@ export default function reducer (state = initialState, action) {
             });
 
         case FIND_JOBS.SUCCEEDED:
-            console.log(action.data);
-
             return assign({}, state, {
                 foundCount: action.data.found_count,
                 page: action.data.page,

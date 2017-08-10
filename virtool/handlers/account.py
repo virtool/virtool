@@ -126,7 +126,7 @@ async def change_password(req):
 async def logout(req):
     """
     Invalidates the requesting session, effectively logging out the user.
-     
+
     """
     db = req.app["db"]
 

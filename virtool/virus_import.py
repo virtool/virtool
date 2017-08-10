@@ -11,7 +11,8 @@ from virtool.handlers.status import status_processor
 
 async def import_file(loop, db, dispatch, handle, user_id, replace=False):
     """
-    
+    Import a previously exported Virtool virus reference.
+
     :param loop: the application IO loop
 
     :param db: the application database client
