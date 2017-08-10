@@ -21,6 +21,10 @@ const indexesAPI = {
 
     create: () => {
         return Request.post("/api/indexes");
+    },
+
+    getIndexHistory: (indexVersion) => {
+        return Request.get(`/api/indexes/${indexVersion}/history`);
     }
 };
 

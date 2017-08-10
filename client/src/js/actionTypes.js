@@ -75,6 +75,7 @@ export const WS_UPDATE_INDEX = "WS_UPDATE_INDEX";
 export const FIND_INDEXES = createRequestActionType("FIND_INDEXES");
 export const GET_INDEX = createRequestActionType("GET_INDEX");
 export const CREATE_INDEX = createRequestActionType("CREATE_INDEX");
+export const GET_INDEX_HISTORY = createRequestActionType("GET_INDEX_HISTORY");
 export const CLEAR_INDEX_ERROR = "CLEAR_INDEX_ERROR";
 
 // Subtraction
