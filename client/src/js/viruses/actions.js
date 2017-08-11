@@ -14,12 +14,14 @@ import {
     GET_VIRUS,
     GET_VIRUS_HISTORY,
     CREATE_VIRUS,
+    REMOVE_VIRUS,
     ADD_ISOLATE,
     EDIT_ISOLATE,
     REMOVE_ISOLATE,
     ADD_SEQUENCE,
     EDIT_SEQUENCE,
     REMOVE_SEQUENCE,
+    SHOW_REMOVE_VIRUS,
     SHOW_ADD_ISOLATE,
     SHOW_EDIT_ISOLATE,
     SHOW_REMOVE_ISOLATE,
@@ -71,6 +73,14 @@ export function createVirus (name, abbreviation) {
         type: CREATE_VIRUS.REQUESTED,
         name,
         abbreviation
+    };
+}
+
+export function removeVirus (virusId, history) {
+    return {
+        type: REMOVE_VIRUS.REQUESTED,
+        virusId,
+        history
     };
 }
 
@@ -132,6 +142,12 @@ export function removeSequence (virusId, isolateId, sequenceId) {
         virusId,
         isolateId,
         sequenceId
+    };
+}
+
+export function showRemoveVirus () {
+    return {
+        type: SHOW_REMOVE_VIRUS
     };
 }
 

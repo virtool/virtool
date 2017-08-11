@@ -16,6 +16,7 @@ import {
     GET_VIRUS,
     GET_VIRUS_HISTORY,
     CREATE_VIRUS,
+    REMOVE_VIRUS,
     ADD_ISOLATE,
     EDIT_ISOLATE,
     REMOVE_ISOLATE,
@@ -29,6 +30,7 @@ export function* watchViruses () {
     yield takeLatest(GET_VIRUS.REQUESTED, getVirus);
     yield takeLatest(GET_VIRUS_HISTORY.REQUESTED, getVirusHistory);
     yield takeEvery(CREATE_VIRUS.REQUESTED, createVirus);
+    yield takeEvery(REMOVE_VIRUS.REQUESTED, removeVirus);
     yield takeEvery(ADD_ISOLATE.REQUESTED, addIsolate);
     yield takeEvery(EDIT_ISOLATE.REQUESTED, editIsolate);
     yield takeEvery(REMOVE_ISOLATE.REQUESTED, removeIsolate);
@@ -77,6 +79,19 @@ export function* createVirus (action) {
             yield put({type: CREATE_VIRUS.SUCCEEDED, data: response.body});
         } catch (error) {
             yield put({type: CREATE_VIRUS.FAILED, error: error});
+        }
+    });
+}
+
+export function* removeVirus (action) {
+    yield setPending(function* () {
+        try {
+            console.log(action);
+            yield call(virusesAPI.remove, action.virusId);
+            yield call(action.history.push, "/viruses");
+            yield put({type: REMOVE_VIRUS.SUCCEEDED, virusId: action.virusId});
+        } catch (error) {
+            yield put({type: REMOVE_VIRUS.FAILED, error: error});
         }
     });
 }

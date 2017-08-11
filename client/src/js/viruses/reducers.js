@@ -15,10 +15,12 @@ import {
     FIND_VIRUSES,
     GET_VIRUS,
     CREATE_VIRUS,
+    REMOVE_VIRUS,
     ADD_ISOLATE,
     EDIT_ISOLATE,
     REMOVE_ISOLATE,
     ADD_SEQUENCE,
+    SHOW_REMOVE_VIRUS,
     SHOW_ADD_ISOLATE,
     SHOW_EDIT_ISOLATE,
     SHOW_REMOVE_ISOLATE,
@@ -34,6 +36,9 @@ const virusesInitialState = {
 
     detail: null,
     detailHistory: null,
+
+    remove: false,
+    removePending: false,
 
     addIsolate: false,
     addIsolatePending: false,
@@ -111,6 +116,13 @@ export default function virusesReducer (state = virusesInitialState, action) {
                 createError: action.error
             });
 
+        case REMOVE_VIRUS.SUCCEEDED:
+            return assign({}, state, {
+                detail: null,
+                actionIsolateId: null,
+                remove: false
+            });
+
         case ADD_ISOLATE.REQUESTED:
             return assign({}, state, {
                 addIsolatePending: true
@@ -164,6 +176,11 @@ export default function virusesReducer (state = virusesInitialState, action) {
                 detailHistory: action.data
             });
 
+        case SHOW_REMOVE_VIRUS:
+            return assign({}, state, {
+                removeVirus: true
+            });
+
         case SHOW_ADD_ISOLATE:
             return assign({}, state, {
                 addIsolate: true
@@ -196,6 +213,7 @@ export default function virusesReducer (state = virusesInitialState, action) {
 
         case HIDE_VIRUS_MODAL:
             return assign({}, state, {
+                removeVirus: false,
                 addIsolate: false,
                 editIsolate: false,
                 removeIsolate: false,

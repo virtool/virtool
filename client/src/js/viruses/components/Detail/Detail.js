@@ -23,6 +23,8 @@ import General from "./General";
 import AddIsolate from "./AddIsolate";
 import Schema from "./Schema";
 import History from "./History";
+import RemoveVirus from "./RemoveVirus";
+import {showRemoveVirus} from "../../actions";
 
 const VirusSection = (props) => (
     <div>
@@ -42,7 +44,8 @@ class VirusDetail extends React.Component {
         match: PropTypes.object,
         history: PropTypes.object,
         detail: PropTypes.object,
-        getVirus: PropTypes.func
+        getVirus: PropTypes.func,
+        showRemove: PropTypes.func
     };
 
     componentDidMount () {
@@ -97,7 +100,7 @@ class VirusDetail extends React.Component {
                                 bsStyle="danger"
                                 name="remove"
                                 style={{fontSize: "18px", paddingLeft: "5px"}}
-                                onClick={() => window.console.log(this.props.detail.name)}
+                                onClick={() => this.props.showRemove()}
                             />
                         </Flex>
                     </h3>
@@ -121,6 +124,8 @@ class VirusDetail extends React.Component {
                             </NavItem>
                         </LinkContainer>
                     </Nav>
+
+                    <RemoveVirus virusId={virusId} virusName={virusName} history={this.props.history} />
 
                     <Switch>
                         <Redirect from="/viruses/:virusId" to={`/viruses/${virusId}/virus`} exact />
@@ -156,6 +161,10 @@ const mapDispatchToProps = (dispatch) => {
     return {
         getVirus: (virusId) => {
             dispatch(getVirus(virusId));
+        },
+
+        showRemove: () => {
+            dispatch(showRemoveVirus())
         }
     };
 };

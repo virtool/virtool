@@ -41,6 +41,10 @@ const virusesAPI = {
             });
     },
 
+    remove: (virusId) => {
+        return Request.delete(`/api/viruses/${virusId}`);
+    },
+
     addIsolate: (virusId, sourceType, sourceName) => {
         return Request.post(`/api/viruses/${virusId}/isolates`)
             .send({
