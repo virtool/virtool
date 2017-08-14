@@ -741,7 +741,11 @@ class NuVs(Base):
         # A numeric index to identify the assembled contig. Increments by one for each FASTA entry.
         index = 0
 
-        for record in SeqIO.parse(os.path.join(self.paths["analysis"], "spades", "contigs.fasta"), "fasta"):
+        spades_path = os.path.join(self.paths["analysis"], "spades")
+
+        fasta_path = os.path.join(spades_path, "scaffolds.fasta")
+
+        for record in SeqIO.parse(fasta_path, "fasta"):
 
             seq_len = len(record.seq)
 
