@@ -73,10 +73,12 @@ class VirusDetail extends React.Component {
                 );
             }
 
+            const virusName = this.props.detail.name;
+
             content = (
                 <div>
                     <Helmet>
-                        <title>{this.props.detail.name}</title>
+                        <title>{virusName}</title>
                     </Helmet>
 
                     <h3 style={{marginBottom: "20px"}}>
@@ -84,7 +86,7 @@ class VirusDetail extends React.Component {
                             <FlexItem grow={1}>
                                 <Flex alignItems="center">
                                     <strong>
-                                        {this.props.detail.name}
+                                        {virusName}
                                     </strong>
                                     <FlexItem grow={1} pad={5}>
                                         <small className="text-strong">
