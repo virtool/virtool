@@ -10,6 +10,7 @@
  */
 
 import React, { PropTypes } from "react";
+import { find } from "lodash";
 import { connect } from "react-redux";
 import { Row, Col, Modal, FormGroup, FormControl, InputGroup, ControlLabel } from "react-bootstrap";
 
@@ -18,12 +19,26 @@ import { Button, Icon } from "virtool/js/components/Base";
 import SequenceField from "./SequenceField";
 import virusAPI from "../../api";
 
-const getInitialState = () => ({
-    definition: "",
-    host: "",
-    sequence: "",
-    autofillPending: false
-});
+const getInitialState = (props) => {
+    if (props.sequenceId) {
+        const isolate = find(props.detail.isolates, {id: props.isolateId});
+        const sequence = find(isolate.sequences, {id: props.sequenceId});
+
+        return {
+            definition: sequence.definition,
+            host: sequence.host,
+            sequence: sequence.sequence,
+            autofillPending: false
+        }
+    }
+
+    return {
+        definition: "",
+        host: "",
+        sequence: "",
+        autofillPending: false
+    }
+};
 
 class EditSequence extends React.Component {
 
@@ -36,8 +51,13 @@ class EditSequence extends React.Component {
         virusId: PropTypes.string,
         isolateId: PropTypes.string,
         sequenceId: PropTypes.oneOfType([PropTypes.bool, PropTypes.string]),
+        detail: PropTypes.object,
         onHide: PropTypes.func,
         onSave: PropTypes.func
+    };
+
+    modalEnter = () => {
+        this.setState(getInitialState(this.props));
     };
 
     save = (event) => {
@@ -88,7 +108,7 @@ class EditSequence extends React.Component {
         }
 
         return (
-            <Modal show={!!this.props.sequenceId} onHide={this.props.onHide}>
+            <Modal show={!!this.props.sequenceId} onEnter={this.modalEnter} onHide={this.props.onHide}>
                 <Modal.Header onHide={this.props.onHide} closeButton>
                     Edit Sequence
                 </Modal.Header>
@@ -156,7 +176,8 @@ class EditSequence extends React.Component {
 
 const mapStateToProps = (state) => {
     return {
-        sequenceId: state.viruses.editSequence
+        sequenceId: state.viruses.editSequence,
+        detail: state.viruses.detail
     };
 };
 
