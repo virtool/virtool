@@ -14,13 +14,15 @@ import { connect } from "react-redux";
 import { Row, Col, Modal, FormGroup, FormControl, InputGroup, ControlLabel } from "react-bootstrap";
 
 import { editSequence, hideVirusModal } from "../../actions";
-import { Button } from "virtool/js/components/Base";
+import { Button, Icon } from "virtool/js/components/Base";
 import SequenceField from "./SequenceField";
+import virusAPI from "../../api";
 
 const getInitialState = () => ({
     definition: "",
     host: "",
-    sequence: ""
+    sequence: "",
+    autofillPending: false
 });
 
 class EditSequence extends React.Component {
@@ -51,13 +53,48 @@ class EditSequence extends React.Component {
         );
     };
 
+    autofill = () => {
+        this.setState({autofillPending: true}, () => {
+            virusAPI.getGenbank(this.props.sequenceId).then((resp) => {
+                // Success
+                const { definition, host, sequence } = resp.body;
+
+                this.setState({
+                    autofillPending: false,
+                    definition,
+                    host,
+                    sequence
+                });
+            }, (err) => {
+                console.log("ERROR");
+                console.log(err);
+                console.log(err.status);
+                this.setState({autofillPending: false});
+            })
+        });
+    };
+
     render () {
+        let overlay;
+
+        if (this.state.autofillPending) {
+            overlay = (
+                <div className="modal-body-overlay">
+                    <span>
+                        Loading
+                    </span>
+                </div>
+            )
+        }
+
         return (
-            <Modal show={this.props.sequenceId} onHide={this.props.onHide}>
+            <Modal show={!!this.props.sequenceId} onHide={this.props.onHide}>
                 <Modal.Header onHide={this.props.onHide} closeButton>
                     Edit Sequence
                 </Modal.Header>
                 <Modal.Body>
+                    {overlay}
+
                     <form onSubmit={this.save}>
                         <Row>
                             <Col sm={12}  md={6}>
@@ -68,6 +105,11 @@ class EditSequence extends React.Component {
                                             value={this.props.sequenceId}
                                             readOnly
                                         />
+                                        <InputGroup.Button>
+                                            <Button onClick={this.autofill}>
+                                                <Icon name="wand"  />
+                                            </Button>
+                                        </InputGroup.Button>
                                     </InputGroup>
                                 </FormGroup>
                             </Col>
