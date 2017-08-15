@@ -61,6 +61,8 @@ export const ADD_SEQUENCE = createRequestActionType("ADD_SEQUENCE");
 export const EDIT_SEQUENCE = createRequestActionType("EDIT_SEQUENCE");
 export const REMOVE_SEQUENCE = createRequestActionType("REMOVE_SEQUENCE");
 
+export const REVERT = createRequestActionType("REVERT");
+
 export const SHOW_REMOVE_VIRUS = "SHOW_REMOVE_VIRUS";
 export const SHOW_ADD_ISOLATE = "SHOW_ADD_ISOLATE";
 export const SHOW_EDIT_ISOLATE = "SHOW_EDIT_ISOLATE";

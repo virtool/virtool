@@ -21,6 +21,7 @@ import {
     EDIT_ISOLATE,
     REMOVE_ISOLATE,
     ADD_SEQUENCE,
+    REVERT,
     SET_APP_PENDING,
     UNSET_APP_PENDING
 }  from "../actionTypes";
@@ -35,6 +36,7 @@ export function* watchViruses () {
     yield takeEvery(EDIT_ISOLATE.REQUESTED, editIsolate);
     yield takeEvery(REMOVE_ISOLATE.REQUESTED, removeIsolate);
     yield takeEvery(ADD_SEQUENCE.REQUESTED, addSequence);
+    yield takeEvery(REVERT.REQUESTED, revert);
 }
 
 export function* findViruses (action) {
@@ -151,4 +153,18 @@ export function* addSequence (action) {
             yield put({type: ADD_SEQUENCE.FAILED, error: error});
         }
     }, action);
+}
+export function* revert (action) {
+    yield setPending(function* (action) {
+        try {
+            yield call(virusesAPI.revert, action.virusId, action.version);
+
+            const virusResponse = yield call(virusesAPI.get, action.virusId);
+            const historyResponse = yield call(virusesAPI.getHistory, action.virusId);
+
+            yield put({type: REVERT.SUCCEEDED, detail: virusResponse.body, history: historyResponse.body});
+        } catch (error) {
+            yield put({type: REVERT.FAILED, error: error});
+        }
+    }, action)
 }

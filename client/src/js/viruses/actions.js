@@ -21,6 +21,7 @@ import {
     ADD_SEQUENCE,
     EDIT_SEQUENCE,
     REMOVE_SEQUENCE,
+    REVERT,
     SHOW_REMOVE_VIRUS,
     SHOW_ADD_ISOLATE,
     SHOW_EDIT_ISOLATE,
@@ -142,6 +143,14 @@ export function removeSequence (virusId, isolateId, sequenceId) {
         virusId,
         isolateId,
         sequenceId
+    };
+}
+
+export function revert (virusId, version) {
+    return {
+        type: REVERT.REQUESTED,
+        virusId,
+        version
     };
 }
 

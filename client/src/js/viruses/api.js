@@ -33,6 +33,10 @@ const virusesAPI = {
         return Request.get(`/api/viruses/${virusId}/history`);
     },
 
+    getGenbank: (accession) => {
+        return Request.get(`/api/genbank/${accession}`);
+    },
+
     create: (name, abbreviation) => {
         return Request.post("/api/viruses")
             .send({
@@ -74,6 +78,23 @@ const virusesAPI = {
                 sequence
             });
     },
+
+    editSequence: (virusId, isolateId, sequenceId, definition, host, sequence) => {
+        return Request.post(`/api/viruses/${virusId}/isolates/${isolateId}/sequences/${sequenceId}`)
+            .send({
+                definition,
+                host,
+                sequence
+            });
+    },
+
+    removeSequence: (virusId, isolateId, sequenceId) => {
+        return Request.delete(`/api/viruses/${virusId}/isolates/${isolateId}/sequences/${sequenceId}`);
+    },
+
+    revert: (virusId, version) => {
+        return Request.delete(`/api/history/${virusId}.${version}`);
+    }
 
 };
 

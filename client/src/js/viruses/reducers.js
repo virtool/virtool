@@ -20,6 +20,9 @@ import {
     EDIT_ISOLATE,
     REMOVE_ISOLATE,
     ADD_SEQUENCE,
+    EDIT_SEQUENCE,
+    REMOVE_SEQUENCE,
+    REVERT,
     SHOW_REMOVE_VIRUS,
     SHOW_ADD_ISOLATE,
     SHOW_EDIT_ISOLATE,
@@ -166,6 +169,12 @@ export default function virusesReducer (state = virusesInitialState, action) {
                 addSequence: false
             });
 
+        case REMOVE_SEQUENCE.SUCCEEDED:
+            return assign({}, state, {
+                detail: action.data,
+                removeSequence: false
+            });
+
         case GET_VIRUS_HISTORY.REQUESTED:
             return assign({}, state, {
                 detailHistory: null
@@ -174,6 +183,12 @@ export default function virusesReducer (state = virusesInitialState, action) {
         case GET_VIRUS_HISTORY.SUCCEEDED:
             return assign({}, state, {
                 detailHistory: action.data
+            });
+
+        case REVERT.SUCCEEDED:
+            return assign({}, state, {
+                detail: action.detail,
+                detailHistory: action.history
             });
 
         case SHOW_REMOVE_VIRUS:
