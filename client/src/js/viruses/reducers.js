@@ -41,17 +41,9 @@ const virusesInitialState = {
     detailHistory: null,
 
     remove: false,
-    removePending: false,
-
     addIsolate: false,
-    addIsolatePending: false,
-
     editIsolate: false,
-    editIsolatePending: false,
-
     removeIsolate: false,
-    removeIsolatePending: false,
-
     addSequence: false,
     editSequence: false,
     removeSequence: false,
