@@ -90,10 +90,9 @@ export function* createVirus (action) {
 export function* removeVirus (action) {
     yield setPending(function* () {
         try {
-            console.log(action);
             yield call(virusesAPI.remove, action.virusId);
             yield call(action.history.push, "/viruses");
-            yield put({type: REMOVE_VIRUS.SUCCEEDED, virusId: action.virusId});
+            yield put({type: REMOVE_VIRUS.SUCCEEDED});
         } catch (error) {
             yield put({type: REMOVE_VIRUS.FAILED, error: error});
         }
