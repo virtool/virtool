@@ -108,12 +108,14 @@ async def join_and_format(db, virus_id, joined=None, issues=False):
 
     joined = virtool.utils.base_processor(joined)
 
-    joined.pop("lower_name")
+    del joined["lower_name"]
 
     for isolate in joined["isolates"]:
+
         for sequence in isolate["sequences"]:
             del sequence["virus_id"]
             del sequence["isolate_id"]
+
             sequence["id"] = sequence.pop("_id")
 
     most_recent_change = await virtool.virus_history.get_most_recent_change(db, virus_id)
