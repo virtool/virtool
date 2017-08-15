@@ -7,7 +7,7 @@
  *
  */
 
-import { merge, assign, concat, find, reject } from "lodash";
+import { assign, concat, find, reject } from "lodash";
 import {
     WS_UPDATE_VIRUS,
     WS_REMOVE_VIRUS,
@@ -61,6 +61,24 @@ const virusesInitialState = {
 
     createError: "",
     createPending: false
+};
+
+const hideVirusModal = (state) => {
+    return assign({}, state, {
+        remove: false,
+        addIsolate: false,
+        editIsolate: false,
+        removeIsolate: false,
+        addSequence: false,
+        editSequence: false,
+        removeSequence: false
+    });
+};
+
+const receivedDetailAfterChange = (state, action) => {
+    return assign({}, hideVirusModal(state), {
+        detail: action.data
+    })
 };
 
 export default function virusesReducer (state = virusesInitialState, action) {
@@ -126,54 +144,13 @@ export default function virusesReducer (state = virusesInitialState, action) {
                 remove: false
             });
 
-        case ADD_ISOLATE.REQUESTED:
-            return assign({}, state, {
-                addIsolatePending: true
-            });
-
         case ADD_ISOLATE.SUCCEEDED:
-            return merge({}, state, {
-                addIsolate: false,
-                addIsolatePending: false,
-                detail: action.data
-            });
-
-        case EDIT_ISOLATE.REQUESTED:
-            return assign({}, state, {
-                editIsolateEnding: true
-            });
-
         case EDIT_ISOLATE.SUCCEEDED:
-            return merge({}, state, {
-                editIsolate: false,
-                editIsolatePending: false,
-                detail: action.data
-            });
-
-        case REMOVE_ISOLATE.REQUESTED:
-            return assign({}, state, {
-                removeIsolate: true,
-                removeIsolatePending: true
-            });
-
         case REMOVE_ISOLATE.SUCCEEDED:
-            return assign({}, state, {
-                removeIsolate: false,
-                removeIsolatePending: false,
-                detail: action.data
-            });
-
         case ADD_SEQUENCE.SUCCEEDED:
-            return assign({}, state, {
-                detail: action.data,
-                addSequence: false
-            });
-
+        case EDIT_SEQUENCE.SUCCEEDED:
         case REMOVE_SEQUENCE.SUCCEEDED:
-            return assign({}, state, {
-                detail: action.data,
-                removeSequence: false
-            });
+            return receivedDetailAfterChange(state, action);
 
         case GET_VIRUS_HISTORY.REQUESTED:
             return assign({}, state, {
@@ -227,15 +204,7 @@ export default function virusesReducer (state = virusesInitialState, action) {
             });
 
         case HIDE_VIRUS_MODAL:
-            return assign({}, state, {
-                removeVirus: false,
-                addIsolate: false,
-                editIsolate: false,
-                removeIsolate: false,
-                addSequence: false,
-                editSequence: false,
-                removeSequence: false
-            });
+            return hideVirusModal(state);
 
         default:
             return state;
