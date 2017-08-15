@@ -69,13 +69,9 @@ async def revert(req):
     if patched is not None:
         patched_virus, sequences = virtool.virus.split_virus(patched)
 
-        import pprint
-        pprint.pprint(sequences)
-
         # Add the reverted sequences to the collection.
-        result = await db.sequences.insert_many(sequences)
-
-        print(result)
+        if len(sequences):
+            await db.sequences.insert_many(sequences)
 
         # Replace the existing virus with the patched one. If it doesn't exist, insert it.
         await db.viruses.replace_one({"_id": virus_id}, patched_virus, upsert=True)
