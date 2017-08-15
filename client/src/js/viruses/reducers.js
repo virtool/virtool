@@ -160,6 +160,11 @@ export default function virusesReducer (state = virusesInitialState, action) {
                 detailHistory: action.history
             });
 
+        case SHOW_EDIT_VIRUS:
+            return assign({}, state, {
+                edit: true
+            });
+
         case SHOW_REMOVE_VIRUS:
             return assign({}, state, {
                 remove: true
