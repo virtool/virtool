@@ -162,7 +162,7 @@ export default function virusesReducer (state = virusesInitialState, action) {
 
         case SHOW_REMOVE_VIRUS:
             return assign({}, state, {
-                removeVirus: true
+                remove: true
             });
 
         case SHOW_ADD_ISOLATE:
