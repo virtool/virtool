@@ -50,12 +50,16 @@ export default class SampleEntry extends React.Component {
 
         const labels = mapValues({pathoscope: null, nuvs: null}, (value, key) =>
             <FlexItem className={CX("sample-label", {"bg-primary": this.props[key]})} pad>
-                <Flex alignItems="center">
+                <Flex alignItems="center" className="hidden-xs visible-md">
                     {this.props[key] === "ip" ? <Spinner />: <Icon name="bars" />}
                     <span style={{paddingLeft: "3px"}}>
                         {key === "pathoscope" ? "Pathoscope" : "NuVs"}
                     </span>
                 </Flex>
+
+                <span className="visible-xs hidden-md">
+                    {this.props[key] === "ip" ? <Spinner />: <strong>{key === "pathoscope" ? "P" : "N"}</strong>}
+                </span>
             </FlexItem>
         );
 
@@ -96,41 +100,66 @@ export default class SampleEntry extends React.Component {
         return (
             <LinkContainer className="spaced" to={`/samples/${this.props.id}`}>
                 <ListGroupItem  onClick={this.props.selecting ? this.toggleSelect: this.showDetail}>
-                    <Row>
-                        <Col md={4}>
-                            <Flex>
-                                <FlexItem>
-                                    <Checkbox checked={this.props.selected} onClick={this.toggleSelect} />
-                                </FlexItem>
-                                <FlexItem grow={1} pad={10}>
+                    <Flex alignItems="center">
+                        <FlexItem grow={0} style={{paddingRight: "12px"}}>
+                            <Checkbox
+                                checked={this.props.selected}
+                                onClick={this.toggleSelect}
+                                className="hidden-sx visible-md"
+                            />
+                            <Checkbox
+                                checked={this.props.selected}
+                                onClick={this.toggleSelect}
+                                className="hidden-md"
+                                style={{fontSize: "20px"}}
+                            />
+                        </FlexItem>
+
+                        <FlexItem grow={1}>
+                            <Row>
+                                <Col xs={9} md={4}>
                                     <strong>{this.props.name}</strong>
-                                </FlexItem>
-                            </Flex>
-                        </Col>
-                        <Col md={3}>
-                            <Flex>
-                                <FlexItem
-                                    className={CX("bg-primary", "sample-label")}
-                                >
-                                    <Flex alignItems="center">
-                                        {this.props.imported === "ip" ? <Spinner />: <Icon name="filing" />}
-                                        <span style={{paddingLeft: "3px"}}>Import</span>
+                                </Col>
+
+                                <Col xs={3} md={3}>
+                                    <Flex>
+                                        <FlexItem
+                                            className={CX("bg-primary", "sample-label")}
+                                        >
+                                            <Flex alignItems="center">
+                                                {this.props.imported === "ip" ? <Spinner />: <Icon name="filing" />}
+                                                <span style={{paddingLeft: "3px"}} className="hidden-sx visible-md">
+                                                    Import
+                                                </span>
+                                            </Flex>
+                                        </FlexItem>
+                                        {labels.pathoscope}
+                                        {labels.nuvs}
                                     </Flex>
-                                </FlexItem>
-                                {labels.pathoscope}
-                                {labels.nuvs}
-                            </Flex>
-                        </Col>
-                        <Col md={3}>
-                            Created <RelativeTime time={this.props.created_at} /> by {this.props.userId}
-                        </Col>
-                        <Col md={2}>
-                            <Flex className="pull-right">
-                                {analyzeIcon}
-                                {archiveIcon}
-                            </Flex>
-                        </Col>
-                    </Row>
+                                </Col>
+
+                                <Col xs={5} md={3}>
+                                    <span className="hidden-xs">
+                                        Created <RelativeTime time={this.props.created_at} /> by {this.props.userId}
+                                    </span>
+                                    <span className="hidden-md">
+                                        <Icon name="meter" /> <RelativeTime time={this.props.created_at} />
+                                    </span>
+                                </Col>
+
+                                <Col xs={3} mdHidden>
+                                    <Icon name="user" /> {this.props.userId}
+                                </Col>
+
+                                <Col xsHidden md={2}>
+                                    <Flex grow={0} shrink={0} className="pull-right">
+                                        {analyzeIcon}
+                                        {archiveIcon}
+                                    </Flex>
+                                </Col>
+                            </Row>
+                        </FlexItem>
+                    </Flex>
                 </ListGroupItem>
             </LinkContainer>
         );
