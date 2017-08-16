@@ -12,7 +12,6 @@ export * from "./ListGroupItem";
 export * from "./LoadingOverlay";
 export * from "./Paginator";
 export * from "./ProgressBar";
-export * from "./Pulse";
 export * from "./Radio";
 export * from "./RelativeTime";
 export * from "./Scroll";
