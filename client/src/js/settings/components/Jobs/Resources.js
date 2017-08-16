@@ -26,7 +26,12 @@ const Resources = (props) => (
         <Col md={12}>
             <h5><strong>Resource Limits</strong></h5>
         </Col>
-        <Col md={6}>
+        <Col sm={12} md={6} mdPush={6}>
+            <Panel>
+                Set limits on the computing resources Virtool can use on the host server.
+            </Panel>
+        </Col>
+        <Col sm={12} md={6} mdPull={6}>
             <Panel>
                 <InputSave
                     label="CPU Limit"
@@ -40,11 +45,6 @@ const Resources = (props) => (
                     onSave={(event) => props.onChangeMem(event.value)}
                     initialValue={props.mem}
                 />
-            </Panel>
-        </Col>
-        <Col md={6}>
-            <Panel>
-                Set limits on the computing resources Virtool can use on the host server.
             </Panel>
         </Col>
     </Row>

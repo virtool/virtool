@@ -12,7 +12,7 @@
 import React from "react";
 import { find } from "lodash";
 import { connect } from "react-redux";
-import { Alert, Panel } from "react-bootstrap";
+import { Row, Col, Alert, Panel, ButtonToolbar } from "react-bootstrap";
 
 import { setForceReset, changeSetPassword, changeSetConfirm, setPassword, clearSetPassword } from "../../users/actions";
 import { FlexItem, Icon, Input, Checkbox, Button, RelativeTime } from "virtool/js/components/Base";
@@ -69,8 +69,8 @@ class Password extends React.PureComponent {
                     </p>
 
                     <form onSubmit={this.submit}>
-                        <div className="toolbar">
-                            <FlexItem grow={1}>
+                        <Row>
+                            <Col sm={16} md={6}>
                                 <Input
                                     type="password"
                                     name="password"
@@ -79,9 +79,9 @@ class Password extends React.PureComponent {
                                     onChange={(e) => {this.props.onChangePassword(e.target.value)}}
                                     disabled={this.props.passwordChangePending}
                                 />
-                            </FlexItem>
+                            </Col>
 
-                            <FlexItem grow={1}>
+                            <Col sm={12} md={6}>
                                 <Input
                                     type="password"
                                     name="confirm"
@@ -90,36 +90,49 @@ class Password extends React.PureComponent {
                                     onChange={(e) => {this.props.onChangeConfirm(e.target.value)}}
                                     disabled={this.props.passwordChangePending}
                                 />
-                            </FlexItem>
+                            </Col>
+                        </Row>
+                        <Row>
+                            <Col sm={12} md={6}>
+                                <Checkbox
+                                    label="Force user to reset password on next login"
+                                    checked={this.props.forceReset}
+                                    onClick={() => this.props.onSetForceReset(
+                                        this.props.userId,
+                                        !this.props.forceReset
+                                    )}
+                                />
+                            </Col>
 
-                            <Button
-                                type="button"
-                                onClick={this.props.onClear}
-                                disabled={this.props.passwordChangePending}
-                            >
-                                Clear
-                            </Button>
+                            <Col sm={12} mdHidden lgHidden>
+                                <div style={{height: "15px"}} />
+                            </Col>
 
-                            <Button
-                                icon="floppy"
-                                type="submit"
-                                bsStyle="primary"
-                                disabled={this.props.passwordChangePending}
-                            >
-                                Save
-                            </Button>
-                        </div>
+                            <Col sm={12} md={6}>
+                                <ButtonToolbar className="pull-right">
+                                    <Button
+                                        type="button"
+                                        onClick={this.props.onClear}
+                                        disabled={this.props.passwordChangePending}
+                                    >
+                                        Clear
+                                    </Button>
+
+                                    <Button
+                                        icon="floppy"
+                                        type="submit"
+                                        bsStyle="primary"
+                                        disabled={this.props.passwordChangePending}
+                                    >
+                                        Save
+                                    </Button>
+                                </ButtonToolbar>
+                            </Col>
+
+                        </Row>
                     </form>
 
                     {alert}
-
-                    <div className="panel-section">
-                        <Checkbox
-                            label="Force user to reset password on next login"
-                            checked={this.props.forceReset}
-                            onClick={() => {this.props.onSetForceReset(this.props.userId, !this.props.forceReset)}}
-                        />
-                    </div>
                 </Panel>
             </div>
 

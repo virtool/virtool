@@ -34,7 +34,12 @@ const DataOptions = (props) => {
                 <Col md={12}>
                     <h5><strong>Database</strong></h5>
                 </Col>
-                <Col md={6}>
+                <Col sm={12} md={6}>
+                    <Panel footer={warningFooter}>
+                        Change the parameters for connecting to MongoDB.
+                    </Panel>
+                </Col>
+                <Col sm={12} md={6}>
                     <Panel>
                         <InputSave
                             label="Database Name"
@@ -54,17 +59,17 @@ const DataOptions = (props) => {
                         />
                     </Panel>
                 </Col>
-                <Col md={6}>
-                    <Panel footer={warningFooter}>
-                        Change the parameters for connecting to MongoDB.
-                    </Panel>
-                </Col>
             </Row>
             <Row>
-                <Col md={12}>
+                <Col sm={12}>
                     <h5><strong>Paths</strong></h5>
                 </Col>
-                <Col md={6}>
+                <Col sm={12} md={6} mdPush={6}>
+                    <Panel footer={warningFooter}>
+                        Set the paths where Virtool looks for its data files and for FASTQ files to import.
+                    </Panel>
+                </Col>
+                <Col sm={12} md={6} mdPull={6}>
                     <Panel>
                         <InputSave
                             label="Virtool Data"
@@ -76,11 +81,6 @@ const DataOptions = (props) => {
                             onSave={(e) => props.onSave("watch_path", e.value)}
                             initialValue={props.watchPath}
                         />
-                    </Panel>
-                </Col>
-                <Col md={6}>
-                    <Panel footer={warningFooter}>
-                        Set the paths where Virtool looks for its data files and for FASTQ files to import.
                     </Panel>
                 </Col>
             </Row>

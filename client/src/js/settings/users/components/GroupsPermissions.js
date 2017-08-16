@@ -38,36 +38,26 @@ const GroupsPermissions = (props) => {
     });
 
     return (
-        <div>
-            <Row>
-                <Col md={5}>
-                    <h5><Icon name="users" /> <strong>Groups</strong></h5>
-                </Col>
-                <Col md={7}>
-                    <h5>
-                        <span>
-                            <Icon name="key" /> <strong>Permissions</strong>
-                        </span>
-                        <Help pullRight>
-                            Users inherit permissions from groups they belong to. Change a user"s groups to modify
-                            their permissions.
-                        </Help>
-                    </h5>
-                </Col>
-            </Row>
-            <Row style={{display: "flex"}}>
-                <Col md={5}>
-                    <Panel style={{height: "100%"}}>
-                        <ListGroup fill style={{borderBottom: "1px solid #dddddd"}}>
-                            {groupComponents}
-                        </ListGroup>
-                    </Panel>
-                </Col>
-                <Col md={7}>
-                    <Permissions permissions={props.permissions} />
-                </Col>
-            </Row>
-        </div>
+        <Row>
+            <Col sm={12} md={5}>
+                <h5><Icon name="users" /> <strong>Groups</strong></h5>
+                <Panel>
+                    <ListGroup fill style={{borderBottom: "1px solid #dddddd"}}>
+                        {groupComponents}
+                    </ListGroup>
+                </Panel>
+            </Col>
+            <Col sm={12} md={7}>
+                <h5>
+                    <Icon name="key" /> <strong>Permissions</strong>
+                    <Help pullRight>
+                        Users inherit permissions from groups they belong to. Change a user's groups to modify
+                        their permissions.
+                    </Help>
+                </h5>
+                <Permissions permissions={props.permissions} />
+            </Col>
+        </Row>
     );
 };
 

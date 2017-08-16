@@ -99,7 +99,7 @@ class SourceTypes extends React.Component {
         return (
             <div>
                 <Row>
-                    <Col md={6}>
+                    <Col sm={12} md={6}>
                         <Flex alignItems="center">
                             <FlexItem grow={1} >
                                 <h5><strong>Source Types</strong></h5>
@@ -114,10 +114,17 @@ class SourceTypes extends React.Component {
                         </Flex>
                     </Col>
 
-                    <Col md={6} />
+                    <Col md={6} smHidden />
                 </Row>
                 <Row>
-                    <Col md={6}>
+                    <Col sm={12} md={6} mdPush={6}>
+                        <Panel>
+                            Configure a list of allowable source types. When a user creates a new isolate they will
+                            only be able to select a source type from this list. If this feature is disabled, users
+                            will be able to enter any string as a source type.
+                        </Panel>
+                    </Col>
+                    <Col sm={12} md={6} mdPull={6}>
                         <Panel>
                             <form onSubmit={this.onSubmit}>
                                 <FormGroup>
@@ -152,13 +159,6 @@ class SourceTypes extends React.Component {
                                     Warning
                                 </Popover>
                             </Overlay>
-                        </Panel>
-                    </Col>
-                    <Col md={6}>
-                        <Panel>
-                            Configure a list of allowable source types. When a user creates a new isolate they will
-                            only be able to select a source type from this list. If this feature is disabled, users
-                            will be able to enter any string as a source type.
                         </Panel>
                     </Col>
                 </Row>
