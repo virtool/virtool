@@ -152,7 +152,7 @@ async def check_name_and_abbreviation(db, name=None, abbreviation=None):
     name_count = 0
 
     if name:
-        name_count = await db.viruses.find({"name": re.compile(name, re.IGNORECASE)}).count()
+        name_count = await db.viruses.count({"lower_name": name.lower()})
 
     abbr_count = 0
 
