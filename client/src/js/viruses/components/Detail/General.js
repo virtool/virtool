@@ -13,7 +13,6 @@ import React, { PropTypes } from "react";
 import { connect } from "react-redux";
 import { Table } from "react-bootstrap";
 
-import { InputCell } from "virtool/js/components/Base";
 import Issues from "./Issues";
 
 

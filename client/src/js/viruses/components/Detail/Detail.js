@@ -100,19 +100,22 @@ class VirusDetail extends React.Component {
 
                             {modifiedLabel}
 
-                            <Icon
-                                bsStyle="warning"
-                                name="pencil"
-                                style={{fontSize: "18px", paddingLeft: "5px"}}
-                                onClick={() => this.props.showEdit()}
-                            />
+                            <small style={{paddingLeft: "5px"}}>
+                                <Icon
+                                    bsStyle="warning"
+                                    name="pencil"
 
-                            <Icon
-                                bsStyle="danger"
-                                name="remove"
-                                style={{fontSize: "18px", paddingLeft: "5px"}}
-                                onClick={() => this.props.showRemove()}
-                            />
+                                    onClick={() => this.props.showEdit()}
+                                />
+                            </small>
+
+                            <small style={{paddingLeft: "5px"}}>
+                                <Icon
+                                    bsStyle="danger"
+                                    name="remove"
+                                    onClick={() => this.props.showRemove()}
+                                />
+                            </small>
                         </Flex>
                     </h3>
 
