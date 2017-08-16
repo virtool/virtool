@@ -34,12 +34,12 @@ const DataOptions = (props) => {
                 <Col md={12}>
                     <h5><strong>Database</strong></h5>
                 </Col>
-                <Col sm={12} md={6}>
+                <Col xs={12} md={6}>
                     <Panel footer={warningFooter}>
                         Change the parameters for connecting to MongoDB.
                     </Panel>
                 </Col>
-                <Col sm={12} md={6}>
+                <Col xs={12} md={6}>
                     <Panel>
                         <InputSave
                             label="Database Name"
@@ -61,15 +61,15 @@ const DataOptions = (props) => {
                 </Col>
             </Row>
             <Row>
-                <Col sm={12}>
+                <Col xs={12}>
                     <h5><strong>Paths</strong></h5>
                 </Col>
-                <Col sm={12} md={6} mdPush={6}>
+                <Col xs={12} md={6} mdPush={6}>
                     <Panel footer={warningFooter}>
                         Set the paths where Virtool looks for its data files and for FASTQ files to import.
                     </Panel>
                 </Col>
-                <Col sm={12} md={6} mdPull={6}>
+                <Col xs={12} md={6} mdPull={6}>
                     <Panel>
                         <InputSave
                             label="Virtool Data"

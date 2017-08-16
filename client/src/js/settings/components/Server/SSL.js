@@ -28,7 +28,7 @@ const SSLFooter = () => (
 const SSLOptions = (props) => (
     <div>
         <Row>
-            <Col sm={12} md={6}>
+            <Col xs={12} md={6}>
                 <Flex alignItems="center" style={{marginBottom: "10px"}}>
                     <FlexItem grow={1}>
                         <strong>SSL</strong>
@@ -45,12 +45,12 @@ const SSLOptions = (props) => (
             <Col smHidden md={6} />
         </Row>
         <Row>
-            <Col sm={12} md={6} mdPush={6}>
+            <Col xs={12} md={6} mdPush={6}>
                 <Panel footer={<SSLFooter />}>
                     Configure the server to use SSL.
                 </Panel>
             </Col>
-            <Col sm={12} md={6} mdPull={6}>
+            <Col xs={12} md={6} mdPull={6}>
                 <Panel>
                     <InputSave
                         label="Certificate Path"

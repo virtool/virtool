@@ -82,10 +82,10 @@ class VirusesList extends React.Component {
                 <LinkContainer to={`/viruses/${document.id}`} key={document.id} className="spaced">
                     <ListGroupItem bsStyle={document.verified ? null: "warning"}>
                         <Row>
-                            <Col sm={12} md={6}>
+                            <Col xs={12} md={6}>
                                 <strong>{document.name}</strong>
                             </Col>
-                            <Col sm={12} md={6}>
+                            <Col xs={12} md={6}>
                                 {document.abbreviation}
                                 <span className="pull-right">
                                     {document.modified ? <Icon bsStyle="warning" name="flag" />: null}

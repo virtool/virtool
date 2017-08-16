@@ -114,7 +114,7 @@ class EditSequence extends React.Component {
 
                     <form onSubmit={this.save}>
                         <Row>
-                            <Col sm={12}  md={6}>
+                            <Col xs={12}  md={6}>
                                 <FormGroup>
                                     <ControlLabel>Accession (ID)</ControlLabel>
                                     <InputGroup>
@@ -130,7 +130,7 @@ class EditSequence extends React.Component {
                                     </InputGroup>
                                 </FormGroup>
                             </Col>
-                            <Col sm={12} md={6}>
+                            <Col xs={12} md={6}>
                                 <FormGroup>
                                     <ControlLabel>Host</ControlLabel>
                                     <FormControl
@@ -141,7 +141,7 @@ class EditSequence extends React.Component {
                             </Col>
                         </Row>
                         <Row>
-                            <Col sm={12}>
+                            <Col xs={12}>
                                 <FormGroup>
                                     <ControlLabel>Definition</ControlLabel>
                                     <FormControl
@@ -152,7 +152,7 @@ class EditSequence extends React.Component {
                             </Col>
                         </Row>
                         <Row>
-                            <Col sm={12}>
+                            <Col xs={12}>
                                 <SequenceField
                                     sequence={this.state.sequence}
                                     onChange={(e) => this.setState({sequence: e.target.value})}

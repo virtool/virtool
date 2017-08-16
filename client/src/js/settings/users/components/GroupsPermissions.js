@@ -39,7 +39,7 @@ const GroupsPermissions = (props) => {
 
     return (
         <Row>
-            <Col sm={12} md={5}>
+            <Col xs={12} md={5}>
                 <h5><Icon name="users" /> <strong>Groups</strong></h5>
                 <Panel>
                     <ListGroup fill style={{borderBottom: "1px solid #dddddd"}}>
@@ -47,7 +47,7 @@ const GroupsPermissions = (props) => {
                     </ListGroup>
                 </Panel>
             </Col>
-            <Col sm={12} md={7}>
+            <Col xs={12} md={7}>
                 <h5>
                     <Icon name="key" /> <strong>Permissions</strong>
                     <Help pullRight>

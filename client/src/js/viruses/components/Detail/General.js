@@ -44,8 +44,8 @@ const VirusGeneral = (props) => {
             <Table bordered>
                 <tbody>
                     <tr>
-                        <th className="col-sm-4">Name</th>
-                        <td className="col-sm-8">{props.name}</td>
+                        <th className="col-xs-4">Name</th>
+                        <td className="col-xs-8">{props.name}</td>
                     </tr>
                     <tr>
                         <th>Abbreviation</th>

@@ -78,7 +78,7 @@ export default class AddUser extends React.PureComponent {
             <form onSubmit={this.handleSubmit}>
                 <Modal.Body>
                     <Row>
-                        <Col sm={12}>
+                        <Col xs={12}>
                             <Input
                                 type="text"
                                 ref={(input) => this.usernameNode = input}
@@ -90,7 +90,7 @@ export default class AddUser extends React.PureComponent {
                         </Col>
                     </Row>
                     <Row>
-                        <Col sm={6}>
+                        <Col xs={6}>
                             <Input
                                 type="password"
                                 name="password"
@@ -98,7 +98,7 @@ export default class AddUser extends React.PureComponent {
                                 value={this.state.password}
                                 onChange={this.handleChange}/>
                         </Col>
-                        <Col sm={6}>
+                        <Col xs={6}>
                             <Input
                                 type="password"
                                 name="confirm"
@@ -109,7 +109,7 @@ export default class AddUser extends React.PureComponent {
                         </Col>
                     </Row>
                     <Row>
-                        <Col sm={12}>
+                        <Col xs={12}>
                             <div onClick={this.toggleForceReset} className="pointer">
                                 <Checkbox
                                     label="Force user to reset password on login"

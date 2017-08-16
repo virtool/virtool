@@ -11,8 +11,8 @@ const SampleDetailGeneral = (props) => {
 
     const cells = ["name", "host", "isolate"].map(field =>
         <tr key={field}>
-            <th className="col-md-4">{capitalize(field)}</th>
-            <td className="col-sm-8">{props[field]}</td>
+            <th className="col-xs-4">{capitalize(field)}</th>
+            <td className="col-xs-8">{props[field]}</td>
         </tr>
     );
 
@@ -48,8 +48,8 @@ const SampleDetailGeneral = (props) => {
                 <Table bordered fill>
                     <tbody>
                         <tr>
-                            <th className="col-sm-4">Read Count</th>
-                            <td className="col-sm-8">{props.count}</td>
+                            <th className="col-xs-4">Read Count</th>
+                            <td className="col-xs-8">{props.count}</td>
                         </tr>
                         <tr>
                             <th>Length Range</th>
@@ -71,8 +71,8 @@ const SampleDetailGeneral = (props) => {
                 <Table bordered fill>
                     <tbody>
                         <tr>
-                            <th className="col-sm-4">Original Files</th>
-                            <td className="col-sm-8">{props.files.join(", ")}</td>
+                            <th className="col-xs-4">Original Files</th>
+                            <td className="col-xs-8">{props.files.join(", ")}</td>
                         </tr>
                         <tr>
                             <th>Encoding</th>

@@ -70,7 +70,7 @@ class Password extends React.PureComponent {
 
                     <form onSubmit={this.submit}>
                         <Row>
-                            <Col sm={16} md={6}>
+                            <Col xs={16} md={6}>
                                 <Input
                                     type="password"
                                     name="password"
@@ -81,7 +81,7 @@ class Password extends React.PureComponent {
                                 />
                             </Col>
 
-                            <Col sm={12} md={6}>
+                            <Col xs={12} md={6}>
                                 <Input
                                     type="password"
                                     name="confirm"
@@ -93,7 +93,7 @@ class Password extends React.PureComponent {
                             </Col>
                         </Row>
                         <Row>
-                            <Col sm={12} md={6}>
+                            <Col xs={12} md={6}>
                                 <Checkbox
                                     label="Force user to reset password on next login"
                                     checked={this.props.forceReset}
@@ -104,11 +104,11 @@ class Password extends React.PureComponent {
                                 />
                             </Col>
 
-                            <Col sm={12} mdHidden lgHidden>
+                            <Col xs={12} mdHidden lgHidden>
                                 <div style={{height: "15px"}} />
                             </Col>
 
-                            <Col sm={12} md={6}>
+                            <Col xs={12} md={6}>
                                 <ButtonToolbar className="pull-right">
                                     <Button
                                         type="button"
