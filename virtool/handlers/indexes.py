@@ -1,3 +1,5 @@
+from collections import defaultdict
+
 import virtool.utils
 import virtool.virus_index
 import virtool.virus_history
@@ -84,6 +86,16 @@ async def get(req):
     del document["modification_count"]
 
     return json_response(document)
+
+
+async def get_unbuilt(req):
+    db = req.app["db"]
+
+    history = await db.history.find({"index.id": "unbuilt"}, virtool.virus_history.LIST_PROJECTION).to_list(None)
+
+    return json_response({
+        "history": [virtool.utils.base_processor(c) for c in history]
+    })
 
 
 @protected("rebuild_index")
