@@ -45,6 +45,13 @@ const virusesAPI = {
             });
     },
 
+    edit: (virusId, name, abbreviation) => {
+        return Request.patch(`/api/viruses/${virusId}`, {
+            name,
+            abbreviation
+        });
+    },
+
     remove: (virusId) => {
         return Request.delete(`/api/viruses/${virusId}`);
     },

@@ -14,6 +14,7 @@ import {
     GET_VIRUS,
     GET_VIRUS_HISTORY,
     CREATE_VIRUS,
+    EDIT_VIRUS,
     REMOVE_VIRUS,
     ADD_ISOLATE,
     EDIT_ISOLATE,
@@ -22,6 +23,7 @@ import {
     EDIT_SEQUENCE,
     REMOVE_SEQUENCE,
     REVERT,
+    SHOW_EDIT_VIRUS,
     SHOW_REMOVE_VIRUS,
     SHOW_ADD_ISOLATE,
     SHOW_EDIT_ISOLATE,
@@ -72,6 +74,15 @@ export function getVirusHistory (virusId) {
 export function createVirus (name, abbreviation) {
     return {
         type: CREATE_VIRUS.REQUESTED,
+        name,
+        abbreviation
+    };
+}
+
+export function editVirus (virusId, name, abbreviation) {
+    return {
+        type: EDIT_VIRUS.REQUESTED,
+        virusId,
         name,
         abbreviation
     };
@@ -151,6 +162,12 @@ export function revert (virusId, version) {
         type: REVERT.REQUESTED,
         virusId,
         version
+    };
+}
+
+export function showEditVirus () {
+    return {
+        type: SHOW_EDIT_VIRUS
     };
 }
 

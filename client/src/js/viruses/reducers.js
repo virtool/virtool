@@ -15,6 +15,7 @@ import {
     FIND_VIRUSES,
     GET_VIRUS,
     CREATE_VIRUS,
+    EDIT_VIRUS,
     REMOVE_VIRUS,
     ADD_ISOLATE,
     EDIT_ISOLATE,
@@ -23,6 +24,7 @@ import {
     EDIT_SEQUENCE,
     REMOVE_SEQUENCE,
     REVERT,
+    SHOW_EDIT_VIRUS,
     SHOW_REMOVE_VIRUS,
     SHOW_ADD_ISOLATE,
     SHOW_EDIT_ISOLATE,
@@ -57,6 +59,7 @@ const virusesInitialState = {
 
 const hideVirusModal = (state) => {
     return assign({}, state, {
+        edit: false,
         remove: false,
         addIsolate: false,
         editIsolate: false,
@@ -136,6 +139,7 @@ export default function virusesReducer (state = virusesInitialState, action) {
                 remove: false
             });
 
+        case EDIT_VIRUS.SUCCEEDED:
         case ADD_ISOLATE.SUCCEEDED:
         case EDIT_ISOLATE.SUCCEEDED:
         case REMOVE_ISOLATE.SUCCEEDED:
