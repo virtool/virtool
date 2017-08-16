@@ -10,89 +10,78 @@
  */
 
 import React, { PropTypes } from "react";
-import { Alert, Collapse } from "react-bootstrap";
+import { connect } from "react-redux";
+import { Modal, Panel } from "react-bootstrap";
 
-import { Flex, FlexItem, Icon, Button } from "virtool/js/components/Base";
+import { getUnbuilt, hideRebuild } from "../actions";
+import { Button } from "virtool/js/components/Base";
+import RebuildHistory from "./History";
 
-export const RebuildAlert = (props) => {
+class RebuildIndex extends React.Component {
 
-    let button;
-
-    if (props.canRebuild) {
-        button = (
-            <FlexItem pad={20}>
-                <Button bsStyle="warning" icon="hammer" onClick={props.rebuild} pullRight>
-                    Rebuild
-                </Button>
-            </FlexItem>
-        );
+    constructor (props) {
+        super(props);
     }
 
-    return (
-        <Alert bsStyle="warning">
-            <Flex alignItems="center">
-                <FlexItem grow={1}>
-                    <Flex alignItems="center">
-                        <Icon name="notification" />
-                        <FlexItem pad={10}>
-                            The virus reference database has changed and the index must be rebuilt before the new
-                            information will be included in future analyses.
-                        </FlexItem>
-                    </Flex>
-                </FlexItem>
-                {button}
-            </Flex>
-        </Alert>
-    );
-};
+    static propTypes = {
+        show: PropTypes.bool,
+        unbuilt: PropTypes.object,
+        onHide: PropTypes.func,
+        onGetUnbuilt: PropTypes.func
+    };
 
-RebuildAlert.propTypes = {
-    canRebuild: PropTypes.bool,
-    rebuild: PropTypes.func.isRequired
-};
+    modalEntered = () => {
+        this.props.onGetUnbuilt();
+    };
 
-export const RebuildIndex = (props) => {
+    save = (event) => {
+        event.preventDefault();
+    };
 
-    let alert;
+    render () {
+        return (
+            <Modal bsSize="large" onEntered={this.modalEntered} show={this.props.show} onHide={this.props.onHide}>
+                <Modal.Header>
+                    Rebuild Index
+                </Modal.Header>
+                <form onSubmit={this.save}>
+                    <Modal.Body>
+                        <Panel>
+                            Build the changes described below into a new index.
+                        </Panel>
 
-    if (props.modifiedCount > 0) {
-        alert = <RebuildAlert {...props} />;
-    } else {
-        alert = (
-            <Alert bsStyle="success">
-                <Flex alignItems="center">
-                    <Icon name="info" />
-                    <FlexItem pad={5}>
-                        No viruses have been modified since the last index build.
-                    </FlexItem>
-                </Flex>
-            </Alert>
+                        <RebuildHistory unbuilt={this.props.unbuilt} />
+                    </Modal.Body>
+                    <Modal.Footer>
+                        <Button type="submit" bsStyle="primary" icon="hammer">
+                            Start
+                        </Button>
+                    </Modal.Footer>
+                </form>
+            </Modal>
         );
     }
+}
 
-    return (
-        <div>
-            {alert}
-
-            <Collapse in={props.error}>
-                <div>
-                    <Alert bsStyle="danger" onDismiss={props.dismissError}>
-                        <Icon name="warning" />&nbsp;
-                        <strong>
-                            One or more viruses are in an unverified state. All virus documents must be verified
-                            before the index can be rebuilt.
-                        </strong>
-                    </Alert>
-                </div>
-            </Collapse>
-        </div>
-    );
+const mapStateToProps = (state) => {
+    return {
+        show: Boolean(state.indexes.showRebuild),
+        unbuilt: state.indexes.unbuilt
+    };
 };
 
-RebuildIndex.propTypes = {
-    error: PropTypes.bool,
-    canRebuild: PropTypes.bool,
-    modifiedCount: PropTypes.number,
-    dismissError: PropTypes.func,
-    rebuild: PropTypes.func
+const mapDispatchToProps = (dispatch) => {
+    return {
+        onGetUnbuilt: () => {
+            dispatch(getUnbuilt());
+        },
+
+        onHide: () => {
+            dispatch(hideRebuild());
+        }
+    };
 };
+
+const Container = connect(mapStateToProps, mapDispatchToProps)(RebuildIndex);
+
+export default Container;

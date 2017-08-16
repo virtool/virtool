@@ -11,11 +11,12 @@ import { call, put, takeEvery, takeLatest } from "redux-saga/effects";
 
 import indexesAPI from "./api";
 import { setPending } from "../wrappers";
-import { FIND_INDEXES, GET_INDEX, CREATE_INDEX, GET_INDEX_HISTORY }  from "../actionTypes";
+import { FIND_INDEXES, GET_INDEX, GET_UNBUILT, CREATE_INDEX, GET_INDEX_HISTORY }  from "../actionTypes";
 
 export function* watchIndexes () {
     yield takeLatest(FIND_INDEXES.REQUESTED, findIndexes);
     yield takeLatest(GET_INDEX.REQUESTED, getIndex);
+    yield takeLatest(GET_UNBUILT.REQUESTED, getUnbuilt);
     yield takeEvery(CREATE_INDEX.REQUESTED, createIndex);
     yield takeLatest(GET_INDEX_HISTORY.REQUESTED, getIndexHistory);
 }
@@ -38,6 +39,17 @@ export function* getIndex (action) {
             yield put({type: GET_INDEX.SUCCEEDED, data: response.body});
         } catch (error) {
             yield put({type: GET_INDEX.FAILED}, error);
+        }
+    }, action);
+}
+
+export function* getUnbuilt (action) {
+    yield setPending(function* () {
+        try {
+            const response = yield call(indexesAPI.getUnbuilt);
+            yield put({type: GET_UNBUILT.SUCCEEDED, data: response.body});
+        } catch (error) {
+            yield put({type: GET_UNBUILT.FAILED}, error);
         }
     }, action);
 }
