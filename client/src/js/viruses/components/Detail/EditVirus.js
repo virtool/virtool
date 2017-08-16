@@ -14,7 +14,7 @@ import { connect } from "react-redux";
 import { Row, Col, Modal, FormGroup, ControlLabel, FormControl } from "react-bootstrap";
 
 import { editVirus, hideVirusModal } from "../../actions";
-import { Button } from "virtool/js/components/Base";
+import { Icon, Button } from "virtool/js/components/Base";
 
 const getInitialState = (props) => ({
     name: props.name || "",
@@ -37,6 +37,7 @@ class EditVirus extends React.Component {
         name: PropTypes.string,
         abbreviation: PropTypes.string,
         show: PropTypes.bool,
+        error: PropTypes.string,
         onHide: PropTypes.func,
         onSave: PropTypes.func
     };
@@ -47,6 +48,17 @@ class EditVirus extends React.Component {
     };
 
     render () {
+
+        let error;
+
+        if (this.props.error) {
+            error = (
+                <p className="text-danger">
+                    <Icon name="warning" /> {this.props.error}
+                </p>
+            );
+        }
+
         return (
             <Modal show={this.props.show} onEnter={this.modalEnter} onHide={this.props.onHide}>
                 <Modal.Header onHide={this.props.onHide} closeButton>
@@ -76,6 +88,9 @@ class EditVirus extends React.Component {
                                 </FormGroup>
                             </Col>
                         </Row>
+
+                        {error}
+
                     </Modal.Body>
                     <Modal.Footer>
                         <Button type="submit" bsStyle="primary" icon="floppy">
@@ -90,7 +105,8 @@ class EditVirus extends React.Component {
 
 const mapStateToProps = (state) => {
     return {
-        show: state.viruses.edit
+        show: state.viruses.edit,
+        error: state.viruses.editError
     };
 };
 

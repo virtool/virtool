@@ -90,13 +90,17 @@ export function* createVirus (action) {
 }
 
 export function* editVirus (action) {
-    yield setPending(function* () {
+    yield setPending(function* (action) {
         try {
-            yield call(virusesAPI.edit, action.virusId, action.name, action.abbreviation);
-            const response = yield call(virusesAPI.get, action.virusId);
+            yield virusesAPI.edit(action.virusId, action.name, action.abbreviation);
+            const response = yield virusesAPI.get(action.virusId);
             yield put({type: EDIT_VIRUS.SUCCEEDED, data: response.body});
         } catch (error) {
-            yield put({type: EDIT_VIRUS.FAILED, error: error});
+            if (error.response.status === 409) {
+                yield put({type: EDIT_VIRUS.FAILED, message: error.response.body.message});
+            } else{
+                throw error;
+            }
         }
     }, action);
 }

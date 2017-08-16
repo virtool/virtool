@@ -42,6 +42,7 @@ const virusesInitialState = {
     detail: null,
     detailHistory: null,
 
+    edit: false,
     remove: false,
     addIsolate: false,
     editIsolate: false,
@@ -54,7 +55,7 @@ const virusesInitialState = {
     activeSequenceId: null,
 
     createError: "",
-    createPending: false
+    editError: ""
 };
 
 const hideVirusModal = (state) => {
@@ -139,6 +140,11 @@ export default function virusesReducer (state = virusesInitialState, action) {
                 remove: false
             });
 
+        case EDIT_VIRUS.FAILED:
+            return assign({}, state, {
+                editError: action.message
+            });
+
         case EDIT_VIRUS.SUCCEEDED:
         case ADD_ISOLATE.SUCCEEDED:
         case EDIT_ISOLATE.SUCCEEDED:
@@ -166,7 +172,8 @@ export default function virusesReducer (state = virusesInitialState, action) {
 
         case SHOW_EDIT_VIRUS:
             return assign({}, state, {
-                edit: true
+                edit: true,
+                editError: ""
             });
 
         case SHOW_REMOVE_VIRUS:
