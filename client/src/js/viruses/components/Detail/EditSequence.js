@@ -85,10 +85,7 @@ class EditSequence extends React.Component {
                     host,
                     sequence
                 });
-            }, (err) => {
-                console.log("ERROR");
-                console.log(err);
-                console.log(err.status);
+            }, () => {
                 this.setState({autofillPending: false});
             })
         });
