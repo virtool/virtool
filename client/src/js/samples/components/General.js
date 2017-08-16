@@ -5,37 +5,16 @@ import { capitalize } from "lodash";
 import { connect } from "react-redux";
 import { Panel, Table } from "react-bootstrap";
 
-
 import { updateSample } from "../actions";
-import { InputCell } from "virtool/js/components/Base";
 
 const SampleDetailGeneral = (props) => {
 
-    const cells = ["name", "host", "isolate"].map(field => {
-        let inputCell;
-
-        if (props.canModify) {
-            inputCell = (
-                <InputCell
-                    _id={props._id}
-                    field={field}
-                    value={props[field]}
-                    className="col-sm-8"
-                    onSave={(key, value) => props.onChangeValue(props.sampleId, key, value)}
-                />
-            );
-        } else {
-            inputCell = <td className="col-sm-8">{props[field]}</td>;
-        }
-
-        return (
-            <tr key={field}>
-                <th className="col-md-4">{capitalize(field)}</th>
-                {inputCell}
-            </tr>
-        );
-
-    });
+    const cells = ["name", "host", "isolate"].map(field =>
+        <tr key={field}>
+            <th className="col-md-4">{capitalize(field)}</th>
+            <td className="col-sm-8">{props[field]}</td>
+        </tr>
+    );
 
     let idCell;
 
