@@ -7,7 +7,7 @@
  *
  */
 
-import { merge, assign, concat, find, reject } from "lodash";
+import { assign, concat, find, reject } from "lodash";
 import {
     WS_UPDATE_VIRUS,
     WS_REMOVE_VIRUS,
@@ -15,10 +15,17 @@ import {
     FIND_VIRUSES,
     GET_VIRUS,
     CREATE_VIRUS,
+    EDIT_VIRUS,
+    REMOVE_VIRUS,
     ADD_ISOLATE,
     EDIT_ISOLATE,
     REMOVE_ISOLATE,
     ADD_SEQUENCE,
+    EDIT_SEQUENCE,
+    REMOVE_SEQUENCE,
+    REVERT,
+    SHOW_EDIT_VIRUS,
+    SHOW_REMOVE_VIRUS,
     SHOW_ADD_ISOLATE,
     SHOW_EDIT_ISOLATE,
     SHOW_REMOVE_ISOLATE,
@@ -35,15 +42,11 @@ const virusesInitialState = {
     detail: null,
     detailHistory: null,
 
+    edit: false,
+    remove: false,
     addIsolate: false,
-    addIsolatePending: false,
-
     editIsolate: false,
-    editIsolatePending: false,
-
     removeIsolate: false,
-    removeIsolatePending: false,
-
     addSequence: false,
     editSequence: false,
     removeSequence: false,
@@ -52,7 +55,26 @@ const virusesInitialState = {
     activeSequenceId: null,
 
     createError: "",
-    createPending: false
+    editError: ""
+};
+
+const hideVirusModal = (state) => {
+    return assign({}, state, {
+        edit: false,
+        remove: false,
+        addIsolate: false,
+        editIsolate: false,
+        removeIsolate: false,
+        addSequence: false,
+        editSequence: false,
+        removeSequence: false
+    });
+};
+
+const receivedDetailAfterChange = (state, action) => {
+    return assign({}, hideVirusModal(state), {
+        detail: action.data
+    })
 };
 
 export default function virusesReducer (state = virusesInitialState, action) {
@@ -111,48 +133,26 @@ export default function virusesReducer (state = virusesInitialState, action) {
                 createError: action.error
             });
 
-        case ADD_ISOLATE.REQUESTED:
+        case REMOVE_VIRUS.SUCCEEDED:
             return assign({}, state, {
-                addIsolatePending: true
+                detail: null,
+                actionIsolateId: null,
+                remove: false
             });
 
+        case EDIT_VIRUS.FAILED:
+            return assign({}, state, {
+                editError: action.message
+            });
+
+        case EDIT_VIRUS.SUCCEEDED:
         case ADD_ISOLATE.SUCCEEDED:
-            return merge({}, state, {
-                addIsolate: false,
-                addIsolatePending: false,
-                detail: action.data
-            });
-
-        case EDIT_ISOLATE.REQUESTED:
-            return assign({}, state, {
-                editIsolateEnding: true
-            });
-
         case EDIT_ISOLATE.SUCCEEDED:
-            return merge({}, state, {
-                editIsolate: false,
-                editIsolatePending: false,
-                detail: action.data
-            });
-
-        case REMOVE_ISOLATE.REQUESTED:
-            return assign({}, state, {
-                removeIsolate: true,
-                removeIsolatePending: true
-            });
-
         case REMOVE_ISOLATE.SUCCEEDED:
-            return assign({}, state, {
-                removeIsolate: false,
-                removeIsolatePending: false,
-                detail: action.data
-            });
-
         case ADD_SEQUENCE.SUCCEEDED:
-            return assign({}, state, {
-                detail: action.data,
-                addSequence: false
-            });
+        case EDIT_SEQUENCE.SUCCEEDED:
+        case REMOVE_SEQUENCE.SUCCEEDED:
+            return receivedDetailAfterChange(state, action);
 
         case GET_VIRUS_HISTORY.REQUESTED:
             return assign({}, state, {
@@ -162,6 +162,23 @@ export default function virusesReducer (state = virusesInitialState, action) {
         case GET_VIRUS_HISTORY.SUCCEEDED:
             return assign({}, state, {
                 detailHistory: action.data
+            });
+
+        case REVERT.SUCCEEDED:
+            return assign({}, state, {
+                detail: action.detail,
+                detailHistory: action.history
+            });
+
+        case SHOW_EDIT_VIRUS:
+            return assign({}, state, {
+                edit: true,
+                editError: ""
+            });
+
+        case SHOW_REMOVE_VIRUS:
+            return assign({}, state, {
+                remove: true
             });
 
         case SHOW_ADD_ISOLATE:
@@ -195,14 +212,7 @@ export default function virusesReducer (state = virusesInitialState, action) {
             });
 
         case HIDE_VIRUS_MODAL:
-            return assign({}, state, {
-                addIsolate: false,
-                editIsolate: false,
-                removeIsolate: false,
-                addSequence: false,
-                editSequence: false,
-                removeSequence: false
-            });
+            return hideVirusModal(state);
 
         default:
             return state;

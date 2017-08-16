@@ -1,11 +1,13 @@
 import React from "react";
 import Moment from "moment";
 import Numeral from "numeral";
-import { connect } from "react-redux";
 import { capitalize } from "lodash";
+import { connect } from "react-redux";
+import { Panel, Table } from "react-bootstrap";
+
 
 import { updateSample } from "../actions";
-import { Icon, InputCell } from "virtool/js/components/Base";
+import { InputCell } from "virtool/js/components/Base";
 
 const SampleDetailGeneral = (props) => {
 
@@ -48,11 +50,6 @@ const SampleDetailGeneral = (props) => {
 
     return (
         <div>
-            <h4>
-                <span>
-                    <Icon name="tag" /> <strong>Annotation</strong>
-                </span>
-            </h4>
             <table className="table table-bordered">
               <tbody>
                 {cells}
@@ -68,45 +65,43 @@ const SampleDetailGeneral = (props) => {
               </tbody>
             </table>
 
-            <h4>
-                <Icon name="table" /> <strong>Library Properties</strong>
-            </h4>
-            <table className="table table-bordered">
-              <tbody>
-                <tr>
-                  <th className="col-sm-4">Read Count</th>
-                  <td className="col-sm-8">{props.count}</td>
-                </tr>
-                <tr>
-                  <th>Length Range</th>
-                  <td>{props.lengthRange}</td>
-                </tr>
-                <tr>
-                  <th>GC Content</th>
-                  <td>{props.gc}</td>
-                </tr>
-                <tr>
-                  <th>Paired</th>
-                  <td>{props.paired ? "Yes": "No"}</td>
-                </tr>
-              </tbody>
-            </table>
+            <Panel header="Library">
+                <Table bordered fill>
+                    <tbody>
+                        <tr>
+                            <th className="col-sm-4">Read Count</th>
+                            <td className="col-sm-8">{props.count}</td>
+                        </tr>
+                        <tr>
+                            <th>Length Range</th>
+                            <td>{props.lengthRange}</td>
+                        </tr>
+                        <tr>
+                            <th>GC Content</th>
+                            <td>{props.gc}</td>
+                        </tr>
+                        <tr>
+                            <th>Paired</th>
+                            <td>{props.paired ? "Yes": "No"}</td>
+                        </tr>
+                    </tbody>
+                </Table>
+            </Panel>
 
-            <h4>
-                <Icon name="file" /> <strong>Files</strong>
-            </h4>
-            <table className="table table-bordered">
-              <tbody>
-                <tr>
-                  <th className="col-sm-4">Original Files</th>
-                  <td className="col-sm-8">{props.files.join(", ")}</td>
-                </tr>
-                <tr>
-                  <th>Encoding</th>
-                  <td>{props.encoding}</td>
-                </tr>
-              </tbody>
-            </table>
+            <Panel header="Files">
+                <Table bordered fill>
+                    <tbody>
+                        <tr>
+                            <th className="col-sm-4">Original Files</th>
+                            <td className="col-sm-8">{props.files.join(", ")}</td>
+                        </tr>
+                        <tr>
+                            <th>Encoding</th>
+                            <td>{props.encoding}</td>
+                        </tr>
+                    </tbody>
+                </Table>
+            </Panel>
         </div>
     );
 };

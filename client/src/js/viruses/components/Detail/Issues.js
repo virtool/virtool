@@ -72,19 +72,18 @@ const VirusIssues = (props) => {
         // Make a list of sequences that have no defined sequence field.
         const emptySequences = props.issues.empty_sequence.map((errorObject, index) => {
             // Get the entire isolate object identified by the isolate_id.
-            const isolate = find(this.props.isolates, {isolate_id: errorObject.isolate_id});
+            const isolate = find(props.isolates, {id: errorObject.isolate_id});
 
             return (
                 <li key={index}>
-                    <span>sequence accession </span>
-                    <span>"{errorObject.sequence_id}" in isolate "{formatIsolateName(isolate)}"</span>
+                    <span><em>{errorObject._id}</em> in isolate <em>{formatIsolateName(isolate)}</em></span>
                 </li>
             );
         });
 
         errors.push(
             <li key="emptySequence">
-                There sequence records have undefined sequence fields:
+                There are sequence records with undefined <code>sequence</code> fields:
                 <ul>{emptySequences}</ul>
             </li>
         );

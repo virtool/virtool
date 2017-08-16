@@ -830,11 +830,10 @@ async def remove_sequence(req):
     db = req.app["db"]
 
     virus_id = req.match_info["virus_id"]
+    isolate_id = req.match_info["isolate_id"]
     sequence_id = req.match_info["sequence_id"]
 
-    document = await db.sequences.find_one(sequence_id, ["isolate_id"])
-
-    if not document:
+    if not await db.sequences.count({"_id": sequence_id}):
         return not_found()
 
     old = await virtool.virus.join(db, virus_id)
@@ -842,7 +841,9 @@ async def remove_sequence(req):
     if not old:
         return not_found()
 
-    isolate = virtool.virus.find_isolate(old["isolates"], document["isolate_id"])
+    isolate = virtool.virus.find_isolate(old["isolates"], isolate_id)
+
+    await db.sequences.delete_one({"_id": sequence_id})
 
     await db.viruses.update_one({"_id": virus_id}, {
         "$set": {

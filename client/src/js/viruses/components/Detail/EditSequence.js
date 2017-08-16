@@ -10,18 +10,35 @@
  */
 
 import React, { PropTypes } from "react";
+import { find } from "lodash";
 import { connect } from "react-redux";
 import { Row, Col, Modal, FormGroup, FormControl, InputGroup, ControlLabel } from "react-bootstrap";
 
 import { editSequence, hideVirusModal } from "../../actions";
-import { Button } from "virtool/js/components/Base";
+import { Button, Icon } from "virtool/js/components/Base";
 import SequenceField from "./SequenceField";
+import virusAPI from "../../api";
 
-const getInitialState = () => ({
-    definition: "",
-    host: "",
-    sequence: ""
-});
+const getInitialState = (props) => {
+    if (props.sequenceId) {
+        const isolate = find(props.detail.isolates, {id: props.isolateId});
+        const sequence = find(isolate.sequences, {id: props.sequenceId});
+
+        return {
+            definition: sequence.definition,
+            host: sequence.host,
+            sequence: sequence.sequence,
+            autofillPending: false
+        }
+    }
+
+    return {
+        definition: "",
+        host: "",
+        sequence: "",
+        autofillPending: false
+    }
+};
 
 class EditSequence extends React.Component {
 
@@ -34,8 +51,13 @@ class EditSequence extends React.Component {
         virusId: PropTypes.string,
         isolateId: PropTypes.string,
         sequenceId: PropTypes.oneOfType([PropTypes.bool, PropTypes.string]),
+        detail: PropTypes.object,
         onHide: PropTypes.func,
         onSave: PropTypes.func
+    };
+
+    modalEnter = () => {
+        this.setState(getInitialState(this.props));
     };
 
     save = (event) => {
@@ -51,13 +73,45 @@ class EditSequence extends React.Component {
         );
     };
 
+    autofill = () => {
+        this.setState({autofillPending: true}, () => {
+            virusAPI.getGenbank(this.props.sequenceId).then((resp) => {
+                // Success
+                const { definition, host, sequence } = resp.body;
+
+                this.setState({
+                    autofillPending: false,
+                    definition,
+                    host,
+                    sequence
+                });
+            }, () => {
+                this.setState({autofillPending: false});
+            })
+        });
+    };
+
     render () {
+        let overlay;
+
+        if (this.state.autofillPending) {
+            overlay = (
+                <div className="modal-body-overlay">
+                    <span>
+                        Loading
+                    </span>
+                </div>
+            )
+        }
+
         return (
-            <Modal show={this.props.sequenceId} onHide={this.props.onHide}>
+            <Modal show={!!this.props.sequenceId} onEnter={this.modalEnter} onHide={this.props.onHide}>
                 <Modal.Header onHide={this.props.onHide} closeButton>
                     Edit Sequence
                 </Modal.Header>
                 <Modal.Body>
+                    {overlay}
+
                     <form onSubmit={this.save}>
                         <Row>
                             <Col sm={12}  md={6}>
@@ -68,6 +122,11 @@ class EditSequence extends React.Component {
                                             value={this.props.sequenceId}
                                             readOnly
                                         />
+                                        <InputGroup.Button>
+                                            <Button onClick={this.autofill}>
+                                                <Icon name="wand"  />
+                                            </Button>
+                                        </InputGroup.Button>
                                     </InputGroup>
                                 </FormGroup>
                             </Col>
@@ -114,7 +173,8 @@ class EditSequence extends React.Component {
 
 const mapStateToProps = (state) => {
     return {
-        sequenceId: state.viruses.editSequence
+        sequenceId: state.viruses.editSequence,
+        detail: state.viruses.detail
     };
 };
 

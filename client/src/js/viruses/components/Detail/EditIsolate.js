@@ -45,10 +45,6 @@ class EditIsolate extends React.Component {
         onSave: PropTypes.func
     };
 
-    modalEntered = () => {
-        this.formNode.focus();
-    };
-
     save = () => {
         this.props.onSave(this.props.virusId, this.props.isolateId, this.state.sourceType, this.state.sourceName);
     };
@@ -61,7 +57,6 @@ class EditIsolate extends React.Component {
                 </Modal.Header>
                 <Modal.Body>
                     <IsolateForm
-                        ref={(node) => this.formNode = node}
                         sourceType={this.state.sourceType}
                         sourceName={this.state.sourceName}
                         allowedSourceTypes={this.props.allowedSourceTypes}

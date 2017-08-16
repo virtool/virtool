@@ -538,9 +538,27 @@ class TestCreate:
         })
 
     @pytest.mark.parametrize("existing,message", [
-        ({"name": "Tobacco mosaic virus"}, "Name already exists"),
-        ({"abbreviation": "TMV"}, "Abbreviation already exists"),
-        ({"name": "Tobacco mosaic virus", "abbreviation": "TMV"}, "Name and abbreviation already exist")
+        (
+            {
+                "name": "Tobacco mosaic virus",
+                "lower_name": "tobacco mosaic virus"
+            },
+            "Name already exists"
+        ),
+        (
+            {
+                "abbreviation": "TMV"
+            },
+            "Abbreviation already exists"
+        ),
+        (
+            {
+                "name": "Tobacco mosaic virus",
+                "lower_name": "tobacco mosaic virus",
+                "abbreviation": "TMV"
+            },
+            "Name and abbreviation already exist"
+        )
     ])
     async def test_field_exists(self, existing, message, spawn_client):
         """

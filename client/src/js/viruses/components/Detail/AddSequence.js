@@ -11,17 +11,21 @@
 
 import React, { PropTypes } from "react";
 import { connect } from "react-redux";
-import { Row, Col, Modal, FormGroup, FormControl, InputGroup, ControlLabel } from "react-bootstrap";
+import { Row, Col, Modal, FormGroup, FormControl, InputGroup, ControlLabel, Popover, Overlay } from "react-bootstrap";
 
 import { addSequence, hideVirusModal } from "../../actions";
-import { Icon, Button } from "virtool/js/components/Base";
+import { Icon, Button, Spinner } from "virtool/js/components/Base";
 import SequenceField from "./SequenceField";
+import virusAPI from "../../api";
 
 const getInitialState = () => ({
     id: "",
     definition: "",
     host: "",
-    sequence: ""
+    sequence: "",
+
+    autofillPending: false,
+    error: false
 });
 
 class AddSequence extends React.Component {
@@ -39,6 +43,10 @@ class AddSequence extends React.Component {
         onSave: PropTypes.func
     };
 
+    modalEntered = () => {
+        this.accessionNode.focus();
+    };
+
     save = (event) => {
         event.preventDefault();
 
@@ -52,26 +60,82 @@ class AddSequence extends React.Component {
         );
     };
 
+    autofill = () => {
+        this.setState({autofillPending: true}, () => {
+            virusAPI.getGenbank(this.state.id).then((resp) => {
+                // Success
+                const { definition, host, sequence } = resp.body;
+
+                this.setState({
+                    autofillPending: false,
+                    definition,
+                    host,
+                    sequence
+                });
+            }, (err) => {
+                this.setState({
+                    autofillPending: false,
+                    error: err.status === 404 ? "Accession not found": false
+                });
+                return err;
+            })
+        });
+    };
+
     render () {
+        let overlay;
+
+        if (this.state.autofillPending) {
+            overlay = (
+                <div className="modal-body-overlay">
+                    <span>
+                        <Spinner />
+                    </span>
+                </div>
+            )
+        }
+
         return (
-            <Modal show={this.props.show} onHide={this.props.onHide}>
+            <Modal
+                show={this.props.show}
+                onHide={this.props.onHide}
+                onEntered={this.modalEntered}
+                onExited={() => this.setState(getInitialState())}
+            >
                 <Modal.Header onHide={this.props.onHide} closeButton>
                     Add Sequence
                 </Modal.Header>
                 <Modal.Body>
+                    {overlay}
+
                     <form onSubmit={this.save}>
                         <Row>
                             <Col sm={12}  md={6}>
                                 <FormGroup>
                                     <ControlLabel>Accession (ID)</ControlLabel>
                                     <InputGroup>
+                                        <Overlay
+                                            show={!!this.state.error}
+                                            target={this.accessionNode}
+                                            placement="top"
+                                            container={this}
+                                            onHide={() => this.setState({error: false})}
+                                            animation={false}
+                                        >
+                                            <Popover id="error-popover">
+                                                {this.state.error}
+                                            </Popover>
+                                        </Overlay>
                                         <FormControl
+                                            inputRef={(node) => this.accessionNode = node}
                                             value={this.state.id}
-                                            onChange={(e) => this.setState({id: e.target.value})}
+                                            onChange={(e) => {
+                                                this.setState({id: e.target.value, error: false})
+                                            }}
                                         />
                                         <InputGroup.Button>
-                                            <Button>
-                                                <Icon name="wand" />
+                                            <Button type="button" onClick={this.autofill}>
+                                                <Icon name="wand"  />
                                             </Button>
                                         </InputGroup.Button>
                                     </InputGroup>

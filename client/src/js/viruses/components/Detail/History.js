@@ -11,8 +11,8 @@ import { sortBy, groupBy } from "lodash";
 import { connect } from "react-redux";
 import { Row, Col, ListGroup, Label } from "react-bootstrap";
 
-import { getVirusHistory } from "../../actions";
-import { Flex, FlexItem, ListGroupItem, RelativeTime, Icon } from "virtool/js/components/Base"
+import { getVirusHistory, revert } from "../../actions";
+import { Flex, FlexItem, ListGroupItem, RelativeTime, Icon } from "virtool/js/components/Base";
 
 
 const getMethodIcon = (change) => {
@@ -41,7 +41,7 @@ const getMethodIcon = (change) => {
         case "remove_isolate":
             return <Icon name="lab" bsStyle="danger" />;
 
-        case "add_sequence":
+        case "create_sequence":
             return <Icon name="dna" bsStyle="primary" />;
 
         case "edit_sequence":
@@ -67,7 +67,7 @@ const HistoryList = (props) => {
                     name="undo"
                     bsStyle="primary"
                     tip="Revert"
-                    onClick={() => window.console.log("REVERT")}
+                    onClick={() => props.revert(change.virus.id, change.virus.version)}
                     pullRight
                 />
             );
@@ -107,7 +107,8 @@ const HistoryList = (props) => {
 
 HistoryList.propTypes = {
     history: PropTypes.arrayOf(React.PropTypes.object),
-    unbuilt: PropTypes.bool
+    unbuilt: PropTypes.bool,
+    revert: PropTypes.func
 };
 
 class VirusHistory extends React.Component {
@@ -115,7 +116,8 @@ class VirusHistory extends React.Component {
     static propTypes = {
         virusId: PropTypes.string,
         history: PropTypes.arrayOf(PropTypes.object),
-        getHistory: PropTypes.func
+        getHistory: PropTypes.func,
+        revert: PropTypes.func
     };
 
     componentDidMount () {
@@ -147,7 +149,7 @@ class VirusHistory extends React.Component {
             unbuilt = (
                 <div>
                     <h4>Unbuilt Changes</h4>
-                    <HistoryList history={changes.unbuilt} unbuilt />
+                    <HistoryList history={changes.unbuilt} revert={this.props.revert} unbuilt />
                 </div>
             );
         }
@@ -173,6 +175,10 @@ const mapDispatchToProps = (dispatch) => {
     return {
         getHistory: (virusId) => {
             dispatch(getVirusHistory(virusId));
+        },
+
+        revert: (virusId, version) => {
+            dispatch(revert(virusId, version));
         }
     };
 };

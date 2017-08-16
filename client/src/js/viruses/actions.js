@@ -14,12 +14,17 @@ import {
     GET_VIRUS,
     GET_VIRUS_HISTORY,
     CREATE_VIRUS,
+    EDIT_VIRUS,
+    REMOVE_VIRUS,
     ADD_ISOLATE,
     EDIT_ISOLATE,
     REMOVE_ISOLATE,
     ADD_SEQUENCE,
     EDIT_SEQUENCE,
     REMOVE_SEQUENCE,
+    REVERT,
+    SHOW_EDIT_VIRUS,
+    SHOW_REMOVE_VIRUS,
     SHOW_ADD_ISOLATE,
     SHOW_EDIT_ISOLATE,
     SHOW_REMOVE_ISOLATE,
@@ -71,6 +76,23 @@ export function createVirus (name, abbreviation) {
         type: CREATE_VIRUS.REQUESTED,
         name,
         abbreviation
+    };
+}
+
+export function editVirus (virusId, name, abbreviation) {
+    return {
+        type: EDIT_VIRUS.REQUESTED,
+        virusId,
+        name,
+        abbreviation
+    };
+}
+
+export function removeVirus (virusId, history) {
+    return {
+        type: REMOVE_VIRUS.REQUESTED,
+        virusId,
+        history
     };
 }
 
@@ -132,6 +154,26 @@ export function removeSequence (virusId, isolateId, sequenceId) {
         virusId,
         isolateId,
         sequenceId
+    };
+}
+
+export function revert (virusId, version) {
+    return {
+        type: REVERT.REQUESTED,
+        virusId,
+        version
+    };
+}
+
+export function showEditVirus () {
+    return {
+        type: SHOW_EDIT_VIRUS
+    };
+}
+
+export function showRemoveVirus () {
+    return {
+        type: SHOW_REMOVE_VIRUS
     };
 }
 

@@ -60,8 +60,7 @@ async def revert(req):
     _, patched, history_to_delete = await virtool.virus_history.patch_virus_to_version(
         db,
         virus_id,
-        virus_version - 1,
-        inclusive=True
+        virus_version - 1
     )
 
     # Remove the old sequences from the collection.
@@ -71,7 +70,8 @@ async def revert(req):
         patched_virus, sequences = virtool.virus.split_virus(patched)
 
         # Add the reverted sequences to the collection.
-        await db.sequences.insert_many(sequences)
+        if len(sequences):
+            await db.sequences.insert_many(sequences)
 
         # Replace the existing virus with the patched one. If it doesn't exist, insert it.
         await db.viruses.replace_one({"_id": virus_id}, patched_virus, upsert=True)
@@ -79,6 +79,6 @@ async def revert(req):
     else:
         await db.viruses.delete_one({"_id": virus_id})
 
-    await db.history.delete_many(history_to_delete)
+    await db.history.delete_many({"_id": {"$in": history_to_delete}})
 
     return json_response(virtool.utils.base_processor(patched))
