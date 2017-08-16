@@ -156,7 +156,37 @@ class TestRemove:
 
         joined = await virtool.virus.join(client.db, "6116cba1")
 
-        assert joined == expected
+        assert joined == {
+            '_id': '6116cba1',
+            'abbreviation': 'TST',
+            'imported': True,
+            'isolates': [
+                {
+                    'default': True,
+                    'id': 'cab8b360',
+                    'sequences': [
+                        {
+                            '_id': 'KX269872',
+                            'definition': 'Prunus virus F isolate 8816-s2 '
+                            'segment RNA2 polyprotein 2 gene, '
+                            'complete cds.',
+                            'host': 'sweet cherry',
+                            'isolate_id': 'cab8b360',
+                            'sequence': 'TGTTTAAGAGATTAAACAACCGCTTTC',
+                            'virus_id': '6116cba1'
+                         }
+                    ],
+                    'source_name': '8816-v2',
+                    'source_type': 'isolate'
+                }
+            ],
+            'last_indexed_version': 0,
+            'lower_name': 'prunus virus f',
+            'modified': False,
+            'name': 'Prunus virus F',
+            'verified': False,
+            'version': 1
+        }
 
     async def test_not_found(self, spawn_client, resp_is):
         """
