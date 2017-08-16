@@ -9,7 +9,6 @@ export * from "./Flex";
 export * from "./Help";
 export * from "./Icon";
 export * from "./Input";
-export * from "./InputCell";
 export * from "./InputSave";
 export * from "./ListGroupItem";
 export * from "./LoadingOverlay";
