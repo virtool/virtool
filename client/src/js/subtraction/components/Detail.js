@@ -13,7 +13,7 @@ import React, { PropTypes } from "react";
 import Numeral from "numeral";
 import { connect } from "react-redux";
 import { LinkContainer } from "react-router-bootstrap";
-import { Badge, Table } from "react-bootstrap";
+import { Row, Col, Badge, Table } from "react-bootstrap";
 
 import { getSubtraction } from "../actions";
 import { Button } from "virtool/js/components/Base";
@@ -37,11 +37,13 @@ class SubtractionDetail extends React.Component {
         const data = this.props.detail;
 
         const linkedSampleComponents = data.linked_samples.map(sample =>
-            <LinkContainer key={sample.id} to={`/samples/${sample.id}`}>
-                <Button>
-                    {sample.name}
-                </Button>
-            </LinkContainer>
+            <Col key={sample.id} xs={6} sm={4} md={3} lg={2}>
+                <LinkContainer className="linked-sample-button" to={`/samples/${sample.id}`}>
+                    <Button block>
+                        {sample.name}
+                    </Button>
+                </LinkContainer>
+            </Col>
         );
 
         return (
@@ -73,9 +75,9 @@ class SubtractionDetail extends React.Component {
                     <strong>Linked Samples</strong> <Badge>{linkedSampleComponents.length}</Badge>
                 </h4>
 
-                <div className="linked-sample-container">
+                <Row>
                     {linkedSampleComponents}
-                </div>
+                </Row>
             </div>
         )
     }

@@ -55,13 +55,13 @@ class SubtractionList extends React.Component {
                 <LinkContainer key={document.id} className="spaced" to={`/subtraction/${document.id}`}>
                     <ListGroupItem>
                         <Row>
-                            <Col xs={8} xs={12} md={4}>
+                            <Col xs={8} md={4}>
                                 <strong>{document.id}</strong>
                             </Col>
                             <Col xsHidden smHidden md={3} className="text-muted">
                                 {document.description}
                             </Col>
-                            <Col xs={4} xs={12} md={5}>
+                            <Col xs={4} md={5}>
                                 {statusComponent}
                             </Col>
                         </Row>
