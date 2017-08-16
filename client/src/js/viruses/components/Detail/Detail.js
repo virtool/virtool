@@ -16,15 +16,16 @@ import { Switch, Route, Redirect } from "react-router-dom";
 import { LinkContainer } from "react-router-bootstrap";
 import { Label, Nav, NavItem } from "react-bootstrap";
 
-import { getVirus } from "../../actions";
+import { getVirus, showEditVirus, showRemoveVirus } from "../../actions";
 import { Flex, FlexItem, Icon, Spinner } from "virtool/js/components/Base";
 import IsolateEditor from "./Editor";
 import General from "./General";
 import AddIsolate from "./AddIsolate";
 import Schema from "./Schema";
 import History from "./History";
+import EditVirus from "./EditVirus";
 import RemoveVirus from "./RemoveVirus";
-import {showRemoveVirus} from "../../actions";
+
 
 const VirusSection = (props) => (
     <div>
@@ -45,6 +46,7 @@ class VirusDetail extends React.Component {
         history: PropTypes.object,
         detail: PropTypes.object,
         getVirus: PropTypes.func,
+        showEdit: PropTypes.func,
         showRemove: PropTypes.func
     };
 
@@ -73,12 +75,12 @@ class VirusDetail extends React.Component {
                 );
             }
 
-            const virusName = this.props.detail.name;
+            const { name, abbreviation } = this.props.detail;
 
             content = (
                 <div>
                     <Helmet>
-                        <title>{virusName}</title>
+                        <title>{name}</title>
                     </Helmet>
 
                     <h3 style={{marginBottom: "20px"}}>
@@ -86,17 +88,24 @@ class VirusDetail extends React.Component {
                             <FlexItem grow={1}>
                                 <Flex alignItems="center">
                                     <strong>
-                                        {virusName}
+                                        {name}
                                     </strong>
                                     <FlexItem grow={1} pad={5}>
                                         <small className="text-strong">
-                                            {this.props.detail.abbreviation}
+                                            {abbreviation}
                                         </small>
                                     </FlexItem>
                                 </Flex>
                             </FlexItem>
 
                             {modifiedLabel}
+
+                            <Icon
+                                bsStyle="warning"
+                                name="pencil"
+                                style={{fontSize: "18px", paddingLeft: "5px"}}
+                                onClick={() => this.props.showEdit()}
+                            />
 
                             <Icon
                                 bsStyle="danger"
@@ -127,7 +136,8 @@ class VirusDetail extends React.Component {
                         </LinkContainer>
                     </Nav>
 
-                    <RemoveVirus virusId={virusId} virusName={virusName} history={this.props.history} />
+                    <EditVirus virusId={virusId} name={name} abbreviation={abbreviation} />
+                    <RemoveVirus virusId={virusId} virusName={name} history={this.props.history} />
 
                     <Switch>
                         <Redirect from="/viruses/:virusId" to={`/viruses/${virusId}/virus`} exact />
@@ -165,8 +175,12 @@ const mapDispatchToProps = (dispatch) => {
             dispatch(getVirus(virusId));
         },
 
+        showEdit: () => {
+            dispatch(showEditVirus());
+        },
+
         showRemove: () => {
-            dispatch(showRemoveVirus())
+            dispatch(showRemoveVirus());
         }
     };
 };

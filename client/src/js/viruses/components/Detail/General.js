@@ -25,32 +25,7 @@ import Issues from "./Issues";
  */
 const VirusGeneral = (props) => {
 
-    let nameCell;
-    let abbrCell;
-
-    if (props.canModify) {
-        nameCell = (
-            <InputCell
-                className="col-sm-8"
-                field="name"
-                value={props.name}
-                onSave={props.onSave}
-            />
-        );
-
-        abbrCell = (
-            <InputCell
-                field="abbreviation"
-                value={props.abbreviation}
-                onSave={props.onSave}
-            />
-        );
-    } else {
-        nameCell = <td className="col-sm-8">{props.name}</td>;
-        abbrCell = <td>{props.abbreviation}</td>;
-    }
-
-    const databaseIdRow = props.showIds ? (
+    const uniqueIdRow = props.showIds ? (
         <tr>
             <th>Unique ID</th>
             <td>{props.virusId}</td>
@@ -71,17 +46,17 @@ const VirusGeneral = (props) => {
                 <tbody>
                     <tr>
                         <th className="col-sm-4">Name</th>
-                        {nameCell}
+                        <td className="col-sm-8">{props.name}</td>
                     </tr>
                     <tr>
                         <th>Abbreviation</th>
-                        {abbrCell}
+                        <td>{props.abbreviation}</td>
                     </tr>
                     <tr>
                         <th>Version</th>
                         <td>{props.version}</td>
                     </tr>
-                    {databaseIdRow}
+                    {uniqueIdRow}
                 </tbody>
             </Table>
         </div>
