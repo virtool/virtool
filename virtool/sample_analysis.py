@@ -127,7 +127,6 @@ def check_rid(rid):
 async def format_analysis(db, analysis):
 
     isolate_fields = [
-        "isolate_id",
         "default",
         "source_name",
         "source_type"
@@ -154,7 +153,9 @@ async def format_analysis(db, analysis):
                 virus_id = hit_document["virus_id"]
                 virus_version = hit_document["virus_version"]
 
-                if virus_id not in fetched_viruses:
+                virus_document = fetched_viruses.get(virus_id, None)
+
+                if virus_document is None:
                     # Get the virus entry (patched to correct version).
                     _, virus_document, _ = await virtool.virus_history.patch_virus_to_version(
                         db,
@@ -172,23 +173,29 @@ async def format_analysis(db, analysis):
                         "ref_length": 0
                     }
 
-                virus_document = fetched_viruses[virus_id]
-
                 max_ref_length = 0
 
                 for isolate in virus_document["isolates"]:
+
+                    try:
+                        isolate_id = isolate["id"]
+                    except KeyError:
+                        isolate_id = isolate["isolate_id"]
 
                     ref_length = 0
 
                     for sequence in isolate["sequences"]:
                         if sequence["_id"] == accession:
-                            isolate_id = isolate["isolate_id"]
-
                             if isolate_id not in found_isolates:
                                 reduced_isolate = {key: isolate[key] for key in isolate_fields}
-                                reduced_isolate["hits"] = list()
+
+                                reduced_isolate.update({
+                                    "id": isolate_id,
+                                    "hits": list()
+                                })
+
                                 annotated[virus_id]["isolates"][isolate_id] = reduced_isolate
-                                found_isolates.append(isolate["isolate_id"])
+                                found_isolates.append(isolate_id)
 
                             hit = dict(hit_document)
                             hit.update({key: sequence[key] for key in sequence_fields})
