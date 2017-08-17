@@ -13,7 +13,7 @@ import React, { PropTypes } from "react";
 import { connect } from "react-redux";
 import { Modal, Panel } from "react-bootstrap";
 
-import { getUnbuilt, hideRebuild } from "../actions";
+import { getUnbuilt, createIndex, hideRebuild } from "../actions";
 import { Button } from "virtool/js/components/Base";
 import RebuildHistory from "./History";
 
@@ -27,7 +27,8 @@ class RebuildIndex extends React.Component {
         show: PropTypes.bool,
         unbuilt: PropTypes.object,
         onHide: PropTypes.func,
-        onGetUnbuilt: PropTypes.func
+        onGetUnbuilt: PropTypes.func,
+        onRebuild: PropTypes.func
     };
 
     modalEntered = () => {
@@ -36,6 +37,7 @@ class RebuildIndex extends React.Component {
 
     save = (event) => {
         event.preventDefault();
+        this.props.onRebuild();
     };
 
     render () {
@@ -74,6 +76,10 @@ const mapDispatchToProps = (dispatch) => {
     return {
         onGetUnbuilt: () => {
             dispatch(getUnbuilt());
+        },
+
+        onRebuild: () => {
+            dispatch(createIndex());
         },
 
         onHide: () => {

@@ -57,7 +57,7 @@ export function* getUnbuilt (action) {
 export function* createIndex (action) {
     yield setPending(function* () {
         try {
-            const response = yield call(indexesAPI.create);
+            const response = yield indexesAPI.create();
             yield put({type: CREATE_INDEX.SUCCEEDED, data: response.body});
         } catch (error) {
             yield put({type: CREATE_INDEX.FAILED, error: error});
