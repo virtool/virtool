@@ -22,6 +22,7 @@ import {
     EDIT_ISOLATE,
     REMOVE_ISOLATE,
     ADD_SEQUENCE,
+    EDIT_SEQUENCE,
     REMOVE_SEQUENCE,
     REVERT,
     SET_APP_PENDING,
@@ -39,6 +40,7 @@ export function* watchViruses () {
     yield takeEvery(EDIT_ISOLATE.REQUESTED, editIsolate);
     yield takeEvery(REMOVE_ISOLATE.REQUESTED, removeIsolate);
     yield takeEvery(ADD_SEQUENCE.REQUESTED, addSequence);
+    yield takeEvery(EDIT_SEQUENCE.REQUESTED, editSequence);
     yield takeEvery(REMOVE_SEQUENCE.REQUESTED, removeSequence);
     yield takeEvery(REVERT.REQUESTED, revert);
 }
@@ -170,6 +172,26 @@ export function* addSequence (action) {
             yield put({type: ADD_SEQUENCE.SUCCEEDED, data: response.body});
         } catch (error) {
             yield put({type: ADD_SEQUENCE.FAILED, error: error});
+        }
+    }, action);
+}
+
+export function* editSequence (action) {
+    yield setPending(function* (action) {
+        try {
+            yield call(
+                virusesAPI.editSequence,
+                action.virusId,
+                action.isolateId,
+                action.sequenceId,
+                action.definition,
+                action.host,
+                action.sequence
+            );
+            const response = yield call(virusesAPI.get, action.virusId);
+            yield put({type: EDIT_SEQUENCE.SUCCEEDED, data: response.body});
+        } catch (error) {
+            yield put({type: EDIT_SEQUENCE.FAILED, error: error});
         }
     }, action);
 }

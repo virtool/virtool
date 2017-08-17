@@ -87,7 +87,7 @@ const virusesAPI = {
     },
 
     editSequence: (virusId, isolateId, sequenceId, definition, host, sequence) => {
-        return Request.post(`/api/viruses/${virusId}/isolates/${isolateId}/sequences/${sequenceId}`)
+        return Request.patch(`/api/viruses/${virusId}/isolates/${isolateId}/sequences/${sequenceId}`)
             .send({
                 definition,
                 host,
