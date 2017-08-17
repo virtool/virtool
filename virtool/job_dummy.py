@@ -1,5 +1,4 @@
 import time
-import pprint
 
 import virtool.job
 
@@ -16,27 +15,14 @@ class DummyJob(virtool.job.Job):
         self.long = self._task_args.get("long", False)
 
         self._stage_list = [
-            self.say_message,
-            self.do_db_op
+            self.say_message
         ]
 
-    def say_message(self):
-        self.call_static("pass_message", self.message)
-
-        if self.long:
-            time.sleep(5)
-
-        if self.generate_python_error:
-            # This will cause a Python error
-            print("pass_message", 1 + "2")
-
-        if self.generate_process_error:
-            out = self.run_process(["ls", "/this/path/should/not/exist"])
-            print(out)
-
-    def do_db_op(self):
-        self.db.job_test.insert_one({"message": self.message})
+    async def say_message(self):
+        phrase = self.run_method(self.ext_method, "fred", duration=5)
+        print(phrase)
 
     @staticmethod
-    def pass_message(manager, message):
-        pprint.pprint(message)
+    def ext_method(name, duration=5):
+        time.sleep(duration)
+        return "hello world, my name is " + name
