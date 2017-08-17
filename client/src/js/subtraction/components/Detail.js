@@ -37,9 +37,9 @@ class SubtractionDetail extends React.Component {
         const data = this.props.detail;
 
         const linkedSampleComponents = data.linked_samples.map(sample =>
-            <Col key={sample.id} xs={6} sm={4} md={3} lg={2}>
-                <LinkContainer className="linked-sample-button" to={`/samples/${sample.id}`}>
-                    <Button block>
+            <Col key={sample.id} className="linked-sample-button" xs={6} sm={4} md={3} lg={2}>
+                <LinkContainer  to={`/samples/${sample.id}`}>
+                    <Button  block>
                         {sample.name}
                     </Button>
                 </LinkContainer>
