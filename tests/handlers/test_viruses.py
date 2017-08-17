@@ -2093,6 +2093,7 @@ class TestCreateSequence:
 
         new.update({
             "modified": True,
+            "verified": True,
             "version": 1
         })
 
@@ -2111,7 +2112,7 @@ class TestCreateSequence:
                 "id": "6116cba1",
                 "abbreviation": "PVF",
                 "modified": True,
-                "verified": False,
+                "verified": True,
                 "name": "Prunus virus F",
                 "version": 1
             }
@@ -2237,6 +2238,7 @@ class TestEditSequence:
 
         new.update({
             "modified": True,
+            "verified": True,
             "version": 1
         })
 
@@ -2255,7 +2257,7 @@ class TestEditSequence:
                 "id": "6116cba1",
                 "abbreviation": "PVF",
                 "modified": True,
-                "verified": False,
+                "verified": True,
                 "name": "Prunus virus F",
                 "version": 1
             }

@@ -5,37 +5,16 @@ import { capitalize } from "lodash";
 import { connect } from "react-redux";
 import { Panel, Table } from "react-bootstrap";
 
-
 import { updateSample } from "../actions";
-import { InputCell } from "virtool/js/components/Base";
 
 const SampleDetailGeneral = (props) => {
 
-    const cells = ["name", "host", "isolate"].map(field => {
-        let inputCell;
-
-        if (props.canModify) {
-            inputCell = (
-                <InputCell
-                    _id={props._id}
-                    field={field}
-                    value={props[field]}
-                    className="col-sm-8"
-                    onSave={(key, value) => props.onChangeValue(props.sampleId, key, value)}
-                />
-            );
-        } else {
-            inputCell = <td className="col-sm-8">{props[field]}</td>;
-        }
-
-        return (
-            <tr key={field}>
-                <th className="col-md-4">{capitalize(field)}</th>
-                {inputCell}
-            </tr>
-        );
-
-    });
+    const cells = ["name", "host", "isolate"].map(field =>
+        <tr key={field}>
+            <th className="col-xs-4">{capitalize(field)}</th>
+            <td className="col-xs-8">{props[field]}</td>
+        </tr>
+    );
 
     let idCell;
 
@@ -69,8 +48,8 @@ const SampleDetailGeneral = (props) => {
                 <Table bordered fill>
                     <tbody>
                         <tr>
-                            <th className="col-sm-4">Read Count</th>
-                            <td className="col-sm-8">{props.count}</td>
+                            <th className="col-xs-4">Read Count</th>
+                            <td className="col-xs-8">{props.count}</td>
                         </tr>
                         <tr>
                             <th>Length Range</th>
@@ -92,8 +71,8 @@ const SampleDetailGeneral = (props) => {
                 <Table bordered fill>
                     <tbody>
                         <tr>
-                            <th className="col-sm-4">Original Files</th>
-                            <td className="col-sm-8">{props.files.join(", ")}</td>
+                            <th className="col-xs-4">Original Files</th>
+                            <td className="col-xs-8">{props.files.join(", ")}</td>
                         </tr>
                         <tr>
                             <th>Encoding</th>

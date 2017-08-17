@@ -67,7 +67,7 @@ class EditVirus extends React.Component {
                 <form onSubmit={this.save}>
                     <Modal.Body>
                         <Row>
-                            <Col md={6} sm={12}>
+                            <Col md={6} xs={12}>
                                 <FormGroup>
                                     <ControlLabel>Name</ControlLabel>
                                     <FormControl
@@ -77,7 +77,7 @@ class EditVirus extends React.Component {
                                     />
                                 </FormGroup>
                             </Col>
-                            <Col md={6} sm={12}>
+                            <Col md={6} xs={12}>
                                 <FormGroup>
                                     <ControlLabel>Abbreviation</ControlLabel>
                                     <FormControl

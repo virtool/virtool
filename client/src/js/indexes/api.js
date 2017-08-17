@@ -19,6 +19,10 @@ const indexesAPI = {
         return Request.get(`/api/indexes/${indexVersion}`);
     },
 
+    getUnbuilt: () => {
+        return Request.get("/api/indexes/unbuilt");
+    },
+
     create: () => {
         return Request.post("/api/indexes");
     },

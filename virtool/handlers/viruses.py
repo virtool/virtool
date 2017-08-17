@@ -490,6 +490,17 @@ async def edit_isolate(req):
     # Get the joined entry now that it has been updated.
     new = await virtool.virus.join(db, virus_id, document)
 
+    issues = await virtool.virus.verify(db, virus_id, joined=new)
+
+    if issues is None:
+        await db.viruses.update_one({"_id": virus_id}, {
+            "$set": {
+                "verified": True
+            }
+        })
+
+        new["verified"] = True
+
     isolate_name = virtool.virus.format_isolate_name(isolate)
 
     # Use the old and new entry to add a new history document for the change.
@@ -559,6 +570,17 @@ async def set_as_default(req):
 
     # Get the joined entry now that it has been updated.
     new = await virtool.virus.join(db, virus_id, document)
+
+    issues = await virtool.virus.verify(db, virus_id, joined=new)
+
+    if issues is None:
+        await db.viruses.update_one({"_id": virus_id}, {
+            "$set": {
+                "verified": True
+            }
+        })
+
+        new["verified"] = True
 
     isolate_name = virtool.virus.format_isolate_name(isolate)
 
@@ -750,6 +772,17 @@ async def create_sequence(req):
 
     new = await virtool.virus.join(db, virus_id, document)
 
+    issues = await virtool.virus.verify(db, virus_id, joined=new)
+
+    if issues is None:
+        await db.viruses.update_one({"_id": virus_id}, {
+            "$set": {
+                "verified": True
+            }
+        })
+
+        new["verified"] = True
+
     isolate = virtool.virus.find_isolate(old["isolates"], isolate_id)
 
     await virtool.virus_history.add(
@@ -806,6 +839,15 @@ async def edit_sequence(req):
 
     new = await virtool.virus.join(db, virus_id, document)
 
+    if await virtool.virus.verify(db, virus_id, joined=new) is None:
+        await db.viruses.update_one({"_id": virus_id}, {
+            "$set": {
+                "verified": True
+            }
+        })
+
+        new["verified"] = True
+
     isolate = virtool.virus.find_isolate(old["isolates"], isolate_id)
 
     await virtool.virus_history.add(
@@ -856,6 +898,15 @@ async def remove_sequence(req):
     })
 
     new = await virtool.virus.join(db, virus_id)
+
+    if await virtool.virus.verify(db, virus_id, joined=new) is None:
+        await db.viruses.update_one({"_id": virus_id}, {
+            "$set": {
+                "verified": True
+            }
+        })
+
+        new["verified"] = True
 
     isolate_name = virtool.virus.format_isolate_name(isolate)
 

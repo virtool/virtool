@@ -11,9 +11,12 @@ import {
     WS_UPDATE_INDEX,
     FIND_INDEXES,
     GET_INDEX,
+    GET_UNBUILT,
     CREATE_INDEX,
     GET_INDEX_HISTORY,
-    CLEAR_INDEX_ERROR
+    CLEAR_INDEX_ERROR,
+    SHOW_REBUILD,
+    HIDE_REBUILD
 } from "../actionTypes";
 
 const initialState = {
@@ -23,7 +26,10 @@ const initialState = {
     error: false,
 
     detail: null,
-    history: null
+    history: null,
+    unbuilt: null,
+
+    showRebuild: false
 };
 
 const indexesReducer = (state = initialState, action) => {
@@ -55,6 +61,16 @@ const indexesReducer = (state = initialState, action) => {
                 detail: action.data
             });
 
+        case GET_UNBUILT.REQUESTED:
+            return assign({}, state, {
+                unbuilt: null
+            });
+
+        case GET_UNBUILT.SUCCEEDED:
+            return assign({}, state, {
+                unbuilt: action.data
+            });
+
         case CREATE_INDEX.FAILED:
             return assign({}, state, {
                 error: true
@@ -68,6 +84,16 @@ const indexesReducer = (state = initialState, action) => {
         case GET_INDEX_HISTORY.SUCCEEDED:
             return assign({}, state, {
                 history: action.data
+            });
+
+        case SHOW_REBUILD:
+            return assign({}, state, {
+                showRebuild: true
+            });
+
+        case HIDE_REBUILD:
+            return assign({}, state, {
+                hideRebuild: false
             });
 
         case CLEAR_INDEX_ERROR:

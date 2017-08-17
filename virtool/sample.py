@@ -132,7 +132,7 @@ async def remove_samples(db, settings, id_list):
     :type id_list: list
 
     :return: the result from the samples collection remove operation
-    :rtype: dict
+    :rtype: Coroutine[dict]
 
     """
     if not isinstance(id_list, list):

@@ -26,10 +26,15 @@ const HTTPOptions = (props) => {
 
     return (
         <Row>
-            <Col md={12}>
+            <Col xs={12}>
                 <h5><strong>HTTP Server</strong></h5>
             </Col>
-            <Col md={6}>
+            <Col xs={12} md={6} mdPush={6}>
+                <Panel footer={footer}>
+                    Change the address and port the the web server listens on.
+                </Panel>
+            </Col>
+            <Col xs={12} md={6} mdPull={6}>
                 <Panel>
                     <InputSave
                         name="server_host"
@@ -46,11 +51,6 @@ const HTTPOptions = (props) => {
                         onSave={event => props.onChangePort("server_port", event.value)}
                         initialValue={props.port}
                     />
-                </Panel>
-            </Col>
-            <Col md={6}>
-                <Panel footer={footer}>
-                    Change the address and port the the Virtool HTTP server listens on.
                 </Panel>
             </Col>
         </Row>

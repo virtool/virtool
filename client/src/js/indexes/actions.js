@@ -11,9 +11,12 @@ import {
     WS_UPDATE_INDEX,
     FIND_INDEXES,
     GET_INDEX,
+    GET_UNBUILT,
     CREATE_INDEX,
     GET_INDEX_HISTORY,
-    CLEAR_INDEX_ERROR
+    CLEAR_INDEX_ERROR,
+    SHOW_REBUILD,
+    HIDE_REBUILD
 } from "../actionTypes";
 
 
@@ -37,6 +40,12 @@ export function getIndex (indexVersion) {
     };
 }
 
+export function getUnbuilt () {
+    return {
+        type: GET_UNBUILT.REQUESTED
+    };
+}
+
 export function createIndex () {
     return {
         type: CREATE_INDEX.REQUESTED
@@ -53,5 +62,17 @@ export function getIndexHistory (indexVersion) {
 export function clearIndexError () {
     return {
         type: CLEAR_INDEX_ERROR
+    };
+}
+
+export function showRebuild () {
+    return {
+        type: SHOW_REBUILD
+    };
+}
+
+export function hideRebuild () {
+    return {
+        type: HIDE_REBUILD
     };
 }

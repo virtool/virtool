@@ -13,10 +13,10 @@ import React, { PropTypes } from "react";
 import { connect } from "react-redux";
 import { Alert } from "react-bootstrap";
 
-import { Flex, FlexItem, Icon, ListGroupItem } from "virtool/js/components/Base";
-import { findIndexes, createIndex } from "../actions";
+import { Button, Flex, FlexItem, Icon, ListGroupItem } from "virtool/js/components/Base";
+import { findIndexes, showRebuild } from "../actions";
 import IndexEntry from "./Entry";
-import { RebuildIndex } from "./Rebuild";
+import RebuildIndex from "./Rebuild";
 
 class IndexesList extends React.Component {
 
@@ -27,7 +27,8 @@ class IndexesList extends React.Component {
         canRebuild: PropTypes.bool,
 
         onFind: PropTypes.func,
-        onCreate: PropTypes.func
+        onCreate: PropTypes.func,
+        showRebuild: PropTypes.func
     };
 
     componentDidMount () {
@@ -65,13 +66,44 @@ class IndexesList extends React.Component {
                 );
             }
 
+            let alert;
+
+            if (this.props.modifiedCount) {
+                let button;
+
+                if (this.props.canRebuild) {
+                    button = (
+                        <FlexItem pad={20}>
+                            <Button bsStyle="warning" icon="hammer" onClick={this.props.showRebuild} pullRight>
+                                Rebuild
+                            </Button>
+                        </FlexItem>
+                    );
+                }
+
+                alert = (
+                    <Alert bsStyle="warning">
+                        <Flex alignItems="center">
+                            <FlexItem grow={1}>
+                                <Flex alignItems="center">
+                                    <Icon name="notification" />
+                                    <FlexItem pad={10}>
+                                        The virus reference database has changed and the index must be rebuilt before
+                                        the new information will be included in future analyses.
+                                    </FlexItem>
+                                </Flex>
+                            </FlexItem>
+                            {button}
+                        </Flex>
+
+                        <RebuildIndex />
+                    </Alert>
+                );
+            }
+
             content = (
                 <div>
-                    <RebuildIndex
-                        canRebuild={this.props.canRebuild}
-                        modifiedCount={this.props.modifiedCount}
-                        rebuild={this.props.onCreate}
-                    />
+                    {alert}
 
                     <div className="list-group">
                         {indexComponents}
@@ -118,8 +150,8 @@ const mapDispatchToProps = (dispatch) => {
             dispatch(findIndexes());
         },
 
-        onCreate: () => {
-            dispatch(createIndex());
+        showRebuild: () => {
+            dispatch(showRebuild());
         }
     };
 };

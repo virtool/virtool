@@ -86,6 +86,16 @@ async def get(req):
     return json_response(document)
 
 
+async def get_unbuilt(req):
+    db = req.app["db"]
+
+    history = await db.history.find({"index.id": "unbuilt"}, virtool.virus_history.LIST_PROJECTION).to_list(None)
+
+    return json_response({
+        "history": [virtool.utils.base_processor(c) for c in history]
+    })
+
+
 @protected("rebuild_index")
 async def create(req):
     """
@@ -98,7 +108,7 @@ async def create(req):
     if await db.indexes.count({"ready": False}):
         return conflict("Index build already in progress")
 
-    if await db.viruses.count({"modified": True}):
+    if await db.viruses.count({"verified": False}):
         return bad_request("There are unverified viruses")
 
     if not await db.history.count({"index.id": "unbuilt"}):

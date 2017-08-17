@@ -109,63 +109,65 @@ class EditSequence extends React.Component {
                 <Modal.Header onHide={this.props.onHide} closeButton>
                     Edit Sequence
                 </Modal.Header>
-                <Modal.Body>
-                    {overlay}
 
-                    <form onSubmit={this.save}>
-                        <Row>
-                            <Col sm={12}  md={6}>
-                                <FormGroup>
-                                    <ControlLabel>Accession (ID)</ControlLabel>
-                                    <InputGroup>
+                <form onSubmit={this.save}>
+                    <Modal.Body>
+                        {overlay}
+
+
+                            <Row>
+                                <Col xs={12}  md={6}>
+                                    <FormGroup>
+                                        <ControlLabel>Accession (ID)</ControlLabel>
+                                        <InputGroup>
+                                            <FormControl
+                                                value={this.props.sequenceId}
+                                                readOnly
+                                            />
+                                            <InputGroup.Button>
+                                                <Button onClick={this.autofill}>
+                                                    <Icon name="wand"  />
+                                                </Button>
+                                            </InputGroup.Button>
+                                        </InputGroup>
+                                    </FormGroup>
+                                </Col>
+                                <Col xs={12} md={6}>
+                                    <FormGroup>
+                                        <ControlLabel>Host</ControlLabel>
                                         <FormControl
-                                            value={this.props.sequenceId}
-                                            readOnly
+                                            value={this.state.host}
+                                            onChange={(e) => this.setState({host: e.target.value})}
                                         />
-                                        <InputGroup.Button>
-                                            <Button onClick={this.autofill}>
-                                                <Icon name="wand"  />
-                                            </Button>
-                                        </InputGroup.Button>
-                                    </InputGroup>
-                                </FormGroup>
-                            </Col>
-                            <Col sm={12} md={6}>
-                                <FormGroup>
-                                    <ControlLabel>Host</ControlLabel>
-                                    <FormControl
-                                        value={this.state.host}
-                                        onChange={(e) => this.setState({host: e.target.value})}
+                                    </FormGroup>
+                                </Col>
+                            </Row>
+                            <Row>
+                                <Col xs={12}>
+                                    <FormGroup>
+                                        <ControlLabel>Definition</ControlLabel>
+                                        <FormControl
+                                            value={this.state.definition}
+                                            onChange={(e) => this.setState({definition: e.target.value})}
+                                        />
+                                    </FormGroup>
+                                </Col>
+                            </Row>
+                            <Row>
+                                <Col xs={12}>
+                                    <SequenceField
+                                        sequence={this.state.sequence}
+                                        onChange={(e) => this.setState({sequence: e.target.value})}
                                     />
-                                </FormGroup>
-                            </Col>
-                        </Row>
-                        <Row>
-                            <Col sm={12}>
-                                <FormGroup>
-                                    <ControlLabel>Definition</ControlLabel>
-                                    <FormControl
-                                        value={this.state.definition}
-                                        onChange={(e) => this.setState({definition: e.target.value})}
-                                    />
-                                </FormGroup>
-                            </Col>
-                        </Row>
-                        <Row>
-                            <Col sm={12}>
-                                <SequenceField
-                                    sequence={this.state.sequence}
-                                    onChange={(e) => this.setState({sequence: e.target.value})}
-                                />
-                            </Col>
-                        </Row>
-                    </form>
-                </Modal.Body>
-                <Modal.Footer>
-                    <Button bsStyle="primary" icon="floppy" onClick={this.save}>
-                        Save
-                    </Button>
-                </Modal.Footer>
+                                </Col>
+                            </Row>
+                    </Modal.Body>
+                    <Modal.Footer>
+                        <Button type="submit" bsStyle="primary" icon="floppy">
+                            Save
+                        </Button>
+                    </Modal.Footer>
+                </form>
             </Modal>
         );
     }

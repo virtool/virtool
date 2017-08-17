@@ -363,11 +363,11 @@ class TestCreate:
         await client.db.viruses.insert_many([
             {
                 "_id": "foo",
-                "modified": False
+                "verified": False
             },
             {
                 "_id": "bar",
-                "modified": True
+                "verified": True
             }
         ])
 

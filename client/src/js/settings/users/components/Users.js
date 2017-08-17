@@ -89,12 +89,12 @@ class ManageUsers extends React.Component {
 
         return (
             <Row>
-                <Col md={3}>
+                <Col xs={3} md={2}>
                     <ListGroup>
                         {userComponents}
                     </ListGroup>
                 </Col>
-                <Col md={9}>
+                <Col xs={9} md={10}>
                     {content}
                 </Col>
             </Row>

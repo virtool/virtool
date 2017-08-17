@@ -59,7 +59,7 @@ class InternalControl extends React.Component {
         return (
             <div>
                 <Row>
-                    <Col md={6}>
+                    <Col xs={12} md={6}>
                         <Flex alignItems="center" style={{marginBottom: "10px"}}>
                             <FlexItem grow={1} >
                                 <strong>Internal Control</strong>
@@ -73,22 +73,22 @@ class InternalControl extends React.Component {
                             </FlexItem>
                         </Flex>
                     </Col>
-                    <Col md={6} />
+                    <Col smHidden md={6} />
                 </Row>
                 <Row>
-                    <Col md={6}>
+                    <Col xs={12} mdPush={6} md={6}>
+                        <Panel>
+                            Set a virus that is spiked into samples to be used as a positive control. Viral abundances
+                            in a sample can be calculated as proportions relative to the control.
+                        </Panel>
+                    </Col>
+                    <Col xs={12} mdPull={6} md={6}>
                         <Panel>
                             <Typeahead
                                 options={["Test"]}
                                 onChange={(selected) => this.props.set("internal_control_id", selected[0].id)}
                                 disabled={!this.props.useInternalControl}
                             />
-                        </Panel>
-                    </Col>
-                    <Col md={6}>
-                        <Panel>
-                            Set a virus that is spiked into samples to be used as a positive control. Viral abundances
-                            in a sample can be calculated as proportions relative to the control.
                         </Panel>
                     </Col>
                 </Row>
