@@ -1,5 +1,3 @@
-from collections import defaultdict
-
 import virtool.utils
 import virtool.virus_index
 import virtool.virus_history
