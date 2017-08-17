@@ -1,5 +1,6 @@
 import os
 import sys
+import json
 import uvloop
 import asyncio
 
@@ -38,6 +39,16 @@ settings_path = os.path.join(sys.path[0], "settings.json")
 
 skip_setup = os.path.isfile(settings_path)
 
+try:
+    with open(settings_path, "r") as handle:
+        settings_temp = json.load(handle)
+except FileNotFoundError:
+    settings_temp = dict()
+
 if __name__ == "__main__":
     app = create_app(loop, skip_setup=skip_setup)
-    web.run_app(app, host="localhost", port=9950)
+
+    host = args.host or settings_temp.get("server_host", "localhost")
+    port = args.port or settings_temp.get("server_port", 9950)
+
+    web.run_app(app, host=host, port=port)

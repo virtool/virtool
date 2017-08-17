@@ -11,14 +11,12 @@ def get_args():
     parser.add_argument(
         "-H", "--host",
         dest="host",
-        default="localhost",
         help="hostname to listen on"
     )
 
     parser.add_argument(
         "-p", "--port",
         dest="port",
-        default=9550,
         help="port to listen on"
     )
 
