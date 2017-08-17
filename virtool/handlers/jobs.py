@@ -166,9 +166,9 @@ async def clear(req):
     })
 
 
-async def test_job(req):
+async def dummy_job(req):
     """
-    Submit a test job
+    Submit a dummy job
 
     """
     data = await req.json()
@@ -178,7 +178,7 @@ async def test_job(req):
     task_args["message"] = "hello world"
 
     document = await req.app["job_manager"].new(
-        "test_task",
+        "dummy_job",
         task_args,
         1,
         4,

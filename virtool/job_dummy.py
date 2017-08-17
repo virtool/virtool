@@ -4,7 +4,7 @@ import pprint
 import virtool.job
 
 
-class TestTask(virtool.job.Job):
+class DummyJob(virtool.job.Job):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
