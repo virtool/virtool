@@ -110,7 +110,7 @@ async def create(req):
     if await db.indexes.count({"ready": False}):
         return conflict("Index build already in progress")
 
-    if await db.viruses.count({"modified": True}):
+    if await db.viruses.count({"verified": False}):
         return bad_request("There are unverified viruses")
 
     if not await db.history.count({"index.id": "unbuilt"}):
