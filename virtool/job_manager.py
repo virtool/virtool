@@ -1,10 +1,9 @@
 import asyncio
-import logging
 import inspect
-import multiprocessing
-
+import logging
 from pymongo import ReturnDocument
 from operator import itemgetter
+from concurrent.futures import ProcessPoolExecutor
 
 import virtool.job
 import virtool.job_classes
@@ -13,6 +12,31 @@ import virtool.errors
 import virtool.virus_index
 
 logger = logging.getLogger(__name__)
+
+
+import time
+import asyncio
+import traceback
+import multiprocessing
+from concurrent.futures import ProcessPoolExecutor
+
+
+def dummy(word):
+    print("Dummy starting")
+    for i in range(5):
+        print(i + 1)
+        time.sleep(1)
+    print("The word is " + word)
+    return word
+
+
+class Manager:
+
+    def __init__(self, loop, db, settings, dispatch):
+        self.loop = loop
+        self.db = db
+        self.settings = settings
+        self.executor = ProcessPoolExecutor()
 
 
 class Manager:
@@ -47,11 +71,10 @@ class Manager:
             "mem": 0
         }
 
+        self.pool = ProcessPoolExecutor()
+
         #: A :class:`dict` for keeping track of the number or running jobs for each task type.
         self.task_counts = {key: 0 for key in virtool.job_classes.TASK_CLASSES}
-
-        #: A :class:`multiprocessing.Queue` object used to communicate with job processes.
-        self.queue = multiprocessing.Queue()
 
         #: A kill signal for the job manager. The main loop will stop when :attr:`.die` is ``True``.
         self.die = False

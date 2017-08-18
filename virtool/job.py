@@ -64,37 +64,31 @@ def dispatch_processor(document):
     return document
 
 
-class Job(multiprocessing.Process):
+class Job():
 
-    def __init__(self, job_id, settings, message_queue, task, task_args, proc, mem):
+    def __init__(self, job_id, settings, task, task_args, proc, mem):
         super().__init__()
 
         #: The job's database id.
-        self._job_id = job_id
+        self.id = job_id
 
         #: A dict of server settings.
         self._settings = settings
 
-        #: Used to communicate with the main process.
-        self._queue = message_queue
-
         #: The task name.
-        self._task = task
+        self.task = task
 
         #: The task args passed from the :meth:`.jobs.Collection.new` method.
-        self._task_args = task_args
+        self.task_args = task_args
 
         #: The number of cores the job is allowed to use.
-        self._proc = proc
+        self.proc = proc
 
         #: The amount of memory in GB that the job is allowed to use.
-        self._mem = mem
-
-        # If the job owns an external subprocess, the subprocess.Popen object will be referred to by this attribute. If
-        # no process is open, the attribute is set to None.
-        self._process = None
+        self.mem = mem
 
         self._stage_list = list()
+
         self.stage_counter = 0
         self.progress = 0
 
@@ -104,24 +98,7 @@ class Job(multiprocessing.Process):
         self._stage = None
         self._error = None
 
-        self._db_host = self._settings["db_host"]
-        self._db_port = self._settings["db_port"]
-        self._db_name = self._settings["db_name"]
-
-        self.db = None
-
     def run(self):
-
-        self.db = pymongo.MongoClient(host=self._db_host, port=self._db_port)[self._db_name]
-
-        # Set the process title so that it is easily identifiable as a virtool job process.
-        setproctitle.setproctitle("virtool-{}".format(self._job_id))
-
-        # Ignore keyboard interrupts. The manager will deal with the signal and cancel jobs safely.
-        signal.signal(signal.SIGINT, signal.SIG_IGN)
-
-        # When the manager terminates jobs, call :meth:`.handle_sigterm`.
-        signal.signal(signal.SIGTERM, handle_sigterm)
 
         was_cancelled = False
         had_error = False
@@ -171,14 +148,6 @@ class Job(multiprocessing.Process):
             self.progress = 1
             self.update_status(state="complete", stage=None)
 
-        except Termination:
-            # The Termination exception will only be caught here when the termination is due to cancellation of the job
-            # by the user.
-            was_cancelled = True
-
-        except JobError:
-            had_error = True
-
         if had_error or was_cancelled:
             self.progress = 1
 
@@ -195,6 +164,7 @@ class Job(multiprocessing.Process):
 
         if had_error:
             self.update_status(state="error", stage=self._stage, error=self._error)
+
 
     def run_process(self, cmd, stdout_handler=None, dont_read_stdout=False, no_output_failure=False, env=None):
         """
@@ -245,12 +215,6 @@ class Job(multiprocessing.Process):
                 "context": "External Process Error"
             }
 
-        if self._error:
-            raise JobError
-
-        # Set the process attribute to None, indicating that there is no running external process.
-        self._process = None
-
         return output
 
     def update_status(self, state=None, stage=None, error=None):
@@ -266,31 +230,8 @@ class Job(multiprocessing.Process):
         # Instruct the manager to update the jobs database collection with the new status information.
         self.call_static("add_status", self._job_id, self.progress, self._state, self._stage, error)
 
-    def call_static(self, method_name, *args, **kwargs):
-        self._queue.put((self._job_id, method_name, args, kwargs))
-
     def cleanup(self):
         pass
-
-
-class Termination(Exception):
-    """
-    Exception raised when a Job handles SIGTERM.
-
-    """
-    pass
-
-
-class JobError(Exception):
-    """
-    Exception raised when a Job encounters and error in a subprocess or stage method."
-
-    """
-    pass
-
-
-def handle_sigterm(*args, **kwargs):
-    raise Termination
 
 
 def handle_exception(max_tb=50, print_message=False):
