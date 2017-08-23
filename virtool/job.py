@@ -1,11 +1,6 @@
-import os
 import sys
-import signal
 import pymongo
 import traceback
-import multiprocessing
-import subprocess
-import setproctitle
 
 import virtool.utils
 
@@ -20,35 +15,18 @@ LIST_PROJECTION = [
 ]
 
 
-def processor(document):
-    """
-    Process a job document for transmission to a client.
-
-    :param document: a job document
-    :type document: dict
-    
-    :return: a processed job document
-    :rtype: dict
-    
-    """
-    return virtool.utils.base_processor(document)
-
-
 def dispatch_processor(document):
     """
     Removes the ``status`` and ``args`` fields from the job document.
-
     Adds a ``username`` field, an ``added`` date taken from the first status entry in the job document, and
     ``state`` and ``progress`` fields taken from the most recent status entry in the job document.
-
     :param document: a document to process.
     :type document: dict
 
     :return: a processed documents.
     :rtype: dict
-
     """
-    document = processor(document)
+    document = virtool.utils.base_processor(document)
 
     status = document.pop("status")
 
@@ -64,226 +42,105 @@ def dispatch_processor(document):
     return document
 
 
-class Job():
+class Job:
 
-    def __init__(self, job_id, settings, task, task_args, proc, mem):
-        super().__init__()
-
-        #: The job's database id.
+    def __init__(self, loop, executor, db, settings, dispatch, job_id, task_name, task_args, proc, mem):
+        self.loop = loop
+        self.executor = executor
+        self.db = db
+        self.settings = settings
+        self.dispatch = dispatch
         self.id = job_id
-
-        #: A dict of server settings.
-        self._settings = settings
-
-        #: The task name.
-        self.task = task
-
-        #: The task args passed from the :meth:`.jobs.Collection.new` method.
+        self.task_name = task_name
         self.task_args = task_args
-
-        #: The number of cores the job is allowed to use.
         self.proc = proc
-
-        #: The amount of memory in GB that the job is allowed to use.
         self.mem = mem
 
-        self._stage_list = list()
+        self.started = False
+        self.finished = False
 
-        self.stage_counter = 0
-        self.progress = 0
-
-        self._do_cleanup = False
-
+        self._progress = 0
         self._state = "waiting"
         self._stage = None
         self._error = None
+        self._task = None
+        self._process_task = None
+        self._stage_list = None
 
-    def run(self):
+    def start(self):
+        self._task = self.loop.create_task(self.run())
+        self.started = True
 
-        was_cancelled = False
-        had_error = False
-
-        try:
-            # Tell the database that the job has started running
-            self.update_status(state="running")
+    async def run(self):
+        for method in self._stage_list:
+            await self.add_status(stage=method.__name__, state="running")
 
             try:
-                # Run the commands in the command list
-                for method in self._stage_list:
-                    self.stage_counter += 1
-
-                    self.progress = round(self.stage_counter / (len(self._stage_list) + 1), 2)
-
-                    # Get the function name and use it to tell the jobs collection that a new stage has been started.
-                    self.update_status(stage=method.__name__)
-
-                    # Run the command function
-                    method()
-
+                await method()
             except:
-                # Handle exceptions in the Python code
-                exception = handle_exception()
+                self._error = handle_exception()
 
-                # This conditional will only be True and raise a Termination exception if the source of the termination
-                # is cancellation of the job by a user. Job errors will not result in a Termination exception being
-                # raised here.
-                if exception["type"] == "Termination":
-                    # Re-raise the exception so it can be handled outside the func execution loop.
-                    raise Termination
+            if self._error:
+                break
 
-                elif exception["type"] == "JobError":
-                    # Re-raise the exception so it can be handled outside the func execution loop.
-                    raise JobError
+        self._progress = 1
+        self.finished = True
 
-                # An error has occurred. Handle and parse the error and traceback using the handle_error method.
-                else:
-                    self._error = {
-                        "message": exception,
-                        "context": "Python Error"
-                    }
-                    raise JobError
+        if self._error:
+            await self.add_status(state="error")
+        else:
+            await self.add_status(state="complete")
 
-            # Tell the database that the job has completed. This line is only reached if no error or cancellation
-            # occurs.
-            self.progress = 1
-            self.update_status(state="complete", stage=None)
+    async def run_in_executor(self, func, *args):
+        self._process_task = self.loop.run_in_executor(self.executor, func, *args)
+        return await self._process_task
 
-        if had_error or was_cancelled:
-            self.progress = 1
-
-            # Terminate any owned subprocess and log the outcome.
-            try:
-                self._process.terminate()
-            except AttributeError:
-                pass
-
-            self.cleanup()
-
-        if was_cancelled:
-            self.update_status(state="cancelled")
-
-        if had_error:
-            self.update_status(state="error", stage=self._stage, error=self._error)
-
-
-    def run_process(self, cmd, stdout_handler=None, dont_read_stdout=False, no_output_failure=False, env=None):
-        """
-        Wraps :class:`subprocess.Popen`. Takes a command (list) that is run with all output be cleanly handled in
-        real time. Also takes handler methods for stdout and stderr lines. These will be called anytime new output is
-        available and be passed the line. If the process encounters an error as identified by the return code, it is
-        handled just like a Python error.
-
-        """
-        stderr = None
-
-        output = None
-        stdout_handle = subprocess.DEVNULL
-
-        if not dont_read_stdout:
-            stdout_handle = subprocess.PIPE
-
-            if not stdout_handler:
-                output = list()
-                stdout_handler = output.append
-
-        try:
-            with subprocess.Popen(
-                    cmd,
-                    stdout=stdout_handle,
-                    stderr=subprocess.PIPE,
-                    env=env,
-                    universal_newlines=True
-            ) as process:
-                
-                if not dont_read_stdout:
-                    for line in process.stdout:
-                        stdout_handler(line.rstrip())
-                        if output is None:
-                            output = True
-
-                stderr = process.stderr.read()
-
-        except subprocess.CalledProcessError:
-            self._error = {
-                "message": ["Returned " + str(self._process.returncode), "Check log."],
-                "context": "External Process Error"
-            }
-
-        if no_output_failure and not output:
-            self._error = {
-                "message": stderr.split("\n"),
-                "context": "External Process Error"
-            }
-
-        return output
-
-    def update_status(self, state=None, stage=None, error=None):
-        """
-        Report changes in job state and stage and any errors to the job manager. Any changes are also logged to the job
-        log.
-
-        """
-        # Set the state and stage attributes if they are changed by this status update.
+    async def add_status(self, state=None, stage=None):
         self._state = state or self._state
         self._stage = stage or self._stage
 
-        # Instruct the manager to update the jobs database collection with the new status information.
-        self.call_static("add_status", self._job_id, self.progress, self._state, self._stage, error)
+        if self.finished:
+            self._progress = 1
+        else:
+            stage_index = [m.__name__ for m in self._stage_list].index(self._stage)
+            self._progress = round((stage_index + 1) / (len(self._stage_list) + 1), 2)
 
-    def cleanup(self):
+        document = await self.db.jobs.find_one_and_update({"_id": self.id}, {
+            "$push": {
+                "status": {
+                    "state": self._state,
+                    "stage": self._stage,
+                    "error": self._error,
+                    "progress": self._progress,
+                    "timestamp": virtool.utils.timestamp()
+                }
+            }
+        }, return_document=pymongo.ReturnDocument.AFTER, projection=LIST_PROJECTION)
+
+        await self.dispatch("jobs", "update", dispatch_processor(document))
+
+    async def cancel(self):
+        if self.started:
+            return await self._task.cancel()
+
+        await self.cleanup()
+
+        self.finished = True
+
+    async def cleanup(self):
         pass
 
 
-def handle_exception(max_tb=50, print_message=False):
-    # Retrieve exception data from exc_info()
-    exception, value, trace_info = sys.exc_info()
-
-    # Exception type: eg. KeyError
-    exception = exception.__name__
-
-    # Get the value details
-    details = []
-    for line in value.args:
-        details.append(str(line))
-
-    # Format the traceback data
-    trace_info = traceback.format_tb(trace_info, max_tb)
-
-    if print_message:
-        for line in trace_info:
-            print(line)
-        print(exception + ": " + "; ".join(details))
-
-    # Return exception information as dictionary
-    return {
-        "type": exception,
-        "traceback": trace_info,
-        "details": details
-    }
-
-
-def write_log(path, log_list):
-    try:
-        with open(path, "w") as log_file:
-            for line in log_list:
-                log_file.write(line + "\n")
-
-    except IOError:
-        os.makedirs(path)
-        write_log(path, log_list)
-
-
 def stage_method(func):
-    """
-    A decorator that adds the attribute ``is_stage_method`` to the returned function so it can be recognized as a
-    job stage method when the documentation is generated.
-
-    :param func: the function to decorate.
-    :type func: function
-
-    :return: the decorated function.
-    :rtype: function
-
-    """
     func.is_stage_method = True
     return func
+
+
+def handle_exception(max_tb=50):
+    exception, value, trace_info = sys.exc_info()
+
+    return {
+        "type": exception.__name__,
+        "traceback": traceback.format_tb(trace_info, max_tb),
+        "details": [str(l) for l in value.args]
+    }
