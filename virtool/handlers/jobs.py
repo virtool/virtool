@@ -72,7 +72,7 @@ async def get(req):
     if not document:
         return not_found()
 
-    return json_response(virtool.job.processor(document))
+    return json_response(virtool.utils.base_processor(document))
 
 
 async def cancel(req):
@@ -96,7 +96,7 @@ async def cancel(req):
 
     document = await db.jobs.find_one(job_id)
 
-    return json_response(virtool.job.processor(document))
+    return json_response(virtool.utils.base_processor(document))
 
 
 async def remove(req):
@@ -176,12 +176,12 @@ async def dummy_job(req):
     task_args = {key: data.get(key, False) for key in ["generate_python_error", "generate_process_error", "long"]}
 
     task_args["message"] = "hello world"
+    task_args["long"] = True
+    task_args["use_executor"] = True
 
     document = await req.app["job_manager"].new(
-        "dummy_job",
+        "dummy",
         task_args,
-        1,
-        4,
         req["session"].user_id or "test"
     )
 

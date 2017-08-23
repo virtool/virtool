@@ -12,5 +12,5 @@ TASK_CLASSES = {
     "nuvs": virtool.job_analysis.NuVs,
     "add_subtraction": virtool.subtraction.CreateSubtraction,
     "create_sample": virtool.sample_create.CreateSample,
-    "dummy_job": virtool.job_dummy.DummyJob
+    "dummy": virtool.job_dummy.DummyJob
 }

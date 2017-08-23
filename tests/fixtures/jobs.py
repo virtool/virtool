@@ -5,7 +5,7 @@ import collections
 import multiprocessing
 
 import virtool.job
-import virtool.job_test
+import virtool.job_dummy
 import virtool.job_manager
 
 
@@ -172,6 +172,6 @@ def test_task_inst(test_task_class):
     proc = 1
     mem = 1
 
-    job = virtool.job_test.TestTask(job_id, settings, queue, task, task_args, proc, mem)
+    job = virtool.job_dummy.DummyJob(job_id, settings, queue, task, task_args, proc, mem)
 
     return job
