@@ -51,6 +51,7 @@ class Manager:
                         self.reserve_resources(job)
                         job.start()
                     except InsufficientResourceError:
+                        print("INSUFFICIENT RESOURCES")
                         pass
 
                 if job.started and job.finished:

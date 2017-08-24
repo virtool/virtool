@@ -1,4 +1,6 @@
+import os
 import sys
+import asyncio
 import pymongo
 import traceback
 
@@ -66,6 +68,8 @@ class Job:
         self._task = None
         self._process_task = None
         self._stage_list = None
+        self._log_path = os.path.join(self.settings.get("data_path"), "logs", "jobs", self.id)
+        self._log_buffer = list()
 
     def start(self):
         self._task = self.loop.create_task(self.run())
@@ -73,9 +77,12 @@ class Job:
 
     async def run(self):
         for method in self._stage_list:
-            await self.add_status(stage=method.__name__, state="running")
+            name = method.__name__
+
+            await self.add_status(stage=name, state="running")
 
             try:
+                await self.add_log("Stage: {}".format(name))
                 await method()
             except:
                 self._error = handle_exception()
@@ -88,12 +95,62 @@ class Job:
 
         if self._error:
             await self.add_status(state="error")
+            await self.cleanup()
         else:
             await self.add_status(state="complete")
 
+        await self.run_in_executor(flush_log, self._log_path, self._log_buffer)
+
     async def run_in_executor(self, func, *args):
+        await self.add_log("Process: {}".format(func.__name__))
         self._process_task = self.loop.run_in_executor(self.executor, func, *args)
         return await self._process_task
+
+    async def run_subprocess(self, command, error_test=None, log_stdout=False, log_stderr=True):
+        await self.add_log("Command: {}".format(" ".join(command)))
+
+        asyncio.set_event_loop(self.loop)
+
+        proc = await asyncio.create_subprocess_exec(
+            *command,
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.PIPE,
+            loop=self.loop
+        )
+
+        out = list()
+        err = list()
+
+        while True:
+            line = await proc.stdout.readline()
+
+            if not line:
+                break
+
+            line = line.decode().rstrip()
+
+            out.append(line)
+
+            if log_stdout:
+                await self.add_log(line, indent=1)
+
+        while True:
+            line = await proc.stderr.readline()
+
+            if not line:
+                break
+
+            line = line.decode().rstrip()
+
+            err.append(line)
+
+            if log_stderr:
+                await self.add_log(line, indent=1)
+
+        await proc.wait()
+
+        if proc.returncode != 0 or (error_test and error_test(out, err)):
+            raise SubprocessError("Command failed: {}. Check job log.".format(" ".join(command)))
 
     async def add_status(self, state=None, stage=None):
         self._state = state or self._state
@@ -119,6 +176,18 @@ class Job:
 
         await self.dispatch("jobs", "update", dispatch_processor(document))
 
+    async def add_log(self, line, indent=0):
+        timestamp = virtool.utils.timestamp().isoformat()
+
+        self._log_buffer.append("{}{}    {}".format(timestamp, " " * indent * 4, line.rstrip()))
+
+        if len(self._log_buffer) == 15:
+            await self.flush_log()
+            del self._log_buffer[:]
+
+    async def flush_log(self):
+        await self.run_in_executor(flush_log, self._log_path, self._log_buffer)
+
     async def cancel(self):
         if self.started:
             return await self._task.cancel()
@@ -136,6 +205,11 @@ def stage_method(func):
     return func
 
 
+def flush_log(path, buffer):
+    with open(path, "a") as handle:
+        handle.write("\n".join(buffer))
+
+
 def handle_exception(max_tb=50):
     exception, value, trace_info = sys.exc_info()
 
@@ -144,3 +218,7 @@ def handle_exception(max_tb=50):
         "traceback": traceback.format_tb(trace_info, max_tb),
         "details": [str(l) for l in value.args]
     }
+
+
+class SubprocessError(Exception):
+    pass
