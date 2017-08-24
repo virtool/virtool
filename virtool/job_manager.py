@@ -51,7 +51,6 @@ class Manager:
                         self.reserve_resources(job)
                         job.start()
                     except InsufficientResourceError:
-                        print("INSUFFICIENT RESOURCES")
                         pass
 
                 if job.started and job.finished:
@@ -126,8 +125,6 @@ class Manager:
             self._used["mem"] += job.mem
         else:
             raise InsufficientResourceError
-
-        print(self._used, job.proc, job.mem)
 
     def release_resources(self, job):
         self._used["proc"] -= job.proc
