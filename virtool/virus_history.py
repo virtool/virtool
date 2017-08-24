@@ -162,6 +162,9 @@ async def patch_virus_to_version(db, virus_id, version):
 
     current = await virtool.virus.join(db, virus_id) or dict()
 
+    if current["version"] == version:
+        return current, deepcopy(current), reverted_history_ids
+
     patched = deepcopy(current)
 
     # Sort the changes by descending timestamp.
