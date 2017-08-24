@@ -121,11 +121,19 @@ async def create(req):
 
     job_id = await virtool.utils.get_new_id(db.jobs)
 
+    # Generate a dict of virus document version numbers keyed by the document id. We use this to make sure only changes
+    # made at the time the index rebuild was started are
+    virus_manifest = dict()
+
+    async for document in db.viruses.find({}, ["version"]):
+        virus_manifest[document["_id"]] = document["version"]
+
     await db.indexes.insert_one({
         "_id": index_id,
         "version": index_version,
         "created_at": virtool.utils.timestamp(),
         "virus_count": None,
+        "manifest": virus_manifest,
         "ready": False,
         "has_files": True,
         "user": {
@@ -146,13 +154,6 @@ async def create(req):
         }
     })
 
-    # Generate a dict of virus document version numbers keyed by the document id. We use this to make sure only changes
-    # made at the time the index rebuild was started are
-    virus_manifest = dict()
-
-    async for document in db.viruses.find({}, ["version"]):
-        virus_manifest[document["_id"]] = document["version"]
-
     # A dict of task_args for the rebuild job.
     task_args = {
         "user_id": user_id,
@@ -162,7 +163,7 @@ async def create(req):
     }
 
     # Start the job.
-    await req.app["job_manager"].new("rebuild_index", task_args, 2, 2, user_id, job_id=job_id)
+    await req.app["job_manager"].new("rebuild_index", task_args, user_id, job_id=job_id)
 
     document = await db.indexes.find_one(index_id)
 
