@@ -1,7 +1,4 @@
 import os
-import asyncio
-import asyncio.subprocess
-import collections
 
 import virtool.job
 import virtool.virus
@@ -23,7 +20,7 @@ PROJECTION = [
 ]
 
 
-def remove_index_files(base_path, retained):
+def remove_unused_index_files(base_path, retained):
     """
     Cleans up unused index dirs. Only the **active** index (latest ready index) is ever available for running
     analysis from the web client. Any older indexes are removed from disk. If a running analysis still needs an old
@@ -187,18 +184,15 @@ class RebuildIndex(virtool.job.Job):
 
         active_indexes = await get_active_index_ids(self.db)
 
-        unused_indexes = await self.db.indexes.find({"_id": {"$not": {"$in": active_indexes}}}).distinct("_id")
+        base_path = os.path.join(self.settings.get("data_path"), "reference", "viruses")
 
-        if len(unused_indexes):
-            base_path = os.path.join(self.settings.get("data_path"), "reference", "viruses")
+        await self.run_in_executor(remove_unused_index_files, base_path, active_indexes)
 
-            await self.run_in_executor(remove_index_files, base_path, unused_indexes)
-
-            await self.db.indexes.update_many({"_id": {"$in": unused_indexes}}, {
-                "$set": {
-                    "has_files": False
-                }
-            })
+        await self.db.indexes.update_many({"_id": {"$not": {"$in": active_indexes}}}, {
+            "$set": {
+                "has_files": False
+            }
+        })
 
     @virtool.job.stage_method
     async def cleanup(self):
