@@ -80,13 +80,14 @@ async def get(req):
 
     document["change_count"] = sum(v["count"] for v in viruses)
 
-    del document["modified_virus_count"]
-    del document["modification_count"]
-
     return json_response(document)
 
 
 async def get_unbuilt(req):
+    """
+    Get a JSON document describing the unbuilt changes that could be used to create a new index.
+
+    """
     db = req.app["db"]
 
     history = await db.history.find({"index.id": "unbuilt"}, virtool.virus_history.LIST_PROJECTION).to_list(None)
