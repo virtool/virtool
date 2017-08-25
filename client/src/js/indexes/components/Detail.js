@@ -19,7 +19,7 @@ import { getIndex } from "../actions";
 
 class IndexDetail extends React.Component {
 
-    componentWillMount () {
+    componentDidMount () {
         this.props.onGet(this.props.match.params.indexVersion);
     }
 
