@@ -4,7 +4,7 @@ from cerberus import Validator
 
 import virtool.utils
 import virtool.job
-from virtool.handlers.utils import unpack_request, json_response, bad_request, not_found, invalid_query, \
+from virtool.handlers.utils import json_response, bad_request, not_found, invalid_query, \
     compose_regex_query, no_content
 
 
