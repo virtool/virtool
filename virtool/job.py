@@ -65,6 +65,7 @@ class Job:
         self._state = "waiting"
         self._stage = None
         self._error = None
+        self._cancelled = False
         self._task = None
         self._process_task = None
         self._stage_list = None
@@ -84,22 +85,28 @@ class Job:
             try:
                 await self.add_log("Stage: {}".format(name))
                 await method()
+            except asyncio.CancelledError:
+                self._cancelled = True
             except:
                 self._error = handle_exception()
 
-            if self._error:
+            if self._error or self._cancelled:
                 break
 
         self._progress = 1
-        self.finished = True
 
         if self._error:
             await self.add_status(state="error")
+            await self.cleanup()
+        elif self._cancelled:
+            await self.add_status(state="cancelled")
             await self.cleanup()
         else:
             await self.add_status(state="complete")
 
         await self.run_in_executor(flush_log, self._log_path, self._log_buffer)
+
+        self.finished = True
 
     async def run_in_executor(self, func, *args):
         await self.add_log("Process: {}".format(func.__name__))
@@ -156,9 +163,7 @@ class Job:
         self._state = state or self._state
         self._stage = stage or self._stage
 
-        if self.finished:
-            self._progress = 1
-        else:
+        if self._progress != 1:
             stage_index = [m.__name__ for m in self._stage_list].index(self._stage)
             self._progress = round((stage_index + 1) / (len(self._stage_list) + 1), 2)
 
@@ -190,7 +195,10 @@ class Job:
 
     async def cancel(self):
         if self.started:
-            return await self._task.cancel()
+            self._task.cancel()
+
+        while not self.finished:
+            await asyncio.sleep(0.1, loop=self.loop)
 
         await self.cleanup()
 

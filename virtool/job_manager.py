@@ -107,6 +107,16 @@ class Manager:
 
         return virtool.utils.base_processor(document)
 
+
+    async def cancel(self, job_id):
+        await self._jobs_dict[job_id].cancel()
+
+    async def close(self):
+        self._stop = True
+
+        for job in self._jobs_dict.values():
+            await job.cancel()
+
     def reserve_resources(self, job):
         """
         Reserve resources for the given job. Throws an :class:`InsufficientResourceError` if the required resources are
@@ -136,12 +146,6 @@ class Manager:
             "available": {key: self.settings.get(key) - self._used[key] for key in self._used},
             "limit": {key: self.settings.get(key) for key in self._used}
         }
-
-    async def close(self):
-        self._stop = True
-
-        for job in self._jobs_dict.values():
-            await job.cancel()
 
 
 class InsufficientResourceError(Exception):
