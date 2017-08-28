@@ -137,9 +137,7 @@ async def remove(req):
 async def clear(req):
     db = req.app["db"]
 
-    query = {
-        "finished": True
-    }
+    query = dict()
 
     if req.path == "/api/jobs/complete":
         query["status.state"] = "complete"
