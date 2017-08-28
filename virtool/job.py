@@ -111,7 +111,10 @@ class Job:
     async def run_in_executor(self, func, *args):
         await self.add_log("Process: {}".format(func.__name__))
         self._process_task = self.loop.run_in_executor(self.executor, func, *args)
-        return await self._process_task
+        result = await self._process_task
+        self._process_task = None
+
+        return result
 
     async def run_subprocess(self, command, error_test=None, log_stdout=False, log_stderr=True):
         await self.add_log("Command: {}".format(" ".join(command)))
@@ -194,11 +197,14 @@ class Job:
         await self.run_in_executor(flush_log, self._log_path, self._log_buffer)
 
     async def cancel(self):
-        if self.started:
+        print("STARTED", self.started)
+        print("FINISHED", self.finished)
+
+        if self.started and not self.finished:
             self._task.cancel()
 
-        while not self.finished:
-            await asyncio.sleep(0.1, loop=self.loop)
+            while not self.finished:
+                await asyncio.sleep(0.1, loop=self.loop)
 
         await self.cleanup()
 

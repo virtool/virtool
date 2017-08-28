@@ -6,13 +6,16 @@ import virtool.job_manager
 
 
 @pytest.fixture
-def test_job_manager(loop, test_motor, test_dispatch):
+def test_job_manager(tmpdir, loop, test_motor, test_dispatch):
     settings = {
         "proc": 6,
         "mem": 24,
         "dummy_proc": 2,
-        "dummy_mem": 4
+        "dummy_mem": 4,
+        "data_path": str(tmpdir)
     }
+
+    tmpdir.mkdir("logs").mkdir("jobs")
 
     manager = virtool.job_manager.Manager(loop, test_motor, settings, test_dispatch)
 
@@ -74,7 +77,7 @@ class TestNew:
             "use_executor": use_executor
         }, "test")
 
-        await asyncio.sleep(0.3, loop=test_job_manager.loop)
+        await asyncio.sleep(0.5, loop=test_job_manager.loop)
 
         assert await test_job_manager.db.jobs.find_one() == {
             "_id": test_random_alphanumeric.last_choice,
@@ -256,9 +259,13 @@ class TestReserveResources:
     async def test(self, test_job_manager):
         mock_job = virtool.job.Job(
             test_job_manager.loop,
+            test_job_manager.executor,
             test_job_manager.db,
             test_job_manager.settings,
+            test_job_manager.dispatch,
             "foobar",
+            "dummy",
+            {},
             2,
             4
         )
@@ -283,18 +290,26 @@ class TestReserveResources:
     async def test_multiple(self, test_job_manager):
         mock_job_1 = virtool.job.Job(
             test_job_manager.loop,
+            test_job_manager.executor,
             test_job_manager.db,
             test_job_manager.settings,
+            test_job_manager.dispatch,
             "foobar",
+            "dummy",
+            {},
             2,
             8
         )
 
-        mock_job_2 = virtool.job.Job(
+        mock_job_2 = mock_job = virtool.job.Job(
             test_job_manager.loop,
+            test_job_manager.executor,
             test_job_manager.db,
             test_job_manager.settings,
+            test_job_manager.dispatch,
             "foobar",
+            "dummy",
+            {},
             1,
             2
         )
@@ -323,9 +338,13 @@ class TestReleaseResources:
     async def test(self, test_job_manager):
         mock_job = virtool.job.Job(
             test_job_manager.loop,
+            test_job_manager.executor,
             test_job_manager.db,
             test_job_manager.settings,
+            test_job_manager.dispatch,
             "foobar",
+            "dummy",
+            {},
             2,
             4
         )

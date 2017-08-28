@@ -63,6 +63,7 @@ class Manager:
             await asyncio.sleep(0.1, loop=self.loop)
 
     async def new(self, task_name, task_args, user_id, job_id=None):
+
         job_id = job_id or await virtool.utils.get_new_id(self.db.jobs)
 
         proc = self.settings.get("{}_proc".format(task_name))
@@ -106,7 +107,6 @@ class Manager:
         await self.dispatch("jobs", "update", virtool.job.dispatch_processor(document))
 
         return virtool.utils.base_processor(document)
-
 
     async def cancel(self, job_id):
         await self._jobs_dict[job_id].cancel()
