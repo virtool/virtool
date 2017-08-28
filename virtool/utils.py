@@ -182,11 +182,9 @@ async def get_new_id(collection, excluded=None):
     """
     excluded = excluded or list()
 
-    existing_ids = await collection.distinct("_id")
+    excluded += await collection.distinct("_id")
 
-    excluded += existing_ids
-
-    excluded = set(excluded)
+    excluded = list(set(excluded))
 
     return random_alphanumeric(length=8, excluded=excluded)
 
