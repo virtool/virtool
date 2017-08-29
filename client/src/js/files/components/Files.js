@@ -1,13 +1,13 @@
 import React, { PropTypes } from "react";
+import { capitalize, filter } from "lodash";
 import { connect } from "react-redux";
 import Dropzone from "react-dropzone";
 import { Badge, Row, Col, ListGroup } from "react-bootstrap";
 
 import { byteSize } from "virtool/js/utils";
-import { findFiles, removeFile } from "../../files/actions";
-import { Button, Icon, ListGroupItem, RelativeTime } from "virtool/js/components/Base";
-import { uploadReads, uploadProgress } from "../../files/actions";
 import { createRandomString } from "../../utils";
+import { findFiles, removeFile, upload, uploadProgress } from "../actions";
+import { Button, Icon, ListGroupItem, RelativeTime } from "virtool/js/components/Base";
 
 const File = (props) => (
     <ListGroupItem className="spaced">
@@ -43,9 +43,10 @@ File.propTypes = {
     onRemove: PropTypes.func
 };
 
-class ReadFiles extends React.Component {
+class FileManager extends React.Component {
 
     static propTypes = {
+        fileType: PropTypes.string.isRequired,
         documents: PropTypes.arrayOf(PropTypes.object),
         onFind: PropTypes.func,
         onDrop: PropTypes.func,
@@ -56,12 +57,16 @@ class ReadFiles extends React.Component {
         this.props.onFind();
     }
 
+    handleDrop = (acceptedFiles) => {
+        this.props.onDrop(this.props.fileType, acceptedFiles);
+    };
+
     render () {
         if (this.props.documents === null) {
             return <div />;
         }
 
-        let fileComponents = this.props.documents.map(document =>
+        let fileComponents = filter(this.props.documents, {type: this.props.fileType}).map(document =>
             <File
                 key={document.id}
                 {...document}
@@ -72,21 +77,23 @@ class ReadFiles extends React.Component {
         if (!fileComponents.length) {
             fileComponents = (
                 <ListGroupItem className="text-center">
-                    <Icon name="info" /> No read files found
+                    <Icon name="info" /> No files found
                 </ListGroupItem>
             );
         }
 
+        const titleType = this.props.fileType === "reads" ? "Read": capitalize(this.props.fileType);
+
         return (
             <div>
                 <h3 className="view-header">
-                    <strong>Read Files</strong> <Badge>{fileComponents.length}</Badge>
+                    <strong>{titleType} Files</strong> <Badge>{fileComponents.length}</Badge>
                 </h3>
 
                 <div className="toolbar">
                     <Dropzone
                         ref={(node) => this.dropzone = node}
-                        onDrop={this.props.onDrop}
+                        onDrop={this.handleDrop}
                         className="dropzone"
                         activeClassName="dropzone-active"
                         disableClick
@@ -121,15 +128,15 @@ const mapDispatchProps = (dispatch) => {
             dispatch(removeFile(fileId));
         },
 
-        onDrop: (acceptedFiles) => {
+        onDrop: (fileType, acceptedFiles) => {
             const file = acceptedFiles[0];
             const localId = createRandomString();
 
-            dispatch(uploadReads(localId, file, (e) => dispatch(uploadProgress(localId, e.percent))));
+            dispatch(upload(localId, file, fileType, (e) => dispatch(uploadProgress(localId, e.percent))));
         }
     };
 };
 
-const Container = connect(mapStateToProps, mapDispatchProps)(ReadFiles);
+const Container = connect(mapStateToProps, mapDispatchProps)(FileManager);
 
 export default Container;
