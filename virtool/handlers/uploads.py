@@ -10,7 +10,7 @@ FILE_TYPES = {
     "/upload/reads": "reads",
     "/upload/hmm/profiles": "profiles",
     "/upload/hmm/annotations": "annotations",
-    "/upload/host": "host"
+    "/upload/subtraction": "subtraction"
 }
 
 

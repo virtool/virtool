@@ -82,7 +82,7 @@ def setup_file_routes(app):
     app.router.add_post("/upload/reads", uploads.upload)
     app.router.add_post("/upload/hmm/profiles", uploads.upload)
     app.router.add_post("/upload/hmm/annotations", uploads.upload)
-    app.router.add_post("/upload/host", uploads.upload)
+    app.router.add_post("/upload/subtraction", uploads.upload)
 
     app.router.add_get("/download/viruses/", viruses.export)
     app.router.add_get("/download/viruses/{virus_id}", downloads.download_virus_sequences)
