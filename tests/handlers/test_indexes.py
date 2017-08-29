@@ -12,8 +12,6 @@ class TestFind:
                 "version": 0,
                 "created_at": static_time,
                 "virus_count": 231,
-                "modification_count": 29,
-                "modified_virus_count": 22,
                 "ready": True,
                 "has_files": True,
                 "user": {
@@ -28,8 +26,6 @@ class TestFind:
                 "version": 1,
                 "created_at": static_time,
                 "virus_count": 232,
-                "modification_count": 7,
-                "modified_virus_count": 2,
                 "ready": False,
                 "has_files": True,
                 "user": {
@@ -54,8 +50,6 @@ class TestFind:
                     "job": {
                         "id": "sj82la"
                     },
-                    "modification_count": 7,
-                    "modified_virus_count": 2,
                     "ready": False,
                     "user": {
                         "id": "test"
@@ -70,8 +64,6 @@ class TestFind:
                     "job": {
                         "id": "abh675"
                     },
-                    "modification_count": 29,
-                    "modified_virus_count": 22,
                     "ready": True,
                     "user": {
                         "id": "test"
@@ -95,8 +87,6 @@ class TestGet:
             "version": 0,
             "created_at": static_time,
             "virus_count": 232,
-            "modification_count": 245,
-            "modified_virus_count": 232,
             "ready": False,
             "has_files": True,
             "user": {
@@ -296,6 +286,7 @@ class TestCreate:
             "virus_count": None,
             "ready": False,
             "has_files": True,
+            "manifest": {},
             "user": {
                 "id": "test"
             },
@@ -312,6 +303,7 @@ class TestCreate:
                 "id": "fx1l90rt"
             },
             "ready": False,
+            "manifest": {},
             "user": {
                 "id": "test"
             },
@@ -328,8 +320,6 @@ class TestCreate:
                 "user_id": "test",
                 "virus_manifest": {}
             },
-            2,
-            2,
             "test"
         )
 

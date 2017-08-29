@@ -46,7 +46,7 @@ async def test_write_fasta(mocker, test_rebuild_job):
 
     async def patch_virus_to_version(*args):
         m(*args)
-        return {
+        return None, {
             "isolates": [
                 {
                     "default": True,
@@ -75,7 +75,7 @@ async def test_write_fasta(mocker, test_rebuild_job):
                     ]
                 }
             ]
-        }
+        }, None
 
     mocker.patch("virtool.virus_history.patch_virus_to_version", patch_virus_to_version)
 
@@ -143,17 +143,20 @@ async def test_replace_old(in_use, mocker, tmpdir, test_motor, test_rebuild_job)
         {
             "_id": "foobar",
             "version": 2,
-            "ready": False
+            "ready": False,
+            "has_files": True
         },
         {
             "_id": "foo",
             "version": 1,
-            "ready": True
+            "ready": True,
+            "has_files": True
         },
         {
             "_id": "baz",
             "version": 0,
-            "ready": True
+            "ready": True,
+            "has_files": True
         }
     ])
 
@@ -171,22 +174,23 @@ async def test_replace_old(in_use, mocker, tmpdir, test_motor, test_rebuild_job)
     assert await test_motor.indexes.find_one("foobar") == {
         "_id": "foobar",
         "version": 2,
-        "ready": True
+        "ready": True,
+        "has_files": True
     }
+
+    expected = {"foo", "foobar"} if in_use else {"foobar"}
 
     assert m.called
 
     assert m.call_args[0][0:2] == (
-        virtool.virus_index.remove_index_files,
+        virtool.virus_index.remove_unused_index_files,
         os.path.join(str(tmpdir), "reference", "viruses")
     )
-
-    expected = {"baz"} if in_use else {"foo", "baz"}
 
     assert set(m.call_args[0][2]) == expected
 
     # Make sure that ``has_files`` was set to false for non-active indexes.
-    assert set(await test_motor.indexes.find({"has_files": False}).distinct("_id")) == expected
+    assert set(await test_motor.indexes.find({"has_files": True}).distinct("_id")) == expected
 
 
 async def test_cleanup(test_motor, test_rebuild_job):
