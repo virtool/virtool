@@ -11,7 +11,9 @@ import {
     WS_UPDATE_SUBTRACTION,
     WS_REMOVE_SUBTRACTION,
     FIND_SUBTRACTIONS,
-    GET_SUBTRACTION
+    GET_SUBTRACTION,
+    SHOW_CREATE_SUBTRACTION,
+    HIDE_SUBTRACTION_MODAL
 } from "../actionTypes";
 
 export const wsUpdateSubtraction = (data) => {
@@ -45,5 +47,17 @@ export const removeSubtraction = (hostId) => {
     return {
         type: GET_SUBTRACTION.REQUESTED,
         hostId
+    };
+};
+
+export const showCreateSubtraction = () => {
+    return {
+        type: SHOW_CREATE_SUBTRACTION
+    };
+};
+
+export const hideSubtractionModal = () => {
+    return {
+        type: HIDE_SUBTRACTION_MODAL
     };
 };

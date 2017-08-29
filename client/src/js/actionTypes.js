@@ -94,12 +94,15 @@ export const FIND_SUBTRACTIONS = createRequestActionType("FIND_SUBTRACTIONS");
 export const GET_SUBTRACTION = createRequestActionType("GET_SUBTRACTION");
 export const REMOVE_SUBTRACTION = createRequestActionType("REMOVE_SUBTRACTION");
 
+export const SHOW_CREATE_SUBTRACTION = "SHOW_CREATE_SUBTRACTION";
+export const HIDE_SUBTRACTION_MODAL = "HIDE_SUBTRACTION_MODALS";
+
 // Files
 export const WS_UPDATE_FILE = "WS_UPDATE_FILE";
 export const WS_REMOVE_FILE = "WS_REMOVE_FILE";
 export const FIND_FILES = createRequestActionType("FIND_FILES");
 export const REMOVE_FILE = createRequestActionType("REMOVE_FILE");
-export const UPLOAD_READS = createRequestActionType("UPLOAD_READS");
+export const UPLOAD = createRequestActionType("UPLOAD");
 export const UPLOAD_PROGRESS = "UPLOAD_PROGRESS";
 export const HIDE_UPLOAD_OVERLAY = "HIDE_UPLOAD_OVERLAY";
 
