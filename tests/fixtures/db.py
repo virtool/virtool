@@ -22,6 +22,7 @@ def test_motor(test_db, loop):
     client = motor.motor_asyncio.AsyncIOMotorClient(io_loop=loop)
     loop.run_until_complete(client.drop_database("test"))
     yield client["test"]
+    loop.run_until_complete(client.drop_database("test"))
 
 
 @pytest.fixture
