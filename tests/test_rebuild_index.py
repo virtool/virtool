@@ -1,5 +1,6 @@
 import os
 import pytest
+import asyncio
 from concurrent.futures import ProcessPoolExecutor
 
 import virtool.job
@@ -115,6 +116,7 @@ async def test_bowtie_build(error, capsys, tmpdir, test_rebuild_job):
             assert "Command failed: bowtie2-build -f" in str(err)
         else:
             await test_rebuild_job.bowtie_build()
+            await asyncio.sleep(1, loop=test_rebuild_job.loop)
 
     await test_rebuild_job.flush_log()
 
