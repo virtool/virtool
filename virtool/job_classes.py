@@ -2,7 +2,7 @@ import virtool.subtraction
 import virtool.virus_index
 import virtool.sample_create
 import virtool.job_analysis
-import virtool.job_test
+import virtool.job_dummy
 
 
 #: A dict containing :class:`~.job.Job` subclasses keyed by their task names.
@@ -12,5 +12,5 @@ TASK_CLASSES = {
     "nuvs": virtool.job_analysis.NuVs,
     "add_subtraction": virtool.subtraction.CreateSubtraction,
     "create_sample": virtool.sample_create.CreateSample,
-    "test_task": virtool.job_test.TestTask
+    "dummy": virtool.job_dummy.DummyJob
 }

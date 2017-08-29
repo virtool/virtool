@@ -162,6 +162,9 @@ async def patch_virus_to_version(db, virus_id, version):
 
     current = await virtool.virus.join(db, virus_id) or dict()
 
+    if "version" in current and current["version"] == version:
+        return current, deepcopy(current), reverted_history_ids
+
     patched = deepcopy(current)
 
     # Sort the changes by descending timestamp.
@@ -185,26 +188,3 @@ async def patch_virus_to_version(db, virus_id, version):
         current = None
 
     return current, patched, reverted_history_ids
-
-
-async def set_index_as_unbuilt(db, index_id):
-    """
-    Set the ``index_id`` and ``index_version`` fields to "unbuilt" for all change documents with the passed
-    ``index_id``. This is called in the event that a index rebuild process fails.
-    
-    :param db: the application database client
-    :type db: :class:`~motor.motor_asyncio.AsyncIOMotorClient`
-     
-    :param index_id: the ``index_id`` to replace
-    :type index_id: str
-
-    """
-    await db.history.update_many({"index.id": index_id}, {
-        "$set": {
-            "index": {
-                "id": "unbuilt",
-                "version": "unbuilt"
-            }
-        }
-    })
-

@@ -135,6 +135,8 @@ async def init_job_manager(app):
         app["dispatcher"].dispatch
     )
 
+    app["job_manager"].start()
+
 
 async def init_file_manager(app):
     """
@@ -202,12 +204,6 @@ async def on_shutdown(app):
 
     if "job_manager" in app:
         job_manager = app["job_manager"]
-
-        for job_id in job_manager:
-            await job_manager.cancel(job_id)
-
-        while job_manager:
-            asyncio.sleep(0.1, loop=app.loop)
 
         await job_manager.close()
 

@@ -4,7 +4,7 @@ from cerberus import Validator
 
 import virtool.utils
 import virtool.job
-from virtool.handlers.utils import unpack_request, json_response, bad_request, not_found, invalid_query, \
+from virtool.handlers.utils import json_response, bad_request, not_found, invalid_query, \
     compose_regex_query, no_content
 
 
@@ -72,7 +72,7 @@ async def get(req):
     if not document:
         return not_found()
 
-    return json_response(virtool.job.processor(document))
+    return json_response(virtool.utils.base_processor(document))
 
 
 async def cancel(req):
@@ -96,7 +96,7 @@ async def cancel(req):
 
     document = await db.jobs.find_one(job_id)
 
-    return json_response(virtool.job.processor(document))
+    return json_response(virtool.utils.base_processor(document))
 
 
 async def remove(req):
@@ -137,9 +137,7 @@ async def remove(req):
 async def clear(req):
     db = req.app["db"]
 
-    query = {
-        "finished": True
-    }
+    query = dict()
 
     if req.path == "/api/jobs/complete":
         query["status.state"] = "complete"
@@ -166,9 +164,9 @@ async def clear(req):
     })
 
 
-async def test_job(req):
+async def dummy_job(req):
     """
-    Submit a test job
+    Submit a dummy job
 
     """
     data = await req.json()
@@ -176,12 +174,12 @@ async def test_job(req):
     task_args = {key: data.get(key, False) for key in ["generate_python_error", "generate_process_error", "long"]}
 
     task_args["message"] = "hello world"
+    task_args["long"] = True
+    task_args["use_executor"] = True
 
     document = await req.app["job_manager"].new(
-        "test_task",
+        "dummy",
         task_args,
-        1,
-        4,
         req["session"].user_id or "test"
     )
 
