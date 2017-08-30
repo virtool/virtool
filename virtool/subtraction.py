@@ -1,5 +1,6 @@
 import os
 import logging
+import pymongo
 
 import virtool.job
 import virtool.utils
@@ -10,59 +11,43 @@ logger = logging.getLogger(__name__)
 
 LIST_PROJECTION = [
     "_id",
-    "description",
-    "file_name",
+    "file",
     "ready",
     "job"
 ]
 
 
-async def set_stats(db, subtraction_id, stats):
-    """
-    Set the stats field for the subtraction with the passed ``subtraction_id`` using the data in ``stats``.
+def calculate_fasta_gc(path):
+    nucleotides = {
+        "a": 0,
+        "t": 0,
+        "g": 0,
+        "c": 0,
+        "n": 0
+    }
 
-    :param db: the application database client
-    :type db: :class:`~motor.motor_asyncio.AsyncIOMotorClient`
+    count = 0
 
-    :param subtraction_id: the id of the sample to recalculate tags for
-    :type subtraction_id: str
+    # Go through the fasta file getting the nucleotide counts, lengths, and number of sequences
+    with open(path, "r") as handle:
+        for line in handle:
+            if line[0] == ">":
+                count += 1
+                continue
 
-    :param stats: the data to add to the subtraction document
-    :type stats: dict
+            for i in ["a", "t", "g", "c", "n"]:
+                # Find lowercase and uppercase nucleotide characters
+                nucleotides[i] += line.lower().count(i)
 
-    """
-    update_result = await db.subtraction.update_one({"_id": subtraction_id}, {
-        "$set": {key: stats[key] for key in ["count", "nucleotides"]}
-    })
+    nucleotides_sum = sum(nucleotides.values())
 
-    if not update_result.modified_count:
-        raise virtool.errors.DatabaseError("No subtraction with id '{}'".format(subtraction_id))
-
-
-async def set_ready(db, subtraction_id):
-    """
-    Sets the ``ready`` field to ``True`` for a host document.
-
-    """
-    update_result = await db.subtraction.update_one({"_id": subtraction_id}, {
-        "$set": {
-            "ready": True
-        }
-    })
-
-    if not update_result.modified_count:
-        raise virtool.errors.DatabaseError("No subtraction with id '{}'".format(subtraction_id))
+    return {k: round(nucleotides[k] / nucleotides_sum, 3) for k in nucleotides}, count
 
 
 class CreateSubtraction(virtool.job.Job):
 
     """
-    A subclass of :class:`.Job` that adds a new host to Virtool from a passed FASTA file. Job stages are:
-
-    1. mk_host_dir
-    2. stats
-    3. bowtie_build
-    4. update_db
+    A subclass of :class:`.Job` that adds a new host to Virtool from a passed FASTA file.
 
     """
 
@@ -70,89 +55,56 @@ class CreateSubtraction(virtool.job.Job):
         super().__init__(*args, **task_args)
 
         #: The id of the host being added. Extracted from :attr:`~.virtool.job.Job.task_args`.
-        self.host_id = self._task_args["_id"]
+        self.subtraction_id = self.task_args["subtraction_id"]
 
         #: The path to the FASTA file being added as a host reference.
-        self.fasta_path = os.path.join(self._settings.get("data_path"), "files", self._task_args["file_id"])
+        self.fasta_path = os.path.join(
+            self.settings.get("data_path"),
+            "files",
+            self.task_args["file_id"]
+        )
 
         #: The path to the directory the Bowtie2 index will be written to.
         self.index_path = os.path.join(
-            self._settings.get("data_path"),
-            "reference/hosts",
-            self.host_id.lower().replace(" ", "_")
+            self.settings.get("data_path"),
+            "reference",
+            "subtraction",
+            self.subtraction_id.lower().replace(" ", "_")
         )
 
         #: The job stages.
         self.stage_list = [
-            self.mk_host_dir,
-            self.stats,
+            self.mk_subtraction_dir,
+            self.set_stats,
             self.bowtie_build,
             self.update_db
         ]
 
-    def mk_host_dir(self):
+    async def mk_subtraction_dir(self):
         """
         Make a directory for the host index files at ``<vt_data_path>/reference/hosts/<host_id>``.
 
         """
-        os.mkdir(self.index_path)
+        await self.run_in_executor(os.mkdir, self.index_path)
 
-    def stats(self):
+    async def set_stats(self):
         """
         Generate some stats for the FASTA file associated with this job. These numbers include nucleotide distribution,
         length distribution, and sequence count.
 
         """
-        nucleotides = {
-            "a": 0,
-            "t": 0,
-            "g": 0,
-            "c": 0,
-            "n": 0
-        }
+        gc, count = await self.run_in_executor(calculate_fasta_gc, self.fasta_path)
 
-        count = 0
-        length_list = []
-        sequence = []
+        document = await self.db.subtraction.find_one_and_update({"_id": self.subtraction_id}, {
+            "$set": {
+                "gc": gc,
+                "count": count
+            }
+        }, projection=LIST_PROJECTION, return_document=pymongo.ReturnDocument.AFTER)
 
-        # Go through the fasta file getting the nucleotide counts, lengths, and number of sequences
-        with open(self.fasta_path, "r") as fasta_file:
-            for line in fasta_file:
-                if line[0] == ">":
-                    count += 1
+        await self.dispatch("subtraction", "update", virtool.utils.base_processor(document))
 
-                    if sequence:
-                        sequence = "".join(sequence)
-                        length_list.append(len(sequence))
-
-                        for i in ["a", "t", "g", "c", "n"]:
-                            # Find lowercase and uppercase nucleotide characters
-                            nucleotides[i] += sequence.count(i)
-                            nucleotides[i] += sequence.count(i.upper())
-
-                        sequence = []
-
-                else:
-                    sequence.append(line.rstrip())
-
-        # Calculate the average and total length to be returned at end of function
-        lengths = {
-            "total": sum(length_list),
-            "mean": round(sum(length_list) / len(length_list)),
-            "max": max(length_list),
-            "min": min(length_list)
-        }
-
-        # Reprocess the nucleotides dict to contain ratios for each nucleotide rather than counts
-        nucleotides = {i: round(nucleotides[i] / lengths["total"], 3) for i in nucleotides}
-
-        self.collection_operation("hosts", "add_stats", {"_id": self.host_id, "stats": {
-            "nucleotides": nucleotides,
-            "lengths": lengths,
-            "count": count
-        }})
-
-    def bowtie_build(self):
+    async def bowtie_build(self):
         """
         Call *bowtie2-build* using :meth:`~.Job.run_process` to build a Bowtie2 index for the host.
 
@@ -161,21 +113,37 @@ class CreateSubtraction(virtool.job.Job):
             "bowtie2-build",
             "-f",
             self.fasta_path,
-            self.index_path + "/reference"
+            os.path.join(self.index_path, "reference")
         ]
 
-        self.run_process(command)
+        await self.run_subprocess(command)
 
-    def update_db(self):
+    async def update_db(self):
         """
-        Set the *ready* field to True by calling :meth:`.hosts.Collection.set_added`.
-
-        """
-        self.collection_operation("hosts", "set_ready", {"_id": self.host_id})
-
-    def cleanup(self):
-        """
-        Clean up if the job process encounters an error or is cancelled. Removes the host document from the database.
+        Set the ``ready`` on the subtraction document ``True`` and dispatch the change.
 
         """
-        self.collection_operation("hosts", "_remove_host", self.host_id)
+        document = await self.db.subtraction.find_one_and_update({"_id": self.subtraction_id}, {
+            "$set": {
+                "ready": True
+            }
+        }, projection=LIST_PROJECTION, return_document=pymongo.ReturnDocument.AFTER)
+
+        await self.dispatch("subtraction", "update", virtool.utils.base_processor(document))
+
+    async def cleanup(self):
+        """
+        Clean up if the job process encounters an error or is cancelled. Removes the host document from the database
+        and deletes any index files.
+
+        """
+        # Remove the nascent index directory and fail silently if it doesn't exist.
+        try:
+            await self.run_in_executor(virtool.utils.rm, self.index_path, True)
+        except FileNotFoundError:
+            pass
+
+        # Remove the associated subtraction document.
+        await self.db.subtraction.delete_one({"_id": self.subtraction_id})
+
+        await self.dispatch("subtraction", "remove", self.subtraction_id)
