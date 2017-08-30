@@ -303,7 +303,7 @@ async def save_and_reload(req):
     subdirs = [
         "files",
         "reference/viruses",
-        "reference/hosts",
+        "reference/subtraction",
         "samples",
         "hmm",
         "logs/jobs"
