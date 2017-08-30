@@ -10,7 +10,7 @@ TASK_CLASSES = {
     "rebuild_index": virtool.virus_index.RebuildIndex,
     "pathoscope_bowtie": virtool.job_analysis.PathoscopeBowtie,
     "nuvs": virtool.job_analysis.NuVs,
-    "add_subtraction": virtool.subtraction.CreateSubtraction,
+    "create_subtraction": virtool.subtraction.CreateSubtraction,
     "create_sample": virtool.sample_create.CreateSample,
     "dummy": virtool.job_dummy.DummyJob
 }
