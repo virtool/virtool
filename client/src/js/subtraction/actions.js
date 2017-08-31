@@ -12,6 +12,7 @@ import {
     WS_REMOVE_SUBTRACTION,
     FIND_SUBTRACTIONS,
     GET_SUBTRACTION,
+    CREATE_SUBTRACTION,
     SHOW_CREATE_SUBTRACTION,
     HIDE_SUBTRACTION_MODAL
 } from "../actionTypes";
@@ -40,6 +41,14 @@ export const getSubtraction = (subtractionId) => {
     return {
         type: GET_SUBTRACTION.REQUESTED,
         subtractionId
+    };
+};
+
+export const createSubtraction = (subtractionId, fileId) => {
+    return {
+        type: CREATE_SUBTRACTION.REQUESTED,
+        subtractionId,
+        fileId
     };
 };
 

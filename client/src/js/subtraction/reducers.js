@@ -9,6 +9,7 @@
 
 import { assign, } from "lodash";
 import { FIND_SUBTRACTIONS, GET_SUBTRACTION, SHOW_CREATE_SUBTRACTION, HIDE_SUBTRACTION_MODAL } from "../actionTypes";
+import {CREATE_SUBTRACTION} from "../actionTypes";
 
 const initialState = {
     documents: null,
@@ -32,6 +33,11 @@ export default function subtractionReducer (state = initialState, action) {
         case GET_SUBTRACTION.SUCCEEDED:
             return assign({}, state, {
                 detail: action.data
+            });
+
+        case CREATE_SUBTRACTION.SUCCEEDED:
+            return assign({}, state, {
+                showCreate: false
             });
 
         case SHOW_CREATE_SUBTRACTION:

@@ -19,6 +19,14 @@ const subtractionAPI = {
         return Request.get(`/api/subtraction/${subtractionId}`);
     },
 
+    create: (subtractionId, fileId) => {
+        return Request.post("/api/subtraction")
+            .send({
+                subtraction_id: subtractionId,
+                file_id: fileId
+            });
+    },
+
     remove: (subId) => {
         return Request.delete(`/api/subtraction/${subId}`);
     }
