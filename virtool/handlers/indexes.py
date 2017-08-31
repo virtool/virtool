@@ -14,7 +14,8 @@ async def find(req):
 
     documents = await db.indexes.find({}, virtool.virus_index.PROJECTION, sort=[("version", -1)]).to_list(None)
 
-    modified_virus_count = await db.viruses.count({"modified": True})
+    modified_virus_count = len(await db.history.find({"index.id": "unbuilt"}, ["virus"]).distinct("virus.name"))
+
     total_virus_count = await db.viruses.count()
 
     return json_response({

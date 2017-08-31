@@ -39,7 +39,7 @@ async def find(req):
 
     data = await paginate(db.viruses, db_query, req.query, "name", projection=virtool.virus.LIST_PROJECTION)
 
-    data["modified_count"] = await db.viruses.count({"modified": True})
+    data["modified_count"] = len(await db.history.find({"index.id": "unbuilt"}, ["virus"]).distinct("virus.name"))
 
     return json_response(data)
 
