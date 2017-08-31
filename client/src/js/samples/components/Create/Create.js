@@ -27,7 +27,7 @@ import {
     InputGroup
 } from "react-bootstrap";
 
-import { findReadyHosts } from "../../actions";
+import { findReadyHosts, createSample } from "../../actions";
 import { findFiles } from "../../../files/actions";
 import { Flex, FlexItem, Icon, Input, Button } from "virtool/js/components/Base";
 import ReadSelector from "./ReadSelector";
@@ -325,8 +325,8 @@ const mapDispatchToProps = (dispatch) => {
             dispatch(findFiles());
         },
 
-        onCreate: (name, isolate, host, locale, subtraction, selected) => {
-            window.console.log(name, isolate, host, locale, subtraction, selected);
+        onCreate: (name, isolate, host, locale, subtraction, files) => {
+            dispatch(createSample(name, isolate, host, locale, subtraction, files));
         }
     };
 };

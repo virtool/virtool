@@ -38,6 +38,18 @@ const samplesAPI = {
             .send(update);
     },
 
+    create: (name, isolate, host, locale, subtraction, files) => {
+        return Request.post("/api/samples")
+            .send({
+                name,
+                isolate,
+                host,
+                locale,
+                subtraction,
+                files
+            })
+    },
+
     findAnalyses: (sampleId) => {
         return Request.get(`/api/samples/${sampleId}/analyses`)
     },
