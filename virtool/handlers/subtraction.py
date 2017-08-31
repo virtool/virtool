@@ -66,6 +66,7 @@ async def create(req):
     document = {
         "_id": data["subtraction_id"],
         "ready": False,
+        "is_host": True,
         "file": {
             "id": file_id,
             "name": file["name"]
