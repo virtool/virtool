@@ -15,11 +15,11 @@ import { connect } from "react-redux";
 import { Row, Col, ListGroup, Modal } from "react-bootstrap";
 
 import { findFiles } from "../../files/actions";
-import { hideSubtractionModal } from "../actions";
+import { createSubtraction, hideSubtractionModal } from "../actions";
 import { Button, Input, ListGroupItem, RelativeTime } from "virtool/js/components/Base";
 
 const getInitialState = () => ({
-    name: "",
+    subtractionId: "",
     fileId: "",
 });
 
@@ -37,12 +37,13 @@ class CreateSubtraction extends React.Component {
         show: PropTypes.bool.isRequired,
         files: PropTypes.arrayOf(PropTypes.object),
         onHide: PropTypes.func,
-        onFindFiles: PropTypes.func
+        onFindFiles: PropTypes.func,
+        onCreate: PropTypes.func
     };
 
     modalEnter = () => {
         this.props.onFindFiles();
-        this.nameNode.focus()
+        this.idNode.focus()
     };
 
     modalExited = () => {
@@ -57,15 +58,7 @@ class CreateSubtraction extends React.Component {
      */
     handleSubmit = (event) => {
         event.preventDefault();
-
-        // Only submit the request if the two form fields are filled.
-        if (this.state.organism && this.state.description.length && this.state.fileId) {
-            dispatcher.db.hosts.request("add", {
-                file_id: this.state.fileId,
-                description: this.state.description,
-                organism: this.state.organism
-            }).success(this.props.onHide);
-        }
+        this.props.onCreate(this.state.subtractionId, this.state.fileId);
     };
 
     render () {
@@ -104,11 +97,11 @@ class CreateSubtraction extends React.Component {
                 <form onSubmit={this.handleSubmit}>
                     <Modal.Body>
                         <Input
-                            ref={(node) => this.nameNode = node}
+                            ref={(node) => this.idNode = node}
                             type="text"
-                            label="Name"
-                            value={this.state.name}
-                            onChange={this.handleChange}
+                            label="Unique Name"
+                            value={this.state.subtractionId}
+                            onChange={(e) => this.setState({subtractionId: e.target.value})}
                         />
 
                         <h5><strong>Files</strong></h5>
@@ -144,6 +137,10 @@ const mapDispatchToProps = (dispatch) => {
     return {
         onFindFiles: () => {
             dispatch(findFiles());
+        },
+
+        onCreate: (subtractionId, fileId) => {
+            dispatch(createSubtraction(subtractionId, fileId));
         },
 
         onHide: () => {
