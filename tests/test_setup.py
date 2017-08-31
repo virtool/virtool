@@ -373,7 +373,7 @@ class TestSaveAndReload:
 
         assert await connection.foobar.users.find_one() == {
             '_id': 'fred',
-            'groups': [],
+            'groups': ["administrator"],
             'invalidate_sessions': False,
             'password': 'hashed',
             'last_password_change': static_time,
@@ -410,7 +410,7 @@ class TestSaveAndReload:
         subdirs = [
             "files",
             "reference/viruses",
-            "reference/hosts",
+            "reference/subtraction",
             "samples",
             "hmm",
             "logs/jobs"

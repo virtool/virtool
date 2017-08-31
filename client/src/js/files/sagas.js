@@ -11,14 +11,14 @@ import { call, put, takeEvery, takeLatest } from "redux-saga/effects";
 
 import filesAPI from "./api";
 import { setPending } from "../wrappers";
-import { WS_UPDATE_FILE, WS_REMOVE_FILE, FIND_FILES, REMOVE_FILE, UPLOAD_READS }  from "../actionTypes";
+import { WS_UPDATE_FILE, WS_REMOVE_FILE, FIND_FILES, REMOVE_FILE, UPLOAD }  from "../actionTypes";
 
 export function* watchFiles () {
     yield takeLatest(WS_REMOVE_FILE, wsUpdateFile);
     yield takeLatest(WS_UPDATE_FILE, wsUpdateFile);
     yield takeLatest(FIND_FILES.REQUESTED, findFiles);
     yield takeEvery(REMOVE_FILE.REQUESTED, removeFile);
-    yield takeEvery(UPLOAD_READS.REQUESTED, uploadReads);
+    yield takeEvery(UPLOAD.REQUESTED, upload);
 }
 
 export function* wsUpdateFile () {
@@ -52,12 +52,12 @@ export function* removeFile (action) {
     }, action)
 }
 
-export function * uploadReads (action) {
+export function * upload (action) {
     try {
-        const response = yield call(filesAPI.uploadReads, action.file, action.onProgress);
-        yield put({type: UPLOAD_READS.SUCCEEDED, data: response.body});
+        const response = yield call(filesAPI.upload, action.file, action.fileType, action.onProgress);
+        yield put({type: UPLOAD.SUCCEEDED, data: response.body});
     } catch (error) {
-        yield put({type: UPLOAD_READS.FAILED}, error);
+        yield put({type: UPLOAD.FAILED}, error);
     }
 }
 

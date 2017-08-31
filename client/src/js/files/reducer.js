@@ -12,7 +12,7 @@ import { assign, every, reject } from "lodash";
 import {
     FIND_FILES,
     REMOVE_FILE,
-    UPLOAD_READS,
+    UPLOAD,
     UPLOAD_PROGRESS,
     HIDE_UPLOAD_OVERLAY
 } from "../actionTypes";
@@ -42,7 +42,7 @@ export default function reducer (state = initialState, action) {
                 documents: reject(state.documents, {id: action.data.file_id})
             });
 
-        case UPLOAD_READS.REQUESTED: {
+        case UPLOAD.REQUESTED: {
             const fileMeta = {
                 name: action.file.name,
                 size: action.file.size,

@@ -50,35 +50,49 @@ async def get(req):
 
 async def create(req):
     """
-    Adds a new host described by the transaction. Starts an :class:`.AddHost` job process.
+    Adds a new host described by the transaction. Starts an :class:`.CreateSubtraction` job process.
 
     """
     db, data = await unpack_request(req)
 
-    user_id = req["session"]["user_id"]
+    subtraction_id = data["subtraction_id"]
+    file_id = data["file_id"]
+    user_id = req["session"].user_id
 
     job_id = await virtool.utils.get_new_id(db.jobs)
 
-    data.update({
-        "_id": data.pop("organism"),
-        "file_name": "-".join(data["file_id"].split("-")[1:]),
-        "ready": False,
-        "username": user_id,
-        "job": job_id
-    })
+    file = await db.files.find_one(data["file_id"], ["name"])
 
-    await db.hosts.insert_one(data)
+    document = {
+        "_id": data["subtraction_id"],
+        "ready": False,
+        "file": {
+            "id": file_id,
+            "name": file["name"]
+        },
+        "user": {
+            "id": user_id
+        },
+        "job": {
+            "id": job_id
+        }
+    }
+
+    await db.subtraction.insert_one(document)
+
+    task_args = {
+        "subtraction_id": subtraction_id,
+        "file_id": file_id
+    }
 
     await req.app["job_manager"].new(
-        "add_host",
-        data,
-        1,
-        4,
+        "create_subtraction",
+        task_args,
         user_id,
         job_id=job_id
     )
 
-    return json_response(virtool.utils.base_processor(data))
+    return json_response(virtool.utils.base_processor(document))
 
 
 async def authorize_upload(req):

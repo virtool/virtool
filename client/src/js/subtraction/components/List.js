@@ -15,15 +15,17 @@ import { connect } from "react-redux";
 import { LinkContainer } from "react-router-bootstrap";
 import { Row, Col, Alert, FormGroup, InputGroup, FormControl } from "react-bootstrap";
 
-import { findSubtractions } from "../actions";
+import { findSubtractions, showCreateSubtraction } from "../actions";
 import { Flex, FlexItem, Icon, Button, ListGroupItem } from "virtool/js/components/Base";
+import CreateSubtraction from "./Create";
 
 class SubtractionList extends React.Component {
 
     static propTypes = {
         documents: PropTypes.arrayOf(PropTypes.object),
         readyHostCount: PropTypes.number,
-        onFind: PropTypes.func
+        onFind: PropTypes.func,
+        onShowCreate: PropTypes.func
     };
 
     componentDidMount () {
@@ -99,6 +101,8 @@ class SubtractionList extends React.Component {
                     <strong>Subtraction</strong>
                 </h3>
 
+                <CreateSubtraction />
+
                 {alert}
 
                 <div key="toolbar" className="toolbar">
@@ -115,9 +119,11 @@ class SubtractionList extends React.Component {
                         </InputGroup>
                     </FormGroup>
 
-                    <LinkContainer to="/subtraction/create">
-                        <Button icon="new-entry" bsStyle="primary" />
+                    <LinkContainer to="/subtraction/files">
+                        <Button icon="folder-open" tip="Files" />
                     </LinkContainer>
+
+                    <Button icon="new-entry" bsStyle="primary" tip="Create" onClick={this.props.onShowCreate} />
                 </div>
 
                 <div className="list-group">
@@ -138,6 +144,10 @@ const mapDispatchToProps = (dispatch) => {
     return {
         onFind: () => {
             dispatch(findSubtractions())
+        },
+
+        onShowCreate: () => {
+            dispatch(showCreateSubtraction())
         }
     };
 };

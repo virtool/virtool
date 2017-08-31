@@ -12,7 +12,7 @@ import {
     WS_REMOVE_FILE,
     FIND_FILES,
     REMOVE_FILE,
-    UPLOAD_READS,
+    UPLOAD,
     UPLOAD_PROGRESS,
     HIDE_UPLOAD_OVERLAY
 } from "../actionTypes";
@@ -35,11 +35,12 @@ export function findFiles () {
     };
 }
 
-export function uploadReads (localId, file, onProgress) {
+export function upload (localId, file, fileType, onProgress) {
     return {
-        type: UPLOAD_READS.REQUESTED,
+        type: UPLOAD.REQUESTED,
         localId,
         file,
+        fileType,
         onProgress
     };
 }

@@ -22,7 +22,7 @@ import TaskField from "./TaskField";
  */
 const Task = (props) => {
 
-    const readOnly = includes(["add_host", "rebuild_index"], props.taskPrefix);
+    const readOnly = includes(["create_subtraction", "rebuild_index"], props.taskPrefix);
 
     return (
         <ListGroupItem allowFocus>

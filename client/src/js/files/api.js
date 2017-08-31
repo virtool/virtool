@@ -19,12 +19,12 @@ const filesAPI = {
         return Request.delete(`/api/files/${fileId}`);
     },
 
-    uploadReads: (file, onProgress) => {
-        return Request.post("/upload/reads")
+    upload: (file, fileType, onProgress) => {
+        return Request.post(`/upload/${fileType}`)
             .query({name: file.name})
             .attach("file", file)
             .on("progress", onProgress);
-    }
+    },
 };
 
 
