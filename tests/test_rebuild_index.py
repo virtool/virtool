@@ -12,7 +12,7 @@ def test_rebuild_job(tmpdir, loop, test_motor, test_dispatch):
     tmpdir.mkdir("reference").mkdir("viruses")
     tmpdir.mkdir("logs").mkdir("jobs")
 
-    exec = ProcessPoolExecutor()
+    executor = ProcessPoolExecutor()
 
     settings = {
         "data_path": str(tmpdir)
@@ -20,7 +20,7 @@ def test_rebuild_job(tmpdir, loop, test_motor, test_dispatch):
 
     job = virtool.virus_index.RebuildIndex(
         loop,
-        exec,
+        executor,
         test_motor,
         settings,
         test_dispatch,
