@@ -55,16 +55,16 @@ async def create(req):
     """
     db, data = await unpack_request(req)
 
-    name = data["name"]
+    subtraction_id = data["subtraction_id"]
     file_id = data["file_id"]
-    user_id = req["session"]["user_id"]
+    user_id = req["session"].user_id
 
     job_id = await virtool.utils.get_new_id(db.jobs)
 
     file = await db.files.find_one(data["file_id"], ["name"])
 
-    await db.subtraction.insert_one({
-        "_id": data["name"],
+    document = {
+        "_id": data["subtraction_id"],
         "ready": False,
         "file": {
             "id": file_id,
@@ -76,14 +76,13 @@ async def create(req):
         "job": {
             "id": job_id
         }
-    })
+    }
 
-    await db.hosts.insert_one(data)
+    await db.subtraction.insert_one(document)
 
     task_args = {
-        "name": name,
-        "file_id": file_id,
-        "user_id": user_id
+        "subtraction_id": subtraction_id,
+        "file_id": file_id
     }
 
     await req.app["job_manager"].new(
@@ -93,7 +92,7 @@ async def create(req):
         job_id=job_id
     )
 
-    return json_response(virtool.utils.base_processor(data))
+    return json_response(virtool.utils.base_processor(document))
 
 
 async def authorize_upload(req):
