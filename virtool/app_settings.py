@@ -46,9 +46,9 @@ SCHEMA = {
     "import_reads_mem": get_default_integer(4),
     "import_reads_inst": get_default_integer(3),
 
-    "add_host_proc": get_default_integer(2),
-    "add_host_mem": get_default_integer(4),
-    "add_host_inst": get_default_integer(2),
+    "create_subtraction_proc": get_default_integer(2),
+    "create_subtraction_mem": get_default_integer(4),
+    "create_subtraction_inst": get_default_integer(2),
 
     "rebuild_index_proc": get_default_integer(2),
     "rebuild_index_mem": get_default_integer(4),
