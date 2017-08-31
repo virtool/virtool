@@ -73,7 +73,7 @@ class CreateSubtraction(virtool.job.Job):
         )
 
         #: The job stages.
-        self.stage_list = [
+        self._stage_list = [
             self.mk_subtraction_dir,
             self.set_stats,
             self.bowtie_build,
