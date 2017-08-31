@@ -116,7 +116,7 @@ class Job:
 
         return result
 
-    async def run_subprocess(self, command, error_test=None, log_stdout=False, log_stderr=True):
+    async def run_subprocess(self, command, error_test=None, log_stdout=False, log_stderr=True, env=None):
         await self.add_log("Command: {}".format(" ".join(command)))
 
         asyncio.set_event_loop(self.loop)
@@ -125,7 +125,8 @@ class Job:
             *command,
             stdout=asyncio.subprocess.PIPE,
             stderr=asyncio.subprocess.PIPE,
-            loop=self.loop
+            loop=self.loop,
+            env=env
         )
 
         out = list()
