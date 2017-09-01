@@ -52,10 +52,10 @@ class CreateSample(virtool.job.Job):
         self.sample_id = self.task_args["sample_id"]
 
         #: The path where the files for this sample are stored.
-        self.sample_path = os.path.join(self.settings.get("data_path"), "samples", "sample_{}".format(self.sample_id))
+        self.sample_path = os.path.join(self.settings.get("data_path"), "samples", str(self.sample_id))
 
         #: The path where FASTQC results will be written.
-        fastqc_path = os.path.join(self.sample_path, "fastqc")
+        self.fastqc_path = os.path.join(self.sample_path, "fastqc")
 
         #: The names of the reads files in the files path used to create the sample.
         self.files = self.task_args["files"]
@@ -65,7 +65,7 @@ class CreateSample(virtool.job.Job):
 
         #: The ordered list of :ref:`stage methods <stage-methods>` that are called by the job.
         self._stage_list = [
-            self.mk_sample_dir,
+            self.make_sample_dir,
             self.trim_reads,
             self.save_trimmed,
             self.fastqc,
@@ -80,7 +80,7 @@ class CreateSample(virtool.job.Job):
         analysis data will be stored here.
 
         """
-        await self.run_in_executor(mk_sample_dir(self.sample_path))
+        await self.run_in_executor(force_makedirs, self.sample_path)
 
     @virtool.job.stage_method
     async def trim_reads(self):
@@ -119,12 +119,12 @@ class CreateSample(virtool.job.Job):
         Runs FastQC on the renamed, trimmed read files.
 
         """
-        await self.run_subprocess(fastqc_path)
+        await self.run_subprocess(self.fastqc_path)
 
         command = [
             "fastqc",
             "-f", "fastq",
-            "-o", fastqc_path,
+            "-o", self.fastqc_path,
             "-t", "2",
             "--extract",
             self.sample_path + "/reads_1.fastq"
@@ -143,11 +143,13 @@ class CreateSample(virtool.job.Job):
 
         """
         # Get the text data files from the FastQC output
-        for name in os.listdir(self.sample_path + "/fastqc"):
+        for name in os.listdir(self.fastqc_path):
             if "reads" in name and "." not in name:
                 suffix = name.split("_")[1]
-                folder = self.sample_path + "/fastqc/" + name
-                shutil.move(folder + "/fastqc_data.txt", self.sample_path + "/fastqc_" + suffix + ".txt")
+                shutil.move(
+                    os.path.join(self.fastqc_path, name, "fastqc_data.txt"),
+                    os.path.join(self.sample_path, "fastqc_{}.txt".format(suffix))
+                )
 
         # Dispose of the rest of the data files.
         shutil.rmtree(self.sample_path + "/fastqc")
