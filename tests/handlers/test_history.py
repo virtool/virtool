@@ -182,7 +182,6 @@ class TestRemove:
             ],
             'last_indexed_version': 0,
             'lower_name': 'prunus virus f',
-            'modified': False,
             'name': 'Prunus virus F',
             'verified': False,
             'version': 1

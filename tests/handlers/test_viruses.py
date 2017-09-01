@@ -4,147 +4,154 @@ from copy import deepcopy
 import virtool.virus
 
 
-class TestFind:
+@pytest.mark.parametrize("term,verified,modified,per_page,page,d_range,meta", [
+    (None, None, False, None, None, range(0, 3), {
+        "page": 1,
+        "per_page": 15,
+        "page_count": 1,
+        "found_count": 3,
+        "total_count": 3,
+        "modified_count": 0,
+    }),
+    # Test ``per_page`` query param.
+    (None, None, False, 2, 1, range(0, 2), {
+        "page": 1,
+        "per_page": 2,
+        "page_count": 2,
+        "found_count": 3,
+        "total_count": 3,
+        "modified_count": 0,
+    }),
+    # Test ``per_page`` and ``page`` query param.
+    (None, None, False, 2, 2, range(2, 3), {
+        "page": 2,
+        "per_page": 2,
+        "page_count": 2,
+        "found_count": 3,
+        "total_count": 3,
+        "modified_count": 0,
+    }),
+    # Test ``term`` query param and ``found_count`` response field.
+    ("pvf", None, False, None, None, range(1, 2), {
+        "page": 1,
+        "per_page": 15,
+        "page_count": 1,
+        "found_count": 1,
+        "total_count": 3,
+        "modified_count": 0,
+    }),
+    # Test ``verified`` query param when set to ``True``. Should only return verified viruses.
+    (None, True, False, None, None, range(0, 2), {
+        "page": 1,
+        "per_page": 15,
+        "page_count": 1,
+        "found_count": 2,
+        "total_count": 3,
+        "modified_count": 0,
+    }),
+    # Test ``verified`` query param when set to ``False``. Should only return unverified viruses.
+    (None, False, False, None, None, range(2, 3), {
+        "page": 1,
+        "per_page": 15,
+        "page_count": 1,
+        "found_count": 1,
+        "total_count": 3,
+        "modified_count": 0,
+    }),
+    # Test ``modified_count`` calculation. Should return a ``modified_count`` of 1.
+    (None, None, True, None, None, range(0, 3), {
+        "page": 1,
+        "per_page": 15,
+        "page_count": 1,
+        "found_count": 3,
+        "total_count": 3,
+        "modified_count": 1
+    })
+])
+async def test_find(term, verified, modified, per_page, page, d_range, meta, spawn_client):
+    client = await spawn_client()
 
-    @pytest.mark.parametrize("term,modified,per_page,page,d_range,add_modified,meta", [
-        (None, None, None, None, range(0, 3), False, {
-            "page": 1,
-            "per_page": 15,
-            "page_count": 1,
-            "found_count": 3,
-            "total_count": 3,
-            "modified_count": 0,
-        }),
-        # Test ``per_page`` query param.
-        (None, None, 2, 1, range(0, 2), False, {
-            "page": 1,
-            "per_page": 2,
-            "page_count": 2,
-            "found_count": 3,
-            "total_count": 3,
-            "modified_count": 0,
-        }),
-        # Test ``per_page`` and ``page`` query param.
-        (None, None, 2, 2, range(2, 3), False, {
-            "page": 2,
-            "per_page": 2,
-            "page_count": 2,
-            "found_count": 3,
-            "total_count": 3,
-            "modified_count": 0,
-        }),
-        # Test ``term`` query param and ``found_count`` response field.
-        ("pvf", None, None, None, range(1, 2), False, {
-            "page": 1,
-            "per_page": 15,
-            "page_count": 1,
-            "found_count": 1,
-            "total_count": 3,
-            "modified_count": 0,
-        }),
-        # Test ``modified`` query param when set to ``True``. Should only return modified viruses.
-        (None, True, None, None, range(2, 3), True, {
-            "page": 1,
-            "per_page": 15,
-            "page_count": 1,
-            "found_count": 1,
-            "total_count": 3,
-            "modified_count": 1,
-        }),
-        # Test ``modified`` query param when set to ``False``. Should only return unmodified viruses.
-        (None, False, None, None, range(0, 2), True, {
-            "page": 1,
-            "per_page": 15,
-            "page_count": 1,
-            "found_count": 2,
-            "total_count": 3,
-            "modified_count": 1,
-        }),
-        # Test ``modified_count`` calculation.
-        (None, None, 15, 1, range(0, 3), True, {
-            "page": 1,
-            "per_page": 15,
-            "page_count": 1,
-            "found_count": 3,
-            "total_count": 3,
-            "modified_count": 1,
-        })
+    await client.db.viruses.insert_many([
+        {
+            "abbreviation": "EV_TF3-mycovirus",
+            "verified": True,
+            "name": "Endornavirus of Tree Fruit #3",
+            "_id": "5350af44"
+        },
+        {
+            "abbreviation": "PVF",
+            "verified": True,
+            "name": "Prunus virus F",
+            "_id": "6116cba1"
+        },
+        {
+            "abbreviation": "TyV_GV1 (not confirmed)",
+            "verified": False,
+            "name": "Tymovirus from Grapevine 1(not confirmed)",
+            "_id": "2f97f077"
+        }
     ])
-    async def test(self, term, modified, per_page, page, d_range, meta, add_modified, spawn_client):
-        client = await spawn_client()
 
-        await client.db.viruses.insert_many([
-            {
-                "abbreviation": "EV_TF3-mycovirus",
-                "modified": False,
-                "name": "Endornavirus of Tree Fruit #3",
-                "_id": "5350af44"
+    if modified:
+        await client.db.history.insert_one({
+            "_id": "foobar",
+            "index": {
+                "id": "unbuilt",
+                "version": "unbuilt"
             },
-            {
-                "abbreviation": "PVF",
-                "modified": False,
-                "name": "Prunus virus F",
-                "_id": "6116cba1"
-            },
-            {
-                "abbreviation": "TyV_GV1 (not confirmed)",
-                "modified": False,
-                "name": "Tymovirus from Grapevine 1(not confirmed)",
-                "_id": "2f97f077"
+            "virus": {
+                "name": "Tobacco mosaic virus"
             }
-        ])
+        })
 
-        if add_modified:
-            await client.db.viruses.update_one({"_id": "2f97f077"}, {
-                "$set": {
-                    "modified": True
-                }
-            })
+    path = "/api/viruses"
+    query = list()
 
-        path = "/api/viruses"
-        query = list()
+    if term is not None:
+        query.append("term={}".format(term))
 
-        if term is not None:
-            query.append("term={}".format(term))
+    if verified is not None:
+        query.append("verified={}".format(str(verified).lower()))
 
-        if modified is not None:
-            query.append("modified={}".format(str(modified).lower()))
+    if per_page is not None:
+        query.append("per_page={}".format(per_page))
 
-        if per_page is not None:
-            query.append("per_page={}".format(per_page))
+    if page is not None:
+        query.append("page={}".format(page))
 
-        if page is not None:
-            query.append("page={}".format(page))
+    if len(query):
+        path += "?{}".format("&".join(query))
 
-        if len(query):
-            path += "?{}".format("&".join(query))
+    resp = await client.get(path)
 
-        resp = await client.get(path)
+    assert resp.status == 200
 
-        assert resp.status == 200
+    expected_documents = [
+        {
+            "abbreviation": "EV_TF3-mycovirus",
+            "verified": True,
+            "name": "Endornavirus of Tree Fruit #3",
+            "id": "5350af44"
+        },
+        {
+            "abbreviation": "PVF",
+            "verified": True,
+            "name": "Prunus virus F",
+            "id": "6116cba1"
+        },
+        {
+            "abbreviation": "TyV_GV1 (not confirmed)",
+            "verified": False,
+            "name": "Tymovirus from Grapevine 1(not confirmed)",
+            "id": "2f97f077"
+        }
+    ]
 
-        expected_documents = [
-            {
-                "abbreviation": "EV_TF3-mycovirus",
-                "modified": False,
-                "name": "Endornavirus of Tree Fruit #3",
-                "id": "5350af44"
-            },
-            {
-                "abbreviation": "PVF",
-                "modified": False,
-                "name": "Prunus virus F",
-                "id": "6116cba1"
-            },
-            {
-                "abbreviation": "TyV_GV1 (not confirmed)",
-                "modified": add_modified,
-                "name": "Tymovirus from Grapevine 1(not confirmed)",
-                "id": "2f97f077"
-            }
-        ]
+    body = await resp.json()
 
-        assert await resp.json() == dict(meta, documents=[expected_documents[i] for i in d_range])
+    print(body["documents"])
+
+    assert body == dict(meta, documents=[expected_documents[i] for i in d_range])
 
 
 class TestGet:
@@ -167,7 +174,6 @@ class TestGet:
             "abbreviation": "PVF",
             "imported": True,
             "last_indexed_version": 0,
-            "modified": False,
             "verified": False,
             "most_recent_change": None,
             "name": "Prunus virus F",
@@ -212,7 +218,6 @@ class TestGet:
             "abbreviation": "PVF",
             "imported": True,
             "last_indexed_version": 0,
-            "modified": False,
             "verified": False,
             "most_recent_change": None,
             "name": "Prunus virus F",
@@ -244,7 +249,6 @@ class TestGet:
             "abbreviation": "PVF",
             "imported": True,
             "last_indexed_version": 0,
-            "modified": False,
             "verified": False,
             "most_recent_change": None,
             "name": "Prunus virus F",
@@ -288,7 +292,6 @@ class TestGet:
             "abbreviation": "PVF",
             "imported": True,
             "last_indexed_version": 0,
-            "modified": False,
             "verified": False,
             "most_recent_change": None,
             "name": "Prunus virus F",
@@ -358,7 +361,6 @@ class TestGet:
             "abbreviation": "PVF",
             "imported": True,
             "last_indexed_version": 0,
-            "modified": False,
             "verified": False,
             "most_recent_change": None,
             "name": "Prunus virus F",
@@ -457,7 +459,6 @@ class TestCreate:
             "abbreviation": expected_abbreviation,
             "isolates": [],
             "last_indexed_version": None,
-            "modified": True,
             "verified": False,
             "most_recent_change": None,
             "name": "Tobacco mosaic virus",
@@ -478,7 +479,6 @@ class TestCreate:
             "name": "Tobacco mosaic virus",
             "isolates": [],
             "last_indexed_version": None,
-            "modified": True,
             "verified": False,
             "abbreviation": expected_abbreviation,
             "version": 0
@@ -494,7 +494,6 @@ class TestCreate:
                 "lower_name": "tobacco mosaic virus",
                 "_id": "test",
                 "version": 0,
-                "modified": True,
                 "verified": False,
                 "last_indexed_version": None
             },
@@ -507,7 +506,6 @@ class TestCreate:
             "update",
             {
                 "abbreviation": expected_abbreviation,
-                "modified": True,
                 "verified": False,
                 "version": 0,
                 "name": "Tobacco mosaic virus",
@@ -679,7 +677,6 @@ class TestEdit:
                 }
             ],
             "last_indexed_version": 0,
-            "modified": True,
             "verified": False,
             "most_recent_change": None,
             "name": "Prunus virus F",
@@ -716,7 +713,6 @@ class TestEdit:
             "id": "6116cba1",
             "name": "Prunus virus F",
             "abbreviation": existing_abbreviation,
-            "modified": True,
             "verified": False,
             "version": 1
         }
@@ -733,7 +729,6 @@ class TestEdit:
 
         old.update({
             "_id": old.pop("id"),
-            "modified": False,
             "lower_name": old["name"].lower(),
             "version": 0
         })
@@ -1150,7 +1145,6 @@ class TestAddIsolate:
                 "id": "6116cba1",
                 "name": "Prunus virus F",
                 "abbreviation": "PVF",
-                "modified": True,
                 "verified": False,
                 "version": 1
             }
@@ -1225,7 +1219,6 @@ class TestAddIsolate:
                 "id": "6116cba1",
                 "name": "Prunus virus F",
                 "abbreviation": "PVF",
-                "modified": True,
                 "verified": False,
                 "version": 1
             }
@@ -1292,7 +1285,6 @@ class TestAddIsolate:
                 "id": "6116cba1",
                 "name": "Prunus virus F",
                 "abbreviation": "PVF",
-                "modified": True,
                 "verified": False,
                 "version": 1
             }
@@ -1354,7 +1346,6 @@ class TestAddIsolate:
                 "id": "6116cba1",
                 "name": "Prunus virus F",
                 "abbreviation": "PVF",
-                "modified": True,
                 "verified": False,
                 "version": 1
             }
@@ -1409,7 +1400,6 @@ class TestAddIsolate:
                 "id": "6116cba1",
                 "name": "Prunus virus F",
                 "abbreviation": "PVF",
-                "modified": True,
                 "verified": False,
                 "version": 1
             }
@@ -1494,7 +1484,6 @@ class TestEditIsolate:
                 "id": "6116cba1",
                 "name": "Prunus virus F",
                 "abbreviation": "PVF",
-                "modified": True,
                 "verified": False,
                 "version": 1
             }
@@ -1543,7 +1532,6 @@ class TestEditIsolate:
                 "id": "6116cba1",
                 "name": "Prunus virus F",
                 "abbreviation": "PVF",
-                "modified": True,
                 "verified": False,
                 "version": 1
             }
@@ -1676,7 +1664,6 @@ class TestSetAsDefault:
                 "id": "6116cba1",
                 "name": "Prunus virus F",
                 "abbreviation": "PVF",
-                "modified": True,
                 "verified": False,
                 "version": 1
             }
@@ -1804,7 +1791,6 @@ class TestRemoveIsolate:
             ],
             "last_indexed_version": 0,
             "lower_name": "prunus virus f",
-            "modified": False,
             "verified": False,
             "name": "Prunus virus F",
             "version": 0
@@ -1814,7 +1800,6 @@ class TestRemoveIsolate:
 
         new.update({
             "version": 1,
-            "modified": True,
             "isolates": []
         })
 
@@ -1833,7 +1818,6 @@ class TestRemoveIsolate:
                 "id": "6116cba1",
                 "name": "Prunus virus F",
                 "abbreviation": "PVF",
-                "modified": True,
                 "verified": False,
                 "version": 1
             }
@@ -1899,7 +1883,6 @@ class TestRemoveIsolate:
             ],
             "last_indexed_version": 0,
             "lower_name": "prunus virus f",
-            "modified": False,
             "verified": False,
             "name": "Prunus virus F",
             "version": 0
@@ -1920,7 +1903,6 @@ class TestRemoveIsolate:
             ],
             "last_indexed_version": 0,
             "lower_name": "prunus virus f",
-            "modified": True,
             "verified": False,
             "name": "Prunus virus F",
             "version": 1
@@ -1941,7 +1923,6 @@ class TestRemoveIsolate:
                 "id": "6116cba1",
                 "name": "Prunus virus F",
                 "abbreviation": "PVF",
-                "modified": True,
                 "verified": False,
                 "version": 1
             }
@@ -2074,7 +2055,6 @@ class TestCreateSequence:
             ],
             "last_indexed_version": 0,
             "lower_name": "prunus virus f",
-            "modified": False,
             "verified": False,
             "name": "Prunus virus F",
             "version": 0
@@ -2092,7 +2072,6 @@ class TestCreateSequence:
         }]
 
         new.update({
-            "modified": True,
             "verified": True,
             "version": 1
         })
@@ -2111,7 +2090,6 @@ class TestCreateSequence:
             {
                 "id": "6116cba1",
                 "abbreviation": "PVF",
-                "modified": True,
                 "verified": True,
                 "name": "Prunus virus F",
                 "version": 1
@@ -2219,7 +2197,6 @@ class TestEditSequence:
             ],
             "last_indexed_version": 0,
             "lower_name": "prunus virus f",
-            "modified": False,
             "verified": False,
             "name": "Prunus virus F",
             "version": 0
@@ -2237,7 +2214,6 @@ class TestEditSequence:
         }]
 
         new.update({
-            "modified": True,
             "verified": True,
             "version": 1
         })
@@ -2256,7 +2232,6 @@ class TestEditSequence:
             {
                 "id": "6116cba1",
                 "abbreviation": "PVF",
-                "modified": True,
                 "verified": True,
                 "name": "Prunus virus F",
                 "version": 1
@@ -2343,7 +2318,6 @@ class TestRemoveSequence:
             {
                 "id": "6116cba1",
                 "abbreviation": "PVF",
-                "modified": True,
                 "verified": False,
                 "name": "Prunus virus F",
                 "version": 1

@@ -8,7 +8,6 @@ def iresine():
     return {
         "last_indexed_version": 0,
         "abbreviation": "IrVd",
-        "modified": False,
         "_id": "008lgo",
         "name": "Iresine viroid",
         "isolates": [
@@ -796,7 +795,6 @@ class TestInsertFromImport:
 
         assert virus == {
             "abbreviation": "PVF",
-            "modified": False,
             "name": "Prunus virus F",
             "version": 0,
             "id": "6116cba1"
