@@ -17,6 +17,5 @@ class TestUnset:
 
         assert await test_motor.viruses.find().to_list(None) == [{
             "_id": 1,
-            "modified": False,
             "verified": True
         }]

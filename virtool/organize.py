@@ -183,22 +183,23 @@ async def organize_viruses(db):
         }
     })
 
-    await db.viruses.update_many({}, {
-        "$unset": {
-            "segments": "",
-            "abbrevation": "",
-            "new": "",
-            "username": "",
-            "user_id": ""
-        }
-    })
-
     async for document in db.viruses.find({"verified": {"$exists": False}}, ["modified"]):
         await db.viruses.update_one({"_id": document["_id"]}, {
             "$set": {
                 "verified": not document["modified"]
             }
         })
+
+    await db.viruses.update_many({}, {
+        "$unset": {
+            "segments": "",
+            "abbrevation": "",
+            "new": "",
+            "username": "",
+            "user_id": "",
+            "modified": ""
+        }
+    })
 
     async for document in db.viruses.find({"isolates.isolate_id": {"$exists": True}}, ["isolates"]):
         for isolate in document["isolates"]:
