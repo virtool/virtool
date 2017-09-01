@@ -98,7 +98,6 @@ async def import_file(loop, db, dispatch, handle, user_id, replace=False):
 
     base_virus_document = {
         "last_indexed_version": 0,
-        "modified": False,
         "user_id": user_id,
         "imported": True
     }
@@ -434,7 +433,6 @@ async def insert_from_import(db, virus_document, user_id):
     # Modified is set to ``False`` so the user does not have to verify every single imported virus.
     virus_document.update({
         "version": 0,
-        "modified": False,
         "last_indexed_version": None,
         "lower_name": virus_document["name"].lower(),
         "imported": True
