@@ -10,42 +10,6 @@ import virtool.virus
 FIXTURE_DIR = os.path.join(os.path.dirname(os.path.realpath(__file__)), "test_files")
 
 
-@pytest.fixture
-def iresine():
-    return {
-        "last_indexed_version": 0,
-        "abbreviation": "IrVd",
-        "modified": False,
-        "_id": "008lgo",
-        "name": "Iresine viroid",
-        "isolates": [
-            {
-                "source_name": "",
-                "id": "6kplarn7",
-                "source_type": "unknown",
-                "default": True
-            }
-        ]
-    }
-
-
-@pytest.fixture
-def iresine_sequence():
-    return {
-        "sequence": "CGTGGTT",
-        "_id": "NC_003613",
-        "host": "Iresine herbstii",
-        "definition": "Iresine viroid complete sequence",
-        "length": 370,
-        "isolate_id": "6kplarn7"
-    }
-
-
-@pytest.fixture
-def duplicate_result():
-    return {"isolate_id": [], "_id": [], "name": [], "sequence_id": [], "abbreviation": []}
-
-
 class TestJoin:
 
     async def test(self, test_motor, test_virus, test_sequence, test_merged_virus):
