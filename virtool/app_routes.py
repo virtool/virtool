@@ -98,7 +98,7 @@ def setup_basic_api_routes(app):
 
 
 def setup_update_routes(app):
-    app.router.add_get("/api/updates", updates.get)
+    app.router.add_get("/api/updates/software", updates.get)
 
 
 def setup_jobs_routes(app):
