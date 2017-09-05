@@ -126,6 +126,7 @@ class Job:
         print("STARTED SETTING EVENT LOOP")
 
         asyncio.set_event_loop(self.loop)
+        asyncio.get_child_watcher().attach_loop(self.loop)
 
         print("FINISHED SETTING EVENT LOOP")
 
