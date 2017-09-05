@@ -1,13 +1,12 @@
 import os
 import sys
 import shutil
+import aiohttp
 import tarfile
 import logging
-import requests
 import tempfile
 import urllib.request
 
-import virtool.database
 import virtool.utils
 
 logger = logging.getLogger(__name__)
@@ -23,171 +22,124 @@ RELEASE_KEYS = [
 ]
 
 
-class Collection(virtool.database.Collection):
+async def get_releases(repo, server_version):
+    headers = {
+        "user-agent": "virtool/{}".format(server_version)
+    }
+
+    async with aiohttp.ClientSession() as session:
+        async with session.get("https://api.github.com/repos/{}/releases".format(repo), headers=headers) as resp:
+            data = await resp.json()
+
+    releases = []
+
+    # Reformat the release dicts to make them more palatable. If the response code was not 200, the releases list
+    # will be empty. This is interpreted by the web client as an error.
+    if resp.status == 200:
+        releases = [format_software_release(release) for release in data if not release["prerelease"]]
+        releases = releases[0:5]
+
+    return releases
+
+
+def upgrade_to_latest(self, transaction):
+    """
+    Starts the update install process. Blocks all waiting jobs from starting. Then, removes any existing
+    "software_update"-type document from the database and inserts a new one.
+
+    Finally the install process is started by calling :meth:`.install_update` using :meth:`spawn_callback`. The
+    latest release document is passed to :meth:`.install_update`.
+
+    :param transaction: a :class:`~.Transaction` object containing the name of the release to install.
+    :type transaction: :class:`~.Transaction`
+
+    :return: a tuple in the form (``True``, ``None``)
+    :rtype: tuple
 
     """
-    An :class:`.virtool.database.Collection` interface for the *updates* MongoDB collection.
+    # Block any more jobs from starting.
+    self.collections["jobs"].blocked = True
+
+    # Update any pre-existing software_update document.
+    yield self.delete_one(["software_install"])
+
+    # Get the latest release document from the updates collection.
+    release = yield self.find_one({"name": transaction.data["name"]})
+
+    # Insert the new software update document, which contains information about the install process.
+    yield self.insert_one({
+        "_id": "software_install",
+        "name": transaction.data["name"],
+        "type": "software_install",
+        "size": release["size"],
+        "display_notification": transaction.data["displayNotification"],
+        "delete_temporary": transaction.data["deleteTemporary"],
+        "forcefully_cancel": transaction.data["forcefullyCancel"],
+        "shutdown": transaction.data["shutdown"],
+        "step": "block_jobs",
+        "progress": 0,
+        "good_tree": True,
+        "complete": False
+    })
+
+    # Start the install process outside of the exposed method so the transaction can be returned. This is done by
+    # calling :meth:`.install_update` with :meth:`spawn_callback` and passing the latest release to it.
+    tornado.ioloop.IOLoop.current().spawn_callback(self.install_update, release)
+
+    return True, None
+
+
+def install_update(self, release):
+    """
+    Installs the update described by the passed release document.
+
+    :param release:
+    :return:
 
     """
-    def __init__(self, dispatch, collections, settings, add_periodic_callback, reload):
-        super().__init__("updates", dispatch, collections, settings, add_periodic_callback)
+    with tempfile.TemporaryDirectory() as tempdir:
+        # Download the release from GitHub and write it to a temporary directory.
+        yield self.update_software_step(0, "download")
+        compressed_path = os.path.join(str(tempdir), "release.tar.gz")
+        yield download_release(release["download_url"], release["size"], compressed_path, self.update_software_step)
 
-        self.reload = reload
-        self.sync_projector = None
+        # Decompress the gzipped tarball to the root of the temporary directory.
+        yield self.update_software_step(0, "decompress")
+        yield decompress_file(compressed_path, str(tempdir))
+        decompressed_path = os.path.join(str(tempdir), "virtool")
 
-    @virtool.gen.exposed_method(["modify_options"])
-    def refresh_software_releases(self, transaction):
-        """
-        An exposed method for allowing clients to call :meth:`.update_software_release`.
-
-        :return: always (``True``, ``None``)
-        :rtype: tuple
-
-        """
-        yield self.update_software_releases()
-        return True, None
-
-    @virtool.gen.coroutine
-    def update_software_releases(self):
-        """
-        Use the GitHub API to get data describing the latest releases of the Virtool software. The five most recent
-        releases are upserted in the ``updates`` MongoDB collection. Any older releases are removed from the database.
-
-        """
-        response = requests.get(
-            "https://api.github.com/repos/{}/releases".format(self.settings.get("software_repo")),
-            headers={"user-agent": "virtool/{}".format(self.settings.get("server_version"))}
-        )
-
-        # This list will contain dicts describing the releases retrieved from GitHub.
-        releases = []
-
-        # Reformat the release dicts to make them more palatable. If the response code was not 200, the releases list
-        # will be empty. This is interpreted by the web client as an error.
-        if response.status_code == 200:
-            releases = [format_software_release(release) for release in response.json() if not release["prerelease"]]
-            releases = releases[0:5]
-
-        # A list of ids of documents that should be removed from the updates collection. Initially all document ids in
-        # the collection.
-        to_remove = yield self.find({"type": "software"}).distinct("_id")
-
-        # Upsert the releases. Remove upserted document ids from the ``to_remove`` list.
-        for release in releases:
-            yield self.update_one({"_id": release["_id"]}, {
-                "$set": release,
-                "$inc": {"_version": 1}
-            }, upsert=True, increment_version=False)
-
-            try:
-                to_remove.remove(release["_id"])
-            except ValueError:
-                pass
-
-        # Remove any documents whose ids are still in the ``to_remove`` list.
-        if to_remove:
-            yield self.delete_many(to_remove)
-
-    @virtool.gen.exposed_method(["modify_options"])
-    def upgrade_to_latest(self, transaction):
-        """
-        Starts the update install process. Blocks all waiting jobs from starting. Then, removes any existing
-        "software_update"-type document from the database and inserts a new one.
-
-        Finally the install process is started by calling :meth:`.install_update` using :meth:`spawn_callback`. The
-        latest release document is passed to :meth:`.install_update`.
-
-        :param transaction: a :class:`~.Transaction` object containing the name of the release to install.
-        :type transaction: :class:`~.Transaction`
-
-        :return: a tuple in the form (``True``, ``None``)
-        :rtype: tuple
-
-        """
-        # Block any more jobs from starting.
-        self.collections["jobs"].blocked = True
-
-        # Update any pre-existing software_update document.
-        yield self.delete_one(["software_install"])
-
-        # Get the latest release document from the updates collection.
-        release = yield self.find_one({"name": transaction.data["name"]})
-
-        # Insert the new software update document, which contains information about the install process.
-        yield self.insert_one({
-            "_id": "software_install",
-            "name": transaction.data["name"],
-            "type": "software_install",
-            "size": release["size"],
-            "display_notification": transaction.data["displayNotification"],
-            "delete_temporary": transaction.data["deleteTemporary"],
-            "forcefully_cancel": transaction.data["forcefullyCancel"],
-            "shutdown": transaction.data["shutdown"],
-            "step": "block_jobs",
-            "progress": 0,
-            "good_tree": True,
-            "complete": False
-        })
-
-        # Start the install process outside of the exposed method so the transaction can be returned. This is done by
-        # calling :meth:`.install_update` with :meth:`spawn_callback` and passing the latest release to it.
-        tornado.ioloop.IOLoop.current().spawn_callback(self.install_update, release)
-
-        return True, None
-
-    @virtool.gen.coroutine
-    def install_update(self, release):
-        """
-        Installs the update described by the passed release document.
-
-        :param release:
-        :return:
-
-        """
-        with tempfile.TemporaryDirectory() as tempdir:
-            # Download the release from GitHub and write it to a temporary directory.
-            yield self.update_software_step(0, "download")
-            compressed_path = os.path.join(str(tempdir), "release.tar.gz")
-            yield download_release(release["download_url"], release["size"], compressed_path, self.update_software_step)
-
-            # Decompress the gzipped tarball to the root of the temporary directory.
-            yield self.update_software_step(0, "decompress")
-            yield decompress_file(compressed_path, str(tempdir))
-            decompressed_path = os.path.join(str(tempdir), "virtool")
-
-            # Check that the file structure matches our expectations.
-            yield self.update_software_step(0, "check_tree")
-            good_tree = yield check_software_tree(decompressed_path)
-
-            yield self.update_one({"_id": "software_install"}, {
-                "$set": {
-                    "good_tree": good_tree
-                }
-            })
-
-            # Copy the update files to the install directory.
-            yield self.update_software_step(0, "copy_files")
-            yield copy_software_files(decompressed_path, INSTALL_PATH)
-
-            yield self.delete_one(["software_install"])
-
-            yield tornado.gen.sleep(1.5)
-
-            yield self.reload()
-
-    @virtool.gen.coroutine
-    def update_software_step(self, progress, step=None):
-        set_dict = dict(progress=progress)
-
-        if step:
-            set_dict["step"] = step
+        # Check that the file structure matches our expectations.
+        yield self.update_software_step(0, "check_tree")
+        good_tree = yield check_software_tree(decompressed_path)
 
         yield self.update_one({"_id": "software_install"}, {
-            "$set": set_dict
+            "$set": {
+                "good_tree": good_tree
+            }
         })
 
+        # Copy the update files to the install directory.
+        yield self.update_software_step(0, "copy_files")
+        yield copy_software_files(decompressed_path, INSTALL_PATH)
 
-@virtool.gen.coroutine
+        yield self.delete_one(["software_install"])
+
+        yield tornado.gen.sleep(1.5)
+
+        yield self.reload()
+
+
+def update_software_step(self, progress, step=None):
+    set_dict = dict(progress=progress)
+
+    if step:
+        set_dict["step"] = step
+
+    yield self.update_one({"_id": "software_install"}, {
+        "$set": set_dict
+    })
+
+
 def download_release(url, size, target_path, progress_handler):
     """
     Download the GitHub release at ``url`` to the location specified by ``target_path``. Release files are downloaded in
@@ -228,7 +180,6 @@ def download_release(url, size, target_path, progress_handler):
                     yield progress_handler(progress)
 
 
-@virtool.gen.synchronous
 def get_url_file(url):
     """
     A coroutine that just calls :meth:`urllib.request.urlopen` in a separate thread for the given ``url`` and returns
@@ -243,7 +194,6 @@ def get_url_file(url):
     return urllib.request.urlopen(url)
 
 
-@virtool.gen.synchronous
 def read_url_file(url_file):
     """
     Reads and returns a 4 KB chunk from the passed ``url_file``. Calls in a separate thread.
@@ -253,7 +203,6 @@ def read_url_file(url_file):
     return url_file.read(4096)
 
 
-@virtool.gen.synchronous
 def decompress_file(path, target):
     """
     Decompress the tar.gz file at ``path`` to the directory ``target``.
@@ -269,7 +218,6 @@ def decompress_file(path, target):
         tar.extractall(target)
 
 
-@virtool.gen.synchronous
 def check_software_tree(path):
     if set(os.listdir(path)) != {"client", "install.sh", "run", "VERSION"}:
         return False
@@ -285,7 +233,6 @@ def check_software_tree(path):
     return True
 
 
-@virtool.gen.synchronous
 def copy_software_files(src, dest):
     # Remove the client dir and replace it with the new one.
     try:
