@@ -198,9 +198,6 @@ class Job:
         await self.run_in_executor(flush_log, self._log_path, self._log_buffer)
 
     async def cancel(self):
-        print("STARTED", self.started)
-        print("FINISHED", self.finished)
-
         if self.started and not self.finished:
             self._task.cancel()
 

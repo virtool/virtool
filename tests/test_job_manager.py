@@ -20,18 +20,7 @@ def test_job_manager(capsys, tmpdir, loop, test_motor, test_dispatch):
 
     manager.start()
 
-    with capsys.disabled():
-        print("YIELD MANAGER")
-
     yield manager
-
-    with capsys.disabled():
-        print("CLOSE MANAGER")
-
-    manager.loop.run_until_complete(manager.close())
-
-    with capsys.disabled():
-        print("FINISH FIXTURE")
 
 
 class TestStarted:
