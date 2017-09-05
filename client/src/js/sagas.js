@@ -18,6 +18,7 @@ import { watchAccount } from "./nav/sagas"
 import { watchSettings, watchUpdateSettings } from "./settings/sagas"
 import { watchUsers } from "./settings/users/sagas";
 import { watchGroups } from "./settings/groups/sagas";
+import { watchUpdates } from "./updates/sagas";
 
 export default function* rootSaga () {
     yield [
@@ -31,6 +32,7 @@ export default function* rootSaga () {
         fork(watchSettings),
         fork(watchUpdateSettings),
         fork(watchUsers),
-        fork(watchGroups)
+        fork(watchGroups),
+        fork(watchUpdates)
     ]
 }

@@ -7,32 +7,29 @@
  *
  */
 
-import { call, put, takeEvery, takeLatest } from "redux-saga/effects";
-import settingsAPI from "./api";
-import { GET_SETTINGS, UPDATE_SETTINGS } from "../actionTypes";
+import { call, put, takeLatest } from "redux-saga/effects";
+import updatesAPI from "./api";
+import { GET_SOFTWARE_UPDATES, GET_DATABASE_UPDATES } from "../actionTypes";
 
-export function* watchSettings () {
-    yield takeLatest(GET_SETTINGS.REQUESTED, getSettings);
+export function* watchUpdates () {
+    yield takeLatest(GET_SOFTWARE_UPDATES.REQUESTED, getSoftwareUpdates);
+    yield takeLatest(GET_DATABASE_UPDATES.REQUESTED, getDatabaseUpdates);
 }
 
-function* getSettings () {
+function* getSoftwareUpdates () {
     try {
-        const response = yield call(settingsAPI.get);
-        yield put({type: GET_SETTINGS.SUCCEEDED, data: response.body});
-    } catch (error) {
-        yield put({type: GET_SETTINGS.FAILED}, error);
+        const response = yield call(updatesAPI.getSoftware);
+        yield put({type: GET_SOFTWARE_UPDATES.SUCCEEDED, data: response.body});
+    } catch(error) {
+        yield put({type: GET_SOFTWARE_UPDATES.FAILED})
     }
 }
 
-export function* watchUpdateSettings () {
-    yield takeEvery(UPDATE_SETTINGS.REQUESTED, updateSettings)
-}
-
-function* updateSettings (action) {
+function* getDatabaseUpdates () {
     try {
-        const response = yield call(settingsAPI.update, action.update);
-        yield put({type: UPDATE_SETTINGS.SUCCEEDED, settings: response.body});
+        const response = yield call(updatesAPI.getDatabase);
+        yield put({type: GET_DATABASE_UPDATES.SUCCEEDED, data: response.body});
     } catch(error) {
-        yield put({type: UPDATE_SETTINGS.FAILED})
+        yield put({type: GET_DATABASE_UPDATES.FAILED})
     }
 }
