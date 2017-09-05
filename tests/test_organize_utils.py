@@ -23,8 +23,8 @@ class TestUpdateUserField:
 
         await virtool.organize_utils.update_user_field(test_motor.test)
 
-        assert set(await test_motor.test.find().to_list(None)) == {
-            {"_id": "test2", "user": {"id": "foo"}},
+        assert await test_motor.test.find(sort=[("_id", 1)]).to_list(None) == [
             {"_id": "test", "user": {"id": "foobar"}},
-            {"_id": "test1", "user": {"id": "baz"}}
-        }
+            {"_id": "test1", "user": {"id": "baz"}},
+            {"_id": "test2", "user": {"id": "foo"}}
+        ]
