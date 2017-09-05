@@ -8,7 +8,7 @@ addons:
   apt:
     sources:
       - mongodb-upstart
-      - mongodb-3.4-trusty
+      - mongodb-3.4-precise
     packages:
       - libtbb-dev
       - mongodb-org-server
