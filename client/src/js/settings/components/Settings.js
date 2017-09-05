@@ -23,6 +23,7 @@ import Data from "./Data";
 import Resources from "./Jobs/Resources";
 import Tasks from "./Jobs/Tasks";
 import Users from "../users/components/Users";
+import Updates from "../../updates/components/Viewer";
 
 const General = () => (
     <div>
@@ -76,6 +77,10 @@ const Settings = () => {
                 <LinkContainer to="/settings/users">
                     <NavItem>Users</NavItem>
                 </LinkContainer>
+
+                <LinkContainer to="/settings/updates">
+                    <NavItem>Updates</NavItem>
+                </LinkContainer>
             </Nav>
 
             <Switch>
@@ -85,6 +90,7 @@ const Settings = () => {
                 <Route path="/settings/data" component={Data} />
                 <Route path="/settings/jobs" component={Jobs} />
                 <Route path="/settings/users" component={Users} />
+                <Route path="/settings/updates" component={Updates} />
             </Switch>
         </div>
     );
