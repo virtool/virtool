@@ -74,7 +74,7 @@ before_script:
 - sleep 15
 
 script:
-- pytest --faulthandler-timeout=10 --cov --cov-report xml -vv
+- pytest --faulthandler-timeout=30 --cov --cov-report xml -vv
 
 after_success:
 - python-codacy-coverage -r coverage.xml
