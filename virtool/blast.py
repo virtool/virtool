@@ -2,7 +2,6 @@ import re
 import io
 import json
 import time
-import requests
 import zipfile
 
 
