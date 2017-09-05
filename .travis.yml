@@ -8,7 +8,7 @@ addons:
   apt:
     sources:
       - mongodb-upstart
-      - mongodb-3.0-precise
+      - mongodb-3.4-trusty
     packages:
       - libtbb-dev
       - mongodb-org-server
@@ -66,9 +66,9 @@ install:
 - webpack --config webpack.production.config.js
 - cd $TRAVIS_BUILD_DIR
 
-
 before_script:
 - sleep 15
+- mongo mydb_test --eval 'db.addUser("travis", "test");'
 
 script:
 - pytest --cov --cov-report xml -vv
