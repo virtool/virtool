@@ -42,7 +42,7 @@ before_install:
 - bowtie2-inspect --version
 
 # Skewer
-- wget https://github.com/relipmoc/skewer/archive/skewer-0.2.2.tar.gz
+- wget https://github.com/relipmoc/skewer/archive/0.2.2.tar.gz
 - tar -xvf skewer-0.2.2.tar.gz
 - cd skewer-0.2.2
 - make
