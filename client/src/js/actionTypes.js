@@ -115,7 +115,7 @@ export const GET_ACCOUNT_FAILED = "GET_ACCOUNT_FAILED";
 export const LOGOUT_REQUESTED = "LOGOUT_REQUESTED";
 export const LOGOUT_SUCCEEDED = "LOGOUT_SUCCEEDED";
 
-// Administrative setting actionTypes
+// Administrative Settings
 export const GET_SETTINGS = createRequestActionType("GET_SETTINGS");
 export const UPDATE_SETTINGS = createRequestActionType("UPDATE_SETTINGS");
 
@@ -136,6 +136,10 @@ export const SET_FORCE_RESET = createRequestActionType("SET_FORCE_RESET");
 export const SET_PRIMARY_GROUP = createRequestActionType("SET_PRIMARY_GROUP");
 export const ADD_USER_TO_GROUP = createRequestActionType("ADD_USER_TO_GROUP");
 export const REMOVE_USER_FROM_GROUP = createRequestActionType("REMOVE_USER_FROM_GROUP");
+
+// Updates
+export const GET_SOFTWARE_UPDATES = createRequestActionType("GET_SOFTWARE_UPDATES");
+export const GET_DATABASE_UPDATES = createRequestActionType("GET_DATABASE_UPDATES");
 
 // Groups
 export const LIST_GROUPS = createRequestActionType("LIST_GROUPS");
