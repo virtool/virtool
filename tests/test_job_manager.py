@@ -5,7 +5,7 @@ import virtool.job_manager
 
 
 @pytest.fixture
-def test_job_manager(tmpdir, loop, test_motor, test_dispatch):
+def test_job_manager(capsys, tmpdir, loop, test_motor, test_dispatch):
     settings = {
         "proc": 6,
         "mem": 24,
@@ -20,9 +20,18 @@ def test_job_manager(tmpdir, loop, test_motor, test_dispatch):
 
     manager.start()
 
+    with capsys.disabled():
+        print("YIELD MANAGER")
+
     yield manager
 
+    with capsys.disabled():
+        print("CLOSE MANAGER")
+
     manager.loop.run_until_complete(manager.close())
+
+    with capsys.disabled():
+        print("FINISH FIXTURE")
 
 
 class TestStarted:
@@ -146,8 +155,10 @@ class TestNew:
             if last_status["error"]:
                 break
 
-            if count == 20:
+            if count == 15:
                 raise TimeoutError("Timed out waiting for job to error")
+
+            count += 1
 
             await asyncio.sleep(0.3, loop=loop)
 
