@@ -43,7 +43,7 @@ before_install:
 
 # Skewer
 - wget https://github.com/relipmoc/skewer/archive/0.2.2.tar.gz
-- tar -xvf skewer-0.2.2.tar.gz
+- tar -xvf 0.2.2.tar.gz
 - cd skewer-0.2.2
 - make
 - cd ..
