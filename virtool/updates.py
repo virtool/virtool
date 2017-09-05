@@ -37,12 +37,43 @@ async def get_releases(repo, server_version):
     # will be empty. This is interpreted by the web client as an error.
     if resp.status == 200:
         releases = [format_software_release(release) for release in data if not release["prerelease"]]
-        releases = releases[0:5]
 
     return releases
 
 
-def upgrade_to_latest(self, transaction):
+def format_software_release(release):
+    """
+    Format a raw GitHub release object (dict) to something that can be sent to clients.
+
+    :param release: a raw GitHub release object
+    :type release: dict
+
+    :return: a formatted release
+    :rtype: dict
+
+    """
+    formatted = {key: release[key] for key in RELEASE_KEYS}
+
+    asset_error = False
+
+    try:
+        asset = release["assets"][0]
+
+        formatted.update({
+            "filename": asset["name"],
+            "content_type": asset["content_type"],
+            "size": asset["size"],
+            "download_url": asset["browser_download_url"]
+        })
+    except (KeyError, IndexError):
+        asset_error = True
+
+    formatted["asset_error"] = asset_error
+
+    return formatted
+
+
+async def upgrade_to_latest(db, job_manager):
     """
     Starts the update install process. Blocks all waiting jobs from starting. Then, removes any existing
     "software_update"-type document from the database and inserts a new one.
@@ -57,17 +88,17 @@ def upgrade_to_latest(self, transaction):
     :rtype: tuple
 
     """
-    # Block any more jobs from starting.
-    self.collections["jobs"].blocked = True
+    await job_manager.close()
 
     # Update any pre-existing software_update document.
-    yield self.delete_one(["software_install"])
-
-    # Get the latest release document from the updates collection.
-    release = yield self.find_one({"name": transaction.data["name"]})
+    await db.status.update_one({"_id": "software_update"}, {
+        "$set": {
+            "process": None
+        }
+    })
 
     # Insert the new software update document, which contains information about the install process.
-    yield self.insert_one({
+    await self.insert_one({
         "_id": "software_install",
         "name": transaction.data["name"],
         "type": "software_install",
@@ -127,17 +158,6 @@ def install_update(self, release):
         yield tornado.gen.sleep(1.5)
 
         yield self.reload()
-
-
-def update_software_step(self, progress, step=None):
-    set_dict = dict(progress=progress)
-
-    if step:
-        set_dict["step"] = step
-
-    yield self.update_one({"_id": "software_install"}, {
-        "$set": set_dict
-    })
 
 
 def download_release(url, size, target_path, progress_handler):
@@ -250,29 +270,3 @@ def copy_software_files(src, dest):
             pass
 
         shutil.copy(os.path.join(src, filename), dest)
-
-
-def format_software_release(release):
-    formatted = {key: release[key] for key in RELEASE_KEYS}
-
-    asset_error = False
-
-    try:
-        asset = release["assets"][0]
-
-        formatted.update({
-            "filename": asset["name"],
-            "content_type": asset["content_type"],
-            "size": asset["size"],
-            "download_url": asset["browser_download_url"]
-        })
-    except (KeyError, IndexError):
-        asset_error = True
-
-    formatted.update({
-        "_id": "software-" + release["name"],
-        "type": "software",
-        "asset_error": asset_error
-    })
-
-    return formatted
