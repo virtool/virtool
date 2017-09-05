@@ -123,14 +123,14 @@ class Job:
 
         print("FINISHED ADDING INIT LOG")
 
-        print("STARTED SETTING EVENT LOOP")
+        # print("STARTED SETTING EVENT LOOP")
 
-        asyncio.set_event_loop(self.loop)
-        asyncio.get_child_watcher().attach_loop(self.loop)
+        # asyncio.set_event_loop(self.loop)
+        # asyncio.get_child_watcher().attach_loop(self.loop)
 
-        print("FINISHED SETTING EVENT LOOP")
+        # print("FINISHED SETTING EVENT LOOP")
 
-        print("STARTED WAITING FOR START")
+        # print("STARTED WAITING FOR START")
 
         proc = await asyncio.create_subprocess_exec(
             *command,
