@@ -39,6 +39,15 @@ before_install:
 - export PATH=${PATH}:${PWD}/bowtie2-2.3.2
 - bowtie2-inspect --version
 
+# Skewer
+- wget https://github.com/relipmoc/skewer/archive/skewer-0.2.2.tar.gz
+- tar -xvf skewer-0.2.2.tar.gz
+- cd skewer-0.2.2
+- make
+- cd ..
+- export PATH=${PATH}:${PWD}/skewer-0.2.2
+- skewer --version
+
 install:
 - pip install -r requirements.txt
 - rm -rf ~/.nvm
