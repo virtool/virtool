@@ -117,20 +117,10 @@ class Job:
         return result
 
     async def run_subprocess(self, command, error_test=None, log_stdout=False, log_stderr=True, env=None):
-        print("STARTED ADDING INIT LOG")
-
         await self.add_log("Command: {}".format(" ".join(command)))
 
-        print("FINISHED ADDING INIT LOG")
-
-        # print("STARTED SETTING EVENT LOOP")
-
         # asyncio.set_event_loop(self.loop)
-        # asyncio.get_child_watcher().attach_loop(self.loop)
-
-        # print("FINISHED SETTING EVENT LOOP")
-
-        # print("STARTED WAITING FOR START")
+        asyncio.get_child_watcher().attach_loop(self.loop)
 
         proc = await asyncio.create_subprocess_exec(
             *command,
@@ -140,12 +130,8 @@ class Job:
             env=env
         )
 
-        print("FINISHED WAITING FOR START")
-
         out = list()
         err = list()
-
-        print("STARTED LISTENING TO STDOUT")
 
         while True:
             line = await proc.stdout.readline()
@@ -160,10 +146,6 @@ class Job:
             if log_stdout:
                 await self.add_log(line, indent=1)
 
-        print("FINISHED LISTENING TO STDOUT")
-
-        print("STARTED LISTENING TO STDERR")
-
         while True:
             line = await proc.stderr.readline()
 
@@ -177,13 +159,7 @@ class Job:
             if log_stderr:
                 await self.add_log(line, indent=1)
 
-        print("FINISHED LISTENING TO STDERR")
-
-        print("STARTED WAITING FOR PROC")
-
         await proc.wait()
-
-        print("FINISHED WAITING FOR PROC")
 
         if proc.returncode != 0 or (error_test and error_test(out, err)):
             raise SubprocessError("Command failed: {}. Check job log.".format(" ".join(command)))

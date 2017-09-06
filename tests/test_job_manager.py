@@ -188,7 +188,7 @@ class TestNew:
             }
         }
 
-        assert last_status["error"]["details"] == ["Can't convert 'int' object to str implicitly"]
+        assert last_status["error"]["details"] == ["must be str, not int"]
         assert last_status["error"]["type"] == "TypeError"
 
 
