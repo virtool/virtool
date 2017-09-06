@@ -8,6 +8,7 @@ import tempfile
 import urllib.request
 
 import virtool.utils
+import virtool.errors
 
 logger = logging.getLogger(__name__)
 
@@ -22,21 +23,26 @@ RELEASE_KEYS = [
 ]
 
 
-async def get_releases(repo, server_version):
+async def get_releases(repo, server_version, username=None, token=None):
     headers = {
         "user-agent": "virtool/{}".format(server_version)
     }
 
-    async with aiohttp.ClientSession() as session:
+    auth = None
+
+    if token is not None:
+        auth = aiohttp.BasicAuth(login=username, password=token)
+
+    async with aiohttp.ClientSession(auth=auth) as session:
         async with session.get("https://api.github.com/repos/{}/releases".format(repo), headers=headers) as resp:
             data = await resp.json()
-
-    releases = []
 
     # Reformat the release dicts to make them more palatable. If the response code was not 200, the releases list
     # will be empty. This is interpreted by the web client as an error.
     if resp.status == 200:
         releases = [format_software_release(release) for release in data if not release["prerelease"]]
+    else:
+        raise virtool.errors.GitHubError("Could not retrieve GitHub data: {}".format(resp.status))
 
     return releases
 

@@ -67,6 +67,8 @@ SCHEMA = {
 
     "server_host": {"type": "string", "default": "localhost"},
     "server_port": get_default_integer(9950),
+    "github_username": {"type": "string", "default": None, "nullable": True},
+    "github_token": {"type": "string", "default": None, "nullable": True},
 
     "software_repo": {"type": "string", "default": "virtool/virtool"},
     "database_repo": {"type": "string", "default": "virtool/virtool-database"},
