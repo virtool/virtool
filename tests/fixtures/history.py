@@ -69,7 +69,6 @@ def test_virus_edit():
             ],
             "last_indexed_version": 0,
             "lower_name": "prunus virus f",
-            "modified": False,
             "name": "Prunus virus F",
             "version": 0
         },
@@ -97,7 +96,6 @@ def test_virus_edit():
             ],
             "last_indexed_version": 0,
             "lower_name": "prunus virus f",
-            "modified": False,
             "name": "Prunus virus E",
             "version": 1
         }
@@ -139,7 +137,6 @@ def create_mock_history(test_motor):
                     ],
                     "last_indexed_version": 0,
                     "lower_name": "prunus virus f",
-                    "modified": False,
                     "verified": False,
                     "name": "Prunus virus F",
                     "version": 0
@@ -253,7 +250,6 @@ def create_mock_history(test_motor):
                     "isolates": [],
                     "last_indexed_version": 0,
                     "lower_name": "prunus virus f",
-                    "modified": False,
                     "verified": False,
                     "name": "Test Virus",
                     "version": 3
@@ -280,7 +276,6 @@ def create_mock_history(test_motor):
                 "isolates": [],
                 "last_indexed_version": 0,
                 "lower_name": "prunus virus f",
-                "modified": False,
                 "verified": False,
                 "name": "Test Virus",
                 "version": 3

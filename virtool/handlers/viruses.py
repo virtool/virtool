@@ -26,20 +26,19 @@ async def find(req):
     db = req.app["db"]
 
     term = req.query.get("term", None)
-    modified = req.query.get("modified", None)
+    verified = req.query.get("verified", None)
 
     db_query = dict()
 
     if term:
         db_query.update(compose_regex_query(term, ["name", "abbreviation"]))
 
-    if modified is not None:
-        modded = virtool.utils.to_bool(modified)
-        db_query["modified"] = modded
+    if verified is not None:
+        db_query["verified"] = virtool.utils.to_bool(verified)
 
     data = await paginate(db.viruses, db_query, req.query, "name", projection=virtool.virus.LIST_PROJECTION)
 
-    data["modified_count"] = await db.viruses.count({"modified": True})
+    data["modified_count"] = len(await db.history.find({"index.id": "unbuilt"}, ["virus"]).distinct("virus.name"))
 
     return json_response(data)
 
@@ -90,7 +89,6 @@ async def create(req):
         "_id": virus_id,
         "abbreviation": abbreviation,
         "last_indexed_version": None,
-        "modified": True,
         "verified": False,
         "lower_name": data["name"].lower(),
         "isolates": [],
@@ -173,10 +171,7 @@ async def edit(req):
 
     # Update the ``modified`` and ``verified`` fields in the virus document now, because we are definitely going to
     # modify the virus.
-    data.update({
-        "modified": True,
-        "verified": False
-    })
+    data["verified"] = False
 
     # If the name is changing, update the ``lower_name`` field in the virus document.
     if name_change:
@@ -389,7 +384,6 @@ async def add_isolate(req):
     document = await db.viruses.find_one_and_update({"_id": virus_id}, {
         "$set": {
             "isolates": isolates,
-            "modified": True,
             "verified": False
         },
         "$inc": {
@@ -479,7 +473,6 @@ async def edit_isolate(req):
     document = await db.viruses.find_one_and_update({"_id": virus_id}, {
         "$set": {
             "isolates": isolates,
-            "modified": True,
             "verified": False
         },
         "$inc": {
@@ -560,7 +553,6 @@ async def set_as_default(req):
     document = await db.viruses.find_one_and_update({"_id": virus_id}, {
         "$set": {
             "isolates": isolates,
-            "modified": True,
             "verified": False
         },
         "$inc": {
@@ -640,7 +632,6 @@ async def remove_isolate(req):
     document = await db.viruses.find_one_and_update({"_id": virus_id}, {
         "$set": {
             "isolates": isolates,
-            "modified": True,
             "verified": False
         },
         "$inc": {
@@ -762,7 +753,6 @@ async def create_sequence(req):
 
     document = await db.viruses.find_one_and_update({"_id": virus_id}, {
         "$set": {
-            "modified": True,
             "verified": False
         },
         "$inc": {
@@ -829,7 +819,6 @@ async def edit_sequence(req):
 
     document = await db.viruses.find_one_and_update({"_id": virus_id}, {
         "$set": {
-            "modified": True,
             "verified": False
         },
         "$inc": {
@@ -889,7 +878,6 @@ async def remove_sequence(req):
 
     await db.viruses.update_one({"_id": virus_id}, {
         "$set": {
-            "modified": True,
             "verified": False
         },
         "$inc": {

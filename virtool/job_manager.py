@@ -42,11 +42,11 @@ class Manager:
         self.loop.create_task(self.run())
 
     async def run(self):
-        while not self._stop:
+        while True:
             to_delete = list()
 
             for job in self._jobs_dict.values():
-                if not job.started:
+                if not self._stop and not job.started:
                     try:
                         self.reserve_resources(job)
                         job.start()
@@ -61,6 +61,9 @@ class Manager:
                 del self._jobs_dict[job_id]
 
             await asyncio.sleep(0.1, loop=self.loop)
+
+            if self._stop and len(self._jobs_dict) == 0:
+                break
 
     async def new(self, task_name, task_args, user_id, job_id=None):
 

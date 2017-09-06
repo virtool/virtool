@@ -13,10 +13,10 @@ import React, { PropTypes } from "react";
 import Numeral from "numeral";
 import { connect } from "react-redux";
 import { LinkContainer } from "react-router-bootstrap";
-import { Row, Col, Badge, Table } from "react-bootstrap";
+import { ListGroup, ListGroupItem, Row, Col, Badge, Table } from "react-bootstrap";
 
 import { getSubtraction } from "../actions";
-import { Button } from "virtool/js/components/Base";
+import { Button, Icon } from "virtool/js/components/Base";
 
 const calculateGC = (nucleotides) => {
     return Numeral(1 - nucleotides.a - nucleotides.t - nucleotides.n).format("0.000")
@@ -36,15 +36,33 @@ class SubtractionDetail extends React.Component {
 
         const data = this.props.detail;
 
-        const linkedSampleComponents = data.linked_samples.map(sample =>
-            <Col key={sample.id} className="linked-sample-button" xs={6} sm={4} md={3} lg={2}>
-                <LinkContainer  to={`/samples/${sample.id}`}>
-                    <Button  block>
-                        {sample.name}
-                    </Button>
-                </LinkContainer>
-            </Col>
-        );
+        let linkedSamples;
+
+        if (data.linked_samples.length) {
+            const linkedSampleComponents = data.linked_samples.map(sample =>
+                <Col key={sample.id} className="linked-sample-button" xs={6} sm={4} md={3} lg={2}>
+                    <LinkContainer  to={`/samples/${sample.id}`}>
+                        <Button  block>
+                            {sample.name}
+                        </Button>
+                    </LinkContainer>
+                </Col>
+            );
+
+            linkedSamples = (
+                <Row>
+                    {linkedSampleComponents}
+                </Row>
+            );
+        } else {
+            linkedSamples = (
+                <ListGroup>
+                    <ListGroupItem className="text-center">
+                        <Icon name="info" /> No linked samples found.
+                    </ListGroupItem>
+                </ListGroup>
+            );
+        }
 
         return (
             <div>
@@ -55,29 +73,22 @@ class SubtractionDetail extends React.Component {
                 <Table bordered>
                     <tbody>
                         <tr>
-                            <th>Description</th>
-                            <td>{data.description}</td>
-                        </tr>
-
-                        <tr>
                             <th>File</th>
-                            <td>{data.file_name}</td>
+                            <td>{data.file.name}</td>
                         </tr>
 
                         <tr>
                             <th>GC Estimate</th>
-                            <td>{calculateGC(data.nucleotides)}</td>
+                            <td>{calculateGC(data.gc)}</td>
                         </tr>
                     </tbody>
                 </Table>
 
                 <h4 className="section-header">
-                    <strong>Linked Samples</strong> <Badge>{linkedSampleComponents.length}</Badge>
+                    <strong>Linked Samples</strong> <Badge>{data.linked_samples.length}</Badge>
                 </h4>
 
-                <Row>
-                    {linkedSampleComponents}
-                </Row>
+                {linkedSamples}
             </div>
         )
     }

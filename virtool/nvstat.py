@@ -89,8 +89,11 @@ def list_devices():
     except FileNotFoundError:
         raise FileNotFoundError("nvidia-smi could not be called. Make sure it is installed")
     except subprocess.CalledProcessError as err:
-        if "couldn't communicate with NVIDIA driver" in err.output.decode():
+        output = err.output.decode()
+
+        if "couldn't communicate with" in output and "NVIDIA driver" in output:
             raise NVDriverError("Couldn't communicate with NVIDIA driver")
+
         raise
 
     device_list = list()

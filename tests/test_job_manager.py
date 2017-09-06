@@ -4,9 +4,8 @@ import virtool.job
 import virtool.job_manager
 
 
-
 @pytest.fixture
-def test_job_manager(tmpdir, loop, test_motor, test_dispatch):
+def test_job_manager(capsys, tmpdir, loop, test_motor, test_dispatch):
     settings = {
         "proc": 6,
         "mem": 24,
@@ -22,8 +21,6 @@ def test_job_manager(tmpdir, loop, test_motor, test_dispatch):
     manager.start()
 
     yield manager
-
-    manager.loop.run_until_complete(manager.close())
 
 
 class TestStarted:
@@ -53,7 +50,7 @@ class TestNew:
         (True, "I ran in an executor. My message is hello world"),
         (False, "I didn't run in an executor. My message is hello world")
     ])
-    async def test(self, use_executor, result, test_job_manager, test_random_alphanumeric, static_time):
+    async def test(self, loop, use_executor, result, test_job_manager, test_random_alphanumeric, static_time):
         assert test_job_manager.get_resources() == {
             "limit": {
                 "proc": 6,
@@ -77,7 +74,7 @@ class TestNew:
             "use_executor": use_executor
         }, "test")
 
-        await asyncio.sleep(1, loop=test_job_manager.loop)
+        await asyncio.sleep(1, loop=loop)
 
         assert await test_job_manager.db.jobs.find_one() == {
             "_id": test_random_alphanumeric.last_choice,
@@ -127,7 +124,7 @@ class TestNew:
         assert target == [result]
 
     @pytest.mark.parametrize("use_executor", [True, False])
-    async def test_exception(self, use_executor, test_job_manager, test_random_alphanumeric, static_time):
+    async def test_exception(self, loop, use_executor, test_job_manager, test_random_alphanumeric, static_time):
         """
         Test that an exception in a stage_method leads to an error log in the job document.
 
@@ -137,11 +134,22 @@ class TestNew:
             "use_executor": use_executor
         }, "test")
 
-        await asyncio.sleep(0.5, loop=test_job_manager.loop)
+        count = 0
 
-        document = await test_job_manager.db.jobs.find_one()
+        while True:
+            document = await test_job_manager.db.jobs.find_one()
 
-        last_status = document["status"].pop(-1)
+            last_status = document["status"].pop(-1)
+
+            if last_status["error"]:
+                break
+
+            if count == 15:
+                raise TimeoutError("Timed out waiting for job to error")
+
+            count += 1
+
+            await asyncio.sleep(0.3, loop=loop)
 
         assert document == {
             "_id": test_random_alphanumeric.last_choice,
@@ -180,7 +188,7 @@ class TestNew:
             }
         }
 
-        assert last_status["error"]["details"] == ["Can't convert 'int' object to str implicitly"]
+        assert last_status["error"]["details"] == ["must be str, not int"]
         assert last_status["error"]["type"] == "TypeError"
 
 

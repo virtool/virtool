@@ -1,3 +1,4 @@
+from copy import deepcopy
 from pymongo import ReturnDocument
 from cerberus import Validator
 
@@ -6,7 +7,7 @@ import virtool.utils
 import virtool.sample
 import virtool.sample_analysis
 from virtool.handlers.utils import unpack_request, json_response, bad_request, not_found, invalid_input, \
-    invalid_query, compose_regex_query, paginate, protected, validation, no_content
+    invalid_query, compose_regex_query, paginate, protected, validation, no_content, conflict
 
 
 async def find(req):
@@ -54,17 +55,18 @@ async def get(req):
 @protected("add_sample")
 @validation({
     "name": {"type": "string", "required": True},
-    "subtraction": {"type": "string", "required": True}
+    "host": {"type": "string"},
+    "isolate": {"type": "string"},
+    "locale": {"type": "string"},
+    "subtraction": {"type": "string", "required": True},
+    "files": {"type": "list", "required": True}
 })
 async def create(req):
     db, data = await unpack_request(req)
 
     # Check if the submitted sample name is unique if unique sample names are being enforced.
-    if await db.samples.count({"name": data["name"]}):
-        return json_response({
-            "id": "conflict",
-            "message": "Sample name '{}' already exists".format(data["name"])
-        }, status=409)
+    if await db.samples.count({"lower_name": data["name"].lower()}):
+        return conflict("Sample name '{}' already exists".format(data["name"]))
 
     # Make sure a subtraction host was submitted and it exists.
     if data["subtraction"] not in await db.subtraction.find({"is_host": True}).distinct("_id"):
@@ -74,15 +76,7 @@ async def create(req):
 
     user_id = req["session"].user_id
 
-    # Construct a new sample entry.
-    data.update({
-        "_id": sample_id,
-        "nuvs": False,
-        "pathoscope": False,
-        "user": {
-            "id": user_id
-        }
-    })
+    document = deepcopy(data)
 
     settings = req.app["settings"]
 
@@ -91,41 +85,42 @@ async def create(req):
     # Assign the user"s primary group as the sample owner group if the ``sample_group`` settings is
     # ``users_primary_group``.
     if sample_group_setting == "users_primary_group":
-        data["group"] = (await db.users.find_one(user_id))["primary_group"]
+        document["group"] = (await db.users.find_one(user_id, ["primary_group"]))["primary_group"]
 
     # Make the owner group none if the setting is none.
     elif sample_group_setting == "none":
-        data["group"] = "none"
+        document["group"] = "none"
 
-    # Add the default sample right fields to the sample document.
-    data.update({
-        "group_read": settings.get("sample_group_read"),
-        "group_write": settings.get("sample_group_write"),
-        "all_read": settings.get("sample_all_read"),
-        "all_write": settings.get("sample_all_write")
-    })
-
-    task_args = dict(data)
-
-    data.update({
+    document.update({
+        "_id": sample_id,
+        "nuvs": False,
+        "pathoscope": False,
         "created_at": virtool.utils.timestamp(),
         "format": "fastq",
         "imported": "ip",
         "quality": None,
         "analyzed": False,
         "hold": True,
-        "archived": False
+        "archived": False,
+        "group_read": settings.get("sample_group_read"),
+        "group_write": settings.get("sample_group_write"),
+        "all_read": settings.get("sample_all_read"),
+        "all_write": settings.get("sample_all_write"),
+        "subtraction": {
+            "id": data["subtraction"]
+        },
+        "user": {
+            "id": user_id
+        }
     })
 
-    await db.samples.insert_one(data)
+    await db.samples.insert_one(document)
 
     await virtool.file.reserve(db, data["files"])
 
-    proc, mem = 2, 6
+    await req["job_manager"].new("create_sample", task_args, data["username"])
 
-    await req["job_manager"].new("create_sample", task_args, proc, mem, data["username"])
-
-    return json_response(virtool.utils.base_processor(data))
+    return json_response(virtool.utils.base_processor(document))
 
 
 @validation({

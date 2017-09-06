@@ -212,6 +212,7 @@ class TestCreate:
         await client.db.samples.insert_one({
             "_id": "foobar",
             "name": "Foobar",
+            "lower_name": "foobar",
             "created_at": static_time,
             "nuvs": False,
             "pathoscope": False
@@ -219,6 +220,7 @@ class TestCreate:
 
         resp = await client.post("/api/samples", {
             "name": "Foobar",
+            "files": ["test.fq"],
             "subtraction": "apple"
         })
 
@@ -230,6 +232,7 @@ class TestCreate:
 
         resp = await client.post("/api/samples", {
             "name": "Foobar",
+            "files": ["test.fq"],
             "subtraction": "apple"
         })
 

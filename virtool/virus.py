@@ -18,7 +18,6 @@ LIST_PROJECTION = [
     "name",
     "abbreviation",
     "version",
-    "modified",
     "verified"
 ]
 

@@ -15,6 +15,7 @@ import {
     FIND_SAMPLES,
     FIND_READY_HOSTS,
     GET_SAMPLE,
+    CREATE_SAMPLE,
     UPDATE_SAMPLE,
     FIND_ANALYSES,
     GET_ANALYSIS,
@@ -25,6 +26,7 @@ export function* watchSamples () {
     yield takeLatest(FIND_SAMPLES.REQUESTED, findSamples);
     yield takeLatest(FIND_READY_HOSTS.REQUESTED, findReadyHosts);
     yield takeLatest(GET_SAMPLE.REQUESTED, getSample);
+    yield takeLatest(CREATE_SAMPLE.REQUESTED, createSample);
     yield takeEvery(UPDATE_SAMPLE.REQUESTED, updateSample);
     yield takeLatest(FIND_ANALYSES.REQUESTED, findAnalyses);
     yield takeLatest(GET_ANALYSIS.REQUESTED, getAnalysis);
@@ -58,6 +60,17 @@ export function* getSample (action) {
     } catch (error) {
         yield put({type: GET_SAMPLE.FAILED, error});
     }
+}
+
+export function* createSample (action) {
+    yield setPending(function* ({name, isolate, host, locale, subtraction, files}) {
+        try {
+        const response = yield call(samplesAPI.create, name, isolate, host, locale, subtraction, files);
+        yield put({type: GET_SAMPLE.SUCCEEDED, data: response.body});
+    } catch (error) {
+        yield put({type: GET_SAMPLE.FAILED, error});
+    }
+    }, action);
 }
 
 export function* updateSample (action) {

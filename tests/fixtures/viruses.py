@@ -25,7 +25,6 @@ def test_virus():
         ],
         "last_indexed_version": 0,
         "lower_name": "prunus virus f",
-        "modified": False,
         "verified": False,
         "name": "Prunus virus F",
         "_id": "6116cba1"
@@ -80,7 +79,6 @@ def test_merged_virus():
         ],
         "last_indexed_version": 0,
         "lower_name": "prunus virus f",
-        "modified": False,
         "verified": False,
         "name": "Prunus virus F",
         "_id": "6116cba1"

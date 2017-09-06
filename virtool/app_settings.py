@@ -42,9 +42,9 @@ SCHEMA = {
     "nuvs_mem": DEFAULT_ANALYSIS_MEM,
     "nuvs_inst": DEFAULT_ANALYSIS_INST,
 
-    "import_reads_proc": get_default_integer(4),
-    "import_reads_mem": get_default_integer(4),
-    "import_reads_inst": get_default_integer(3),
+    "create_sample_proc": get_default_integer(4),
+    "create_sample_mem": get_default_integer(4),
+    "create_sample_inst": get_default_integer(3),
 
     "create_subtraction_proc": get_default_integer(2),
     "create_subtraction_mem": get_default_integer(4),

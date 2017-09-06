@@ -11,6 +11,7 @@ import {
     FIND_SAMPLES,
     FIND_READY_HOSTS,
     GET_SAMPLE,
+    CREATE_SAMPLE,
     UPDATE_SAMPLE,
     REMOVE_SAMPLE,
     FIND_ANALYSES,
@@ -41,6 +42,18 @@ export const getSample = (sampleId) => {
         type: GET_SAMPLE.REQUESTED,
         sampleId: sampleId
     }
+};
+
+export const createSample = (name, isolate, host, locale, subtraction, files) => {
+    return {
+        type: CREATE_SAMPLE.REQUESTED,
+        name,
+        isolate,
+        host,
+        locale,
+        subtraction,
+        files
+    };
 };
 
 export const updateSample = (sampleId, update) => {

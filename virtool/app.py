@@ -109,7 +109,6 @@ async def init_db(app):
     await db.analyses.create_index("sample.id")
     await db.viruses.create_index("name")
     await db.viruses.create_index("abbreviation")
-    await db.viruses.create_index("modified")
     await db.sequences.create_index("virus_id")
     await db.indexes.create_index("version", unique=True)
     await db.history.create_index("virus.id")

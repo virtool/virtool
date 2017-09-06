@@ -7,7 +7,7 @@
  *
  */
 
-import { call, put, takeEvery, takeLatest } from "redux-saga/effects";
+import { call, put, takeEvery, takeLatest, throttle } from "redux-saga/effects";
 
 import virusesAPI from "./api";
 import { setPending } from "../wrappers";
@@ -30,7 +30,7 @@ import {
 }  from "../actionTypes";
 
 export function* watchViruses () {
-    yield takeLatest(FIND_VIRUSES.REQUESTED, findViruses);
+    yield throttle(150, FIND_VIRUSES.REQUESTED, findViruses);
     yield takeLatest(GET_VIRUS.REQUESTED, getVirus);
     yield takeLatest(GET_VIRUS_HISTORY.REQUESTED, getVirusHistory);
     yield takeEvery(CREATE_VIRUS.REQUESTED, createVirus);
