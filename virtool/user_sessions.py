@@ -44,8 +44,6 @@ async def middleware_factory(app, handler):
                 "user_agent": user_agent
             })
 
-            print(document)
-
         if not document:
             document = {
                 "_id": random_alphanumeric(128, mixed_case=True),
