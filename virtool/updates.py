@@ -3,6 +3,7 @@ import sys
 import shutil
 import aiohttp
 import tarfile
+import pymongo
 import logging
 import tempfile
 import urllib.request
@@ -23,7 +24,7 @@ RELEASE_KEYS = [
 ]
 
 
-async def get_releases(repo, server_version, username=None, token=None):
+async def get_releases(db, repo, server_version, username=None, token=None):
     headers = {
         "user-agent": "virtool/{}".format(server_version)
     }
@@ -43,6 +44,12 @@ async def get_releases(repo, server_version, username=None, token=None):
         releases = [format_software_release(release) for release in data if not release["prerelease"]]
     else:
         raise virtool.errors.GitHubError("Could not retrieve GitHub data: {}".format(resp.status))
+
+    await db.status.update_one({"_id": "software_update"}, {
+        "$set": {
+            "releases": releases
+        }
+    }, upsert=True)
 
     return releases
 
@@ -79,79 +86,52 @@ def format_software_release(release):
     return formatted
 
 
-async def upgrade_to_latest(db, job_manager):
-    """
-    Starts the update install process. Blocks all waiting jobs from starting. Then, removes any existing
-    "software_update"-type document from the database and inserts a new one.
+async def update_software_process(db, dispatch, progress, step=None):
+    set_dict = {
+        "process.progress": progress
+    }
 
-    Finally the install process is started by calling :meth:`.install_update` using :meth:`spawn_callback`. The
-    latest release document is passed to :meth:`.install_update`.
+    if step:
+        set_dict["process.step"] = step
 
-    :param transaction: a :class:`~.Transaction` object containing the name of the release to install.
-    :type transaction: :class:`~.Transaction`
+    document = await db.status.find_one_and_update({"_id": "software_update"}, {
+        "$set": set_dict
+    }, return_document=pymongo.ReturnDocument.AFTER, projection={"_id": False})
 
-    :return: a tuple in the form (``True``, ``None``)
-    :rtype: tuple
-
-    """
-    await job_manager.close()
-
-    # Update any pre-existing software_update document.
-    await db.status.update_one({"_id": "software_update"}, {
-        "$set": {
-            "process": None
-        }
-    })
-
-    # Insert the new software update document, which contains information about the install process.
-    await self.insert_one({
-        "_id": "software_install",
-        "name": transaction.data["name"],
-        "type": "software_install",
-        "size": release["size"],
-        "display_notification": transaction.data["displayNotification"],
-        "delete_temporary": transaction.data["deleteTemporary"],
-        "forcefully_cancel": transaction.data["forcefullyCancel"],
-        "shutdown": transaction.data["shutdown"],
-        "step": "block_jobs",
-        "progress": 0,
-        "good_tree": True,
-        "complete": False
-    })
-
-    # Start the install process outside of the exposed method so the transaction can be returned. This is done by
-    # calling :meth:`.install_update` with :meth:`spawn_callback` and passing the latest release to it.
-    tornado.ioloop.IOLoop.current().spawn_callback(self.install_update, release)
-
-    return True, None
+    await dispatch("status", "update", document)
 
 
-def install_update(self, release):
+async def install_update(db, dispatch, download_url, size):
     """
     Installs the update described by the passed release document.
 
-    :param release:
+    :param db:
     :return:
 
     """
     with tempfile.TemporaryDirectory() as tempdir:
+        # Start download release step, reporting this to the DB.
+        await update_software_process(db, dispatch, 0, "download")
+
         # Download the release from GitHub and write it to a temporary directory.
-        yield self.update_software_step(0, "download")
         compressed_path = os.path.join(str(tempdir), "release.tar.gz")
-        yield download_release(release["download_url"], release["size"], compressed_path, self.update_software_step)
+        await download_release(db, dispatch, download_url, size, compressed_path)
+
+        # Start decompression step, reporting this to the DB.
+        await update_software_process(db, 0, "decompress")
 
         # Decompress the gzipped tarball to the root of the temporary directory.
-        yield self.update_software_step(0, "decompress")
         yield decompress_file(compressed_path, str(tempdir))
-        decompressed_path = os.path.join(str(tempdir), "virtool")
+
+        # Start check tree step, reporting this to the DB.
+        await update_software_process(db, 0, "check_tree")
 
         # Check that the file structure matches our expectations.
-        yield self.update_software_step(0, "check_tree")
-        good_tree = yield check_software_tree(decompressed_path)
+        decompressed_path = os.path.join(str(tempdir), "virtool")
 
-        yield self.update_one({"_id": "software_install"}, {
+        await db.update_one({"_id": "software_update"}, {
             "$set": {
-                "good_tree": good_tree
+                "process.good_tree": await check_software_tree(decompressed_path)
             }
         })
 
@@ -166,7 +146,7 @@ def install_update(self, release):
         yield self.reload()
 
 
-def download_release(url, size, target_path, progress_handler):
+async def download_release(db, dispatch, url, size, target_path):
     """
     Download the GitHub release at ``url`` to the location specified by ``target_path``. Release files are downloaded in
     chunks. The ``progress_handler`` function is called with total number of bytes downloaded every time a chunk is
@@ -185,48 +165,24 @@ def download_release(url, size, target_path, progress_handler):
     :type progress_handler: func
 
     """
-    url_file = yield get_url_file(url)
+    url_file = urllib.request.urlopen(url)
 
     counter = 0
     last_reported = 0
 
     with open(target_path, "wb") as target:
         while True:
-            data = yield read_url_file(url_file)
+            data = url_file.read(4096)
             if not data:
                 break
 
             target.write(data)
 
-            if progress_handler:
-                counter += len(data)
-                progress = round(counter / size, 2)
-                if progress - last_reported >= 0.01:
-                    last_reported = progress
-                    yield progress_handler(progress)
-
-
-def get_url_file(url):
-    """
-    A coroutine that just calls :meth:`urllib.request.urlopen` in a separate thread for the given ``url`` and returns
-    the result.
-
-    :param url: the URL to open the URL file for.
-    :type url: str
-
-    :return: a URL file for the ``url``
-
-    """
-    return urllib.request.urlopen(url)
-
-
-def read_url_file(url_file):
-    """
-    Reads and returns a 4 KB chunk from the passed ``url_file``. Calls in a separate thread.
-    :param url_file:
-    :return:
-    """
-    return url_file.read(4096)
+            counter += len(data)
+            progress = round(counter / size, 2)
+            if progress - last_reported >= 0.01:
+                last_reported = progress
+                await update_software_process(db, dispatch, progress)
 
 
 def decompress_file(path, target):
@@ -244,7 +200,7 @@ def decompress_file(path, target):
         tar.extractall(target)
 
 
-def check_software_tree(path):
+async def check_software_tree(path):
     if set(os.listdir(path)) != {"client", "install.sh", "run", "VERSION"}:
         return False
 
@@ -259,7 +215,7 @@ def check_software_tree(path):
     return True
 
 
-def copy_software_files(src, dest):
+async def copy_software_files(src, dest):
     # Remove the client dir and replace it with the new one.
     try:
         shutil.rmtree(os.path.join(dest, "client"))
