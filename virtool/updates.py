@@ -1,12 +1,13 @@
 import os
 import sys
 import shutil
-import aiohttp
 import tarfile
 import pymongo
+import asyncio
 import logging
+import aiohttp
+import aiofiles
 import tempfile
-import urllib.request
 
 import virtool.utils
 import virtool.errors
@@ -86,7 +87,90 @@ def format_software_release(release):
     return formatted
 
 
+async def install(db, dispatch, loop, download_url, size):
+    """
+    Installs the update described by the passed release document.
+
+    :param db:
+    :return:
+
+    """
+    with tempfile.TemporaryDirectory() as tempdir:
+        # Start download release step, reporting this to the DB.
+        await update_software_process(db, dispatch, 0, "download")
+
+        # Download the release from GitHub and write it to a temporary directory.
+        compressed_path = os.path.join(str(tempdir), "release.tar.gz")
+
+        try:
+            await download_release(db, dispatch, download_url, size, compressed_path)
+        except virtool.errors.GitHubError:
+            await db.status.find_one_and_update({"_id": "software_update"}, {
+                "$set": {
+                    "process.error": "Could not find GitHub repository"
+                }
+            })
+        except FileNotFoundError:
+            await db.status.find_one_and_update({"_id": "software_update"}, {
+                "$set": {
+                    "process.error": "Could not write to release download location"
+                }
+            })
+
+        # Start decompression step, reporting this to the DB.
+        await update_software_process(db, 0, "decompress")
+
+        # Decompress the gzipped tarball to the root of the temporary directory.
+        await loop.run_in_executor(decompress_file, compressed_path, str(tempdir))
+
+        # Start check tree step, reporting this to the DB.
+        await update_software_process(db, 0, "check_tree")
+
+        # Check that the file structure matches our expectations.
+        decompressed_path = os.path.join(str(tempdir), "virtool")
+
+        await db.update_one({"_id": "software_update"}, {
+            "$set": {
+                "process.good_tree": await loop.run_in_executor(check_tree, decompressed_path)
+            }
+        })
+
+        # Copy the update files to the install directory.
+        await update_software_process(db, dispatch, 0, "copy_files")
+
+        yield copy_software_files(decompressed_path, INSTALL_PATH)
+
+        document = await db.status.find_one_and_update({"_id": "software_update"}, {
+            "$set": {
+                "process": None
+            }
+        }, return_document=pymongo.ReturnDocument.AFTER, projection={"_id": False})
+
+        await dispatch("status", "update", document)
+
+        await asyncio.sleep(1.5, loop=loop)
+
+        await virtool.utils.reload()
+
+
 async def update_software_process(db, dispatch, progress, step=None):
+    """
+    Update the process field in the software update document. Used to keep track of the current progress of the update
+    process.
+
+    :param db: the application database client
+    :type db: :class:`~motor.motor_asyncio.AsyncIOMotorClient`
+
+    :param dispatch: a reference to the dispatcher's dispatch method
+    :type dispatch: func
+
+    :param progress: the numeric progress number for the step
+    :type progress: Union(int, float)
+
+    :param step: the name of the step in progress
+    :type step: str
+
+    """
     set_dict = {
         "process.progress": progress
     }
@@ -101,56 +185,15 @@ async def update_software_process(db, dispatch, progress, step=None):
     await dispatch("status", "update", document)
 
 
-async def install_update(db, dispatch, download_url, size):
-    """
-    Installs the update described by the passed release document.
-
-    :param db:
-    :return:
-
-    """
-    with tempfile.TemporaryDirectory() as tempdir:
-        # Start download release step, reporting this to the DB.
-        await update_software_process(db, dispatch, 0, "download")
-
-        # Download the release from GitHub and write it to a temporary directory.
-        compressed_path = os.path.join(str(tempdir), "release.tar.gz")
-        await download_release(db, dispatch, download_url, size, compressed_path)
-
-        # Start decompression step, reporting this to the DB.
-        await update_software_process(db, 0, "decompress")
-
-        # Decompress the gzipped tarball to the root of the temporary directory.
-        yield decompress_file(compressed_path, str(tempdir))
-
-        # Start check tree step, reporting this to the DB.
-        await update_software_process(db, 0, "check_tree")
-
-        # Check that the file structure matches our expectations.
-        decompressed_path = os.path.join(str(tempdir), "virtool")
-
-        await db.update_one({"_id": "software_update"}, {
-            "$set": {
-                "process.good_tree": await check_software_tree(decompressed_path)
-            }
-        })
-
-        # Copy the update files to the install directory.
-        yield self.update_software_step(0, "copy_files")
-        yield copy_software_files(decompressed_path, INSTALL_PATH)
-
-        yield self.delete_one(["software_install"])
-
-        yield tornado.gen.sleep(1.5)
-
-        yield self.reload()
-
-
 async def download_release(db, dispatch, url, size, target_path):
     """
-    Download the GitHub release at ``url`` to the location specified by ``target_path``. Release files are downloaded in
-    chunks. The ``progress_handler`` function is called with total number of bytes downloaded every time a chunk is
-    read.
+    Download the GitHub release at ``url`` to the location specified by ``target_path``.
+
+    :param db: the application database client
+    :type db: :class:`~motor.motor_asyncio.AsyncIOMotorClient`
+
+    :param dispatch: a reference to the dispatcher's dispatch method
+    :type dispatch: func
 
     :param url: the download URL for the release
     :type url str
@@ -161,28 +204,29 @@ async def download_release(db, dispatch, url, size, target_path):
     :param target_path: the path to write the downloaded file to.
     :type target_path: str
 
-    :param progress_handler: a function to call with the number of download bytes at each chunk read.
-    :type progress_handler: func
-
     """
-    url_file = urllib.request.urlopen(url)
-
     counter = 0
     last_reported = 0
 
-    with open(target_path, "wb") as target:
-        while True:
-            data = url_file.read(4096)
-            if not data:
-                break
+    async with aiohttp.ClientSession() as session:
+        async with session.get(url) as resp:
 
-            target.write(data)
+            if resp.status != 200:
+                raise virtool.errors.GitHubError("Could not download release")
 
-            counter += len(data)
-            progress = round(counter / size, 2)
-            if progress - last_reported >= 0.01:
-                last_reported = progress
-                await update_software_process(db, dispatch, progress)
+            async with aiofiles.open(target_path, "wb") as handle:
+                while True:
+                    chunk = await resp.content.read(4096)
+                    if not chunk:
+                        break
+
+                    await handle.write(chunk)
+
+                    counter += len(chunk)
+                    progress = round(counter / size, 2)
+                    if progress - last_reported >= 0.01:
+                        last_reported = progress
+                        await update_software_process(db, dispatch, progress)
 
 
 def decompress_file(path, target):
@@ -200,8 +244,8 @@ def decompress_file(path, target):
         tar.extractall(target)
 
 
-async def check_software_tree(path):
-    if set(os.listdir(path)) != {"client", "install.sh", "run", "VERSION"}:
+def check_tree(path):
+    if not {"client", "run", "VERSION"}.issubset(set(os.listdir(path))):
         return False
 
     client_content = os.listdir(os.path.join(path, "client"))
@@ -215,8 +259,7 @@ async def check_software_tree(path):
     return True
 
 
-async def copy_software_files(src, dest):
-    # Remove the client dir and replace it with the new one.
+def copy_software_files(src, dest):
     try:
         shutil.rmtree(os.path.join(dest, "client"))
     except FileNotFoundError:

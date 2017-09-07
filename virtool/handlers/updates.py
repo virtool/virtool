@@ -65,7 +65,8 @@ async def upgrade(req):
                 "step": "block_jobs",
                 "progress": 0,
                 "good_tree": True,
-                "complete": False
+                "complete": False,
+                "error": False
             }
         }
     }, return_document=pymongo.ReturnDocument.AFTER, projection={"_id": False})
@@ -74,6 +75,12 @@ async def upgrade(req):
 
     download_url = latest_release["download_url"]
 
-    req.app.loop.create_task(virtool.updates.install_update(db, dispatch, download_url))
+    req.app.loop.create_task(virtool.updates.install_update(
+        db,
+        dispatch,
+        req.app.loop,
+        download_url,
+        latest_release["size"]
+    ))
 
     return json_response(document)

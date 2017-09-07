@@ -1,7 +1,11 @@
 import os
+import sys
+import shutil
 import pytest
+import tarfile
 import aiohttp
 
+import virtool.errors
 import virtool.updates
 
 
@@ -98,6 +102,10 @@ def test_format_software_release(mock_release):
     }
 
 
+def test_install(mocker):
+    pass
+
+
 @pytest.mark.parametrize("step", ["download_release", "check_tree"])
 @pytest.mark.parametrize("progress", [0.1, 0.3])
 async def test_update_software_process(progress, step, test_motor, test_dispatch):
@@ -122,14 +130,21 @@ async def test_update_software_process(progress, step, test_motor, test_dispatch
     }
 
 
-# @pytest.mark.parametrize("error", [None, "url", "write"])
-async def test_download_release(tmpdir, test_motor, test_dispatch):
+@pytest.mark.parametrize("error", [None, "url", "write"])
+async def test_download_release(error, tmpdir, test_motor, test_dispatch):
     url = "https://github.com/linux-test-project/ltp/releases/download/20170516/ltp-full-20170516.tar.bz2"
+
+    if error == "url":
+        url = "https://github.com/virtool/virtool/releases/download/v1.8.5/foobar.tar.gz"
+
     size = 3664835
 
     path = str(tmpdir)
 
     target_path = os.path.join(path, "release.tar.gz")
+
+    if error == "write":
+        target_path = "/foobar/this/should/not-exist"
 
     await test_motor.status.insert_one({
         "_id": "software_update",
@@ -140,17 +155,126 @@ async def test_download_release(tmpdir, test_motor, test_dispatch):
         }
     })
 
-    await virtool.updates.download_release(test_motor, test_dispatch, url, size, target_path)
+    task = virtool.updates.download_release(test_motor, test_dispatch, url, size, target_path)
 
-    assert os.listdir(path) == ["release.tar.gz"]
+    if error == "url":
+        with pytest.raises(virtool.errors.GitHubError) as err:
+            await task
 
-    assert os.path.getsize(target_path) == 3664835
+        assert "Could not download release" in str(err)
 
-    assert await test_motor.status.find_one("software_update") == {
-        "_id": "software_update",
-        "process": {
-            "size": 34091211,
-            "step": "download_release",
-            "progress": 1
+    elif error == "write":
+        with pytest.raises(FileNotFoundError):
+            await task
+
+    else:
+        await task
+
+    if error:
+        assert os.listdir(path) == []
+    else:
+        assert os.listdir(path) == ["release.tar.gz"]
+
+    if not error:
+        assert os.path.getsize(target_path) == 3664835
+
+        assert await test_motor.status.find_one("software_update") == {
+            "_id": "software_update",
+            "process": {
+                "size": 34091211,
+                "step": "download_release",
+                "progress": 1
+            }
         }
-    }
+
+
+def test_decompress_file(tmpdir):
+    path = str(tmpdir)
+
+    src_path = os.path.join(sys.path[0], "tests", "test_files", "virtool.tar.gz")
+
+    shutil.copy(src_path, path)
+
+    virtool.updates.decompress_file(os.path.join(path, "virtool.tar.gz"), os.path.join(path, "de"))
+
+    assert os.listdir(path) == ["virtool.tar.gz", "de"]
+
+    assert os.listdir(os.path.join(path, "de")) == ["virtool"]
+
+    assert os.listdir(os.path.join(path, "de", "virtool")) == ["run", "client", "VERSION", "install.sh"]
+
+
+@pytest.mark.parametrize("missing_path,p_result", [(None, True), ("run", False), ("VERSION", False)])
+@pytest.mark.parametrize("missing_client,c_result", [
+    (None, True),
+    ("dir", False),
+    ("app.foobar.js", False),
+    ("favicon.ico", False),
+    ("index.html", False)
+])
+def test_check_tree(missing_path, p_result, missing_client, c_result, tmpdir):
+    paths_to_write = ["run", "VERSION"]
+
+    if missing_path is not None:
+        paths_to_write.remove(missing_path)
+
+    for path in paths_to_write:
+        tmpdir.join(path).write("foobar")
+
+    if missing_client != "dir":
+        client_dir = tmpdir.mkdir("client")
+
+        client_files_to_write = ["app.foobar.js", "favicon.ico", "index.html"]
+
+        if missing_client is not None:
+            client_files_to_write.remove(missing_client)
+
+        for filename in client_files_to_write:
+            client_dir.join(filename).write("foobar")
+
+    result = virtool.updates.check_tree(str(tmpdir))
+
+    assert result == (p_result and c_result)
+
+
+async def test_copy_software_files(tmpdir):
+    tar_path = os.path.join(sys.path[0], "tests", "test_files", "virtool.tar.gz")
+
+    temp_path = str(tmpdir)
+
+    shutil.copy(tar_path, temp_path)
+
+    decomp_path = os.path.join(temp_path, "decomp")
+
+    with tarfile.open(os.path.join(temp_path, "virtool.tar.gz"), "r:gz") as handle:
+        handle.extractall(decomp_path)
+
+    dest_dir = tmpdir.mkdir("dest")
+
+    f = dest_dir.mkdir("client").join("test.txt")
+    f.write("foobar")
+
+    for filename in ["VERSION", "run"]:
+        dest_dir.join(filename).write("foobar")
+
+    dest_path = str(dest_dir)
+
+    virtool.updates.copy_software_files(os.path.join(decomp_path, "virtool"), dest_path)
+
+    assert set(os.listdir(dest_path)) == {"run", "client", "VERSION"}
+
+    assert os.listdir(os.path.join(dest_path, "client")) == [
+        "app.a006b17bf13ea9cb7827.js",
+        "favicon.ico",
+        "index.html"
+    ]
+
+    assert os.path.getsize(os.path.join(dest_path, "run")) == 43957176
+
+    assert tmpdir.join("dest").join("VERSION").read() == "v1.7.5"
+
+
+
+
+
+
