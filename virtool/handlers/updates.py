@@ -53,7 +53,9 @@ async def upgrade(req):
             "$set": {
                 "releases": await virtool.updates.get_releases(db, repo, server_version, username, token)
             }
-        }, return_document=pymongo.ReturnDocument, projection={"_id": False})
+        }, return_document=pymongo.ReturnDocument)
+
+        await dispatch("status", "update", virtool.utils.base_processor(document))
 
     releases = document.get("releases", list())
 
@@ -73,9 +75,9 @@ async def upgrade(req):
                 "error": False
             }
         }
-    }, return_document=pymongo.ReturnDocument.AFTER, projection={"_id": False})
+    }, return_document=pymongo.ReturnDocument.AFTER)
 
-    await dispatch("status", "update", document)
+    await dispatch("status", "update", virtool.utils.base_processor(document))
 
     download_url = latest_release["download_url"]
 
