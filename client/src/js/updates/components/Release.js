@@ -14,7 +14,7 @@ import { ListGroupItem, Button, Row, Col } from "react-bootstrap";
 const renderReleaseMarkdown = (body) => {
     let html = Marked(body);
 
-    html = html.replace(/#([0-9]+)/g, `<a target="_blank" href="https://github.com/virtool/virtool/issues/$1">#$1</a>`);
+    html = html.replace(/#([0-9]+)/g, "<a target='_blank' href='https://github.com/virtool/virtool/issues/$1'>#$1</a>");
 
     return <div style={{marginTop: "10px"}} dangerouslySetInnerHTML={{__html: html}} />;
 };
@@ -31,7 +31,8 @@ export default class Release extends React.Component {
 
     static propTypes = {
         name: PropTypes.string,
-        body: PropTypes.string
+        body: PropTypes.string,
+        html_url: PropTypes.string
     };
 
     render () {
