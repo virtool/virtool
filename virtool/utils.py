@@ -1,14 +1,20 @@
 import os
+import sys
+import arrow
 import shutil
-import binascii
 import datetime
-import pymongo
-import motor
 
-import virtool.gen
+from random import choice
+from string import ascii_letters, ascii_lowercase, digits
 
 
-@virtool.gen.synchronous
+def base_processor(document):
+    document = dict(document)
+    document["id"] = document.pop("_id")
+
+    return document
+
+
 def rm(path, recursive=False):
     """
     A function that removes files or directories in a separate thread. Wraps :func:`os.remove` and func:`shutil.rmtree`.
@@ -34,7 +40,6 @@ def rm(path, recursive=False):
         raise
 
 
-@virtool.gen.synchronous
 def write_file(path, body, is_bytes=False):
     """
     Writes the data in ``body`` to a file at ``path``. Write in bytes mode if ``is_bytes`` is ``True``.
@@ -58,7 +63,6 @@ def write_file(path, body, is_bytes=False):
         handle.write(body)
 
 
-@virtool.gen.synchronous
 def list_files(directory, excluded=None):
     """
     Get a list of dicts describing the files in the passed directory. Each dict contains the information:
@@ -92,95 +96,70 @@ def file_stats(path):
     # Append file entry to reply list
     return {
         "size": stats.st_size,
-        "modify": timestamp(stats.st_mtime)
+        "modify": arrow.get(stats.st_mtime).datetime
     }
 
 
-def timestamp(time=None, time_getter=datetime.datetime.now):
+def timestamp():
     """
-    Returns and ISO format timestamp. Generates one for the current time if no ``time`` argument is passed.
+    Returns a datetime object representing the current UTC time. The last 3 digits of the microsecond frame are set
+    to zero.
 
-    :param time: the datetime to generate a timestamp for.
-    :type time: :class:`datetime.datetime` or str
+    :return: a UTC timestamp
+    :rtype: datetime.datetime
 
-    :param time_getter: a function that return a :class:"datetime.datetime" object.
-    :type time_getter: func
+    """
+    # Get tz-aware datetime object.
+    dt = arrow.utcnow().naive
 
-    :return: a timestamp
+    # Set the last three ms digits to 0.
+    dt = dt.replace(microsecond=int(str(dt.microsecond)[0:3] + "000"))
+
+    return dt
+
+
+def to_isoformat(dt):
+    """
+    Returns the ISO formatted string for the passed datetime object. Uses Z at the end of the string instead of +00:00.
+    Suitable for sending to clients.
+
+    :param dt: the time to format
+    :type dt: the :class:`datetime.datetime`
+
+    :return: an ISO formatted time string
     :rtype: str
 
     """
-    if time is None:
-        time = time_getter()
-
-    if isinstance(time, datetime.datetime):
-        return time.isoformat()
-
-    # Probably a POSIX timestamp.
-    if isinstance(time, float):
-        return datetime.datetime.fromtimestamp(time).isoformat()
-
-    raise TypeError("Couldn't calculate timestamp from time or time_getter")
+    return dt.replace(tzinfo=datetime.timezone.utc).isoformat().replace("+00:00", "Z")
 
 
-def random_alphanumeric(length=6, excluded=[], randomizer=None):
+def random_alphanumeric(length=6, mixed_case=False, excluded=None):
     """
     Generates a random string composed of letters and numbers.
 
     :param length: the length of the string.
     :type length: int
 
-    :param excluded: strings that may not be returned.
-    :type excluded: list
+    :param mixed_case: included alpha characters will be mixed case instead of lowercase
+    :type mixed_case: bool
 
-    :param randomizer: a custom function for return the random string.
-    :type randomizer: func
+    :param excluded: strings that may not be returned.
+    :type excluded: Union[list, set]
 
     :return: a random alphanumeric string.
     :rtype: string
 
     """
-    if randomizer is None:
-        def randomizer():
-            return binascii.hexlify(os.urandom(length * 3)).decode()[0:length]
+    excluded = excluded or list()
 
-    candidate = randomizer()
+    characters = digits + ascii_letters if mixed_case else ascii_lowercase
+
+    candidate = "".join([choice(characters) for i in range(length)])
 
     if candidate not in excluded:
         return candidate
 
-    return random_alphanumeric(length, excluded, randomizer)
-
-
-def where(subject, predicate):
-    """
-    Returns the first object in ``subject`` that return True for the given ``predicate``.
-
-    :param subject: a list of objects.
-    :type subject: list
-
-    :param predicate: a function or dict to test items in the ``subject`` list.
-    :type predicate: func or dict
-
-    :return: the matched object or None.
-    :rtype: any
-
-    """
-    if isinstance(predicate, dict):
-        clone = dict(predicate)
-
-        def predicate(entry):
-            return all([(key in entry and entry[key] == value) for key, value in clone.items()])
-
-    if callable(predicate):
-        filtered = list(filter(predicate, subject))
-
-        if len(filtered) > 0:
-            return filtered[0]
-
-        return None
-
-    raise TypeError("Predicate must be callable or dict")
+    return random_alphanumeric(length, excluded)
 
 
 def average_list(list1, list2):
@@ -193,3 +172,62 @@ def average_list(list1, list2):
         raise TypeError("Both arguments must be lists of the same length")
 
     return [(value + list2[i]) / 2 for i, value in enumerate(list1)]
+
+
+async def get_new_id(collection, excluded=None):
+    """
+    Returns a new, unique, id that can be used for inserting a new document. Will not return any id that is included
+    in ``excluded``.
+
+    """
+    excluded = excluded or list()
+
+    excluded += await collection.distinct("_id")
+
+    excluded = list(set(excluded))
+
+    return random_alphanumeric(length=8, excluded=excluded)
+
+
+def format_doc_id(prefix, document):
+    document[prefix + "_id"] = document.pop("_id")
+    return document
+
+
+def coerce_list(obj):
+    """
+    Takes an object of any type and returns a list. If ``obj`` is a list it will be passed back with modification.
+    Otherwise, a single-item list containing ``obj`` will be returned.
+
+    :param obj: an object of any type.
+    :type obj: any
+
+    :return: a list equal to or containing ``obj``.
+    :rtype: list
+
+    """
+    return [obj] if not isinstance(obj, list) else obj
+
+
+def to_bool(obj):
+    return str(obj).lower() in ["1", "true"]
+
+
+def get_static_hash():
+    client_files = os.listdir(os.path.join(sys.path[0], "client", "dist"))
+
+    for file_name in client_files:
+        if "style." in file_name:
+            return file_name.split(".")[1]
+
+
+def reload():
+    exe = sys.executable
+
+    if exe.endswith("python") or "python3" in exe:
+        os.execl(exe, exe, *sys.argv)
+
+    if exe.endswith("run"):
+        os.execv(exe, sys.argv)
+
+    raise SystemError("Could not determine executable type")

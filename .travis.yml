@@ -1,6 +1,25 @@
 language: python
-python: "3.5"
-services: mongodb
+sudo: false
+python: "3.6"
+
+# services: mongodb
+
+services:
+  - mongodb
+
+addons:
+  apt:
+    sources:
+      - mongodb-upstart
+      - mongodb-3.4-precise
+    packages:
+      - libtbb-dev
+      - mongodb-org-server
+      - mongodb-org-shell
+      - nvidia-cuda-dev
+      - nvidia-profiler
+      - nvidia-cuda-toolkit
+
 cache:
   pip: true
   apt: true
@@ -10,8 +29,33 @@ cache:
 env:
 - TRAVIS_NODE_VERSION="6"
 
+before_install:
+# Codacy coverage reporter
+- pip install codacy-coverage
+
+# HMMER
+- wget http://eddylab.org/software/hmmer3/3.1b2/hmmer-3.1b2-linux-intel-x86_64.tar.gz
+- tar -xf hmmer-3.1b2-linux-intel-x86_64.tar.gz
+- export PATH=${PATH}:${PWD}/hmmer-3.1b2-linux-intel-x86_64/binaries
+
+# Bowtie2
+- wget https://github.com/BenLangmead/bowtie2/releases/download/v2.3.2/bowtie2-2.3.2-linux-x86_64.zip
+- unzip bowtie2-2.3.2-linux-x86_64.zip
+- export PATH=${PATH}:${PWD}/bowtie2-2.3.2
+- bowtie2-inspect --version
+
+# Skewer
+- wget https://github.com/relipmoc/skewer/archive/0.2.2.tar.gz
+- tar -xvf 0.2.2.tar.gz
+- cd skewer-0.2.2
+- make
+- cd ..
+- export PATH=${PATH}:${PWD}/skewer-0.2.2
+- skewer --version
+
 install:
 - pip install -r requirements.txt
+- pip install -U -I pytest
 - rm -rf ~/.nvm
 - git clone https://github.com/creationix/nvm.git ~/.nvm
 - cd ~/.nvm
@@ -21,24 +65,21 @@ install:
 - npm install -g yarn
 - npm install -g webpack
 - cd $TRAVIS_BUILD_DIR
-
-script:
-- pytest --cov
-
-before_install:
-- pip install codecov
-- wget http://eddylab.org/software/hmmer3/3.1b2/hmmer-3.1b2-linux-intel-x86_64.tar.gz
-- tar -xf hmmer-3.1b2-linux-intel-x86_64.tar.gz
-- export PATH=${PATH}:${PWD}/hmmer-3.1b2-linux-intel-x86_64/binaries 
-
-after_success:
-- codecov
-- mkdir build
-- mkdir build/virtool
 - cd client
 - yarn install
 - webpack --config webpack.production.config.js
-- cd ..
+- cd $TRAVIS_BUILD_DIR
+
+before_script:
+- sleep 15
+
+script:
+- pytest --faulthandler-timeout=30 --cov --cov-report xml -vv
+
+after_success:
+- python-codacy-coverage -r coverage.xml
+- mkdir build
+- mkdir build/virtool
 - pyinstaller -F --hidden-import=tkinter --hidden-import=tkinter.filedialog --distpath build/virtool run.py
 - cp -rv assets build/virtool
 - cp -rv client/dist build/virtool/client

@@ -1,5 +1,7 @@
-import virtool.pathoscope
-import math
+import virtool.sam
+import virtool.pathoscope.matrix
+import virtool.pathoscope.report
+import virtool.pathoscope.em
 
 
 def run(sam, tsv_path, verbose=False):
@@ -25,7 +27,7 @@ def run(sam, tsv_path, verbose=False):
         reads.count
     )
 
-    new_sam = virtool.pathoscope.sam.Data()
+    new_sam = virtool.sam.Data()
 
     for read_id, ref_id, pos, length, p_score, a_score in sam.entries():
         if p_score < min_pscore:

@@ -6,6 +6,22 @@
         "spec": true
       }
     ],
+
+    [
+      "transform-imports",
+      {
+        "react-bootstrap": {
+          "transform": "react-bootstrap/lib/${member}",
+          "preventFullImport": true
+        },
+
+        "lodash": {
+          "transform": "lodash/${member}",
+          "preventFullImport": true
+        }
+      }
+    ],
+
     [
       "lodash"
     ]
@@ -13,6 +29,7 @@
 
   "presets": [
     "es2015",
+    "stage-0",
     "react"
   ]
 }

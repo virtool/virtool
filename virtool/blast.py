@@ -2,7 +2,6 @@ import re
 import io
 import json
 import time
-import requests
 import zipfile
 
 
@@ -146,7 +145,7 @@ def blast(sequence):
     :type sequence: str
 
     """
-    rid, rtoe = initialize(sequence)
+    rid, _ = initialize(sequence)
 
     is_ready = False
     interval = 3

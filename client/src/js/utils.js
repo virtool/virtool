@@ -1,6 +1,5 @@
 import Numeral from "numeral";
-import Request from "superagent";
-import { get, startCase, capitalize } from "lodash";
+import { sampleSize, get, startCase, capitalize } from "lodash";
 
 export const taskDisplayNames = {
     nuvs: "NuVs",
@@ -21,6 +20,12 @@ export const numberDictionary = {
     7: "seven",
     8: "eight",
     9: "nine"
+};
+
+const alphanumeric = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+
+export const createRandomString = (length=8) => {
+    return sampleSize(alphanumeric, length).join("")
 };
 
 export const numberToWord = (number) => numberDictionary[Number(number)] || number;
@@ -51,12 +56,35 @@ export const formatIsolateName = (isolate) => {
     return "Unnamed";
 };
 
-export const postJSON = (uri, data, callback) => {
-    Request.post(uri)
-        .send(data)
-        .type("application/x-www-form-urlencoded; charset=UTF-8")
-        .accept("json")
-        .end((err, response) => {
-            callback(response.body)
-        });
+export const followDownload = (path) => {
+    const a = document.createElement("A");
+    a.href = path;
+    a.download = path.substr(path.lastIndexOf("/") + 1);
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+};
+
+export const versionComparator = (a, b) => {
+    let splitA = a.replace("v", "").split("-")[0];
+    let splitB = b.replace("v", "").split("-")[0];
+
+    if (splitA === splitB) {
+        return 0;
+    }
+
+    splitA = splitA.split(".");
+    splitB = splitB.split(".");
+
+    for (let i = 0; i < 3; i++) {
+        if (splitA[i] > splitB[i]) {
+            return 1;
+        }
+
+        if (splitA[i] < splitB[i]) {
+            return -1;
+        }
+    }
+
+    throw("Could not compare versions");
 };

@@ -1,338 +1,237 @@
 import os
 import sys
-import signal
+import asyncio
+import pymongo
 import traceback
-import multiprocessing
-import subprocess
 
-from setproctitle import setproctitle
-from virtool import utils
+import virtool.utils
 
 
-class Termination(Exception):
+LIST_PROJECTION = [
+    "_id",
+    "task",
+    "status",
+    "proc",
+    "mem",
+    "user"
+]
+
+
+def dispatch_processor(document):
     """
-    Exception raised when a Job handles SIGTERM.
+    Removes the ``status`` and ``args`` fields from the job document.
+    Adds a ``username`` field, an ``added`` date taken from the first status entry in the job document, and
+    ``state`` and ``progress`` fields taken from the most recent status entry in the job document.
+    :param document: a document to process.
+    :type document: dict
 
+    :return: a processed documents.
+    :rtype: dict
     """
-    pass
+    document = virtool.utils.base_processor(document)
+
+    status = document.pop("status")
+
+    last_update = status[-1]
+
+    document.update({
+        "state": last_update["state"],
+        "stage": last_update["stage"],
+        "created_at": status[0]["timestamp"],
+        "progress": status[-1]["progress"]
+    })
+
+    return document
 
 
-class JobError(Exception):
-    """
-    Exception raised when a Job encounters and error in a subprocess or stage method."
+class Job:
 
-    """
-    pass
-
-
-class Job(multiprocessing.Process):
-
-    def __init__(self, _id, settings, message_queue, task, task_args, proc, mem):
-        super().__init__()
-
-        #: A dictionary of server settings.
+    def __init__(self, loop, executor, db, settings, dispatch, job_id, task_name, task_args, proc, mem):
+        self.loop = loop
+        self.executor = executor
+        self.db = db
         self.settings = settings
-
-        #: A instance of MongoClient for Virtool's database. Assigned after forking.
-        self.db = None
-
-        #: Used to communicate with the server.
-        self.queue = message_queue
-
-        #: The job's database id.
-        self._id = _id
-
-        #: The task name.
-        self.task = task
-
-        #: The task args passed from the :meth:`.jobs.Collection.new` method.
+        self.dispatch = dispatch
+        self.id = job_id
+        self.task_name = task_name
         self.task_args = task_args
-
-        #: The number of cores the job is allowed to use.
         self.proc = proc
-
-        #: The amount of memory in GB that the job is allowed to use.
         self.mem = mem
-        self.log_list = []
 
-        # If the job owns an external subprocess, the subprocess.Popen object will be referred to by this attribute. If
-        # no process is open, the attribute is set to None.
-        self.process = None
+        self.started = False
+        self.finished = False
 
-        self.stage_list = list()
-        self.stage_counter = 0
-        self.progress = 0
-        self.stage_progress = 0
+        self._progress = 0
+        self._state = "waiting"
+        self._stage = None
+        self._error = None
+        self._cancelled = False
+        self._task = None
+        self._process_task = None
+        self._stage_list = None
+        self._log_path = os.path.join(self.settings.get("data_path"), "logs", "jobs", self.id)
+        self._log_buffer = list()
 
-        self.do_cleanup = False
+    def start(self):
+        self._task = self.loop.create_task(self.run())
+        self.started = True
 
-        self.state = "waiting"
-        self.stage = None
-        self.error = None
+    async def run(self):
+        for method in self._stage_list:
+            name = method.__name__
 
-    def log(self, line, timestamp=None):
-        if timestamp is None:
-            timestamp = str(utils.timestamp())
-
-        self.log_list.append(timestamp + "\t" + str(line))
-
-    def on_db(self):
-        pass
-
-    def run(self):
-        # Set the process title so that it is easily identifiable as a virtool job process.
-        setproctitle("virtool-" + self._id)
-
-        # Ignore keyboard interrupts. The manager will deal with the signal and cancel jobs safely.
-        signal.signal(signal.SIGINT, signal.SIG_IGN)
-
-        # When the manager terminates jobs, run the get_term method.
-        signal.signal(signal.SIGTERM, self.handle_sigterm)
-
-        #: A synchronous connection to the Virtool database.
-        self.db = self.settings.get_db_client(sync=True)
-
-        self.on_db()
-
-        was_cancelled = False
-        had_error = False
-
-        try:
-            # Tell the database that the job has started running
-            self.update_status(state="running")
+            await self.add_status(stage=name, state="running")
 
             try:
-                # Run the commands in the command list
-                for stage_method in self.stage_list:
-                    self.stage_counter += 1
-                    self.stage_progress = 0
-
-                    self.progress = round(self.stage_counter / (len(self.stage_list) + 2), 3)
-
-                    # Get the function name and use it to tell the jobs collection that a new stage has been started.
-                    self.update_status(stage=stage_method.__name__)
-
-                    # Run the command function
-                    stage_method()
+                await self.add_log("Stage: {}".format(name))
+                await method()
+            except asyncio.CancelledError:
+                self._cancelled = True
             except:
-                # Handle exceptions in the Python code
-                exception = handle_exception()
+                self._error = handle_exception()
 
-                # This conditional will only be True and raise a Termination exception if the source of the termination
-                # is cancellation of the job by a user. Job errors will not result in a Termination exception being
-                # raised here.
-                if exception["type"] == "Termination":
-                    # Re-raise the exception so it can be handled outside the func execution loop.
-                    raise Termination
+            if self._error or self._cancelled:
+                break
 
-                elif exception["type"] == "JobError":
-                    # Re-raise the exception so it can be handled outside the func execution loop.
-                    raise JobError
+        self._progress = 1
 
-                # An error has occurred. Handle and parse the error and traceback using the handle_error method.
-                else:
-                    self.error = {
-                        "message": exception,
-                        "context": "Python Error"
-                    }
-                    raise JobError
-
-            # Tell the database that the job has completed. This line is only reached if no error or cancellation
-            # occurs.
-            self.update_status(state="complete", stage=None)
-
-        except Termination:
-            # The Termination exception will only be caught here when the termination is due to cancellation of the job
-            # by the user.
-            was_cancelled = True
-
-            self.do_cleanup = True
-
-            # Terminate any owned subprocess and log the outcome.
-            try:
-                self.log("Terminated an external subprocess.")
-                self.process.terminate()
-            except AttributeError:
-                self.log("Did not find an external subprocess to terminate.")
-                pass
-
-        except JobError:
-            # When an error occurs in the job the JobError exception is raised immediately to stop all execution of task
-            # code. A message is sent to the job manager detailing the error. In response, the manager calls the Job's
-            # terminate method. The SIGTERM is caught and the handle_sigterm method is called to cleanly kill the job.
-            had_error = True
-
-            self.update_status(state="error", stage=self.stage, error=self.error)
-
-            try:
-                # Wait after the JobError exception while the server gets around to calling the terminate method.
-                while True:
-                    pass
-
-            except Termination:
-                # When it does, the Terminate exception will be raised and we will continue shutting down the job.
-                self.do_cleanup = True
-
-        # Clean-up intermediate files and database changes if the job is ending due to cancellation or and error.
-        self.log("Cleaning up")
-        if self.do_cleanup:
-            self.cleanup()
-
-        # Write the job log to file and clear the log data from the database to save memory.
-        write_log(self.settings.get("data_path") + "/logs/jobs/" + self._id + ".log", self.log_list)
-
-        if was_cancelled:
-            self.update_status(state="cancelled")
-
-    def handle_sigterm(self, *args, **kwargs):
-        self.log("Got a termination signal. Raising Termination exception. {} {}".format(repr(args), repr(kwargs)))
-        raise Termination
-
-    def run_process(self, cmd, stdout_handler=None, dont_read_stdout=False, no_output_failure=False, env=None):
-        """
-        Wraps :class:`subprocess.Popen`. Takes a command (list) that is run with all output be cleanly handled in
-        real time. Also takes handler methods for stdout and stderr lines. These will be called anytime new output is
-        available and be passed the line. If the process encounters an error as identified by the return code, it is
-        handled just like a Python error.
-
-        """
-        stderr = None
-
-        output = None
-        stdout_handle = subprocess.DEVNULL
-
-        if not dont_read_stdout:
-            stdout_handle = subprocess.PIPE
-
-            if not stdout_handler:
-                output = list()
-                stdout_handler = output.append
-
-        try:
-            with subprocess.Popen(cmd, stdout=stdout_handle, stderr=subprocess.PIPE, env=env, universal_newlines=True) as process:
-                if not dont_read_stdout:
-                    for line in process.stdout:
-                        stdout_handler(line.rstrip())
-                        if output is None:
-                            output = True
-
-                stderr = process.stderr.read()
-
-        except subprocess.CalledProcessError:
-            self.error = {
-                "message": ["Returned " + str(self.process.returncode), "Check log."],
-                "context": "External Process Error"
-            }
-
-        if no_output_failure and not output:
-            self.error = {
-                "message": stderr.split("\n"),
-                "context": "External Process Error"
-            }
-
-        if self.error:
-            raise JobError
-
-        # Set the process attribute to None, indicating that there is no running external process.
-        self.process = None
-
-        return output
-
-    def update_status(self, state=None, stage=None, error=None):
-        """
-        Report changes in job state and stage and any errors to the job manager. Any changes are also logged to the job
-        log.
-
-        """
-        # Set the state and stage attributes if they are changed by this status update.
-        self.state = state if state else self.state
-        self.stage = stage if stage else self.stage
-
-        # Write to the job log.
-        if not error:
-            if not state or state != "complete":
-                self.log("status_change: State='" + str(self.state) + "', Stage='" + str(self.stage) + "'")
-            elif state == "complete":
-                self.log("job complete.")
+        if self._error:
+            await self.add_status(state="error")
+            await self.cleanup()
+        elif self._cancelled:
+            await self.add_status(state="cancelled")
+            await self.cleanup()
         else:
-            self.log("an error occurred")
+            await self.add_status(state="complete")
 
-        # Instruct the manager to update the jobs database collection with the new status information.
-        self.collection_operation("jobs", "update_status", {
-            "_id": self._id,
-            "progress": self.progress + self.stage_progress,
-            "state": self.state,
-            "stage": self.stage,
-            "error": error
-        })
+        await self.run_in_executor(flush_log, self._log_path, self._log_buffer)
 
-    def update_stage_progress(self, stage_progress):
-        stage_weight = round(1 / (len(self.stage_list) + 2), 3)
+        self.finished = True
 
-        self.stage_progress = stage_weight * stage_progress
-        self.update_status()
+    async def run_in_executor(self, func, *args):
+        await self.add_log("Process: {}".format(func.__name__))
+        self._process_task = self.loop.run_in_executor(self.executor, func, *args)
+        result = await self._process_task
+        self._process_task = None
 
-    def collection_operation(self, collection_name, operation, data=None):
-        self.queue.put({
-            "operation": operation,
-            "collection_name": collection_name,
-            "data": data
-        })
+        return result
 
-    def cleanup(self):
+    async def run_subprocess(self, command, error_test=None, log_stdout=False, log_stderr=True, env=None):
+        await self.add_log("Command: {}".format(" ".join(command)))
+
+        # asyncio.set_event_loop(self.loop)
+        asyncio.get_child_watcher().attach_loop(self.loop)
+
+        proc = await asyncio.create_subprocess_exec(
+            *command,
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.PIPE,
+            loop=self.loop,
+            env=env
+        )
+
+        out = list()
+        err = list()
+
+        while True:
+            line = await proc.stdout.readline()
+
+            if not line:
+                break
+
+            line = line.decode().rstrip()
+
+            out.append(line)
+
+            if log_stdout:
+                await self.add_log(line, indent=1)
+
+        while True:
+            line = await proc.stderr.readline()
+
+            if not line:
+                break
+
+            line = line.decode().rstrip()
+
+            err.append(line)
+
+            if log_stderr:
+                await self.add_log(line, indent=1)
+
+        await proc.wait()
+
+        if proc.returncode != 0 or (error_test and error_test(out, err)):
+            raise SubprocessError("Command failed: {}. Check job log.".format(" ".join(command)))
+
+    async def add_status(self, state=None, stage=None):
+        self._state = state or self._state
+        self._stage = stage or self._stage
+
+        if self._progress != 1:
+            stage_index = [m.__name__ for m in self._stage_list].index(self._stage)
+            self._progress = round((stage_index + 1) / (len(self._stage_list) + 1), 2)
+
+        document = await self.db.jobs.find_one_and_update({"_id": self.id}, {
+            "$push": {
+                "status": {
+                    "state": self._state,
+                    "stage": self._stage,
+                    "error": self._error,
+                    "progress": self._progress,
+                    "timestamp": virtool.utils.timestamp()
+                }
+            }
+        }, return_document=pymongo.ReturnDocument.AFTER, projection=LIST_PROJECTION)
+
+        await self.dispatch("jobs", "update", dispatch_processor(document))
+
+    async def add_log(self, line, indent=0):
+        timestamp = virtool.utils.timestamp().isoformat()
+
+        self._log_buffer.append("{}{}    {}".format(timestamp, " " * indent * 4, line.rstrip()))
+
+        if len(self._log_buffer) == 15:
+            await self.flush_log()
+            del self._log_buffer[:]
+
+    async def flush_log(self):
+        await self.run_in_executor(flush_log, self._log_path, self._log_buffer)
+
+    async def cancel(self):
+        if self.started and not self.finished:
+            self._task.cancel()
+
+            while not self.finished:
+                await asyncio.sleep(0.1, loop=self.loop)
+
+        await self.cleanup()
+
+        self.finished = True
+
+    async def cleanup(self):
         pass
-
-
-def handle_exception(max_tb=50, print_message=False):
-    # Retrieve exception data from exc_info()
-    exception, value, trace_info = sys.exc_info()
-
-    # Exception type: eg. KeyError
-    exception = exception.__name__
-
-    # Get the value details
-    details = []
-    for line in value.args:
-        details.append(str(line))
-
-    # Format the traceback data
-    trace_info = traceback.format_tb(trace_info, max_tb)
-
-    if print_message:
-        for line in trace_info:
-            print(line)
-        print(exception + ": " + "; ".join(details))
-
-    # Return exception information as dictionary
-    return {
-        "type": exception,
-        "traceback": trace_info,
-        "details": details
-    }
-
-
-def write_log(path, log_list):
-    try:
-        with open(path, "w") as log_file:
-            for line in log_list:
-                log_file.write(line + "\n")
-    except IOError:
-        os.makedirs(path)
-        write_log(path, log_list)
 
 
 def stage_method(func):
-    """
-    A decorator that adds the attribute ``is_stage_method`` to the returned function so it can be recognized as a
-    job stage method when the documentation is generated.
-
-    :param func: the function to decorate.
-    :type func: function
-
-    :return: the decorated function.
-    :rtype: function
-
-    """
     func.is_stage_method = True
-
     return func
+
+
+def flush_log(path, buffer):
+    with open(path, "a") as handle:
+        handle.write("\n".join(buffer))
+
+
+def handle_exception(max_tb=50):
+    exception, value, trace_info = sys.exc_info()
+
+    return {
+        "type": exception.__name__,
+        "traceback": traceback.format_tb(trace_info, max_tb),
+        "details": [str(l) for l in value.args]
+    }
+
+
+class SubprocessError(Exception):
+    pass

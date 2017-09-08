@@ -1,6 +1,7 @@
 import math
 import collections
-from virtool.pathoscope import sam
+from virtool import sam
+
 
 class Store:
     """ Stores read and genome information and provides methods for access and modification """

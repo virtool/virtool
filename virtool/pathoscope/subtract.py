@@ -1,6 +1,3 @@
-from virtool.pathoscope import sam
-
-
 def run(isolate_sam, host_sam):
     # Get a mapping score for every read mapped to the host genome
     host_scores = host_sam.high_scores()

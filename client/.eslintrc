@@ -4,7 +4,8 @@
     "window": true,
     "document": true,
     "dispatcher": true,
-    "console": true
+    "console": true,
+    "fetch": true
   },
 
   "parser": "babel-eslint",

@@ -1,75 +1,54 @@
 import os
 import sys
-import logging.handlers
-import coloredlogs
-import argparse
-import virtool.web
+import json
+import uvloop
+import asyncio
 
+from aiohttp import web
 from setproctitle import setproctitle
+from virtool.app import create_app
+from virtool.app_init import get_args, configure
 
 sys.dont_write_bytecode = True
 
-setproctitle('virtool')
+setproctitle("virtool")
 
-parser = argparse.ArgumentParser()
+args = get_args()
 
-parser.add_argument(
-    "--dev",
-    dest="development",
-    action="store_true",
-    default=False,
-    help="Make the server run in development mode."
-)
+logger = configure(verbose=args.verbose)
 
-parser.add_argument(
-    "--write-pid",
-    dest="write_pid",
-    action="store_true",
-    default=False,
-    help="Force the server to write a PID file even if it is development mode"
-)
-
-args = parser.parse_args()
-
-logging_level = logging.INFO
-
-logging.captureWarnings(True)
-
-if args.development:
-    logging_level = logging.DEBUG
-
-log_format = "%(asctime)-20s %(module)-11s %(levelname)-8s %(message)s"
-
-coloredlogs.install(
-    level=logging_level,
-    fmt=log_format
-)
-
-logger = logging.getLogger('virtool')
-
-handler = logging.handlers.RotatingFileHandler("virtool.log", maxBytes=1000000, backupCount=5)
-handler.setFormatter(logging.Formatter(log_format))
-
-logger.addHandler(handler)
-
-pid_path = None
-
-if not args.development or args.write_pid:
-    logger.info("writing pid file")
+if args.write_pid:
+    logger.debug("Writing pid file")
 
     pid = str(os.getpid())
     pid_path = "/var/run/virtoold/virtoold.pid"
 
     if os.path.isfile(pid_path):
-        logger.fatal('PID file already exists.')
+        logger.fatal("PID file already exists.")
         sys.exit(1)
 
     with open(pid_path, "w") as pidfile:
         pidfile.write(pid)
 
-server = virtool.web.Application(args.development)
 
-server.run()
+asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
 
-if not args.development:
-    os.unlink(pid_path)
+loop = asyncio.get_event_loop()
+
+settings_path = os.path.join(sys.path[0], "settings.json")
+
+skip_setup = os.path.isfile(settings_path)
+
+try:
+    with open(settings_path, "r") as handle:
+        settings_temp = json.load(handle)
+except FileNotFoundError:
+    settings_temp = dict()
+
+if __name__ == "__main__":
+    app = create_app(loop, skip_setup=skip_setup)
+
+    host = args.host or settings_temp.get("server_host", "localhost")
+    port = args.port or settings_temp.get("server_port", 9950)
+
+    web.run_app(app, host=host, port=port)
