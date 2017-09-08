@@ -465,3 +465,14 @@ def organize_files(db):
             "reserved": False
         }
     })
+
+
+async def organize_status(db):
+    document = await db.status.find_one("software_update")
+
+    if "process" not in document:
+        await db.status.update_one({"_id": "software_update"}, {
+            "$set": {
+                "process": None
+            }
+        })

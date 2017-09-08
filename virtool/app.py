@@ -102,6 +102,7 @@ async def init_db(app):
     await virtool.organize.organize_subtraction(db)
     await virtool.organize.organize_users(db)
     await virtool.organize.organize_groups(db)
+    await virtool.organize.organize_status(db)
 
     logger.info("Creating database indexes...")
 

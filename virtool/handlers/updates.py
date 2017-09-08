@@ -1,6 +1,7 @@
 import pymongo
 
 import virtool.app
+import virtool.utils
 import virtool.updates
 from virtool.handlers.utils import json_response, not_found
 
@@ -15,10 +16,13 @@ async def get(req):
 
     releases = await virtool.updates.get_releases(req.app["db"], repo, server_version, username, token)
 
-    return json_response({
-        "releases": releases,
-        "current_version": server_version
+    document = await req.app["db"].status.find_one_and_update({"_id": "software_update"}, {
+        "$set": {
+            "releases": releases
+        }
     })
+
+    return json_response(virtool.utils.base_processor(document))
 
 
 async def upgrade(req):
