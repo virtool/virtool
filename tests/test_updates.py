@@ -150,8 +150,12 @@ async def test_install(download_release_error, loop, tmpdir, monkeypatch, mocker
     await virtool.updates.install(test_motor, test_dispatch, loop, "foobar", 1234)
 
     if not download_release_error:
-        assert os.listdir(install_path) == ["run", "client", "VERSION"]
-        assert os.listdir(os.path.join(install_path, "client")) == ["app.a006b17bf13ea9cb7827.js", "favicon.ico", "index.html"]
+        assert set(os.listdir(install_path)) == {"run", "client", "VERSION"}
+        assert set(os.listdir(os.path.join(install_path, "client"))) == {
+            "app.a006b17bf13ea9cb7827.js",
+            "favicon.ico",
+            "index.html"
+        }
 
         assert m_reload.called
 
@@ -261,11 +265,11 @@ def test_decompress_file(tmpdir):
 
     virtool.updates.decompress_file(os.path.join(path, "virtool.tar.gz"), os.path.join(path, "de"))
 
-    assert os.listdir(path) == ["virtool.tar.gz", "de"]
+    assert set(os.listdir(path)) == {"virtool.tar.gz", "de"}
 
     assert os.listdir(os.path.join(path, "de")) == ["virtool"]
 
-    assert os.listdir(os.path.join(path, "de", "virtool")) == ["run", "client", "VERSION", "install.sh"]
+    assert set(os.listdir(os.path.join(path, "de", "virtool"))) == {"run", "client", "VERSION", "install.sh"}
 
 
 @pytest.mark.parametrize("missing_path,p_result", [(None, True), ("run", False), ("VERSION", False)])
@@ -327,11 +331,11 @@ async def test_copy_software_files(tmpdir):
 
     assert set(os.listdir(dest_path)) == {"run", "client", "VERSION"}
 
-    assert os.listdir(os.path.join(dest_path, "client")) == [
+    assert set(os.listdir(os.path.join(dest_path, "client"))) == {
         "app.a006b17bf13ea9cb7827.js",
         "favicon.ico",
         "index.html"
-    ]
+    }
 
     assert os.path.getsize(os.path.join(dest_path, "run")) == 43957176
 
