@@ -11,7 +11,7 @@ import React, { PropTypes } from "react";
 import Marked from "marked";
 import { ListGroupItem, Button, Row, Col } from "react-bootstrap";
 
-const renderReleaseMarkdown = (body) => {
+export const renderReleaseMarkdown = (body) => {
     let html = Marked(body);
 
     html = html.replace(/#([0-9]+)/g, "<a target='_blank' href='https://github.com/virtool/virtool/issues/$1'>#$1</a>");

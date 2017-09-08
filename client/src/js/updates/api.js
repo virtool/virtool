@@ -17,8 +17,11 @@ const updatesAPI = {
 
     getDatabase: () => {
         return Request.get("/api/updates/database");
-    }
+    },
 
+    installSoftwareUpdates: () => {
+        return Request.patch("/api/updates/software", {});
+    }
 };
 
 export default updatesAPI;

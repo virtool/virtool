@@ -35,8 +35,12 @@ async def get_releases(db, repo, server_version, username=None, token=None):
     if token is not None:
         auth = aiohttp.BasicAuth(login=username, password=token)
 
+    url = "https://api.github.com/repos/{}/releases".format(repo)
+
+    print(url)
+
     async with aiohttp.ClientSession(auth=auth) as session:
-        async with session.get("https://api.github.com/repos/{}/releases".format(repo), headers=headers) as resp:
+        async with session.get(url, headers=headers) as resp:
             data = await resp.json()
 
     # Reformat the release dicts to make them more palatable. If the response code was not 200, the releases list
@@ -109,9 +113,9 @@ async def install(db, dispatch, loop, download_url, size):
                 "$set": {
                     "process.error": "Could not find GitHub repository"
                 }
-            }, return_document=pymongo.ReturnDocument.AFTER, projection={"_id": False})
+            }, return_document=pymongo.ReturnDocument.AFTER)
 
-            await dispatch("status", "update", document)
+            await dispatch("status", "update", virtool.utils.base_processor(document))
 
             return
         except FileNotFoundError:
@@ -119,9 +123,9 @@ async def install(db, dispatch, loop, download_url, size):
                 "$set": {
                     "process.error": "Could not write to release download location"
                 }
-            }, return_document=pymongo.ReturnDocument.AFTER, projection={"_id": False})
+            }, return_document=pymongo.ReturnDocument.AFTER)
 
-            await dispatch("status", "update", document)
+            await dispatch("status", "update", virtool.utils.base_processor(document))
 
             return
 
@@ -143,9 +147,9 @@ async def install(db, dispatch, loop, download_url, size):
             "$set": {
                 "process.good_tree": good_tree
             }
-        }, return_document=pymongo.ReturnDocument.AFTER, projection={"_id": False})
+        }, return_document=pymongo.ReturnDocument.AFTER)
 
-        await dispatch("status", "update", document)
+        await dispatch("status", "update", virtool.utils.base_processor(document))
 
         # Copy the update files to the install directory.
         await update_software_process(db, dispatch, 0, "copy_files")
@@ -156,9 +160,9 @@ async def install(db, dispatch, loop, download_url, size):
             "$set": {
                 "process": None
             }
-        }, return_document=pymongo.ReturnDocument.AFTER, projection={"_id": False})
+        }, return_document=pymongo.ReturnDocument.AFTER)
 
-        await dispatch("status", "update", document)
+        await dispatch("status", "update", virtool.utils.base_processor(document))
 
         await asyncio.sleep(1.5, loop=loop)
 
@@ -196,9 +200,9 @@ async def update_software_process(db, dispatch, progress, step=None):
 
     document = await db.status.find_one_and_update({"_id": "software_update"}, {
         "$set": set_dict
-    }, return_document=pymongo.ReturnDocument.AFTER, projection={"_id": False})
+    }, return_document=pymongo.ReturnDocument.AFTER)
 
-    await dispatch("status", "update", document)
+    await dispatch("status", "update", virtool.utils.base_processor(document))
 
 
 async def download_release(db, dispatch, url, size, target_path):

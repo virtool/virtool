@@ -3,10 +3,11 @@ import { filter } from "lodash";
 import { connect } from "react-redux";
 import { Row, Col, Panel, ListGroup } from "react-bootstrap";
 
-import { getSoftwareUpdates } from "../actions";
+import { getSoftwareUpdates, showInstallModal } from "../actions";
 import { Button, Checkbox, Icon, InputSave } from "../../components/Base";
 import { versionComparator } from "../../utils";
 import Release from "./Release";
+import InstallModal from "./Install";
 
 class SoftwareUpdateViewer extends React.Component {
 
@@ -16,7 +17,8 @@ class SoftwareUpdateViewer extends React.Component {
 
     static propTypes = {
         updates: PropTypes.object,
-        onGet: PropTypes.func
+        onGet: PropTypes.func,
+        onShowModal: PropTypes.func
     };
 
     componentDidMount () {
@@ -35,12 +37,15 @@ class SoftwareUpdateViewer extends React.Component {
             return versionComparator(release.name, currentVersion) === 1;
         });
 
+        let installModal;
         let updateComponent;
 
         if (releases.length) {
             const releaseComponents = releases.map(release =>
                 <Release key={release.name} {...release} />
             );
+
+            installModal = <InstallModal releases={releases} />;
 
             updateComponent = (
                 <Panel>
@@ -55,7 +60,7 @@ class SoftwareUpdateViewer extends React.Component {
                     </ListGroup>
 
                     <span className="pull-right">
-                        <Button icon="download" bsStyle="primary">
+                        <Button icon="download" bsStyle="primary" onClick={this.props.onShowModal}>
                             Install
                         </Button>
                     </span>
@@ -94,6 +99,7 @@ class SoftwareUpdateViewer extends React.Component {
                         </Panel>
                     </Col>
                 </Row>
+                {installModal}
             </div>
         );
     }
@@ -109,6 +115,10 @@ const mapDispatchToProps = (dispatch) => {
     return {
         onGet: () => {
             dispatch(getSoftwareUpdates());
+        },
+
+        onShowModal: () => {
+            dispatch(showInstallModal());
         }
     };
 };

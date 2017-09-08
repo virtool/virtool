@@ -1,9 +1,11 @@
 import { wsUpdateJob, wsRemoveJob } from "./jobs/actions";
 import { wsUpdateFile, wsRemoveFile } from "./files/actions";
+import { wsUpdateStatus } from "./updates/actions";
 
 const documentUpdaters = {
     jobs: wsUpdateJob,
-    files: wsUpdateFile
+    files: wsUpdateFile,
+    status: wsUpdateStatus
 };
 
 const wsUpdateDocument = (iface, data) => {

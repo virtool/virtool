@@ -1,6 +1,7 @@
 import pymongo
 
 import virtool.app
+import virtool.utils
 import virtool.updates
 from virtool.handlers.utils import json_response, not_found
 
@@ -13,12 +14,15 @@ async def get(req):
 
     username, token = settings.get("github_username"), settings.get("github_token")
 
-    releases = await virtool.updates.get_releases(repo, server_version, username, token)
+    releases = await virtool.updates.get_releases(req.app["db"], repo, server_version, username, token)
 
-    return json_response({
-        "releases": releases,
-        "current_version": server_version
+    document = await req.app["db"].status.find_one_and_update({"_id": "software_update"}, {
+        "$set": {
+            "releases": releases
+        }
     })
+
+    return json_response(virtool.utils.base_processor(document))
 
 
 async def upgrade(req):
@@ -49,7 +53,9 @@ async def upgrade(req):
             "$set": {
                 "releases": await virtool.updates.get_releases(db, repo, server_version, username, token)
             }
-        }, return_document=pymongo.ReturnDocument, projection={"_id": False})
+        }, return_document=pymongo.ReturnDocument)
+
+        await dispatch("status", "update", virtool.utils.base_processor(document))
 
     releases = document.get("releases", list())
 
@@ -69,9 +75,9 @@ async def upgrade(req):
                 "error": False
             }
         }
-    }, return_document=pymongo.ReturnDocument.AFTER, projection={"_id": False})
+    }, return_document=pymongo.ReturnDocument.AFTER)
 
-    await dispatch("status", "update", document)
+    await dispatch("status", "update", virtool.utils.base_processor(document))
 
     download_url = latest_release["download_url"]
 
