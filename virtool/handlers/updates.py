@@ -13,7 +13,7 @@ async def get(req):
 
     username, token = settings.get("github_username"), settings.get("github_token")
 
-    releases = await virtool.updates.get_releases(repo, server_version, username, token)
+    releases = await virtool.updates.get_releases(req.app["db"], repo, server_version, username, token)
 
     return json_response({
         "releases": releases,

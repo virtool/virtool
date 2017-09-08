@@ -35,8 +35,12 @@ async def get_releases(db, repo, server_version, username=None, token=None):
     if token is not None:
         auth = aiohttp.BasicAuth(login=username, password=token)
 
+    url = "https://api.github.com/repos/{}/releases".format(repo)
+
+    print(url)
+
     async with aiohttp.ClientSession(auth=auth) as session:
-        async with session.get("https://api.github.com/repos/{}/releases".format(repo), headers=headers) as resp:
+        async with session.get(url, headers=headers) as resp:
             data = await resp.json()
 
     # Reformat the release dicts to make them more palatable. If the response code was not 200, the releases list
