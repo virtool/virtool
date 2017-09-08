@@ -3,7 +3,9 @@ import sys
 import shutil
 import pytest
 import tarfile
-import aiohttp
+import tempfile
+from concurrent.futures import ThreadPoolExecutor
+from aiohttp.test_utils import make_mocked_coro
 
 import virtool.errors
 import virtool.updates
@@ -102,8 +104,70 @@ def test_format_software_release(mock_release):
     }
 
 
-def test_install(mocker):
-    pass
+@pytest.mark.parametrize("download_release_error", [None, virtool.errors.GitHubError, FileNotFoundError])
+async def test_install(download_release_error, loop, tmpdir, monkeypatch, mocker, test_motor, test_dispatch):
+    # This the replacement for the TemporaryDirectory that would normally be used by install().
+    temp_dir = None
+
+    def m_get_tempdir():
+        global temp_dir
+        temp_dir = tempfile.TemporaryDirectory(dir=str(tmpdir))
+        return temp_dir
+
+    async def m_download_release(db, dispatch, url, size, target_path):
+        if download_release_error:
+            raise download_release_error
+
+        src_path = os.path.join(sys.path[0], "tests", "test_files", "virtool.tar.gz")
+        shutil.copyfile(src_path, target_path)
+
+    await test_motor.status.insert_one({
+        "_id": "software_update",
+        "process": {
+            "size": 34091211,
+            "step": "block_jobs",
+            "progress": 0,
+            "good_tree": True
+        }
+    })
+
+    monkeypatch.setattr("virtool.updates.download_release", m_download_release)
+
+    monkeypatch.setattr("virtool.updates.get_temp_dir", m_get_tempdir)
+
+    m_update_software_process = make_mocked_coro()
+    monkeypatch.setattr("virtool.updates.update_software_process", m_update_software_process)
+
+    m_reload = make_mocked_coro()
+    monkeypatch.setattr("virtool.utils.reload", m_reload)
+
+    install_path = str(tmpdir.mkdir("virtool_install"))
+
+    monkeypatch.setattr("virtool.updates.INSTALL_PATH", install_path)
+
+    loop.set_default_executor(ThreadPoolExecutor())
+
+    await virtool.updates.install(test_motor, test_dispatch, loop, "foobar", 1234)
+
+    if not download_release_error:
+        assert os.listdir(install_path) == ["run", "client", "VERSION"]
+        assert os.listdir(os.path.join(install_path, "client")) == ["app.a006b17bf13ea9cb7827.js", "favicon.ico", "index.html"]
+
+        assert m_reload.called
+
+    else:
+        assert os.listdir(install_path) == []
+
+        document = await test_motor.status.find_one("software_update", ["process"])
+
+        error = document["process"]["error"]
+
+        if download_release_error == virtool.errors.GitHubError:
+            assert error == "Could not find GitHub repository"
+        else:
+            assert error == "Could not write to release download location"
+
+        assert not m_reload.called
 
 
 @pytest.mark.parametrize("step", ["download_release", "check_tree"])

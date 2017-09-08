@@ -95,7 +95,7 @@ async def install(db, dispatch, loop, download_url, size):
     :return:
 
     """
-    with tempfile.TemporaryDirectory() as tempdir:
+    with get_temp_dir() as tempdir:
         # Start download release step, reporting this to the DB.
         await update_software_process(db, dispatch, 0, "download")
 
@@ -105,23 +105,31 @@ async def install(db, dispatch, loop, download_url, size):
         try:
             await download_release(db, dispatch, download_url, size, compressed_path)
         except virtool.errors.GitHubError:
-            await db.status.find_one_and_update({"_id": "software_update"}, {
+            document = await db.status.find_one_and_update({"_id": "software_update"}, {
                 "$set": {
                     "process.error": "Could not find GitHub repository"
                 }
-            })
+            }, return_document=pymongo.ReturnDocument.AFTER, projection={"_id": False})
+
+            await dispatch("status", "update", document)
+
+            return
         except FileNotFoundError:
-            await db.status.find_one_and_update({"_id": "software_update"}, {
+            document = await db.status.find_one_and_update({"_id": "software_update"}, {
                 "$set": {
                     "process.error": "Could not write to release download location"
                 }
-            })
+            }, return_document=pymongo.ReturnDocument.AFTER, projection={"_id": False})
+
+            await dispatch("status", "update", document)
+
+            return
 
         # Start decompression step, reporting this to the DB.
         await update_software_process(db, 0, "decompress")
 
         # Decompress the gzipped tarball to the root of the temporary directory.
-        await loop.run_in_executor(decompress_file, compressed_path, str(tempdir))
+        await loop.run_in_executor(None, decompress_file, compressed_path, str(tempdir))
 
         # Start check tree step, reporting this to the DB.
         await update_software_process(db, 0, "check_tree")
@@ -129,16 +137,20 @@ async def install(db, dispatch, loop, download_url, size):
         # Check that the file structure matches our expectations.
         decompressed_path = os.path.join(str(tempdir), "virtool")
 
-        await db.update_one({"_id": "software_update"}, {
+        good_tree = await loop.run_in_executor(None, check_tree, decompressed_path)
+
+        document = await db.status.find_one_and_update({"_id": "software_update"}, {
             "$set": {
-                "process.good_tree": await loop.run_in_executor(check_tree, decompressed_path)
+                "process.good_tree": good_tree
             }
-        })
+        }, return_document=pymongo.ReturnDocument.AFTER, projection={"_id": False})
+
+        await dispatch("status", "update", document)
 
         # Copy the update files to the install directory.
         await update_software_process(db, dispatch, 0, "copy_files")
 
-        yield copy_software_files(decompressed_path, INSTALL_PATH)
+        await loop.run_in_executor(None, copy_software_files, decompressed_path, INSTALL_PATH)
 
         document = await db.status.find_one_and_update({"_id": "software_update"}, {
             "$set": {
@@ -151,6 +163,10 @@ async def install(db, dispatch, loop, download_url, size):
         await asyncio.sleep(1.5, loop=loop)
 
         await virtool.utils.reload()
+
+
+def get_temp_dir():
+    return tempfile.TemporaryDirectory()
 
 
 async def update_software_process(db, dispatch, progress, step=None):
