@@ -22,6 +22,7 @@ import accountReducer from "./nav/reducers";
 import settingsReducer from "./settings/reducers";
 import usersReducer from "./settings/users/reducers";
 import groupsReducer from "./settings/groups/reducers";
+import updatesReducer from "./updates/reducers";
 import rootSaga from "./sagas";
 
 const sagaMiddleware = createSagaMiddleware();
@@ -56,7 +57,8 @@ const reducer = combineReducers({
     settings: settingsReducer,
     users: usersReducer,
     groups: groupsReducer,
-    account: accountReducer
+    account: accountReducer,
+    updates: updatesReducer
 });
 
 export const store = createStore(
