@@ -213,10 +213,8 @@ def to_bool(obj):
     return str(obj).lower() in ["1", "true"]
 
 
-def get_static_hash():
-    client_files = os.listdir(os.path.join(sys.path[0], "client", "dist"))
-
-    for file_name in client_files:
+def get_static_hash(client_path):
+    for file_name in os.listdir(client_path):
         if "style." in file_name:
             return file_name.split(".")[1]
 
