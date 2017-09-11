@@ -1,4 +1,5 @@
 import os
+import sys
 import ssl
 import logging
 import subprocess
@@ -231,6 +232,14 @@ def create_app(loop, db_name=None, disable_job_manager=False, disable_file_manag
     app = web.Application(loop=loop, middlewares=middlewares)
 
     app["db_name"] = db_name
+
+    for client_path in [os.path.join(sys.path[0], "client"), os.path.join(sys.path[0], "client", "dist")]:
+        if os.path.exists(os.path.join(client_path, "index.html")):
+            app["client_path"] = client_path
+            break
+
+    if "client_path" not in app:
+        raise FileNotFoundError("Could not find client path")
 
     if not skip_setup:
         virtool.setup.setup_routes(app)

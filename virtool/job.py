@@ -119,9 +119,6 @@ class Job:
     async def run_subprocess(self, command, error_test=None, log_stdout=False, log_stderr=True, env=None):
         await self.add_log("Command: {}".format(" ".join(command)))
 
-        # asyncio.set_event_loop(self.loop)
-        asyncio.get_child_watcher().attach_loop(self.loop)
-
         proc = await asyncio.create_subprocess_exec(
             *command,
             stdout=asyncio.subprocess.PIPE,
