@@ -120,7 +120,7 @@ class Manager:
                                 await self.dispatch(
                                     "files",
                                     "remove",
-                                    {"removed": [document["_id"]]}
+                                    [document["_id"]]
                                 )
 
                     except queue.Empty:
