@@ -1,8 +1,6 @@
 import os
 import shutil
-import random
 import pymongo
-import subprocess
 
 import virtool.job
 import virtool.file
