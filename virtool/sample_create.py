@@ -259,15 +259,17 @@ class CreateSample(virtool.job.Job):
         """ Remove the original read files from the files directory """
         self.call_static("remove_files", self.files)
 
-    @virtool.job.stage_method
-    def cleanup(self):
-        """
-        This method is run in the event of an error or cancellation signal. It deletes the sample directory
-        and wipes the sample information from the samples_db collection. Watch files are not deleted.
+    async def cleanup(self):
+        await virtool.file.release_reservations(self.db, self.task_args["files"])
 
-        """
-        self.call_static("release_files", self.files)
-        self.call_static("remove_sample", self.sample_id)
+        try:
+            await self.loop.run_in_executor(None, shutil.rmtree, self.sample_path)
+        except FileNotFoundError:
+            pass
+
+        # Remove the sample document and dispatch the operation.
+        await self.db.samples.delete_one({"_id": self.sample_id})
+        await self.dispatch("remove", "samples", [self.sample_id])
 
     @staticmethod
     async def set_quality(manager, sample_id, quality):
