@@ -206,8 +206,17 @@ class TestGet:
 
 class TestCreate:
 
-    async def test_already_exists(self, spawn_client, static_time, resp_is):
-        client = await spawn_client(authorize=True, permissions=["add_sample"])
+    async def test(self, spawn_client, static_time, resp_is):
+        client = await spawn_client(authorize=True, permissions=["create_sample"])
+
+        resp = await client.post("/api/samples", {
+            "name": "Foobar",
+            "files": ["test.fq"],
+            "subtraction": "apple"
+        })
+
+    async def test_exists(self, spawn_client, static_time, resp_is):
+        client = await spawn_client(authorize=True, permissions=["create_sample"])
 
         await client.db.samples.insert_one({
             "_id": "foobar",
@@ -243,6 +252,32 @@ class TestCreate:
             })
 
         assert await resp_is.not_found(resp, "Subtraction host 'apple' not found")
+
+    @pytest.mark.parametrize("one_exists", [True, False])
+    async def test_file_dne(self, one_exists, spawn_client, resp_is):
+        """
+        Test that a ``404`` is returned if one or more of the file ids passed in ``files`` does not exist.
+
+        """
+        client = await spawn_client(authorize=True, permissions=["create_sample"])
+
+        await client.db.subtraction.insert_one({
+            "_id": "apple",
+            "is_host": True
+        })
+
+        if one_exists:
+            await client.db.files.insert_one({
+                "_id": "test.fq"
+            })
+
+        resp = await client.post("/api/samples", {
+            "name": "Foobar",
+            "files": ["test.fq", "baz.fq"],
+            "subtraction": "apple"
+        })
+
+        assert await resp_is.not_found(resp, "One or more of the passed file ids do(es) not exist")
 
 
 class TestRemove:

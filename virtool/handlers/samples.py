@@ -72,6 +72,10 @@ async def create(req):
     if data["subtraction"] not in await db.subtraction.find({"is_host": True}).distinct("_id"):
         return not_found("Subtraction host '{}' not found".format(data["subtraction"]))
 
+    # Make sure all of the passed file ids exist.
+    if await db.files.count({"_id": {"$in": data["files"]}}) != len(data["files"]):
+        return not_found("One or more of the passed file ids do(es) not exist")
+
     sample_id = await virtool.utils.get_new_id(db.samples)
 
     user_id = req["session"].user_id
