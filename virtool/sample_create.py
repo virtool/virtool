@@ -168,6 +168,8 @@ class CreateSample(virtool.job.Job):
                 else:
                     raise
 
+            flag = None
+
             for line in handle:
                 # Turn off flag if the end of a module is encountered
                 if flag is not None and "END_MODULE" in line:
