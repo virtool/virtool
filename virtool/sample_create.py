@@ -134,7 +134,7 @@ class CreateSample(virtool.job.Job):
         await self.run_subprocess(command)
 
     @virtool.job.stage_method
-    def parse_fastqc(self):
+    async def parse_fastqc(self):
         """
         Capture the desired data from the FastQC output. The data is added to the samples database
         in the main run() method
@@ -254,12 +254,20 @@ class CreateSample(virtool.job.Job):
 
                     fastqc["sequences"][quality] += int(line[1].split(".")[0])
 
-        self.call_static("set_quality", self.sample_id, fastqc)
+        document = await self.db.samples.find_one_and_update({"_id": self.sample_id}, {
+            "$set": {
+                "quality": fastqc,
+                "imported": False
+            }
+        }, return_document=pymongo.ReturnDocument.AFTER, projection=virtool.sample.LIST_PROJECTION)
+
+        await self.dispatch("samples", "update", virtool.utils.base_processor(document))
 
     @virtool.job.stage_method
-    def clean_watch(self):
+    async def clean_watch(self):
         """ Remove the original read files from the files directory """
-        self.call_static("remove_files", self.files)
+        for file_id in self.files:
+            await virtool.file.remove(self.loop, self.db, self.settings, self.dispatch, file_id)
 
     async def cleanup(self):
         await virtool.file.release_reservations(self.db, self.task_args["files"])
@@ -272,23 +280,3 @@ class CreateSample(virtool.job.Job):
         # Remove the sample document and dispatch the operation.
         await self.db.samples.delete_one({"_id": self.sample_id})
         await self.dispatch("remove", "samples", [self.sample_id])
-
-    @staticmethod
-    async def set_quality(manager, sample_id, quality):
-        document = await manager.db.samples.find_one_and_update(sample_id, {
-            "$set": {
-                "quality": quality,
-                "imported": False
-            }
-        }, return_document=pymongo.ReturnDocument.AFTER, projection=virtool.sample.LIST_PROJECTION)
-
-        await manager.dispatch("samples", "update", virtool.sample.processor(document))
-
-    @staticmethod
-    async def remove_files(manager, files):
-        for file_id in files:
-            await virtool.file.remove(manager.db, manager.setting, manager.dispatch, file_id)
-
-    @staticmethod
-    async def remove_sample(manager, sample_id):
-        await virtool.sample.remove_samples(manager.db, manager.settings, [sample_id])
