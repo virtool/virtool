@@ -118,7 +118,7 @@ async def create(req):
 
     await virtool.file.reserve(db, data["files"])
 
-    await req["job_manager"].new("create_sample", task_args, data["username"])
+    await req.app["job_manager"].new("create_sample", task_args, data["username"])
 
     return json_response(virtool.utils.base_processor(document))
 
