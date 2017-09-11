@@ -57,12 +57,20 @@ async def get(req):
     "name": {"type": "string", "required": True},
     "host": {"type": "string"},
     "isolate": {"type": "string"},
+    "group": {"type": "string"},
     "locale": {"type": "string"},
     "subtraction": {"type": "string", "required": True},
     "files": {"type": "list", "required": True}
 })
 async def create(req):
     db, data = await unpack_request(req)
+
+    if req.app["settings"].get("sample_group") == "force_choice":
+        try:
+            if not await db.groups.count({"_id": data["group"]}):
+                return not_found("Group '{}' not found".format(data["group"]))
+        except KeyError:
+            return bad_request("Server requires a 'group' field for sample creation")
 
     # Check if the submitted sample name is unique if unique sample names are being enforced.
     if await db.samples.count({"lower_name": data["name"].lower()}):
@@ -122,7 +130,12 @@ async def create(req):
 
     await virtool.file.reserve(db, data["files"])
 
-    await req.app["job_manager"].new("create_sample", task_args, data["username"])
+    task_args = {
+        "sample_id": sample_id,
+        "files": document["files"]
+    }
+
+    await req.app["job_manager"].new("create_sample", task_args, document["user"]["id"])
 
     return json_response(virtool.utils.base_processor(document))
 
@@ -138,9 +151,6 @@ async def edit(req):
 
     """
     db, data = await unpack_request(req)
-
-    if not v(data):
-        return invalid_input(v.errors)
 
     document = await db.samples.find_one_and_update({"_id": req.match_info["sample_id"]}, {
         "$set": v.document

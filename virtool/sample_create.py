@@ -61,7 +61,7 @@ class CreateSample(virtool.job.Job):
         self.files = self.task_args["files"]
 
         #: Is the sample library paired or not.
-        self.paired = self.task_args["paired"]
+        self.paired = len(self.files) == 2
 
         #: The ordered list of :ref:`stage methods <stage-methods>` that are called by the job.
         self._stage_list = [
