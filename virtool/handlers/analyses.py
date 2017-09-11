@@ -1,7 +1,7 @@
 import asyncio
 
 from virtool.handlers.utils import not_found, json_response
-from virtool.sample_analysis import format_analysis, initialize_blast, check_rid, retrieve_blast_result
+from virtool.sample_analysis import format_analysis
 
 
 async def get(req):
