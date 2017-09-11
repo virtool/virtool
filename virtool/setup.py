@@ -26,12 +26,7 @@ def setup_routes(app):
     app.router.add_post(r"/setup/watch", setup_watch)
     app.router.add_get(r"/setup/clear", clear)
     app.router.add_get(r"/setup/save", save_and_reload)
-
-    static_path = os.path.join(sys.path[0], "client", "dist")
-
-    if os.path.isdir(static_path):
-        app.router.add_static("/static", static_path)
-
+    app.router.add_static("/static", app["client_path"])
     app.router.add_get(r"/{suffix:.*}", setup_redirect)
 
 
@@ -54,7 +49,7 @@ async def setup_get(req):
     if setup["first_user_password"]:
         setup["first_user_password"] = "dummy password"
 
-    html = template.render(hash=virtool.utils.get_static_hash(), setup=setup)
+    html = template.render(hash=virtool.utils.get_static_hash(req.app["client_path"]), setup=setup)
 
     return web.Response(body=html, content_type="text/html")
 
