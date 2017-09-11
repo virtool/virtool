@@ -35,7 +35,7 @@ async def index_handler(req):
 
         return web.Response(body=html, content_type="text/html")
 
-    with open("client/dist/index.html") as handle:
+    with open(os.path.join(req.app["client_path"], "index.html"), "r") as handle:
         return web.Response(body=handle.read(), content_type="text/html")
 
 
@@ -71,11 +71,7 @@ def setup_basic_routes(app):
     app.router.add_get(r"/settings{suffix:.*}", index_handler)
     app.router.add_get("/ws", websocket.root)
     app.router.add_post("/login", login_handler)
-
-    if os.path.exists("client/dist"):
-        app.router.add_static("/static", "client/dist")
-    else:
-        logger.warning("Could not locate client static files")
+    app.router.add_static("/static", app["client_path"])
 
 
 def setup_file_routes(app):
