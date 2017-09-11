@@ -283,10 +283,6 @@ class CreateSample(virtool.job.Job):
         await manager.dispatch("samples", "update", virtool.sample.processor(document))
 
     @staticmethod
-    async def release_files(manager, files):
-        await virtool.file.release_reservations(manager.db, files)
-
-    @staticmethod
     async def remove_files(manager, files):
         for file_id in files:
             await virtool.file.remove(manager.db, manager.setting, manager.dispatch, file_id)
@@ -294,77 +290,3 @@ class CreateSample(virtool.job.Job):
     @staticmethod
     async def remove_sample(manager, sample_id):
         await virtool.sample.remove_samples(manager.db, manager.settings, [sample_id])
-
-
-def reduce_library_size(input_path, output_path):
-    line_count = subprocess.check_output(["wc", "-l", input_path])
-    decoded = line_count.decode("utf-8")
-
-    seq_count = int(int(decoded.split(" ")[0]) / 4)
-
-    if seq_count > 17000000:
-        randomized_indexes = random.sample(range(0, seq_count), 17000000)
-
-        randomized_indexes.sort()
-
-        next_read_index = randomized_indexes[0] * 4
-        next_index = 1
-        line_count = 0
-        writing = False
-
-        with open(input_path, "r") as input_file:
-            with open(output_path, "w") as output_file:
-
-                for index, line in enumerate(input_file):
-                    if index == next_read_index:
-                        try:
-                            next_read_index = randomized_indexes[next_index] * 4
-                            next_index += 1
-                            writing = True
-                        except IndexError:
-                            break
-
-                    if writing:
-                        if line_count == 0:
-                            assert line.startswith("@")
-
-                        output_file.write(line)
-                        line_count += 1
-
-                        if line_count == 4:
-                            writing = False
-                            line_count = 0
-
-        os.remove(input_path)
-
-    else:
-        os.rename(input_path, output_path)
-
-
-def can_read(document, user_groups):
-    return document["all_read"] or (document["group_read"] and document["group"] in user_groups)
-
-
-def writer(connection, message):
-
-    if message["operation"] not in ["add", "update", "remove"]:
-        raise ValueError("samples.writer only takes messages with operations: add, update, remove")
-
-    # A list of groups the connection's user belongs to.
-    user_groups = connection.user["groups"]
-
-    data = message["data"]
-
-    if message["operation"] in ["add", "update"]:
-        to_send = dict(message)
-        to_send["data"] = [d for d in data if can_read(d, user_groups)]
-
-        send_count = len(to_send["data"])
-
-        if send_count:
-            connection.write_message(to_send)
-
-        if send_count < len(message["data"]):
-            message["data"] = list({d["_id"] for d in data} - set(to_send["data"]))
-            message["operation"] = "remove"
-            connection.write_message(message)
