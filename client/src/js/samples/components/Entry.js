@@ -105,12 +105,12 @@ export default class SampleEntry extends React.Component {
                             <Checkbox
                                 checked={this.props.selected}
                                 onClick={this.toggleSelect}
-                                className="hidden-sx visible-md"
+                                className="hidden-xs hidden-sm"
                             />
                             <Checkbox
                                 checked={this.props.selected}
                                 onClick={this.toggleSelect}
-                                className="hidden-md"
+                                className="hidden-md hidden-lg"
                                 style={{fontSize: "20px"}}
                             />
                         </FlexItem>
@@ -128,7 +128,7 @@ export default class SampleEntry extends React.Component {
                                         >
                                             <Flex alignItems="center">
                                                 {this.props.imported === "ip" ? <Spinner />: <Icon name="filing" />}
-                                                <span style={{paddingLeft: "3px"}} className="hidden-sx visible-md">
+                                                <span style={{paddingLeft: "3px"}} className="hidden-xs hidden-sm">
                                                     Import
                                                 </span>
                                             </Flex>
@@ -139,19 +139,19 @@ export default class SampleEntry extends React.Component {
                                 </Col>
 
                                 <Col xs={5} md={3}>
-                                    <span className="hidden-xs">
+                                    <span className="hidden-xs hidden-sm">
                                         Created <RelativeTime time={this.props.created_at} /> by {this.props.userId}
                                     </span>
-                                    <span className="hidden-md">
+                                    <span className="hidden-md hidden-lg">
                                         <Icon name="meter" /> <RelativeTime time={this.props.created_at} />
                                     </span>
                                 </Col>
 
-                                <Col xs={3} mdHidden>
+                                <Col xs={3} mdHidden lgHidden>
                                     <Icon name="user" /> {this.props.userId}
                                 </Col>
 
-                                <Col xsHidden md={2}>
+                                <Col md={2} xsHidden smHidden>
                                     <Flex grow={0} shrink={0} className="pull-right">
                                         {analyzeIcon}
                                         {archiveIcon}
