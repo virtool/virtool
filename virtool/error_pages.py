@@ -29,6 +29,6 @@ async def middleware_factory(app, handler):
 
 
 def handle_404():
-    path = os.path.join(sys.path[0],"virtool", "templates", "error_404.html")
+    path = os.path.join(sys.path[0], "templates", "error_404.html")
     html = Template(filename=path).render(hash=get_static_hash())
     return web.Response(body=html, content_type="text/html", status=404)

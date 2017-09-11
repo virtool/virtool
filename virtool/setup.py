@@ -47,7 +47,7 @@ async def setup_redirect(req):
 
 
 async def setup_get(req):
-    template = Template(filename=os.path.join(sys.path[0], "virtool", "templates", "setup.html"))
+    template = Template(filename=os.path.join(sys.path[0], "templates", "setup.html"))
 
     setup = copy.deepcopy(req.app["setup"])
 

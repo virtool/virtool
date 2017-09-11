@@ -83,6 +83,7 @@ after_success:
 - python setup.py build
 - cp -rv build/exe.linux-x86_64-3.6/* gh_build/virtool
 - cp -rv assets gh_build/virtool
+- cp -rv templates gh_build/virtool
 - cp -rv client/dist gh_build/virtool/client
 - cp -v LICENSE gh_build/virtool
 - cp -v readme.md gh_build/virtool

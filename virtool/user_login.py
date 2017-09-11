@@ -9,7 +9,7 @@ import virtool.utils
 
 
 def get_login_template():
-    return Template(filename=os.path.join(sys.path[0], "virtool", "templates", "login.html"))
+    return Template(filename=os.path.join(sys.path[0], "templates", "login.html"))
 
 
 def generate_verification_keys():
