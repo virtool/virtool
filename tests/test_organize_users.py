@@ -20,8 +20,7 @@ class TestUnsetSessions:
             "_id": "foobar",
             "permissions": {
                 "modify_host": False,
-                "add_sample": False,
-                "add_virus": False,
+                "create_sample": False,
                 "cancel_job": False,
                 "manage_users": False,
                 "modify_hmm": False,
