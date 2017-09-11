@@ -17,8 +17,8 @@ class TestGet:
             "id": "test",
             "last_password_change": "2015-10-06T20:00:00Z",
             "permissions": {
-                "add_host": False,
-                "add_sample": False,
+                "modify_host": False,
+                "create_sample": False,
                 "add_virus": False,
                 "archive_job": False,
                 "cancel_job": False,

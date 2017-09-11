@@ -372,33 +372,33 @@ class TestSaveAndReload:
         )
 
         assert await connection.foobar.users.find_one() == {
-            '_id': 'fred',
-            'groups': ["administrator"],
-            'invalidate_sessions': False,
-            'password': 'hashed',
-            'last_password_change': static_time,
-            'force_reset': False,
-            'primary_group': '',
-            'settings': {
-                'skip_quick_analyze_dialog': True,
-                'quick_analyze_algorithm': 'pathoscope_bowtie',
-                'show_ids': False,
-                'show_versions': False
+            "_id": "fred",
+            "groups": ["administrator"],
+            "invalidate_sessions": False,
+            "password": "hashed",
+            "last_password_change": static_time,
+            "force_reset": False,
+            "primary_group": "",
+            "settings": {
+                "skip_quick_analyze_dialog": True,
+                "quick_analyze_algorithm": "pathoscope_bowtie",
+                "show_ids": False,
+                "show_versions": False
             },
-            'permissions': {
-                'modify_options': True,
-                'modify_hmm': True,
-                'remove_virus': True,
-                'add_virus': True,
-                'rebuild_index': True,
-                'remove_host': True,
-                'modify_virus': True,
-                'cancel_job': True,
-                'manage_users': True,
-                'archive_job': True,
-                'remove_job': True,
-                'add_sample': True,
-                'add_host': True
+            "permissions": {
+                "modify_options": True,
+                "modify_hmm": True,
+                "remove_virus": True,
+                "add_virus": True,
+                "rebuild_index": True,
+                "remove_host": True,
+                "modify_virus": True,
+                "cancel_job": True,
+                "manage_users": True,
+                "archive_job": True,
+                "remove_job": True,
+                "create_sample": True,
+                "modify_host": True
             }
         }
 

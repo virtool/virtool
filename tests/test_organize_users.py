@@ -19,7 +19,7 @@ class TestUnsetSessions:
         assert await test_motor.users.find().to_list(None) == [{
             "_id": "foobar",
             "permissions": {
-                "add_host": False,
+                "modify_host": False,
                 "add_sample": False,
                 "add_virus": False,
                 "archive_job": False,

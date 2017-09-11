@@ -228,7 +228,7 @@ class TestCreate:
 
     @pytest.mark.parametrize("in_db", [True, False])
     async def test_subtraction_dne(self, in_db, spawn_client, resp_is):
-        client = await spawn_client(authorize=True, permissions=["add_sample"])
+        client = await spawn_client(authorize=True, permissions=["create_sample"])
 
         resp = await client.post("/api/samples", {
             "name": "Foobar",

@@ -52,7 +52,7 @@ async def get(req):
     return json_response(virtool.utils.base_processor(document))
 
 
-@protected("add_sample")
+@protected("create_sample")
 @validation({
     "name": {"type": "string", "required": True},
     "host": {"type": "string"},
