@@ -22,7 +22,6 @@ class TestUnsetSessions:
                 "modify_host": False,
                 "add_sample": False,
                 "add_virus": False,
-                "archive_job": False,
                 "cancel_job": False,
                 "manage_users": False,
                 "modify_hmm": False,

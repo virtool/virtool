@@ -8,7 +8,6 @@ PERMISSIONS = [
     "remove_host",
     "cancel_job",
     "remove_job",
-    "archive_job",
     "rebuild_index",
     "modify_options",
     "manage_users"

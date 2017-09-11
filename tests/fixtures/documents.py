@@ -23,7 +23,6 @@ def user_document():
             "create_sample": False,
             "remove_job": False,
             "cancel_job": False,
-            "archive_job": False,
             "remove_host": False,
             "modify_hmm": False,
             "modify_virus": False,

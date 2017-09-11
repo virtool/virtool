@@ -19,8 +19,6 @@ class TestGet:
             "permissions": {
                 "modify_host": False,
                 "create_sample": False,
-                "add_virus": False,
-                "archive_job": False,
                 "cancel_job": False,
                 "manage_users": False,
                 "modify_hmm": False,
@@ -31,7 +29,7 @@ class TestGet:
                 "remove_job": False,
                 "remove_virus": False
             },
-            "primary_group": "",
+            "primary_group": "technician",
             "settings": {
                 "quick_analyze_algorithm": "pathoscope_bowtie",
                 "show_ids": True,

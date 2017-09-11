@@ -389,13 +389,11 @@ class TestSaveAndReload:
                 "modify_options": True,
                 "modify_hmm": True,
                 "remove_virus": True,
-                "add_virus": True,
                 "rebuild_index": True,
                 "remove_host": True,
                 "modify_virus": True,
                 "cancel_job": True,
                 "manage_users": True,
-                "archive_job": True,
                 "remove_job": True,
                 "create_sample": True,
                 "modify_host": True

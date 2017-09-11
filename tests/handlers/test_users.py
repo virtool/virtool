@@ -28,8 +28,6 @@ class TestFind:
             "permissions": {
                 "modify_host": False,
                 "create_sample": False,
-                "add_virus": False,
-                "archive_job": False,
                 "cancel_job": False,
                 "modify_hmm": False,
                 "manage_users": False,
@@ -40,7 +38,7 @@ class TestFind:
                 "remove_job": False,
                 "remove_virus": False
             },
-            "primary_group": ""
+            "primary_group": "technician"
         }
 
         expected = [dict(base_dict, id=user_id) for user_id in user_ids + ["test"]]
@@ -75,8 +73,6 @@ class TestGet:
             "permissions": {
                 "modify_host": False,
                 "create_sample": False,
-                "add_virus": False,
-                "archive_job": False,
                 "cancel_job": False,
                 "modify_hmm": False,
                 "manage_users": False,
@@ -87,7 +83,7 @@ class TestGet:
                 "remove_job": False,
                 "remove_virus": False
             },
-            "primary_group": ""
+            "primary_group": "technician"
         }
 
     async def test_not_found(self, spawn_client, resp_is):
@@ -134,8 +130,6 @@ class TestCreate:
             "permissions": {
                 "modify_host": False,
                 "create_sample": False,
-                "add_virus": False,
-                "archive_job": False,
                 "cancel_job": False,
                 "modify_hmm": False,
                 "manage_users": False,
@@ -234,8 +228,6 @@ class TestSetPassword:
             "permissions": {
                 "modify_host": False,
                 "create_sample": False,
-                "add_virus": False,
-                "archive_job": False,
                 "cancel_job": False,
                 "manage_users": False,
                 "modify_hmm": False,
@@ -246,7 +238,7 @@ class TestSetPassword:
                 "remove_job": False,
                 "remove_virus": False
             },
-            "primary_group": ""
+            "primary_group": "technician"
         }
 
     async def test_not_found(self, spawn_client, resp_is):
@@ -308,8 +300,6 @@ class TestSetForceReset:
             "permissions": {
                 "modify_host": False,
                 "create_sample": False,
-                "add_virus": False,
-                "archive_job": False,
                 "cancel_job": False,
                 "manage_users": False,
                 "modify_hmm": False,
@@ -320,7 +310,7 @@ class TestSetForceReset:
                 "remove_job": False,
                 "remove_virus": False
             },
-            "primary_group": ""
+            "primary_group": "technician"
         }
 
     async def test_not_found(self, spawn_client, resp_is):
