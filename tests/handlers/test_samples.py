@@ -1,4 +1,5 @@
 import pytest
+from aiohttp.test_utils import make_mocked_coro
 
 
 class TestFind:
@@ -206,8 +207,106 @@ class TestGet:
 
 class TestCreate:
 
-    async def test_already_exists(self, spawn_client, static_time, resp_is):
-        client = await spawn_client(authorize=True, permissions=["add_sample"])
+    @pytest.mark.parametrize("group_setting", ["none", "users_primary_group", "force_choice"])
+    async def test(self, group_setting, monkeypatch, spawn_client, test_motor, static_time, test_random_alphanumeric):
+        client = await spawn_client(authorize=True, permissions=["create_sample"], job_manager=True)
+
+        await client.db.subtraction.insert_one({
+            "_id": "apple",
+            "is_host": True
+        })
+
+        await client.db.files.insert_one({
+            "_id": "test.fq"
+        })
+
+        await client.db.groups.insert_many([
+            {"_id": "diagnostics"},
+            {"_id": "technician"}
+        ])
+
+        client.app["settings"].set("sample_group", group_setting)
+
+        m_reserve = make_mocked_coro()
+        monkeypatch.setattr("virtool.file.reserve", m_reserve)
+
+        m_new = make_mocked_coro()
+        monkeypatch.setattr(client.app["job_manager"], "new", m_new)
+
+        request_data = {
+            "name": "Foobar",
+            "files": ["test.fq"],
+            "subtraction": "apple"
+        }
+
+        if group_setting == "force_choice":
+            request_data["group"] = "diagnostics"
+
+        resp = await client.post("/api/samples", request_data)
+
+        assert resp.status == 200
+
+        expected_group = "none"
+
+        if group_setting == "users_primary_group":
+            expected_group = "technician"
+
+        if group_setting == "force_choice":
+            expected_group = "diagnostics"
+
+        expected = {
+            "name": "Foobar",
+            "files": ["test.fq"],
+            "subtraction": {
+                "id": "apple"
+            },
+            "group": expected_group,
+            "nuvs": False,
+            "pathoscope": False,
+            "created_at": "2017-10-06T20:00:00Z",
+            "format": "fastq",
+            "imported": "ip",
+            "quality": None,
+            "analyzed": False,
+            "hold": True,
+            "archived": False,
+            "group_read": True,
+            "group_write": False,
+            "all_read": True,
+            "all_write": False,
+            "user": {
+                "id": "test"
+            },
+            "id": test_random_alphanumeric.last_choice
+        }
+
+        assert await resp.json() == expected
+
+        expected.update({
+            "_id": expected.pop("id"),
+            "created_at": static_time
+        })
+
+        assert await test_motor.samples.find_one() == expected
+
+        # Check call to file.reserve.
+        assert m_reserve.call_args[0] == (
+            test_motor,
+            ["test.fq"]
+        )
+
+        # Check call to job_manager.new.
+        assert m_new.call_args[0] == (
+            "create_sample",
+            {
+                "files": ["test.fq"],
+                "sample_id": test_random_alphanumeric.last_choice
+            },
+            "test"
+        )
+
+    async def test_name_exists(self, spawn_client, static_time, resp_is):
+        client = await spawn_client(authorize=True, permissions=["create_sample"])
 
         await client.db.samples.insert_one({
             "_id": "foobar",
@@ -226,9 +325,41 @@ class TestCreate:
 
         assert await resp_is.conflict(resp, "Sample name 'Foobar' already exists")
 
+    async def test_force_choice(self, spawn_client, static_time, resp_is):
+        """
+        Test that when ``force_choice`` is enabled, a request with no group field passed results in an error.
+        response.
+
+        """
+        client = await spawn_client(authorize=True, permissions=["create_sample"])
+
+        client.app["settings"].set("sample_group", "force_choice")
+
+        resp = await client.post("/api/samples", {
+            "name": "Foobar",
+            "files": ["test.fq"],
+            "subtraction": "apple"
+        })
+
+        assert await resp_is.bad_request(resp, "Server requires a 'group' field for sample creation")
+
+    async def test_group_dne(self, spawn_client, resp_is):
+        client = await spawn_client(authorize=True, permissions=["create_sample"])
+
+        client.app["settings"].set("sample_group", "force_choice")
+
+        resp = await client.post("/api/samples", {
+            "name": "Foobar",
+            "files": ["test.fq"],
+            "subtraction": "apple",
+            "group": "foobar"
+        })
+
+        assert await resp_is.not_found(resp, "Group 'foobar' not found")
+
     @pytest.mark.parametrize("in_db", [True, False])
     async def test_subtraction_dne(self, in_db, spawn_client, resp_is):
-        client = await spawn_client(authorize=True, permissions=["add_sample"])
+        client = await spawn_client(authorize=True, permissions=["create_sample"])
 
         resp = await client.post("/api/samples", {
             "name": "Foobar",
@@ -243,6 +374,32 @@ class TestCreate:
             })
 
         assert await resp_is.not_found(resp, "Subtraction host 'apple' not found")
+
+    @pytest.mark.parametrize("one_exists", [True, False])
+    async def test_file_dne(self, one_exists, spawn_client, resp_is):
+        """
+        Test that a ``404`` is returned if one or more of the file ids passed in ``files`` does not exist.
+
+        """
+        client = await spawn_client(authorize=True, permissions=["create_sample"])
+
+        await client.db.subtraction.insert_one({
+            "_id": "apple",
+            "is_host": True
+        })
+
+        if one_exists:
+            await client.db.files.insert_one({
+                "_id": "test.fq"
+            })
+
+        resp = await client.post("/api/samples", {
+            "name": "Foobar",
+            "files": ["test.fq", "baz.fq"],
+            "subtraction": "apple"
+        })
+
+        assert await resp_is.not_found(resp, "One or more of the passed file ids do(es) not exist")
 
 
 class TestRemove:

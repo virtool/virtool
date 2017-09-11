@@ -137,27 +137,35 @@ async def remove(req):
 async def clear(req):
     db = req.app["db"]
 
-    query = dict()
+    query = None
 
     if req.path == "/api/jobs/complete":
-        query["status.state"] = "complete"
+        query = {
+            "status.state": "complete"
+        }
 
     if req.path == "/api/jobs/failed":
-        query["$or"] = [
-            {"status.state": "error"},
-            {"status.state": "cancelled"}
-        ]
+        query = {
+            "$or": [
+                {"status.state": "error"},
+                {"status.state": "cancelled"}
+            ]
+        }
 
     if req.path == "/api/jobs/finished":
-        query["$or"] = [
-            {"status.state": "error"},
-            {"status.state": "cancelled"},
-            {"status.state": "complete"}
-        ]
+        query = {
+            "$or": [
+                {"status.state": "error"},
+                {"status.state": "cancelled"},
+                {"status.state": "complete"}
+            ]
+        }
 
-    removed = await db.jobs.find(query).distinct("_id")
+    removed = list()
 
-    await db.jobs.delete_many(query)
+    if query is not None:
+        removed = await db.jobs.find(query).distinct("_id")
+        await db.jobs.delete_many(query)
 
     return json_response({
         "removed": removed

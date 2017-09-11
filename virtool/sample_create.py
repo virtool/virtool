@@ -1,8 +1,6 @@
 import os
 import shutil
-import random
 import pymongo
-import subprocess
 
 import virtool.job
 import virtool.file
@@ -61,7 +59,7 @@ class CreateSample(virtool.job.Job):
         self.files = self.task_args["files"]
 
         #: Is the sample library paired or not.
-        self.paired = self.task_args["paired"]
+        self.paired = len(self.files) == 2
 
         #: The ordered list of :ref:`stage methods <stage-methods>` that are called by the job.
         self._stage_list = [
@@ -119,7 +117,7 @@ class CreateSample(virtool.job.Job):
         Runs FastQC on the renamed, trimmed read files.
 
         """
-        await self.run_subprocess(self.fastqc_path)
+        self.loop.run_in_executor(None, os.mkdir, os.path.join(self.sample_path, "fastqc"))
 
         command = [
             "fastqc",
@@ -136,7 +134,7 @@ class CreateSample(virtool.job.Job):
         await self.run_subprocess(command)
 
     @virtool.job.stage_method
-    def parse_fastqc(self):
+    async def parse_fastqc(self):
         """
         Capture the desired data from the FastQC output. The data is added to the samples database
         in the main run() method
@@ -169,6 +167,8 @@ class CreateSample(virtool.job.Job):
                     continue
                 else:
                     raise
+
+            flag = None
 
             for line in handle:
                 # Turn off flag if the end of a module is encountered
@@ -254,117 +254,29 @@ class CreateSample(virtool.job.Job):
 
                     fastqc["sequences"][quality] += int(line[1].split(".")[0])
 
-        self.call_static("set_quality", self.sample_id, fastqc)
-
-    @virtool.job.stage_method
-    def clean_watch(self):
-        """ Remove the original read files from the files directory """
-        self.call_static("remove_files", self.files)
-
-    @virtool.job.stage_method
-    def cleanup(self):
-        """
-        This method is run in the event of an error or cancellation signal. It deletes the sample directory
-        and wipes the sample information from the samples_db collection. Watch files are not deleted.
-
-        """
-        self.call_static("release_files", self.files)
-        self.call_static("remove_sample", self.sample_id)
-
-    @staticmethod
-    async def set_quality(manager, sample_id, quality):
-        document = await manager.db.samples.find_one_and_update(sample_id, {
+        document = await self.db.samples.find_one_and_update({"_id": self.sample_id}, {
             "$set": {
-                "quality": quality,
+                "quality": fastqc,
                 "imported": False
             }
         }, return_document=pymongo.ReturnDocument.AFTER, projection=virtool.sample.LIST_PROJECTION)
 
-        await manager.dispatch("samples", "update", virtool.sample.processor(document))
+        await self.dispatch("samples", "update", virtool.utils.base_processor(document))
 
-    @staticmethod
-    async def release_files(manager, files):
-        await virtool.file.release_reservations(manager.db, files)
+    @virtool.job.stage_method
+    async def clean_watch(self):
+        """ Remove the original read files from the files directory """
+        for file_id in self.files:
+            await virtool.file.remove(self.loop, self.db, self.settings, self.dispatch, file_id)
 
-    @staticmethod
-    async def remove_files(manager, files):
-        for file_id in files:
-            await virtool.file.remove(manager.db, manager.setting, manager.dispatch, file_id)
+    async def cleanup(self):
+        await virtool.file.release_reservations(self.db, self.task_args["files"])
 
-    @staticmethod
-    async def remove_sample(manager, sample_id):
-        await virtool.sample.remove_samples(manager.db, manager.settings, [sample_id])
+        try:
+            await self.loop.run_in_executor(None, shutil.rmtree, self.sample_path)
+        except FileNotFoundError:
+            pass
 
-
-def reduce_library_size(input_path, output_path):
-    line_count = subprocess.check_output(["wc", "-l", input_path])
-    decoded = line_count.decode("utf-8")
-
-    seq_count = int(int(decoded.split(" ")[0]) / 4)
-
-    if seq_count > 17000000:
-        randomized_indexes = random.sample(range(0, seq_count), 17000000)
-
-        randomized_indexes.sort()
-
-        next_read_index = randomized_indexes[0] * 4
-        next_index = 1
-        line_count = 0
-        writing = False
-
-        with open(input_path, "r") as input_file:
-            with open(output_path, "w") as output_file:
-
-                for index, line in enumerate(input_file):
-                    if index == next_read_index:
-                        try:
-                            next_read_index = randomized_indexes[next_index] * 4
-                            next_index += 1
-                            writing = True
-                        except IndexError:
-                            break
-
-                    if writing:
-                        if line_count == 0:
-                            assert line.startswith("@")
-
-                        output_file.write(line)
-                        line_count += 1
-
-                        if line_count == 4:
-                            writing = False
-                            line_count = 0
-
-        os.remove(input_path)
-
-    else:
-        os.rename(input_path, output_path)
-
-
-def can_read(document, user_groups):
-    return document["all_read"] or (document["group_read"] and document["group"] in user_groups)
-
-
-def writer(connection, message):
-
-    if message["operation"] not in ["add", "update", "remove"]:
-        raise ValueError("samples.writer only takes messages with operations: add, update, remove")
-
-    # A list of groups the connection's user belongs to.
-    user_groups = connection.user["groups"]
-
-    data = message["data"]
-
-    if message["operation"] in ["add", "update"]:
-        to_send = dict(message)
-        to_send["data"] = [d for d in data if can_read(d, user_groups)]
-
-        send_count = len(to_send["data"])
-
-        if send_count:
-            connection.write_message(to_send)
-
-        if send_count < len(message["data"]):
-            message["data"] = list({d["_id"] for d in data} - set(to_send["data"]))
-            message["operation"] = "remove"
-            connection.write_message(message)
+        # Remove the sample document and dispatch the operation.
+        await self.db.samples.delete_one({"_id": self.sample_id})
+        await self.dispatch("remove", "samples", [self.sample_id])

@@ -84,7 +84,7 @@ class VirusesList extends React.Component {
                         <Row>
                             <Col xs={11} md={7}>
                                 <strong>{document.name}</strong>
-                                <small className="hidden-md text-muted" style={{marginLeft: "5px"}}>
+                                <small className="hidden-md hidden-lg text-muted" style={{marginLeft: "5px"}}>
                                     {document.abbreviation}
                                 </small>
                             </Col>

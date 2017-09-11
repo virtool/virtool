@@ -17,10 +17,8 @@ class TestGet:
             "id": "test",
             "last_password_change": "2015-10-06T20:00:00Z",
             "permissions": {
-                "add_host": False,
-                "add_sample": False,
-                "add_virus": False,
-                "archive_job": False,
+                "modify_host": False,
+                "create_sample": False,
                 "cancel_job": False,
                 "manage_users": False,
                 "modify_hmm": False,
@@ -31,7 +29,7 @@ class TestGet:
                 "remove_job": False,
                 "remove_virus": False
             },
-            "primary_group": "",
+            "primary_group": "technician",
             "settings": {
                 "quick_analyze_algorithm": "pathoscope_bowtie",
                 "show_ids": True,
