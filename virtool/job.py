@@ -127,36 +127,7 @@ class Job:
             env=env
         )
 
-        out = list()
-        err = list()
-
-        while True:
-            line = await proc.stdout.readline()
-
-            if not line:
-                break
-
-            line = line.decode().rstrip()
-
-            out.append(line)
-
-            if log_stdout:
-                await self.add_log(line, indent=1)
-
-        while True:
-            line = await proc.stderr.readline()
-
-            if not line:
-                break
-
-            line = line.decode().rstrip()
-
-            err.append(line)
-
-            if log_stderr:
-                await self.add_log(line, indent=1)
-
-        await proc.wait()
+        out, err = await proc.communicate()
 
         if proc.returncode != 0 or (error_test and error_test(out, err)):
             raise SubprocessError("Command failed: {}. Check job log.".format(" ".join(command)))
