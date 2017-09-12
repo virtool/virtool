@@ -1,12 +1,17 @@
+"""
+Functions and job classes for sample analysis.
+
+"""
 import os
 import shutil
+import aiofiles
+import pymongo.errors
 from Bio import SeqIO
 
 import virtool.app_settings
 import virtool.blast
 import virtool.job
-import virtool.pathoscope.reassign
-import virtool.pathoscope.subtract
+import virtool.pathoscope
 import virtool.sam
 import virtool.sample
 import virtool.utils
@@ -196,6 +201,88 @@ async def format_analysis(db, analysis):
         return analysis
 
 
+class MongoSAM:
+
+    def __init__(self, db):
+        self._db = db
+        self._collection_name = None
+        self._client = None
+
+        self.collection = None
+        self.header = list()
+
+    async def open(self):
+        while self._collection_name is None:
+            self._collection_name = virtool.utils.random_alphanumeric(length=12, mixed_case=True)
+
+            try:
+                await self._db.create_collection(self._collection_name)
+            except pymongo.errors.CollectionInvalid:
+                self._collection_name = None
+
+        self.collection = self._db[self._collection_name]
+
+        await self.collection.create_index("ref")
+        await self.collection.create_index("read")
+
+    async def add(self, line):
+        if line[0] in ["#", "@"]:
+            self.header.append(line.rstrip())
+            return
+
+        split = line.rstrip().split("\t")
+
+        ref_id = split[2]
+
+        if ref_id == "*":
+            return
+
+        if int(split[1]) & 0x4 == 4 or split[2] == "*":
+            return
+
+        p_score, skip = await virtool.sam.entry_score(split, 0.01)
+
+        if skip:
+            return
+
+        await self.collection.insert_one({
+            "read": split[0],
+            "ref": ref_id,
+            "pos": int(split[3]),
+            "length": len(split[9]),
+            "p": p_score,
+            "a": virtool.sam.get_score(split)
+        })
+
+    async def high_scores(self):
+        pipeline = [{
+            "$group": {
+                "_id": "$read",
+                "score": {
+                    "$max": "$p"
+                }
+            }
+        }]
+
+        score_dict = dict()
+
+        async for agg in self.collection.aggregate(pipeline):
+            score_dict[agg["_id"]] = agg["score"]
+
+        return score_dict
+
+    async def genomes(self):
+        return await self.collection.distinct("ref")
+
+    async def close(self):
+        await self._db.drop_collection(self.collection)
+
+        self._db = None
+        self._collection_name = None
+        self._client = None
+        self.collection = None
+
+
 class Base(virtool.job.Job):
     """
     A base class for all analysis job objects. Functions include:
@@ -206,7 +293,7 @@ class Base(virtool.job.Job):
     - calculating the sample read count
     - constructing paths used by all subclasses
 
-   """
+    """
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
@@ -232,18 +319,24 @@ class Base(virtool.job.Job):
         #: The number of reads in the sample library. Assigned after database connection is made.
         self.read_count = None
 
-        #: A dictionary of path strings that will be used to access files relevant to the analysis. Paths include:
-        #: - data - test
-        self.paths = dict()
-
         # The path to the general data directory
-        self.paths["data"] = self.settings["data_path"]
+        self.data_path = self.settings["data_path"]
 
         # The parent folder for all data associated with the sample
-        self.paths["sample"] = os.path.join(self.paths["data"], "samples", "sample_{}".format(self.sample_id))
+        self.sample_path = os.path.join(self.data_path, "samples", self.sample_id)
 
         # The path to the directory where all analysis result files will be written.
-        self.paths["analysis"] = os.path.join(self.paths["sample"], "analysis", self.analysis_id)
+        self.analysis_path = os.path.join(self.sample_path, "analysis", self.analysis_id)
+
+        self.index_path = os.path.join(
+            self.data_path,
+            "reference",
+            "viruses",
+            self.task_args["index_id"],
+            "reference"
+        )
+
+        self.host_path = None
 
         self._stage_list = [
             self.check_db,
@@ -262,6 +355,10 @@ class Base(virtool.job.Job):
 
     @virtool.job.stage_method
     async def check_db(self):
+        """
+        Get some initial information from the database that will be required during the course of the job.
+
+        """
         # Get the complete sample document from the database.
         self.sample = await self.db.samples.find_one({"_id": self.sample_id})
 
@@ -269,30 +366,38 @@ class Base(virtool.job.Job):
         self.read_count = int(self.sample["quality"]["count"])
 
         # Calculate the path(s) to the sample read file(s).
-        self.read_paths = [os.path.join(self.paths["sample"], "reads_1.fastq")]
+        self.read_paths = [os.path.join(self.sample_path, "reads_1.fastq")]
 
         if self.sample["paired"]:
-            self.read_paths.append(os.path.join(self.paths["sample"], "/reads_2.fastq"))
+            self.read_paths.append(os.path.join(self.sample_path, "/reads_2.fastq"))
 
-        if os.path.isfile(self.read_paths[0] + ".gz"):
-            self.read_paths = [file_path + ".gz" for file_path in self.read_paths]
+        if os.path.isfile("{}.gz".format(self.read_paths[0])):
+            self.read_paths = ["{}.gz".format(file_path) for file_path in self.read_paths]
 
         # Get the complete host document from the database.
         self.host = await self.db.hosts.find_one({"_id": self.sample["subtraction"]})
 
+        self.host_path = os.path.join(
+            self.data_path,
+            "reference",
+            "hosts",
+            self.sample["subtraction"].lower().replace(" ", "_"),
+            "reference"
+        )
+
     @virtool.job.stage_method
     def mk_analysis_dir(self):
         """
-        Make a directory for the analysis within the sample analysis directory.
+        Make a directory for the analysis in the sample/analysis directory.
 
         """
-        self.run_in_executor(os.mkdir, self.paths["analysis"])
+        self.run_in_executor(os.mkdir, self.analysis_path)
 
     async def cleanup(self):
         """
         Remove the analysis document and the analysis files. Dispatch the removal op.
 
-        Recalcaulate the algorithm tags for the sample document and dispatch the new processed document.
+        Recalculate the algorithm tags for the sample document and dispatch the new processed document.
 
         """
         await self.db.analyses.delete_one({"_id": self.analysis_id})
@@ -300,7 +405,7 @@ class Base(virtool.job.Job):
         await self.dispatch("analyses", "remove", [self.analysis_id])
 
         try:
-            await self.loop.run_in_executor(None, shutil.rmtree, self.paths["analysis"])
+            await self.loop.run_in_executor(None, shutil.rmtree, self.analysis_path)
         except FileNotFoundError:
             pass
 
@@ -312,12 +417,7 @@ class Base(virtool.job.Job):
 class Pathoscope(Base):
 
     """
-    A base class for all Pathoscope-based tasks. Includes common functionality for:
-
-    - identifying candidate viruses from initial mapping to default isolates
-    - writing an multi-isolate FASTA for making an isolate index
-    - running the Pathoscope algorithm
-    - importing Pathoscope and other results to the database
+    A base class for all Pathoscope-based tasks. Subclass of :class:`.sample_analysis.Base`.
 
     """
 
@@ -325,65 +425,26 @@ class Pathoscope(Base):
         super().__init__(*args, **kwargs)
 
     @virtool.job.stage_method
-    def identify_candidate_viruses(self):
+    async def generate_isolate_fasta(self):
         """
-        Takes the initial default virus mapping from :attr:`.intermediate` and identifies all viruses hit by reads from
-        the sample library. Determines if an isolate-level analysis should be performed because one or more of the
-        candidates has more than one isolate.
+        Identifies virus hits from the initial default virus mapping from :attr:`.intermediate`. The initial mapping
+        method is defined in subclass.
 
         """
         # Get the accessions of the viral sequences that were hit.
-        accessions = self.intermediate["to_viruses"].genomes()
+        sequence_ids = await self.intermediate["to_viruses"].genomes()
 
-        # Create a dict mapping isolate ids to the ids of their parent viruses
-        aggregated = self.db.viruses.aggregate([
-            {"$unwind": "$isolates"},
-            {"$project": {
-                "_id": "$isolates.isolate_id",
-                "virus_id": "$_id"
-            }}
-        ])
+        await self.intermediate["to_viruses"].close()
 
-        # Create a dict mapping isolate ids to virus ids. This will allow is to get from the hit accessions to
-        # the ids of candidate viruses.
-        isolate_to_virus = {entry["_id"]: entry["virus_id"] for entry in aggregated}
-
-        # A dict of candidate viruses keyed by their document ids.
-        viruses = dict()
+        fasta_path = os.path.join(self.analysis_path, "isolate_index.fa")
 
         # Get the database documents for the sequences
-        for sequence_entry in self.db.sequences.find({"_id": {"$in": accessions}}):
-            # Get the virus and isolate ids associated with the sequence.
-            isolate_id = sequence_entry["isolate_id"]
-            virus_id = isolate_to_virus[isolate_id]
-
-            # Get the document for the virus associated with the sequence unless it has already been retrieved.
-            if virus_id not in viruses:
-                virus = self.db.viruses.find_one({"_id": virus_id})
-
-                for isolate in virus["isolates"]:
-                    isolate_sequences = self.db.sequences.find({"isolate_id": isolate["isolate_id"]})
-                    isolate["sequences"] = list(isolate_sequences)
-
-                viruses[virus_id] = virus
-
-        # Save the candidate virus documents for later use.
-        self.intermediate["candidates"] = [virus for virus in viruses.values()]
-
-    @virtool.job.stage_method
-    def generate_isolate_fasta(self):
-        """
-        Writes a FASTA file containing the sequences for all isolates of the candidate viruses identified in
-        :meth:`.identify_candidate_viruses`.
-
-        """
-        fasta_path = os.path.join(self.paths["analysis"], "isolate_index.fa")
-
-        with open(fasta_path, "w") as fasta_file:
-            for virus in self.intermediate["candidates"]:
-                for isolate in virus["isolates"]:
-                    for sequence in isolate["sequences"]:
-                        fasta_file.write(">{}\n{}\n".format(sequence["_id"], sequence["sequence"]))
+        async with aiofiles.open(fasta_path, "w") as handle:
+            # Iterate through each virus id referenced by the hit sequence ids.
+            for virus_id in await self.db.sequences.distinct("virus_id", {"_id": {"$in": sequence_ids}}):
+                # Write all of the sequences for each virus to a FASTA file.
+                async for document in self.db.sequences.find({"virus_id": virus_id}, ["sequence"]):
+                    await handle.write(">{}\n{}\n".format(document["_id"], document["sequence"]))
 
     @virtool.job.stage_method
     def pathoscope(self):
@@ -394,7 +455,7 @@ class Pathoscope(Base):
         """
         diagnosis, read_count, self.intermediate["reassigned"] = virtool.pathoscope.reassign.run(
             self.intermediate["to_viruses"],
-            self.paths["analysis"] + "/pathoscope.tsv"
+            os.path.join(self.analysis_path, "pathoscope.tsv")
         )
 
         self.results["read_count"] = read_count
@@ -466,26 +527,19 @@ class Pathoscope(Base):
         self.call_static("cleanup_index_files")
 
     @virtool.job.stage_method
-    def subtract_virus_mapping(self):
+    async def subtract_virus_mapping(self):
         """
         Subtracts virus and host alignments stored in :attr:`.intermediate` as :class:`virtool.pathoscope.sam.Lines`
         objects. Reads that have a higher alignment score to the host than to the virus reference are eliminated from
         the analysis.
 
-        **Directly modifies the *to_viruses* :class:`.pathoscope.sam.Lines` object.**
-
         """
         virtool.pathoscope.subtract.run(
-            self.intermediate["to_viruses"],
+            self.intermediate["to_isolates"],
             self.intermediate["to_host"]
         )
 
-        del self.intermediate["to_host"]
-
-
-    @staticmethod
-    async def cleanup_index_files(manager):
-        await virtool.virus_index.cleanup_index_files(manager.db, manager.settings)
+        await self.intermediate["to_host"].close()
 
 
 class PathoscopeBowtie(Pathoscope):
@@ -498,18 +552,8 @@ class PathoscopeBowtie(Pathoscope):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        # The path the the Bowtie2 reference for all plant viruses
-        self.paths["viruses"] = os.path.join(
-            self.paths["data"],
-            "reference/viruses",
-            self._task_args["index_id"],
-            "reference"
-        )
-
         self._stage_list += [
-            self.configure_paths,
             self.map_viruses,
-            self.identify_candidate_viruses,
             self.generate_isolate_fasta,
             self.build_isolate_index,
             self.map_isolates,
@@ -518,16 +562,6 @@ class PathoscopeBowtie(Pathoscope):
             self.pathoscope,
             self.import_results
         ]
-
-    @virtool.job.stage_method
-    def configure_paths(self):
-        # The path to the index of the subtraction host for the sample.
-        self.paths["host"] = os.path.join(
-            self.paths["data"],
-            "reference/hosts",
-            self.sample["subtraction"].lower().replace(" ", "_"),
-            "reference"
-        )
 
     @virtool.job.stage_method
     async def map_viruses(self):
@@ -542,14 +576,15 @@ class PathoscopeBowtie(Pathoscope):
             "--score-min", "L,20,1.0",
             "-N", "0",
             "-L", "15",
-            "-x", self.paths["viruses"],
-            "--al", self.paths["analysis"] + "/mapped.fastq",
+            "-x", self.index_path,
+            "--al", os.path.join(self.analysis_path, "mapped.fastq"),
             "-U", ",".join(self.read_paths)
         ]
 
-        to_viruses = virtool.sam.Lines()
+        to_viruses = MongoSAM(self.db)
+        await to_viruses.open()
 
-        await self.run_subprocess(command)
+        await self.run_subprocess(command, stdout_handler=to_viruses.add)
 
         self.intermediate["to_viruses"] = to_viruses
 
@@ -562,14 +597,14 @@ class PathoscopeBowtie(Pathoscope):
         """
         command = [
             "bowtie2-build",
-            self.paths["analysis"] + "/isolate_index.fa",
-            self.paths["analysis"] + "/isolates"
+            os.path.join(self.analysis_path, "isolate_index.fa"),
+            os.path.join(self.analysis_path, "isolates")
         ]
 
         await self.run_subprocess(command)
 
     @virtool.job.stage_method
-    def map_isolates(self):
+    async def map_isolates(self):
         """
         Using ``bowtie2``, map the sample reads to the index built using :meth:`.build_isolate_index`.
 
@@ -583,19 +618,20 @@ class PathoscopeBowtie(Pathoscope):
             "-N", "0",
             "-L", "15",
             "-k", "100",
-            "--al", os.path.join(self.paths["analysis"], "mapped.fastq"),
-            "-x", os.path.join(self.paths["analysis"], "isolates"),
+            "--al", os.path.join(self.analysis_path, "mapped.fastq"),
+            "-x", os.path.join(self.analysis_path, "isolates"),
             "-U", ",".join(self.read_paths)
         ]
 
-        self.intermediate["to_viruses"] = virtool.sam.Lines()
+        to_isolates = MongoSAM(self.db)
+        await to_isolates.open()
 
-        handler = self.intermediate["to_viruses"].add
+        await self.run_subprocess(command, stdout_handler=to_isolates.add)
 
-        self.run_subprocess(command)
+        self.intermediate["to_isolates"] = to_isolates
 
     @virtool.job.stage_method
-    def map_host(self):
+    async def map_host(self):
         """
         Using ``bowtie2``, map the reads that were successfully mapped in :meth:`.map_isolates` to the subtraction host
         for the sample.
@@ -606,13 +642,14 @@ class PathoscopeBowtie(Pathoscope):
             "--local",
             "-N", "0",
             "-p", str(self.proc - 1),
-            "-x", self.paths["host"],
-            "-U", os.path.join(self.paths["analysis"], "mapped.fastq")
+            "-x", self.host_path,
+            "-U", os.path.join(self.analysis_path, "mapped.fastq")
         ]
 
-        to_host = virtool.sam.Lines()
+        to_host = MongoSAM(self.db)
+        await to_host.open()
 
-        self.run_subprocess(command)
+        await self.run_subprocess(command, stdout_handler=to_host.add)
 
         self.intermediate["to_host"] = to_host
 
@@ -635,15 +672,7 @@ class NuVs(Base):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        self.paths["viruses"] = os.path.join(
-            self.paths["data"],
-            "reference/viruses",
-            self.task_args["index_id"],
-            "reference"
-        )
-
         self._stage_list += [
-            self.configure_paths,
             self.map_viruses,
             self.map_host,
             self.reunite_pairs,
@@ -655,16 +684,7 @@ class NuVs(Base):
         ]
 
     @virtool.job.stage_method
-    def configure_paths(self):
-        self.paths["host"] = os.path.join(
-            self.paths["data"],
-            "reference/hosts",
-            self.sample["subtraction"].lower().replace(" ", "_"),
-            "reference"
-        )
-
-    @virtool.job.stage_method
-    def map_viruses(self):
+    async def map_viruses(self):
         """
         Maps reads to the main virus reference using ``bowtie2``. Bowtie2 is set to use the search parameter
         ``--very-fast-local`` and retain unaligned reads to the FASTA file ``unmapped_viruses.fq``.
@@ -672,18 +692,18 @@ class NuVs(Base):
         """
         command = [
             "bowtie2",
-            "-p", str(self._proc),
+            "-p", str(self.proc),
             "-k", str(1),
             "--very-fast-local",
-            "-x", self.paths["viruses"],
-            "--un", self.paths["analysis"] + "/unmapped_viruses.fq",
-            "-U", ",".join(self.calculate_read_path())
+            "-x", self.index_path,
+            "--un", os.path.join(self.analysis_path, "/unmapped_viruses.fq"),
+            "-U", ",".join(self.read_paths)
         ]
 
-        self.run_process(command, no_output_failure=True)
+        await self.run_subprocess(command)
 
     @virtool.job.stage_method
-    def map_host(self):
+    async def map_host(self):
         """
         Maps unaligned reads from :meth:`.map_viruses` to the sample's subtraction host using ``bowtie2``. Bowtie2 is
         set to use the search parameter ``--very-fast-local`` and retain unaligned reads to the FASTA file
@@ -694,38 +714,36 @@ class NuVs(Base):
             "bowtie2",
             "--very-fast-local",
             "-k", str(1),
-            "-p", str(self._proc),
-            "-x", self.paths["host"],
-            "--un", self.paths["analysis"] + "/unmapped_hosts.fq",
-            "-U", self.paths["analysis"] + "/unmapped_viruses.fq"
+            "-p", str(self.proc),
+            "-x", self.host_path,
+            "--un", os.path.join(self.analysis_path, "unmapped_hosts.fq"),
+            "-U", os.path.join(self.analysis_path, "unmapped_viruses.fq"),
         ]
 
-        self.run_process(command, no_output_failure=True)
+        await self.run_subprocess(command)
 
     @virtool.job.stage_method
-    def reunite_pairs(self):
+    async def reunite_pairs(self):
         if self.sample["paired"]:
-            with open(self.paths["analysis"] + "/unmapped_hosts.fq", "rU") as handle:
+            with open(os.path.join(self.analysis_path, "unmapped_hosts.fq"), "rU") as handle:
                 unmapped_roots = {record.id.split(" ")[0] for record in SeqIO.parse(handle, "fastq")}
 
-            files = self.calculate_read_path()
-
-            with open(files[0], "r") as handle:
+            with open(self.read_paths[0], "r") as handle:
                 s_dict = {record.id.split(" ")[0]: record for record in SeqIO.parse(handle, "fastq")}
 
-                with open(self.paths["analysis"] + "/unmapped_1.fq", "w") as unmapped:
+                with open(os.path.join(self.analysis_path, "unmapped_1.fq"), "w") as unmapped:
                     for root in unmapped_roots:
                         SeqIO.write(s_dict[root], unmapped, "fastq")
 
-            with open(files[1], "r") as handle:
+            with open(self.read_paths[1], "r") as handle:
                 s_dict = {record.id.split(" ")[0]: record for record in SeqIO.parse(handle, "fastq")}
 
-                with open(self.paths["analysis"] + "/unmapped_2.fq", "w") as unmapped:
+                with open(os.path.join(self.analysis_path, "unmapped_2.fq"), "w") as unmapped:
                     for root in unmapped_roots:
                         SeqIO.write(s_dict[root], unmapped, "fastq")
 
     @virtool.job.stage_method
-    def assemble(self):
+    async def assemble(self):
         """
         Call ``spades.py`` to assemble contigs from ``unmapped_hosts.fq``. Passes ``21,33,55,75`` for the ``-k``
         argument.
@@ -733,26 +751,26 @@ class NuVs(Base):
         """
         command = [
             "spades.py",
-            "-t", str(self._proc - 1),
-            "-m", str(self._mem)
+            "-t", str(self.proc - 1),
+            "-m", str(self.mem)
         ]
 
         if self.sample["paired"]:
             command += [
-                "-1", self.paths["analysis"] + "/unmapped_1.fq",
-                "-2", self.paths["analysis"] + "/unmapped_2.fq",
+                "-1", os.path.join(self.analysis_path, "unmapped_1.fq"),
+                "-2", os.path.join(self.analysis_path, "unmapped_2.fq"),
             ]
         else:
             command += [
-                "-s", os.path.join(self.paths["analysis"], "unmapped_hosts.fq"),
+                "-s", os.path.join(self.analysis_path, "unmapped_hosts.fq"),
             ]
 
         command += [
-            "-o", os.path.join(self.paths["analysis"], "spades"),
+            "-o", os.path.join(self.analysis_path, "spades"),
             "-k", "21,33,55,75"
         ]
 
-        self.run_process(command)
+        await self.run_subprocess(command)
 
     @virtool.job.stage_method
     def process_fasta(self):
@@ -770,7 +788,7 @@ class NuVs(Base):
         # A numeric index to identify the assembled contig. Increments by one for each FASTA entry.
         index = 0
 
-        spades_path = os.path.join(self.paths["analysis"], "spades")
+        spades_path = os.path.join(self.analysis_path, "spades")
 
         fasta_path = os.path.join(spades_path, "scaffolds.fasta")
 
@@ -824,7 +842,7 @@ class NuVs(Base):
                 index += 1
 
         # Write the ORFs to a FASTA file so that they can be analyzed using HMMER and vFAM.
-        with open(os.path.join(self.paths["analysis"], "candidates.fa"), "w") as candidates:
+        with open(os.path.join(self.analysis_path, "candidates.fa"), "w") as candidates:
             for entry in self.results["orfs"]:
                 candidates.write(">sequence_{}.{}\n{}\n".format(
                     str(entry["index"]),
@@ -835,21 +853,21 @@ class NuVs(Base):
     @virtool.job.stage_method
     def press_hmm(self):
 
-        shutil.copy(os.path.join(self.paths["data"], "hmm", "profiles.hmm"), self.paths["analysis"])
+        shutil.copy(os.path.join(self.data_path, "hmm", "profiles.hmm"), self.analysis_path)
 
-        hmm_path = os.path.join(self.paths["analysis"], "profiles.hmm")
+        hmm_path = os.path.join(self.analysis_path, "profiles.hmm")
 
         command = [
             "hmmpress",
             hmm_path
         ]
 
-        self.run_process(command)
+        self.run_subprocess(command)
 
         os.remove(hmm_path)
 
     @virtool.job.stage_method
-    def vfam(self):
+    async def vfam(self):
         """
         Searches for viral motifs in ORF translations generated by :meth:`.process_fasta`. Calls ``hmmscan`` and
         searches against ``candidates.fa`` using the profile HMMs in ``data_path/hmm/vFam.hmm``.
@@ -864,18 +882,18 @@ class NuVs(Base):
         self.results["hmm"] = list()
 
         # The path to output the hmmer results to.
-        tsv_path = os.path.join(self.paths["analysis"], "hmm.tsv")
+        tsv_path = os.path.join(self.analysis_path, "hmm.tsv")
 
         command = [
             "hmmscan",
             "--tblout", tsv_path,
             "--noali",
-            "--cpu", str(self._proc - 1),
-            os.path.join(self.paths["analysis"], "profiles.hmm"),
-            os.path.join(self.paths["analysis"], "candidates.fa")
+            "--cpu", str(self.proc - 1),
+            os.path.join(self.analysis_path, "profiles.hmm"),
+            os.path.join(self.analysis_path, "candidates.fa")
         ]
 
-        self.run_process(command)
+        await self.run_subprocess(command)
 
         # The column titles for the ``hits.tsv`` output file.
         header = [
@@ -891,7 +909,7 @@ class NuVs(Base):
         ]
 
         # The path to write ``hits.tsv`` to.
-        hit_path = os.path.join(self.paths["analysis"], "hits.tsv")
+        hit_path = os.path.join(self.self.analysis_path, "hits.tsv")
 
         # Go through the raw HMMER results and annotate the HMM hits with data from the database.
         with open(tsv_path, "r") as hmm_file:
@@ -921,12 +939,12 @@ class NuVs(Base):
 
                         self.results["hmm"].append(entry)
 
-                        joined = ",".join([('"' + str(entry[key]) + '"') for key in header])
+                        joined = ",".join(["{}".format(entry[key]) for key in header])
 
                         hit_file.write(joined + "\n")
 
     @virtool.job.stage_method
-    def import_results(self):
+    async def import_results(self):
         """
         Import into the analysis document in the database the following data:
 
@@ -950,7 +968,7 @@ class NuVs(Base):
 
         self.call_static("set_analysis", self.sample_id, self.analysis_id, self.results)
 
-        self.call_static("cleanup_index_files")
+        await virtool.virus_index.cleanup_index_files(manager.db, manager.settings)
 
     @staticmethod
     async def set_analysis(manager, sample_id, analysis_id, data):
@@ -972,7 +990,3 @@ class NuVs(Base):
         await db.samples.update_one({"_id": sample_id}, {
             "$set": {"nuvs": True}
         })
-
-    @staticmethod
-    async def cleanup_index_files(manager):
-        await virtool.virus_index.cleanup_index_files(manager.db, manager.settings)
