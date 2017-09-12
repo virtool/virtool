@@ -116,20 +116,36 @@ class Job:
 
         return result
 
-    async def run_subprocess(self, command, error_test=None, log_stdout=False, log_stderr=True, env=None):
+    async def run_subprocess(self, command, error_test=None, stdout_handler=None, stderr_handler=None, env=None):
         await self.add_log("Command: {}".format(" ".join(command)))
+
+        stdout = asyncio.subprocess.PIPE if stdout_handler else asyncio.subprocess.DEVNULL
+        stderr = asyncio.subprocess.PIPE if stderr_handler else asyncio.subprocess.DEVNULL
 
         proc = await asyncio.create_subprocess_exec(
             *command,
-            stdout=asyncio.subprocess.PIPE,
-            stderr=asyncio.subprocess.PIPE,
+            stdout=stdout,
+            stderr=stderr,
             loop=self.loop,
             env=env
         )
 
-        out, err = await proc.communicate()
+        waits = []
 
-        if proc.returncode != 0 or (error_test and error_test(out, err)):
+        if stdout_handler:
+            waits.append(read_stream(proc.stdout, stdout_handler))
+
+        if stderr_handler:
+            waits.append(read_stream(proc.stderr, stderr_handler))
+
+        if len(waits):
+            await asyncio.wait(waits)
+        else:
+            await proc.communicate()
+
+        await proc.wait()
+
+        if proc.returncode != 0: # or (error_test and error_test(out, err)):
             raise SubprocessError("Command failed: {}. Check job log.".format(" ".join(command)))
 
     async def add_status(self, state=None, stage=None):
@@ -184,6 +200,16 @@ class Job:
 def stage_method(func):
     func.is_stage_method = True
     return func
+
+
+async def read_stream(stream, cb):
+    while True:
+        line = await stream.readline()
+
+        if line:
+            cb(line)
+        else:
+            break
 
 
 def flush_log(path, buffer):
