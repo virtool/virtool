@@ -57,7 +57,7 @@ def find_sam_align_score(fields):
     raise ValueError("Could not find alignment score")
 
 
-def build_matrix(alignment_path, p_score_cutoff=0.01):
+def build_matrix(vta_path, p_score_cutoff=0.01):
     u = dict()
     nu = dict()
 
@@ -73,29 +73,14 @@ def build_matrix(alignment_path, p_score_cutoff=0.01):
     max_score = 0
     min_score = 0
 
-    with open(alignment_path, "r") as handle:
+    with open(vta_path, "r") as handle:
         for line in handle:
-            if line[0] == "@" or line == "#":
-                continue
+            read_id, ref_id, pos, length, p_score = line.rstrip().split(",")
 
-            fields = line.split("\t")
+            p_score = float(p_score)
 
-            # Bitwise FLAG - 0x4 : segment unmapped
-            if int(fields[1]) & 0x4 == 4:
-                continue
-
-            ref_id = fields[2]
-
-            if ref_id == "*":
-                continue
-
-            p_score = find_sam_align_score(fields)
-
-            # Skip if the p_score does not meet the minimum cutoff.
             if p_score < p_score_cutoff:
                 continue
-
-            read_id = fields[0]
 
             min_score = min(min_score, p_score)
             max_score = max(max_score, p_score)

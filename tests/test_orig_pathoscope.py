@@ -10,6 +10,43 @@ import virtool.orig_pathoscope
 SAM_PATH = os.path.join(sys.path[0], "tests", "test_files", "test_al.sam")
 
 
+def convert_sam_to_vta(sam_path, vta_path, p_score_cutoff=0.01):
+    with open(sam_path, "r") as sam_handle:
+        with open(vta_path, "w") as vta_handle:
+            for line in sam_handle:
+                if line[0] == "@" or line[0] == "#":
+                    continue
+
+                fields = line.split("\t")
+
+                # Bitwise FLAG - 0x4 : segment unmapped
+                if int(fields[1]) & 0x4 == 4:
+                    continue
+
+                ref_id = fields[2]
+
+                if ref_id == "*":
+                    continue
+
+                p_score = virtool.pathoscope.find_sam_align_score(fields)
+
+                # Skip if the p_score does not meet the minimum cutoff.
+                if p_score < p_score_cutoff:
+                    continue
+
+                print(fields[0])
+
+                vta_handle.write(",".join([
+                    fields[0],  # read_id
+                    ref_id,
+                    fields[3],  # pos
+                    str(len(fields[9])),  # length
+                    str(p_score)
+                ]) + "\n")
+
+    return vta_path
+
+
 def test_find_sam_align_score(sam_line):
     new_score = virtool.pathoscope.find_sam_align_score(sam_line)
     old_score = virtool.orig_pathoscope.findSamAlignScore(sam_line)
@@ -17,9 +54,15 @@ def test_find_sam_align_score(sam_line):
     assert new_score == old_score
 
 
-def test_build_matrix(i, test_sam_path):
+def test_build_matrix(tmpdir, test_sam_path):
+    vta_path = os.path.join(str(tmpdir), "test.vta")
+
+    print(vta_path)
+
+    convert_sam_to_vta(test_sam_path, vta_path)
+
     old_result = virtool.orig_pathoscope.conv_align2GRmat(test_sam_path, 0.01, 1)
-    new_result = virtool.pathoscope.build_matrix(test_sam_path, 0.01)
+    new_result = virtool.pathoscope.build_matrix(vta_path, 0.01)
 
     assert old_result == new_result
 
