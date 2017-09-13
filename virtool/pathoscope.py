@@ -31,40 +31,28 @@ def rescale_samscore(u, nu, max_score, min_score):
     return u, nu
 
 
-def find_sam_align_score(l):
-    use_mapq = True
+def find_sam_align_score(fields):
+    """
+    Find the Bowtie2 alignment score for the given split line (``fields``).
 
-    read_length = float(len(l[9]))
+    Searches the SAM fields for the ``AS:i`` substring and extracts the Bowtie2-specific alignment score. This will not
+    work for other aligners.
 
-    for i in range(11, len(l)):
-        if use_mapq and l[i].startswith("AS:i:"):
-            a_score = int(l[i][5:])
-            use_mapq = False
-        elif l[i].startswith("YS:i:"):
-            use_mapq += int(l[i][5:])
-            # For paired end we simply multiply read length by 2
-            read_length = 2 * read_length
-            break
+    :param fields: a line that has been split on "\t"
+    :type fields: list
 
-    if use_mapq:
-        a_score = None
-    else:
-        a_score += read_length
+    :return: the alignment score
+    :rtype: float
 
-    return a_score
+    """
+    read_length = float(len(fields[9]))
 
+    for field in fields:
+        if field.startswith("AS:i:"):
+            a_score = int(field[5:])
+            return a_score + read_length
 
-def find_entry_score(l, p_score_cutoff):
-    skip = False
-
-    p_score = find_sam_align_score(l)
-
-    if p_score is None:
-        mapq2 = float(l[4]) / -10.0
-        p_score = 1.0 - pow(10, mapq2)
-        skip = p_score < p_score_cutoff
-
-    return p_score, skip
+    raise ValueError("Could not find alignment score")
 
 
 def build_matrix(alignment_path, p_score_cutoff=0.01):
@@ -85,26 +73,27 @@ def build_matrix(alignment_path, p_score_cutoff=0.01):
 
     with open(alignment_path, "r") as handle:
         for line in handle:
-            if line[0] in ["@", "#"]:
+            if line[0] == "@" or line == "#":
                 continue
 
-            l = line.split("\t")
-
-            read_id = l[0]
+            fields = line.split("\t")
 
             # Bitwise FLAG - 0x4 : segment unmapped
-            if int(l[1]) & 0x4 == 4:
+            if int(fields[1]) & 0x4 == 4:
                 continue
 
-            ref_id = l[2]
+            ref_id = fields[2]
 
             if ref_id == "*":
                 continue
 
-            p_score, skip = find_entry_score(l, p_score_cutoff)
+            p_score = find_sam_align_score(fields)
 
-            if skip:
+            # Skip if the p_score does not meet the minimum cutoff.
+            if p_score < p_score_cutoff:
                 continue
+
+            read_id = fields[0]
 
             min_score = min(min_score, p_score)
             max_score = max(max_score, p_score)
@@ -151,7 +140,7 @@ def build_matrix(alignment_path, p_score_cutoff=0.01):
 
     for read_index in nu:
         p_score_sum = sum(nu[read_index][1])
-        # Normalizing p_score
+        # Normalize p_score.
         nu[read_index][2] = [k / p_score_sum for k in nu[read_index][1]]
 
     return u, nu, refs, reads
@@ -166,7 +155,6 @@ def em(u, nu, genomes, max_iter, epsilon, pi_prior, theta_prior):
 
     pi_sum_0 = [0] * genome_count
 
-    # Weights for unique reads.
     u_weights = [u[i][1] for i in u]
 
     max_u_weights = 0
@@ -179,7 +167,6 @@ def em(u, nu, genomes, max_iter, epsilon, pi_prior, theta_prior):
     for i in u:
         pi_sum_0[u[i][0]] += u[i][1]
 
-    # Weights for non-unique reads.
     nu_weights = [nu[i][3] for i in nu]
 
     max_nu_weights = 0
@@ -213,7 +200,7 @@ def em(u, nu, genomes, max_iter, epsilon, pi_prior, theta_prior):
             # Get relevant thetas for the read.
             theta_tmp = [theta[k] for k in ind]
 
-            # Calculate unormalized xs
+            # Calculate non-normalized xs
             x_tmp = [1. * pi_tmp[k] * theta_tmp[k] * z[1][k] for k in range(len(ind))]
 
             x_sum = sum(x_tmp)
@@ -235,9 +222,6 @@ def em(u, nu, genomes, max_iter, epsilon, pi_prior, theta_prior):
         # M step
         pi_sum = [theta_sum[k] + pi_sum_0[k] for k in range(len(theta_sum))]
         pip = pi_prior * prior_weight
-        total_div = u_total + nu_total
-
-        total_div = total_div or 1
 
         # Update pi.
         pi = [(1. * k + pip) / (u_total + nu_total + pip * len(pi_sum)) for k in pi_sum]
@@ -419,26 +403,27 @@ def rewrite_align(u, nu, sam_path, p_score_cutoff, path):
             ref_count = 0
             read_count = 0
 
-            for ln in old_handle:
-                if ln[0] in ["@", "#"]:
-                    new_handle.write(ln)
+            for line in old_handle:
+                if line[0] in ["@", "#"]:
+                    new_handle.write(line)
                     continue
 
-                l = ln.split("\t")
+                fields = line.split("\t")
 
-                read_id = l[0]
-                ref_id = l[2]
+                read_id = fields[0]
+                ref_id = fields[2]
 
                 # Bitwise FLAG - 0x4 : segment unmapped
-                if int(l[1]) & 0x4 == 4:
+                if int(fields[1]) & 0x4 == 4:
                     continue
 
                 if ref_id == "*":
                     continue
 
-                _, skip = find_entry_score(l, p_score_cutoff)
+                p_score = find_sam_align_score(fields)
 
-                if skip:
+                # Skip if the p_score does not meet the minimum cutoff.
+                if p_score < p_score_cutoff:
                     continue
 
                 ref_index = h_ref_id.get(ref_id, -1)
@@ -460,7 +445,7 @@ def rewrite_align(u, nu, sam_path, p_score_cutoff, path):
                     read_count += 1
 
                     if read_index in u:
-                        new_handle.write(ln)
+                        new_handle.write(line)
                         continue
 
                 if read_index in nu:
@@ -474,9 +459,9 @@ def rewrite_align(u, nu, sam_path, p_score_cutoff, path):
 
                     mapq2 = math.log10(1 - updated_score)
 
-                    l[4] = str(int(round(-10.0 * mapq2)))
+                    fields[4] = str(int(round(-10.0 * mapq2)))
 
-                    new_handle.write("\t".join(l))
+                    new_handle.write("\t".join(fields))
 
     return path
 
@@ -500,3 +485,27 @@ def subtract(isolate_sam, host_sam):
     # Return the number of read mapping that were eliminated due to higher similarity to the host than to
     # the initially mapped virus
     return subtracted_count
+
+
+def filter_alignment(host_path, isolates_path, filtered_path):
+
+    scores = find_readsAlignScore(filterAlignFiles)
+
+    with open(host_path, 'r') as in1:
+        with open(filtered_path, 'w') as out1:
+            for ln in in1:
+                if (ln[0] == '@' or ln[0] == '#'):
+                    out1.write(ln)
+                    continue
+                l = ln.split('\t')
+                readId = l[0]
+
+                a_score = find_sam_align_score(l)
+
+                if aScore is not None:
+                    score = h_readId.get(readId, None)
+                    if score is None or score < aScore:
+                        # This read is (not/having low scores) in the filterAlignFiles
+                        out1.write(ln)
+
+    return outAlignFile
