@@ -2,8 +2,6 @@ import os
 import sys
 import copy
 import pytest
-import random
-import shutil
 
 import virtool.pathoscope
 import virtool.orig_pathoscope
@@ -12,48 +10,14 @@ import virtool.orig_pathoscope
 SAM_PATH = os.path.join(sys.path[0], "tests", "test_files", "test_al.sam")
 
 
-@pytest.fixture
-def test_sam_path(tmpdir):
-    path = os.path.join(str(tmpdir.mkdir("test_sam_file")), "test_al.sam")
-    shutil.copy(SAM_PATH, path)
-    return path
-
-
-def get_random_sam_lines(count=50):
-    lines = list()
-
-    with open(SAM_PATH, "r") as handle:
-        for line in handle:
-            if line[0] in ["@", "#"]:
-                continue
-
-            if random.randint(1, 5) == 1:
-                lines.append(line)
-                if len(lines) == count:
-                    return lines
-
-
-@pytest.mark.parametrize("line", get_random_sam_lines())
-def test_find_sam_align_score(line):
-    split = line.split()
-
-    new_score = virtool.pathoscope.find_sam_align_score(split)
-    old_score = virtool.orig_pathoscope.findSamAlignScore(split)
+def test_find_sam_align_score(sam_line):
+    new_score = virtool.pathoscope.find_sam_align_score(sam_line)
+    old_score = virtool.orig_pathoscope.findSamAlignScore(sam_line)
 
     assert new_score == old_score
 
 
-@pytest.mark.parametrize("line", get_random_sam_lines())
-def test_find_entry_score(line):
-    split = line.split()
-
-    new_result = virtool.pathoscope.find_entry_score(split, 0.01)
-    old_result = virtool.orig_pathoscope.find_entry_score(line, split, 1, 0.01)
-
-    assert new_result == old_result
-
-
-def test_create_matrix(test_sam_path):
+def test_build_matrix(i, test_sam_path):
     old_result = virtool.orig_pathoscope.conv_align2GRmat(test_sam_path, 0.01, 1)
     new_result = virtool.pathoscope.build_matrix(test_sam_path, 0.01)
 
