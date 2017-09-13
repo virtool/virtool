@@ -221,11 +221,11 @@ class Base(virtool.job.Job):
         #: The document id for the analysis being run.
         self.analysis_id = self.task_args["analysis_id"]
 
-        #: Stores intermediate data that is reused between job stages.
-        self.intermediate = dict()
-
         #: Stores data that is processed and stored in the analysis document.
         self.results = dict()
+
+        #: Intermediate data dict.
+        self.intermediate = dict()
 
         #: The document for the sample being analyzed. Assigned after database connection is made.
         self.sample = None
@@ -345,16 +345,12 @@ class Pathoscope(Base):
     @virtool.job.stage_method
     async def generate_isolate_fasta(self):
         """
-        Identifies virus hits from the initial default virus mapping from :attr:`.intermediate`. The initial mapping
-        method is defined in subclass.
+        Identifies virus hits from the initial default virus mapping.
 
         """
-        # Get the accessions of the viral sequences that were hit.
-        sequence_ids = await self.intermediate["to_viruses"].genomes()
-
-        await self.intermediate["to_viruses"].close()
-
         fasta_path = os.path.join(self.analysis_path, "isolate_index.fa")
+
+        sequence_ids = self.intermediate["to_host"]
 
         # Get the database documents for the sequences
         async with aiofiles.open(fasta_path, "w") as handle:
@@ -364,6 +360,8 @@ class Pathoscope(Base):
                 async for document in self.db.sequences.find({"virus_id": virus_id}, ["sequence"]):
                     await handle.write(">{}\n{}\n".format(document["_id"], document["sequence"]))
 
+        del self.intermediate["to_host"]
+
     @virtool.job.stage_method
     def pathoscope(self):
         """
@@ -371,7 +369,7 @@ class Pathoscope(Base):
         also parsed and saved to :attr:`intermediate`.
 
         """
-        diagnosis, read_count, self.intermediate["reassigned"] = virtool.pathoscope.reassign.run(
+        diagnosis, read_count, self.intermediate["reassigned"] = virtool.pathoscope.reassign(
             self.intermediate["to_viruses"],
             os.path.join(self.analysis_path, "pathoscope.tsv")
         )
@@ -401,20 +399,7 @@ class Pathoscope(Base):
         self.results["diagnosis"] = cleaned
 
     @virtool.job.stage_method
-    async def import_results(self):
-        """
-        Commits the results to the database. Data includes the output of Pathoscope, final mapped read count,
-        and viral genome coverage maps.
-
-        Once the import is complete, :meth:`cleanup_index_files` is called to remove
-        any virus indexes that may become unused when this analysis completes.
-
-        """
-        genome_ids = list(self.results["diagnosis"].keys())
-        minimal_sequences = self.db.sequences.find({"_id": {"$in": genome_ids}})
-
-        lengths = {entry["_id"]: len(entry["sequence"]) for entry in minimal_sequences}
-
+    def calculate_coverage(self):
         # Only calculate coverage if there are some diagnostic results.
         if self.results["diagnosis"]:
             coverage = virtool.sam.coverage(
@@ -430,6 +415,21 @@ class Pathoscope(Base):
                     except KeyError:
                         pass
 
+    @virtool.job.stage_method
+    async def import_results(self):
+        """
+        Commits the results to the database. Data includes the output of Pathoscope, final mapped read count,
+        and viral genome coverage maps.
+
+        Once the import is complete, :meth:`cleanup_index_files` is called to remove
+        any virus indexes that may become unused when this analysis completes.
+
+        """
+        genome_ids = list(self.results["diagnosis"].keys())
+        # minimal_sequences = self.db.sequences.find({"_id": {"$in": genome_ids}})
+
+        # lengths = {entry["_id"]: len(entry["sequence"]) for entry in minimal_sequences}
+
         document = await self.db.analyses.find_one({"_id": self.analysis_id})
 
         document.update(dict(self.results, ready=True))
@@ -442,7 +442,7 @@ class Pathoscope(Base):
 
         await self.dispatch("samples", "update", document)
 
-        self.call_static("cleanup_index_files")
+        # self.call_static("cleanup_index_files")
 
     @virtool.job.stage_method
     async def subtract_virus_mapping(self):
@@ -452,12 +452,8 @@ class Pathoscope(Base):
         the analysis.
 
         """
-        virtool.pathoscope.subtract.run(
-            self.intermediate["to_isolates"],
-            self.intermediate["to_host"]
-        )
-
-        await self.intermediate["to_host"].close()
+        self.run_in_executor(virtool.pathoscope.subtract, self.analysis_path, self.intermediate["to_host"])
+        del self.intermediate["to_host"]
 
 
 class PathoscopeBowtie(Pathoscope):
@@ -487,22 +483,48 @@ class PathoscopeBowtie(Pathoscope):
         Using ``bowtie2``, maps reads to the main virus reference. This mapping is used to identify candidate viruses.
 
         """
+        print(self.read_paths)
+
         command = [
             "bowtie2",
             "-p", str(self.proc),
+            "--no-unal",
             "--local",
             "--score-min", "L,20,1.0",
             "-N", "0",
             "-L", "15",
             "-x", self.index_path,
-            "--al", os.path.join(self.analysis_path, "mapped.fastq"),
             "-U", ",".join(self.read_paths)
         ]
 
-        to_viruses = MongoSAM(self.db)
-        await to_viruses.open()
+        to_viruses = set()
 
-        await self.run_subprocess(command, stdout_handler=to_viruses.add)
+        def stdout_handler(line, p_score_cutoff=0.01):
+            line = line.decode()
+
+            if line[0] == "@" or line == "#":
+                return
+
+            fields = line.split("\t")
+
+            # Bitwise FLAG - 0x4: segment unmapped
+            if int(fields[1]) & 0x4 == 4:
+                return
+
+            ref_id = fields[2]
+
+            if ref_id == "*":
+                return
+
+            p_score = virtool.pathoscope.find_sam_align_score(fields)
+
+            # Skip if the p_score does not meet the minimum cutoff.
+            if p_score < p_score_cutoff:
+                return
+
+            to_viruses.add(ref_id)
+
+        await self.run_subprocess(command, stdout_handler=stdout_handler)
 
         self.intermediate["to_viruses"] = to_viruses
 
@@ -541,12 +563,42 @@ class PathoscopeBowtie(Pathoscope):
             "-U", ",".join(self.read_paths)
         ]
 
-        to_isolates = MongoSAM(self.db)
-        await to_isolates.open()
+        out_handle = await aiofiles.open(os.path.join(self.analysis_path, "to_isolates.vta"), "w")
 
-        await self.run_subprocess(command, stdout_handler=to_isolates.add)
+        async def stdout_handler(line, p_score_cutoff=0.01):
+            line = line.decode()
 
-        self.intermediate["to_isolates"] = to_isolates
+            if line[0] == "@" or line == "#":
+                return
+
+            fields = line.split("\t")
+
+            # Bitwise FLAG - 0x4 : segment unmapped
+            if int(fields[1]) & 0x4 == 4:
+                return
+
+            ref_id = fields[2]
+
+            if ref_id == "*":
+                return
+
+            p_score = virtool.pathoscope.find_sam_align_score(fields)
+
+            # Skip if the p_score does not meet the minimum cutoff.
+            if p_score < p_score_cutoff:
+                return
+
+            await out_handle.write(",".join([
+                fields[0],  # read_id
+                ref_id,
+                fields[3],  # pos
+                str(len(fields[9])),  # length
+                str(p_score)
+            ]) + "\n")
+
+        await self.run_subprocess(command, stdout_handler=stdout_handler)
+
+        await out_handle.close()
 
     @virtool.job.stage_method
     async def map_host(self):
@@ -564,12 +616,29 @@ class PathoscopeBowtie(Pathoscope):
             "-U", os.path.join(self.analysis_path, "mapped.fastq")
         ]
 
-        to_host = MongoSAM(self.db)
-        await to_host.open()
+        to_hosts = dict()
 
-        await self.run_subprocess(command, stdout_handler=to_host.add)
+        async def stdout_handler(line):
+            line = line.decode()
 
-        self.intermediate["to_host"] = to_host
+            if line[0] == "@" or line == "#":
+                return
+
+            fields = line.split("\t")
+
+            # Bitwise FLAG - 0x4 : segment unmapped
+            if int(fields[1]) & 0x4 == 4:
+                return
+
+            # No ref_id assigned.
+            if fields[2] == "*":
+                return
+
+            to_hosts[fields[0]] = virtool.pathoscope.find_sam_align_score(fields)
+
+        await self.run_subprocess(command, stdout_handler=stdout_handler)
+
+        self.intermediate["to_hosts"] = to_hosts
 
 
 class NuVs(Base):
