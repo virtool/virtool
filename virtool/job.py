@@ -2,6 +2,7 @@ import os
 import sys
 import asyncio
 import pymongo
+import inspect
 import traceback
 
 import virtool.utils
@@ -119,8 +120,35 @@ class Job:
     async def run_subprocess(self, command, error_test=None, stdout_handler=None, stderr_handler=None, env=None):
         await self.add_log("Command: {}".format(" ".join(command)))
 
-        stdout = asyncio.subprocess.PIPE if stdout_handler else asyncio.subprocess.DEVNULL
-        stderr = asyncio.subprocess.PIPE if stderr_handler else asyncio.subprocess.DEVNULL
+        waits = []
+
+        _stdout_handler = None
+        _stderr_handler = None
+
+        if stdout_handler:
+            stdout = asyncio.subprocess.PIPE
+
+            if not inspect.iscoroutinefunction(stdout_handler):
+                def _stdout_handler(*args, **kwargs):
+                    return stdout_handler(*args, **kwargs)
+            else:
+                _stdout_handler = stdout_handler
+        else:
+            stdout = asyncio.subprocess.DEVNULL
+
+        if stderr_handler:
+            stderr = asyncio.subprocess.PIPE
+
+            if not inspect.iscoroutinefunction(stderr_handler):
+                def _stderr_handler(*args, **kwargs):
+                    return stderr_handler(*args, **kwargs)
+            else:
+                _stderr_handler = stderr_handler
+        else:
+            stderr = asyncio.subprocess.DEVNULL
+
+        child_watcher = asyncio.get_child_watcher()
+        child_watcher.attach_loop(self.loop)
 
         proc = await asyncio.create_subprocess_exec(
             *command,
@@ -130,13 +158,11 @@ class Job:
             env=env
         )
 
-        waits = []
+        if _stdout_handler:
+            waits.append(read_stream(proc.stdout, _stdout_handler))
 
-        if stdout_handler:
-            waits.append(read_stream(proc.stdout, stdout_handler))
-
-        if stderr_handler:
-            waits.append(read_stream(proc.stderr, stderr_handler))
+        if _stderr_handler:
+            waits.append(read_stream(proc.stderr, _stderr_handler))
 
         if len(waits):
             await asyncio.wait(waits)
@@ -207,7 +233,7 @@ async def read_stream(stream, cb):
         line = await stream.readline()
 
         if line:
-            cb(line)
+            await cb(line)
         else:
             break
 
