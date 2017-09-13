@@ -1,6 +1,8 @@
+import os
 import csv
 import copy
 import math
+import collections
 
 
 def rescale_samscore(u, nu, max_score, min_score):
@@ -466,46 +468,58 @@ def rewrite_align(u, nu, sam_path, p_score_cutoff, path):
     return path
 
 
-def subtract(isolate_sam, host_sam):
-    # Get a mapping score for every read mapped to the host genome
-    host_scores = host_sam.high_scores()
-
+def subtract(analysis_path, host_scores):
     subtracted_count = 0
 
-    for read_id, isolate_high_score in isolate_sam.high_scores().items():
-        # Write each line from the virus SAM to a new file if its score is better against the virus
-        # than the host. Discard it if it isn't and add the read_id to the list of skipped reads
-        try:
-            if host_scores[read_id] >= isolate_high_score:
-                isolate_sam.remove(read_id)
-                subtracted_count += 1
-        except KeyError:
-            pass
+    vta_path = os.path.join(analysis_path, "to_isolates.vta")
 
-    # Return the number of read mapping that were eliminated due to higher similarity to the host than to
-    # the initially mapped virus
+    isolates_high_scores = collections.defaultdict(int)
+
+    with open(vta_path, "r") as handle:
+        for line in handle:
+            read_id = line[0]
+            isolates_high_scores[read_id] = max(isolates_high_scores[read_id], int(line[4]))
+
+    out_path = os.path.join(analysis_path, "subtracted.vta")
+
+    with open(out_path, "w") as handle:
+        for line in handle:
+            line = line.decode()
+            read_id = line[0]
+            if host_scores.get(read_id, 0) >= isolates_high_scores[read_id]:
+                subtracted_count += 1
+                handle.write(line)
+
+    os.remove(vta_path)
+
     return subtracted_count
 
 
-def filter_alignment(host_path, isolates_path, filtered_path):
+def coverage(sam, ref_lengths):
+    align = dict()
 
-    scores = find_readsAlignScore(filterAlignFiles)
+    for read_id, ref_id, pos, length, p_score, a_score in sam.entries():
+        if ref_id not in ref_lengths:
+            continue
 
-    with open(host_path, 'r') as in1:
-        with open(filtered_path, 'w') as out1:
-            for ln in in1:
-                if (ln[0] == '@' or ln[0] == '#'):
-                    out1.write(ln)
-                    continue
-                l = ln.split('\t')
-                readId = l[0]
+        if ref_id not in align:
+            align[ref_id] = [0] * ref_lengths[ref_id]
 
-                a_score = find_sam_align_score(l)
+        for i in range(pos, pos + length):
+            try:
+                align[ref_id][i] += 1
+            except IndexError:
+                pass
 
-                if aScore is not None:
-                    score = h_readId.get(readId, None)
-                    if score is None or score < aScore:
-                        # This read is (not/having low scores) in the filterAlignFiles
-                        out1.write(ln)
+    depth = dict()
 
-    return outAlignFile
+    for ref_id, ref in align.items():
+        length = len(ref)
+
+        depth[ref_id] = {
+            "coverage": 1 - ref.count(0) / length,
+            "depth": sum(ref) / length,
+            "align": ref
+        }
+
+    return depth
