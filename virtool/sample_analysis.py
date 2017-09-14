@@ -361,12 +361,49 @@ class Pathoscope(Base):
         del self.intermediate["to_host"]
 
     @virtool.job.stage_method
-    def pathoscope(self):
+    async def pathoscope(self):
         """
         Run the Pathoscope reassignment algorithm. Tab-separated output is written to ``pathoscope.tsv``. Results are
         also parsed and saved to :attr:`intermediate`.
 
         """
+        vta_path = os.path.join(self.analysis_path, "to_isolates.vta")
+
+        u, nu, refs, reads = await self.run_in_executor(virtool.pathoscope.build_matrix, vta_path)
+
+        best_hit_initial_reads, best_hit_initial, level_1_initial, level_2_initial = await self.run_in_executor(
+            virtool.pathoscope.compute_best_hit,
+            u,
+            nu,
+            refs,
+            reads
+        )
+
+        init_pi, pi, _, nu = await self.run_in_executor(virtool.pathoscope.em, u, nu, refs, 50, 1e-7, 0, 0)
+
+        best_hit_final_reads, best_hit_final, level_1_final, level_2_final = await self.run_in_executor(
+            virtool.pathoscope.compute_best_hit,
+            u,
+            nu,
+            refs,
+            reads
+        )
+
+        await virtool.pathoscope.write_report(
+            os.path.join(self.analysis_path, "report.tsv"),
+            pi,
+            refs,
+            init_pi,
+            best_hit_initial,
+            best_hit_initial_reads,
+            best_hit_final,
+            best_hit_final_reads,
+            level_1_initial,
+            level_2_initial,
+            level_1_final,
+            level_2_final
+        )
+
         diagnosis, read_count, self.intermediate["reassigned"] = virtool.pathoscope.reassign(
             self.intermediate["to_viruses"],
             os.path.join(self.analysis_path, "pathoscope.tsv")
