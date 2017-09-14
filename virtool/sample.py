@@ -1,4 +1,5 @@
 import os
+import pymongo
 
 import virtool.utils
 import virtool.pathoscope
@@ -88,9 +89,11 @@ async def recalculate_algorithm_tags(db, sample_id):
 
     update = calculate_algorithm_tags(analyses)
 
-    await db.samples.update_one({"_id": sample_id}, {
+    document = await db.samples.find_one_and_update({"_id": sample_id}, {
         "$set": update
-    })
+    }, return_document=pymongo.ReturnDocument.AFTER, projection=LIST_PROJECTION)
+
+    return document
 
 
 async def get_sample_owner(db, sample_id):

@@ -5,7 +5,7 @@ import virtool.job_manager
 
 
 @pytest.fixture
-def test_job_manager(capsys, tmpdir, loop, test_motor, test_dispatch):
+def test_job_manager(tmpdir, loop, test_motor, test_dispatch):
     settings = {
         "proc": 6,
         "mem": 24,
@@ -95,22 +95,29 @@ class TestNew:
                 },
                 {
                     "error": None,
-                    "progress": 0.33,
+                    "progress": 0.25,
                     "stage": "prepare",
                     "state": "running",
                     "timestamp": static_time
                 },
                 {
                     "error": None,
-                    "progress": 0.67,
+                    "progress": 0.50,
                     "stage": "say_message",
                     "state": "running",
                     "timestamp": static_time
                 },
                 {
                     "error": None,
+                    "progress": 0.75,
+                    "stage": "try_read_stdout",
+                    "state": "running",
+                    "timestamp": static_time
+                },
+                {
+                    "error": None,
                     "progress": 1,
-                    "stage": "say_message",
+                    "stage": "try_read_stdout",
                     "state": "complete",
                     "timestamp": static_time
                 }
@@ -169,14 +176,14 @@ class TestNew:
                 },
                 {
                     "error": None,
-                    "progress": 0.33,
+                    "progress": 0.25,
                     "stage": "prepare",
                     "state": "running",
                     "timestamp": static_time
                 },
                 {
                     "error": None,
-                    "progress": 0.67,
+                    "progress": 0.5,
                     "stage": "say_message",
                     "state": "running",
                     "timestamp": static_time
@@ -190,57 +197,6 @@ class TestNew:
 
         assert last_status["error"]["details"] == ["must be str, not int"]
         assert last_status["error"]["type"] == "TypeError"
-
-
-class TestCancel:
-
-    async def test(self, test_job_manager, test_random_alphanumeric, static_time):
-        await test_job_manager.new("dummy", {"message": "Hello world"}, "test")
-
-        await asyncio.sleep(0.5, loop=test_job_manager.loop)
-
-        assert await test_job_manager.db.jobs.find_one() == {
-            "_id": test_random_alphanumeric.last_choice,
-            "args": {
-                "message": "Hello world"
-            },
-            "mem": 4,
-            "proc": 2,
-            "status": [
-                {
-                    "error": None,
-                    "progress": 0,
-                    "stage": None,
-                    "state": "waiting",
-                    "timestamp": static_time
-                },
-                {
-                    "error": None,
-                    "progress": 0.33,
-                    "stage": "prepare",
-                    "state": "running",
-                    "timestamp": static_time
-                },
-                {
-                    "error": None,
-                    "progress": 0.67,
-                    "stage": "say_message",
-                    "state": "running",
-                    "timestamp": static_time
-                },
-                {
-                    "error": None,
-                    "progress": 1,
-                    "stage": "say_message",
-                    "state": "complete",
-                    "timestamp": static_time
-                }
-            ],
-            "task": "dummy",
-            "user": {
-                "id": "test"
-            }
-        }
 
 
 class TestGetResources:

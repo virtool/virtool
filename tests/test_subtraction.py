@@ -119,8 +119,6 @@ async def test_set_stats(test_motor, mock_subtraction, test_create_subtraction, 
 
     assert await test_motor.subtraction.find_one() == mock_subtraction
 
-    print(test_dispatch.stub.call_args[0])
-
     assert test_dispatch.stub.call_args[0]== (
         "subtraction",
         "update",

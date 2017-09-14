@@ -139,6 +139,15 @@ async def clear(req):
 
     query = None
 
+    if req.path == "/api/jobs" or req.path == "/api/jobs/finished":
+        query = {
+            "$or": [
+                {"status.state": "error"},
+                {"status.state": "cancelled"},
+                {"status.state": "complete"}
+            ]
+        }
+
     if req.path == "/api/jobs/complete":
         query = {
             "status.state": "complete"
@@ -149,15 +158,6 @@ async def clear(req):
             "$or": [
                 {"status.state": "error"},
                 {"status.state": "cancelled"}
-            ]
-        }
-
-    if req.path == "/api/jobs/finished":
-        query = {
-            "$or": [
-                {"status.state": "error"},
-                {"status.state": "cancelled"},
-                {"status.state": "complete"}
             ]
         }
 

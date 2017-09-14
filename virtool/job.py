@@ -2,6 +2,7 @@ import os
 import sys
 import asyncio
 import pymongo
+import inspect
 import traceback
 
 import virtool.utils
@@ -116,20 +117,62 @@ class Job:
 
         return result
 
-    async def run_subprocess(self, command, error_test=None, log_stdout=False, log_stderr=True, env=None):
+    async def run_subprocess(self, command, error_test=None, stdout_handler=None, stderr_handler=None, env=None):
         await self.add_log("Command: {}".format(" ".join(command)))
+
+        waits = []
+
+        _stdout_handler = None
+        _stderr_handler = None
+
+        if stdout_handler:
+            stdout = asyncio.subprocess.PIPE
+
+            if not inspect.iscoroutinefunction(stdout_handler):
+                async def _stdout_handler(*args, **kwargs):
+                    return stdout_handler(*args, **kwargs)
+            else:
+                _stdout_handler = stdout_handler
+        else:
+            stdout = asyncio.subprocess.DEVNULL
+
+        if stderr_handler:
+            stderr = asyncio.subprocess.PIPE
+
+            if not inspect.iscoroutinefunction(stderr_handler):
+                async def _stderr_handler(*args, **kwargs):
+                    return stderr_handler(*args, **kwargs)
+            else:
+                _stderr_handler = stderr_handler
+        else:
+            stderr = asyncio.subprocess.DEVNULL
+
+        child_watcher = asyncio.get_child_watcher()
+        child_watcher.attach_loop(self.loop)
 
         proc = await asyncio.create_subprocess_exec(
             *command,
-            stdout=asyncio.subprocess.PIPE,
-            stderr=asyncio.subprocess.PIPE,
+            stdin=asyncio.subprocess.DEVNULL,
+            stdout=stdout,
+            stderr=stderr,
             loop=self.loop,
             env=env
         )
 
-        out, err = await proc.communicate()
+        if _stdout_handler:
+            waits.append(read_stream(proc.stdout, _stdout_handler))
 
-        if proc.returncode != 0 or (error_test and error_test(out, err)):
+        if _stderr_handler:
+            waits.append(read_stream(proc.stderr, _stderr_handler))
+
+        if len(waits):
+            await asyncio.wait(waits)
+        else:
+            await proc.communicate()
+
+        await proc.wait()
+
+        if proc.returncode != 0: # or (error_test and error_test(out, err)):
             raise SubprocessError("Command failed: {}. Check job log.".format(" ".join(command)))
 
     async def add_status(self, state=None, stage=None):
@@ -184,6 +227,16 @@ class Job:
 def stage_method(func):
     func.is_stage_method = True
     return func
+
+
+async def read_stream(stream, cb):
+    while True:
+        line = await stream.readline()
+
+        if line:
+            await cb(line)
+        else:
+            break
 
 
 def flush_log(path, buffer):

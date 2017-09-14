@@ -141,12 +141,6 @@ class TestConfigureSSL:
         cert_path = os.path.join(test_files_path, "test.crt")
         key_path = os.path.join(test_files_path, "test.key")
 
-        with open(cert_path, "r") as handle:
-            print(handle.read())
-
-        with open(key_path, "r") as handle:
-            print(handle.read())
-
         ctx = virtool.app.configure_ssl(cert_path, key_path)
 
         assert isinstance(ctx, ssl.SSLContext)

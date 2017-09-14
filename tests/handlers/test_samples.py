@@ -418,8 +418,6 @@ class TestRemove:
 
         resp = await client.delete("/api/samples/foobar")
 
-        print(m.call_args[0])
-
         assert m.call_args[0] == (client.db, client.app["settings"], ["foobar"])
 
         assert await getattr(resp_is, resp_is_attr)(resp)

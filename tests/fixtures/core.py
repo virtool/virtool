@@ -1,7 +1,14 @@
+import os
+import sys
 import arrow
 import types
 import pytest
+import shutil
+
 import virtool.app_dispatcher
+
+SAM_PATH = os.path.join(sys.path[0], "tests", "test_files", "test_al.sam")
+SAM_50_PATH = os.path.join(sys.path[0], "tests", "test_files", "sam_50.sam")
 
 
 @pytest.fixture
@@ -75,3 +82,20 @@ def test_dispatch(mocker, monkeypatch):
     monkeypatch.setattr("virtool.app_dispatcher.Dispatcher", mock_class)
 
     return m.dispatch
+
+
+@pytest.fixture
+def test_sam_path(tmpdir):
+    path = os.path.join(str(tmpdir.mkdir("test_sam_file")), "test_al.sam")
+    shutil.copy(SAM_PATH, path)
+    return path
+
+
+def get_sam_lines():
+    with open(SAM_50_PATH, "r") as handle:
+        return handle.read().split("\n")[0:-1]
+
+
+@pytest.fixture(params=get_sam_lines())
+def sam_line(request):
+    return request.param.split("\t")
