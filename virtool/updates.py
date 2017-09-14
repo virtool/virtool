@@ -37,8 +37,6 @@ async def get_releases(db, repo, server_version, username=None, token=None):
 
     url = "https://api.github.com/repos/{}/releases".format(repo)
 
-    print(url)
-
     async with aiohttp.ClientSession(auth=auth) as session:
         async with session.get(url, headers=headers) as resp:
             data = await resp.json()
