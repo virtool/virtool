@@ -5,14 +5,12 @@ Functions and job classes for sample analysis.
 import os
 import shutil
 import aiofiles
-import pymongo.errors
 from Bio import SeqIO
 
 import virtool.app_settings
 import virtool.blast
 import virtool.job
 import virtool.pathoscope
-import virtool.sam
 import virtool.sample
 import virtool.utils
 import virtool.virus

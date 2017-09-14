@@ -105,5 +105,3 @@ async def test_map_isolates(capsys, tmpdir, mock_job):
         await mock_job.map_isolates()
         vta_path = os.path.join(mock_job.analysis_path, "to_isolates.vta")
         assert os.path.getsize(vta_path) == 50090
-
-

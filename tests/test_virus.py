@@ -2,7 +2,6 @@ import os
 import pytest
 
 from string import ascii_lowercase, digits
-from pprint import pprint
 from copy import deepcopy
 
 import virtool.virus
@@ -208,8 +207,6 @@ class TestGetDefaultIsolate:
             default_isolate,
             dict(test_isolate, isolate_id="foobar4", default=False)
         ]
-
-        pprint(test_virus["isolates"])
 
         assert virtool.virus.get_default_isolate(test_virus) == default_isolate
 
@@ -432,8 +429,6 @@ class TestFormatIsolateName:
             "source_type": source_type,
             "source_name": source_name
         })
-
-        print(source_type, source_name)
 
         formatted = virtool.virus.format_isolate_name(test_isolate)
 

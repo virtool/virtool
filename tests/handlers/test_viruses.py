@@ -149,8 +149,6 @@ async def test_find(term, verified, modified, per_page, page, d_range, meta, spa
 
     body = await resp.json()
 
-    print(body["documents"])
-
     assert body == dict(meta, documents=[expected_documents[i] for i in d_range])
 
 
