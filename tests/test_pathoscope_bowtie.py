@@ -54,13 +54,12 @@ async def mock_job(tmpdir, loop, test_motor, test_dispatch):
     return job
 
 
-async def test_map_viruses(capsys, tmpdir, mock_job):
+async def test_map_viruses(tmpdir, mock_job):
     mock_job.read_paths = [
         os.path.join(str(tmpdir), "samples", "foobar", "reads_1.fq")
     ]
 
-    with capsys.disabled():
-        await mock_job.map_viruses()
+    await mock_job.map_viruses()
 
     assert mock_job.intermediate["to_viruses"] == {
         "NC_013110",
