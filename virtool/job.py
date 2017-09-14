@@ -129,7 +129,7 @@ class Job:
             stdout = asyncio.subprocess.PIPE
 
             if not inspect.iscoroutinefunction(stdout_handler):
-                def _stdout_handler(*args, **kwargs):
+                async def _stdout_handler(*args, **kwargs):
                     return stdout_handler(*args, **kwargs)
             else:
                 _stdout_handler = stdout_handler
@@ -140,7 +140,7 @@ class Job:
             stderr = asyncio.subprocess.PIPE
 
             if not inspect.iscoroutinefunction(stderr_handler):
-                def _stderr_handler(*args, **kwargs):
+                async def _stderr_handler(*args, **kwargs):
                     return stderr_handler(*args, **kwargs)
             else:
                 _stderr_handler = stderr_handler
@@ -152,6 +152,7 @@ class Job:
 
         proc = await asyncio.create_subprocess_exec(
             *command,
+            stdin=asyncio.subprocess.DEVNULL,
             stdout=stdout,
             stderr=stderr,
             loop=self.loop,
