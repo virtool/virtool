@@ -242,7 +242,10 @@ def find_updated_score(nu, read_index, ref_index):
     except ValueError:
         return 0.0, 0.0
 
-    p_score_sum = sum(nu[read_index][1]) / 100
+    p_score_sum = 0.0
+
+    for p_score in nu[read_index][1]:
+        p_score_sum += p_score
 
     updated_pscore = nu[read_index][2][index]
 
@@ -292,19 +295,8 @@ def compute_best_hit(u, nu, refs, reads):
     return best_hit_reads, best_hit, level_1, level_2
 
 
-def reassign(sam_path, p_score_cutoff=0.01, epsilon=1e-7, pi_prior=0, theta_prior=0, max_iter=30, report_path=None,
-             realigned_path=None):
-
-    u, nu, refs, reads = build_matrix(sam_path, p_score_cutoff)
-
-    ref_count = len(refs)
-    read_count = len(reads)
-
-    best_hit_initial_reads, best_hit_initial, level_1_initial, level_2_initial = compute_best_hit(u, nu, refs, reads)
-
-    init_pi, pi, _, nu = em(u, nu, refs, max_iter, epsilon, pi_prior, theta_prior)
-
-    best_hit_final_reads, best_hit_final, level_1_final, level_2_final = compute_best_hit(u, nu, refs, reads)
+def write_report(path, pi, refs, init_pi, best_hit_initial, best_hit_initial_reads, best_hit_final,
+                 best_hit_final_reads, level_1_initial, level_2_initial, level_1_final, level_2_final):
 
     tmp = zip(
         pi,
@@ -348,109 +340,106 @@ def reassign(sam_path, p_score_cutoff=0.01, epsilon=1e-7, pi_prior=0, theta_prio
         x9[:i]
     )
 
-    if report_path:
-        with open(report_path, "w") as handle:
-            csv_writer = csv.writer(handle, delimiter='\t')
+    with open(path, "w") as handle:
+        csv_writer = csv.writer(handle, delimiter='\t')
 
-            header = [
-                "Genome",
-                "Final Guess",
-                "Final Best Hit",
-                "Final Best Hit Read Numbers",
-                "Final High Confidence Hits",
-                "Final Low Confidence Hits",
-                "Initial Guess",
-                "Initial Best Hit",
-                "Initial Best Hit Read Numbers",
-                "Initial High Confidence Hits",
-                "Initial Low Confidence Hits"
-            ]
+        header = [
+            "Genome",
+            "Final Guess",
+            "Final Best Hit",
+            "Final Best Hit Read Numbers",
+            "Final High Confidence Hits",
+            "Final Low Confidence Hits",
+            "Initial Guess",
+            "Initial Best Hit",
+            "Initial Best Hit Read Numbers",
+            "Initial High Confidence Hits",
+            "Initial Low Confidence Hits"
+        ]
 
-            header1 = ["Total Number of Aligned Reads:", read_count, "Total Number of Mapped Genomes:", ref_count]
+        header1 = ["Total Number of Aligned Reads:", read_count, "Total Number of Mapped Genomes:", ref_count]
 
-            csv_writer.writerow(header1)
-            csv_writer.writerow(header)
-            csv_writer.writerows(tmp)
-
-    if realigned_path:
-        rewrite_align(u, nu, sam_path, p_score_cutoff, realigned_path)
-
-    return report_path, x2, x3, x4, x5, x1, x6, x7, x8, x9, x10, x11, realigned_path
+        csv_writer.writerow(header1)
+        csv_writer.writerow(header)
+        csv_writer.writerows(tmp)
 
 
-def rewrite_align(u, nu, sam_path, p_score_cutoff, path):
-    with open(sam_path, "r") as old_handle:
-        with open(path, "w") as new_handle:
-            h_read_id = {}
-            h_ref_id = {}
-
-            refs = []
-            reads = []
-
+def rewrite_align(u, nu, vta_path, p_score_cutoff, path):
+    with open(path, 'w') as of:
+        with open(vta_path, 'r') as in1:
+            h_readId = {}
+            h_refId = {}
+            genomes = []
+            read = []
             ref_count = 0
             read_count = 0
 
-            for line in old_handle:
-                if line[0] in ["@", "#"]:
-                    new_handle.write(line)
-                    continue
+            for line in in1:
+                read_id, ref_id, pos, length, p_score = line.split(",")
 
-                fields = line.split("\t")
+                pos = int(pos)
+                length = int(length)
+                p_score = float(p_score)
 
-                read_id = fields[0]
-                ref_id = fields[2]
-
-                # Bitwise FLAG - 0x4 : segment unmapped
-                if int(fields[1]) & 0x4 == 4:
-                    continue
-
-                if ref_id == "*":
-                    continue
-
-                p_score = find_sam_align_score(fields)
-
-                # Skip if the p_score does not meet the minimum cutoff.
                 if p_score < p_score_cutoff:
                     continue
 
-                ref_index = h_ref_id.get(ref_id, -1)
+                ref_index = h_refId.get(ref_id, -1)
 
                 if ref_index == -1:
                     ref_index = ref_count
-                    h_ref_id[ref_id] = ref_index
-                    refs.append(ref_id)
+                    h_refId[ref_id] = ref_index
+                    genomes.append(ref_id)
                     ref_count += 1
 
-                read_index = h_read_id.get(read_id, -1)
+                read_index = h_readId.get(read_id, -1)
 
                 if read_index == -1:
                     # hold on this new read
                     # first, wrap previous read profile and see if any previous read has a same profile with that!
                     read_index = read_count
-                    h_read_id[read_id] = read_index
-                    reads.append(read_id)
+                    h_readId[read_id] = read_index
+                    read.append(read_id)
                     read_count += 1
-
                     if read_index in u:
-                        new_handle.write(line)
+                        of.write(line)
                         continue
 
                 if read_index in nu:
-                    updated_score, p_score_sum = find_updated_score(nu, read_index, ref_index)
+                    upPscore, pscoreSum = find_updated_score(nu, read_index, ref_index)
 
-                    if updated_score < p_score_cutoff:
+                    if (upPscore < p_score_cutoff):
                         continue
+                    if (upPscore >= 1.0):
+                        upPscore = 0.999999
 
-                    if updated_score >= 1.0:
-                        updated_score = 0.999999
+                    of.write(line)
 
-                    mapq2 = math.log10(1 - updated_score)
 
-                    fields[4] = str(int(round(-10.0 * mapq2)))
+async def calculate_coverage(vta_path, ref_lengths):
+    coverage_dict = dict()
+    pos_length_list = list()
 
-                    new_handle.write("\t".join(fields))
+    with open(vta_path, "r") as old_handle:
+        for line in old_handle:
+            _, ref_id, pos, length, _ = line.split(",")
 
-    return path
+            coverage_dict[ref_id] = None
+            pos_length_list.append((ref_id, int(pos), int(length)))
+
+    for key in coverage_dict:
+        coverage_dict[key] = [0] * ref_lengths[key]
+
+    for ref_id, pos, length in pos_length_list:
+        start_index = pos - 1
+
+        for i in range(start_index, start_index + length):
+            try:
+                coverage_dict[ref_id][i] += 1
+            except IndexError:
+                pass
+
+    return coverage_dict
 
 
 def subtract(analysis_path, host_scores):
@@ -478,33 +467,3 @@ def subtract(analysis_path, host_scores):
     os.remove(vta_path)
 
     return subtracted_count
-
-
-def coverage(sam, ref_lengths):
-    align = dict()
-
-    for read_id, ref_id, pos, length, p_score, a_score in sam.entries():
-        if ref_id not in ref_lengths:
-            continue
-
-        if ref_id not in align:
-            align[ref_id] = [0] * ref_lengths[ref_id]
-
-        for i in range(pos, pos + length):
-            try:
-                align[ref_id][i] += 1
-            except IndexError:
-                pass
-
-    depth = dict()
-
-    for ref_id, ref in align.items():
-        length = len(ref)
-
-        depth[ref_id] = {
-            "coverage": 1 - ref.count(0) / length,
-            "depth": sum(ref) / length,
-            "align": ref
-        }
-
-    return depth
