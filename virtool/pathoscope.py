@@ -202,7 +202,7 @@ def em(u, nu, genomes, max_iter, epsilon, pi_prior, theta_prior):
             # Update x in nu.
             nu[j][2] = x_norm
 
-            for k in range(len(ind)):
+            for k, _ in enumerate(ind):
                 # Keep weighted running tally for theta
                 theta_sum[ind[k]] += x_norm[k] * nu[j][3]
 
@@ -227,7 +227,7 @@ def em(u, nu, genomes, max_iter, epsilon, pi_prior, theta_prior):
 
         cutoff = 0.0
 
-        for k in range(len(pi)):
+        for k, _ in enumerate(pi):
             cutoff += abs(pi_old[k] - pi[k])
 
         if cutoff <= epsilon or nu_length == 1:
@@ -270,7 +270,7 @@ def compute_best_hit(u, nu, refs, reads):
         best_ref = max(x_norm)
         num_best_ref = 0
 
-        for i in range(len(x_norm)):
+        for i, _ in enumerate(x_norm):
             if x_norm[i] == best_ref:
                 num_best_ref += 1
 
@@ -318,7 +318,7 @@ def write_report(path, pi, refs, init_pi, best_hit_initial, best_hit_initial_rea
 
     no_cutoff = False
 
-    for i in range(len(x10)):
+    for i, _ in enumerate(x10):
         if not no_cutoff and x1[i] < 0.01 and x10[i] <= 0 and x11[i] <= 0:
             break
 

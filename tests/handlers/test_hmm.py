@@ -2,7 +2,7 @@ class TestFind:
 
     async def test_no_params(self, spawn_client, hmm_document):
         """
-        Check that a request with no URL parameters returns a list of HMM annotation documents.        
+        Check that a request with no URL parameters returns a list of HMM annotation documents.
 
         """
         client = await spawn_client()
@@ -67,7 +67,7 @@ class TestUpdate:
     async def test(self, spawn_client, hmm_document):
         """
         Test that a valid request results in a document insertion and a valid response.
-        
+
         """
         client = await spawn_client(authorize=True, permissions=["modify_hmm"])
 

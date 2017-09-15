@@ -87,7 +87,7 @@ class TestFind:
                 }
             ], key=itemgetter("id"))
         }
-        
+
 
 class TestGet:
 
