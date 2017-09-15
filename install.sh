@@ -4,9 +4,6 @@ SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
 echo $SCRIPT_DIR
 
-TMPFILE="/tmp/out.$$"
-GREP="/bin/grep"
-
 if [[ $EUID -ne 0 ]]; then
 	printf 'This install script must be run as root.%s\n%s\n'
 	exit 1

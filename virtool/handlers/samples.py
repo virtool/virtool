@@ -6,8 +6,8 @@ import virtool.file
 import virtool.utils
 import virtool.sample
 import virtool.sample_analysis
-from virtool.handlers.utils import unpack_request, json_response, bad_request, not_found, invalid_input, \
-    invalid_query, compose_regex_query, paginate, protected, validation, no_content, conflict
+from virtool.handlers.utils import unpack_request, json_response, bad_request, not_found, invalid_query,\
+    compose_regex_query, paginate, protected, validation, no_content, conflict
 
 
 async def find(req):
@@ -17,7 +17,6 @@ async def find(req):
     """
     db = req.app["db"]
 
-    # Validator for URL query.
     v = Validator({
         "term": {"type": "string", "default": "", "coerce": str},
         "page": {"type": "integer", "coerce": int, "default": 1, "min": 1},
@@ -140,19 +139,21 @@ async def create(req):
     return json_response(virtool.utils.base_processor(document))
 
 
-@validation({
-    "name": {"type": "string"},
-    "host": {"type": "string"},
-    "isolate": {"type": "string"}
-})
 async def edit(req):
     """
     Update specific fields in the sample document.
 
     """
-    db, data = await unpack_request(req)
+    v = Validator({
+        "name": {"type": "string"},
+        "host": {"type": "string"},
+        "isolate": {"type": "string"}
+    })
 
-    document = await db.samples.find_one_and_update({"_id": req.match_info["sample_id"]}, {
+    if not v(dict(req.query)):
+        return invalid_query(v.errors)
+
+    document = await req.app["db"].samples.find_one_and_update({"_id": req.match_info["sample_id"]}, {
         "$set": v.document
     }, return_document=ReturnDocument.AFTER, projection=virtool.sample.LIST_PROJECTION)
 

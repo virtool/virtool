@@ -90,7 +90,7 @@ def test_em(tmpdir, theta_prior, pi_prior, epsilon, max_iter, expected_em):
     shutil.copy(VTA_PATH, str(tmpdir))
     vta_path = os.path.join(str(tmpdir), "test.vta")
 
-    u, nu, refs, reads = virtool.pathoscope.build_matrix(vta_path, 0.01)
+    u, nu, refs, _ = virtool.pathoscope.build_matrix(vta_path, 0.01)
 
     result = virtool.pathoscope.em(u, nu, refs, max_iter, epsilon, pi_prior, theta_prior)
 

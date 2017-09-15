@@ -150,8 +150,6 @@ class TestRemove:
         """
         client = await spawn_client(authorize=True, permissions=["modify_virus"])
 
-        expected = await create_mock_history(remove)
-
         await client.delete("/api/history/6116cba1.2")
 
         joined = await virtool.virus.join(client.db, "6116cba1")

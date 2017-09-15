@@ -243,7 +243,7 @@ class TestDeviceMemory:
         Test that unhandled ``CalledProcessErrors`` can still be raised.
 
         """
-        with pytest.raises(subprocess.CalledProcessError) as err:
+        with pytest.raises(subprocess.CalledProcessError):
             virtool.nvstat.device_memory(0)
 
 
