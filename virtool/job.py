@@ -117,35 +117,38 @@ class Job:
 
         return result
 
-    async def run_subprocess(self, command, error_test=None, stdout_handler=None, stderr_handler=None, env=None):
+    async def run_subprocess(self, command, stdout_handler=None, stderr_handler=None, env=None):
         await self.add_log("Command: {}".format(" ".join(command)))
 
-        waits = []
-
         _stdout_handler = None
-        _stderr_handler = None
 
         if stdout_handler:
             stdout = asyncio.subprocess.PIPE
 
             if not inspect.iscoroutinefunction(stdout_handler):
-                async def _stdout_handler(*args, **kwargs):
-                    return stdout_handler(*args, **kwargs)
+                async def _stdout_handler(line):
+                    return stdout_handler(line)
             else:
                 _stdout_handler = stdout_handler
         else:
             stdout = asyncio.subprocess.DEVNULL
 
-        if stderr_handler:
-            stderr = asyncio.subprocess.PIPE
+        stderr = asyncio.subprocess.PIPE
 
+        if stderr_handler:
             if not inspect.iscoroutinefunction(stderr_handler):
-                async def _stderr_handler(*args, **kwargs):
-                    return stderr_handler(*args, **kwargs)
+                async def arg_stderr_handler(line):
+                    await self.add_log(line)
+                    return stderr_handler(line)
             else:
-                _stderr_handler = stderr_handler
+                arg_stderr_handler = stderr_handler
+
+            async def _stderr_handler(line):
+                await arg_stderr_handler(line)
+                await self.add_log(line, indent=1)
         else:
-            stderr = asyncio.subprocess.DEVNULL
+            async def _stderr_handler(line):
+                await self.add_log(line, indent=1)
 
         child_watcher = asyncio.get_child_watcher()
         child_watcher.attach_loop(self.loop)
@@ -159,20 +162,16 @@ class Job:
             env=env
         )
 
+        waits = [read_stream(proc.stderr, _stderr_handler)]
+
         if _stdout_handler:
             waits.append(read_stream(proc.stdout, _stdout_handler))
 
-        if _stderr_handler:
-            waits.append(read_stream(proc.stderr, _stderr_handler))
-
-        if len(waits):
-            await asyncio.wait(waits)
-        else:
-            await proc.communicate()
+        await asyncio.wait(waits)
 
         await proc.wait()
 
-        if proc.returncode != 0: # or (error_test and error_test(out, err)):
+        if proc.returncode != 0:
             raise SubprocessError("Command failed: {}. Check job log.".format(" ".join(command)))
 
     async def add_status(self, state=None, stage=None):
