@@ -110,7 +110,7 @@ async def import_annotations(req):
     # A list of documents that have to be inserted when chunk_size is met.
     cache = list()
 
-    for i, annotation in enumerate(annotations_to_import):
+    for annotation in annotations_to_import:
         top_three = Counter([entry["name"] for entry in annotation["entries"]]).most_common(3)
         top_names = [entry[0] for entry in top_three]
 
@@ -124,14 +124,5 @@ async def import_annotations(req):
         })
 
         cache.append(annotation)
-
-        '''
-        if len(cache) == chunk_size or i == count - 1:
-            self.db.insert_many(cache)
-            yield self.dispatch("update", [{key: d[key] for key in self.sync_projector} for d in cache])
-            cache = []
-        '''
-
-    # transaction.update({"checking": True})
 
     return json_response(await virtool.virus_hmm.check(db, settings))

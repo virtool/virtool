@@ -194,7 +194,7 @@ async def on_shutdown(app):
     """
     A function called when the app is shutting down.
     
-    :param app: the Virtool application 
+    :param app: the Virtool application
     :type app: :class:`aiohttp.web.Application`
     
     """

@@ -42,7 +42,7 @@ def test_changes(test_change):
 def test_virus_edit():
     """
     An :class:`tuple` containing old and new virus documents for testing history diffing.
-     
+
     """
     return (
         {

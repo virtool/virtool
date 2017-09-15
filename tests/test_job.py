@@ -1,5 +1,3 @@
-import time
-import pytest
 import datetime
 
 import virtool.job

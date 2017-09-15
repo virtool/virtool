@@ -144,7 +144,7 @@ class TestCheckVirus:
 
     def test_isolate_inconsistency(self, test_merged_virus, test_sequence):
         """
-        Test that isolates in a single virus with disparate sequence counts are detected. 
+        Test that isolates in a single virus with disparate sequence counts are detected.
 
         """
         test_merged_virus["isolates"].append(dict(test_merged_virus["isolates"][0], id="foobar"))
@@ -287,7 +287,7 @@ class TestGetNewIsolateId:
 
     async def test_excluded(self, test_motor, test_random_alphanumeric):
         """
-        Test that a different ``isolate_id`` is generated if the first generated one is in the ``excluded`` list.        
+        Test that a different ``isolate_id`` is generated if the first generated one is in the ``excluded`` list.
 
         """
         excluded = [test_random_alphanumeric.next_choice[:8].lower()]

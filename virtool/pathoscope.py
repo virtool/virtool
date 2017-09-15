@@ -75,7 +75,7 @@ def build_matrix(vta_path, p_score_cutoff=0.01):
 
     with open(vta_path, "r") as handle:
         for line in handle:
-            read_id, ref_id, pos, length, p_score = line.rstrip().split(",")
+            read_id, ref_id, _, length, p_score = line.rstrip().split(",")
 
             p_score = float(p_score)
 
@@ -202,7 +202,7 @@ def em(u, nu, genomes, max_iter, epsilon, pi_prior, theta_prior):
             # Update x in nu.
             nu[j][2] = x_norm
 
-            for k in range(len(ind)):
+            for k, _ in enumerate(ind):
                 # Keep weighted running tally for theta
                 theta_sum[ind[k]] += x_norm[k] * nu[j][3]
 
@@ -227,7 +227,7 @@ def em(u, nu, genomes, max_iter, epsilon, pi_prior, theta_prior):
 
         cutoff = 0.0
 
-        for k in range(len(pi)):
+        for k, _ in enumerate(pi):
             cutoff += abs(pi_old[k] - pi[k])
 
         if cutoff <= epsilon or nu_length == 1:
@@ -249,7 +249,7 @@ def find_updated_score(nu, read_index, ref_index):
 
     updated_pscore = nu[read_index][2][index]
 
-    return updated_pscore, p_score_sum
+    return updated_pscore
 
 
 def compute_best_hit(u, nu, refs, reads):
@@ -270,7 +270,7 @@ def compute_best_hit(u, nu, refs, reads):
         best_ref = max(x_norm)
         num_best_ref = 0
 
-        for i in range(len(x_norm)):
+        for i, _ in enumerate(x_norm):
             if x_norm[i] == best_ref:
                 num_best_ref += 1
 
@@ -318,7 +318,7 @@ def write_report(path, pi, refs, init_pi, best_hit_initial, best_hit_initial_rea
 
     no_cutoff = False
 
-    for i in range(len(x10)):
+    for i, _ in enumerate(x10):
         if not no_cutoff and x1[i] < 0.01 and x10[i] <= 0 and x11[i] <= 0:
             break
 
@@ -367,38 +367,36 @@ def write_report(path, pi, refs, init_pi, best_hit_initial, best_hit_initial_rea
 def rewrite_align(u, nu, vta_path, p_score_cutoff, path):
     with open(path, 'w') as of:
         with open(vta_path, 'r') as in1:
-            h_readId = {}
-            h_refId = {}
+            read_id_dict = {}
+            ref_id_dict = {}
             genomes = []
             read = []
             ref_count = 0
             read_count = 0
 
             for line in in1:
-                read_id, ref_id, pos, length, p_score = line.split(",")
+                read_id, ref_id, _, _, p_score = line.split(",")
 
-                pos = int(pos)
-                length = int(length)
                 p_score = float(p_score)
 
                 if p_score < p_score_cutoff:
                     continue
 
-                ref_index = h_refId.get(ref_id, -1)
+                ref_index = ref_id_dict.get(ref_id, -1)
 
                 if ref_index == -1:
                     ref_index = ref_count
-                    h_refId[ref_id] = ref_index
+                    ref_id_dict[ref_id] = ref_index
                     genomes.append(ref_id)
                     ref_count += 1
 
-                read_index = h_readId.get(read_id, -1)
+                read_index = read_id_dict.get(read_id, -1)
 
                 if read_index == -1:
                     # hold on this new read
                     # first, wrap previous read profile and see if any previous read has a same profile with that!
                     read_index = read_count
-                    h_readId[read_id] = read_index
+                    read_id_dict[read_id] = read_index
                     read.append(read_id)
                     read_count += 1
                     if read_index in u:
@@ -406,12 +404,8 @@ def rewrite_align(u, nu, vta_path, p_score_cutoff, path):
                         continue
 
                 if read_index in nu:
-                    upPscore, pscoreSum = find_updated_score(nu, read_index, ref_index)
-
-                    if (upPscore < p_score_cutoff):
+                    if find_updated_score(nu, read_index, ref_index) < p_score_cutoff:
                         continue
-                    if (upPscore >= 1.0):
-                        upPscore = 0.999999
 
                     of.write(line)
 

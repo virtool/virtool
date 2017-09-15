@@ -265,7 +265,7 @@ class TestReserveResources:
             8
         )
 
-        mock_job_2 = mock_job = virtool.job.Job(
+        mock_job_2 = virtool.job.Job(
             test_job_manager.loop,
             test_job_manager.executor,
             test_job_manager.db,
@@ -332,25 +332,6 @@ class TestReleaseResources:
 
         test_job_manager.release_resources(mock_job)
 
-        assert test_job_manager.get_resources() == {
-            "limit": {
-                "proc": 6,
-                "mem": 24
-            },
-            "used": {
-                "proc": 0,
-                "mem": 0
-            },
-            "available": {
-                "proc": 6,
-                "mem": 24
-            }
-        }
-
-
-class TestGetResources:
-
-    async def test(self, test_job_manager):
         assert test_job_manager.get_resources() == {
             "limit": {
                 "proc": 6,

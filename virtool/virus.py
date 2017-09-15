@@ -2,8 +2,6 @@
 Functions for working with virus documents.
 
 """
-
-import re
 import logging
 from copy import deepcopy
 
