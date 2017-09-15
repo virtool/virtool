@@ -177,8 +177,6 @@ async def find_history(req):
 
     index_id_or_version = req.match_info["index_id_or_version"]
 
-    print(index_id_or_version)
-
     try:
         document = await db.indexes.find_one({"version": int(index_id_or_version)}, ["_id"])
     except ValueError:

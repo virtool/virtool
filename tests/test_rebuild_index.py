@@ -93,11 +93,9 @@ async def test_write_fasta(mocker, test_rebuild_job):
             ">bar\nGGCTTTCTCTATCAGGGAGGACTAGGCTAC\n>foo\nATAGAGATATAGAGACACACTTACTTATCA\n"
         ]
 
-'''
-
 
 @pytest.mark.parametrize("error", [False, True])
-async def test_bowtie_build(error, capsys, tmpdir, test_rebuild_job):
+async def test_bowtie_build(error, tmpdir, test_rebuild_job):
     root_path = os.path.join(str(tmpdir), "reference", "viruses")
     os.mkdir(os.path.join(root_path, "foobar"))
 
@@ -108,15 +106,14 @@ async def test_bowtie_build(error, capsys, tmpdir, test_rebuild_job):
             handle.write(">test_1\nTACGTATGACTGAGCTACGGGGCTACGACTTACCCTTCACGATCAC")
             handle.write(">test_2\nGGCTTCGGCTGATCACGACTGGACTAGCATCTGACTACGATGCTGA")
 
-    with capsys.disabled():
-        if error:
-            with pytest.raises(virtool.job.SubprocessError) as err:
-                await test_rebuild_job.bowtie_build()
-
-            assert "virtool.job.SubprocessError" in str(err)
-            assert "Command failed: bowtie2-build -f" in str(err)
-        else:
+    if error:
+        with pytest.raises(virtool.job.SubprocessError) as err:
             await test_rebuild_job.bowtie_build()
+
+        assert "virtool.job.SubprocessError" in str(err)
+        assert "Command failed: bowtie2-build -f" in str(err)
+    else:
+        await test_rebuild_job.bowtie_build()
 
     await test_rebuild_job.flush_log()
 
@@ -130,8 +127,6 @@ async def test_bowtie_build(error, capsys, tmpdir, test_rebuild_job):
             assert "Error: Encountered internal Bowtie 2 exception (#1)" in content
         else:
             assert "Building a SMALL index" in content
-            
-'''
 
 
 @pytest.mark.parametrize("in_use", [True, False])

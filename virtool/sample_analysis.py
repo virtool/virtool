@@ -518,8 +518,6 @@ class PathoscopeBowtie(Pathoscope):
         Using ``bowtie2``, maps reads to the main virus reference. This mapping is used to identify candidate viruses.
 
         """
-        print(self.read_paths)
-
         command = [
             "bowtie2",
             "-p", str(self.proc),
