@@ -295,7 +295,7 @@ def compute_best_hit(u, nu, refs, reads):
     return best_hit_reads, best_hit, level_1, level_2
 
 
-def write_report(path, pi, refs, init_pi, best_hit_initial, best_hit_initial_reads, best_hit_final,
+def write_report(path, pi, refs, read_count, init_pi, best_hit_initial, best_hit_initial_reads, best_hit_final,
                  best_hit_final_reads, level_1_initial, level_2_initial, level_1_final, level_2_final):
 
     tmp = zip(
@@ -357,7 +357,7 @@ def write_report(path, pi, refs, init_pi, best_hit_initial, best_hit_initial_rea
             "Initial Low Confidence Hits"
         ]
 
-        header1 = ["Total Number of Aligned Reads:", read_count, "Total Number of Mapped Genomes:", ref_count]
+        header1 = ["Total Number of Aligned Reads:", read_count, "Total Number of Mapped Genomes:", len(refs)]
 
         csv_writer.writerow(header1)
         csv_writer.writerow(header)

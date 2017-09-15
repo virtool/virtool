@@ -35,48 +35,13 @@ def expected_scores():
     return scores
 
 
-def convert_sam_to_vta(sam_path, vta_path, p_score_cutoff=0.01):
-    with open(sam_path, "r") as sam_handle:
-        with open(vta_path, "w") as vta_handle:
-            for line in sam_handle:
-                if line[0] == "@" or line[0] == "#":
-                    continue
-
-                fields = line.split("\t")
-
-                # Bitwise FLAG - 0x4 : segment unmapped
-                if int(fields[1]) & 0x4 == 4:
-                    continue
-
-                ref_id = fields[2]
-
-                if ref_id == "*":
-                    continue
-
-                p_score = virtool.pathoscope.find_sam_align_score(fields)
-
-                # Skip if the p_score does not meet the minimum cutoff.
-                if p_score < p_score_cutoff:
-                    continue
-
-                vta_handle.write(",".join([
-                    fields[0],  # read_id
-                    ref_id,
-                    fields[3],  # pos
-                    str(len(fields[9])),  # length
-                    str(p_score)
-                ]) + "\n")
-
-    return vta_path
-
-
 def test_find_sam_align_score(sam_line, expected_scores):
     assert virtool.pathoscope.find_sam_align_score(sam_line) == expected_scores["".join(sam_line)]
 
 
 def test_build_matrix(tmpdir, test_sam_path):
+    shutil.copy(VTA_PATH, str(tmpdir))
     vta_path = os.path.join(str(tmpdir), "test.vta")
-    convert_sam_to_vta(test_sam_path, vta_path)
 
     with open(MATRIX_PATH, "rb") as handle:
         assert pickle.load(handle) == virtool.pathoscope.build_matrix(vta_path, 0.01)
@@ -146,3 +111,45 @@ async def test_calculate_coverage(tmpdir, test_sam_path):
                 ref_lengths[ref_id] = length
 
     await virtool.pathoscope.calculate_coverage(vta_path, ref_lengths)
+
+
+async def test_write_report(tmpdir):
+    shutil.copy(VTA_PATH, str(tmpdir))
+    vta_path = os.path.join(str(tmpdir), "test.vta")
+
+    u, nu, refs, reads = virtool.pathoscope.build_matrix(vta_path, 0.01)
+
+    with open(BEST_HIT_PATH, "rb") as handle:
+        best_hit_initial_reads, best_hit_initial, level_1_initial, level_2_initial = pickle.load(handle)
+
+    init_pi, pi, theta, nu = virtool.pathoscope.em(u, nu, refs, 30, 1e-7, 0, 0)
+
+    best_hit_final_reads, best_hit_final, level_1_final, level_2_final = virtool.pathoscope.compute_best_hit(
+        u,
+        nu,
+        refs,
+        reads
+    )
+
+    report_path = os.path.join(str(tmpdir), "report.tsv")
+
+    virtool.pathoscope.write_report(
+        report_path,
+        pi,
+        refs,
+        len(reads),
+        init_pi,
+        best_hit_initial,
+        best_hit_initial_reads,
+        best_hit_final,
+        best_hit_final_reads,
+        level_1_initial,
+        level_2_initial,
+        level_1_final,
+        level_2_final
+    )
+
+    assert filecmp.cmp(report_path, TSV_PATH)
+
+
+
