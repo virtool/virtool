@@ -8,6 +8,7 @@
  */
 
 import React from "react";
+import { includes } from "lodash";
 import { Switch, Route, Redirect } from "react-router-dom";
 import { connect } from "react-redux";
 import { LinkContainer } from "react-router-bootstrap";
@@ -44,6 +45,21 @@ class SampleDetail extends React.Component {
         const detail = this.props.detail;
         const sampleId = this.props.match.params.sampleId;
 
+        let editIcon;
+
+        if (includes(this.props.history.location.pathname, "general")) {
+            editIcon = (
+                <small style={{paddingLeft: "5px"}}>
+                    <Icon
+                        bsStyle="warning"
+                        name="pencil"
+                        tip="Edit Sample"
+                        onClick={() => window.console.log("EDIT SAMPLE")}
+                    />
+                </small>
+            );
+        }
+
         return (
             <div>
                 <h3 style={{marginBottom: "20px"}}>
@@ -54,13 +70,16 @@ class SampleDetail extends React.Component {
                             </strong>
                         </FlexItem>
 
-                        <Icon
-                            bsStyle="danger"
-                            name="remove"
-                            tip="Remove Sample"
-                            style={{fontSize: "18px"}}
-                            onClick={() => this.props.showRemove(sampleId, detail.name)}
-                        />
+                        {editIcon}
+
+                        <small style={{paddingLeft: "5px"}}>
+                            <Icon
+                                bsStyle="danger"
+                                name="remove"
+                                tip="Remove Sample"
+                                onClick={() => this.props.showRemove(sampleId, detail.name)}
+                            />
+                        </small>
                     </Flex>
                 </h3>
 
