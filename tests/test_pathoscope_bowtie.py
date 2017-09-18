@@ -85,14 +85,74 @@ async def mock_job(tmpdir, loop, test_motor, test_dispatch, virus_resource):
         4
     )
 
-    job.read_paths = [
-        os.path.join(str(tmpdir), "samples", "foobar", "reads_1.fq")
-    ]
-
     return job
 
 
-async def test_map_viruses(mock_job):
+@pytest.mark.parametrize("paired", [False, True])
+async def test_check_db(tmpdir, paired, test_motor, mock_job):
+    """
+    Check that the method assigns various job attributes based on information from the database.
+
+    """
+    assert mock_job.sample is None
+    assert mock_job.read_paths is None
+    assert mock_job.host is None
+
+    await test_motor.samples.insert_one({
+        "_id": "foobar",
+        "paired": paired,
+        "subtraction": "Arabidopsis thaliana",
+        "quality": {
+            "count": 1337
+        }
+    })
+
+    await test_motor.hosts.insert_one({
+        "_id": "Arabidopsis thaliana"
+    })
+
+    await mock_job.check_db()
+
+    assert mock_job.sample == {
+        "_id": "foobar",
+        "paired": paired,
+        "subtraction": "Arabidopsis thaliana",
+        "quality": {
+            "count": 1337
+        }
+    }
+
+    assert mock_job.host == {
+        "_id": "Arabidopsis thaliana"
+    }
+
+    assert mock_job.read_count == 1337
+
+    expected_read_filenames = ["reads_1.fastq"]
+
+    if paired:
+        expected_read_filenames.append("reads_2.fastq")
+
+    assert mock_job.read_paths == [os.path.join(mock_job.sample_path, filename) for filename in expected_read_filenames]
+
+    assert mock_job.host_path == os.path.join(str(tmpdir), "reference", "hosts", "arabidopsis_thaliana", "reference")
+
+
+async def test_mk_analysis_dir(mock_job):
+    assert not os.path.isdir(mock_job.analysis_path)
+
+    await mock_job.mk_analysis_dir()
+
+    assert os.path.isdir(mock_job.analysis_path)
+
+
+async def test_map_viruses(tmpdir, mock_job):
+    os.makedirs(mock_job.analysis_path)
+
+    mock_job.read_paths = [
+        os.path.join(str(tmpdir), "samples", "foobar", "reads_1.fq")
+    ]
+
     await mock_job.map_viruses()
 
     assert mock_job.intermediate["to_viruses"] == {
@@ -116,15 +176,15 @@ async def test_map_viruses(mock_job):
     }
 
 
-async def test_map_isolates(tmpdir, mock_job, capsys):
+async def test_map_isolates(tmpdir, mock_job):
+    os.makedirs(mock_job.analysis_path)
+
     mock_job.read_paths = [
         os.path.join(str(tmpdir), "samples", "foobar", "reads_1.fq")
     ]
 
     sample_path = os.path.join(str(tmpdir), "samples", "foobar")
     index_path = os.path.join(str(tmpdir), "reference", "viruses", "index")
-
-    os.mkdir(os.path.join(sample_path, "analysis", "baz"))
 
     for filename in os.listdir(index_path):
         shutil.copyfile(
@@ -171,3 +231,54 @@ async def test_pathoscope(mock_job):
             "read_count": 20276,
             "ready": True
         }
+
+
+async def test_import_results(test_motor, test_dispatch, mock_job):
+    await test_motor.analyses.insert_one({
+        "_id": "baz",
+        "algorithm": "pathoscope_bowtie",
+        "ready": False,
+        "sample": {
+            "id": "foobar"
+        }
+    })
+
+    await test_motor.samples.insert_one({
+        "_id": "foobar",
+        "pathoscope": False
+    })
+
+    mock_job.results = {
+        "diagnosis": "diagnosis will be here",
+        "read_count": 1337,
+        "ready": True
+    }
+
+    await mock_job.import_results()
+
+    assert await test_motor.analyses.find_one() == {
+        "_id": "baz",
+        "ready": True,
+        "algorithm": "pathoscope_bowtie",
+        "diagnosis": "diagnosis will be here",
+        "read_count": 1337,
+        "sample": {
+            "id": "foobar"
+        }
+    }
+
+    assert await test_motor.samples.find_one() == {
+        "_id": "foobar",
+        "nuvs": False,
+        "pathoscope": True
+    }
+
+    assert test_dispatch.stub.call_args[0] == (
+        "samples",
+        "update",
+        {
+            "_id": "foobar",
+            "nuvs": False,
+            "pathoscope": True
+        }
+    )

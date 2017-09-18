@@ -138,82 +138,80 @@ async def format_analysis(db, analysis):
         "definition"
     ]
 
-    # Only included 'ready' analyses in the detail payload.
-    if analysis["ready"]:
-        if "pathoscope" in analysis["algorithm"]:
-            # Holds viruses that have already been fetched from the database. If another isolate of a previously
-            # fetched virus is found, there is no need for a round-trip back to the database.
-            fetched_viruses = dict()
-            reduced_isolates = dict()
+    if "pathoscope" in analysis["algorithm"]:
+        # Holds viruses that have already been fetched from the database. If another isolate of a previously
+        # fetched virus is found, there is no need for a round-trip back to the database.
+        fetched_viruses = dict()
+        reduced_isolates = dict()
 
-            formatted = dict()
+        formatted = dict()
 
-            for sequence_id, hit in analysis["diagnosis"].items():
+        for sequence_id, hit in analysis["diagnosis"].items():
 
-                virus_id = hit["virus"]["id"]
-                version = hit["virus"]["version"]
+            virus_id = hit["virus"]["id"]
+            version = hit["virus"]["version"]
 
-                virus_document = fetched_viruses.get(virus_id, None)
+            virus_document = fetched_viruses.get(virus_id, None)
 
-                if virus_document is None:
-                    # Get the virus entry (patched to correct version).
-                    _, virus_document, _ = await virtool.virus_history.patch_virus_to_version(
-                        db,
-                        virus_id,
-                        version
-                    )
+            if virus_document is None:
+                # Get the virus entry (patched to correct version).
+                _, virus_document, _ = await virtool.virus_history.patch_virus_to_version(
+                    db,
+                    virus_id,
+                    version
+                )
 
-                    fetched_viruses[virus_id] = virus_document
+                fetched_viruses[virus_id] = virus_document
 
-                    formatted[virus_id] = {
-                        "id": virus_id,
-                        "name": virus_document["name"],
-                        "version": virus_document["version"],
-                        "abbreviation": virus_document["abbreviation"],
-                        "isolates": dict(),
-                        "length": 0
-                    }
+                formatted[virus_id] = {
+                    "id": virus_id,
+                    "name": virus_document["name"],
+                    "version": virus_document["version"],
+                    "abbreviation": virus_document["abbreviation"],
+                    "isolates": dict(),
+                    "length": 0
+                }
 
-                max_ref_length = 0
+            max_ref_length = 0
 
-                for isolate in virus_document["isolates"]:
-                    isolate_id = isolate["id"]
+            for isolate in virus_document["isolates"]:
+                isolate_id = isolate["id"]
 
-                    ref_length = 0
+                ref_length = 0
 
-                    for sequence in isolate["sequences"]:
-                        if sequence["id"] == sequence_id:
-                            if isolate_id not in reduced_isolates:
-                                reduced_isolate = dict({key: isolate[key] for key in isolate_fields}, sequences=list())
-                                formatted[virus_id]["isolates"][isolate_id] = reduced_isolate
+                for sequence in isolate["sequences"]:
+                    if sequence["id"] == sequence_id:
+                        if isolate_id not in reduced_isolates:
+                            reduced_isolate = dict({key: isolate[key] for key in isolate_fields}, sequences=list())
+                            formatted[virus_id]["isolates"][isolate_id] = reduced_isolate
 
-                            hit = dict(hit_document)
-                            hit.update({key: sequence[key] for key in sequence_fields})
-                            hit["id"] = accession
+                        hit = dict(hit)
+                        hit.update({key: sequence[key] for key in sequence_fields})
+                        hit["id"] = sequence_id
 
-                            formatted[virus_id]["isolates"][isolate_id]["hits"].append(hit)
+                        formatted[virus_id]["isolates"][isolate_id]["hits"].append(hit)
 
-                            ref_length += len(sequence["sequence"])
+                        ref_length += len(sequence["sequence"])
 
-                    if ref_length > max_ref_length:
-                        max_ref_length = ref_length
+                if ref_length > max_ref_length:
+                    max_ref_length = ref_length
 
-                formatted[virus_id]["length"] = max_ref_length
+            formatted[virus_id]["length"] = max_ref_length
 
-            analysis["diagnosis"] = [formatted[virus_id] for virus_id in formatted]
+        analysis["diagnosis"] = [formatted[virus_id] for virus_id in formatted]
 
-        if analysis["algorithm"] == "nuvs":
-            for hmm_result in analysis["hmm"]:
-                hmm = await db.hmm.find_one({"_id": hmm_result["hit"]}, [
-                    "cluster",
-                    "families",
-                    "definition",
-                    "label"
-                ])
+    if analysis["algorithm"] == "nuvs":
+        for hmm_result in analysis["hmm"]:
+            hmm = await db.hmm.find_one({"_id": hmm_result["hit"]}, [
+                "cluster",
+                "families",
+                "definition",
+                "label"
+            ])
 
-                hmm_result.update(hmm)
+            hmm_result.update(hmm)
 
-        return analysis
+    return analysis
 
 
 class Base(virtool.job.Job):
@@ -306,10 +304,7 @@ class Base(virtool.job.Job):
         self.read_paths = [os.path.join(self.sample_path, "reads_1.fastq")]
 
         if self.sample["paired"]:
-            self.read_paths.append(os.path.join(self.sample_path, "/reads_2.fastq"))
-
-        if os.path.isfile("{}.gz".format(self.read_paths[0])):
-            self.read_paths = ["{}.gz".format(file_path) for file_path in self.read_paths]
+            self.read_paths.append(os.path.join(self.sample_path, "reads_2.fastq"))
 
         # Get the complete host document from the database.
         self.host = await self.db.hosts.find_one({"_id": self.sample["subtraction"]})
@@ -323,12 +318,12 @@ class Base(virtool.job.Job):
         )
 
     @virtool.job.stage_method
-    def mk_analysis_dir(self):
+    async def mk_analysis_dir(self):
         """
         Make a directory for the analysis in the sample/analysis directory.
 
         """
-        self.run_in_executor(os.mkdir, self.analysis_path)
+        await self.run_in_executor(os.mkdir, self.analysis_path)
 
     async def cleanup(self):
         """
@@ -379,6 +374,17 @@ class Pathoscope(Base):
                 async for document in self.db.sequences.find({"virus_id": virus_id}, ["sequence"]):
                     await handle.write(">{}\n{}\n".format(document["_id"], document["sequence"]))
 
+        del self.intermediate["to_host"]
+
+    @virtool.job.stage_method
+    async def subtract_virus_mapping(self):
+        """
+        Subtracts virus and host alignments stored in :attr:`.intermediate` as :class:`virtool.pathoscope.sam.Lines`
+        objects. Reads that have a higher alignment score to the host than to the virus reference are eliminated from
+        the analysis.
+
+        """
+        self.run_in_executor(virtool.pathoscope.subtract, self.analysis_path, self.intermediate["to_host"])
         del self.intermediate["to_host"]
 
     @virtool.job.stage_method
@@ -467,7 +473,6 @@ class Pathoscope(Base):
             # Calculate depth and attach to hit.
             hit["depth"] = round(sum(hit_coverage) / len(hit_coverage))
 
-
     @virtool.job.stage_method
     async def import_results(self):
         """
@@ -486,18 +491,10 @@ class Pathoscope(Base):
 
         await self.dispatch("samples", "update", document)
 
-        # self.call_static("cleanup_index_files")
-
     @virtool.job.stage_method
-    async def subtract_virus_mapping(self):
-        """
-        Subtracts virus and host alignments stored in :attr:`.intermediate` as :class:`virtool.pathoscope.sam.Lines`
-        objects. Reads that have a higher alignment score to the host than to the virus reference are eliminated from
-        the analysis.
-
-        """
-        self.run_in_executor(virtool.pathoscope.subtract, self.analysis_path, self.intermediate["to_host"])
-        del self.intermediate["to_host"]
+    async def cleanup_indexes(self):
+        pass
+        # self.call_static("cleanup_index_files")
 
 
 class PathoscopeBowtie(Pathoscope):
