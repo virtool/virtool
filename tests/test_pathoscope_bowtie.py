@@ -1,19 +1,49 @@
 import os
 import sys
+import json
 import shutil
 import pytest
+import filecmp
 from concurrent.futures import ProcessPoolExecutor
 
 import virtool.job
 import virtool.sample_analysis
 
+TEST_FILES_PATH = os.path.join(sys.path[0], "tests", "test_files")
 
-INDEX_PATH = os.path.join(sys.path[0], "tests", "test_files", "index")
-FASTQ_PATH = os.path.join(sys.path[0], "tests", "test_files", "test.fq")
+INDEX_PATH = os.path.join(TEST_FILES_PATH, "index")
+FASTQ_PATH = os.path.join(TEST_FILES_PATH, "test.fq")
+VTA_PATH = os.path.join(TEST_FILES_PATH, "test.vta")
+UPDATED_VTA_PATH = os.path.join(TEST_FILES_PATH, "updated.vta")
+TSV_PATH = os.path.join(TEST_FILES_PATH, "report.tsv")
+REF_LENGTHS_PATH = os.path.join(TEST_FILES_PATH, "ref_lengths.json")
+COVERAGE_PATH = os.path.join(TEST_FILES_PATH, "coverage.json")
+DIAGNOSIS_PATH = os.path.join(TEST_FILES_PATH, "diagnosis.json")
+
+
+@pytest.fixture("session")
+def virus_resource():
+    map_dict = dict()
+    viruses = dict()
+
+    with open(VTA_PATH, "r") as handle:
+        for line in handle:
+            ref_id = line.split(",")[1]
+
+            virus_id = "virus_{}".format(ref_id)
+
+            map_dict[ref_id] = virus_id
+
+            viruses[virus_id] = {
+                "id": virus_id,
+                "version": 2
+            }
+
+    return map_dict, viruses
 
 
 @pytest.fixture
-async def mock_job(tmpdir, loop, test_motor, test_dispatch):
+async def mock_job(tmpdir, loop, test_motor, test_dispatch, virus_resource):
     # Add index files.
     shutil.copytree(INDEX_PATH, os.path.join(str(tmpdir), "reference", "viruses", "index"))
 
@@ -32,10 +62,14 @@ async def mock_job(tmpdir, loop, test_motor, test_dispatch):
         "data_path": str(tmpdir)
     }
 
+    sequence_virus_map, virus_dict = virus_resource
+
     task_args = {
         "sample_id": "foobar",
         "analysis_id": "baz",
-        "index_id": "index"
+        "index_id": "index",
+        "sequence_virus_map": sequence_virus_map,
+        "virus_dict": virus_dict
     }
 
     job = virtool.sample_analysis.PathoscopeBowtie(
@@ -51,14 +85,14 @@ async def mock_job(tmpdir, loop, test_motor, test_dispatch):
         4
     )
 
-    return job
-
-
-async def test_map_viruses(tmpdir, mock_job):
-    mock_job.read_paths = [
+    job.read_paths = [
         os.path.join(str(tmpdir), "samples", "foobar", "reads_1.fq")
     ]
 
+    return job
+
+
+async def test_map_viruses(mock_job):
     await mock_job.map_viruses()
 
     assert mock_job.intermediate["to_viruses"] == {
@@ -82,7 +116,7 @@ async def test_map_viruses(tmpdir, mock_job):
     }
 
 
-async def test_map_isolates(capsys, tmpdir, mock_job):
+async def test_map_isolates(tmpdir, mock_job, capsys):
     mock_job.read_paths = [
         os.path.join(str(tmpdir), "samples", "foobar", "reads_1.fq")
     ]
@@ -100,7 +134,40 @@ async def test_map_isolates(capsys, tmpdir, mock_job):
 
     mock_job.proc = 2
 
-    with capsys.disabled():
-        await mock_job.map_isolates()
-        vta_path = os.path.join(mock_job.analysis_path, "to_isolates.vta")
-        assert os.path.getsize(vta_path) == 50090
+    await mock_job.map_isolates()
+
+    vta_path = os.path.join(mock_job.analysis_path, "to_isolates.vta")
+    assert os.path.getsize(vta_path) == 50090
+
+
+async def test_pathoscope(mock_job):
+    os.makedirs(mock_job.analysis_path)
+
+    with open(REF_LENGTHS_PATH, "r") as handle:
+        mock_job.intermediate["ref_lengths"] = json.load(handle)
+
+    shutil.copyfile(
+        VTA_PATH,
+        os.path.join(mock_job.analysis_path, "to_isolates.vta")
+    )
+
+    await mock_job.pathoscope()
+
+    # Check that a new VTA is written.
+    assert filecmp.cmp(
+        os.path.join(mock_job.analysis_path, "reassigned.vta"),
+        UPDATED_VTA_PATH
+    )
+
+    # Check that the correct report.tsv file is written.
+    assert filecmp.cmp(
+        os.path.join(mock_job.analysis_path, "report.tsv"),
+        TSV_PATH
+    )
+
+    with open(DIAGNOSIS_PATH, "r") as handle:
+        assert mock_job.results == {
+            "diagnosis": json.load(handle),
+            "read_count": 20276,
+            "ready": True
+        }

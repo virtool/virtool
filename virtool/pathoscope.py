@@ -363,6 +363,31 @@ def write_report(path, pi, refs, read_count, init_pi, best_hit_initial, best_hit
         csv_writer.writerow(header)
         csv_writer.writerows(tmp)
 
+    results = dict()
+
+    for i, ref_id in enumerate(x2[:i]):
+        if x1[i] < 0.01 and x10[i] <= 0 and x11[i] <= 0:
+            pass
+        else:
+            results[ref_id] = {
+                "final": {
+                    "pi": x1[i],
+                    "best": x6[i],
+                    "high": x10[i],
+                    "low": x11[i],
+                    "reads": int(x7[i])
+                },
+                "initial": {
+                    "pi": x3[i],
+                    "best": x4[i],
+                    "high": x8[i],
+                    "low": x9[i],
+                    "reads": int(x5[i])
+                }
+            }
+
+    return results
+
 
 def rewrite_align(u, nu, vta_path, p_score_cutoff, path):
     with open(path, 'w') as of:
@@ -410,7 +435,7 @@ def rewrite_align(u, nu, vta_path, p_score_cutoff, path):
                     of.write(line)
 
 
-async def calculate_coverage(vta_path, ref_lengths):
+def calculate_coverage(vta_path, ref_lengths):
     coverage_dict = dict()
     pos_length_list = list()
 

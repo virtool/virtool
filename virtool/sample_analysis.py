@@ -71,12 +71,39 @@ async def new(db, settings, manager, sample_id, user_id, algorithm):
         }
     })
 
+    sequence_virus_map = dict()
+    virus_dict = dict()
+
+    async for document in db.sequences.find({}, ["virus_id", "isolate_id"]):
+        virus_id = document["virus_id"]
+
+        virus = virus_dict.get(virus_id, None)
+
+        if virus is None:
+            virus = await db.viruses.find_one(virus_id, ["last_indexed_version"])
+
+            try:
+                last_index_version = virus["last_indexed_version"]
+
+                virus_dict[virus["_id"]] = {
+                    "id": virus["_id"],
+                    "version": last_index_version
+                }
+
+                sequence_virus_map[document["_id"]] = virus_id
+            except KeyError:
+                virus_dict[virus["id"]] = False
+
+        sequence_virus_map[document["_id"]] = virus_id
+
     task_args = dict(
         data,
         analysis_id=analysis_id,
         sample_id=sample_id,
         sample_name=sample["name"],
-        index_id=index_id
+        index_id=index_id,
+        virus_dict=virus_dict,
+        sequence_virus_map=sequence_virus_map
     )
 
     await db.analyses.insert_one(document)
@@ -100,6 +127,7 @@ async def new(db, settings, manager, sample_id, user_id, algorithm):
 async def format_analysis(db, analysis):
 
     isolate_fields = [
+        "id",
         "default",
         "source_name",
         "source_type"
@@ -111,20 +139,19 @@ async def format_analysis(db, analysis):
     ]
 
     # Only included 'ready' analyses in the detail payload.
-    if analysis["ready"] is True:
+    if analysis["ready"]:
         if "pathoscope" in analysis["algorithm"]:
             # Holds viruses that have already been fetched from the database. If another isolate of a previously
             # fetched virus is found, there is no need for a round-trip back to the database.
             fetched_viruses = dict()
+            reduced_isolates = dict()
 
-            found_isolates = list()
+            formatted = dict()
 
-            annotated = dict()
+            for sequence_id, hit in analysis["diagnosis"].items():
 
-            for accession, hit_document in analysis["diagnosis"].items():
-
-                virus_id = hit_document["virus_id"]
-                virus_version = hit_document["virus_version"]
+                virus_id = hit["virus"]["id"]
+                version = hit["virus"]["version"]
 
                 virus_document = fetched_viruses.get(virus_id, None)
 
@@ -133,57 +160,47 @@ async def format_analysis(db, analysis):
                     _, virus_document, _ = await virtool.virus_history.patch_virus_to_version(
                         db,
                         virus_id,
-                        virus_version
+                        version
                     )
 
                     fetched_viruses[virus_id] = virus_document
 
-                    annotated[virus_id] = {
-                        "_id": virus_id,
+                    formatted[virus_id] = {
+                        "id": virus_id,
                         "name": virus_document["name"],
+                        "version": virus_document["version"],
                         "abbreviation": virus_document["abbreviation"],
                         "isolates": dict(),
-                        "ref_length": 0
+                        "length": 0
                     }
 
                 max_ref_length = 0
 
                 for isolate in virus_document["isolates"]:
-
-                    try:
-                        isolate_id = isolate["id"]
-                    except KeyError:
-                        isolate_id = isolate["isolate_id"]
+                    isolate_id = isolate["id"]
 
                     ref_length = 0
 
                     for sequence in isolate["sequences"]:
-                        if sequence["_id"] == accession:
-                            if isolate_id not in found_isolates:
-                                reduced_isolate = {key: isolate[key] for key in isolate_fields}
-
-                                reduced_isolate.update({
-                                    "id": isolate_id,
-                                    "hits": list()
-                                })
-
-                                annotated[virus_id]["isolates"][isolate_id] = reduced_isolate
-                                found_isolates.append(isolate_id)
+                        if sequence["id"] == sequence_id:
+                            if isolate_id not in reduced_isolates:
+                                reduced_isolate = dict({key: isolate[key] for key in isolate_fields}, sequences=list())
+                                formatted[virus_id]["isolates"][isolate_id] = reduced_isolate
 
                             hit = dict(hit_document)
                             hit.update({key: sequence[key] for key in sequence_fields})
-                            hit["accession"] = accession
+                            hit["id"] = accession
 
-                            annotated[virus_id]["isolates"][isolate_id]["hits"].append(hit)
+                            formatted[virus_id]["isolates"][isolate_id]["hits"].append(hit)
 
                             ref_length += len(sequence["sequence"])
 
                     if ref_length > max_ref_length:
                         max_ref_length = ref_length
 
-                annotated[virus_id]["ref_length"] = max_ref_length
+                formatted[virus_id]["length"] = max_ref_length
 
-            analysis["diagnosis"] = [annotated[virus_id] for virus_id in annotated]
+            analysis["diagnosis"] = [formatted[virus_id] for virus_id in formatted]
 
         if analysis["algorithm"] == "nuvs":
             for hmm_result in analysis["hmm"]:
@@ -218,6 +235,10 @@ class Base(virtool.job.Job):
 
         #: The document id for the analysis being run.
         self.analysis_id = self.task_args["analysis_id"]
+
+        self.sequence_virus_map = self.task_args["sequence_virus_map"]
+
+        self.virus_dict = self.task_args["virus_dict"]
 
         #: Stores data that is processed and stored in the analysis document.
         self.results = dict()
@@ -389,10 +410,14 @@ class Pathoscope(Base):
             reads
         )
 
-        await virtool.pathoscope.write_report(
+        read_count = len(reads)
+
+        report = await self.run_in_executor(
+            virtool.pathoscope.write_report,
             os.path.join(self.analysis_path, "report.tsv"),
             pi,
             refs,
+            read_count,
             init_pi,
             best_hit_initial,
             best_hit_initial_reads,
@@ -404,51 +429,44 @@ class Pathoscope(Base):
             level_2_final
         )
 
-        diagnosis, read_count, self.intermediate["reassigned"] = virtool.pathoscope.reassign(
-            self.intermediate["to_viruses"],
-            os.path.join(self.analysis_path, "pathoscope.tsv")
+        reassigned_path = os.path.join(self.analysis_path, "reassigned.vta")
+
+        await self.run_in_executor(virtool.pathoscope.rewrite_align, u, nu, vta_path, 0.01, reassigned_path)
+
+        self.intermediate["coverage"] = await self.run_in_executor(
+            virtool.pathoscope.calculate_coverage,
+            reassigned_path,
+            self.intermediate["ref_lengths"]
         )
 
-        self.results["read_count"] = read_count
+        self.results = {
+            "ready": True,
+            "read_count": read_count,
+            "diagnosis": report
+        }
 
-        cleaned = dict()
+        for ref_id, hit in report.items():
+            # Get the virus info for the sequence id.
+            virus = self.virus_dict[self.sequence_virus_map[ref_id]]
 
-        for entry in diagnosis:
-            genome_id = entry["genome"]
-            final = entry["final"]
+            # Make sure it is not ``False`` (meaning the virus had not ``last_indexed_version`` field).
+            assert virus
 
-            sequence_entry = self.db.sequences.find_one({"_id": genome_id}, {"isolate_id": True})
+            # Attach "virus" (id, version) to the hit.
+            hit["virus"] = virus
 
-            minimal_virus = self.db.viruses.find_one(
-                {"isolates.isolate_id": sequence_entry["isolate_id"]},
-                {"_id": True, "version": True}
-            )
+            # Get the coverage for the sequence.
+            hit_coverage = self.intermediate["coverage"][ref_id]
 
-            cleaned[genome_id] = {key: final[key] for key in ["pi", "best", "reads"]}
+            # Attach coverage list to hit dict.
+            hit["align"] = hit_coverage
 
-            cleaned[genome_id].update({
-                "virus_version": minimal_virus["version"],
-                "virus_id": minimal_virus["_id"]
-            })
+            # Calculate coverage and attach to hit.
+            hit["coverage"] = round(1 - hit_coverage.count(0) / len(hit_coverage), 3)
 
-        self.results["diagnosis"] = cleaned
+            # Calculate depth and attach to hit.
+            hit["depth"] = round(sum(hit_coverage) / len(hit_coverage))
 
-    @virtool.job.stage_method
-    def calculate_coverage(self):
-        # Only calculate coverage if there are some diagnostic results.
-        if self.results["diagnosis"]:
-            coverage = virtool.sam.coverage(
-                self.intermediate["reassigned"],
-                lengths
-            )
-
-            # Attach the per-sequence coverage arrays to the diagnostic results.
-            for ref_id in coverage:
-                for key in coverage[ref_id]:
-                    try:
-                        self.results["diagnosis"][ref_id][key] = coverage[ref_id][key]
-                    except KeyError:
-                        pass
 
     @virtool.job.stage_method
     async def import_results(self):
@@ -460,17 +478,8 @@ class Pathoscope(Base):
         any virus indexes that may become unused when this analysis completes.
 
         """
-        genome_ids = list(self.results["diagnosis"].keys())
-        # minimal_sequences = self.db.sequences.find({"_id": {"$in": genome_ids}})
-
-        # lengths = {entry["_id"]: len(entry["sequence"]) for entry in minimal_sequences}
-
-        document = await self.db.analyses.find_one({"_id": self.analysis_id})
-
-        document.update(dict(self.results, ready=True))
-
         await self.db.analyses.update_one({"_id": self.analysis_id}, {
-            "$set": document
+            "$set": self.results
         })
 
         document = await virtool.sample.recalculate_algorithm_tags(self.db, self.sample_id)
@@ -506,8 +515,8 @@ class PathoscopeBowtie(Pathoscope):
             self.generate_isolate_fasta,
             self.build_isolate_index,
             self.map_isolates,
-            self.map_host,
-            self.subtract_virus_mapping,
+            # self.map_host,
+            # self.subtract_virus_mapping,
             self.pathoscope,
             self.import_results
         ]
@@ -532,10 +541,26 @@ class PathoscopeBowtie(Pathoscope):
 
         to_viruses = set()
 
-        def stdout_handler(line, p_score_cutoff=0.01):
+        ref_lengths = dict()
+
+        async def stdout_handler(line):
             line = line.decode()
 
-            if line[0] == "@" or line == "#":
+            if line[0] == "#":
+                return
+
+            if line[0] == "@":
+                if line[1:3] == "SQ":
+                    for field in line.split("\t"):
+                        split_field = field.split(":")
+
+                        if split_field[0] == "SN":
+                            ref_id = split_field[1]
+                        if split_field[0] == "LN":
+                            length = int(split_field[1])
+
+                    ref_lengths[ref_id] = length
+
                 return
 
             fields = line.split("\t")
@@ -549,10 +574,8 @@ class PathoscopeBowtie(Pathoscope):
             if ref_id == "*":
                 return
 
-            p_score = virtool.pathoscope.find_sam_align_score(fields)
-
             # Skip if the p_score does not meet the minimum cutoff.
-            if p_score < p_score_cutoff:
+            if virtool.pathoscope.find_sam_align_score(fields) < 0.01:
                 return
 
             to_viruses.add(ref_id)
