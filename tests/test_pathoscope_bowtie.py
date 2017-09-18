@@ -19,6 +19,8 @@ TSV_PATH = os.path.join(TEST_FILES_PATH, "report.tsv")
 REF_LENGTHS_PATH = os.path.join(TEST_FILES_PATH, "ref_lengths.json")
 COVERAGE_PATH = os.path.join(TEST_FILES_PATH, "coverage.json")
 DIAGNOSIS_PATH = os.path.join(TEST_FILES_PATH, "diagnosis.json")
+HOST_PATH = os.path.join(TEST_FILES_PATH, "index", "host")
+TO_HOST_PATH = os.path.join(TEST_FILES_PATH, "to_host.json")
 
 
 @pytest.fixture("session")
@@ -198,6 +200,33 @@ async def test_map_isolates(tmpdir, mock_job):
 
     vta_path = os.path.join(mock_job.analysis_path, "to_isolates.vta")
     assert os.path.getsize(vta_path) == 50090
+
+
+async def test_map_subtraction(mock_job):
+    mock_job.proc = 2
+    mock_job.host_path = HOST_PATH
+
+    os.makedirs(mock_job.analysis_path)
+
+    shutil.copyfile(FASTQ_PATH, os.path.join(mock_job.analysis_path, "mapped.fastq"))
+
+    await mock_job.map_subtraction()
+
+    with open(TO_HOST_PATH, "r") as handle:
+        assert mock_job.intermediate["to_host"] == json.load(handle)
+
+
+async def test_subtract_mapping(mock_job):
+    os.makedirs(mock_job.analysis_path)
+
+    with open(TO_HOST_PATH, "r") as handle:
+        mock_job.intermediate["to_host"] = json.load(handle)
+
+    shutil.copyfile(VTA_PATH, os.path.join(mock_job.analysis_path, "to_isolates.vta"))
+
+    await mock_job.subtract_mapping()
+
+    assert mock_job.results["subtracted_count"] == 8
 
 
 async def test_pathoscope(mock_job):

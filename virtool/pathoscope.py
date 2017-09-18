@@ -2,6 +2,7 @@ import os
 import csv
 import copy
 import math
+import shutil
 import collections
 
 
@@ -470,19 +471,27 @@ def subtract(analysis_path, host_scores):
 
     with open(vta_path, "r") as handle:
         for line in handle:
-            read_id = line[0]
-            isolates_high_scores[read_id] = max(isolates_high_scores[read_id], int(line[4]))
+            fields = line.rstrip().split(",")
+            read_id = fields[0]
+            isolates_high_scores[read_id] = max(isolates_high_scores[read_id], float(fields[4]))
 
     out_path = os.path.join(analysis_path, "subtracted.vta")
 
-    with open(out_path, "w") as handle:
-        for line in handle:
-            line = line.decode()
-            read_id = line[0]
-            if host_scores.get(read_id, 0) >= isolates_high_scores[read_id]:
-                subtracted_count += 1
-                handle.write(line)
+    total_count = 0
+
+    with open(vta_path, "r") as vta_handle:
+        with open(out_path, "w") as out_handle:
+            for line in vta_handle:
+                total_count += 1
+                fields = line.rstrip().split(",")
+                read_id = fields[0]
+                if isolates_high_scores[read_id] > host_scores.get(read_id, 0):
+                    out_handle.write(line)
+                else:
+                    subtracted_count += 1
 
     os.remove(vta_path)
+
+    shutil.move(out_path, vta_path)
 
     return subtracted_count

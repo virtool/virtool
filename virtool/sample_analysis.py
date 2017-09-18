@@ -40,7 +40,19 @@ async def new(db, settings, manager, sample_id, user_id, algorithm):
     # Get the current id and version of the virus index currently being used for analysis.
     index_id, index_version = await virtool.virus_index.get_current_index(db)
 
-    data = {
+    sample = await db.samples.find_one(sample_id, ["name"])
+
+    analysis_id = await virtool.utils.get_new_id(db.analyses)
+
+    job_id = await virtool.utils.get_new_id(db.jobs)
+
+    document = {
+        "_id": analysis_id,
+        "ready": False,
+        "created_at": virtool.utils.timestamp(),
+        "job": {
+            "id": job_id
+        },
         "algorithm": algorithm,
         "sample": {
             "id": sample_id
@@ -54,28 +66,11 @@ async def new(db, settings, manager, sample_id, user_id, algorithm):
         }
     }
 
-    sample = await db.samples.find_one(sample_id, ["name"])
-
-    analysis_id = await virtool.utils.get_new_id(db.analyses)
-
-    job_id = await virtool.utils.get_new_id(db.jobs)
-
-    document = dict(data)
-
-    document.update({
-        "_id": analysis_id,
-        "ready": False,
-        "created_at": virtool.utils.timestamp(),
-        "job": {
-            "id": job_id
-        }
-    })
-
     sequence_virus_map = dict()
     virus_dict = dict()
 
-    async for document in db.sequences.find({}, ["virus_id", "isolate_id"]):
-        virus_id = document["virus_id"]
+    async for sequence_document in db.sequences.find({}, ["virus_id", "isolate_id"]):
+        virus_id = sequence_document["virus_id"]
 
         virus = virus_dict.get(virus_id, None)
 
@@ -90,14 +85,17 @@ async def new(db, settings, manager, sample_id, user_id, algorithm):
                     "version": last_index_version
                 }
 
-                sequence_virus_map[document["_id"]] = virus_id
+                sequence_virus_map[sequence_document["_id"]] = virus_id
             except KeyError:
                 virus_dict[virus["id"]] = False
 
-        sequence_virus_map[document["_id"]] = virus_id
+        sequence_virus_map[sequence_document["_id"]] = virus_id
+
+    sequence_virus_map = [item for item in sequence_virus_map.items()]
+
+    await db.analyses.insert_one(document)
 
     task_args = dict(
-        data,
         analysis_id=analysis_id,
         sample_id=sample_id,
         sample_name=sample["name"],
@@ -106,15 +104,11 @@ async def new(db, settings, manager, sample_id, user_id, algorithm):
         sequence_virus_map=sequence_virus_map
     )
 
-    await db.analyses.insert_one(document)
-
     # Clone the arguments passed from the client and amend the resulting dictionary with the analysis entry
     # _id. This dictionary will be passed the the new analysis job.
     await manager.new(
-        data["algorithm"],
+        document["algorithm"],
         task_args,
-        settings.get("{}_proc".format(algorithm)),
-        settings.get("{}_mem".format(algorithm)),
         user_id,
         job_id=job_id
     )
@@ -234,7 +228,7 @@ class Base(virtool.job.Job):
         #: The document id for the analysis being run.
         self.analysis_id = self.task_args["analysis_id"]
 
-        self.sequence_virus_map = self.task_args["sequence_virus_map"]
+        self.sequence_virus_map = {item[0]: item[1] for item in self.task_args["sequence_virus_map"]}
 
         self.virus_dict = self.task_args["virus_dict"]
 
@@ -255,7 +249,7 @@ class Base(virtool.job.Job):
         self.read_count = None
 
         # The path to the general data directory
-        self.data_path = self.settings["data_path"]
+        self.data_path = self.settings.get("data_path")
 
         # The parent folder for all data associated with the sample
         self.sample_path = os.path.join(self.data_path, "samples", self.sample_id)
@@ -303,17 +297,17 @@ class Base(virtool.job.Job):
         # Calculate the path(s) to the sample read file(s).
         self.read_paths = [os.path.join(self.sample_path, "reads_1.fastq")]
 
-        if self.sample["paired"]:
+        if self.sample.get("paired", False):
             self.read_paths.append(os.path.join(self.sample_path, "reads_2.fastq"))
 
         # Get the complete host document from the database.
-        self.host = await self.db.hosts.find_one({"_id": self.sample["subtraction"]})
+        self.host = await self.db.hosts.find_one({"_id": self.sample["subtraction"]["id"]})
 
         self.host_path = os.path.join(
             self.data_path,
             "reference",
             "hosts",
-            self.sample["subtraction"].lower().replace(" ", "_"),
+            self.sample["subtraction"]["id"].lower().replace(" ", "_"),
             "reference"
         )
 
@@ -377,15 +371,22 @@ class Pathoscope(Base):
         del self.intermediate["to_host"]
 
     @virtool.job.stage_method
-    async def subtract_virus_mapping(self):
+    async def subtract_mapping(self):
         """
         Subtracts virus and host alignments stored in :attr:`.intermediate` as :class:`virtool.pathoscope.sam.Lines`
         objects. Reads that have a higher alignment score to the host than to the virus reference are eliminated from
         the analysis.
 
         """
-        self.run_in_executor(virtool.pathoscope.subtract, self.analysis_path, self.intermediate["to_host"])
+        subtracted_count = await self.run_in_executor(
+            virtool.pathoscope.subtract,
+            self.analysis_path,
+            self.intermediate["to_host"]
+        )
+        
         del self.intermediate["to_host"]
+        
+        self.results["subtracted_count"] = subtracted_count
 
     @virtool.job.stage_method
     async def pathoscope(self):
@@ -494,7 +495,6 @@ class Pathoscope(Base):
     @virtool.job.stage_method
     async def cleanup_indexes(self):
         pass
-        # self.call_static("cleanup_index_files")
 
 
 class PathoscopeBowtie(Pathoscope):
@@ -507,15 +507,18 @@ class PathoscopeBowtie(Pathoscope):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        self._stage_list += [
+        self._stage_list = [
+            self.check_db,
+            self.mk_analysis_dir,
             self.map_viruses,
             self.generate_isolate_fasta,
             self.build_isolate_index,
             self.map_isolates,
-            # self.map_host,
-            # self.subtract_virus_mapping,
+            self.map_subtraction,
+            self.subtract_mapping,
             self.pathoscope,
-            self.import_results
+            self.import_results,
+            self.cleanup_indexes
         ]
 
     @virtool.job.stage_method
@@ -654,7 +657,7 @@ class PathoscopeBowtie(Pathoscope):
         await out_handle.close()
 
     @virtool.job.stage_method
-    async def map_host(self):
+    async def map_subtraction(self):
         """
         Using ``bowtie2``, map the reads that were successfully mapped in :meth:`.map_isolates` to the subtraction host
         for the sample.
@@ -669,7 +672,7 @@ class PathoscopeBowtie(Pathoscope):
             "-U", os.path.join(self.analysis_path, "mapped.fastq")
         ]
 
-        to_hosts = dict()
+        to_host = dict()
 
         async def stdout_handler(line):
             line = line.decode()
@@ -687,11 +690,11 @@ class PathoscopeBowtie(Pathoscope):
             if fields[2] == "*":
                 return
 
-            to_hosts[fields[0]] = virtool.pathoscope.find_sam_align_score(fields)
+            to_host[fields[0]] = virtool.pathoscope.find_sam_align_score(fields)
 
         await self.run_subprocess(command, stdout_handler=stdout_handler)
 
-        self.intermediate["to_hosts"] = to_hosts
+        self.intermediate["to_host"] = to_host
 
 
 class NuVs(Base):
