@@ -103,7 +103,9 @@ class VirusesList extends React.Component {
         } else {
             virusComponents = (
                 <ListGroupItem key="noViruses" className="text-center">
-                    <Icon name="info"/> No viruses found.
+                    <span><Icon name="info"/> No viruses found. <Link to="/viruses/import">Import</Link> or</span>
+                    <span> <Link to="/viruses/create">Create</Link> some</span>
+
                 </ListGroupItem>
             );
         }
