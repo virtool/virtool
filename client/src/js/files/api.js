@@ -24,7 +24,7 @@ const filesAPI = {
             .query({name: file.name})
             .attach("file", file)
             .on("progress", onProgress);
-    },
+    }
 };
 
 

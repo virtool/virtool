@@ -23,6 +23,8 @@ import {
     EDIT_SEQUENCE,
     REMOVE_SEQUENCE,
     REVERT,
+    UPLOAD_IMPORT,
+    COMMIT_IMPORT,
     SHOW_EDIT_VIRUS,
     SHOW_REMOVE_VIRUS,
     SHOW_ADD_ISOLATE,
@@ -162,6 +164,21 @@ export function revert (virusId, version) {
         type: REVERT.REQUESTED,
         virusId,
         version
+    };
+}
+
+export function uploadImport (file, onProgress) {
+    return {
+        type: UPLOAD_IMPORT.REQUESTED,
+        file,
+        onProgress
+    };
+}
+
+export function commitImport (fileId) {
+    return {
+        type: COMMIT_IMPORT.REQUESTED,
+        fileId
     };
 }
 

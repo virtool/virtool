@@ -4384,7 +4384,7 @@ prop-types@^15.0.0, prop-types@^15.5.4, prop-types@^15.5.8:
   dependencies:
     fbjs "^0.8.9"
 
-prop-types@^15.5.10:
+prop-types@^15.5.10, prop-types@^15.5.7:
   version "15.5.10"
   resolved "https://registry.yarnpkg.com/prop-types/-/prop-types-15.5.10.tgz#2797dfc3126182e3a95e3dfbb2e893ddd7456154"
   dependencies:
@@ -4524,11 +4524,11 @@ react-cookie@^1.0.4:
     object-assign "^4.1.0"
 
 react-dropzone@^3.7.3:
-  version "3.11.1"
-  resolved "https://registry.yarnpkg.com/react-dropzone/-/react-dropzone-3.11.1.tgz#6b9e27eb3aa3e7017bfecf173f749176c3521eaf"
+  version "3.13.4"
+  resolved "https://registry.yarnpkg.com/react-dropzone/-/react-dropzone-3.13.4.tgz#84da26815c40339691c49b4544c2ef7a16912ccc"
   dependencies:
     attr-accept "^1.0.3"
-    react-is-deprecated "^0.1.2"
+    prop-types "^15.5.7"
 
 react-flip-move@^2.8.0:
   version "2.9.1"
@@ -4553,10 +4553,6 @@ react-highlighter@^0.3.3:
 react-input-autosize@^1.1.0:
   version "1.1.0"
   resolved "https://registry.yarnpkg.com/react-input-autosize/-/react-input-autosize-1.1.0.tgz#3fe1ac832387d8abab85f6051ceab1c9e5570853"
-
-react-is-deprecated@^0.1.2:
-  version "0.1.2"
-  resolved "https://registry.yarnpkg.com/react-is-deprecated/-/react-is-deprecated-0.1.2.tgz#301148f86ea428fe8e673eca7a372160b7579dbd"
 
 react-onclickoutside@^5.7.0:
   version "5.9.0"

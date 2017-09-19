@@ -101,8 +101,18 @@ const virusesAPI = {
 
     revert: (virusId, version) => {
         return Request.delete(`/api/history/${virusId}.${version}`);
-    }
+    },
 
+    getImport: (fileId) => {
+        return Request.get("/api/viruses/import")
+            .query({file_id: fileId});
+    },
+
+    commitImport: (fileId) => {
+        console.log("API", fileId);
+        return Request.post("/api/viruses/import")
+            .send({file_id: fileId});
+    }
 };
 
 export default virusesAPI;

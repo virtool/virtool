@@ -24,6 +24,7 @@ import {
     EDIT_SEQUENCE,
     REMOVE_SEQUENCE,
     REVERT,
+    UPLOAD_IMPORT,
     SHOW_EDIT_VIRUS,
     SHOW_REMOVE_VIRUS,
     SHOW_ADD_ISOLATE,
@@ -55,7 +56,9 @@ const virusesInitialState = {
     activeSequenceId: null,
 
     createError: "",
-    editError: ""
+    editError: "",
+
+    importData: null
 };
 
 const hideVirusModal = (state) => {
@@ -168,6 +171,11 @@ export default function virusesReducer (state = virusesInitialState, action) {
             return assign({}, state, {
                 detail: action.detail,
                 detailHistory: action.history
+            });
+
+        case UPLOAD_IMPORT.SUCCEEDED:
+            return assign({}, state, {
+                importData: action.data
             });
 
         case SHOW_EDIT_VIRUS:
