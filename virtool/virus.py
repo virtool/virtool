@@ -343,7 +343,8 @@ def merge_virus(virus, sequences):
 
     """
     for isolate in virus["isolates"]:
-        isolate["sequences"] = [s for s in sequences if s["isolate_id"] == isolate["id"]]
+        isolate_id = isolate.get("id", isolate["isolate_id"])
+        isolate["sequences"] = [s for s in sequences if s["isolate_id"] == isolate_id]
 
     return virus
 
