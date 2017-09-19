@@ -54,7 +54,11 @@ module.exports = {
     },
 
     resolve: {
-        alias: {virtool: path.resolve(__dirname, "./src")}
+        alias: {
+            "virtool": path.resolve(__dirname, "./src"),
+            "react": "preact-compat",
+            "react-dom": "preact-compat"
+        }
     },
 
     node: {
