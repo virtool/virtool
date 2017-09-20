@@ -74,6 +74,7 @@ async def organize_samples(db):
                 }
             })
 
+
 async def organize_analyses(db):
     """
     Bring analysis documents up-to-date by doing the following:
@@ -176,71 +177,6 @@ async def organize_analyses(db):
     await db.analyses.delete_many({"ready": False})
 
 
-async def organize_viruses(db):
-    await db.viruses.update_many({}, {
-        "$rename": {
-            "_version": "version"
-        }
-    })
-
-    async for document in db.viruses.find({"verified": {"$exists": False}}, ["modified"]):
-        await db.viruses.update_one({"_id": document["_id"]}, {
-            "$set": {
-                "verified": not document["modified"]
-            }
-        })
-
-    await db.viruses.update_many({}, {
-        "$unset": {
-            "segments": "",
-            "abbrevation": "",
-            "new": "",
-            "username": "",
-            "user_id": "",
-            "modified": ""
-        }
-    })
-
-    async for document in db.viruses.find({"isolates.isolate_id": {"$exists": True}}, ["isolates"]):
-        for isolate in document["isolates"]:
-            try:
-                isolate["id"] = isolate["isolate_id"]
-                del isolate["isolate_id"]
-            except KeyError:
-                pass
-
-        await db.viruses.update_one({"_id": document["_id"]}, {
-            "$set": {
-                "isolates": document["isolates"]
-            }
-        })
-
-
-async def organize_sequences(database):
-    await database.sequences.update_many({}, {
-        "$unset": {
-            "length": "",
-            "annotated": "",
-            "neighbours": "",
-            "proteins": "",
-            "molecule_type": "",
-            "molecular_structure": ""
-        }
-    })
-
-    async for document in database.sequences.find({"virus_id": {"$exists": False}}, ["isolate_id"]):
-        virus = await database.viruses.find_one({"isolates.id": document["isolate_id"]}, ["_id"])
-
-        if not virus:
-            await database.viruses.delete_one({"_id": document["_id"]})
-            continue
-        else:
-            await database.sequences.update_one({"_id": document["_id"]}, {
-                "$set": {
-                    "virus_id": virus["_id"]
-                }
-            })
-
 async def organize_indexes(db):
     await db.indexes.update_many({}, {
         "$unset": {
@@ -263,79 +199,6 @@ async def organize_indexes(db):
                 "username": ""
             }
         })
-
-
-async def organize_history(db):
-    """
-    For now, just rename the ``timestamp`` field to ``created_at``.
-
-    """
-    await virtool.organize_utils.update_user_field(db.history)
-
-    await db.history.update_many({}, {
-        "$rename": {
-            "changes": "diff",
-            "timestamp": "created_at",
-            "entry_id": "virus_id",
-            "entry_version": "virus_version"
-        },
-        "$unset": {
-            "annotation": "",
-            "_version": ""
-        }
-    })
-
-    async for change in db.history.find({}, ["index", "index_id", "index_version"]):
-        index = None
-
-        if "index" in change:
-            if isinstance(change["index"], str):
-                index = {
-                    "id": change["index"],
-                    "version": change["index_version"]
-                }
-        else:
-            index = {
-                "id": change["index_id"],
-                "version": change["index_version"]
-            }
-
-        if index:
-            await db.history.update_one({"_id": change["_id"]}, {
-                "$set": {
-                    "index": index
-                },
-                "$unset": {
-                    "index_id": "",
-                    "index_version": ""
-                }
-            })
-
-    async for change in db.history.find({"virus_id": {"$exists": True}}):
-        await db.history.update_one({"_id": change["_id"]}, {
-            "$set": {
-                "virus": {
-                    "id": change["virus_id"],
-                    "version": change["virus_version"],
-                    "name": change.get("virus_name", None)
-                }
-            },
-            "$unset": {
-                "virus_id": "",
-                "virus_version": "",
-                "virus_name": ""
-            }
-        })
-
-    async for change in db.history.find({"virus.name": None}, ["virus"]):
-        virus = await db.viruses.find_one(change["virus"]["id"], ["name"])
-
-        if virus:
-            await db.history.update_one({"_id": change["_id"]}, {
-                "$set": {
-                    "virus.name": virus["name"]
-                }
-            })
 
 
 async def organize_subtraction(db):

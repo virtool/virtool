@@ -170,8 +170,8 @@ def test_virus_list(test_merged_virus):
 
     for prefix, virus in [("second", second_virus), ("third", third_virus), ("fourth", fourth_virus)]:
         for i, isolate in enumerate(virus["isolates"]):
-            isolate["isolate_id"] = "{}_{}".format(prefix, i)
-            isolate["sequences"][0]["isolate_id"] = isolate["isolate_id"]
+            isolate["id"] = "{}_{}".format(prefix, i)
+            isolate["sequences"][0]["isolate_id"] = isolate["id"]
             isolate["sequences"][0]["_id"] = "{}_seq_{}".format(prefix, i)
 
     return [first_virus, second_virus, third_virus, fourth_virus]

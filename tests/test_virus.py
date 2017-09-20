@@ -1,12 +1,41 @@
 import os
+import sys
+import json
 import pytest
-
 from string import ascii_lowercase, digits
 from copy import deepcopy
 
 import virtool.virus
 
-FIXTURE_DIR = os.path.join(os.path.dirname(os.path.realpath(__file__)), "test_files")
+TEST_FILES_PATH = os.path.join(sys.path[0], "tests", "test_files")
+OLD_VIRUS_PATH = os.path.join(TEST_FILES_PATH, "old_virus.json")
+OLD_HISTORY_PATH = os.path.join(TEST_FILES_PATH, "old_history.json")
+OLD_SEQUENCES_PATH = os.path.join(TEST_FILES_PATH, "old_sequences.json")
+
+
+@pytest.fixture("session")
+def test_old_files():
+    with open(OLD_VIRUS_PATH, "r") as f:
+        virus = json.load(f)
+
+    with open(OLD_HISTORY_PATH, "r") as f:
+        history = json.load(f)
+
+    with open(OLD_SEQUENCES_PATH, "r") as f:
+        sequences = json.load(f)
+
+    return virus, sequences, history
+
+
+@pytest.fixture
+def test_old(loop, test_old_files, test_motor):
+    virus, sequences, history = test_old_files
+
+    loop.run_until_complete(test_motor.viruses.insert_one(virus))
+    loop.run_until_complete(test_motor.sequences.insert_many(sequences))
+    loop.run_until_complete(test_motor.history.insert_many(history))
+
+    return test_motor
 
 
 class TestJoin:
@@ -436,3 +465,10 @@ class TestFormatIsolateName:
             assert formatted == "Isolate 8816 - v2"
         else:
             assert formatted == "Unnamed Isolate"
+
+
+class TestUpgradeVirusAndHistoryFormat:
+
+    async def test(self, test_old, capsys):
+        with capsys.disabled():
+            await virtool.virus.upgrade_legacy_virus_and_history(test_old, "4114ebff")
