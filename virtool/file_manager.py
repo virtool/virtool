@@ -1,5 +1,6 @@
 import os
 import time
+import arrow
 import queue
 import asyncio
 import logging
@@ -125,6 +126,11 @@ class Manager:
 
                     except queue.Empty:
                         break
+
+                async for document in self.db.files.find({"expires_at": {"$ne": None}}, ["expires_at"]):
+                    if arrow.get(document["expires_at"]) <= arrow.utcnow():
+                        await self.db.files.delete_one({"_id": document["_id"]})
+                        os.remove(os.path.join(self.path, document["_id"]))
 
                 await asyncio.sleep(0.1, loop=self.loop)
 
