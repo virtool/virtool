@@ -91,15 +91,31 @@ async def init_db(app):
 
     db = motor_asyncio.AsyncIOMotorClient(io_loop=app.loop)[app["db_name"]]
 
-    logger.info("Organizing database...")
+    logger.info("Organizing viruses collection etc...")
+    await virtool.organize.organize_viruses_etc(db)
 
+    logger.info("Organizing jobs collection...")
     await virtool.organize.organize_jobs(db)
+
+    logger.info("Organizing samples collection...")
     await virtool.organize.organize_samples(db)
+
+    logger.info("Organizing analyses collection...")
     await virtool.organize.organize_analyses(db)
+
+    logger.info("Organizing indexes collection...")
     await virtool.organize.organize_indexes(db)
+
+    logger.info("Organizing subtraction collection...")
     await virtool.organize.organize_subtraction(db)
+
+    logger.info("Organizing users collection...")
     await virtool.organize.organize_users(db)
+
+    logger.info("Organizing groups collection...")
     await virtool.organize.organize_groups(db)
+
+    logger.info("Organizing status collection...")
     await virtool.organize.organize_status(db)
 
     logger.info("Creating database indexes...")
