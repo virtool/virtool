@@ -8,6 +8,11 @@ from virtool.user_permissions import PERMISSIONS
 from virtool.user_groups import merge_group_permissions
 
 
+async def organize_viruses_etc(db):
+    for virus_id in await db.viruses.find({"version": {"$exists": False}}).distinct("_id"):
+        await virtool.virus.upgrade_legacy_virus_and_history(db, virus_id)
+
+
 async def organize_jobs(db):
     """
     Unset deprecated fields ``_version`` and ``archived``. Update document to use new ``user`` subdocument structure.

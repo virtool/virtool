@@ -344,7 +344,7 @@ def merge_virus(virus, sequences):
 
     """
     for isolate in virus["isolates"]:
-        isolate_id = isolate.get("id", isolate["isolate_id"])
+        isolate_id = isolate.get("id", lambda: isolate["isolate_id"])
         isolate["sequences"] = [s for s in sequences if s["isolate_id"] == isolate_id]
 
     return virus
@@ -500,7 +500,7 @@ async def legacy_patch(db, virus_id, version):
     patched = dict(current)
 
     for history_document in virus_history:
-        if history_document["entry_version"] == "removed" or history_document["entry_version"] >= version:
+        if history_document["entry_version"] == "removed" or history_document["entry_version"] > version:
             reverted_history_ids.append(history_document["_id"])
 
             if history_document["method_name"] == "add":
@@ -566,7 +566,7 @@ async def upgrade_legacy_virus_and_history(db, virus_id):
     history = dict()
     versions = list()
 
-    # Do this because there is a chance, a change document may be missing.
+    # Do this because there is a chance a change document may be missing.
     async for change in db.history.find({"entry_id": virus_id}, sort=[("entry_version", 1)]):
         versions.append(change["entry_version"])
 
@@ -584,63 +584,65 @@ async def upgrade_legacy_virus_and_history(db, virus_id):
 
     for version in versions:
         _, patched, _ = await legacy_patch(db, virus_id, version)
-        patches.append(patched)
+        patches.append((patched, version))
 
-    patches.append(await legacy_join(db, virus_id))
-
-    assert patches[0] == "remove"
+    history_additions = list()
 
     previous = None
 
-    await db.history.delete_many({"entry_id": virus_id})
+    for patched, version in patches:
 
-    for patched in patches[1:]:
         upgraded = upgrade_legacy_virus(patched)
 
         method_name = "legacy"
         description = "No description"
 
-        await virtool.virus_history.add(
-            db,
-            method_name,
-            previous,
-            upgraded,
-            description,
-            "test"
-        )
-
-        change_id = "{}.{}".format(upgraded["_id"], upgraded["version"])
+        change_id = "{}.{}".format(upgraded["_id"], version)
 
         legacy_change = history[change_id]
 
-        created_at = legacy_change.pop("timestamp")
+        try:
+            created_at = legacy_change.pop("timestamp")
+        except KeyError:
+            print(legacy_change)
+            raise
 
         index = {
             "id": legacy_change.pop("index"),
             "version": legacy_change.pop("index_version")
         }
 
-        user = {
-            "id": legacy_change.pop("username")
-        }
+        user_id = legacy_change.pop("username")
 
-        await db.history.update_one({"_id": change_id}, {
-            "$set": {
-                "index": index,
-                "created_at": created_at,
-                "legacy": legacy_change,
-                "user": user
-            }
-        })
+        history_additions.append((change_id, (
+            db,
+            method_name,
+            previous,
+            upgraded,
+            description,
+            user_id
+        ), {
+            "index": index,
+            "created_at": created_at,
+            "legacy": legacy_change
+        }))
 
         previous = deepcopy(upgraded)
+
+    await db.history.delete_many({"entry_id": virus_id})
+
+    for addition in history_additions:
+        change_id = addition[0]
+        await virtool.virus_history.add(*addition[1])
+        await db.history.update_one({"_id": change_id}, {
+            "$set": addition[2]
+        })
 
     upgraded_current = upgrade_legacy_virus(await legacy_join(db, virus_id))
 
     virus, sequences = split_virus(upgraded_current)
 
-    await db.viruses.delete_one({"_id": virus_id})
-    await db.viruses.insert_one(virus)
+    await db.viruses.replace_one({"_id": virus_id}, virus)
 
     isolate_ids = extract_isolate_ids(virus)
 
