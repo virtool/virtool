@@ -128,6 +128,8 @@ def setup_analyses_routes(app):
 
 def setup_viruses_routes(app):
     app.router.add_get("/api/viruses", viruses.find)
+    app.router.add_get("/api/viruses/import", viruses.get_import)
+    app.router.add_post("/api/viruses/import", viruses.import_viruses)
     app.router.add_get("/api/viruses/{virus_id}", viruses.get)
     app.router.add_post("/api/viruses", viruses.create)
     app.router.add_patch("/api/viruses/{virus_id}", viruses.edit)
