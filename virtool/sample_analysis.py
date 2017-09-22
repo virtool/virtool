@@ -119,35 +119,17 @@ async def new(db, settings, manager, sample_id, user_id, algorithm):
 
 
 async def format_analysis(db, analysis):
-
-    isolate_fields = [
-        "id",
-        "default",
-        "source_name",
-        "source_type"
-    ]
-
-    sequence_fields = [
-        "host",
-        "definition"
-    ]
-
     if "pathoscope" in analysis["algorithm"]:
-        # Holds viruses that have already been fetched from the database. If another isolate of a previously
-        # fetched virus is found, there is no need for a round-trip back to the database.
-        fetched_viruses = dict()
-        reduced_isolates = dict()
-
         formatted = dict()
 
-        for sequence_id, hit in analysis["diagnosis"].items():
+        for hit in analysis["diagnosis"]:
 
             virus_id = hit["virus"]["id"]
             version = hit["virus"]["version"]
 
-            virus_document = fetched_viruses.get(virus_id, None)
+            virus = formatted.get(virus_id, None)
 
-            if virus_document is None:
+            if virus is None:
                 # Get the virus entry (patched to correct version).
                 _, virus_document, _ = await virtool.virus_history.patch_virus_to_version(
                     db,
@@ -155,44 +137,45 @@ async def format_analysis(db, analysis):
                     version
                 )
 
-                fetched_viruses[virus_id] = virus_document
+                max_ref_length = 0
 
-                formatted[virus_id] = {
+                for isolate in virus_document["isolates"]:
+                    max_ref_length = max(max_ref_length, max([len(s["sequence"]) for s in isolate["sequences"]]))
+
+                virus = {
                     "id": virus_id,
                     "name": virus_document["name"],
                     "version": virus_document["version"],
                     "abbreviation": virus_document["abbreviation"],
-                    "isolates": dict(),
-                    "length": 0
+                    "isolates": virus_document["isolates"],
+                    "length": max_ref_length
                 }
 
-            max_ref_length = 0
+                formatted[virus_id] = virus
 
-            for isolate in virus_document["isolates"]:
-                isolate_id = isolate["id"]
-
-                ref_length = 0
-
+            for isolate in virus["isolates"]:
                 for sequence in isolate["sequences"]:
-                    if sequence["id"] == sequence_id:
-                        if isolate_id not in reduced_isolates:
-                            reduced_isolate = dict({key: isolate[key] for key in isolate_fields}, sequences=list())
-                            formatted[virus_id]["isolates"][isolate_id] = reduced_isolate
-
-                        hit = dict(hit)
-                        hit.update({key: sequence[key] for key in sequence_fields})
-                        hit["id"] = sequence_id
-
-                        formatted[virus_id]["isolates"][isolate_id]["hits"].append(hit)
-
-                        ref_length += len(sequence["sequence"])
-
-                if ref_length > max_ref_length:
-                    max_ref_length = ref_length
-
-            formatted[virus_id]["length"] = max_ref_length
+                    if sequence["_id"] == hit["id"]:
+                        sequence.update(hit)
+                        sequence["length"] = len(sequence["sequence"])
+                        del sequence["sequence"]
 
         analysis["diagnosis"] = [formatted[virus_id] for virus_id in formatted]
+
+        for virus in analysis["diagnosis"]:
+            for isolate in list(virus["isolates"]):
+                keep = False
+
+                for sequence in list(isolate["sequences"]):
+                    if "pi" in sequence:
+                        keep = True
+                    else:
+                        isolate["sequences"].remove(sequence)
+
+                if not keep:
+                    virus["isolates"].remove(isolate)
+
+        return analysis
 
     if analysis["algorithm"] == "nuvs":
         for hmm_result in analysis["hmm"]:
