@@ -109,7 +109,6 @@ const virusesAPI = {
     },
 
     commitImport: (fileId) => {
-        console.log("API", fileId);
         return Request.post("/api/viruses/import")
             .send({file_id: fileId});
     }
