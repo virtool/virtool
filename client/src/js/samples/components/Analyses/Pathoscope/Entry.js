@@ -7,7 +7,7 @@ import { toScientificNotation } from "virtool/js/utils";
 export default class PathoscopeEntry extends React.Component {
 
     static propTypes = {
-        _id: React.PropTypes.string,
+        id: React.PropTypes.string,
         name: React.PropTypes.string,
         abbreviation: React.PropTypes.string,
 
@@ -25,7 +25,7 @@ export default class PathoscopeEntry extends React.Component {
         return this.props.in !== nextProps.in || this.props.showReads !== nextProps.showReads;
     }
 
-    toggleIn = () => this.props.toggleIn(this.props._id);
+    toggleIn = () => this.props.toggleIn(this.props.id);
 
     render () {
 

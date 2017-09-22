@@ -26,7 +26,7 @@ export default class PathoscopeList extends React.Component {
 
         let rows = this.props.data.map((item, index) => {
 
-            const expanded = includes(this.props.expanded, item._id);
+            const expanded = includes(this.props.expanded, item.id);
 
             const components = [
                 <PathoscopeEntry

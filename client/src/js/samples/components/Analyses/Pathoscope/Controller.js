@@ -30,15 +30,25 @@ export default class PathoscopeController extends React.Component {
 
     collapseAll = () => this.setState({expanded: []});
 
-    toggleIn = (virusId) => this.setState({expanded: xor(this.state.expanded, [virusId])});
+    toggleIn = (virusId) => {
+        this.setState({
+            expanded: xor(this.state.expanded, [virusId])
+        });
+    };
 
-    toggleShowReads = () => this.setState({showReads: !this.state.showReads});
+    toggleShowReads = () => {
+        this.setState({
+            showReads: !this.state.showReads
+        });
+    };
 
-    setFindTerm = (event) => this.setState({findTerm: event.target.value});
+    setSortKey = (event) => {
+        this.setState({sortKey: event.target.value});
+    };
 
-    setSortKey = (event) => this.setState({sortKey: event.target.value});
-
-    toggleSortDescending = () =>this.setState({sortDescending: !this.state.sortDescending});
+    toggleSortDescending = () => {
+        this.setState({sortDescending: !this.state.sortDescending});
+    };
 
     filter = (eventKey) => {
 
@@ -94,7 +104,10 @@ export default class PathoscopeController extends React.Component {
                             <InputGroup.Addon>
                                 <Icon name="search" />
                             </InputGroup.Addon>
-                            <FormControl value={this.state.findTerm} onChange={this.setFindTerm} />
+                            <FormControl
+                                value={this.state.findTerm}
+                                onChange={(e) => this.setState({findTerm: e.target.value})}
+                            />
                         </InputGroup>
                     </FormGroup>
 
