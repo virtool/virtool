@@ -487,19 +487,17 @@ async def legacy_join(db, virus_id):
 async def legacy_patch(db, virus_id, version):
     joined = await legacy_join(db, virus_id)
 
-    virus_history = await db.history.find({"entry_id": virus_id}).to_list(None)
+    virus_history = await db.history.find({"entry_id": virus_id}, sort=[("entry_version", -1)]).to_list(None)
 
     current = joined or dict()
 
     # A list of history_ids reverted to produce the patched entry.
     reverted_history_ids = list()
 
-    # Sort the changes be descending entry version.
-    virus_history = sorted(virus_history, key=lambda x: x["entry_version"], reverse=True)
-
     patched = deepcopy(current)
 
     for history_document in virus_history:
+
         if history_document["entry_version"] == "removed" or history_document["entry_version"] > version:
             reverted_history_ids.append(history_document["_id"])
 
@@ -582,22 +580,34 @@ async def upgrade_legacy_virus_and_history(db, virus_id):
     # A list of all the different versions of joined viruses.
     patches = list()
 
+    current = await legacy_join(db, virus_id)
+
+    current_version = versions.pop()
+
+    try:
+        assert current["_version"] == current_version
+    except TypeError:
+        assert current is None and current_version == "removed"
+
     for version in versions:
         _, patched, _ = await legacy_patch(db, virus_id, version)
         patches.append((patched, version))
+
+    patches.append((current, current_version))
 
     history_additions = list()
 
     previous = None
 
     for patched, version in patches:
+        if patched is not None:
+            upgraded = upgrade_legacy_virus(patched)
+        else:
+            upgraded = patched
 
-        upgraded = upgrade_legacy_virus(patched)
-
-        method_name = "legacy"
         description = "No description"
 
-        change_id = "{}.{}".format(upgraded["_id"], version)
+        change_id = "{}.{}".format(virus_id, version)
 
         legacy_change = history[change_id]
 
@@ -607,6 +617,13 @@ async def upgrade_legacy_virus_and_history(db, virus_id):
             "id": legacy_change.pop("index"),
             "version": legacy_change.pop("index_version")
         }
+
+        if version == 0:
+            method_name = "create"
+        elif version == "removed":
+            method_name = "remove"
+        else:
+            method_name = "legacy"
 
         user_id = legacy_change.pop("username")
 
@@ -634,15 +651,16 @@ async def upgrade_legacy_virus_and_history(db, virus_id):
             "$set": addition[2]
         })
 
-    upgraded_current = upgrade_legacy_virus(await legacy_join(db, virus_id))
+    if current:
+        upgraded_current = upgrade_legacy_virus(current)
 
-    virus, sequences = split_virus(upgraded_current)
+        virus, sequences = split_virus(upgraded_current)
 
-    await db.viruses.replace_one({"_id": virus_id}, virus)
+        await db.viruses.replace_one({"_id": virus_id}, virus)
 
-    isolate_ids = extract_isolate_ids(virus)
+        isolate_ids = extract_isolate_ids(virus)
 
-    await db.sequences.delete_many({"isolate_id": {"$in": isolate_ids}})
+        await db.sequences.delete_many({"isolate_id": {"$in": isolate_ids}})
 
-    if sequences:
-        await db.sequences.insert_many(sequences)
+        if sequences:
+            await db.sequences.insert_many(sequences)

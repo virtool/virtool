@@ -7,6 +7,9 @@ import concurrent.futures
 
 from aiohttp import web
 from motor import motor_asyncio
+from raven import Client
+from raven.conf import setup_logging
+from raven.handlers.logging import SentryHandler
 
 import virtool.app_routes
 import virtool.app_dispatcher
@@ -24,6 +27,12 @@ import virtool.utils
 
 
 logger = logging.getLogger(__name__)
+
+client = Client("https://9a2f8d1a3f7a431e873207a70ef3d44d:ca6db07b82934005beceae93560a6794@sentry.io/220532")
+
+handler = SentryHandler(client)
+handler.setLevel(logging.ERROR)
+setup_logging(handler)
 
 
 def init_thread_pool_executor(app):
@@ -91,31 +100,33 @@ async def init_db(app):
 
     db = motor_asyncio.AsyncIOMotorClient(io_loop=app.loop)[app["db_name"]]
 
-    logger.info("Organizing viruses collection etc...")
-    await virtool.organize.organize_viruses_etc(db)
+    logger.info("Starting database checks. Do not interrupt. This may take several minutes.")
 
-    logger.info("Organizing jobs collection...")
+    logger.info("Checking viruses...")
+    await virtool.organize.organize_viruses(db, logger.info)
+
+    logger.info("Checking jobs...")
     await virtool.organize.organize_jobs(db)
 
-    logger.info("Organizing samples collection...")
+    logger.info("Checking samples...")
     await virtool.organize.organize_samples(db)
 
-    logger.info("Organizing analyses collection...")
-    await virtool.organize.organize_analyses(db)
+    logger.info("Checking analyses...")
+    await virtool.organize.organize_analyses(db, logger.info)
 
-    logger.info("Organizing indexes collection...")
+    logger.info("Checking indexes...")
     await virtool.organize.organize_indexes(db)
 
-    logger.info("Organizing subtraction collection...")
+    logger.info("Checking subtraction...")
     await virtool.organize.organize_subtraction(db)
 
-    logger.info("Organizing users collection...")
-    await virtool.organize.organize_users(db)
-
-    logger.info("Organizing groups collection...")
+    logger.info("Checking groups...")
     await virtool.organize.organize_groups(db)
 
-    logger.info("Organizing status collection...")
+    logger.info("Checking users...")
+    await virtool.organize.organize_users(db)
+
+    logger.info("Checking status...")
     await virtool.organize.organize_status(db)
 
     logger.info("Creating database indexes...")
