@@ -344,7 +344,7 @@ def merge_virus(virus, sequences):
 
     """
     for isolate in virus["isolates"]:
-        isolate_id = isolate.get("id", lambda: isolate["isolate_id"])
+        isolate_id = isolate.get("id", None) or isolate.get("isolate_id", None)
         isolate["sequences"] = [s for s in sequences if s["isolate_id"] == isolate_id]
 
     return virus
@@ -495,9 +495,9 @@ async def legacy_patch(db, virus_id, version):
     reverted_history_ids = list()
 
     # Sort the changes be descending entry version.
-    virus_history = sorted(virus_history, key=lambda x: x["timestamp"], reverse=True)
+    virus_history = sorted(virus_history, key=lambda x: x["entry_version"], reverse=True)
 
-    patched = dict(current)
+    patched = deepcopy(current)
 
     for history_document in virus_history:
         if history_document["entry_version"] == "removed" or history_document["entry_version"] > version:
@@ -601,11 +601,7 @@ async def upgrade_legacy_virus_and_history(db, virus_id):
 
         legacy_change = history[change_id]
 
-        try:
-            created_at = legacy_change.pop("timestamp")
-        except KeyError:
-            print(legacy_change)
-            raise
+        created_at = legacy_change.pop("timestamp")
 
         index = {
             "id": legacy_change.pop("index"),
@@ -647,4 +643,6 @@ async def upgrade_legacy_virus_and_history(db, virus_id):
     isolate_ids = extract_isolate_ids(virus)
 
     await db.sequences.delete_many({"isolate_id": {"$in": isolate_ids}})
-    await db.sequences.insert_many(sequences)
+
+    if sequences:
+        await db.sequences.insert_many(sequences)
