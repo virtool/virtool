@@ -80,7 +80,7 @@ const createChart = (element, data, meta, yMax, xMin, showYAxis) => {
     svg.append("text")
         .attr("class", "coverage-label small")
         .attr("transform", "translate(4,10)")
-        .text(`${meta.accession} - ${meta.definition}`);
+        .text(`${meta.id} - ${meta.definition}`);
 };
 
 export default class CoverageChart extends React.Component {
@@ -110,7 +110,7 @@ export default class CoverageChart extends React.Component {
         createChart(
             this.chartNode,
             this.props.data,
-            pick(this.props, ["accession", "definition"]),
+            pick(this.props, ["id", "definition"]),
             this.props.yMax,
             this.chartNode.offsetWidth,
             this.props.showYAxis

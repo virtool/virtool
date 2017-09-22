@@ -16,7 +16,7 @@ export default class PathoscopeIsolate extends React.Component {
         maxDepth: React.PropTypes.number,
         reads: React.PropTypes.number,
 
-        hits: React.PropTypes.arrayOf(React.PropTypes.object),
+        sequences: React.PropTypes.arrayOf(React.PropTypes.object),
 
         setScroll: React.PropTypes.func,
         showReads: React.PropTypes.bool
@@ -49,11 +49,11 @@ export default class PathoscopeIsolate extends React.Component {
             width: 0
         };
 
-        const hitComponents = sortBy(this.props.hits, hit => hit.align.length).map((hit, i) =>
-            <div key={hit.accession} style={hitContainerStyle}>
+        const hitComponents = sortBy(this.props.sequences, hit => hit.length).map((hit, i) =>
+            <div key={i} style={hitContainerStyle}>
                 <Coverage
                     data={hit.align}
-                    accession={hit.accession}
+                    id={hit.id}
                     definition={hit.definition}
                     yMax={this.props.maxDepth}
                     showYAxis={i === 0}
