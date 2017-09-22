@@ -8,9 +8,16 @@ from virtool.user_permissions import PERMISSIONS
 from virtool.user_groups import merge_group_permissions
 
 
-async def organize_viruses_etc(db):
-    for virus_id in await db.viruses.find({"version": {"$exists": False}}).distinct("_id"):
+async def organize_viruses(db, logger_cb=None):
+    count = 0
+
+    for virus_id in await db.history.distinct("entry_id"):
         await virtool.virus.upgrade_legacy_virus_and_history(db, virus_id)
+        count += 1
+
+        if logger_cb and count % 100 == 0:
+            logger_cb("  {}".format(count))
+
 
 
 async def organize_jobs(db):
@@ -80,7 +87,7 @@ async def organize_samples(db):
             })
 
 
-async def organize_analyses(db):
+async def organize_analyses(db, logger_cb=None):
     """
     Bring analysis documents up-to-date by doing the following:
 
@@ -96,44 +103,58 @@ async def organize_analyses(db):
     await virtool.organize_utils.unset_version_field(db.analyses)
     await virtool.organize_utils.update_user_field(db.analyses)
 
-    async for analysis in db.analyses.find({"index_id": {"$exists": True}}, ["index_id", "index_version"]):
-        await db.analyses.update_one({"_id": analysis["_id"]}, {
+    projection = ["sample_id", "sample", "diagnosis", "index_id", "index_version"]
+
+    count = 0
+
+    await db.analyses.delete_many({"ready": False})
+
+    async for analysis in db.analyses.find({"index_id": {"$exists": True}}, projection):
+        new_diagnosis = list()
+
+        for sequence_id, hit in analysis["diagnosis"].items():
+            hit.update({
+                "id": sequence_id,
+                "virus": {
+                    "id": hit.pop("virus_id"),
+                    "version": hit.pop("virus_version")
+                }
+            })
+
+            new_diagnosis.append(hit)
+
+        update = {
             "$set": {
+                "diagnosis": new_diagnosis,
                 "index": {
-                    "id": analysis["index_id"],
-                    "version": analysis["index_version"]
+                    "id": analysis.pop("index_id"),
+                    "version": analysis.pop("index_version")
+                },
+                "job": {
+                    "id": analysis.get("job", None)
                 }
             },
             "$unset": {
                 "index_id": "",
                 "index_version": ""
             }
-        })
+        }
 
-    async for analysis in db.analyses.find({}, ["sample_id", "sample"]):
         sample_id = analysis.get("sample_id", None) or analysis.get("sample", None)
 
         if isinstance(sample_id, str):
-            await db.analyses.update_one({"_id": analysis["_id"]}, {
-                "$set": {
-                    "sample": {
-                        "id": sample_id
-                    }
-                },
-                "$unset": {
-                    "sample_id": ""
-                }
-            })
+            update["$set"]["sample"] = {
+                "id": sample_id
+            }
 
-    async for analysis in db.analyses.find({"job": {"$exists": True}}, ["job"]):
-        if isinstance(analysis["job"], str):
-            await db.analyses.update_one({"_id": analysis["_id"]}, {
-                "$set": {
-                    "job": {
-                        "id": analysis["job"]
-                    }
-                }
-            })
+            update["$unset"]["sample_id"] = ""
+
+        await db.analyses.update_one({"_id": analysis["_id"]}, update)
+
+        count += 1
+
+        if logger_cb and count % 100 == 0:
+            logger_cb("  {}".format(count))
 
     # If the algorithm field is unset, set it to ``pathoscope_bowtie``.
     await db.analyses.update_many({"algorithm": {"$exists": False}}, {
