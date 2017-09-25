@@ -110,7 +110,7 @@ async def test_calculate_coverage(tmpdir, test_sam_path):
 
                 ref_lengths[ref_id] = length
 
-    await virtool.pathoscope.calculate_coverage(vta_path, ref_lengths)
+    virtool.pathoscope.calculate_coverage(vta_path, ref_lengths)
 
 
 async def test_write_report(tmpdir):
