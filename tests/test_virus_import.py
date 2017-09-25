@@ -1,8 +1,13 @@
 import os
+import pytest
+from copy import deepcopy
+
+import virtool.virus_import
+
 
 FIXTURE_DIR = os.path.join(os.path.dirname(os.path.realpath(__file__)), "test_files")
 
-'''
+
 @pytest.fixture
 def iresine():
     return {
@@ -13,7 +18,7 @@ def iresine():
         "isolates": [
             {
                 "source_name": "",
-                "isolate_id": "6kplarn7",
+                "id": "6kplarn7",
                 "source_type": "unknown",
                 "default": True
             }
@@ -35,8 +40,240 @@ def iresine_sequence():
 
 @pytest.fixture
 def duplicate_result():
-    return {"isolate_id": [], "_id": [], "name": [], "sequence_id": [], "abbreviation": []}
+    return {
+        "isolate_id": [],
+        "_id": [],
+        "name": [],
+        "sequence_id": [],
+        "abbreviation": []
+    }
 
+
+class TestVerifyVirusList:
+
+    def test(self, test_virus_list):
+        """
+        Test that a valid virus list returns no duplicates or errors.
+
+        """
+        result = virtool.virus_import.verify_virus_list(test_virus_list)
+        assert result == (None, None)
+
+    @pytest.mark.parametrize("multiple", [False, True])
+    def test_duplicate_virus_ids(self, multiple, test_virus_list):
+        test_virus_list[0]["_id"] = "067jz0t3"
+
+        if multiple:
+            test_virus_list[3]["_id"] = "067jz213"
+
+        duplicates, error = virtool.virus_import.verify_virus_list(test_virus_list)
+
+        assert error is None
+
+        assert all([duplicates[key] == [] for key in ["isolate_id", "name", "abbreviation", "sequence_id"]])
+
+        expected = {"067jz0t3"}
+
+        if multiple:
+            expected.add("067jz213")
+
+        assert set(duplicates["_id"]) == expected
+
+    def test_empty_abbreviations(self, test_virus_list):
+        """
+        Ensure that abbreviations with value "" are not counted as duplicates.
+
+        """
+        test_virus_list[0]["abbreviation"] = ""
+        test_virus_list[1]["abbreviation"] = ""
+
+        result = virtool.virus_import.verify_virus_list(test_virus_list)
+
+        assert result == (None, None)
+
+    @pytest.mark.parametrize("multiple", [False, True])
+    def test_duplicate_abbreviations(self, multiple, test_virus_list):
+        """
+        Test that duplicate abbreviations are detected. Use parametrization to test if single and multiple occurrences
+        are detected.
+
+        """
+        test_virus_list[0]["abbreviation"] = "TST"
+
+        if multiple:
+            test_virus_list[3]["abbreviation"] = "EXV"
+
+        duplicates, error = virtool.virus_import.verify_virus_list(test_virus_list)
+
+        assert error is None
+
+        for key in ["isolate_id", "name", "_id", "sequence_id"]:
+            assert duplicates[key] == []
+
+        expected = {"TST"}
+
+        if multiple:
+            expected.add("EXV")
+
+        assert set(duplicates["abbreviation"]) == expected
+
+    @pytest.mark.parametrize("multiple", [False, True])
+    def test_duplicate_names(self, multiple, test_virus_list):
+        """
+        Test that duplicate virus names are detected. Use parametrization to test if single and multiple occurrences are
+        detected.
+
+        """
+        # Add a duplicate virus name to the list.
+        test_virus_list[1]["name"] = "Prunus virus F"
+
+        if multiple:
+            test_virus_list[3]["name"] = "Example virus"
+
+        duplicates, error = virtool.virus_import.verify_virus_list(test_virus_list)
+
+        assert error is None
+
+        assert all([duplicates[key] == [] for key in ["isolate_id", "_id", "sequence_id"]])
+
+        expected = {"prunus virus f"}
+
+        if multiple:
+            expected.add("example virus")
+
+        assert set(duplicates["name"]) == expected
+
+    @pytest.mark.parametrize("multiple", [False, True])
+    def test_duplicate_sequence_ids(self, multiple, test_virus_list):
+        """
+        Test that duplicate sequence ids in a virus list are detected. Use parametrization to test if single and
+        multiple occurrences are detected.
+
+        """
+        test_virus_list[0]["isolates"][0]["sequences"].append(
+            dict(test_virus_list[0]["isolates"][0]["sequences"][0])
+        )
+
+        if multiple:
+            test_virus_list[1]["isolates"][0]["sequences"].append(
+                dict(test_virus_list[1]["isolates"][0]["sequences"][0])
+            )
+
+        duplicates, error = virtool.virus_import.verify_virus_list(test_virus_list)
+
+        assert error is None
+
+        assert all([duplicates[key] == [] for key in ["isolate_id", "_id", "name", "abbreviation"]])
+
+        expected = {test_virus_list[0]["isolates"][0]["sequences"][0]["_id"]}
+
+        if multiple:
+            expected.add(test_virus_list[1]["isolates"][0]["sequences"][0]["_id"])
+
+        assert set(duplicates["sequence_id"]) == expected
+
+    def test_isolate_inconsistency(self, test_virus_list):
+        """
+        Test that viruses containing isolates associated with disparate numbers of sequences are detected.
+
+        """
+        extra_isolate = deepcopy(test_virus_list[0]["isolates"][0])
+
+        test_virus_list[0]["isolates"].append(extra_isolate)
+
+        extra_isolate.update({
+            "_id": "extra",
+            "isolate_id": "extra"
+        })
+
+        extra_isolate["sequences"][0].update({
+            "_id": "extra_0",
+            "isolate_id": "extra"
+        })
+
+        extra_sequence = dict(test_virus_list[0]["isolates"][0]["sequences"][0])
+
+        extra_sequence.update({
+            "_id": "extra_1",
+            "isolate_id": "extra"
+        })
+
+        extra_isolate["sequences"].append(extra_sequence)
+
+        duplicates, errors = virtool.virus_import.verify_virus_list(test_virus_list)
+
+        assert duplicates is None
+
+        assert errors["prunus virus f"]["isolate_inconsistency"]
+
+    @pytest.mark.parametrize("multiple", [False, True])
+    def test_empty_virus(self, multiple, test_virus_list):
+        """
+        Test that viruses with no isolates are detected. Use parametrization to test if single and multiple occurrences
+        are detected.
+
+        """
+        test_virus_list[0]["isolates"] = list()
+
+        if multiple:
+            test_virus_list[1]["isolates"] = list()
+
+        duplicates, errors = virtool.virus_import.verify_virus_list(test_virus_list)
+
+        assert duplicates is None
+
+        assert errors["prunus virus f"]["empty_virus"]
+
+        if multiple:
+            assert errors["test virus"]["empty_virus"] is True
+
+    @pytest.mark.parametrize("multiple", [False, True])
+    def test_empty_isolate(self, multiple, test_virus_list):
+        """
+        Test that isolates with no sequences are detected. Use parametrization to test if single and multiple
+        occurrences are detected.
+
+        """
+        test_virus_list[0]["isolates"][0]["sequences"] = list()
+
+        if multiple:
+            test_virus_list[1]["isolates"][0]["sequences"] = list()
+
+        import pprint
+        pprint.pprint(test_virus_list)
+
+        duplicates, errors = virtool.virus_import.verify_virus_list(test_virus_list)
+
+        pprint.pprint(errors)
+
+        assert errors["prunus virus f"]["empty_isolate"] == ["cab8b360"]
+
+        if multiple:
+            assert errors["test virus"]["empty_isolate"] == ["second_0"]
+
+    @pytest.mark.parametrize("multiple", [False, True])
+    def test_empty_sequences(self, multiple, test_virus_list):
+        """
+        Test that sequences with empty ``sequence`` fields are detected. Use parametrization to test if single and
+        multiple occurrences are detected.
+
+        """
+        test_virus_list[1]["isolates"][0]["sequences"][0]["sequence"] = ""
+
+        if multiple:
+            test_virus_list[2]["isolates"][0]["sequences"][0]["sequence"] = ""
+
+        duplicates, errors = virtool.virus_import.verify_virus_list(test_virus_list)
+
+        assert duplicates is None
+
+        assert errors["test virus"]["empty_sequence"][0]["_id"] == "second_seq_0"
+
+        if multiple:
+            assert errors["example virus"]["empty_sequence"][0]["_id"] == "third_seq_0"
+
+
+'''
 
 class TestImportFile:
 
@@ -432,286 +669,10 @@ class TestImportFile:
         )
 
 
-class TestVerifyVirusList:
-    def test_valid(self, test_virus_list):
-        """
-        Test that a valid virus list returns no duplicates or errors.
 
-        """
-        result = virtool.virus_import.verify_virus_list(test_virus_list)
-        assert result == (None, None)
 
-    @pytest.mark.parametrize("multiple", [False, True])
-    def test_duplicate_virus_ids(self, multiple, test_virus_list):
-        test_virus_list[0]["_id"] = "067jz0t3"
 
-        if multiple:
-            test_virus_list[3]["_id"] = "067jz213"
 
-        duplicates, error = virtool.virus_import.verify_virus_list(test_virus_list)
-
-        assert error is None
-
-        assert all([duplicates[key] == [] for key in ["isolate_id", "name", "abbreviation", "sequence_id"]])
-
-        expected = {"067jz0t3"}
-
-        if multiple:
-            expected.add("067jz213")
-
-        assert set(duplicates["_id"]) == expected
-
-    def test_empty_abbreviations(self, test_virus_list, duplicate_result):
-        """
-        Ensure that abbreviations with value "" are not counted as duplicates.
-
-        """
-        test_virus_list[0]["abbreviation"] = ""
-        test_virus_list[1]["abbreviation"] = ""
-
-        result = virtool.virus_import.verify_virus_list(test_virus_list)
-
-        assert result == (None, None)
-
-    @pytest.mark.parametrize("multiple", [False, True])
-    def test_duplicate_abbreviations(self, multiple, test_virus_list):
-        """
-        Test that duplicate abbreviations are detected. Use parametrization to test if single and multiple occurrences
-        are detected.
-
-        """
-        test_virus_list[0]["abbreviation"] = "TST"
-
-        if multiple:
-            test_virus_list[3]["abbreviation"] = "EXV"
-
-        duplicates, error = virtool.virus_import.verify_virus_list(test_virus_list)
-
-        assert error is None
-
-        for key in ["isolate_id", "name", "_id", "sequence_id"]:
-            assert duplicates[key] == []
-
-        expected = {"TST"}
-
-        if multiple:
-            expected.add("EXV")
-
-        assert set(duplicates["abbreviation"]) == expected
-
-    @pytest.mark.parametrize("multiple", [False, True])
-    def test_duplicate_names(self, multiple, test_virus_list):
-        """
-        Test that duplicate virus names are detected. Use parametrization to test if single and multiple occurrences are
-        detected.
-
-        """
-        # Add a duplicate virus name to the list.
-        test_virus_list[1]["name"] = "Prunus virus F"
-
-        if multiple:
-            test_virus_list[3]["name"] = "Example virus"
-
-        duplicates, error = virtool.virus_import.verify_virus_list(test_virus_list)
-
-        assert error is None
-
-        assert all([duplicates[key] == [] for key in ["isolate_id", "_id", "sequence_id"]])
-
-        expected = {"prunus virus f"}
-
-        if multiple:
-            expected.add("example virus")
-
-        assert set(duplicates["name"]) == expected
-
-    @pytest.mark.parametrize("multiple", [False, True])
-    def test_duplicate_sequence_ids(self, multiple, test_virus_list):
-        """
-        Test that duplicate sequence ids in a virus list are detected. Use parametrization to test if single and
-        multiple occurrences are detected.
-
-        """
-        test_virus_list[0]["isolates"][0]["sequences"].append(
-            dict(test_virus_list[0]["isolates"][0]["sequences"][0])
-        )
-
-        if multiple:
-            test_virus_list[1]["isolates"][0]["sequences"].append(
-                dict(test_virus_list[1]["isolates"][0]["sequences"][0])
-            )
-
-        duplicates, error = virtool.virus_import.verify_virus_list(test_virus_list)
-
-        assert error is None
-
-        assert all([duplicates[key] == [] for key in ["isolate_id", "_id", "name", "abbreviation"]])
-
-        expected = {test_virus_list[0]["isolates"][0]["sequences"][0]["_id"]}
-
-        if multiple:
-            expected.add(test_virus_list[1]["isolates"][0]["sequences"][0]["_id"])
-
-        assert set(duplicates["sequence_id"]) == expected
-
-    def test_isolate_inconsistency(self, test_virus_list):
-        """
-        Test that viruses containing isolates associated with disparate numbers of sequences are detected.
-
-        """
-        extra_isolate = deepcopy(test_virus_list[0]["isolates"][0])
-
-        test_virus_list[0]["isolates"].append(extra_isolate)
-
-        extra_isolate.update({
-            "_id": "extra",
-            "isolate_id": "extra"
-        })
-
-        extra_isolate["sequences"][0].update({
-            "_id": "extra_0",
-            "isolate_id": "extra"
-        })
-
-        extra_sequence = dict(test_virus_list[0]["isolates"][0]["sequences"][0])
-
-        extra_sequence.update({
-            "_id": "extra_1",
-            "isolate_id": "extra"
-        })
-
-        extra_isolate["sequences"].append(extra_sequence)
-
-        duplicates, errors = virtool.virus_import.verify_virus_list(test_virus_list)
-
-        assert duplicates is None
-
-        assert errors["prunus virus f"]["isolate_inconsistency"]
-
-    @pytest.mark.parametrize("multiple", [False, True])
-    def test_empty_virus(self, multiple, test_virus_list):
-        """
-        Test that viruses with no isolates are detected. Use parametrization to test if single and multiple occurrences
-        are detected.
-
-        """
-        test_virus_list[0]["isolates"] = list()
-
-        if multiple:
-            test_virus_list[1]["isolates"] = list()
-
-        duplicates, errors = virtool.virus_import.verify_virus_list(test_virus_list)
-
-        assert duplicates is None
-
-        assert errors["prunus virus f"]["empty_virus"]
-
-        if multiple:
-            assert errors["test virus"]["empty_virus"] is True
-
-    @pytest.mark.parametrize("multiple", [False, True])
-    def test_empty_isolate(self, multiple, test_virus_list):
-        """
-        Test that isolates with no sequences are detected. Use parametrization to test if single and multiple
-        occurrences are detected.
-
-        """
-        test_virus_list[0]["isolates"][0]["sequences"] = list()
-
-        if multiple:
-            test_virus_list[1]["isolates"][0]["sequences"] = list()
-
-        duplicates, errors = virtool.virus_import.verify_virus_list(test_virus_list)
-
-        assert errors["prunus virus f"]["empty_isolate"] == ["cab8b360"]
-
-        if multiple:
-            assert errors["test virus"]["empty_isolate"] == ["second_0"]
-
-    @pytest.mark.parametrize("multiple", [False, True])
-    def test_empty_sequences(self, multiple, test_virus_list):
-        """
-        Test that sequences with empty ``sequence`` fields are detected. Use parametrization to test if single and
-        multiple occurrences are detected.
-
-        """
-        test_virus_list[1]["isolates"][0]["sequences"][0]["sequence"] = ""
-
-        if multiple:
-            test_virus_list[2]["isolates"][0]["sequences"][0]["sequence"] = ""
-
-        duplicates, errors = virtool.virus_import.verify_virus_list(test_virus_list)
-
-        assert duplicates is None
-
-        assert errors["test virus"]["empty_sequence"][0]["_id"] == "second_seq_0"
-
-        if multiple:
-            assert errors["example virus"]["empty_sequence"][0]["_id"] == "third_seq_0"
-
-
-class TestFindImportConflicts:
-
-    async def test_empty_collection(self, test_motor, test_virus_list):
-        """
-        Test that no conflicts are found when the sequence collection is empty.
-
-        """
-        result = await virtool.virus_import.find_import_conflicts(test_motor, test_virus_list, False)
-
-        assert result is None
-
-    async def test_no_conflicts(self, test_motor, test_virus_list, iresine, iresine_sequence):
-        """
-        Test that no conflicts are found when the sequence collection is populated, but there are no conflicts.
-
-        """
-        await test_motor.viruses.insert(iresine)
-        await test_motor.sequences.insert(iresine_sequence)
-
-        result = await virtool.virus_import.find_import_conflicts(test_motor, test_virus_list, False)
-
-        assert result is None
-
-    @pytest.mark.parametrize("replace", [True, False])
-    async def test_existing_sequence_id(self, replace, test_motor, test_virus_list, iresine, iresine_sequence):
-        """
-        Test that a conflict is found when ``replace`` is ``True`` or ``False`` and an imported sequence id already
-        exists in the database.
-
-        """
-        await test_motor.viruses.insert(iresine)
-        await test_motor.sequences.insert(iresine_sequence)
-
-        # Replace CMV's first sequence id with the one from ``iresine_sequence``. This creates a situation in which we
-        # are attempting to import a sequence id (NC_003613) that already exists in another virus (IrVd).
-        test_virus_list[0]["isolates"][0]["sequences"][0]["_id"] = "NC_003613"
-
-        result = await virtool.virus_import.find_import_conflicts(test_motor, test_virus_list, replace)
-
-        assert result == [('008lgo', 'Iresine viroid', 'NC_003613')]
-
-    async def test_existing_sequence_id_same_virus(self, test_motor, test_virus_list, iresine, iresine_sequence):
-        """
-        Test that no conflict is found when ``replace`` is ``True`` and and imported sequence id already exists in the
-        same virus as the one being imported.
-
-        """
-        iresine.update({
-            "user_id": "test",
-            "lower_name": "iresine viroid"
-        })
-
-        await test_motor.viruses.insert(iresine)
-        await test_motor.sequences.insert(iresine_sequence)
-
-        iresine["isolates"][0]["sequences"] = [iresine_sequence]
-
-        test_virus_list.append(iresine)
-
-        result = await virtool.virus_import.find_import_conflicts(test_motor, test_virus_list, True, ["iresine viroid"])
-
-        assert result is None
 
 
 class TestSendImportDispatches:
