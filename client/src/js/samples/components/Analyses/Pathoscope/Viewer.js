@@ -61,7 +61,7 @@ const PathoscopeViewer = (props) => {
                         isolateDepth = hitDepth;
                     }
 
-                    genomeLength += hit.align.length;
+                    genomeLength += hit.length;
 
                     if (hit.coverage > isolate.coverage) {
                         isolate.coverage = hit.coverage;

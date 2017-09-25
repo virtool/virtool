@@ -16,6 +16,7 @@ class AnalysisDetail extends React.Component {
         match: PropTypes.object,
         name: PropTypes.string,
         detail: PropTypes.object,
+        quality: PropTypes.object,
         getAnalysis: PropTypes.func
     };
 
@@ -38,7 +39,7 @@ class AnalysisDetail extends React.Component {
         let content;
 
         if (detail.algorithm === "pathoscope_bowtie") {
-            content = <PathoscopeViewer {...detail}/>;
+            content = <PathoscopeViewer {...detail} maxReadLength={this.props.quality.length[1]} />;
         }
 
         if (detail.algorithm === "nuvs") {
@@ -82,7 +83,8 @@ class AnalysisDetail extends React.Component {
 
 const mapStateToProps = (state) => {
     return {
-        detail: state.samples.analysisDetail
+        detail: state.samples.analysisDetail,
+        quality: state.samples.detail.quality
     };
 };
 

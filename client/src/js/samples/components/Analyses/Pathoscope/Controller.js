@@ -1,7 +1,7 @@
 import React from "react";
-import { assign, xor, sortBy, sum, map, filter } from "lodash";
+import { assign, xor, sortBy, sum, filter } from "lodash";
 import { Icon, Flex, FlexItem, Button, Checkbox } from "virtool/js/components/Base";
-import { Dropdown, MenuItem, FormGroup, InputGroup, FormControl } from "react-bootstrap";
+import { Row, Col, Dropdown, MenuItem, FormGroup, InputGroup, FormControl } from "react-bootstrap";
 
 import PathoscopeList from "./List";
 
@@ -52,22 +52,20 @@ export default class PathoscopeController extends React.Component {
 
     filter = (eventKey) => {
 
-        switch (eventKey) {
-
-            case "viruses":
-                this.setState({filterViruses: !this.state.filterViruses});
-                break;
-
-            case "isolates":
-                this.setState({filterIsolates: !this.state.filterIsolates});
-                break;
-
-            default:
-                this.setState({
-                    filterViruses: false,
-                    filterIsolates: false
-                });
+        if (eventKey === "viruses") {
+            return this.setState({filterViruses: !this.state.filterViruses});
         }
+
+        if (eventKey === "isolates") {
+            return this.setState({filterIsolates: !this.state.filterIsolates});
+        }
+
+        const filterValue = !(this.state.filterViruses && this.state.filterIsolates);
+
+        return this.setState({
+            filterViruses: filterValue,
+            filterIsolates: filterValue
+        });
     };
 
     render () {
@@ -75,20 +73,21 @@ export default class PathoscopeController extends React.Component {
         let data = sortBy(this.props.data, this.state.sortKey);
 
         if (this.state.filterViruses) {
-            const totalReadsMapped = sum(map(data, "reads"));
+            const totalReadsMapped = sum(data.map(v => v.reads));
 
             const re = this.state.findTerm ? new RegExp(this.state.findTerm, "i"): null;
 
             data = filter(data, (virus) => (
-                (virus.pi * totalReadsMapped >= virus.ref_length * 0.8 / this.props.maxReadLength) &&
+                (virus.pi * totalReadsMapped >= virus.length * 0.8 / this.props.maxReadLength) &&
                 (!re || (re.test(virus.abbreviation) || re.test(virus.name)))
             ));
         }
 
         if (this.state.filterIsolates) {
-            data = data.map((virus) => {
-                const minIsolateWeight = 0.03 * virus.pi;
-                return assign({}, virus, filter(virus.isolates, isolate => isolate.pi >= minIsolateWeight));
+            data = data.map(virus => {
+                return assign({}, virus, {
+                    isolates: filter(virus.isolates, isolate => isolate.pi >= 0.03 * virus.pi)
+                });
             });
         }
 
@@ -98,93 +97,95 @@ export default class PathoscopeController extends React.Component {
 
         return (
             <div>
-                <div className="toolbar">
-                    <FormGroup>
-                        <InputGroup>
-                            <InputGroup.Addon>
-                                <Icon name="search" />
-                            </InputGroup.Addon>
-                            <FormControl
-                                value={this.state.findTerm}
-                                onChange={(e) => this.setState({findTerm: e.target.value})}
+                <Row>
+                    <Col xs={12} md={7}>
+                        <FormGroup>
+                            <InputGroup>
+                                <InputGroup.Addon>
+                                    <Icon name="search" />
+                                </InputGroup.Addon>
+                                <FormControl
+                                    value={this.state.findTerm}
+                                    onChange={(e) => this.setState({findTerm: e.target.value})}
+                                />
+                            </InputGroup>
+                        </FormGroup>
+                    </Col>
+
+                    <Col xs={12} md={5}>
+                        <div className="toolbar">
+                            <FormGroup>
+                                <InputGroup>
+                                    <InputGroup.Button>
+                                        <Button title="Sort Direction" onClick={this.toggleSortDescending}>
+                                            <Icon name={this.state.sortDescending ? "sort-desc": "sort-asc"} />
+                                        </Button>
+                                    </InputGroup.Button>
+                                    <FormControl
+                                        componentClass="select"
+                                        value={this.state.sortKey}
+                                        onChange={this.setSortKey}
+                                    >
+                                        <option className="text-primary" value="coverage">Coverage</option>
+                                        <option className="text-success" value="pi">Weight</option>
+                                        <option className="text-danger" value="best">Best Hit</option>
+                                    </FormControl>
+                                </InputGroup>
+                            </FormGroup>
+
+                            <Button
+                                icon="shrink"
+                                title="Collapse"
+                                onClick={this.collapseAll}
+                                className="hidden-xs"
+                                disabled={this.state.expanded.length === 0}
                             />
-                        </InputGroup>
-                    </FormGroup>
 
-                    <FormGroup>
-                        <InputGroup>
-                            <InputGroup.Addon>
-                                <Icon name="sort" /> Sort
-                            </InputGroup.Addon>
-                            <FormControl
-                                componentClass="select"
-                                value={this.state.sortKey}
-                                onChange={this.setSortKey}
+                            <Button
+                                icon="pie"
+                                title="Change Weight Format"
+                                active={!this.state.showReads}
+                                className="hidden-xs"
+                                onClick={this.toggleShowReads}
+                            />
+
+                            <Dropdown id="job-clear-dropdown" onSelect={this.handleSelect} className="split-dropdown"
+                                pullRight
                             >
-                                <option className="text-primary" value="coverage">Coverage</option>
-                                <option className="text-success" value="pi">Weight</option>
-                                <option className="text-danger" value="best">Best Hit</option>
-                            </FormControl>
-                            <InputGroup.Button>
-                                <Button title="Sort Direction" onClick={this.toggleSortDescending}>
-                                    <Icon name={this.state.sortDescending ? "sort-desc": "sort-asc"} />
+                                <Button
+                                    title="Filter"
+                                    onClick={this.filter}
+                                    active={this.state.filterViruses || this.state.filterIsolates}
+                                >
+                                    <Icon name="filter" />
                                 </Button>
-                            </InputGroup.Button>
-                        </InputGroup>
-                    </FormGroup>
-
-                    <Button
-                        icon="shrink"
-                        title="Collapse"
-                        onClick={this.collapseAll}
-                        disabled={this.state.expanded.length === 0}
-                    />
-
-                    <Button
-                        icon="pie"
-                        title="Change Weight Format"
-                        active={!this.state.showReads}
-                        onClick={this.toggleShowReads}
-                    />
-
-                    <Dropdown
-                        id="job-clear-dropdown"
-                        onSelect={this.handleSelect}
-                        className="split-dropdown"
-                        pullRight
-                    >
-                        <Button
-                            title="Filter"
-                            onClick={this.filter}
-                            active={this.state.filterViruses || this.state.filterIsolates}
-                        >
-                            <Icon name="filter" />
-                        </Button>
-                        <Dropdown.Toggle />
-                        <Dropdown.Menu onSelect={this.filter}>
-                            <MenuItem eventKey="viruses">
-                                <Flex>
-                                    <FlexItem>
-                                        <Checkbox checked={this.state.filterViruses} />
-                                    </FlexItem>
-                                    <FlexItem pad={5}>
-                                        Viruses
-                                    </FlexItem>
-                                </Flex>
-                            </MenuItem>
-                            <MenuItem eventKey="isolates">
-                                <Flex>
-                                    <FlexItem>
-                                        <Checkbox checked={this.state.filterIsolates} />
-                                    </FlexItem>
-                                    <FlexItem pad={5}>
-                                        Isolates
-                                    </FlexItem>
-                                </Flex>
-                            </MenuItem>
-                        </Dropdown.Menu>
-                    </Dropdown>
-                </div>
+                                <Dropdown.Toggle />
+                                <Dropdown.Menu onSelect={this.filter}>
+                                    <MenuItem eventKey="viruses">
+                                        <Flex>
+                                            <FlexItem>
+                                                <Checkbox checked={this.state.filterViruses} />
+                                            </FlexItem>
+                                            <FlexItem pad={5}>
+                                                Viruses
+                                            </FlexItem>
+                                        </Flex>
+                                    </MenuItem>
+                                    <MenuItem eventKey="isolates">
+                                        <Flex>
+                                            <FlexItem>
+                                                <Checkbox checked={this.state.filterIsolates} />
+                                            </FlexItem>
+                                            <FlexItem pad={5}>
+                                                Isolates
+                                            </FlexItem>
+                                        </Flex>
+                                    </MenuItem>
+                                </Dropdown.Menu>
+                            </Dropdown>
+                        </div>
+                    </Col>
+                </Row>
 
                 <PathoscopeList
                     data={data}
