@@ -158,22 +158,32 @@ async def format_analysis(db, analysis):
                     if sequence["_id"] == hit["id"]:
                         sequence.update(hit)
                         sequence["length"] = len(sequence["sequence"])
-                        del sequence["sequence"]
+
+                        del sequence["virus"]
+                        del sequence["virus_id"]
+                        del sequence["isolate_id"]
 
         analysis["diagnosis"] = [formatted[virus_id] for virus_id in formatted]
 
         for virus in analysis["diagnosis"]:
             for isolate in list(virus["isolates"]):
-                keep = False
-
-                for sequence in list(isolate["sequences"]):
-                    if "pi" in sequence:
-                        keep = True
-                    else:
-                        isolate["sequences"].remove(sequence)
-
-                if not keep:
+                if not any("pi" in sequence for sequence in isolate["sequences"]):
                     virus["isolates"].remove(isolate)
+                    continue
+
+                for sequence in isolate["sequences"]:
+                    if "pi" not in sequence:
+                        sequence.update({
+                            "pi": 0,
+                            "reads": 0,
+                            "coverage": 0,
+                            "best": 0,
+                            "length": len(sequence["sequence"])
+                        })
+
+                    sequence["id"] = sequence.pop("_id")
+
+                    del sequence["sequence"]
 
         return analysis
 
@@ -432,7 +442,7 @@ class Pathoscope(Base):
         self.results = {
             "ready": True,
             "read_count": read_count,
-            "diagnosis": report
+            "diagnosis": list()
         }
 
         for ref_id, hit in report.items():
@@ -441,6 +451,8 @@ class Pathoscope(Base):
 
             # Make sure it is not ``False`` (meaning the virus had not ``last_indexed_version`` field).
             assert virus
+
+            hit["id"] = ref_id
 
             # Attach "virus" (id, version) to the hit.
             hit["virus"] = virus
@@ -456,6 +468,8 @@ class Pathoscope(Base):
 
             # Calculate depth and attach to hit.
             hit["depth"] = round(sum(hit_coverage) / len(hit_coverage))
+
+            self.results["diagnosis"].append(hit)
 
     @virtool.job.stage_method
     async def import_results(self):
