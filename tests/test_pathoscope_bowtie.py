@@ -103,7 +103,9 @@ async def test_check_db(tmpdir, paired, test_motor, mock_job):
     await test_motor.samples.insert_one({
         "_id": "foobar",
         "paired": paired,
-        "subtraction": "Arabidopsis thaliana",
+        "subtraction": {
+            "id": "Arabidopsis thaliana"
+        },
         "quality": {
             "count": 1337
         }
@@ -118,7 +120,9 @@ async def test_check_db(tmpdir, paired, test_motor, mock_job):
     assert mock_job.sample == {
         "_id": "foobar",
         "paired": paired,
-        "subtraction": "Arabidopsis thaliana",
+        "subtraction": {
+            "id": "Arabidopsis thaliana"
+        },
         "quality": {
             "count": 1337
         }
@@ -226,7 +230,7 @@ async def test_subtract_mapping(mock_job):
 
     await mock_job.subtract_mapping()
 
-    assert mock_job.results["subtracted_count"] == 8
+    assert mock_job.results["subtracted_count"] == 4
 
 
 async def test_pathoscope(mock_job):
@@ -239,6 +243,55 @@ async def test_pathoscope(mock_job):
         VTA_PATH,
         os.path.join(mock_job.analysis_path, "to_isolates.vta")
     )
+
+    with open(DIAGNOSIS_PATH, "r") as handle:
+        report_dict = json.load(handle)
+
+        for key in report_dict:
+            print(key)
+
+    mock_job.sequence_virus_map = {
+        "NC_016509": "foobar",
+        "NC_001948": "foobar",
+        "13TF149_Reovirus_TF1_Seg06": "reo",
+        "13TF149_Reovirus_TF1_Seg03": "reo",
+        "13TF149_Reovirus_TF1_Seg07": "reo",
+        "13TF149_Reovirus_TF1_Seg02": "reo",
+        "13TF149_Reovirus_TF1_Seg08": "reo",
+        "13TF149_Reovirus_TF1_Seg11": "reo",
+        "13TF149_Reovirus_TF1_Seg04": "reo",
+        "NC_004667": "foobar",
+        "NC_003347": "foobar",
+        "NC_003615": "foobar",
+        "NC_003689": "foobar",
+        "NC_011552": "foobar",
+        "KX109927": "baz",
+        "NC_008039": "foobar",
+        "NC_015782": "foobar",
+        "NC_016416": "foobar",
+        "NC_003623": "foobar",
+        "NC_008038": "foobar",
+        "NC_001836": "foobar",
+        "JQ080272": "baz",
+        "NC_017938": "foobar",
+        "NC_008037": "foobar",
+        "NC_007448": "foobar"
+    }
+
+    mock_job.virus_dict = {
+        "foobar": {
+            "name": "Foobar",
+            "version": 10
+        },
+        "reo": {
+            "name": "Reovirus",
+            "version": 5
+        },
+        "baz": {
+            "name": "Bazvirus",
+            "version": 6
+        }
+    }
 
     await mock_job.pathoscope()
 
@@ -253,6 +306,9 @@ async def test_pathoscope(mock_job):
         os.path.join(mock_job.analysis_path, "report.tsv"),
         TSV_PATH
     )
+
+    with open("diagnosis.json", "w") as f:
+        json.dump(mock_job.results["diagnosis"], f)
 
     with open(DIAGNOSIS_PATH, "r") as handle:
         assert mock_job.results == {
