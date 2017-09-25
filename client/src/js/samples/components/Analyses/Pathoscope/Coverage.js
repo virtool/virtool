@@ -5,15 +5,13 @@ import { area } from "d3-shape";
 import { scaleLinear } from "d3-scale";
 import { axisBottom, axisLeft } from "d3-axis";
 
-const createChart = (element, data, meta, yMax, xMin, showYAxis) => {
+const createChart = (element, data, length, meta, yMax, xMin, showYAxis) => {
 
     let svg = select(element).append("svg");
 
-    let maxWidth = 0;
-
     const margin = {
         top: 10,
-        left: maxWidth + (showYAxis ? 50: 0),
+        left: 15 + (showYAxis ? 30: 0),
         bottom: 50,
         right: 10
     };
@@ -25,7 +23,7 @@ const createChart = (element, data, meta, yMax, xMin, showYAxis) => {
 
     const height = 200 - margin.top - margin.bottom;
 
-    let width = data.length / 8;
+    let width = length / 5;
 
     if (width < xMin) {
         width = xMin;
@@ -35,18 +33,13 @@ const createChart = (element, data, meta, yMax, xMin, showYAxis) => {
 
     const x = scaleLinear()
         .range([0, width])
-        .domain([0, data.length]);
+        .domain([0, length]);
 
     const y = scaleLinear()
         .range([height, 0])
         .domain([0, yMax]);
 
     const xAxis = axisBottom(x);
-
-    const areaDrawer = area()
-        .x((d, i) => x(i))
-        .y0(d => y(d))
-        .y1(height);
 
     // Construct the SVG canvas.
     svg = select(element).append("svg")
@@ -55,10 +48,17 @@ const createChart = (element, data, meta, yMax, xMin, showYAxis) => {
         .append("g")
             .attr("transform", `translate(${margin.left},${margin.top})`);
 
-    svg.append("path")
-        .datum(data)
-        .attr("class", "depth-area")
-        .attr("d", areaDrawer);
+    if (data) {
+        const areaDrawer = area()
+            .x((d, i) => x(i))
+            .y0(d => y(d))
+            .y1(height);
+
+        svg.append("path")
+            .datum(data)
+            .attr("class", "depth-area")
+            .attr("d", areaDrawer);
+    }
 
     // Set-up a y-axis that will appear at the top of the chart.
     svg.append("g")
@@ -88,6 +88,7 @@ export default class CoverageChart extends React.Component {
     static propTypes = {
         yMax: React.PropTypes.number,
         data: React.PropTypes.array,
+        length: React.PropTypes.number,
         title: React.PropTypes.string,
         showYAxis: React.PropTypes.bool
     };
@@ -110,6 +111,7 @@ export default class CoverageChart extends React.Component {
         createChart(
             this.chartNode,
             this.props.data,
+            this.props.length,
             pick(this.props, ["id", "definition"]),
             this.props.yMax,
             this.chartNode.offsetWidth,
@@ -118,8 +120,6 @@ export default class CoverageChart extends React.Component {
     };
 
     render = () => (
-        <span style={{marginTop: "5px"}} className="coverage-chart">
-            <div ref={(node) => this.chartNode = node} />
-        </span>
+        <div className="coverage-chart" ref={(node) => this.chartNode = node} />
     );
 }
