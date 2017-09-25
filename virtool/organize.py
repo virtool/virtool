@@ -19,7 +19,6 @@ async def organize_viruses(db, logger_cb=None):
             logger_cb("  {}".format(count))
 
 
-
 async def organize_jobs(db):
     """
     Unset deprecated fields ``_version`` and ``archived``. Update document to use new ``user`` subdocument structure.
@@ -103,11 +102,11 @@ async def organize_analyses(db, logger_cb=None):
     await virtool.organize_utils.unset_version_field(db.analyses)
     await virtool.organize_utils.update_user_field(db.analyses)
 
-    projection = ["sample_id", "sample", "diagnosis", "index_id", "index_version"]
-
-    count = 0
+    projection = ["sample_id", "sample", "diagnosis", "index_id", "index_version", "job"]
 
     await db.analyses.delete_many({"ready": False})
+
+    count = 0
 
     async for analysis in db.analyses.find({"index_id": {"$exists": True}}, projection):
         new_diagnosis = list()
