@@ -28,11 +28,11 @@ import virtool.utils
 
 logger = logging.getLogger(__name__)
 
-client = Client("https://9a2f8d1a3f7a431e873207a70ef3d44d:ca6db07b82934005beceae93560a6794@sentry.io/220532")
+# client = Client("https://9a2f8d1a3f7a431e873207a70ef3d44d:ca6db07b82934005beceae93560a6794@sentry.io/220532")
 
-handler = SentryHandler(client)
-handler.setLevel(logging.ERROR)
-setup_logging(handler)
+# handler = SentryHandler(client)
+# handler.setLevel(logging.ERROR)
+# setup_logging(handler)
 
 
 def init_executors(app):
