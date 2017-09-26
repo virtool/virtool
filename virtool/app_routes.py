@@ -81,7 +81,7 @@ def setup_file_routes(app):
     app.router.add_post("/upload/hmm/annotations", uploads.upload)
     app.router.add_post("/upload/subtraction", uploads.upload)
 
-    app.router.add_get("/download/viruses/", viruses.export)
+    app.router.add_get("/download/viruses", viruses.export)
     app.router.add_get("/download/viruses/{virus_id}", downloads.download_virus_sequences)
     app.router.add_get("/download/sequences/{sequence_id}", downloads.download_sequence)
     app.router.add_get("/download/viruses/{virus_id}/isolates/{isolate_id}", downloads.download_isolate_sequences)
