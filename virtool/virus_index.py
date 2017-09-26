@@ -133,16 +133,27 @@ class RebuildIndex(virtool.job.Job):
         fasta_dict = dict()
 
         for virus_id, virus_version in self.task_args["virus_manifest"].items():
-            _, patched, _ = await virtool.virus_history.patch_virus_to_version(self.db, virus_id, virus_version)
+            document = await self.db.viruses.find_one(virus_id)
+
+            if document["version"] == virus_version:
+                joined = await virtool.virus.join(self.db, virus_id)
+            else:
+                _, joined, _ = await virtool.virus_history.patch_virus_to_version(self.db, virus_id, virus_version)
 
             # Extract the list of sequences from the joined patched virus.
-            sequences = virtool.virus.get_default_sequences(patched)
+            sequences = virtool.virus.get_default_sequences(joined)
 
             defaults = list()
 
-            for sequence in sequences:
-                defaults.append(sequence["_id"])
-                fasta_dict[sequence["_id"]] = sequence["sequence"]
+            try:
+                for sequence in sequences:
+                    defaults.append(sequence["_id"])
+                    fasta_dict[sequence["_id"]] = sequence["sequence"]
+
+            except TypeError:
+                print(virus_id)
+                raise
+
 
         fasta_path = os.path.join(self.reference_path, "ref.fa")
 
@@ -193,6 +204,25 @@ class RebuildIndex(virtool.job.Job):
                 "has_files": False
             }
         })
+
+        # Find viruses with changes.
+        aggregate = await self.db.viruses.aggregate([
+            {"$project": {
+                "version": True,
+                "last_indexed_version": True,
+                "comp": {"$cmp": ["$version", "$last_indexed_version"]}
+            }},
+            {"$match": {
+                "comp": {"$ne": 0}
+            }}
+        ])
+
+        for agg in aggregate:
+            await self.db.viruses.update_one({"_id": agg["_id"]}, {
+                "$set": {
+                    "last_indexed_version": agg["version"]
+                }
+            })
 
     @virtool.job.stage_method
     async def cleanup(self):
