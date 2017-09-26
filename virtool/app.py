@@ -35,7 +35,7 @@ handler.setLevel(logging.ERROR)
 setup_logging(handler)
 
 
-def init_thread_pool_executor(app):
+def init_executors(app):
     """
     An application ``on_startup`` callback that initializes a :class:`~ThreadPoolExecutor` and attaches it to the
     ``app`` object.
@@ -47,6 +47,9 @@ def init_thread_pool_executor(app):
     executor = concurrent.futures.ThreadPoolExecutor(max_workers=5)
     app.loop.set_default_executor(executor)
     app["executor"] = executor
+
+    executor = concurrent.futures.ProcessPoolExecutor()
+    app["process_executor"] = executor
 
 
 def init_resources(app):
@@ -271,7 +274,7 @@ def create_app(loop, db_name=None, disable_job_manager=False, disable_file_manag
     else:
         virtool.app_routes.setup_routes(app)
 
-        app.on_startup.append(init_thread_pool_executor)
+        app.on_startup.append(init_executors)
         app.on_startup.append(init_settings)
         app.on_startup.append(init_dispatcher)
         app.on_startup.append(init_db)
