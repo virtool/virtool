@@ -38,17 +38,6 @@ def iresine_sequence():
     }
 
 
-@pytest.fixture
-def duplicate_result():
-    return {
-        "isolate_id": [],
-        "_id": [],
-        "name": [],
-        "sequence_id": [],
-        "abbreviation": []
-    }
-
-
 class TestVerifyVirusList:
 
     def test(self, test_virus_list):

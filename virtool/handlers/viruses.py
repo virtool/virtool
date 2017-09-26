@@ -1,8 +1,8 @@
+import os
 import json
 import gzip
 import pymongo
 import pymongo.errors
-import tempfile
 
 from aiohttp import web
 from copy import deepcopy
@@ -15,7 +15,7 @@ import virtool.virus_import
 import virtool.virus_history
 
 from virtool.handlers.utils import unpack_request, json_response, not_found, invalid_input, protected, validation,\
-    compose_regex_query, paginate, bad_request, no_content
+    compose_regex_query, paginate, bad_request, no_content, conflict
 
 
 async def find(req):
@@ -926,60 +926,84 @@ async def list_history(req):
 
 
 @protected("modify_virus")
-async def upload(req):
+async def get_import(req):
     db = req.app["db"]
 
-    reader = await req.multipart()
+    file_id = req.query["file_id"]
 
-    import_file = await reader.next()
+    file_path = os.path.join(req.app["settings"].get("data_path"), "files", file_id)
 
-    document = await db.status.find_one_and_update({"_id": "import_viruses"}, {
-        "$set": {
-            "file_name": import_file.filename,
-            "file_size": 0,
-            "virus_count": 0,
-            "in_progress": True,
-            "progress": 0,
-            "inserted": 0,
-            "replaced": 0,
-            "skipped": 0,
-            "errors": None,
-            "duplicates": None,
-            "conflicts": None,
-            "warnings": []
-        }
-    }, return_document=ReturnDocument.AFTER, upsert=True)
+    if await db.viruses.count() or await db.indexes.count() or await db.history.count():
+        return conflict("Can only import viruses into a virgin instance")
 
-    await req.app["dispatcher"].dispatch("status", "update", document)
+    if not os.path.isfile(file_path):
+        return not_found("File not found")
 
-    handle = tempfile.TemporaryFile()
-
-    while True:
-        chunk = await import_file.read_chunk()
-
-        if not chunk:
-            break
-
-        document = await db.status.find_one_and_update({"_id": "import_viruses"}, {
-            "$inc": {
-                "file_size": len(chunk)
-            }
-        }, return_document=ReturnDocument.AFTER, projection=["_id", "file_size"])
-
-        await req.app["dispatcher"].dispatch("status", "update", document)
-
-        handle.write(chunk)
-
-    handle.seek(0)
-
-    await virtool.virus_import.import_file(
-        db,
-        req.app["dispatcher"].dispatch,
-        req.app["settings"],
-        handle
+    data = await req.app.loop.run_in_executor(
+        req.app["executor"],
+        virtool.virus_import.load_import_file,
+        file_path
     )
 
-    return json_response({"message": "Accepted. Check '/api/status' for more info."}, status=202)
+    duplicates, errors = await req.app.loop.run_in_executor(
+        req.app["executor"],
+        virtool.virus_import.verify_virus_list,
+        data
+    )
+
+    isolate_count = 0
+    sequence_count = 0
+
+    for virus in data:
+        isolates = virus["isolates"]
+        isolate_count += len(isolates)
+
+        for isolate in isolates:
+            sequence_count += len(isolate["sequences"])
+
+    return json_response({
+        "file_id": file_id,
+        "virus_count": len(data),
+        "isolate_count": isolate_count,
+        "sequence_count": sequence_count,
+        "duplicates": duplicates,
+        "errors": errors
+    })
+
+
+@protected("modify_virus")
+async def import_viruses(req):
+    db, data = await unpack_request(req)
+
+    file_id = data["file_id"]
+
+    file_path = os.path.join(req.app["settings"].get("data_path"), "files", file_id)
+
+    if await db.viruses.count() or await db.indexes.count() or await db.history.count():
+        return conflict("Can only import viruses into a virgin instance")
+
+    if not os.path.isfile(file_path):
+        return not_found("File not found")
+
+    data = await req.app.loop.run_in_executor(
+        req.app["executor"],
+        virtool.virus_import.load_import_file,
+        file_path
+    )
+
+    vt_version = data.get("vt_version", None)
+
+    if not vt_version:
+        return bad_request("File is not compatible with this version of Virtool")
+
+    req.app.loop.create_task(virtool.virus_import.import_data(
+        db,
+        req.app["dispatcher"].dispatch,
+        data["viruses"],
+        req["session"].user_id
+    ))
+
+    return json_response({}, status=201, headers={"Location": "/api/viruses"})
 
 
 async def export(req):
@@ -993,7 +1017,7 @@ async def export(req):
     # A list of joined viruses.
     virus_list = list()
 
-    async for document in db.viruses.find({"last_indexed_version": {"ne": None}}):
+    async for document in db.viruses.find({"last_indexed_version": {"$ne": None}}):
         # If the virus has been changed since the last index rebuild, patch it to its last indexed version.
         if document["version"] != document["last_indexed_version"]:
             _, joined, _ = await virtool.virus_history.patch_virus_to_version(
@@ -1001,14 +1025,16 @@ async def export(req):
                 document["_id"],
                 document["last_indexed_version"]
             )
+        else:
+            joined = await virtool.virus.join(db, document["_id"], document)
 
-            virus_list.append(joined)
+        virus_list.append(joined)
 
     # Convert the list of viruses to a JSON-formatted string.
     json_string = json.dumps(virus_list)
 
     # Compress the JSON string with gzip.
-    body = gzip.compress(bytes(json_string, "utf-8"))
+    body = await req.app.loop.run_in_executor(req.app["process_executor"], gzip.compress, bytes(json_string, "utf-8"))
 
     return web.Response(
         headers={"Content-Disposition": "attachment; filename='viruses.json.gz'"},
