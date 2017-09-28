@@ -82,7 +82,7 @@ SCHEMA = {
 
     # Virus settings
     "restrict_source_types": get_default_boolean(True),
-    "allowed_source_types": {"type": "list", "default": ["isolate", "genotype"]},
+    "allowed_source_types": {"type": "list", "default": ["clone", "culture", "genotype", "isolate", "strain"]},
 
     # Analysis settings
     "use_internal_control": get_default_boolean(False),
