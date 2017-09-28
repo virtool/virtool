@@ -262,6 +262,93 @@ class TestVerifyVirusList:
             assert errors["example virus"]["empty_sequence"][0]["_id"] == "third_seq_0"
 
 
+class TestImportFile:
+
+    @pytest.mark.parametrize("errors,dups", [(True, True), (True, False), (False, True), (False, False)])
+    async def test(self, errors, dups, mocker, test_motor, test_dispatch, import_data):
+
+        m = mocker.patch(
+            "virtool.virus_import.verify_virus_list",
+            return_value=("Duplicates" if dups else None, "Errors" if errors else None)
+        )
+
+        await test_motor.status.insert_one({
+            "_id": "virus_import",
+            "errors": None,
+            "duplicates": None
+        })
+
+        await virtool.virus_import.import_data(test_motor, test_dispatch, import_data, "test")
+
+        expected = {
+            "_id": "virus_import",
+            "virus_count": 1419,
+            "version": "v0.2.0",
+            "file_created_at": "2017-09-27T21:32:51.901919+00:00",
+            "errors": None,
+            "duplicates": None
+        }
+
+        expected["id"] = expected.pop("_id")
+
+        assert test_dispatch.stub.call_args_list[0][0] == (
+            "status",
+            "update",
+            expected
+        )
+
+        if errors or dups:
+            if errors:
+                expected["errors"] = "Errors"
+
+            if dups:
+                expected["duplicates"] = "Duplicates"
+
+            expected["_id"] = expected.pop("id")
+
+            assert await test_motor.status.find_one() == expected
+
+            expected["id"] = expected.pop("_id")
+
+            assert m.call_args[0][0] is import_data["data"]
+
+            assert test_dispatch.stub.call_args_list[1][0] == (
+                "status",
+                "update",
+                expected
+            )
+
+            return
+
+        expected["totals"] = {
+            "viruses": 1419,
+            "isolates": 2053,
+            "sequences": 2752
+        }
+
+        for i in range(0, 20):
+            expected["inserted"] = i * 50
+
+            assert test_dispatch.stub.call_args_list[1 + i][0] == (
+                "status",
+                "update",
+                expected
+            )
+
+        expected.update({
+            "inserted": 1419,
+            "totals": {
+                "viruses": 1419,
+                "isolates": 2053,
+                "sequences": 2752
+            }
+        })
+
+        expected["_id"] = expected.pop("id")
+
+        assert await test_motor.status.find_one() == expected
+
+
 '''
 
 class TestImportFile:
@@ -275,15 +362,6 @@ class TestImportFile:
         Also test that the import proceeds if no errors or duplicates are detected.
          
         """
-        stub = mocker.stub(name="dispatch")
-
-        mocker.patch(
-            "virtool.virus_import.verify_virus_list",
-            return_value=("Duplicates" if dups else None, "Errors" if errors else None)
-        )
-
-        result = await virtool.virus_import.import_file(loop, test_motor, stub, test_import_handle, "test", replace=False)
-
         if any([errors, dups]):
             assert result is None
 

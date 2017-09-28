@@ -48,7 +48,7 @@ class TestInitDB:
         assert isinstance(app["db"], motor.motor_asyncio.AsyncIOMotorDatabase)
 
 
-class TestInitThreadPoolExecutor:
+class TestInitExecutors:
 
     async def test(self, loop):
         """
@@ -56,7 +56,7 @@ class TestInitThreadPoolExecutor:
         """
         app = web.Application(loop=loop)
 
-        virtool.app.init_thread_pool_executor(app)
+        virtool.app.init_executors(app)
 
         assert isinstance(app["executor"], concurrent.futures.ThreadPoolExecutor)
 

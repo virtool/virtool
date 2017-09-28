@@ -41,17 +41,21 @@ async def import_data(db, dispatch, data, user_id):
     :type user_id: str
 
     """
-    virus_count = len(data)
+    viruses = data["data"]
+
+    virus_count = len(viruses)
 
     document = await db.status.find_one_and_update({"_id": "virus_import"}, {
         "$set": {
-            "virus_count": virus_count
+            "virus_count": virus_count,
+            "version": data["version"],
+            "file_created_at": data["created_at"]
         }
     }, return_document=ReturnDocument.AFTER)
 
     await dispatch("status", "update", virtool.utils.base_processor(document))
 
-    duplicates, errors = verify_virus_list(data)
+    duplicates, errors = verify_virus_list(viruses)
 
     if duplicates or errors:
         document = await db.status.find_one_and_update({"_id": "virus_import"}, {
@@ -63,24 +67,23 @@ async def import_data(db, dispatch, data, user_id):
 
         return await dispatch("status", "update", virtool.utils.base_processor(document))
 
-    virus_count = len(data)
-    isolate_count = 0
-    sequence_count = 0
+    isolate_counts = list()
+    sequence_counts = list()
 
-    for virus in data:
+    for virus in viruses:
         isolates = virus["isolates"]
-        isolate_count += len(isolates)
-
+        isolate_counts.append(len(isolates))
+        
         for isolate in isolates:
-            sequence_count += len(isolate["sequences"])
+            sequence_counts.append(len(isolate["sequences"]))
 
     document = await db.status.find_one_and_update({"_id": "virus_import"}, {
         "$set": {
             "inserted": 0,
             "totals": {
-                "viruses": virus_count,
-                "isolates": isolate_count,
-                "sequences": sequence_count
+                "viruses": len(viruses),
+                "isolates": sum(isolate_counts),
+                "sequences": sum(sequence_counts)
             }
         }
     }, return_document=ReturnDocument.AFTER)
@@ -90,17 +93,22 @@ async def import_data(db, dispatch, data, user_id):
     _virus_buffer = list()
     _sequence_buffer = list()
 
-    for virus in data:
+    for virus in viruses:
         document, sequences = virtool.virus.split_virus(virus)
 
-        document["lower_name"] = document["name"].lower()
+        document.update({
+            "lower_name": document["name"].lower(),
+            "last_indexed_version": None,
+            "created_at": virtool.utils.timestamp(),
+            "version": 0
+        })
 
         _virus_buffer.append(document)
 
         for sequence in sequences:
             _sequence_buffer.append(sequence)
 
-        if len(_virus_buffer) > 50:
+        if len(_virus_buffer) == 50:
             await db.viruses.insert_many(_virus_buffer)
 
             document = await db.status.find_one_and_update({"_id": "virus_import"}, {
@@ -113,7 +121,7 @@ async def import_data(db, dispatch, data, user_id):
 
             _virus_buffer = list()
 
-        if len(_sequence_buffer) > 50:
+        if len(_sequence_buffer) == 50:
             await db.sequences.insert_many(_sequence_buffer)
             _sequence_buffer = list()
 
@@ -133,7 +141,7 @@ async def import_data(db, dispatch, data, user_id):
     if len(_sequence_buffer):
         await db.sequences.insert_many(_sequence_buffer)
 
-    for virus in data:
+    for virus in viruses:
         # Join the virus document into a complete virus record. This will be used for recording history.
         joined = await virtool.virus.join(db, virus["_id"])
 
@@ -155,7 +163,7 @@ async def import_data(db, dispatch, data, user_id):
             user_id
         )
 
-    dispatch("status", "update", virtool.utils.base_processor(document))
+    await dispatch("status", "update", virtool.utils.base_processor(document))
 
 
 def verify_virus_list(viruses):

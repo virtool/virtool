@@ -1,4 +1,5 @@
 import os
+import sys
 import gzip
 import json
 import copy
@@ -6,7 +7,20 @@ import pytest
 
 from virtool.utils import random_alphanumeric
 
-FIXTURE_DIR = os.path.join(os.path.dirname(os.path.realpath(__file__)), "test_files")
+TEST_FILES_PATH = os.path.join(sys.path[0], "tests", "test_files")
+
+
+@pytest.fixture("session")
+def import_data_file():
+    with gzip.open(os.path.join(TEST_FILES_PATH, "viruses.json.gz"), "rt") as f:
+        data = json.load(f)
+
+    return data
+
+
+@pytest.fixture
+def import_data(import_data_file):
+    return copy.deepcopy(import_data_file)
 
 
 @pytest.fixture
@@ -95,12 +109,6 @@ def test_add_history(monkeypatch, mocker):
     monkeypatch.setattr("virtool.virus_history.add", fake_add_history)
 
     return m
-
-
-@pytest.fixture(scope="session")
-def import_json_from_file():
-    with gzip.open(os.path.join(FIXTURE_DIR, "files", "import.json.gz"), "rt") as handle:
-        return json.load(handle)
 
 
 @pytest.fixture(scope="function")
