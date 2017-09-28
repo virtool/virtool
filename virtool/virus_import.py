@@ -45,6 +45,8 @@ async def import_data(db, dispatch, data, user_id):
 
     virus_count = len(viruses)
 
+    await db.status.replace_one({"_id": "virus_import"}, {"_id": "virus_import"}, upsert=True)
+
     document = await db.status.find_one_and_update({"_id": "virus_import"}, {
         "$set": {
             "virus_count": virus_count,

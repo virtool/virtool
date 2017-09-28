@@ -945,28 +945,32 @@ async def get_import(req):
         file_path
     )
 
+    isolate_counts = list()
+    sequence_counts = list()
+
+    viruses = data["data"]
+
+    for virus in viruses:
+        isolates = virus["isolates"]
+        isolate_counts.append(len(isolates))
+
+        for isolate in isolates:
+            sequence_counts.append(len(isolate["sequences"]))
+
     duplicates, errors = await req.app.loop.run_in_executor(
         req.app["executor"],
         virtool.virus_import.verify_virus_list,
-        data
+        data["data"]
     )
-
-    isolate_count = 0
-    sequence_count = 0
-
-    for virus in data:
-        isolates = virus["isolates"]
-        isolate_count += len(isolates)
-
-        for isolate in isolates:
-            sequence_count += len(isolate["sequences"])
 
     return json_response({
         "file_id": file_id,
-        "virus_count": len(data),
-        "isolate_count": isolate_count,
-        "sequence_count": sequence_count,
+        "virus_count": len(viruses),
+        "isolate_count": sum(isolate_counts),
+        "sequence_count": sum(sequence_counts),
         "duplicates": duplicates,
+        "version": data["version"],
+        "file_created_at": data["created_at"],
         "errors": errors
     })
 
@@ -991,15 +995,17 @@ async def import_viruses(req):
         file_path
     )
 
-    vt_version = data.get("vt_version", None)
+    print(data.keys())
 
-    if not vt_version:
+    data_version = data.get("version", None)
+
+    if not data_version:
         return bad_request("File is not compatible with this version of Virtool")
 
     req.app.loop.create_task(virtool.virus_import.import_data(
         db,
         req.app["dispatcher"].dispatch,
-        data["viruses"],
+        data,
         req["session"].user_id
     ))
 
