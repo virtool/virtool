@@ -88,7 +88,7 @@ export default function virusesReducer (state = virusesInitialState, action) {
         case WS_UPDATE_STATUS:
             if (action.data.id === "virus_import") {
                 return assign({}, state, {
-                    importData: assign({}, action.data, {in_progress: true})
+                    importData: assign({}, state.importData, action.data, {in_progress: true})
                 });
             }
 
