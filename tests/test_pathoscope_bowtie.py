@@ -307,9 +307,6 @@ async def test_pathoscope(mock_job):
         TSV_PATH
     )
 
-    with open("diagnosis.json", "w") as f:
-        json.dump(mock_job.results["diagnosis"], f)
-
     with open(DIAGNOSIS_PATH, "r") as handle:
         assert mock_job.results == {
             "diagnosis": json.load(handle),

@@ -206,7 +206,7 @@ class RebuildIndex(virtool.job.Job):
         })
 
         # Find viruses with changes.
-        aggregate = await self.db.viruses.aggregate([
+        aggregation_cursor = self.db.viruses.aggregate([
             {"$project": {
                 "version": True,
                 "last_indexed_version": True,
@@ -217,7 +217,7 @@ class RebuildIndex(virtool.job.Job):
             }}
         ])
 
-        for agg in aggregate:
+        async for agg in aggregation_cursor:
             await self.db.viruses.update_one({"_id": agg["_id"]}, {
                 "$set": {
                     "last_indexed_version": agg["version"]

@@ -48,7 +48,9 @@ async def import_data(db, dispatch, data, user_id):
     document = await db.status.find_one_and_update({"_id": "virus_import"}, {
         "$set": {
             "version": data["version"],
-            "file_created_at": data["created_at"]
+            "file_created_at": data["created_at"],
+            "errors": None,
+            "duplicates": None
         }
     }, return_document=ReturnDocument.AFTER)
 
