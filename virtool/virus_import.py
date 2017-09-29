@@ -5,15 +5,28 @@ from pymongo import ReturnDocument
 import virtool.virus
 import virtool.virus_history
 import virtool.utils
-from virtool.utils import get_new_id
-from virtool.handlers.status import status_processor
+import virtool.errors
 
 
-async def import_file(loop, db, dispatch, handle, user_id, replace=False):
+def load_import_file(path):
+    """
+    Load a list of merged virus documents from a file handle associated with a Virtool ``viruses.json.gz`` file.
+
+    :param path: the path to the viruses.json.gz file
+    :type path: str
+
+    :return: the virus data to import
+    :rtype: dict
+
+    """
+    with open(path, "rb") as handle:
+        with gzip.open(handle, "rt") as gzip_file:
+            return json.load(gzip_file)
+
+
+async def import_data(db, dispatch, data, user_id):
     """
     Import a previously exported Virtool virus reference.
-
-    :param loop: the application IO loop
 
     :param db: the application database client
     :type db: :class:`~motor.motor_asyncio.AsyncIOMotorClient`
@@ -21,219 +34,137 @@ async def import_file(loop, db, dispatch, handle, user_id, replace=False):
     :param dispatch: the dispatcher's dispatch function
     :type dispatch: func
 
-    :param handle: the temporary file handle for the file to import
-    :type handle: :class:`~.TemporaryFile`
+    :param data: the virus data to import
+    :type data: dict
 
     :param user_id: the requesting ``user_id``
     :type user_id: str
 
-    :param replace: should viruses existing in the database be replaced by ones in the import file 
-    :type replace: bool
-
     """
-    viruses = await loop.run_in_executor(None, load_import_file, handle)
+    viruses = data["data"]
 
-    virus_count = len(viruses)
+    await db.status.replace_one({"_id": "virus_import"}, {"_id": "virus_import"}, upsert=True)
 
-    document = await db.status.find_one_and_update({"_id": "import_viruses"}, {
+    document = await db.status.find_one_and_update({"_id": "virus_import"}, {
         "$set": {
-            "virus_count": virus_count
+            "version": data["version"],
+            "file_created_at": data["created_at"],
+            "errors": None,
+            "duplicates": None
         }
     }, return_document=ReturnDocument.AFTER)
 
-    dispatch("status", "update", status_processor(document))
+    await dispatch("status", "update", virtool.utils.base_processor(document))
 
     duplicates, errors = verify_virus_list(viruses)
 
-    # If there are problems in the import file, report them to the status collection and stop the import.
     if duplicates or errors:
-        document = await db.status.find_one_and_update({"_id": "import_viruses"}, {
+        document = await db.status.find_one_and_update({"_id": "virus_import"}, {
             "$set": {
-                "in_progress": False,
                 "errors": errors,
                 "duplicates": duplicates
             }
         }, return_document=ReturnDocument.AFTER)
 
-        dispatch("status", "update", status_processor(document))
+        return await dispatch("status", "update", virtool.utils.base_processor(document))
 
-        return
+    isolate_counts = list()
+    sequence_counts = list()
 
-    # Make a list of lowered virus names that are already in use in the database.
-    used_names = await db.viruses.distinct("lower_name")
+    for virus in viruses:
+        isolates = virus["isolates"]
+        isolate_counts.append(len(isolates))
+        
+        for isolate in isolates:
+            sequence_counts.append(len(isolate["sequences"]))
 
-    # Set the variable to ``True`` if the viruses collection is empty.
-    empty_collection = len(used_names) == 0
+    document = await db.status.find_one_and_update({"_id": "virus_import"}, {
+        "$set": {
+            "inserted": 0,
+            "totals": {
+                "viruses": len(viruses),
+                "isolates": sum(isolate_counts),
+                "sequences": sum(sequence_counts)
+            }
+        }
+    }, return_document=ReturnDocument.AFTER)
 
-    # If the viruses collection is empty, remove any extraneous sequence documents.
-    if empty_collection:
-        await db.sequences.delete_many({})
+    await dispatch("status", "update", virtool.utils.base_processor(document))
 
-    # Only check for ``sequence_id`` conflicts if the collection is not empty.
-    else:
-        conflicts = await find_import_conflicts(db, viruses, replace, used_names=used_names)
+    _virus_buffer = list()
+    _sequence_buffer = list()
 
-        if conflicts:
-            document = await db.status.find_one_and_update({"_id": "import_viruses"}, {
-                "$set": {
-                    "in_progress": False,
-                    "conflicts": conflicts
+    for virus in viruses:
+        document, sequences = virtool.virus.split_virus(virus)
+
+        document.update({
+            "lower_name": document["name"].lower(),
+            "last_indexed_version": None,
+            "created_at": virtool.utils.timestamp(),
+            "version": 0
+        })
+
+        _virus_buffer.append(document)
+
+        for sequence in sequences:
+            _sequence_buffer.append(sequence)
+
+        if len(_virus_buffer) == 50:
+            await db.viruses.insert_many(_virus_buffer)
+
+            document = await db.status.find_one_and_update({"_id": "virus_import"}, {
+                "$inc": {
+                    "inserted": 50,
                 }
             }, return_document=ReturnDocument.AFTER)
 
-            dispatch("status", "update", status_processor(document))
+            await dispatch("status", "update", virtool.utils.base_processor(document))
 
-            return
+            _virus_buffer = list()
 
-    # Keeps track of the progress of the import process. Intermittently saved to database and dispatched to clients.
-    counter = {
-        "progress": 0,
-        "inserted": 0,
-        "replaced": 0,
-        "skipped": 0,
-        "warnings": list()
-    }
+        if len(_sequence_buffer) == 50:
+            await db.sequences.insert_many(_sequence_buffer)
+            _sequence_buffer = list()
 
-    used_isolate_ids = set(await db.viruses.distinct("isolates.isolate_id"))
+    virus_buffer_length = len(_virus_buffer)
 
-    base_virus_document = {
-        "last_indexed_version": 0,
-        "user_id": user_id,
-        "imported": True
-    }
+    if virus_buffer_length:
+        await db.viruses.insert_many(_virus_buffer)
 
-    # Lists of pending dispatches. These are batched to avoid overwhelming clients.
-    insertions = list()
-    replacements = list()
+        document = await db.status.find_one_and_update({"_id": "virus_import"}, {
+            "$inc": {
+                "inserted": virus_buffer_length,
+            }
+        }, return_document=ReturnDocument.AFTER)
 
-    # Iterate through virus to be imported.
-    for i, virus in enumerate(viruses):
-        # Calculate the overall progress (how many viruses in the import document have been processed?)
-        progress = round((i + 1) / virus_count, 3)
+        await dispatch("status", "update", virtool.utils.base_processor(document))
 
-        # Send the current progress data in ``counter`` to the client if the progress has increased by at least
-        # 2% since the last report.
-        if progress - counter["progress"] > 0.02:
-            counter["progress"] = progress
+    if len(_sequence_buffer):
+        await db.sequences.insert_many(_sequence_buffer)
 
-            document = await db.status.find_one_and_update({"_id": "import_viruses"}, {
-                "$set": counter
-            }, return_document=ReturnDocument.AFTER)
+    for virus in viruses:
+        # Join the virus document into a complete virus record. This will be used for recording history.
+        joined = await virtool.virus.join(db, virus["_id"])
 
-            dispatch("status", "update", status_processor(document))
+        # Build a ``description`` field for the virus creation change document.
+        description = "Created {}".format(joined["name"])
 
-        virus_document, sequences = virtool.virus.split_virus(virus)
+        abbreviation = document.get("abbreviation", None)
 
-        to_insert = dict(base_virus_document)
+        # Add the abbreviation to the description if there is one.
+        if abbreviation:
+            description += " ({})".format(abbreviation)
 
-        to_insert.update({key: virus_document[key] for key in ["name", "abbreviation", "isolates"]})
+        await virtool.virus_history.add(
+            db,
+            "create",
+            None,
+            joined,
+            description,
+            user_id
+        )
 
-        # If the collection was empty when the import started, do not bother considering replacement.
-        if empty_collection:
-            to_insert["_id"] = await get_new_id(db.viruses)
-
-            insertions.append(await insert_from_import(db, to_insert, user_id))
-
-            await db.sequences.insert_many(sequences)
-
-            counter["inserted"] += 1
-
-            send_import_dispatches(dispatch, insertions, replacements)
-
-            continue
-
-        lower_name = virus["name"].lower()
-
-        virus_exists = lower_name in used_names
-
-        # Do nothing if the virus exists and replacement is disabled. Increment ``skipped`` counter by one.
-        if virus_exists and not replace:
-            counter["skipped"] += 1
-            continue
-
-        to_insert["_id"] = await get_new_id(db.viruses)
-
-        abbreviation_warning = await check_import_abbreviation(db, to_insert, lower_name=lower_name)
-
-        virus_document, sequences = virtool.virus.split_virus(virus)
-
-        # Loops through each isolate in the imported virus, replacing isolate_ids if they are not unique.
-        for isolate in virus_document["isolates"]:
-            # Check if the isolate id is already used in the viruses collection.
-            if isolate["isolate_id"] in used_isolate_ids:
-                # Generate a new isolate id if the imported isolate id is already in the viruses collection.
-                isolate["isolate_id"] = await virtool.virus.get_new_isolate_id(db, used_isolate_ids)
-
-                # Append the generated isolate to a list of used isolate ids so that is isn't reused during the
-                # import process.
-                used_isolate_ids.add(isolate["isolate_id"])
-
-        # In this case, do a replacement by removing the existing virus and inserting a new virus document.
-        if virus_exists:
-            existing_virus = await db.viruses.find_one({"lower_name": lower_name})
-
-            # Remove the existing virus, including its sequences.
-            remove_dispatches = await delete_for_import(
-                existing_virus["_id"],
-                # transaction.connection.user["_id"]
-            )
-
-            # Remove all sequence documents associated with the existing virus.
-            await db.sequences.delete_many({"_id": {
-                "$in": virtool.virus.extract_isolate_ids(existing_virus)
-            }})
-
-            counter["replaced"] += 1
-
-        to_insert.update({key: virus_document[key] for key in ["abbreviation", "name", "isolates"]})
-
-        # Add the new virus.
-        insert_dispatches = await insert_from_import(db, to_insert, user_id)
-
-        if virus_exists:
-            replacements.append((remove_dispatches, insert_dispatches))
-        else:
-            insertions.append(insert_dispatches)
-
-        await db.sequences.insert_many(sequences)
-
-        if not virus_exists:
-            counter["inserted"] += 1
-
-        send_import_dispatches(dispatch, insertions, replacements)
-
-    # Flush any remaining messages to the dispatcher.
-    send_import_dispatches(dispatch, insertions, replacements, flush=True)
-
-    counter["progress"] = 1
-
-    document = await db.status.find_one_and_update({"_id": "import_viruses"}, {
-        "$set": counter
-    }, return_document=ReturnDocument.AFTER)
-
-    dispatch("status", "update", status_processor(document))
-
-    return counter
-
-
-def load_import_file(handle):
-    """
-    Load a list of merged virus documents from a file handle associated with a Virtool ``viruses.json.gz`` file.
-    
-    :param handle: the handle for a importable file
-    
-    :return: list of merged virus documents
-    :rtype: list
-    
-    """
-    # Open GZIP file and parse JSON into dict.
-    with gzip.open(handle, "rt") as gzip_file:
-        data = json.load(gzip_file)
-
-    # Close the temporary handle. It isn't closed by the calling handler function.
-    handle.close()
-
-    return data
+    await dispatch("status", "update", virtool.utils.base_processor(document))
 
 
 def verify_virus_list(viruses):
@@ -251,7 +182,6 @@ def verify_virus_list(viruses):
 
         # Check for problems in the list as a whole.
         for field in fields:
-
             value = joined[field]
 
             if field == "abbreviation" and value == "":
@@ -266,6 +196,9 @@ def verify_virus_list(viruses):
                 seen[field].add(value)
 
         for isolate in joined["isolates"]:
+            if "isolate_id" in isolate:
+                isolate["id"] = isolate.pop("isolate_id")
+
             isolate_id = isolate["id"]
 
             if isolate_id in seen:
@@ -274,7 +207,7 @@ def verify_virus_list(viruses):
                 seen["isolate_id"].add(isolate_id)
 
             for sequence in isolate["sequences"]:
-                sequence_id = sequence["_id"]
+                sequence_id = sequence.get("id", sequence["_id"])
 
                 if sequence_id in seen["sequence_id"]:
                     duplicates["sequence_id"].add(sequence_id)
@@ -292,56 +225,6 @@ def verify_virus_list(viruses):
         errors = None
 
     return duplicates, errors
-
-
-async def find_import_conflicts(db, viruses, replace, used_names=None):
-
-    used_names = used_names or list()
-
-    conflicts = list()
-
-    for virus in viruses:
-
-        lower_name = virus["name"].lower()
-
-        # Check if the virus to be imported already exists in the database using a case-insensitive name comparison.
-        virus_exists = lower_name in used_names
-
-        # A list of sequence ids that will be imported along with the virus.
-        sequence_ids_to_import = virtool.virus.extract_sequence_ids(virus)
-
-        # Sequences that already exist in the database and have the same ids as some sequences to be imported.
-        already_existing_sequences = await db.sequences.find(
-            {"_id": {"$in": sequence_ids_to_import}},
-            ["_id", "isolate_id"]
-        ).to_list(length=None)
-
-        if virus_exists:
-            # Continue to the next virus if this one cannot be applied to the database.
-            if not replace:
-                continue
-
-            # The full document of the existing virus.
-            existing_virus = await db.viruses.find_one(
-                {"lower_name": lower_name},
-                ["_id", "name", "isolates"]
-            )
-
-            # The isolate ids in the existing virus document.
-            existing_isolate_ids = virtool.virus.extract_isolate_ids(existing_virus)
-
-            for sequence in already_existing_sequences:
-                if not sequence["isolate_id"] in existing_isolate_ids:
-                    conflicts.append((existing_virus["_id"], existing_virus["name"], sequence["_id"]))
-
-        else:
-            # The virus doesn't already exist but some of its sequence ids are already assigned to other viruses. This
-            # is a problem.
-            for sequence in already_existing_sequences:
-                existing = await db.viruses.find_one({"isolates.isolate_id": sequence["isolate_id"]}, ["_id", "name"])
-                conflicts.append((existing["_id"], existing["name"], sequence["_id"]))
-
-    return conflicts or None
 
 
 async def check_import_abbreviation(db, virus_document, lower_name=None):
@@ -381,7 +264,7 @@ async def check_import_abbreviation(db, virus_document, lower_name=None):
     return None
 
 
-def send_import_dispatches(dispatch, insertions, replacements, flush=False):
+async def send_import_dispatches(dispatch, insertions, replacements, flush=False):
     """
     Dispatch all possible insertion and replacement messages for a running virus reference import. Called many times
     during an import process.
@@ -403,17 +286,17 @@ def send_import_dispatches(dispatch, insertions, replacements, flush=False):
     if len(insertions) == 30 or (flush and insertions):
         virus_updates, history_updates = zip(*insertions)
 
-        dispatch("viruses", "update", virus_updates)
-        dispatch("history", "update", history_updates)
+        await dispatch("viruses", "update", virus_updates)
+        await dispatch("history", "update", history_updates)
 
         del insertions[:]
 
     if len(replacements) == 30 or (flush and replacements):
-        dispatch("viruses", "remove", [replace[0][0] for replace in replacements])
-        dispatch("history", "update", [replace[0][1] for replace in replacements])
+        await dispatch("viruses", "remove", [replace[0][0] for replace in replacements])
+        await dispatch("history", "update", [replace[0][1] for replace in replacements])
 
-        dispatch("viruses", "update", [replace[1][0] for replace in replacements])
-        dispatch("history", "update", [replace[1][1] for replace in replacements])
+        await dispatch("viruses", "update", [replace[1][0] for replace in replacements])
+        await dispatch("history", "update", [replace[1][1] for replace in replacements])
 
         del replacements[:]
 
@@ -435,11 +318,23 @@ async def insert_from_import(db, virus_document, user_id):
         "version": 0,
         "last_indexed_version": None,
         "lower_name": virus_document["name"].lower(),
-        "imported": True
+        "imported": True,
+        "verified": False
     })
 
     # Perform the actual database insert operation, retaining the response.
     await db.viruses.insert_one(virus_document)
+
+    issues = await virtool.virus.verify(db, virus_document["_id"], virus_document)
+
+    if issues is None:
+        await db.viruses.update_one({"_id": virus_document["_id"]}, {
+            "$set": {
+                "verified": True
+            }
+        })
+
+        virus_document["verified"] = True
 
     to_dispatch = virtool.utils.base_processor({key: virus_document[key] for key in virtool.virus.LIST_PROJECTION})
 

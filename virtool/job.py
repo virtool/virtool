@@ -150,8 +150,10 @@ class Job:
             async def _stderr_handler(line):
                 await self.add_log(line, indent=1)
 
-        child_watcher = asyncio.get_child_watcher()
-        child_watcher.attach_loop(self.loop)
+        try:
+            asyncio.get_child_watcher().attach_loop(self.loop)
+        except NotImplementedError:
+            pass
 
         proc = await asyncio.create_subprocess_exec(
             *command,

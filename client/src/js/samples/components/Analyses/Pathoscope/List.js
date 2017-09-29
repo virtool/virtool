@@ -26,11 +26,11 @@ export default class PathoscopeList extends React.Component {
 
         let rows = this.props.data.map((item, index) => {
 
-            const expanded = includes(this.props.expanded, item._id);
+            const expanded = includes(this.props.expanded, item.id);
 
             const components = [
                 <PathoscopeEntry
-                    key={item._id}
+                    key={item.id}
                     {...item}
                     toggleIn={this.props.toggleIn}
                     showReads={this.props.showReads}
@@ -39,9 +39,8 @@ export default class PathoscopeList extends React.Component {
             ];
 
             if (expanded) {
-
                 const isolateComponents = sortBy(item.isolates, "pi").reverse().map((isolate) => {
-                    const key = `${item._id}-${isolate.isolate_id}`;
+                    const key = `${item.id}-${isolate.id}`;
 
                     return <PathoscopeIsolate
                         ref={key}

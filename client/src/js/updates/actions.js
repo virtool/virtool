@@ -8,20 +8,12 @@
  */
 
 import {
-    WS_UPDATE_STATUS,
     GET_SOFTWARE_UPDATES,
     GET_DATABASE_UPDATES,
     INSTALL_SOFTWARE_UPDATES,
     SHOW_INSTALL_MODAL,
     HIDE_INSTALL_MODAL
 } from "../actionTypes";
-
-export function wsUpdateStatus (data) {
-    return {
-        type: WS_UPDATE_STATUS,
-        data
-    };
-}
 
 export function getSoftwareUpdates () {
     return {

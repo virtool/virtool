@@ -2,6 +2,7 @@ import React, { PropTypes } from "react";
 import Numeral from "numeral";
 import { connect } from "react-redux";
 import { Label, Table } from "react-bootstrap";
+import { ScaleLoader } from "halogen";
 import { RelativeTime } from "virtool/js/components/Base";
 
 import { getAnalysis } from "../../actions";
@@ -15,6 +16,7 @@ class AnalysisDetail extends React.Component {
         match: PropTypes.object,
         name: PropTypes.string,
         detail: PropTypes.object,
+        quality: PropTypes.object,
         getAnalysis: PropTypes.func
     };
 
@@ -25,7 +27,11 @@ class AnalysisDetail extends React.Component {
     render () {
 
         if (this.props.detail === null) {
-            return <div />;
+            return (
+                <div className="text-center" style={{height: "500px", paddingTop: "220px"}}>
+                    <ScaleLoader color="#3c8786" />
+                </div>
+            );
         }
 
         const detail = this.props.detail;
@@ -33,7 +39,7 @@ class AnalysisDetail extends React.Component {
         let content;
 
         if (detail.algorithm === "pathoscope_bowtie") {
-            content = <PathoscopeViewer {...detail}/>;
+            content = <PathoscopeViewer {...detail} maxReadLength={this.props.quality.length[1]} />;
         }
 
         if (detail.algorithm === "nuvs") {
@@ -59,11 +65,11 @@ class AnalysisDetail extends React.Component {
                             <td>{Numeral(detail.read_count).format()}</td>
                         </tr>
                         <tr>
-                            <th>Added</th>
+                            <th>Created</th>
                             <td><RelativeTime time={detail.created_at} /></td>
                         </tr>
                         <tr>
-                            <th>User</th>
+                            <th>Created By</th>
                             <td>{detail.user.id}</td>
                         </tr>
                     </tbody>
@@ -77,7 +83,8 @@ class AnalysisDetail extends React.Component {
 
 const mapStateToProps = (state) => {
     return {
-        detail: state.samples.analysisDetail
+        detail: state.samples.analysisDetail,
+        quality: state.samples.detail.quality
     };
 };
 

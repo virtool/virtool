@@ -7,7 +7,7 @@ import { toScientificNotation } from "virtool/js/utils";
 export default class PathoscopeEntry extends React.Component {
 
     static propTypes = {
-        _id: React.PropTypes.string,
+        id: React.PropTypes.string,
         name: React.PropTypes.string,
         abbreviation: React.PropTypes.string,
 
@@ -25,7 +25,7 @@ export default class PathoscopeEntry extends React.Component {
         return this.props.in !== nextProps.in || this.props.showReads !== nextProps.showReads;
     }
 
-    toggleIn = () => this.props.toggleIn(this.props._id);
+    toggleIn = () => this.props.toggleIn(this.props.id);
 
     render () {
 
@@ -48,7 +48,7 @@ export default class PathoscopeEntry extends React.Component {
         return (
             <div className={className} onClick={this.props.in ? null: this.toggleIn}>
                 <Row>
-                    <Col md={6}>
+                    <Col xs={12} md={6}>
                         <Flex>
                             <FlexItem>
                                 {this.props.name}
@@ -62,7 +62,12 @@ export default class PathoscopeEntry extends React.Component {
                             </FlexItem>
                         </Flex>
                     </Col>
-                    <Col md={2}>
+
+                    <Col xs={12} mdHidden lgHidden>
+                        <div style={{height: "20px"}} />
+                    </Col>
+
+                    <Col xs={6} sm={4} md={2}>
                         <Flex alignItems="center" style={flexStyle}>
                             <FlexItem>
                                 <Label>{this.props.showReads ? "Reads": "Weight"}</Label>
@@ -74,7 +79,7 @@ export default class PathoscopeEntry extends React.Component {
                             </FlexItem>
                         </Flex>
                     </Col>
-                    <Col md={2}>
+                    <Col xs={6} sm={4} md={2}>
                         <Flex alignItems="center" alignContent="center" style={flexStyle}>
                             <FlexItem>
                                 <Label>Best Hit</Label>
@@ -86,7 +91,7 @@ export default class PathoscopeEntry extends React.Component {
                             </FlexItem>
                         </Flex>
                     </Col>
-                    <Col md={2}>
+                    <Col xs={6} sm={4} md={2}>
                         <Flex alignItems="center" style={flexStyle}>
                             <FlexItem>
                                 <Label>Coverage</Label>

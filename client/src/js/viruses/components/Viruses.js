@@ -12,6 +12,7 @@ import { Switch, Route } from "react-router-dom";
 
 import VirusesList from "./List";
 import VirusDetail from "./Detail/Detail";
+import VirusImport from "./Import";
 import Indexes from "../../indexes/components/Indexes";
 
 const Viruses = () => {
@@ -23,6 +24,13 @@ const Viruses = () => {
                 <Route path="/viruses/indexes" component={Indexes} />
                 <Route path="/viruses/:virusId" component={VirusDetail} />
             </Switch>
+
+            <Route path="/viruses" children={({ history }) => (
+                <VirusImport
+                    show={history.location.state && history.location.state.virusImport}
+                    onHide={() => history.push(history.location.pathname, {virusImport: false})}
+                />
+            )} />
         </div>
     );
 };

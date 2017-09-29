@@ -9,6 +9,7 @@
 
 import { call, put, takeEvery, takeLatest, throttle } from "redux-saga/effects";
 
+import filesAPI from "../files/api";
 import virusesAPI from "./api";
 import { setPending } from "../wrappers";
 import {
@@ -25,6 +26,8 @@ import {
     EDIT_SEQUENCE,
     REMOVE_SEQUENCE,
     REVERT,
+    UPLOAD_IMPORT,
+    COMMIT_IMPORT,
     SET_APP_PENDING,
     UNSET_APP_PENDING
 }  from "../actionTypes";
@@ -43,6 +46,8 @@ export function* watchViruses () {
     yield takeEvery(EDIT_SEQUENCE.REQUESTED, editSequence);
     yield takeEvery(REMOVE_SEQUENCE.REQUESTED, removeSequence);
     yield takeEvery(REVERT.REQUESTED, revert);
+    yield takeLatest(UPLOAD_IMPORT.REQUESTED, uploadImport);
+    yield takeLatest(COMMIT_IMPORT.REQUESTED, commitImport);
 }
 
 export function* findViruses (action) {
@@ -221,4 +226,23 @@ export function* revert (action) {
             yield put({type: REVERT.FAILED, error: error});
         }
     }, action)
+}
+
+export function* uploadImport (action) {
+    try {
+        const uploadResponse = yield filesAPI.upload(action.file, "viruses", action.onProgress);
+        const getResponse = yield virusesAPI.getImport(uploadResponse.body.id);
+        yield put({type: UPLOAD_IMPORT.SUCCEEDED, data: getResponse.body});
+    } catch (error) {
+        yield put({type: UPLOAD_IMPORT.FAILED, error: error});
+    }
+}
+
+export function* commitImport (action) {
+    try {
+        const response = yield virusesAPI.commitImport(action.fileId);
+        yield put({type: COMMIT_IMPORT.SUCCEEDED, data: response.body});
+    } catch (error) {
+        yield put({type: COMMIT_IMPORT.FAILED, error: error});
+    }
 }

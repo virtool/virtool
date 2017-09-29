@@ -1,4 +1,5 @@
 import os
+import sys
 import gzip
 import json
 import copy
@@ -6,7 +7,20 @@ import pytest
 
 from virtool.utils import random_alphanumeric
 
-FIXTURE_DIR = os.path.join(os.path.dirname(os.path.realpath(__file__)), "test_files")
+TEST_FILES_PATH = os.path.join(sys.path[0], "tests", "test_files")
+
+
+@pytest.fixture("session")
+def import_data_file():
+    with gzip.open(os.path.join(TEST_FILES_PATH, "viruses.json.gz"), "rt") as f:
+        data = json.load(f)
+
+    return data
+
+
+@pytest.fixture
+def import_data(import_data_file):
+    return copy.deepcopy(import_data_file)
 
 
 @pytest.fixture
@@ -97,12 +111,6 @@ def test_add_history(monkeypatch, mocker):
     return m
 
 
-@pytest.fixture(scope="session")
-def import_json_from_file():
-    with gzip.open(os.path.join(FIXTURE_DIR, "files", "import.json.gz"), "rt") as handle:
-        return json.load(handle)
-
-
 @pytest.fixture(scope="function")
 def import_json(import_json_from_file):
     return copy.deepcopy(import_json_from_file)
@@ -170,8 +178,8 @@ def test_virus_list(test_merged_virus):
 
     for prefix, virus in [("second", second_virus), ("third", third_virus), ("fourth", fourth_virus)]:
         for i, isolate in enumerate(virus["isolates"]):
-            isolate["isolate_id"] = "{}_{}".format(prefix, i)
-            isolate["sequences"][0]["isolate_id"] = isolate["isolate_id"]
+            isolate["id"] = "{}_{}".format(prefix, i)
+            isolate["sequences"][0]["isolate_id"] = isolate["id"]
             isolate["sequences"][0]["_id"] = "{}_seq_{}".format(prefix, i)
 
     return [first_virus, second_virus, third_virus, fourth_virus]

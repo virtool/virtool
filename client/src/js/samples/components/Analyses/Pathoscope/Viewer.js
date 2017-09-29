@@ -46,7 +46,8 @@ const PathoscopeViewer = (props) => {
 
                 // Go through each hit/sequence owned by the isolate and composite its values into the overall isolate
                 // values of weight, best-hit, read count, and coverage.
-                forEach(isolate.hits, hit => {
+                forEach(isolate.sequences, hit => {
+
                     hit.reads = Math.round(hit.pi * mappedReadCount);
 
                     // Add the following three values to the totals for the isolate.
@@ -60,7 +61,7 @@ const PathoscopeViewer = (props) => {
                         isolateDepth = hitDepth;
                     }
 
-                    genomeLength += hit.align.length;
+                    genomeLength += hit.length;
 
                     if (hit.coverage > isolate.coverage) {
                         isolate.coverage = hit.coverage;

@@ -1,4 +1,5 @@
 import os
+import arrow
 from cerberus import Validator
 
 import virtool.file
@@ -41,6 +42,13 @@ async def upload(req):
 
     file_path = os.path.join(req.app["settings"].get("data_path"), "files", file_id)
 
+    uploaded_at = virtool.utils.timestamp()
+
+    expires_at = None
+
+    if file_type == "viruses":
+        expires_at = arrow.get(uploaded_at).shift(hours=+5).datetime
+
     document = {
         "_id": file_id,
         "name": filename,
@@ -48,7 +56,8 @@ async def upload(req):
         "user": {
             "id": req["session"].user_id
         },
-        "uploaded_at": virtool.utils.timestamp(),
+        "uploaded_at": uploaded_at,
+        "expires_at": expires_at,
         "created": False,
         "ready": False
     }

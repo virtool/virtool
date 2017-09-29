@@ -26,7 +26,7 @@ import virtool.utils
 logger = logging.getLogger(__name__)
 
 
-def init_thread_pool_executor(app):
+def init_executors(app):
     """
     An application ``on_startup`` callback that initializes a :class:`~ThreadPoolExecutor` and attaches it to the
     ``app`` object.
@@ -38,6 +38,9 @@ def init_thread_pool_executor(app):
     executor = concurrent.futures.ThreadPoolExecutor(max_workers=5)
     app.loop.set_default_executor(executor)
     app["executor"] = executor
+
+    executor = concurrent.futures.ProcessPoolExecutor()
+    app["process_executor"] = executor
 
 
 def init_resources(app):
@@ -91,18 +94,33 @@ async def init_db(app):
 
     db = motor_asyncio.AsyncIOMotorClient(io_loop=app.loop)[app["db_name"]]
 
-    logger.info("Organizing database...")
+    logger.info("Starting database checks. Do not interrupt. This may take several minutes.")
 
+    logger.info("Checking viruses...")
+    await virtool.organize.organize_viruses(db, logger.info)
+
+    logger.info("Checking jobs...")
     await virtool.organize.organize_jobs(db)
+
+    logger.info("Checking samples...")
     await virtool.organize.organize_samples(db)
-    await virtool.organize.organize_analyses(db)
-    await virtool.organize.organize_viruses(db)
-    await virtool.organize.organize_sequences(db)
+
+    logger.info("Checking analyses...")
+    await virtool.organize.organize_analyses(db, logger.info)
+
+    logger.info("Checking indexes...")
     await virtool.organize.organize_indexes(db)
-    await virtool.organize.organize_history(db)
+
+    logger.info("Checking subtraction...")
     await virtool.organize.organize_subtraction(db)
-    await virtool.organize.organize_users(db)
+
+    logger.info("Checking groups...")
     await virtool.organize.organize_groups(db)
+
+    logger.info("Checking users...")
+    await virtool.organize.organize_users(db)
+
+    logger.info("Checking status...")
     await virtool.organize.organize_status(db)
 
     logger.info("Creating database indexes...")
@@ -247,7 +265,7 @@ def create_app(loop, db_name=None, disable_job_manager=False, disable_file_manag
     else:
         virtool.app_routes.setup_routes(app)
 
-        app.on_startup.append(init_thread_pool_executor)
+        app.on_startup.append(init_executors)
         app.on_startup.append(init_settings)
         app.on_startup.append(init_dispatcher)
         app.on_startup.append(init_db)

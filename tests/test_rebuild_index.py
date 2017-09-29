@@ -41,43 +41,57 @@ async def test_mk_index_dir(tmpdir, test_rebuild_job):
     ]
 
 
-async def test_write_fasta(mocker, test_rebuild_job):
+@pytest.mark.parametrize("virus_version", [1, 2])
+async def test_write_fasta(virus_version, test_motor, mocker, test_rebuild_job):
+    m = mocker.stub(name="join")
     m = mocker.stub(name="patch_virus_to_version")
+
+    await test_motor.viruses.insert_one({
+        "_id": "foobar",
+        "version": virus_version
+    })
+
+    mock_virus = {
+        "isolates": [
+            {
+                "default": True,
+                "sequences": [
+                    {
+                        "_id": "foo",
+                        "sequence": "ATAGAGATATAGAGACACACTTACTTATCA"
+                    },
+                    {
+                        "_id": "bar",
+                        "sequence": "GGCTTTCTCTATCAGGGAGGACTAGGCTAC"
+                    }
+                ]
+            },
+            {
+                "default": True,
+                "sequences": [
+                    {
+                        "_id": "baz",
+                        "sequence": "ATAGAGATATAGAGACACACTTACTTATCA"
+                    },
+                    {
+                        "_id": "test",
+                        "sequence": "GGCTTTCTCTATCAGGGAGGACTAGGCTAC"
+                    }
+                ]
+            }
+        ]
+    }
+
+    async def join(*args):
+        m(*args)
+        return mock_virus
 
     async def patch_virus_to_version(*args):
         m(*args)
-        return None, {
-            "isolates": [
-                {
-                    "default": True,
-                    "sequences": [
-                        {
-                            "_id": "foo",
-                            "sequence": "ATAGAGATATAGAGACACACTTACTTATCA"
-                        },
-                        {
-                            "_id": "bar",
-                            "sequence": "GGCTTTCTCTATCAGGGAGGACTAGGCTAC"
-                        }
-                    ]
-                },
-                {
-                    "default": True,
-                    "sequences": [
-                        {
-                            "_id": "baz",
-                            "sequence": "ATAGAGATATAGAGACACACTTACTTATCA"
-                        },
-                        {
-                            "_id": "test",
-                            "sequence": "GGCTTTCTCTATCAGGGAGGACTAGGCTAC"
-                        }
-                    ]
-                }
-            ]
-        }, None
+        return None, mock_virus, None
 
     mocker.patch("virtool.virus_history.patch_virus_to_version", patch_virus_to_version)
+    mocker.patch("virtool.virus.join", join)
 
     test_rebuild_job.task_args["virus_manifest"] = {
         "foobar": 2

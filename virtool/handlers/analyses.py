@@ -34,7 +34,7 @@ async def blast_nuvs_sequence(req):
     analysis_id = req.match_info["analysis_id"]
     sequence_index = req.match_info["sequence_index"]
 
-    analysis = await req.app["db"].analyses.find_one({"_id": analysis_id}, ["sample_id", "sequences"])
+    analysis = await req.app["db"].analyses.find_one({"_id": analysis_id}, ["sequences"])
 
     sequences = [sequence for sequence in analysis["sequences"] if sequence["index"] == int(sequence_index)]
 

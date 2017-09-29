@@ -16,7 +16,7 @@ export default class PathoscopeIsolate extends React.Component {
         maxDepth: React.PropTypes.number,
         reads: React.PropTypes.number,
 
-        hits: React.PropTypes.arrayOf(React.PropTypes.object),
+        sequences: React.PropTypes.arrayOf(React.PropTypes.object),
 
         setScroll: React.PropTypes.func,
         showReads: React.PropTypes.bool
@@ -41,25 +41,26 @@ export default class PathoscopeIsolate extends React.Component {
     render () {
 
         const chartContainerStyle = {
-            overflowX: "scroll"
+            overflowX: "scroll",
+            marginTop: "5px",
+            boxShadow: "inset 0px 0px 3px 1px #dddddd"
         };
 
-        const hitContainerStyle = {
-            minWidth: "100%",
-            width: 0
+        const chartRibbonStyle = {
+            whiteSpace: "nowrap"
         };
 
-        const hitComponents = sortBy(this.props.hits, hit => hit.align.length).map((hit, i) =>
-            <div key={hit.accession} style={hitContainerStyle}>
-                <Coverage
-                    data={hit.align}
-                    accession={hit.accession}
-                    definition={hit.definition}
-                    yMax={this.props.maxDepth}
-                    showYAxis={i === 0}
-                    isolateComponent={this}
-                />
-            </div>
+        const hitComponents = sortBy(this.props.sequences, hit => hit.length).map((hit, i) =>
+            <Coverage
+                key={i}
+                data={hit.align}
+                length={hit.length}
+                id={hit.id}
+                definition={hit.definition}
+                yMax={this.props.maxDepth}
+                showYAxis={i === 0}
+                isolateComponent={this}
+            />
         );
 
         const piValue = this.props.showReads ? this.props.reads: toScientificNotation(this.props.pi);
@@ -89,7 +90,9 @@ export default class PathoscopeIsolate extends React.Component {
                     </Flex>
                 </div>
                 <div ref={(node) => this.chartNode = node} style={chartContainerStyle}>
-                    {hitComponents}
+                    <div style={chartRibbonStyle}>
+                        {hitComponents}
+                    </div>
                 </div>
             </div>
         );
