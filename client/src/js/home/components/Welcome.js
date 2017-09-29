@@ -11,7 +11,7 @@
 
 import React from "react";
 import { Panel, ButtonToolbar } from "react-bootstrap";
-import { Icon } from "virtool/js/components/Base"
+import { Icon } from "../../components/Base/Icon";
 import CUDA from "./CUDA";
 
 const Welcome  = () => (

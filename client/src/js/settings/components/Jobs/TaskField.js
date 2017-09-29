@@ -11,6 +11,7 @@
 
 import CX from "classnames";
 import React from "react";
+import PropTypes from "prop-types";
 import { Icon } from "virtool/js/components/Base";
 
 /**
@@ -28,9 +29,9 @@ export default class TaskField extends React.PureComponent {
     }
 
     static propTypes = {
-        value: React.PropTypes.number,
-        onChange: React.PropTypes.func,
-        readOnly: React.PropTypes.bool
+        value: PropTypes.number,
+        onChange: PropTypes.func,
+        readOnly: PropTypes.bool
     };
 
     handleBlur = () => {

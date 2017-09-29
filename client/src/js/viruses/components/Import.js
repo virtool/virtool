@@ -7,7 +7,8 @@
  *
  */
 
-import React, { PropTypes } from "react";
+import React from "react";
+import PropTypes from "prop-types";
 import { connect } from "react-redux";
 import Dropzone from "react-dropzone";
 import { Modal, Panel, Table, ProgressBar } from "react-bootstrap";
@@ -22,7 +23,6 @@ const getInitialState = () => {
 };
 
 class VirusImport extends React.Component {
-
 
     constructor (props) {
         super(props);

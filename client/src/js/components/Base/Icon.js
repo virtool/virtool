@@ -11,6 +11,7 @@
 
 import CX from "classnames";
 import React from "react";
+import PropTypes from "prop-types";
 import { assign } from "lodash";
 import { Tooltip, OverlayTrigger } from "react-bootstrap";
 
@@ -61,17 +62,17 @@ export const Icon = (props) => {
 };
 
 Icon.propTypes = {
-    name: React.PropTypes.string.isRequired,
-    tip: React.PropTypes.oneOfType([React.PropTypes.string, React.PropTypes.element]),
-    tipPlacement: React.PropTypes.oneOf(["top", "right", "bottom", "left"]),
-    onClick: React.PropTypes.func,
-    pending: React.PropTypes.bool,
-    bsStyle: React.PropTypes.string,
-    className: React.PropTypes.string,
-    pullRight: React.PropTypes.bool,
-    fixedWidth: React.PropTypes.bool,
-    style: React.PropTypes.object,
-    pad: React.PropTypes.bool
+    name: PropTypes.string.isRequired,
+    tip: PropTypes.oneOfType([PropTypes.string, PropTypes.element]),
+    tipPlacement: PropTypes.oneOf(["top", "right", "bottom", "left"]),
+    onClick: PropTypes.func,
+    pending: PropTypes.bool,
+    bsStyle: PropTypes.string,
+    className: PropTypes.string,
+    pullRight: PropTypes.bool,
+    fixedWidth: PropTypes.bool,
+    style: PropTypes.object,
+    pad: PropTypes.bool
 };
 
 Icon.defaultProps = {

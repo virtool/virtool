@@ -32,8 +32,8 @@ export default class ExportViruses extends React.Component {
     }
 
     static propTypes = {
-        show: React.PropTypes.bool,
-        onHide: React.PropTypes.func.isRequired
+        show: PropTypes.bool,
+        onHide: PropTypes.func.isRequired
     };
 
     modalExited = () => {

@@ -10,6 +10,7 @@
  */
 
 import React from "react";
+import PropTypes from "prop-types";
 import FlipMove from "react-flip-move"
 import { capitalize, find } from "lodash";
 import { Row, Col, Modal } from "react-bootstrap";
@@ -40,8 +41,8 @@ export default class Groups extends React.Component {
     }
 
     static propTypes = {
-        show: React.PropTypes.bool,
-        onHide: React.PropTypes.func
+        show: PropTypes.bool,
+        onHide: PropTypes.func
     };
 
     componentDidMount () {

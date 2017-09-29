@@ -9,7 +9,8 @@
  * @exports ManageHosts
  */
 
-import React, { PropTypes } from "react";
+import React from "react";
+import PropTypes from "prop-types";
 import { some } from "lodash";
 import { connect } from "react-redux";
 import { LinkContainer } from "react-router-bootstrap";

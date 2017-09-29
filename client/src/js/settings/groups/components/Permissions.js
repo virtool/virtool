@@ -10,6 +10,7 @@
  */
 
 import React from "react";
+import PropTypes from "prop-types";
 import { transform, sortBy } from "lodash";
 import { Panel, ListGroup } from "react-bootstrap";
 
@@ -18,9 +19,9 @@ import Permission from "./Permission";
 export default class Permissions extends React.Component {
 
     static propTypes = {
-        collection: React.PropTypes.object,
-        permissions: React.PropTypes.object,
-        groupName: React.PropTypes.string
+        collection: PropTypes.object,
+        permissions: PropTypes.object,
+        groupName: PropTypes.string
     };
 
     render () {

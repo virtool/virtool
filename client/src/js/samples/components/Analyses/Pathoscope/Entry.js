@@ -1,5 +1,6 @@
 import CX from "classnames";
 import React from "react";
+import PropTypes from "prop-types";
 import { Row, Col, Label } from "react-bootstrap";
 import { Flex, FlexItem } from "virtool/js/components/Base";
 import { toScientificNotation } from "virtool/js/utils";
@@ -7,18 +8,18 @@ import { toScientificNotation } from "virtool/js/utils";
 export default class PathoscopeEntry extends React.Component {
 
     static propTypes = {
-        id: React.PropTypes.string,
-        name: React.PropTypes.string,
-        abbreviation: React.PropTypes.string,
+        id: PropTypes.string,
+        name: PropTypes.string,
+        abbreviation: PropTypes.string,
 
-        pi: React.PropTypes.number,
-        best: React.PropTypes.number,
-        reads: React.PropTypes.number,
-        coverage: React.PropTypes.number,
+        pi: PropTypes.number,
+        best: PropTypes.number,
+        reads: PropTypes.number,
+        coverage: PropTypes.number,
 
-        in: React.PropTypes.bool,
-        toggleIn: React.PropTypes.func,
-        showReads: React.PropTypes.bool
+        in: PropTypes.bool,
+        toggleIn: PropTypes.func,
+        showReads: PropTypes.bool
     };
 
     shouldComponentUpdate (nextProps) {

@@ -9,12 +9,13 @@
  * @exports RemoveSample
  */
 
-import React, { PropTypes } from "react";
+import React from "react";
+import PropTypes from "prop-types";
 import { connect } from "react-redux";
 import { Modal } from "react-bootstrap";
 
 import { removeSample, hideSampleModal } from "../actions";
-import { Button } from "virtool/js/components/Base";
+import { Button } from "../../components/Base/Button";
 
 const RemoveSample = (props) => (
     <Modal show={props.show} onHide={props.onHide} dialogClassName="modal-danger">

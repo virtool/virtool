@@ -10,6 +10,7 @@
  */
 
 import React from "react";
+import PropTypes from "prop-types";
 import { Row, Col, Modal, ButtonToolbar } from "react-bootstrap";
 import { Icon, Input, Checkbox, Button } from "virtool/js/components/Base";
 
@@ -35,9 +36,9 @@ export default class AddUser extends React.PureComponent {
     }
 
     static propTypes = {
-        add: React.PropTypes.func.isRequired,
-        onHide: React.PropTypes.func.isRequired,
-        show: React.PropTypes.bool.isRequired
+        add: PropTypes.func.isRequired,
+        onHide: PropTypes.func.isRequired,
+        show: PropTypes.bool.isRequired
     };
 
     componentWillUpdate (nextProps, nextState) {

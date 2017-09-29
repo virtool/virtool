@@ -24,16 +24,6 @@ import { setSourceTypeValue, updateSettings } from "../../actions";
  */
 class SourceTypes extends React.Component {
 
-    static propTypes = {
-        restrictSourceTypes: React.PropTypes.bool.isRequired,
-        allowedSourceTypes: React.PropTypes.arrayOf(React.PropTypes.string),
-        value: React.PropTypes.string,
-
-        onChange: React.PropTypes.func,
-        onSubmit: React.PropTypes.func,
-        onToggle: React.PropTypes.func
-    };
-
     /*
 
     handleSubmit = (event) => {

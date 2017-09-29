@@ -9,7 +9,8 @@
  * @exports IsolateAdd
  */
 
-import React, { PropTypes } from "react";
+import React from "react";
+import PropTypes from "prop-types";
 import { connect } from "react-redux";
 import { Row, Col, Modal, FormGroup, FormControl, InputGroup, ControlLabel, Popover, Overlay } from "react-bootstrap";
 

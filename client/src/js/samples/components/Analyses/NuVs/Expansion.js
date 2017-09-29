@@ -1,7 +1,8 @@
+import React from "react";
+import PropTypes from "prop-types";
 import { select } from "d3-selection";
 import { scaleLinear } from "d3-scale"
 import { axisTop } from "d3-axis";
-import React from "react";
 import { ListGroupItem } from "virtool/js/components/Base";
 
 import NuVsORF from "./ORF";
@@ -10,12 +11,12 @@ import NuVsBLAST from "./BLAST";
 export default class NuVsExpansion extends React.Component {
 
     static propTypes = {
-        index: React.PropTypes.number,
-        analysisId: React.PropTypes.string,
-        blast: React.PropTypes.object,
-        orfs: React.PropTypes.arrayOf(React.PropTypes.object),
-        sequence: React.PropTypes.string,
-        maxSequenceLength: React.PropTypes.number
+        index: PropTypes.number,
+        analysisId: PropTypes.string,
+        blast: PropTypes.object,
+        orfs: PropTypes.arrayOf(PropTypes.object),
+        sequence: PropTypes.string,
+        maxSequenceLength: PropTypes.number
     };
 
     componentDidMount () {

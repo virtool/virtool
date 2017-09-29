@@ -18,7 +18,8 @@
  * @exports ConfirmVirus
  */
 
-import React, { PropTypes } from "react";
+import React from "react";
+import PropTypes from "prop-types";
 import { find } from "lodash";
 import { Alert } from "react-bootstrap";
 import { formatIsolateName } from "virtool/js/utils";

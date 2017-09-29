@@ -9,7 +9,7 @@
  * @exports IndexRebuild
  */
 
-import React, { PropTypes } from "react";
+import React from "react";
 import { connect } from "react-redux";
 import { Modal, Panel } from "react-bootstrap";
 
@@ -22,14 +22,6 @@ class RebuildIndex extends React.Component {
     constructor (props) {
         super(props);
     }
-
-    static propTypes = {
-        show: PropTypes.bool,
-        unbuilt: PropTypes.object,
-        onHide: PropTypes.func,
-        onGetUnbuilt: PropTypes.func,
-        onRebuild: PropTypes.func
-    };
 
     modalEntered = () => {
         this.props.onGetUnbuilt();

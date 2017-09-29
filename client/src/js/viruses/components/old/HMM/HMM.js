@@ -54,7 +54,7 @@ export default class ManageHMM extends React.Component {
     }
 
     static propTypes = {
-        route: React.PropTypes.object
+        route: PropTypes.object
     };
 
     componentDidMount () {

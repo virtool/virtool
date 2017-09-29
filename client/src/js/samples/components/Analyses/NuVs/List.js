@@ -1,6 +1,7 @@
-import { assign, flatten, filter, includes, xor } from "lodash";
 import React from "react";
+import PropTypes from "prop-types";
 import FlipMove from "react-flip-move";
+import { assign, flatten, filter, includes, xor } from "lodash";
 
 import NuVsEntry from "./Entry";
 import NuVsExpansion from "./Expansion";
@@ -15,9 +16,9 @@ export default class NuVsList extends React.Component {
     }
 
     static propTypes = {
-        analysisId: React.PropTypes.string,
-        maxSequenceLength: React.PropTypes.number,
-        data: React.PropTypes.arrayOf(React.PropTypes.object)
+        analysisId: PropTypes.string,
+        maxSequenceLength: PropTypes.number,
+        data: PropTypes.arrayOf(PropTypes.object)
     };
 
     toggleIn = (sequenceIndex) => {

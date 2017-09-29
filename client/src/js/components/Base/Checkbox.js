@@ -11,6 +11,7 @@
 
 import CX from "classnames";
 import React from "react";
+import PropTypes from "prop-types";
 
 /**
  * A checkbox component based on the Icomoon checkbox icons. Has three possible states: checked, unchecked, and partial.
@@ -49,14 +50,14 @@ export const Checkbox = (props) => {
 };
 
 Checkbox.propTypes = {
-    label: React.PropTypes.node,
-    checked: React.PropTypes.bool,
-    partial: React.PropTypes.bool,
-    onClick: React.PropTypes.func,
-    pending: React.PropTypes.bool,
-    style: React.PropTypes.object,
-    className: React.PropTypes.string,
-    pullRight: React.PropTypes.bool
+    label: PropTypes.node,
+    checked: PropTypes.bool,
+    partial: PropTypes.bool,
+    onClick: PropTypes.func,
+    pending: PropTypes.bool,
+    style: PropTypes.object,
+    className: PropTypes.string,
+    pullRight: PropTypes.bool
 };
 
 Checkbox.defaultProps = {

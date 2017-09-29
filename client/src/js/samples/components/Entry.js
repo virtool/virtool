@@ -11,6 +11,7 @@
 
 import React from "react";
 import CX from "classnames";
+import PropTypes from "prop-types";
 import { mapValues } from "lodash";
 import { LinkContainer } from "react-router-bootstrap";
 import { Row, Col } from "react-bootstrap";
@@ -28,17 +29,17 @@ export default class SampleEntry extends React.Component {
     }
 
     static propTypes = {
-        id: React.PropTypes.string.isRequired,
-        name: React.PropTypes.string.isRequired,
-        created_at: React.PropTypes.string.isRequired,
-        userId: React.PropTypes.string.isRequired,
+        id: PropTypes.string.isRequired,
+        name: PropTypes.string.isRequired,
+        created_at: PropTypes.string.isRequired,
+        userId: PropTypes.string.isRequired,
         imported: stringOrBool.isRequired,
         pathoscope: stringOrBool.isRequired,
         nuvs: stringOrBool.isRequired,
-        archived: React.PropTypes.bool.isRequired,
-        selected: React.PropTypes.bool,
-        selecting: React.PropTypes.bool,
-        toggleSelect: React.PropTypes.func
+        archived: PropTypes.bool.isRequired,
+        selected: PropTypes.bool,
+        selecting: PropTypes.bool,
+        toggleSelect: PropTypes.func
     };
 
     static defaultProps = {

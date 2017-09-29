@@ -98,7 +98,6 @@ export default class AddGroup extends React.Component {
                         </InputGroup.Button>
                     </InputGroup>
                 </FormGroup>
-
             </form>
         );
     }

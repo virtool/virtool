@@ -1,4 +1,5 @@
 import React from "react";
+import PropTypes from "prop-types";
 
 export const Tooltip = (props) => {
 
@@ -29,13 +30,13 @@ export const Tooltip = (props) => {
 };
 
 Tooltip.propTypes = {
-    x: React.PropTypes.number,
-    y: React.PropTypes.number,
+    x: PropTypes.number,
+    y: PropTypes.number,
 
-    header: React.PropTypes.oneOfType([
-        React.PropTypes.string,
-        React.PropTypes.element
+    header: PropTypes.oneOfType([
+        PropTypes.string,
+        PropTypes.element
     ]),
 
-    children: React.PropTypes.node
+    children: PropTypes.node
 };

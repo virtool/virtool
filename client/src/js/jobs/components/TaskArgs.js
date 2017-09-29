@@ -7,7 +7,8 @@
  *
  */
 
-import React, { PropTypes } from "react";
+import React from "react";
+import PropTypes from "prop-types";
 import { Link } from "react-router-dom";
 import { mapValues, values } from "lodash";
 import { Table } from "react-bootstrap";

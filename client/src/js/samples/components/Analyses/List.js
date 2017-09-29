@@ -9,8 +9,9 @@
  * @exports AnalysisList
  */
 
-import React, { PropTypes } from "react";
+import React from "react";
 import { sortBy } from "lodash";
+import PropTypes from "prop-types";
 import { connect } from "react-redux";
 import { ListGroup, FormGroup, InputGroup, FormControl } from "react-bootstrap";
 
@@ -33,7 +34,7 @@ class AnalysesList extends React.Component {
         history: PropTypes.object,
         account: PropTypes.object,
         detail: PropTypes.object,
-        analyses: PropTypes.arrayOf(React.PropTypes.object),
+        analyses: PropTypes.arrayOf(PropTypes.object),
         onAnalyze: PropTypes.func
     };
 

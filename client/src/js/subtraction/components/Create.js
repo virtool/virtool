@@ -9,7 +9,7 @@
  * @exports AddHost
  */
 
-import React, { PropTypes } from "react";
+import React from "react";
 import { filter } from "lodash";
 import { connect } from "react-redux";
 import { Row, Col, ListGroup, Modal } from "react-bootstrap";
@@ -32,14 +32,6 @@ class CreateSubtraction extends React.Component {
         super(props);
         this.state = getInitialState();
     }
-
-    static propTypes = {
-        show: PropTypes.bool.isRequired,
-        files: PropTypes.arrayOf(PropTypes.object),
-        onHide: PropTypes.func,
-        onFindFiles: PropTypes.func,
-        onCreate: PropTypes.func
-    };
 
     modalEnter = () => {
         this.props.onFindFiles();

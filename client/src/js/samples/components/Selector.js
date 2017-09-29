@@ -11,6 +11,7 @@
  */
 
 import React from "react";
+import PropTypes from "prop-types";
 import { filter, map, some } from "lodash";
 import { FormGroup, InputGroup, FormControl } from "react-bootstrap";
 import { Icon, FlexItem, Button } from "virtool/js/components/Base";
@@ -33,8 +34,8 @@ export default class SampleSelector extends React.Component {
 
     static propTypes = {
         archived: stringOrBool,
-        selected: React.PropTypes.arrayOf(React.PropTypes.object).isRequired,
-        selectNone: React.PropTypes.func
+        selected: PropTypes.arrayOf(PropTypes.object).isRequired,
+        selectNone: PropTypes.func
     };
 
     setAlgorithm = (event) => {

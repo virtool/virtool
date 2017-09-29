@@ -50,13 +50,6 @@ const Resources = (props) => (
     </Row>
 );
 
-Resources.propTypes = {
-    proc: React.PropTypes.number,
-    mem: React.PropTypes.number,
-    onChangeProc: React.PropTypes.func,
-    onChangeMem: React.PropTypes.func
-};
-
 const mapStateToProps = (state) => {
     return {
         proc: state.settings.data.proc,

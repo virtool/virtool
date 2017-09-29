@@ -1,4 +1,5 @@
 import React from "react";
+import PropTypes from "prop-types";
 import { sortBy, some, assign, filter, reduce } from "lodash";
 
 import NuVsController from "./Controller";
@@ -62,10 +63,10 @@ const NuVsViewer = (props) => {
 };
 
 NuVsViewer.propTypes = {
-    _id: React.PropTypes.string,
-    sequences: React.PropTypes.array,
-    hmm: React.PropTypes.array,
-    orfs: React.PropTypes.array
+    _id: PropTypes.string,
+    sequences: PropTypes.array,
+    hmm: PropTypes.array,
+    orfs: PropTypes.array
 };
 
 export default NuVsViewer;

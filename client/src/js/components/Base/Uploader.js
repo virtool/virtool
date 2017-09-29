@@ -1,4 +1,5 @@
 import React from "react";
+import PropTypes from "prop-types";
 import Numeral from "numeral";
 import Dropzone from "react-dropzone";
 import FlipMove from "react-flip-move";
@@ -11,14 +12,14 @@ import { Flex, Button, ListGroupItem, getFlipMoveProps } from "virtool/js/compon
 export class FileItem extends React.PureComponent {
 
     static propTypes = {
-        _id: React.PropTypes.string.isRequired,
-        name: React.PropTypes.string.isRequired,
-        timestamp: React.PropTypes.string.isRequired,
-        created: React.PropTypes.bool,
-        ready: React.PropTypes.bool,
-        size_now: React.PropTypes.number.isRequired,
-        size_end: React.PropTypes.number.isRequired,
-        remove: React.PropTypes.func.isRequired
+        _id: PropTypes.string.isRequired,
+        name: PropTypes.string.isRequired,
+        timestamp: PropTypes.string.isRequired,
+        created: PropTypes.bool,
+        ready: PropTypes.bool,
+        size_now: PropTypes.number.isRequired,
+        size_end: PropTypes.number.isRequired,
+        remove: PropTypes.func.isRequired
     };
 
     static defaultProps = {
@@ -115,7 +116,7 @@ export const Uploader = (props) => {
 };
 
 Uploader.propTypes = {
-    fileDocuments: React.PropTypes.object,
-    onDrop: React.PropTypes.func.isRequired,
-    onRemove: React.PropTypes.func.isRequired
+    fileDocuments: PropTypes.object,
+    onDrop: PropTypes.func.isRequired,
+    onRemove: PropTypes.func.isRequired
 };

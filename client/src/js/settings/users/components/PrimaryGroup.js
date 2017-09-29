@@ -54,13 +54,6 @@ const PrimaryGroup = (props) => {
     );
 };
 
-PrimaryGroup.propTypes = {
-    userId: React.PropTypes.string,
-    primaryGroup: React.PropTypes.string,
-    groups: React.PropTypes.arrayOf(React.PropTypes.string),
-    onChange: React.PropTypes.func
-};
-
 const mapStateToProps = (state) => {
     const activeData = find(state.users.list, {id: state.users.activeId});
 

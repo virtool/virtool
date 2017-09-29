@@ -86,11 +86,6 @@ const TaskLimits = (props) => {
     );
 };
 
-TaskLimits.propTypes = {
-    limits: React.PropTypes.object,
-    onChangeLimit: React.PropTypes.func
-};
-
 const mapStateToProps = (state) => {
     let limits = {};
 

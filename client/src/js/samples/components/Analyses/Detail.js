@@ -1,4 +1,5 @@
-import React, { PropTypes } from "react";
+import React from "react";
+import PropTypes from "prop-types";
 import Numeral from "numeral";
 import { connect } from "react-redux";
 import { Label, Table } from "react-bootstrap";

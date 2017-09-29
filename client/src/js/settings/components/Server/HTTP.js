@@ -57,13 +57,6 @@ const HTTPOptions = (props) => {
     );
 };
 
-HTTPOptions.propTypes = {
-    host: React.PropTypes.string,
-    port: React.PropTypes.number,
-    onChangeHost: React.PropTypes.func,
-    onChangePort: React.PropTypes.func
-};
-
 const mapStateToProps = (state) => {
     return {
         host: state.settings.data.server_host,

@@ -1,4 +1,5 @@
 import React from "react";
+import PropTypes from "prop-types";
 import { assign, filter } from "lodash";
 import { Table, FormGroup, InputGroup, FormControl, Dropdown, MenuItem } from "react-bootstrap";
 import { Flex, FlexItem, Icon, Button, Checkbox } from "virtool/js/components/Base";
@@ -17,9 +18,9 @@ export default class NuVsController extends React.PureComponent {
     }
 
     static propTypes = {
-        analysisId: React.PropTypes.string,
-        maxSequenceLength: React.PropTypes.number,
-        data: React.PropTypes.arrayOf(React.PropTypes.object)
+        analysisId: PropTypes.string,
+        maxSequenceLength: PropTypes.number,
+        data: PropTypes.arrayOf(PropTypes.object)
     };
 
     setFindTerm = (event) => this.setState({findTerm: event.target.value});

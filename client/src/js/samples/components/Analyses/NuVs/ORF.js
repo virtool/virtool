@@ -1,6 +1,7 @@
 import { select } from "d3-selection";
 import { scaleLinear } from "d3-scale";
 import React from "react";
+import PropTypes from "prop-types";
 import { capitalize } from "lodash";
 import { Flex, FlexItem } from "virtool/js/components/Base";
 
@@ -15,12 +16,12 @@ const HEIGHT = 8;
 export default class NuVsORF extends React.Component {
 
     static propTypes = {
-        nuc: React.PropTypes.string,
-        hmms: React.PropTypes.arrayOf(React.PropTypes.object),
-        maxSequenceLength: React.PropTypes.number,
-        hasHmm: React.PropTypes.bool,
-        pos: React.PropTypes.array,
-        strand: React.PropTypes.number,
+        nuc: PropTypes.string,
+        hmms: PropTypes.arrayOf(PropTypes.object),
+        maxSequenceLength: PropTypes.number,
+        hasHmm: PropTypes.bool,
+        pos: PropTypes.array,
+        strand: PropTypes.number,
     };
 
     componentDidMount = () => this.draw();

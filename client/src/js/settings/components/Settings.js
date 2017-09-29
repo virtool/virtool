@@ -8,8 +8,7 @@
  */
 
 import React from "react";
-import { connect } from "react-redux";
-import { withRouter, Switch, Redirect, Route } from "react-router-dom";
+import { Switch, Redirect, Route } from "react-router-dom";
 import { Nav, NavItem } from "react-bootstrap";
 import { LinkContainer } from "react-router-bootstrap";
 
@@ -96,20 +95,4 @@ const Settings = () => {
     );
 };
 
-Settings.propTypes = {
-    source_types: React.PropTypes.object,
-    get: React.PropTypes.func
-};
-
-const mapStateToProps = (state) => {
-    return {
-        restrictSourceTypes: state.settings.data.restrict_source_types,
-        allowedSourceTypes: state.settings.data.allowed_source_types
-    };
-};
-
-const SettingsContainer = withRouter(connect(
-    mapStateToProps
-)(Settings));
-
-export default SettingsContainer;
+export default Settings;

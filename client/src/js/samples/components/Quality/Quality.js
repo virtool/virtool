@@ -46,12 +46,6 @@ const SampleDetailQuality = (props) => (
     </div>
 );
 
-SampleDetailQuality.propTypes = {
-    bases: React.PropTypes.array,
-    composition: React.PropTypes.array,
-    sequences: React.PropTypes.array
-};
-
 const mapStateToProps = (state) => {
     return pick(state.samples.detail.quality, ["bases", "composition", "sequences"]);
 };

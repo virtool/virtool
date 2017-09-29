@@ -9,7 +9,8 @@
  * @exports Isolate
  */
 
-import React, { PropTypes } from "react";
+import React from "react";
+import PropTypes from "prop-types";
 import URI from "urijs";
 import { capitalize, find } from "lodash";
 import { connect } from "react-redux";

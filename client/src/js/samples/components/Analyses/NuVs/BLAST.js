@@ -1,5 +1,6 @@
-import Numeral from "numeral";
 import React from "react";
+import Numeral from "numeral";
+import PropTypes from "prop-types";
 import { Panel, Alert, Table } from "react-bootstrap";
 import { Icon, Flex, FlexItem, Button } from "virtool/js/components/Base";
 
@@ -84,9 +85,9 @@ const NuVsBLAST = (props) => {
 };
 
 NuVsBLAST.propTypes = {
-    analysisId: React.PropTypes.string,
-    sequenceIndex: React.PropTypes.number,
-    blast: React.PropTypes.object
+    analysisId: PropTypes.string,
+    sequenceIndex: PropTypes.number,
+    blast: PropTypes.object
 };
 
 export default NuVsBLAST;

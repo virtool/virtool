@@ -11,6 +11,7 @@
  */
 
 import React from "react";
+import PropTypes from "prop-types";
 import CX from "classnames";
 import { round } from "lodash";
 import { bsStyles } from "./";
@@ -26,11 +27,11 @@ export class AutoProgressBar extends React.Component {
     }
 
     static propTypes = {
-        step: React.PropTypes.number,
-        bsStyle: React.PropTypes.oneOf(bsStyles),
-        active: React.PropTypes.bool,
-        interval: React.PropTypes.number,
-        affixed: React.PropTypes.bool
+        step: PropTypes.number,
+        bsStyle: PropTypes.oneOf(bsStyles),
+        active: PropTypes.bool,
+        interval: PropTypes.number,
+        affixed: PropTypes.bool
     };
 
     static defaultProps = {
@@ -105,12 +106,12 @@ export class AutoProgressBar extends React.Component {
 export class ProgressBar extends React.PureComponent {
 
     static propTypes = {
-        now: React.PropTypes.number,
-        onMoved: React.PropTypes.func,
-        children: React.PropTypes.node,
-        affixed: React.PropTypes.bool,
-        style: React.PropTypes.object,
-        bsStyle: React.PropTypes.oneOf(bsStyles)
+        now: PropTypes.number,
+        onMoved: PropTypes.func,
+        children: PropTypes.node,
+        affixed: PropTypes.bool,
+        style: PropTypes.object,
+        bsStyle: PropTypes.oneOf(bsStyles)
     };
 
     static defaultProps = {

@@ -95,14 +95,6 @@ const SamplePermissions = (props) => {
     );
 };
 
-SamplePermissions.propTypes = {
-    sampleGroup: React.PropTypes.string,
-    group: React.PropTypes.string,
-    all: React.PropTypes.string,
-    onChangeSampleGroup: React.PropTypes.func,
-    onChangeRights: React.PropTypes.func
-};
-
 const mapStateToProps = (state) => {
     const settings = state.settings.data;
 

@@ -10,6 +10,7 @@
  */
 
 import React from "react";
+import PropTypes from "prop-types";
 import { connect } from "react-redux";
 import { Typeahead } from "react-bootstrap-typeahead";
 import { Row, Col, Panel } from "react-bootstrap";
@@ -21,9 +22,9 @@ import { Flex, FlexItem, Checkbox } from "virtool/js/components/Base";
 class InternalControl extends React.Component {
 
     static propTypes = {
-        set: React.PropTypes.func,
-        useInternalControl: React.PropTypes.bool,
-        internalControlId: React.PropTypes.string
+        set: PropTypes.func,
+        useInternalControl: PropTypes.bool,
+        internalControlId: PropTypes.string
     };
 
     /**

@@ -1,17 +1,18 @@
-import CX from "classnames";
 import React from "react";
+import CX from "classnames";
+import PropTypes from "prop-types";
 import { Row, Col, Label } from "react-bootstrap";
 import { Flex, FlexItem } from "virtool/js/components/Base";
 
 export default class NuVsEntry extends React.Component {
     
     static propTypes = {
-        in: React.PropTypes.bool,
-        index: React.PropTypes.number,
-        sequence: React.PropTypes.string,
-        orfs: React.PropTypes.array,
-        minE: React.PropTypes.number,
-        toggleIn: React.PropTypes.func
+        in: PropTypes.bool,
+        index: PropTypes.number,
+        sequence: PropTypes.string,
+        orfs: PropTypes.array,
+        minE: PropTypes.number,
+        toggleIn: PropTypes.func
     };
 
     shouldComponentUpdate (nextProps) {

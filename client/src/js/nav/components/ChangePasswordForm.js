@@ -38,23 +38,23 @@ export default class PasswordChangeForm extends React.Component {
 
     static propTypes = {
         // Function called when the user's password is successfully reset.
-        onReset: React.PropTypes.func,
+        onReset: PropTypes.func,
 
         // Should the old password be required in order for a new one to be set?
-        requireOld: React.PropTypes.bool,
+        requireOld: PropTypes.bool,
 
         // Toggles the visibility of a notice telling the user their password expired.
-        showExpiry: React.PropTypes.bool,
+        showExpiry: PropTypes.bool,
 
         // An element to position above the reset form.
-        header: React.PropTypes.element,
+        header: PropTypes.element,
 
         // Classes to apply to the form body and the footer that contains the submit button.
-        bodyClass: React.PropTypes.string,
-        footerClass: React.PropTypes.string,
+        bodyClass: PropTypes.string,
+        footerClass: PropTypes.string,
 
         // A username to override the one stored in dispatcher.user.
-        username: React.PropTypes.string
+        username: PropTypes.string
     };
 
     componentDidMount () {

@@ -9,20 +9,18 @@
  * @exports IndexRebuild
  */
 
-import React, { PropTypes } from "react";
+import React from "react";
+import PropTypes from "prop-types";
 import { sortBy } from "lodash";
+import { ScaleLoader } from "halogen";
 import { Row, Col, ListGroup, ListGroupItem, Panel } from "react-bootstrap";
-
-import { Spinner } from "virtool/js/components/Base";
 
 const RebuildHistory = (props) => {
 
     if (props.unbuilt === null) {
         return (
             <Panel header="Changes">
-                <div className="text-center">
-                    <Spinner color="#777777" />
-                </div>
+                <ScaleLoader />
             </Panel>
         );
     }

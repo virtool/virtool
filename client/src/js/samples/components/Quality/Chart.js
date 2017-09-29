@@ -11,6 +11,7 @@
 
 import "d3-transition";
 import React from "react";
+import PropTypes from "prop-types";
 
 /**
  * A React component that renders a d3 chart object.
@@ -20,8 +21,8 @@ import React from "react";
 export default class QualityChart extends React.Component {
 
     static propTypes = {
-        data: React.PropTypes.array,
-        createChart: React.PropTypes.func
+        data: PropTypes.array,
+        createChart: PropTypes.func
     };
 
     componentDidMount () {

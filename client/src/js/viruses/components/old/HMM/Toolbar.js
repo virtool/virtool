@@ -20,8 +20,8 @@ export default class HMMToolbar extends React.Component {
     }
 
     static propTypes = {
-        findTerm: React.PropTypes.string,
-        setFindTerm: React.PropTypes.func.isRequired
+        findTerm: PropTypes.string,
+        setFindTerm: PropTypes.func.isRequired
     };
 
     render = () => (

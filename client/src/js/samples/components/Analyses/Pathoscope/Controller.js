@@ -1,4 +1,5 @@
 import React from "react";
+import PropTypes from "prop-types";
 import { assign, xor, sortBy, sum, filter } from "lodash";
 import { Icon, Flex, FlexItem, Button, Checkbox } from "virtool/js/components/Base";
 import { Row, Col, Dropdown, MenuItem, FormGroup, InputGroup, FormControl } from "react-bootstrap";
@@ -24,8 +25,8 @@ export default class PathoscopeController extends React.Component {
     }
 
     static propTypes = {
-        data: React.PropTypes.array,
-        maxReadLength: React.PropTypes.number
+        data: PropTypes.array,
+        maxReadLength: PropTypes.number
     };
 
     collapseAll = () => this.setState({expanded: []});

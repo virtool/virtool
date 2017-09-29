@@ -10,9 +10,10 @@
  */
 
 import React from "react";
+import PropTypes from "prop-types";
 import CX from "classnames";
 import { Popover, OverlayTrigger } from "react-bootstrap";
-import { Icon } from "virtool/js/components/Base";
+import { Icon } from "./Icon";
 
 export const Help = (props) => {
 
@@ -36,7 +37,7 @@ export const Help = (props) => {
 };
 
 Help.propTypes = {
-    title: React.PropTypes.string,
-    pullRight: React.PropTypes.bool,
-    children: React.PropTypes.node.isRequired
+    title: PropTypes.string,
+    pullRight: PropTypes.bool,
+    children: PropTypes.node.isRequired
 };

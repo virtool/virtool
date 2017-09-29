@@ -1,4 +1,5 @@
 import React from "react";
+import PropTypes from "prop-types";
 import { pick } from "lodash";
 import { select } from "d3-selection";
 import { area } from "d3-shape";
@@ -86,11 +87,11 @@ const createChart = (element, data, length, meta, yMax, xMin, showYAxis) => {
 export default class CoverageChart extends React.Component {
 
     static propTypes = {
-        yMax: React.PropTypes.number,
-        data: React.PropTypes.array,
-        length: React.PropTypes.number,
-        title: React.PropTypes.string,
-        showYAxis: React.PropTypes.bool
+        yMax: PropTypes.number,
+        data: PropTypes.array,
+        length: PropTypes.number,
+        title: PropTypes.string,
+        showYAxis: PropTypes.bool
     };
 
     componentDidMount () {

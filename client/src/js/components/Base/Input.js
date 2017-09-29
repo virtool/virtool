@@ -9,7 +9,8 @@
  * @exports Input
  */
 
-import React, { PropTypes } from "react";
+import React from "react";
+import PropTypes from "prop-types";
 import { ControlLabel, FormControl, FormGroup, Overlay, Popover } from "react-bootstrap";
 
 export class Input extends React.Component {
@@ -50,10 +51,6 @@ export class Input extends React.Component {
 
     focus = () => {
         this.inputNode.focus();
-    };
-
-    blur = () => {
-        this.inputNode.blur();
     };
 
     render () {

@@ -1,4 +1,5 @@
 import React from "react";
+import PropTypes from "prop-types";
 import { Helmet } from "react-helmet";
 import { Provider, connect } from "react-redux";
 import { BrowserRouter, Switch, Route, withRouter } from "react-router-dom";
@@ -43,7 +44,7 @@ const Inner = (props) => {
 };
 
 Inner.propTypes = {
-    ready: React.PropTypes.bool
+    ready: PropTypes.bool
 };
 
 const mapStateToProps = (state) => {
@@ -67,7 +68,7 @@ const App = (props) => {
 };
 
 App.propTypes = {
-    store: React.PropTypes.object.isRequired
+    store: PropTypes.object.isRequired
 };
 
 export default App;

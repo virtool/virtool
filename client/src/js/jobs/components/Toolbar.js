@@ -9,7 +9,7 @@
  * @exports JobsToolbar
  */
 
-import React, { PropTypes } from "react";
+import React from "react";
 import { connect } from "react-redux";
 import { LinkContainer } from "react-router-bootstrap";
 import {InputGroup, FormGroup, FormControl, Dropdown, MenuItem} from "react-bootstrap";
@@ -60,12 +60,6 @@ const JobsToolbar = (props) => {
             {removalDropdown}
         </div>
     );
-};
-
-JobsToolbar.propTypes = {
-    canRemove: PropTypes.bool,
-    onClear: PropTypes.func,
-    onTest: PropTypes.func
 };
 
 const mapStateToProps = (state) => {

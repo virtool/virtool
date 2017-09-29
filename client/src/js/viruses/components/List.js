@@ -7,7 +7,7 @@
  *
  */
 
-import React, { PropTypes } from "react";
+import React from "react";
 import URI from "urijs";
 import { connect } from "react-redux";
 import { Link, Route } from "react-router-dom";
@@ -24,19 +24,6 @@ class VirusesList extends React.Component {
     constructor (props) {
         super(props)
     }
-
-    static propTypes = {
-        history: PropTypes.object,
-        location: PropTypes.object,
-        account: PropTypes.object,
-        page: PropTypes.number,
-        pageCount: PropTypes.number,
-        totalCount: PropTypes.number,
-        foundCount: PropTypes.number,
-        documents: PropTypes.arrayOf(React.PropTypes.object),
-        modifiedCount: PropTypes.number,
-        onFind: PropTypes.func
-    };
 
     componentDidMount () {
         this.props.onFind(this.props.location);

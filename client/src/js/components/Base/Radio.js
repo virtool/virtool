@@ -10,6 +10,7 @@
  */
 
 import React from "react";
+import PropTypes from "prop-types";
 import { Icon } from "./";
 
 /**
@@ -21,6 +22,6 @@ export const Radio = (props) => (
 );
 
 Radio.propTypes = {
-    checked: React.PropTypes.bool.isRequired,
-    onClick: React.PropTypes.func
+    checked: PropTypes.bool.isRequired,
+    onClick: PropTypes.func
 };

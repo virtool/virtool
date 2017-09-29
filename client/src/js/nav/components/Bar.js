@@ -9,7 +9,7 @@
  * @exports Bar
  */
 
-import React, { PropTypes } from "react";
+import React from "react";
 import { assign, startsWith } from "lodash";
 import { connect } from "react-redux";
 import { withRouter } from "react-router-dom";
@@ -100,12 +100,6 @@ const Bar = (props) => {
             <AutoProgressBar step={50} interval={80} active={props.pending} affixed />
         </div>
     );
-};
-
-Bar.propTypes = {
-    pending: PropTypes.bool,
-    id: PropTypes.string,
-    logout: PropTypes.func
 };
 
 const mapStateToProps = (state) => {

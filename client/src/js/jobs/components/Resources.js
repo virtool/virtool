@@ -15,7 +15,7 @@
  *
  */
 
-import React, { PropTypes } from "react";
+import React from "react";
 import { mean } from "lodash";
 import { connect } from "react-redux";
 import Gauge from "react-svg-gauge";
@@ -24,11 +24,6 @@ import { Flex, FlexItem } from "virtool/js/components/Base";
 import { getResources } from "../actions";
 
 class JobsResources extends React.Component {
-
-    static propTypes = {
-        resources: PropTypes.object,
-        onGet: PropTypes.func
-    };
 
     componentDidMount () {
         this.props.onGet();

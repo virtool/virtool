@@ -35,9 +35,9 @@ export default class ImportVirusesProgress extends React.Component {
     }
 
     static propTypes = {
-        fileId: React.PropTypes.string.isRequired,
-        fileDocument: React.PropTypes.object.isRequired,
-        replace: React.PropTypes.bool.isRequired
+        fileId: PropTypes.string.isRequired,
+        fileDocument: PropTypes.object.isRequired,
+        replace: PropTypes.bool.isRequired
     };
 
     componentDidUpdate (prevProps) {

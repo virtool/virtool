@@ -10,6 +10,7 @@
  */
 
 import React from "react";
+import PropTypes from "prop-types";
 import { Alert } from "react-bootstrap";
 
 /**
@@ -41,7 +42,7 @@ const JobError = (props) => {
 };
 
 JobError.propTypes = {
-    error: React.PropTypes.object.isRequired
+    error: PropTypes.object.isRequired
 };
 
 export default JobError;

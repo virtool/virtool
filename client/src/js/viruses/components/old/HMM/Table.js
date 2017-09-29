@@ -20,10 +20,10 @@ import HMMEntry from "./Entry";
 export class CaretHeader extends React.Component {
 
     static propTypes = {
-        name: React.PropTypes.string,
-        onClick: React.PropTypes.func,
-        showCaret: React.PropTypes.bool,
-        descending: React.PropTypes.bool
+        name: PropTypes.string,
+        onClick: PropTypes.func,
+        showCaret: PropTypes.bool,
+        descending: PropTypes.bool
     };
 
     sort = () => {
@@ -71,10 +71,10 @@ export default class HMMTable extends React.Component {
     }
 
     static propTypes = {
-        documents: React.PropTypes.arrayOf(React.PropTypes.object),
-        sort: React.PropTypes.func,
-        sortKey: React.PropTypes.string,
-        sortDescending: React.PropTypes.bool
+        documents: PropTypes.arrayOf(PropTypes.object),
+        sort: PropTypes.func,
+        sortKey: PropTypes.string,
+        sortDescending: PropTypes.bool
     };
 
     setPage = (page) => {

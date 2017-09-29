@@ -61,16 +61,6 @@ const GroupsPermissions = (props) => {
     );
 };
 
-GroupsPermissions.propTypes = {
-    userId: React.PropTypes.string,
-    accountUserId: React.PropTypes.string,
-    allGroups: React.PropTypes.array,
-    memberGroups: React.PropTypes.array,
-    permissions: React.PropTypes.object,
-    addToGroup: React.PropTypes.func,
-    removeFromGroup: React.PropTypes.func
-};
-
 const mapStateToProps = (state) => {
 
     const activeData = find(state.users.list, {id: state.users.activeId});

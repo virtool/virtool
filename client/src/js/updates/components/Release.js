@@ -7,8 +7,9 @@
  *
  */
 
-import React, { PropTypes } from "react";
+import React from "react";
 import Marked from "marked";
+import PropTypes from "prop-types";
 import { ListGroupItem, Button, Row, Col } from "react-bootstrap";
 
 export const renderReleaseMarkdown = (body) => {

@@ -1,4 +1,5 @@
 import React from "react";
+import PropTypes from "prop-types";
 
 export const Spinner = (props) => {
     let style;
@@ -17,5 +18,5 @@ export const Spinner = (props) => {
 };
 
 Spinner.propTypes = {
-    color: React.PropTypes.string
+    color: PropTypes.string
 };

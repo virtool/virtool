@@ -70,15 +70,6 @@ const SSLOptions = (props) => (
     </div>
 );
 
-SSLOptions.propTypes = {
-    enabled: React.PropTypes.bool,
-    certPath: React.PropTypes.string,
-    keyPath: React.PropTypes.string,
-    onToggle: React.PropTypes.func,
-    onChangeCertPath: React.PropTypes.func,
-    onChangeKeyPath: React.PropTypes.func
-};
-
 const mapStateToProps = (state) => {
     return {
         enabled: state.settings.data.use_ssl,

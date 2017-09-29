@@ -1,4 +1,5 @@
-import React, { PropTypes } from "react";
+import React from "react";
+import PropTypes from "prop-types";
 import URI from "urijs";
 import { connect } from "react-redux";
 import { Badge, ListGroup, Pagination } from "react-bootstrap";
@@ -15,7 +16,7 @@ class SamplesList extends React.Component {
         match: PropTypes.object,
         location: PropTypes.object,
         history: PropTypes.object,
-        samples: PropTypes.arrayOf(React.PropTypes.object),
+        samples: PropTypes.arrayOf(PropTypes.object),
         totalCount: PropTypes.number,
         foundCount: PropTypes.number,
         pageCount: PropTypes.number,

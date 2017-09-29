@@ -88,15 +88,6 @@ const DataOptions = (props) => {
     )
 };
 
-DataOptions.propTypes = {
-    dataPath: React.PropTypes.string,
-    watchPath: React.PropTypes.string,
-    dbName: React.PropTypes.string,
-    dbHost: React.PropTypes.string,
-    dbPort: React.PropTypes.number,
-    onSave: React.PropTypes.func
-};
-
 const mapStateToProps = (state) => {
 
     const settings = state.settings.data;
