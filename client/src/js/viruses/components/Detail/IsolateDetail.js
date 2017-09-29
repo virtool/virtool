@@ -37,6 +37,7 @@ const IsolateDetail = (props) => {
 
     const activeIsolateId = props.match.params.isolateId;
     const isolate = find(props.isolates, {id: activeIsolateId});
+
     const isolateName = formatIsolateName(isolate);
 
     const activeAccession = props.match.params.accession;

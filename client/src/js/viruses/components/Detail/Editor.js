@@ -12,7 +12,7 @@
 import React from "react";
 import PropTypes from "prop-types";
 import { connect } from "react-redux";
-import { withRouter, Redirect, Route } from "react-router-dom";
+import { withRouter, Route } from "react-router-dom";
 import { LinkContainer } from "react-router-bootstrap";
 import { Badge, Row, Col, ListGroup } from "react-bootstrap";
 
@@ -46,12 +46,6 @@ const IsolateEditor = (props) => {
                 </ListGroupItem>
             </Col>
         );
-    }
-
-    let firstIsolateId = props.isolates[0] ? props.isolates[0].id: "";
-
-    if (firstIsolateId) {
-        firstIsolateId = "/" + firstIsolateId;
     }
 
     // Get the array of sequences from the isolate.
@@ -88,10 +82,6 @@ const IsolateEditor = (props) => {
                     </ListGroup>
                 </Col>
                 <Col md={9}>
-                    <Redirect
-                        from="/viruses/:virusId/virus"
-                        to={`/viruses/${props.virusId}/virus${firstIsolateId}`}
-                    />
                     <Route path="/viruses/:virusId/virus/:isolateId" component={IsolateDetail} />
                 </Col>
             </Row>
