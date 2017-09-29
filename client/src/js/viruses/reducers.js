@@ -11,6 +11,7 @@ import { assign, concat, find, reject } from "lodash";
 import {
     WS_UPDATE_VIRUS,
     WS_REMOVE_VIRUS,
+    WS_UPDATE_STATUS,
 
     FIND_VIRUSES,
     GET_VIRUS,
@@ -83,6 +84,15 @@ const receivedDetailAfterChange = (state, action) => {
 export default function virusesReducer (state = virusesInitialState, action) {
 
     switch (action.type) {
+
+        case WS_UPDATE_STATUS:
+            if (action.data.id === "virus_import") {
+                return assign({}, state, {
+                    importData: assign({}, action.data, {in_progress: true})
+                });
+            }
+
+            return state;
 
         case WS_UPDATE_VIRUS:
             return assign({}, state, {
@@ -175,7 +185,7 @@ export default function virusesReducer (state = virusesInitialState, action) {
 
         case UPLOAD_IMPORT.SUCCEEDED:
             return assign({}, state, {
-                importData: action.data
+                importData: assign({}, action.data, {in_progress: false})
             });
 
         case SHOW_EDIT_VIRUS:

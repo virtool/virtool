@@ -22,7 +22,8 @@ const updatesReducer = (state = initialState, action) => {
             if (action.data.id === "software_update") {
                 return assign({}, state, {software: action.data});
             }
-            break;
+
+            return state;
 
         case GET_SOFTWARE_UPDATES.SUCCEEDED:
             return assign({}, state, {software: action.data});

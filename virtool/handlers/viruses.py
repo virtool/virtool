@@ -965,9 +965,11 @@ async def get_import(req):
 
     return json_response({
         "file_id": file_id,
-        "virus_count": len(viruses),
-        "isolate_count": sum(isolate_counts),
-        "sequence_count": sum(sequence_counts),
+        "totals": {
+            "viruses": len(viruses),
+            "isolates": sum(isolate_counts),
+            "sequences": sum(sequence_counts),
+        },
         "duplicates": duplicates,
         "version": data["version"],
         "file_created_at": data["created_at"],
@@ -994,8 +996,6 @@ async def import_viruses(req):
         virtool.virus_import.load_import_file,
         file_path
     )
-
-    print(data.keys())
 
     data_version = data.get("version", None)
 

@@ -1,6 +1,6 @@
 import { wsUpdateJob, wsRemoveJob } from "./jobs/actions";
 import { wsUpdateFile, wsRemoveFile } from "./files/actions";
-import { wsUpdateStatus } from "./updates/actions";
+import { wsUpdateStatus } from "./status/actions";
 
 const documentUpdaters = {
     jobs: wsUpdateJob,

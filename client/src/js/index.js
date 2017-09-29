@@ -2,7 +2,7 @@ import React from "react";
 import ReactDOM from "react-dom";
 
 import App from "./App";
-import WSConnection from "virtool/js/websocket";
+import WSConnection from "./websocket";
 import { store } from "./store";
 import { getAccount } from "./nav/actions";
 import { getSettings } from "./settings/actions";

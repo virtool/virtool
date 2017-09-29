@@ -22,9 +22,15 @@ const Viruses = () => {
                 <Route path="/viruses" component={VirusesList} exact />
                 <Route path="/viruses/create" component={VirusesList} />
                 <Route path="/viruses/indexes" component={Indexes} />
-                <Route path="/viruses/import" component={VirusImport} />
                 <Route path="/viruses/:virusId" component={VirusDetail} />
             </Switch>
+
+            <Route path="/viruses" children={({ history }) => (
+                <VirusImport
+                    show={history.location.state && history.location.state.virusImport}
+                    onHide={() => history.push(history.location.pathname, {virusImport: false})}
+                />
+            )} />
         </div>
     );
 };

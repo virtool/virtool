@@ -10,9 +10,9 @@
 import React, { PropTypes } from "react";
 import { connect } from "react-redux";
 import Dropzone from "react-dropzone";
-import { Panel } from "react-bootstrap";
+import { Modal, Panel, Table, ProgressBar } from "react-bootstrap";
 
-import { Button } from "../../components/Base";
+import { Button, RelativeTime } from "../../components/Base";
 import { uploadImport, commitImport } from "../actions";
 
 const getInitialState = () => {
@@ -30,6 +30,8 @@ class VirusImport extends React.Component {
     }
 
     static propTypes = {
+        show: PropTypes.bool,
+        onHide: PropTypes.func,
         importData: PropTypes.object,
         onDrop: PropTypes.func,
         onCommit: PropTypes.func
@@ -44,10 +46,11 @@ class VirusImport extends React.Component {
     };
 
     render () {
-        let content;
+        let body;
+        let footer;
 
         if (this.props.importData === null) {
-            content = (
+            body = (
                 <div>
                     <Dropzone className="dropzone" onDrop={(files) => this.props.onDrop(files[0], this.handleProgress)}>
                         <span>Drag or click here to upload a <strong>viruses.json.gz</strong> file.</span>
@@ -61,47 +64,78 @@ class VirusImport extends React.Component {
         } else {
             const data = this.props.importData;
 
-            if (!data.duplicates && !data.errors) {
-                const footer = (
-                    <div className="clearfix">
-                        <Button bsStyle="primary" icon="checkmark" onClick={this.handleCommit} pullRight>
-                            Import
-                        </Button>
+            if (data.duplicates || data.errors) {
+                body = (
+                    <strong>The import file is invalid.</strong>
+                );
+
+            } else {
+                let progress;
+
+                if (data.in_progress) {
+                    progress = (
+                        <Panel>
+                            <ProgressBar now={data.inserted || 0 / data.totals.viruses * 100} />
+                            <p className="text-center text-muted">
+                                <small>Inserted {data.inserted} of {data.totals.viruses}</small>
+                            </p>
+                        </Panel>
+                    );
+                }
+
+                body = (
+                    <div>
+                        {progress}
+
+                        <Table bordered>
+                            <tbody>
+                                <tr>
+                                    <th>Created</th>
+                                    <td><RelativeTime time={data.file_created_at} /></td>
+                                </tr>
+                                <tr>
+                                    <th>Version</th>
+                                    <td>{data.version || "None"}</td>
+                                </tr>
+                                <tr>
+                                    <th>Viruses</th>
+                                    <td>{data.totals.viruses}</td>
+                                </tr>
+                                <tr>
+                                    <th>Isolates</th>
+                                    <td>{data.totals.isolates}</td>
+                                </tr>
+                                <tr>
+                                    <th>Sequences</th>
+                                    <td>{data.totals.sequences}</td>
+                                </tr>
+                            </tbody>
+                        </Table>
                     </div>
                 );
 
-                content = (
-                    <Panel footer={footer}>
-                        <h5>
-                            <strong>The import file is valid.</strong> The following will be imported:
-                        </h5>
-
-                        <ul>
-                            <li>{data.virus_count} viruses</li>
-                            <li>{data.isolate_count} isolates</li>
-                            <li>{data.sequence_count} sequences</li>
-                        </ul>
-                    </Panel>
-                );
-            } else {
-                content = (
-                    <Panel bsStlye="danger">
-                        <strong>The import file is invalid.</strong>
-                    </Panel>
+                footer = (
+                    <Modal.Footer>
+                        <Button bsStyle="primary" icon="checkmark" onClick={this.handleCommit} pullRight>
+                            Import
+                        </Button>
+                    </Modal.Footer>
                 );
             }
         }
 
         return (
-            <div>
-                <h3 className="view-header">
-                    <strong>
-                        Import Viruses
-                    </strong>
-                </h3>
+            <Modal show={this.props.show} onHide={this.props.onHide}>
+                <Modal.Header onHide={this.props.onHide} closeButton>
+                    Import Viruses
+                </Modal.Header>
 
-                {content}
-            </div>
+                <Modal.Body>
+                    {body}
+                </Modal.Body>
+
+                {footer}
+            </Modal>
         );
     }
 
