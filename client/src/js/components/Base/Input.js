@@ -53,6 +53,10 @@ export class Input extends React.Component {
         this.inputNode.focus();
     };
 
+    blur = () => {
+        this.inputNode.blur();
+    };
+
     render () {
 
         let overlay;
