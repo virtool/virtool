@@ -32,7 +32,7 @@ import EditSequence from "./EditSequence";
 import RemoveSequence from "./RemoveSequence";
 
 const IsolateDetail = (props) => {
-    
+
     const isolate = find(props.isolates, {id: props.activeIsolateId});
 
     const isolateName = formatIsolateName(isolate);
@@ -101,7 +101,7 @@ const IsolateDetail = (props) => {
                 virusId={props.virusId}
                 isolateId={isolate.id}
                 isolateName={isolateName}
-                nextIsolateId={props.isolates.length ? props.isolates[0].id: null}
+                nextIsolateId={props.isolate.length ? props.isolates[0].id: null}
             />
 
             <AddSequence
