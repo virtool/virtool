@@ -10,7 +10,7 @@
  */
 
 import React from "react";
-import { Panel, ButtonToolbar } from "react-bootstrap";
+import { Panel } from "react-bootstrap";
 import { Icon } from "../../components/Base/Icon";
 
 const Welcome  = () => (
