@@ -14,10 +14,11 @@ import PropTypes from "prop-types";
 import Numeral from "numeral";
 import { connect } from "react-redux";
 import { LinkContainer } from "react-router-bootstrap";
+import { ScaleLoader } from "halogen";
 import { ListGroup, ListGroupItem, Row, Col, Badge, Table } from "react-bootstrap";
 
 import { getSubtraction } from "../actions";
-import { Button, Icon } from "virtool/js/components/Base";
+import { Button, Icon } from "../../components/Base";
 
 const calculateGC = (nucleotides) => {
     return Numeral(1 - nucleotides.a - nucleotides.t - nucleotides.n).format("0.000")
@@ -32,7 +33,11 @@ class SubtractionDetail extends React.Component {
     render () {
 
         if (this.props.detail === null) {
-            return <div />;
+            return (
+                <div className="text-center" style={{marginTop: "220px"}}>
+                    <ScaleLoader color="#3c8786" />
+                </div>
+            );
         }
 
         const data = this.props.detail;
@@ -75,12 +80,12 @@ class SubtractionDetail extends React.Component {
                     <tbody>
                         <tr>
                             <th>File</th>
-                            <td>{data.file.name}</td>
+                            <td>{data.file.id}</td>
                         </tr>
 
                         <tr>
                             <th>GC Estimate</th>
-                            <td>{calculateGC(data.gc)}</td>
+                            <td>{calculateGC(data.nucleotides)}</td>
                         </tr>
                     </tbody>
                 </Table>
