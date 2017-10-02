@@ -16,7 +16,7 @@ import { Badge, Row, Col, ListGroup } from "react-bootstrap";
 
 import { formatIsolateName } from "../../../utils";
 import { selectIsolate, showAddIsolate } from "../../actions";
-import { Flex, FlexItem, Icon, ListGroupItem } from "virtool/js/components/Base";
+import { FlexItem, Icon, ListGroupItem } from "virtool/js/components/Base";
 import IsolateDetail from "./IsolateDetail";
 
 const IsolateEditor = (props) => {
@@ -24,13 +24,16 @@ const IsolateEditor = (props) => {
     const isolateComponents = props.isolates.map(isolate =>
         <ListGroupItem
             key={isolate.id}
+            className="isolate-item"
             active={isolate.id === props.activeIsolateId}
             onClick={() => props.onSelectIsolate(isolate.id)}
         >
-            <Flex alignItems="center">
-                <FlexItem grow={1} shrink={0}>{formatIsolateName(isolate)}</FlexItem>
-                {isolate.default ? <Icon name="star" />: null}
-            </Flex>
+            <div className="isolate-item-name">
+                <span>{formatIsolateName(isolate)}</span>
+            </div>
+            <div className="isolate-item-icon">
+                <span>{isolate.default ? <Icon className="pull-right" name="star" />: null}</span>
+            </div>
         </ListGroupItem>
     );
 
