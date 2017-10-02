@@ -26,6 +26,8 @@ import {
     REMOVE_SEQUENCE,
     REVERT,
     UPLOAD_IMPORT,
+    SELECT_ISOLATE,
+    SELECT_SEQUENCE,
     SHOW_EDIT_VIRUS,
     SHOW_REMOVE_VIRUS,
     SHOW_ADD_ISOLATE,
@@ -127,7 +129,9 @@ export default function virusesReducer (state = virusesInitialState, action) {
 
         case GET_VIRUS.REQUESTED:
             return assign({}, state, {
-                detail: null
+                detail: null,
+                activeIsolateId: null,
+                activeSequenceId: null
             });
 
         case GET_VIRUS.SUCCEEDED:
@@ -186,6 +190,16 @@ export default function virusesReducer (state = virusesInitialState, action) {
         case UPLOAD_IMPORT.SUCCEEDED:
             return assign({}, state, {
                 importData: assign({}, action.data, {in_progress: false})
+            });
+
+        case SELECT_ISOLATE:
+            return assign({}, state, {
+               activeIsolateId: action.isolateId
+            });
+
+        case SELECT_SEQUENCE:
+            return assign({}, state, {
+               activeSequenceId: action.sequenceId
             });
 
         case SHOW_EDIT_VIRUS:

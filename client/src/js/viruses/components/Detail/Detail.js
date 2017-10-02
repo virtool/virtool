@@ -10,7 +10,6 @@
  */
 
 import React from "react";
-import PropTypes from "prop-types";
 import { Helmet } from "react-helmet";
 import { connect } from "react-redux";
 import { Switch, Route, Redirect } from "react-router-dom";
@@ -19,7 +18,7 @@ import { Label, Nav, NavItem } from "react-bootstrap";
 import { ScaleLoader } from "halogen";
 
 import { getVirus, showEditVirus, showRemoveVirus } from "../../actions";
-import { Flex, FlexItem, Icon } from "virtool/js/components/Base";
+import { Flex, FlexItem, Icon } from "../../../components/Base";
 import IsolateEditor from "./Editor";
 import General from "./General";
 import AddIsolate from "./AddIsolate";
@@ -29,31 +28,18 @@ import EditVirus from "./EditVirus";
 import RemoveVirus from "./RemoveVirus";
 
 
-const VirusSection = (props) => (
+const VirusSection = ({ match }) => (
     <div>
         <General />
         <IsolateEditor />
-        <AddIsolate virusId={props.match.params.virusId} />
+        <AddIsolate virusId={match.params.virusId} />
     </div>
 );
 
-VirusSection.propTypes = {
-    match: PropTypes.object
-};
-
 class VirusDetail extends React.Component {
 
-    static propTypes = {
-        match: PropTypes.object,
-        history: PropTypes.object,
-        detail: PropTypes.object,
-        getVirus: PropTypes.func,
-        showEdit: PropTypes.func,
-        showRemove: PropTypes.func
-    };
-
     componentWillMount () {
-        this.props.getVirus(this.props.match.params.virusId)
+        this.props.getVirus(this.props.match.params.virusId);
     }
 
     render = () => {
@@ -79,12 +65,6 @@ class VirusDetail extends React.Component {
                     </Label>
                 </small>
             );
-        }
-
-        let firstIsolateId = this.props.detail.isolates[0] ? this.props.detail.isolates[0].id: "";
-
-        if (firstIsolateId) {
-            firstIsolateId = "/" + firstIsolateId;
         }
 
         const { name, abbreviation } = this.props.detail;
@@ -155,7 +135,7 @@ class VirusDetail extends React.Component {
                 <RemoveVirus virusId={virusId} virusName={name} history={this.props.history} />
 
                 <Switch>
-                    <Redirect from="/viruses/:virusId" to={`/viruses/${virusId}/virus${firstIsolateId}`} exact />
+                    <Redirect from="/viruses/:virusId" to={`/viruses/${virusId}/virus`} exact />
                     <Route path="/viruses/:virusId/virus" component={VirusSection} />
                     <Route path="/viruses/:virusId/schema" component={Schema} />
                     <Route path="/viruses/:virusId/history" component={History} />
