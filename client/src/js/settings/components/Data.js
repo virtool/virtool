@@ -34,12 +34,12 @@ const DataOptions = (props) => {
                 <Col md={12}>
                     <h5><strong>Database</strong></h5>
                 </Col>
-                <Col xs={12} md={6}>
+                <Col xs={12} md={6} mdPush={6}>
                     <Panel footer={warningFooter}>
                         Change the parameters for connecting to MongoDB.
                     </Panel>
                 </Col>
-                <Col xs={12} md={6}>
+                <Col xs={12} md={6} mdPull={6}>
                     <Panel>
                         <InputSave
                             label="Database Name"
