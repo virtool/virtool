@@ -85,6 +85,10 @@ const Bar = (props) => {
                     </Nav>
 
                     <Nav pullRight>
+                        <NavItem target="_blank" href="https://github.com/virtool/virtool">
+                            <Icon name="github" />
+                        </NavItem>
+
                         <NavItem target="_blank" href="https://docs.virtool.ca">
                             <Icon name="book" />
                         </NavItem>
