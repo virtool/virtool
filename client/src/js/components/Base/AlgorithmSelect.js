@@ -1,6 +1,9 @@
 import React from "react";
+import PropTypes from "prop-types";
+
 import { Input } from "./";
 import { getTaskDisplayName } from "virtool/js/utils";
+
 
 export const algorithms = ["pathoscope_bowtie", "nuvs"];
 
@@ -19,8 +22,8 @@ export const AlgorithmSelect = (props) => (
 );
 
 AlgorithmSelect.propTypes = {
-    noLabel: React.PropTypes.bool,
-    value: React.PropTypes.oneOf(["pathoscope_bowtie", "nuvs"]),
-    onChange: React.PropTypes.func
+    noLabel: PropTypes.bool,
+    value: PropTypes.oneOf(["pathoscope_bowtie", "nuvs"]),
+    onChange: PropTypes.func
 };
 

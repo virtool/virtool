@@ -32,9 +32,9 @@ export default class ImportModal extends React.Component {
     }
 
     static propTypes = {
-        show: React.PropTypes.bool,
-        onHide: React.PropTypes.func,
-        annotationCount: React.PropTypes.number
+        show: PropTypes.bool,
+        onHide: PropTypes.func,
+        annotationCount: PropTypes.number
     };
 
     componentDidUpdate () {

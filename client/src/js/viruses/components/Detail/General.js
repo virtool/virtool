@@ -9,7 +9,7 @@
  * @exports VirusGeneral
  */
 
-import React, { PropTypes } from "react";
+import React from "react";
 import { connect } from "react-redux";
 import { Table } from "react-bootstrap";
 
@@ -60,18 +60,6 @@ const VirusGeneral = (props) => {
             </Table>
         </div>
     );
-};
-
-VirusGeneral.propTypes = {
-    virusId: PropTypes.string.isRequired,
-    version: PropTypes.number.isRequired,
-    name: PropTypes.string.isRequired,
-    abbreviation: PropTypes.string,
-    canModify: PropTypes.bool,
-    showIds: PropTypes.bool,
-    issues: PropTypes.object,
-    isolates: PropTypes.arrayOf(PropTypes.object),
-    onSave: PropTypes.func
 };
 
 const mapStateToProps = (state) => {

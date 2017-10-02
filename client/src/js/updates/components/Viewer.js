@@ -1,4 +1,4 @@
-import React, { PropTypes } from "react";
+import React from "react";
 import { filter } from "lodash";
 import { connect } from "react-redux";
 import { Row, Col, Panel, ListGroup } from "react-bootstrap";
@@ -14,12 +14,6 @@ class SoftwareUpdateViewer extends React.Component {
     constructor (props) {
         super(props);
     }
-
-    static propTypes = {
-        updates: PropTypes.object,
-        onGet: PropTypes.func,
-        onShowModal: PropTypes.func
-    };
 
     componentDidMount () {
         this.props.onGet();

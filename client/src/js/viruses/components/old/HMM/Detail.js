@@ -184,8 +184,8 @@ function HMMDetail (props) {
 }
 
 HMMDetail.propTypes = {
-    detail: React.PropTypes.object,
-    onHide: React.PropTypes.func
+    detail: PropTypes.object,
+    onHide: PropTypes.func
 };
 
 export default HMMDetail;

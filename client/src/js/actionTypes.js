@@ -68,6 +68,8 @@ export const REVERT = createRequestActionType("REVERT");
 export const UPLOAD_IMPORT = createRequestActionType("UPLOAD_IMPORT");
 export const COMMIT_IMPORT = createRequestActionType("COMMIT_IMPORT");
 
+export const SELECT_ISOLATE = "SELECT_ISOLATE";
+export const SELECT_SEQUENCE = "SELECT_SEQUENCE";
 export const SHOW_EDIT_VIRUS = "SHOW_EDIT_VIRUS";
 export const SHOW_REMOVE_VIRUS = "SHOW_REMOVE_VIRUS";
 export const SHOW_ADD_ISOLATE = "SHOW_ADD_ISOLATE";

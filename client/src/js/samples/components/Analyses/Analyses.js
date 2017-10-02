@@ -1,4 +1,5 @@
-import React, { PropTypes } from "react";
+import React from "react";
+import PropTypes from "prop-types";
 import { connect } from "react-redux";
 import { Switch, Route } from "react-router-dom";
 
@@ -33,15 +34,8 @@ class Analyses extends React.Component {
     }
 }
 
-AnalysesList.propTypes = {
-    account: React.PropTypes.object,
-    detail: React.PropTypes.object,
-    analyses: React.PropTypes.arrayOf(React.PropTypes.object)
-};
-
 const mapStateToProps = (state) => {
     return {
-        detail: state.samples.detail,
         analyses: state.samples.analyses
     };
 };

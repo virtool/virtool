@@ -23,9 +23,9 @@ export default class UserSettings extends React.Component {
     }
 
     static propTypes = {
-        user: React.PropTypes.object,
-        show: React.PropTypes.bool.isRequired,
-        onHide: React.PropTypes.func.isRequired
+        user: PropTypes.object,
+        show: PropTypes.bool.isRequired,
+        onHide: PropTypes.func.isRequired
     };
 
     requestSet = (key, value) => {

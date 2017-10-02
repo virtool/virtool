@@ -10,15 +10,16 @@
  */
 
 import React from "react";
+import PropTypes from "prop-types";
 import { pick, join, assign } from "lodash";
 
 export class Flex extends React.Component {
 
     static propTypes = {
-        direction: React.PropTypes.oneOf(["row", "row-reverse", "column", "column-reverse"]),
-        wrap: React.PropTypes.oneOf(["nowrap", "wrap", "wrap-reverse"]),
+        direction: PropTypes.oneOf(["row", "row-reverse", "column", "column-reverse"]),
+        wrap: PropTypes.oneOf(["nowrap", "wrap", "wrap-reverse"]),
 
-        justifyContent: React.PropTypes.oneOf([
+        justifyContent: PropTypes.oneOf([
             "flex-start",
             "flex-end",
             "center",
@@ -26,7 +27,7 @@ export class Flex extends React.Component {
             "space-around"
         ]),
 
-        alignItems: React.PropTypes.oneOf([
+        alignItems: PropTypes.oneOf([
             "flex-start",
             "flex-end",
             "center",
@@ -34,7 +35,7 @@ export class Flex extends React.Component {
             "baseline"
         ]),
 
-        alignContent: React.PropTypes.oneOf([
+        alignContent: PropTypes.oneOf([
             "flex-start",
             "flex-end",
             "center",
@@ -43,10 +44,10 @@ export class Flex extends React.Component {
             "space-around"
         ]),
 
-        children: React.PropTypes.node.isRequired,
+        children: PropTypes.node.isRequired,
 
-        className: React.PropTypes.string,
-        style: React.PropTypes.object
+        className: PropTypes.string,
+        style: PropTypes.object
     };
 
     static defaultProps = {
@@ -79,14 +80,14 @@ export class Flex extends React.Component {
 export class FlexItem extends React.Component {
 
     static propTypes = {
-        grow: React.PropTypes.number,
-        shrink: React.PropTypes.number,
-        basis: React.PropTypes.oneOfType([React.PropTypes.string, React.PropTypes.number]),
-        alignSelf: React.PropTypes.oneOf(["auto", "flex-start", "flex-end", "center", "baseline", "stretch"]),
-        pad: React.PropTypes.oneOfType([React.PropTypes.bool, React.PropTypes.number]),
-        style: React.PropTypes.object,
-        className: React.PropTypes.string,
-        children: React.PropTypes.node
+        grow: PropTypes.number,
+        shrink: PropTypes.number,
+        basis: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+        alignSelf: PropTypes.oneOf(["auto", "flex-start", "flex-end", "center", "baseline", "stretch"]),
+        pad: PropTypes.oneOfType([PropTypes.bool, PropTypes.number]),
+        style: PropTypes.object,
+        className: PropTypes.string,
+        children: PropTypes.node
     };
 
     static defaultProps = {

@@ -11,6 +11,7 @@
 
 
 import React from "react";
+import PropTypes from "prop-types";
 import { Badge, FormGroup, FormControl, ControlLabel } from "react-bootstrap";
 
 /**
@@ -38,9 +39,9 @@ const SequenceField = (props) => {
 };
 
 SequenceField.propTypes = {
-    sequence: React.PropTypes.string,
-    readOnly: React.PropTypes.bool,
-    onChange: React.PropTypes.func
+    sequence: PropTypes.string,
+    readOnly: PropTypes.bool,
+    onChange: PropTypes.func
 };
 
 SequenceField.defaultProps = {

@@ -25,6 +25,8 @@ import {
     REVERT,
     UPLOAD_IMPORT,
     COMMIT_IMPORT,
+    SELECT_ISOLATE,
+    SELECT_SEQUENCE,
     SHOW_EDIT_VIRUS,
     SHOW_REMOVE_VIRUS,
     SHOW_ADD_ISOLATE,
@@ -117,12 +119,12 @@ export function editIsolate (virusId, isolateId, sourceType, sourceName) {
     };
 }
 
-export function removeIsolate (virusId, isolateId, onSuccess) {
+export function removeIsolate (virusId, isolateId, nextIsolateId) {
     return {
         type: REMOVE_ISOLATE.REQUESTED,
         virusId,
         isolateId,
-        onSuccess
+        nextIsolateId
     };
 }
 
@@ -179,6 +181,20 @@ export function commitImport (fileId) {
     return {
         type: COMMIT_IMPORT.REQUESTED,
         fileId
+    };
+}
+
+export function selectIsolate (isolateId) {
+    return {
+        type: SELECT_ISOLATE,
+        isolateId
+    };
+}
+
+export function selectSequence (sequenceId) {
+    return {
+        type: SELECT_SEQUENCE,
+        sequenceId
     };
 }
 

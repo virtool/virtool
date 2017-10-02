@@ -9,7 +9,7 @@
  * @exports Index
  */
 
-import React, { PropTypes } from "react";
+import React from "react";
 import { connect } from "react-redux";
 import { Alert } from "react-bootstrap";
 
@@ -19,17 +19,6 @@ import IndexEntry from "./Entry";
 import RebuildIndex from "./Rebuild";
 
 class IndexesList extends React.Component {
-
-    static propTypes = {
-        documents: PropTypes.arrayOf(PropTypes.object),
-        totalCount: PropTypes.number,
-        modifiedCount: PropTypes.number,
-        canRebuild: PropTypes.bool,
-
-        onFind: PropTypes.func,
-        onCreate: PropTypes.func,
-        showRebuild: PropTypes.func
-    };
 
     componentDidMount () {
         if (this.props.documents === null) {

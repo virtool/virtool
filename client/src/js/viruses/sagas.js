@@ -7,7 +7,7 @@
  *
  */
 
-import { call, put, takeEvery, takeLatest, throttle } from "redux-saga/effects";
+import { all, call, put, takeEvery, takeLatest, throttle } from "redux-saga/effects";
 
 import filesAPI from "../files/api";
 import virusesAPI from "./api";
@@ -28,6 +28,8 @@ import {
     REVERT,
     UPLOAD_IMPORT,
     COMMIT_IMPORT,
+    SELECT_ISOLATE,
+    SELECT_SEQUENCE,
     SET_APP_PENDING,
     UNSET_APP_PENDING
 }  from "../actionTypes";
@@ -152,8 +154,11 @@ export function* removeIsolate (action) {
     yield setPending(function* (action) {
         try {
             yield call(virusesAPI.removeIsolate, action.virusId, action.isolateId);
-            yield call(action.onSuccess);
             const response = yield call(virusesAPI.get, action.virusId);
+            yield all([
+                put({type: SELECT_SEQUENCE, sequenceId: null}),
+                put({type: SELECT_ISOLATE, isolateId: action.nextIsolateId})
+            ]);
             yield put({type: REMOVE_ISOLATE.SUCCEEDED, data: response.body});
         } catch (error) {
             yield put({type: REMOVE_ISOLATE.FAILED, error: error});

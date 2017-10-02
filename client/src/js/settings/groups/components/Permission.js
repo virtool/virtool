@@ -10,6 +10,7 @@
  */
 
 import React from "react";
+import PropTypes from "prop-types";
 import { startCase } from "lodash";
 import { Icon, ListGroupItem } from "virtool/js/components/Base";
 
@@ -24,11 +25,11 @@ export default class Permission extends React.Component {
     }
 
     static propTypes = {
-        name: React.PropTypes.string.isRequired,
-        groupName: React.PropTypes.string,
-        value: React.PropTypes.bool.isRequired,
-        collection: React.PropTypes.object,
-        disabled: React.PropTypes.bool
+        name: PropTypes.string.isRequired,
+        groupName: PropTypes.string,
+        value: PropTypes.bool.isRequired,
+        collection: PropTypes.object,
+        disabled: PropTypes.bool
     };
 
     componentWillReceiveProps (nextProps) {

@@ -6,7 +6,8 @@
  * @author igboyes
  *
  */
-import React, { PropTypes } from "react";
+import React from "react";
+import PropTypes from "prop-types";
 import { sortBy, groupBy } from "lodash";
 import { connect } from "react-redux";
 import { Row, Col, ListGroup, Label } from "react-bootstrap";
@@ -106,19 +107,12 @@ const HistoryList = (props) => {
 };
 
 HistoryList.propTypes = {
-    history: PropTypes.arrayOf(React.PropTypes.object),
+    history: PropTypes.arrayOf(PropTypes.object),
     unbuilt: PropTypes.bool,
     revert: PropTypes.func
 };
 
 class VirusHistory extends React.Component {
-
-    static propTypes = {
-        virusId: PropTypes.string,
-        history: PropTypes.arrayOf(PropTypes.object),
-        getHistory: PropTypes.func,
-        revert: PropTypes.func
-    };
 
     componentDidMount () {
         this.props.getHistory(this.props.virusId)

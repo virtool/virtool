@@ -45,11 +45,6 @@ const UniqueNames = (props) => {
     );
 };
 
-UniqueNames.propTypes = {
-    enabled: React.PropTypes.bool,
-    onToggle: React.PropTypes.func,
-};
-
 const mapStateToProps = (state) => {
     return {
         enabled: state.settings.data.sample_unique_names

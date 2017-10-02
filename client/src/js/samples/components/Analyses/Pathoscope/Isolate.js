@@ -1,4 +1,5 @@
 import React from "react";
+import PropTypes from "prop-types";
 import { sortBy } from "lodash";
 import { Flex, FlexItem } from "virtool/js/components/Base";
 import { toScientificNotation } from "virtool/js/utils";
@@ -7,19 +8,19 @@ import Coverage from "./Coverage";
 export default class PathoscopeIsolate extends React.Component {
 
     static propTypes = {
-        virusId: React.PropTypes.string,
-        name: React.PropTypes.string,
+        virusId: PropTypes.string,
+        name: PropTypes.string,
 
-        pi: React.PropTypes.number,
-        best: React.PropTypes.number,
-        coverage: React.PropTypes.number,
-        maxDepth: React.PropTypes.number,
-        reads: React.PropTypes.number,
+        pi: PropTypes.number,
+        best: PropTypes.number,
+        coverage: PropTypes.number,
+        maxDepth: PropTypes.number,
+        reads: PropTypes.number,
 
-        sequences: React.PropTypes.arrayOf(React.PropTypes.object),
+        sequences: PropTypes.arrayOf(PropTypes.object),
 
-        setScroll: React.PropTypes.func,
-        showReads: React.PropTypes.bool
+        setScroll: PropTypes.func,
+        showReads: PropTypes.bool
     };
 
     componentDidMount () {

@@ -1,15 +1,15 @@
-import React from "react";
+import PropTypes from "prop-types";
 
 export const oneOrMore = (propType) => (
-    React.PropTypes.oneOfType([
+    PropTypes.oneOfType([
         propType,
-        React.PropTypes.arrayOf(propType)
+        PropTypes.arrayOf(propType)
     ])
 );
 
 export const stringOrBool = (
-    React.PropTypes.oneOfType([
-        React.PropTypes.string,
-        React.PropTypes.bool
+    PropTypes.oneOfType([
+        PropTypes.string,
+        PropTypes.bool
     ])
 );

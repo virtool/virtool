@@ -7,7 +7,7 @@
  *
  */
 
-import React, { PropTypes } from "react";
+import React from "react";
 import { connect } from "react-redux";
 import { Link } from "react-router-dom";
 import { Badge, Panel, ListGroup, ListGroupItem, Table } from "react-bootstrap";
@@ -91,10 +91,6 @@ const IndexGeneral = (props) => {
             </Panel>
         </div>
     );
-};
-
-IndexGeneral.propTypes = {
-    detail: PropTypes.object
 };
 
 const mapStateToProps = (state) => {

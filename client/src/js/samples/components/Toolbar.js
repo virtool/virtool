@@ -1,4 +1,5 @@
-import React, { PropTypes } from "react";
+import React from "react";
+import PropTypes from "prop-types";
 import { LinkContainer } from "react-router-bootstrap";
 
 import { FormGroup, InputGroup, FormControl } from "react-bootstrap";

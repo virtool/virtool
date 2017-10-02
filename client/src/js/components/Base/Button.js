@@ -10,6 +10,7 @@
  */
 
 import React from "react";
+import PropTypes from "prop-types";
 import CX from "classnames";
 import { Tooltip, OverlayTrigger } from "react-bootstrap";
 import { Icon, bsStyles } from "./";
@@ -20,23 +21,23 @@ import { Icon, bsStyles } from "./";
 export class Button extends React.Component {
 
     static propTypes = {
-        type: React.PropTypes.oneOf(["button", "submit"]),
-        bsSize: React.PropTypes.oneOf(["xsmall", "small", "large"]),
-        bsStyle: React.PropTypes.oneOf(bsStyles),
-        active: React.PropTypes.bool,
-        disabled: React.PropTypes.bool,
-        block: React.PropTypes.bool,
-        pullRight: React.PropTypes.bool,
-        onClick: React.PropTypes.func,
-        style: React.PropTypes.object,
-        icon: React.PropTypes.string,
-        iconStyle: React.PropTypes.oneOf(bsStyles),
-        pad: React.PropTypes.bool,
+        type: PropTypes.oneOf(["button", "submit"]),
+        bsSize: PropTypes.oneOf(["xsmall", "small", "large"]),
+        bsStyle: PropTypes.oneOf(bsStyles),
+        active: PropTypes.bool,
+        disabled: PropTypes.bool,
+        block: PropTypes.bool,
+        pullRight: PropTypes.bool,
+        onClick: PropTypes.func,
+        style: PropTypes.object,
+        icon: PropTypes.string,
+        iconStyle: PropTypes.oneOf(bsStyles),
+        pad: PropTypes.bool,
 
-        tip: React.PropTypes.oneOfType([React.PropTypes.string, React.PropTypes.element]),
-        tipPlacement: React.PropTypes.oneOf(["top", "right", "bottom", "left"]),
+        tip: PropTypes.oneOfType([PropTypes.string, PropTypes.element]),
+        tipPlacement: PropTypes.oneOf(["top", "right", "bottom", "left"]),
 
-        children: React.PropTypes.node
+        children: PropTypes.node
     };
 
     static defaultProps = {

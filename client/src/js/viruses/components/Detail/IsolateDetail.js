@@ -9,8 +9,7 @@
  * @exports Isolate
  */
 
-import React, { PropTypes } from "react";
-import URI from "urijs";
+import React from "react";
 import { capitalize, find } from "lodash";
 import { connect } from "react-redux";
 import { Badge, Label, Panel, Table, ListGroup } from "react-bootstrap";
@@ -34,11 +33,9 @@ import RemoveSequence from "./RemoveSequence";
 
 const IsolateDetail = (props) => {
 
-    const activeIsolateId = props.match.params.isolateId;
-    const isolate = find(props.isolates, {id: activeIsolateId});
-    const isolateName = formatIsolateName(isolate);
+    const isolate = find(props.isolates, {id: props.activeIsolateId});
 
-    const activeAccession = props.match.params.accession;
+    const isolateName = formatIsolateName(isolate);
 
     const defaultIsolateLabel = (
         <Label bsStyle="info" style={{visibility: props.default ? "visible": "hidden"}}>
@@ -49,7 +46,7 @@ const IsolateDetail = (props) => {
     let sequenceComponents = isolate.sequences.map(sequence =>
         <Sequence
             key={sequence.id}
-            active={sequence.accession === activeAccession}
+            active={sequence.accession === props.activeSequenceId}
             showEditSequence={props.showEditSequence}
             showRemoveSequence={props.showRemoveSequence}
             {...sequence}
@@ -91,14 +88,6 @@ const IsolateDetail = (props) => {
         </span>
     );
 
-    const nextURI = URI(props.location.pathname + props.location.search);
-
-    if (props.isolates.length) {
-        nextURI.segment(3, props.isolates[0].id);
-    } else {
-        nextURI.segment(3, "");
-    }
-
     return (
         <div>
             <EditIsolate
@@ -112,7 +101,7 @@ const IsolateDetail = (props) => {
                 virusId={props.virusId}
                 isolateId={isolate.id}
                 isolateName={isolateName}
-                onSuccess={() => props.history.push(nextURI.toString())}
+                nextIsolateId={props.isolate.length ? props.isolates[0].id: null}
             />
 
             <AddSequence
@@ -183,29 +172,12 @@ const IsolateDetail = (props) => {
     );
 };
 
-IsolateDetail.propTypes = {
-    match: PropTypes.object,
-    history: PropTypes.object,
-    location: PropTypes.object,
-
-    virusId: PropTypes.string,
-    default: PropTypes.string,
-    isolates: PropTypes.arrayOf(PropTypes.object),
-
-    allowedSourceTypes: PropTypes.arrayOf(PropTypes.string),
-    restrictSourceTypes: PropTypes.bool,
-    showEditIsolate: PropTypes.func,
-    showRemoveIsolate: PropTypes.func,
-    showAddSequence: PropTypes.func,
-    showEditSequence: PropTypes.func,
-    showRemoveSequence: PropTypes.func
-
-};
-
 const mapStateToProps = (state) => {
     return {
         isolates: state.viruses.detail.isolates,
         virusId: state.viruses.detail.id,
+        activeIsolateId: state.viruses.activeIsolateId,
+        activeSequenceId: state.viruses.activeSequenceId,
         editing: state.viruses.editingIsolate,
         editingSequence: state.viruses.editSequence,
         allowedSourceTypes: state.settings.data.allowed_source_types,

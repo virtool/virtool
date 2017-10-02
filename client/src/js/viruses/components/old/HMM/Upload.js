@@ -31,8 +31,8 @@ export default class UploadModal extends React.Component {
     }
 
     static propTypes = {
-        show: React.PropTypes.bool,
-        onHide: React.PropTypes.func
+        show: PropTypes.bool,
+        onHide: PropTypes.func
     };
 
     componentDidUpdate (prevProps, prevState) {

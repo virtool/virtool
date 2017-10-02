@@ -101,6 +101,7 @@ async def import_data(db, dispatch, data, user_id):
             "lower_name": document["name"].lower(),
             "last_indexed_version": None,
             "created_at": virtool.utils.timestamp(),
+            "verified": True,
             "version": 0
         })
 

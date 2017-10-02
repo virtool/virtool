@@ -12,6 +12,7 @@
 
 
 import React from "react";
+import PropTypes from "prop-types";
 import { Modal } from "react-bootstrap";
 import {
     AlgorithmSelect,
@@ -47,8 +48,8 @@ export default class QuickAnalyze extends React.Component {
     }
 
     static propTypes = {
-        show: React.PropTypes.bool.isRequired,
-        onHide: React.PropTypes.func.isRequired
+        show: PropTypes.bool.isRequired,
+        onHide: PropTypes.func.isRequired
     };
 
     modalWillEnter = () => {

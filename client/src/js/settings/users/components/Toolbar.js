@@ -10,6 +10,7 @@
  */
 
 import React from "react";
+import PropTypes from "prop-types";
 import { FormGroup, InputGroup, FormControl } from "react-bootstrap";
 import { Icon, Button } from "virtool/js/components/Base";
 
@@ -32,8 +33,8 @@ export default class UserToolbar extends React.PureComponent {
     }
 
     static propTypes = {
-        add: React.PropTypes.func.isRequired,
-        onChange: React.PropTypes.func.isRequired
+        add: PropTypes.func.isRequired,
+        onChange: PropTypes.func.isRequired
     };
 
     showAddUserModal = () => {

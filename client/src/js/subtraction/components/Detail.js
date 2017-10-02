@@ -9,7 +9,8 @@
  * @exports SubtractionDetail
  */
 
-import React, { PropTypes } from "react";
+import React from "react";
+import PropTypes from "prop-types";
 import Numeral from "numeral";
 import { connect } from "react-redux";
 import { LinkContainer } from "react-router-bootstrap";

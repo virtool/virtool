@@ -30,12 +30,6 @@ class CreateVirus extends React.Component {
         };
     }
 
-    static propTypes = {
-        error: React.PropTypes.string,
-        onSubmit: React.PropTypes.func,
-        onHide: React.PropTypes.func
-    };
-
     componentDidMount () {
         this.inputNode.focus();
     }

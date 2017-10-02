@@ -9,7 +9,8 @@
  * @exports IsolateForm
  */
 
-import React, { PropTypes } from "react";
+import React from "react";
+import PropTypes from "prop-types";
 import { capitalize } from "lodash";
 import { Row, Col } from "react-bootstrap";
 
@@ -21,7 +22,7 @@ export default class IsolateForm extends React.Component {
     static propTypes = {
         sourceType: PropTypes.string,
         sourceName: PropTypes.string,
-        allowedSourceTypes: PropTypes.arrayOf(React.PropTypes.string),
+        allowedSourceTypes: PropTypes.arrayOf(PropTypes.string),
         restrictSourceTypes: PropTypes.bool,
         onChange: PropTypes.func,
         onSubmit: PropTypes.func

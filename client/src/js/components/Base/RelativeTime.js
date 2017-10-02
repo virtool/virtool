@@ -10,6 +10,7 @@
  */
 
 import React from "react";
+import PropTypes from "prop-types";
 import Moment from "moment";
 import { includes } from "lodash";
 
@@ -29,8 +30,8 @@ export class RelativeTime extends React.Component {
     }
 
     static propTypes = {
-        time: React.PropTypes.string.isRequired,
-        em: React.PropTypes.bool
+        time: PropTypes.string.isRequired,
+        em: PropTypes.bool
     };
 
     static defaultProps = {

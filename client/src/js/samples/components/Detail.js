@@ -8,6 +8,7 @@
  */
 
 import React from "react";
+import PropTypes from "prop-types";
 import { includes } from "lodash";
 import { Switch, Route, Redirect } from "react-router-dom";
 import { connect } from "react-redux";
@@ -24,12 +25,12 @@ import RemoveSample from "./Remove";
 class SampleDetail extends React.Component {
 
     static propTypes = {
-        detail: React.PropTypes.object,
-        match: React.PropTypes.object,
-        history: React.PropTypes.object,
-        getSample: React.PropTypes.func,
-        showRemove: React.PropTypes.func,
-        remove: React.PropTypes.func
+        detail: PropTypes.object,
+        match: PropTypes.object,
+        history: PropTypes.object,
+        getSample: PropTypes.func,
+        showRemove: PropTypes.func,
+        remove: PropTypes.func
     };
 
     componentDidMount () {

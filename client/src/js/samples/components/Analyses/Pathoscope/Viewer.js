@@ -1,5 +1,5 @@
-
 import React from "react";
+import PropTypes from "prop-types";
 import { Alert } from "react-bootstrap";
 import { Icon } from "virtool/js/components/Base";
 import { assign, forEach, sortBy, max } from "lodash";
@@ -108,10 +108,10 @@ const PathoscopeViewer = (props) => {
 };
 
 PathoscopeViewer.propTypes = {
-    diagnosis: React.PropTypes.arrayOf(React.PropTypes.object),
-    showListing: React.PropTypes.bool,
-    read_count: React.PropTypes.number,
-    maxReadLength: React.PropTypes.number
+    diagnosis: PropTypes.arrayOf(PropTypes.object),
+    showListing: PropTypes.bool,
+    read_count: PropTypes.number,
+    maxReadLength: PropTypes.number
 };
 
 export default PathoscopeViewer;

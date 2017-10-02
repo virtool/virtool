@@ -1,4 +1,5 @@
 import React from "react";
+import PropTypes from "prop-types";
 import FlipMove from "react-flip-move"
 import { forIn, includes, sortBy, flatten } from "lodash";
 
@@ -8,10 +9,10 @@ import PathoscopeIsolate from "./Isolate";
 export default class PathoscopeList extends React.Component {
 
     static propTypes = {
-        expanded: React.PropTypes.arrayOf(React.PropTypes.string),
-        showReads: React.PropTypes.bool,
-        toggleIn: React.PropTypes.func,
-        data: React.PropTypes.arrayOf(React.PropTypes.object).isRequired
+        expanded: PropTypes.arrayOf(PropTypes.string),
+        showReads: PropTypes.bool,
+        toggleIn: PropTypes.func,
+        data: PropTypes.arrayOf(PropTypes.object).isRequired
     };
 
     setScroll = (virusId, scrollLeft) => {

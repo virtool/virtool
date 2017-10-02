@@ -51,6 +51,12 @@
     ],
     "space-before-function-paren": [
       1
+    ],
+    "react/prop-types": [
+      1,
+      {
+        "skipUndeclared": true
+      }
     ]
   }
 }

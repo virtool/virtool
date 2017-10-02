@@ -9,9 +9,9 @@
  * exports Isolates
  */
 
-import React, { PropTypes } from "react";
+import React from "react";
 import { connect } from "react-redux";
-import { withRouter, Redirect, Route } from "react-router-dom";
+import { withRouter } from "react-router-dom";
 import { LinkContainer } from "react-router-bootstrap";
 import { Badge, Row, Col, ListGroup } from "react-bootstrap";
 
@@ -22,11 +22,9 @@ import IsolateDetail from "./IsolateDetail";
 
 const IsolateEditor = (props) => {
 
-    const activeIsolateId = props.match.params.isolateId;
-
     const isolateComponents = props.isolates.map(isolate =>
         <LinkContainer key={isolate.id} to={`/viruses/${props.virusId}/virus/${isolate.id}`}>
-            <ListGroupItem key={isolate.id} active={isolate.id === activeIsolateId}>
+            <ListGroupItem key={isolate.id} active={isolate.id === props.activeIsolateId}>
                 <Flex alignItems="center">
                     <FlexItem grow={1} shrink={0}>{formatIsolateName(isolate)}</FlexItem>
                     {isolate.default ? <Icon name="star" />: null}
@@ -47,14 +45,6 @@ const IsolateEditor = (props) => {
         );
     }
 
-    let firstIsolateId = props.isolates[0] ? props.isolates[0].id: "";
-
-    if (firstIsolateId) {
-        firstIsolateId = "/" + firstIsolateId;
-    }
-
-    // Get the array of sequences from the isolate.
-    // const sequenceData = activeIsolate && activeIsolate.hasOwnProperty("sequences") ? activeIsolate.sequences: [];
     return (
         <div>
             <h4 style={{display: "flex", alignItems: "center"}} className="section-header">
@@ -87,28 +77,18 @@ const IsolateEditor = (props) => {
                     </ListGroup>
                 </Col>
                 <Col md={9}>
-                    <Redirect
-                        from="/viruses/:virusId/virus"
-                        to={`/viruses/${props.virusId}/virus${firstIsolateId}`}
-                    />
-                    <Route path="/viruses/:virusId/virus/:isolateId" component={IsolateDetail} />
+                    <IsolateDetail />
                 </Col>
             </Row>
         </div>
     );
 };
 
-IsolateEditor.propTypes = {
-    match: PropTypes.object,
-    virusId: PropTypes.string,
-    isolates: PropTypes.arrayOf(PropTypes.object),
-    showAddIsolate: PropTypes.func
-};
-
 const mapStateToProps = (state) => {
     return {
         virusId: state.viruses.detail.id,
-        isolates: state.viruses.detail.isolates
+        isolates: state.viruses.detail.isolates,
+        activeIsolateId: state.viruses.activeIsolateId
     };
 };
 

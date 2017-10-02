@@ -1,4 +1,5 @@
 import React from "react";
+import PropTypes from "prop-types";
 import { Panel } from "react-bootstrap";
 import { forEach, capitalize } from "lodash";
 import { Input } from "virtool/js/components/Base";
@@ -6,12 +7,12 @@ import { Input } from "virtool/js/components/Base";
 export default class SampleDetailRights extends React.PureComponent {
 
     static propTypes = {
-        id: React.PropTypes.string,
-        group: React.PropTypes.string,
-        group_read: React.PropTypes.bool,
-        group_write: React.PropTypes.bool,
-        all_read: React.PropTypes.bool,
-        all_write: React.PropTypes.bool
+        id: PropTypes.string,
+        group: PropTypes.string,
+        group_read: PropTypes.bool,
+        group_write: PropTypes.bool,
+        all_read: PropTypes.bool,
+        all_write: PropTypes.bool
     };
 
     changeGroup = (event) => {

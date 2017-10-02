@@ -35,8 +35,8 @@ const ChangePasswordModal = (props) => {
 };
 
 ChangePasswordModal.propTypes = {
-    show: React.PropTypes.bool.isRequired,
-    onHide: React.PropTypes.func.isRequired
+    show: PropTypes.bool.isRequired,
+    onHide: PropTypes.func.isRequired
 };
 
 export default ChangePasswordModal;

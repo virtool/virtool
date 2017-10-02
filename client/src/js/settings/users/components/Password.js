@@ -19,23 +19,6 @@ import { Icon, Input, Checkbox, Button, RelativeTime } from "virtool/js/componen
 
 class Password extends React.PureComponent {
 
-    static propTypes = {
-        userId: React.PropTypes.string,
-
-        password: React.PropTypes.string,
-        confirm: React.PropTypes.string,
-        error: React.PropTypes.string,
-        lastPasswordChange: React.PropTypes.string,
-        passwordChangePending: React.PropTypes.bool,
-        onChangePassword: React.PropTypes.func,
-        onChangeConfirm: React.PropTypes.func,
-        onSubmit: React.PropTypes.func,
-        onClear: React.PropTypes.func,
-
-        forceReset: React.PropTypes.bool,
-        onSetForceReset: React.PropTypes.func
-    };
-
     /**
      * Called when the password is submitted. Sends the new password data to the server.
      *

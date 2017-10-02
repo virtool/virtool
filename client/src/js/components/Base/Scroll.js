@@ -10,18 +10,19 @@
  */
 
 import React from "react";
+import PropTypes from "prop-types";
 import { pick, assign } from "lodash";
 import Ps from "perfect-scrollbar";
 
 export class Scroll extends React.Component {
 
     static propTypes = {
-        style: React.PropTypes.object,
-        height: React.PropTypes.string,
-        wheelSpeed: React.PropTypes.number,
-        wheelPropagation: React.PropTypes.bool,
-        minScrollbarLength: React.PropTypes.number,
-        children: React.PropTypes.node
+        style: PropTypes.object,
+        height: PropTypes.string,
+        wheelSpeed: PropTypes.number,
+        wheelPropagation: PropTypes.bool,
+        minScrollbarLength: PropTypes.number,
+        children: PropTypes.node
     };
 
     static defaultProps = {

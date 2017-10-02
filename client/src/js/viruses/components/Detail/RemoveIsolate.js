@@ -9,7 +9,8 @@
  * @exports RemoveIsolate
  */
 
-import React, { PropTypes } from "react";
+import React from "react";
+import PropTypes from "prop-types";
 import { connect } from "react-redux";
 import { Modal } from "react-bootstrap";
 
@@ -28,7 +29,7 @@ const RemoveIsolate = (props) => (
             <Button
                 bsStyle="danger"
                 icon="checkmark"
-                onClick={() => props.onConfirm(props.virusId, props.isolateId, props.onSuccess)}
+                onClick={() => props.onConfirm(props.virusId, props.isolateId, props.nextIsolateId)}
             >
                 Confirm
             </Button>
@@ -40,6 +41,7 @@ RemoveIsolate.propTypes = {
     virusId: PropTypes.string,
     isolateId: PropTypes.string,
     isolateName: PropTypes.string,
+    nextIsolateId: PropTypes.string,
     show: PropTypes.bool,
     onHide: PropTypes.func,
     onConfirm: PropTypes.func,
@@ -58,8 +60,8 @@ const mapDispatchToProps = (dispatch) => {
             dispatch(hideVirusModal());
         },
 
-        onConfirm: (virusId, isolateId, onSuccess) => {
-            dispatch(removeIsolate(virusId, isolateId, onSuccess));
+        onConfirm: (virusId, isolateId, nextIsolateId) => {
+            dispatch(removeIsolate(virusId, isolateId, nextIsolateId));
         }
     };
 };

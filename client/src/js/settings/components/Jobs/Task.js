@@ -10,6 +10,7 @@
  */
 
 import React from "react";
+import PropTypes from "prop-types";
 import { includes } from "lodash";
 import { Row, Col } from "react-bootstrap";
 import { ListGroupItem } from "virtool/js/components/Base";
@@ -55,11 +56,11 @@ const Task = (props) => {
 };
 
 Task.propTypes = {
-    taskPrefix: React.PropTypes.string.isRequired,
-    proc: React.PropTypes.number,
-    mem: React.PropTypes.number,
-    inst: React.PropTypes.number,
-    onChangeLimit: React.PropTypes.func
+    taskPrefix: PropTypes.string.isRequired,
+    proc: PropTypes.number,
+    mem: PropTypes.number,
+    inst: PropTypes.number,
+    onChangeLimit: PropTypes.func
 };
 
 export default Task;

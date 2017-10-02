@@ -1,6 +1,7 @@
 import React from "react";
 import Moment from "moment";
 import Numeral from "numeral";
+import PropTypes from "prop-types";
 import { capitalize } from "lodash";
 import { connect } from "react-redux";
 import { Panel, Table } from "react-bootstrap";
@@ -86,22 +87,22 @@ const SampleDetailGeneral = (props) => {
 };
 
 SampleDetailGeneral.propTypes = {
-    showIds: React.PropTypes.bool,
-    canModify: React.PropTypes.bool,
-    sampleId: React.PropTypes.string,
-    name: React.PropTypes.string,
-    host: React.PropTypes.string,
-    files: React.PropTypes.array,
-    isolate: React.PropTypes.string,
-    lengthRange: React.PropTypes.string,
-    encoding: React.PropTypes.string,
-    gc: React.PropTypes.string,
-    count: React.PropTypes.string,
-    paired: React.PropTypes.bool,
-    userId: React.PropTypes.string,
-    createdAt: React.PropTypes.string,
-    quality: React.PropTypes.object,
-    onChangeValue: React.PropTypes.func
+    showIds: PropTypes.bool,
+    canModify: PropTypes.bool,
+    sampleId: PropTypes.string,
+    name: PropTypes.string,
+    host: PropTypes.string,
+    files: PropTypes.array,
+    isolate: PropTypes.string,
+    lengthRange: PropTypes.string,
+    encoding: PropTypes.string,
+    gc: PropTypes.string,
+    count: PropTypes.string,
+    paired: PropTypes.bool,
+    userId: PropTypes.string,
+    createdAt: PropTypes.string,
+    quality: PropTypes.object,
+    onChangeValue: PropTypes.func
 };
 
 const mapStateToProps = (state) => {

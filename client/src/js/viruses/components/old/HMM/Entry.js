@@ -17,10 +17,10 @@ import { Label } from "react-bootstrap";
 export default class HMMEntry extends React.Component {
 
     static propTypes = {
-        _id: React.PropTypes.string,
-        label: React.PropTypes.string,
-        cluster: React.PropTypes.number,
-        families: React.PropTypes.object
+        _id: PropTypes.string,
+        label: PropTypes.string,
+        cluster: PropTypes.number,
+        families: PropTypes.object
     };
 
     render () {

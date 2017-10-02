@@ -11,6 +11,7 @@
 
 
 import React from "react";
+import PropTypes from "prop-types";
 import { LinkContainer } from "react-router-bootstrap";
 import { Row, Col, Label } from "react-bootstrap";
 import { Icon, RelativeTime, ListGroupItem } from "virtool/js/components/Base";
@@ -18,12 +19,12 @@ import { Icon, RelativeTime, ListGroupItem } from "virtool/js/components/Base";
 export default class IndexEntry extends React.PureComponent {
     
     static propTypes = {
-        ready: React.PropTypes.bool,
-        showReady: React.PropTypes.bool,
-        created_at: React.PropTypes.string,
-        version: React.PropTypes.oneOfType([React.PropTypes.number, React.PropTypes.string]),
-        modification_count: React.PropTypes.number,
-        modified_virus_count: React.PropTypes.number
+        ready: PropTypes.bool,
+        showReady: PropTypes.bool,
+        created_at: PropTypes.string,
+        version: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
+        modification_count: PropTypes.number,
+        modified_virus_count: PropTypes.number
     };
 
     render () {
