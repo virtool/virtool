@@ -15,7 +15,7 @@ import { watchIndexes } from "./indexes/sagas"
 import { watchSubtraction } from "./subtraction/sagas"
 import { watchFiles } from "./files/sagas";
 import { watchAccount } from "./nav/sagas"
-import { watchSettings, watchUpdateSettings } from "./settings/sagas"
+import { watchSettings } from "./settings/sagas"
 import { watchUsers } from "./settings/users/sagas";
 import { watchGroups } from "./settings/groups/sagas";
 import { watchUpdates } from "./updates/sagas";
@@ -30,7 +30,6 @@ export default function* rootSaga () {
         fork(watchFiles),
         fork(watchAccount),
         fork(watchSettings),
-        fork(watchUpdateSettings),
         fork(watchUsers),
         fork(watchGroups),
         fork(watchUpdates)

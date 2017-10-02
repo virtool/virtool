@@ -8,11 +8,14 @@
  */
 
 import { call, put, takeEvery, takeLatest } from "redux-saga/effects";
+
 import settingsAPI from "./api";
-import { GET_SETTINGS, UPDATE_SETTINGS } from "../actionTypes";
+import { setPending } from "../wrappers";
+import { GET_SETTINGS, UPDATE_SETTING } from "../actionTypes";
 
 export function* watchSettings () {
     yield takeLatest(GET_SETTINGS.REQUESTED, getSettings);
+    yield takeEvery(UPDATE_SETTING.REQUESTED, updateSetting)
 }
 
 function* getSettings () {
@@ -24,15 +27,18 @@ function* getSettings () {
     }
 }
 
-export function* watchUpdateSettings () {
-    yield takeEvery(UPDATE_SETTINGS.REQUESTED, updateSettings)
-}
-
-function* updateSettings (action) {
-    try {
-        const response = yield call(settingsAPI.update, action.update);
-        yield put({type: UPDATE_SETTINGS.SUCCEEDED, settings: response.body});
-    } catch(error) {
-        yield put({type: UPDATE_SETTINGS.FAILED})
-    }
+function* updateSetting (action) {
+    yield setPending(function* () {
+        try {
+            const response = yield call(settingsAPI.update, action.update);
+            yield put({
+                type: UPDATE_SETTING.SUCCEEDED,
+                settings: response.body,
+                key: action.key,
+                update: action.update
+            });
+        } catch(error) {
+            yield put({type: UPDATE_SETTING.FAILED, key: action.key});
+        }
+    }, action);
 }

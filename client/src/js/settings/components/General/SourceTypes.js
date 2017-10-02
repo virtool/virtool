@@ -10,13 +10,12 @@
  */
 
 import React from "react";
-import { union } from "lodash";
+import { includes, without } from "lodash";
 import { connect } from "react-redux";
-import { capitalize } from "lodash";
 import { Row, Col, Panel, Overlay, Popover, FormGroup, InputGroup, FormControl } from "react-bootstrap";
 
 import { Flex, FlexItem, Icon, Button, Checkbox, ListGroupItem } from "virtool/js/components/Base";
-import { setSourceTypeValue, updateSettings } from "../../actions";
+import { updateSetting } from "../../actions";
 
 /**
  * A component that allows the addition and removal of allowed source types. The use of restricted source types can also
@@ -24,63 +23,68 @@ import { setSourceTypeValue, updateSettings } from "../../actions";
  */
 class SourceTypes extends React.Component {
 
-    /*
+    constructor (props) {
+        super(props);
+
+        this.state = {
+            value: "",
+            error: null
+        };
+    }
+
+    remove = (sourceType) => {
+        this.props.onUpdate(without(this.props.settings.allowed_source_types, sourceType));
+    };
 
     handleSubmit = (event) => {
-
         event.preventDefault();
 
-        // Convert source type to lowercase. All source types are single words stored in lowercase. They are capitalized
-        // when rendered in the application.
-        const newSourceType = this.state.value.toLowerCase();
+        // Do nothing if the sourceType is an empty string.
+        if (this.state.value !== "") {
+            // Convert source type to lowercase. All source types are single words stored in lowercase. They are
+            // capitalized when rendered in the application.
+            const newSourceType = this.state.value.toLowerCase();
 
-        // The source type cannot be an empty string...
-        if (newSourceType !== "") {
-            // Show warning if the source type already exists in the list.
-            if (this.props.settings.allowed_source_types.indexOf(newSourceType) > -1) {
-                this.setState({warning: "Source type already exists."});
+            // Show error if the source type already exists in the list.
+            if (includes(this.props.settings.allowed_source_types, newSourceType)) {
+                this.setState({error: "Source type already exists."});
             }
 
-            // Show warning if the input string includes a space character.
-            else if (newSourceType.indexOf(" ") > -1) {
-                this.setState({warning: "Source types may not contain spaces."})
+            // Show error if the input string includes a space character.
+            else if (includes(newSourceType, " ")) {
+                this.setState({error: "Source types may not contain spaces."})
             }
 
-            // If the string is acceptable add it to the existing source types list and replace the one in the
-            // settings with the new one.
             else {
-                this.props.set("allowed_source_types", this.props.allowedSourceTypes.concat(newSourceType));
+                const newSourceTypes = this.props.settings.allowed_source_types.concat([newSourceType]);
+
+                this.props.onUpdate(newSourceTypes);
+
                 this.setState({
                     value: "",
-                    warning: null
+                    error: null
                 });
             }
         }
     };
 
-    */
-
-    handleSubmit = () => {
-        this.props.onSubmit(union([this.props.value], this.props.allowedSourceTypes));
-    };
-
     render () {
 
-        const restrictSourceTypes = this.props.restrictSourceTypes;
+        const restrictSourceTypes = this.props.settings.restrict_source_types;
 
-        const listComponents = this.props.allowedSourceTypes.map((sourceType) => {
+        const listComponents = this.props.settings.allowed_source_types.sort().map((sourceType) => {
             let removeButton;
 
             // Only show remove button is the sourceTypes feature is enabled.
             if (restrictSourceTypes) {
                 removeButton = (
-                    <Icon name="remove" onClick={() => this.removeSourceType(sourceType)} pullRight />
+                    <Icon name="remove" onClick={() => this.remove(sourceType)} pullRight />
                 );
             }
 
             return (
                 <ListGroupItem key={sourceType} disabled={!restrictSourceTypes}>
-                    {capitalize(sourceType)}
+                    <span className="text-capitalize">{sourceType}</span>
                     {removeButton}
                 </ListGroupItem>
             );
@@ -97,8 +101,8 @@ class SourceTypes extends React.Component {
                             <FlexItem>
                                 <Checkbox
                                     label="Enable"
-                                    checked={this.props.restrictSourceTypes}
-                                    onClick={() => {this.props.onToggle(!this.props.restrictSourceTypes)}}
+                                    checked={restrictSourceTypes}
+                                    onClick={() => this.props.onToggle(!restrictSourceTypes)}
                                 />
                             </FlexItem>
                         </Flex>
@@ -116,15 +120,15 @@ class SourceTypes extends React.Component {
                     </Col>
                     <Col xs={12} md={6} mdPull={6}>
                         <Panel>
-                            <form onSubmit={this.onSubmit}>
+                            <form onSubmit={this.handleSubmit}>
                                 <FormGroup>
-                                    <InputGroup>
+                                    <InputGroup ref={(node) => this.containerNode = node}>
                                         <FormControl
                                             type="text"
-                                            inputRef={(input) => this.inputNode = input}
+                                            inputRef={(node) => this.inputNode = node}
                                             disabled={!restrictSourceTypes}
-                                            onChange={(e) => this.props.onChange(e.target.value)}
-                                            value={this.props.value}
+                                            onChange={(e) => this.setState({value: e.target.value, error: null})}
+                                            value={this.state.value}
                                         />
                                         <InputGroup.Button>
                                             <Button type="submit" bsStyle="primary" disabled={!restrictSourceTypes}>
@@ -140,13 +144,14 @@ class SourceTypes extends React.Component {
                             </div>
 
                             <Overlay
-                                target={this.inputNode}
-                                container={this}
+                                show={!!this.state.error}
+                                target={() => this.inputNode}
+                                container={() => this.containerNode}
                                 placement="top"
                                 animation={false}
                             >
-                                <Popover id="source-type-warning-popover">
-                                    Warning
+                                <Popover id="source-type-error-popover" className="text-danger">
+                                    {this.state.error}
                                 </Popover>
                             </Overlay>
                         </Panel>
@@ -159,28 +164,18 @@ class SourceTypes extends React.Component {
 
 const mapStateToProps = (state) => {
     return {
-        restrictSourceTypes: state.settings.data.restrict_source_types,
-        allowedSourceTypes: state.settings.data.allowed_source_types,
-        value: state.settings.sourceTypes.value
+        settings: state.settings.data
     };
 };
 
 const mapDispatchToProps = (dispatch) => {
     return {
+        onUpdate: (value) => {
+            dispatch(updateSetting("allowed_source_types", value));
+        },
+
         onToggle: (value) => {
-            dispatch(updateSettings({restrict_source_types: value}));
-        },
-
-        onChange: (value) => {
-            dispatch(setSourceTypeValue(value));
-        },
-
-        onSubmit: (allowedSourceTypes) => {
-            const update = {
-                allowed_source_types: allowedSourceTypes
-            };
-
-            dispatch(updateSettings(update))
+            dispatch(updateSetting("restrict_source_types", value));
         }
     };
 };

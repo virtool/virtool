@@ -7,7 +7,7 @@
  *
  */
 
-import { assign, find, findIndex } from "lodash";
+import { assign, findIndex } from "lodash";
 import {
     LIST_USERS,
     SELECT_USER,

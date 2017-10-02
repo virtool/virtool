@@ -122,7 +122,7 @@ export const LOGOUT_SUCCEEDED = "LOGOUT_SUCCEEDED";
 
 // Administrative Settings
 export const GET_SETTINGS = createRequestActionType("GET_SETTINGS");
-export const UPDATE_SETTINGS = createRequestActionType("UPDATE_SETTINGS");
+export const UPDATE_SETTING = createRequestActionType("UPDATE_SETTING");
 
 export const SET_SOURCE_TYPE_VALUE = "SET_SOURCE_TYPE_VALUE";
 export const SET_CONTROL_READAHEAD_TERM = "SET_CONTROL_READAHEAD_TERM";
