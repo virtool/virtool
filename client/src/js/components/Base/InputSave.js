@@ -121,7 +121,6 @@ export class InputSave extends React.Component {
      * @func
      */
     blur = () => {
-        console.log(this.inputNode);
         this.inputNode.blur();
         this.buttonNode.blur();
     };
