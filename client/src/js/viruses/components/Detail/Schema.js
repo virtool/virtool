@@ -14,7 +14,7 @@ import { Icon } from "virtool/js/components/Base";
 const VirusSchema = () => (
     <Panel className="text-center">
         <p>This feature is under development.</p>
-        <a target="_blank" href="https://github.com/virtool/virtool/issues/102">
+        <a target="_blank" href="https://github.com/virtool/virtool/issues/102" rel="noopener noreferrer">
             <Icon name="github" />
         </a>
     </Panel>
