@@ -48,6 +48,22 @@ const TaskArgs = (props) => {
                     </tbody>
                 </Table>
             );
+
+        case "rebuild_index":
+            return (
+                <Table bordered>
+                    <tbody>
+                        <tr>
+                            <th className="col-xs-3">Index Version</th>
+                            <td className="col-xs-9">
+                                <Link to={`/viruses/indexes/${props.taskArgs.index_version}`}>
+                                    <span>{props.taskArgs.index_version}</span>
+                                </Link>
+                            </td>
+                        </tr>
+                    </tbody>
+                </Table>
+            )
     }
 
     const rowComponents = values(mapValues(props.taskArgs, (value, key) =>
