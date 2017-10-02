@@ -52,12 +52,12 @@ const reducer = (state = initialState, action) => {
             return assign({}, state);
 
         case LIST_USERS.SUCCEEDED: {
-            const activeId = action.users[0].user_id;
+            const activeData = action.users[0];
 
             return assign({}, state, {
                 list: action.users,
-                activeId: activeId,
-                activeData: find(action.users, {user_id: activeId})
+                activeId: activeData.id,
+                activeData: activeData
             });
         }
 

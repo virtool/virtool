@@ -48,7 +48,9 @@ class ManageUsers extends React.Component {
 
         if (this.props.users === null || this.props.groups === null) {
             return (
-                <div />
+                <div className="text-center" style={{margin: "220px auto"}}>
+                    <ScaleLoader color="#3c8786" />
+                </div>
             );
         }
 
@@ -62,27 +64,6 @@ class ManageUsers extends React.Component {
             </ListGroupItem>
         );
 
-        let content;
-
-        if (this.props.activeId) {
-            content = (
-                <Panel header={this.props.activeId}>
-                    <AutoProgressBar affixed />
-                    <Password />
-                    <GroupsPermissions />
-                    <PrimaryGroup />
-                </Panel>
-            )
-        } else {
-            content = (
-                <Panel>
-                    <div className="text-center" style={{margin: "80px auto"}}>
-                        <ScaleLoader color="#3c8786" />
-                    </div>
-                </Panel>
-            );
-        }
-
         return (
             <Row>
                 <Col xs={3} md={2}>
@@ -91,7 +72,12 @@ class ManageUsers extends React.Component {
                     </ListGroup>
                 </Col>
                 <Col xs={9} md={10}>
-                    {content}
+                    <Panel header={this.props.activeId}>
+                        <AutoProgressBar affixed />
+                        <Password />
+                        <GroupsPermissions />
+                        <PrimaryGroup />
+                    </Panel>
                 </Col>
             </Row>
         )
