@@ -11,14 +11,14 @@ import { assign } from "lodash";
 import {
     GET_SETTINGS,
     UPDATE_SETTING,
-    GET_CONTROL_READAHEAD_REQUESTED,
-    GET_CONTROL_READAHEAD_SUCCEEDED,
-    SET_SOURCE_TYPE_VALUE
+    GET_CONTROL_READAHEAD
 } from "../actionTypes";
 
 
 const initialState = {
-    data: null
+    data: null,
+    readahead: null,
+    readaheadPending: false
 };
 
 const reducer = (state = initialState, action) => {
@@ -30,6 +30,22 @@ const reducer = (state = initialState, action) => {
 
         case UPDATE_SETTING.SUCCEEDED:
             return assign({}, state, {data: assign({}, state.data, action.update)});
+
+        case GET_CONTROL_READAHEAD.REQUESTED:
+            return assign({}, state, {
+                readaheadPending: true
+            });
+
+        case GET_CONTROL_READAHEAD.SUCCEEDED:
+            return assign({}, state, {
+                readahead: action.data,
+                readaheadPending: false
+            });
+
+        case GET_CONTROL_READAHEAD.FAILED:
+            return assign({}, state, {
+                readaheadPending:false
+            });
 
         default:
             return state;

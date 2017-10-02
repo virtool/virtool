@@ -9,7 +9,8 @@
 
 import {
     GET_SETTINGS,
-    UPDATE_SETTING
+    UPDATE_SETTING,
+    GET_CONTROL_READAHEAD
 } from "../actionTypes";
 
 export function getSettings () {
@@ -28,4 +29,11 @@ export function updateSetting (key, value) {
         value,
         update
     };
+}
+
+export function getControlReadahead (term) {
+    return {
+        type: GET_CONTROL_READAHEAD.REQUESTED,
+        term
+    }
 }
