@@ -32,9 +32,7 @@ import EditSequence from "./EditSequence";
 import RemoveSequence from "./RemoveSequence";
 
 const IsolateDetail = (props) => {
-
-    console.log(props);
-
+    
     const isolate = find(props.isolates, {id: props.activeIsolateId});
 
     const isolateName = formatIsolateName(isolate);

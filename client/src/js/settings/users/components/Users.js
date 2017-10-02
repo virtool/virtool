@@ -12,8 +12,9 @@
 import React from "react";
 import { connect } from "react-redux";
 import { Row, Col, Panel, ListGroup } from "react-bootstrap";
+import { ScaleLoader } from "halogen";
 
-import { Spinner, ListGroupItem, AutoProgressBar } from "virtool/js/components/Base";
+import { ListGroupItem, AutoProgressBar } from "../../../components/Base";
 import { listUsers, selectUser } from "../../users/actions";
 import { listGroups } from "../../groups/actions";
 import Password from "./Password";
@@ -28,6 +29,10 @@ import PrimaryGroup from "./PrimaryGroup";
  * @class
  */
 class ManageUsers extends React.Component {
+
+    constructor (props) {
+        super(props);
+    }
 
     componentWillMount () {
         if (this.props.users === null) {
@@ -71,8 +76,8 @@ class ManageUsers extends React.Component {
         } else {
             content = (
                 <Panel>
-                    <div className="text-center">
-                        <Spinner color="#777777" />
+                    <div className="text-center" style={{margin: "80px auto"}}>
+                        <ScaleLoader color="#3c8786" />
                     </div>
                 </Panel>
             );

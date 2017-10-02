@@ -13,9 +13,10 @@ import React from "react";
 import PropTypes from "prop-types";
 import { connect } from "react-redux";
 import { Row, Col, Modal, FormGroup, FormControl, InputGroup, ControlLabel, Popover, Overlay } from "react-bootstrap";
+import { ScaleLoader } from "halogen";
 
 import { addSequence, hideVirusModal } from "../../actions";
-import { Icon, Button, Spinner } from "virtool/js/components/Base";
+import { Icon, Button } from "virtool/js/components/Base";
 import SequenceField from "./SequenceField";
 import virusAPI from "../../api";
 
@@ -90,7 +91,7 @@ class AddSequence extends React.Component {
             overlay = (
                 <div className="modal-body-overlay">
                     <span>
-                        <Spinner />
+                        <ScaleLoader color="#fff" />
                     </span>
                 </div>
             )
