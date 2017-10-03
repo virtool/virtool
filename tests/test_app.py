@@ -86,8 +86,7 @@ class TestInitSettings:
         """
         class MockSettings:
 
-            def __init__(self, loop):
-                self.loop = loop
+            def __init__(self):
                 self.stub = mocker.stub(name="load")
 
             async def load(self):
