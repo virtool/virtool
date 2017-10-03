@@ -13,8 +13,8 @@ import React from "react";
 import { connect } from "react-redux";
 import { Row, Col, Panel } from "react-bootstrap";
 
-import { updateSettings } from "../../actions";
-import { InputSave } from "virtool/js/components/Base";
+import { updateSetting } from "../../actions";
+import { InputSave } from "../../../components/Base";
 
 
 /**
@@ -36,13 +36,13 @@ const Resources = (props) => (
                 <InputSave
                     label="CPU Limit"
                     type="number"
-                    onSave={(event) => props.onChangeProc(event.value)}
+                    onSave={(event) => props.onUpdateProc(event.value)}
                     initialValue={props.proc}
                 />
                 <InputSave
                     label="Memory Limit (GB)"
                     type="number"
-                    onSave={(event) => props.onChangeMem(event.value)}
+                    onSave={(event) => props.onUpdateMem(event.value)}
                     initialValue={props.mem}
                 />
             </Panel>
@@ -59,13 +59,12 @@ const mapStateToProps = (state) => {
 
 const mapDispatchToProps = (dispatch) => {
     return {
-        onChangeProc: (proc) => {
-
-            dispatch(updateSettings({proc: proc}));
+        onUpdateProc: (value) => {
+            dispatch(updateSetting("proc", value));
         },
 
-        onChangeMem: (mem) => {
-            dispatch(updateSettings({mem: mem}));
+        onUpdateMem: (value) => {
+            dispatch(updateSetting("mem", value));
         }
     };
 };

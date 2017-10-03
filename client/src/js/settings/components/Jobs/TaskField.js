@@ -12,6 +12,7 @@
 import CX from "classnames";
 import React from "react";
 import PropTypes from "prop-types";
+import { toNumber } from "lodash";
 import { Icon } from "virtool/js/components/Base";
 
 /**
@@ -34,6 +35,15 @@ export default class TaskField extends React.PureComponent {
         readOnly: PropTypes.bool
     };
 
+    componentWillReceiveProps (nextProps) {
+        if (nextProps.value !== this.props.value) {
+            this.setState({
+                value: nextProps.value,
+                pending: false
+            });
+        }
+    }
+
     handleBlur = () => {
         if (!this.state.pending) {
             this.setState({value: this.props.value});
@@ -41,12 +51,18 @@ export default class TaskField extends React.PureComponent {
     };
 
     handleChange = (event) => {
-        this.setState({value: event.target.value});
+        this.setState({
+            value: toNumber(event.target.value)
+        });
     };
 
     handleSubmit = (event) => {
         event.preventDefault();
-        this.props.onChange(this.state.value);
+        this.setState({pending: true},  () => {
+            this.props.onChange(this.state.value);
+            this.inputNode.blur();
+        });
+
     };
 
     render () {
@@ -71,6 +87,7 @@ export default class TaskField extends React.PureComponent {
                     <input
                         key="input"
                         type="number"
+                        ref={(node) => this.inputNode = node}
                         className="form-control"
                         value={this.state.value}
                         onBlur={this.handleBlur}

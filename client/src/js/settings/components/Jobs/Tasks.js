@@ -13,7 +13,7 @@ import React from "react";
 import { connect } from "react-redux";
 import { Row, Col, ListGroup, Panel } from "react-bootstrap";
 
-import { updateSettings } from "../../actions";
+import { updateSetting } from "../../actions";
 import { Flex, FlexItem, ListGroupItem, Icon } from "virtool/js/components/Base";
 
 import Task from "./Task";
@@ -105,9 +105,7 @@ const mapStateToProps = (state) => {
 const mapDispatchToProps = (dispatch) => {
     return {
         onChangeLimit: (taskPrefix, key, value) => {
-            let update = {};
-            update[`${taskPrefix}_${key}`] = value;
-            dispatch(updateSettings(update));
+            dispatch(updateSetting(`${taskPrefix}_${key}`, value));
         }
     }
 };
