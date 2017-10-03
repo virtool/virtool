@@ -1,9 +1,11 @@
 import React from "react";
 import { filter } from "lodash";
 import { connect } from "react-redux";
+import { ClipLoader } from "halogenium";
 import { Row, Col, Panel, ListGroup } from "react-bootstrap";
 
 import { getSoftwareUpdates, showInstallModal } from "../actions";
+import { updateSetting } from "../../settings/actions";
 import { Button, Checkbox, Icon, InputSave } from "../../components/Base";
 import { versionComparator } from "../../utils";
 import Release from "./Release";
@@ -15,14 +17,18 @@ class SoftwareUpdateViewer extends React.Component {
         super(props);
     }
 
-    componentDidMount () {
+    componentWillMount () {
         this.props.onGet();
     }
 
     render () {
 
         if (this.props.updates === null) {
-            return <div />;
+            return (
+                <div className="text-center" style={{marginTop: "220px"}}>
+                    <ClipLoader color="#3c8786" size="24px" />
+                </div>
+            );
         }
 
         const currentVersion = "v1.8.3"; // this.props.updates.current_version;
@@ -84,7 +90,11 @@ class SoftwareUpdateViewer extends React.Component {
                         <Panel>
                             <Row>
                                 <Col xs={12}>
-                                    <InputSave label="Repository" onSave={() => console.log("save")} />
+                                    <InputSave
+                                        label="Repository"
+                                        initialValue={this.props.softwareRepo}
+                                        onSave={(value) => console.log(value)}
+                                    />
                                 </Col>
                                 <Col xs={12}>
                                     <Checkbox label="Ignore pre-releases" checked={true} />
@@ -101,7 +111,8 @@ class SoftwareUpdateViewer extends React.Component {
 
 const mapStateToProps = (state) => {
     return {
-        updates: state.updates.software
+        updates: state.updates.software,
+        softwareRepo: state.settings.data.software_repo
     };
 };
 
@@ -109,6 +120,10 @@ const mapDispatchToProps = (dispatch) => {
     return {
         onGet: () => {
             dispatch(getSoftwareUpdates());
+        },
+
+        onUpdateSoftwareRepo: (value) => {
+            dispatch(updateSetting("software_repo", value));
         },
 
         onShowModal: () => {
