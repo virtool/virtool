@@ -13,12 +13,12 @@ import React from "react";
 import PropTypes from "prop-types";
 import { some } from "lodash";
 import { connect } from "react-redux";
+import { Link } from "react-router-dom";
 import { LinkContainer } from "react-router-bootstrap";
 import { Row, Col, Alert, FormGroup, InputGroup, FormControl } from "react-bootstrap";
 
 import { findSubtractions, showCreateSubtraction } from "../actions";
 import { Flex, FlexItem, Icon, Button, ListGroupItem } from "virtool/js/components/Base";
-import CreateSubtraction from "./Create";
 
 class SubtractionList extends React.Component {
 
@@ -76,7 +76,8 @@ class SubtractionList extends React.Component {
         if (!hostComponents.length) {
             hostComponents = (
                 <ListGroupItem key="noSample" className="text-center">
-                    <Icon name="info" /> No hosts found
+                    <Icon name="info" /> No hosts found.
+                    <span> <Link to={{state: {createSubtraction: true}}}>Create one</Link>.</span>
                 </ListGroupItem>
             );
         }
@@ -102,8 +103,6 @@ class SubtractionList extends React.Component {
                     <strong>Subtraction</strong>
                 </h3>
 
-                <CreateSubtraction />
-
                 {alert}
 
                 <div key="toolbar" className="toolbar">
@@ -124,7 +123,9 @@ class SubtractionList extends React.Component {
                         <Button icon="folder-open" tip="Files" />
                     </LinkContainer>
 
-                    <Button icon="new-entry" bsStyle="primary" tip="Create" onClick={this.props.onShowCreate} />
+                    <LinkContainer to={{state: {createSubtraction: true}}}>
+                        <Button bsStyle="primary" icon="new-entry" tip="Create" />
+                    </LinkContainer>
                 </div>
 
                 <div className="list-group">

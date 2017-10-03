@@ -13,7 +13,7 @@ import React from "react";
 import { connect } from "react-redux";
 import { Row, Col, Panel } from "react-bootstrap";
 
-import { updateSettings } from "../../actions";
+import { updateSetting } from "../../actions";
 import { Checkbox, Button } from "virtool/js/components/Base";
 
 /**
@@ -53,15 +53,12 @@ const mapStateToProps = (state) => {
 
 const mapDispatchToProps = (dispatch) => {
     return {
-        onToggle: (enabled) => {
-            dispatch(updateSettings({sample_unique_names: enabled}));
+        onToggle: (value) => {
+            dispatch(updateSetting("sample_unique_names", value));
         }
     };
 };
 
-const Container = connect(
-    mapStateToProps,
-    mapDispatchToProps
-)(UniqueNames);
+const Container = connect(mapStateToProps, mapDispatchToProps)(UniqueNames);
 
 export default Container;

@@ -135,7 +135,7 @@ export class InputSave extends React.Component {
                 <Flex alignItems="stretch" style={{marginBottom: "15px"}}>
                     <FlexItem grow={1} shrink={0}>
                         <Input
-                            ref={(input) => this.inputNode = input}
+                            ref={(node) => this.inputNode = node}
                             type={this.props.type}
                             autoComplete={this.props.autoComplete}
                             onChange={this.handleChange}

@@ -2,6 +2,7 @@ import os
 import sys
 import json
 import logging
+import aiofiles
 from cerberus import Validator
 
 from virtool.utils import to_bool
@@ -92,10 +93,9 @@ SCHEMA = {
 
 class Settings:
 
-    def __init__(self, loop):
-        self.loop = loop
+    def __init__(self):
         self.data = None
-        self.path = "./settings.json"
+        self.path = os.path.join(sys.path[0], "settings.json")
 
     def get(self, key):
         return self.data[key]
@@ -105,37 +105,31 @@ class Settings:
         return self.data
 
     async def load(self):
-        await self.loop.run_in_executor(None, self.load_from_file)
-
-    def load_from_file(self):
-        """ Load a JSON settings file. If the path cannot be found, generate a new settings file. """
-        content = {}
-
         try:
-            # Open file and parse JSON into dictionary.
-            with open(self.path, "r") as settings_file:
-                string = settings_file.read()
-                content = json.loads(string)
+            async with aiofiles.open(self.path, "r") as f:
+                content = json.loads(await f.read())
         except IOError:
-            pass
+            content = dict()
 
-        v = Validator(SCHEMA, purge_unknown=True)
+        self.data = self.validate(content)
 
-        if not v.validate(content):
-            raise ValueError("Could not validate settings file", v.errors)
-
-        self.data = v.document
-        write_to_file(self.data, self.path)
+        await self.write()
 
     async def write(self):
-        await self.loop.run_in_executor(None, write_to_file, self.data, self.path)
+        self.data = self.validate(self.data)
+
+        async with aiofiles.open(self.path, "w") as f:
+            json_string = json.dumps(self.data, indent=4, sort_keys=True)
+            await f.write(json_string)
 
     def as_dict(self):
         return dict(self.data)
 
+    @staticmethod
+    def validate(data):
+        v = Validator(SCHEMA, purge_unknown=True)
 
-def write_to_file(settings_dict, path=None):
-    path = path or os.path.join(sys.path[0], "settings.json")
+        if not v.validate(data):
+            raise ValueError("Could not validate settings file", v.errors)
 
-    with open(path, "w") as settings_file:
-        json.dump(settings_dict, settings_file, indent=4, sort_keys=True)
+        return v.document

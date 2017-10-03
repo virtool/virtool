@@ -25,6 +25,12 @@ const virusesAPI = {
             .query(query);
     },
 
+    listNames: () => {
+        return Request
+            .get("/api/viruses")
+            .query({names: true});
+    },
+
     get: (virusId) => {
         return Request.get(`/api/viruses/${virusId}`);
     },

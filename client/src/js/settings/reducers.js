@@ -8,85 +8,49 @@
  */
 
 import { assign } from "lodash";
-import { combineReducers } from "redux";
 import {
     GET_SETTINGS,
-    UPDATE_SETTINGS,
-    GET_CONTROL_READAHEAD_REQUESTED,
-    GET_CONTROL_READAHEAD_SUCCEEDED,
-    SET_SOURCE_TYPE_VALUE
+    UPDATE_SETTING,
+    GET_CONTROL_READAHEAD
 } from "../actionTypes";
 
-const dataReducer = (state = {}, action) => {
+
+const initialState = {
+    data: null,
+    readahead: null,
+    readaheadPending: false
+};
+
+const reducer = (state = initialState, action) => {
 
     switch (action.type) {
 
         case GET_SETTINGS.SUCCEEDED:
-            return assign({}, state, action.data);
+            return assign({}, state, {data: action.data});
 
-        case UPDATE_SETTINGS.SUCCEEDED:
-            return assign({}, state, action.settings);
+        case UPDATE_SETTING.SUCCEEDED:
+            return assign({}, state, {data: assign({}, state.data, action.update)});
 
-        default:
-            return state;
-    }
-
-};
-
-const sourceTypesInitialState = {
-    value: ""
-};
-
-const sourceTypesReducer = (state = sourceTypesInitialState, action) => {
-    switch (action.type) {
-
-        case SET_SOURCE_TYPE_VALUE:
-            return assign({}, state, {value: action.value});
-
-        default:
-            return state;
-    }
-};
-
-const internalControlInitialState = {
-    readaheadTerm: "",
-    pendingReadahead: false,
-
-    sourceType: "",
-    sourceTypePending: false
-};
-
-const internalControlReducer = (state = internalControlInitialState, action) => {
-    switch (action.type) {
-
-        case GET_CONTROL_READAHEAD_REQUESTED:
+        case GET_CONTROL_READAHEAD.REQUESTED:
             return assign({}, state, {
-                readaheadTerm: action.term,
-                pendingReadahead: true
+                readaheadPending: true
             });
 
-        case GET_CONTROL_READAHEAD_SUCCEEDED:
+        case GET_CONTROL_READAHEAD.SUCCEEDED:
             return assign({}, state, {
                 readahead: action.data,
-                readaheadTerm: "",
-                pendingReadahead: false
+                readaheadPending: false
             });
 
-        case SET_SOURCE_TYPE_VALUE:
+        case GET_CONTROL_READAHEAD.FAILED:
             return assign({}, state, {
-
+                readaheadPending:false
             });
 
         default:
             return state;
-
     }
+
 };
 
-const rootReducer = combineReducers({
-    data: dataReducer,
-    sourceTypes: sourceTypesReducer,
-    internalControl: internalControlReducer
-});
-
-export default rootReducer;
+export default reducer;

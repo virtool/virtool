@@ -12,21 +12,29 @@ import virtool.job_manager
 
 class TestInitDB:
 
-    async def test(self, loop):
+    async def test(self, loop, test_db_name):
         """
         Test that the ``db_name`` and ``db`` keys and values are added to the ``app`` object.
         """
         app = web.Application(loop=loop)
 
+        temp_db_name = "foobar" + test_db_name
+
         app["settings"] = {
-            "db_name": "foobar"
+            "db_name": temp_db_name
         }
 
         await virtool.app.init_db(app)
 
-        assert app["db_name"] == "foobar"
-        assert app["db"].name == "foobar"
+        assert app["db_name"] == temp_db_name
+        assert app["db"].name == temp_db_name
         assert isinstance(app["db"], motor.motor_asyncio.AsyncIOMotorDatabase)
+
+        client = motor.motor_asyncio.AsyncIOMotorClient()
+
+        await client.drop_database(temp_db_name)
+
+
 
     async def test_override(self, loop):
         """
@@ -86,8 +94,7 @@ class TestInitSettings:
         """
         class MockSettings:
 
-            def __init__(self, loop):
-                self.loop = loop
+            def __init__(self):
                 self.stub = mocker.stub(name="load")
 
             async def load(self):

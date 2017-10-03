@@ -20,7 +20,7 @@ REF_LENGTHS_PATH = os.path.join(TEST_FILES_PATH, "ref_lengths.json")
 COVERAGE_PATH = os.path.join(TEST_FILES_PATH, "coverage.json")
 DIAGNOSIS_PATH = os.path.join(TEST_FILES_PATH, "diagnosis.json")
 HOST_PATH = os.path.join(TEST_FILES_PATH, "index", "host")
-TO_HOST_PATH = os.path.join(TEST_FILES_PATH, "to_host.json")
+TO_SUBTRACTION_PATH = os.path.join(TEST_FILES_PATH, "to_subtraction.json")
 
 
 @pytest.fixture("session")
@@ -141,7 +141,13 @@ async def test_check_db(tmpdir, paired, test_motor, mock_job):
 
     assert mock_job.read_paths == [os.path.join(mock_job.sample_path, filename) for filename in expected_read_filenames]
 
-    assert mock_job.host_path == os.path.join(str(tmpdir), "reference", "hosts", "arabidopsis_thaliana", "reference")
+    assert mock_job.host_path == os.path.join(
+        str(tmpdir),
+        "reference",
+        "subtraction",
+        "arabidopsis_thaliana",
+        "reference"
+    )
 
 
 async def test_mk_analysis_dir(mock_job):
@@ -216,15 +222,15 @@ async def test_map_subtraction(mock_job):
 
     await mock_job.map_subtraction()
 
-    with open(TO_HOST_PATH, "r") as handle:
-        assert mock_job.intermediate["to_host"] == json.load(handle)
+    with open(TO_SUBTRACTION_PATH, "r") as handle:
+        assert mock_job.intermediate["to_subtraction"] == json.load(handle)
 
 
 async def test_subtract_mapping(mock_job):
     os.makedirs(mock_job.analysis_path)
 
-    with open(TO_HOST_PATH, "r") as handle:
-        mock_job.intermediate["to_host"] = json.load(handle)
+    with open(TO_SUBTRACTION_PATH, "r") as handle:
+        mock_job.intermediate["to_subtraction"] = json.load(handle)
 
     shutil.copyfile(VTA_PATH, os.path.join(mock_job.analysis_path, "to_isolates.vta"))
 

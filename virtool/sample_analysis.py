@@ -167,11 +167,14 @@ async def format_analysis(db, analysis):
 
         for virus in analysis["diagnosis"]:
             for isolate in list(virus["isolates"]):
-                if not any("pi" in sequence for sequence in isolate["sequences"]):
+                if not any((key in sequence for sequence in isolate["sequences"]) for key in ("pi", "final")):
                     virus["isolates"].remove(isolate)
                     continue
 
                 for sequence in isolate["sequences"]:
+                    if "final" in sequence:
+                        sequence.update(sequence.pop("final"))
+                        del sequence["initial"]
                     if "pi" not in sequence:
                         sequence.update({
                             "pi": 0,
@@ -299,7 +302,7 @@ class Base(virtool.job.Job):
         self.host_path = os.path.join(
             self.data_path,
             "reference",
-            "hosts",
+            "subtraction",
             self.sample["subtraction"]["id"].lower().replace(" ", "_"),
             "reference"
         )
@@ -351,7 +354,9 @@ class Pathoscope(Base):
         """
         fasta_path = os.path.join(self.analysis_path, "isolate_index.fa")
 
-        sequence_ids = self.intermediate["to_host"]
+        sequence_ids = list(self.intermediate["to_viruses"])
+
+        ref_lengths = dict()
 
         # Get the database documents for the sequences
         async with aiofiles.open(fasta_path, "w") as handle:
@@ -360,24 +365,21 @@ class Pathoscope(Base):
                 # Write all of the sequences for each virus to a FASTA file.
                 async for document in self.db.sequences.find({"virus_id": virus_id}, ["sequence"]):
                     await handle.write(">{}\n{}\n".format(document["_id"], document["sequence"]))
+                    ref_lengths[document["_id"]] = len(document["sequence"])
 
-        del self.intermediate["to_host"]
+        del self.intermediate["to_viruses"]
+
+        self.intermediate["ref_lengths"] = ref_lengths
 
     @virtool.job.stage_method
     async def subtract_mapping(self):
-        """
-        Subtracts virus and host alignments stored in :attr:`.intermediate` as :class:`virtool.pathoscope.sam.Lines`
-        objects. Reads that have a higher alignment score to the host than to the virus reference are eliminated from
-        the analysis.
-
-        """
         subtracted_count = await self.run_in_executor(
             virtool.pathoscope.subtract,
             self.analysis_path,
-            self.intermediate["to_host"]
+            self.intermediate["to_subtraction"]
         )
         
-        del self.intermediate["to_host"]
+        del self.intermediate["to_subtraction"]
         
         self.results["subtracted_count"] = subtracted_count
 
@@ -538,8 +540,6 @@ class PathoscopeBowtie(Pathoscope):
 
         to_viruses = set()
 
-        ref_lengths = dict()
-
         async def stdout_handler(line):
             line = line.decode()
 
@@ -555,8 +555,6 @@ class PathoscopeBowtie(Pathoscope):
                             ref_id = split_field[1]
                         if split_field[0] == "LN":
                             length = int(split_field[1])
-
-                    ref_lengths[ref_id] = length
 
                 return
 
@@ -669,7 +667,7 @@ class PathoscopeBowtie(Pathoscope):
             "-U", os.path.join(self.analysis_path, "mapped.fastq")
         ]
 
-        to_host = dict()
+        to_subtraction = dict()
 
         async def stdout_handler(line):
             line = line.decode()
@@ -687,11 +685,11 @@ class PathoscopeBowtie(Pathoscope):
             if fields[2] == "*":
                 return
 
-            to_host[fields[0]] = virtool.pathoscope.find_sam_align_score(fields)
+            to_subtraction[fields[0]] = virtool.pathoscope.find_sam_align_score(fields)
 
         await self.run_subprocess(command, stdout_handler=stdout_handler)
 
-        self.intermediate["to_host"] = to_host
+        self.intermediate["to_subtraction"] = to_subtraction
 
 
 class NuVs(Base):

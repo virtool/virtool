@@ -10,11 +10,12 @@
  */
 
 import React from "react";
+import { toNumber } from "lodash";
 import { connect } from "react-redux";
 import { Row, Col, Panel } from "react-bootstrap";
 
-import { updateSettings } from "../../actions";
-import { Icon, InputSave } from "virtool/js/components/Base";
+import { updateSetting } from "../../actions";
+import { Icon, InputSave } from "../../../components/Base";
 
 const HTTPOptions = (props) => {
 
@@ -37,18 +38,16 @@ const HTTPOptions = (props) => {
             <Col xs={12} md={6} mdPull={6}>
                 <Panel>
                     <InputSave
-                        name="server_host"
                         label="Host"
                         autoComplete={false}
-                        onSave={e => props.onChangeHost(e.value)}
+                        onSave={e => props.onUpdateHost(e.value)}
                         initialValue={props.host}
                     />
                     <InputSave
-                        name="server_port"
                         label="Port"
                         type="number"
                         autoComplete={false}
-                        onSave={event => props.onChangePort("server_port", event.value)}
+                        onSave={e => props.onUpdatePort(e.value)}
                         initialValue={props.port}
                     />
                 </Panel>
@@ -66,12 +65,12 @@ const mapStateToProps = (state) => {
 
 const mapDispatchToProps = (dispatch) => {
     return {
-        onChangeHost: (host) => {
-            dispatch(updateSettings({server_host: host}));
+        onUpdateHost: (value) => {
+            dispatch(updateSetting("server_host", value));
         },
 
-        onChangePort: (port) => {
-            dispatch(updateSettings({server_port: Number(port)}));
+        onUpdatePort: (value) => {
+            dispatch(updateSetting("server_port", toNumber(value)));
         }
     };
 };

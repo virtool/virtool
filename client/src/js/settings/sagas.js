@@ -7,12 +7,17 @@
  *
  */
 
-import { call, put, takeEvery, takeLatest } from "redux-saga/effects";
+import { call, put, throttle, takeEvery, takeLatest } from "redux-saga/effects";
+
 import settingsAPI from "./api";
-import { GET_SETTINGS, UPDATE_SETTINGS } from "../actionTypes";
+import virusesAPI from "../viruses/api";
+import { setPending } from "../wrappers";
+import { GET_SETTINGS, UPDATE_SETTING, GET_CONTROL_READAHEAD } from "../actionTypes";
 
 export function* watchSettings () {
     yield takeLatest(GET_SETTINGS.REQUESTED, getSettings);
+    yield takeEvery(UPDATE_SETTING.REQUESTED, updateSetting);
+    yield throttle(120, GET_CONTROL_READAHEAD.REQUESTED, getControlReadahead);
 }
 
 function* getSettings () {
@@ -24,15 +29,27 @@ function* getSettings () {
     }
 }
 
-export function* watchUpdateSettings () {
-    yield takeEvery(UPDATE_SETTINGS.REQUESTED, updateSettings)
+function* updateSetting (action) {
+    yield setPending(function* () {
+        try {
+            const response = yield call(settingsAPI.update, action.update);
+            yield put({
+                type: UPDATE_SETTING.SUCCEEDED,
+                settings: response.body,
+                key: action.key,
+                update: action.update
+            });
+        } catch(error) {
+            yield put({type: UPDATE_SETTING.FAILED, key: action.key});
+        }
+    }, action);
 }
 
-function* updateSettings (action) {
+function* getControlReadahead () {
     try {
-        const response = yield call(settingsAPI.update, action.update);
-        yield put({type: UPDATE_SETTINGS.SUCCEEDED, settings: response.body});
+        const response = yield virusesAPI.listNames();
+        yield put({type: GET_CONTROL_READAHEAD.SUCCEEDED, data: response.body});
     } catch(error) {
-        yield put({type: UPDATE_SETTINGS.FAILED})
+        yield put({type: GET_CONTROL_READAHEAD.FAILED});
     }
 }

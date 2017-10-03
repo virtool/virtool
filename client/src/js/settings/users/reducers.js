@@ -7,7 +7,7 @@
  *
  */
 
-import { assign, find, findIndex } from "lodash";
+import { assign, findIndex } from "lodash";
 import {
     LIST_USERS,
     SELECT_USER,
@@ -52,12 +52,12 @@ const reducer = (state = initialState, action) => {
             return assign({}, state);
 
         case LIST_USERS.SUCCEEDED: {
-            const activeId = action.users[0].user_id;
+            const activeData = action.users[0];
 
             return assign({}, state, {
                 list: action.users,
-                activeId: activeId,
-                activeData: find(action.users, {user_id: activeId})
+                activeId: activeData.id,
+                activeData: activeData
             });
         }
 

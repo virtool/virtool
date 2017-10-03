@@ -101,7 +101,7 @@ const IsolateDetail = (props) => {
                 virusId={props.virusId}
                 isolateId={isolate.id}
                 isolateName={isolateName}
-                nextIsolateId={props.isolate.length ? props.isolates[0].id: null}
+                nextIsolateId={props.isolates.length ? props.isolates[0].id: null}
             />
 
             <AddSequence

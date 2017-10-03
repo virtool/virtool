@@ -10,52 +10,41 @@
  */
 
 import React from "react";
-import PropTypes from "prop-types";
+import { find } from "lodash";
 import { connect } from "react-redux";
 import { Typeahead } from "react-bootstrap-typeahead";
 import { Row, Col, Panel } from "react-bootstrap";
-import { Flex, FlexItem, Checkbox } from "virtool/js/components/Base";
+import { Flex, FlexItem, Checkbox } from "../../../components/Base";
+import { updateSetting, getControlReadahead } from "../../actions";
 
 /**
  * A form component for setting whether an internal control should be used and which virus to use as a control.
  */
 class InternalControl extends React.Component {
 
-    static propTypes = {
-        set: PropTypes.func,
-        useInternalControl: PropTypes.bool,
-        internalControlId: PropTypes.string
-    };
+    componentWillMount () {
+        this.props.onGetReadahead();
+    }
 
-    /**
-     * Calculates the inputValue (virus name) from the virus id of the current control (controlId). Returns an empty
-     * string if no controlId is defined.
-     *
-     * @func
-     */
-    getSelected = () => {
-        // The id of the virus that is used as an internal control if there is one..
-        const controlId = this.props.internalControlId;
-
-        let virus;
-
-        if (controlId) {
-            virus = dispatcher.db.viruses.by("_id", controlId);
+    handleChange = (selected) => {
+        if (this.props.settings.internal_control_id) {
+            return this.props.onUpdate(null);
         }
 
-        let selected = [];
-
-        if (virus) {
-            selected.push({
-                label: virus.name,
-                id: virus._id
-            });
-        }
-
-        return selected;
+        return this.props.onUpdate(selected[0].id);
     };
 
     render () {
+
+        const useInternalControl = this.props.settings.use_internal_control;
+
+        const internalControlId = this.props.settings.internal_control_id;
+
+        let selected;
+
+        if (internalControlId && this.props.readahead) {
+            selected = [find(this.props.readahead, {id: internalControlId})];
+        }
 
         return (
             <div>
@@ -68,8 +57,8 @@ class InternalControl extends React.Component {
                             <FlexItem grow={0} shrink={0}>
                                 <Checkbox
                                     label="Enable"
-                                    checked={this.props.useInternalControl}
-                                    onClick={this.toggle}
+                                    checked={useInternalControl}
+                                    onClick={() => this.props.onToggle(!useInternalControl)}
                                 />
                             </FlexItem>
                         </Flex>
@@ -86,9 +75,12 @@ class InternalControl extends React.Component {
                     <Col xs={12} mdPull={6} md={6}>
                         <Panel>
                             <Typeahead
-                                options={["Test"]}
-                                onChange={(selected) => this.props.set("internal_control_id", selected[0].id)}
-                                disabled={!this.props.useInternalControl}
+                                onBlur={() => this.props.onGetReadahead()}
+                                onChange={this.handleChange}
+                                labelKey="name"
+                                selected={selected}
+                                options={this.props.readahead || []}
+                                disabled={!useInternalControl}
                             />
                         </Panel>
                     </Col>
@@ -100,13 +92,28 @@ class InternalControl extends React.Component {
 
 const mapStateToProps = (state) => {
     return {
-        useInternalControl: state.settings.use_internal_control,
-        internalControlId: state.settings.internal_control_id
+        settings: state.settings.data,
+        readahead: state.settings.readahead,
+        readaheadPending: state.settings.readaheadPending
     };
 };
 
-const Container = connect(
-    mapStateToProps
-)(InternalControl);
+const mapDispatchToProps = (dispatch) => {
+    return {
+        onGetReadahead: (term) => {
+            dispatch(getControlReadahead(term));
+        },
+
+        onUpdate: (value) => {
+            dispatch(updateSetting("internal_control_id", value));
+        },
+
+        onToggle: (value) => {
+            dispatch(updateSetting("use_internal_control", value));
+        }
+    };
+};
+
+const Container = connect(mapStateToProps, mapDispatchToProps)(InternalControl);
 
 export default Container;

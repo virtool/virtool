@@ -9,8 +9,8 @@
 
 import {
     GET_SETTINGS,
-    UPDATE_SETTINGS,
-    SET_SOURCE_TYPE_VALUE
+    UPDATE_SETTING,
+    GET_CONTROL_READAHEAD
 } from "../actionTypes";
 
 export function getSettings () {
@@ -19,16 +19,21 @@ export function getSettings () {
     }
 }
 
-export function setSourceTypeValue (value) {
-    return {
-        type: SET_SOURCE_TYPE_VALUE,
-        value
-    }
-}
+export function updateSetting (key, value) {
+    let update = {};
+    update[key] = value;
 
-export function updateSettings (update) {
     return {
-        type: UPDATE_SETTINGS.REQUESTED,
+        type: UPDATE_SETTING.REQUESTED,
+        key,
+        value,
         update
     };
+}
+
+export function getControlReadahead (term) {
+    return {
+        type: GET_CONTROL_READAHEAD.REQUESTED,
+        term
+    }
 }

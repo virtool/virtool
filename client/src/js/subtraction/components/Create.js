@@ -12,11 +12,12 @@
 import React from "react";
 import { filter } from "lodash";
 import { connect } from "react-redux";
+import { Link } from "react-router-dom";
 import { Row, Col, ListGroup, Modal } from "react-bootstrap";
 
 import { findFiles } from "../../files/actions";
-import { createSubtraction, hideSubtractionModal } from "../actions";
-import { Button, Input, ListGroupItem, RelativeTime } from "virtool/js/components/Base";
+import { createSubtraction } from "../actions";
+import { Button, Icon, Input, ListGroupItem, RelativeTime } from "../../components/Base";
 
 const getInitialState = () => ({
     subtractionId: "",
@@ -55,7 +56,7 @@ class CreateSubtraction extends React.Component {
 
     render () {
 
-        const fileComponents = filter(this.props.files, {type: "subtraction"}).map(file => {
+        let fileComponents = filter(this.props.files, {type: "subtraction"}).map(file => {
             const active = file.id === this.state.fileId;
 
             return (
@@ -76,11 +77,17 @@ class CreateSubtraction extends React.Component {
             );
         });
 
+        if (!fileComponents.length) {
+            fileComponents = (
+                <ListGroupItem className="text-center">
+                    <Icon name="info" /> No files found. <Link to="/subtraction/files">Upload some</Link>.
+                </ListGroupItem>
+            );
+        }
+
         return (
-            <Modal show={this.props.show}
-                onHide={this.props.onHide}
-                onEnter={this.modalEnter}
-                onExited={this.modalExited}
+            <Modal show={this.props.show} onHide={this.props.onHide} onEnter={this.modalEnter}
+                   onExited={this.modalExited}
             >
                 <Modal.Header>
                     Create Subtraction
@@ -120,7 +127,6 @@ class CreateSubtraction extends React.Component {
 
 const mapStateToProps = (state) => {
     return {
-        show: state.subtraction.showCreate,
         files: state.files.documents
     }
 };
@@ -133,10 +139,6 @@ const mapDispatchToProps = (dispatch) => {
 
         onCreate: (subtractionId, fileId) => {
             dispatch(createSubtraction(subtractionId, fileId));
-        },
-
-        onHide: () => {
-            dispatch(hideSubtractionModal());
         }
     };
 };

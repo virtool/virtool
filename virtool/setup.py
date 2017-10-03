@@ -262,6 +262,7 @@ async def clear(req):
 
     return web.HTTPFound("/setup")
 
+
 async def save_and_reload(req):
     data = req.app["setup"]
 
@@ -315,13 +316,12 @@ async def save_and_reload(req):
     for subdir in subdirs:
         os.makedirs(os.path.join(data_path, subdir))
 
-    v = Validator(virtool.app_settings.SCHEMA)
+    req.app["settings"] = virtool.app_settings.Settings()
 
-    v({key: data[key] for key in ["db_host", "db_port", "db_name", "data_path", "watch_path"]})
+    for key in ["db_host", "db_port", "db_name", "data_path", "watch_path"]:
+        req.app["settings"].set(key, data[key])
 
-    settings_path = os.path.join(sys.path[0], "settings.json")
-
-    virtool.app_settings.write_to_file(v.document, settings_path)
+    await req.app["settings"].write()
 
     virtool.utils.reload()
 

@@ -48,7 +48,7 @@ class TestVFamToJSON:
         """
         result = vfam_text_to_json(annotation_path)
 
-        to_check = [{key: r[key] for key in r if key not in ["entries", "genera", "families"]} for r in result]
+        to_check = [{key: r[key] for key in r if key not in ("entries", "genera", "families")} for r in result]
 
         to_check = sorted(to_check, key=operator.itemgetter("cluster"))
         expected_annotations = sorted(to_check, key=operator.itemgetter("cluster"))

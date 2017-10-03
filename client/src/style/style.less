@@ -664,3 +664,19 @@ ul.tight-list > li {
   overflow: hidden;
   white-space: nowrap;
 }
+
+.isolate-item {
+  display: flex;
+  align-items: center;
+
+  .isolate-item-name {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .isolate-item-icon {
+    flex: 1 0 auto;
+    padding-left: 5px;
+  }
+}

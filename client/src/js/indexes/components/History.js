@@ -12,7 +12,7 @@
 import React from "react";
 import PropTypes from "prop-types";
 import { sortBy } from "lodash";
-import { ScaleLoader } from "halogen";
+import { ClipLoader } from "halogenium";
 import { Row, Col, ListGroup, ListGroupItem, Panel } from "react-bootstrap";
 
 const RebuildHistory = (props) => {
@@ -20,7 +20,7 @@ const RebuildHistory = (props) => {
     if (props.unbuilt === null) {
         return (
             <Panel header="Changes">
-                <ScaleLoader />
+                <ClipLoader />
             </Panel>
         );
     }

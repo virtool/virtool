@@ -13,8 +13,8 @@ import React from "react";
 import { connect } from "react-redux";
 import { Row, Col, Panel } from "react-bootstrap";
 
-import { updateSettings } from "../../actions";
-import { Icon, Flex, FlexItem, InputSave, Checkbox } from "virtool/js/components/Base";
+import { updateSetting } from "../../actions";
+import { Icon, Flex, FlexItem, InputSave, Checkbox } from "../../../components/Base";
 
 const SSLFooter = () => (
     <small className="text-warning">
@@ -54,13 +54,13 @@ const SSLOptions = (props) => (
                 <Panel>
                     <InputSave
                         label="Certificate Path"
-                        onSave={event => props.onChangeCertPath(event.value)}
+                        onSave={e => props.onUpdateCertPath(e.value)}
                         initialValue={props.certPath}
                         disabled={!props.enabled}
                     />
                     <InputSave
                         label="Key Path"
-                        onSave={event => props.onChangeKeyPath(event.value)}
+                        onSave={e => props.onUpdateKeyPath(e.value)}
                         initialValue={props.keyPath}
                         disabled={!props.enabled}
                     />
@@ -80,16 +80,16 @@ const mapStateToProps = (state) => {
 
 const mapDispatchToProps = (dispatch) => {
     return {
-        onToggle: (enabled) => {
-            dispatch(updateSettings({use_ssl: enabled}));
+        onToggle: (value) => {
+            dispatch(updateSetting("use_ssl", value));
         },
 
-        onChangeCertPath: (path) => {
-            dispatch(updateSettings({cert_path: path}));
+        onUpdateCertPath: (path) => {
+            dispatch(updateSetting("cert_path", path));
         },
 
-        onChangeKeyPath: (path) => {
-            dispatch(updateSettings({key_path: path}));
+        onUpdateKeyPath: (path) => {
+            dispatch(updateSetting("key_path", path));
         }
     };
 };

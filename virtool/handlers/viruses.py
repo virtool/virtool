@@ -27,6 +27,7 @@ async def find(req):
 
     term = req.query.get("term", None)
     verified = req.query.get("verified", None)
+    names = req.query.get("names", False)
 
     db_query = dict()
 
@@ -36,9 +37,12 @@ async def find(req):
     if verified is not None:
         db_query["verified"] = virtool.utils.to_bool(verified)
 
-    data = await paginate(db.viruses, db_query, req.query, "name", projection=virtool.virus.LIST_PROJECTION)
-
-    data["modified_count"] = len(await db.history.find({"index.id": "unbuilt"}, ["virus"]).distinct("virus.name"))
+    if names in [True, "true"]:
+        data = await db.viruses.find(db_query, ["name"], sort=[("name", 1)]).to_list(None)
+        data = [virtool.utils.base_processor(d) for d in data]
+    else:
+        data = await paginate(db.viruses, db_query, req.query, "name", projection=virtool.virus.LIST_PROJECTION)
+        data["modified_count"] = len(await db.history.find({"index.id": "unbuilt"}, ["virus"]).distinct("virus.name"))
 
     return json_response(data)
 

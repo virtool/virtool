@@ -122,13 +122,10 @@ export const LOGOUT_SUCCEEDED = "LOGOUT_SUCCEEDED";
 
 // Administrative Settings
 export const GET_SETTINGS = createRequestActionType("GET_SETTINGS");
-export const UPDATE_SETTINGS = createRequestActionType("UPDATE_SETTINGS");
+export const UPDATE_SETTING = createRequestActionType("UPDATE_SETTING");
 
 export const SET_SOURCE_TYPE_VALUE = "SET_SOURCE_TYPE_VALUE";
-export const SET_CONTROL_READAHEAD_TERM = "SET_CONTROL_READAHEAD_TERM";
-export const GET_CONTROL_READAHEAD_REQUESTED = "GET_CONTROL_READAHEAD_REQUESTED";
-export const GET_CONTROL_READAHEAD_SUCCEEDED = "GET_CONTROL_READAHEAD_SUCCEEDED";
-export const GET_CONTROL_READAHEAD_FAILED = "GET_CONTROL_READAHEAD_FAILED";
+export const GET_CONTROL_READAHEAD = createRequestActionType("GET_CONTROL_READAHEAD");
 
 // Users
 export const LIST_USERS = createRequestActionType("LIST_USERS");

@@ -8,8 +8,10 @@
  */
 
 import React from "react";
+import { connect } from "react-redux";
 import { Switch, Redirect, Route } from "react-router-dom";
 import { Nav, NavItem } from "react-bootstrap";
+import { ClipLoader } from "halogenium";
 import { LinkContainer } from "react-router-bootstrap";
 
 import SourceTypes from "./General/SourceTypes";
@@ -47,7 +49,29 @@ const Jobs = () => (
     </div>
 );
 
-const Settings = () => {
+const Settings = ({ settings }) => {
+    let content;
+
+    if (settings === null) {
+        content = (
+            <div className="text-center" style={{marginTop: "220px"}}>
+                <ClipLoader color="#3c8786" />
+            </div>
+        )
+    } else {
+        content = (
+            <Switch>
+                <Redirect from="/settings" to="/settings/general" exact />
+                <Route path="/settings/general" component={General} />
+                <Route path="/settings/server" component={Server} />
+                <Route path="/settings/data" component={Data} />
+                <Route path="/settings/jobs" component={Jobs} />
+                <Route path="/settings/users" component={Users} />
+                <Route path="/settings/updates" component={Updates} />
+            </Switch>
+        );
+    }
+
     return (
         <div className="container">
             <h3 className="view-header">
@@ -82,17 +106,17 @@ const Settings = () => {
                 </LinkContainer>
             </Nav>
 
-            <Switch>
-                <Redirect from="/settings" to="/settings/general" exact />
-                <Route path="/settings/general" component={General} />
-                <Route path="/settings/server" component={Server} />
-                <Route path="/settings/data" component={Data} />
-                <Route path="/settings/jobs" component={Jobs} />
-                <Route path="/settings/users" component={Users} />
-                <Route path="/settings/updates" component={Updates} />
-            </Switch>
+            {content}
         </div>
     );
 };
 
-export default Settings;
+const mapStateToProps = (state) => {
+    return {
+        settings: state.settings.data
+    };
+};
+
+const Container = connect(mapStateToProps)(Settings);
+
+export default Container;

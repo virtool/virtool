@@ -65,7 +65,7 @@ async def init_settings(app):
     :type app: :class:`aiohttp.web.Application`
 
     """
-    app["settings"] = virtool.app_settings.Settings(app.loop)
+    app["settings"] = virtool.app_settings.Settings()
     await app["settings"].load()
 
 

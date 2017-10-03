@@ -13,9 +13,8 @@ import React from "react";
 import { connect } from "react-redux";
 import { Row, Col, ListGroup, Panel } from "react-bootstrap";
 
-import { updateSettings } from "../../actions";
-import { Flex, FlexItem, ListGroupItem, Icon } from "virtool/js/components/Base";
-
+import { updateSetting } from "../../actions";
+import { Flex, FlexItem, ListGroupItem, Icon } from "../../../components/Base";
 import Task from "./Task";
 
 const taskNames = ["create_sample", "rebuild_index", "create_subtraction", "pathoscope_bowtie", "nuvs"];
@@ -47,18 +46,16 @@ const TasksFooter = () => (
  */
 const TaskLimits = (props) => {
 
-    const taskComponents = taskNames.map(taskPrefix => {
-        return (
-            <Task
-                key={taskPrefix}
-                taskPrefix={taskPrefix}
-                proc={props.limits[taskPrefix].proc}
-                mem={props.limits[taskPrefix].mem}
-                inst={props.limits[taskPrefix].inst}
-                onChangeLimit={props.onChangeLimit}
-            />
-        );
-    });
+    const taskComponents = taskNames.map(taskPrefix =>
+        <Task
+            key={taskPrefix}
+            taskPrefix={taskPrefix}
+            proc={props.limits[taskPrefix].proc}
+            mem={props.limits[taskPrefix].mem}
+            inst={props.limits[taskPrefix].inst}
+            onChangeLimit={props.onChangeLimit}
+        />
+    );
 
     return (
         <Row>
@@ -105,9 +102,7 @@ const mapStateToProps = (state) => {
 const mapDispatchToProps = (dispatch) => {
     return {
         onChangeLimit: (taskPrefix, key, value) => {
-            let update = {};
-            update[`${taskPrefix}_${key}`] = value;
-            dispatch(updateSettings(update));
+            dispatch(updateSetting(`${taskPrefix}_${key}`, value));
         }
     }
 };
