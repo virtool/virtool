@@ -3,7 +3,7 @@ import PropTypes from "prop-types";
 import Numeral from "numeral";
 import { connect } from "react-redux";
 import { Label, Table } from "react-bootstrap";
-import { ScaleLoader } from "halogen";
+import { ClipLoader } from "halogenium";
 import { RelativeTime } from "virtool/js/components/Base";
 
 import { getAnalysis } from "../../actions";
@@ -30,7 +30,7 @@ class AnalysisDetail extends React.Component {
         if (this.props.detail === null) {
             return (
                 <div className="text-center" style={{height: "500px", paddingTop: "220px"}}>
-                    <ScaleLoader color="#3c8786" />
+                    <ClipLoader color="#3c8786" />
                 </div>
             );
         }

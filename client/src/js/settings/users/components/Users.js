@@ -12,7 +12,7 @@
 import React from "react";
 import { connect } from "react-redux";
 import { Row, Col, Panel, ListGroup } from "react-bootstrap";
-import { ScaleLoader } from "halogen";
+import { ClipLoader } from "halogenium";
 
 import { ListGroupItem, AutoProgressBar } from "../../../components/Base";
 import { listUsers, selectUser } from "../../users/actions";
@@ -49,7 +49,7 @@ class ManageUsers extends React.Component {
         if (this.props.users === null || this.props.groups === null) {
             return (
                 <div className="text-center" style={{margin: "220px auto"}}>
-                    <ScaleLoader color="#3c8786" />
+                    <ClipLoader color="#3c8786" />
                 </div>
             );
         }

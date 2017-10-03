@@ -15,7 +15,7 @@ import { connect } from "react-redux";
 import { Switch, Route, Redirect } from "react-router-dom";
 import { LinkContainer } from "react-router-bootstrap";
 import { Label, Nav, NavItem } from "react-bootstrap";
-import { ScaleLoader } from "halogen";
+import { ClipLoader } from "halogenium";
 
 import { getVirus, showEditVirus, showRemoveVirus } from "../../actions";
 import { Flex, FlexItem, Icon } from "../../../components/Base";
@@ -47,7 +47,7 @@ class VirusDetail extends React.Component {
         if (this.props.detail === null || this.props.detail.id !== this.props.match.params.virusId) {
             return (
                 <div className="text-center">
-                    <ScaleLoader />
+                    <ClipLoader size="12px" />
                 </div>
             );
         }

@@ -14,7 +14,7 @@ import PropTypes from "prop-types";
 import Numeral from "numeral";
 import { connect } from "react-redux";
 import { LinkContainer } from "react-router-bootstrap";
-import { ScaleLoader } from "halogen";
+import { ClipLoader } from "halogenium";
 import { ListGroup, ListGroupItem, Row, Col, Badge, Table } from "react-bootstrap";
 
 import { getSubtraction } from "../actions";
@@ -35,7 +35,7 @@ class SubtractionDetail extends React.Component {
         if (this.props.detail === null) {
             return (
                 <div className="text-center" style={{marginTop: "220px"}}>
-                    <ScaleLoader color="#3c8786" />
+                    <ClipLoader color="#3c8786" />
                 </div>
             );
         }

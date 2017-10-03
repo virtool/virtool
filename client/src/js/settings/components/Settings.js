@@ -11,7 +11,7 @@ import React from "react";
 import { connect } from "react-redux";
 import { Switch, Redirect, Route } from "react-router-dom";
 import { Nav, NavItem } from "react-bootstrap";
-import { ScaleLoader } from "halogen";
+import { ClipLoader } from "halogenium";
 import { LinkContainer } from "react-router-bootstrap";
 
 import SourceTypes from "./General/SourceTypes";
@@ -55,7 +55,7 @@ const Settings = ({ settings }) => {
     if (settings === null) {
         content = (
             <div className="text-center" style={{marginTop: "220px"}}>
-                <ScaleLoader color="#3c8786" />
+                <ClipLoader color="#3c8786" />
             </div>
         )
     } else {

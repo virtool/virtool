@@ -13,7 +13,7 @@ import { connect } from "react-redux";
 import { Switch, Redirect, Route } from "react-router-dom";
 import { LinkContainer } from "react-router-bootstrap";
 import { Badge, Nav, NavItem } from "react-bootstrap";
-import { ScaleLoader } from "halogen";
+import { ClipLoader } from "halogenium";
 
 import IndexGeneral from "./General";
 import IndexChanges from "./Changes";
@@ -36,7 +36,7 @@ class IndexDetail extends React.Component {
         if (this.props.detail === null) {
             return (
                 <div className="text-center" style={{marginTop: "200px"}}>
-                    <ScaleLoader color="#3c8786" />
+                    <ClipLoader color="#3c8786" />
                 </div>
             );
         }

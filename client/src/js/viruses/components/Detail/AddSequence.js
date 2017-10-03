@@ -13,7 +13,7 @@ import React from "react";
 import PropTypes from "prop-types";
 import { connect } from "react-redux";
 import { Row, Col, Modal, FormGroup, FormControl, InputGroup, ControlLabel, Popover, Overlay } from "react-bootstrap";
-import { ScaleLoader } from "halogen";
+import { ClipLoader } from "halogenium";
 
 import { addSequence, hideVirusModal } from "../../actions";
 import { Icon, Button } from "virtool/js/components/Base";
@@ -91,7 +91,7 @@ class AddSequence extends React.Component {
             overlay = (
                 <div className="modal-body-overlay">
                     <span>
-                        <ScaleLoader color="#fff" />
+                        <ClipLoader color="#fff" />
                     </span>
                 </div>
             )
