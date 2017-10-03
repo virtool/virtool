@@ -51,17 +51,15 @@ class TestUnavailable:
         assert resp.headers["Location"] == "/setup"
 
 
-class TestSetupRedirect:
+@pytest.mark.parametrize("url", ["/viruses", "/hosts", "/foobar"])
+async def test_setup_redirect(url, spawn_client):
+    client = await spawn_client(setup_mode=True)
 
-    @pytest.mark.parametrize("url", ["/viruses", "/hosts", "/foobar"])
-    async def test(self, url, spawn_client):
-        client = await spawn_client(setup_mode=True)
+    resp = await client.get(url)
 
-        resp = await client.get(url)
+    assert resp.status == 200
 
-        assert resp.status == 200
-
-        assert "Connect to MongoDB" in await resp.text()
+    assert "Connect to MongoDB" in await resp.text()
 
 
 class TestSetupGet:
@@ -148,13 +146,13 @@ class TestSetupGet:
 
 class TestSetupDB:
 
-    async def test(self, spawn_client, mock_setup):
+    async def test(self, spawn_client, test_db_name, mock_setup):
         client = await spawn_client(setup_mode=True)
 
         update = {
             "db_host": "localhost",
             "db_port": 27017,
-            "db_name": "test"
+            "db_name": test_db_name
         }
 
         resp = await client.post_form("/setup/db", update)
@@ -184,13 +182,15 @@ class TestSetupDB:
 
         assert client.app["setup"] == mock_setup
 
-    async def test_db_exists(self, spawn_client, mock_setup):
+    async def test_db_exists(self, spawn_client, test_db_name, mock_setup):
         client = await spawn_client(setup_mode=True)
+
+        foobar_db_name = test_db_name + "-foobar"
 
         update = {
             "db_host": "localhost",
             "db_port": 27017,
-            "db_name": "foobar"
+            "db_name": foobar_db_name
         }
 
         connection = motor.motor_asyncio.AsyncIOMotorClient(
@@ -200,11 +200,11 @@ class TestSetupDB:
             serverSelectionTimeoutMS=1500
         )
 
-        await connection.foobar.test.insert_one({"_id": "test"})
+        await connection[foobar_db_name].test.insert_one({"_id": "test"})
 
         resp = await client.post_form("/setup/db", update)
 
-        await connection.drop_database("foobar")
+        await connection.drop_database(foobar_db_name)
 
         assert resp.status == 200
 
@@ -336,7 +336,20 @@ class TestSaveAndReload:
         client = await spawn_client(setup_mode=True)
 
         m_reload = mocker.patch("virtool.utils.reload")
-        m_write_to_file = mocker.patch("virtool.app_settings.write_to_file")
+
+        class MockSettings:
+
+            def __init__(self):
+                self.m_write = mocker.stub(name="write")
+                self.data = dict()
+
+            def set(self, key, value):
+                self.data[key] = value
+
+            async def write(self):
+                self.m_write()
+
+        mocker.patch("virtool.app_settings.Settings", new=MockSettings)
 
         data = tmpdir.mkdir("data")
         watch = tmpdir.mkdir("watch")
@@ -429,4 +442,14 @@ class TestSaveAndReload:
             'watch_path': str(watch)
         })
 
-        assert m_write_to_file.call_args[0] == (v.document, os.path.join(sys.path[0], "settings.json"))
+        for key in ["db_host", "db_port", "db_name"]:
+            assert client.app["settings"].data[key] == {
+                "db_host": "localhost",
+                "db_port": 27017,
+                "db_name": "foobar"
+            }[key]
+
+        for key in ["data_path", "watch_path"]:
+            assert key.split("_")[0] in client.app["settings"].data[key]
+
+        assert client.app["settings"].m_write.called
