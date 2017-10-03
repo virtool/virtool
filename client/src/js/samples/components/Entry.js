@@ -51,18 +51,18 @@ export default class SampleEntry extends React.Component {
 
         const labels = mapValues({pathoscope: null, nuvs: null}, (value, key) =>
             <FlexItem className={CX("sample-label", {"bg-primary": this.props[key]})} pad>
-                <Flex alignItems="center" className="hidden-xs visible-md">
+                <Flex alignItems="center" className="hidden-xs hidden-sm">
                     <Icon name={this.props[key] === "ip" ? "play": "bars"} />
                     <span style={{paddingLeft: "3px"}}>
-                        {key === "pathoscope" ? "Pathoscope" : "NuVs"}
+                        {key === "pathoscope" ? "Pathoscope": "NuVs"}
                     </span>
                 </Flex>
 
-                <span className="visible-xs hidden-md">
+                <Flex alignItems="center" className="hidden-md hidden-lg">
                     {this.props[key] === "ip" ? <Icon name="play" />:
-                        <strong>{key === "pathoscope" ? "P" : "N"}</strong>
+                        <strong>{key === "pathoscope" ? "P": "N"}</strong>
                     }
-                </span>
+                </Flex>
             </FlexItem>
         );
 
