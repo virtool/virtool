@@ -90,12 +90,13 @@ class CreateSample(virtool.job.Job):
 
         command = [
             "skewer",
-            "-m", "pe" if self.paired else "head",
+            "-m", "pe" if self.paired else "any",
             "-l", "50",
             "-q", "20",
             "-Q", "25",
             "-t", str(self.settings.get("create_sample_proc")),
             "-o", os.path.join(self.sample_path, "reads"),
+            "--quiet",
         ] + input_paths
 
         # Prevents an error from skewer when called inside a subprocess.
