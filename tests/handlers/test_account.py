@@ -146,6 +146,47 @@ class TestChangePassword:
         })
 
 
+async def test_create_api_key(mocker, spawn_client, static_time, test_motor, test_dispatch):
+    mocker.patch("virtool.user.get_api_key", return_value="abc123xyz789")
+
+    client = await spawn_client(authorize=True)
+
+    resp = await client.post("/api/account/keys", {
+        "name": "Foobar"
+    })
+
+    assert resp.status == 201
+
+    expected = {
+        "id": "foobar_0",
+        "name": "Foobar",
+        "key": "57f614878f6056613d77f38b8b105bed8bb452f49a98c70cc63099a5129bac80",
+        "created_at": static_time,
+        "permissions": {
+            "cancel_job": False,
+            "create_sample": False,
+            "manage_users": False,
+            "modify_hmm": False,
+            "modify_host": False,
+            "modify_options": False,
+            "modify_virus": False,
+            "rebuild_index": False,
+            "remove_host": False,
+            "remove_job": False,
+            "remove_virus": False
+        }
+    }
+
+    assert (await test_motor.users.find_one({"_id": "test"}, ["api_keys"]))["api_keys"][0] == expected
+
+    expected.update({
+        "raw": "abc123xyz789",
+        "created_at": "2017-10-06T20:00:00Z"
+    })
+
+    assert await resp.json() == expected
+
+
 class TestLogout:
 
     async def test(self, spawn_client):

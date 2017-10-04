@@ -2,8 +2,9 @@ from pymongo import ReturnDocument
 
 import virtool.utils
 import virtool.user
+import virtool.user_permissions
 
-from virtool.handlers.utils import json_response, no_content, bad_request, protected, validation
+from virtool.handlers.utils import json_response, no_content, bad_request, protected, validation, unpack_request
 
 SETTINGS_SCHEMA = {
     "show_ids": {
@@ -121,6 +122,62 @@ async def change_password(req):
 
     return json_response({"last_password_change": last_password_change})
 
+
+@protected()
+@validation({
+    "name": {"type": "string", "required": True},
+    "permissions": {"type": "dict"}
+})
+async def create_api_key(req):
+    db, data = await unpack_request(req)
+
+    name = data["name"]
+    permissions = data.get("permissions", None) or {key: False for key in virtool.user_permissions.PERMISSIONS}
+
+    user_id = req["session"].user_id
+
+    document = await db.users.find_one({"_id": user_id}, ["api_keys"])
+
+    existing_ids = [key["id"] for key in document["api_keys"]]
+
+    key_id = name.lower().replace(" ", "_")
+
+    suffix = 0
+
+    while True:
+        candidate = "{}_{}".format(key_id, suffix)
+
+        if candidate not in existing_ids:
+            key_id = candidate
+            break
+
+        suffix += 1
+
+    raw = virtool.user.get_api_key()
+
+    document = await db.users.find_one_and_update({"_id": user_id}, {
+        "$push": {
+            "api_keys": {
+                "id": key_id,
+                "name": name,
+                "permissions": permissions,
+                "key": virtool.user.hash_api_key(raw),
+                "created_at": virtool.utils.timestamp()
+            }
+        }
+    }, return_document=ReturnDocument.AFTER)
+
+    document = virtool.utils.base_processor(document)
+
+    for key in ["salt", "password", "invalidate_sessions"]:
+        document.pop(key, None)
+
+    await req.app["dispatcher"].dispatch("users", "update", document)
+
+    for key in document["api_keys"]:
+        if key["id"] == key_id:
+            key["raw"] = raw
+            return json_response(key, status=201)
 
 @protected()
 async def logout(req):
