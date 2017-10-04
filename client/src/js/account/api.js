@@ -32,9 +32,9 @@ const accountAPI = {
             });
     },
 
-    updateAPIKey: (keyId, update) => {
+    updateAPIKey: (keyId, permissions) => {
         return Request.patch(`/api/account/keys/${keyId}`)
-            .send(update);
+            .send(permissions);
     },
 
     removeAPIKey: (keyId) => {

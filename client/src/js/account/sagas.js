@@ -11,13 +11,21 @@ import { put, takeEvery, takeLatest } from "redux-saga/effects";
 
 import accountAPI from "./api";
 import { setPending } from "../wrappers";
-import { GET_ACCOUNT, GET_ACCOUNT_SETTINGS, UPDATE_ACCOUNT_SETTINGS, CREATE_API_KEY, LOGOUT } from "../actionTypes";
+import {
+    GET_ACCOUNT,
+    GET_ACCOUNT_SETTINGS,
+    UPDATE_ACCOUNT_SETTINGS,
+    CREATE_API_KEY,
+    REMOVE_API_KEY,
+    LOGOUT
+} from "../actionTypes";
 
 export function* watchAccount () {
     yield takeLatest(GET_ACCOUNT.REQUESTED, getAccount);
     yield takeLatest(GET_ACCOUNT_SETTINGS.REQUESTED, getAccountSettings);
     yield takeLatest(UPDATE_ACCOUNT_SETTINGS.REQUESTED, updateAccountSettings);
     yield takeEvery(CREATE_API_KEY.REQUESTED, createAPIKey);
+    yield takeEvery(REMOVE_API_KEY.REQUESTED, removeAPIKey);
     yield takeEvery(LOGOUT.REQUESTED, logout);
 }
 
@@ -57,6 +65,15 @@ export function* createAPIKey (action) {
         yield put({type: GET_ACCOUNT.REQUESTED});
     } catch (error) {
         yield put({type: CREATE_API_KEY.FAILED}, error);
+    }
+}
+
+export function* removeAPIKey (action) {
+    try {
+        yield accountAPI.removeAPIKey(action.keyId);
+        yield put({type: GET_ACCOUNT.REQUESTED});
+    } catch (error) {
+        yield put({type: REMOVE_API_KEY.FAILED}, error);
     }
 }
 

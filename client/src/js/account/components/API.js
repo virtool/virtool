@@ -14,9 +14,8 @@ import { connect } from "react-redux";
 import { LinkContainer } from "react-router-bootstrap";
 import { ButtonToolbar, Col, ListGroup, Modal, Panel, Row } from "react-bootstrap";
 
-import { createAPIKey } from "../actions";
+import { createAPIKey, removeAPIKey } from "../actions";
 import { Button, Icon, Input, ListGroupItem, RelativeTime } from "../../base";
-import {Checkbox} from "../../base/Checkbox";
 
 const getInitialState = (props) => {
     return {
@@ -230,7 +229,13 @@ class APIKey extends React.Component {
 const APIKeys = (props) => {
 
     let keyComponents = props.apiKeys.map(apiKey =>
-        <APIKey key={apiKey.id} apiKey={apiKey} permissions={props.permissions} />
+        <APIKey
+            key={apiKey.id}
+            apiKey={apiKey}
+            permissions={props.permissions}
+            onUpdate={props.onUpdate}
+            onRemove={props.onRemove}
+        />
     );
 
     if (!keyComponents.length) {
@@ -303,7 +308,7 @@ const mapDispatchToProps = (dispatch) => {
         },
 
         onRemove: (keyId) => {
-            dispatch()
+            dispatch(removeAPIKey(keyId));
         }
     };
 };

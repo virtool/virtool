@@ -11,6 +11,8 @@ import {
     GET_ACCOUNT,
     UPDATE_ACCOUNT_SETTINGS,
     CREATE_API_KEY,
+    UPDATE_API_KEY,
+    REMOVE_API_KEY,
     CHANGE_PASSWORD,
     LOGOUT
 } from "../actionTypes";
@@ -42,6 +44,21 @@ export function createAPIKey (name, permissions, callback) {
         name,
         permissions,
         callback
+    };
+}
+
+export function updateAPIKey (keyId, permissions) {
+    return {
+        type: UPDATE_API_KEY.REQUESTED,
+        keyId,
+        permissions
+    };
+}
+
+export function removeAPIKey (keyId) {
+    return {
+        type: REMOVE_API_KEY.REQUESTED,
+        keyId
     };
 }
 
