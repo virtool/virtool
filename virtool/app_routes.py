@@ -69,6 +69,7 @@ def setup_basic_routes(app):
     app.router.add_get(r"/viruses{suffix:.*}", index_handler)
     app.router.add_get(r"/subtraction{suffix:.*}", index_handler)
     app.router.add_get(r"/settings{suffix:.*}", index_handler)
+    app.router.add_get(r"/account{suffix:.*}", index_handler)
     app.router.add_get("/ws", websocket.root)
     app.router.add_post("/login", login_handler)
     app.router.add_static("/static", app["client_path"])
