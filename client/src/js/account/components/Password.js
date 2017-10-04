@@ -10,9 +10,11 @@
  */
 
 import React from "react";
+import { connect } from "react-redux";
 import { clone, assign } from "lodash";
-import { Alert } from "react-bootstrap";
-import { Input, Button } from "../../base";
+import { Row, Col, Panel } from "react-bootstrap";
+
+import { Button, Input, RelativeTime } from "../../base";
 
 const getInitialState = () => {
     return {
@@ -29,36 +31,11 @@ const getInitialState = () => {
 /**
  * A form used by user to change their password.
  */
-export default class PasswordChangeForm extends React.Component {
+class ChangePassword extends React.Component {
 
     constructor (props) {
         super(props);
         this.state = getInitialState();
-    }
-
-    static propTypes = {
-        // Function called when the user's password is successfully reset.
-        onReset: PropTypes.func,
-
-        // Should the old password be required in order for a new one to be set?
-        requireOld: PropTypes.bool,
-
-        // Toggles the visibility of a notice telling the user their password expired.
-        showExpiry: PropTypes.bool,
-
-        // An element to position above the reset form.
-        header: PropTypes.element,
-
-        // Classes to apply to the form body and the footer that contains the submit button.
-        bodyClass: PropTypes.string,
-        footerClass: PropTypes.string,
-
-        // A username to override the one stored in dispatcher.user.
-        username: PropTypes.string
-    };
-
-    componentDidMount () {
-        (this.props.requireOld ? this.oldPasswordNode: this.passwordNode).focus();
     }
 
     componentDidUpdate (prevProps, prevState) {
@@ -96,22 +73,6 @@ export default class PasswordChangeForm extends React.Component {
                 old_password: this.state.old,
                 new_password: this.state.password
             };
-
-            dispatcher.send({
-                interface: "users",
-                method: "change_password",
-                data: data
-            }).success(() => {
-                this.setState(getInitialState(), this.props.onReset);
-            }).failure(() => {
-                // The old and new passwords do not match. Can only be determined on the server.
-                this.setState({
-                    old: "",
-                    password: "",
-                    confirm: "",
-                    failure: true
-                });
-            });
         }
 
         // Set state to show that the user attempted to submit the form.
@@ -127,73 +88,58 @@ export default class PasswordChangeForm extends React.Component {
         if (this.state.submitted) {
             passwordError = this.state.tooShort ? "New password must be at least four characters long": null;
             confirmError = this.state.noMatch ? "Passwords don't match": null;
-
-            if (this.props.requireOld) {
-                oldError = this.state.failure ? "Old password is incorrect" : null;
-            }
-        }
-
-        const inputProps = {
-            type: "password",
-            onChange: this.handleChange
-        };
-
-        let oldField;
-
-        if (this.props.requireOld) {
-            oldField = (
-                <Input
-                    ref={(node) => this.oldPasswordNode = node}
-                    name="old"
-                    label="Old Password"
-                    error={oldError}
-                    errorPlacement="bottom"
-                    value={this.state.old}
-                    {...inputProps}
-                />
-            );
-        }
-
-        let expiry;
-
-        if (this.props.showExpiry) {
-            expiry = <Alert bsStyle="info">Your password has expired. Please change it before continuing.</Alert>;
+            oldError = this.state.failure ? "Old password is incorrect" : null;
         }
 
         return (
-            <form onSubmit={this.handleSubmit}>
-                {this.props.header}
-
-                <div className={this.props.bodyClass}>
-                    {expiry}
-                    {oldField}
-
+            <Panel header="Password">
+                <form onSubmit={this.handleSubmit}>
                     <Input
-                        ref={(node) => this.passwordNode = node}
+                        name="old"
+                        label="Old Password"
+                        error={oldError}
+                        errorPlacement="bottom"
+                        value={this.state.old}
+                    />
+                    <Input
                         name="password"
                         label="New password"
                         error={passwordError}
                         errorPlacement="bottom"
                         value={this.state.password}
-                        {...inputProps}
                     />
-
                     <Input
                         name="confirm"
-                        label="Confirm"
+                        label="Confirm New Password"
                         error={confirmError}
                         errorPlacement="bottom"
                         value={this.state.confirm}
-                        {...inputProps}
                     />
-                </div>
 
-                <div className={this.props.footerClass}>
-                    <Button icon="floppy" bsStyle="primary" type="submit" pullRight>
-                        Save
-                    </Button>
-                </div>
-            </form>
+                    <div style={{marginTop: "20px"}}>
+                        <Row>
+                            <Col xs={12} md={6} className="text-muted">
+                                Last changed <RelativeTime time={this.props.lastPasswordChange} />
+                            </Col>
+                            <Col xs={12} md={6}>
+                                <Button type="submit" bsStyle="primary" icon="floppy" pullRight>
+                                    Change
+                                </Button>
+                            </Col>
+                        </Row>
+                    </div>
+                </form>
+            </Panel>
         );
     }
 }
+
+const mapStateToProps = (state) => {
+    return {
+        lastPasswordChange: state.account.last_password_change
+    };
+};
+
+const Container = connect(mapStateToProps)(ChangePassword);
+
+export default Container;
