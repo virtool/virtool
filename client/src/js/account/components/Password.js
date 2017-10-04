@@ -17,8 +17,8 @@ import { Input, Button } from "../../base";
 const getInitialState = () => {
     return {
         oldPassword: "",
-        password: "",
-        confirm: "",
+        newPassword: "",
+        confirmPassword: "",
         tooShort: true,
         noMatch: true,
         submitted: false,
