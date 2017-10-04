@@ -9,10 +9,10 @@
 
 import React from "react";
 import PropTypes from "prop-types";
-import { assign, map, sortBy } from "lodash";
+import { assign, map, sortBy, isEqual } from "lodash";
 import { connect } from "react-redux";
 import { LinkContainer } from "react-router-bootstrap";
-import { Col, ListGroup, Modal, Panel, Row } from "react-bootstrap";
+import { ButtonToolbar, Col, ListGroup, Modal, Panel, Row } from "react-bootstrap";
 
 import { createAPIKey } from "../actions";
 import { Button, Icon, Input, ListGroupItem, RelativeTime } from "../../base";
@@ -101,13 +101,16 @@ class APIKey extends React.Component {
 
         this.state = {
             in: false,
+            changed: false,
             permissions: props.apiKey.permissions
         };
     }
 
     static propTypes = {
         apiKey: PropTypes.object,
-        permissions: PropTypes.object
+        permissions: PropTypes.object,
+        onRemove: PropTypes.func,
+        onUpdate: PropTypes.func
     };
 
     toggleIn = () => {
@@ -124,38 +127,82 @@ class APIKey extends React.Component {
         let update = {};
         update[name] = !this.state.permissions[name];
 
+        const permissions = assign({}, this.state.permissions, update);
+
         this.setState({
-            permissions: assign({}, this.state.permissions, update)
+            changed: !isEqual(permissions, this.props.apiKey.permissions),
+            permissions: permissions
         });
     };
 
     render () {
         let lower;
+        let closeButton;
 
         if (this.state.in) {
             const permissions = map(this.state.permissions, (value, key) => ({name: key, allowed: value}));
 
-            const rowComponents = sortBy(permissions, "permission").map(permission =>
-                <ListGroupItem
-                    key={permission.name}
-                    onClick={() => this.togglePermission(permission.name)}
-                    disabled={!this.props.permissions[permission.name]}
-                >
-                    {permission.name}
-                    <Checkbox checked={permission.allowed} pullRight />
-                </ListGroupItem>
-            );
+            const rowComponents = sortBy(permissions, "permission").map(permission => {
+                const disabled = !this.props.permissions[permission.name];
+
+                return (
+                    <ListGroupItem
+                        key={permission.name}
+                        onClick={disabled ? null: () => this.togglePermission(permission.name)}
+                        disabled={disabled}
+                    >
+                        <code>{permission.name}</code>
+                        <Icon name={`checkbox-${permission.allowed ? "checked": "unchecked"}`} pullRight />
+                    </ListGroupItem>
+                )
+            });
+
+            let updateButton;
+
+            if (this.state.changed) {
+                updateButton = (
+                    <Button
+                        bsStyle="primary"
+                        icon="floppy"
+                        onClick={() => this.onUpdate(this.apiKey.id, this.state.permissions)}
+                    >
+                        Update
+                    </Button>
+                );
+            }
 
             lower = (
-                <Row>
-                    <Col xs={12}>
-                        <Panel style={{marginTop: "15px"}}>
-                            <ListGroup fill>
-                                {rowComponents}
-                            </ListGroup>
-                        </Panel>
-                    </Col>
-                </Row>
+                <div>
+                    <Row>
+                        <Col xs={12}>
+                            <Panel style={{marginTop: "15px"}}>
+                                <ListGroup fill>
+                                    {rowComponents}
+                                </ListGroup>
+                            </Panel>
+                        </Col>
+                    </Row>
+                    <Row>
+                        <Col xs={12}>
+                            <ButtonToolbar className="pull-right">
+                                <Button
+                                    bsStyle="danger"
+                                    icon="remove"
+                                    onClick={() => this.props.onRemove(this.props.apiKey.id)}
+                                >
+                                    Remove
+                                </Button>
+                                {updateButton}
+                            </ButtonToolbar>
+                        </Col>
+                    </Row>
+                </div>
+            );
+
+            closeButton = (
+                <button type="button" className="close" onClick={this.toggleIn}>
+                    <span>×</span>
+                </button>
             );
         }
 
@@ -170,7 +217,7 @@ class APIKey extends React.Component {
                         Created <RelativeTime time={this.props.apiKey.created_at} />
                     </Col>
                     <Col xs={1}>
-                        <Icon name="remove" bsStyle="danger" pullRight />
+                        {closeButton}
                     </Col>
                 </Row>
 
@@ -209,7 +256,7 @@ const APIKeys = (props) => {
                                 </a>
                             </li>
                             <li>
-                                <a href="https://docs.virtool.ca/web-api.html" target="_blank">
+                                <a href="https://docs.virtool.ca/web-api/authentication.html" target="_blank">
                                     learn more about authentication
                                 </a>
                             </li>
