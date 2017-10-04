@@ -2,6 +2,8 @@ import uuid
 import bcrypt
 import hashlib
 
+import virtool.utils
+
 PROJECTION = [
     "_id",
     "groups",
@@ -10,6 +12,26 @@ PROJECTION = [
     "permissions",
     "primary_group"
 ]
+
+
+ACCOUNT_PROJECTION = [
+    "_id",
+    "groups",
+    "settings",
+    "last_password_change",
+    "permissions",
+    "primary_group",
+    "api_keys"
+]
+
+
+def account_processor(document):
+    document = virtool.utils.base_processor(document)
+
+    for api_key in document["api_keys"]:
+        del api_key["key"]
+
+    return document
 
 
 async def user_exists(db, user_id):

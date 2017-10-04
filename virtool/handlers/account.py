@@ -40,12 +40,9 @@ async def get(req):
     """
     user_id = req["session"].user_id
 
-    document = await req.app["db"].users.find_one(user_id)
+    document = await req.app["db"].users.find_one(user_id, virtool.user.ACCOUNT_PROJECTION)
 
-    for key in ["salt", "password", "invalidate_sessions"]:
-        document.pop(key, None)
-
-    return json_response(virtool.utils.base_processor(document))
+    return json_response(virtool.user.account_processor(document))
 
 
 @protected()
@@ -165,12 +162,9 @@ async def create_api_key(req):
                 "created_at": virtool.utils.timestamp()
             }
         }
-    }, return_document=ReturnDocument.AFTER)
+    }, return_document=ReturnDocument.AFTER, projection=virtool.user.ACCOUNT_PROJECTION)
 
-    document = virtool.utils.base_processor(document)
-
-    for key in ["salt", "password", "invalidate_sessions"]:
-        document.pop(key, None)
+    document = virtool.user.account_processor(document)
 
     await req.app["dispatcher"].dispatch("users", "update", document)
 
