@@ -10,119 +10,103 @@
  */
 
 import React from "react";
-import { assign } from "lodash";
-import { Panel, Modal } from "react-bootstrap";
-import { AlgorithmSelect, Flex, FlexItem, Checkbox, ProgressBar,  } from "../../base";
+import { connect } from "react-redux";
+import { Panel, ListGroup, ListGroupItem } from "react-bootstrap";
 
-export default class UserSettings extends React.Component {
+import { updateAccountSettings } from "../actions";
+import { AlgorithmSelect, Checkbox, Flex, FlexItem, Icon } from "../../base";
+
+
+class AccountSettings extends React.Component {
 
     constructor (props) {
         super(props);
-
-        this.state = assign({pending: false}, dispatcher.user.settings);
     }
 
-    static propTypes = {
-        user: PropTypes.object,
-        show: PropTypes.bool.isRequired,
-        onHide: PropTypes.func.isRequired
-    };
-
-    requestSet = (key, value) => {
-        this.setState({pending: true}, () => {
-            dispatcher.db.users.request("change_user_setting", {
-                key: key,
-                value: value
-            }).success(() => this.setState({pending: false}));
-        });
-    };
-
-    toggleSetting = (key) => {
-        this.requestSet(key, !this.props.user.settings[key]);
-    };
-
-    update = () => {
-        this.setState(assign({pending: false}, dispatcher.user.settings));
-    };
-
-    toggleShowIds = () => {
-        this.toggleSetting("show_ids")
-    };
-
-    toggleShowVersions = () => {
-        this.toggleSetting("show_versions")
-    };
-
-    toggleSkipQuickAnalyzeDialog = () => {
-        this.toggleSetting("skip_quick_analyze_dialog");
-    };
-
-    setQuickAnalyzeAlgorithm = (event) => {
-        this.requestSet("quick_analyze_algorithm", event.target.value);
-    };
-
     render () {
-
-        const checkboxProps = {
-            style: {
-                marginBottom: "10px"
-            },
-
-            className: "pointer"
-        };
+        const settings = this.props.account.settings;
 
         return (
-            <Modal bsSize="small" show={this.props.show} onHide={this.props.onHide}>
-                <Modal.Header onHide={this.props.onHide} closeButton>
-                    User Settings
-                </Modal.Header>
-
-                <ProgressBar active={this.state.pending} affixed />
-
-                <Modal.Body>
-                    <Panel header="Display">
-                        <div onClick={this.toggleShowIds}>
-                            <Flex {...checkboxProps}>
+            <div>
+                <Panel header="User Interface">
+                    <ListGroup fill>
+                        <ListGroupItem>
+                            <Flex>
                                 <FlexItem>
-                                    <Checkbox checked={this.props.user.settings.show_ids} />
+                                    <Checkbox
+                                        checked={settings.show_ids}
+                                        onClick={(e) => this.props.onUpdateSetting("show_ids", e.target.value)}
+                                    />
                                 </FlexItem>
-                                <FlexItem pad={7}>
-                                    Show database IDs
+                                <FlexItem pad={10}>
+                                    <div>Show Unique ID Fields</div>
+                                    <small>
+                                        Show the unique database IDs for Virtool records where possible. This is not
+                                        required for normal use, but is useful for debugging.
+                                    </small>
                                 </FlexItem>
                             </Flex>
-                        </div>
+                        </ListGroupItem>
+                    </ListGroup>
+                </Panel>
 
-                        <div onClick={this.toggleShowVersions}>
-                            <Flex {...checkboxProps}>
+                <Panel header="Quick Analyze">
+                    <ListGroup fill>
+                        <ListGroupItem>
+                            <Flex>
                                 <FlexItem>
-                                    <Checkbox checked={this.props.user.settings.show_versions} />
+                                    <Checkbox
+                                        checked={settings.skip_quick_analyze_dialog}
+                                        onClick={(e) => this.props.onUpdateSetting(
+                                            "skip_quick_analyze_dialog",
+                                            e.target.value
+                                        )}
+                                    />
                                 </FlexItem>
-                                <FlexItem pad={7}>
-                                    Show database versions
+                                <FlexItem pad={10}>
+                                    <div>Skip Dialog</div>
+                                    <small>
+                                        Allow samples to be analyzed with a single click of
+                                        &nbsp;<Icon bsStyle="success" name="bars" /> using a preconfigured algorithm.
+                                        The algorithm selection dialog is not shown.
+                                    </small>
+
+                                    <div style={{marginTop: "7px"}}>
+                                        <AlgorithmSelect
+                                            value={settings.quick_analyze_algorithm}
+                                            noLabel={true}
+                                            onChange={(e) => this.props.onUpdateSetting(
+                                                "quick_analyze_algorithm",
+                                                e.target.value
+                                            )}
+                                        />
+                                    </div>
                                 </FlexItem>
                             </Flex>
-                        </div>
-                    </Panel>
-
-                    <Panel header="Quick Analyze">
-                        <div onClick={this.toggleSkipQuickAnalyzeDialog}>
-                            <Flex {...checkboxProps}>
-                                <FlexItem>
-                                    <Checkbox checked={this.props.user.settings.skip_quick_analyze_dialog} />
-                                </FlexItem>
-                                <FlexItem pad={7}>
-                                    Skip quick analyze dialog
-                                </FlexItem>
-                            </Flex>
-                        </div>
-
-                        <AlgorithmSelect
-                            value={this.props.user.settings.quick_analyze_algorithm}
-                            onChange={this.setQuickAnalyzeAlgorithm}
-                        />
-                    </Panel>
-                </Modal.Body>
-            </Modal>
+                        </ListGroupItem>
+                    </ListGroup>
+                </Panel>
+            </div>
         );
     }
 }
+
+const mapStateToProps = (state) => {
+    return {
+        account: state.account
+    };
+};
+
+const mapDispatchToProps = (dispatch) => {
+    return {
+        onUpdateSetting: (key, value) => {
+            let update = {};
+            update[key] = value;
+            dispatch(updateAccountSettings(update));
+        }
+    };
+};
+
+const Container = connect(mapStateToProps, mapDispatchToProps)(AccountSettings);
+
+export default Container;
