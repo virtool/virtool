@@ -15,7 +15,7 @@ import { connect } from "react-redux";
 import { Row, Col, Panel } from "react-bootstrap";
 
 import { updateSetting } from "../../actions";
-import { Icon, InputSave } from "../../../components/Base";
+import { Icon, InputSave } from "../../../base";
 
 const HTTPOptions = (props) => {
 

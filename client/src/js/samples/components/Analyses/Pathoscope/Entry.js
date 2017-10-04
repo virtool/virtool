@@ -2,8 +2,8 @@ import CX from "classnames";
 import React from "react";
 import PropTypes from "prop-types";
 import { Row, Col, Label } from "react-bootstrap";
-import { Flex, FlexItem } from "virtool/js/components/Base";
-import { toScientificNotation } from "virtool/js/utils";
+import { Flex, FlexItem } from "../../../../base";
+import { toScientificNotation } from "../../../../utils";
 
 export default class PathoscopeEntry extends React.Component {
 

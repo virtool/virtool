@@ -14,7 +14,7 @@ import { connect } from "react-redux";
 import { Modal, Panel } from "react-bootstrap";
 
 import { getUnbuilt, createIndex, hideRebuild } from "../actions";
-import { Button } from "virtool/js/components/Base";
+import { Button } from "../../base";
 import RebuildHistory from "./History";
 
 class RebuildIndex extends React.Component {

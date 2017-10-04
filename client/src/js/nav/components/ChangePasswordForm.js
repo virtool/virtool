@@ -12,7 +12,7 @@
 import React from "react";
 import { clone, assign } from "lodash";
 import { Alert } from "react-bootstrap";
-import { Input, Button } from "virtool/js/components/Base";
+import { Input, Button } from "../../base";
 
 const getInitialState = () => {
     return {

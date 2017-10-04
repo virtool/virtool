@@ -16,7 +16,7 @@ import { connect } from "react-redux";
 import { Row, Col, Modal, FormGroup, FormControl, InputGroup, ControlLabel } from "react-bootstrap";
 
 import { editSequence, hideVirusModal } from "../../actions";
-import { Button, Icon } from "virtool/js/components/Base";
+import { Button, Icon } from "../../../base";
 import SequenceField from "./SequenceField";
 import virusAPI from "../../api";
 

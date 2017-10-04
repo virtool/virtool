@@ -13,7 +13,7 @@ import { connect } from "react-redux";
 import { Row, Col, ListGroup, Label } from "react-bootstrap";
 
 import { getVirusHistory, revert } from "../../actions";
-import { Flex, FlexItem, ListGroupItem, RelativeTime, Icon } from "virtool/js/components/Base";
+import { Flex, FlexItem, ListGroupItem, RelativeTime, Icon } from "../../../base";
 
 
 const getMethodIcon = (change) => {

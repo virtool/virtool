@@ -13,7 +13,7 @@ import CX from "classnames";
 import React from "react";
 import PropTypes from "prop-types";
 import { toNumber } from "lodash";
-import { Icon } from "virtool/js/components/Base";
+import { Icon } from "../../../base";
 
 /**
  * A component centered around an input element that updates a task-specific setting on the server. Shows pending save

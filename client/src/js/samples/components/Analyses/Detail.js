@@ -4,7 +4,7 @@ import Numeral from "numeral";
 import { connect } from "react-redux";
 import { Label, Table } from "react-bootstrap";
 import { ClipLoader } from "halogenium";
-import { RelativeTime } from "virtool/js/components/Base";
+import { RelativeTime } from "../../../base";
 
 import { getAnalysis } from "../../actions";
 import { getTaskDisplayName } from "../../../utils";

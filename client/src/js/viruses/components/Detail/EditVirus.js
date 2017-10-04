@@ -15,7 +15,7 @@ import { connect } from "react-redux";
 import { Row, Col, Modal, FormGroup, ControlLabel, FormControl } from "react-bootstrap";
 
 import { editVirus, hideVirusModal } from "../../actions";
-import { Icon, Button } from "virtool/js/components/Base";
+import { Icon, Button } from "../../../base";
 
 const getInitialState = (props) => ({
     name: props.name || "",

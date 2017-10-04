@@ -14,7 +14,7 @@ import { connect } from "react-redux";
 import { Row, Col, Panel, ListGroup } from "react-bootstrap";
 import { ClipLoader } from "halogenium";
 
-import { ListGroupItem, AutoProgressBar } from "../../../components/Base";
+import { ListGroupItem, AutoProgressBar } from "../../../base";
 import { listUsers, selectUser } from "../../users/actions";
 import { listGroups } from "../../groups/actions";
 import Password from "./Password";

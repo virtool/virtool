@@ -4,9 +4,9 @@ import Numeral from "numeral";
 import Dropzone from "react-dropzone";
 import FlipMove from "react-flip-move";
 import { sortBy } from "lodash";
-import { Icon, RelativeTime, ProgressBar } from "virtool/js/components/Base";
 import { Row, Col } from "react-bootstrap";
-import { Flex, Button, ListGroupItem, getFlipMoveProps } from "virtool/js/components/Base";
+
+import { Flex, Button, ListGroupItem, getFlipMoveProps, Icon, RelativeTime, ProgressBar } from ".";
 
 
 export class FileItem extends React.PureComponent {

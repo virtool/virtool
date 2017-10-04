@@ -13,8 +13,8 @@ import React from "react";
 import PropTypes from "prop-types";
 import { includes } from "lodash";
 import { Row, Col } from "react-bootstrap";
-import { ListGroupItem } from "virtool/js/components/Base";
-import { getTaskDisplayName } from "virtool/js/utils";
+import { ListGroupItem } from "../../../base";
+import { getTaskDisplayName } from "../../../utils";
 
 import TaskField from "./TaskField";
 

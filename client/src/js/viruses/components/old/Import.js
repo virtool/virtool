@@ -13,7 +13,7 @@ import React from "react";
 import Dropzone from "react-dropzone";
 import { includes, pick } from "lodash";
 import { Alert, Modal, ListGroup } from "react-bootstrap";
-import { Button, Icon, Flex, FlexItem, ListGroupItem, Checkbox } from "virtool/js/components/Base";
+import { Button, Icon, Flex, FlexItem, ListGroupItem, Checkbox } from "virtool/js/components/base";
 import { byteSize } from "virtool/js/utils";
 
 import ImportVirusesProgress from "./Import/Progress";

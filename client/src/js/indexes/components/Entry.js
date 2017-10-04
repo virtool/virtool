@@ -14,7 +14,7 @@ import React from "react";
 import PropTypes from "prop-types";
 import { LinkContainer } from "react-router-bootstrap";
 import { Row, Col, Label } from "react-bootstrap";
-import { Icon, RelativeTime, ListGroupItem } from "virtool/js/components/Base";
+import { Icon, RelativeTime, ListGroupItem } from "../../base";
 
 export default class IndexEntry extends React.PureComponent {
     

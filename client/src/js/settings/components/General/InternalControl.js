@@ -14,7 +14,7 @@ import { find } from "lodash";
 import { connect } from "react-redux";
 import { Typeahead } from "react-bootstrap-typeahead";
 import { Row, Col, Panel } from "react-bootstrap";
-import { Flex, FlexItem, Checkbox } from "../../../components/Base";
+import { Flex, FlexItem, Checkbox } from "../../../base";
 import { updateSetting, getControlReadahead } from "../../actions";
 
 /**

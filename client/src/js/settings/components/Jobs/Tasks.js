@@ -14,7 +14,7 @@ import { connect } from "react-redux";
 import { Row, Col, ListGroup, Panel } from "react-bootstrap";
 
 import { updateSetting } from "../../actions";
-import { Flex, FlexItem, ListGroupItem, Icon } from "../../../components/Base";
+import { Flex, FlexItem, ListGroupItem, Icon } from "../../../base";
 import Task from "./Task";
 
 const taskNames = ["create_sample", "rebuild_index", "create_subtraction", "pathoscope_bowtie", "nuvs"];

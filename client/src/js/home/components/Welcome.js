@@ -11,7 +11,7 @@
 
 import React from "react";
 import { Panel } from "react-bootstrap";
-import { Icon } from "../../components/Base/Icon";
+import { Icon } from "../../base";
 
 const Welcome  = () => (
     <div className="container">

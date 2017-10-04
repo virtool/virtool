@@ -14,7 +14,7 @@ import { connect } from "react-redux";
 import { Row, Col, Panel } from "react-bootstrap"
 
 import { updateSettings } from "../../actions";
-import { Help, Input } from "virtool/js/components/Base"
+import { Help, Input } from "../../../base"
 
 /**
  * A component that allows the addition and removal of allowed source types. The use of restricted source types can also

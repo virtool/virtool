@@ -15,7 +15,7 @@ import { LinkContainer } from "react-router-bootstrap";
 import { Alert, Badge, Row, Col, ListGroup, Pagination } from "react-bootstrap";
 
 import { findViruses } from "../actions";
-import { Flex, FlexItem, Icon, ListGroupItem } from "virtool/js/components/Base";
+import { Flex, FlexItem, Icon, ListGroupItem } from "../../base";
 import VirusToolbar from "./Toolbar";
 import CreateVirus from "./Create";
 

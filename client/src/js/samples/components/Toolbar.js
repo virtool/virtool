@@ -3,7 +3,7 @@ import PropTypes from "prop-types";
 import { LinkContainer } from "react-router-bootstrap";
 
 import { FormGroup, InputGroup, FormControl } from "react-bootstrap";
-import { Icon, Button } from "virtool/js/components/Base";
+import { Icon, Button } from "../../base";
 
 const SampleToolbar = (props) => (
     <div key="toolbar" className="toolbar">

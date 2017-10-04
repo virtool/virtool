@@ -6,7 +6,7 @@ import { Row, Col, Panel, ListGroup } from "react-bootstrap";
 
 import { getSoftwareUpdates, showInstallModal } from "../actions";
 import { updateSetting } from "../../settings/actions";
-import { Button, Checkbox, Icon, InputSave } from "../../components/Base";
+import { Button, Checkbox, Icon, InputSave } from "../../base";
 import { versionComparator } from "../../utils";
 import Release from "./Release";
 import InstallModal from "./Install";

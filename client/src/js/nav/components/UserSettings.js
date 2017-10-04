@@ -12,7 +12,7 @@
 import React from "react";
 import { assign } from "lodash";
 import { Panel, Modal } from "react-bootstrap";
-import { AlgorithmSelect, Flex, FlexItem, Checkbox, ProgressBar,  } from "virtool/js/components/Base";
+import { AlgorithmSelect, Flex, FlexItem, Checkbox, ProgressBar,  } from "../../base";
 
 export default class UserSettings extends React.Component {
 

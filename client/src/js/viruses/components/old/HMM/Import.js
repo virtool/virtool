@@ -13,7 +13,7 @@ import React from "react";
 import Dropzone from "react-dropzone";
 import { Modal } from "react-bootstrap";
 import { byteSize } from "virtool/js/utils";
-import { Button, Flex, ProgressBar } from "virtool/js/components/Base";
+import { Button, Flex, ProgressBar } from "virtool/js/components/base";
 
 const getInitialState = () => ({
     uploaded: 0,

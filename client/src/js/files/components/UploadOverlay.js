@@ -13,9 +13,9 @@ import PropTypes from "prop-types";
 import { connect } from "react-redux";
 import { Badge, ListGroup } from "react-bootstrap";
 
-import { byteSize } from "virtool/js/utils";
+import { byteSize } from "../../utils";
 import { hideUploadOverlay } from "../actions";
-import { Flex, FlexItem, ListGroupItem, ProgressBar } from "virtool/js/components/Base";
+import { Flex, FlexItem, ListGroupItem, ProgressBar } from "../../base";
 
 const UploadOverlay = (props) => {
 

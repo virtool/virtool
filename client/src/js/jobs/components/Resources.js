@@ -19,7 +19,7 @@ import React from "react";
 import { mean } from "lodash";
 import { connect } from "react-redux";
 import Gauge from "react-svg-gauge";
-import { Flex, FlexItem } from "virtool/js/components/Base";
+import { Flex, FlexItem } from "../../base";
 
 import { getResources } from "../actions";
 

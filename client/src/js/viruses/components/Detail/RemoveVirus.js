@@ -15,7 +15,7 @@ import { connect } from "react-redux";
 import { Modal } from "react-bootstrap";
 
 import { removeVirus, hideVirusModal } from "../../actions";
-import { Button } from "virtool/js/components/Base";
+import { Button } from "../../../base";
 
 const RemoveVirus = (props) => {
     return (

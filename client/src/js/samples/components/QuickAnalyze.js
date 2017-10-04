@@ -23,7 +23,7 @@ import {
     Checkbox,
     Button,
     AutoProgressBar
-} from "virtool/js/components/Base";
+} from "../../base";
 
 const getInitialState = () => ({
     name: "",

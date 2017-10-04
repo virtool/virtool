@@ -17,7 +17,7 @@ import { LinkContainer } from "react-router-bootstrap";
 import { Navbar, Nav, NavItem, NavDropdown, MenuItem } from "react-bootstrap";
 
 import { logout } from "../actions";
-import { Icon, AutoProgressBar } from "virtool/js/components/Base"
+import { Icon, AutoProgressBar } from "../../base"
 
 const isHomeActive = (match, location) => {
     return location.pathname === "/" || startsWith(location.pathname, "/home")

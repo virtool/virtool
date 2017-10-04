@@ -12,7 +12,7 @@
 import React from "react";
 import { capitalize } from "lodash";
 import { Alert, ListGroup } from "react-bootstrap";
-import { ListGroupItem, Icon, Flex, FlexItem, ProgressBar } from "virtool/js/components/Base";
+import { ListGroupItem, Icon, Flex, FlexItem, ProgressBar } from "virtool/js/components/base";
 import { byteSize } from "virtool/js/utils";
 
 const getInitialState = () => ({

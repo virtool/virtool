@@ -5,10 +5,9 @@ import { connect } from "react-redux";
 import Dropzone from "react-dropzone";
 import { Badge, Row, Col, ListGroup } from "react-bootstrap";
 
-import { byteSize } from "virtool/js/utils";
-import { createRandomString } from "../../utils";
+import { byteSize, createRandomString } from "../../utils";
 import { findFiles, removeFile, upload, uploadProgress } from "../actions";
-import { Button, Icon, ListGroupItem, RelativeTime } from "virtool/js/components/Base";
+import { Button, Icon, ListGroupItem, RelativeTime } from "../../base";
 
 const File = (props) => (
     <ListGroupItem className="spaced">

@@ -13,7 +13,7 @@ import { capitalize } from "lodash";
 import React from "react";
 import FlipMove from "react-flip-move"
 import { Table, ListGroup } from "react-bootstrap";
-import { Icon, Flex, FlexItem, Paginator, ListGroupItem, getFlipMoveProps } from "virtool/js/components/Base";
+import { Icon, Flex, FlexItem, Paginator, ListGroupItem, getFlipMoveProps } from "virtool/js/components/base";
 
 import HMMEntry from "./Entry";
 

@@ -12,7 +12,7 @@
 import React from "react";
 import { sortBy, transform } from "lodash";
 import { Row, Col, Modal, Table, Badge, Label, Panel, ListGroup } from "react-bootstrap";
-import { InputCell, ListGroupItem } from "virtool/js/components/Base";
+import { InputCell, ListGroupItem } from "virtool/js/components/base";
 
 /**
  * A component the contains child components that modify certain general options. A small explanation of each

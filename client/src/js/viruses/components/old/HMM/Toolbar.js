@@ -11,7 +11,7 @@
 
 import React from "react";
 import { FormGroup, InputGroup, FormControl } from "react-bootstrap";
-import { Icon } from "virtool/js/components/Base";
+import { Icon } from "virtool/js/components/base";
 
 export default class HMMToolbar extends React.Component {
 

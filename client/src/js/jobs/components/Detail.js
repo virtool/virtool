@@ -16,7 +16,7 @@ import { Table } from "react-bootstrap";
 
 import { getJob } from "../actions";
 import { getTaskDisplayName } from "../../utils";
-import { Flex, FlexItem, Icon, ProgressBar } from "virtool/js/components/Base";
+import { Flex, FlexItem, Icon, ProgressBar } from "../../base";
 import TaskArgs from "./TaskArgs";
 import JobError from "./Error";
 

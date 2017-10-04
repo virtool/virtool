@@ -53,12 +53,6 @@ module.exports = {
         ]
     },
 
-    resolve: {
-        alias: {
-            "virtool": path.resolve(__dirname, "./src")
-        }
-    },
-
     node: {
         fs: "empty"
     },

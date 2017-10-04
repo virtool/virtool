@@ -15,7 +15,7 @@ import { connect } from "react-redux";
 import { Modal } from "react-bootstrap";
 
 import { removeSequence, hideVirusModal } from "../../actions";
-import { Button } from "virtool/js/components/Base";
+import { Button } from "../../../base";
 
 const RemoveSequence = (props) => (
     <Modal show={Boolean(props.sequenceId)} onHide={props.onHide} dialogClassName="modal-danger">

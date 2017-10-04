@@ -2,7 +2,7 @@ import React from "react";
 import PropTypes from "prop-types";
 import { Panel } from "react-bootstrap";
 import { forEach, capitalize } from "lodash";
-import { Input } from "virtool/js/components/Base";
+import { Input } from "../../base";
 
 export default class SampleDetailRights extends React.PureComponent {
 

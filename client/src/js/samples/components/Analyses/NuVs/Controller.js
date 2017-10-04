@@ -2,7 +2,7 @@ import React from "react";
 import PropTypes from "prop-types";
 import { assign, filter } from "lodash";
 import { Table, FormGroup, InputGroup, FormControl, Dropdown, MenuItem } from "react-bootstrap";
-import { Flex, FlexItem, Icon, Button, Checkbox } from "virtool/js/components/Base";
+import { Flex, FlexItem, Icon, Button, Checkbox } from "../../../../base";
 
 import NuVsList from "./List";
 

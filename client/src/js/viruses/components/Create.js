@@ -14,7 +14,7 @@ import { connect } from "react-redux";
 import { withRouter } from "react-router-dom";
 import { Row, Col, Modal, Alert, ButtonToolbar } from "react-bootstrap";
 
-import { Icon, Flex, FlexItem, Input, Button } from "virtool/js/components/Base";
+import { Icon, Flex, FlexItem, Input, Button } from "../../base";
 import { createVirus } from "../actions";
 
 /**

@@ -14,7 +14,7 @@ import PropTypes from "prop-types";
 import FlipMove from "react-flip-move"
 import { capitalize, find } from "lodash";
 import { Row, Col, Modal } from "react-bootstrap";
-import { Icon, ListGroupItem, getFlipMoveProps } from "virtool/js/components/Base";
+import { Icon, ListGroupItem, getFlipMoveProps } from "../../../base";
 
 import Add from "./Add";
 import Permissions from "./Permissions";

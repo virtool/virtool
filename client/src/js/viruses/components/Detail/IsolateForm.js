@@ -14,8 +14,8 @@ import PropTypes from "prop-types";
 import { capitalize } from "lodash";
 import { Row, Col } from "react-bootstrap";
 
-import { formatIsolateName } from "virtool/js/utils";
-import { Input } from "virtool/js/components/Base";
+import { formatIsolateName } from "../../../utils";
+import { Input } from "../../../base";
 
 export default class IsolateForm extends React.Component {
 

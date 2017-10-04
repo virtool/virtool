@@ -21,9 +21,8 @@ import {
     showEditSequence,
     showRemoveSequence
 } from "../../actions";
-import { formatIsolateName } from "virtool/js/utils";
-import { Icon, ListGroupItem } from "virtool/js/components/Base";
-import { followDownload } from "virtool/js/utils";
+import { Icon, ListGroupItem } from "../../../base";
+import { formatIsolateName, followDownload } from "../../../utils";
 import Sequence from "./Sequence";
 import EditIsolate from "./EditIsolate";
 import RemoveIsolate from "./RemoveIsolate";

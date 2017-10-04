@@ -2,7 +2,7 @@ import React from "react";
 import CX from "classnames";
 import PropTypes from "prop-types";
 import { Row, Col, Label } from "react-bootstrap";
-import { Flex, FlexItem } from "virtool/js/components/Base";
+import { Flex, FlexItem } from "../../../../base";
 
 export default class NuVsEntry extends React.Component {
     

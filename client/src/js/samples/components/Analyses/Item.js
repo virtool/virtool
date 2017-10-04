@@ -15,7 +15,7 @@ import PropTypes from "prop-types";
 import { Row, Col, Label } from "react-bootstrap";
 
 import { getTaskDisplayName } from "../../../utils";
-import { Icon, RelativeTime } from "virtool/js/components/Base";
+import { Icon, RelativeTime } from "../../../base";
 
 const AnalysisItem = (props) => {
 
