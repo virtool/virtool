@@ -14,7 +14,7 @@ import PropTypes from "prop-types";
 import { capitalize } from "lodash";
 import { Row, Col } from "react-bootstrap";
 import { Icon, RelativeTime, ProgressBar } from "../../base";
-import { getTaskDisplayName } from "virtool/js/utils";
+import { getTaskDisplayName } from "../../utils";
 
 export default class JobEntry extends React.Component {
 
