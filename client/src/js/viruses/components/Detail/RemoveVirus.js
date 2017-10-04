@@ -50,9 +50,7 @@ RemoveVirus.propTypes = {
 
 const mapStateToProps = (state) => {
     return {
-        show: state.viruses.remove,
-        virusId: state.viruses.detail.id,
-        virusName: state.viruses.detail.name
+        show: state.viruses.remove
     };
 };
 
