@@ -9,12 +9,14 @@
 
 import React from "react";
 import PropTypes from "prop-types";
+import { assign, map, sortBy } from "lodash";
 import { connect } from "react-redux";
 import { LinkContainer } from "react-router-bootstrap";
-import { Col, ListGroup, ListGroupItem, Modal, Panel, Row } from "react-bootstrap";
+import { Col, ListGroup, Modal, Panel, Row } from "react-bootstrap";
 
 import { createAPIKey } from "../actions";
-import { Button, Icon, Input } from "../../base";
+import { Button, Icon, Input, ListGroupItem, RelativeTime } from "../../base";
+import {Checkbox} from "../../base/Checkbox";
 
 const getInitialState = (props) => {
     return {
@@ -92,15 +94,97 @@ class CreateAPIKey extends React.Component {
     }
 }
 
-const APIKeys = (props) => {
+class APIKey extends React.Component {
 
-    let keyComponents = props.apiKeys.map(key => {
+    constructor (props) {
+        super(props);
+
+        this.state = {
+            in: false,
+            permissions: props.apiKey.permissions
+        };
+    }
+
+    static propTypes = {
+        apiKey: PropTypes.object,
+        permissions: PropTypes.object
+    };
+
+    toggleIn = () => {
+        let state = {in: !this.state.in};
+
+        if (this.state.in) {
+            state.permissions = this.props.apiKey.permissions;
+        }
+
+        this.setState(state);
+    };
+
+    togglePermission = (name) => {
+        let update = {};
+        update[name] = !this.state.permissions[name];
+
+        this.setState({
+            permissions: assign({}, this.state.permissions, update)
+        });
+    };
+
+    render () {
+        let lower;
+
+        if (this.state.in) {
+            const permissions = map(this.state.permissions, (value, key) => ({name: key, allowed: value}));
+
+            const rowComponents = sortBy(permissions, "permission").map(permission =>
+                <ListGroupItem
+                    key={permission.name}
+                    onClick={() => this.togglePermission(permission.name)}
+                    disabled={!this.props.permissions[permission.name]}
+                >
+                    {permission.name}
+                    <Checkbox checked={permission.allowed} pullRight />
+                </ListGroupItem>
+            );
+
+            lower = (
+                <Row>
+                    <Col xs={12}>
+                        <Panel style={{marginTop: "15px"}}>
+                            <ListGroup fill>
+                                {rowComponents}
+                            </ListGroup>
+                        </Panel>
+                    </Col>
+                </Row>
+            );
+        }
+
+
         return (
-            <ListGroupItem key={key.id}>
-                {key.id}
+            <ListGroupItem key={this.props.apiKey.id} className="spaced" onClick={this.state.in ? null: this.toggleIn}>
+                <Row>
+                    <Col xs={5}>
+                        {this.props.apiKey.name}
+                    </Col>
+                    <Col xs={6}>
+                        Created <RelativeTime time={this.props.apiKey.created_at} />
+                    </Col>
+                    <Col xs={1}>
+                        <Icon name="remove" bsStyle="danger" pullRight />
+                    </Col>
+                </Row>
+
+                {lower}
             </ListGroupItem>
         );
-    });
+    }
+}
+
+const APIKeys = (props) => {
+
+    let keyComponents = props.apiKeys.map(apiKey =>
+        <APIKey key={apiKey.id} apiKey={apiKey} permissions={props.permissions} />
+    );
 
     if (!keyComponents.length) {
         keyComponents = (
@@ -156,7 +240,8 @@ const APIKeys = (props) => {
 
 const mapStateToProps = (state) => {
     return {
-        apiKeys: state.account.api || []
+        apiKeys: state.account.api_keys || [],
+        permissions: state.account.permissions
     };
 };
 
