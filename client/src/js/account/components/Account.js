@@ -8,9 +8,12 @@
  */
 import React from "react";
 import { connect } from "react-redux";
-import { Row, Col, Panel } from "react-bootstrap";
+import { LinkContainer } from "react-router-bootstrap";
+import { Switch, Redirect, Route } from "react-router-dom";
+import { Nav, NavItem } from "react-bootstrap";
 
 import { getAccount } from "../actions";
+import AccountGeneral from "./General";
 
 
 class Account extends React.Component {
@@ -23,17 +26,24 @@ class Account extends React.Component {
         this.props.onGet();
     }
 
-    render () {
-        return (
-            <div className="container">
-                <h3 className="view-header">
-                    <strong>Account</strong>  <small>{this.props.account.id}</small>
-                </h3>
+    render = () => (
+        <div className="container">
+            <h3 className="view-header">
+                <strong>Account</strong>
+            </h3>
 
+            <Nav bsStyle="tabs">
+                <LinkContainer to="/account/general">
+                    <NavItem>General</NavItem>
+                </LinkContainer>
+            </Nav>
 
-            </div>
-        );
-    }
+            <Switch>
+                <Redirect from="/account" to="/account/general" exact/>
+                <Route path="/account/general" component={AccountGeneral}/>
+            </Switch>
+        </div>
+    );
 }
 
 const mapStateToProps = (state) => {
