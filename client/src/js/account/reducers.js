@@ -8,7 +8,7 @@
  */
 
 import { assign } from "lodash";
-import { GET_ACCOUNT_SUCCEEDED, LOGOUT_SUCCEEDED } from "../actionTypes";
+import { GET_ACCOUNT, LOGOUT } from "../actionTypes";
 
 const initialState = {
     ready: false
@@ -18,10 +18,10 @@ export default function accountReducer (state = initialState, action) {
 
     switch (action.type) {
 
-        case GET_ACCOUNT_SUCCEEDED:
+        case GET_ACCOUNT.SUCCEEDED:
             return assign({}, state, action.data, {ready: true});
 
-        case LOGOUT_SUCCEEDED:
+        case LOGOUT.SUCCEEDED:
             window.location.reload();
             return state;
 

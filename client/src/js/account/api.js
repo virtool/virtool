@@ -12,15 +12,21 @@ import Request from "superagent";
 const accountAPI = {
 
     get: () => {
-        return Request.get("/api/account");
+        return Request.get("/api/account")
     },
 
+    getSettings: () => {
+        return Request.get("/api/account/settings");
+    },
 
+    updateSettings: (update) => {
+        return Request.patch("/api/account/settings")
+            .send(update);
+    },
 
     logout: () => {
         return Request.get("/api/account/logout");
     }
-
 };
 
 export default accountAPI;

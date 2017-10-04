@@ -16,7 +16,7 @@ import { withRouter } from "react-router-dom";
 import { LinkContainer } from "react-router-bootstrap";
 import { Navbar, Nav, NavItem, NavDropdown, MenuItem } from "react-bootstrap";
 
-import { logout } from "../actions";
+import { logout } from "../../account/actions";
 import { Icon, AutoProgressBar } from "../../base"
 
 const isHomeActive = (match, location) => {

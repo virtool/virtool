@@ -18,7 +18,7 @@ import indexesReducer from "./indexes/reducers";
 import virusesReducer from "./viruses/reducers";
 import subtractionReducer from "./subtraction/reducers";
 import filesReducer from "./files/reducer";
-import accountReducer from "./nav/reducers";
+import accountReducer from "./account/reducers";
 import settingsReducer from "./settings/reducers";
 import usersReducer from "./settings/users/reducers";
 import groupsReducer from "./settings/groups/reducers";
