@@ -24,6 +24,23 @@ const accountAPI = {
             .send(update);
     },
 
+    createAPIKey: (name, permissions) => {
+        return Request.post("/api/account/keys")
+            .send({
+                name,
+                permissions
+            });
+    },
+
+    updateAPIKey: (keyId, update) => {
+        return Request.patch(`/api/account/keys/${keyId}`)
+            .send(update);
+    },
+
+    removeAPIKey: (keyId) => {
+        return Request.delete(`/api/account/keys/${keyId}`);
+    },
+
     logout: () => {
         return Request.get("/api/account/logout");
     }

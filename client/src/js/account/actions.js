@@ -6,7 +6,14 @@
  * @author igboyes
  *
  */
-import { WS_UPDATE_ACCOUNT, GET_ACCOUNT, UPDATE_ACCOUNT_SETTINGS, LOGOUT } from "../actionTypes";
+import {
+    WS_UPDATE_ACCOUNT,
+    GET_ACCOUNT,
+    UPDATE_ACCOUNT_SETTINGS,
+    CREATE_API_KEY,
+    CHANGE_PASSWORD,
+    LOGOUT
+} from "../actionTypes";
 
 
 export function wsUpdateAccount (data) {
@@ -26,6 +33,15 @@ export function updateAccountSettings (update) {
     return {
         type: UPDATE_ACCOUNT_SETTINGS.REQUESTED,
         update
+    };
+}
+
+export function createAPIKey (name, permissions, callback) {
+    return {
+        type: CREATE_API_KEY.REQUESTED,
+        name,
+        permissions,
+        callback
     };
 }
 
