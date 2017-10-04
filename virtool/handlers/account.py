@@ -4,7 +4,8 @@ import virtool.utils
 import virtool.user
 import virtool.user_permissions
 
-from virtool.handlers.utils import json_response, no_content, bad_request, protected, validation, unpack_request
+from virtool.handlers.utils import json_response, no_content, bad_request, protected, validation, unpack_request, \
+    not_found
 
 SETTINGS_SCHEMA = {
     "show_ids": {
@@ -172,6 +173,29 @@ async def create_api_key(req):
         if key["id"] == key_id:
             key["raw"] = raw
             return json_response(key, status=201)
+
+
+@protected()
+async def remove_api_key(req):
+    db = req.app["db"]
+
+    user_id = req["session"].user_id
+    key_id = req.match_info.get("key_id")
+
+    if not await db.users.count({"_id": user_id, "api_keys.id": key_id}):
+        return not_found()
+
+    document = await db.users.find_one_and_update({"_id": user_id}, {
+        "$pull": {
+            "api_keys": {
+                "id": key_id
+            }
+        }
+    }, return_document=ReturnDocument.AFTER, projection=virtool.user.ACCOUNT_PROJECTION)
+
+    await req.app["dispatcher"].dispatch("users", "update", virtool.user.account_processor(document))
+
+    return no_content()
 
 @protected()
 async def logout(req):
