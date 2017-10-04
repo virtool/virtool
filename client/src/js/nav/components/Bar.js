@@ -94,7 +94,9 @@ const Bar = (props) => {
                         </NavItem>
 
                         <NavDropdown id="account-dropdown" title={dropdownTitle}>
-                            <MenuItem>Settings</MenuItem>
+                            <LinkContainer to="/account">
+                                <MenuItem>Account</MenuItem>
+                            </LinkContainer>
                             <MenuItem onClick={props.logout}>Logout</MenuItem>
                         </NavDropdown>
                     </Nav>
