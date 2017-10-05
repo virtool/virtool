@@ -19,12 +19,14 @@ import {
     REMOVE_API_KEY,
     LOGOUT
 } from "../actionTypes";
+import {UPDATE_API_KEY} from "../actionTypes";
 
 export function* watchAccount () {
     yield takeLatest(GET_ACCOUNT.REQUESTED, getAccount);
     yield takeLatest(GET_ACCOUNT_SETTINGS.REQUESTED, getAccountSettings);
     yield takeLatest(UPDATE_ACCOUNT_SETTINGS.REQUESTED, updateAccountSettings);
     yield takeEvery(CREATE_API_KEY.REQUESTED, createAPIKey);
+    yield takeEvery(UPDATE_API_KEY.REQUESTED, updateAPIKey);
     yield takeEvery(REMOVE_API_KEY.REQUESTED, removeAPIKey);
     yield takeEvery(LOGOUT.REQUESTED, logout);
 }
@@ -65,6 +67,15 @@ export function* createAPIKey (action) {
         yield put({type: GET_ACCOUNT.REQUESTED});
     } catch (error) {
         yield put({type: CREATE_API_KEY.FAILED}, error);
+    }
+}
+
+export function* updateAPIKey (action) {
+    try {
+        yield accountAPI.updateAPIKey(action.keyId, action.permissions);
+        yield put({type: GET_ACCOUNT.REQUESTED});
+    } catch (error) {
+        yield put({type: UPDATE_API_KEY.FAILED}, error);
     }
 }
 

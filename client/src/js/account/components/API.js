@@ -10,39 +10,74 @@
 import React from "react";
 import PropTypes from "prop-types";
 import { CopyToClipboard } from "react-copy-to-clipboard";
-import { assign, map, sortBy, isEqual } from "lodash";
+import { assign, isEqual, map, mapValues, reduce, sortBy  } from "lodash";
 import { connect } from "react-redux";
 import { LinkContainer } from "react-router-bootstrap";
 import { ButtonToolbar, Col, ListGroup, Modal, Panel, Row } from "react-bootstrap";
 
-import { createAPIKey, removeAPIKey } from "../actions";
+import { createAPIKey, updateAPIKey, removeAPIKey } from "../actions";
 import { Button, Icon, Input, Flex, FlexItem, ListGroupItem, RelativeTime } from "../../base";
 
 const getInitialState = (props) => {
     return {
         name: "",
-        permissions: {},
+        permissions: mapValues(props.permissions, () => false),
         submitted: false,
         key: ""
     };
+};
+
+const APIPermissions = ({ style, userPermissions, keyPermissions, onChange }) => {
+
+    const permissions = map(keyPermissions, (value, key) => ({name: key, allowed: value}));
+
+    const rowComponents = sortBy(permissions, "name").map(permission => {
+        const disabled = !userPermissions[permission.name];
+
+        return (
+            <ListGroupItem
+                key={permission.name}
+                onClick={disabled ? null: () => onChange(permission.name, !permission.allowed)}
+                disabled={disabled}
+            >
+                <code>{permission.name}</code>
+                <Icon name={`checkbox-${permission.allowed ? "checked": "unchecked"}`} pullRight />
+            </ListGroupItem>
+        )
+    });
+
+    return (
+        <Panel style={style}>
+            <ListGroup fill>
+                {rowComponents}
+            </ListGroup>
+        </Panel>
+    )
+};
+
+APIPermissions.propTypes = {
+    userPermissions: PropTypes.object.isRequired,
+    keyPermissions: PropTypes.object.isRequired,
+    onChange: PropTypes.func.isRequired,
+    style: PropTypes.object
 };
 
 class CreateAPIKey extends React.Component {
 
     constructor (props) {
         super(props);
-        this.state = getInitialState();
+        this.state = getInitialState(props);
     }
 
     static propTypes = {
-        show: PropTypes.bool,
-        permissions: PropTypes.object,
-        onHide: PropTypes.func,
-        onCreate: PropTypes.func
+        show: PropTypes.bool.isRequired,
+        permissions: PropTypes.object.isRequired,
+        onHide: PropTypes.func.isRequired,
+        onCreate: PropTypes.func.isRequired
     };
 
     modalExited = () => {
-        this.setState(getInitialState());
+        this.setState(getInitialState(this.props));
     };
 
     handleSubmit = (event) => {
@@ -51,6 +86,13 @@ class CreateAPIKey extends React.Component {
         this.setState({submitted: true}, () => {
             this.props.onCreate(this.state.name, this.state.permissions, (key) => this.setState({key: key}));
         });
+    };
+
+    handlePermissionChange = (key, value) => {
+        let update = {};
+        update[key] = value;
+
+        this.setState({permissions: assign({}, this.state.permissions, update)});
     };
 
     render () {
@@ -73,7 +115,7 @@ class CreateAPIKey extends React.Component {
                         <Col xs={12} md={8} mdOffset={2}>
                             <Flex alignItems="stretch" alignContent="stretch">
                                 <FlexItem grow={1}>
-                                    <Input value={this.state.key} onChange={() => {}} />
+                                    <Input className="text-center" value={this.state.key} onChange={() => {}} />
                                 </FlexItem>
                                 <CopyToClipboard
                                     style={{marginBottom: "15px"}}
@@ -95,6 +137,14 @@ class CreateAPIKey extends React.Component {
                             label="Name"
                             value={this.state.name}
                             onChange={(e) => this.setState({name: e.target.value})}
+                        />
+
+                        <label>Permissions</label>
+
+                        <APIPermissions
+                            userPermissions={this.props.permissions}
+                            keyPermissions={this.state.permissions}
+                            onChange={this.handlePermissionChange}
                         />
                     </Modal.Body>
 
@@ -148,9 +198,9 @@ class APIKey extends React.Component {
         this.setState(state);
     };
 
-    togglePermission = (name) => {
+    handlePermissionChange = (key, value) => {
         let update = {};
-        update[name] = !this.state.permissions[name];
+        update[key] = value;
 
         const permissions = assign({}, this.state.permissions, update);
 
@@ -165,46 +215,16 @@ class APIKey extends React.Component {
         let closeButton;
 
         if (this.state.in) {
-            const permissions = map(this.state.permissions, (value, key) => ({name: key, allowed: value}));
-
-            const rowComponents = sortBy(permissions, "permission").map(permission => {
-                const disabled = !this.props.permissions[permission.name];
-
-                return (
-                    <ListGroupItem
-                        key={permission.name}
-                        onClick={disabled ? null: () => this.togglePermission(permission.name)}
-                        disabled={disabled}
-                    >
-                        <code>{permission.name}</code>
-                        <Icon name={`checkbox-${permission.allowed ? "checked": "unchecked"}`} pullRight />
-                    </ListGroupItem>
-                )
-            });
-
-            let updateButton;
-
-            if (this.state.changed) {
-                updateButton = (
-                    <Button
-                        bsStyle="primary"
-                        icon="floppy"
-                        onClick={() => this.onUpdate(this.apiKey.id, this.state.permissions)}
-                    >
-                        Update
-                    </Button>
-                );
-            }
-
             lower = (
                 <div>
                     <Row>
                         <Col xs={12}>
-                            <Panel style={{marginTop: "15px"}}>
-                                <ListGroup fill>
-                                    {rowComponents}
-                                </ListGroup>
-                            </Panel>
+                            <APIPermissions
+                                style={{marginTop: "15px"}}
+                                userPermissions={this.props.permissions}
+                                keyPermissions={this.state.permissions}
+                                onChange={this.handlePermissionChange}
+                            />
                         </Col>
                     </Row>
                     <Row>
@@ -217,7 +237,14 @@ class APIKey extends React.Component {
                                 >
                                     Remove
                                 </Button>
-                                {updateButton}
+                                <Button
+                                    bsStyle="primary"
+                                    icon="floppy"
+                                    onClick={() => this.onUpdate(this.apiKey.id, this.state.permissions)}
+                                    disabled={!this.state.changed}
+                                >
+                                    Update
+                                </Button>
                             </ButtonToolbar>
                         </Col>
                     </Row>
@@ -231,14 +258,18 @@ class APIKey extends React.Component {
             );
         }
 
+        const permissionCount = reduce(this.props.apiKey.permissions, (result, value) => result + (value ? 1: 0), 0);
 
         return (
             <ListGroupItem key={this.props.apiKey.id} className="spaced" onClick={this.state.in ? null: this.toggleIn}>
                 <Row>
-                    <Col xs={5}>
-                        {this.props.apiKey.name}
+                    <Col xs={4}>
+                        <strong>{this.props.apiKey.name}</strong>
                     </Col>
-                    <Col xs={6}>
+                    <Col xs={4}>
+                        {permissionCount} permissions
+                    </Col>
+                    <Col xs={3}>
                         Created <RelativeTime time={this.props.apiKey.created_at} />
                     </Col>
                     <Col xs={1}>
@@ -280,18 +311,10 @@ const APIKeys = (props) => {
                         <p>
                             Create keys for accessing the Virtool API.
                         </p>
-                        <ul>
-                            <li>
-                                <a href="https://docs.virtool.ca/web-api.html" target="_blank">
-                                    learn more about the Virtool API
-                                </a>
-                            </li>
-                            <li>
-                                <a href="https://docs.virtool.ca/web-api/authentication.html" target="_blank">
-                                    learn more about authentication
-                                </a>
-                            </li>
-                        </ul>
+                        <p>
+                            <span>Learn how to use API keys </span>
+                            <a href="https://docs.virtool.ca/web-api/authentication.html" target="_blank">here</a>.
+                        </p>
                     </Col>
                     <Col xs={12} md={2}>
                         <LinkContainer to={{state: {createAPIKey: true}}}>
@@ -309,6 +332,7 @@ const APIKeys = (props) => {
 
             <CreateAPIKey
                 show={props.location.state && props.location.state.createAPIKey}
+                permissions={props.permissions}
                 onHide={() => props.history.push({state: {createAPIKey: false}})}
                 onCreate={props.onCreate}
             />
@@ -330,7 +354,7 @@ const mapDispatchToProps = (dispatch) => {
         },
 
         onUpdate: (keyId, permissions) => {
-            dispatch()
+            dispatch(updateAPIKey(keyId, permissions));
         },
 
         onRemove: (keyId) => {
