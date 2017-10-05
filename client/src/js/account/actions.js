@@ -13,7 +13,6 @@ import {
     CREATE_API_KEY,
     UPDATE_API_KEY,
     REMOVE_API_KEY,
-    CHANGE_PASSWORD,
     LOGOUT
 } from "../actionTypes";
 

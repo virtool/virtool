@@ -65,16 +65,6 @@ class ChangePassword extends React.Component {
 
     handleSubmit = (event) => {
         event.preventDefault();
-
-        // Only send the request if the new passwords match and the password is at least four characters in length.
-        if (!this.state.tooShort && !this.state.noMatch) {
-            const data = {
-                _id: this.props.username || dispatcher.user.name,
-                old_password: this.state.old,
-                new_password: this.state.password
-            };
-        }
-
         // Set state to show that the user attempted to submit the form.
         this.setState({submitted: true});
     };
