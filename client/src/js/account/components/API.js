@@ -323,13 +323,15 @@ const APIKeys = (props) => {
 
     return (
         <div>
-            <Flex alignItems="center" style={{marginBottom: "10px"}}>
-                <FlexItem grow={1} shrink={0}>
-                    <span>Manage API keys for accessing the </span>
-                    <a href="https://docs.virtool.ca/web-api/authentication.html" target="_blank">Virtool API</a>.
+            <Flex alignItems="center" style={{marginTop: "-7px", marginBottom: "10px"}}>
+                <FlexItem>
+                    <div style={{whiteSpace: "wrap"}}>
+                        <span>Manage API keys for accessing the </span>
+                        <a href="https://docs.virtool.ca/web-api/authentication.html" target="_blank">Virtool API</a>.
+                    </div>
                 </FlexItem>
-                <FlexItem grow={0} shrink={0}>
-                    <LinkContainer to={{state: {createAPIKey: true}}}>
+                <FlexItem grow={1} shrink={0} pad={7}>
+                    <LinkContainer to={{state: {createAPIKey: true}}} className="pull-right">
                         <Button bsStyle="primary" icon="key" pullRight>
                             Create
                         </Button>
