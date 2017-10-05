@@ -13,16 +13,12 @@ SETTINGS_SCHEMA = {
         "type": "boolean",
         "required": False
     },
-    "show_versions": {
-        "type": "boolean",
-        "required": False
-    },
     "quick_analyze_algorithm": {
         "type": "boolean",
         "required": False
     },
     "skip_quick_analyze_dialog": {
-        "type": "string",
+        "type": "boolean",
         "required": False
     }
 }
