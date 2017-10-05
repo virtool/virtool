@@ -3,6 +3,7 @@ from pymongo import ReturnDocument
 import virtool.utils
 import virtool.user
 import virtool.user_permissions
+import virtool.validators
 
 from virtool.handlers.utils import json_response, no_content, bad_request, protected, validation, unpack_request, \
     not_found
@@ -123,8 +124,8 @@ async def change_password(req):
 
 @protected()
 @validation({
-    "name": {"type": "string", "required": True},
-    "permissions": {"type": "dict"}
+    "name": {"type": "string", "required": True, "minlength": 1},
+    "permissions": {"type": "dict", "validator": virtool.validators.is_permission_dict}
 })
 async def create_api_key(req):
     db, data = await unpack_request(req)
@@ -173,6 +174,47 @@ async def create_api_key(req):
         if key["id"] == key_id:
             key["raw"] = raw
             return json_response(key, status=201)
+
+
+@protected()
+@validation({
+    "permissions": {"type": "dict", "validator": virtool.validators.is_permission_dict}
+})
+async def update_api_key(req):
+    db, data = await unpack_request(req)
+
+    key_id = req.match_info.get("key_id")
+
+    user_id = req["session"].user_id
+
+    query = {"_id": user_id, "api_keys.id": key_id}
+
+    document = await db.users.find_one(query, ["api_keys"])
+
+    if not document:
+        return not_found()
+
+    permissions = None
+
+    for api_key in document["api_keys"]:
+        if api_key["id"] == key_id:
+            permissions = api_key["permissions"]
+            permissions.update(data["permissions"])
+            break
+
+    document = await db.users.find_one_and_update(query, {
+        "$set": {
+            "api_keys.$.permissions": permissions
+        }
+    }, return_document=ReturnDocument.AFTER, projection=virtool.user.ACCOUNT_PROJECTION)
+
+    document = virtool.user.account_processor(document)
+
+    await req.app["dispatcher"].dispatch("users", "update", document)
+
+    for key in document["api_keys"]:
+        if key["id"] == key_id:
+            return json_response(key, status=200)
 
 
 @protected()

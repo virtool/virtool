@@ -187,6 +187,50 @@ async def test_create_api_key(mocker, spawn_client, static_time, test_motor, tes
     assert await resp.json() == expected
 
 
+async def test_update_api_key(spawn_client, static_time, test_dispatch):
+    client = await spawn_client(authorize=True)
+
+    api_key = {
+        "id": "foobar_0",
+        "name": "Foobar",
+        "key": "foobar",
+        "created_at": static_time.isoformat(),
+        "permissions": {
+            "cancel_job": False,
+            "create_sample": False,
+            "manage_users": False,
+            "modify_hmm": False,
+            "modify_host": False,
+            "modify_options": False,
+            "modify_virus": False,
+            "rebuild_index": False,
+            "remove_host": False,
+            "remove_job": False,
+            "remove_virus": False
+        }
+    }
+
+    await client.db.users.update_one({"_id": "test"}, {
+        "$set": {
+            "api_keys": [api_key]
+        }
+    })
+
+    resp = await client.patch("/api/account/keys/foobar_0", {
+        "permissions": {"manage_users": True}
+    })
+
+    assert resp.status == 200
+
+    api_key["permissions"]["manage_users"] = True
+
+    assert (await client.db.users.find_one({"_id": "test"}, ["api_keys"]))["api_keys"][0] == api_key
+
+    del api_key["key"]
+
+    assert await resp.json() == api_key
+
+
 class TestLogout:
 
     async def test(self, spawn_client):
