@@ -9,13 +9,14 @@
 
 import React from "react";
 import PropTypes from "prop-types";
+import { CopyToClipboard } from "react-copy-to-clipboard";
 import { assign, map, sortBy, isEqual } from "lodash";
 import { connect } from "react-redux";
 import { LinkContainer } from "react-router-bootstrap";
 import { ButtonToolbar, Col, ListGroup, Modal, Panel, Row } from "react-bootstrap";
 
 import { createAPIKey, removeAPIKey } from "../actions";
-import { Button, Icon, Input, ListGroupItem, RelativeTime } from "../../base";
+import { Button, Icon, Input, Flex, FlexItem, ListGroupItem, RelativeTime } from "../../base";
 
 const getInitialState = (props) => {
     return {
@@ -57,8 +58,33 @@ class CreateAPIKey extends React.Component {
 
         if (this.state.key) {
             content = (
-                <Modal.Body>
-                    <Input label="This is your key. It will not be shown again." value={this.state.key} readOnly />
+                <Modal.Body className="text-center">
+                    <Row>
+                        <Col xs={12}>
+                            <strong className="text-success">Here is your key.</strong>
+                        </Col>
+                    </Row>
+
+                    <small>
+                        Make note of it now. For security purposes, it will not be shown again.
+                    </small>
+
+                    <Row style={{marginTop: "10px"}}>
+                        <Col xs={12} md={8} mdOffset={2}>
+                            <Flex alignItems="stretch" alignContent="stretch">
+                                <FlexItem grow={1}>
+                                    <Input value={this.state.key} onChange={() => {}} />
+                                </FlexItem>
+                                <CopyToClipboard
+                                    style={{marginBottom: "15px"}}
+                                    text={this.state.key}
+                                    onCopy={() => {}}
+                                >
+                                    <Button icon="paste" bsStyle="primary" />
+                                </CopyToClipboard>
+                            </Flex>
+                        </Col>
+                    </Row>
                 </Modal.Body>
             );
         } else {
