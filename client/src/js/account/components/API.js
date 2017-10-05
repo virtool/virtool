@@ -7,7 +7,9 @@
  *
  */
 
+import CX from "classnames";
 import React from "react";
+import Moment from "moment";
 import PropTypes from "prop-types";
 import { CopyToClipboard } from "react-copy-to-clipboard";
 import { assign, isEqual, map, mapValues, reduce, sortBy  } from "lodash";
@@ -23,6 +25,7 @@ const getInitialState = (props) => {
         name: "",
         permissions: mapValues(props.permissions, () => false),
         submitted: false,
+        copied: false,
         key: ""
     };
 };
@@ -111,22 +114,30 @@ class CreateAPIKey extends React.Component {
                         Make note of it now. For security purposes, it will not be shown again.
                     </small>
 
-                    <Row style={{marginTop: "10px"}}>
+                    <Row style={{marginTop: "10px", marginBottom: "5px"}}>
                         <Col xs={12} md={8} mdOffset={2}>
                             <Flex alignItems="stretch" alignContent="stretch">
                                 <FlexItem grow={1}>
-                                    <Input className="text-center" value={this.state.key} onChange={() => {}} />
+                                    <Input
+                                        style={{marginBottom: 0}}
+                                        formGroupStyle={{marginBottom: 0}}
+                                        className="text-center"
+                                        value={this.state.key} onChange={() => {}}
+                                    />
                                 </FlexItem>
                                 <CopyToClipboard
-                                    style={{marginBottom: "15px"}}
                                     text={this.state.key}
-                                    onCopy={() => {}}
+                                    onCopy={() => this.setState({copied: true})}
                                 >
                                     <Button icon="paste" bsStyle="primary" />
                                 </CopyToClipboard>
                             </Flex>
                         </Col>
                     </Row>
+
+                    <small className={CX("text-primary", {"invisible": !this.state.copied})}>
+                        <Icon name="checkmark" /> Copied
+                    </small>
                 </Modal.Body>
             );
         } else {
@@ -240,7 +251,7 @@ class APIKey extends React.Component {
                                 <Button
                                     bsStyle="primary"
                                     icon="floppy"
-                                    onClick={() => this.onUpdate(this.apiKey.id, this.state.permissions)}
+                                    onClick={() => this.props.onUpdate(this.props.apiKey.id, this.state.permissions)}
                                     disabled={!this.state.changed}
                                 >
                                     Update
@@ -266,12 +277,19 @@ class APIKey extends React.Component {
                     <Col xs={4}>
                         <strong>{this.props.apiKey.name}</strong>
                     </Col>
+
                     <Col xs={4}>
-                        {permissionCount} permissions
+                        <span>{permissionCount} perm</span>
+                        <span className="hidden-xs hidden-sm">ission</span>{permissionCount === 1 ? null: "s"}
                     </Col>
-                    <Col xs={3}>
+
+                    <Col xsHidden smHidden md={3}>
                         Created <RelativeTime time={this.props.apiKey.created_at} />
                     </Col>
+                    <Col mdHidden lgHidden xs={3}>
+                        {Moment(this.props.apiKey.created_at).format("YY-MM-DD")}
+                    </Col>
+
                     <Col xs={1}>
                         {closeButton}
                     </Col>
@@ -305,26 +323,19 @@ const APIKeys = (props) => {
 
     return (
         <div>
-            <Panel>
-                <Row>
-                    <Col xs={12} md={10}>
-                        <p>
-                            Create keys for accessing the Virtool API.
-                        </p>
-                        <p>
-                            <span>Learn how to use API keys </span>
-                            <a href="https://docs.virtool.ca/web-api/authentication.html" target="_blank">here</a>.
-                        </p>
-                    </Col>
-                    <Col xs={12} md={2}>
-                        <LinkContainer to={{state: {createAPIKey: true}}}>
-                            <Button bsStyle="primary" icon="key" pullRight>
-                                Create
-                            </Button>
-                        </LinkContainer>
-                    </Col>
-                </Row>
-            </Panel>
+            <Flex alignItems="center" style={{marginBottom: "10px"}}>
+                <FlexItem grow={1} shrink={0}>
+                    <span>Manage API keys for accessing the </span>
+                    <a href="https://docs.virtool.ca/web-api/authentication.html" target="_blank">Virtool API</a>.
+                </FlexItem>
+                <FlexItem grow={0} shrink={0}>
+                    <LinkContainer to={{state: {createAPIKey: true}}}>
+                        <Button bsStyle="primary" icon="key" pullRight>
+                            Create
+                        </Button>
+                    </LinkContainer>
+                </FlexItem>
+            </Flex>
 
             <ListGroup>
                 {keyComponents}

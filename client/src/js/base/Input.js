@@ -10,6 +10,7 @@
  */
 
 import React from "react";
+import { assign } from "lodash";
 import PropTypes from "prop-types";
 import { ControlLabel, FormControl, FormGroup, Overlay, Popover } from "react-bootstrap";
 
@@ -39,6 +40,7 @@ export class Input extends React.Component {
         onChange: PropTypes.func,
 
         style: PropTypes.object,
+        formGroupStyle: PropTypes.object,
         children: PropTypes.node,
         noMargin: PropTypes.bool
     };
@@ -46,7 +48,8 @@ export class Input extends React.Component {
     static defaultProps = {
         type: "text",
         autoComplete: true,
-        errorPlacement: "top"
+        errorPlacement: "top",
+        formGroupStyle: {}
     };
 
     focus = () => {
@@ -98,10 +101,10 @@ export class Input extends React.Component {
             );
         }
 
-        let groupStyle;
+        let groupStyle = assign({}, this.props.formGroupStyle);
 
         if (this.props.noMargin) {
-            groupStyle = {marginBottom: 0};
+            assign(groupStyle, {marginBottom: 0});
         }
 
         return (

@@ -71,21 +71,25 @@ export function* createAPIKey (action) {
 }
 
 export function* updateAPIKey (action) {
-    try {
-        yield accountAPI.updateAPIKey(action.keyId, action.permissions);
-        yield put({type: GET_ACCOUNT.REQUESTED});
-    } catch (error) {
-        yield put({type: UPDATE_API_KEY.FAILED}, error);
-    }
+    yield setPending(function* () {
+        try {
+            yield accountAPI.updateAPIKey(action.keyId, action.permissions);
+            yield put({type: GET_ACCOUNT.REQUESTED});
+        } catch (error) {
+            yield put({type: UPDATE_API_KEY.FAILED}, error);
+        }
+    }, action);
 }
 
 export function* removeAPIKey (action) {
-    try {
-        yield accountAPI.removeAPIKey(action.keyId);
-        yield put({type: GET_ACCOUNT.REQUESTED});
-    } catch (error) {
-        yield put({type: REMOVE_API_KEY.FAILED}, error);
-    }
+    yield setPending(function* () {
+        try {
+            yield accountAPI.removeAPIKey(action.keyId);
+            yield put({type: GET_ACCOUNT.REQUESTED});
+        } catch (error) {
+            yield put({type: REMOVE_API_KEY.FAILED}, error);
+        }
+    }, action);
 }
 
 export function* logout () {

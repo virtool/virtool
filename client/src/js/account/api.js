@@ -34,7 +34,9 @@ const accountAPI = {
 
     updateAPIKey: (keyId, permissions) => {
         return Request.patch(`/api/account/keys/${keyId}`)
-            .send(permissions);
+            .send({
+                permissions: permissions
+            });
     },
 
     removeAPIKey: (keyId) => {
