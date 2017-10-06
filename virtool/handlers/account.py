@@ -95,9 +95,12 @@ async def change_password(req):
 
     data = await req.json()
 
+    if len(data["new_password"]) < 8:
+        return bad_request("Password is to short. Must be at least 8 characters.")
+
     # Will evaluate true if the passed username and password are correct.
     if not await virtool.user.validate_credentials(db, user_id, data["old_password"]):
-        return bad_request("Invalid credentials")
+        return bad_request("Invalid old password")
 
     # Salt and hash the new password
     hashed = virtool.user.hash_password(data["new_password"])
