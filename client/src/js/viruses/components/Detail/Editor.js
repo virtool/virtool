@@ -16,7 +16,7 @@ import { Badge, Row, Col, ListGroup } from "react-bootstrap";
 
 import { formatIsolateName } from "../../../utils";
 import { selectIsolate, showAddIsolate } from "../../actions";
-import { FlexItem, Icon, ListGroupItem } from "virtool/js/components/Base";
+import { FlexItem, Icon, ListGroupItem } from "../../../base";
 import IsolateDetail from "./IsolateDetail";
 
 const IsolateEditor = (props) => {

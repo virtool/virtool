@@ -15,7 +15,7 @@ import { connect } from "react-redux";
 import { Row, Col, Alert, Panel, ButtonToolbar } from "react-bootstrap";
 
 import { setForceReset, changeSetPassword, changeSetConfirm, setPassword, clearSetPassword } from "../../users/actions";
-import { Icon, Input, Checkbox, Button, RelativeTime } from "virtool/js/components/Base";
+import { Icon, Input, Checkbox, Button, RelativeTime } from "../../../base";
 
 class Password extends React.PureComponent {
 

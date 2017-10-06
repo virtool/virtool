@@ -15,7 +15,7 @@ import { connect } from "react-redux";
 import { Modal } from "react-bootstrap";
 
 import { removeIsolate, hideVirusModal } from "../../actions";
-import { Button } from "virtool/js/components/Base";
+import { Button } from "../../../base";
 
 const RemoveIsolate = (props) => (
     <Modal show={props.show} onHide={props.onHide} dialogClassName="modal-danger">

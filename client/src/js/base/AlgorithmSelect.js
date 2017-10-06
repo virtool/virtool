@@ -2,7 +2,7 @@ import React from "react";
 import PropTypes from "prop-types";
 
 import { Input } from "./";
-import { getTaskDisplayName } from "virtool/js/utils";
+import { getTaskDisplayName } from "../utils";
 
 
 export const algorithms = ["pathoscope_bowtie", "nuvs"];

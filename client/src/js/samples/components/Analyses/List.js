@@ -16,7 +16,7 @@ import { connect } from "react-redux";
 import { ListGroup, FormGroup, InputGroup, FormControl } from "react-bootstrap";
 
 import { analyze } from "../../actions";
-import { Icon, Button, ListGroupItem } from "virtool/js/components/Base";
+import { Icon, Button, ListGroupItem } from "../../../base";
 import AnalysisItem from "./Item";
 import CreateAnalysis from "./Create";
 

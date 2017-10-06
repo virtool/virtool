@@ -3,7 +3,7 @@ import PropTypes from "prop-types";
 import { select } from "d3-selection";
 import { scaleLinear } from "d3-scale"
 import { axisTop } from "d3-axis";
-import { ListGroupItem } from "virtool/js/components/Base";
+import { ListGroupItem } from "../../../../base";
 
 import NuVsORF from "./ORF";
 import NuVsBLAST from "./BLAST";

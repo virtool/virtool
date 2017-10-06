@@ -30,7 +30,7 @@ import {
 
 import { findReadyHosts, createSample } from "../../actions";
 import { findFiles } from "../../../files/actions";
-import { Flex, FlexItem, Icon, Input, Button } from "virtool/js/components/Base";
+import { Flex, FlexItem, Icon, Input, Button } from "../../../base";
 import ReadSelector from "./ReadSelector";
 
 

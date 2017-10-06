@@ -9,7 +9,7 @@
 
 import React from "react";
 import { Panel } from "react-bootstrap";
-import { Icon } from "virtool/js/components/Base";
+import { Icon } from "../../../base";
 
 const VirusSchema = () => (
     <Panel className="text-center">

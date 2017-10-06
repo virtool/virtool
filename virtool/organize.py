@@ -322,6 +322,12 @@ async def organize_users(db):
             }
         })
 
+    await db.users.update_many({"api_keys": {"$exists": False}}, {
+        "$set": {
+            "api_keys": []
+        }
+    })
+
 
 async def organize_groups(db):
     if not await db.groups.count({"_id": "administrator"}):

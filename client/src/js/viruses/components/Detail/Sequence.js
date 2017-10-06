@@ -10,8 +10,8 @@
 import React from "react";
 import PropTypes from "prop-types";
 import { Table, Label, Collapse } from "react-bootstrap";
-import { Icon, Flex, FlexItem, ListGroupItem } from "virtool/js/components/Base";
-import { followDownload } from "virtool/js/utils";
+import { Icon, Flex, FlexItem, ListGroupItem } from "../../../base";
+import { followDownload } from "../../../utils";
 
 class Sequence extends React.Component {
 

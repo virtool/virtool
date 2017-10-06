@@ -114,11 +114,14 @@ export const UPLOAD_PROGRESS = "UPLOAD_PROGRESS";
 export const HIDE_UPLOAD_OVERLAY = "HIDE_UPLOAD_OVERLAY";
 
 // Account
-export const GET_ACCOUNT_REQUESTED = "GET_ACCOUNT_REQUESTED";
-export const GET_ACCOUNT_SUCCEEDED = "GET_ACCOUNT_SUCCEEDED";
-export const GET_ACCOUNT_FAILED = "GET_ACCOUNT_FAILED";
-export const LOGOUT_REQUESTED = "LOGOUT_REQUESTED";
-export const LOGOUT_SUCCEEDED = "LOGOUT_SUCCEEDED";
+export const WS_UPDATE_ACCOUNT = createRequestActionType("WS_UPDATE_ACCOUNT");
+export const GET_ACCOUNT = createRequestActionType("GET_ACCOUNT");
+export const GET_ACCOUNT_SETTINGS = createRequestActionType("GET_ACCOUNT_SETTINGS");
+export const UPDATE_ACCOUNT_SETTINGS = createRequestActionType("UPDATE_ACCOUNT_SETTINGS");
+export const CREATE_API_KEY = createRequestActionType("CREATE_API_KEY");
+export const UPDATE_API_KEY = createRequestActionType("UPDATE_API_KEY");
+export const REMOVE_API_KEY = createRequestActionType("REMOVE_API_KEY");
+export const LOGOUT = createRequestActionType("LOGOUT");
 
 // Administrative Settings
 export const GET_SETTINGS = createRequestActionType("GET_SETTINGS");

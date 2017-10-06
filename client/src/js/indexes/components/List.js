@@ -13,7 +13,7 @@ import React from "react";
 import { connect } from "react-redux";
 import { Alert } from "react-bootstrap";
 
-import { Button, Flex, FlexItem, Icon, ListGroupItem } from "virtool/js/components/Base";
+import { Button, Flex, FlexItem, Icon, ListGroupItem } from "../../base";
 import { findIndexes, showRebuild } from "../actions";
 import IndexEntry from "./Entry";
 import RebuildIndex from "./Rebuild";

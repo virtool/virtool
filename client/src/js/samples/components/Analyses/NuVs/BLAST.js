@@ -2,7 +2,7 @@ import React from "react";
 import Numeral from "numeral";
 import PropTypes from "prop-types";
 import { Panel, Alert, Table } from "react-bootstrap";
-import { Icon, Flex, FlexItem, Button } from "virtool/js/components/Base";
+import { Icon, Flex, FlexItem, Button } from "../../../../base";
 
 const nuccoreRoot = "https://www.ncbi.nlm.nih.gov/nuccore/";
 

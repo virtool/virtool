@@ -17,7 +17,7 @@ import { Row, Col, ListGroup, Modal } from "react-bootstrap";
 
 import { findFiles } from "../../files/actions";
 import { createSubtraction } from "../actions";
-import { Button, Icon, Input, ListGroupItem, RelativeTime } from "../../components/Base";
+import { Button, Icon, Input, ListGroupItem, RelativeTime } from "../../base";
 
 const getInitialState = () => ({
     subtractionId: "",

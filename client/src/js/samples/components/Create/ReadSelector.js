@@ -15,7 +15,7 @@ import { Link } from "react-router-dom";
 import { includes, without, intersection, filter, sortBy } from "lodash";
 import { Overlay, Popover, Panel } from "react-bootstrap";
 
-import { Icon, Input, Button, ListGroupItem } from "virtool/js/components/Base";
+import { Icon, Input, Button, ListGroupItem } from "../../../base";
 import ReadItem from "./ReadItem";
 
 export default class ReadSelector extends React.PureComponent {

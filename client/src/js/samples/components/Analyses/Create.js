@@ -1,7 +1,7 @@
 import React from "react";
 import PropTypes from "prop-types";
 import { Modal } from "react-bootstrap";
-import { AlgorithmSelect, Button } from "virtool/js/components/Base";
+import { AlgorithmSelect, Button } from "../../../base";
 
 const getInitialState = () => ({
     algorithm: "pathoscope_bowtie"

@@ -14,7 +14,7 @@ import { includes, without } from "lodash";
 import { connect } from "react-redux";
 import { Row, Col, Panel, Overlay, Popover, FormGroup, InputGroup, FormControl } from "react-bootstrap";
 
-import { Flex, FlexItem, Icon, Button, Checkbox, ListGroupItem } from "virtool/js/components/Base";
+import { Flex, FlexItem, Icon, Button, Checkbox, ListGroupItem } from "../../../base";
 import { updateSetting } from "../../actions";
 
 /**

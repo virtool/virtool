@@ -18,7 +18,7 @@ import { LinkContainer } from "react-router-bootstrap";
 import { Row, Col, Alert, FormGroup, InputGroup, FormControl } from "react-bootstrap";
 
 import { findSubtractions, showCreateSubtraction } from "../actions";
-import { Flex, FlexItem, Icon, Button, ListGroupItem } from "virtool/js/components/Base";
+import { Flex, FlexItem, Icon, Button, ListGroupItem } from "../../base";
 
 class SubtractionList extends React.Component {
 

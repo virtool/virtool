@@ -13,7 +13,7 @@ import { connect } from "react-redux";
 import Dropzone from "react-dropzone";
 import { Modal, Panel, Table, ProgressBar } from "react-bootstrap";
 
-import { Button, RelativeTime } from "../../components/Base";
+import { Button, RelativeTime } from "../../base";
 import { uploadImport, commitImport } from "../actions";
 
 const getInitialState = () => {

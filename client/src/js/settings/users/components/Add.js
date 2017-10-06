@@ -12,7 +12,7 @@
 import React from "react";
 import PropTypes from "prop-types";
 import { Row, Col, Modal, ButtonToolbar } from "react-bootstrap";
-import { Icon, Input, Checkbox, Button } from "virtool/js/components/Base";
+import { Icon, Input, Checkbox, Button } from "../../../base";
 
 const getInitialState = () => ({
     username: "",

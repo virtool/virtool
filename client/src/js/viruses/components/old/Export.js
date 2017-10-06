@@ -11,7 +11,7 @@
 
 import React from "react";
 import { Modal, Panel } from "react-bootstrap";
-import { Icon, Button } from "virtool/js/components/Base";
+import { Icon, Button } from "virtool/js/components/base";
 import { byteSize } from "virtool/js/utils";
 
 const getInitialState = () => ({

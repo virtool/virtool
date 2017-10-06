@@ -5,7 +5,6 @@
   font-style: normal;
 }
 
-
 i {
   /* use !important to prevent issues with browser extensions that change fonts */
   font-family: 'vtfont' !important;
@@ -19,6 +18,22 @@ i {
   /* Better Font Rendering =========== */
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+.i-paste:before {
+  content: "\e918";
+}
+.i-binoculars:before {
+  content: "\e917";
+}
+.i-lookup:before {
+  content: "\e917";
+}
+.i-search:before {
+  content: "\e917";
+}
+.i-find:before {
+  content: "\e917";
 }
 .i-download:before {
   content: "\e913";
@@ -110,7 +125,7 @@ i {
 .i-users:before {
   content: "\e623";
 }
-.i-search:before {
+.i-search2:before {
   content: "\e627";
 }
 .i-wrench:before {

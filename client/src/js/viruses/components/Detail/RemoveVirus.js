@@ -15,7 +15,7 @@ import { connect } from "react-redux";
 import { Modal } from "react-bootstrap";
 
 import { removeVirus, hideVirusModal } from "../../actions";
-import { Button } from "virtool/js/components/Base";
+import { Button } from "../../../base";
 
 const RemoveVirus = (props) => {
     return (
@@ -50,9 +50,7 @@ RemoveVirus.propTypes = {
 
 const mapStateToProps = (state) => {
     return {
-        show: state.viruses.remove,
-        virusId: state.viruses.detail.id,
-        virusName: state.viruses.detail.name
+        show: state.viruses.remove
     };
 };
 

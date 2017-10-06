@@ -16,7 +16,7 @@ import { mapValues } from "lodash";
 import { LinkContainer } from "react-router-bootstrap";
 import { Row, Col } from "react-bootstrap";
 
-import { ListGroupItem, Icon, Flex, FlexItem, Checkbox, RelativeTime } from "../../components/Base";
+import { ListGroupItem, Icon, Flex, FlexItem, Checkbox, RelativeTime } from "../../base";
 import { stringOrBool } from "../../propTypes";
 
 export default class SampleEntry extends React.Component {

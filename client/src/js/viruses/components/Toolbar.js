@@ -13,7 +13,7 @@ import React from "react";
 import PropTypes from "prop-types";
 import { LinkContainer } from "react-router-bootstrap";
 import { DropdownButton, MenuItem } from "react-bootstrap";
-import { Icon, Button } from "virtool/js/components/Base";
+import { Icon, Button } from "../../base";
 
 /**
  * A toolbar component rendered at the top of the virus manager table. Allows searching of viruses by name and

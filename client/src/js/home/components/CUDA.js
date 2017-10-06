@@ -13,8 +13,8 @@ import { connect } from "react-redux";
 import { Row, Col, ListGroup, ListGroupItem } from "react-bootstrap";
 
 import { getCUDA } from "../../jobs/actions";
-import { byteSize } from "virtool/js/utils";
-import { Flex, FlexItem, Icon } from "virtool/js/components/Base";
+import { byteSize } from "../../utils";
+import { Flex, FlexItem, Icon } from "../../base";
 
 class CUDAList extends React.Component {
 

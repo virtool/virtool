@@ -11,6 +11,7 @@ import Samples from "./samples/components/Samples";
 import Viruses from "./viruses/components/Viruses";
 import Subtraction from "./subtraction/components/Subtraction";
 import Settings from "./settings/components/Settings";
+import Account from "./account/components/Account";
 import UploadOverlay from "./files/components/UploadOverlay";
 
 const Inner = (props) => {
@@ -29,6 +30,7 @@ const Inner = (props) => {
                     <Route path="/viruses" component={Viruses} />
                     <Route path="/subtraction" component={Subtraction} />
                     <Route path="/settings" component={Settings} />
+                    <Route path="/account" component={Account} />
                 </Switch>
 
                 <UploadOverlay />

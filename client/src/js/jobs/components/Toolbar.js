@@ -15,7 +15,7 @@ import { LinkContainer } from "react-router-bootstrap";
 import {InputGroup, FormGroup, FormControl, Dropdown, MenuItem} from "react-bootstrap";
 
 import { test, clearJobs } from "../actions";
-import { Icon, Button } from "virtool/js/components/Base";
+import { Icon, Button } from "../../base";
 
 const JobsToolbar = (props) => {
 

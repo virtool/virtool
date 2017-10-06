@@ -3,7 +3,7 @@ import { scaleLinear } from "d3-scale";
 import React from "react";
 import PropTypes from "prop-types";
 import { capitalize } from "lodash";
-import { Flex, FlexItem } from "virtool/js/components/Base";
+import { Flex, FlexItem } from "../../../../base";
 
 const DEFAULT_HMM = {
     label: "Unannotated",

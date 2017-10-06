@@ -18,7 +18,7 @@ import { Label, Nav, NavItem } from "react-bootstrap";
 import { ClipLoader } from "halogenium";
 
 import { getVirus, showEditVirus, showRemoveVirus } from "../../actions";
-import { Flex, FlexItem, Icon } from "../../../components/Base";
+import { Flex, FlexItem, Icon } from "../../../base";
 import IsolateEditor from "./Editor";
 import General from "./General";
 import AddIsolate from "./AddIsolate";

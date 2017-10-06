@@ -13,7 +13,7 @@ import { connect } from "react-redux";
 import { Label, Modal, ProgressBar } from "react-bootstrap";
 
 import { installSoftwareUpdates, hideInstallModal } from "../actions";
-import { Button } from "../../components/Base";
+import { Button } from "../../base";
 import { renderReleaseMarkdown } from "./Release";
 import { byteSize } from "../../utils";
 

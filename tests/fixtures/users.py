@@ -16,6 +16,7 @@ def create_user():
             "invalidate_sessions": False,
             "last_password_change": datetime.datetime(2015, 10, 6, 20, 0, 0, tzinfo=datetime.timezone.utc),
             "primary_group": "technician",
+            "api_keys": [],
             "settings": {
                 "skip_quick_analyze_dialog": True,
                 "show_ids": True,

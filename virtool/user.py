@@ -1,5 +1,8 @@
+import uuid
 import bcrypt
 import hashlib
+
+import virtool.utils
 
 PROJECTION = [
     "_id",
@@ -9,6 +12,26 @@ PROJECTION = [
     "permissions",
     "primary_group"
 ]
+
+
+ACCOUNT_PROJECTION = [
+    "_id",
+    "groups",
+    "settings",
+    "last_password_change",
+    "permissions",
+    "primary_group",
+    "api_keys"
+]
+
+
+def account_processor(document):
+    document = virtool.utils.base_processor(document)
+
+    for api_key in document["api_keys"]:
+        del api_key["key"]
+
+    return document
 
 
 async def user_exists(db, user_id):
@@ -114,3 +137,44 @@ def check_legacy_password(password, salt, hashed):
      
     """
     return hashed == hashlib.sha512(salt.encode("utf-8") + password.encode("utf-8")).hexdigest()
+
+
+def get_api_key():
+    """
+    Create a unique, UUID-based API key.
+
+    :return: API key
+    :rtype str
+
+    """
+    return uuid.uuid4().hex
+
+
+def hash_api_key(key):
+    """
+    Hash an API key using SHA256.
+
+    :param key: the API key to hash
+    :type key: str
+
+    :return: the hashed key
+    :rtype: str
+
+    """
+    return hashlib.sha256(key.encode("utf-8")).hexdigest()
+
+
+def check_api_key(key, hashed):
+    """
+    Check a API key string against a hashed one from the user database.
+
+    :param key: the API key to check
+    :type key: str
+
+    :param hashed: the hashed key to check against
+    :type hashed: str
+
+    """
+    return hash_api_key(key) == hashed
+
+

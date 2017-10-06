@@ -16,8 +16,8 @@ import { withRouter } from "react-router-dom";
 import { LinkContainer } from "react-router-bootstrap";
 import { Navbar, Nav, NavItem, NavDropdown, MenuItem } from "react-bootstrap";
 
-import { logout } from "../actions";
-import { Icon, AutoProgressBar } from "virtool/js/components/Base"
+import { logout } from "../../account/actions";
+import { Icon, AutoProgressBar } from "../../base"
 
 const isHomeActive = (match, location) => {
     return location.pathname === "/" || startsWith(location.pathname, "/home")
@@ -94,7 +94,9 @@ const Bar = (props) => {
                         </NavItem>
 
                         <NavDropdown id="account-dropdown" title={dropdownTitle}>
-                            <MenuItem>Settings</MenuItem>
+                            <LinkContainer to="/account">
+                                <MenuItem>Account</MenuItem>
+                            </LinkContainer>
                             <MenuItem onClick={props.logout}>Logout</MenuItem>
                         </NavDropdown>
                     </Nav>

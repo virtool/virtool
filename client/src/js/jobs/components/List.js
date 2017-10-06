@@ -13,7 +13,7 @@ import { connect } from "react-redux";
 import { ListGroup, ListGroupItem } from "react-bootstrap";
 
 import { findJobs, cancelJob, removeJob } from "../actions";
-import { Flex, FlexItem, Icon } from "virtool/js/components/Base";
+import { Flex, FlexItem, Icon } from "../../base";
 import Job from "./Entry";
 import JobsToolbar from "./Toolbar";
 

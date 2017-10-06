@@ -69,6 +69,7 @@ async def create(req):
             "quick_analyze_algorithm": "pathoscope_bowtie"
         },
         "sessions": [],
+        "api_keys": [],
         "permissions": {permission: False for permission in PERMISSIONS},
         "password": virtool.user.hash_password(data["password"]),
         "primary_group": "",

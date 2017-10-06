@@ -14,7 +14,7 @@ import { connect } from "react-redux";
 import { Row, Col, Panel } from "react-bootstrap";
 
 import { updateSetting } from "../../actions";
-import { InputSave } from "../../../components/Base";
+import { InputSave } from "../../../base";
 
 
 /**

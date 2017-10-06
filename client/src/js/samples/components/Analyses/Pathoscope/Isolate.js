@@ -1,8 +1,8 @@
 import React from "react";
 import PropTypes from "prop-types";
 import { sortBy } from "lodash";
-import { Flex, FlexItem } from "virtool/js/components/Base";
-import { toScientificNotation } from "virtool/js/utils";
+import { Flex, FlexItem } from "../../../../base";
+import { toScientificNotation } from "../../../../utils";
 import Coverage from "./Coverage";
 
 export default class PathoscopeIsolate extends React.Component {

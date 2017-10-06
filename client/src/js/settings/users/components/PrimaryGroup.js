@@ -15,7 +15,7 @@ import { find, capitalize } from "lodash";
 import { Row, Col } from "react-bootstrap";
 
 import { setPrimaryGroup } from "../actions";
-import { Icon, Help, Input } from "virtool/js/components/Base";
+import { Icon, Help, Input } from "../../../base";
 
 /**
  * A component based on ListGroupItem

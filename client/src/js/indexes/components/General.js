@@ -12,7 +12,7 @@ import { connect } from "react-redux";
 import { Link } from "react-router-dom";
 import { Badge, Panel, ListGroup, ListGroupItem, Table } from "react-bootstrap";
 
-import { Flex, FlexItem, RelativeTime } from "virtool/js/components/Base";
+import { Flex, FlexItem, RelativeTime } from "../../base";
 
 const IndexGeneral = (props) => {
 

@@ -15,7 +15,7 @@ import { LinkContainer } from "react-router-bootstrap";
 import { Alert, Badge, Row, Col, ListGroup, Pagination } from "react-bootstrap";
 
 import { findViruses } from "../actions";
-import { Flex, FlexItem, Icon, ListGroupItem } from "virtool/js/components/Base";
+import { Flex, FlexItem, Icon, ListGroupItem } from "../../base";
 import VirusToolbar from "./Toolbar";
 import CreateVirus from "./Create";
 
@@ -90,8 +90,10 @@ class VirusesList extends React.Component {
         } else {
             virusComponents = (
                 <ListGroupItem key="noViruses" className="text-center">
-                    <span><Icon name="info"/> No viruses found. <Link to={{state: {virusImport: true}}}>Import</Link> or</span>
-                    <span> <Link to="/viruses/create">Create</Link> some</span>s
+                    <span>
+                        <Icon name="info"/> No viruses found. <Link to={{state: {virusImport: true}}}>Import</Link> or
+                    </span>
+                    <span> <Link to="/viruses/create">Create</Link> some</span>
                 </ListGroupItem>
             );
         }

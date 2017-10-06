@@ -15,7 +15,7 @@ import { connect } from "react-redux";
 import { Modal } from "react-bootstrap";
 
 import { removeSample, hideSampleModal } from "../actions";
-import { Button } from "../../components/Base/Button";
+import { Button } from "../../base";
 
 const RemoveSample = (props) => (
     <Modal show={props.show} onHide={props.onHide} dialogClassName="modal-danger">

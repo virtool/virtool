@@ -11,7 +11,7 @@
 
 import React from "react";
 import { Alert } from "react-bootstrap";
-import { Icon, DetailModal, Flex, FlexItem, Button, AutoProgressBar } from "virtool/js/components/Base"
+import { Icon, DetailModal, Flex, FlexItem, Button, AutoProgressBar } from "virtool/js/components/base"
 import { numberToWord } from "virtool/js/utils";
 
 import HMMTable from "./HMM/Table";

@@ -1,7 +1,7 @@
 import React from "react";
 import PropTypes from "prop-types";
 import { assign, xor, sortBy, sum, filter } from "lodash";
-import { Icon, Flex, FlexItem, Button, Checkbox } from "virtool/js/components/Base";
+import { Icon, Flex, FlexItem, Button, Checkbox } from "../../../../base";
 import { Row, Col, Dropdown, MenuItem, FormGroup, InputGroup, FormControl } from "react-bootstrap";
 
 import PathoscopeList from "./List";

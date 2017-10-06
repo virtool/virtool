@@ -14,7 +14,7 @@ import { connect } from "react-redux";
 import { Row, Col, Panel } from "react-bootstrap";
 
 import { updateSetting } from "../../actions";
-import { Icon, Flex, FlexItem, InputSave, Checkbox } from "../../../components/Base";
+import { Icon, Flex, FlexItem, InputSave, Checkbox } from "../../../base";
 
 const SSLFooter = () => (
     <small className="text-warning">

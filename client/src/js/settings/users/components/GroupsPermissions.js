@@ -14,7 +14,7 @@ import { find } from "lodash";
 import { connect } from "react-redux";
 import { capitalize, includes} from "lodash";
 import { Row, Col, Panel, ListGroup } from "react-bootstrap";
-import { ListGroupItem, Checkbox, Icon, Help } from "virtool/js/components/Base";
+import { ListGroupItem, Checkbox, Icon, Help } from "../../../base";
 
 import { addUserToGroup, removeUserFromGroup } from "../actions";
 import Permissions from "../../groups/components/Permissions";

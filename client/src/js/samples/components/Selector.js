@@ -14,8 +14,8 @@ import React from "react";
 import PropTypes from "prop-types";
 import { filter, map, some } from "lodash";
 import { FormGroup, InputGroup, FormControl } from "react-bootstrap";
-import { Icon, FlexItem, Button } from "virtool/js/components/Base";
-import { stringOrBool } from "virtool/js/propTypes";
+import { Icon, FlexItem, Button } from "../../base";
+import { stringOrBool } from "../../propTypes";
 
 /**
  * A main view for importing samples from FASTQ files. Importing starts an import job on the server.

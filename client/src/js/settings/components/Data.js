@@ -14,7 +14,7 @@ import { connect } from "react-redux";
 import { Row, Col, Panel } from "react-bootstrap";
 
 import { updateSettings } from "../actions";
-import { Icon, InputSave } from "virtool/js/components/Base";
+import { Icon, InputSave } from "../../base";
 
 /**
  * A component the contains child components that modify certain general options. A small explanation of each

@@ -16,7 +16,7 @@ import { Row, Col, Modal, FormGroup, FormControl, InputGroup, ControlLabel, Popo
 import { ClipLoader } from "halogenium";
 
 import { addSequence, hideVirusModal } from "../../actions";
-import { Icon, Button } from "virtool/js/components/Base";
+import { Icon, Button } from "../../../base";
 import SequenceField from "./SequenceField";
 import virusAPI from "../../api";
 

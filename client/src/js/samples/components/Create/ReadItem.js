@@ -2,8 +2,8 @@ import React from "react";
 import PropTypes from "prop-types";
 import { Row, Col } from "react-bootstrap";
 
-import { byteSize } from "virtool/js/utils";
-import { Icon, ListGroupItem } from "virtool/js/components/Base";
+import { byteSize } from "../../../utils";
+import { Icon, ListGroupItem } from "../../../base";
 
 export default class ReadItem extends React.PureComponent {
 

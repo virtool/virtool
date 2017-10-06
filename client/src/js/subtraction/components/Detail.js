@@ -18,7 +18,7 @@ import { ClipLoader } from "halogenium";
 import { ListGroup, ListGroupItem, Row, Col, Badge, Table } from "react-bootstrap";
 
 import { getSubtraction } from "../actions";
-import { Button, Icon } from "../../components/Base";
+import { Button, Icon } from "../../base";
 
 const calculateGC = (nucleotides) => {
     return Numeral(1 - nucleotides.a - nucleotides.t - nucleotides.n).format("0.000")

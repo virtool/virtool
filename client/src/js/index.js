@@ -4,7 +4,7 @@ import ReactDOM from "react-dom";
 import App from "./App";
 import WSConnection from "./websocket";
 import { store } from "./store";
-import { getAccount } from "./nav/actions";
+import { getAccount } from "./account/actions";
 import { getSettings } from "./settings/actions";
 
 export * from "../style/style.less";

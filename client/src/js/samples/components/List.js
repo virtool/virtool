@@ -5,7 +5,7 @@ import { connect } from "react-redux";
 import { Badge, ListGroup, Pagination } from "react-bootstrap";
 
 import { findSamples } from "../actions";
-import { Flex, FlexItem, Icon, ListGroupItem } from "virtool/js/components/Base";
+import { Flex, FlexItem, Icon, ListGroupItem } from "../../base";
 import SampleEntry from "./Entry";
 import SampleToolbar from "./Toolbar";
 import CreateSample from "./Create/Create";

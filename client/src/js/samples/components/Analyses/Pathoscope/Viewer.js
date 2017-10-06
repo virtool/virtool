@@ -1,9 +1,9 @@
 import React from "react";
 import PropTypes from "prop-types";
 import { Alert } from "react-bootstrap";
-import { Icon } from "virtool/js/components/Base";
+import { Icon } from "../../../../base";
 import { assign, forEach, sortBy, max } from "lodash";
-import { formatIsolateName } from "virtool/js/utils";
+import { formatIsolateName } from "../../../../utils";
 
 import PathoscopeController from "./Controller";
 

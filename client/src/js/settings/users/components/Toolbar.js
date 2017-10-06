@@ -12,7 +12,7 @@
 import React from "react";
 import PropTypes from "prop-types";
 import { FormGroup, InputGroup, FormControl } from "react-bootstrap";
-import { Icon, Button } from "virtool/js/components/Base";
+import { Icon, Button } from "../../../base";
 
 import Add from "./Add";
 import Groups from "./Groups/Groups";

@@ -11,7 +11,7 @@
 
 import React from "react";
 import { Overlay, Popover, FormGroup, InputGroup, FormControl } from "react-bootstrap";
-import { Icon, Button } from "virtool/js/components/Base";
+import { Icon, Button } from "../../../base";
 
 export default class AddGroup extends React.Component {
 

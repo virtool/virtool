@@ -16,7 +16,7 @@ import { LinkContainer } from "react-router-bootstrap";
 import { Nav, NavItem } from "react-bootstrap";
 
 import { getSample, showRemoveSample } from "../actions";
-import { Flex, FlexItem, Icon } from "virtool/js/components/Base";
+import { Flex, FlexItem, Icon } from "../../base";
 import General from "./General";
 import Quality from "./Quality/Quality";
 import Analyses from "./Analyses/Analyses";

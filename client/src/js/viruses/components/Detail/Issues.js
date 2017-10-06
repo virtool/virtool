@@ -22,7 +22,7 @@ import React from "react";
 import PropTypes from "prop-types";
 import { find } from "lodash";
 import { Alert } from "react-bootstrap";
-import { formatIsolateName } from "virtool/js/utils";
+import { formatIsolateName } from "../../../utils";
 
 const VirusIssues = (props) => {
 

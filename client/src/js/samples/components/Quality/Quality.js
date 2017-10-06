@@ -13,7 +13,7 @@ import React from "react";
 import { pick } from "lodash";
 import { connect } from "react-redux";
 
-import { Button } from "virtool/js/components/Base";
+import { Button } from "../../../base";
 import Chart from "./Chart";
 import Bases from "./Bases";
 import Nucleotides from "./Nucleotides";

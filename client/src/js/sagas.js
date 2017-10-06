@@ -14,7 +14,7 @@ import { watchViruses } from "./viruses/sagas"
 import { watchIndexes } from "./indexes/sagas"
 import { watchSubtraction } from "./subtraction/sagas"
 import { watchFiles } from "./files/sagas";
-import { watchAccount } from "./nav/sagas"
+import { watchAccount } from "./account/sagas"
 import { watchSettings } from "./settings/sagas"
 import { watchUsers } from "./settings/users/sagas";
 import { watchGroups } from "./settings/groups/sagas";

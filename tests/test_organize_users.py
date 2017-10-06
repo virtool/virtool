@@ -18,6 +18,7 @@ class TestUnsetSessions:
 
         assert await test_motor.users.find().to_list(None) == [{
             "_id": "foobar",
+            "api_keys": [],
             "permissions": {
                 "modify_host": False,
                 "create_sample": False,

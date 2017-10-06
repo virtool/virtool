@@ -2,62 +2,58 @@ import pytest
 from virtool.user import check_password
 
 
-class TestGet:
+async def test_get(spawn_client):
+    client = await spawn_client(authorize=True)
 
-    async def test(self, spawn_client):
-        client = await spawn_client(authorize=True)
+    resp = await client.get("/api/account")
 
-        resp = await client.get("/api/account")
+    assert resp.status == 200
 
-        assert resp.status == 200
-
-        assert await resp.json() == {
-            "force_reset": False,
-            "groups": [],
-            "id": "test",
-            "last_password_change": "2015-10-06T20:00:00Z",
-            "permissions": {
-                "modify_host": False,
-                "create_sample": False,
-                "cancel_job": False,
-                "manage_users": False,
-                "modify_hmm": False,
-                "modify_options": False,
-                "modify_virus": False,
-                "rebuild_index": False,
-                "remove_host": False,
-                "remove_job": False,
-                "remove_virus": False
-            },
-            "primary_group": "technician",
-            "settings": {
-                "quick_analyze_algorithm": "pathoscope_bowtie",
-                "show_ids": True,
-                "show_versions": True,
-                "skip_quick_analyze_dialog": True
-            }
-        }
-
-
-class TestGetSettings:
-
-    async def test(self, spawn_client):
-        """
-        Test that a ``GET /account/settings`` returns the settings for the session user.
-
-        """
-        client = await spawn_client(authorize=True)
-
-        resp = await client.get("/api/account/settings")
-
-        assert resp.status == 200
-
-        assert await resp.json() == {
-            "skip_quick_analyze_dialog": True,
+    assert await resp.json() == {
+        "groups": [],
+        "id": "test",
+        "last_password_change": "2015-10-06T20:00:00Z",
+        "api_keys": [],
+        "permissions": {
+            "modify_host": False,
+            "create_sample": False,
+            "cancel_job": False,
+            "manage_users": False,
+            "modify_hmm": False,
+            "modify_options": False,
+            "modify_virus": False,
+            "rebuild_index": False,
+            "remove_host": False,
+            "remove_job": False,
+            "remove_virus": False
+        },
+        "primary_group": "technician",
+        "settings": {
+            "quick_analyze_algorithm": "pathoscope_bowtie",
             "show_ids": True,
             "show_versions": True,
-            "quick_analyze_algorithm": "pathoscope_bowtie"
+            "skip_quick_analyze_dialog": True
         }
+    }
+
+
+async def test_get_settings(spawn_client):
+    """
+    Test that a ``GET /account/settings`` returns the settings for the session user.
+
+    """
+    client = await spawn_client(authorize=True)
+
+    resp = await client.get("/api/account/settings")
+
+    assert resp.status == 200
+
+    assert await resp.json() == {
+        "skip_quick_analyze_dialog": True,
+        "show_ids": True,
+        "show_versions": True,
+        "quick_analyze_algorithm": "pathoscope_bowtie"
+    }
 
 
 class TestUpdateSettings:
@@ -146,27 +142,112 @@ class TestChangePassword:
         })
 
 
-class TestLogout:
+async def test_create_api_key(mocker, spawn_client, static_time, test_motor, test_dispatch):
+    mocker.patch("virtool.user.get_api_key", return_value="abc123xyz789")
 
-    async def test(self, spawn_client):
-        """
-        Test that calling the logout endpoint results in the current session being removed and the user being logged
-        out.
+    client = await spawn_client(authorize=True)
 
-        """
-        client = await spawn_client(authorize=True)
+    resp = await client.post("/api/account/keys", {
+        "name": "Foobar"
+    })
 
-        # Make sure the session is authorized
-        resp = await client.get("/api/account")
-        assert resp.status == 200
+    assert resp.status == 201
 
-        # Logout
-        resp = await client.get("/api/account/logout")
-        assert resp.status == 204
+    expected = {
+        "id": "foobar_0",
+        "name": "Foobar",
+        "key": "57f614878f6056613d77f38b8b105bed8bb452f49a98c70cc63099a5129bac80",
+        "created_at": static_time,
+        "permissions": {
+            "cancel_job": False,
+            "create_sample": False,
+            "manage_users": False,
+            "modify_hmm": False,
+            "modify_host": False,
+            "modify_options": False,
+            "modify_virus": False,
+            "rebuild_index": False,
+            "remove_host": False,
+            "remove_job": False,
+            "remove_virus": False
+        }
+    }
 
-        # Make sure that the session is no longer authorized
-        resp = await client.get("/api/account")
-        assert resp.status == 401
+    assert (await test_motor.users.find_one({"_id": "test"}, ["api_keys"]))["api_keys"][0] == expected
+
+    expected.update({
+        "raw": "abc123xyz789",
+        "created_at": "2017-10-06T20:00:00Z"
+    })
+
+    del expected["key"]
+
+    assert await resp.json() == expected
+
+
+async def test_update_api_key(spawn_client, static_time, test_dispatch):
+    client = await spawn_client(authorize=True)
+
+    api_key = {
+        "id": "foobar_0",
+        "name": "Foobar",
+        "key": "foobar",
+        "created_at": static_time.isoformat(),
+        "permissions": {
+            "cancel_job": False,
+            "create_sample": False,
+            "manage_users": False,
+            "modify_hmm": False,
+            "modify_host": False,
+            "modify_options": False,
+            "modify_virus": False,
+            "rebuild_index": False,
+            "remove_host": False,
+            "remove_job": False,
+            "remove_virus": False
+        }
+    }
+
+    await client.db.users.update_one({"_id": "test"}, {
+        "$set": {
+            "api_keys": [api_key]
+        }
+    })
+
+    resp = await client.patch("/api/account/keys/foobar_0", {
+        "permissions": {"manage_users": True}
+    })
+
+    assert resp.status == 200
+
+    api_key["permissions"]["manage_users"] = True
+
+    assert (await client.db.users.find_one({"_id": "test"}, ["api_keys"]))["api_keys"][0] == api_key
+
+    del api_key["key"]
+
+    assert await resp.json() == api_key
+
+
+async def test_logout(spawn_client):
+    """
+    Test that calling the logout endpoint results in the current session being removed and the user being logged
+    out.
+
+    """
+    client = await spawn_client(authorize=True)
+
+    # Make sure the session is authorized
+    resp = await client.get("/api/account")
+    assert resp.status == 200
+
+    # Logout
+    resp = await client.get("/api/account/logout")
+    assert resp.status == 204
+
+    # Make sure that the session is no longer authorized
+    resp = await client.get("/api/account")
+    assert resp.status == 401
 
 
 @pytest.mark.parametrize("method,path", [
