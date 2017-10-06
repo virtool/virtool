@@ -24,6 +24,14 @@ const accountAPI = {
             .send(update);
     },
 
+    changePassword: (oldPassword, newPassword) => {
+        return Request.put("/api/account/password")
+            .send({
+                old_password: oldPassword,
+                new_password: newPassword
+            });
+    },
+
     createAPIKey: (name, permissions) => {
         return Request.post("/api/account/keys")
             .send({

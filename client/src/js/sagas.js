@@ -33,5 +33,5 @@ export default function* rootSaga () {
         fork(watchUsers),
         fork(watchGroups),
         fork(watchUpdates)
-    ]
+    ];
 }

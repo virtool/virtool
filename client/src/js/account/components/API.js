@@ -344,7 +344,7 @@ const APIKeys = (props) => {
             </ListGroup>
 
             <CreateAPIKey
-                show={props.location.state && props.location.state.createAPIKey}
+                show={!!(props.location.state && props.location.state.createAPIKey)}
                 permissions={props.permissions}
                 onHide={() => props.history.push({state: {createAPIKey: false}})}
                 onCreate={props.onCreate}

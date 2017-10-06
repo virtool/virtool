@@ -65,7 +65,7 @@ async def validate_credentials(db, user_id, password):
     :type password: str
 
     :return: validation success
-    :rtype: bool
+    :rtype: Coroutine[bool]
 
     """
     document = await db.users.find_one(user_id, ["password", "salt"])
