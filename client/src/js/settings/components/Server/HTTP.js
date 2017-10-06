@@ -15,7 +15,7 @@ import { connect } from "react-redux";
 import { Row, Col, Panel } from "react-bootstrap";
 
 import { updateSetting } from "../../actions";
-import { Icon, InputSave } from "../../../base";
+import { Checkbox, Icon, InputSave } from "../../../base";
 
 const HTTPOptions = (props) => {
 
@@ -23,6 +23,12 @@ const HTTPOptions = (props) => {
         <small className="text-warning">
             <Icon name="warning" /> Changes to these settings will only take effect when the server is reloaded.
         </small>
+    );
+
+    const checkboxLabel = (
+        <span>
+            Enable <a href="https://docs.virtool.ca/web-api.html" target="_blank">API</a>
+        </span>
     );
 
     return (
@@ -50,6 +56,11 @@ const HTTPOptions = (props) => {
                         onSave={e => props.onUpdatePort(e.value)}
                         initialValue={props.port}
                     />
+                    <Checkbox
+                        label={checkboxLabel}
+                        checked={props.enableApi}
+                        onClick={() => props.onUpdateAPI(!props.enableApi)}
+                    />
                 </Panel>
             </Col>
         </Row>
@@ -59,8 +70,9 @@ const HTTPOptions = (props) => {
 const mapStateToProps = (state) => {
     return {
         host: state.settings.data.server_host,
-        port: state.settings.data.server_port
-    }
+        port: state.settings.data.server_port,
+        enableApi: state.settings.data.enable_api
+    };
 };
 
 const mapDispatchToProps = (dispatch) => {
@@ -71,6 +83,10 @@ const mapDispatchToProps = (dispatch) => {
 
         onUpdatePort: (value) => {
             dispatch(updateSetting("server_port", toNumber(value)));
+        },
+
+        onUpdateAPI: (value) => {
+            dispatch(updateSetting("enable_api", value));
         }
     };
 };

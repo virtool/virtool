@@ -69,6 +69,7 @@ SCHEMA = {
     # HTTP Server
     "server_host": {"type": "string", "default": "localhost"},
     "server_port": get_default_integer(9950),
+    "enable_api": {"type": "boolean", "default": False},
 
     # Github
     "github_token": {"type": "string", "default": None, "nullable": True},
