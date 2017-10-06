@@ -28,7 +28,7 @@ async def login_handler(req):
 
     form_data = await req.post()
 
-    username = form_data.get("username", None)
+    user_id = form_data.get("username", None)
     password = form_data.get("password", None)
     location = form_data.get("location", "/")
 
@@ -39,13 +39,15 @@ async def login_handler(req):
 
         await req.app["db"].sessions.update_one({"_id": session.id}, {
             "$set": {
-                "user_id": username,
                 "groups": user_document["groups"],
-                "permissions": user_document["permissions"]
+                "permissions": user_document["permissions"],
+                "user": {
+                    "id": user_id
+                }
             }
         })
 
-        session.user_id = username
+        session.user_id = user_id
         session.groups = user_document["groups"]
         session.permissions = user_document["permissions"]
 

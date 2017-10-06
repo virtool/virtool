@@ -50,8 +50,8 @@ async def middleware_factory(app, handler):
                 user_id, key = split
 
                 document = await app["db"].keys.find_one({
-                    "key": virtool.user.hash_api_key(key),
-                    "user_id": user_id
+                    "_id": virtool.user.hash_api_key(key),
+                    "user.id": user_id
                 }, AUTHENICATION_PROJECTION)
 
                 if not document:

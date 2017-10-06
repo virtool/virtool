@@ -133,6 +133,8 @@ async def init_db(app):
     await db.history.create_index("virus.id")
     await db.history.create_index("index.id")
     await db.history.create_index("created_at")
+    await db.keys.create_index("id", unique=True)
+    await db.keys.create_index("user.id")
 
     app["db"] = db
 
