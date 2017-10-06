@@ -118,7 +118,7 @@ async def create(req):
         None,
         joined,
         description,
-        req["session"].user_id
+        req["client"].user_id
     )
 
     complete = await virtool.virus.join_and_format(db, virus_id, joined=joined)
@@ -235,7 +235,7 @@ async def edit(req):
         old,
         new,
         description,
-        req["session"].user_id
+        req["client"].user_id
     )
 
     await req.app["dispatcher"].dispatch(
@@ -280,7 +280,7 @@ async def remove(req):
         joined,
         None,
         description,
-        req["session"].user_id
+        req["client"].user_id
     )
 
     await req.app["dispatcher"].dispatch(
@@ -422,7 +422,7 @@ async def add_isolate(req):
         old,
         new,
         description,
-        req["session"].user_id
+        req["client"].user_id
     )
 
     await virtool.virus.dispatch_version_only(req, new)
@@ -507,7 +507,7 @@ async def edit_isolate(req):
         old,
         new,
         "Renamed {} to {}".format(old_isolate_name, isolate_name),
-        req["session"].user_id
+        req["client"].user_id
     )
 
     await virtool.virus.dispatch_version_only(req, new)
@@ -587,7 +587,7 @@ async def set_as_default(req):
         old,
         new,
         "Set {} as default".format(isolate_name),
-        req["session"].user_id
+        req["client"].user_id
     )
 
     await virtool.virus.dispatch_version_only(req, new)
@@ -670,7 +670,7 @@ async def remove_isolate(req):
         old,
         new,
         description,
-        req["session"].user_id
+        req["client"].user_id
     )
 
     await virtool.virus.dispatch_version_only(req, new)
@@ -785,7 +785,7 @@ async def create_sequence(req):
         old,
         new,
         "Created new sequence {} in {}".format(data["_id"], virtool.virus.format_isolate_name(isolate)),
-        req["session"].user_id
+        req["client"].user_id
     )
 
     await virtool.virus.dispatch_version_only(req, new)
@@ -849,7 +849,7 @@ async def edit_sequence(req):
         old,
         new,
         "Edited sequence {} in {}".format(sequence_id, virtool.virus.format_isolate_name(isolate)),
-        req["session"].user_id
+        req["client"].user_id
     )
 
     await virtool.virus.dispatch_version_only(req, new)
@@ -908,7 +908,7 @@ async def remove_sequence(req):
         old,
         new,
         "Removed sequence {} from {}".format(sequence_id, isolate_name),
-        req["session"].user_id
+        req["client"].user_id
     )
 
     await virtool.virus.dispatch_version_only(req, new)
@@ -1010,7 +1010,7 @@ async def import_viruses(req):
         db,
         req.app["dispatcher"].dispatch,
         data,
-        req["session"].user_id
+        req["client"].user_id
     ))
 
     return json_response({}, status=201, headers={"Location": "/api/viruses"})

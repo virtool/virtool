@@ -239,7 +239,7 @@ async def remove_group(req):
     if not await virtool.user.user_exists(db, user_id):
         return not_found()
 
-    if group_id == "administrator" and user_id == req["session"].user_id:
+    if group_id == "administrator" and user_id == req["client"].user_id:
         return bad_request("Administrators cannot remove themselves from the administrator group")
 
     document = await db.users.find_one_and_update({"_id": user_id}, {
@@ -269,7 +269,7 @@ async def remove(req):
     """
     user_id = req.match_info["user_id"]
 
-    if user_id == req["session"].user_id:
+    if user_id == req["client"].user_id:
         return bad_request("Cannot remove own account")
 
     delete_result = await req.app["db"].users.delete_one({"_id": user_id})

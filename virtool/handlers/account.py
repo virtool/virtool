@@ -36,7 +36,7 @@ async def get(req):
     Get complete user document
 
     """
-    user_id = req["session"].user_id
+    user_id = req["client"].user_id
 
     document = await req.app["db"].users.find_one(user_id, virtool.user.ACCOUNT_PROJECTION)
 
@@ -49,7 +49,7 @@ async def get_settings(req):
     Get account settings
 
     """
-    user_id = req["session"].user_id
+    user_id = req["client"].user_id
 
     document = await req.app["db"].users.find_one(user_id)
 
@@ -65,7 +65,7 @@ async def update_settings(req):
     """
     db, data = req.app["db"], req["data"]
 
-    user_id = req["session"].user_id
+    user_id = req["client"].user_id
 
     document = await db.users.find_one(user_id, ["settings"])
 
@@ -91,7 +91,7 @@ async def change_password(req):
     """
     db, data = req.app["db"], req["data"]
 
-    user_id = req["session"].user_id
+    user_id = req["client"].user_id
 
     data = await req.json()
 
@@ -132,7 +132,7 @@ async def create_api_key(req):
     name = data["name"]
     permissions = data.get("permissions", None) or {key: False for key in virtool.user_permissions.PERMISSIONS}
 
-    user_id = req["session"].user_id
+    user_id = req["client"].user_id
 
     document = await db.users.find_one({"_id": user_id}, ["api_keys"])
 
@@ -184,7 +184,7 @@ async def update_api_key(req):
 
     key_id = req.match_info.get("key_id")
 
-    user_id = req["session"].user_id
+    user_id = req["client"].user_id
 
     query = {"_id": user_id, "api_keys.id": key_id}
 
@@ -220,7 +220,7 @@ async def update_api_key(req):
 async def remove_api_key(req):
     db = req.app["db"]
 
-    user_id = req["session"].user_id
+    user_id = req["client"].user_id
     key_id = req.match_info.get("key_id")
 
     if not await db.users.count({"_id": user_id, "api_keys.id": key_id}):
@@ -246,7 +246,7 @@ async def logout(req):
     """
     db = req.app["db"]
 
-    session_id = req["session"].id
+    session_id = req["client"].id
 
     await db.sessions.delete_one({"_id": session_id})
 

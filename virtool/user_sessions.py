@@ -1,65 +1,86 @@
-from virtool.utils import random_alphanumeric
+import virtool.user
+import virtool.utils
 from virtool.handlers.utils import bad_request
 
 
-class Session:
+AUTHENICATION_PROJECTION = ["user_id", "groups", "permissions"]
 
-    def __init__(self, session_document):
+
+class Client:
+
+    def __init__(self, ip, user_agent):
         # These attributes are assigned even when the session is not authorized.
-        self.id = session_document["_id"]
-        self.ip = session_document["ip"]
-        self.user_agent = session_document["user_agent"]
+        self.ip = ip
+        self.user_agent = user_agent
 
-        # The attributes are only assigned when the session is authorized.
-        self.user_id = session_document.get("user_id", None)
-        self.groups = session_document.get("groups", None)
-        self.permissions = session_document.get("permissions", None)
+        self.authenticated = False
+        self.user_id = None
+        self.groups = None
+        self.permissions = None
+        self.is_api = False
+
+    def authenticate(self, document, is_api):
+        self.authenticated = True
+        self.user_id = document["user_id"]
+        self.groups = document["groups"]
+        self.permissions = document["permissions"]
+        self.is_api = is_api
 
 
 async def middleware_factory(app, handler):
-    async def middleware_handler(request):
+    async def middleware_handler(req):
+        ip = req.transport.get_extra_info("peername")[0]
+        user_agent = req.headers["User-Agent"]
 
-        session_id = request.cookies.get("session_id", None)
+        req["client"] = Client(ip, user_agent)
 
-        if app["settings"].get("enable_api") and not session_id and request.path[0:5] == "/api":
-            authentication = request.headers.get("Authentication", None)
+        # Check if there is a session_id in cookies.
+        session_id = req.cookies.get("session_id", None)
+
+        # Try API key authentication if there was no session_id.
+        if app["settings"].get("enable_api") and not session_id and req.path[0:5] == "/api":
+            authentication = req.headers.get("Authentication", None)
 
             if authentication:
                 split = authentication.split(":")
 
                 if not len(split) == 2:
-                    return bad_request("Invalid authentication header")
+                    return bad_request("Malformed Authentication header")
 
-                user = await app["db"].users.find_one()
+                user_id, key = split
 
-        ip = request.transport.get_extra_info("peername")[0]
-        user_agent = request.headers["User-Agent"]
+                document = await app["db"].keys.find_one({
+                    "key": virtool.user.hash_api_key(key),
+                    "user_id": user_id
+                }, AUTHENICATION_PROJECTION)
 
-        document = None
+                if not document:
+                    return bad_request("Invalid Authentication header")
 
-        if session_id:
-            document = await app["db"].sessions.find_one({
+                req["client"].authenticate(document, True)
+
+                return await handler(req)
+
+        document = await app["db"].sessions.find_one({
+            "_id": session_id,
+            "ip": ip,
+            "user_agent": user_agent
+        }, AUTHENICATION_PROJECTION)
+
+        if document:
+            req["client"].authenticate(document, False)
+        else:
+            session_id = virtool.utils.random_alphanumeric(128, mixed_case=True),
+
+            await app["db"].sessions.insert_one({
                 "_id": session_id,
                 "ip": ip,
                 "user_agent": user_agent
             })
 
-        if not document:
-            document = {
-                "_id": random_alphanumeric(128, mixed_case=True),
-                "ip": ip,
-                "user_agent": user_agent
-            }
+        response = await handler(req)
 
-            await app["db"].sessions.insert_one(document)
-
-        session = Session(document)
-
-        request["session"] = session
-
-        response = await handler(request)
-
-        response.set_cookie("session_id", request["session"].id)
+        response.set_cookie("session_id", session_id)
 
         return response
 

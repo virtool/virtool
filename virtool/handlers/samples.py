@@ -85,7 +85,7 @@ async def create(req):
 
     sample_id = await virtool.utils.get_new_id(db.samples)
 
-    user_id = req["session"].user_id
+    user_id = req["client"].user_id
 
     document = deepcopy(data)
 
@@ -201,8 +201,8 @@ async def set_rights(req):
     """
     data = await req.json()
 
-    user_id = req["session"].user_id
-    user_groups = req["session"].groups
+    user_id = req["client"].user_id
+    user_groups = req["client"].groups
 
     sample_id = req.match_info["sample_id"]
 
@@ -282,7 +282,7 @@ async def analyze(req):
         req.app["settings"],
         req.app["job_manager"],
         sample_id,
-        req["session"].user_id,
+        req["client"].user_id,
         data["algorithm"]
     )
 

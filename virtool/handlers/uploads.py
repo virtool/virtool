@@ -54,7 +54,7 @@ async def upload(req):
         "name": filename,
         "type": file_type,
         "user": {
-            "id": req["session"].user_id
+            "id": req["client"].user_id
         },
         "uploaded_at": uploaded_at,
         "expires_at": expires_at,

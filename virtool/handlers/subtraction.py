@@ -57,7 +57,7 @@ async def create(req):
 
     subtraction_id = data["subtraction_id"]
     file_id = data["file_id"]
-    user_id = req["session"].user_id
+    user_id = req["client"].user_id
 
     job_id = await virtool.utils.get_new_id(db.jobs)
 

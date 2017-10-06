@@ -24,7 +24,7 @@ def generate_verification_keys():
 
 async def login_handler(req):
     db = req.app["db"]
-    session = req["session"]
+    session = req["client"]
 
     form_data = await req.post()
 

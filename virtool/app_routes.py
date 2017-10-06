@@ -14,10 +14,10 @@ logger = logging.getLogger(__name__)
 async def index_handler(req):
     static_hash = get_static_hash(req.app["client_path"])
 
-    if not req["session"].user_id:
+    if not req["client"].user_id:
         keys = generate_verification_keys()
 
-        session_id = req["session"].id
+        session_id = req["client"].id
 
         await req.app["db"].sessions.update_one({"_id": session_id}, {
             "$set": {
