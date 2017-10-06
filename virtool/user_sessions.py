@@ -1,4 +1,5 @@
 from virtool.utils import random_alphanumeric
+from virtool.handlers.utils import bad_request
 
 
 class Session:
@@ -14,23 +15,22 @@ class Session:
         self.groups = session_document.get("groups", None)
         self.permissions = session_document.get("permissions", None)
 
-    def has_group(self, *args):
-        if not all(isinstance(str, arg) for arg in args):
-            raise ValueError("Permissions must be of type str")
-
-        return all(grp in self.groups for grp in args)
-
-    def has_permission(self, *args):
-        if not all(isinstance(str, arg) for arg in args):
-            raise ValueError("Permissions must be of type str")
-
-        return all(self.permissions[perm] is True for perm in args)
-
 
 async def middleware_factory(app, handler):
     async def middleware_handler(request):
 
         session_id = request.cookies.get("session_id", None)
+
+        if app["settings"].get("enable_api") and not session_id and request.path[0:5] == "/api":
+            authentication = request.headers.get("Authentication", None)
+
+            if authentication:
+                split = authentication.split(":")
+
+                if not len(split) == 2:
+                    return bad_request("Invalid authentication header")
+
+                user = await app["db"].users.find_one()
 
         ip = request.transport.get_extra_info("peername")[0]
         user_agent = request.headers["User-Agent"]
