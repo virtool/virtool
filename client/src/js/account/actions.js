@@ -16,6 +16,7 @@ import {
     REMOVE_API_KEY,
     LOGOUT
 } from "../actionTypes";
+import {GET_API_KEYS} from "../actionTypes";
 
 
 export function wsUpdateAccount (data) {
@@ -43,6 +44,12 @@ export function changePassword (oldPassword, newPassword) {
         type: CHANGE_ACCOUNT_PASSWORD.REQUESTED,
         oldPassword,
         newPassword
+    };
+}
+
+export function getAPIKeys () {
+    return {
+        type: GET_API_KEYS.REQUESTED
     };
 }
 

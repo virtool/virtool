@@ -32,6 +32,10 @@ const accountAPI = {
             });
     },
 
+    getAPIKeys: () => {
+        return Request.get("/api/account/keys");
+    },
+
     createAPIKey: (name, permissions) => {
         return Request.post("/api/account/keys")
             .send({

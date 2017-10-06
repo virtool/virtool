@@ -8,11 +8,12 @@
  */
 
 import { assign } from "lodash";
-import { GET_ACCOUNT, UPDATE_ACCOUNT_SETTINGS, CHANGE_ACCOUNT_PASSWORD, LOGOUT } from "../actionTypes";
+import { GET_ACCOUNT, UPDATE_ACCOUNT_SETTINGS, CHANGE_ACCOUNT_PASSWORD, GET_API_KEYS, LOGOUT } from "../actionTypes";
 
 const initialState = {
     ready: false,
-    oldPasswordError: false
+    oldPasswordError: false,
+    apiKeys: null
 };
 
 export default function accountReducer (state = initialState, action) {
@@ -30,6 +31,9 @@ export default function accountReducer (state = initialState, action) {
 
         case CHANGE_ACCOUNT_PASSWORD.FAILED:
             return assign({}, state, {oldPasswordError: true});
+
+        case GET_API_KEYS.SUCCEEDED:
+            return assign({}, state, {apiKeys: action.data});
 
         case LOGOUT.SUCCEEDED:
             window.location.reload();
