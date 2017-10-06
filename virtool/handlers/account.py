@@ -127,9 +127,9 @@ async def get_api_keys(req):
 
     user_id = req["client"].user_id
 
-    documents = await db.keys.find({"user.id": user_id}, {"key": False})
+    api_keys = await db.keys.find({"user.id": user_id}, {"_id": False}).to_list(None)
 
-    return [virtool.utils.base_processor(d) for d in documents]
+    return json_response(api_keys, status=200)
 
 
 @protected()
@@ -173,12 +173,14 @@ async def create_api_key(req):
         "created_at": virtool.utils.timestamp(),
         "user": {
             "id": user_id
-        },
+        }
     }
 
     await db.keys.insert_one(document)
 
     del document["_id"]
+
+    document["key"] = raw
 
     return json_response(document, status=201)
 
@@ -195,16 +197,18 @@ async def update_api_key(req):
 
     user_id = req["client"].user_id
 
-    query = {"id": key_id, "user.id": user_id}
-
-    document = await db.keys.find_one(query, ["permissions"])
+    document = await db.keys.find_one({"id": key_id, "user.id": user_id}, ["permissions"])
 
     if document is None:
         return not_found()
 
-    document = await db.users.find_one_and_update(query, {
+    permissions = document["permissions"]
+
+    permissions.update(data["permissions"])
+
+    document = await db.keys.find_one_and_update({"_id": document["_id"]}, {
         "$set": {
-            "api_keys.$.permissions": document["permissions"].update(data["permissions"])
+            "permissions": permissions
         }
     }, return_document=ReturnDocument.AFTER, projection={"_id": False})
 
