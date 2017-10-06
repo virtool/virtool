@@ -118,6 +118,7 @@ export const WS_UPDATE_ACCOUNT = createRequestActionType("WS_UPDATE_ACCOUNT");
 export const GET_ACCOUNT = createRequestActionType("GET_ACCOUNT");
 export const GET_ACCOUNT_SETTINGS = createRequestActionType("GET_ACCOUNT_SETTINGS");
 export const UPDATE_ACCOUNT_SETTINGS = createRequestActionType("UPDATE_ACCOUNT_SETTINGS");
+export const CHANGE_ACCOUNT_PASSWORD = createRequestActionType("CHANGE_ACCOUNT_PASSWORD");
 export const CREATE_API_KEY = createRequestActionType("CREATE_API_KEY");
 export const UPDATE_API_KEY = createRequestActionType("UPDATE_API_KEY");
 export const REMOVE_API_KEY = createRequestActionType("REMOVE_API_KEY");
