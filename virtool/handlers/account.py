@@ -100,7 +100,7 @@ async def change_password(req):
 
     # Will evaluate true if the passed username and password are correct.
     if not await virtool.user.validate_credentials(db, user_id, data["old_password"]):
-        return bad_request("Invalid old password")
+        return bad_request("Invalid old password.")
 
     # Salt and hash the new password
     hashed = virtool.user.hash_password(data["new_password"])
@@ -129,6 +129,9 @@ async def get_api_keys(req):
 
     api_keys = await db.keys.find({"user.id": user_id}, {"_id": False}).to_list(None)
 
+    for api_key in api_keys:
+        del api_key["user"]
+
     return json_response(api_keys, status=200)
 
 
@@ -141,20 +144,19 @@ async def create_api_key(req):
     db, data = await unpack_request(req)
 
     name = data["name"]
-    permissions = data.get("permissions", None) or {key: False for key in virtool.user_permissions.PERMISSIONS}
+
+    permissions = {key: False for key in virtool.user_permissions.PERMISSIONS}
+
+    permissions.update(data.get("permissions", {}))
 
     user_id = req["client"].user_id
 
-    existing_keys = await db.keys.find({"user.id": user_id}, {"_id": False}).to_list(None)
-
-    existing_alt_ids = [key["id"] for key in existing_keys]
-
-    alt_id = name.lower().replace(" ", "_")
+    existing_alt_ids = await db.keys.distinct("id")
 
     suffix = 0
 
     while True:
-        candidate = "{}_{}".format(alt_id, suffix)
+        candidate = "{}_{}".format(name.lower(), suffix)
 
         if candidate not in existing_alt_ids:
             alt_id = candidate
@@ -179,11 +181,11 @@ async def create_api_key(req):
     await db.keys.insert_one(document)
 
     del document["_id"]
+    del document["user"]
 
     document["key"] = raw
 
     return json_response(document, status=201)
-
 
 
 @protected()
@@ -210,7 +212,7 @@ async def update_api_key(req):
         "$set": {
             "permissions": permissions
         }
-    }, return_document=ReturnDocument.AFTER, projection={"_id": False})
+    }, return_document=ReturnDocument.AFTER, projection={"_id": False, "user": False})
 
     return json_response(document, status=200)
 
@@ -231,6 +233,15 @@ async def remove_api_key(req):
 
 
 @protected()
+async def remove_all_api_keys(req):
+    db = req.app["db"]
+
+    await db.keys.delete_many({"user.id": req["client"].user_id})
+
+    return no_content()
+
+
+@protected()
 async def logout(req):
     """
     Invalidates the requesting session, effectively logging out the user.
@@ -238,8 +249,6 @@ async def logout(req):
     """
     db = req.app["db"]
 
-    session_id = req["client"].id
-
-    await db.sessions.delete_one({"_id": session_id})
+    await db.sessions.delete_one({"_id": req["client"].session_id})
 
     return no_content()
