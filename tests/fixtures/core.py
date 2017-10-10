@@ -32,6 +32,8 @@ def test_random_alphanumeric(monkeypatch):
             if not mixed_case:
                 string = string.lower()
 
+            excluded = excluded or list()
+
             if string in excluded:
                 string = self.__call__(length, mixed_case, excluded)
 

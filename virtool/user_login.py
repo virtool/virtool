@@ -1,6 +1,7 @@
 import os
 import sys
 import random
+import pymongo
 from aiohttp import web
 from mako.template import Template
 
@@ -24,29 +25,29 @@ def generate_verification_keys():
 
 async def login_handler(req):
     db = req.app["db"]
-    session = req["session"]
+    client = req["client"]
 
     form_data = await req.post()
 
-    username = form_data.get("username", None)
+    user_id = form_data.get("username", None)
     password = form_data.get("password", None)
     location = form_data.get("location", "/")
 
-    authenticated = await virtool.user.validate_credentials(db, username, password)
+    authenticated = await virtool.user.validate_credentials(db, user_id, password)
 
     if authenticated:
-        user_document = await db.users.find_one(username)
+        user_document = await db.users.find_one(user_id)
 
-        await req.app["db"].sessions.update_one({"_id": session.id}, {
+        document = await req.app["db"].sessions.find_one_and_update({"_id": client.session_id}, {
             "$set": {
-                "user_id": username,
                 "groups": user_document["groups"],
-                "permissions": user_document["permissions"]
+                "permissions": user_document["permissions"],
+                "user": {
+                    "id": user_id
+                }
             }
-        })
+        }, return_document=pymongo.ReturnDocument.AFTER)
 
-        session.user_id = username
-        session.groups = user_document["groups"]
-        session.permissions = user_document["permissions"]
+        client.authorize(document, False)
 
     return web.HTTPFound(location)

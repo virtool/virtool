@@ -27,7 +27,8 @@ RELEASE_KEYS = [
 
 async def get_releases(db, repo, server_version, username=None, token=None):
     headers = {
-        "user-agent": "virtool/{}".format(server_version)
+        "user-agent": "virtool/{}".format(server_version),
+        "Accept": "application/vnd.github.v3+json"
     }
 
     auth = None

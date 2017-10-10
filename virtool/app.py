@@ -8,17 +8,16 @@ import concurrent.futures
 from aiohttp import web
 from motor import motor_asyncio
 
-import virtool.app_routes
+import virtool.app_auth
 import virtool.app_dispatcher
+import virtool.app_routes
 import virtool.app_settings
-
 import virtool.job_manager
 import virtool.job_resources
-import virtool.file_manager
-import virtool.organize
-import virtool.user_sessions
 import virtool.error_pages
+import virtool.file_manager
 import virtool.nvstat
+import virtool.organize
 import virtool.setup
 import virtool.utils
 
@@ -133,6 +132,8 @@ async def init_db(app):
     await db.history.create_index("virus.id")
     await db.history.create_index("index.id")
     await db.history.create_index("created_at")
+    await db.keys.create_index("id", unique=True)
+    await db.keys.create_index("user.id")
 
     app["db"] = db
 
@@ -245,7 +246,7 @@ def create_app(loop, db_name=None, disable_job_manager=False, disable_file_manag
     ]
 
     if skip_setup:
-        middlewares.append(virtool.user_sessions.middleware_factory)
+        middlewares.append(virtool.app_auth.middleware_factory)
 
     app = web.Application(loop=loop, middlewares=middlewares)
 

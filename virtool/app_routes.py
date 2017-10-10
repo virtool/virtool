@@ -14,10 +14,10 @@ logger = logging.getLogger(__name__)
 async def index_handler(req):
     static_hash = get_static_hash(req.app["client_path"])
 
-    if not req["session"].user_id:
+    if not req["client"].user_id:
         keys = generate_verification_keys()
 
-        session_id = req["session"].id
+        session_id = req["client"].session_id
 
         await req.app["db"].sessions.update_one({"_id": session_id}, {
             "$set": {
@@ -199,9 +199,11 @@ def setup_account_routes(app):
     app.router.add_get("/api/account/settings", account.get_settings)
     app.router.add_patch("/api/account/settings", account.update_settings)
     app.router.add_put("/api/account/password", account.change_password)
+    app.router.add_get("/api/account/keys", account.get_api_keys)
     app.router.add_post("/api/account/keys", account.create_api_key)
     app.router.add_patch("/api/account/keys/{key_id}", account.update_api_key)
     app.router.add_delete("/api/account/keys/{key_id}", account.remove_api_key)
+    app.router.add_delete("/api/account/keys", account.remove_all_api_keys)
     app.router.add_get("/api/account/logout", account.logout)
 
 

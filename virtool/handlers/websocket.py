@@ -10,7 +10,7 @@ async def root(req):
     """
     ws = web.WebSocketResponse(autoping=True, heartbeat=10)
 
-    connection = virtool.app_dispatcher.Connection(ws, req["session"])
+    connection = virtool.app_dispatcher.Connection(ws, req["client"])
 
     req.app["dispatcher"].add_connection(connection)
 

@@ -69,12 +69,16 @@ SCHEMA = {
     # HTTP Server
     "server_host": {"type": "string", "default": "localhost"},
     "server_port": get_default_integer(9950),
+    "enable_api": {"type": "boolean", "default": False},
 
     # Github
     "github_token": {"type": "string", "default": None, "nullable": True},
     "github_username": {"type": "string", "default": None, "nullable": True},
     "software_repo": {"type": "string", "default": "virtool/virtool"},
     "database_repo": {"type": "string", "default": "virtool/virtool-database"},
+
+    # Accounts
+    "minimum_password_length": {"type": "integer", "default": 8},
 
     # SSL
     "use_ssl": get_default_boolean(False),

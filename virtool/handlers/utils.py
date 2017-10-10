@@ -195,13 +195,13 @@ def protected(required_perm=None):
 
     def decorator(handler):
         async def wrapped(req):
-            if not req["session"].user_id:
+            if not req["client"].user_id:
                 return json_response({
                     "id": "requires_authorization",
                     "message": "Requires authorization"
                 }, status=401)
 
-            if required_perm and not req["session"].permissions[required_perm]:
+            if required_perm and not req["client"].permissions[required_perm]:
                 return json_response({
                     "id": "not_permitted",
                     "message": "Not permitted"

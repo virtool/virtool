@@ -151,7 +151,6 @@ class RebuildIndex(virtool.job.Job):
                     fasta_dict[sequence["_id"]] = sequence["sequence"]
 
             except TypeError:
-                print(virus_id)
                 raise
 
 

@@ -20,18 +20,8 @@ ACCOUNT_PROJECTION = [
     "settings",
     "last_password_change",
     "permissions",
-    "primary_group",
-    "api_keys"
+    "primary_group"
 ]
-
-
-def account_processor(document):
-    document = virtool.utils.base_processor(document)
-
-    for api_key in document["api_keys"]:
-        del api_key["key"]
-
-    return document
 
 
 async def user_exists(db, user_id):
@@ -65,7 +55,7 @@ async def validate_credentials(db, user_id, password):
     :type password: str
 
     :return: validation success
-    :rtype: bool
+    :rtype: Coroutine[bool]
 
     """
     document = await db.users.find_one(user_id, ["password", "salt"])

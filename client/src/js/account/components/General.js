@@ -20,7 +20,7 @@ class AccountGeneral extends React.Component {
     }
 
     render () {
-        const groupLabels = this.props.account.groups.map(groupId =>
+        const groupLabels = this.props.groups.map(groupId =>
             <Label key={groupId} style={{marginRight: "3px"}}>
                 {capitalize(groupId)}
             </Label>
@@ -36,7 +36,7 @@ class AccountGeneral extends React.Component {
                                     Name
                                 </th>
                                 <td className="col-xs-8">
-                                    {this.props.account.id}
+                                    {this.props.id}
                                 </td>
                             </tr>
                             <tr>
@@ -59,18 +59,11 @@ class AccountGeneral extends React.Component {
 
 const mapStateToProps = (state) => {
     return {
-        account: state.account
+        id: state.account.id,
+        groups: state.account.groups
     };
 };
 
-const mapDispatchToProps = () => {
-    return {
-        onChangePassword: () => {
-            console.log("CHANGE PASSWORD");
-        }
-    }
-};
-
-const Container = connect(mapStateToProps, mapDispatchToProps)(AccountGeneral);
+const Container = connect(mapStateToProps)(AccountGeneral);
 
 export default Container;

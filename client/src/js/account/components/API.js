@@ -11,13 +11,14 @@ import CX from "classnames";
 import React from "react";
 import Moment from "moment";
 import PropTypes from "prop-types";
+import { ClipLoader } from "halogenium";
 import { CopyToClipboard } from "react-copy-to-clipboard";
 import { assign, isEqual, map, mapValues, reduce, sortBy  } from "lodash";
 import { connect } from "react-redux";
 import { LinkContainer } from "react-router-bootstrap";
 import { ButtonToolbar, Col, ListGroup, Modal, Panel, Row } from "react-bootstrap";
 
-import { createAPIKey, updateAPIKey, removeAPIKey } from "../actions";
+import { getAPIKeys, createAPIKey, updateAPIKey, removeAPIKey } from "../actions";
 import { Button, Icon, Input, Flex, FlexItem, ListGroupItem, RelativeTime } from "../../base";
 
 const getInitialState = (props) => {
@@ -301,67 +302,87 @@ class APIKey extends React.Component {
     }
 }
 
-const APIKeys = (props) => {
+class APIKeys extends React.Component {
 
-    let keyComponents = props.apiKeys.map(apiKey =>
-        <APIKey
-            key={apiKey.id}
-            apiKey={apiKey}
-            permissions={props.permissions}
-            onUpdate={props.onUpdate}
-            onRemove={props.onRemove}
-        />
-    );
-
-    if (!keyComponents.length) {
-        keyComponents = (
-            <ListGroupItem className="text-center">
-                <Icon name="info" /> No API keys found.
-            </ListGroupItem>
-        );
+    componentWillMount () {
+        this.props.onGet();
     }
 
-    return (
-        <div>
-            <Flex alignItems="center" style={{marginTop: "-7px", marginBottom: "10px"}}>
-                <FlexItem>
-                    <div style={{whiteSpace: "wrap"}}>
-                        <span>Manage API keys for accessing the </span>
-                        <a href="https://docs.virtool.ca/web-api/authentication.html" target="_blank">Virtool API</a>.
-                    </div>
-                </FlexItem>
-                <FlexItem grow={1} shrink={0} pad={7}>
-                    <LinkContainer to={{state: {createAPIKey: true}}} className="pull-right">
-                        <Button bsStyle="primary" icon="key" pullRight>
-                            Create
-                        </Button>
-                    </LinkContainer>
-                </FlexItem>
-            </Flex>
+    render () {
 
-            <ListGroup>
-                {keyComponents}
-            </ListGroup>
+        if (this.props.apiKeys === null) {
+            return (
+                <div className="text-center" style={{marginTop: "150px"}}>
+                    <ClipLoader color="#3c8786" size="24px"/>
+                </div>
+            );
+        }
 
-            <CreateAPIKey
-                show={props.location.state && props.location.state.createAPIKey}
-                permissions={props.permissions}
-                onHide={() => props.history.push({state: {createAPIKey: false}})}
-                onCreate={props.onCreate}
+        let keyComponents = this.props.apiKeys.map(apiKey =>
+            <APIKey
+                key={apiKey.id}
+                apiKey={apiKey}
+                permissions={this.props.permissions}
+                onUpdate={this.props.onUpdate}
+                onRemove={this.props.onRemove}
             />
-        </div>
-    );
-};
+        );
+
+        if (!keyComponents.length) {
+            keyComponents = (
+                <ListGroupItem className="text-center">
+                    <Icon name="info"/> No API keys found.
+                </ListGroupItem>
+            );
+        }
+
+        return (
+            <div>
+                <Flex alignItems="center" style={{marginTop: "-7px", marginBottom: "10px"}}>
+                    <FlexItem>
+                        <div style={{whiteSpace: "wrap"}}>
+                            <span>Manage API keys for accessing the </span>
+                            <a href="https://docs.virtool.ca/web-api/authentication.html" target="_blank">Virtool
+                                API</a>.
+                        </div>
+                    </FlexItem>
+                    <FlexItem grow={1} shrink={0} pad={7}>
+                        <LinkContainer to={{state: {createAPIKey: true}}} className="pull-right">
+                            <Button bsStyle="primary" icon="key" pullRight>
+                                Create
+                            </Button>
+                        </LinkContainer>
+                    </FlexItem>
+                </Flex>
+
+                <ListGroup>
+                    {keyComponents}
+                </ListGroup>
+
+                <CreateAPIKey
+                    show={!!(this.props.location.state && this.props.location.state.createAPIKey)}
+                    permissions={this.props.permissions}
+                    onHide={() => this.props.history.push({state: {createAPIKey: false}})}
+                    onCreate={this.props.onCreate}
+                />
+            </div>
+        );
+    }
+}
 
 const mapStateToProps = (state) => {
     return {
-        apiKeys: state.account.api_keys || [],
+        apiKeys: state.account.apiKeys,
         permissions: state.account.permissions
     };
 };
 
 const mapDispatchToProps = (dispatch) => {
     return {
+        onGet: () => {
+            dispatch(getAPIKeys());
+        },
+
         onCreate: (name, permissions, callback) => {
             dispatch(createAPIKey(name, permissions, callback));
         },

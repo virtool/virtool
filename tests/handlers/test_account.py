@@ -13,7 +13,6 @@ async def test_get(spawn_client):
         "groups": [],
         "id": "test",
         "last_password_change": "2015-10-06T20:00:00Z",
-        "api_keys": [],
         "permissions": {
             "modify_host": False,
             "create_sample": False,
@@ -105,15 +104,15 @@ class TestChangePassword:
         """
         client = await spawn_client(authorize=True)
 
-        resp = await client.put("/api/account/password", {"old_password": "hello_world", "new_password": "foo_bar"})
+        resp = await client.put("/api/account/password", {"old_password": "hello_world", "new_password": "foo_bar_1"})
 
         assert resp.status == 200
 
         document = await client.db.users.find_one({"_id": "test"}, ["password"])
 
-        assert check_password("foo_bar", document["password"])
+        assert check_password("foo_bar_1", document["password"])
 
-    async def test_invalid_credentials(self, spawn_client, resp_is):
+    async def test_too_short(self, spawn_client, resp_is):
         """
         Test that request to ``PUT /account/password`` return 400 for wrong ``old_password`` values.
 
@@ -125,7 +124,21 @@ class TestChangePassword:
             "new_password": "foo_bar"
         })
 
-        assert await resp_is.bad_request(resp, "Invalid credentials")
+        assert await resp_is.bad_request(resp, "Password is to short. Must be at least 8 characters.")
+
+    async def test_invalid_old(self, spawn_client, resp_is):
+        """
+        Test that request to ``PUT /account/password`` return 400 for wrong ``old_password`` values.
+
+        """
+        client = await spawn_client(authorize=True)
+
+        resp = await client.put("/api/account/password", {
+            "old_password": "not_right",
+            "new_password": "foo_bar_1"
+        })
+
+        assert await resp_is.bad_request(resp, "Invalid old password.")
 
     async def test_invalid_input(self, spawn_client, resp_is):
         """
@@ -142,91 +155,312 @@ class TestChangePassword:
         })
 
 
-async def test_create_api_key(mocker, spawn_client, static_time, test_motor, test_dispatch):
-    mocker.patch("virtool.user.get_api_key", return_value="abc123xyz789")
-
+async def test_get_api_keys(spawn_client):
     client = await spawn_client(authorize=True)
 
-    resp = await client.post("/api/account/keys", {
-        "name": "Foobar"
-    })
-
-    assert resp.status == 201
-
-    expected = {
-        "id": "foobar_0",
-        "name": "Foobar",
-        "key": "57f614878f6056613d77f38b8b105bed8bb452f49a98c70cc63099a5129bac80",
-        "created_at": static_time,
-        "permissions": {
-            "cancel_job": False,
-            "create_sample": False,
-            "manage_users": False,
-            "modify_hmm": False,
-            "modify_host": False,
-            "modify_options": False,
-            "modify_virus": False,
-            "rebuild_index": False,
-            "remove_host": False,
-            "remove_job": False,
-            "remove_virus": False
+    await client.db.keys.insert_many([
+        {
+            "_id": "abc123",
+            "id": "foobar_0",
+            "name": "Foobar",
+            "user": {
+                "id": "test"
+            }
+        },
+        {
+            "_id": "xyz321",
+            "id": "baz_1",
+            "name": "Baz",
+            "user": {
+                "id": "test"
+            }
         }
-    }
+    ])
 
-    assert (await test_motor.users.find_one({"_id": "test"}, ["api_keys"]))["api_keys"][0] == expected
+    resp = await client.get("/api/account/keys")
 
-    expected.update({
-        "raw": "abc123xyz789",
-        "created_at": "2017-10-06T20:00:00Z"
-    })
+    assert await resp.json() == [
+        {
+            "id": "foobar_0",
+            "name": "Foobar"
+        },
+        {
+            "id": "baz_1",
+            "name": "Baz"
+        }
+    ]
 
-    del expected["key"]
 
-    assert await resp.json() == expected
+class TestCreateAPIKey:
+
+    @pytest.mark.parametrize("req_permissions", [
+        None,
+        {
+            "create_sample": True
+        },
+        {
+            "modify_host": True,
+            "rebuild_index": True
+        },
+        {
+            "cancel_job": True,
+            "create_sample": True,
+            "manage_users": True,
+            "modify_hmm": True,
+            "modify_host": True,
+            "modify_options": True,
+            "modify_virus": True,
+            "rebuild_index": True,
+            "remove_host": True,
+            "remove_job": True,
+            "remove_virus": True
+        }
+    ])
+    async def test(self, req_permissions, mocker, spawn_client, static_time, test_motor):
+        """
+        Test that creation of an API key functions properly. Check that different permission inputs work.
+
+        """
+        mocker.patch("virtool.user.get_api_key", return_value="abc123xyz789")
+
+        client = await spawn_client(authorize=True)
+
+        body = {
+            "name": "Foobar"
+        }
+
+        if req_permissions:
+            body["permissions"] = req_permissions
+
+        resp = await client.post("/api/account/keys", body)
+
+        assert resp.status == 201
+
+        expected = {
+            "_id": "57f614878f6056613d77f38b8b105bed8bb452f49a98c70cc63099a5129bac80",
+            "id": "foobar_0",
+            "name": "Foobar",
+            "created_at": static_time,
+            "user": {
+                "id": "test"
+            },
+            "groups": [],
+            "permissions": {
+                "cancel_job": False,
+                "create_sample": False,
+                "manage_users": False,
+                "modify_hmm": False,
+                "modify_host": False,
+                "modify_options": False,
+                "modify_virus": False,
+                "rebuild_index": False,
+                "remove_host": False,
+                "remove_job": False,
+                "remove_virus": False
+            }
+        }
+
+        if req_permissions:
+            expected["permissions"].update(req_permissions)
+
+        assert await test_motor.keys.find_one() == expected
+
+        expected.update({
+            "key": "abc123xyz789",
+            "created_at": "2017-10-06T20:00:00Z"
+        })
+
+        del expected["_id"]
+        del expected["user"]
+
+        assert await resp.json() == expected
+
+    async def test_naming(self, mocker, spawn_client, static_time):
+        """
+        Test that uniqueness is ensured on the ``id`` field.
+
+        """
+        mocker.patch("virtool.user.get_api_key", return_value="987zyx321cba")
+
+        client = await spawn_client(authorize=True)
+
+        await client.db.keys.insert_one({
+            "_id": "foobar",
+            "id": "foobar_0",
+            "name": "Foobar"
+        })
+
+        body = {
+            "name": "Foobar"
+        }
+
+        resp = await client.post("/api/account/keys", body)
+
+        assert resp.status == 201
+
+        expected = {
+            "_id": "b85815a74c3c42fe4a0aa79069defc59f93a8b344d509fdae87cfaa795a2fd68",
+            "id": "foobar_1",
+            "name": "Foobar",
+            "created_at": static_time,
+            "user": {
+                "id": "test"
+            },
+            "groups": [],
+            "permissions": {
+                "cancel_job": False,
+                "create_sample": False,
+                "manage_users": False,
+                "modify_hmm": False,
+                "modify_host": False,
+                "modify_options": False,
+                "modify_virus": False,
+                "rebuild_index": False,
+                "remove_host": False,
+                "remove_job": False,
+                "remove_virus": False
+            }
+        }
+
+        assert await client.db.keys.find_one({"id": "foobar_1"}) == expected
+
+        expected.update({
+            "key": "987zyx321cba",
+            "created_at": "2017-10-06T20:00:00Z"
+        })
+
+        del expected["_id"]
+        del expected["user"]
+
+        assert await resp.json() == expected
 
 
-async def test_update_api_key(spawn_client, static_time, test_dispatch):
+class TestUpdateAPIKey:
+
+    async def test(self, spawn_client, static_time):
+        client = await spawn_client(authorize=True)
+
+        expected = {
+            "_id": "foobar",
+            "id": "foobar_0",
+            "name": "Foobar",
+            "created_at": static_time,
+            "user": {
+                "id": "test"
+            },
+            "groups": [],
+            "permissions": {
+                "cancel_job": False,
+                "create_sample": False,
+                "manage_users": False,
+                "modify_hmm": False,
+                "modify_host": False,
+                "modify_options": False,
+                "modify_virus": False,
+                "rebuild_index": False,
+                "remove_host": False,
+                "remove_job": False,
+                "remove_virus": False
+            }
+        }
+
+        await client.db.keys.insert_one(expected)
+
+        resp = await client.patch("/api/account/keys/foobar_0", {
+            "permissions": {"manage_users": True}
+        })
+
+        assert resp.status == 200
+
+        expected["permissions"]["manage_users"] = True
+
+        assert await client.db.keys.find_one() == expected
+
+        del expected["_id"]
+        del expected["user"]
+
+        expected["created_at"] = "2017-10-06T20:00:00Z"
+
+        assert await resp.json() == expected
+
+    async def test_not_found(self, spawn_client, resp_is):
+        client = await spawn_client(authorize=True)
+
+        resp = await client.patch("/api/account/keys/foobar_0", {})
+
+        assert await resp_is.not_found(resp)
+
+
+class TestRemoveAPIKey:
+
+    async def test(self, spawn_client, resp_is):
+        client = await spawn_client(authorize=True)
+
+        await client.db.keys.insert_one({
+            "_id": "foobar",
+            "id": "foobar_0",
+            "name": "Foobar",
+            "user": {
+                "id": "test"
+            }
+        })
+
+        resp = await client.delete("/api/account/keys/foobar_0")
+
+        assert await resp_is.no_content(resp)
+
+        assert await client.db.keys.count() == 0
+
+    async def test_not_found(self, spawn_client, resp_is):
+        """
+        Test that ``404 Not found`` is returned when the API key does not exist.
+
+        """
+        client = await spawn_client(authorize=True)
+
+        resp = await client.delete("/api/account/keys/foobar_0")
+
+        assert await resp_is.not_found(resp)
+
+
+async def test_remove_all_api_keys(spawn_client, resp_is):
     client = await spawn_client(authorize=True)
 
-    api_key = {
-        "id": "foobar_0",
-        "name": "Foobar",
-        "key": "foobar",
-        "created_at": static_time.isoformat(),
-        "permissions": {
-            "cancel_job": False,
-            "create_sample": False,
-            "manage_users": False,
-            "modify_hmm": False,
-            "modify_host": False,
-            "modify_options": False,
-            "modify_virus": False,
-            "rebuild_index": False,
-            "remove_host": False,
-            "remove_job": False,
-            "remove_virus": False
+    await client.db.keys.insert_many([
+        {
+            "_id": "hello_world",
+            "id": "hello_world_0",
+            "user": {
+                "id": "test"
+            }
+        },
+        {
+            "_id": "foobar",
+            "id": "foobar_0",
+            "user": {
+                "id": "test"
+            }
+        },
+        {
+            "_id": "baz",
+            "id": "baz_0",
+            "user": {
+                "id": "fred"
+            }
         }
-    }
+    ])
 
-    await client.db.users.update_one({"_id": "test"}, {
-        "$set": {
-            "api_keys": [api_key]
+    resp = await client.delete("/api/account/keys")
+
+    assert await resp_is.no_content(resp)
+
+    assert await client.db.keys.find().to_list(None) == [{
+        "_id": "baz",
+        "id": "baz_0",
+        "user": {
+            "id": "fred"
         }
-    })
-
-    resp = await client.patch("/api/account/keys/foobar_0", {
-        "permissions": {"manage_users": True}
-    })
-
-    assert resp.status == 200
-
-    api_key["permissions"]["manage_users"] = True
-
-    assert (await client.db.users.find_one({"_id": "test"}, ["api_keys"]))["api_keys"][0] == api_key
-
-    del api_key["key"]
-
-    assert await resp.json() == api_key
+    }]
 
 
 async def test_logout(spawn_client):

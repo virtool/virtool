@@ -11,9 +11,9 @@
 
 import React from "react";
 import { connect } from "react-redux";
-import { clone, assign } from "lodash";
-import { Row, Col, Panel } from "react-bootstrap";
+import { Alert, Col, Panel, Row } from "react-bootstrap";
 
+import { changePassword } from "../actions";
 import { Button, Input, RelativeTime } from "../../base";
 
 const getInitialState = () => {
@@ -21,10 +21,7 @@ const getInitialState = () => {
         oldPassword: "",
         newPassword: "",
         confirmPassword: "",
-        tooShort: true,
-        noMatch: true,
-        submitted: false,
-        failure: false
+        errors: []
     };
 };
 
@@ -38,73 +35,81 @@ class ChangePassword extends React.Component {
         this.state = getInitialState();
     }
 
-    componentDidUpdate (prevProps, prevState) {
-        // Focus on the first Input component if that form is submitted but fails and the fields need to be re-entered.
-        const submitted = !prevState.submitted && this.state.submitted;
+    componentWillReceiveProps (nextProps) {
+        if (nextProps.oldPasswordError) {
+            this.setState({errors: ["Old password is invalid"]})
+        }
 
-        if (submitted && (this.state.failure || this.state.noMatch || this.state.tooShort)) {
-            this.passwordNode.focus();
+        if (nextProps.lastPasswordChange !== this.props.lastPasswordChange) {
+            this.setState(getInitialState());
         }
     }
 
-    handleChange = (event) => {
-
-        let newState = clone(this.state);
-
-        newState[event.target.name] = event.target.value;
-
-        if (event.target.name === "old") {
-            newState.failure = false;
-        }
-
-        this.setState(assign(newState, {
-            noMatch: newState.confirm !== newState.password,
-            tooShort: newState.confirm.length < 4 || newState.password.length < 4
-        }));
-    };
-
     handleSubmit = (event) => {
         event.preventDefault();
+
+        let errors = [];
+
+        const minLength = this.props.settings.minimum_password_length;
+
+        if (this.state.confirmPassword.length < minLength || this.state.newPassword.length < minLength) {
+            errors.push(`Password must be contain least ${minLength} characters`);
+        }
+
+        if (this.state.confirmPassword !== this.state.newPassword) {
+            errors.push("New passwords do not match");
+        }
+
+        if (errors.length) {
+            return this.setState({errors: errors});
+        }
+
         // Set state to show that the user attempted to submit the form.
-        this.setState({submitted: true});
+        this.props.onChangePassword(this.state.oldPassword, this.state.newPassword, this.state.confirmPassword);
     };
 
     render () {
+        if (!this.props.settings) {
+            return <div />;
+        }
 
-        let oldError;
-        let passwordError;
-        let confirmError;
+        let errorAlert;
 
-        if (this.state.submitted) {
-            passwordError = this.state.tooShort ? "New password must be at least four characters long": null;
-            confirmError = this.state.noMatch ? "Passwords don't match": null;
-            oldError = this.state.failure ? "Old password is incorrect" : null;
+        if (this.state.errors.length) {
+            const errorComponents = this.state.errors.map(error =>
+                <li key={error}>{error}</li>
+            );
+
+            errorAlert = (
+                <Alert bsStyle="danger">
+                    {errorComponents}
+                </Alert>
+            );
         }
 
         return (
             <Panel header="Password">
                 <form onSubmit={this.handleSubmit}>
                     <Input
-                        name="old"
                         label="Old Password"
-                        error={oldError}
-                        errorPlacement="bottom"
-                        value={this.state.old}
+                        type="password"
+                        value={this.state.oldPassword}
+                        onChange={(e) => this.setState({oldPassword: e.target.value, errors: []})}
                     />
                     <Input
-                        name="password"
                         label="New password"
-                        error={passwordError}
-                        errorPlacement="bottom"
-                        value={this.state.password}
+                        type="password"
+                        value={this.state.newPassword}
+                        onChange={(e) => this.setState({newPassword: e.target.value, errors: []})}
                     />
                     <Input
-                        name="confirm"
                         label="Confirm New Password"
-                        error={confirmError}
-                        errorPlacement="bottom"
-                        value={this.state.confirm}
+                        type="password"
+                        value={this.state.confirmPassword}
+                        onChange={(e) => this.setState({confirmPassword: e.target.value, errors: []})}
                     />
+
+                    {errorAlert}
 
                     <div style={{marginTop: "20px"}}>
                         <Row>
@@ -126,10 +131,20 @@ class ChangePassword extends React.Component {
 
 const mapStateToProps = (state) => {
     return {
-        lastPasswordChange: state.account.last_password_change
+        lastPasswordChange: state.account.last_password_change,
+        oldPasswordError: state.account.oldPasswordError,
+        settings: state.settings.data
     };
 };
 
-const Container = connect(mapStateToProps)(ChangePassword);
+const mapDispatchToProps = (dispatch) => {
+    return {
+        onChangePassword: (oldPassword, newPassword) => {
+            dispatch(changePassword(oldPassword, newPassword));
+        }
+    };
+};
+
+const Container = connect(mapStateToProps, mapDispatchToProps)(ChangePassword);
 
 export default Container;

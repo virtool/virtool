@@ -119,7 +119,7 @@ async def create(req):
     index_id = await virtool.utils.get_new_id(db.indexes)
     index_version = await virtool.virus_index.get_current_index_version(db) + 1
 
-    user_id = req["session"].user_id
+    user_id = req["client"].user_id
 
     job_id = await virtool.utils.get_new_id(db.jobs)
 

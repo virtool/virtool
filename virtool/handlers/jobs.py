@@ -188,7 +188,7 @@ async def dummy_job(req):
     document = await req.app["job_manager"].new(
         "dummy",
         task_args,
-        req["session"].user_id or "test"
+        req["client"].user_id or "test"
     )
 
     return json_response(document)
