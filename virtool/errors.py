@@ -4,3 +4,7 @@ class DatabaseError(Exception):
 
 class GitHubError(Exception):
     pass
+
+
+class AuthError(Exception):
+    pass

@@ -17,7 +17,7 @@ async def index_handler(req):
     if not req["client"].user_id:
         keys = generate_verification_keys()
 
-        session_id = req["client"].id
+        session_id = req["client"].session_id
 
         await req.app["db"].sessions.update_one({"_id": session_id}, {
             "$set": {
