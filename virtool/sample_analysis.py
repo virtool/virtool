@@ -8,6 +8,7 @@ import aiofiles
 from Bio import SeqIO
 
 import virtool.app_settings
+import virtool.bio
 import virtool.blast
 import virtool.job
 import virtool.pathoscope
