@@ -4,6 +4,7 @@ Functions and job classes for sample analysis.
 """
 import os
 import shutil
+import tempfile
 import aiofiles
 from Bio import SeqIO
 
@@ -803,12 +804,31 @@ class NuVs(Base):
                 "-s", os.path.join(self.analysis_path, "unmapped_hosts.fq"),
             ]
 
-        command += [
-            "-o", os.path.join(self.analysis_path, "spades"),
-            "-k", "21,33,55,75"
-        ]
+        with tempfile.TemporaryDirectory() as temp_path:
+            command += [
+                "-o", temp_path,
+                "-k", "21,33,55,75"
+            ]
 
-        await self.run_subprocess(command)
+            await self.run_subprocess(command)
+
+            shutil.copyfile(
+                os.path.join(temp_path, "scaffolds.fasta"),
+                os.path.join(self.analysis_path, "assembly.fa")
+            )
+
+            shutil.copy(
+                os.path.join(temp_path, "spades.log"),
+                self.analysis_path
+            )
+
+            warnings_path = os.path.join(temp_path, "warnings.log")
+
+            if os.path.isfile(warnings_path):
+                shutil.copyfile(
+                    warnings_path,
+                    os.path.join(self.analysis_path, "spades.warnings")
+                )
 
     @virtool.job.stage_method
     def process_fasta(self):
