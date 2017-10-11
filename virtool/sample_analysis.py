@@ -764,22 +764,21 @@ class NuVs(Base):
     @virtool.job.stage_method
     async def reunite_pairs(self):
         if self.sample["paired"]:
-            with open(os.path.join(self.analysis_path, "unmapped_hosts.fq"), "rU") as handle:
-                unmapped_roots = {record.id.split(" ")[0] for record in SeqIO.parse(handle, "fastq")}
+            unmapped_path = os.path.join(self.analysis_path, "unmapped_hosts.fq")
 
-            with open(self.read_paths[0], "r") as handle:
-                s_dict = {record.id.split(" ")[0]: record for record in SeqIO.parse(handle, "fastq")}
+            headers = await self.run_in_executor(virtool.bio.read_fastq_headers, unmapped_path)
 
-                with open(os.path.join(self.analysis_path, "unmapped_1.fq"), "w") as unmapped:
-                    for root in unmapped_roots:
-                        SeqIO.write(s_dict[root], unmapped, "fastq")
+            unmapped_roots = {h.split(" ")[0] for h in headers}
 
-            with open(self.read_paths[1], "r") as handle:
-                s_dict = {record.id.split(" ")[0]: record for record in SeqIO.parse(handle, "fastq")}
+            with open(os.path.join(self.analysis_path, "unmapped_1.fq"), "w") as f:
+                for header, seq, quality in await self.run_in_executor(virtool.bio.read_fastq, self.read_paths[0]):
+                    if header.split(" ")[0] in unmapped_roots:
+                        f.write("\n".join([header, seq, "+", quality]) + "\n")
 
-                with open(os.path.join(self.analysis_path, "unmapped_2.fq"), "w") as unmapped:
-                    for root in unmapped_roots:
-                        SeqIO.write(s_dict[root], unmapped, "fastq")
+            with open(os.path.join(self.analysis_path, "unmapped_2.fq"), "w") as f:
+                for header, seq, quality in await self.run_in_executor(virtool.bio.read_fastq, self.read_paths[1]):
+                    if header.split(" ")[0] in unmapped_roots:
+                        f.write("\n".join([header, seq, "+", quality]) + "\n")
 
     @virtool.job.stage_method
     async def assemble(self):
