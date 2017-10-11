@@ -224,10 +224,6 @@ class Base(virtool.job.Job):
         #: The document id for the analysis being run.
         self.analysis_id = self.task_args["analysis_id"]
 
-        self.sequence_virus_map = {item[0]: item[1] for item in self.task_args["sequence_virus_map"]}
-
-        self.virus_dict = self.task_args["virus_dict"]
-
         #: Stores data that is processed and stored in the analysis document.
         self.results = dict()
 
@@ -345,6 +341,10 @@ class Pathoscope(Base):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+
+        self.sequence_virus_map = {item[0]: item[1] for item in self.task_args["sequence_virus_map"]}
+
+        self.virus_dict = self.task_args["virus_dict"]
 
     @virtool.job.stage_method
     async def generate_isolate_fasta(self):
