@@ -1,3 +1,28 @@
+def read_fasta(path):
+    data = list()
+
+    with open(path, "r") as f:
+        header = None
+        seq = []
+
+        for line in f:
+            if line[0] == ">":
+                if header:
+                    data.append((header, "".join(seq)))
+
+                header = line.rstrip().replace(">", "")
+                seq = []
+                continue
+
+            if header:
+                seq.append(line.rstrip())
+                continue
+
+            raise IOError("Illegal FASTA line: {}".format(line))
+
+    return data
+
+
 def read_fastq(path):
     data = list()
 
