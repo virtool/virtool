@@ -712,7 +712,7 @@ class NuVs(Base):
 
         self._stage_list += [
             self.map_viruses,
-            self.map_host,
+            self.map_subtraction,
             self.reunite_pairs,
             self.assemble,
             self.process_fasta,
@@ -734,14 +734,14 @@ class NuVs(Base):
             "-k", str(1),
             "--very-fast-local",
             "-x", self.index_path,
-            "--un", os.path.join(self.analysis_path, "/unmapped_viruses.fq"),
+            "--un", os.path.join(self.analysis_path, "unmapped_viruses.fq"),
             "-U", ",".join(self.read_paths)
         ]
 
         await self.run_subprocess(command)
 
     @virtool.job.stage_method
-    async def map_host(self):
+    async def map_subtraction(self):
         """
         Maps unaligned reads from :meth:`.map_viruses` to the sample's subtraction host using ``bowtie2``. Bowtie2 is
         set to use the search parameter ``--very-fast-local`` and retain unaligned reads to the FASTA file
