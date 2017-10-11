@@ -12,5 +12,3 @@ from tests.fixtures.users import *
 from tests.fixtures.viruses import *
 
 
-def pytest_addoption(parser):
-    parser.addoption("--quick", action="store_true", help="Skip slower tests")
