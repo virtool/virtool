@@ -203,13 +203,6 @@ async def test_press_hmm(mock_job):
     # Check that all the pressed file were written to the analysis directory.
     assert all("profiles.hmm." + suffix in listing for suffix in ["h3p", "h3m", "h3f", "h3i"])
 
-    # Check that these three files match the expected test files.
-    for suffix in ["h3p", "h3m", "h3f"]:
-        assert filecmp.cmp(
-            os.path.join(mock_job.analysis_path, "profiles.hmm." + suffix),
-            os.path.join(TEST_FILES_PATH, "test.hmm." + suffix)
-        )
-
 
 async def test_vfam(mock_job, test_motor):
     os.mkdir(mock_job.analysis_path)
