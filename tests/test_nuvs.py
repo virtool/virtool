@@ -174,11 +174,6 @@ async def test_process_fasta(mock_job):
         os.path.join(mock_job.analysis_path, "assembly.fa")
     )
 
-    mock_job.results = {
-        "sequences": list(),
-        "orfs": list()
-    }
-
     await mock_job.process_fasta()
 
     # Make sure the results attribute matches the expected value.
@@ -268,9 +263,6 @@ async def test_vfam(mock_job, test_motor):
     ]
 
     await mock_job.vfam()
-
-    import pprint
-    pprint.pprint(mock_job.results)
 
     assert mock_job.results == [
         {

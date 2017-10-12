@@ -863,7 +863,7 @@ class NuVs(Base):
 
             for orf in orfs:
                 orf.pop("nuc")
-                orf.hits = list()
+                orf["hits"] = list()
 
             # Make an entry for the nucleotide sequence containing a unique integer index, the sequence itself, and
             # all ORFs in the sequence.
