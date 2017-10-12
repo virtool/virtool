@@ -59,7 +59,7 @@ before_install:
 
 install:
 - pip install -r requirements.txt
-- pip install -U -I --loop uvloop pytest
+- pip install -U -I pytest
 - rm -rf ~/.nvm
 - git clone https://github.com/creationix/nvm.git ~/.nvm
 - cd ~/.nvm
@@ -78,7 +78,7 @@ before_script:
 - sleep 15
 
 script:
-- pytest --cov --cov-report xml -vv
+- pytest --loop uvloop --cov --cov-report xml -vv
 
 after_success:
 - python-codacy-coverage -r coverage.xml
