@@ -68,43 +68,47 @@ async def new(db, settings, manager, sample_id, user_id, algorithm):
         }
     }
 
-    sequence_virus_map = dict()
-    virus_dict = dict()
-
-    async for sequence_document in db.sequences.find({}, ["virus_id", "isolate_id"]):
-        virus_id = sequence_document["virus_id"]
-
-        virus = virus_dict.get(virus_id, None)
-
-        if virus is None:
-            virus = await db.viruses.find_one(virus_id, ["last_indexed_version"])
-
-            try:
-                last_index_version = virus["last_indexed_version"]
-
-                virus_dict[virus["_id"]] = {
-                    "id": virus["_id"],
-                    "version": last_index_version
-                }
-
-                sequence_virus_map[sequence_document["_id"]] = virus_id
-            except KeyError:
-                virus_dict[virus["id"]] = False
-
-        sequence_virus_map[sequence_document["_id"]] = virus_id
-
-    sequence_virus_map = [item for item in sequence_virus_map.items()]
-
-    await db.analyses.insert_one(document)
-
     task_args = dict(
         analysis_id=analysis_id,
         sample_id=sample_id,
         sample_name=sample["name"],
-        index_id=index_id,
-        virus_dict=virus_dict,
-        sequence_virus_map=sequence_virus_map
+        index_id=index_id
     )
+
+    if "pathoscope" in algorithm:
+        sequence_virus_map = dict()
+        virus_dict = dict()
+
+        async for sequence_document in db.sequences.find({}, ["virus_id", "isolate_id"]):
+            virus_id = sequence_document["virus_id"]
+
+            virus = virus_dict.get(virus_id, None)
+
+            if virus is None:
+                virus = await db.viruses.find_one(virus_id, ["last_indexed_version"])
+
+                try:
+                    last_index_version = virus["last_indexed_version"]
+
+                    virus_dict[virus["_id"]] = {
+                        "id": virus["_id"],
+                        "version": last_index_version
+                    }
+
+                    sequence_virus_map[sequence_document["_id"]] = virus_id
+                except KeyError:
+                    virus_dict[virus["id"]] = False
+
+            sequence_virus_map[sequence_document["_id"]] = virus_id
+
+        sequence_virus_map = [item for item in sequence_virus_map.items()]
+
+        task_args.update({
+            "virus_dict": virus_dict,
+            "sequence_virus_map": sequence_virus_map
+        })
+
+    await db.analyses.insert_one(document)
 
     # Clone the arguments passed from the client and amend the resulting dictionary with the analysis entry
     # _id. This dictionary will be passed the the new analysis job.
