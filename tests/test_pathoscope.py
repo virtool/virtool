@@ -39,7 +39,7 @@ def test_find_sam_align_score(sam_line, expected_scores):
     assert virtool.pathoscope.find_sam_align_score(sam_line) == expected_scores["".join(sam_line)]
 
 
-def test_build_matrix(tmpdir, test_sam_path):
+def test_build_matrix(tmpdir):
     shutil.copy(VTA_PATH, str(tmpdir))
     vta_path = os.path.join(str(tmpdir), "test.vta")
 
