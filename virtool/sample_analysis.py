@@ -752,7 +752,7 @@ class NuVs(Base):
 
     @virtool.job.stage_method
     async def reunite_pairs(self):
-        if self.sample["paired"]:
+        if self.sample.get("paired", False):
             unmapped_path = os.path.join(self.analysis_path, "unmapped_hosts.fq")
 
             headers = await self.run_in_executor(virtool.bio.read_fastq_headers, unmapped_path)
@@ -782,7 +782,7 @@ class NuVs(Base):
             "-m", str(self.mem)
         ]
 
-        if self.sample["paired"]:
+        if self.sample.get("paired", False):
             command += [
                 "-1", os.path.join(self.analysis_path, "unmapped_1.fq"),
                 "-2", os.path.join(self.analysis_path, "unmapped_2.fq"),
