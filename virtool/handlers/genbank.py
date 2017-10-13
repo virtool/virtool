@@ -1,9 +1,11 @@
-from Bio import Entrez, SeqIO
+import re
+import string
+import aiohttp
 
 from virtool.handlers.utils import json_response, not_found
 
 
-def get(req):
+async def get(req):
     """
     Retrieve the Genbank data associated with the given accession and transform it into a Virtool-style sequence
     document.
@@ -11,34 +13,59 @@ def get(req):
     """
     accession = req.match_info["accession"]
 
-    Entrez.tool = "Virtool"
-    Entrez.email = "dev@virtool.ca"
+    tool = "Virtool"
+    email = "dev@virtool.ca"
 
-    term = "{}[accn]".format(accession)
+    params = {
+        "db": "nucleotide",
+        "term": "{}[accn]".format(accession),
+        "tool": tool,
+        "email": email
+    }
 
-    gi_handle = Entrez.esearch(db="nucleotide", term=term)
-    gi_record = Entrez.read(gi_handle)
+    async with aiohttp.ClientSession() as session:
+        async with session.get("https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi", params=params) as resp:
+            data = await resp.text()
+            gi = re.search("<Id>([0-9]+)</Id>", data).group(1)
 
-    gi_list = gi_record["IdList"]
+        if gi:
+            url = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi"
 
-    if len(gi_list) == 1:
-        gb_handle = Entrez.efetch(db="nuccore", id=gi_list[0], rettype="gb", retmode="text")
-        gb_record = list(SeqIO.parse(gb_handle, "gb"))
+            fetch_params = {
+                "db": "nuccore",
+                "id": gi,
+                "rettype": "gb",
+                "retmode": "text",
+                "tool": tool,
+                "email": email
+            }
 
-        seq_record = gb_record[0]
+            async with session.get(url, params=fetch_params) as resp:
+                body = await resp.text()
 
-        data = {
-            "accession": seq_record.name,
-            "sequence": str(seq_record.seq),
-            "definition": seq_record.description,
-            "host": ""
-        }
+                data = {
+                    "host": ""
+                }
 
-        for feature in seq_record.features:
-            for key, value in feature.qualifiers.items():
-                if key == "host":
-                    data["host"] = value[0]
+                for line in body.split("\n"):
 
-        return json_response(data)
+                    if line.startswith("VERSION"):
+                        data["accession"] = line.replace("VERSION", "").lstrip(" ")
+
+                    if line.startswith("DEFINITION"):
+                        data["definition"] = line.replace("DEFINITION", "").lstrip(" ")
+
+                    if "/host=" in line:
+                        data["host"] = line.lstrip(" ").replace("/host=", "").replace('"', "")
+
+                    # Extract sequence
+                    sequence_field = body.split("ORIGIN")[1].lower()
+
+                    for char in [" ", "/", "\n"] + list(string.digits):
+                        sequence_field = sequence_field.replace(char, "")
+
+                    data["sequence"] = sequence_field.upper()
+
+                return json_response(data)
 
     return not_found()

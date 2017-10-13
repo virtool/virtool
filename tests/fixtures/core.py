@@ -98,6 +98,6 @@ def get_sam_lines():
         return handle.read().split("\n")[0:-1]
 
 
-@pytest.fixture(params=get_sam_lines())
+@pytest.fixture(params=get_sam_lines(), ids=lambda x: x.split("\t")[0])
 def sam_line(request):
     return request.param.split("\t")
