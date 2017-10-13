@@ -37,9 +37,9 @@ before_install:
 - export PATH=${PATH}:${PWD}/hmmer-3.1b2-linux-intel-x86_64/binaries
 
 # Bowtie2
-- wget https://github.com/BenLangmead/bowtie2/releases/download/v2.3.3.1/bowtie2-2.3.3.1-linux-x86_64.zip
-- unzip bowtie2-2.3.3.1-linux-x86_64.zip
-- export PATH=${PATH}:${PWD}/bowtie2-2.3.3.1-linux-x86_64
+- wget https://github.com/BenLangmead/bowtie2/releases/download/v2.3.2/bowtie2-2.3.2-legacy-linux-x86_64.zip
+- unzip bowtie2-2.3.2-legacy-linux-x86_64.zip
+- export PATH=${PATH}:${PWD}/bowtie2-2.3.2-legacy
 - bowtie2-inspect --version
 
 # Skewer
