@@ -545,19 +545,7 @@ class PathoscopeBowtie(Pathoscope):
         async def stdout_handler(line):
             line = line.decode()
 
-            if line[0] == "#":
-                return
-
-            if line[0] == "@":
-                if line[1:3] == "SQ":
-                    for field in line.split("\t"):
-                        split_field = field.split(":")
-
-                        if split_field[0] == "SN":
-                            ref_id = split_field[1]
-                        if split_field[0] == "LN":
-                            length = int(split_field[1])
-
+            if line[0] == "#" or line[0] == "@":
                 return
 
             fields = line.split("\t")
@@ -844,7 +832,7 @@ class NuVs(Base):
 
         assembly = await self.run_in_executor(virtool.bio.read_fasta, assembly_path)
 
-        for header, sequence in assembly:
+        for _, sequence in assembly:
 
             sequence_length = len(sequence)
 
