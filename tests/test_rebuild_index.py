@@ -120,18 +120,15 @@ async def test_bowtie_build(error, tmpdir, test_rebuild_job, capsys):
             handle.write(">test_1\nTACGTATGACTGAGCTACGGGGCTACGACTTACCCTTCACGATCAC")
             handle.write(">test_2\nGGCTTCGGCTGATCACGACTGGACTAGCATCTGACTACGATGCTGA")
 
-    if error:
-        with capsys.disabled():
+    with capsys.disabled():
+        if error:
             with pytest.raises(virtool.job.SubprocessError) as err:
                 await test_rebuild_job.bowtie_build()
 
-        assert "virtool.job.SubprocessError" in str(err)
-        assert "Command failed: bowtie2-build -f" in str(err)
-    else:
-        await test_rebuild_job.bowtie_build()
-
-    with capsys.disabled():
-        print("FLUSH LOG")
+            assert "virtool.job.SubprocessError" in str(err)
+            assert "Command failed: bowtie2-build -f" in str(err)
+        else:
+            await test_rebuild_job.bowtie_build()
 
     await test_rebuild_job.flush_log()
 
