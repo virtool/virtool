@@ -1,5 +1,6 @@
 import os
 import sys
+import aiofiles
 import asyncio
 import pymongo
 import inspect
@@ -208,7 +209,8 @@ class Job:
             del self._log_buffer[:]
 
     async def flush_log(self):
-        await self.run_in_executor(flush_log, self._log_path, self._log_buffer)
+        async with aiofiles.open(self._log_path, "a") as f:
+            await f.write("\n".join(self._log_buffer))
 
     async def cancel(self):
         if self.started and not self.finished:
@@ -238,11 +240,6 @@ async def read_stream(stream, cb):
             await cb(line)
         else:
             break
-
-
-def flush_log(path, buffer):
-    with open(path, "a") as handle:
-        handle.write("\n".join(buffer))
 
 
 def handle_exception(max_tb=50):

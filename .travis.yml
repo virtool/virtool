@@ -37,10 +37,10 @@ before_install:
 - export PATH=${PATH}:${PWD}/hmmer-3.1b2-linux-intel-x86_64/binaries
 
 # Bowtie2
-- wget https://github.com/BenLangmead/bowtie2/releases/download/v2.3.3/bowtie2-2.3.3-linux-x86_64.zip
-- unzip bowtie2-2.3.3-linux-x86_64.zip
-- export PATH=${PATH}:${PWD}/bowtie2-2.3.3
-- bowtie2-inspect --version
+- wget https://github.com/BenLangmead/bowtie2/releases/download/v2.3.2/bowtie2-2.3.2-legacy-linux-x86_64.zip
+- unzip bowtie2-2.3.2-legacy-linux-x86_64.zip
+- export PATH=${PATH}:${PWD}/bowtie2-2.3.2-legacy
+- bowtie2 --version
 
 # Skewer
 - wget https://github.com/relipmoc/skewer/archive/0.2.2.tar.gz
@@ -50,6 +50,12 @@ before_install:
 - cd ..
 - export PATH=${PATH}:${PWD}/skewer-0.2.2
 - skewer --version
+
+# SPAdes
+- wget https://github.com/ablab/spades/releases/download/v3.11.0/SPAdes-3.11.0-Linux.tar.gz
+- tar -xvf SPAdes-3.11.0-Linux.tar.gz
+- export PATH=${PATH}:${PWD}/SPAdes-3.11.0-Linux/bin
+- spades.py --version
 
 install:
 - pip install -r requirements.txt
@@ -72,7 +78,7 @@ before_script:
 - sleep 15
 
 script:
-- pytest --cov --cov-report xml -vv
+- pytest --loop uvloop --cov --cov-report xml -vv
 
 after_success:
 - python-codacy-coverage -r coverage.xml

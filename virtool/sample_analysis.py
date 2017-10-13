@@ -2,12 +2,14 @@
 Functions and job classes for sample analysis.
 
 """
+import collections
 import os
 import shutil
+import tempfile
 import aiofiles
-from Bio import SeqIO
 
 import virtool.app_settings
+import virtool.bio
 import virtool.blast
 import virtool.job
 import virtool.pathoscope
@@ -224,10 +226,6 @@ class Base(virtool.job.Job):
         #: The document id for the analysis being run.
         self.analysis_id = self.task_args["analysis_id"]
 
-        self.sequence_virus_map = {item[0]: item[1] for item in self.task_args["sequence_virus_map"]}
-
-        self.virus_dict = self.task_args["virus_dict"]
-
         #: Stores data that is processed and stored in the analysis document.
         self.results = dict()
 
@@ -345,6 +343,10 @@ class Pathoscope(Base):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+
+        self.sequence_virus_map = {item[0]: item[1] for item in self.task_args["sequence_virus_map"]}
+
+        self.virus_dict = self.task_args["virus_dict"]
 
     @virtool.job.stage_method
     async def generate_isolate_fasta(self):
@@ -543,19 +545,7 @@ class PathoscopeBowtie(Pathoscope):
         async def stdout_handler(line):
             line = line.decode()
 
-            if line[0] == "#":
-                return
-
-            if line[0] == "@":
-                if line[1:3] == "SQ":
-                    for field in line.split("\t"):
-                        split_field = field.split(":")
-
-                        if split_field[0] == "SN":
-                            ref_id = split_field[1]
-                        if split_field[0] == "LN":
-                            length = int(split_field[1])
-
+            if line[0] == "#" or line[0] == "@":
                 return
 
             fields = line.split("\t")
@@ -712,7 +702,7 @@ class NuVs(Base):
 
         self._stage_list += [
             self.map_viruses,
-            self.map_host,
+            self.map_subtraction,
             self.reunite_pairs,
             self.assemble,
             self.process_fasta,
@@ -734,14 +724,14 @@ class NuVs(Base):
             "-k", str(1),
             "--very-fast-local",
             "-x", self.index_path,
-            "--un", os.path.join(self.analysis_path, "/unmapped_viruses.fq"),
+            "--un", os.path.join(self.analysis_path, "unmapped_viruses.fq"),
             "-U", ",".join(self.read_paths)
         ]
 
         await self.run_subprocess(command)
 
     @virtool.job.stage_method
-    async def map_host(self):
+    async def map_subtraction(self):
         """
         Maps unaligned reads from :meth:`.map_viruses` to the sample's subtraction host using ``bowtie2``. Bowtie2 is
         set to use the search parameter ``--very-fast-local`` and retain unaligned reads to the FASTA file
@@ -763,22 +753,21 @@ class NuVs(Base):
     @virtool.job.stage_method
     async def reunite_pairs(self):
         if self.sample["paired"]:
-            with open(os.path.join(self.analysis_path, "unmapped_hosts.fq"), "rU") as handle:
-                unmapped_roots = {record.id.split(" ")[0] for record in SeqIO.parse(handle, "fastq")}
+            unmapped_path = os.path.join(self.analysis_path, "unmapped_hosts.fq")
 
-            with open(self.read_paths[0], "r") as handle:
-                s_dict = {record.id.split(" ")[0]: record for record in SeqIO.parse(handle, "fastq")}
+            headers = await self.run_in_executor(virtool.bio.read_fastq_headers, unmapped_path)
 
-                with open(os.path.join(self.analysis_path, "unmapped_1.fq"), "w") as unmapped:
-                    for root in unmapped_roots:
-                        SeqIO.write(s_dict[root], unmapped, "fastq")
+            unmapped_roots = {h.split(" ")[0] for h in headers}
 
-            with open(self.read_paths[1], "r") as handle:
-                s_dict = {record.id.split(" ")[0]: record for record in SeqIO.parse(handle, "fastq")}
+            with open(os.path.join(self.analysis_path, "unmapped_1.fq"), "w") as f:
+                for header, seq, quality in await self.run_in_executor(virtool.bio.read_fastq, self.read_paths[0]):
+                    if header.split(" ")[0] in unmapped_roots:
+                        f.write("\n".join([header, seq, "+", quality]) + "\n")
 
-                with open(os.path.join(self.analysis_path, "unmapped_2.fq"), "w") as unmapped:
-                    for root in unmapped_roots:
-                        SeqIO.write(s_dict[root], unmapped, "fastq")
+            with open(os.path.join(self.analysis_path, "unmapped_2.fq"), "w") as f:
+                for header, seq, quality in await self.run_in_executor(virtool.bio.read_fastq, self.read_paths[1]):
+                    if header.split(" ")[0] in unmapped_roots:
+                        f.write("\n".join([header, seq, "+", quality]) + "\n")
 
     @virtool.job.stage_method
     async def assemble(self):
@@ -803,93 +792,83 @@ class NuVs(Base):
                 "-s", os.path.join(self.analysis_path, "unmapped_hosts.fq"),
             ]
 
-        command += [
-            "-o", os.path.join(self.analysis_path, "spades"),
-            "-k", "21,33,55,75"
-        ]
+        with tempfile.TemporaryDirectory() as temp_path:
+            command += [
+                "-o", temp_path,
+                "-k", "21,33,55,75"
+            ]
 
-        await self.run_subprocess(command)
+            await self.run_subprocess(command)
+
+            shutil.copyfile(
+                os.path.join(temp_path, "scaffolds.fasta"),
+                os.path.join(self.analysis_path, "assembly.fa")
+            )
+
+            shutil.copy(
+                os.path.join(temp_path, "spades.log"),
+                self.analysis_path
+            )
+
+            warnings_path = os.path.join(temp_path, "warnings.log")
+
+            if os.path.isfile(warnings_path):
+                shutil.copyfile(
+                    warnings_path,
+                    os.path.join(self.analysis_path, "spades.warnings")
+                )
 
     @virtool.job.stage_method
-    def process_fasta(self):
+    async def process_fasta(self):
         """
         Finds ORFs in the contigs assembled by :meth:`.assemble`. Only ORFs that are 100+ amino acids long are recorded.
         Contigs with no acceptable ORFs are discarded.
 
         """
         # Contigs that contain at least one acceptable ORF.
-        self.results["sequences"] = list()
+        self.results = list()
 
-        # Acceptable ORFs found in assembled contigs.
-        self.results["orfs"] = list()
+        assembly_path = os.path.join(self.analysis_path, "assembly.fa")
 
-        # A numeric index to identify the assembled contig. Increments by one for each FASTA entry.
-        index = 0
+        assembly = await self.run_in_executor(virtool.bio.read_fasta, assembly_path)
 
-        spades_path = os.path.join(self.analysis_path, "spades")
+        for _, sequence in assembly:
 
-        fasta_path = os.path.join(spades_path, "scaffolds.fasta")
+            sequence_length = len(sequence)
 
-        for record in SeqIO.parse(fasta_path, "fasta"):
+            # Don't consider the sequence if it is shorter than 300 bp.
+            if sequence_length < 300:
+                continue
 
-            seq_len = len(record.seq)
+            orfs = virtool.bio.find_orfs(sequence)
 
-            orf_count = 0
+            # Don't consider the sequence if it has no ORFs.
+            if len(orfs) == 0:
+                continue
 
-            # Only look for ORFs if the contig is at least 300 nucleotides long.
-            if seq_len > 300:
-                # Looks at both forward (+) and reverse (-) strands.
-                for strand, nuc in [(+1, record.seq), (-1, record.seq.reverse_complement())]:
-                    # Look in all three translation frames.
-                    for frame in range(3):
-                        trans = str(nuc[frame:].translate(1))
-                        trans_len = len(trans)
-                        aa_start = 0
+            # Add an index field to each orf dict.
+            orfs = [dict(o, index=i) for i, o in enumerate(orfs)]
 
-                        # Extract ORFs.
-                        while aa_start < trans_len:
-                            aa_end = trans.find("*", aa_start)
+            for orf in orfs:
+                orf.pop("nuc")
+                orf["hits"] = list()
 
-                            if aa_end == -1:
-                                aa_end = trans_len
-                            if aa_end - aa_start >= 100:
-                                if strand == 1:
-                                    start = frame + aa_start * 3
-                                    end = min(seq_len, frame + aa_end * 3 + 3)
-                                else:
-                                    start = seq_len - frame - aa_end * 3 - 3
-                                    end = seq_len - frame - aa_start * 3
-
-                                self.results["orfs"].append({
-                                    "index": index,
-                                    "orf_index": orf_count,
-                                    "pro": str(trans[aa_start:aa_end]),
-                                    "nuc": str(nuc[start:end]),
-                                    "frame": frame,
-                                    "strand": strand,
-                                    "pos": (start, end)
-                                })
-
-                                orf_count += 1
-
-                            aa_start = aa_end + 1
-
-            # Save the contig sequence if it contains at least one acceptable ORF.
-            if orf_count > 0:
-                self.results["sequences"].append(str(record.seq))
-                index += 1
+            # Make an entry for the nucleotide sequence containing a unique integer index, the sequence itself, and
+            # all ORFs in the sequence.
+            self.results.append({
+                "index": len(self.results),
+                "sequence": sequence,
+                "orfs": orfs
+            })
 
         # Write the ORFs to a FASTA file so that they can be analyzed using HMMER and vFAM.
-        with open(os.path.join(self.analysis_path, "candidates.fa"), "w") as candidates:
-            for entry in self.results["orfs"]:
-                candidates.write(">sequence_{}.{}\n{}\n".format(
-                    str(entry["index"]),
-                    str(entry["orf_index"]),
-                    entry["pro"]
-                ))
+        async with aiofiles.open(os.path.join(self.analysis_path, "orfs.fa"), "w") as f:
+            for entry in self.results:
+                for orf in entry["orfs"]:
+                    await f.write(">sequence_{}.{}\n{}\n".format(entry["index"], orf["index"], orf["pro"]))
 
     @virtool.job.stage_method
-    def press_hmm(self):
+    async def press_hmm(self):
 
         shutil.copy(os.path.join(self.data_path, "hmm", "profiles.hmm"), self.analysis_path)
 
@@ -900,7 +879,7 @@ class NuVs(Base):
             hmm_path
         ]
 
-        self.run_subprocess(command)
+        await self.run_subprocess(command)
 
         os.remove(hmm_path)
 
@@ -917,8 +896,6 @@ class NuVs(Base):
           database collection
 
         """
-        self.results["hmm"] = list()
-
         # The path to output the hmmer results to.
         tsv_path = os.path.join(self.analysis_path, "hmm.tsv")
 
@@ -928,103 +905,54 @@ class NuVs(Base):
             "--noali",
             "--cpu", str(self.proc - 1),
             os.path.join(self.analysis_path, "profiles.hmm"),
-            os.path.join(self.analysis_path, "candidates.fa")
+            os.path.join(self.analysis_path, "orfs.fa")
         ]
 
         await self.run_subprocess(command)
 
-        # The column titles for the ``hits.tsv`` output file.
-        header = [
-            "index",
-            "orf_index",
-            "hit",
-            "full_e",
-            "full_score",
-            "full_bias",
-            "best_e",
-            "best_bias",
-            "best_score"
-        ]
-
-        # The path to write ``hits.tsv`` to.
-        hit_path = os.path.join(self.self.analysis_path, "hits.tsv")
+        hits = collections.defaultdict(lambda: collections.defaultdict(list))
 
         # Go through the raw HMMER results and annotate the HMM hits with data from the database.
         with open(tsv_path, "r") as hmm_file:
-            with open(hit_path, "w") as hit_file:
-                hit_file.write(",".join(header))
+            for line in hmm_file:
+                if line.startswith("vFam"):
+                    line = line.split()
 
-                for line in hmm_file:
-                    if line.startswith("vFam"):
-                        line = line.split()
+                    cluster_id = int(line[0].split("_")[1])
+                    annotation_id = (await self.db.hmm.find_one({"cluster": int(cluster_id)}, {"_id": True}))["_id"]
 
-                        cluster_id = int(line[0].split("_")[1])
-                        annotation_id = self.db.hmm.find_one({"cluster": int(cluster_id)}, {"_id": True})["_id"]
+                    sequence_index, orf_index = (int(x) for x in line[2].split("_")[1:])
 
-                        compound_id = line[2].split("_")[1].split(".")
+                    hits[sequence_index][orf_index].append({
+                        "hit": annotation_id,
+                        "full_e": float(line[4]),
+                        "full_score": float(line[5]),
+                        "full_bias": float(line[6]),
+                        "best_e": float(line[7]),
+                        "best_bias": float(line[8]),
+                        "best_score": float(line[9])
+                    })
 
-                        entry = {
-                            "index": int(compound_id[0]),
-                            "orf_index": int(compound_id[1]),
-                            "hit": annotation_id,
-                            "full_e": float(line[4]),
-                            "full_score": float(line[5]),
-                            "full_bias": float(line[6]),
-                            "best_e": float(line[7]),
-                            "best_bias": float(line[8]),
-                            "best_score": float(line[9])
-                        }
-
-                        self.results["hmm"].append(entry)
-
-                        joined = ",".join(["{}".format(entry[key]) for key in header])
-
-                        hit_file.write(joined + "\n")
+        for sequence_index in hits:
+            for orf_index in hits[sequence_index]:
+                self.results[sequence_index]["orfs"][orf_index]["hits"] = hits[sequence_index][orf_index]
 
     @virtool.job.stage_method
     async def import_results(self):
         """
-        Import into the analysis document in the database the following data:
-
-        - the sequences with significant ORFs in them
-        - all significant ORF sequences and metadata
-        - the annotated HMMER results from ``hits.tsv``
+        Save the results to the analysis document and set the ``ready`` field to ``True``.
 
         After the import is complete, :meth:`.indexes.Collection.cleanup_index_files` is called to remove any virus
         indexes that are no longer being used by an active analysis job.
 
         """
-        referenced = [entry["index"] for entry in self.results["hmm"]]
-
-        self.results["sequences"] = [
-            {"sequence": seq, "index": i} for i, seq in enumerate(self.results["sequences"]) if i in referenced
-        ]
-
-        retained = [entry["index"] for entry in self.results["sequences"]]
-
-        self.results["orfs"] = [orf for orf in self.results["orfs"] if orf["index"] in retained]
-
-        self.call_static("set_analysis", self.sample_id, self.analysis_id, self.results)
-
-        await virtool.virus_index.cleanup_index_files(manager.db, manager.settings)
-
-    @staticmethod
-    async def set_analysis(manager, sample_id, analysis_id, data):
-        """
-        Update the analysis document identified using ``data``, which contains the analysis id and the update. Sets the
-        analysis' ``ready`` field to ``True``. Sets the parent sample's ``analyzed`` field to ``True`` and increments
-        its version by one.
-
-        """
-        db = manager.db
-
-        document = await db.analyses.find_one({"_id": analysis_id})
-        document.update(dict(data, ready=True))
-
-        await db.analyses.update_one({"_id": analysis_id}, {
-            "$set": document
+        await self.db.analyses.find_one_and_update({"_id": self.analysis_id}, {
+            "$set": {
+                "results": self.results,
+                "ready": True
+            }
         })
 
-        await db.samples.update_one({"_id": sample_id}, {
-            "$set": {"nuvs": True}
-        })
+        document = await virtool.sample.recalculate_algorithm_tags(self.db, self.sample_id)
+
+        await self.dispatch("samples", "update", document)

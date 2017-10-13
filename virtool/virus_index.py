@@ -172,7 +172,7 @@ class RebuildIndex(virtool.job.Job):
             os.path.join(self.reference_path, "reference")
         )
 
-        await self.run_subprocess(command)
+        await self.run_subprocess(command, stdout_handler=print, stderr_handler=print)
 
     @virtool.job.stage_method
     async def replace_old(self):
