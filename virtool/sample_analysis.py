@@ -921,7 +921,8 @@ class NuVs(Base):
                     cluster_id = int(line[0].split("_")[1])
                     annotation_id = (await self.db.hmm.find_one({"cluster": int(cluster_id)}, {"_id": True}))["_id"]
 
-                    sequence_index, orf_index = (int(x) for x in line[2].split("_")[1:])
+                    # Expecting sequence_0.0
+                    sequence_index, orf_index = (int(x) for x in line[2].split("_")[1].split("."))
 
                     hits[sequence_index][orf_index].append({
                         "hit": annotation_id,
