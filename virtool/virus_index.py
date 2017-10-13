@@ -168,7 +168,6 @@ class RebuildIndex(virtool.job.Job):
         command = (
             "bowtie2-build",
             "-f",
-            "--quiet",
             os.path.join(self.reference_path, "ref.fa"),
             os.path.join(self.reference_path, "reference")
         )
