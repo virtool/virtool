@@ -1,9 +1,7 @@
 import React from "react";
-import PropTypes from "prop-types";
 import { connect } from "react-redux";
-import { sortBy, assign, filter, reduce } from "lodash";
 
-import NuVsController from "./Controller";
+import NuVsList from "./List";
 
 const NuVsViewer = (props) => {
 
@@ -47,7 +45,7 @@ const NuVsViewer = (props) => {
     });
 
     return (
-        <NuVsController
+        <NuVsList
             data={sequences}
             analysisId={props.id}
             maxSequenceLength={maxSequenceLength}

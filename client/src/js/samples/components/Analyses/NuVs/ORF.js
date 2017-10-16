@@ -16,16 +16,15 @@ const HEIGHT = 8;
 export default class NuVsORF extends React.Component {
 
     static propTypes = {
-        hmms: PropTypes.arrayOf(PropTypes.object),
+        hits: PropTypes.arrayOf(PropTypes.object),
         maxSequenceLength: PropTypes.number,
-        hasHmm: PropTypes.bool,
         pos: PropTypes.array,
         strand: PropTypes.number,
     };
 
-    componentDidMount = () => this.draw();
-
-    shouldComponentUpdate = () => false;
+    componentDidMount () {
+        this.draw();
+    }
 
     draw = () => {
 
@@ -70,7 +69,7 @@ export default class NuVsORF extends React.Component {
 
     render () {
 
-        const hmm = this.props.hasHmm ? this.props.hmms[0]: DEFAULT_HMM;
+        const hmm = this.props.hits[0] || DEFAULT_HMM;
 
         return (
             <div className="nuvs-item">
