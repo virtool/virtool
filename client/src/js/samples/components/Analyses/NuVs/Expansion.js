@@ -81,8 +81,8 @@ export default class NuVsExpansion extends React.Component {
 
                 <NuVsBLAST
                     analysisId={this.props.analysisId}
-                    blast={this.props.blast}
                     sequenceIndex={this.props.index}
+                    blast={this.props.blast}
                     sequence={this.props.sequence}
                 />
 

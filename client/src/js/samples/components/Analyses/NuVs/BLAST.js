@@ -1,14 +1,13 @@
 import React from "react";
 import Numeral from "numeral";
 import { connect } from "react-redux";
-import PropTypes from "prop-types";
 import { Panel, Alert, Table } from "react-bootstrap";
+
+import { blastNuvs } from "../../../actions";
 import { Icon, Flex, FlexItem, Button } from "../../../../base";
 
 const ridRoot = "https://blast.ncbi.nlm.nih.gov/Blast.cgi?\
     CMD=Web&PAGE_TYPE=BlastFormatting&OLD_BLAST=false&GET_RID_INFO=on&RID=";
-
-
 
 const NuVsBLAST = (props) => {
 
@@ -72,7 +71,7 @@ const NuVsBLAST = (props) => {
                     <Button
                         bsSize="small"
                         icon="cloud"
-                        onClick={() => this.props.blast(props.analysisId, props.sequenceIndex)}
+                        onClick={() => this.props.onBlast(props.analysisId, props.sequenceIndex)}
                     >
                         BLAST at NCBI
                     </Button>
@@ -90,12 +89,12 @@ const mapStateToProps = (state) => {
 
 const mapDispatchToProps = (dispatch) => {
     return {
-        blast: (analysisId, sequenceIndex) => {
-            dispatch
+        onBlast: (analysisId, sequenceIndex) => {
+            dispatch(blastNuvs(analysisId, sequenceIndex));
         }
     };
 };
 
-const Container = connect(mapStateToProps, mapDispatchToProps);
+const Container = connect(mapStateToProps, mapDispatchToProps)(NuVsBLAST);
 
 export default Container;
