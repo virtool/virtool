@@ -23,18 +23,6 @@ i {
 .i-paste:before {
   content: "\e918";
 }
-.i-binoculars:before {
-  content: "\e917";
-}
-.i-lookup:before {
-  content: "\e917";
-}
-.i-search:before {
-  content: "\e917";
-}
-.i-find:before {
-  content: "\e917";
-}
 .i-download:before {
   content: "\e913";
 }
@@ -125,7 +113,7 @@ i {
 .i-users:before {
   content: "\e623";
 }
-.i-search2:before {
+.i-search:before {
   content: "\e627";
 }
 .i-wrench:before {
@@ -166,12 +154,6 @@ i {
 }
 .i-attachment:before {
   content: "\e638";
-}
-.i-eye:before {
-  content: "\e639";
-}
-.i-eye-blocked:before {
-  content: "\e63a";
 }
 .i-warning:before {
   content: "\e644";
@@ -232,18 +214,6 @@ i {
 }
 .i-file-zip:before {
   content: "\e660";
-}
-.i-chrome:before {
-  content: "\e661";
-}
-.i-firefox:before {
-  content: "\e662";
-}
-.i-IE:before {
-  content: "\e663";
-}
-.i-safari:before {
-  content: "\e664";
 }
 .i-play:before {
   content: "\ea1c";
