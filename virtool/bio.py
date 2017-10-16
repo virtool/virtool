@@ -291,9 +291,6 @@ async def initialize_ncbi_blast(sequence):
         async with session.post(BLAST_CGI_URL, params=params, data=data) as resp:
             assert resp.status == 200
 
-            with open("initialize_blast.html", "w") as f:
-                f.write(await resp.text())
-
             # Extract and return the RID and RTOE from the QBlastInfo tag.
             return extract_blast_info(await resp.text())
 
@@ -353,7 +350,6 @@ async def get_ncbi_blast_result(rid):
 
     with aiohttp.ClientSession() as session:
         async with session.get(BLAST_CGI_URL, params=params) as resp:
-            print(BLAST_CGI_URL)
             return parse_blast_content(await resp.read(), rid)
 
 
