@@ -16,7 +16,6 @@ const HEIGHT = 8;
 export default class NuVsORF extends React.Component {
 
     static propTypes = {
-        nuc: PropTypes.string,
         hmms: PropTypes.arrayOf(PropTypes.object),
         maxSequenceLength: PropTypes.number,
         hasHmm: PropTypes.bool,
@@ -82,7 +81,7 @@ export default class NuVsORF extends React.Component {
                         </FlexItem>
                         <FlexItem pad={5}>
                             <small className="text-primary text-strong">
-                                {this.props.nuc.length}
+                                {this.props.pos[1] - this.props.pos[0]}
                             </small>
                         </FlexItem>
                         <FlexItem pad={5}>

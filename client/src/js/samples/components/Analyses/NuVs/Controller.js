@@ -23,8 +23,6 @@ export default class NuVsController extends React.PureComponent {
         data: PropTypes.arrayOf(PropTypes.object)
     };
 
-    setFindTerm = (event) => this.setState({findTerm: event.target.value});
-
     filter = (eventKey) => {
 
         switch (eventKey) {
@@ -41,17 +39,6 @@ export default class NuVsController extends React.PureComponent {
     };
 
     render () {
-
-        let data = this.props.data;
-
-        if (this.state.filterORFs) {
-            data = data.map(sequence => assign({}, sequence, {orfs: filter(sequence.orfs, {hasHmm: true})}));
-        }
-
-        if (this.state.filterSequences) {
-            data = filter(data, sequence => sequence.hasSignificantOrf);
-        }
-
         return (
             <div>
                 <Table bordered>
@@ -67,11 +54,11 @@ export default class NuVsController extends React.PureComponent {
                     <FormGroup>
                         <InputGroup>
                             <InputGroup.Addon>
-                                <Icon name="search" /> Find
+                                <Icon name="search" />
                             </InputGroup.Addon>
                             <FormControl
                                 value={this.state.findTerm}
-                                onChange={this.setFindTerm}
+                                onChange={(e) => this.setState({findTerm: e.target.value})}
                                 placeholder="Definition, family"
                             />
                         </InputGroup>
@@ -116,7 +103,7 @@ export default class NuVsController extends React.PureComponent {
                 </div>
 
                 <NuVsList
-                    data={data}
+                    data={this.props.data}
                     analysisId={this.props.analysisId}
                     maxSequenceLength={this.props.maxSequenceLength}
                 />

@@ -27,8 +27,6 @@ export default class NuVsList extends React.Component {
         });
     };
 
-    collapseAll = () => this.setState({expanded: []});
-
     render () {
 
         let data;
