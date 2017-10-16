@@ -20,6 +20,9 @@ i {
   -moz-osx-font-smoothing: grayscale;
 }
 
+.i-cloud:before {
+  content: "\e917";
+}
 .i-paste:before {
   content: "\e918";
 }
