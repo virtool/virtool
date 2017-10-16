@@ -10,7 +10,6 @@ import aiofiles
 
 import virtool.app_settings
 import virtool.bio
-import virtool.blast
 import virtool.job
 import virtool.pathoscope
 import virtool.sample

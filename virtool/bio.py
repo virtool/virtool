@@ -1,3 +1,13 @@
+import aiohttp
+import io
+import json
+import re
+import zipfile
+
+
+BLAST_CGI_URL = "https://blast.ncbi.nlm.nih.gov/Blast.cgi"
+
+
 COMPLEMENT_TABLE = {
     "A": "T",
     "T": "A",
@@ -248,3 +258,173 @@ def find_orfs(sequence):
                     aa_start = aa_end + 1
 
     return orfs
+
+
+async def initialize_ncbi_blast(sequence):
+    """
+    Send a request to NCBI to BLAST the passed sequence. Return the RID and RTOE from the response.
+
+    :param sequence: the nucleotide sequence to BLAST
+    :type sequence: str
+
+    :return: the RID and RTOE for the request
+    :rtype: Coroutine[tuple]
+
+    """
+    # Parameters passed in the URL string. eg. ?CMD=Put&DATABASE=nr
+    params = {
+        "CMD": "Put",
+        "DATABASE": "nr",
+        "PROGRAM": "blastn",
+        "MEGABLAST": "on",
+        "HITLIST_SIZE": 5,
+        "FILTER": "mL",
+        "FORMAT_TYPE": "JSON2"
+    }
+
+    # Data passed as POST content.
+    data = {
+        "QUERY": sequence,
+    }
+
+    with aiohttp.ClientSession() as session:
+        async with session.post(BLAST_CGI_URL, params=params, data=data) as resp:
+            assert resp.status == 200
+
+            with open("initialize_blast.html", "w") as f:
+                f.write(await resp.text())
+
+            # Extract and return the RID and RTOE from the QBlastInfo tag.
+            return extract_blast_info(await resp.text())
+
+
+def extract_blast_info(html):
+    """
+    Extract the RID and RTOE from BLAST HTML data containing a <QBlastInfo /> tag.
+
+    :param html: the input HTML
+    :type html: str
+
+    :return: a tuple containg the RID and RTOE
+    :rtype: tuple
+
+    """
+    string = html.split("<!--QBlastInfoBegin")[1].split("QBlastInfoEnd")[0]
+
+    match = re.search(r"RID = (.+)", string)
+    rid = match.group(1)
+
+    match = re.search(r"RTOE = (.+)", string)
+    rtoe = match.group(1)
+
+    return rid, int(rtoe)
+
+
+async def check_rid(rid):
+    """
+    Check if the BLAST process identified by the passed RID is ready.
+
+    :param rid: the RID to check
+    :type rid: str
+
+    :return: ``True`` if ready, ``False`` otherwise
+    :rtype: Coroutine[bool]
+
+    """
+    params = {
+        "CMD": "Get",
+        "RID": rid,
+        "FORMAT_OBJECT": "SearchInfo"
+    }
+
+    with aiohttp.ClientSession() as session:
+        async with session.get(BLAST_CGI_URL, params=params) as resp:
+            assert resp.status == 200
+            return "Status=WAITING" not in await resp.text()
+
+
+async def get_ncbi_blast_result(rid):
+    params = {
+        "CMD": "Get",
+        "RID": rid,
+        "FORMAT_TYPE": "JSON2",
+        "FORMAT_OBJECT": "Alignment"
+    }
+
+    with aiohttp.ClientSession() as session:
+        async with session.get(BLAST_CGI_URL, params=params) as resp:
+            print(BLAST_CGI_URL)
+            return parse_blast_content(await resp.read(), rid)
+
+
+def parse_blast_content(content, rid):
+    zipped = zipfile.ZipFile(io.BytesIO(content))
+    string = zipped.open(rid + "_1.json", "r").read().decode()
+
+    result = json.loads(string)
+
+    assert len(result) == 1
+
+    result = result["BlastOutput2"]
+
+    assert len(result) == 1
+
+    result = result["report"]
+
+    output = {key: result[key] for key in ["program", "params", "version"]}
+
+    output["target"] = result["search_target"]
+
+    result = result["results"]["search"]
+
+    try:
+        output["masking"] = result["query_masking"]
+    except KeyError:
+        output["masking"] = None
+
+    output["stat"] = result["stat"]
+
+    output["hits"] = list()
+
+    for hit in result["hits"]:
+        cleaned = {key: hit["description"][0][key] for key in ["taxid", "title", "accession"]}
+
+        cleaned["len"] = hit["len"]
+        cleaned["name"] = hit["description"][0]["sciname"]
+
+        hsps = {key: hit["hsps"][0][key] for key in [
+            "identity",
+            "evalue",
+            "align_len",
+            "score",
+            "bit_score",
+            "gaps"
+        ]}
+
+        cleaned.update(hsps)
+
+        output["hits"].append(cleaned)
+
+    return output
+
+
+def blast(sequence):
+    """
+    Retrieve the Genbank data associated with the given accession and transform it into a Virtool-format sequence
+    document.
+
+    :param sequence: the nucleotide or protein sequence to BLAST.
+    :type sequence: str
+
+    """
+    rid, _ = initialize_ncbi_blast(sequence)
+
+    is_ready = False
+    interval = 3
+
+    while not is_ready:
+        time.sleep(interval)
+        interval += 5
+        is_ready = check_rid(rid)
+
+    return retrieve_result(rid)
