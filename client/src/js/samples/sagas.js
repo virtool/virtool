@@ -19,7 +19,8 @@ import {
     UPDATE_SAMPLE,
     FIND_ANALYSES,
     GET_ANALYSIS,
-    ANALYZE
+    ANALYZE,
+    BLAST_NUVS
 }  from "../actionTypes";
 
 export function* watchSamples () {
@@ -110,5 +111,19 @@ export function* analyze (action) {
         yield put({type: ANALYZE.SUCCEEDED, data: response.body});
     } catch (error) {
         yield put({type: ANALYZE.FAILED, error});
+    }
+}
+
+export function* blastNuvs (action) {
+    try {
+        const response = yield samplesAPI.blastNuvs(action.analysisId, action.sequenceIndex);
+        yield put({
+            type: BLAST_NUVS.SUCCEEDED,
+            analysisId: action.analysisId,
+            sequenceIndex: action.sequenceIndex,
+            data: response.body
+        });
+    } catch (err) {
+        yield put({type: BLAST_NUVS.FAILED, err});
     }
 }

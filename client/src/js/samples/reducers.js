@@ -21,8 +21,29 @@ import {
     FIND_ANALYSES,
     FIND_READY_HOSTS,
     GET_ANALYSIS,
-    ANALYZE
+    ANALYZE,
+    BLAST_NUVS
 } from "../actionTypes";
+
+const setNuvsBLAST = (state, analysisId, sequenceIndex, data = "ip") => {
+    const analysisDetail = state.analyses.analysisDetail;
+
+    if (analysisDetail.id === analysisId) {
+        return assign({}, state, {
+            analysisDetail: assign({}, analysisDetail, {
+                results: analysisDetail.results.map(sequence => {
+                    if (sequenceIndex === sequenceIndex) {
+                        return assign({}, sequence, {blast: data});
+                    }
+
+                    return sequence;
+                })
+            })
+        });
+    }
+
+    return state;
+};
 
 const initialState = {
     documents: null,
@@ -153,6 +174,12 @@ export default function reducer (state = initialState, action) {
             return assign({}, state, {
                 analyses: state.analyses.concat([action.data])
             });
+
+        case BLAST_NUVS.REQUESTED:
+            return setNuvsBLAST(state, action.analysisId, action.sequenceIndex, null);
+
+        case BLAST_NUVS.SUCCEEDED:
+            return setNuvsBLAST(state, action.analysisId, action.sequenceIndex, action.data);
 
         default:
             return state;
