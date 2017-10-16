@@ -1,7 +1,7 @@
-import asyncio
-
+import virtool.bio
+import virtool.utils
+import virtool.sample_analysis
 from virtool.handlers.utils import not_found, json_response
-from virtool.sample_analysis import format_analysis
 
 
 async def get(req):
@@ -15,10 +15,10 @@ async def get(req):
 
     document = await db.analyses.find_one(analysis_id)
 
-    formatted = await format_analysis(db, document)
+    formatted = await virtool.sample_analysis.format_analysis(db, document)
 
     if document:
-        return json_response(formatted)
+        return json_response(virtool.utils.base_processor(formatted))
 
     return not_found()
 
@@ -32,53 +32,45 @@ async def blast_nuvs_sequence(req):
     db = req.app["db"]
 
     analysis_id = req.match_info["analysis_id"]
-    sequence_index = req.match_info["sequence_index"]
+    sequence_index = int(req.match_info["sequence_index"])
 
-    analysis = await req.app["db"].analyses.find_one({"_id": analysis_id}, ["sequences"])
+    analysis = await db.analyses.find_one({"_id": analysis_id}, ["results"])
 
-    sequences = [sequence for sequence in analysis["sequences"] if sequence["index"] == int(sequence_index)]
+    sequences = [result["sequence"] for result in analysis["results"] if result["index"] == int(sequence_index)]
 
     assert len(sequences) == 1
 
-    nuc = sequences[0]["sequence"]
+    sequence = sequences[0]
 
-    rid, _ = await initialize_blast(nuc)
+    rid, _ = await virtool.bio.initialize_ncbi_blast(sequence)
 
-    ready = False
-    checked = False
-    interval = 3
+    ready = await virtool.bio.check_rid(rid)
 
-    while not ready:
-        await db.analyses.update_one({"_id": analysis_id, "sequences.index": sequence_index}, {
-            "$set": {
-                "sequences.$.blast": {
-                    "rid": rid,
-                    "ready": ready,
-                    "checked": checked,
-                    "interval": interval
-                }
-            }
-        })
-
-        asyncio.sleep(interval)
-
-        ready = await check_rid(rid)
-
-        interval += 3
-
-    result = await retrieve_blast_result(rid)
-
-    result.update({
+    data = {
         "rid": rid,
         "ready": ready,
-        "checked": checked,
-        "interval": interval
-    })
+        "last_checked_at": virtool.utils.timestamp(),
+        "interval": 3
+    }
 
-    response = await db.analyses.update_one({"_id": analysis_id, "sequences.index": sequence_index}, {
+    await db.analyses.update_one({"_id": analysis_id, "results.index": sequence_index}, {
         "$set": {
-            "sequences.$.blast": result
+            "results.$.blast": data
         }
     })
 
-    return True, response
+    wait_for_blast_coro = virtool.bio.wait_for_blast_result(
+        db,
+        req.app["dispatcher"].dispatch,
+        analysis_id,
+        sequence_index,
+        rid
+    )
+
+    req.app.loop.create_task(wait_for_blast_coro)
+
+    headers = {
+        "Location": "/api/analyses/{}/{}/blast".format(analysis_id, sequence_index)
+    }
+
+    return json_response(data, status=201, headers=headers)

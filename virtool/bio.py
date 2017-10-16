@@ -1,8 +1,13 @@
 import aiohttp
+import asyncio
 import io
 import json
+import pymongo
 import re
 import zipfile
+
+import virtool.sample_analysis
+import virtool.utils
 
 
 BLAST_CGI_URL = "https://blast.ncbi.nlm.nih.gov/Blast.cgi"
@@ -404,23 +409,42 @@ def parse_blast_content(content, rid):
     return output
 
 
-def blast(sequence):
+async def wait_for_blast_result(db, dispatch, analysis_id, sequence_index, rid):
     """
     Retrieve the Genbank data associated with the given accession and transform it into a Virtool-format sequence
     document.
 
-    :param sequence: the nucleotide or protein sequence to BLAST.
-    :type sequence: str
+    :param rid: the identifier to the BLAST request
+    :type rid: str
 
     """
-    rid, _ = initialize_ncbi_blast(sequence)
-
-    is_ready = False
+    ready = False
     interval = 3
 
-    while not is_ready:
-        time.sleep(interval)
-        interval += 5
-        is_ready = check_rid(rid)
+    while not ready:
+        await asyncio.sleep(interval)
 
-    return retrieve_result(rid)
+        # Do this before checking RID for more accurate time.
+        last_checked_at = virtool.utils.timestamp()
+
+        ready = await check_rid(rid)
+
+        update = {
+            "interval": interval,
+            "last_checked_at": last_checked_at,
+            "ready": ready,
+            "rid": rid
+        }
+
+        interval += 5
+
+        if update["ready"]:
+            update["result"] = await get_ncbi_blast_result(rid)
+
+        document = await db.analyses.find_one_and_update({"_id": analysis_id, "results.index": sequence_index}, {
+            "$set": {
+                "results.$.blast": update
+            }
+        }, return_document=pymongo.ReturnDocument.AFTER, projection=virtool.sample_analysis.LIST_PROJECTION)
+
+        await dispatch("analyses", "update", virtool.utils.base_processor(document))
