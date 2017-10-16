@@ -1,20 +1,14 @@
 import React from "react";
 import Numeral from "numeral";
+import { connect } from "react-redux";
 import PropTypes from "prop-types";
 import { Panel, Alert, Table } from "react-bootstrap";
 import { Icon, Flex, FlexItem, Button } from "../../../../base";
 
-const nuccoreRoot = "https://www.ncbi.nlm.nih.gov/nuccore/";
-
 const ridRoot = "https://blast.ncbi.nlm.nih.gov/Blast.cgi?\
     CMD=Web&PAGE_TYPE=BlastFormatting&OLD_BLAST=false&GET_RID_INFO=on&RID=";
 
-const requestBLAST = (analysisId, sequenceIndex) => {
-    dispatcher.db.analyses.request("blast_nuvs_sequence", {
-        _id: analysisId,
-        sequence_index: sequenceIndex
-    })
-};
+
 
 const NuVsBLAST = (props) => {
 
@@ -23,7 +17,11 @@ const NuVsBLAST = (props) => {
         if (props.blast.ready) {
             const hitComponents = props.blast.hits.map((hit, index) =>
                 <tr key={index}>
-                    <td><a target="_blank" href={nuccoreRoot + hit.accession}>{hit.accession}</a></td>
+                    <td>
+                        <a target="_blank" href={`https://www.ncbi.nlm.nih.gov/nuccore/${hit.accession}`}>
+                            {hit.accession}
+                        </a>
+                    </td>
                     <td>{hit.name}</td>
                     <td>{hit.evalue}</td>
                     <td>{hit.score}</td>
@@ -51,18 +49,18 @@ const NuVsBLAST = (props) => {
             );
         }
 
-        const ridHref = ridRoot + props.blast.rid;
-
         return (
             <Alert bsStyle="info">
                 <span>BLAST in progress with RID </span>
-                <a target="_blank" href={ridHref}>{props.blast.rid} <sup><Icon name="new-tab" /></sup></a>
+                <a target="_blank" href={ridRoot + props.blast.rid}>
+                    {props.blast.rid} <sup><Icon name="new-tab" /></sup>
+                </a>
             </Alert>
         );
     }
 
     return (
-        <Alert bsStyle="info">
+        <Alert bsStyle="warning">
             <Flex alignItems="center">
                 <FlexItem>
                     <Icon name="info" />
@@ -72,11 +70,11 @@ const NuVsBLAST = (props) => {
                 </FlexItem>
                 <FlexItem pad={10}>
                     <Button
-                        bsStyle="primary"
                         bsSize="small"
-                        onClick={() => requestBLAST(props.analysisId, props.sequenceIndex)}
+                        icon="cloud"
+                        onClick={() => this.props.blast(props.analysisId, props.sequenceIndex)}
                     >
-                        BLAST
+                        BLAST at NCBI
                     </Button>
                 </FlexItem>
             </Flex>
@@ -84,10 +82,20 @@ const NuVsBLAST = (props) => {
     );
 };
 
-NuVsBLAST.propTypes = {
-    analysisId: PropTypes.string,
-    sequenceIndex: PropTypes.number,
-    blast: PropTypes.object
+const mapStateToProps = (state) => {
+    return {
+        analysisId: state.samples.analysisDetail.id
+    };
 };
 
-export default NuVsBLAST;
+const mapDispatchToProps = (dispatch) => {
+    return {
+        blast: (analysisId, sequenceIndex) => {
+            dispatch
+        }
+    };
+};
+
+const Container = connect(mapStateToProps, mapDispatchToProps);
+
+export default Container;
