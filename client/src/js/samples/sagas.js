@@ -7,7 +7,7 @@
  *
  */
 
-import { call, put, takeEvery, takeLatest } from "redux-saga/effects";
+import { takeEvery, takeLatest, throttle, put } from "redux-saga/effects";
 
 import samplesAPI from "./api";
 import { setPending } from "../wrappers";
@@ -32,12 +32,13 @@ export function* watchSamples () {
     yield takeLatest(FIND_ANALYSES.REQUESTED, findAnalyses);
     yield takeLatest(GET_ANALYSIS.REQUESTED, getAnalysis);
     yield takeEvery(ANALYZE.REQUESTED, analyze);
+    yield throttle(150, BLAST_NUVS.REQUESTED, blastNuvs);
 }
 
 export function* findSamples (action) {
     yield setPending(function* (action) {
         try {
-            const response = yield call(samplesAPI.find, action.term, action.page);
+            const response = yield samplesAPI.find(action.term, action.page);
             yield put({type: FIND_SAMPLES.SUCCEEDED, data: response.body});
         } catch (error) {
             yield put({type: FIND_SAMPLES.FAILED, error});
@@ -47,7 +48,7 @@ export function* findSamples (action) {
 
 export function* findReadyHosts () {
     try {
-        const response = yield call(samplesAPI.findReadyHosts);
+        const response = yield samplesAPI.findReadyHosts();
         yield put({type: FIND_READY_HOSTS.SUCCEEDED, data: response.body});
     } catch (error) {
         yield put({type: FIND_READY_HOSTS.FAILED, error});
@@ -56,7 +57,7 @@ export function* findReadyHosts () {
 
 export function* getSample (action) {
     try {
-        const response = yield call(samplesAPI.get, action.sampleId);
+        const response = yield samplesAPI.get(action.sampleId);
         yield put({type: GET_SAMPLE.SUCCEEDED, data: response.body});
     } catch (error) {
         yield put({type: GET_SAMPLE.FAILED, error});
@@ -66,7 +67,7 @@ export function* getSample (action) {
 export function* createSample (action) {
     yield setPending(function* ({name, isolate, host, locale, subtraction, files}) {
         try {
-        const response = yield call(samplesAPI.create, name, isolate, host, locale, subtraction, files);
+        const response = yield samplesAPI.create(name, isolate, host, locale, subtraction, files);
         yield put({type: GET_SAMPLE.SUCCEEDED, data: response.body});
     } catch (error) {
         yield put({type: GET_SAMPLE.FAILED, error});
@@ -77,7 +78,7 @@ export function* createSample (action) {
 export function* updateSample (action) {
     yield setPending(function* (action) {
         try {
-            const response = yield call(samplesAPI.update, action.sampleId, action.update);
+            const response = yield samplesAPI.update(action.sampleId, action.update);
             yield put({type: UPDATE_SAMPLE.SUCCEEDED, data: response.body});
         } catch (error) {
             yield put({type: UPDATE_SAMPLE.FAILED, error});
@@ -87,7 +88,7 @@ export function* updateSample (action) {
 
 export function* findAnalyses (action) {
     try {
-        const response = yield call(samplesAPI.findAnalyses, action.sampleId);
+        const response = yield samplesAPI.findAnalyses(action.sampleId);
         yield put({type: FIND_ANALYSES.SUCCEEDED, data: response.body});
     } catch (error) {
         yield put({type: FIND_ANALYSES.FAILED, error});
@@ -97,7 +98,7 @@ export function* findAnalyses (action) {
 export function* getAnalysis (action) {
     yield setPending(function* (action) {
         try {
-            const response = yield call(samplesAPI.getAnalysis, action.analysisId);
+            const response = yield samplesAPI.getAnalysis(action.analysisId);
             yield put({type: GET_ANALYSIS.SUCCEEDED, data: response.body});
         } catch (error) {
             yield put({type: GET_ANALYSIS.FAILED, error});
@@ -107,7 +108,7 @@ export function* getAnalysis (action) {
 
 export function* analyze (action) {
     try {
-        const response = yield call(samplesAPI.analyze, action.sampleId, action.algorithm);
+        const response = yield samplesAPI.analyze(action.sampleId, action.algorithm);
         yield put({type: ANALYZE.SUCCEEDED, data: response.body});
     } catch (error) {
         yield put({type: ANALYZE.FAILED, error});

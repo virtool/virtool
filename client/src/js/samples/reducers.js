@@ -26,7 +26,7 @@ import {
 } from "../actionTypes";
 
 const setNuvsBLAST = (state, analysisId, sequenceIndex, data = "ip") => {
-    const analysisDetail = state.analyses.analysisDetail;
+    const analysisDetail = state.analysisDetail;
 
     if (analysisDetail.id === analysisId) {
         return assign({}, state, {

@@ -66,7 +66,7 @@ const samplesAPI = {
     },
 
     blastNuvs: (analysisId, sequenceIndex) => {
-        return Request.put(`/api/analyses/${analysisId}/${sequenceIndex}/blast`);
+        return Request.put(`/api/analyses/${analysisId}/${sequenceIndex}/blast`, {});
     }
 
 };

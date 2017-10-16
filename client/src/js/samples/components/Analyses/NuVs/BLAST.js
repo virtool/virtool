@@ -14,7 +14,7 @@ const NuVsBLAST = (props) => {
     if (props.blast) {
 
         if (props.blast.ready) {
-            const hitComponents = props.blast.hits.map((hit, index) =>
+            const hitComponents = props.blast.result.hits.map((hit, index) =>
                 <tr key={index}>
                     <td>
                         <a target="_blank" href={`https://www.ncbi.nlm.nih.gov/nuccore/${hit.accession}`}>
@@ -49,12 +49,12 @@ const NuVsBLAST = (props) => {
         }
 
         return (
-            <Alert bsStyle="info">
+            <Panel>
                 <span>BLAST in progress with RID </span>
                 <a target="_blank" href={ridRoot + props.blast.rid}>
                     {props.blast.rid} <sup><Icon name="new-tab" /></sup>
                 </a>
-            </Alert>
+            </Panel>
         );
     }
 
@@ -71,7 +71,7 @@ const NuVsBLAST = (props) => {
                     <Button
                         bsSize="small"
                         icon="cloud"
-                        onClick={() => this.props.onBlast(props.analysisId, props.sequenceIndex)}
+                        onClick={() => props.onBlast(props.analysisId, props.sequenceIndex)}
                     >
                         BLAST at NCBI
                     </Button>
