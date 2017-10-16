@@ -1,7 +1,9 @@
+import json
 import os
 import pickle
 import pytest
 import sys
+from aiohttp import web
 
 import virtool.bio
 
@@ -13,6 +15,71 @@ TEST_BIO_PATH = os.path.join(TEST_FILES_PATH, "bio")
 def orf_containing():
     data = virtool.bio.read_fasta(os.path.join(TEST_BIO_PATH, "has_orfs.fa"))
     return data[0][1]
+
+
+@pytest.fixture
+def mock_blast_server(monkeypatch, loop, test_server):
+    async def get_handler(req):
+
+        params = dict(req.query)
+
+        format_object = params.get("FORMAT_OBJECT", None)
+
+        if format_object == "SearchInfo":
+            with open(os.path.join(TEST_BIO_PATH, "check_rid.html"), "r") as f:
+                html = f.read()
+
+            assert params["CMD"] == "Get"
+
+            # For 'Status=READY' test, RID is YA27F0T6015. For 'WAITING' test, RID is 5106T0F27AY.
+            if params["RID"] == "5106T0F27AY":
+                html = html.replace("Status=READY", "Status=WAITING")
+
+            return web.Response(text=html, status=200)
+
+        if format_object == "Alignment":
+            assert params == {
+                "CMD": "Get",
+                "RID": "YA6M9135015",
+                "FORMAT_TYPE": "JSON2",
+                "FORMAT_OBJECT": "Alignment"
+            }
+
+            with open(os.path.join(TEST_BIO_PATH, "blast.zip"), "rb") as f:
+                return web.Response(body=f.read(), status=200)
+
+        return web.Response(status=404)
+
+    async def post_handler(req):
+        assert dict(req.query) == {
+            "CMD": "Put",
+            "DATABASE": "nr",
+            "PROGRAM": "blastn",
+            "MEGABLAST": "on",
+            "HITLIST_SIZE": "5",
+            "FILTER": "mL",
+            "FORMAT_TYPE": "JSON2"
+        }
+
+        data = await req.post()
+
+        assert dict(data) == {
+            "QUERY": "ATGTACAGGATCAGCATCGAGCTACGAT",
+        }
+
+        with open(os.path.join(TEST_BIO_PATH, "initialize_blast.html"), "r") as f:
+            return web.Response(text=f.read(), status=200)
+
+    app = web.Application()
+
+    app.router.add_get("/blast", get_handler)
+    app.router.add_post("/blast", post_handler)
+
+    server = loop.run_until_complete(test_server(app))
+
+    monkeypatch.setattr("virtool.bio.BLAST_CGI_URL", "http://{}:{}/blast".format(server.host, server.port))
+
+    return server
 
 
 @pytest.mark.parametrize("illegal", [False, True])
@@ -139,3 +206,39 @@ def test_find_orfs(orf_containing):
 
     with open(os.path.join(TEST_BIO_PATH, "orfs"), "rb") as f:
         assert pickle.load(f) == result
+
+
+async def test_initialize_ncbi_blast(mock_blast_server):
+    """
+    Using a mock BLAST server, test that a BLAST initialization request works properly.
+
+    """
+    seq = "ATGTACAGGATCAGCATCGAGCTACGAT"
+
+    assert await virtool.bio.initialize_ncbi_blast(seq) == ("YA40WNN5014", 19)
+
+
+def test_extract_blast_info():
+    """
+    Test that the function returns the correct RID and RTOE from the stored test HTML file.
+
+    """
+    with open(os.path.join(TEST_BIO_PATH, "initialize_blast.html"), "r") as f:\
+        assert virtool.bio.extract_blast_info(f.read()) == ("YA40WNN5014", 19)
+
+
+@pytest.mark.parametrize("rid,expected", [
+    ("YA27F0T6015", True),
+    ("5106T0F27AY", False)
+])
+async def test_check_rid(rid, expected, mock_blast_server):
+    """
+    Test that check_rid() returns the correct result given HTML for a ready BLAST request and a waiting BLAST request.
+
+    """
+    assert await virtool.bio.check_rid(rid) == expected
+
+
+async def test_get_ncbi_blast_result(mock_blast_server):
+    with open(os.path.join(TEST_BIO_PATH, "blast.json"), "r") as f:
+        assert await virtool.bio.get_ncbi_blast_result("YA6M9135015") == json.load(f)
