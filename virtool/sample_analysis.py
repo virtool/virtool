@@ -197,15 +197,17 @@ async def format_analysis(db, analysis):
         return analysis
 
     if analysis["algorithm"] == "nuvs":
-        for hmm_result in analysis["hmm"]:
-            hmm = await db.hmm.find_one({"_id": hmm_result["hit"]}, [
-                "cluster",
-                "families",
-                "definition",
-                "label"
-            ])
+        for sequence in analysis["results"]:
+            for orf in sequence["orfs"]:
+                for hit in orf["hits"]:
+                    hmm = await db.hmm.find_one({"_id": hit["hit"]}, [
+                        "cluster",
+                        "families",
+                        "definition",
+                        "label"
+                    ])
 
-            hmm_result.update(hmm)
+                    hit.update(hmm)
 
     return analysis
 
