@@ -12,6 +12,7 @@ import { takeEvery, takeLatest, throttle, put } from "redux-saga/effects";
 import samplesAPI from "./api";
 import { setPending } from "../wrappers";
 import {
+    WS_UPDATE_ANALYSIS,
     FIND_SAMPLES,
     FIND_READY_HOSTS,
     GET_SAMPLE,
@@ -24,6 +25,7 @@ import {
 }  from "../actionTypes";
 
 export function* watchSamples () {
+    yield takeEvery(WS_UPDATE_ANALYSIS, wsUpdateAnalysis);
     yield takeLatest(FIND_SAMPLES.REQUESTED, findSamples);
     yield takeLatest(FIND_READY_HOSTS.REQUESTED, findReadyHosts);
     yield takeLatest(GET_SAMPLE.REQUESTED, getSample);
@@ -33,6 +35,15 @@ export function* watchSamples () {
     yield takeLatest(GET_ANALYSIS.REQUESTED, getAnalysis);
     yield takeEvery(ANALYZE.REQUESTED, analyze);
     yield throttle(150, BLAST_NUVS.REQUESTED, blastNuvs);
+}
+
+export function* wsUpdateAnalysis (action) {
+    try {
+        const response = yield samplesAPI.getAnalysis(action.update.id);
+        yield put({type: GET_ANALYSIS.SUCCEEDED, data: response.body});
+    } catch (error) {
+        yield put({type: GET_ANALYSIS.FAILED, error});
+    }
 }
 
 export function* findSamples (action) {

@@ -176,7 +176,7 @@ export default function reducer (state = initialState, action) {
             });
 
         case BLAST_NUVS.REQUESTED:
-            return setNuvsBLAST(state, action.analysisId, action.sequenceIndex, null);
+            return setNuvsBLAST(state, action.analysisId, action.sequenceIndex, {ready: false});
 
         case BLAST_NUVS.SUCCEEDED:
             return setNuvsBLAST(state, action.analysisId, action.sequenceIndex, action.data);

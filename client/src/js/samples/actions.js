@@ -8,6 +8,8 @@
  */
 
 import {
+    WS_UPDATE_ANALYSIS,
+
     FIND_SAMPLES,
     FIND_READY_HOSTS,
     GET_SAMPLE,
@@ -23,6 +25,13 @@ import {
     SHOW_REMOVE_SAMPLE,
     HIDE_SAMPLE_MODAL
 } from "../actionTypes";
+
+export const wsUpdateAnalysis = (update) => {
+    return {
+        type: WS_UPDATE_ANALYSIS,
+        update
+    };
+};
 
 export const findSamples = (term, page) => {
     return {

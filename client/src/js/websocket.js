@@ -1,15 +1,20 @@
 import { wsUpdateJob, wsRemoveJob } from "./jobs/actions";
 import { wsUpdateFile, wsRemoveFile } from "./files/actions";
+import { wsUpdateAnalysis } from "./samples/actions";
 import { wsUpdateStatus } from "./status/actions";
 
 const documentUpdaters = {
     jobs: wsUpdateJob,
     files: wsUpdateFile,
-    status: wsUpdateStatus
+    status: wsUpdateStatus,
+    analyses: wsUpdateAnalysis
 };
 
 const wsUpdateDocument = (iface, data) => {
-    return documentUpdaters[iface](data);
+    if (documentUpdaters.hasOwnProperty(iface)) {
+        return documentUpdaters[iface](data);
+    }
+
 };
 
 const documentRemovers = {

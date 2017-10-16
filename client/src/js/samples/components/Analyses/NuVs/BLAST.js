@@ -1,10 +1,12 @@
 import React from "react";
+import Moment from "moment";
 import Numeral from "numeral";
 import { connect } from "react-redux";
+import { ClipLoader } from "halogenium";
 import { Panel, Alert, Table } from "react-bootstrap";
 
 import { blastNuvs } from "../../../actions";
-import { Icon, Flex, FlexItem, Button } from "../../../../base";
+import { Button, Flex, FlexItem, Icon, RelativeTime } from "../../../../base";
 
 const ridRoot = "https://blast.ncbi.nlm.nih.gov/Blast.cgi?\
     CMD=Web&PAGE_TYPE=BlastFormatting&OLD_BLAST=false&GET_RID_INFO=on&RID=";
@@ -48,12 +50,43 @@ const NuVsBLAST = (props) => {
             );
         }
 
-        return (
-            <Panel>
-                <span>BLAST in progress with RID </span>
+        let timing;
+        let ridText;
+        let ridLink;
+
+        if (props.blast.rid) {
+            const relativeLast = <RelativeTime time={props.blast.last_checked_at} />;
+            const relativeNext = Moment(props.blast.last_checked_at).add(props.blast.interval, "seconds").fromNow();
+
+            timing = (
+                <FlexItem grow={1}>
+                    <small className="pull-right">
+                        Last checked {relativeLast}. Checking again in {relativeNext}.
+                    </small>
+                </FlexItem>
+            );
+
+            ridText = " with RID ";
+
+            ridLink = (
                 <a target="_blank" href={ridRoot + props.blast.rid}>
                     {props.blast.rid} <sup><Icon name="new-tab" /></sup>
                 </a>
+            );
+        }
+
+        return (
+            <Panel>
+                <Flex alignItems="center">
+                    <FlexItem>
+                        <ClipLoader size={16} color="#000" />
+                    </FlexItem>
+                    <FlexItem pad={5}>
+                        <span>BLAST in progress {ridText}</span>
+                        {ridLink}
+                    </FlexItem>
+                    {timing}
+                </Flex>
             </Panel>
         );
     }
