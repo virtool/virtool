@@ -15,6 +15,12 @@ async def get(req):
 
     document = await db.analyses.find_one(analysis_id)
 
+    sample_names = await db.samples.distinct("name", {"_id": document["sample"]["id"]})
+
+    assert len(sample_names) == 1
+
+    document["sample"]["name"] = sample_names[0]
+
     formatted = await virtool.sample_analysis.format_analysis(db, document)
 
     if document:
