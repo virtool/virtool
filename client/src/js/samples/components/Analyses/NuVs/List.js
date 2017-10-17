@@ -1,6 +1,7 @@
 import React from "react";
 import PropTypes from "prop-types";
 import FlipMove from "react-flip-move";
+import { LinkContainer } from "react-router-bootstrap";
 import { FormControl, FormGroup, InputGroup, Table } from "react-bootstrap";
 import { assign, flatten, reject, includes, xor } from "lodash";
 
@@ -102,6 +103,12 @@ export default class NuVsList extends React.Component {
                         disabled={this.state.expanded.length === 0}
                         onClick={() => this.setState({expanded: []})}
                     />
+                    <LinkContainer to={{state: {export: true}}}>
+                        <Button
+                            tip="Export"
+                            icon="download"
+                        />
+                    </LinkContainer>
                     <Button
                         tip="Filter ORFs"
                         icon="filter"

@@ -1,7 +1,8 @@
 import React from "react";
-import { connect } from "react-redux";
 
+import NuVsExport from "./Export";
 import NuVsList from "./List";
+
 
 const NuVsViewer = (props) => {
 
@@ -45,21 +46,23 @@ const NuVsViewer = (props) => {
     });
 
     return (
-        <NuVsList
-            data={sequences}
-            analysisId={props.id}
-            maxSequenceLength={maxSequenceLength}
-        />
+        <div>
+            <NuVsExport
+                show={props.location.state && props.location.state.export}
+                sampleId={props.sample.id}
+                sampleName={props.sample.name}
+                analysisId={props.id}
+                results={sequences}
+                onHide={() => props.history.push({state: {export: false}})}
+            />
+
+            <NuVsList
+                data={sequences}
+                analysisId={props.id}
+                maxSequenceLength={maxSequenceLength}
+            />
+        </div>
     );
 };
 
-const mapStateToProps = (state) => {
-    return {
-        detail: state.analysisDetail
-    };
-};
-
-const Container = connect(mapStateToProps)(NuVsViewer);
-
-export default Container;
-
+export default NuVsViewer;

@@ -14,6 +14,8 @@ import NuVsViewer from "./NuVs/Viewer";
 class AnalysisDetail extends React.Component {
 
     static propTypes = {
+        history: PropTypes.object,
+        location: PropTypes.object,
         match: PropTypes.object,
         name: PropTypes.string,
         detail: PropTypes.object,
@@ -44,7 +46,13 @@ class AnalysisDetail extends React.Component {
         }
 
         if (detail.algorithm === "nuvs") {
-            content = <NuVsViewer {...detail} />;
+            content = (
+                <NuVsViewer
+                    history={this.props.history}
+                    location={this.props.location}
+                    {...detail}
+                />
+            );
         }
 
         return (
