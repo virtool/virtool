@@ -65,6 +65,19 @@ export const followDownload = (path) => {
     document.body.removeChild(a);
 };
 
+export const followDynamicDownload = (filename, text) => {
+    const a = document.createElement("a");
+    a.href = `data:text/plain;charset=utf-8,${encodeURIComponent(text)}`;
+    a.download = filename;
+
+    a.style.display = "none";
+    document.body.appendChild(a);
+
+    a.click();
+
+    document.body.removeChild(a);
+};
+
 export const versionComparator = (a, b) => {
     let splitA = a.replace("v", "").split("-")[0];
     let splitB = b.replace("v", "").split("-")[0];
