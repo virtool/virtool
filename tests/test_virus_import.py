@@ -288,8 +288,6 @@ class TestImportFile:
 
         expected["id"] = expected.pop("_id")
 
-        print(test_dispatch.stub.call_args_list[0][0])
-
         assert test_dispatch.stub.call_args_list[0][0] == (
             "status",
             "update",
