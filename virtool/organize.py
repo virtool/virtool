@@ -1,4 +1,5 @@
 import arrow
+import hashlib
 
 import virtool.virus
 import virtool.virus_index
@@ -327,6 +328,13 @@ async def organize_users(db):
             "api_keys": []
         }
     })
+
+    async for document in db.users.find({"identicon": {"$exists": False}}):
+        await db.users.update_one({"_id": document["_id"]}, {
+            "$set": {
+                "identicon": hashlib.sha256(document["_id"].encode()).hexdigest()
+            }
+        })
 
 
 async def organize_groups(db):
