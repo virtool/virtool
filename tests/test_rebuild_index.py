@@ -109,7 +109,7 @@ async def test_write_fasta(virus_version, test_motor, mocker, test_rebuild_job):
 
 
 @pytest.mark.parametrize("error", [False, True])
-async def test_bowtie_build(error, tmpdir, test_rebuild_job, capsys):
+async def test_bowtie_build(error, tmpdir, test_rebuild_job):
     root_path = os.path.join(str(tmpdir), "reference", "viruses")
     os.mkdir(os.path.join(root_path, "foobar"))
 
@@ -127,8 +127,7 @@ async def test_bowtie_build(error, tmpdir, test_rebuild_job, capsys):
         assert "virtool.job.SubprocessError" in str(err)
         assert "Command failed: bowtie2-build -f" in str(err)
     else:
-        with capsys.disabled():
-            await test_rebuild_job.bowtie_build()
+        await test_rebuild_job.bowtie_build()
 
     await test_rebuild_job.flush_log()
 
