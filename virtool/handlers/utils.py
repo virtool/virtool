@@ -165,7 +165,7 @@ def invalid_input(errors):
     """
     return json_response({
         "id": "invalid_input",
-        "message": "Invalid Input",
+        "message": "Invalid input",
         "errors": errors
     }, status=422)
 
@@ -184,7 +184,7 @@ def invalid_query(errors):
     """
     return json_response({
         "id": "invalid_query",
-        "message": "Invalid Query",
+        "message": "Invalid query",
         "errors": errors
     }, status=422)
 
