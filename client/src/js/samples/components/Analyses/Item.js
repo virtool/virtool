@@ -27,7 +27,7 @@ const AnalysisItem = (props) => {
 
     if (props.ready) {
         if (props.canModify) {
-            end = <Icon name="remove" bsStyle="danger" pullRight/>;
+            end = <Icon name="remove" bsStyle="danger" onClick={props.onRemove} pullRight/>;
         }
     } else {
         end = (
@@ -64,7 +64,8 @@ AnalysisItem.propTypes = {
     created_at: PropTypes.string,
     ready: PropTypes.bool,
     canModify: PropTypes.bool,
-    onClick: PropTypes.func
+    onClick: PropTypes.func,
+    onRemove: PropTypes.func
 };
 
 export default AnalysisItem;

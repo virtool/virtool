@@ -21,7 +21,6 @@ export const GET_JOB = createRequestActionType("GET_JOB");
 export const CANCEL_JOB = createRequestActionType("CANCEL_JOB");
 export const REMOVE_JOB = createRequestActionType("REMOVE_JOB");
 export const CLEAR_JOBS = createRequestActionType("CLEAR_JOBS");
-export const TEST_JOB = createRequestActionType("TEST_JOB");
 export const GET_RESOURCES = createRequestActionType("GET_RESOURCES");
 export const GET_CUDA = createRequestActionType("GET_CUDA");
 
@@ -40,6 +39,7 @@ export const FIND_ANALYSES = createRequestActionType("FIND_ANALYSES");
 export const GET_ANALYSIS = createRequestActionType("GET_ANALYSIS");
 export const ANALYZE = createRequestActionType("ANALYZE");
 export const BLAST_NUVS = createRequestActionType("BLAST_NUVS");
+export const REMOVE_ANALYSIS = createRequestActionType("REMOVE_ANALYSIS");
 
 export const SHOW_EDIT_SAMPLE = "SHOW_EDIT_SAMPLE";
 export const SHOW_REMOVE_SAMPLE = "SHOW_REMOVE_SAMPLE";

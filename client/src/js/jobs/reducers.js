@@ -43,7 +43,7 @@ export default function reducer (state = initialState, action) {
     switch (action.type) {
 
         case WS_UPDATE_JOB:
-            return updateJob(state, action);
+            return state.documents === null ? state: updateJob(state, action);
 
         case WS_REMOVE_JOB:
             return assign({}, state, {

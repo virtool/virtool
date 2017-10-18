@@ -20,6 +20,7 @@ import {
     GET_ANALYSIS,
     ANALYZE,
     BLAST_NUVS,
+    REMOVE_ANALYSIS,
 
     SHOW_EDIT_SAMPLE,
     SHOW_REMOVE_SAMPLE,
@@ -126,5 +127,12 @@ export const blastNuvs = (analysisId, sequenceIndex) => {
         type: BLAST_NUVS.REQUESTED,
         analysisId,
         sequenceIndex
+    };
+};
+
+export const removeAnalysis = (analysisId) => {
+    return {
+        type: REMOVE_ANALYSIS.REQUESTED,
+        analysisId
     };
 };

@@ -10,12 +10,12 @@
  */
 
 import React from "react";
-import { sortBy } from "lodash";
-import PropTypes from "prop-types";
+import { LinkContainer } from "react-router-bootstrap";
+import { includes, sortBy } from "lodash";
 import { connect } from "react-redux";
 import { ListGroup, FormGroup, InputGroup, FormControl } from "react-bootstrap";
 
-import { analyze } from "../../actions";
+import { analyze, removeAnalysis } from "../../actions";
 import { Icon, Button, ListGroupItem } from "../../../base";
 import AnalysisItem from "./Item";
 import CreateAnalysis from "./Create";
@@ -30,21 +30,17 @@ class AnalysesList extends React.Component {
         };
     }
 
-    static propTypes = {
-        history: PropTypes.object,
-        account: PropTypes.object,
-        detail: PropTypes.object,
-        analyses: PropTypes.arrayOf(PropTypes.object),
-        onAnalyze: PropTypes.func
-    };
-
     render () {
 
         if (this.props.analyses === null) {
             return <div />;
         }
 
-        const canModify = this.props.account.permissions.modify_sample;
+        const canModify = (
+            this.props.detail.user.id === this.props.account.id ||
+            this.props.detail.all_write ||
+            this.props.detail.group_write && includes(this.props.account.groups, this.props.detail.group)
+        );
 
         // The content that will be shown below the "New Analysis" form.
         let listContent;
@@ -55,18 +51,15 @@ class AnalysesList extends React.Component {
             const sorted = sortBy(this.props.analyses, "timestamp").reverse();
 
             // The components that detail individual analyses.
-            listContent = sorted.map(document => {
-                const url = `/samples/${this.props.detail.id}/analyses/${document.id}`;
-
-                return (
+            listContent = sorted.map(document =>
+                <LinkContainer key={document.id} to={`/samples/${this.props.detail.id}/analyses/${document.id}`}>
                     <AnalysisItem
-                        key={document.id}
-                        onClick={() => this.props.history.push(url)}
                         canModify={canModify}
+                        onRemove={() => this.props.onRemove(document.id)}
                         {...document}
                     />
-                );
-            });
+                </LinkContainer>
+            );
         }
 
         // If no analyses are associated with the sample, show a panel saying so.
@@ -124,6 +117,10 @@ const mapDispatchToProps = (dispatch) => {
     return {
         onAnalyze: (sampleId, algorithm) => {
             dispatch(analyze(sampleId, algorithm));
+        },
+
+        onRemove: (analysisId) => {
+            dispatch(removeAnalysis(analysisId));
         }
     };
 };

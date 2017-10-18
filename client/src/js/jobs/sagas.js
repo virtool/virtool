@@ -18,7 +18,6 @@ import {
     CANCEL_JOB,
     REMOVE_JOB,
     CLEAR_JOBS,
-    TEST_JOB,
     GET_RESOURCES,
     GET_CUDA
 } from "../actionTypes";
@@ -30,7 +29,6 @@ export function* watchJobs () {
     yield takeEvery(CANCEL_JOB.REQUESTED, cancelJob);
     yield takeEvery(REMOVE_JOB.REQUESTED, removeJob);
     yield takeLatest(CLEAR_JOBS.REQUESTED, clearJobs);
-    yield takeLatest(TEST_JOB.REQUESTED, testJob);
     yield takeLatest(GET_RESOURCES.REQUESTED, getResources);
     yield takeLatest(GET_CUDA.REQUESTED, getCUDA);
 }
@@ -102,15 +100,6 @@ export function* clearJobs (action) {
             yield put({type: REMOVE_JOB.FAILED}, error);
         }
     }, action);
-}
-
-export function* testJob (action) {
-    try {
-        const response = yield call(jobsAPI.test, action);
-        yield put({type: TEST_JOB.SUCCEEDED, data: response.body});
-    } catch (error) {
-        yield put({type: TEST_JOB.FAILED}, error);
-    }
 }
 
 export function* getResources (action) {
