@@ -106,7 +106,7 @@ class Job:
         else:
             await self.add_status(state="complete")
 
-        await self.run_in_executor(flush_log, self._log_path, self._log_buffer)
+        await self.flush_log()
 
         self.finished = True
 
