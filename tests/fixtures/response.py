@@ -12,7 +12,7 @@ class RespIs:
         return resp.status == 204
 
     @staticmethod
-    async def bad_request(resp, message="Bad Request"):
+    async def bad_request(resp, message="Bad request"):
         """
         Check whether a response object is a valid Virtool ``bad_request``.
 
@@ -23,7 +23,7 @@ class RespIs:
         }
 
     @staticmethod
-    async def not_found(resp, message="Not Found"):
+    async def not_found(resp, message="Not found"):
         """
         Check whether a response object is a valid Virtool ``not_found``.
 
@@ -52,7 +52,7 @@ class RespIs:
         """
         return resp.status == 422 and await resp.json() == {
             "id": "invalid_input",
-            "message": "Invalid Input",
+            "message": "Invalid input",
             "errors": errors
         }
 
@@ -64,7 +64,7 @@ class RespIs:
         """
         return resp.status == 422 and await resp.json() == {
             "id": "invalid_query",
-            "message": "Invalid Query",
+            "message": "Invalid query",
             "errors": errors
         }
 

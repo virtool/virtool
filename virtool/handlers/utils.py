@@ -97,7 +97,7 @@ def no_content():
     return web.Response(status=204)
 
 
-def bad_request(message="Bad Request"):
+def bad_request(message="Bad request"):
     """
     A shortcut for creating a :class:`~aiohttp.web.Response` object with a ``400`` status the JSON body
     ``{"message": "Bad request"}``.
@@ -115,7 +115,7 @@ def bad_request(message="Bad Request"):
     }, status=400)
 
 
-def not_found(message="Not Found"):
+def not_found(message="Not found"):
     """
     A shortcut for creating a :class:`~aiohttp.web.Response` object with a ``404`` status the JSON body
     ``{"message": "Not found"}``.
