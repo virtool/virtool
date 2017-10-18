@@ -20,7 +20,8 @@ ACCOUNT_PROJECTION = [
     "settings",
     "last_password_change",
     "permissions",
-    "primary_group"
+    "primary_group",
+    "identicon"
 ]
 
 

@@ -1,8 +1,11 @@
 import React from "react";
 import PropTypes from "prop-types";
 import FlipMove from "react-flip-move";
-import { assign, flatten, filter, includes, xor } from "lodash";
+import { LinkContainer } from "react-router-bootstrap";
+import { FormControl, FormGroup, InputGroup, Table } from "react-bootstrap";
+import { assign, flatten, reject, includes, xor } from "lodash";
 
+import { Button, Icon } from "../../../../base";
 import NuVsEntry from "./Entry";
 import NuVsExpansion from "./Expansion";
 
@@ -11,7 +14,9 @@ export default class NuVsList extends React.Component {
     constructor (props) {
         super(props);
         this.state = {
-            expanded: []
+            expanded: [],
+            findTerm: "",
+            filter: true
         };
     }
 
@@ -27,18 +32,14 @@ export default class NuVsList extends React.Component {
         });
     };
 
-    collapseAll = () => this.setState({expanded: []});
-
     render () {
 
         let data;
 
-        if (this.state.filterORFs) {
-            data = this.props.data.map(sequence => assign({}, sequence, {orfs: filter(sequence.orfs, {hasHmm: true})}));
-        }
-
-        else if (this.state.filterSequences) {
-            data = filter(this.props.data, sequence => sequence.hasSignificantOrf);
+        if (this.state.filter) {
+            data = this.props.data.map(sequence => {
+                return assign({}, sequence, {orfs: reject(sequence.orfs, orf => orf.hits.length === 0)});
+            });
         }
 
         else {
@@ -70,11 +71,52 @@ export default class NuVsList extends React.Component {
             }
 
             return components;
-
         }));
 
         return (
             <div>
+                <Table bordered>
+                    <tbody>
+                        <tr>
+                            <th className="col-md-3">Contig Count</th>
+                            <td className="col-md-9">{this.props.data.length}</td>
+                        </tr>
+                    </tbody>
+                </Table>
+
+                <div className="toolbar">
+                    <FormGroup>
+                        <InputGroup>
+                            <InputGroup.Addon>
+                                <Icon name="search" />
+                            </InputGroup.Addon>
+                            <FormControl
+                                value={this.state.findTerm}
+                                onChange={(e) => this.setState({findTerm: e.target.value})}
+                                placeholder="Definition, family"
+                            />
+                        </InputGroup>
+                    </FormGroup>
+                    <Button
+                        tip="Collpase All"
+                        icon="shrink"
+                        disabled={this.state.expanded.length === 0}
+                        onClick={() => this.setState({expanded: []})}
+                    />
+                    <LinkContainer to={{state: {export: true}}}>
+                        <Button
+                            tip="Export"
+                            icon="download"
+                        />
+                    </LinkContainer>
+                    <Button
+                        tip="Filter ORFs"
+                        icon="filter"
+                        active={this.state.filter}
+                        onClick={() => this.setState({filter: !this.state.filter})}
+                    />
+                </div>
+
                 <FlipMove
                     typeName="div"
                     className="list-group"

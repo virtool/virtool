@@ -1,73 +1,68 @@
 import React from "react";
-import PropTypes from "prop-types";
-import { sortBy, some, assign, filter, reduce } from "lodash";
 
-import NuVsController from "./Controller";
+import NuVsExport from "./Export";
+import NuVsList from "./List";
+
 
 const NuVsViewer = (props) => {
 
     // The length of the longest sequence will be stored here.
     let maxSequenceLength = 0;
 
-    const significantHmms = filter(props.hmm, hmm => hmm.full_e < 1e-10);
+    let sequences = [];
 
-    let sequences = props.sequences.map((sequence) => {
-
-        if (sequence.sequence.length > maxSequenceLength) {
-            maxSequenceLength = sequence.sequence.length;
+    props.results.forEach(result => {
+        // Don't include sequence if there are no ORFs.
+        if (result.orfs.length === 0) {
+            return;
         }
 
-        const sequenceEntry = assign({}, sequence);
-        const sequenceHmms = filter(significantHmms, {index: sequence.index});
+        const minE = result.orfs.reduce((result, orf) => {
+            const orfMinE = orf.hits.reduce((result, hit) => {
+                if (hit.full_e < result) {
+                    return hit.full_e;
+                }
+            }, 10);
 
-        let minE = 10;
-
-        sequenceEntry.orfs = filter(props.orfs, {index: sequence.index}).map((orf) => {
-            // The significant HMM hits associated with this ORF;
-            const orfHmms = filter(sequenceHmms, {orf_index: orf.orf_index});
-
-            // The lowest e-value for HMMs associated with this ORF.
-            const orfMinE = reduce(orfHmms, (min, hmm) => hmm.full_e < min ? hmm.full_e: min, 10);
-
-            // Update the sequence minimum HMM e-value if the one for this ORF is lower.
-            if (minE > orfMinE) {
-                minE = orfMinE;
+            if (orfMinE < result) {
+                return orfMinE;
             }
 
-            return assign({
-                hmms: orfHmms,
-                hasHmm: orfHmms.length > 0,
-                minE: orfMinE
-            }, orf);
-        });
+            return result;
+        }, 10);
 
-        assign(sequenceEntry, {
-            minE: minE,
-            hasSignificantOrf: some(sequenceEntry.orfs, {hasHmm: true}),
-            orfs: sortBy(sequenceEntry.orfs, "pos[0]")
-        });
+        // Don't include if there are no significant ORFs
+        if (minE > 1e-10) {
+            return;
+        }
 
-        return sequenceEntry;
+        result.minE = minE;
 
+        if (result.sequence.length > maxSequenceLength) {
+            maxSequenceLength = result.sequence.length;
+        }
+
+        sequences.push(result);
     });
 
-    sequences = sortBy(sequences, "minE");
-
     return (
-        <NuVsController
-            data={sequences}
-            analysisId={props._id}
-            maxSequenceLength={maxSequenceLength}
-        />
+        <div>
+            <NuVsExport
+                show={props.location.state && props.location.state.export}
+                sampleId={props.sample.id}
+                sampleName={props.sample.name}
+                analysisId={props.id}
+                results={sequences}
+                onHide={() => props.history.push({state: {export: false}})}
+            />
+
+            <NuVsList
+                data={sequences}
+                analysisId={props.id}
+                maxSequenceLength={maxSequenceLength}
+            />
+        </div>
     );
 };
 
-NuVsViewer.propTypes = {
-    _id: PropTypes.string,
-    sequences: PropTypes.array,
-    hmm: PropTypes.array,
-    orfs: PropTypes.array
-};
-
 export default NuVsViewer;
-

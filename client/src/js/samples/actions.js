@@ -8,6 +8,8 @@
  */
 
 import {
+    WS_UPDATE_ANALYSIS,
+
     FIND_SAMPLES,
     FIND_READY_HOSTS,
     GET_SAMPLE,
@@ -17,11 +19,19 @@ import {
     FIND_ANALYSES,
     GET_ANALYSIS,
     ANALYZE,
+    BLAST_NUVS,
 
     SHOW_EDIT_SAMPLE,
     SHOW_REMOVE_SAMPLE,
     HIDE_SAMPLE_MODAL
 } from "../actionTypes";
+
+export const wsUpdateAnalysis = (update) => {
+    return {
+        type: WS_UPDATE_ANALYSIS,
+        update
+    };
+};
 
 export const findSamples = (term, page) => {
     return {
@@ -108,5 +118,13 @@ export const analyze = (sampleId, algorithm) => {
         type: ANALYZE.REQUESTED,
         sampleId,
         algorithm
+    };
+};
+
+export const blastNuvs = (analysisId, sequenceIndex) => {
+    return {
+        type: BLAST_NUVS.REQUESTED,
+        analysisId,
+        sequenceIndex
     };
 };

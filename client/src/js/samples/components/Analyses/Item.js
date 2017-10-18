@@ -41,7 +41,7 @@ const AnalysisItem = (props) => {
         <div className={itemClass} onClick={props.onClick}>
             <Row>
                 <Col md={3}>
-                    {getTaskDisplayName(props.algorithm)}
+                    <strong>{getTaskDisplayName(props.algorithm)}</strong>
                 </Col>
                 <Col md={4}>
                     Started <RelativeTime time={props.created_at}/> by {props.user.id}

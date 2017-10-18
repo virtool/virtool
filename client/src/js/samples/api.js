@@ -63,6 +63,10 @@ const samplesAPI = {
             .send({
                 algorithm: algorithm
             });
+    },
+
+    blastNuvs: (analysisId, sequenceIndex) => {
+        return Request.put(`/api/analyses/${analysisId}/${sequenceIndex}/blast`, {});
     }
 
 };

@@ -10,7 +10,6 @@ import aiofiles
 
 import virtool.app_settings
 import virtool.bio
-import virtool.blast
 import virtool.job
 import virtool.pathoscope
 import virtool.sample
@@ -68,43 +67,47 @@ async def new(db, settings, manager, sample_id, user_id, algorithm):
         }
     }
 
-    sequence_virus_map = dict()
-    virus_dict = dict()
-
-    async for sequence_document in db.sequences.find({}, ["virus_id", "isolate_id"]):
-        virus_id = sequence_document["virus_id"]
-
-        virus = virus_dict.get(virus_id, None)
-
-        if virus is None:
-            virus = await db.viruses.find_one(virus_id, ["last_indexed_version"])
-
-            try:
-                last_index_version = virus["last_indexed_version"]
-
-                virus_dict[virus["_id"]] = {
-                    "id": virus["_id"],
-                    "version": last_index_version
-                }
-
-                sequence_virus_map[sequence_document["_id"]] = virus_id
-            except KeyError:
-                virus_dict[virus["id"]] = False
-
-        sequence_virus_map[sequence_document["_id"]] = virus_id
-
-    sequence_virus_map = [item for item in sequence_virus_map.items()]
-
-    await db.analyses.insert_one(document)
-
     task_args = dict(
         analysis_id=analysis_id,
         sample_id=sample_id,
         sample_name=sample["name"],
-        index_id=index_id,
-        virus_dict=virus_dict,
-        sequence_virus_map=sequence_virus_map
+        index_id=index_id
     )
+
+    if "pathoscope" in algorithm:
+        sequence_virus_map = dict()
+        virus_dict = dict()
+
+        async for sequence_document in db.sequences.find({}, ["virus_id", "isolate_id"]):
+            virus_id = sequence_document["virus_id"]
+
+            virus = virus_dict.get(virus_id, None)
+
+            if virus is None:
+                virus = await db.viruses.find_one(virus_id, ["last_indexed_version"])
+
+                try:
+                    last_index_version = virus["last_indexed_version"]
+
+                    virus_dict[virus["_id"]] = {
+                        "id": virus["_id"],
+                        "version": last_index_version
+                    }
+
+                    sequence_virus_map[sequence_document["_id"]] = virus_id
+                except KeyError:
+                    virus_dict[virus["id"]] = False
+
+            sequence_virus_map[sequence_document["_id"]] = virus_id
+
+        sequence_virus_map = [item for item in sequence_virus_map.items()]
+
+        task_args.update({
+            "virus_dict": virus_dict,
+            "sequence_virus_map": sequence_virus_map
+        })
+
+    await db.analyses.insert_one(document)
 
     # Clone the arguments passed from the client and amend the resulting dictionary with the analysis entry
     # _id. This dictionary will be passed the the new analysis job.
@@ -193,15 +196,17 @@ async def format_analysis(db, analysis):
         return analysis
 
     if analysis["algorithm"] == "nuvs":
-        for hmm_result in analysis["hmm"]:
-            hmm = await db.hmm.find_one({"_id": hmm_result["hit"]}, [
-                "cluster",
-                "families",
-                "definition",
-                "label"
-            ])
+        for sequence in analysis["results"]:
+            for orf in sequence["orfs"]:
+                for hit in orf["hits"]:
+                    hmm = await db.hmm.find_one({"_id": hit["hit"]}, [
+                        "cluster",
+                        "families",
+                        "definition",
+                        "label"
+                    ])
 
-            hmm_result.update(hmm)
+                    hit.update(hmm)
 
     return analysis
 
@@ -752,7 +757,7 @@ class NuVs(Base):
 
     @virtool.job.stage_method
     async def reunite_pairs(self):
-        if self.sample["paired"]:
+        if self.sample.get("paired", False):
             unmapped_path = os.path.join(self.analysis_path, "unmapped_hosts.fq")
 
             headers = await self.run_in_executor(virtool.bio.read_fastq_headers, unmapped_path)
@@ -782,7 +787,7 @@ class NuVs(Base):
             "-m", str(self.mem)
         ]
 
-        if self.sample["paired"]:
+        if self.sample.get("paired", False):
             command += [
                 "-1", os.path.join(self.analysis_path, "unmapped_1.fq"),
                 "-2", os.path.join(self.analysis_path, "unmapped_2.fq"),
@@ -921,7 +926,8 @@ class NuVs(Base):
                     cluster_id = int(line[0].split("_")[1])
                     annotation_id = (await self.db.hmm.find_one({"cluster": int(cluster_id)}, {"_id": True}))["_id"]
 
-                    sequence_index, orf_index = (int(x) for x in line[2].split("_")[1:])
+                    # Expecting sequence_0.0
+                    sequence_index, orf_index = (int(x) for x in line[2].split("_")[1].split("."))
 
                     hits[sequence_index][orf_index].append({
                         "hit": annotation_id,

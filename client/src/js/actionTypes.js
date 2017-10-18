@@ -28,6 +28,7 @@ export const GET_CUDA = createRequestActionType("GET_CUDA");
 // Samples
 export const WS_UPDATE_SAMPLE = "WS_UPDATE_SAMPLE";
 export const WS_REMOVE_SAMPLE = "WS_REMOVE_SAMPLE";
+export const WS_UPDATE_ANALYSIS = "WS_UPDATE_ANALYSIS";
 
 export const FIND_SAMPLES = createRequestActionType("FIND_SAMPLES");
 export const FIND_READY_HOSTS = createRequestActionType("FIND_READY_HOSTS");
@@ -38,6 +39,7 @@ export const REMOVE_SAMPLE = createRequestActionType("REMOVE_SAMPLE");
 export const FIND_ANALYSES = createRequestActionType("FIND_ANALYSES");
 export const GET_ANALYSIS = createRequestActionType("GET_ANALYSIS");
 export const ANALYZE = createRequestActionType("ANALYZE");
+export const BLAST_NUVS = createRequestActionType("BLAST_NUVS");
 
 export const SHOW_EDIT_SAMPLE = "SHOW_EDIT_SAMPLE";
 export const SHOW_REMOVE_SAMPLE = "SHOW_REMOVE_SAMPLE";

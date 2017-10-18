@@ -9,9 +9,11 @@
 import React from "react";
 import { capitalize } from "lodash";
 import { connect } from "react-redux";
-import { Label, Table, Panel } from "react-bootstrap";
+import { Label } from "react-bootstrap";
 
+import { Flex, FlexItem } from "../../base";
 import ChangePassword from "./Password";
+import Identicon from "./Identicon";
 
 class AccountGeneral extends React.Component {
 
@@ -28,28 +30,21 @@ class AccountGeneral extends React.Component {
 
         return (
             <div>
-                <Panel header="Profile">
-                    <Table bordered fill>
-                        <tbody>
-                            <tr>
-                                <th className="col-xs-4">
-                                    Name
-                                </th>
-                                <td className="col-xs-8">
-                                    {this.props.id}
-                                </td>
-                            </tr>
-                            <tr>
-                                <th className="col-xs-4">
-                                    Groups
-                                </th>
-                                <td className="col-xs-8">
-                                    {groupLabels}
-                                </td>
-                            </tr>
-                        </tbody>
-                    </Table>
-                </Panel>
+                <Flex alignItems="stretch">
+                    <FlexItem>
+                        <Identicon hash={this.props.hash} />
+                    </FlexItem>
+                    <FlexItem pad={10}>
+                        <h5>
+                            <strong>
+                                {this.props.id}
+                            </strong>
+                        </h5>
+                        <div>
+                            {groupLabels}
+                        </div>
+                    </FlexItem>
+                </Flex>
 
                 <ChangePassword />
             </div>
@@ -60,6 +55,7 @@ class AccountGeneral extends React.Component {
 const mapStateToProps = (state) => {
     return {
         id: state.account.id,
+        hash: state.account.identicon,
         groups: state.account.groups
     };
 };
