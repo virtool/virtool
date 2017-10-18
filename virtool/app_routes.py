@@ -125,6 +125,7 @@ def setup_samples_routes(app):
 
 def setup_analyses_routes(app):
     app.router.add_get("/api/analyses/{analysis_id}", analyses.get)
+    app.router.add_delete("/api/analyses/{analysis_id}", analyses.remove)
     app.router.add_put("/api/analyses/{analysis_id}/{sequence_index}/blast", analyses.blast_nuvs_sequence)
 
 

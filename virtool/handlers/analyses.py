@@ -1,7 +1,8 @@
 import virtool.bio
 import virtool.utils
+import virtool.sample
 import virtool.sample_analysis
-from virtool.handlers.utils import not_found, json_response
+from virtool.handlers.utils import conflict, json_response, no_content, not_found
 
 
 async def get(req):
@@ -21,6 +22,35 @@ async def get(req):
         return json_response(virtool.utils.base_processor(formatted))
 
     return not_found()
+
+
+async def remove(req):
+    """
+    Remove an analysis document by its id.
+
+    """
+    db = req.app["db"]
+
+    analysis_id = req.match_info["analysis_id"]
+
+    document = await db.analyses.find_one({"_id": analysis_id}, ["ready", "job"])
+
+    if not document:
+        return not_found()
+
+    if not document["ready"]:
+        return conflict("Analysis is still running. Cancel job '{}' instead".format(document["job"]["id"]))
+
+    document = await db.analyses.find_one_and_delete({"_id": analysis_id}, ["sample"])
+
+    sample_id = document["sample"]["id"]
+
+    sample = await db.samples.find_one({"_id": sample_id}, virtool.sample.PROJECTION)
+
+    if sample:
+        await req.app["dispatcher"].dispatch("samples", "update", virtool.utils.base_processor(sample))
+
+    return no_content()
 
 
 async def blast_nuvs_sequence(req):
