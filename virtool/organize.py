@@ -202,6 +202,21 @@ async def organize_analyses(db, logger_cb=None):
     # Delete any unfinished analyses.
     await db.analyses.delete_many({"ready": False})
 
+    # Add sample names to sample embedded documents.
+    sample_ids_without_names = await db.analyses.distinct("sample.id", {"sample.name": {"$exists": False}})
+
+    sample_name_lookup = dict()
+
+    async for sample in db.samples.find({"_id": {"$in": sample_ids_without_names}}, ["name"]):
+        sample_name_lookup[sample["_id"]] = sample["name"]
+
+    for sample_id, sample_name in sample_name_lookup.items():
+        await db.analyses.update_many({"sample.id": sample_id}, {
+            "$set": {
+                "sample.name": sample_name
+            }
+        })
+
 
 async def organize_indexes(db):
     await db.indexes.update_many({}, {
