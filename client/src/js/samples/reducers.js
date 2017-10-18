@@ -22,7 +22,8 @@ import {
     FIND_READY_HOSTS,
     GET_ANALYSIS,
     ANALYZE,
-    BLAST_NUVS
+    BLAST_NUVS,
+    REMOVE_ANALYSIS
 } from "../actionTypes";
 
 const setNuvsBLAST = (state, analysisId, sequenceIndex, data = "ip") => {
@@ -180,6 +181,13 @@ export default function reducer (state = initialState, action) {
 
         case BLAST_NUVS.SUCCEEDED:
             return setNuvsBLAST(state, action.analysisId, action.sequenceIndex, action.data);
+
+        case REMOVE_ANALYSIS.SUCCEEDED:
+            if (state.analyses === null) {
+                return state;
+            }
+
+            return assign({}, state, {analyses: reject(state.analyses, {id: action.id})});
 
         default:
             return state;

@@ -67,8 +67,11 @@ const samplesAPI = {
 
     blastNuvs: (analysisId, sequenceIndex) => {
         return Request.put(`/api/analyses/${analysisId}/${sequenceIndex}/blast`, {});
-    }
+    },
 
+    removeAnalysis: (analysisId) => {
+        return Request.delete(`/api/analyses/${analysisId}`);
+    }
 };
 
 export default samplesAPI;

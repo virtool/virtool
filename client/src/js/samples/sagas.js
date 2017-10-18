@@ -21,7 +21,8 @@ import {
     FIND_ANALYSES,
     GET_ANALYSIS,
     ANALYZE,
-    BLAST_NUVS
+    BLAST_NUVS,
+    REMOVE_ANALYSIS
 }  from "../actionTypes";
 
 export function* watchSamples () {
@@ -35,6 +36,7 @@ export function* watchSamples () {
     yield takeLatest(GET_ANALYSIS.REQUESTED, getAnalysis);
     yield takeEvery(ANALYZE.REQUESTED, analyze);
     yield throttle(150, BLAST_NUVS.REQUESTED, blastNuvs);
+    yield takeLatest(REMOVE_ANALYSIS.REQUESTED, removeAnalysis);
 }
 
 export function* wsUpdateAnalysis (action) {
@@ -138,4 +140,15 @@ export function* blastNuvs (action) {
     } catch (err) {
         yield put({type: BLAST_NUVS.FAILED, err});
     }
+}
+
+export function* removeAnalysis (action) {
+    yield setPending(function* (action) {
+        try {
+            yield samplesAPI.removeAnalysis(action.analysisId);
+            yield put({type: REMOVE_ANALYSIS.SUCCEEDED, id: action.analysisId});
+        } catch (error) {
+            yield put({type: REMOVE_ANALYSIS.FAILED, error});
+        }
+    }, action);
 }

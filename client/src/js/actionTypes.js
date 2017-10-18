@@ -39,6 +39,7 @@ export const FIND_ANALYSES = createRequestActionType("FIND_ANALYSES");
 export const GET_ANALYSIS = createRequestActionType("GET_ANALYSIS");
 export const ANALYZE = createRequestActionType("ANALYZE");
 export const BLAST_NUVS = createRequestActionType("BLAST_NUVS");
+export const REMOVE_ANALYSIS = createRequestActionType("REMOVE_ANALYSIS");
 
 export const SHOW_EDIT_SAMPLE = "SHOW_EDIT_SAMPLE";
 export const SHOW_REMOVE_SAMPLE = "SHOW_REMOVE_SAMPLE";
