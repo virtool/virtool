@@ -208,7 +208,9 @@ async def format_analysis(db, analysis):
 
                     hit.update(hmm)
 
-    return analysis
+        return analysis
+
+    raise ValueError("No algorithm field in document")
 
 
 class Base(virtool.job.Job):
