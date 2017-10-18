@@ -14,7 +14,7 @@ import { connect } from "react-redux";
 import { LinkContainer } from "react-router-bootstrap";
 import {InputGroup, FormGroup, FormControl, Dropdown, MenuItem} from "react-bootstrap";
 
-import { test, clearJobs } from "../actions";
+import { clearJobs } from "../actions";
 import { Icon, Button } from "../../base";
 
 const JobsToolbar = (props) => {
@@ -51,8 +51,6 @@ const JobsToolbar = (props) => {
                 </InputGroup>
             </FormGroup>
 
-            <Button icon="lab" onClick={props.onTest} tip="Run Test" />
-
             <LinkContainer to="/jobs/resources">
                 <Button icon="meter" tip="Resources" />
             </LinkContainer>
@@ -70,10 +68,6 @@ const mapStateToProps = (state) => {
 
 const mapDispatchToProps = (dispatch) => {
     return {
-        onTest: () => {
-            dispatch(test({long: true}));
-        },
-
         onClear: (scope) => {
             dispatch(clearJobs(scope));
         }

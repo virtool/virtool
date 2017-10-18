@@ -41,11 +41,6 @@ const jobsAPI = {
         return Request.delete(url)
     },
 
-    test: (options = {}) => {
-        return Request.post("/api/jobs/test")
-            .send(options);
-    },
-
     getResources: () => {
         return Request.get("/api/resources");
     },

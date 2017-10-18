@@ -15,7 +15,6 @@ import {
     CANCEL_JOB,
     REMOVE_JOB,
     CLEAR_JOBS,
-    TEST_JOB,
     GET_RESOURCES,
     GET_CUDA
 } from "../actionTypes";
@@ -65,13 +64,6 @@ export const clearJobs = (scope) => {
     return {
         type: CLEAR_JOBS.REQUESTED,
         scope
-    };
-};
-
-export const test = () => {
-    return {
-        type: TEST_JOB.REQUESTED,
-        long: true
     };
 };
 
