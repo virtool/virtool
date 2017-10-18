@@ -445,6 +445,8 @@ async def wait_for_blast_result(db, dispatch, analysis_id, sequence_index, rid):
             "$set": {
                 "results.$.blast": update
             }
-        }, return_document=pymongo.ReturnDocument.AFTER, projection=virtool.sample_analysis.LIST_PROJECTION)
+        }, return_document=pymongo.ReturnDocument.AFTER)
 
-        await dispatch("analyses", "update", virtool.utils.base_processor(document))
+        formatted = await virtool.sample_analysis.format_analysis(db, document)
+
+        await dispatch("analyses", "update", virtool.utils.base_processor(formatted))
