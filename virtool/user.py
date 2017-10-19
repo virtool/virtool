@@ -5,8 +5,10 @@ import hashlib
 
 PROJECTION = [
     "_id",
-    "groups",
+
     "force_reset",
+    "groups",
+    "identicon",
     "last_password_change",
     "permissions",
     "primary_group"
@@ -16,11 +18,11 @@ PROJECTION = [
 ACCOUNT_PROJECTION = [
     "_id",
     "groups",
-    "settings",
+    "identicon",
     "last_password_change",
     "permissions",
     "primary_group",
-    "identicon"
+    "settings"
 ]
 
 
@@ -112,10 +114,10 @@ def check_legacy_password(password, salt, hashed):
     """
     Check if a unicode ``password`` and ``salt`` match a ``hashed`` password from the database. This is for use only
     with legacy SHA512 hashed passwords. New password hash with :func:`.hash_password` will be hashed using bcrypt.
-    
+
     :param password: the password to check
     :type password: str
-    
+
     :param salt: a salt
     :type salt: str
 
@@ -124,7 +126,7 @@ def check_legacy_password(password, salt, hashed):
 
     :return: success of test
     :rtype: bool
-     
+
     """
     return hashed == hashlib.sha512(salt.encode("utf-8") + password.encode("utf-8")).hexdigest()
 
