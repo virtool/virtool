@@ -308,7 +308,7 @@ def extract_blast_info(html):
     :param html: the input HTML
     :type html: str
 
-    :return: a tuple containg the RID and RTOE
+    :return: a tuple containing the RID and RTOE
     :rtype: tuple
 
     """

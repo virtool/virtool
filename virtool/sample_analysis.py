@@ -387,7 +387,7 @@ class Pathoscope(Base):
             self.analysis_path,
             self.intermediate["to_subtraction"]
         )
-        
+
         del self.intermediate["to_subtraction"]
         
         self.results["subtracted_count"] = subtracted_count
@@ -462,7 +462,7 @@ class Pathoscope(Base):
 
             # Raise exception if virus is ``False`` (meaning the virus had no ``last_indexed_version`` field).
             if not virus:
-                raise ValueError("Doucment has no last_indexed_version field.")
+                raise ValueError("Document has no last_indexed_version field.")
 
             hit["id"] = ref_id
 

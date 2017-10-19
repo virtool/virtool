@@ -11,7 +11,7 @@ from virtool.handlers.utils import json_response, bad_request, not_found, invali
 async def find(req):
     """
     Return a list of job documents.
-     
+
     """
     db = req.app["db"]
 

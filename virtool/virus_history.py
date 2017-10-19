@@ -45,7 +45,7 @@ async def add(db, method_name, old, new, description, user_id):
     :type new: Union[dict, None]
     
     :param description: a human readable description of the change
-    :type description: str 
+    :type description: str
     
     :param user_id: the id of the requesting user
     :type user_id: str
