@@ -195,13 +195,6 @@ export default class ManageHMM extends React.Component {
 
             errors.push(
                 <Alert key="not_in_file" bsStyle="warning">
-                    <AutoProgressBar
-                        active={this.state.pending}
-                        bsStyle="warning"
-                        step={4}
-                        interval={600}
-                        affixed
-                    />
                     <Flex>
                         <FlexItem>
                             <strong>

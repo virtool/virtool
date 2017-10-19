@@ -71,7 +71,7 @@ class CreateVirus extends React.Component {
         };
 
         return (
-            <Modal show={true} onHide={this.props.onHide} onExited={this.modalExited} animation={false}>
+            <Modal show={true} onHide={this.props.onHide} onExited={this.modalExited}>
                 <Modal.Header onHide={this.props.onHide} closeButton>
                     Create Virus
                 </Modal.Header>
