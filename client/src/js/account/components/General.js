@@ -13,7 +13,7 @@ import { Label } from "react-bootstrap";
 
 import { Flex, FlexItem } from "../../base";
 import ChangePassword from "./Password";
-import Identicon from "./Identicon";
+import { Identicon } from "../../base";
 
 class AccountGeneral extends React.Component {
 
