@@ -20,6 +20,12 @@ i {
   -moz-osx-font-smoothing: grayscale;
 }
 
+.i-user-plus:before {
+  content: "\e91a";
+}
+.i-cloud-upload:before {
+  content: "\e919";
+}
 .i-cloud:before {
   content: "\e917";
 }
