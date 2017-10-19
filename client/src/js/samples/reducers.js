@@ -11,6 +11,7 @@ import { assign, concat, find, reject } from "lodash";
 import {
     WS_UPDATE_SAMPLE,
     WS_REMOVE_SAMPLE,
+    WS_REMOVE_ANALYSIS,
     FIND_SAMPLES,
     GET_SAMPLE,
     UPDATE_SAMPLE,
@@ -75,6 +76,10 @@ export default function reducer (state = initialState, action) {
             return assign({}, state, {
                 viruses: reject(state.viruses, {id: action.virus_id})
             });
+
+        case WS_REMOVE_ANALYSIS:
+            console.log(action);
+            return state;
 
         case FIND_SAMPLES.SUCCEEDED:
             return assign({}, state, {

@@ -153,7 +153,6 @@ class RebuildIndex(virtool.job.Job):
             except TypeError:
                 raise
 
-
         fasta_path = os.path.join(self.reference_path, "ref.fa")
 
         await self.run_in_executor(write_fasta_dict_to_file, fasta_path, fasta_dict)

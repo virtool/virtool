@@ -122,7 +122,7 @@ async def test_write_report(tmpdir):
     with open(BEST_HIT_PATH, "rb") as handle:
         best_hit_initial_reads, best_hit_initial, level_1_initial, level_2_initial = pickle.load(handle)
 
-    init_pi, pi, theta, nu = virtool.pathoscope.em(u, nu, refs, 30, 1e-7, 0, 0)
+    init_pi, pi, _, nu = virtool.pathoscope.em(u, nu, refs, 30, 1e-7, 0, 0)
 
     best_hit_final_reads, best_hit_final, level_1_final, level_2_final = virtool.pathoscope.compute_best_hit(
         u,

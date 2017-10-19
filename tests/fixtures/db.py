@@ -2,8 +2,6 @@ import pytest
 import pymongo
 import motor.motor_asyncio
 
-import virtool.utils
-
 
 class MockDeleteResult:
 

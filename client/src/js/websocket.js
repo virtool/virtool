@@ -1,6 +1,6 @@
 import { wsUpdateJob, wsRemoveJob } from "./jobs/actions";
 import { wsUpdateFile, wsRemoveFile } from "./files/actions";
-import { wsUpdateAnalysis } from "./samples/actions";
+import { wsUpdateAnalysis, wsRemoveAnalysis } from "./samples/actions";
 import { wsUpdateStatus } from "./status/actions";
 
 const documentUpdaters = {
@@ -10,20 +10,10 @@ const documentUpdaters = {
     analyses: wsUpdateAnalysis
 };
 
-const wsUpdateDocument = (iface, data) => {
-    if (documentUpdaters.hasOwnProperty(iface)) {
-        return documentUpdaters[iface](data);
-    }
-
-};
-
 const documentRemovers = {
     jobs: wsRemoveJob,
-    files: wsRemoveFile
-};
-
-const wsRemoveDocument = (iface, data) => {
-    return documentRemovers[iface](data);
+    files: wsRemoveFile,
+    analyses: wsRemoveAnalysis
 };
 
 export default function WSConnection (dispatch) {
@@ -34,15 +24,17 @@ export default function WSConnection (dispatch) {
     // When a websocket message is received, this method is called with the message as the sole argument. Every message
     // has a property "operation" that tells the dispatcher what to do. Illegal operation names will throw an error.
     this.handle = (message) => {
-        window.console.log(`${message.interface}.${message.operation}`);
+        const iface = message.interface;
+        const operation = message.operation;
 
-        switch (message.operation) {
-            case "update":
-                dispatch(wsUpdateDocument(message.interface, message.data));
-                break;
+        window.console.log(`${iface}.${operation}`);
 
-            case "remove":
-                dispatch(wsRemoveDocument(message.interface, message.data));
+        if (operation === "update" && documentUpdaters.hasOwnProperty(iface)) {
+            return dispatch(documentUpdaters[iface](message.data))
+        }
+
+        if (operation === "remove" && documentRemovers.hasOwnProperty(iface)) {
+            return dispatch(documentRemovers[iface](message.data))
         }
     };
 

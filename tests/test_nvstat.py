@@ -353,5 +353,5 @@ class TestDeviceClock:
         Test that unhandled ``CalledProcessErrors`` can still be raised.
 
         """
-        with pytest.raises(subprocess.CalledProcessError) as err:
+        with pytest.raises(subprocess.CalledProcessError):
             virtool.nvstat.device_clock(0)

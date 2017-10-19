@@ -228,12 +228,7 @@ class TestVerifyVirusList:
         if multiple:
             test_virus_list[1]["isolates"][0]["sequences"] = list()
 
-        import pprint
-        pprint.pprint(test_virus_list)
-
-        duplicates, errors = virtool.virus_import.verify_virus_list(test_virus_list)
-
-        pprint.pprint(errors)
+        _, errors = virtool.virus_import.verify_virus_list(test_virus_list)
 
         assert errors["prunus virus f"]["empty_isolate"] == ["cab8b360"]
 

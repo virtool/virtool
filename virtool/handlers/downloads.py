@@ -6,6 +6,7 @@ from aiohttp import web
 
 import virtool.virus
 
+
 async def download_sequence(req):
     db = req.app["db"]
 

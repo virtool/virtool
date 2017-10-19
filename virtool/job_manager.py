@@ -33,6 +33,7 @@ class Manager:
 
         #: The main loop
         self._stop = False
+        self.started = False
 
     def __iter__(self):
         return iter(self._jobs_dict.keys())

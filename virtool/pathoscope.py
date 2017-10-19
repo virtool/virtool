@@ -76,7 +76,7 @@ def build_matrix(vta_path, p_score_cutoff=0.01):
 
     with open(vta_path, "r") as handle:
         for line in handle:
-            read_id, ref_id, _, length, p_score = line.rstrip().split(",")
+            read_id, ref_id, _, _, p_score = line.rstrip().split(",")
 
             p_score = float(p_score)
 

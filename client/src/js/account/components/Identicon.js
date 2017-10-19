@@ -62,7 +62,7 @@ const Identicon = ({ hash }) => {
 
     return (
         <svg width={size} height={size}>
-            {rectPropsArray.map(rectProps => <rect height={cell} width={cell} {...rectProps} />)}
+            {rectPropsArray.map((rectProps, i) => <rect key={i} height={cell} width={cell} {...rectProps} />)}
         </svg>
     );
 };

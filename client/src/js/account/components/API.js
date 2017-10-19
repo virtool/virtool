@@ -342,8 +342,11 @@ class APIKeys extends React.Component {
                     <FlexItem>
                         <div style={{whiteSpace: "wrap"}}>
                             <span>Manage API keys for accessing the </span>
-                            <a href="https://docs.virtool.ca/web-api/authentication.html" target="_blank">Virtool
-                                API</a>.
+                            <a
+                                href="https://docs.virtool.ca/web-api/authentication.html"
+                                rel="noopener noreferrer"
+                                target="_blank">Virtool API
+                            </a>.
                         </div>
                     </FlexItem>
                     <FlexItem grow={1} shrink={0} pad={7}>

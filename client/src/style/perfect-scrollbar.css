@@ -2,19 +2,19 @@
 .ps-container {
     -ms-touch-action: none;
     touch-action: none;
-    overflow: hidden !important;
+    overflow: hidden;
     -ms-overflow-style: none;
 }
 
 @supports (-ms-overflow-style: none) {
     .ps-container {
-        overflow: auto !important;
+        overflow: auto;
     }
 }
 
 @media screen and (-ms-high-contrast: active), (-ms-high-contrast: none) {
     .ps-container {
-        overflow: auto !important;
+        overflow: auto;
     }
 }
 

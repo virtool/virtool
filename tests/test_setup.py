@@ -1,5 +1,4 @@
 import os
-import sys
 import pytest
 import motor.motor_asyncio
 from cerberus import Validator

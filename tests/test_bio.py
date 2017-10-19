@@ -111,35 +111,6 @@ def test_read_fasta(illegal, tmpdir):
         ]
 
 
-@pytest.mark.parametrize("illegal", [False, True])
-def test_read_fasta(illegal, tmpdir):
-    tmpfile = tmpdir.join("test.fa")
-
-    content = (
-        ">test_1\n"
-        "ATAGAGTACATATCTACTTCTATCATTTATATATTATAAAAACCTC\n"
-        ">test_2\n"
-        "CCTCTGACTGACTATGGGCTCTCGACTATTTACGATCAGCATCGTT\n"
-    )
-
-    if illegal:
-        content = "ATTAGATAC\n" + content
-
-    tmpfile.write(content)
-
-    if illegal:
-        with pytest.raises(IOError) as err:
-            virtool.bio.read_fasta(str(tmpfile))
-
-        assert "Illegal FASTA line: ATTAGATAC" in str(err)
-
-    else:
-        assert virtool.bio.read_fasta(str(tmpfile)) == [
-            ("test_1", "ATAGAGTACATATCTACTTCTATCATTTATATATTATAAAAACCTC"),
-            ("test_2", "CCTCTGACTGACTATGGGCTCTCGACTATTTACGATCAGCATCGTT")
-        ]
-
-
 @pytest.mark.parametrize("headers_only", [True, False], ids=["read_fastq_headers", "read_fastq"])
 def test_fastq(headers_only, tmpdir):
     tmpfile = tmpdir.join("test.fa")

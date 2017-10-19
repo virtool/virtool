@@ -294,7 +294,8 @@ async def initialize_ncbi_blast(sequence):
 
     with aiohttp.ClientSession() as session:
         async with session.post(BLAST_CGI_URL, params=params, data=data) as resp:
-            assert resp.status == 200
+            if resp.status != 200:
+                raise NCBIError("BLAST request returned status {}".format(resp.status))
 
             # Extract and return the RID and RTOE from the QBlastInfo tag.
             return extract_blast_info(await resp.text())
@@ -307,7 +308,7 @@ def extract_blast_info(html):
     :param html: the input HTML
     :type html: str
 
-    :return: a tuple containg the RID and RTOE
+    :return: a tuple containing the RID and RTOE
     :rtype: tuple
 
     """
@@ -341,7 +342,9 @@ async def check_rid(rid):
 
     with aiohttp.ClientSession() as session:
         async with session.get(BLAST_CGI_URL, params=params) as resp:
-            assert resp.status == 200
+            if resp.status != 200:
+                raise NCBIError("RID check request returned status {}".format(resp.status))
+
             return "Status=WAITING" not in await resp.text()
 
 
@@ -364,11 +367,13 @@ def parse_blast_content(content, rid):
 
     result = json.loads(string)
 
-    assert len(result) == 1
+    if len(result) != 1:
+        raise NCBIError("Unexpected BLAST result count {} returned".format(len(result)))
 
     result = result["BlastOutput2"]
 
-    assert len(result) == 1
+    if len(result) != 1:
+        raise NCBIError("Unexpected BLAST result count {} returned".format(len(result)))
 
     result = result["report"]
 
@@ -450,3 +455,7 @@ async def wait_for_blast_result(db, dispatch, analysis_id, sequence_index, rid):
         formatted = await virtool.sample_analysis.format_analysis(db, document)
 
         await dispatch("analyses", "update", virtool.utils.base_processor(formatted))
+
+
+class NCBIError(Exception):
+    pass

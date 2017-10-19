@@ -9,6 +9,7 @@
 
 import {
     WS_UPDATE_ANALYSIS,
+    WS_REMOVE_ANALYSIS,
 
     FIND_SAMPLES,
     FIND_READY_HOSTS,
@@ -31,6 +32,13 @@ export const wsUpdateAnalysis = (update) => {
     return {
         type: WS_UPDATE_ANALYSIS,
         update
+    };
+};
+
+export const wsRemoveAnalysis = (removed) => {
+    return {
+        type: WS_REMOVE_ANALYSIS,
+        removed
     };
 };
 

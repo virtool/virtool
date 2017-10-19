@@ -166,9 +166,7 @@ def average_list(list1, list2):
     if not isinstance(list1, list) or not isinstance(list2, list):
         raise TypeError("Both arguments must be lists")
 
-    try:
-        assert len(list1) == len(list2)
-    except AssertionError:
+    if len(list1) != len(list2):
         raise TypeError("Both arguments must be lists of the same length")
 
     return [(value + list2[i]) / 2 for i, value in enumerate(list1)]
