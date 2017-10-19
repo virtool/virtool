@@ -530,7 +530,8 @@ def upgrade_legacy_virus(document):
         except KeyError:
             user_id = joined.pop("user")
 
-    assert isinstance(user_id, str)
+    if not isinstance(user_id, str):
+        raise TypeError("Expected type 'str' for user_id")
 
     joined["user"] = {
         "id": user_id
@@ -584,10 +585,10 @@ async def upgrade_legacy_virus_and_history(db, virus_id):
 
     current_version = versions.pop()
 
-    try:
-        assert current["_version"] == current_version
-    except TypeError:
-        assert current is None and current_version == "removed"
+    if isinstance(current, dict) and current["_version"] != current_version:
+        raise ValueError("Virus version mismatch")
+    elif current is None and current_version != "removed":
+        raise ValueError("Missing history for removed virus")
 
     for version in versions:
         _, patched, _ = await legacy_patch(db, virus_id, version)

@@ -460,8 +460,9 @@ class Pathoscope(Base):
             # Get the virus info for the sequence id.
             virus = self.virus_dict[self.sequence_virus_map[ref_id]]
 
-            # Make sure it is not ``False`` (meaning the virus had not ``last_indexed_version`` field).
-            assert virus
+            # Raise exception if virus is ``False`` (meaning the virus had no ``last_indexed_version`` field).
+            if not virus:
+                raise ValueError("Doucment has no last_indexed_version field.")
 
             hit["id"] = ref_id
 

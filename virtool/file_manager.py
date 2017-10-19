@@ -46,7 +46,6 @@ class Manager:
         self.loop.create_task(self.run())
         msg = self.queue.get(block=True, timeout=3)
 
-        assert msg == "alive"
         self._run_alive = True
 
     async def clean(self):
@@ -185,7 +184,8 @@ class Watcher(multiprocessing.Process):
                     _, type_names, _, filename = event
 
                     if filename and type_names[0] in TYPE_NAME_DICT:
-                        assert len(type_names) == 1
+                        if len(type_names) != 1:
+                            raise ValueError("Unexpected number of type_names")
 
                         action = TYPE_NAME_DICT[type_names[0]]
 
