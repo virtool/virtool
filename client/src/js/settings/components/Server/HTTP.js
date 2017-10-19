@@ -27,7 +27,7 @@ const HTTPOptions = (props) => {
 
     const checkboxLabel = (
         <span>
-            Enable <a href="https://docs.virtool.ca/web-api.html" target="_blank">API</a>
+            Enable <a rel="noopener noreferrer" href="https://docs.virtool.ca/web-api.html" target="_blank">API</a>
         </span>
     );
 

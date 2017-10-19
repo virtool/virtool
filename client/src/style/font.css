@@ -7,7 +7,7 @@
 
 i {
   /* use !important to prevent issues with browser extensions that change fonts */
-  font-family: 'vtfont' !important;
+  font-family: "vtfont";
   speak: none;
   font-style: normal;
   font-weight: normal;

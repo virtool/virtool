@@ -70,10 +70,10 @@ async def blast(req):
         return not_found("Analysis not found")
 
     if analysis["algorithm"] != "nuvs":
-        return bad_request("Not a NuVs analysis".format(analysis_id))
+        return bad_request("Not a NuVs analysis")
 
     if not analysis["ready"]:
-        return bad_request("Still in progress".format(analysis_id))
+        return bad_request("Still in progress")
 
     sequences = [result["sequence"] for result in analysis["results"] if result["index"] == int(sequence_index)]
 
@@ -106,17 +106,15 @@ async def blast(req):
 
     await req.app["dispatcher"].dispatch("analyses", "update", virtool.utils.base_processor(formatted))
 
-    # This coroutine will run as a Task until the BLAST completes on NCBI. At that point the sequence in the DB will be
+    # Wait on BLAST request as a Task until the it completes on NCBI. At that point the sequence in the DB will be
     # updated with the BLAST result.
-    wait_for_blast_coro = virtool.bio.wait_for_blast_result(
+    req.app.loop.create_task(virtool.bio.wait_for_blast_result(
         db,
         req.app["dispatcher"].dispatch,
         analysis_id,
         sequence_index,
         rid
-    )
-
-    req.app.loop.create_task(wait_for_blast_coro)
+    ))
 
     headers = {
         "Location": "/api/analyses/{}/{}/blast".format(analysis_id, sequence_index)
