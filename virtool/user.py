@@ -2,7 +2,6 @@ import uuid
 import bcrypt
 import hashlib
 
-import virtool.utils
 
 PROJECTION = [
     "_id",
