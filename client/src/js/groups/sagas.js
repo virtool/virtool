@@ -7,9 +7,9 @@
  *
  */
 
-import { call, put, takeLatest } from "redux-saga/effects";
+import { put, takeLatest } from "redux-saga/effects";
 import groupsAPI from "./api";
-import { LIST_GROUPS } from "../../actionTypes";
+import { LIST_GROUPS } from "../actionTypes";
 
 export function* watchGroups () {
     yield takeLatest(LIST_GROUPS.REQUESTED, listGroups);
@@ -17,7 +17,7 @@ export function* watchGroups () {
 
 function* listGroups () {
     try {
-        const response = yield call(groupsAPI.list);
+        const response = yield groupsAPI.list();
         yield put({type: LIST_GROUPS.SUCCEEDED, data: response.body});
     } catch (error) {
         yield put({type: LIST_GROUPS.FAILED}, error);

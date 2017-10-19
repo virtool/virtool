@@ -12,7 +12,7 @@
 import React from "react";
 import PropTypes from "prop-types";
 import { startCase } from "lodash";
-import { Icon, ListGroupItem } from "../../../base";
+import { Icon, ListGroupItem } from "../../base";
 
 export default class Permission extends React.Component {
 

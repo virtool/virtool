@@ -10,28 +10,39 @@
  */
 
 import React from "react";
-import { find } from "lodash";
 import { connect } from "react-redux";
 import { Row, Col, Alert, Panel, ButtonToolbar } from "react-bootstrap";
 
-import { setForceReset, changeSetPassword, changeSetConfirm, setPassword, clearSetPassword } from "../../users/actions";
-import { Icon, Input, Checkbox, Button, RelativeTime } from "../../../base";
+import { setForceReset, setPassword } from "../../users/actions";
+import { Icon, Input, Checkbox, Button, RelativeTime } from "../../base";
 
-class Password extends React.PureComponent {
+class Password extends React.Component {
 
-    /**
-     * Called when the password is submitted. Sends the new password data to the server.
-     *
-     * @param e - the submit event, used purely to prevent the default submit action
-     */
-    submit = (e) => {
-        e.preventDefault();
-        this.props.onSubmit(this.props.userId, this.props.password, this.props.confirm);
+    constructor (props) {
+        super(props);
+
+        this.state = {
+            newPassword: "",
+            confirmPassword: ""
+        };
+    }
+
+    componentWillUnmount () {
+        this.setState({
+            newPassword: "",
+            confirmPassword: ""
+        });
+    }
+
+    handleSubmit = (event) => {
+        event.preventDefault();
+        this.props.onSubmit(this.props.id, this.props.newPassword);
     };
 
     render () {
-
         let alert;
+
+        console.log(this.props);
 
         if (this.props.error) {
             alert = (
@@ -43,12 +54,12 @@ class Password extends React.PureComponent {
 
         return (
             <div>
-                <h5><Icon name="lock" /> <strong>Password</strong></h5>
+                <h5><Icon name="lock"/> <strong>Password</strong></h5>
 
                 <Panel>
                     <p>
                         <em>Last changed </em>
-                        <RelativeTime time={this.props.lastPasswordChange} em={true} />
+                        <RelativeTime time={this.props.last_password_change} em={true}/>
                     </p>
 
                     <form onSubmit={this.submit}>
@@ -58,9 +69,8 @@ class Password extends React.PureComponent {
                                     type="password"
                                     name="password"
                                     placeholder="New Password"
-                                    value={this.props.password}
-                                    onChange={(e) => {this.props.onChangePassword(e.target.value)}}
-                                    disabled={this.props.passwordChangePending}
+                                    value={this.state.password}
+                                    onChange={(e) => this.setState({newPassword: e.target.value})}
                                 />
                             </Col>
 
@@ -69,9 +79,8 @@ class Password extends React.PureComponent {
                                     type="password"
                                     name="confirm"
                                     placeholder="Confirm Password"
-                                    value={this.props.confirm}
-                                    onChange={(e) => {this.props.onChangeConfirm(e.target.value)}}
-                                    disabled={this.props.passwordChangePending}
+                                    value={this.state.confirm}
+                                    onChange={(e) => this.setState({oldPassword: e.target.value})}
                                 />
                             </Col>
                         </Row>
@@ -79,24 +88,23 @@ class Password extends React.PureComponent {
                             <Col xs={12} md={6}>
                                 <Checkbox
                                     label="Force user to reset password on next login"
-                                    checked={this.props.forceReset}
+                                    checked={this.props.force_reset}
                                     onClick={() => this.props.onSetForceReset(
-                                        this.props.userId,
-                                        !this.props.forceReset
+                                        this.props.id,
+                                        !this.props.force_reset
                                     )}
                                 />
                             </Col>
 
                             <Col xs={12} mdHidden lgHidden>
-                                <div style={{height: "15px"}} />
+                                <div style={{height: "15px"}}/>
                             </Col>
 
                             <Col xs={12} md={6}>
                                 <ButtonToolbar className="pull-right">
                                     <Button
                                         type="button"
-                                        onClick={this.props.onClear}
-                                        disabled={this.props.passwordChangePending}
+                                        onClick={() => this.setState({oldPassword: "", newPassword: ""})}
                                     >
                                         Clear
                                     </Button>
@@ -105,55 +113,23 @@ class Password extends React.PureComponent {
                                         icon="floppy"
                                         type="submit"
                                         bsStyle="primary"
-                                        disabled={this.props.passwordChangePending}
                                     >
                                         Save
                                     </Button>
                                 </ButtonToolbar>
                             </Col>
-
                         </Row>
                     </form>
 
                     {alert}
                 </Panel>
             </div>
-
         );
     }
 }
 
-const mapStateToProps = (state) => {
-
-    const activeData = find(state.users.list, {id: state.users.activeId});
-
-    return {
-        userId: state.users.activeId,
-
-        password: state.users.password,
-        confirm: state.users.confirm,
-        error: state.users.passwordError,
-        passwordChangePending: state.users.passwordChangePending,
-
-        lastPasswordChange: activeData.last_password_change,
-        forceReset: activeData.force_reset
-    };
-};
-
 const mapDispatchToProps = (dispatch) => {
     return {
-        onClear: () => {
-            dispatch(clearSetPassword())
-        },
-
-        onChangePassword: (password) => {
-            dispatch(changeSetPassword(password));
-        },
-
-        onChangeConfirm: (confirm) => {
-            dispatch(changeSetConfirm(confirm));
-        },
-
         onSubmit: (userId, password, confirm) => {
             dispatch(setPassword(userId, password, confirm));
         },
@@ -164,6 +140,6 @@ const mapDispatchToProps = (dispatch) => {
     };
 };
 
-const Container = connect(mapStateToProps, mapDispatchToProps)(Password);
+const Container = connect(() => ({}), mapDispatchToProps)(Password);
 
 export default Container;

@@ -10,16 +10,13 @@
 import { assign, findIndex } from "lodash";
 import {
     LIST_USERS,
-    SELECT_USER,
-    CHANGE_SET_PASSWORD,
-    CHANGE_SET_CONFIRM,
+    FILTER_USERS,
     SET_PASSWORD,
-    CLEAR_SET_PASSWORD,
     SET_FORCE_RESET,
     SET_PRIMARY_GROUP,
     ADD_USER_TO_GROUP,
     REMOVE_USER_FROM_GROUP
-} from "../../actionTypes";
+} from "../actionTypes";
 
 const updateActiveData = (state, updater) => {
     const newState = assign({}, state);
@@ -33,15 +30,7 @@ const updateActiveData = (state, updater) => {
 
 const initialState = {
     list: null,
-    activeId: null,
-
-    password: "",
-    confirm: "",
-    passwordError: "",
-    passwordChangeFailed: false,
-    passwordChangePending: false,
-
-    setForceResetPending: false
+    filter: ""
 };
 
 const reducer = (state = initialState, action) => {
@@ -61,32 +50,9 @@ const reducer = (state = initialState, action) => {
             });
         }
 
-        case SELECT_USER:
-            return assign({}, state, {
-                activeId: action.userId,
-                password: "",
-                confirm: "",
-                passwordChangeFailed: false,
-                passwordChangePending: false,
-                setForceResetPending: false
-            });
-
-        case CHANGE_SET_PASSWORD:
-            return assign({}, state, {
-                password: action.password
-            });
-
-        case CHANGE_SET_CONFIRM:
-            return assign({}, state, {
-                confirm: action.confirm
-            });
-
-        case CLEAR_SET_PASSWORD:
-            return assign({}, state, {
-                password: "",
-                confirm: "",
-                passwordError: ""
-            });
+        case FILTER_USERS: {
+            return assign({}, state, {filter: action.term});
+        }
 
         case SET_PASSWORD.REQUESTED: {
             return assign({}, state, {

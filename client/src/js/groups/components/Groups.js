@@ -11,15 +11,10 @@
 
 import React from "react";
 import PropTypes from "prop-types";
-import FlipMove from "react-flip-move"
-import { capitalize, find } from "lodash";
-import { Row, Col, Modal } from "react-bootstrap";
-import { Icon, ListGroupItem, getFlipMoveProps } from "../../../base";
+import { connect } from "react-redux";
+import { Modal } from "react-bootstrap";
 
-import Add from "./Add";
-import Permissions from "./Permissions";
-
-const getDocuments = () => dispatcher.db.groups.chain().find().simplesort("_id").data();
+import { listGroups } from "../actions";
 
 /**
  * Renders either a table describing the sessions associated with the user or a panel with a message indicating no
@@ -27,17 +22,10 @@ const getDocuments = () => dispatcher.db.groups.chain().find().simplesort("_id")
  *
  * @class
  */
-export default class Groups extends React.Component {
+class Groups extends React.Component {
 
     constructor (props) {
         super(props);
-
-        const documents = getDocuments();
-
-        this.state = {
-            documents: documents,
-            activeId: documents[0]._id
-        };
     }
 
     static propTypes = {
@@ -45,36 +33,17 @@ export default class Groups extends React.Component {
         onHide: PropTypes.func
     };
 
-    componentDidMount () {
-        dispatcher.db.groups.on("change", this.update);
-    }
-
-    componentWillUnmount () {
-        dispatcher.db.groups.off("change", this.update);
+    componentWillMount () {
+        this.props.onList();
     }
 
     select = (groupId) => {
         this.setState({activeId: groupId});
     };
 
-    update = () => {
-        const documents = getDocuments();
-
-        const activeDocument = find(documents, {_id: this.state.activeId});
-
-        this.setState({
-            documents: documents,
-            activeId: (activeDocument || documents[0])._id
-        });
-    };
-
-    remove = (groupName) => {
-        dispatcher.db.groups.request("remove_group", {
-            _id: groupName
-        });
-    };
-
     render () {
+
+        /*
 
         const groupItemComponents = this.state.documents.map((document) => {
 
@@ -99,12 +68,16 @@ export default class Groups extends React.Component {
 
         const activeGroup = find(this.state.documents, {_id: this.state.activeId});
 
+        */
+
         return (
-            <Modal dialogClassName="modal-md" show={this.props.show} onHide={this.props.onHide}>
+            <Modal show={this.props.show} onHide={this.props.onHide}>
                 <Modal.Header>
-                    User Groups
+                    Manage Groups
                 </Modal.Header>
                 <Modal.Body>
+                    Test
+                    {/*
                     <Row>
                         <Col md={6}>
                             <FlipMove {...getFlipMoveProps()}>
@@ -123,8 +96,27 @@ export default class Groups extends React.Component {
                             </FlipMove>
                         </Col>
                     </Row>
+                    */}
                 </Modal.Body>
             </Modal>
         );
     }
 }
+
+const mapStateToProps = (state) => {
+    return {
+        groups: state.groups.list
+    };
+};
+
+const mapDispatchToProps = (dispatch) => {
+    return {
+        onList: () => {
+            dispatch(listGroups());
+        }
+    };
+};
+
+const Container = connect(mapStateToProps, mapDispatchToProps)(Groups);
+
+export default Container;

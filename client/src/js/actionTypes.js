@@ -12,6 +12,7 @@ const createRequestActionType = (root) => {
 
 export const SET_APP_PENDING = "SET_APP_PENDING";
 export const UNSET_APP_PENDING = "UNSET_APP_PENDING";
+export const WS_CLOSED = "WS_CLOSED";
 
 // Jobs
 export const WS_UPDATE_JOB = "WS_UPDATE_JOB";
@@ -137,11 +138,8 @@ export const GET_CONTROL_READAHEAD = createRequestActionType("GET_CONTROL_READAH
 
 // Users
 export const LIST_USERS = createRequestActionType("LIST_USERS");
-export const SELECT_USER = "SELECT_USER";
-export const CHANGE_SET_PASSWORD = "CHANGE_SET_PASSWORD";
-export const CHANGE_SET_CONFIRM = "CHANGE_SET_CONFIRM";
+export const FILTER_USERS = "FILTER_USERS";
 export const SET_PASSWORD = createRequestActionType("SET_PASSWORD");
-export const CLEAR_SET_PASSWORD = "CLEAR_SET_PASSWORD";
 export const SET_FORCE_RESET = createRequestActionType("SET_FORCE_RESET");
 export const SET_PRIMARY_GROUP = createRequestActionType("SET_PRIMARY_GROUP");
 export const ADD_USER_TO_GROUP = createRequestActionType("ADD_USER_TO_GROUP");

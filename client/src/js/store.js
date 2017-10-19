@@ -20,8 +20,8 @@ import subtractionReducer from "./subtraction/reducers";
 import filesReducer from "./files/reducer";
 import accountReducer from "./account/reducers";
 import settingsReducer from "./settings/reducers";
-import usersReducer from "./settings/users/reducers";
-import groupsReducer from "./settings/groups/reducers";
+import usersReducer from "./users/reducers";
+import groupsReducer from "./groups/reducers";
 import updatesReducer from "./updates/reducers";
 import rootSaga from "./sagas";
 

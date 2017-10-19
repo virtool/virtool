@@ -8,7 +8,7 @@
  */
 
 import { assign } from "lodash";
-import { LIST_GROUPS } from "../../actionTypes";
+import { LIST_GROUPS } from "../actionTypes";
 
 const initialState = {
     list: null

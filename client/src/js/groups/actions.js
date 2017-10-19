@@ -7,7 +7,7 @@
  *
  */
 
-import { LIST_GROUPS } from "../../actionTypes";
+import { LIST_GROUPS } from "../actionTypes";
 
 export const listGroups = () => {
     return {
