@@ -1,3 +1,4 @@
+import hashlib
 from pymongo import ReturnDocument
 from cerberus import Validator
 
@@ -24,7 +25,7 @@ async def find(req):
 async def get(req):
     """
     Get a near-complete user document. Password data are removed.
-     
+
     """
     document = await req.app["db"].users.find_one(req.match_info["user_id"], virtool.user.PROJECTION)
 
@@ -68,6 +69,7 @@ async def create(req):
             "show_versions": True,
             "quick_analyze_algorithm": "pathoscope_bowtie"
         },
+        "identicon": hashlib.sha256(data["user_id"].encode()).hexdigest(),
         "sessions": [],
         "permissions": {permission: False for permission in PERMISSIONS},
         "password": virtool.user.hash_password(data["password"]),
@@ -82,7 +84,7 @@ async def create(req):
     }
 
     await db.users.insert_one(document)
-    
+
     return json_response(virtool.utils.base_processor({key: document[key] for key in virtool.user.PROJECTION}))
 
 
