@@ -1,7 +1,9 @@
 import React from "react";
 import PropTypes from "prop-types";
 import { Helmet } from "react-helmet";
+import { ClipLoader } from "halogenium";
 import { Provider, connect } from "react-redux";
+import { ConnectedRouter } from "react-router-redux";
 import { BrowserRouter, Switch, Route, withRouter } from "react-router-dom";
 
 import NavBar from "./nav/components/Bar";
@@ -39,14 +41,10 @@ const Inner = (props) => {
     }
 
     return (
-        <div className="text-center">
-            Loading
+        <div className="text-center" style={{paddingTop: "290px"}}>
+            <ClipLoader />
         </div>
     );
-};
-
-Inner.propTypes = {
-    ready: PropTypes.bool
 };
 
 const mapStateToProps = (state) => {
@@ -59,18 +57,14 @@ const InnerContainer = withRouter(connect(
     mapStateToProps
 )(Inner));
 
-const App = (props) => {
+const App = ({ store, history }) => {
     return (
-        <Provider store={props.store}>
-            <BrowserRouter>
+        <Provider store={store}>
+            <ConnectedRouter history={history}>
                 <InnerContainer />
-            </BrowserRouter>
+            </ConnectedRouter>
         </Provider>
     );
-};
-
-App.propTypes = {
-    store: PropTypes.object.isRequired
 };
 
 export default App;
