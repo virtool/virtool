@@ -10,7 +10,7 @@
  */
 
 import React from "react";
-import { filter } from "lodash";
+import { filter, sortBy } from "lodash";
 import { connect } from "react-redux";
 import { LinkContainer } from "react-router-bootstrap";
 import { ListGroup, ListGroupItem } from "react-bootstrap";
@@ -59,12 +59,11 @@ const UsersList = (props) => {
 
     const re = new RegExp(props.filter);
 
-    const userComponents = filter(props.users, (user) => user.id.match(re)).map((user) =>
+    const userComponents = sortBy(filter(props.users, (user) => user.id.match(re)), "id").map((user) =>
         <UserEntry
             key={user.id}
             {...user}
             active={user.id === props.match.params.activeId}
-            onSelect={props.onSelect}
         />
     );
 
@@ -84,14 +83,6 @@ const mapStateToProps = (state) => {
     };
 };
 
-const mapDispatchToProps = (dispatch) => {
-    return {
-        onSelect: (userId) => {
-            dispatch(selectUser(userId));
-        }
-    }
-};
-
-const Container = connect(mapStateToProps, mapDispatchToProps)(UsersList);
+const Container = connect(mapStateToProps)(UsersList);
 
 export default Container;

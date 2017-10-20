@@ -10,7 +10,9 @@
  */
 
 import React from "react";
+import { get } from "lodash";
 import { connect } from "react-redux";
+import { push } from "react-router-redux";
 import { LinkContainer } from "react-router-bootstrap";
 import { Route, Switch } from "react-router-dom";
 import { Col, FormControl, FormGroup, InputGroup, Row  } from "react-bootstrap";
@@ -66,7 +68,7 @@ class ManageUsers extends React.Component {
                                 </InputGroup>
                             </FormGroup>
 
-                            <LinkContainer to={{state: {addUser: true}}}>
+                            <LinkContainer to={{state: {groups: true}}}>
                                 <Button icon="users" tip="Manage Groups" />
                             </LinkContainer>
 
@@ -83,18 +85,17 @@ class ManageUsers extends React.Component {
                     </Col>
                 </Row>
 
-                <Route path="/settings/users" render={({ history, location }) => {
+                <Route path="/settings/users" render={({ location }) => {
                     return (
                         <div>
                             <AddUser
-                                show={!!location.state && location.state.addUser}
-                                add={this.props.onAdd}
-                                onHide={() => history.push({state: {addUser: false}})}
+                                show={get(location.state, "addUser")}
+                                onHide={this.props.onHide}
                             />
 
                             <Groups
-                                show={!!location.state && location.state.groups}
-                                onHide={() => history.push({state: {groups: false}})}
+                                show={get(location.state, "groups")}
+                                onHide={this.props.onHide}
                             />
                         </div>
                     );
@@ -121,8 +122,8 @@ const mapDispatchToProps = (dispatch) => {
             dispatch(filterUsers(term));
         },
 
-        onAdd: () => {
-            console.log("ADD");
+        onHide: () => {
+            dispatch(push({state: {groups: false, addUser: false}}));
         }
     }
 };

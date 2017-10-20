@@ -19,6 +19,15 @@ const usersAPI = {
         return Request.get(`/api/users/${userId}`);
     },
 
+    add: (userId, password, forceReset) => {
+        return Request.post("/api/users")
+            .send({
+                user_id: userId,
+                password,
+                force_reset: forceReset
+            });
+    },
+
     setPassword: (userId, password) => {
         return Request.put(`/api/users/${userId}/password`)
             .send({password: password});

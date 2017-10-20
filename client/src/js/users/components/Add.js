@@ -10,15 +10,16 @@
  */
 
 import React from "react";
-import PropTypes from "prop-types";
+import { connect } from "react-redux";
 import { Row, Col, Modal, ButtonToolbar } from "react-bootstrap";
+
+import { addUser } from "../actions";
 import { Icon, Input, Checkbox, Button } from "../../base";
 
 const getInitialState = () => ({
     username: "",
     password: "",
     confirm: "",
-    error: false,
     forceReset: false
 });
 
@@ -28,33 +29,16 @@ const getInitialState = () => ({
  *
  * @class
  */
-export default class AddUser extends React.PureComponent {
+class AddUser extends React.PureComponent {
 
     constructor (props) {
         super(props);
         this.state = getInitialState();
     }
 
-    static propTypes = {
-        add: PropTypes.func.isRequired,
-        onHide: PropTypes.func.isRequired,
-        show: PropTypes.bool.isRequired
-    };
-
-    componentWillUpdate (nextProps, nextState) {
-        if (nextState.username !== this.state.username) {
-            this.setState({error: false});
-        }
-    }
-
     handleSubmit = (event) => {
         event.preventDefault();
-
-        this.props.add(
-            {_id: this.state.username, password: this.state.password, force_reset: this.state.forceReset},
-            () => this.setState(getInitialState(), () => this.props.onHide()),
-            () => this.setState({error: true})
-        );
+        this.props.onAdd(this.state.username, this.state.password, this.state.forceReset);
     };
 
     render = () => (
@@ -71,7 +55,7 @@ export default class AddUser extends React.PureComponent {
                                 name="username"
                                 label="Username"
                                 value={this.state.username}
-                                onChange={() => this.setState({username: e.target.value})}
+                                onChange={(e) => this.setState({username: e.target.value})}
                             />
                         </Col>
                     </Row>
@@ -116,3 +100,22 @@ export default class AddUser extends React.PureComponent {
         </Modal>
     );
 }
+
+const mapStateToProps = (state) => {
+    return {
+        error: state.users.addError,
+        pending: state.users.addPending
+    };
+};
+
+const mapDispatchToProps = (dispatch) => {
+    return {
+        onAdd: (userId, password, forceReset) => {
+            dispatch(addUser(userId, password, forceReset));
+        }
+    };
+};
+
+const Container = connect(mapStateToProps, mapDispatchToProps)(AddUser);
+
+export default Container;

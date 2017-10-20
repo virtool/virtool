@@ -7,10 +7,11 @@
  *
  */
 
-import { assign, findIndex } from "lodash";
+import { assign, merge } from "lodash";
 import {
     LIST_USERS,
     FILTER_USERS,
+    ADD_USER,
     SET_PASSWORD,
     SET_FORCE_RESET,
     SET_PRIMARY_GROUP,
@@ -18,19 +19,16 @@ import {
     REMOVE_USER_FROM_GROUP
 } from "../actionTypes";
 
-const updateActiveData = (state, updater) => {
-    const newState = assign({}, state);
-
-    const index = findIndex(state.list, {user_id: state.activeId});
-
-    updater(newState.list[index]);
-
-    return newState;
-};
-
 const initialState = {
     list: null,
-    filter: ""
+    filter: "",
+
+    addPending: false,
+    addError: null
+};
+
+const updateUser = (state, update) => {
+    return merge({}, state, {list: [update]});
 };
 
 const reducer = (state = initialState, action) => {
@@ -54,72 +52,32 @@ const reducer = (state = initialState, action) => {
             return assign({}, state, {filter: action.term});
         }
 
-        case SET_PASSWORD.REQUESTED: {
-            return assign({}, state, {
-                passwordChangePending: true
-            });
+        case ADD_USER.SUCCEEDED:
+        case SET_PASSWORD.SUCCEEDED:
+        case SET_FORCE_RESET.SUCCEEDED:
+        case SET_PRIMARY_GROUP.SUCCEEDED:
+        case ADD_USER_TO_GROUP.SUCCEEDED:
+        case REMOVE_USER_FROM_GROUP.SUCCEEDED: {
+            return updateUser(state, action.data);
         }
 
-        case SET_PASSWORD.SUCCEEDED: {
-            let newState = assign({}, state, {
-                password: "",
-                confirm: "",
-                error: "",
-                passwordChangePending: false
-            });
+        case ADD_USER.REQUESTED:
+            return assign({}, state, {addPending: true, addError: null});
 
-            const index = findIndex(newState.list, {user_id: state.activeId});
+        case ADD_USER.FAILED:
+            return assign({}, state, {addPending: false, addError: action.error});
 
-            assign(newState.list[index], action.data);
-
-            return newState;
+        case SET_PASSWORD.REQUESTED: {
+            return updateUser(state, {passwordPending: true, passwordError: null});
         }
 
         case SET_PASSWORD.FAILED:
-            return assign({}, state, {
-                passwordError: action.error,
-                passwordChangePending: false
-            });
+            return updateUser(state, assign({}, state, {passwordPending: false, passwordError: action.error}));
 
         case SET_FORCE_RESET.REQUESTED:
             return assign({}, state, {
                 forceResetChangePending: true
             });
-
-        case SET_FORCE_RESET.SUCCEEDED: {
-            let newState = assign({}, state, {
-                forceResetChangePending: false
-            });
-
-            const index = findIndex(newState.list, {user_id: state.activeId});
-
-            assign(newState.list[index], action.data);
-
-            return newState;
-        }
-
-        case SET_PRIMARY_GROUP.SUCCEEDED: {
-
-            const newState = assign({}, state);
-
-            const index = findIndex(state.list, {user_id: state.activeId});
-
-            assign(newState.list[index], action.data);
-
-            return newState;
-        }
-
-        case ADD_USER_TO_GROUP.SUCCEEDED: {
-            return updateActiveData(state, (activeData => {
-                assign(activeData, action.data);
-            }));
-        }
-
-        case REMOVE_USER_FROM_GROUP.SUCCEEDED: {
-            return updateActiveData(state, (activeData => {
-                assign(activeData, action.data);
-            }));
-        }
 
         default:
             return state;

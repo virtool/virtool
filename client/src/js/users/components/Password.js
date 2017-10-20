@@ -42,8 +42,6 @@ class Password extends React.Component {
     render () {
         let alert;
 
-        console.log(this.props);
-
         if (this.props.error) {
             alert = (
                 <Alert bsStyle="danger">

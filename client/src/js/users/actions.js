@@ -10,6 +10,7 @@
 import {
     LIST_USERS,
     FILTER_USERS,
+    ADD_USER,
     SET_PASSWORD,
     SET_PRIMARY_GROUP,
     SET_FORCE_RESET,
@@ -27,6 +28,15 @@ export const filterUsers = (term) => {
     return {
         type: FILTER_USERS,
         term
+    };
+};
+
+export const addUser = (userId, password, forceReset) => {
+    return {
+        type: ADD_USER.REQUESTED,
+        userId,
+        password,
+        forceReset
     };
 };
 
