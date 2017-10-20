@@ -146,6 +146,12 @@ export const SET_PRIMARY_GROUP = createRequestActionType("SET_PRIMARY_GROUP");
 export const ADD_USER_TO_GROUP = createRequestActionType("ADD_USER_TO_GROUP");
 export const REMOVE_USER_FROM_GROUP = createRequestActionType("REMOVE_USER_FROM_GROUP");
 
+// Groups
+export const LIST_GROUPS = createRequestActionType("LIST_GROUPS");
+export const CREATE_GROUP = createRequestActionType("CREATE_GROUP");
+export const SET_GROUP_PERMISSION = createRequestActionType("SET_GROUP_PERMISSIONS");
+export const REMOVE_GROUP = createRequestActionType("REMOVE_GROUP");
+
 // Updates
 export const WS_UPDATE_STATUS = createRequestActionType("WS_UPDATE_STATUS");
 export const GET_SOFTWARE_UPDATES = createRequestActionType("GET_SOFTWARE_UPDATES");
@@ -153,6 +159,3 @@ export const GET_DATABASE_UPDATES = createRequestActionType("GET_DATABASE_UPDATE
 export const INSTALL_SOFTWARE_UPDATES = createRequestActionType("INSTALL_SOFTWARE_UPDATES");
 export const SHOW_INSTALL_MODAL = "SHOW_INSTALL_MODAL";
 export const HIDE_INSTALL_MODAL = "HIDE_INSTALL_MODAL";
-
-// Groups
-export const LIST_GROUPS = createRequestActionType("LIST_GROUPS");

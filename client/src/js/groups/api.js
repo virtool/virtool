@@ -13,6 +13,23 @@ const groupsAPI = {
 
     list: () => {
         return Request.get("/api/groups");
+    },
+
+    create: (groupId) => {
+        return Request.post("/api/groups")
+            .send({group_id: groupId});
+    },
+
+    setPermission: (groupId, permission, value) => {
+        let update = {};
+        update[permission] = value;
+
+        return Request.patch(`/api/groups/${groupId}`)
+            .send(update);
+    },
+
+    remove: (groupId) => {
+        return Request.delete(`/api/groups/${groupId}`);
     }
 
 };
