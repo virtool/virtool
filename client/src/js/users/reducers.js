@@ -11,7 +11,7 @@ import { assign, merge } from "lodash";
 import {
     LIST_USERS,
     FILTER_USERS,
-    ADD_USER,
+    CREATE_USER,
     SET_PASSWORD,
     SET_FORCE_RESET,
     SET_PRIMARY_GROUP,
@@ -23,8 +23,8 @@ const initialState = {
     list: null,
     filter: "",
 
-    addPending: false,
-    addError: null
+    createPending: false,
+    createError: null
 };
 
 const updateUser = (state, update) => {
@@ -52,7 +52,7 @@ const reducer = (state = initialState, action) => {
             return assign({}, state, {filter: action.term});
         }
 
-        case ADD_USER.SUCCEEDED:
+        case CREATE_USER.SUCCEEDED:
         case SET_PASSWORD.SUCCEEDED:
         case SET_FORCE_RESET.SUCCEEDED:
         case SET_PRIMARY_GROUP.SUCCEEDED:
@@ -61,11 +61,11 @@ const reducer = (state = initialState, action) => {
             return updateUser(state, action.data);
         }
 
-        case ADD_USER.REQUESTED:
-            return assign({}, state, {addPending: true, addError: null});
+        case CREATE_USER.REQUESTED:
+            return assign({}, state, {createPending: true, createError: null});
 
-        case ADD_USER.FAILED:
-            return assign({}, state, {addPending: false, addError: action.error});
+        case CREATE_USER.FAILED:
+            return assign({}, state, {createPending: false, createError: action.error});
 
         case SET_PASSWORD.REQUESTED: {
             return updateUser(state, {passwordPending: true, passwordError: null});

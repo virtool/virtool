@@ -21,7 +21,7 @@ import { ClipLoader } from "halogenium";
 import { listUsers, filterUsers } from "../actions";
 import { Button, Icon } from "../../base";
 import UsersList from "./List";
-import AddUser from "./Add";
+import CreateUser from "./Create";
 import Groups from "../../groups/components/Groups";
 
 class ManageUsers extends React.Component {
@@ -72,8 +72,8 @@ class ManageUsers extends React.Component {
                                 <Button icon="users" tip="Manage Groups" />
                             </LinkContainer>
 
-                            <LinkContainer to={{state: {addUser: true}}}>
-                                <Button bsStyle="primary" icon="user-plus" tip="Add User" />
+                            <LinkContainer to={{state: {createUser: true}}}>
+                                <Button bsStyle="primary" icon="user-plus" tip="Create User" />
                             </LinkContainer>
                         </div>
                     </Col>
@@ -88,8 +88,8 @@ class ManageUsers extends React.Component {
                 <Route path="/settings/users" render={({ location }) => {
                     return (
                         <div>
-                            <AddUser
-                                show={get(location.state, "addUser")}
+                            <CreateUser
+                                show={get(location.state, "createUser")}
                                 onHide={this.props.onHide}
                             />
 
@@ -123,7 +123,7 @@ const mapDispatchToProps = (dispatch) => {
         },
 
         onHide: () => {
-            dispatch(push({state: {groups: false, addUser: false}}));
+            dispatch(push({state: {groups: false, createUser: false}}));
         }
     }
 };

@@ -139,7 +139,7 @@ export const GET_CONTROL_READAHEAD = createRequestActionType("GET_CONTROL_READAH
 // Users
 export const LIST_USERS = createRequestActionType("LIST_USERS");
 export const FILTER_USERS = "FILTER_USERS";
-export const ADD_USER = createRequestActionType("ADD_USER");
+export const CREATE_USER = createRequestActionType("CREATE_USER");
 export const SET_PASSWORD = createRequestActionType("SET_PASSWORD");
 export const SET_FORCE_RESET = createRequestActionType("SET_FORCE_RESET");
 export const SET_PRIMARY_GROUP = createRequestActionType("SET_PRIMARY_GROUP");

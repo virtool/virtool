@@ -10,7 +10,7 @@
 import {
     LIST_USERS,
     FILTER_USERS,
-    ADD_USER,
+    CREATE_USER,
     SET_PASSWORD,
     SET_PRIMARY_GROUP,
     SET_FORCE_RESET,
@@ -31,9 +31,9 @@ export const filterUsers = (term) => {
     };
 };
 
-export const addUser = (userId, password, forceReset) => {
+export const createUser = (userId, password, forceReset) => {
     return {
-        type: ADD_USER.REQUESTED,
+        type: CREATE_USER.REQUESTED,
         userId,
         password,
         forceReset

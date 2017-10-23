@@ -14,7 +14,7 @@ import { setPending } from "../wrappers";
 import usersAPI from "./api";
 import {
     LIST_USERS,
-    ADD_USER,
+    CREATE_USER,
     SET_PASSWORD,
     SET_FORCE_RESET,
     SET_PRIMARY_GROUP,
@@ -24,7 +24,7 @@ import {
 
 export function* watchUsers () {
     yield takeLatest(LIST_USERS.REQUESTED, listUsers);
-    yield throttle(200, ADD_USER.REQUESTED, addUser);
+    yield throttle(200, CREATE_USER.REQUESTED, createUser);
     yield takeLatest(SET_PASSWORD.REQUESTED, setPassword);
     yield takeLatest(SET_FORCE_RESET.REQUESTED, setForceReset);
     yield takeLatest(SET_PRIMARY_GROUP.REQUESTED, setPrimaryGroup);
@@ -43,17 +43,16 @@ function* listUsers (action) {
     }, action);
 }
 
-function* addUser (action) {
+function* createUser (action) {
     yield setPending(function* () {
         try {
-            const response = yield usersAPI.add(action.userId, action.password, action.forceReset);
-            yield put({type: ADD_USER.SUCCEEDED, data: response.body});
+            const response = yield usersAPI.create(action.userId, action.password, action.forceReset);
+            yield put({type: CREATE_USER.SUCCEEDED, data: response.body});
 
-            // Close the add user modal and navigate to the new user.
-            yield put(push(`/settings/users/${action.userId}`, {state: {addUser: false}}));
+            // Close the create user modal and navigate to the new user.
+            yield put(push(`/settings/users/${action.userId}`, {state: {createUser: false}}));
         } catch (error) {
-            console.log(error);
-            yield put({type: ADD_USER.FAILED}, error);
+            yield put({type: CREATE_USER.FAILED}, error);
         }
     }, action);
 }

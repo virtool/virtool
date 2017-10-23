@@ -6,14 +6,13 @@
  * @author
  * Ian Boyes
  *
- * @exports AddUser
  */
 
 import React from "react";
 import { connect } from "react-redux";
 import { Row, Col, Modal, ButtonToolbar } from "react-bootstrap";
 
-import { addUser } from "../actions";
+import { createUser } from "../actions";
 import { Icon, Input, Checkbox, Button } from "../../base";
 
 const getInitialState = () => ({
@@ -23,13 +22,7 @@ const getInitialState = () => ({
     forceReset: false
 });
 
-/**
- * A form for adding a new user. Defines username, role, password, and whether the new user should be forced to reset
- * their password.
- *
- * @class
- */
-class AddUser extends React.PureComponent {
+class CreateUser extends React.PureComponent {
 
     constructor (props) {
         super(props);
@@ -38,13 +31,13 @@ class AddUser extends React.PureComponent {
 
     handleSubmit = (event) => {
         event.preventDefault();
-        this.props.onAdd(this.state.username, this.state.password, this.state.forceReset);
+        this.props.onCreate(this.state.username, this.state.password, this.state.forceReset);
     };
 
     render = () => (
         <Modal show={this.props.show} onHide={this.props.onHide} onEnter={this.modalEnter}>
             <Modal.Header onHide={this.props.onHide} closeButton>
-                Add User
+                Create User
             </Modal.Header>
             <form onSubmit={this.handleSubmit}>
                 <Modal.Body>
@@ -103,19 +96,19 @@ class AddUser extends React.PureComponent {
 
 const mapStateToProps = (state) => {
     return {
-        error: state.users.addError,
-        pending: state.users.addPending
+        error: state.users.createError,
+        pending: state.users.createPending
     };
 };
 
 const mapDispatchToProps = (dispatch) => {
     return {
-        onAdd: (userId, password, forceReset) => {
-            dispatch(addUser(userId, password, forceReset));
+        onCreate: (userId, password, forceReset) => {
+            dispatch(createUser(userId, password, forceReset));
         }
     };
 };
 
-const Container = connect(mapStateToProps, mapDispatchToProps)(AddUser);
+const Container = connect(mapStateToProps, mapDispatchToProps)(CreateUser);
 
 export default Container;
