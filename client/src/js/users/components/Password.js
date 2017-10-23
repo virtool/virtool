@@ -10,21 +10,32 @@
  */
 
 import React from "react";
+import CX from "classnames";
 import { connect } from "react-redux";
 import { Row, Col, Alert, Panel, ButtonToolbar } from "react-bootstrap";
 
-import { setForceReset, setPassword } from "../../users/actions";
-import { Icon, Input, Checkbox, Button, RelativeTime } from "../../base";
+import { setForceReset, setPassword } from "../actions";
+import { Input, Checkbox, Button, RelativeTime } from "../../base";
+
+const getInitialState = () => {
+    return {
+        newPassword: "",
+        confirmPassword: "",
+        error: false
+    };
+};
 
 class Password extends React.Component {
 
     constructor (props) {
         super(props);
+        this.state = getInitialState();
+    }
 
-        this.state = {
-            newPassword: "",
-            confirmPassword: ""
-        };
+    componentWillReceiveProps (nextProps) {
+        if (this.props.last_password_change !== nextProps.last_password_change) {
+            this.setState(getInitialState());
+        }
     }
 
     componentWillUnmount () {
@@ -36,7 +47,14 @@ class Password extends React.Component {
 
     handleSubmit = (event) => {
         event.preventDefault();
-        this.props.onSubmit(this.props.id, this.props.newPassword);
+
+        if (this.state.newPassword === this.state.confirmPassword) {
+            this.props.onSubmit(this.props.id, this.state.newPassword);
+        } else {
+            this.setState({
+                error: true
+            });
+        }
     };
 
     render () {
@@ -57,15 +75,18 @@ class Password extends React.Component {
                     <RelativeTime time={this.props.last_password_change} em={true}/>
                 </p>
 
-                <form onSubmit={this.submit}>
+                <form onSubmit={this.handleSubmit}>
                     <Row>
                         <Col xs={16} md={6}>
                             <Input
                                 type="password"
                                 name="password"
                                 placeholder="New Password"
-                                value={this.state.password}
-                                onChange={(e) => this.setState({newPassword: e.target.value})}
+                                value={this.state.newPassword}
+                                onChange={(e) => this.setState({
+                                    newPassword: e.target.value,
+                                    error: this.state.error && this.state.newPassword === this.state.confirmPassword
+                                })}
                             />
                         </Col>
 
@@ -74,8 +95,11 @@ class Password extends React.Component {
                                 type="password"
                                 name="confirm"
                                 placeholder="Confirm Password"
-                                value={this.state.confirm}
-                                onChange={(e) => this.setState({oldPassword: e.target.value})}
+                                value={this.state.confirmPassword}
+                                onChange={(e) => this.setState({
+                                    confirmPassword: e.target.value,
+                                    error: this.state.error && this.state.newPassword === this.state.confirmPassword
+                                })}
                             />
                         </Col>
                     </Row>
@@ -99,7 +123,7 @@ class Password extends React.Component {
                             <ButtonToolbar className="pull-right">
                                 <Button
                                     type="button"
-                                    onClick={() => this.setState({oldPassword: "", newPassword: ""})}
+                                    onClick={() => this.setState({confirmPassword: "", newPassword: ""})}
                                 >
                                     Clear
                                 </Button>
@@ -113,6 +137,12 @@ class Password extends React.Component {
                                 </Button>
                             </ButtonToolbar>
                         </Col>
+
+                        <Col xs={12} className={CX({"hidden": !this.state.error})}>
+                            <h5 className="text-danger">
+                                Passwords do not match
+                            </h5>
+                        </Col>
                     </Row>
                 </form>
 
@@ -124,8 +154,8 @@ class Password extends React.Component {
 
 const mapDispatchToProps = (dispatch) => {
     return {
-        onSubmit: (userId, password, confirm) => {
-            dispatch(setPassword(userId, password, confirm));
+        onSubmit: (userId, password) => {
+            dispatch(setPassword(userId, password));
         },
 
         onSetForceReset: (userId, enabled) => {

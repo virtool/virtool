@@ -58,34 +58,32 @@ function* createUser (action) {
 }
 
 function* setPassword (action) {
-    if (action.password === action.confirm) {
+    yield setPending(function* (action) {
         try {
             const response = yield usersAPI.setPassword(action.userId, action.password);
             yield put({type: SET_PASSWORD.SUCCEEDED, data: response.body});
         } catch (error) {
-            yield put({type: SET_PASSWORD.FAILED});
+            if (error.response.body.message.id === "invalid_input") {
+                yield put({type: SET_PASSWORD.FAILED});
+            }
         }
-    } else {
-        yield put({type: SET_PASSWORD.FAILED, error: "Passwords don't match"});
-    }
+    }, action);
 }
 
 function* setForceReset (action) {
-    try {
-        const response = yield usersAPI.setForceReset(action.userId, action.enabled);
-        yield put({type: SET_FORCE_RESET.SUCCEEDED, data: response.body});
-    } catch (error) {
-        yield put({type: SET_FORCE_RESET.FAILED});
-    }
+    yield setPending(function* (action) {
+        try {
+            const response = yield usersAPI.setForceReset(action.userId, action.enabled);
+            yield put({type: SET_FORCE_RESET.SUCCEEDED, data: response.body});
+        } catch (error) {
+            yield put({type: SET_FORCE_RESET.FAILED});
+        }
+    }, action);
 }
 
 function* setPrimaryGroup (action) {
-    try {
-        const response = yield usersAPI.setPrimaryGroup(action.userId, action.primaryGroup);
-        yield put({type: SET_PRIMARY_GROUP.SUCCEEDED, data: response.body});
-    } catch (error) {
-        yield put({type: SET_PRIMARY_GROUP.FAILED, error: error});
-    }
+    const response = yield usersAPI.setPrimaryGroup(action.userId, action.primaryGroup);
+    yield put({type: SET_PRIMARY_GROUP.SUCCEEDED, data: response.body});
 }
 
 function* addToGroup (action) {

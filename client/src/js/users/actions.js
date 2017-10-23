@@ -48,12 +48,11 @@ export const setForceReset = (userId, enabled) => {
     };
 };
 
-export const setPassword = (userId, password, confirm) => {
+export const setPassword = (userId, password) => {
     return {
         type: SET_PASSWORD.REQUESTED,
         userId,
-        password,
-        confirm
+        password
     };
 };
 
