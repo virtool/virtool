@@ -30,10 +30,6 @@ export class InputSave extends React.Component {
     static propTypes = {
         name: PropTypes.string,
 
-        onBlue: PropTypes.func,
-
-        autoFocus: PropTypes.bool,
-
         // The function to call with the newValue when the form is submitted.
         onSave: PropTypes.func.isRequired,
 
@@ -80,8 +76,6 @@ export class InputSave extends React.Component {
         if (!this.state.pending && event.relatedTarget && event.relatedTarget.type !== "submit") {
             this.setState({value: this.props.initialValue});
         }
-
-        this.props.onBlur();
     };
 
     /**
