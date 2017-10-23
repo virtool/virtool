@@ -12,7 +12,8 @@ import { LIST_GROUPS, CREATE_GROUP, SET_GROUP_PERMISSION, REMOVE_GROUP } from ".
 
 const initialState = {
     list: null,
-    pending: false
+    pending: false,
+    createError: false
 };
 
 const updateGroup = (state, update) => {
@@ -33,6 +34,9 @@ const reducer = (state = initialState, action) => {
         case CREATE_GROUP.SUCCEEDED:
         case SET_GROUP_PERMISSION.SUCCEEDED:
             return updateGroup(state, action.data);
+
+        case CREATE_GROUP.FAILED:
+            return {...state, createError: true, pending: false};
 
         case REMOVE_GROUP.SUCCEEDED:
             return assign({}, state, {pending: false, list: reject(state.list, {id: action.id})});

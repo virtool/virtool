@@ -32,7 +32,11 @@ function* createGroup (action) {
         const response = yield groupsAPI.create(action.groupId);
         yield put({type: CREATE_GROUP.SUCCEEDED, data: response.body});
     } catch (error) {
-        yield put({type: CREATE_GROUP.FAILED}, error);
+        if (error.response.body.message === "Group already exists") {
+            yield put({type: CREATE_GROUP.FAILED, error: "Group already exists"});
+        } else {
+            throw(error);
+        }
     }
 }
 

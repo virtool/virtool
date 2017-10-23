@@ -5,7 +5,7 @@ from pymongo import ReturnDocument
 import virtool.utils
 import virtool.user_groups
 import virtool.user_permissions
-from virtool.handlers.utils import json_response, bad_request, no_content, not_found, protected, validation
+from virtool.handlers.utils import bad_request, conflict, json_response, not_found, no_content, protected, validation
 
 logger = logging.getLogger(__name__)
 
@@ -25,7 +25,8 @@ async def find(req):
 @validation({
     "group_id": {
         "type": "string",
-        "required": True
+        "required": True,
+        "minlength": 1
     }
 })
 async def create(req):
@@ -43,10 +44,7 @@ async def create(req):
     try:
         await db.groups.insert_one(document)
     except pymongo.errors.DuplicateKeyError:
-        return json_response({
-            "id": "conflict",
-            "message": "Group already exists"
-        }, status=409)
+        return conflict("Group already exists")
 
     return json_response(virtool.utils.base_processor(document), status=201)
 

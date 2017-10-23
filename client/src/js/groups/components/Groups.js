@@ -13,7 +13,7 @@ import React from "react";
 import { difference, filter, find, includes, some, transform } from "lodash";
 import { connect } from "react-redux";
 import { ClipLoader } from "halogenium";
-import { Col, FormControl, Label, ListGroup, Modal, Panel, Row } from "react-bootstrap";
+import { Col, FormControl, Label, ListGroup, Modal, Overlay, Panel, Popover, Row } from "react-bootstrap";
 
 import { listGroups, setGroupPermission, removeGroup } from "../actions";
 import { AutoProgressBar, Button, Flex, FlexItem, Icon, ListGroupItem } from "../../base";
@@ -29,10 +29,11 @@ class Groups extends React.Component {
 
     constructor (props) {
         super(props);
-
         this.state = {
             activeId: null,
-            createGroupId: ""
+            createGroupId: "",
+            spaceError: false,
+            submitted: false
         };
     }
 
@@ -56,13 +57,30 @@ class Groups extends React.Component {
         this.setState(state);
     }
 
+    modalExited = () => {
+        this.setState({
+            createGroupId: "",
+            spaceError: false,
+            submitted: false
+        });
+    };
+
     select = (groupId) => {
         this.setState({activeId: groupId});
     };
 
     handleSubmit = (event) => {
         event.preventDefault();
-        this.props.onCreate(this.state.createGroupId);
+
+        if (this.state.createGroupId !== "") {
+            if (this.state.createGroupId.includes(" ")) {
+                this.setState({
+                    spaceError: true
+                });
+            } else {
+                this.setState({submitted: true}, () => this.props.onCreate(this.state.createGroupId));
+            }
+        }
     };
 
     render () {
@@ -100,6 +118,17 @@ class Groups extends React.Component {
             )
         }
 
+        let error;
+
+        if (this.state.submitted && this.props.createError) {
+            error = "Group with that name already exists";
+        }
+
+        // This error text is shown when the group name contains a space.
+        if (this.state.spaceError) {
+            error = "Group names may not contain spaces";
+        }
+
         const permissionComponents = transform(activeGroup.permissions, (result, value, key) => {
             const readOnly = activeGroup.id === "administrator";
 
@@ -117,7 +146,7 @@ class Groups extends React.Component {
         }, []);
 
         return (
-            <Modal show={this.props.show} onHide={this.props.onHide}>
+            <Modal show={this.props.show} onHide={this.props.onHide} onExited={this.modalExited}>
                 <Modal.Header onHide={this.props.onHide} closeButton>
                     Groups
                 </Modal.Header>
@@ -130,7 +159,26 @@ class Groups extends React.Component {
                             <form onSubmit={this.handleSubmit}>
                                 <Flex alignItems="stretch" style={{marginBottom: "5px"}}>
                                     <FlexItem grow={1} shrink={1}>
-                                        <FormControl type="text" />
+                                        <Overlay
+                                            show={!!error}
+                                            container={this}
+                                            target={() => this.inputNode}
+                                            placement="top"
+                                        >
+                                            <Popover id="create-group-error">
+                                                {error}
+                                            </Popover>
+                                        </Overlay>
+                                        <FormControl
+                                            type="text"
+                                            inputRef={(node) => this.inputNode = node}
+                                            value={this.state.createGroupId}
+                                            onChange={(e) => this.setState({
+                                                createGroupId: e.target.value,
+                                                spaceError: this.state.spaceError && e.target.value.includes(" "),
+                                                submitted: false
+                                            })}
+                                        />
                                     </FlexItem>
                                     <FlexItem grow={1} shrink={1}>
                                         <Button
@@ -179,7 +227,8 @@ const mapStateToProps = (state) => {
     return {
         users: state.users.list,
         groups: state.groups.list,
-        pending: state.groups.pending
+        pending: state.groups.pending,
+        createError: state.groups.createError
     };
 };
 
