@@ -108,7 +108,6 @@ def setup_jobs_routes(app):
     app.router.add_delete("/api/jobs/{job_id}", jobs.remove)
     app.router.add_post("/api/jobs/test", jobs.dummy_job)
     app.router.add_get("/api/resources", resources.get)
-    app.router.add_get("/api/resources/cuda", resources.get_cuda)
 
 
 def setup_samples_routes(app):

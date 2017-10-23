@@ -16,7 +16,6 @@ import {
     REMOVE_JOB,
     CLEAR_JOBS,
     GET_RESOURCES,
-    GET_CUDA
 } from "../actionTypes";
 
 export const wsUpdateJob = (data) => {
@@ -70,11 +69,5 @@ export const clearJobs = (scope) => {
 export const getResources = () => {
     return {
         type: GET_RESOURCES.REQUESTED
-    };
-};
-
-export const getCUDA = () => {
-    return {
-        type: GET_CUDA.REQUESTED
     };
 };

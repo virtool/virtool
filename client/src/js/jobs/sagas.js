@@ -19,7 +19,6 @@ import {
     REMOVE_JOB,
     CLEAR_JOBS,
     GET_RESOURCES,
-    GET_CUDA
 } from "../actionTypes";
 
 export function* watchJobs () {
@@ -30,7 +29,6 @@ export function* watchJobs () {
     yield takeEvery(REMOVE_JOB.REQUESTED, removeJob);
     yield takeLatest(CLEAR_JOBS.REQUESTED, clearJobs);
     yield takeLatest(GET_RESOURCES.REQUESTED, getResources);
-    yield takeLatest(GET_CUDA.REQUESTED, getCUDA);
 }
 
 export function* wsUpdateJob (action) {
@@ -108,14 +106,5 @@ export function* getResources (action) {
         yield put({type: GET_RESOURCES.SUCCEEDED, data: response.body});
     } catch (error) {
         yield put({type: GET_RESOURCES.FAILED}, error);
-    }
-}
-
-export function* getCUDA (action) {
-    try {
-        const response = yield call(jobsAPI.getCUDA, action);
-        yield put({type: GET_CUDA.SUCCEEDED, data: response.body});
-    } catch (error) {
-        yield put({type: GET_CUDA.FAILED}, error);
     }
 }

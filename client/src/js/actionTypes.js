@@ -23,7 +23,6 @@ export const CANCEL_JOB = createRequestActionType("CANCEL_JOB");
 export const REMOVE_JOB = createRequestActionType("REMOVE_JOB");
 export const CLEAR_JOBS = createRequestActionType("CLEAR_JOBS");
 export const GET_RESOURCES = createRequestActionType("GET_RESOURCES");
-export const GET_CUDA = createRequestActionType("GET_CUDA");
 
 // Samples
 export const WS_UPDATE_SAMPLE = "WS_UPDATE_SAMPLE";

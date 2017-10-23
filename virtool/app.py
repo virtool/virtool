@@ -16,7 +16,6 @@ import virtool.job_manager
 import virtool.job_resources
 import virtool.error_pages
 import virtool.file_manager
-import virtool.nvstat
 import virtool.organize
 import virtool.setup
 import virtool.utils
@@ -44,15 +43,6 @@ def init_executors(app):
 
 def init_resources(app):
     app["resources"] = virtool.job_resources.get()
-
-    try:
-        cuda = virtool.job_resources.get_cuda_devices()
-    except FileNotFoundError:
-        cuda = "Could not call nvidia-smi"
-    except virtool.nvstat.NVDriverError:
-        cuda = "Could not communicate with Nvidia driver"
-
-    app["resources"]["cuda"] = cuda
 
 
 async def init_settings(app):
@@ -84,10 +74,10 @@ async def init_db(app):
     """
     An application ``on_startup`` callback that attaches an instance of :class:`~AsyncIOMotorClient` and the ``db_name``
     to the Virtool ``app`` object. Also initializes collection indices.
-    
+
     :param app: the app object
     :type app: :class:`aiohttp.web.Application`
-     
+
     """
     app["db_name"] = app.get("db_name", None) or app["settings"].get("db_name")
 
@@ -142,7 +132,7 @@ async def init_job_manager(app):
     """
     An application ``on_startup`` callback that initializes a Virtool :class:`virtool.job_manager.Manager` object and
     attaches it to the ``app`` object.
-    
+
     :param app: the app object
     :type app: :class:`aiohttp.web.Application`
 
@@ -212,10 +202,10 @@ def init_setup(app):
 async def on_shutdown(app):
     """
     A function called when the app is shutting down.
-    
+
     :param app: the Virtool application
     :type app: :class:`aiohttp.web.Application`
-    
+
     """
     for conn in app["dispatcher"].connections:
         await conn.close()
@@ -235,11 +225,11 @@ async def on_shutdown(app):
 def create_app(loop, db_name=None, disable_job_manager=False, disable_file_manager=False, skip_setup=False):
     """
     Creates the Virtool application.
-    
+
     - creates an returns an instance of :class:`aiohttp.web.Application`
     - sets up URL routing
     - initializes all main Virtool objects during ``on_startup``
-     
+
     """
     middlewares = [
         virtool.error_pages.middleware_factory
@@ -286,16 +276,16 @@ def create_app(loop, db_name=None, disable_job_manager=False, disable_file_manag
 def configure_ssl(cert_path, key_path):
     """
     Return an SSL context given the paths to a certificate file and key file.
-    
+
     :param cert_path: the certificate path
     :type cert_path: str
-    
+
     :param key_path: the key path
     :type key_path: str
-    
+
     :return: an SSL context
     :rtype: :class:`ssl.SSLContext`
-    
+
     """
     ssl_ctx = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
     ssl_ctx.load_cert_chain(cert_path, keyfile=key_path)
