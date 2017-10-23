@@ -37,7 +37,7 @@ async def create(req):
     db, data = req.app["db"], req["data"]
 
     document = {
-        "_id": data["group_id"],
+        "_id": data["group_id"].lower(),
         "permissions": {permission: False for permission in virtool.user_permissions.PERMISSIONS}
     }
 

@@ -17,19 +17,19 @@ const initialState = {
 };
 
 const updateGroup = (state, update) => {
-    return assign({}, state, {pending: false}, {list: sortBy(unionBy([update], state.list, "id"), "id")});
+    return {...state, pending: false, list: sortBy(unionBy([update], state.list, "id"), "id")};
 };
 
 const reducer = (state = initialState, action) => {
     switch (action.type) {
 
         case LIST_GROUPS.SUCCEEDED:
-            return assign({}, state, {list: sortBy(action.data, "id")});
+            return {...state, list: action.data};
 
         case CREATE_GROUP.REQUESTED:
         case REMOVE_GROUP.REQUESTED:
         case SET_GROUP_PERMISSION.REQUESTED:
-            return assign({}, state, {pending: true});
+            return {...state, pending: true};
 
         case CREATE_GROUP.SUCCEEDED:
         case SET_GROUP_PERMISSION.SUCCEEDED:
@@ -39,7 +39,7 @@ const reducer = (state = initialState, action) => {
             return {...state, createError: true, pending: false};
 
         case REMOVE_GROUP.SUCCEEDED:
-            return assign({}, state, {pending: false, list: reject(state.list, {id: action.id})});
+            return {...state, pending: false, list: reject(state.list, {id: action.id})};
 
         default:
             return state;

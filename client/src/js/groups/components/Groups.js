@@ -10,7 +10,7 @@
  */
 
 import React from "react";
-import { difference, filter, find, includes, some, transform } from "lodash";
+import { difference, filter, find, includes, some, sortBy, transform } from "lodash";
 import { connect } from "react-redux";
 import { ClipLoader } from "halogenium";
 import { Col, FormControl, Label, ListGroup, Modal, Overlay, Panel, Popover, Row } from "react-bootstrap";
@@ -38,7 +38,13 @@ class Groups extends React.Component {
     }
 
     componentWillMount () {
-        this.props.onList();
+        if (this.props.groups === null) {
+            this.props.onList();
+        } else {
+            this.setState({
+                activeId: this.props.groups[0].id
+            });
+        }
     }
 
     componentWillReceiveProps (nextProps) {
@@ -93,7 +99,7 @@ class Groups extends React.Component {
             );
         }
 
-        const groupComponents = this.props.groups.map((group) =>
+        const groupComponents = sortBy(this.props.groups, "id").map((group) =>
             <ListGroupItem key={group.id}
                 active={this.state.activeId === group.id}
                 onClick={() => this.select(group.id)}
