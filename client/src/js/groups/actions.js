@@ -15,7 +15,7 @@ export const listGroups = () => {
     };
 };
 
-export const createGroup = (groupid) => {
+export const createGroup = (groupId) => {
     return {
         type: CREATE_GROUP.REQUESTED,
         groupId

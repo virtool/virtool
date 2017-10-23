@@ -10,13 +10,14 @@
  */
 
 import React from "react";
-import { filter, find, includes, some, transform } from "lodash";
+import { difference, filter, find, includes, some, transform } from "lodash";
 import { connect } from "react-redux";
 import { ClipLoader } from "halogenium";
-import { Col, Label, ListGroup, Modal, Panel, Row } from "react-bootstrap";
+import { Col, FormControl, Label, ListGroup, Modal, Panel, Row } from "react-bootstrap";
 
 import { listGroups, setGroupPermission, removeGroup } from "../actions";
-import { AutoProgressBar, Button, Icon, InputSave, ListGroupItem } from "../../base";
+import { AutoProgressBar, Button, Flex, FlexItem, Icon, ListGroupItem } from "../../base";
+import {createGroup} from "../actions";
 
 /**
  * Renders either a table describing the sessions associated with the user or a panel with a message indicating no
@@ -31,7 +32,7 @@ class Groups extends React.Component {
 
         this.state = {
             activeId: null,
-            showCreate: false
+            createGroupId: ""
         };
     }
 
@@ -40,19 +41,33 @@ class Groups extends React.Component {
     }
 
     componentWillReceiveProps (nextProps) {
+        let state = {};
+
         // What to do if the active group was removed OR the active group id in state if onList response is incoming.
-        if ((!some(nextProps, {id: this.state.activeId})) || (this.props.groups === null && nextProps.groups)) {
-            this.setState({activeId: nextProps.groups[0].id});
+        if (!some(nextProps.groups, {id: this.state.activeId}) || (this.props.groups === null && nextProps.groups)) {
+            state.activeId = nextProps.groups[0].id;
         }
+
+        if (this.props.groups !== null && nextProps.groups.length > this.props.groups.length) {
+            state.activeId = difference(nextProps.groups, this.props.groups)[0].id;
+            state.createGroupId = "";
+        }
+
+        this.setState(state);
     }
 
     select = (groupId) => {
         this.setState({activeId: groupId});
     };
 
+    handleSubmit = (event) => {
+        event.preventDefault();
+        this.props.onCreate(this.state.createGroupId);
+    };
+
     render () {
 
-        if (this.props.groups === null) {
+        if (this.props.groups === null || this.props.users === null) {
             return (
                 <div className="text-center" style={{marginTop: "120px"}}>
                     <ClipLoader />
@@ -71,7 +86,19 @@ class Groups extends React.Component {
 
         const activeGroup = find(this.props.groups, {id: this.state.activeId});
 
-        activeGroup.members = filter(this.props.users, user => includes(user.groups, activeGroup.id));
+        let memberComponents = filter(this.props.users, user => includes(user.groups, activeGroup.id)).map(member =>
+            <Label key={member.id} style={{marginRight: "5px"}}>
+                {member.id}
+            </Label>
+        );
+
+        if (!memberComponents.length) {
+            memberComponents = (
+                <div className="text-center">
+                    <Icon name="info" /> No members found.
+                </div>
+            )
+        }
 
         const permissionComponents = transform(activeGroup.permissions, (result, value, key) => {
             const readOnly = activeGroup.id === "administrator";
@@ -89,28 +116,6 @@ class Groups extends React.Component {
             return result;
         }, []);
 
-        let create;
-
-        if (this.state.showCreate) {
-            create = (
-                <InputSave
-                    onBlur={() => this.setState({showCreate: false})}
-                    onSave={(value) => console.log(value)}
-                />
-            );
-        } else {
-            create = (
-                <Button
-                    icon="new-entry"
-                    bsStyle="primary"
-                    onClick={() => this.setState({showCreate: true})}
-                    block
-                >
-                    Create Group
-                </Button>
-            )
-        }
-
         return (
             <Modal show={this.props.show} onHide={this.props.onHide}>
                 <Modal.Header onHide={this.props.onHide} closeButton>
@@ -122,11 +127,25 @@ class Groups extends React.Component {
                 <Modal.Body>
                     <Row>
                         <Col md={5}>
+                            <form onSubmit={this.handleSubmit}>
+                                <Flex alignItems="stretch" style={{marginBottom: "5px"}}>
+                                    <FlexItem grow={1} shrink={1}>
+                                        <FormControl type="text" />
+                                    </FlexItem>
+                                    <FlexItem grow={1} shrink={1}>
+                                        <Button
+                                            type="submit"
+                                            bsStyle="primary"
+                                            icon="plus-square"
+                                            style={{height: "100%"}}
+                                        />
+                                    </FlexItem>
+                                </Flex>
+                            </form>
+
                             <ListGroup>
                                 {groupComponents}
                             </ListGroup>
-
-                            {create}
                         </Col>
                         <Col md={7}>
                             <Panel header="Permissions">
@@ -136,11 +155,7 @@ class Groups extends React.Component {
                             </Panel>
 
                             <Panel header="Members">
-                                {activeGroup.members.map(member =>
-                                    <Label key={member.id} style={{marginRight: "5px"}}>
-                                        {member.id}
-                                    </Label>
-                                )}
+                                {memberComponents}
                             </Panel>
 
                             <Button
@@ -172,6 +187,10 @@ const mapDispatchToProps = (dispatch) => {
     return {
         onList: () => {
             dispatch(listGroups());
+        },
+
+        onCreate: (groupId) => {
+            dispatch(createGroup(groupId));
         },
 
         onSetPermission: (groupId, permission, value) => {
