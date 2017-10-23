@@ -12,6 +12,7 @@
 import React from "react";
 import { filter, sortBy } from "lodash";
 import { connect } from "react-redux";
+import { push } from "react-router-redux";
 import { LinkContainer } from "react-router-bootstrap";
 import { ListGroup, ListGroupItem } from "react-bootstrap";
 
@@ -28,11 +29,25 @@ const test = () => (
 );
 
 const UserEntry = (props) => {
+    let closeButton;
+
+    if (props.active) {
+        closeButton = (
+            <button type="button" className="close" onClick={props.onClose}>
+                <span>×</span>
+            </button>
+        )
+    }
+
+
     const identifier = (
         <Flex alignItems="center">
             <Identicon size={32} hash={props.identicon} />
             <FlexItem pad={10}>
                 {props.id}
+            </FlexItem>
+            <FlexItem grow={1} shrink={1}>
+                {closeButton}
             </FlexItem>
         </Flex>
     );
@@ -77,6 +92,7 @@ const UsersList = (props) => {
             key={user.id}
             {...user}
             active={user.id === props.match.params.activeId}
+            onClose={props.onClose}
         />
     );
 
@@ -96,6 +112,14 @@ const mapStateToProps = (state) => {
     };
 };
 
-const Container = connect(mapStateToProps)(UsersList);
+const mapDispatchToProps = (dispatch) => {
+    return {
+        onClose: () => {
+            dispatch(push("/settings/users"));
+        }
+    };
+};
+
+const Container = connect(mapStateToProps, mapDispatchToProps)(UsersList);
 
 export default Container;
