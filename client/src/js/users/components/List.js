@@ -17,12 +17,12 @@ import { ListGroup, ListGroupItem } from "react-bootstrap";
 
 import { Flex, FlexItem ,Identicon } from "../../base";
 import Password from "./Password";
-import GroupsPermissions from "./GroupsPermissions";
+import UserPermissions from "./Permissions";
+import UserGroups from "./Groups";
 import PrimaryGroup from "./PrimaryGroup";
 
 const test = () => (
     <div>
-        <GroupsPermissions />
         <PrimaryGroup />
     </div>
 );
@@ -41,7 +41,20 @@ const UserEntry = (props) => {
         return (
             <div className="list-group-item spaced" style={{paddingLeft: "10px"}}>
                 {identifier}
-                <Password {...props} />
+
+                <div style={{marginTop: "20px"}}>
+                    <label>Change Password</label>
+                    <Password {...props} />
+
+                    <label>Groups</label>
+                    <UserGroups userId={props.id} memberGroups={props.groups} />
+
+                    <Flex alignItems="center" justifyContent="space-between">
+                        <label>Permissions</label>
+                        <small className="text-muted">Change group membership to modify permissions</small>
+                    </Flex>
+                    <UserPermissions permissions={props.permissions} />
+                </div>
             </div>
         );
     }
@@ -59,7 +72,7 @@ const UsersList = (props) => {
 
     const re = new RegExp(props.filter);
 
-    const userComponents = sortBy(filter(props.users, (user) => user.id.match(re)), "id").map((user) =>
+    const userComponents = sortBy(filter(props.users, user => user.id.match(re)), "id").map(user =>
         <UserEntry
             key={user.id}
             {...user}

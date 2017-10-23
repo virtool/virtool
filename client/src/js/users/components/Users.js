@@ -19,6 +19,7 @@ import { Col, FormControl, FormGroup, InputGroup, Row  } from "react-bootstrap";
 import { ClipLoader } from "halogenium";
 
 import { listUsers, filterUsers } from "../actions";
+import { listGroups } from "../../groups/actions";
 import { Button, Icon } from "../../base";
 import UsersList from "./List";
 import CreateUser from "./Create";
@@ -36,13 +37,17 @@ class ManageUsers extends React.Component {
 
     componentWillMount () {
         if (this.props.users === null) {
-            this.props.onList();
+            this.props.onListUsers();
+        }
+
+        if (this.props.groups === null) {
+            this.props.onListGroups();
         }
     }
 
     render () {
 
-        if (this.props.users === null) {
+        if (this.props.users === null || this.props.groups === null) {
             return (
                 <div className="text-center" style={{margin: "220px auto"}}>
                     <ClipLoader color="#3c8786" />
@@ -108,14 +113,19 @@ class ManageUsers extends React.Component {
 const mapStateToProps = (state) => {
     return {
         users: state.users.list,
+        groups: state.groups.list,
         filter: state.users.filter
     };
 };
 
 const mapDispatchToProps = (dispatch) => {
     return {
-        onList: () => {
+        onListUsers: () => {
             dispatch(listUsers());
+        },
+
+        onListGroups: () => {
+            dispatch(listGroups());
         },
 
         onFilter: (term) => {

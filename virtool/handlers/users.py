@@ -219,11 +219,9 @@ async def add_group(req):
         "$set": {
             "permissions": new_permissions
         }
-    }, return_document=ReturnDocument.AFTER, projection=["groups", "permissions"])
+    }, return_document=ReturnDocument.AFTER, projection=virtool.user.PROJECTION)
 
-    document["user_id"] = document.pop("_id")
-
-    return json_response(document)
+    return json_response(virtool.utils.base_processor(document))
 
 
 @protected("manage_users")
@@ -257,7 +255,7 @@ async def remove_group(req):
         "$set": {
             "permissions": virtool.user_groups.merge_group_permissions(list(groups))
         }
-    }, return_document=ReturnDocument.AFTER, projection=["groups", "permissions"])
+    }, return_document=ReturnDocument.AFTER, projection=virtool.user.PROJECTION)
 
     return json_response(virtool.utils.base_processor(document))
 

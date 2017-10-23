@@ -7,7 +7,7 @@
  *
  */
 
-import { assign, merge } from "lodash";
+import { assign, unionBy } from "lodash";
 import {
     LIST_USERS,
     FILTER_USERS,
@@ -28,7 +28,13 @@ const initialState = {
 };
 
 const updateUser = (state, update) => {
-    return merge({}, state, {list: [update]});
+    return {...state, list: state.list.map(user => {
+        if (user.id === update.id) {
+            return {...user, ...update};
+        }
+
+        return user;
+    })};
 };
 
 const reducer = (state = initialState, action) => {

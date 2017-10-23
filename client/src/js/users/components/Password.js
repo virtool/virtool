@@ -51,77 +51,73 @@ class Password extends React.Component {
         }
 
         return (
-            <div>
-                <h5><Icon name="lock"/> <strong>Password</strong></h5>
+            <Panel>
+                <p>
+                    <em>Last changed </em>
+                    <RelativeTime time={this.props.last_password_change} em={true}/>
+                </p>
 
-                <Panel>
-                    <p>
-                        <em>Last changed </em>
-                        <RelativeTime time={this.props.last_password_change} em={true}/>
-                    </p>
+                <form onSubmit={this.submit}>
+                    <Row>
+                        <Col xs={16} md={6}>
+                            <Input
+                                type="password"
+                                name="password"
+                                placeholder="New Password"
+                                value={this.state.password}
+                                onChange={(e) => this.setState({newPassword: e.target.value})}
+                            />
+                        </Col>
 
-                    <form onSubmit={this.submit}>
-                        <Row>
-                            <Col xs={16} md={6}>
-                                <Input
-                                    type="password"
-                                    name="password"
-                                    placeholder="New Password"
-                                    value={this.state.password}
-                                    onChange={(e) => this.setState({newPassword: e.target.value})}
-                                />
-                            </Col>
+                        <Col xs={12} md={6}>
+                            <Input
+                                type="password"
+                                name="confirm"
+                                placeholder="Confirm Password"
+                                value={this.state.confirm}
+                                onChange={(e) => this.setState({oldPassword: e.target.value})}
+                            />
+                        </Col>
+                    </Row>
+                    <Row>
+                        <Col xs={12} md={6}>
+                            <Checkbox
+                                label="Force user to reset password on next login"
+                                checked={this.props.force_reset}
+                                onClick={() => this.props.onSetForceReset(
+                                    this.props.id,
+                                    !this.props.force_reset
+                                )}
+                            />
+                        </Col>
 
-                            <Col xs={12} md={6}>
-                                <Input
-                                    type="password"
-                                    name="confirm"
-                                    placeholder="Confirm Password"
-                                    value={this.state.confirm}
-                                    onChange={(e) => this.setState({oldPassword: e.target.value})}
-                                />
-                            </Col>
-                        </Row>
-                        <Row>
-                            <Col xs={12} md={6}>
-                                <Checkbox
-                                    label="Force user to reset password on next login"
-                                    checked={this.props.force_reset}
-                                    onClick={() => this.props.onSetForceReset(
-                                        this.props.id,
-                                        !this.props.force_reset
-                                    )}
-                                />
-                            </Col>
+                        <Col xs={12} mdHidden lgHidden>
+                            <div style={{height: "15px"}}/>
+                        </Col>
 
-                            <Col xs={12} mdHidden lgHidden>
-                                <div style={{height: "15px"}}/>
-                            </Col>
+                        <Col xs={12} md={6}>
+                            <ButtonToolbar className="pull-right">
+                                <Button
+                                    type="button"
+                                    onClick={() => this.setState({oldPassword: "", newPassword: ""})}
+                                >
+                                    Clear
+                                </Button>
 
-                            <Col xs={12} md={6}>
-                                <ButtonToolbar className="pull-right">
-                                    <Button
-                                        type="button"
-                                        onClick={() => this.setState({oldPassword: "", newPassword: ""})}
-                                    >
-                                        Clear
-                                    </Button>
+                                <Button
+                                    icon="floppy"
+                                    type="submit"
+                                    bsStyle="primary"
+                                >
+                                    Save
+                                </Button>
+                            </ButtonToolbar>
+                        </Col>
+                    </Row>
+                </form>
 
-                                    <Button
-                                        icon="floppy"
-                                        type="submit"
-                                        bsStyle="primary"
-                                    >
-                                        Save
-                                    </Button>
-                                </ButtonToolbar>
-                            </Col>
-                        </Row>
-                    </form>
-
-                    {alert}
-                </Panel>
-            </div>
+                {alert}
+            </Panel>
         );
     }
 }

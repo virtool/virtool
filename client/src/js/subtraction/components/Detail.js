@@ -48,7 +48,7 @@ class SubtractionDetail extends React.Component {
             const linkedSampleComponents = data.linked_samples.map(sample =>
                 <Col key={sample.id} className="linked-sample-button" xs={6} sm={4} md={3} lg={2}>
                     <LinkContainer  to={`/samples/${sample.id}`}>
-                        <Button  block>
+                        <Button block>
                             {sample.name}
                         </Button>
                     </LinkContainer>
@@ -85,7 +85,7 @@ class SubtractionDetail extends React.Component {
 
                         <tr>
                             <th>GC Estimate</th>
-                            <td>{calculateGC(data.nucleotides)}</td>
+                            <td>{calculateGC(data.gc)}</td>
                         </tr>
                     </tbody>
                 </Table>

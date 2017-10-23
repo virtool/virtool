@@ -7,7 +7,7 @@
  *
  */
 
-import { assign, reject, sortBy, unionBy } from "lodash";
+import { reject, sortBy, unionBy } from "lodash";
 import { LIST_GROUPS, CREATE_GROUP, SET_GROUP_PERMISSION, REMOVE_GROUP } from "../actionTypes";
 
 const initialState = {
