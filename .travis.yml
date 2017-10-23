@@ -14,9 +14,6 @@ addons:
       - libtbb-dev
       - mongodb-org-server
       - mongodb-org-shell
-      - nvidia-cuda-dev
-      - nvidia-profiler
-      - nvidia-cuda-toolkit
 
 cache:
   pip: true
