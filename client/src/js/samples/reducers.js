@@ -78,7 +78,6 @@ export default function reducer (state = initialState, action) {
             });
 
         case WS_REMOVE_ANALYSIS:
-            console.log(action);
             return state;
 
         case FIND_SAMPLES.SUCCEEDED:
