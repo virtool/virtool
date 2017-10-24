@@ -8,6 +8,7 @@
  */
 
 import { takeEvery, takeLatest, throttle, put } from "redux-saga/effects";
+import { push } from "react-router-redux";
 
 import samplesAPI from "./api";
 import { setPending } from "../wrappers";
@@ -16,6 +17,7 @@ import {
     FIND_SAMPLES,
     FIND_READY_HOSTS,
     GET_SAMPLE,
+    REFRESH_SAMPLE,
     CREATE_SAMPLE,
     UPDATE_SAMPLE,
     FIND_ANALYSES,
@@ -29,6 +31,7 @@ export function* watchSamples () {
     yield takeEvery(WS_UPDATE_ANALYSIS, wsUpdateAnalysis);
     yield takeLatest(FIND_SAMPLES.REQUESTED, findSamples);
     yield takeLatest(FIND_READY_HOSTS.REQUESTED, findReadyHosts);
+    yield takeLatest(REFRESH_SAMPLE.REQUESTED, getSample);
     yield takeLatest(GET_SAMPLE.REQUESTED, getSample);
     yield takeLatest(CREATE_SAMPLE.REQUESTED, createSample);
     yield takeEvery(UPDATE_SAMPLE.REQUESTED, updateSample);
@@ -91,8 +94,9 @@ export function* createSample (action) {
 export function* updateSample (action) {
     yield setPending(function* (action) {
         try {
-            const response = yield samplesAPI.update(action.sampleId, action.update);
-            yield put({type: UPDATE_SAMPLE.SUCCEEDED, data: response.body});
+            yield samplesAPI.update(action.sampleId, action.update);
+            yield put(push({state: {editSample: false}}));
+            yield put({type: REFRESH_SAMPLE.REQUESTED, sampleId: action.sampleId});
         } catch (error) {
             yield put({type: UPDATE_SAMPLE.FAILED, error});
         }

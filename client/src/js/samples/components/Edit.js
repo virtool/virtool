@@ -16,7 +16,6 @@ import { connect } from "react-redux";
 import { Row, Col, Modal, FormGroup, ControlLabel, FormControl } from "react-bootstrap";
 
 import { editSample } from "../actions";
-import { listSubtractionIds } from "../../subtraction/actions";
 import { Icon, Button } from "../../base";
 
 const getInitialState = (props) => {
@@ -24,7 +23,6 @@ const getInitialState = (props) => {
         name: props.name || "",
         isolate: props.isolate || "",
         host: props.host || "",
-        subtraction: props.subtraction.id || null
     };
 };
 
@@ -32,17 +30,16 @@ class EditSample extends React.Component {
 
     constructor (props) {
         super(props);
-        this.state = getInitialState(this.props.detail);
+        this.state = getInitialState(this.props);
     }
 
     modalEnter = () => {
-        this.props.onListSubtractionIds();
-        this.setState(getInitialState(this.props.detail))
+        this.setState(getInitialState(this.props))
     };
 
     handleSubmit = (event) => {
         event.preventDefault();
-        this.props.onEdit(this.props.id, this.state.name, this.state.isolate, this.state.host, this.state.subtraction);
+        this.props.onEdit(this.props.id, this.state);
     };
 
     render () {
@@ -57,14 +54,6 @@ class EditSample extends React.Component {
             );
         }
 
-        let subtractionOptions;
-
-        if (this.props.subtractionIds) {
-            subtractionOptions = this.props.subtractionIds.map(subtractionId =>
-                <option key={subtractionId} value={subtractionId}>{subtractionId}</option>
-            )
-        }
-
         return (
             <Modal show={this.props.show} onEnter={this.modalEnter} onHide={this.props.onHide}>
                 <Modal.Header onHide={this.props.onHide} closeButton>
@@ -73,7 +62,7 @@ class EditSample extends React.Component {
                 <form onSubmit={this.handleSubmit}>
                     <Modal.Body>
                         <Row>
-                            <Col xs={12} md={6}>
+                            <Col xs={12}>
                                 <FormGroup>
                                     <ControlLabel>Name</ControlLabel>
                                     <FormControl
@@ -103,19 +92,6 @@ class EditSample extends React.Component {
                                     />
                                 </FormGroup>
                             </Col>
-                            <Col xs={12} md={6}>
-                                <FormGroup>
-                                    <ControlLabel>Subtraction</ControlLabel>
-                                    <FormControl
-                                        componentClass="select"
-                                        value={this.state.subtraction}
-                                        disabled={this.props.subtractionIds === null}
-                                        onChange={(e) => this.setState({subtraction: e.target.value})}
-                                    >
-                                        {subtractionOptions}
-                                    </FormControl>
-                                </FormGroup>
-                            </Col>
                         </Row>
 
                         {error}
@@ -134,8 +110,7 @@ class EditSample extends React.Component {
 
 const mapStateToProps = (state) => {
     return {
-        detail: state.samples.detail,
-        subtractionIds: state.subtraction.ids,
+        ...state.samples.detail,
         show: get(state.router.location.state, "editSample", false),
         error: state.samples.editError
     };
@@ -143,16 +118,12 @@ const mapStateToProps = (state) => {
 
 const mapDispatchToProps = (dispatch) => {
     return {
-        onListSubtractionIds: () => {
-            dispatch(listSubtractionIds());
-        },
-
         onHide: () => {
             dispatch(push({state: {showEdit: false}}));
         },
 
-        onEdit: (sampleId, name, isolate, host, subtraction) => {
-            dispatch(editSample(sampleId, name, isolate, host, subtraction))
+        onEdit: (sampleId, update) => {
+            dispatch(editSample(sampleId, update));
         }
     };
 };

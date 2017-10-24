@@ -23,7 +23,6 @@ import {
     BLAST_NUVS,
     REMOVE_ANALYSIS,
 
-    SHOW_EDIT_SAMPLE,
     SHOW_REMOVE_SAMPLE,
     HIDE_SAMPLE_MODAL
 } from "../actionTypes";
@@ -87,12 +86,6 @@ export const removeSample = (sampleId) => {
     return {
         type: REMOVE_SAMPLE.REQUESTED,
         sampleId
-    };
-};
-
-export const showEditSample = () => {
-    return {
-        type: SHOW_EDIT_SAMPLE
     };
 };
 

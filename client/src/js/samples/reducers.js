@@ -16,7 +16,6 @@ import {
     GET_SAMPLE,
     UPDATE_SAMPLE,
     REMOVE_SAMPLE,
-    SHOW_EDIT_SAMPLE,
     SHOW_REMOVE_SAMPLE,
     HIDE_SAMPLE_MODAL,
     FIND_ANALYSES,
@@ -109,39 +108,19 @@ export default function reducer (state = initialState, action) {
             });
 
         case UPDATE_SAMPLE.SUCCEEDED: {
-            let newState = {};
-
-            if (state.list !== null) {
-                assign(newState, state, {
-                    list: state.list.map(doc => {
-                        if (doc.id !== action.data.sample_id) {
-                            return doc;
-                        }
-
-                        return assign({}, doc, action.data);
-                    })
-                });
+            if (state.list === null) {
+                return state;
             }
 
-            if (state.detail && state.detail.id === action.data.sample_id) {
-                assign(newState, {
-                    detail: assign({}, state.detail, action.data)
-                });
-            }
-
-            return newState;
+            return {...state, documents: state.documents.map(sample =>
+                sample.id === action.data.id ? {...sample, ...action.data}: sample
+            )};
         }
 
         case REMOVE_SAMPLE.SUCCEEDED:
             return assign({}, state, {
                 analyses: reject(state.analyses, {id: action.id}),
                 analysisDetail: state.analysisDetail.id === action.id ? null: state.analysisDetail
-            });
-
-        case SHOW_EDIT_SAMPLE:
-            return assign({}, state, {
-                showEdit: true,
-                showRemove: false
             });
 
         case SHOW_REMOVE_SAMPLE:
@@ -152,7 +131,6 @@ export default function reducer (state = initialState, action) {
 
         case HIDE_SAMPLE_MODAL:
             return assign({}, state, {
-                showEdit: false,
                 showRemove: false
             });
 
