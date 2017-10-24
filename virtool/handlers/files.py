@@ -17,7 +17,7 @@ async def find(req):
     if file_type:
         query["type"] = file_type
 
-    cursor = db.files.find(query, virtool.file.LIST_PROJECTION)
+    cursor = db.files.find(query, virtool.file.PROJECTION)
 
     found_count = await cursor.count()
 

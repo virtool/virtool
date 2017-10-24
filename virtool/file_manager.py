@@ -1,16 +1,16 @@
-import os
-import time
 import arrow
-import queue
 import asyncio
-import logging
-import setproctitle
-import multiprocessing
 import inotify.adapters
-from pymongo import ReturnDocument
+import logging
+import multiprocessing
+import os
+import pymongo
+import queue
+import setproctitle
+import time
 
 import virtool.file
-from virtool.utils import file_stats
+import virtool.utils
 
 
 TYPE_NAME_DICT = {
@@ -83,63 +83,60 @@ class Manager:
     async def run(self):
         looped_once = False
 
-        try:
-            while not (self._kill and looped_once):
-                while True:
-                    try:
-                        event = self.queue.get(block=False)
+        while not (self._kill and looped_once):
+            while True:
+                try:
+                    event = self.queue.get(block=False)
 
-                        filename = event["file"]["filename"]
+                    filename = event["file"]["filename"]
 
-                        if event["action"] == "create":
-                            await self.db.files.update_one({"_id": filename}, {
-                                "$set": {
-                                    "created": True
-                                }
-                            })
+                    if event["action"] == "create":
+                        await self.db.files.update_one({"_id": filename}, {
+                            "$set": {
+                                "created": True
+                            }
+                        })
 
-                        elif event["action"] == "close":
-                            document = await self.db.files.find_one_and_update({"_id": filename}, {
-                                "$set": {
-                                    "size": event["file"]["size"],
-                                    "ready": True
-                                }
-                            }, return_document=ReturnDocument.AFTER, projection=virtool.file.LIST_PROJECTION)
+                    elif event["action"] == "close":
+                        document = await self.db.files.find_one_and_update({"_id": filename}, {
+                            "$set": {
+                                "size": event["file"]["size"],
+                                "ready": True
+                            }
+                        }, return_document=pymongo.ReturnDocument.AFTER, projection=virtool.file.PROJECTION)
+
+                        await self.dispatch(
+                            "files",
+                            "update",
+                            virtool.file.processor(document)
+                        )
+
+                    elif event["action"] == "delete":
+                        document = await self.db.files.find_one({"_id": filename})
+
+                        if document:
+                            await self.db.files.delete_one({"_id": filename})
 
                             await self.dispatch(
                                 "files",
-                                "update",
-                                virtool.file.processor(document)
+                                "remove",
+                                [document["_id"]]
                             )
 
-                        elif event["action"] == "delete":
-                            document = await self.db.files.find_one({"_id": filename})
+                except queue.Empty:
+                    break
 
-                            if document:
-                                await self.db.files.delete_one({"_id": filename})
+            async for document in self.db.files.find({"expires_at": {"$ne": None}}, ["expires_at"]):
+                if arrow.get(document["expires_at"]) <= arrow.utcnow():
+                    await self.db.files.delete_one({"_id": document["_id"]})
+                    os.remove(os.path.join(self.files_path, document["_id"]))
 
-                                await self.dispatch(
-                                    "files",
-                                    "remove",
-                                    [document["_id"]]
-                                )
+            await asyncio.sleep(0.1, loop=self.loop)
 
-                    except queue.Empty:
-                        break
-
-                async for document in self.db.files.find({"expires_at": {"$ne": None}}, ["expires_at"]):
-                    if arrow.get(document["expires_at"]) <= arrow.utcnow():
-                        await self.db.files.delete_one({"_id": document["_id"]})
-                        os.remove(os.path.join(self.path, document["_id"]))
-
-                await asyncio.sleep(0.1, loop=self.loop)
-
-                looped_once = True
-
-        except KeyboardInterrupt:
-            pass
+            looped_once = True
 
         self.watcher.terminate()
+
         self._run_alive = False
 
         logging.debug("Stopped file manager")

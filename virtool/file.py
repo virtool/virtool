@@ -6,7 +6,7 @@ import virtool.utils
 logger = logging.getLogger(__name__)
 
 
-LIST_PROJECTION = [
+PROJECTION = [
     "_id",
     "name",
     "size",
