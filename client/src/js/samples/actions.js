@@ -75,7 +75,7 @@ export const createSample = (name, isolate, host, locale, subtraction, files) =>
     };
 };
 
-export const updateSample = (sampleId, update) => {
+export const editSample = (sampleId, update) => {
     return {
         type: UPDATE_SAMPLE.REQUESTED,
         sampleId,

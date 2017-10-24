@@ -7,6 +7,7 @@ import { connect } from "react-redux";
 import { Panel, Table } from "react-bootstrap";
 
 import { updateSample } from "../actions";
+import EditSample from "./Edit";
 
 const SampleDetailGeneral = (props) => {
 
@@ -82,6 +83,8 @@ const SampleDetailGeneral = (props) => {
                     </tbody>
                 </Table>
             </Panel>
+
+            <EditSample />
         </div>
     );
 };

@@ -8,7 +8,7 @@
  */
 
 import React from "react";
-import PropTypes from "prop-types";
+import { push } from "react-router-redux";
 import { includes } from "lodash";
 import { Switch, Route, Redirect } from "react-router-dom";
 import { connect } from "react-redux";
@@ -23,15 +23,6 @@ import Analyses from "./Analyses/Analyses";
 import RemoveSample from "./Remove";
 
 class SampleDetail extends React.Component {
-
-    static propTypes = {
-        detail: PropTypes.object,
-        match: PropTypes.object,
-        history: PropTypes.object,
-        getSample: PropTypes.func,
-        showRemove: PropTypes.func,
-        remove: PropTypes.func
-    };
 
     componentDidMount () {
         this.props.getSample(this.props.match.params.sampleId);
@@ -55,7 +46,7 @@ class SampleDetail extends React.Component {
                         bsStyle="warning"
                         name="pencil"
                         tip="Edit Sample"
-                        onClick={() => window.console.log("EDIT SAMPLE")}
+                        onClick={this.props.showEdit}
                     />
                 </small>
             );
@@ -119,6 +110,10 @@ const mapDispatchToProps = (dispatch) => {
     return {
         getSample: (sampleId) => {
             dispatch(getSample(sampleId));
+        },
+
+        showEdit: () => {
+            dispatch(push({state: {editSample: true}}));
         },
 
         showRemove: (sampleId, sampleName) => {

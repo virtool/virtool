@@ -57,6 +57,8 @@ const initialState = {
     showEdit: false,
     showRemove: false,
 
+    editError: false,
+
     readyHosts: null
 };
 

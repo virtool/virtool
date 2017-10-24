@@ -100,6 +100,7 @@ export const WS_UPDATE_SUBTRACTION = "WS_UPDATE_SUBTRACTION";
 export const WS_REMOVE_SUBTRACTION = "WS_REMOVE_SUBTRACTION";
 
 export const FIND_SUBTRACTIONS = createRequestActionType("FIND_SUBTRACTIONS");
+export const LIST_SUBTRACTION_IDS = createRequestActionType("LIST_SUBTRACTION_IDS");
 export const GET_SUBTRACTION = createRequestActionType("GET_SUBTRACTION");
 export const CREATE_SUBTRACTION = createRequestActionType("CREATE_SUBTRACTION");
 export const REMOVE_SUBTRACTION = createRequestActionType("REMOVE_SUBTRACTION");

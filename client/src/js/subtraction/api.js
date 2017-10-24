@@ -15,6 +15,11 @@ const subtractionAPI = {
         return Request.get("/api/subtraction");
     },
 
+    listIds: () => {
+        return Request.get("/api/subtraction")
+            .query({ids: true});
+    },
+
     get: (subtractionId) => {
         return Request.get(`/api/subtraction/${subtractionId}`);
     },
