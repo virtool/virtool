@@ -11,10 +11,11 @@ import { call, put, takeLatest, throttle } from "redux-saga/effects";
 
 import subtractionAPI from "./api";
 import { setPending } from "../wrappers";
-import { FIND_SUBTRACTIONS, GET_SUBTRACTION, CREATE_SUBTRACTION }  from "../actionTypes";
+import { FIND_SUBTRACTIONS, LIST_SUBTRACTION_IDS, GET_SUBTRACTION, CREATE_SUBTRACTION }  from "../actionTypes";
 
 export function* watchSubtraction () {
     yield throttle(500, FIND_SUBTRACTIONS.REQUESTED, findSubtractions);
+    yield takeLatest(LIST_SUBTRACTION_IDS.REQUESTED, listSubtractionIds);
     yield takeLatest(GET_SUBTRACTION.REQUESTED, getSubtraction);
     yield takeLatest(CREATE_SUBTRACTION.REQUESTED, createSubtraction);
 }
@@ -28,6 +29,11 @@ export function* findSubtractions (action) {
             yield put({type: FIND_SUBTRACTIONS.FAILED, error});
         }
     }, action);
+}
+
+export function* listSubtractionIds () {
+    const response = yield subtractionAPI.listIds();
+    yield put({type: LIST_SUBTRACTION_IDS.SUCCEEDED, data: response.body});
 }
 
 export function* getSubtraction (action) {

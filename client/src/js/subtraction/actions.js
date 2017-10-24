@@ -11,6 +11,7 @@ import {
     WS_UPDATE_SUBTRACTION,
     WS_REMOVE_SUBTRACTION,
     FIND_SUBTRACTIONS,
+    LIST_SUBTRACTION_IDS,
     GET_SUBTRACTION,
     CREATE_SUBTRACTION,
     SHOW_CREATE_SUBTRACTION,
@@ -34,6 +35,12 @@ export const wsRemoveSubtraction = (hostId) => {
 export const findSubtractions = () => {
     return {
         type: FIND_SUBTRACTIONS.REQUESTED
+    };
+};
+
+export const listSubtractionIds = () => {
+    return {
+        type: LIST_SUBTRACTION_IDS.REQUESTED
     };
 };
 

@@ -33,6 +33,7 @@ export const WS_REMOVE_ANALYSIS = "WS_REMOVE_ANALYSIS";
 export const FIND_SAMPLES = createRequestActionType("FIND_SAMPLES");
 export const FIND_READY_HOSTS = createRequestActionType("FIND_READY_HOSTS");
 export const GET_SAMPLE = createRequestActionType("GET_SAMPLE");
+export const REFRESH_SAMPLE = createRequestActionType("REFRESH_SAMPLE");
 export const CREATE_SAMPLE = createRequestActionType("CREATE_SAMPLE");
 export const UPDATE_SAMPLE = createRequestActionType("UPDATE_SAMPLE");
 export const REMOVE_SAMPLE = createRequestActionType("REMOVE_SAMPLE");
@@ -100,6 +101,7 @@ export const WS_UPDATE_SUBTRACTION = "WS_UPDATE_SUBTRACTION";
 export const WS_REMOVE_SUBTRACTION = "WS_REMOVE_SUBTRACTION";
 
 export const FIND_SUBTRACTIONS = createRequestActionType("FIND_SUBTRACTIONS");
+export const LIST_SUBTRACTION_IDS = createRequestActionType("LIST_SUBTRACTION_IDS");
 export const GET_SUBTRACTION = createRequestActionType("GET_SUBTRACTION");
 export const CREATE_SUBTRACTION = createRequestActionType("CREATE_SUBTRACTION");
 export const REMOVE_SUBTRACTION = createRequestActionType("REMOVE_SUBTRACTION");
