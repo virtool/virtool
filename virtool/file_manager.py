@@ -24,16 +24,16 @@ TYPE_NAME_DICT = {
 
 class Manager:
 
-    def __init__(self, loop, db, dispatch, path, watch_path, clean_interval=20):
+    def __init__(self, loop, db, dispatch, files_path, watch_path, clean_interval=20):
         self.loop = loop
         self.db = db
         self.dispatch = dispatch
-        self.path = path
+        self.files_path = files_path
         self.watch_path = watch_path
         self.clean_interval = clean_interval
 
         self.queue = multiprocessing.Queue()
-        self.watcher = Watcher(self.path, self.watch_path, self.queue)
+        self.watcher = Watcher(self.files_path, self.watch_path, self.queue)
         self.watcher.start()
 
         self._kill = False
@@ -55,12 +55,12 @@ class Manager:
         looped_once = False
 
         while not (self._kill and looped_once):
-            dir_list = os.listdir(self.path)
+            dir_list = os.listdir(self.files_path)
             db_list = await self.db.files.distinct("_id")
 
             for filename in dir_list:
                 if filename not in db_list:
-                    os.remove(os.path.join(self.path, filename))
+                    os.remove(os.path.join(self.files_path, filename))
 
             db_created_list = await self.db.files.find({"created": True}).distinct("_id")
 
@@ -159,11 +159,11 @@ class Manager:
 
 class Watcher(multiprocessing.Process):
 
-    def __init__(self, path, watch_path, q):
+    def __init__(self, files_path, watch_path, q):
         super().__init__()
 
-        self.path = path
-        self.watch_path = path
+        self.files_path = files_path
+        self.watch_path = watch_path
         self.queue = q
 
     def run(self):
@@ -173,7 +173,7 @@ class Watcher(multiprocessing.Process):
 
         notifier = inotify.adapters.Inotify()
 
-        notifier.add_watch(bytes(self.path, encoding="utf-8"))
+        notifier.add_watch(bytes(self.files_path, encoding="utf-8"))
 
         last_modification = time.time()
 
@@ -195,7 +195,7 @@ class Watcher(multiprocessing.Process):
                         now = time.time()
 
                         if action in ["create", "modify", "close"]:
-                            file_entry = file_stats(os.path.join(self.path, filename))
+                            file_entry = virtool.utils.file_stats(os.path.join(self.files_path, filename))
                             file_entry["filename"] = filename
 
                             if action == "modify" and (now - last_modification) > interval:
