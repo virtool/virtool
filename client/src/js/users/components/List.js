@@ -10,23 +10,17 @@
  */
 
 import React from "react";
-import { filter, sortBy } from "lodash";
+import { capitalize, filter, sortBy } from "lodash";
 import { connect } from "react-redux";
 import { push } from "react-router-redux";
 import { LinkContainer } from "react-router-bootstrap";
 import { ListGroup, ListGroupItem } from "react-bootstrap";
 
-import { Flex, FlexItem ,Identicon } from "../../base";
+import { setPrimaryGroup } from "../actions";
+import { Flex, FlexItem ,Identicon, Input } from "../../base";
 import Password from "./Password";
 import UserPermissions from "./Permissions";
 import UserGroups from "./Groups";
-import PrimaryGroup from "./PrimaryGroup";
-
-const test = () => (
-    <div>
-        <PrimaryGroup />
-    </div>
-);
 
 const UserEntry = (props) => {
     let closeButton;
@@ -51,8 +45,12 @@ const UserEntry = (props) => {
             </FlexItem>
         </Flex>
     );
-
+    
     if (props.active) {
+        const groupOptions = props.groups.map(group =>
+            <option key={group} value={group}>{capitalize(group)}</option>
+        );
+
         return (
             <div className="list-group-item spaced" style={{paddingLeft: "10px"}}>
                 {identifier}
@@ -63,6 +61,16 @@ const UserEntry = (props) => {
 
                     <label>Groups</label>
                     <UserGroups userId={props.id} memberGroups={props.groups} />
+
+                    <label>Primary Group</label>
+                    <Input
+                        type="select"
+                        value={props.primary_group}
+                        onChange={(e) => props.onSetPrimaryGroup(props.id, e.target.value)}
+                    >
+                        <option key="none" value="none">None</option>
+                        {groupOptions}
+                    </Input>
 
                     <Flex alignItems="center" justifyContent="space-between">
                         <label>Permissions</label>
@@ -92,6 +100,7 @@ const UsersList = (props) => {
             key={user.id}
             {...user}
             active={user.id === props.match.params.activeId}
+            onSetPrimaryGroup={props.onSetPrimaryGroup}
             onClose={props.onClose}
         />
     );
@@ -116,6 +125,10 @@ const mapDispatchToProps = (dispatch) => {
     return {
         onClose: () => {
             dispatch(push("/settings/users"));
+        },
+
+        onSetPrimaryGroup: (userId, groupId) => {
+            dispatch(setPrimaryGroup(userId, groupId));
         }
     };
 };

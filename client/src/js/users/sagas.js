@@ -82,8 +82,10 @@ function* setForceReset (action) {
 }
 
 function* setPrimaryGroup (action) {
-    const response = yield usersAPI.setPrimaryGroup(action.userId, action.primaryGroup);
-    yield put({type: SET_PRIMARY_GROUP.SUCCEEDED, data: response.body});
+    yield setPending(function* (action) {
+        const response = yield usersAPI.setPrimaryGroup(action.userId, action.primaryGroup);
+        yield put({type: SET_PRIMARY_GROUP.SUCCEEDED, data: response.body});
+    }, action);
 }
 
 function* addToGroup (action) {
