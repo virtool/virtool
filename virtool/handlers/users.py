@@ -155,7 +155,7 @@ async def set_primary_group(req):
     Set a user's primary group.
 
     """
-    db, data = unpack_request(req)
+    db, data = await unpack_request(req)
 
     user_id = req.match_info["user_id"]
 
