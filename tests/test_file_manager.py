@@ -1,25 +1,32 @@
 import os
+import pytest
 import multiprocessing
 import virtool.file_manager
 
 
+@pytest.fixture
+def test_watcher_instance(tmpdir):
+    queue = multiprocessing.Queue()
+
+    files_path = str(tmpdir.mkdir("files"))
+    watch_path = str(tmpdir.mkdir("watch"))
+
+    watcher = virtool.file_manager.Watcher(files_path, watch_path, queue)
+
+    watcher.start()
+
+    yield watcher
+
+    watcher.terminate()
+
+
 class TestWatch:
 
-    async def test_alive(self, tmpdir):
-        queue = multiprocessing.Queue()
-
-        watcher = virtool.file_manager.Watcher(str(tmpdir), queue)
-        watcher.start()
-
-        assert queue.get(block=True, timeout=2) == "alive"
-
-        watcher.terminate()
+    async def test_alive(self, test_watcher):
+        assert test_watcher.queue.get(block=True, timeout=2) == "alive"
 
     async def test_create(self, tmpdir):
-        queue = multiprocessing.Queue()
 
-        watcher = virtool.file_manager.Watcher(str(tmpdir), queue)
-        watcher.start()
 
         # This will be an 'alive' message
         queue.get(block=True, timeout=2)

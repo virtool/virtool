@@ -24,15 +24,16 @@ TYPE_NAME_DICT = {
 
 class Manager:
 
-    def __init__(self, loop, db, dispatch, path, clean_interval=20):
+    def __init__(self, loop, db, dispatch, path, watch_path, clean_interval=20):
         self.loop = loop
         self.db = db
         self.dispatch = dispatch
         self.path = path
+        self.watch_path = watch_path
         self.clean_interval = clean_interval
 
         self.queue = multiprocessing.Queue()
-        self.watcher = Watcher(self.path, self.queue)
+        self.watcher = Watcher(self.path, self.watch_path, self.queue)
         self.watcher.start()
 
         self._kill = False
@@ -44,7 +45,7 @@ class Manager:
             self.loop.create_task(self.clean())
 
         self.loop.create_task(self.run())
-        msg = self.queue.get(block=True, timeout=3)
+        self.queue.get(block=True, timeout=3)
 
         self._run_alive = True
 
@@ -158,10 +159,11 @@ class Manager:
 
 class Watcher(multiprocessing.Process):
 
-    def __init__(self, path, q):
+    def __init__(self, path, watch_path, q):
         super().__init__()
 
         self.path = path
+        self.watch_path = path
         self.queue = q
 
     def run(self):
@@ -180,7 +182,6 @@ class Watcher(multiprocessing.Process):
 
             for event in notifier.event_gen():
                 if event is not None:
-
                     _, type_names, _, filename = event
 
                     if filename and type_names[0] in TYPE_NAME_DICT:
@@ -221,6 +222,9 @@ class Watcher(multiprocessing.Process):
 
         except KeyboardInterrupt:
             logging.debug("Stopped file watcher")
+
+
+
 
 
 
