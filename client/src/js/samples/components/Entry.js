@@ -36,7 +36,6 @@ export default class SampleEntry extends React.Component {
         imported: stringOrBool.isRequired,
         pathoscope: stringOrBool.isRequired,
         nuvs: stringOrBool.isRequired,
-        archived: PropTypes.bool.isRequired,
         selected: PropTypes.bool,
         selecting: PropTypes.bool,
         toggleSelect: PropTypes.func
@@ -67,7 +66,6 @@ export default class SampleEntry extends React.Component {
         );
 
         let analyzeIcon;
-        let archiveIcon;
 
         if (!this.props.selected) {
             analyzeIcon = (
@@ -82,22 +80,6 @@ export default class SampleEntry extends React.Component {
                     />
                 </FlexItem>
             );
-
-            if (this.props.nuvs === true || this.props.pathoscope === true && !this.props.archived) {
-                archiveIcon = (
-                    <FlexItem pad={5}>
-                        <Icon
-                            name="box-add"
-                            tip="Archive"
-                            tipPlacement="top"
-                            bsStyle="info"
-                            onClick={this.archive}
-                            style={{fontSize: "17px"}}
-                        />
-                    </FlexItem>
-                );
-
-            }
         }
 
         return (
@@ -157,7 +139,6 @@ export default class SampleEntry extends React.Component {
                                 <Col md={2} xsHidden smHidden>
                                     <Flex grow={0} shrink={0} className="pull-right">
                                         {analyzeIcon}
-                                        {archiveIcon}
                                     </Flex>
                                 </Col>
                             </Row>

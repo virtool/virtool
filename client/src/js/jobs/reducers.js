@@ -15,15 +15,13 @@ import {
     GET_JOB,
     CANCEL_JOB,
     REMOVE_JOB,
-    GET_RESOURCES,
-    GET_CUDA
+    GET_RESOURCES
 } from "../actionTypes";
 
 const initialState = {
     documents: null,
     detail: null,
-    resources: null,
-    cuda: null
+    resources: null
 };
 
 const updateJob = (state, action) => {
@@ -81,16 +79,6 @@ export default function reducer (state = initialState, action) {
         case GET_RESOURCES.SUCCEEDED:
             return assign({}, state, {
                 resources: action.data
-            });
-
-        case GET_CUDA.REQUESTED:
-            return assign({}, state, {
-                cuda: null
-            });
-
-        case GET_CUDA.SUCCEEDED:
-            return assign({}, state, {
-                cuda: action.data
             });
 
         default:

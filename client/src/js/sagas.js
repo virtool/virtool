@@ -16,8 +16,8 @@ import { watchSubtraction } from "./subtraction/sagas"
 import { watchFiles } from "./files/sagas";
 import { watchAccount } from "./account/sagas"
 import { watchSettings } from "./settings/sagas"
-import { watchUsers } from "./settings/users/sagas";
-import { watchGroups } from "./settings/groups/sagas";
+import { watchUsers } from "./users/sagas";
+import { watchGroups } from "./groups/sagas";
 import { watchUpdates } from "./updates/sagas";
 
 export default function* rootSaga () {

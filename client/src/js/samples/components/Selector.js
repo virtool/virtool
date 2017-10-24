@@ -15,7 +15,6 @@ import PropTypes from "prop-types";
 import { filter, map, some } from "lodash";
 import { FormGroup, InputGroup, FormControl } from "react-bootstrap";
 import { Icon, FlexItem, Button } from "../../base";
-import { stringOrBool } from "../../propTypes";
 
 /**
  * A main view for importing samples from FASTQ files. Importing starts an import job on the server.
@@ -33,7 +32,6 @@ export default class SampleSelector extends React.Component {
     }
 
     static propTypes = {
-        archived: stringOrBool,
         selected: PropTypes.arrayOf(PropTypes.object).isRequired,
         selectNone: PropTypes.func
     };
@@ -42,14 +40,6 @@ export default class SampleSelector extends React.Component {
         this.setState({
             algorithm: event.target.value
         });
-    };
-
-    archive = () => {
-        const candidates = filter(this.props.selected, (document) =>
-            !this.props.archived && (document.pathoscope || document.nuvs) === true
-        );
-
-        dispatcher.db.samples.request("archive", {_id: map(candidates, "_id")});
     };
 
     handleSubmit = (event) => {
@@ -69,30 +59,13 @@ export default class SampleSelector extends React.Component {
     };
 
     render () {
-
-        const selectedCount = this.props.selected.length;
-
-        let archiveButton;
-
-        if (!this.props.archived && some(this.props.selected, {analyzed: true})) {
-            archiveButton = (
-                <FlexItem pad={5}>
-                    <Button tip="Archive Samples" bsStyle="info" onClick={this.archive}>
-                        <Icon name="box-add" />
-                    </Button>
-                </FlexItem>
-            );
-        }
-
-
-
         return (
             <div className="toolbar">
                 <Button
                     style={{padding: "6px 15px", marginLeft: 0, marginRight: "3px"}}
                     onClick={this.props.selectNone}
                 >
-                    Selected {selectedCount}
+                    Selected {this.props.selected.length}
                 </Button>
 
                 <form onSubmit={this.handleSubmit}>
@@ -117,8 +90,6 @@ export default class SampleSelector extends React.Component {
                         </InputGroup>
                     </FormGroup>
                 </form>
-
-                {archiveButton}
             </div>
         );
     }

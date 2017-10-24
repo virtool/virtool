@@ -21,42 +21,6 @@ const SampleToolbar = (props) => (
             </InputGroup>
         </FormGroup>
 
-        {/*
-
-        <ButtonGroup>
-            <Button
-                tip="Show Active"
-                icon="play"
-                active={!this.state.archived}
-                onClick={this.state.archived ? () => this.toggleFlag("archived"): null}
-            />
-
-            <Button
-                tip="Show Archived"
-                icon="box-add"
-                active={this.state.archived}
-                onClick={this.state.archived ? null: () => this.toggleFlag("archived")}
-            />
-        </ButtonGroup>
-
-        <Button
-            tip="Show Imported"
-            icon="filing"
-            active={this.state.imported}
-            disabled={this.state.archived}
-            onClick={() => this.toggleFlag("imported")}
-        />
-
-        <Button
-            tip="Show Analyzed"
-            icon="bars"
-            active={this.state.analyzed}
-            disabled={this.state.archived}
-            onClick={() => this.toggleFlag("analyzed")}
-        />
-
-        */}
-
         <LinkContainer to="/samples/files">
             <Button tip="Read Files" icon="folder-open" />
         </LinkContainer>

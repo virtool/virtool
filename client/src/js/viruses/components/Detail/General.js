@@ -77,14 +77,6 @@ const mapStateToProps = (state) => {
     };
 };
 
-const mapDispatchToProps = () => {
-    return {
-        onSave: (key, value) => {
-            window.console.log(key, value);
-        }
-    };
-};
-
-const Container = connect(mapStateToProps, mapDispatchToProps)(VirusGeneral);
+const Container = connect(mapStateToProps)(VirusGeneral);
 
 export default Container;

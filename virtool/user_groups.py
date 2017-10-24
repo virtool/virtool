@@ -38,7 +38,7 @@ async def update_member_users(db, group_id, remove=False):
 
     for user in member_users:
         if remove:
-            user["groups"].pop(group_id)
+            user["groups"].remove(group_id)
 
         new_permissions = merge_group_permissions([group for group in groups if group["_id"] in user["groups"]])
 
@@ -57,4 +57,4 @@ async def update_member_users(db, group_id, remove=False):
                 "groups": group_id
             }
 
-        await db.users.update_one(user["_id"], update_dict)
+        await db.users.update_one({"_id": user["_id"]}, update_dict)

@@ -9,16 +9,14 @@
 
 import {
     LIST_USERS,
-    SELECT_USER,
-    CHANGE_SET_PASSWORD,
-    CHANGE_SET_CONFIRM,
+    FILTER_USERS,
+    CREATE_USER,
     SET_PASSWORD,
     SET_PRIMARY_GROUP,
-    CLEAR_SET_PASSWORD,
     SET_FORCE_RESET,
     ADD_USER_TO_GROUP,
     REMOVE_USER_FROM_GROUP
-} from "../../actionTypes";
+} from "../actionTypes";
 
 export const listUsers = () => {
     return {
@@ -26,10 +24,19 @@ export const listUsers = () => {
     };
 };
 
-export const selectUser = (userId) => {
+export const filterUsers = (term) => {
     return {
-        type: SELECT_USER,
-        userId
+        type: FILTER_USERS,
+        term
+    };
+};
+
+export const createUser = (userId, password, forceReset) => {
+    return {
+        type: CREATE_USER.REQUESTED,
+        userId,
+        password,
+        forceReset
     };
 };
 
@@ -41,26 +48,11 @@ export const setForceReset = (userId, enabled) => {
     };
 };
 
-export const changeSetPassword = (password) => {
-    return {
-        type: CHANGE_SET_PASSWORD,
-        password
-    };
-};
-
-export const changeSetConfirm = (confirm) => {
-    return {
-        type: CHANGE_SET_CONFIRM,
-        confirm
-    };
-};
-
-export const setPassword = (userId, password, confirm) => {
+export const setPassword = (userId, password) => {
     return {
         type: SET_PASSWORD.REQUESTED,
         userId,
-        password,
-        confirm
+        password
     };
 };
 
@@ -85,11 +77,5 @@ export const removeUserFromGroup = (userId, groupId) => {
         type: REMOVE_USER_FROM_GROUP.REQUESTED,
         userId,
         groupId
-    };
-};
-
-export const clearSetPassword = () => {
-    return {
-        type: CLEAR_SET_PASSWORD
     };
 };

@@ -5,6 +5,7 @@ export * from "./Checkbox";
 export * from "./Flex";
 export * from "./Help";
 export * from "./Icon";
+export * from "./Identicon";
 export * from "./Input";
 export * from "./InputSave";
 export * from "./ListGroupItem";

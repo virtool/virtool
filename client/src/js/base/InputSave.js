@@ -53,6 +53,10 @@ export class InputSave extends React.Component {
         autoComplete: true
     };
 
+    componentDidMount () {
+        this.focus();
+    }
+
     componentWillReceiveProps (nextProps) {
         // If the initialValue has changed. Remove the pending state on the component. This will remove the spinner on
         // the save button and enable the Input component again.
@@ -133,7 +137,7 @@ export class InputSave extends React.Component {
             <form onSubmit={this.handleSubmit}>
                 <h5><strong>{this.props.label}</strong></h5>
                 <Flex alignItems="stretch" style={{marginBottom: "15px"}}>
-                    <FlexItem grow={1} shrink={0}>
+                    <FlexItem grow={1} shrink={1}>
                         <Input
                             ref={(node) => this.inputNode = node}
                             type={this.props.type}

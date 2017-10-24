@@ -12,6 +12,7 @@ const createRequestActionType = (root) => {
 
 export const SET_APP_PENDING = "SET_APP_PENDING";
 export const UNSET_APP_PENDING = "UNSET_APP_PENDING";
+export const WS_CLOSED = "WS_CLOSED";
 
 // Jobs
 export const WS_UPDATE_JOB = "WS_UPDATE_JOB";
@@ -22,7 +23,6 @@ export const CANCEL_JOB = createRequestActionType("CANCEL_JOB");
 export const REMOVE_JOB = createRequestActionType("REMOVE_JOB");
 export const CLEAR_JOBS = createRequestActionType("CLEAR_JOBS");
 export const GET_RESOURCES = createRequestActionType("GET_RESOURCES");
-export const GET_CUDA = createRequestActionType("GET_CUDA");
 
 // Samples
 export const WS_UPDATE_SAMPLE = "WS_UPDATE_SAMPLE";
@@ -137,15 +137,19 @@ export const GET_CONTROL_READAHEAD = createRequestActionType("GET_CONTROL_READAH
 
 // Users
 export const LIST_USERS = createRequestActionType("LIST_USERS");
-export const SELECT_USER = "SELECT_USER";
-export const CHANGE_SET_PASSWORD = "CHANGE_SET_PASSWORD";
-export const CHANGE_SET_CONFIRM = "CHANGE_SET_CONFIRM";
+export const FILTER_USERS = "FILTER_USERS";
+export const CREATE_USER = createRequestActionType("CREATE_USER");
 export const SET_PASSWORD = createRequestActionType("SET_PASSWORD");
-export const CLEAR_SET_PASSWORD = "CLEAR_SET_PASSWORD";
 export const SET_FORCE_RESET = createRequestActionType("SET_FORCE_RESET");
 export const SET_PRIMARY_GROUP = createRequestActionType("SET_PRIMARY_GROUP");
 export const ADD_USER_TO_GROUP = createRequestActionType("ADD_USER_TO_GROUP");
 export const REMOVE_USER_FROM_GROUP = createRequestActionType("REMOVE_USER_FROM_GROUP");
+
+// Groups
+export const LIST_GROUPS = createRequestActionType("LIST_GROUPS");
+export const CREATE_GROUP = createRequestActionType("CREATE_GROUP");
+export const SET_GROUP_PERMISSION = createRequestActionType("SET_GROUP_PERMISSIONS");
+export const REMOVE_GROUP = createRequestActionType("REMOVE_GROUP");
 
 // Updates
 export const WS_UPDATE_STATUS = createRequestActionType("WS_UPDATE_STATUS");
@@ -154,6 +158,3 @@ export const GET_DATABASE_UPDATES = createRequestActionType("GET_DATABASE_UPDATE
 export const INSTALL_SOFTWARE_UPDATES = createRequestActionType("INSTALL_SOFTWARE_UPDATES");
 export const SHOW_INSTALL_MODAL = "SHOW_INSTALL_MODAL";
 export const HIDE_INSTALL_MODAL = "HIDE_INSTALL_MODAL";
-
-// Groups
-export const LIST_GROUPS = createRequestActionType("LIST_GROUPS");

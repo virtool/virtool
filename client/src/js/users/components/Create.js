@@ -6,75 +6,38 @@
  * @author
  * Ian Boyes
  *
- * @exports AddUser
  */
 
 import React from "react";
-import PropTypes from "prop-types";
+import { connect } from "react-redux";
 import { Row, Col, Modal, ButtonToolbar } from "react-bootstrap";
-import { Icon, Input, Checkbox, Button } from "../../../base";
+
+import { createUser } from "../actions";
+import { Icon, Input, Checkbox, Button } from "../../base";
 
 const getInitialState = () => ({
     username: "",
     password: "",
     confirm: "",
-    error: false,
     forceReset: false
 });
 
-/**
- * A form for adding a new user. Defines username, role, password, and whether the new user should be forced to reset
- * their password.
- *
- * @class
- */
-export default class AddUser extends React.PureComponent {
+class CreateUser extends React.PureComponent {
 
     constructor (props) {
         super(props);
         this.state = getInitialState();
     }
 
-    static propTypes = {
-        add: PropTypes.func.isRequired,
-        onHide: PropTypes.func.isRequired,
-        show: PropTypes.bool.isRequired
-    };
-
-    componentWillUpdate (nextProps, nextState) {
-        if (nextState.username !== this.state.username) {
-            this.setState({error: false});
-        }
-    }
-
-    modalEnter = () => {
-        this.usernameNode.focus();
-    };
-
-    handleChange = (event) => {
-        let data = {};
-        data[event.target.name] = event.target.value;
-        this.setState(data);
-    };
-
     handleSubmit = (event) => {
         event.preventDefault();
-
-        this.props.add(
-            {_id: this.state.username, password: this.state.password, force_reset: this.state.forceReset},
-            () => this.setState(getInitialState(), () => this.props.onHide()),
-            () => this.setState({error: true})
-        );
-    };
-
-    toggleForceReset = () => {
-        this.setState({forceReset: !this.state.forceReset});
+        this.props.onCreate(this.state.username, this.state.password, this.state.forceReset);
     };
 
     render = () => (
         <Modal show={this.props.show} onHide={this.props.onHide} onEnter={this.modalEnter}>
             <Modal.Header onHide={this.props.onHide} closeButton>
-                Add User
+                Create User
             </Modal.Header>
             <form onSubmit={this.handleSubmit}>
                 <Modal.Body>
@@ -82,11 +45,10 @@ export default class AddUser extends React.PureComponent {
                         <Col xs={12}>
                             <Input
                                 type="text"
-                                ref={(input) => this.usernameNode = input}
                                 name="username"
                                 label="Username"
                                 value={this.state.username}
-                                onChange={this.handleChange}
+                                onChange={(e) => this.setState({username: e.target.value})}
                             />
                         </Col>
                     </Row>
@@ -97,7 +59,8 @@ export default class AddUser extends React.PureComponent {
                                 name="password"
                                 label="Password"
                                 value={this.state.password}
-                                onChange={this.handleChange}/>
+                                onChange={(e) => this.setState({password: e.target.value})}
+                            />
                         </Col>
                         <Col xs={6}>
                             <Input
@@ -105,18 +68,17 @@ export default class AddUser extends React.PureComponent {
                                 name="confirm"
                                 label="Confirm"
                                 value={this.state.confirm}
-                                onChange={this.handleChange}
+                                onChange={(e) => this.setState({confirm: e.target.value})}
                             />
                         </Col>
                     </Row>
                     <Row>
                         <Col xs={12}>
-                            <div onClick={this.toggleForceReset} className="pointer">
-                                <Checkbox
-                                    label="Force user to reset password on login"
-                                    checked={this.state.forceReset}
-                                />
-                            </div>
+                            <Checkbox
+                                label="Force user to reset password on login"
+                                checked={this.state.forceReset}
+                                onClick={() => this.setState({forceReset: !this.state.forceReset})}
+                            />
                         </Col>
                     </Row>
                 </Modal.Body>
@@ -131,3 +93,22 @@ export default class AddUser extends React.PureComponent {
         </Modal>
     );
 }
+
+const mapStateToProps = (state) => {
+    return {
+        error: state.users.createError,
+        pending: state.users.createPending
+    };
+};
+
+const mapDispatchToProps = (dispatch) => {
+    return {
+        onCreate: (userId, password, forceReset) => {
+            dispatch(createUser(userId, password, forceReset));
+        }
+    };
+};
+
+const Container = connect(mapStateToProps, mapDispatchToProps)(CreateUser);
+
+export default Container;

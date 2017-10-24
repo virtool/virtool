@@ -4,8 +4,8 @@ from pymongo import ReturnDocument
 
 import virtool.utils
 import virtool.user_groups
-from virtool.user_permissions import PERMISSIONS
-from virtool.handlers.utils import json_response, bad_request, no_content, not_found, protected, validation
+import virtool.user_permissions
+from virtool.handlers.utils import bad_request, conflict, json_response, not_found, no_content, protected, validation
 
 logger = logging.getLogger(__name__)
 
@@ -25,7 +25,8 @@ async def find(req):
 @validation({
     "group_id": {
         "type": "string",
-        "required": True
+        "required": True,
+        "minlength": 1
     }
 })
 async def create(req):
@@ -36,17 +37,14 @@ async def create(req):
     db, data = req.app["db"], req["data"]
 
     document = {
-        "_id": data["group_id"],
-        "permissions": {permission: False for permission in PERMISSIONS}
+        "_id": data["group_id"].lower(),
+        "permissions": {permission: False for permission in virtool.user_permissions.PERMISSIONS}
     }
 
     try:
         await db.groups.insert_one(document)
     except pymongo.errors.DuplicateKeyError:
-        return json_response({
-            "id": "conflict",
-            "message": "Group already exists"
-        }, status=409)
+        return conflict("Group already exists")
 
     return json_response(virtool.utils.base_processor(document), status=201)
 
@@ -55,7 +53,7 @@ async def create(req):
 async def get(req):
     """
     Gets a complete group document.
-    
+
     """
     document = await req.app["db"].groups.find_one(req.match_info["group_id"])
 
@@ -66,11 +64,11 @@ async def get(req):
 
 
 @protected("manage_users")
-@validation({key: dict(type="boolean") for key in PERMISSIONS})
+@validation({key: {"type": "boolean"} for key in virtool.user_permissions.PERMISSIONS})
 async def update_permissions(req):
     """
     Updates the permissions of a given group.
-    
+
     """
     db, data = req.app["db"], req["data"]
 
@@ -84,7 +82,7 @@ async def update_permissions(req):
     old_document["permissions"].update(data)
 
     # Get the current permissions dict for the passed group id.
-    document = await req.app["db"].groups.find_one_and_update({"_id": group_id}, {
+    document = await db.groups.find_one_and_update({"_id": group_id}, {
         "$set": {
             "permissions": old_document["permissions"]
         }

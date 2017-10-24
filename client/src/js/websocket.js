@@ -1,3 +1,4 @@
+import { WS_CLOSED } from "./actionTypes";
 import { wsUpdateJob, wsRemoveJob } from "./jobs/actions";
 import { wsUpdateFile, wsRemoveFile } from "./files/actions";
 import { wsUpdateAnalysis, wsRemoveAnalysis } from "./samples/actions";
@@ -49,7 +50,9 @@ export default function WSConnection (dispatch) {
         };
 
         this.connection.onclose = () => {
-            this.emit("closed");
+            this.dispatch({
+                type: WS_CLOSED
+            });
         };
     };
 }

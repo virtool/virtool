@@ -22,7 +22,7 @@ const Subtraction = () => (
         <Switch>
             <Route path="/subtraction" component={SubtractionList} exact />
             <Route path="/subtraction/files" render={() => <Files fileType="subtraction" />} />
-            <Route path="/subtraction" component={SubtractionDetail} />
+            <Route path="/subtraction/:subtractionId" component={SubtractionDetail} />
         </Switch>
 
         <Route path="/subtraction" children={({ history }) => (
