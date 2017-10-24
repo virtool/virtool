@@ -127,6 +127,7 @@ class TestCreate:
             "force_reset": False,
             "groups": [],
             "last_password_change": "2017-10-06T20:00:00Z",
+            "identicon": "81b637d8fcd2c6da6359e6963113a1170de795e4b725b84d1e0b4cfd9ec58ce9",
             "permissions": {
                 "modify_host": False,
                 "create_sample": False,
@@ -159,7 +160,7 @@ class TestCreate:
     async def test_invalid_input(self, spawn_client, resp_is):
         """
         Test that invalid and missing input data result in a ``422`` response with detailed error data.
-         
+
         """
         client = await spawn_client(authorize=True, permissions=["manage_users"])
 
@@ -244,7 +245,7 @@ class TestSetPassword:
     async def test_not_found(self, spawn_client, resp_is):
         """
         Test that a ``404`` response results when the ``user_id`` does not exist.
-        
+
         """
         client = await spawn_client(authorize=True, permissions=["manage_users"])
 
@@ -355,7 +356,7 @@ class TestAddGroup:
     async def test_valid(self, spawn_client, create_user, no_permissions):
         """
         Test that a valid request results in the addition of a group to a user document.
-         
+
         """
         client = await spawn_client(authorize=True, permissions=["manage_users"])
 
@@ -381,15 +382,30 @@ class TestAddGroup:
         assert resp.status == 200
 
         assert await resp.json() == {
-            "user_id": "bob",
+            "force_reset": False,
             "groups": ["tech"],
-            "permissions": dict(no_permissions, modify_virus=True)
+            "id": "bob",
+            "last_password_change": "2015-10-06T20:00:00Z",
+            "permissions": {
+                "cancel_job": False,
+                "create_sample": False,
+                "manage_users": False,
+                "modify_hmm": False,
+                "modify_host": False,
+                "modify_options": False,
+                "modify_virus": True,
+                "rebuild_index": False,
+                "remove_host": False,
+                "remove_job": False,
+                "remove_virus": False
+            },
+            "primary_group": "technician"
         }
 
     async def test_user_not_found(self, spawn_client, no_permissions, resp_is):
         """
         Test that a request to remove a group from a non-existent user results in a ``404`` response.
-         
+
         """
         client = await spawn_client(authorize=True, permissions=["manage_users"])
 
@@ -409,7 +425,7 @@ class TestAddGroup:
     async def test_group_not_found(self, spawn_client, resp_is, create_user):
         """
         Test that a request to delete an non-existent group results in a ``404`` response.
-         
+
         """
         client = await spawn_client(authorize=True, permissions=["manage_users"])
 
@@ -444,11 +460,11 @@ class TestAddGroup:
 
 class TestRemoveGroup:
 
-    async def test_valid(self, spawn_client, create_user, no_permissions):
+    async def test(self, spawn_client, create_user, no_permissions):
         """
-        Test that a valid request can result in removal of a group from a user and recalculation of the user's
+        Test that a valid request can result in removal of a group from a user and recalculation of the user"s
         permissions.
-        
+
         """
         client = await spawn_client(authorize=True, permissions=["manage_users"])
 
@@ -480,15 +496,30 @@ class TestRemoveGroup:
         assert resp.status == 200
 
         assert await resp.json() == {
-            "id": "bob",
+            "force_reset": False,
             "groups": ["test"],
-            "permissions": dict(no_permissions, rebuild_index=True)
+            "id": "bob",
+            "last_password_change": "2015-10-06T20:00:00Z",
+            "permissions": {
+                "cancel_job": False,
+                "create_sample": False,
+                "manage_users": False,
+                "modify_hmm": False,
+                "modify_host": False,
+                "modify_options": False,
+                "modify_virus": False,
+                "rebuild_index": True,
+                "remove_host": False,
+                "remove_job": False,
+                "remove_virus": False
+            },
+            "primary_group": "technician"
         }
 
     async def test_user_does_not_exist(self, spawn_client, resp_is, no_permissions):
         """
         Test that a ``404`` response results if the ``user_id`` does not exist.
-        
+
         """
         client = await spawn_client(authorize=True, permissions=["manage_users"])
 
@@ -511,7 +542,7 @@ class TestRemove:
     async def test_valid(self, spawn_client, create_user):
         """
         Test that a group is removed from the user for a valid request.
-         
+
         """
         client = await spawn_client(authorize=True, permissions=["manage_users"])
 
@@ -524,7 +555,7 @@ class TestRemove:
     async def test_does_not_exist(self, spawn_client, resp_is):
         """
         Test that a request to remove a non-existent user results in a ``404`` response.
-                 
+
         """
         client = await spawn_client(authorize=True, permissions=["manage_users"])
 
