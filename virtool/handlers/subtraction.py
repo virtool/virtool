@@ -33,8 +33,6 @@ async def find(req):
     })
 
 
-
-
 async def get(req):
     """
     Get a complete host document.

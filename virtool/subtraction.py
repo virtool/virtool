@@ -100,7 +100,7 @@ class CreateSubtraction(virtool.job.Job):
                 "gc": gc,
                 "count": count
             }
-        }, projection=LIST_PROJECTION, return_document=pymongo.ReturnDocument.AFTER)
+        }, projection=PROJECTION, return_document=pymongo.ReturnDocument.AFTER)
 
         await self.dispatch("subtraction", "update", virtool.utils.base_processor(document))
 
@@ -127,7 +127,7 @@ class CreateSubtraction(virtool.job.Job):
             "$set": {
                 "ready": True
             }
-        }, projection=LIST_PROJECTION, return_document=pymongo.ReturnDocument.AFTER)
+        }, projection=PROJECTION, return_document=pymongo.ReturnDocument.AFTER)
 
         await self.dispatch("subtraction", "update", virtool.utils.base_processor(document))
 
