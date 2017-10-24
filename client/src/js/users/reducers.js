@@ -7,7 +7,7 @@
  *
  */
 
-import { assign, unionBy } from "lodash";
+import { assign } from "lodash";
 import {
     LIST_USERS,
     FILTER_USERS,

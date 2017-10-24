@@ -15,9 +15,8 @@ import { connect } from "react-redux";
 import { ClipLoader } from "halogenium";
 import { Col, FormControl, Label, ListGroup, Modal, Overlay, Panel, Popover, Row } from "react-bootstrap";
 
-import { listGroups, setGroupPermission, removeGroup } from "../actions";
+import { listGroups, createGroup, setGroupPermission, removeGroup } from "../actions";
 import { AutoProgressBar, Button, Flex, FlexItem, Icon, ListGroupItem } from "../../base";
-import {createGroup} from "../actions";
 
 /**
  * Renders either a table describing the sessions associated with the user or a panel with a message indicating no

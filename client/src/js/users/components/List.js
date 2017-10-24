@@ -45,7 +45,7 @@ const UserEntry = (props) => {
             </FlexItem>
         </Flex>
     );
-    
+
     if (props.active) {
         const groupOptions = props.groups.map(group =>
             <option key={group} value={group}>{capitalize(group)}</option>

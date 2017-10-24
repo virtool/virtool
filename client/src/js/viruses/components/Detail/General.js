@@ -55,6 +55,7 @@ const VirusGeneral = (props) => {
                         <th>Version</th>
                         <td>{props.version}</td>
                     </tr>
+                    {uniqueIdRow}
                 </tbody>
             </Table>
         </div>

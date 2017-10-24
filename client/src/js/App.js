@@ -1,10 +1,9 @@
 import React from "react";
-import PropTypes from "prop-types";
 import { Helmet } from "react-helmet";
 import { ClipLoader } from "halogenium";
 import { Provider, connect } from "react-redux";
 import { ConnectedRouter } from "react-router-redux";
-import { BrowserRouter, Switch, Route, withRouter } from "react-router-dom";
+import { Switch, Route, withRouter } from "react-router-dom";
 
 import NavBar from "./nav/components/Bar";
 import Welcome from "./home/components/Welcome";

@@ -12,8 +12,8 @@
 import React from "react";
 import { connect } from "react-redux";
 import { includes} from "lodash";
-import { Row, Col, Panel, ListGroup } from "react-bootstrap";
-import { ListGroupItem, Checkbox, Icon, Help } from "../../base";
+import { Row, Col, Panel } from "react-bootstrap";
+import { ListGroupItem, Checkbox } from "../../base";
 
 import { addUserToGroup, removeUserFromGroup } from "../actions";
 
