@@ -13,7 +13,12 @@ async def find(req):
 
     ready_host_count = await db.subtraction.count({"is_host": True, "ready": True})
 
-    cursor = req.app["db"].subtraction.find({})
+    ids = req.query.get("ids", False)
+
+    if ids:
+        return json_response(await req.app["db"].subtraction.distinct("_id"))
+
+    cursor = req.app["db"].subtraction.find({}, virtool.subtraction.PROJECTION)
 
     found_count = await cursor.count()
 
@@ -26,6 +31,8 @@ async def find(req):
         "found_count": found_count,
         "ready_host_count": ready_host_count
     })
+
+
 
 
 async def get(req):

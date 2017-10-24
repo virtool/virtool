@@ -9,7 +9,7 @@ import virtool.errors
 logger = logging.getLogger(__name__)
 
 
-LIST_PROJECTION = [
+PROJECTION = [
     "_id",
     "file",
     "ready",
