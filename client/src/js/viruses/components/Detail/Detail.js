@@ -38,7 +38,7 @@ const VirusSection = ({ match }) => (
 
 class VirusDetail extends React.Component {
 
-    componentWillMount () {
+    componentDidMount () {
         this.props.getVirus(this.props.match.params.virusId);
     }
 
