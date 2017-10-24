@@ -32,7 +32,6 @@ export default function subtractionReducer (state = initialState, action) {
             return {...state, documents: action.data.documents};
 
         case LIST_SUBTRACTION_IDS.SUCCEEDED:
-            console.log(action);
             return {...state, ids: action.data};
 
         case GET_SUBTRACTION.REQUESTED:
