@@ -257,6 +257,7 @@ class Watcher(multiprocessing.Process):
                                 })
 
                         elif dirname.endswith("watch"):
+
                             has_read_ext = any(filename.endswith(ext) for ext in FILE_EXTENSION_FILTER)
 
                             if action == "close" and has_read_ext and filename not in self.watch_files:

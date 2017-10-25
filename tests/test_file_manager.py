@@ -2,6 +2,7 @@ import concurrent.futures
 import multiprocessing
 import os
 import pytest
+import queue
 
 import virtool.file_manager
 
@@ -95,6 +96,49 @@ class TestWatcher:
                 "filename": "test.dat"
             }
         }
+
+    @pytest.mark.parametrize("fastq", [True, False], ids=["fastq", "not_fastq"])
+    async def test_watch(self, fastq, test_watcher_instance):
+        path = os.path.join(test_watcher_instance.watch_path, "test.fq" if fastq else "test.dat")
+
+        # This will be an 'alive' message
+        test_watcher_instance.queue.get(block=True, timeout=2)
+
+        with open(path, "w") as f:
+            f.write("hello world")
+
+        if fastq:
+            message = test_watcher_instance.queue.get(block=True, timeout=1)
+
+            assert message["action"] == "watch"
+
+            file = dict(message["file"])
+            file.pop("modify")
+
+            assert file == {
+                "filename": "test.fq",
+                "size": 11
+            }
+        else:
+            with pytest.raises(queue.Empty):
+                test_watcher_instance.queue.get(block=True, timeout=1)
+
+    async def test_watch_delete(self, test_watcher_instance):
+        """
+        Make sure no exception is raised when deleting from the watch folder.
+
+        """
+        path = os.path.join(test_watcher_instance.watch_path, "test.fq")
+
+        # This will be an 'alive' message
+        test_watcher_instance.queue.get(block=True, timeout=2)
+
+        with open(path, "w") as f:
+            f.write("hello world")
+
+        test_watcher_instance.queue.get(block=True, timeout=3)
+
+        os.remove(path)
 
 
 class TestManager:
