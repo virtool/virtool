@@ -1,5 +1,6 @@
-import os
+import arrow
 import logging
+import os
 
 import virtool.utils
 
@@ -19,6 +20,52 @@ PROJECTION = [
 
 def processor(document):
     return virtool.utils.base_processor(document)
+
+
+async def create(db, dispatch, filename, file_type, user_id=None):
+    file_id = None
+
+    while file_id is None or file_id in await db.files.distinct("_id"):
+        file_id = "{}-{}".format(await virtool.utils.get_new_id(db.files), filename)
+
+    uploaded_at = virtool.utils.timestamp()
+
+    expires_at = None
+
+    if file_type == "viruses":
+        expires_at = arrow.get(uploaded_at).shift(hours=+5).datetime
+
+    user = None
+
+    if user_id is not None:
+        user = {
+            "id": user_id
+        }
+
+    document = {
+        "_id": file_id,
+        "name": filename,
+        "type": file_type,
+        "user": user,
+        "uploaded_at": uploaded_at,
+        "expires_at": expires_at,
+        "created": False,
+        "ready": False
+    }
+
+    await db.files.insert_one(document)
+
+    document = {key: document[key] for key in PROJECTION if document.get(key, False)}
+
+    document = processor(document)
+
+    await dispatch(
+        "files",
+        "update",
+        document
+    )
+
+    return document
 
 
 async def reserve(db, file_ids):
