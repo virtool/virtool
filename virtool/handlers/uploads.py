@@ -1,5 +1,4 @@
 import os
-import arrow
 from cerberus import Validator
 
 import virtool.file

@@ -18,11 +18,9 @@ PROJECTION = [
 ]
 
 
-def processor(document):
-    return virtool.utils.base_processor(document)
-
-
 async def create(db, dispatch, filename, file_type, user_id=None):
+    print(user_id)
+
     file_id = None
 
     while file_id is None or file_id in await db.files.distinct("_id"):
@@ -55,9 +53,10 @@ async def create(db, dispatch, filename, file_type, user_id=None):
 
     await db.files.insert_one(document)
 
-    document = {key: document[key] for key in PROJECTION if document.get(key, False)}
+    # Return document will all keys, but size.
+    document = {key: document[key] for key in [key for key in PROJECTION if key != "size"]}
 
-    document = processor(document)
+    document = virtool.utils.base_processor(document)
 
     await dispatch(
         "files",
