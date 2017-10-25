@@ -97,15 +97,24 @@ class TestWatcher:
             }
         }
 
+    @pytest.mark.parametrize("move", [True, False], ids=["move", "write"])
     @pytest.mark.parametrize("fastq", [True, False], ids=["fastq", "not_fastq"])
-    async def test_watch(self, fastq, test_watcher_instance):
-        path = os.path.join(test_watcher_instance.watch_path, "test.fq" if fastq else "test.dat")
+    async def test_watch(self, move, fastq, tmpdir, test_watcher_instance):
+        target_watch_path = os.path.join(test_watcher_instance.watch_path, "test.fq" if fastq else "test.dat")
+
+        if move:
+            path = os.path.join(str(tmpdir), "test.fq" if fastq else "test.dat")
+        else:
+            path = target_watch_path
 
         # This will be an 'alive' message
         test_watcher_instance.queue.get(block=True, timeout=2)
 
         with open(path, "w") as f:
             f.write("hello world")
+
+        if move:
+            os.rename(path, target_watch_path)
 
         if fastq:
             message = test_watcher_instance.queue.get(block=True, timeout=1)

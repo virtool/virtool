@@ -16,6 +16,7 @@ import virtool.utils
 #: A dict for mapping inotify type names of interest to simple file operation verbs used in Virtool.
 TYPE_NAME_DICT = {
     "IN_CREATE": "create",
+    "IN_MOVED_TO": "move",
     "IN_MODIFY": "modify",
     "IN_DELETE": "delete",
     "IN_MOVED_FROM": "delete",
@@ -229,7 +230,7 @@ class Watcher(multiprocessing.Process):
 
                         now = time.time()
 
-                        if dirname.endswith("files"):
+                        if dirname.endswith("files") and action != "move":
                             if action in ["create", "modify", "close"]:
                                 file_entry = virtool.utils.file_stats(os.path.join(self.files_path, filename))
                                 file_entry["filename"] = filename
@@ -260,7 +261,7 @@ class Watcher(multiprocessing.Process):
 
                             has_read_ext = any(filename.endswith(ext) for ext in FILE_EXTENSION_FILTER)
 
-                            if action == "close" and has_read_ext and filename not in self.watch_files:
+                            if action in ("close", "move") and has_read_ext and filename not in self.watch_files:
                                 self.watch_files.add(filename)
 
                                 file_entry = virtool.utils.file_stats(os.path.join(self.watch_path, filename))
