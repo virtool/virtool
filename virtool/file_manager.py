@@ -7,6 +7,7 @@ import os
 import pymongo
 import queue
 import setproctitle
+import shutil
 import time
 
 import virtool.file
@@ -32,8 +33,9 @@ FILE_EXTENSION_FILTER = (
 
 class Manager:
 
-    def __init__(self, loop, db, dispatch, files_path, watch_path, clean_interval=20):
+    def __init__(self, loop, executor, db, dispatch, files_path, watch_path, clean_interval=20):
         self.loop = loop
+        self.executor = executor
         self.db = db
         self.dispatch = dispatch
         self.files_path = files_path
@@ -68,7 +70,7 @@ class Manager:
 
             for filename in dir_list:
                 if filename not in db_list:
-                    os.remove(os.path.join(self.files_path, filename))
+                    await self.loop.run_in_executor(self.executor, os.remove, os.path.join(self.files_path, filename))
 
             db_created_list = await self.db.files.find({"created": True}).distinct("_id")
 
@@ -95,48 +97,61 @@ class Manager:
             while True:
                 try:
                     event = self.queue.get(block=False)
+                except queue.Empty:
+                    break
 
-                    filename = event["file"]["filename"]
+                filename = event["file"]["filename"]
 
-                    if event["action"] == "create":
-                        await self.db.files.update_one({"_id": filename}, {
-                            "$set": {
-                                "created": True
-                            }
-                        })
+                if event["action"] == "create":
+                    await self.db.files.update_one({"_id": filename}, {
+                        "$set": {
+                            "created": True
+                        }
+                    })
 
-                    elif event["action"] == "close":
-                        document = await self.db.files.find_one_and_update({"_id": filename}, {
-                            "$set": {
-                                "size": event["file"]["size"],
-                                "ready": True
-                            }
-                        }, return_document=pymongo.ReturnDocument.AFTER, projection=virtool.file.PROJECTION)
+                elif event["action"] == "close":
+                    document = await self.db.files.find_one_and_update({"_id": filename}, {
+                        "$set": {
+                            "size": event["file"]["size"],
+                            "ready": True
+                        }
+                    }, return_document=pymongo.ReturnDocument.AFTER, projection=virtool.file.PROJECTION)
+
+                    await self.dispatch(
+                        "files",
+                        "update",
+                        virtool.file.processor(document)
+                    )
+
+                elif event["action"] == "delete":
+                    document = await self.db.files.find_one({"_id": filename})
+
+                    if document:
+                        await self.db.files.delete_one({"_id": filename})
 
                         await self.dispatch(
                             "files",
-                            "update",
-                            virtool.file.processor(document)
+                            "remove",
+                            [document["_id"]]
                         )
 
-                    elif event["action"] == "delete":
-                        document = await self.db.files.find_one({"_id": filename})
+                elif event["action"] == "watch":
+                    document = await virtool.file.create(self.db, self.dispatch, filename, "reads")
 
-                        if document:
-                            await self.db.files.delete_one({"_id": filename})
+                    old_path = os.path.join(self.watch_path, filename)
 
-                            await self.dispatch(
-                                "files",
-                                "remove",
-                                [document["_id"]]
-                            )
+                    await self.loop.run_in_executor(
+                        self.executor,
+                        shutil.copy,
+                        old_path,
+                        os.path.join(self.files_path, document["id"])
+                    )
 
-                    elif event["action"] == "watch":
-                        document = await virtool.file.create(self.db, self.dispatch, filename, "reads")
-                        self.queue.put((filename, document["id"]))
-
-                except queue.Empty:
-                    break
+                    await self.loop.run_in_executor(
+                        self.executor,
+                        os.remove,
+                        old_path
+                    )
 
             async for document in self.db.files.find({"expires_at": {"$ne": None}}, ["expires_at"]):
                 if arrow.get(document["expires_at"]) <= arrow.utcnow():
@@ -168,7 +183,7 @@ class Manager:
 
 class Watcher(multiprocessing.Process):
 
-    def __init__(self, files_path, watch_path, q):
+    def __init__(self, files_path, watch_path, queue):
         super().__init__()
 
         self.files_path = files_path
@@ -176,7 +191,7 @@ class Watcher(multiprocessing.Process):
 
         self.watch_files = set()
 
-        self.queue = q
+        self.queue = queue
 
     def run(self):
         # This title will show up in output from ``top`` and ``ps`` etc.
@@ -199,17 +214,6 @@ class Watcher(multiprocessing.Process):
             self.queue.put("alive")
 
             for event in notifier.event_gen():
-                while not self.queue.empty():
-                    filename, file_id = self.queue.get(block=False)
-
-                    if filename in self.watch_files:
-                        os.rename(
-                            os.path.join(self.files_path, filename),
-                            os.path.join(self.watch_path, filename)
-                        )
-
-                    self.watch_files.remove(filename)
-
                 if event is not None:
                     _, type_names, dirname, filename = event
 
@@ -223,11 +227,9 @@ class Watcher(multiprocessing.Process):
                         filename = filename.decode()
                         dirname = dirname.decode()
 
-                        print(type_names, dirname, filename)
-
                         now = time.time()
 
-                        if dirname == "files":
+                        if dirname.endswith("files"):
                             if action in ["create", "modify", "close"]:
                                 file_entry = virtool.utils.file_stats(os.path.join(self.files_path, filename))
                                 file_entry["filename"] = filename
@@ -254,11 +256,12 @@ class Watcher(multiprocessing.Process):
                                     }
                                 })
 
-                        elif dirname == "watch":
-                            if action == "create" or action == "modify":
+                        elif dirname.endswith("watch"):
+                            has_read_ext = any(filename.endswith(ext) for ext in FILE_EXTENSION_FILTER)
+
+                            if action == "close" and has_read_ext and filename not in self.watch_files:
                                 self.watch_files.add(filename)
 
-                            elif action == "close":
                                 file_entry = virtool.utils.file_stats(os.path.join(self.watch_path, filename))
 
                                 file_entry["filename"] = filename
@@ -267,6 +270,9 @@ class Watcher(multiprocessing.Process):
                                     "action": "watch",
                                     "file": file_entry
                                 })
+
+                            elif action == "delete":
+                                self.watch_files.remove(filename)
 
         except KeyboardInterrupt:
             logging.debug("Stopped file watcher")
