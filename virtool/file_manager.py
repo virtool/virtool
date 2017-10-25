@@ -12,7 +12,7 @@ import time
 import virtool.file
 import virtool.utils
 
-
+#: A dict for mapping inotify type names of interest to simple file operation verbs used in Virtool.
 TYPE_NAME_DICT = {
     "IN_CREATE": "create",
     "IN_MODIFY": "modify",
@@ -20,6 +20,14 @@ TYPE_NAME_DICT = {
     "IN_MOVED_FROM": "delete",
     "IN_CLOSE_WRITE": "close"
 }
+
+#: Files with these extensions will be consumed from the watch folder and be entered into Virtool's file manager.
+FILE_EXTENSION_FILTER = (
+    "fq.gz",
+    "fastq.gz",
+    "fq",
+    "fastq"
+)
 
 
 class Manager:
