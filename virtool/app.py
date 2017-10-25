@@ -161,6 +161,7 @@ async def init_file_manager(app):
     if os.path.isdir(files_path):
         app["file_manager"] = virtool.file_manager.Manager(
             app.loop,
+            app["executor"],
             app["db"],
             app["dispatcher"].dispatch,
             files_path,
