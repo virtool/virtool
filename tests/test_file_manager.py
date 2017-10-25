@@ -258,6 +258,43 @@ class TestManager:
 
         assert await test_manager_instance.db.files.count() == 0
 
+    async def test_watch(self, test_manager_instance, static_time):
+        """
+        Test that a ``watch`` action results in the creation of a file document and copying of the file to the
+        files path. We'll assume that the file document is updated with ``{"created": True, "ready": True}`` afterwards.
+
+        """
+        assert await test_manager_instance.db.files.count() == 0
+
+        with open(os.path.join(test_manager_instance.watch_path, "test.fq"), "w") as f:
+            f.write("hello world")
+
+        test_manager_instance.queue.put("alive")
+
+        test_manager_instance.queue.put({
+            "action": "watch",
+            "file": {
+                "filename": "test.fq",
+                "size": 50
+            }
+        })
+
+        await test_manager_instance.start()
+        await test_manager_instance.close()
+
+        assert await test_manager_instance.db.files.find_one({}, {"_id": False}) == {
+            "name": "test.fq",
+            "type": "reads",
+            "expires_at": None,
+            "created": False,
+            "uploaded_at": static_time,
+            "ready": False,
+            "user": None
+        }
+
+        assert os.listdir(test_manager_instance.watch_path) == list()
+        assert os.listdir(test_manager_instance.files_path)[0].endswith("test.fq")
+
     async def test_start_and_close(self, tmpdir, loop, test_motor, test_dispatch):
         """
         Test the starting and closing the file manager work as designed. The manager should wait for the watch to
