@@ -5,7 +5,6 @@ import logging
 import multiprocessing
 import os
 import pymongo
-import queue
 import setproctitle
 import time
 
@@ -40,8 +39,8 @@ class Manager:
         self.watch_path = watch_path
         self.clean_interval = clean_interval
 
-        self.queue = multiprocessing.Queue()
-        self.watcher = Watcher(self.files_path, self.watch_path, self.queue)
+        self.pipe, child_conn = multiprocessing.Pipe()
+        self.watcher = Watcher(self.files_path, self.watch_path, child_conn)
         self.watcher.start()
 
         self._kill = False
@@ -53,7 +52,8 @@ class Manager:
             self.loop.create_task(self.clean())
 
         self.loop.create_task(self.run())
-        self.queue.get(block=True, timeout=3)
+
+        self.pipe.recv()
 
         self._run_alive = True
 
@@ -92,51 +92,47 @@ class Manager:
         looped_once = False
 
         while not (self._kill and looped_once):
-            while True:
-                try:
-                    event = self.queue.get(block=False)
+            if self.pipe.poll():
+                event = self.pipe.recv()
 
-                    filename = event["file"]["filename"]
+                filename = event["file"]["filename"]
 
-                    if event["action"] == "create":
-                        await self.db.files.update_one({"_id": filename}, {
-                            "$set": {
-                                "created": True
-                            }
-                        })
+                if event["action"] == "create":
+                    await self.db.files.update_one({"_id": filename}, {
+                        "$set": {
+                            "created": True
+                        }
+                    })
 
-                    elif event["action"] == "close":
-                        document = await self.db.files.find_one_and_update({"_id": filename}, {
-                            "$set": {
-                                "size": event["file"]["size"],
-                                "ready": True
-                            }
-                        }, return_document=pymongo.ReturnDocument.AFTER, projection=virtool.file.PROJECTION)
+                elif event["action"] == "close":
+                    document = await self.db.files.find_one_and_update({"_id": filename}, {
+                        "$set": {
+                            "size": event["file"]["size"],
+                            "ready": True
+                        }
+                    }, return_document=pymongo.ReturnDocument.AFTER, projection=virtool.file.PROJECTION)
+
+                    await self.dispatch(
+                        "files",
+                        "update",
+                        virtool.file.processor(document)
+                    )
+
+                elif event["action"] == "delete":
+                    document = await self.db.files.find_one({"_id": filename})
+
+                    if document:
+                        await self.db.files.delete_one({"_id": filename})
 
                         await self.dispatch(
                             "files",
-                            "update",
-                            virtool.file.processor(document)
+                            "remove",
+                            [document["_id"]]
                         )
 
-                    elif event["action"] == "delete":
-                        document = await self.db.files.find_one({"_id": filename})
-
-                        if document:
-                            await self.db.files.delete_one({"_id": filename})
-
-                            await self.dispatch(
-                                "files",
-                                "remove",
-                                [document["_id"]]
-                            )
-
-                    elif event["action"] == "watch":
-                        document = await virtool.file.create(self.db, self.dispatch, filename, "reads")
-                        self.queue.put((filename, document["id"]))
-
-                except queue.Empty:
-                    break
+                elif event["action"] == "watch":
+                    document = await virtool.file.create(self.db, self.dispatch, filename, "reads")
+                    self.pipe.send((filename, document["id"]))
 
             async for document in self.db.files.find({"expires_at": {"$ne": None}}, ["expires_at"]):
                 if arrow.get(document["expires_at"]) <= arrow.utcnow():
@@ -168,7 +164,7 @@ class Manager:
 
 class Watcher(multiprocessing.Process):
 
-    def __init__(self, files_path, watch_path, q):
+    def __init__(self, files_path, watch_path, pipe):
         super().__init__()
 
         self.files_path = files_path
@@ -176,14 +172,14 @@ class Watcher(multiprocessing.Process):
 
         self.watch_files = set()
 
-        self.queue = q
+        self.pipe = pipe
 
     def run(self):
         # This title will show up in output from ``top`` and ``ps`` etc.
         setproctitle.setproctitle("virtool-inotify")
 
         # A ton of "IN_MODIFY" type events can be produced. We minimize the number of messages being sent to the
-        # main process by only allowing one to be put in ``self.queue`` every 300 ms.
+        # main process by only allowing one to be put in ``self.pipe`` every 300 ms.
         interval = 0.300
 
         notifier = inotify.adapters.Inotify()
@@ -196,16 +192,16 @@ class Watcher(multiprocessing.Process):
 
         try:
             # This tells the FileManager object that the watcher is ready to start sending messages.
-            self.queue.put("alive")
+            self.pipe.send("alive")
 
             for event in notifier.event_gen():
-                while not self.queue.empty():
-                    filename, file_id = self.queue.get(block=False)
+                while self.pipe.poll():
+                    filename, file_id = self.pipe.recv()
 
                     if filename in self.watch_files:
                         os.rename(
-                            os.path.join(self.files_path, filename),
-                            os.path.join(self.watch_path, filename)
+                            os.path.join(self.watch_path, filename),
+                            os.path.join(self.files_path, filename)
                         )
 
                     self.watch_files.remove(filename)
@@ -223,8 +219,6 @@ class Watcher(multiprocessing.Process):
                         filename = filename.decode()
                         dirname = dirname.decode()
 
-                        print(type_names, dirname, filename)
-
                         now = time.time()
 
                         if dirname == "files":
@@ -233,7 +227,7 @@ class Watcher(multiprocessing.Process):
                                 file_entry["filename"] = filename
 
                                 if action == "modify" and (now - last_modification) > interval:
-                                    self.queue.put({
+                                    self.pipe.send({
                                         "action": action,
                                         "file": file_entry
                                     })
@@ -241,13 +235,13 @@ class Watcher(multiprocessing.Process):
                                     last_modification = now
 
                                 else:
-                                    self.queue.put({
+                                    self.pipe.send({
                                         "action": action,
                                         "file": file_entry
                                     })
 
                             if action == "delete":
-                                self.queue.put({
+                                self.pipe.send({
                                     "action": "delete",
                                     "file": {
                                         "filename": filename
@@ -263,7 +257,7 @@ class Watcher(multiprocessing.Process):
 
                                 file_entry["filename"] = filename
 
-                                self.queue.put({
+                                self.pipe.send({
                                     "action": "watch",
                                     "file": file_entry
                                 })
