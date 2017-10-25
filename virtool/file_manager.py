@@ -24,10 +24,10 @@ TYPE_NAME_DICT = {
 
 #: Files with these extensions will be consumed from the watch folder and be entered into Virtool's file manager.
 FILE_EXTENSION_FILTER = (
-    "fq.gz",
-    "fastq.gz",
-    "fq",
-    "fastq"
+    ".fq.gz",
+    ".fastq.gz",
+    ".fq",
+    ".fastq"
 )
 
 
@@ -272,7 +272,10 @@ class Watcher(multiprocessing.Process):
                                 })
 
                             elif action == "delete":
-                                self.watch_files.remove(filename)
+                                try:
+                                    self.watch_files.remove(filename)
+                                except KeyError:
+                                    pass
 
         except KeyboardInterrupt:
             logging.debug("Stopped file watcher")
