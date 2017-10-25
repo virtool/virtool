@@ -131,6 +131,10 @@ class Manager:
                                 [document["_id"]]
                             )
 
+                    elif event["action"] == "watch":
+                        document = await virtool.file.create(self.db, self.dispatch, filename, "reads")
+                        self.queue.put((filename, document["id"]))
+
                 except queue.Empty:
                     break
 
@@ -170,6 +174,8 @@ class Watcher(multiprocessing.Process):
         self.files_path = files_path
         self.watch_path = watch_path
 
+        self.watch_files = set()
+
         self.queue = q
 
     def run(self):
@@ -184,6 +190,7 @@ class Watcher(multiprocessing.Process):
 
         # The ``add_watch`` method only takes paths as bytestrings.
         notifier.add_watch(bytes(self.files_path, encoding="utf-8"))
+        notifier.add_watch(bytes(self.watch_path, encoding="utf-8"))
 
         last_modification = time.time()
 
@@ -192,8 +199,19 @@ class Watcher(multiprocessing.Process):
             self.queue.put("alive")
 
             for event in notifier.event_gen():
+                while not self.queue.empty():
+                    filename, file_id = self.queue.get(block=False)
+
+                    if filename in self.watch_files:
+                        os.rename(
+                            os.path.join(self.files_path, filename),
+                            os.path.join(self.watch_path, filename)
+                        )
+
+                    self.watch_files.remove(filename)
+
                 if event is not None:
-                    _, type_names, _, filename = event
+                    _, type_names, dirname, filename = event
 
                     # Only paying attention to a select few type names.
                     if filename and type_names[0] in TYPE_NAME_DICT:
@@ -203,34 +221,52 @@ class Watcher(multiprocessing.Process):
                         action = TYPE_NAME_DICT[type_names[0]]
 
                         filename = filename.decode()
+                        dirname = dirname.decode()
+
+                        print(type_names, dirname, filename)
 
                         now = time.time()
 
-                        if action in ["create", "modify", "close"]:
-                            file_entry = virtool.utils.file_stats(os.path.join(self.files_path, filename))
-                            file_entry["filename"] = filename
+                        if dirname == "files":
+                            if action in ["create", "modify", "close"]:
+                                file_entry = virtool.utils.file_stats(os.path.join(self.files_path, filename))
+                                file_entry["filename"] = filename
 
-                            if action == "modify" and (now - last_modification) > interval:
+                                if action == "modify" and (now - last_modification) > interval:
+                                    self.queue.put({
+                                        "action": action,
+                                        "file": file_entry
+                                    })
+
+                                    last_modification = now
+
+                                else:
+                                    self.queue.put({
+                                        "action": action,
+                                        "file": file_entry
+                                    })
+
+                            if action == "delete":
                                 self.queue.put({
-                                    "action": action,
-                                    "file": file_entry
+                                    "action": "delete",
+                                    "file": {
+                                        "filename": filename
+                                    }
                                 })
 
-                                last_modification = now
+                        elif dirname == "watch":
+                            if action == "create" or action == "modify":
+                                self.watch_files.add(filename)
 
-                            else:
+                            elif action == "close":
+                                file_entry = virtool.utils.file_stats(os.path.join(self.watch_path, filename))
+
+                                file_entry["filename"] = filename
+
                                 self.queue.put({
-                                    "action": action,
+                                    "action": "watch",
                                     "file": file_entry
                                 })
-
-                        if action == "delete":
-                            self.queue.put({
-                                "action": "delete",
-                                "file": {
-                                    "filename": filename
-                                }
-                            })
 
         except KeyboardInterrupt:
             logging.debug("Stopped file watcher")
