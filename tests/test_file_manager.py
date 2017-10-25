@@ -1,6 +1,7 @@
 import os
-import pytest
 import multiprocessing
+import pytest
+
 import virtool.file_manager
 
 
@@ -20,23 +21,32 @@ def test_watcher_instance(tmpdir):
     watcher.terminate()
 
 
-class TestWatch:
+@pytest.fixture
+def test_manager_instance(loop, test_motor, test_dispatch, tmpdir, test_queue):
 
-    async def test_alive(self, test_watcher):
-        assert test_watcher.queue.get(block=True, timeout=2) == "alive"
+    files_path = str(tmpdir.mkdir("files"))
+    watch_path = str(tmpdir.mkdir("watch"))
 
-    async def test_create(self, tmpdir):
+    manager = virtool.file_manager.Manager(loop, test_motor, test_dispatch, files_path, watch_path)
+
+    return manager
 
 
+class TestWatcher:
+
+    async def test_alive(self, test_watcher_instance):
+        assert test_watcher_instance.queue.get(block=True, timeout=2) == "alive"
+
+    async def test_create(self, test_watcher_instance):
         # This will be an 'alive' message
-        queue.get(block=True, timeout=2)
+        test_watcher_instance.queue.get(block=True, timeout=2)
 
-        path = os.path.join(str(tmpdir), "test.dat")
+        path = os.path.join(test_watcher_instance.files_path, "test.dat")
 
         with open(path, "w") as handle:
             handle.write("hello world")
 
-        first_message = queue.get(block=True, timeout=3)
+        first_message = test_watcher_instance.queue.get(block=True, timeout=3)
 
         assert first_message["action"] == "create"
 
@@ -52,7 +62,7 @@ class TestWatch:
         next_message = None
 
         while action == "modify":
-            next_message = queue.get(block=True, timeout=3)
+            next_message = test_watcher_instance.queue.get(block=True, timeout=3)
             action = next_message["action"]
 
         assert next_message["action"] == "close"
@@ -65,25 +75,18 @@ class TestWatch:
             "size": 11
         }
 
-        watcher.terminate()
-
-    async def test_delete(self, tmpdir):
-        path = os.path.join(str(tmpdir), "test.dat")
+    async def test_delete(self, test_watcher_instance):
+        path = os.path.join(test_watcher_instance.files_path, "test.dat")
 
         with open(path, "w") as handle:
             handle.write("hello world")
 
-        queue = multiprocessing.Queue()
-
-        watcher = virtool.file_manager.Watcher(str(tmpdir), queue)
-        watcher.start()
-
         # This will be an 'alive' message
-        queue.get(block=True, timeout=2)
+        test_watcher_instance.queue.get(block=True, timeout=2)
 
         os.remove(path)
 
-        message = queue.get(block=True, timeout=2)
+        message = test_watcher_instance.queue.get(block=True, timeout=3)
 
         assert message == {
             "action": "delete",
@@ -92,30 +95,26 @@ class TestWatch:
             }
         }
 
-        watcher.terminate()
 
+class TestManager:
 
-class TestFileManager:
-
-    async def test_create(self, mocker, tmpdir, loop, test_db, test_motor, test_queue):
+    async def test_create(self, test_manager_instance):
         """
         Test that a ``create`` action results in the ``created`` field on the matching file document in the database
         to be set to ``True``.
 
         """
-
-        m = mocker.stub(name="dispatch")
-
-        async def dispatch(*args, **kwargs):
-            m(*args, **kwargs)
-
-        test_db.files.insert_one({
+        await test_manager_instance.db.files.insert_one({
             "_id": "test.dat"
         })
 
-        test_queue.put("alive")
+        # Do this so the the clean task doesn't remove the database record.
+        with open(os.path.join(test_manager_instance.files_path, "test.dat"), "w") as f:
+            f.write("hello world")
 
-        test_queue.put({
+        test_manager_instance.queue.put("alive")
+
+        test_manager_instance.queue.put({
             "action": "create",
             "file": {
                 "filename": "test.dat",
@@ -123,35 +122,33 @@ class TestFileManager:
             }
         })
 
-        manager = virtool.file_manager.Manager(loop, test_motor, dispatch, str(tmpdir), clean_interval=None)
+        await test_manager_instance.start()
+        await test_manager_instance.close()
 
-        await manager.start()
-        await manager.close()
-
-        assert test_db.files.find_one() == {
+        assert await test_manager_instance.db.files.find_one() == {
             "_id": "test.dat",
             "created": True
         }
 
-    async def test_close(self, mocker, tmpdir, loop, test_db, test_motor, test_queue):
+    async def test_close(self, test_manager_instance):
         """
-        Test that a ``close`` action results in ``eof`` being set to ``True`` on the matching file document in the
+        Test that a ``close`` action results in ``ready`` being set to ``True`` on the matching file document in the
         database.
 
         """
-        m = mocker.stub(name="dispatch")
-
-        async def dispatch(*args, **kwargs):
-            m(*args, **kwargs)
-
-        test_db.files.insert_one({
+        await test_manager_instance.db.files.insert_one({
             "_id": "test.dat",
+            "expires_at": None,
             "created": True
         })
 
-        test_queue.put("alive")
+        # Do this so the the clean task doesn't remove the database record.
+        with open(os.path.join(test_manager_instance.files_path, "test.dat"), "w") as f:
+            f.write("hello world")
 
-        test_queue.put({
+        test_manager_instance.queue.put("alive")
+
+        test_manager_instance.queue.put({
             "action": "close",
             "file": {
                 "filename": "test.dat",
@@ -159,53 +156,55 @@ class TestFileManager:
             }
         })
 
-        manager = virtool.file_manager.Manager(loop, test_motor, dispatch, str(tmpdir), clean_interval=None)
+        await test_manager_instance.start()
+        await test_manager_instance.close()
 
-        await manager.start()
-        await manager.close()
+        assert test_manager_instance.dispatch.stub.call_args[0] == (
+            "files",
+            "update",
+            {
+                "id": "test.dat",
+                "ready": True,
+                "size": 100
+            }
+        )
 
-        assert test_db.files.find_one() == {
+        assert await test_manager_instance.db.files.find_one() == {
             "_id": "test.dat",
+            "expires_at": None,
             "created": True,
             "ready": True,
             "size": 100
         }
 
-    async def test_delete(self, mocker, tmpdir, loop, test_db, test_motor, test_queue):
+    async def test_delete(self, test_manager_instance):
         """
         Test that a ``delete`` action from the Watcher results in the deletion of the matching file document in the
         database.
 
         """
-        m = mocker.stub(name="dispatch")
-
-        async def dispatch(*args, **kwargs):
-            m(*args, **kwargs)
-
-        test_db.files.insert_one({
+        await test_manager_instance.db.files.insert_one({
             "_id": "test.dat",
             "created": True,
             "ready": True,
             "size": 100
         })
 
-        test_queue.put("alive")
+        test_manager_instance.queue.put("alive")
 
-        test_queue.put({
+        test_manager_instance.queue.put({
             "action": "delete",
             "file": {
                 "filename": "test.dat"
             }
         })
 
-        manager = virtool.file_manager.Manager(loop, test_motor, dispatch, str(tmpdir), clean_interval=None)
+        await test_manager_instance.start()
+        await test_manager_instance.close()
 
-        await manager.start()
-        await manager.close()
+        assert await test_manager_instance.db.files.count() == 0
 
-        assert test_db.files.count() == 0
-
-    async def test_start_and_close(self, mocker, tmpdir, loop, test_motor):
+    async def test_start_and_close(self, tmpdir, loop, test_motor, test_dispatch):
         """
         Test the starting and closing the file manager work as designed. The manager should wait for the watch to
         send and "alive" message on the Queue before returning. This results in the ``alive`` attribute being set to
@@ -214,12 +213,13 @@ class TestFileManager:
         Closing the manager should result in ``alive`` being set to ``False``.
 
         """
-        m = mocker.stub(name="dispatch")
-
-        async def dispatch(*args, **kwargs):
-            m(*args, **kwargs)
-
-        manager = virtool.file_manager.Manager(loop, test_motor, dispatch, str(tmpdir), clean_interval=None)
+        manager = virtool.file_manager.Manager(
+            loop,
+            test_motor,
+            test_dispatch,
+            str(tmpdir.mkdir("files")),
+            str(tmpdir.mkdir("watch"))
+        )
 
         assert manager.alive is False
 
@@ -231,48 +231,39 @@ class TestFileManager:
 
         assert manager.alive is False
 
-    async def test_clean_dir(self, mocker, tmpdir, loop, test_db, test_motor):
-        m = mocker.stub(name="dispatch")
-
-        async def dispatch(*args, **kwargs):
-            m(*args, **kwargs)
-
-        test_db.files.insert_one({
-            "_id": "test.dat"
+    async def test_clean_dir(self, tmpdir, loop, test_motor, test_dispatch):
+        await test_motor.files.insert_one({
+            "_id": "test.dat",
+            "created": True
         })
 
-        file_a = tmpdir.join("test.dat")
-        file_a.write("hello world")
+        files = tmpdir.mkdir("files")
 
-        file_b = tmpdir.join("invalid.dat")
-        file_b.write("foo bar")
+        for filename in ("test.dat", "invalid.dat"):
+            files.join(filename).write(filename)
 
-        manager = virtool.file_manager.Manager(loop, test_motor, dispatch, str(tmpdir))
+        manager = virtool.file_manager.Manager(loop, test_motor, test_dispatch, str(files), str(tmpdir.mkdir("watch")))
 
         await manager.start()
-
         await manager.close()
 
-        assert os.listdir(str(tmpdir)) == ["test.dat"]
+        assert os.listdir(str(files)) == ["test.dat"]
 
-    async def test_clean_db(self, mocker, tmpdir, loop, test_db, test_motor):
-        m = mocker.stub(name="dispatch")
+    async def test_clean_db(self, tmpdir, loop, test_motor, test_dispatch):
 
-        async def dispatch(*args, **kwargs):
-            m(*args, **kwargs)
-
-        test_db.files.insert_many([
+        await test_motor.files.insert_many([
             {"_id": "test.dat", "created": True},
             {"_id": "invalid.dat", "created": True}
         ])
 
-        file_a = tmpdir.join("test.dat")
+        files = tmpdir.mkdir("files")
+
+        file_a = files.join("test.dat")
         file_a.write("hello world")
 
-        manager = virtool.file_manager.Manager(loop, test_motor, dispatch, str(tmpdir))
+        manager = virtool.file_manager.Manager(loop, test_motor, test_dispatch, str(files), str(tmpdir.mkdir("watch")))
 
         await manager.start()
-
         await manager.close()
 
-        assert list(test_db.files.find()) == [{"_id": "test.dat", "created": True}]
+        assert list(await test_motor.files.find().to_list(None)) == [{"_id": "test.dat", "created": True}]
