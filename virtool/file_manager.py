@@ -161,26 +161,33 @@ class Watcher(multiprocessing.Process):
 
         self.files_path = files_path
         self.watch_path = watch_path
+
         self.queue = q
 
     def run(self):
+        # This title will show up in output from ``top`` and ``ps`` etc.
         setproctitle.setproctitle("virtool-inotify")
 
+        # A ton of "IN_MODIFY" type events can be produced. We minimize the number of messages being sent to the
+        # main process by only allowing one to be put in ``self.queue`` every 300 ms.
         interval = 0.300
 
         notifier = inotify.adapters.Inotify()
 
+        # The ``add_watch`` method only takes paths as bytestrings.
         notifier.add_watch(bytes(self.files_path, encoding="utf-8"))
 
         last_modification = time.time()
 
         try:
+            # This tells the FileManager object that the watcher is ready to start sending messages.
             self.queue.put("alive")
 
             for event in notifier.event_gen():
                 if event is not None:
                     _, type_names, _, filename = event
 
+                    # Only paying attention to a select few type names.
                     if filename and type_names[0] in TYPE_NAME_DICT:
                         if len(type_names) != 1:
                             raise ValueError("Unexpected number of type_names")
@@ -219,9 +226,3 @@ class Watcher(multiprocessing.Process):
 
         except KeyboardInterrupt:
             logging.debug("Stopped file watcher")
-
-
-
-
-
-
