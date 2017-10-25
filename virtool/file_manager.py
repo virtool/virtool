@@ -121,7 +121,7 @@ class Manager:
                     await self.dispatch(
                         "files",
                         "update",
-                        virtool.file.processor(document)
+                        virtool.utils.base_processor(document)
                     )
 
                 elif event["action"] == "delete":
