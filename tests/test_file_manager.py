@@ -1,5 +1,6 @@
-import os
+import concurrent.futures
 import multiprocessing
+import os
 import pytest
 
 import virtool.file_manager
@@ -7,12 +8,10 @@ import virtool.file_manager
 
 @pytest.fixture
 def test_watcher_instance(tmpdir):
-    queue = multiprocessing.Queue()
-
     files_path = str(tmpdir.mkdir("files"))
     watch_path = str(tmpdir.mkdir("watch"))
 
-    watcher = virtool.file_manager.Watcher(files_path, watch_path, queue)
+    watcher = virtool.file_manager.Watcher(files_path, watch_path, multiprocessing.Queue())
 
     watcher.start()
 
@@ -27,7 +26,9 @@ def test_manager_instance(loop, test_motor, test_dispatch, tmpdir, test_queue):
     files_path = str(tmpdir.mkdir("files"))
     watch_path = str(tmpdir.mkdir("watch"))
 
-    manager = virtool.file_manager.Manager(loop, test_motor, test_dispatch, files_path, watch_path)
+    executor = concurrent.futures.ThreadPoolExecutor()
+
+    manager = virtool.file_manager.Manager(loop, executor, test_motor, test_dispatch, files_path, watch_path)
 
     return manager
 
@@ -215,6 +216,7 @@ class TestManager:
         """
         manager = virtool.file_manager.Manager(
             loop,
+            concurrent.futures.ThreadPoolExecutor(),
             test_motor,
             test_dispatch,
             str(tmpdir.mkdir("files")),
@@ -242,7 +244,14 @@ class TestManager:
         for filename in ("test.dat", "invalid.dat"):
             files.join(filename).write(filename)
 
-        manager = virtool.file_manager.Manager(loop, test_motor, test_dispatch, str(files), str(tmpdir.mkdir("watch")))
+        manager = virtool.file_manager.Manager(
+            loop,
+            concurrent.futures.ThreadPoolExecutor(),
+            test_motor,
+            test_dispatch,
+            str(files),
+            str(tmpdir.mkdir("watch"))
+        )
 
         await manager.start()
         await manager.close()
@@ -261,7 +270,14 @@ class TestManager:
         file_a = files.join("test.dat")
         file_a.write("hello world")
 
-        manager = virtool.file_manager.Manager(loop, test_motor, test_dispatch, str(files), str(tmpdir.mkdir("watch")))
+        manager = virtool.file_manager.Manager(
+            loop,
+            concurrent.futures.ThreadPoolExecutor(),
+            test_motor,
+            test_dispatch,
+            str(files),
+            str(tmpdir.mkdir("watch"))
+        )
 
         await manager.start()
         await manager.close()
