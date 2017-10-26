@@ -21,7 +21,7 @@ async def find(req):
 
     found_count = await cursor.count()
 
-    documents = [virtool.file.processor(d) for d in await cursor.to_list(15)]
+    documents = [virtool.utils.base_processor(d) for d in await cursor.to_list(15)]
 
     return json_response({
         "documents": documents,
