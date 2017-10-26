@@ -39,12 +39,6 @@ class Sequence extends React.Component {
         let buttons;
 
         if (this.state.in) {
-            let modifyIcons;
-
-            if (this.props.canModify) {
-
-            }
-
             buttons = (
                 <FlexItem>
                     <Flex alignItem="center">
