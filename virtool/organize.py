@@ -264,6 +264,9 @@ async def organize_subtraction(db):
     await db.subtraction.update_many({}, {
         "$unset": {
             "lengths": ""
+        },
+        "$rename": {
+            "nucleotides": "gc"
         }
     })
 
