@@ -13,7 +13,7 @@ class TestUpload:
         ("/upload/host", "host")
     ])
     async def test(self, path, file_type, tmpdir, spawn_client, test_dispatch, static_time, test_random_alphanumeric):
-        client = await spawn_client()
+        client = await spawn_client(authorize=True)
 
         client.app["settings"] = {
             "data_path": str(tmpdir)
@@ -38,10 +38,11 @@ class TestUpload:
         assert await resp.json() == {
             "name": "Test.fq.gz",
             "type": "reads",
+            "ready": False,
             "uploaded_at": "2017-10-06T20:00:00Z",
             "id": "{}-Test.fq.gz".format(test_random_alphanumeric.last_choice),
             "user": {
-                "id": None
+                "id": "test"
             }
         }
 
@@ -51,10 +52,11 @@ class TestUpload:
             {
                 "name": "Test.fq.gz",
                 "type": "reads",
+                "ready": False,
                 "uploaded_at": static_time,
                 "id": "{}-Test.fq.gz".format(test_random_alphanumeric.last_choice),
                 "user": {
-                    "id": None
+                    "id": "test"
                 }
             }
         )

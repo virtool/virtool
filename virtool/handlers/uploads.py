@@ -1,5 +1,4 @@
 import os
-import arrow
 from cerberus import Validator
 
 import virtool.file
@@ -35,44 +34,15 @@ async def upload(req):
 
     filename = req.query["name"]
 
-    file_id = "{}-{}".format(await virtool.utils.get_new_id(db.files), filename)
-
-    while file_id in await db.files.distinct("_id"):
-        file_id = "{}-{}".format(await virtool.utils.get_new_id(db.files), filename)
-
-    file_path = os.path.join(req.app["settings"].get("data_path"), "files", file_id)
-
-    uploaded_at = virtool.utils.timestamp()
-
-    expires_at = None
-
-    if file_type == "viruses":
-        expires_at = arrow.get(uploaded_at).shift(hours=+5).datetime
-
-    document = {
-        "_id": file_id,
-        "name": filename,
-        "type": file_type,
-        "user": {
-            "id": req["client"].user_id
-        },
-        "uploaded_at": uploaded_at,
-        "expires_at": expires_at,
-        "created": False,
-        "ready": False
-    }
-
-    await db.files.insert_one(document)
-
-    document = {key: document[key] for key in virtool.file.LIST_PROJECTION if document.get(key, False)}
-
-    document = virtool.file.processor(document)
-
-    await req.app["dispatcher"].dispatch(
-        "files",
-        "update",
-        document
+    document = await virtool.file.create(
+        db,
+        req.app["dispatcher"].dispatch,
+        filename,
+        file_type,
+        req["client"].user_id
     )
+
+    file_path = os.path.join(req.app["settings"].get("data_path"), "files", document["id"])
 
     size = 0
 

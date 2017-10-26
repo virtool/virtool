@@ -9,29 +9,43 @@ import { byteSize, createRandomString } from "../../utils";
 import { findFiles, removeFile, upload, uploadProgress } from "../actions";
 import { Button, Icon, ListGroupItem, RelativeTime } from "../../base";
 
-const File = (props) => (
-    <ListGroupItem className="spaced">
-        <Row>
-            <Col md={5}>
-                {props.name}
-            </Col>
-            <Col md={2}>
-                {byteSize(props.size)}
-            </Col>
-            <Col md={4}>
-                Uploaded <RelativeTime time={props.uploaded_at} /> by {props.user.id}
-            </Col>
-            <Col md={1}>
-                <Icon
-                    name="remove"
-                    bsStyle="danger"
-                    style={{fontSize: "17px"}}
-                    pullRight onClick={() => props.onRemove(props.id)}
-                />
-            </Col>
-        </Row>
-    </ListGroupItem>
-);
+const File = (props) => {
+    let creation;
+
+    if (props.user === null) {
+        creation = (
+            <span>
+                Retrieved <RelativeTime time={props.uploaded_at} />
+            </span>
+        );
+    } else {
+        creation = <span>Uploaded <RelativeTime time={props.uploaded_at} /> by {props.user.id}</span>;
+    }
+
+    return (
+        <ListGroupItem className="spaced">
+            <Row>
+                <Col md={5}>
+                    <strong>{props.name}</strong>
+                </Col>
+                <Col md={2}>
+                    {byteSize(props.size)}
+                </Col>
+                <Col md={4}>
+                    {creation}
+                </Col>
+                <Col md={1}>
+                    <Icon
+                        name="remove"
+                        bsStyle="danger"
+                        style={{fontSize: "17px"}}
+                        pullRight onClick={() => props.onRemove(props.id)}
+                    />
+                </Col>
+            </Row>
+        </ListGroupItem>
+    );
+};
 
 File.propTypes = {
     id: PropTypes.string,
