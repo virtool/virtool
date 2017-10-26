@@ -33,7 +33,14 @@ async def find(req):
     if query["term"]:
         db_query.update(compose_regex_query(query["term"], ["name", "user.id"]))
 
-    data = await paginate(db.samples, db_query, req.query, "name", projection=virtool.sample.LIST_PROJECTION)
+    data = await paginate(
+        db.samples,
+        db_query,
+        req.query,
+        "created_at",
+        projection=virtool.sample.LIST_PROJECTION,
+        reverse=True
+    )
 
     return json_response(data)
 
