@@ -10,7 +10,7 @@
  */
 
 import React from "react";
-import { assign, startsWith } from "lodash";
+import { startsWith } from "lodash";
 import { connect } from "react-redux";
 import { withRouter } from "react-router-dom";
 import { LinkContainer } from "react-router-bootstrap";
@@ -77,11 +77,13 @@ const Bar = (props) => {
                             </NavItem>
                         </LinkContainer>
 
-                        <LinkContainer to="/settings">
-                            <NavItem>
-                                Settings
-                            </NavItem>
-                        </LinkContainer>
+                        {props.permissions.modify_options ? (
+                            <LinkContainer to="/settings">
+                                <NavItem>
+                                    Settings
+                                </NavItem>
+                            </LinkContainer>
+                        ): null}
                     </Nav>
 
                     <Nav pullRight>
@@ -109,7 +111,7 @@ const Bar = (props) => {
 };
 
 const mapStateToProps = (state) => {
-    return assign({}, state.account, {pending: state.app.pending});
+    return {...state.account, pending: state.app.pending};
 };
 
 const mapDispatchToProps = (dispatch) => {
