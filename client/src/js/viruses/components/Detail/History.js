@@ -62,7 +62,7 @@ const HistoryList = (props) => {
 
         let revertIcon;
 
-        if (props.unbuilt) {
+        if (props.unbuilt && props.canModify) {
             revertIcon = (
                 <Icon
                     name="undo"
@@ -109,7 +109,8 @@ const HistoryList = (props) => {
 HistoryList.propTypes = {
     history: PropTypes.arrayOf(PropTypes.object),
     unbuilt: PropTypes.bool,
-    revert: PropTypes.func
+    revert: PropTypes.func,
+    canModify: PropTypes.bool
 };
 
 class VirusHistory extends React.Component {
@@ -134,7 +135,10 @@ class VirusHistory extends React.Component {
             built = (
                 <div>
                     <h4>Built Changes</h4>
-                    <HistoryList history={changes.built} />
+                    <HistoryList
+                        history={changes.built}
+                        canModify={this.props.canModify}
+                    />
                 </div>
             );
         }
@@ -143,7 +147,12 @@ class VirusHistory extends React.Component {
             unbuilt = (
                 <div>
                     <h4>Unbuilt Changes</h4>
-                    <HistoryList history={changes.unbuilt} revert={this.props.revert} unbuilt />
+                    <HistoryList
+                        history={changes.unbuilt}
+                        revert={this.props.revert}
+                        canModify={this.props.canModify}
+                        unbuilt
+                    />
                 </div>
             );
         }
@@ -161,7 +170,8 @@ class VirusHistory extends React.Component {
 const mapStateToProps = (state) => {
     return {
         virusId: state.viruses.detail.id,
-        history: state.viruses.detailHistory
+        history: state.viruses.detailHistory,
+        canModify: state.account.permissions.modify_virus
     };
 };
 

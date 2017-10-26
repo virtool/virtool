@@ -69,6 +69,31 @@ class VirusDetail extends React.Component {
 
         const { name, abbreviation } = this.props.detail;
 
+        let iconButtons = [];
+
+        if (this.props.canModify) {
+            iconButtons = (
+                <span>
+                    <small key="edit-icon" style={{paddingLeft: "5px"}}>
+                        <Icon
+                            bsStyle="warning"
+                            name="pencil"
+
+                            onClick={() => this.props.showEdit()}
+                        />
+                    </small>
+
+                    <small key="remove-icon" style={{paddingLeft: "5px"}}>
+                        <Icon
+                            bsStyle="danger"
+                            name="remove"
+                            onClick={() => this.props.showRemove()}
+                        />
+                    </small>
+                </span>
+            );
+        }
+
         return (
             <div>
                 <Helmet>
@@ -91,23 +116,7 @@ class VirusDetail extends React.Component {
                         </FlexItem>
 
                         {modifiedLabel}
-
-                        <small style={{paddingLeft: "5px"}}>
-                            <Icon
-                                bsStyle="warning"
-                                name="pencil"
-
-                                onClick={() => this.props.showEdit()}
-                            />
-                        </small>
-
-                        <small style={{paddingLeft: "5px"}}>
-                            <Icon
-                                bsStyle="danger"
-                                name="remove"
-                                onClick={() => this.props.showRemove()}
-                            />
-                        </small>
+                        {iconButtons}
                     </Flex>
                 </h3>
 
@@ -147,7 +156,8 @@ class VirusDetail extends React.Component {
 
 const mapStateToProps = (state) => {
     return {
-        detail: state.viruses.detail
+        detail: state.viruses.detail,
+        canModify: state.account.permissions.modify_virus
     };
 };
 

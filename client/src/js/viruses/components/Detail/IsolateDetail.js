@@ -46,6 +46,7 @@ const IsolateDetail = (props) => {
         <Sequence
             key={sequence.id}
             active={sequence.accession === props.activeSequenceId}
+            canModify={props.canModify}
             showEditSequence={props.showEditSequence}
             showRemoveSequence={props.showRemoveSequence}
             {...sequence}
@@ -60,32 +61,29 @@ const IsolateDetail = (props) => {
         );
     }
 
-    let modifyIcons = (
-        <span>
-            <Icon
-                name="pencil"
-                bsStyle="warning"
-                tip="Edit Name"
-                onClick={props.showEditIsolate}
-                style={{paddingLeft: "7px"}}
-            />
+    let modifyIcons;
 
-            <Icon
-                name="remove"
-                bsStyle="danger"
-                tip="Remove Isolate"
-                onClick={props.showRemoveIsolate}
-                style={{paddingLeft: "3px"}}
-            />
+    if (props.canModify) {
+        modifyIcons = (
+            <span>
+                <Icon
+                    name="pencil"
+                    bsStyle="warning"
+                    tip="Edit Name"
+                    onClick={props.showEditIsolate}
+                    style={{paddingLeft: "7px"}}
+                />
 
-            <Icon
-                name="download"
-                tip="Download FASTA"
-                onClick={() => followDownload(`/download/viruses/${props.virusId}/isolates/${isolate.id}`)}
-                style={{paddingLeft: "3px"}}
-            />
-        </span>
-    );
+                <Icon
+                    name="remove"
+                    bsStyle="danger"
+                    tip="Remove Isolate"
+                    onClick={props.showRemoveIsolate}
+                    style={{paddingLeft: "3px"}}
+                />
+            </span>
+        );
+    }
 
     return (
         <div>
@@ -124,8 +122,18 @@ const IsolateDetail = (props) => {
                     <ListGroupItem>
                         <h5 style={{display: "flex", alignItems: "center", marginBottom: "15px"}}>
                             <strong style={{flex: "1 0 auto"}}>{isolateName}</strong>
+
                             {defaultIsolateLabel}
                             {modifyIcons}
+
+                            <Icon
+                                name="download"
+                                tip="Download FASTA"
+                                style={{paddingLeft: "3px"}}
+                                onClick={() => followDownload(
+                                    `/download/viruses/${props.virusId}/isolates/${isolate.id}`
+                                )}
+                            />
                         </h5>
 
                         <Table bordered>
@@ -154,13 +162,15 @@ const IsolateDetail = (props) => {
                             <span style={{flex: "1 0 auto", marginLeft: "5px"}}>
                                 <Badge>{isolate.sequences.length}</Badge>
                             </span>
-                            <Icon
-                                name="new-entry"
-                                bsStyle="primary"
-                                tip="Add Sequence"
-                                onClick={() => props.showAddSequence()}
-                                pullRight
-                            />
+                            {props.canModify ? (
+                                <Icon
+                                    name="new-entry"
+                                    bsStyle="primary"
+                                    tip="Add Sequence"
+                                    onClick={() => props.showAddSequence()}
+                                    pullRight
+                                />
+                            ): null}
                         </div>
                     </ListGroupItem>
 
@@ -204,7 +214,7 @@ const mapDispatchToProps = (dispatch) => {
 
         showRemoveSequence: (sequenceId) => {
             dispatch(showRemoveSequence(sequenceId));
-        },
+        }
     };
 };
 

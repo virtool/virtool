@@ -28,7 +28,8 @@ class Sequence extends React.Component {
         host: PropTypes.string,
         sequence: PropTypes.string,
         showEditSequence: PropTypes.func,
-        showRemoveSequence: PropTypes.func
+        showRemoveSequence: PropTypes.func,
+        canModify: PropTypes.bool
     };
 
     render () {
@@ -38,25 +39,35 @@ class Sequence extends React.Component {
         let buttons;
 
         if (this.state.in) {
+            let modifyIcons;
+
+            if (this.props.canModify) {
+
+            }
+
             buttons = (
                 <FlexItem>
                     <Flex alignItem="center">
-                        <FlexItem grow={0} shrink={0}>
-                            <Icon
-                                name="pencil"
-                                bsStyle="warning"
-                                tip="Edit Sequence"
-                                onClick={() => this.props.showEditSequence(this.props.id)}
-                            />
-                        </FlexItem>
-                        <FlexItem grow={0} shrink={0} pad={3}>
-                            <Icon
-                                name="remove"
-                                bsStyle="danger"
-                                tip="Remove Sequence"
-                                onClick={() => this.props.showRemoveSequence(this.props.id)}
-                            />
-                        </FlexItem>
+                        {this.props.canModify ? (
+                            <FlexItem grow={0} shrink={0}>
+                                <Icon
+                                    name="pencil"
+                                    bsStyle="warning"
+                                    tip="Edit Sequence"
+                                    onClick={() => this.props.showEditSequence(this.props.id)}
+                                />
+                            </FlexItem>
+                        ): null}
+                        {this.props.canModify ? (
+                            <FlexItem grow={0} shrink={0} pad={3}>
+                                <Icon
+                                    name="remove"
+                                    bsStyle="danger"
+                                    tip="Remove Sequence"
+                                    onClick={() => this.props.showRemoveSequence(this.props.id)}
+                                />
+                            </FlexItem>
+                        ): null}
                         <FlexItem grow={0} shrink={0} pad={3}>
                             <Icon
                                 name="download"
