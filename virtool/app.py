@@ -303,9 +303,9 @@ def find_server_version(install_path="."):
     except (subprocess.CalledProcessError, FileNotFoundError):
         pass
 
-    if output is None or "Not a git repository" not in output:
+    if output and "Not a git repository" not in output:
         return output
-
+    
     try:
         version_file_path = os.path.join(install_path, "VERSION")
 
