@@ -64,13 +64,15 @@ const IsolateEditor = (props) => {
                     </Badge>
                 </FlexItem>
 
-                <Icon
-                    bsStyle="primary"
-                    name="new-entry"
-                    tip="Add Isolate"
-                    style={{fontSize: "15px"}}
-                    onClick={props.showAddIsolate}
-                />
+                {props.canModify ? (
+                    <Icon
+                        bsStyle="primary"
+                        name="new-entry"
+                        tip="Add Isolate"
+                        style={{fontSize: "15px"}}
+                        onClick={props.showAddIsolate}
+                    />
+                ): null}
             </h4>
 
             <Row>
@@ -92,7 +94,8 @@ const mapStateToProps = (state) => {
     return {
         virusId: state.viruses.detail.id,
         isolates: state.viruses.detail.isolates,
-        activeIsolateId: state.viruses.activeIsolateId
+        activeIsolateId: state.viruses.activeIsolateId,
+        canModify: state.account.permissions.modify_virus
     };
 };
 
