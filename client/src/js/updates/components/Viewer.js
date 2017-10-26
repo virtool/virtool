@@ -31,7 +31,9 @@ class SoftwareUpdateViewer extends React.Component {
             );
         }
 
-        const currentVersion = "v1.8.3"; // this.props.updates.current_version;
+        console.log(this.props.updates);
+
+        const currentVersion = this.props.updates.current_version;
 
         const releases = filter(this.props.updates.releases, release => {
             return versionComparator(release.name, currentVersion) === 1;

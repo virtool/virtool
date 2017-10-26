@@ -22,6 +22,8 @@ async def get(req):
         }
     })
 
+    document["current_version"] = virtool.app.find_server_version()
+
     return json_response(virtool.utils.base_processor(document))
 
 

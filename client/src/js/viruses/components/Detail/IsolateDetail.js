@@ -190,7 +190,8 @@ const mapStateToProps = (state) => {
         editing: state.viruses.editingIsolate,
         editingSequence: state.viruses.editSequence,
         allowedSourceTypes: state.settings.data.allowed_source_types,
-        restrictSourceTypes: state.settings.data.restrict_source_types
+        restrictSourceTypes: state.settings.data.restrict_source_types,
+        canModify: state.account.permissions.modify_virus
     };
 };
 

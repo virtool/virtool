@@ -296,15 +296,22 @@ def configure_ssl(cert_path, key_path):
 
 
 def find_server_version(install_path="."):
+    output = None
+
     try:
-        return subprocess.check_output(["git", "describe", "--tags"]).decode().rstrip()
+        output = subprocess.check_output(["git", "describe", "--tags"]).decode().rstrip()
     except (subprocess.CalledProcessError, FileNotFoundError):
-        try:
-            version_file_path = os.path.join(install_path, "VERSION")
+        pass
 
-            with open(version_file_path, "r") as version_file:
-                return version_file.read().rstrip()
+    if output and "Not a git repository" not in output:
+        return output
+    
+    try:
+        version_file_path = os.path.join(install_path, "VERSION")
 
-        except FileNotFoundError:
-            logger.critical("Could not determine software version.")
-            return "Unknown"
+        with open(version_file_path, "r") as version_file:
+            return version_file.read().rstrip()
+
+    except FileNotFoundError:
+        logger.critical("Could not determine software version.")
+        return "Unknown"
