@@ -1,4 +1,3 @@
-import { assign } from "lodash";
 import {
     WS_UPDATE_STATUS,
     GET_SOFTWARE_UPDATES,
@@ -20,22 +19,22 @@ const updatesReducer = (state = initialState, action) => {
 
         case WS_UPDATE_STATUS:
             if (action.data.id === "software_update") {
-                return assign({}, state, {software: action.data});
+                return {...state, software: action.data};
             }
 
             return state;
 
         case GET_SOFTWARE_UPDATES.SUCCEEDED:
-            return assign({}, state, {software: action.data});
+            return {...state, software: action.data};
 
         case GET_DATABASE_UPDATES.SUCCEEDED:
-            return assign({}, state, {database: action.data});
+            return {...state, database: action.data};
 
         case SHOW_INSTALL_MODAL:
-            return assign({}, state, {showInstallModal: true});
+            return {...state, showInstallModal: true};
 
         case HIDE_INSTALL_MODAL:
-            return assign({}, state, {showInstallModal: false});
+            return {...state, showInstallModal: false};
 
         default:
             return state;
