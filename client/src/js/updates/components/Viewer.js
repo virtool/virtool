@@ -1,13 +1,12 @@
 import React from "react";
-import { filter } from "lodash";
+import { capitalize, filter, toNumber } from "lodash";
 import { connect } from "react-redux";
 import { ClipLoader } from "halogenium";
 import { Row, Col, Panel, ListGroup } from "react-bootstrap";
 
 import { getSoftwareUpdates, showInstallModal } from "../actions";
 import { updateSetting } from "../../settings/actions";
-import { Button, Checkbox, Icon, InputSave } from "../../base";
-import { versionComparator } from "../../utils";
+import { Button, Icon, Radio } from "../../base";
 import Release from "./Release";
 import InstallModal from "./Install";
 
@@ -31,12 +30,30 @@ class SoftwareUpdateViewer extends React.Component {
             );
         }
 
-        console.log(this.props.updates);
-
         const currentVersion = this.props.updates.current_version;
 
+        let [ currentNumber, currentPre ] = currentVersion.replace("v", "").split("-").map(part =>
+            part.split(".").map(toNumber)
+        );
+
         const releases = filter(this.props.updates.releases, release => {
-            return versionComparator(release.name, currentVersion) === 1;
+            const [ number, pre ] = release.name.replace("v", "").split("-").map(part => part.split("."));
+
+            if (currentNumber[0] > number[0] || currentNumber[1] > number[1] || currentNumber[2] > number[2]) {
+                return false;
+            }
+
+            // Reject if release is a pre-release, but current one isn't.
+            if (!currentPre && pre) {
+                return false;
+            }
+
+            // Reject if the release is alpha, but current on is beta.
+            if (currentPre[0] === "beta" && pre[0] === "alpha") {
+                return false;
+            }
+
+            return currentPre[1] < pre[1];
         });
 
         let installModal;
@@ -77,6 +94,15 @@ class SoftwareUpdateViewer extends React.Component {
             );
         }
 
+        const radioComponents = ["stable", "beta", "alpha"].map((channel) =>
+            <Radio
+                key={channel}
+                checked={this.props.channel === channel}
+                label={`${capitalize(channel)}${channel === "stable" ? " (recommended)": ""}`}
+                onClick={() => this.props.onSetSoftwareChannel(channel)}
+            />
+        );
+
         return (
             <div>
                 <Row>
@@ -85,21 +111,15 @@ class SoftwareUpdateViewer extends React.Component {
                             <strong>Software Updates</strong>
                         </h5>
                     </Col>
-                    <Col xs={12} md={7}>
+                    <Col xs={12} md={8}>
                         {updateComponent}
                     </Col>
-                    <Col xs={12} md={5}>
+                    <Col xs={12} md={4}>
                         <Panel>
                             <Row>
                                 <Col xs={12}>
-                                    <InputSave
-                                        label="Repository"
-                                        initialValue={this.props.softwareRepo}
-                                        onSave={(value) => console.log(value)}
-                                    />
-                                </Col>
-                                <Col xs={12}>
-                                    <Checkbox label="Ignore pre-releases" checked={true} />
+                                    <label>Software Channel</label>
+                                    {radioComponents}
                                 </Col>
                             </Row>
                         </Panel>
@@ -114,7 +134,7 @@ class SoftwareUpdateViewer extends React.Component {
 const mapStateToProps = (state) => {
     return {
         updates: state.updates.software,
-        softwareRepo: state.settings.data.software_repo
+        channel: state.settings.data.software_channel
     };
 };
 
@@ -124,8 +144,8 @@ const mapDispatchToProps = (dispatch) => {
             dispatch(getSoftwareUpdates());
         },
 
-        onUpdateSoftwareRepo: (value) => {
-            dispatch(updateSetting("software_repo", value));
+        onSetSoftwareChannel: (value) => {
+            dispatch(updateSetting("software_channel", value));
         },
 
         onShowModal: () => {
