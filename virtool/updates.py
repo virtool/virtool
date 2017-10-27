@@ -25,7 +25,7 @@ RELEASE_KEYS = [
 ]
 
 
-async def get_releases(db, repo, server_version, username=None, token=None):
+async def get_releases(db, repo, channel, server_version, username=None, token=None):
     headers = {
         "user-agent": "virtool/{}".format(server_version),
         "Accept": "application/vnd.github.v3+json"
@@ -42,12 +42,18 @@ async def get_releases(db, repo, server_version, username=None, token=None):
         async with session.get(url, headers=headers) as resp:
             data = await resp.json()
 
+    if resp.status != 200:
+        raise virtool.errors.GitHubError("Could not retrieve GitHub data: {}".format(resp.status))
+
     # Reformat the release dicts to make them more palatable. If the response code was not 200, the releases list
     # will be empty. This is interpreted by the web client as an error.
-    if resp.status == 200:
-        releases = [format_software_release(release) for release in data if not release["prerelease"]]
-    else:
-        raise virtool.errors.GitHubError("Could not retrieve GitHub data: {}".format(resp.status))
+    if channel == "stable":
+        data = [release for release in data if "alpha" not in release["name"] and "beta" not in release["name"]]
+
+    elif channel == "beta":
+        data = [release for release in data if "alpha" not in release["name"]]
+
+    releases = [format_software_release(release) for release in data]
 
     await db.status.update_one({"_id": "software_update"}, {
         "$set": {

@@ -5,18 +5,22 @@ import virtool.utils
 import virtool.updates
 from virtool.handlers.utils import json_response, not_found
 
+SOFTWARE_REPO = "virtool/virtool"
+
 
 async def get(req):
+    db = req.app["db"]
     settings = req.app["settings"]
 
-    repo = settings.get("software_repo")
+    channel = settings.get("software_channel")
+
     server_version = virtool.app.find_server_version()
 
     username, token = settings.get("github_username"), settings.get("github_token")
 
-    releases = await virtool.updates.get_releases(req.app["db"], repo, server_version, username, token)
+    releases = await virtool.updates.get_releases(db, SOFTWARE_REPO, channel, server_version, username, token)
 
-    document = await req.app["db"].status.find_one_and_update({"_id": "software_update"}, {
+    document = await db.status.find_one_and_update({"_id": "software_update"}, {
         "$set": {
             "releases": releases
         }
@@ -47,13 +51,12 @@ async def upgrade(req):
         await db.status.insert_one(document)
 
     if not document.get("releases", None):
-        repo = settings.get("software_repo")
         server_version = virtool.app.find_server_version()
         username, token = settings.get("github_username"), settings.get("github_token")
 
         document = await db.status.find_one_and_update({"_id": "software_update"}, {
             "$set": {
-                "releases": await virtool.updates.get_releases(db, repo, server_version, username, token)
+                "releases": await virtool.updates.get_releases(db, SOFTWARE_REPO, server_version, username, token)
             }
         }, return_document=pymongo.ReturnDocument)
 
