@@ -15,42 +15,36 @@ import { Flex, FlexItem } from "../../base";
 import ChangePassword from "./Password";
 import { Identicon } from "../../base";
 
-class AccountGeneral extends React.Component {
+const AccountGeneral = ({ id, groups, hash }) => {
 
-    constructor (props) {
-        super(props);
-    }
+    const groupLabels = groups.map(groupId =>
+        <Label key={groupId} style={{marginRight: "3px"}}>
+            {capitalize(groupId)}
+        </Label>
+    );
+    
+    return (
+        <div>
+            <Flex alignItems="stretch" style={{marginBottom: "15px"}}>
+                <FlexItem>
+                    <Identicon hash={hash} />
+                </FlexItem>
+                <FlexItem pad={10}>
+                    <h5>
+                        <strong>
+                            {id}
+                        </strong>
+                    </h5>
+                    <div>
+                        {groupLabels}
+                    </div>
+                </FlexItem>
+            </Flex>
 
-    render () {
-        const groupLabels = this.props.groups.map(groupId =>
-            <Label key={groupId} style={{marginRight: "3px"}}>
-                {capitalize(groupId)}
-            </Label>
-        );
-
-        return (
-            <div>
-                <Flex alignItems="stretch">
-                    <FlexItem>
-                        <Identicon hash={this.props.hash} />
-                    </FlexItem>
-                    <FlexItem pad={10}>
-                        <h5>
-                            <strong>
-                                {this.props.id}
-                            </strong>
-                        </h5>
-                        <div>
-                            {groupLabels}
-                        </div>
-                    </FlexItem>
-                </Flex>
-
-                <ChangePassword />
-            </div>
-        );
-    }
-}
+            <ChangePassword />
+        </div>
+    );
+};
 
 const mapStateToProps = (state) => {
     return {
