@@ -75,7 +75,6 @@ SCHEMA = {
     "github_token": {"type": "string", "default": None, "nullable": True},
     "github_username": {"type": "string", "default": None, "nullable": True},
     "software_repo": {"type": "string", "default": "virtool/virtool"},
-    "database_repo": {"type": "string", "default": "virtool/virtool-database"},
 
     # Accounts
     "minimum_password_length": {"type": "integer", "default": 8},
