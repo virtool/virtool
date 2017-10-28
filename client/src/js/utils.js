@@ -77,27 +77,3 @@ export const followDynamicDownload = (filename, text) => {
 
     document.body.removeChild(a);
 };
-
-export const versionComparator = (a, b) => {
-    let splitA = a.replace("v", "").split("-")[0];
-    let splitB = b.replace("v", "").split("-")[0];
-
-    if (splitA === splitB) {
-        return 0;
-    }
-
-    splitA = splitA.split(".");
-    splitB = splitB.split(".");
-
-    for (let i = 0; i < 3; i++) {
-        if (splitA[i] > splitB[i]) {
-            return 1;
-        }
-
-        if (splitA[i] < splitB[i]) {
-            return -1;
-        }
-    }
-
-    throw("Could not compare versions");
-};
