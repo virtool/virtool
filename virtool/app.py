@@ -1,9 +1,10 @@
-import os
-import sys
-import ssl
-import logging
-import subprocess
 import concurrent.futures
+import logging
+import os
+import pymongo
+import ssl
+import sys
+import subprocess
 
 from aiohttp import web
 from motor import motor_asyncio
@@ -115,15 +116,16 @@ async def init_db(app):
     logger.info("Creating database indexes...")
 
     await db.analyses.create_index("sample.id")
-    await db.viruses.create_index("name")
-    await db.viruses.create_index("abbreviation")
-    await db.sequences.create_index("virus_id")
-    await db.indexes.create_index("version", unique=True)
     await db.history.create_index("virus.id")
     await db.history.create_index("index.id")
-    await db.history.create_index("created_at")
+    await db.history.create_index([("created_at", pymongo.DESCENDING)])
+    await db.indexes.create_index("version", unique=True)
     await db.keys.create_index("id", unique=True)
     await db.keys.create_index("user.id")
+    await db.samples.create_index("created_at")
+    await db.sequences.create_index("virus_id")
+    await db.viruses.create_index("name")
+    await db.viruses.create_index("abbreviation")
 
     app["db"] = db
 
@@ -305,7 +307,7 @@ def find_server_version(install_path="."):
 
     if output and "Not a git repository" not in output:
         return output
-    
+
     try:
         version_file_path = os.path.join(install_path, "VERSION")
 
