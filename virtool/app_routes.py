@@ -98,6 +98,7 @@ def setup_update_routes(app):
     app.router.add_get("/api/updates/software", updates.get)
     app.router.add_post("/api/updates/software", updates.upgrade)
 
+
 def setup_jobs_routes(app):
     app.router.add_get("/api/jobs", jobs.find)
     app.router.add_get("/api/jobs/{job_id}", jobs.get)
