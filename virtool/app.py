@@ -1,3 +1,4 @@
+import aiofiles
 import concurrent.futures
 import logging
 import os
@@ -297,11 +298,12 @@ def configure_ssl(cert_path, key_path):
     return ssl_ctx
 
 
-def find_server_version(install_path="."):
+async def find_server_version(loop, install_path="."):
     output = None
 
     try:
-        output = subprocess.check_output(["git", "describe", "--tags"]).decode().rstrip()
+        output = await loop.run_in_executor(None, subprocess.check_output, ["git", "describe", "--tags"])
+        output = output.decode().rstrip()
     except (subprocess.CalledProcessError, FileNotFoundError):
         pass
 
@@ -311,8 +313,9 @@ def find_server_version(install_path="."):
     try:
         version_file_path = os.path.join(install_path, "VERSION")
 
-        with open(version_file_path, "r") as version_file:
-            return version_file.read().rstrip()
+        async with aiofiles.open(version_file_path, "r") as version_file:
+            content = await version_file.read()
+            return content.rstrip()
 
     except FileNotFoundError:
         logger.critical("Could not determine software version.")
