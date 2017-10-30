@@ -15,6 +15,7 @@ import { connect } from "react-redux";
 import { Badge, Label, Panel, Table, ListGroup } from "react-bootstrap";
 
 import {
+    setIsolateAsDefault,
     showEditIsolate,
     showRemoveIsolate,
     showAddSequence,
@@ -73,6 +74,16 @@ const IsolateDetail = (props) => {
                     onClick={props.showEditIsolate}
                     style={{paddingLeft: "7px"}}
                 />
+
+                {isolate.default ? null: (
+                    <Icon
+                        name="star"
+                        bsStyle="success"
+                        tip="Set as Default"
+                        onClick={() => props.setIsolateAsDefault(props.virusId, isolate.id)}
+                        style={{paddingLeft: "3px"}}
+                    />
+                )}
 
                 <Icon
                     name="remove"
@@ -151,9 +162,19 @@ const IsolateDetail = (props) => {
                                     <td>{isolate.source_name}</td>
                                 </tr>
                                 <tr>
-                                    <th>Unique ID</th>
-                                    <td>{isolate.id}</td>
+                                    <th>Default</th>
+                                    <td>
+                                        <Label bsStyle={isolate.default ? "success": "default"}>
+                                            {isolate.default ? "Yes": "No"}
+                                        </Label>
+                                    </td>
                                 </tr>
+                                {props.showIds ? (
+                                    <tr>
+                                        <th>Unique ID</th>
+                                        <td>{isolate.id}</td>
+                                    </tr>
+                                ): null}
                             </tbody>
                         </Table>
 
@@ -191,12 +212,17 @@ const mapStateToProps = (state) => {
         editingSequence: state.viruses.editSequence,
         allowedSourceTypes: state.settings.data.allowed_source_types,
         restrictSourceTypes: state.settings.data.restrict_source_types,
+        showIds: state.account.settings.show_ids,
         canModify: state.account.permissions.modify_virus
     };
 };
 
 const mapDispatchToProps = (dispatch) => {
     return {
+        setIsolateAsDefault: (virusId, isolateId) => {
+            dispatch(setIsolateAsDefault(virusId, isolateId));
+        },
+
         showEditIsolate: (virusId, isolateId, sourceType, sourceName) => {
             dispatch(showEditIsolate(virusId, isolateId, sourceType, sourceName));
         },

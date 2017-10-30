@@ -36,8 +36,8 @@ const getMethodIcon = (change) => {
         case "edit_isolate":
             return <Icon name="lab" bsStyle="warning" />;
 
-        case "set_default_isolate":
-            return <Icon name="lab" bsStyle="warning" />;
+        case "set_as_default":
+            return <Icon name="star" bsStyle="warning" />;
 
         case "remove_isolate":
             return <Icon name="lab" bsStyle="danger" />;
