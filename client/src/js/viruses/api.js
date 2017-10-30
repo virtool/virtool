@@ -78,6 +78,10 @@ const virusesAPI = {
             });
     },
 
+    setIsolateAsDefault: (virusId, isolateId) => {
+        return Request.put(`/api/viruses/${virusId}/isolates/${isolateId}/default`);
+    },
+
     removeIsolate: (virusId, isolateId) => {
         return Request.delete(`/api/viruses/${virusId}/isolates/${isolateId}`);
     },

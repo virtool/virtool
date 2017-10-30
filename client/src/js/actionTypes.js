@@ -50,28 +50,22 @@ export const HIDE_SAMPLE_MODAL = "HIDE_SAMPLE_MODAL";
 // Virus
 export const WS_UPDATE_VIRUS = "WS_UPDATE_VIRUS";
 export const WS_REMOVE_VIRUS = "WS_REMOVE_VIRUS";
-
 export const FIND_VIRUSES = createRequestActionType("FIND_VIRUSES");
 export const GET_VIRUS = createRequestActionType("GET_VIRUS");
 export const CREATE_VIRUS = createRequestActionType("CREATE_VIRUS");
 export const EDIT_VIRUS = createRequestActionType("EDIT_VIRUS");
 export const REMOVE_VIRUS = createRequestActionType("REMOVE_VIRUS");
-
 export const GET_VIRUS_HISTORY = createRequestActionType("GET_VIRUS_HISTORY");
-
 export const ADD_ISOLATE = createRequestActionType("ADD_ISOLATE");
 export const EDIT_ISOLATE = createRequestActionType("EDIT_ISOLATE");
+export const SET_ISOLATE_AS_DEFAULT = createRequestActionType("SET_ISOLATE_AS_DEFAULT");
 export const REMOVE_ISOLATE = createRequestActionType("REMOVE_ISOLATE");
-
 export const ADD_SEQUENCE = createRequestActionType("ADD_SEQUENCE");
 export const EDIT_SEQUENCE = createRequestActionType("EDIT_SEQUENCE");
 export const REMOVE_SEQUENCE = createRequestActionType("REMOVE_SEQUENCE");
-
 export const REVERT = createRequestActionType("REVERT");
-
 export const UPLOAD_IMPORT = createRequestActionType("UPLOAD_IMPORT");
 export const COMMIT_IMPORT = createRequestActionType("COMMIT_IMPORT");
-
 export const SELECT_ISOLATE = "SELECT_ISOLATE";
 export const SELECT_SEQUENCE = "SELECT_SEQUENCE";
 export const SHOW_EDIT_VIRUS = "SHOW_EDIT_VIRUS";

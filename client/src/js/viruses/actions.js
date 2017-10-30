@@ -18,6 +18,7 @@ import {
     REMOVE_VIRUS,
     ADD_ISOLATE,
     EDIT_ISOLATE,
+    SET_ISOLATE_AS_DEFAULT,
     REMOVE_ISOLATE,
     ADD_SEQUENCE,
     EDIT_SEQUENCE,
@@ -106,6 +107,14 @@ export function addIsolate (virusId, sourceType, sourceName) {
         virusId,
         sourceType,
         sourceName
+    };
+}
+
+export function setIsolateAsDefault (virusId, isolateId) {
+    return {
+        type: SET_ISOLATE_AS_DEFAULT.REQUESTED,
+        virusId,
+        isolateId
     };
 }
 

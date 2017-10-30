@@ -21,6 +21,7 @@ import {
     REMOVE_VIRUS,
     ADD_ISOLATE,
     EDIT_ISOLATE,
+    SET_ISOLATE_AS_DEFAULT,
     REMOVE_ISOLATE,
     ADD_SEQUENCE,
     EDIT_SEQUENCE,
@@ -43,6 +44,7 @@ export function* watchViruses () {
     yield takeEvery(REMOVE_VIRUS.REQUESTED, removeVirus);
     yield takeEvery(ADD_ISOLATE.REQUESTED, addIsolate);
     yield takeEvery(EDIT_ISOLATE.REQUESTED, editIsolate);
+    yield takeEvery(SET_ISOLATE_AS_DEFAULT.REQUESTED, setIsolateAsDefault);
     yield takeEvery(REMOVE_ISOLATE.REQUESTED, removeIsolate);
     yield takeEvery(ADD_SEQUENCE.REQUESTED, addSequence);
     yield takeEvery(EDIT_SEQUENCE.REQUESTED, editSequence);
@@ -107,6 +109,22 @@ export function* editVirus (action) {
         } catch (error) {
             if (error.response.status === 409) {
                 yield put({type: EDIT_VIRUS.FAILED, message: error.response.body.message});
+            } else{
+                throw error;
+            }
+        }
+    }, action);
+}
+
+export function* setIsolateAsDefault (action) {
+    yield setPending(function* (action) {
+        try {
+            yield virusesAPI.setIsolateAsDefault(action.virusId, action.isolateId);
+            const response = yield virusesAPI.get(action.virusId);
+            yield put({type: SET_ISOLATE_AS_DEFAULT.SUCCEEDED, data: response.body});
+        } catch (error) {
+            if (error.response.status === 409) {
+                yield put({type: SET_ISOLATE_AS_DEFAULT.FAILED, message: error.response.body.message});
             } else{
                 throw error;
             }

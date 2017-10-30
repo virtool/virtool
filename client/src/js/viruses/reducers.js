@@ -20,6 +20,7 @@ import {
     REMOVE_VIRUS,
     ADD_ISOLATE,
     EDIT_ISOLATE,
+    SET_ISOLATE_AS_DEFAULT,
     REMOVE_ISOLATE,
     ADD_SEQUENCE,
     EDIT_SEQUENCE,
@@ -165,6 +166,7 @@ export default function virusesReducer (state = virusesInitialState, action) {
         case EDIT_VIRUS.SUCCEEDED:
         case ADD_ISOLATE.SUCCEEDED:
         case EDIT_ISOLATE.SUCCEEDED:
+        case SET_ISOLATE_AS_DEFAULT.SUCCEEDED:
         case REMOVE_ISOLATE.SUCCEEDED:
         case ADD_SEQUENCE.SUCCEEDED:
         case EDIT_SEQUENCE.SUCCEEDED:
