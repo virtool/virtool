@@ -5,8 +5,6 @@ import virtool.utils
 import virtool.updates
 from virtool.handlers.utils import json_response, not_found
 
-SOFTWARE_REPO = "virtool/virtool"
-
 
 async def get(req):
     db = req.app["db"]
@@ -14,11 +12,11 @@ async def get(req):
 
     channel = settings.get("software_channel")
 
-    server_version = virtool.app.find_server_version()
+    server_version = await virtool.app.find_server_version(req.app.loop)
 
     username, token = settings.get("github_username"), settings.get("github_token")
 
-    releases = await virtool.updates.get_releases(db, SOFTWARE_REPO, channel, server_version, username, token)
+    releases = await virtool.updates.get_releases(db, channel, server_version, username, token)
 
     document = await db.status.find_one_and_update({"_id": "software_update"}, {
         "$set": {
@@ -26,7 +24,7 @@ async def get(req):
         }
     })
 
-    document["current_version"] = virtool.app.find_server_version()
+    document["current_version"] = server_version
 
     return json_response(virtool.utils.base_processor(document))
 
@@ -51,12 +49,12 @@ async def upgrade(req):
         await db.status.insert_one(document)
 
     if not document.get("releases", None):
-        server_version = virtool.app.find_server_version()
+        server_version = await virtool.app.find_server_version(req.app.loop)
         username, token = settings.get("github_username"), settings.get("github_token")
 
         document = await db.status.find_one_and_update({"_id": "software_update"}, {
             "$set": {
-                "releases": await virtool.updates.get_releases(db, SOFTWARE_REPO, server_version, username, token)
+                "releases": await virtool.updates.get_releases(db, server_version, username, token)
             }
         }, return_document=pymongo.ReturnDocument)
 
@@ -86,7 +84,7 @@ async def upgrade(req):
 
     download_url = latest_release["download_url"]
 
-    req.app.loop.create_task(virtool.updates.install_update(
+    req.app.loop.create_task(virtool.updates.install(
         db,
         dispatch,
         req.app.loop,

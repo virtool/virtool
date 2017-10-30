@@ -1,3 +1,4 @@
+import concurrent.futures
 import os
 import pytest
 import subprocess
@@ -5,47 +6,31 @@ import subprocess
 from virtool.app import find_server_version
 
 
-@pytest.fixture
-def bad_check_output():
-    def check_output(*args, **kwargs):
-        raise subprocess.CalledProcessError(1, "none")
+@pytest.mark.parametrize("source", [None, "git", "file"])
+async def test_find_server_version(source, loop, mocker, tmpdir):
+    if source == "git":
+        mocker.patch(
+            "subprocess.check_output",
+            return_value=bytes("1.0.13", encoding="utf-8")
+        )
+    else:
+        mocker.patch(
+            "subprocess.check_output",
+            side_effect=subprocess.CalledProcessError(1, "none")
+        )
 
-    return check_output
+    loop.set_default_executor(concurrent.futures.ThreadPoolExecutor())
 
+    tmpdir.join("VERSION")
 
-@pytest.fixture
-def fixed_git_describe():
-    def check_output(*args, **kwargs):
-        return bytes("1.0.13", encoding="utf-8")
+    if source == "git":
+        assert await find_server_version(loop, str(tmpdir)) == "1.0.13"
 
-    return check_output
-
-
-class TestFindServerVersion:
-
-    def test_git(self, monkeypatch, fixed_git_describe, tmpdir):
-        monkeypatch.setattr(subprocess, "check_output", fixed_git_describe)
-
-        version = find_server_version(str(tmpdir))
-
-        assert version == "1.0.13"
-
-    def test_file(self, monkeypatch, bad_check_output, tmpdir):
-        tmpdir.join("VERSION")
-
+    elif source == "file":
         with open(os.path.join(str(tmpdir), "VERSION"), "w") as handle:
             handle.write("1.0.12")
 
-        monkeypatch.setattr(subprocess, "check_output", bad_check_output)
+        assert await find_server_version(loop, str(tmpdir)) == "1.0.12"
 
-        version = find_server_version(str(tmpdir))
-
-        assert version == "1.0.12"
-
-    def test_none(self, monkeypatch, bad_check_output, tmpdir):
-
-        monkeypatch.setattr(subprocess, "check_output", bad_check_output)
-
-        version = find_server_version(str(tmpdir))
-
-        assert version == "Unknown"
+    else:
+        assert await find_server_version(loop, str(tmpdir)) == "Unknown"

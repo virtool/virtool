@@ -14,7 +14,9 @@ import virtool.errors
 
 logger = logging.getLogger(__name__)
 
-INSTALL_PATH = os.path.dirname(os.path.realpath(sys.argv[0]))
+INSTALL_PATH = sys.argv[0]
+
+SOFTWARE_REPO = "virtool/virtool"
 
 RELEASE_KEYS = [
     "name",
@@ -25,7 +27,29 @@ RELEASE_KEYS = [
 ]
 
 
-async def get_releases(db, repo, channel, server_version, username=None, token=None):
+async def get_releases(db, channel, server_version, username=None, token=None):
+    """
+    Get a list of releases, from the Virtool Github repository, published since the current server version.
+
+    :param db: the application database client
+    :type db: :class:`~motor.motor_asyncio.AsyncIOMotorClient`
+
+    :param channel: the software channel to use
+    :type channel: str
+
+    :param server_version: the current server version string
+    :type server_version: str
+
+    :param username: a Github username
+    :type username: str
+
+    :param token: a Github personal access token
+    :type token: str
+
+    :return: a list of Github releases
+    :rtype: Coroutine[list]
+
+    """
     headers = {
         "user-agent": "virtool/{}".format(server_version),
         "Accept": "application/vnd.github.v3+json"
@@ -36,7 +60,7 @@ async def get_releases(db, repo, channel, server_version, username=None, token=N
     if token is not None:
         auth = aiohttp.BasicAuth(login=username, password=token)
 
-    url = "https://api.github.com/repos/{}/releases".format(repo)
+    url = "https://api.github.com/repos/{}/releases".format(SOFTWARE_REPO)
 
     async with aiohttp.ClientSession(auth=auth) as session:
         async with session.get(url, headers=headers) as resp:
@@ -53,7 +77,7 @@ async def get_releases(db, repo, channel, server_version, username=None, token=N
     elif channel == "beta":
         data = [release for release in data if "alpha" not in release["name"]]
 
-    releases = [format_software_release(release) for release in data]
+    releases = [format_software_release(release) for release in data if release["assets"]]
 
     await db.status.update_one({"_id": "software_update"}, {
         "$set": {
