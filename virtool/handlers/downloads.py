@@ -1,5 +1,5 @@
 """
-Request handlers for file downloads.
+Provides request handlers for file downloads.
 
 """
 from aiohttp import web
@@ -24,10 +24,10 @@ async def download_sequence(req):
 
     isolate = virtool.virus.find_isolate(virus["isolates"], sequence["isolate_id"])
 
-    isolate_name = virtool.virus.format_isolate_name(isolate)
-
     if isolate is None:
         return web.Response(status=404)
+
+    isolate_name = virtool.virus.format_isolate_name(isolate)
 
     seq = sequence["sequence"]
 
