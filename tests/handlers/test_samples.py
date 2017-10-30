@@ -1,3 +1,4 @@
+import arrow
 import pytest
 from aiohttp.test_utils import make_mocked_coro
 
@@ -28,21 +29,21 @@ class TestFind:
             "total_count": 3
         }),
         # Test ``term`` query param and ``found_count`` response field.
-        ("gv", None, None, range(0, 2), {
+        ("gv", None, None, range(1, 3), {
             "page": 1,
             "per_page": 15,
             "page_count": 1,
             "found_count": 2,
             "total_count": 3
         }),
-        ("sp", None, None, range(2, 3), {
+        ("sp", None, None, range(0, 1), {
             "page": 1,
             "per_page": 15,
             "page_count": 1,
             "found_count": 1,
             "total_count": 3
         }),
-        ("fred", None, None, range(1, 3), {
+        ("fred", None, None, [0, 2], {
             "page": 1,
             "per_page": 15,
             "page_count": 1,
@@ -52,6 +53,10 @@ class TestFind:
     ])
     async def test(self, term, per_page, page, d_range, meta, spawn_client, static_time):
         client = await spawn_client()
+
+        time_1 = arrow.get(static_time).datetime
+        time_2 = arrow.get(static_time).shift(hours=1).datetime
+        time_3 = arrow.get(static_time).shift(hours=2).datetime
 
         await client.db.samples.insert_many([
             {
@@ -63,7 +68,7 @@ class TestFind:
                 "foobar": True,
                 "imported": True,
                 "isolate": "Thing",
-                "created_at": static_time,
+                "created_at": time_2,
                 "archived": True,
                 "_id": "beb1eb10",
                 "name": "16GVP042",
@@ -78,7 +83,7 @@ class TestFind:
                 "foobar": True,
                 "imported": True,
                 "isolate": "Test",
-                "created_at": static_time,
+                "created_at": time_1,
                 "archived": True,
                 "_id": "72bb8b31",
                 "name": "16GVP043",
@@ -93,7 +98,7 @@ class TestFind:
                 "foobar": True,
                 "imported": True,
                 "isolate": "",
-                "created_at": static_time,
+                "created_at": time_3,
                 "archived": False,
                 "_id": "cb400e6d",
                 "name": "16SPP044",
@@ -115,12 +120,26 @@ class TestFind:
 
         if len(query):
             path += "?{}".format("&".join(query))
-        
+
         resp = await client.get(path)
 
         assert resp.status == 200
 
         expected_documents = [
+            {
+                "user": {
+                    "id": "fred"
+                },
+                "nuvs": False,
+                "host": "",
+                "imported": True,
+                "isolate": "",
+                "created_at": "2017-10-06T22:00:00Z",
+                "archived": False,
+                "id": "cb400e6d",
+                "name": "16SPP044",
+                "pathoscope": False
+            },
             {
                 "user": {
                     "id": "bob"
@@ -129,7 +148,7 @@ class TestFind:
                 "host": "",
                 "imported": True,
                 "isolate": "Thing",
-                "created_at": "2017-10-06T20:00:00Z",
+                "created_at": "2017-10-06T21:00:00Z",
                 "archived": True,
                 "id": "beb1eb10",
                 "name": "16GVP042",
@@ -147,20 +166,6 @@ class TestFind:
                 "archived": True,
                 "id": "72bb8b31",
                 "name": "16GVP043",
-                "pathoscope": False
-            },
-            {
-                "user": {
-                    "id": "fred"
-                },
-                "nuvs": False,
-                "host": "",
-                "imported": True,
-                "isolate": "",
-                "created_at": "2017-10-06T20:00:00Z",
-                "archived": False,
-                "id": "cb400e6d",
-                "name": "16SPP044",
                 "pathoscope": False
             }
         ]
