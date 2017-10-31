@@ -108,41 +108,6 @@ async def test_write_fasta(virus_version, test_motor, mocker, test_rebuild_job):
         ]
 
 
-@pytest.mark.parametrize("error", [False, True])
-async def test_bowtie_build(error, tmpdir, test_rebuild_job):
-    root_path = os.path.join(str(tmpdir), "reference", "viruses")
-    os.mkdir(os.path.join(root_path, "foobar"))
-
-    if not error:
-        fasta_path = os.path.join(str(tmpdir), "reference", "viruses", "foobar", "ref.fa")
-
-        with open(fasta_path, "w") as handle:
-            handle.write(">test_1\nTACGTATGACTGAGCTACGGGGCTACGACTTACCCTTCACGATCAC")
-            handle.write(">test_2\nGGCTTCGGCTGATCACGACTGGACTAGCATCTGACTACGATGCTGA")
-
-    if error:
-        with pytest.raises(virtool.job.SubprocessError) as err:
-            await test_rebuild_job.bowtie_build()
-
-        assert "virtool.job.SubprocessError" in str(err)
-        assert "Command failed: bowtie2-build -f" in str(err)
-    else:
-        await test_rebuild_job.bowtie_build()
-
-    await test_rebuild_job.flush_log()
-
-    log_path = os.path.join(str(tmpdir), "logs", "jobs", test_rebuild_job.id)
-
-    with open(log_path, "r") as handle:
-        content = handle.read()
-
-        if error:
-            assert "Error: could not open" in content
-            assert "Error: Encountered internal Bowtie 2 exception (#1)" in content
-        else:
-            assert "Building a SMALL index" in content
-
-
 @pytest.mark.parametrize("in_use", [True, False])
 async def test_replace_old(in_use, mocker, tmpdir, test_motor, test_rebuild_job):
     m = mocker.Mock()
