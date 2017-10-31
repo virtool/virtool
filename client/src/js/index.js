@@ -1,5 +1,6 @@
 import React from "react";
 import ReactDOM from "react-dom";
+import Raven from "raven-js";
 
 import App from "./App";
 import WSConnection from "./websocket";
@@ -26,6 +27,10 @@ import updatesReducer from "./updates/reducers";
 import rootSaga from "./sagas";
 
 export * from "../style/style.less";
+
+Raven.config("https://9a2f8d1a3f7a431e873207a70ef3d44d@sentry.io/220532").install();
+
+window.Raven = Raven;
 
 const sagaMiddleware = createSagaMiddleware();
 
