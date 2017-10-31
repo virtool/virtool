@@ -47,6 +47,41 @@ class TestAddedCreatedAt:
         ], key=itemgetter("_id"))
 
 
+async def test_host_to_subtraction(samples, test_motor, static_time):
+    samples[0]["subtraction"] = {
+        "id": "Prunus persica"
+    }
+
+    samples[1]["host"] = "Malus"
+
+    await test_motor.samples.insert_many(samples)
+
+    await organize_samples(test_motor)
+
+    assert await test_motor.samples.find({}, sort=[("_id", 1)]).to_list(None) == [
+        {
+            "_id": 1,
+            "name": "sample 1",
+            "created_at": static_time,
+            "pathoscope": False,
+            "nuvs": False,
+            "subtraction": {
+                "id": "Prunus persica"
+            }
+        },
+        {
+            "_id": 2,
+            "name": "sample 2",
+            "created_at": static_time,
+            "pathoscope": False,
+            "nuvs": False,
+            "subtraction": {
+                "id": "Malus"
+            }
+        }
+    ]
+
+
 class TestBowtieTags:
 
     async def test_no_analyses(self, test_motor, samples, pathoscope_analyses):
