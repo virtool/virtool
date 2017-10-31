@@ -256,12 +256,12 @@ async def organize_indexes(db):
 
 
 async def organize_subtraction(db):
-    await virtool.organize_utils.update_user_field(db.hosts)
-    await virtool.organize_utils.unset_version_field(db.hosts)
-
     collection_names = await db.collection_names()
 
     if "hosts" in collection_names and "subtraction" not in collection_names:
+        await virtool.organize_utils.update_user_field(db.hosts)
+        await virtool.organize_utils.unset_version_field(db.hosts)
+
         # Get all documents from the hosts collection.
         documents = await db.hosts.find().to_list(None)
 
