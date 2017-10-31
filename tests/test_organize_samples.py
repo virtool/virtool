@@ -1,3 +1,4 @@
+import os
 import arrow
 import pytest
 from operator import itemgetter
@@ -33,13 +34,15 @@ def nuvs_analyses():
 
 class TestAddedCreatedAt:
 
-    async def test(self, test_motor):
+    async def test(self, tmpdir, test_motor):
+        tmpdir.mkdir("samples")
+
         await test_motor.samples.insert_many([
             {"_id": 1, "added": "2017-07-11T22:07:22.106000"},
             {"_id": 2, "created_at": "2017-07-11T22:07:24.239000"}
         ])
 
-        await organize_samples(test_motor)
+        await organize_samples(test_motor, {"data_path": str(tmpdir)})
 
         assert await test_motor.samples.find(sort=[("_id", 1)]).to_list(None) == sorted([
             {"pathoscope": False, "created_at": arrow.get("2017-07-11T22:07:22.106000").naive, "nuvs": False, "_id": 1},
@@ -47,7 +50,20 @@ class TestAddedCreatedAt:
         ], key=itemgetter("_id"))
 
 
-async def test_host_to_subtraction(samples, test_motor, static_time):
+async def test_files(tmpdir, test_motor):
+    samples_dir = tmpdir.mkdir("samples")
+
+    samples_dir.mkdir("sample_432asd")
+    samples_dir.mkdir("dhj2109")
+
+    await organize_samples(test_motor, {"data_path": str(tmpdir)})
+
+    assert os.listdir(str(samples_dir)) == ["dhj2109", "432asd"]
+
+
+async def test_host_to_subtraction(tmpdir, samples, test_motor, static_time):
+    tmpdir.mkdir("samples")
+
     samples[0]["subtraction"] = {
         "id": "Prunus persica"
     }
@@ -56,7 +72,7 @@ async def test_host_to_subtraction(samples, test_motor, static_time):
 
     await test_motor.samples.insert_many(samples)
 
-    await organize_samples(test_motor)
+    await organize_samples(test_motor, {"data_path": str(tmpdir)})
 
     assert await test_motor.samples.find({}, sort=[("_id", 1)]).to_list(None) == [
         {
@@ -84,49 +100,59 @@ async def test_host_to_subtraction(samples, test_motor, static_time):
 
 class TestBowtieTags:
 
-    async def test_no_analyses(self, test_motor, samples, pathoscope_analyses):
+    async def test_no_analyses(self, tmpdir, test_motor, samples, pathoscope_analyses):
+        tmpdir.mkdir("samples")
+
         await test_motor.samples.insert_many(samples)
 
         pathoscope_analyses[2]["sample"]["id"] = 1
 
         await test_motor.analyses.insert_many(pathoscope_analyses)
 
-        await organize_samples(test_motor)
+        await organize_samples(test_motor, {"data_path": str(tmpdir)})
 
         assert (await test_motor.samples.find_one(2))["pathoscope"] is False
 
-    async def test_bowtie_in_progress(self, test_motor, samples, pathoscope_analyses):
+    async def test_bowtie_in_progress(self, tmpdir, test_motor, samples, pathoscope_analyses):
+        tmpdir.mkdir("samples")
+
         await test_motor.samples.insert_many(samples)
 
         await test_motor.analyses.insert_many(pathoscope_analyses)
 
-        await organize_samples(test_motor)
+        await organize_samples(test_motor, {"data_path": str(tmpdir)})
 
         assert (await test_motor.samples.find_one(2))["pathoscope"] == "ip"
 
-    async def test_bowtie_multi_in_progress(self, test_motor, samples, pathoscope_analyses):
+    async def test_bowtie_multi_in_progress(self, tmpdir, test_motor, samples, pathoscope_analyses):
+        tmpdir.mkdir("samples")
+
         await test_motor.samples.insert_many(samples)
 
         pathoscope_analyses[1]["sample_id"] = 2
 
         await test_motor.analyses.insert_many(pathoscope_analyses)
 
-        await organize_samples(test_motor)
+        await organize_samples(test_motor, {"data_path": str(tmpdir)})
 
         assert (await test_motor.samples.find_one(2))["pathoscope"] == "ip"
 
-    async def test_bowtie_one_ready(self, test_motor, samples, pathoscope_analyses):
+    async def test_bowtie_one_ready(self, tmpdir, test_motor, samples, pathoscope_analyses):
+        tmpdir.mkdir("samples")
+
         await test_motor.samples.insert_many(samples)
 
         pathoscope_analyses[2]["ready"] = True
 
         await test_motor.analyses.insert_many(pathoscope_analyses)
 
-        await organize_samples(test_motor)
+        await organize_samples(test_motor, {"data_path": str(tmpdir)})
 
         assert (await test_motor.samples.find_one(2))["pathoscope"] is True
 
-    async def test_bowtie_multi_ready(self, test_motor, samples, pathoscope_analyses):
+    async def test_bowtie_multi_ready(self, tmpdir, test_motor, samples, pathoscope_analyses):
+        tmpdir.mkdir("samples")
+
         await test_motor.samples.insert_many(samples)
 
         pathoscope_analyses[2].update({
@@ -138,22 +164,26 @@ class TestBowtieTags:
 
         await test_motor.analyses.insert_many(pathoscope_analyses)
 
-        await organize_samples(test_motor)
+        await organize_samples(test_motor, {"data_path": str(tmpdir)})
 
         assert (await test_motor.samples.find_one(2))["pathoscope"] is True
 
-    async def test_bowtie_mixed_ready(self, test_motor, samples, pathoscope_analyses):
+    async def test_bowtie_mixed_ready(self, tmpdir, test_motor, samples, pathoscope_analyses):
+        tmpdir.mkdir("samples")
+
         await test_motor.samples.insert_many(samples)
 
         pathoscope_analyses[2]["ready"] = True
 
         await test_motor.analyses.insert_many(pathoscope_analyses)
 
-        await organize_samples(test_motor)
+        await organize_samples(test_motor, {"data_path": str(tmpdir)})
 
         assert (await test_motor.samples.find_one(2))["pathoscope"] is True
 
-    async def test_both_ready(self, test_motor, samples):
+    async def test_both_ready(self, tmpdir, test_motor, samples):
+        tmpdir.mkdir("samples")
+
         await test_motor.samples.insert_many(samples)
 
         await test_motor.analyses.insert_many([
@@ -161,45 +191,53 @@ class TestBowtieTags:
             {"_id": 3, "ready": True, "sample": {"id": 2}, "algorithm": "pathoscope_bowtie"}
         ])
 
-        await organize_samples(test_motor)
+        await organize_samples(test_motor, {"data_path": str(tmpdir)})
 
         assert (await test_motor.samples.find_one(2))["pathoscope"] is True
 
 
 class TestNuVsTags:
 
-    async def test_no_analyses(self, test_motor, samples, nuvs_analyses):
+    async def test_no_analyses(self, tmpdir, test_motor, samples, nuvs_analyses):
+        tmpdir.mkdir("samples")
+
         await test_motor.samples.insert_many(samples)
 
         nuvs_analyses[2]["sample"]["id"] = 1
 
         await test_motor.analyses.insert_many(nuvs_analyses)
 
-        await organize_samples(test_motor)
+        await organize_samples(test_motor, {"data_path": str(tmpdir)})
 
         assert (await test_motor.samples.find_one(2))["nuvs"] is False
 
-    async def test_one_in_progress(self, test_motor, samples, nuvs_analyses):
+    async def test_one_in_progress(self, tmpdir, test_motor, samples, nuvs_analyses):
+        tmpdir.mkdir("samples")
+
         await test_motor.samples.insert_many(samples)
 
         await test_motor.analyses.insert_many(nuvs_analyses)
 
-        await organize_samples(test_motor)
+        await organize_samples(test_motor, {"data_path": str(tmpdir)})
 
         assert (await test_motor.samples.find_one(2))["nuvs"] == "ip"
 
-    async def test_multi_in_progress(self, test_motor, samples, nuvs_analyses):
+    async def test_multi_in_progress(self, tmpdir, test_motor, samples, nuvs_analyses):
+        tmpdir.mkdir("samples")
+
         await test_motor.samples.insert_many(samples)
 
         nuvs_analyses[1]["sample"]["id"] = 2
 
         await test_motor.analyses.insert_many(nuvs_analyses)
 
-        await organize_samples(test_motor)
+        await organize_samples(test_motor, {"data_path": str(tmpdir)})
 
         assert (await test_motor.samples.find_one(2))["nuvs"] == "ip"
 
-    async def test_one_ready(self, test_motor, samples, nuvs_analyses):
+    async def test_one_ready(self, tmpdir, test_motor, samples, nuvs_analyses):
+        tmpdir.mkdir("samples")
+
         await test_motor.samples.insert_many(samples)
 
         nuvs_analyses[1].update({
@@ -209,11 +247,13 @@ class TestNuVsTags:
 
         await test_motor.analyses.insert_many(nuvs_analyses)
 
-        await organize_samples(test_motor)
+        await organize_samples(test_motor, {"data_path": str(tmpdir)})
 
         assert (await test_motor.samples.find_one(2))["nuvs"] is True
 
-    async def test_multi_ready(self, test_motor, samples, nuvs_analyses):
+    async def test_multi_ready(self, tmpdir, test_motor, samples, nuvs_analyses):
+        tmpdir.mkdir("samples")
+
         await test_motor.samples.insert_many(samples)
 
         for i in [1, 2]:
@@ -224,6 +264,6 @@ class TestNuVsTags:
 
         await test_motor.analyses.insert_many(nuvs_analyses)
 
-        await organize_samples(test_motor)
+        await organize_samples(test_motor, {"data_path": str(tmpdir)})
 
         assert (await test_motor.samples.find_one(2))["nuvs"] is True

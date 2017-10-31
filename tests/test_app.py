@@ -12,16 +12,19 @@ import virtool.job_manager
 
 class TestInitDB:
 
-    async def test(self, loop, test_db_name):
+    async def test(self, tmpdir, loop, test_db_name):
         """
         Test that the ``db_name`` and ``db`` keys and values are added to the ``app`` object.
         """
         app = web.Application(loop=loop)
 
+        tmpdir.mkdir("samples")
+
         temp_db_name = "foobar" + test_db_name
 
         app["settings"] = {
-            "db_name": temp_db_name
+            "db_name": temp_db_name,
+            "data_path": str(tmpdir)
         }
 
         await virtool.app.init_db(app)
@@ -34,17 +37,18 @@ class TestInitDB:
 
         await client.drop_database(temp_db_name)
 
-
-
-    async def test_override(self, loop):
+    async def test_override(self, tmpdir, loop):
         """
         Test that a ``db_name`` value from Virtool settings is overridden by one assigned to ``app`` state with the
         key ``db_name``. This would be used for passing a ``db_name`` from the CLI.
         """
         app = web.Application(loop=loop)
 
+        tmpdir.mkdir("samples")
+
         app["settings"] = {
-            "db_name": "foobar"
+            "db_name": "foobar",
+            "data_path": str(tmpdir)
         }
 
         app["db_name"] = "test"
@@ -114,7 +118,7 @@ class TestInitDispatcher:
     def test(self, loop):
         """
         Test that a instance of :class:`~virtool.app_dispatcher.Dispatcher` is attached to the app state.
-         
+
         """
         app = web.Application(loop=loop)
 

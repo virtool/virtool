@@ -1,5 +1,6 @@
 import arrow
 import hashlib
+import os
 
 import virtool.virus
 import virtool.virus_index
@@ -50,7 +51,7 @@ async def organize_jobs(db):
         })
 
 
-async def organize_samples(db):
+async def organize_samples(db, settings):
     """
     Bring sample documents up-to-date by doing the following:
 
@@ -63,6 +64,15 @@ async def organize_samples(db):
     :type db: :class:`motor.motor_asyncio.AsyncIOMotorCollection`
 
     """
+    samples_path = os.path.join(settings.get("data_path"), "samples")
+
+    if os.path.isdir(samples_path):
+        for dirname in [n for n in os.listdir(samples_path) if n.startswith("sample_")]:
+            os.rename(
+                os.path.join(samples_path, dirname),
+                os.path.join(samples_path, dirname.replace("sample_", ""))
+            )
+
     await virtool.organize_utils.update_user_field(db.samples)
     await virtool.organize_utils.unset_version_field(db.samples)
 
