@@ -1,3 +1,4 @@
+import logging
 import os
 import sys
 import ssl
@@ -6,11 +7,23 @@ import uvloop
 import asyncio
 
 from aiohttp import web
+from raven import Client
+from raven.conf import setup_logging
+from raven.handlers.logging import SentryHandler
+from raven_aiohttp import AioHttpTransport
 from setproctitle import setproctitle
 from virtool.app import create_app
 from virtool.app_init import get_args, configure
 
 sys.dont_write_bytecode = True
+
+sentry_client = Client('https://9a2f8d1a3f7a431e873207a70ef3d44d:ca6db07b82934005beceae93560a6794@sentry.io/220532', transport=AioHttpTransport)
+sentry_handler = SentryHandler(sentry_client)
+sentry_handler.setLevel(logging.ERROR)
+setup_logging(sentry_handler)
+
+logger = logging.getLogger("aiohttp.server")
+logger.addHandler(sentry_handler)
 
 setproctitle("virtool")
 
