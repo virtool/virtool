@@ -143,10 +143,10 @@ const mapDispatchProps = (dispatch) => {
         },
 
         onDrop: (fileType, acceptedFiles) => {
-            const file = acceptedFiles[0];
-            const localId = createRandomString();
-
-            dispatch(upload(localId, file, fileType, (e) => dispatch(uploadProgress(localId, e.percent))));
+            acceptedFiles.forEach(file => {
+                const localId = createRandomString();
+                dispatch(upload(localId, file, fileType, (e) => dispatch(uploadProgress(localId, e.percent))));
+            });
         }
     };
 };
