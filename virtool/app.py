@@ -94,7 +94,7 @@ async def init_db(app):
     await virtool.organize.organize_jobs(db)
 
     logger.info("Checking samples...")
-    await virtool.organize.organize_samples(db, settings)
+    await virtool.organize.organize_samples(db, app["settings"])
 
     logger.info("Checking analyses...")
     await virtool.organize.organize_analyses(db, logger.info)
