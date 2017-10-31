@@ -52,7 +52,7 @@ async def test_host_to_subtraction(samples, test_motor, static_time):
         "id": "Prunus persica"
     }
 
-    samples[1]["host"] = "Malus"
+    samples[1]["subtraction"] = "Malus"
 
     await test_motor.samples.insert_many(samples)
 

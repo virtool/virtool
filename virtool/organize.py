@@ -86,16 +86,13 @@ async def organize_samples(db):
                 }
             })
 
-    async for sample in db.samples.find({"host": {"$exists": True}}, ["host"]):
-        if isinstance(sample["host"], str):
+    async for sample in db.samples.find({"subtraction": {"$exists": True}}, ["subtraction"]):
+        if isinstance(sample["subtraction"], str):
             await db.samples.update_one({"_id": sample["_id"]}, {
                 "$set": {
                     "subtraction": {
-                        "id": sample["host"]
+                        "id": sample["subtraction"]
                     }
-                },
-                "$unset": {
-                    "host": ""
                 }
             })
 
