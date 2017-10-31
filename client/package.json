@@ -41,6 +41,7 @@
     "numeral": "^2.0.3",
     "perfect-scrollbar": "^0.6.15",
     "prop-types": "^15.5.10",
+    "raven-js": "^3.19.1",
     "rc-progress": "^2.0.3",
     "react": "15",
     "react-bootstrap": "^0.31.2",

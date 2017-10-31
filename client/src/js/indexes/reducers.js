@@ -93,7 +93,7 @@ const indexesReducer = (state = initialState, action) => {
 
         case HIDE_REBUILD:
             return assign({}, state, {
-                hideRebuild: false
+                showRebuild: false
             });
 
         case CLEAR_INDEX_ERROR:

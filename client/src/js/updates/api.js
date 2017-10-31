@@ -20,7 +20,7 @@ const updatesAPI = {
     },
 
     installSoftwareUpdates: () => {
-        return Request.patch("/api/updates/software", {});
+        return Request.post("/api/updates/software");
     }
 };
 
