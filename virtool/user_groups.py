@@ -27,10 +27,6 @@ def merge_group_permissions(groups):
     return permission_dict
 
 
-async def get_member_users(db, group_id):
-    return await db.users.find({"groups": group_id}).distinct("_id")
-
-
 async def update_member_users(db, group_id, remove=False):
     groups = await db.groups.find().to_list(length=None)
 
