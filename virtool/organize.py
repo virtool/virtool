@@ -66,11 +66,12 @@ async def organize_samples(db, settings):
     """
     samples_path = os.path.join(settings.get("data_path"), "samples")
 
-    for dirname in [n for n in os.listdir(samples_path) if n.startswith("sample_")]:
-        os.rename(
-            os.path.join(samples_path, dirname),
-            os.path.join(samples_path, dirname.replace("sample_", ""))
-        )
+    if os.path.isdir(samples_path):
+        for dirname in [n for n in os.listdir(samples_path) if n.startswith("sample_")]:
+            os.rename(
+                os.path.join(samples_path, dirname),
+                os.path.join(samples_path, dirname.replace("sample_", ""))
+            )
 
     await virtool.organize_utils.update_user_field(db.samples)
     await virtool.organize_utils.unset_version_field(db.samples)
