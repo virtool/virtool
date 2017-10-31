@@ -244,7 +244,7 @@ class Base(virtool.job.Job):
 
         #: The document for the host associated with the sample being analyzed. Assigned after database connection is
         # made.
-        self.host = None
+        self.subtraction = None
 
         #: The number of reads in the sample library. Assigned after database connection is made.
         self.read_count = None
@@ -266,7 +266,7 @@ class Base(virtool.job.Job):
             "reference"
         )
 
-        self.host_path = None
+        self.subtraction_path = None
 
         self._stage_list = [
             self.check_db,
@@ -278,7 +278,7 @@ class Base(virtool.job.Job):
         self.read_paths = None
 
         #: The document for the host associated with the sample being analyzed. Assigned after job start.
-        self.host = None
+        self.subtraction = None
 
         #: The number of reads in the sample library. Assigned after job start.
         self.read_count = None
@@ -302,9 +302,9 @@ class Base(virtool.job.Job):
             self.read_paths.append(os.path.join(self.sample_path, "reads_2.fastq"))
 
         # Get the complete host document from the database.
-        self.host = await self.db.hosts.find_one({"_id": self.sample["subtraction"]["id"]})
+        self.subtraction = await self.db.subtraction.find_one({"_id": self.sample["subtraction"]["id"]})
 
-        self.host_path = os.path.join(
+        self.subtraction_path = os.path.join(
             self.data_path,
             "reference",
             "subtraction",
@@ -389,7 +389,7 @@ class Pathoscope(Base):
         )
 
         del self.intermediate["to_subtraction"]
-        
+
         self.results["subtracted_count"] = subtracted_count
 
     @virtool.job.stage_method
@@ -661,7 +661,7 @@ class PathoscopeBowtie(Pathoscope):
             "--local",
             "-N", "0",
             "-p", str(self.proc - 1),
-            "-x", self.host_path,
+            "-x", self.subtraction_path,
             "-U", os.path.join(self.analysis_path, "mapped.fastq")
         ]
 
@@ -751,7 +751,7 @@ class NuVs(Base):
             "--very-fast-local",
             "-k", str(1),
             "-p", str(self.proc),
-            "-x", self.host_path,
+            "-x", self.subtraction_path,
             "--un", os.path.join(self.analysis_path, "unmapped_hosts.fq"),
             "-U", os.path.join(self.analysis_path, "unmapped_viruses.fq"),
         ]

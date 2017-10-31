@@ -98,7 +98,7 @@ async def test_check_db(tmpdir, paired, test_motor, mock_job):
     """
     assert mock_job.sample is None
     assert mock_job.read_paths is None
-    assert mock_job.host is None
+    assert mock_job.subtraction is None
 
     await test_motor.samples.insert_one({
         "_id": "foobar",
@@ -111,7 +111,7 @@ async def test_check_db(tmpdir, paired, test_motor, mock_job):
         }
     })
 
-    await test_motor.hosts.insert_one({
+    await test_motor.subtraction.insert_one({
         "_id": "Arabidopsis thaliana"
     })
 
@@ -128,7 +128,7 @@ async def test_check_db(tmpdir, paired, test_motor, mock_job):
         }
     }
 
-    assert mock_job.host == {
+    assert mock_job.subtraction == {
         "_id": "Arabidopsis thaliana"
     }
 
@@ -141,7 +141,7 @@ async def test_check_db(tmpdir, paired, test_motor, mock_job):
 
     assert mock_job.read_paths == [os.path.join(mock_job.sample_path, filename) for filename in expected_read_filenames]
 
-    assert mock_job.host_path == os.path.join(
+    assert mock_job.subtraction_path == os.path.join(
         str(tmpdir),
         "reference",
         "subtraction",
@@ -214,7 +214,7 @@ async def test_map_isolates(tmpdir, mock_job):
 
 async def test_map_subtraction(mock_job):
     mock_job.proc = 2
-    mock_job.host_path = HOST_PATH
+    mock_job.subtraction_path = HOST_PATH
 
     os.makedirs(mock_job.analysis_path)
 

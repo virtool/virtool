@@ -80,7 +80,7 @@ async def test_map_viruses(mock_job):
 async def test_map_subtraction(mock_job):
     os.mkdir(mock_job.analysis_path)
 
-    mock_job.host_path = os.path.join(TEST_FILES_PATH, "index", "host")
+    mock_job.subtraction_path = os.path.join(TEST_FILES_PATH, "index", "host")
 
     shutil.copy(
         os.path.join(TEST_NUVS_PATH, "unmapped_viruses.fq"),
