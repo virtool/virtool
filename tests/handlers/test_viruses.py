@@ -157,7 +157,7 @@ class TestGet:
     async def test(self, spawn_client, test_virus, test_sequence):
         """
         Test that a valid request returns a complete virus document.
-        
+
         """
         client = await spawn_client()
 
@@ -414,7 +414,7 @@ class TestGet:
     async def test_not_found(self, spawn_client, resp_is):
         """
         Test that a request for a non-existent virus results in a ``404`` response.
-         
+
         """
         client = await spawn_client()
 
@@ -438,7 +438,7 @@ class TestCreate:
     async def test(self, data, description, monkeypatch, spawn_client, test_add_history, test_dispatch):
         """
         Test that a valid request results in the creation of a virus document and a ``201`` response.
-         
+
         """
         client = await spawn_client(authorize=True, permissions=["modify_virus"])
 
@@ -450,6 +450,8 @@ class TestCreate:
         resp = await client.post("/api/viruses", data)
 
         assert resp.status == 201
+
+        assert resp.headers["Location"] == "/api/viruses/" + "test"
 
         expected_abbreviation = data.get("abbreviation", "") or ""
 
@@ -514,7 +516,7 @@ class TestCreate:
     async def test_invalid_input(self, spawn_client, resp_is):
         """
         Test that invalid input results in a ``422`` response with error data.
-         
+
         """
         client = await spawn_client(authorize=True, permissions=["modify_virus"])
 
@@ -559,7 +561,7 @@ class TestCreate:
     async def test_field_exists(self, existing, message, spawn_client):
         """
         Test that the request fails with ``409 Conflict`` if the requested virus name already exists.
-         
+
         """
         client = await spawn_client(authorize=True, permissions=["modify_virus"])
 
@@ -892,7 +894,7 @@ class TestEdit:
         resp = await client.patch("/api/viruses/test", data)
 
         assert resp.status == 200
-        
+
         assert await resp.json() == {
             "abbreviation": "TMV",
             "id": "test",
@@ -929,7 +931,7 @@ class TestRemove:
     async def test(self, abbreviation, description, spawn_client, test_virus, test_add_history, test_dispatch):
         """
         Test that an existing virus can be removed.
-         
+
         """
         client = await spawn_client(authorize=True, permissions=["modify_virus"])
 
@@ -980,7 +982,7 @@ class TestListIsolates:
     async def test(self, spawn_client, test_virus):
         """
         Test the isolates are properly listed and formatted for an existing virus.
-         
+
         """
         client = await spawn_client()
 
@@ -1017,7 +1019,7 @@ class TestListIsolates:
     async def test_not_found(self, spawn_client, resp_is):
         """
         Test that a request for a non-existent virus returns a ``404`` response.
-         
+
         """
         client = await spawn_client()
 
@@ -1031,7 +1033,7 @@ class TestGetIsolate:
     async def test(self, spawn_client, test_virus, test_sequence):
         """
         Test that an existing isolate is successfully returned.
-         
+
         """
         client = await spawn_client()
 
@@ -1062,7 +1064,7 @@ class TestGetIsolate:
     async def test_not_found(self, virus_id, isolate_id, spawn_client, resp_is):
         """
         Test that a ``404`` response results for a non-existent virus and/or isolate.
-         
+
         """
         client = await spawn_client()
 
@@ -1077,7 +1079,7 @@ class TestAddIsolate:
         """
         Test that a new default isolate can be added, setting ``default`` to ``False`` on all other isolates in the
         process.
-         
+
         """
         client = await spawn_client(authorize=True, permissions=["modify_virus"])
 
@@ -1097,6 +1099,8 @@ class TestAddIsolate:
         resp = await client.post("/api/viruses/6116cba1/isolates", data)
 
         assert resp.status == 201
+
+        assert resp.headers["Location"] == "/api/viruses/6116cba1/isolates/test"
 
         assert await resp.json() == {
             "id": "test",
@@ -1151,7 +1155,7 @@ class TestAddIsolate:
     async def test_not_default(self, monkeypatch, spawn_client, test_virus, test_add_history, test_dispatch):
         """
         Test that a non-default isolate can be properly added
-        
+
         """
         client = await spawn_client(authorize=True, permissions=["modify_virus"])
 
@@ -1171,6 +1175,8 @@ class TestAddIsolate:
         resp = await client.post("/api/viruses/6116cba1/isolates", data)
 
         assert resp.status == 201
+
+        assert resp.headers["Location"] == "/api/viruses/6116cba1/isolates/test"
 
         assert await resp.json() == {
             "source_name": "b",
@@ -1249,6 +1255,8 @@ class TestAddIsolate:
 
         assert resp.status == 201
 
+        assert resp.headers["Location"] == "/api/viruses/6116cba1/isolates/test"
+
         assert await resp.json() == {
             "source_name": "b",
             "source_type": "isolate",
@@ -1291,7 +1299,7 @@ class TestAddIsolate:
     async def test_force_case(self, monkeypatch, spawn_client, test_virus, test_dispatch):
         """
         Test that the ``source_type`` value is forced to lower case.
-         
+
         """
         client = await spawn_client(authorize=True, permissions=["modify_virus"])
 
@@ -1311,6 +1319,8 @@ class TestAddIsolate:
         resp = await client.post("/api/viruses/6116cba1/isolates", data)
 
         assert resp.status == 201
+
+        assert resp.headers["Location"] == "/api/viruses/6116cba1/isolates/test"
 
         assert await resp.json() == {
             "source_name": "Beta",
@@ -1353,7 +1363,7 @@ class TestAddIsolate:
         """
         Test that an isolate can be added without any POST input. The resulting document should contain the defined
         default values.
-         
+
         """
         client = await spawn_client(authorize=True, permissions=["modify_virus"])
 
@@ -1367,6 +1377,8 @@ class TestAddIsolate:
         resp = await client.post("/api/viruses/6116cba1/isolates", {})
 
         assert resp.status == 201
+
+        assert resp.headers["Location"] == "/api/viruses/6116cba1/isolates/test"
 
         assert await resp.json() == {
             "id": "test",
@@ -1602,7 +1614,7 @@ class TestSetAsDefault:
 
         """
         client = await spawn_client(authorize=True, permissions=["modify_virus"])
-        
+
         test_virus["isolates"].append({
             "id": "test",
             "source_name": "b",
@@ -1674,7 +1686,7 @@ class TestSetAsDefault:
 
         """
         client = await spawn_client(authorize=True, permissions=["modify_virus"])
-        
+
         test_virus["isolates"].append({
             "id": "test",
             "source_name": "b",
@@ -1746,7 +1758,7 @@ class TestRemoveIsolate:
         """
         Test that a valid request results in a ``204`` response and the isolate and sequence data is removed from the
         database.
-         
+
         """
         client = await spawn_client(authorize=True, permissions=["modify_virus"])
 
@@ -1930,7 +1942,7 @@ class TestRemoveIsolate:
     async def test_not_found(self, url, spawn_client, test_virus, resp_is):
         """
         Test that removal fails with ``404`` if the virus does not exist.
-         
+
         """
         client = await spawn_client(authorize=True, permissions=["modify_virus"])
 
@@ -2022,12 +2034,14 @@ class TestCreateSequence:
 
         resp = await client.post("/api/viruses/6116cba1/isolates/cab8b360/sequences", data)
 
+        assert resp.status == 201
+
+        assert resp.headers["Location"] == "/api/viruses/6116cba1/isolates/cab8b360/sequences/foobar"
+
         data.update({
             "isolate_id": "cab8b360",
             "virus_id": "6116cba1"
         })
-
-        assert resp.status == 200
 
         assert await resp.json() == {
             "id": "foobar",
@@ -2111,7 +2125,7 @@ class TestCreateSequence:
     async def test_invalid_input(self, spawn_client, resp_is):
         """
         Test that invalid input results in a ``422`` response with error information.
-         
+
         """
         client = await spawn_client(authorize=True, permissions=["modify_virus"])
 
@@ -2135,7 +2149,7 @@ class TestCreateSequence:
     async def test_not_found(self, virus_id, isolate_id, spawn_client, resp_is):
         """
         Test that non-existent virus or isolate ids in the URL result in a ``404`` response.
-         
+
         """
         client = await spawn_client(authorize=True, permissions=["modify_virus"])
 

@@ -143,7 +143,11 @@ async def create(req):
 
     await req.app["job_manager"].new("create_sample", task_args, document["user"]["id"])
 
-    return json_response(virtool.utils.base_processor(document))
+    headers = {
+        "Location": "/api/samples/" + sample_id
+    }
+
+    return json_response(virtool.utils.base_processor(document), status=201, headers=headers)
 
 
 async def edit(req):

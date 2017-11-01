@@ -52,15 +52,17 @@ async def create(req):
     if not v(data):
         return invalid_input(v.errors)
 
+    user_id = data["user_id"]
+
     # Check if the username is already taken. Fail if it does.
-    if await virtool.user.user_exists(db, data["user_id"]):
+    if await virtool.user.user_exists(db, user_id):
         return json_response({
             "id": "conflict",
             "message": "User already exists"
         }, status=409)
 
     document = {
-        "_id": data["user_id"],
+        "_id": user_id,
         # A list of group _ids the user is associated with.
         "groups": list(),
         "settings": {
@@ -85,7 +87,15 @@ async def create(req):
 
     await db.users.insert_one(document)
 
-    return json_response(virtool.utils.base_processor({key: document[key] for key in virtool.user.PROJECTION}))
+    headers = {
+        "Location": "/api/users/" + user_id
+    }
+
+    return json_response(
+        virtool.utils.base_processor({key: document[key] for key in virtool.user.PROJECTION}),
+        headers=headers,
+        status=201
+    )
 
 
 @protected("manage_users")

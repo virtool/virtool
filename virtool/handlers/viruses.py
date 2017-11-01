@@ -129,7 +129,11 @@ async def create(req):
         virtool.utils.base_processor({key: joined[key] for key in virtool.virus.LIST_PROJECTION})
     )
 
-    return json_response(complete, status=201)
+    headers = {
+        "Location": "/api/viruses/" + virus_id
+    }
+
+    return json_response(complete, status=201, headers=headers)
 
 
 @protected("modify_virus")
@@ -427,7 +431,11 @@ async def add_isolate(req):
 
     await virtool.virus.dispatch_version_only(req, new)
 
-    return json_response(dict(data, sequences=[]), status=201)
+    headers = {
+        "Location": "/api/viruses/{}/isolates/{}".format(virus_id, isolate_id)
+    }
+
+    return json_response(dict(data, sequences=[]), status=201, headers=headers)
 
 
 @protected("modify_virus")
@@ -790,7 +798,11 @@ async def create_sequence(req):
 
     await virtool.virus.dispatch_version_only(req, new)
 
-    return json_response(virtool.utils.base_processor(data))
+    headers = {
+        "Location": "/api/viruses/{}/isolates/{}/sequences/{}".format(virus_id, isolate_id, data["_id"])
+    }
+
+    return json_response(virtool.utils.base_processor(data), status=201, headers=headers)
 
 
 @protected("modify_virus")

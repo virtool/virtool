@@ -249,7 +249,9 @@ class TestCreate:
 
         resp = await client.post("/api/samples", request_data)
 
-        assert resp.status == 200
+        assert resp.status == 201
+
+        assert resp.headers["Location"] == "/api/samples/" + test_random_alphanumeric.last_choice
 
         expected_group = "none"
 
@@ -617,7 +619,7 @@ class TestAnalyze:
 
         assert resp.status == 201
 
-        assert resp.headers.get("Location") == "/api/analyses/test_analysis"
+        assert resp.headers["Location"] == "/api/analyses/test_analysis"
 
         assert await resp.json() == {
             "id": "test_analysis",

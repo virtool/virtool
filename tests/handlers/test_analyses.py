@@ -161,6 +161,9 @@ async def test_blast(error, mocker, spawn_client, test_dispatch, static_time):
 
     assert resp.status == 200 if not error else int(error.split("_")[0])
 
+    if not error:
+        assert resp.headers["Location"] == "/api/analyses/foobar/5/blast"
+
     if error == "404_analysis":
         assert await resp.json() == {
             "id": "not_found",
