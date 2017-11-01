@@ -56,6 +56,8 @@ class TestCreate:
 
         assert resp.status == 201
 
+        assert resp.headers["Location"] == "/api/groups/test"
+
         assert await resp.json() == {
             "id": "test",
             "permissions": no_permissions

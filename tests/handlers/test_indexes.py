@@ -272,6 +272,8 @@ class TestCreate:
 
         assert resp.status == 201
 
+        assert resp.headers["Location"] == "/api/indexes/kl84fg06"
+
         # Make sure history is updated to use the build's new index id and version.
         assert 2 == await client.db.history.count({
             "index.id": test_random_alphanumeric.history[0],

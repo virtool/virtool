@@ -8,7 +8,7 @@ from virtool.handlers.utils import json_response, bad_request, not_found, protec
 async def find(req):
     """
     Return a list of indexes.
-    
+
     """
     db = req.app["db"]
 
@@ -28,7 +28,7 @@ async def find(req):
 async def get(req):
     """
     Get the complete document for a given index.
-    
+
     """
     db = req.app["db"]
 
@@ -169,7 +169,11 @@ async def create(req):
 
     document = await db.indexes.find_one(index_id)
 
-    return json_response(virtool.utils.base_processor(document), status=201)
+    headers = {
+        "Location": "/api/indexes/" + index_id
+    }
+
+    return json_response(virtool.utils.base_processor(document), status=201, headers=headers)
 
 
 async def find_history(req):

@@ -120,7 +120,9 @@ class TestCreate:
 
         resp = await client.post("/api/users", data)
 
-        assert resp.status == 200
+        assert resp.status == 201
+
+        assert resp.headers["Location"] == "/api/users/bob"
 
         expected = {
             "id": "bob",

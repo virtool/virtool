@@ -46,7 +46,11 @@ async def create(req):
     except pymongo.errors.DuplicateKeyError:
         return conflict("Group already exists")
 
-    return json_response(virtool.utils.base_processor(document), status=201)
+    headers = {
+        "Location": "/api/groups/" + data["group_id"]
+    }
+
+    return json_response(virtool.utils.base_processor(document), status=201, headers=headers)
 
 
 @protected("manage_users")
