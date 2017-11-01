@@ -348,7 +348,7 @@ class TestSaveAndReload:
             async def write(self):
                 self.m_write()
 
-        mocker.patch("virtool.app_settings.Settings", new=MockSettings)
+        client.app["settings"] = MockSettings()
 
         data = tmpdir.mkdir("data")
         watch = tmpdir.mkdir("watch")
