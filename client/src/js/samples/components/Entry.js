@@ -16,7 +16,7 @@ import { mapValues } from "lodash";
 import { LinkContainer } from "react-router-bootstrap";
 import { Row, Col } from "react-bootstrap";
 
-import { ListGroupItem, Icon, Flex, FlexItem, Checkbox, RelativeTime } from "../../base";
+import { ListGroupItem, Icon, Flex, FlexItem, RelativeTime } from "../../base";
 import { stringOrBool } from "../../propTypes";
 
 export default class SampleEntry extends React.Component {
@@ -86,20 +86,6 @@ export default class SampleEntry extends React.Component {
             <LinkContainer className="spaced" to={`/samples/${this.props.id}`}>
                 <ListGroupItem  onClick={this.props.selecting ? this.toggleSelect: this.showDetail}>
                     <Flex alignItems="center">
-                        <FlexItem grow={0} style={{paddingRight: "12px"}}>
-                            <Checkbox
-                                checked={this.props.selected}
-                                onClick={this.toggleSelect}
-                                className="hidden-xs hidden-sm"
-                            />
-                            <Checkbox
-                                checked={this.props.selected}
-                                onClick={this.toggleSelect}
-                                className="hidden-md hidden-lg"
-                                style={{fontSize: "20px"}}
-                            />
-                        </FlexItem>
-
                         <FlexItem grow={1}>
                             <Row>
                                 <Col xs={9} md={4}>
