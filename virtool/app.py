@@ -103,7 +103,7 @@ async def init_db(app):
     await virtool.organize.organize_indexes(db)
 
     logger.info("Checking subtraction...")
-    await virtool.organize.organize_subtraction(db)
+    await virtool.organize.organize_subtraction(db, app["settings"])
 
     logger.info("Checking groups...")
     await virtool.organize.organize_groups(db)

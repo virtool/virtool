@@ -262,7 +262,15 @@ async def organize_indexes(db):
         })
 
 
-async def organize_subtraction(db):
+async def organize_subtraction(db, settings):
+    hosts_path = os.path.join(settings.get("data_path"), "reference", "hosts")
+
+    if os.path.isdir(hosts_path):
+        os.rename(
+            hosts_path,
+            os.path.join(settings.get("data_path"), "reference", "subtraction")
+        )
+
     collection_names = await db.collection_names()
 
     if "hosts" in collection_names and "subtraction" not in collection_names:
