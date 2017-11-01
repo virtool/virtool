@@ -159,13 +159,13 @@ async def install(db, dispatch, loop, download_url, size):
             return
 
         # Start decompression step, reporting this to the DB.
-        await update_software_process(db, 0, "decompress")
+        await update_software_process(db, dispatch, 0, "decompress")
 
         # Decompress the gzipped tarball to the root of the temporary directory.
         await loop.run_in_executor(None, decompress_file, compressed_path, str(tempdir))
 
         # Start check tree step, reporting this to the DB.
-        await update_software_process(db, 0, "check_tree")
+        await update_software_process(db, dispatch, 0, "check_tree")
 
         # Check that the file structure matches our expectations.
         decompressed_path = os.path.join(str(tempdir), "virtool")
