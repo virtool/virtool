@@ -485,6 +485,12 @@ class TestRemoveGroup:
             permissions=["modify_virus", "rebuild_index"]
         ))
 
+        await client.db.users.update_one({"_id": "bob"}, {
+            "$set": {
+                "primary_group": "tech"
+            }
+        })
+
         assert await client.db.users.find_one("bob", ["_id", "groups", "permissions"]) == {
             "_id": "bob",
             "groups": ["tech", "test"],
@@ -513,7 +519,7 @@ class TestRemoveGroup:
                 "remove_job": False,
                 "remove_virus": False
             },
-            "primary_group": "technician"
+            "primary_group": ""
         }
 
     async def test_user_does_not_exist(self, spawn_client, resp_is, no_permissions):

@@ -316,9 +316,6 @@ async def save_and_reload(req):
     for subdir in subdirs:
         os.makedirs(os.path.join(data_path, subdir))
 
-    req.app["settings"] = virtool.app_settings.Settings()
-    req.app["settings"].data = dict()
-
     for key in ["db_host", "db_port", "db_name", "data_path", "watch_path"]:
         req.app["settings"].set(key, data[key])
 

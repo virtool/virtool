@@ -1,3 +1,6 @@
+from aiohttp.test_utils import make_mocked_coro
+
+
 class TestFind:
 
     async def test_no_params(self, spawn_client, all_permissions, no_permissions):
@@ -111,7 +114,7 @@ class TestGet:
     async def test_valid(self, spawn_client, all_permissions):
         """
         Test that a ``GET /api/groups/:group_id`` return the correct group.
-    
+
         """
         client = await spawn_client(authorize=True, permissions=["manage_users"])
 
@@ -130,7 +133,7 @@ class TestGet:
     async def test_not_found(self, spawn_client, resp_is):
         """
         Test that a ``GET /api/groups/:group_id`` returns 404 for a non-existent ``group_id``.
-         
+
         """
         client = await spawn_client(authorize=True, permissions=["manage_users"])
 
@@ -207,7 +210,7 @@ class TestUpdatePermissions:
 
 class TestRemove:
 
-    async def test_valid(self, spawn_client, no_permissions):
+    async def test_valid(self, monkeypatch, spawn_client, no_permissions):
         """
         Test that an existing document can be removed at ``DELETE /api/groups/:group_id``.
 
@@ -219,11 +222,20 @@ class TestRemove:
             "permissions": no_permissions
         })
 
+        m = make_mocked_coro(None)
+
+        monkeypatch.setattr("virtool.user_groups.update_member_users", m)
+
         resp = await client.delete("/api/groups/test")
 
         assert resp.status == 204
 
         assert not await client.db.groups.count({"_id": "test"})
+
+        assert m.call_args == (
+            (client.db, "test"),
+            dict(remove=True)
+        )
 
     async def test_not_found(self, spawn_client, resp_is):
         """

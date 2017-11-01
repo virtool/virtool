@@ -241,20 +241,25 @@ async def remove_group(req):
     if group_id == "administrator" and user_id == req["client"].user_id:
         return bad_request("Administrators cannot remove themselves from the administrator group")
 
+    update = dict()
+
+    if await db.users.count({"_id": user_id, "primary_group": group_id}):
+        update["primary_group"] = ""
+
     document = await db.users.find_one_and_update({"_id": user_id}, {
         "$pull": {
             "groups": group_id
         }
-    }, return_document=ReturnDocument.AFTER, projection=["groups"])
+    }, return_document=ReturnDocument.AFTER, projection=["groups", "primary_group"])
 
     groups = await db.groups.find({"_id": {
         "$in": document["groups"]
     }}).to_list(None)
 
+    update["permissions"] = virtool.user_groups.merge_group_permissions(list(groups))
+
     document = await db.users.find_one_and_update({"_id": user_id}, {
-        "$set": {
-            "permissions": virtool.user_groups.merge_group_permissions(list(groups))
-        }
+        "$set": update
     }, return_document=ReturnDocument.AFTER, projection=virtool.user.PROJECTION)
 
     return json_response(virtool.utils.base_processor(document))

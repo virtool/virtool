@@ -27,16 +27,10 @@ def merge_group_permissions(groups):
     return permission_dict
 
 
-async def get_member_users(db, group_id):
-    return await db.users.find({"groups": group_id}).distinct("_id")
-
-
 async def update_member_users(db, group_id, remove=False):
     groups = await db.groups.find().to_list(length=None)
 
-    member_users = await db.users.find({"groups": group_id}).to_list(None)
-
-    for user in member_users:
+    async for user in db.users.find({"groups": group_id}, ["groups", "permissions", "primary_group"]):
         if remove:
             user["groups"].remove(group_id)
 
@@ -51,6 +45,9 @@ async def update_member_users(db, group_id, remove=False):
                 "permissions": new_permissions
             }
         }
+
+        if user["primary_group"] == group_id:
+            update_dict["$set"]["primary_group"] = ""
 
         if remove:
             update_dict["$pull"] = {
