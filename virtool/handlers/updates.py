@@ -18,13 +18,14 @@ async def get(req):
 
     releases = await virtool.updates.get_releases(db, channel, server_version, username, token)
 
+    current_version = await virtool.app.find_server_version(req.app.loop)
+
     document = await db.status.find_one_and_update({"_id": "software_update"}, {
         "$set": {
-            "releases": releases
+            "releases": releases,
+            "current_version": current_version
         }
     })
-
-    document["current_version"] = server_version
 
     return json_response(virtool.utils.base_processor(document))
 
