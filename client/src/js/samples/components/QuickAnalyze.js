@@ -16,6 +16,7 @@ import { connect } from "react-redux";
 import { Modal } from "react-bootstrap";
 
 import { analyze } from "../actions";
+import { updateAccountSettings } from "../../account/actions";
 import { AlgorithmSelect, Input, Checkbox, Button } from "../../base";
 
 const getInitialState = ({ algorithm = "pathoscope_bowtie" }) => ({
@@ -42,7 +43,7 @@ class QuickAnalyze extends React.Component {
 
     handleSubmit = (event) => {
         event.preventDefault();
-        this.props.onAnalyze(this.props.id, this.state.algorithm);
+        this.props.onAnalyze({id: this.props.id, ...this.state});
     };
 
     render () {
@@ -97,8 +98,18 @@ const mapStateToProps = (state) => {
 
 const mapDispatchToProps = (dispatch) => {
     return {
-        onAnalyze: (sampleId, algorithm) => {
-            dispatch(analyze(sampleId, algorithm));
+        onAnalyze: ({ id, algorithm, useAsDefault, skipQuickAnalyzeDialog }) => {
+            dispatch(analyze(id, algorithm));
+
+            let settingsUpdate = {
+                skip_quick_analyze_dialog: skipQuickAnalyzeDialog
+            };
+
+            if (useAsDefault) {
+                settingsUpdate["quick_analyze_algorithm"] = algorithm;
+            }
+
+            dispatch(updateAccountSettings(settingsUpdate));
         }
     };
 };

@@ -16,6 +16,7 @@ import { connect } from "react-redux";
 import { mapValues } from "lodash";
 import { Row, Col } from "react-bootstrap";
 
+import { analyze } from "../actions";
 import { Icon, Flex, FlexItem, RelativeTime } from "../../base";
 
 class SampleEntry extends React.Component {
@@ -29,7 +30,11 @@ class SampleEntry extends React.Component {
 
     handleQuickAnalyze = (event) => {
         event.stopPropagation();
-        this.props.onQuickAnalyze(this.props.id, this.props.name);
+        if (this.props.skipDialog) {
+            this.props.onAnalyze(this.props.id, this.props.algorithm || "pathoscope_bowtie");
+        } else {
+            this.props.onQuickAnalyze(this.props.id, this.props.name);
+        }
     };
 
     render () {
@@ -116,12 +121,21 @@ class SampleEntry extends React.Component {
     }
 }
 
-const mapStateToProps = () => ({});
+const mapStateToProps = (state) => {
+    return {
+        skipDialog: state.account.settings.skip_quick_analyze_dialog,
+        algorithm: state.account.settings.quick_analyze_algorithm
+    };
+};
 
 const mapDispatchToProps = (dispatch) => {
     return {
         onNavigate: (sampleId) => {
             dispatch(push(`/samples/${sampleId}`));
+        },
+
+        onAnalyze: (id, algorithm) => {
+            dispatch(analyze(id, algorithm));
         },
 
         onQuickAnalyze: (id, name) => {
