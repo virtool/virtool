@@ -1,6 +1,7 @@
 import React from "react";
-import PropTypes from "prop-types";
 import URI from "urijs";
+import { Route } from "react-router-dom";
+import { push } from "react-router-redux";
 import { connect } from "react-redux";
 import { Badge, ListGroup, Pagination } from "react-bootstrap";
 
@@ -9,20 +10,9 @@ import { Flex, FlexItem, Icon, ListGroupItem } from "../../base";
 import SampleEntry from "./Entry";
 import SampleToolbar from "./Toolbar";
 import CreateSample from "./Create/Create";
+import QuickAnalyze from "./QuickAnalyze";
 
 class SamplesList extends React.Component {
-
-    static propTypes = {
-        match: PropTypes.object,
-        location: PropTypes.object,
-        history: PropTypes.object,
-        samples: PropTypes.arrayOf(PropTypes.object),
-        totalCount: PropTypes.number,
-        foundCount: PropTypes.number,
-        pageCount: PropTypes.number,
-        page: PropTypes.number,
-        onFind: PropTypes.func
-    };
 
     componentDidMount () {
         this.props.onFind(this.props.location);
@@ -58,8 +48,6 @@ class SamplesList extends React.Component {
         if (this.props.samples === null) {
             return <div />;
         }
-
-        const showCreateModal = this.props.location.state && this.props.location.state.create;
 
         const term = this.props.match.params.term;
 
@@ -127,12 +115,20 @@ class SamplesList extends React.Component {
                     />
                 </div>
 
-                <CreateSample
-                    show={showCreateModal}
-                    onHide={
-                        () => this.props.history.push(this.props.location.pathname + this.props.location.search, {})
-                    }
-                />
+                <Route path="/samples" render={({ history }) =>
+                    <CreateSample
+                        show={!!(history.location.state && history.location.state.create)}
+                        onHide={this.props.onHide}
+                    />
+                } />
+
+                <Route path="/samples" render={({ history }) =>
+                    <QuickAnalyze
+                        show={!!(history.location.state && history.location.state.quickAnalyze)}
+                        {...(history.location.state ? history.location.state.quickAnalyze: {})}
+                        onHide={this.props.onHide}
+                    />
+                } />
             </div>
         );
     }
@@ -156,6 +152,10 @@ const mapDispatchToProps = (dispatch) => {
             const query = uri.search(true);
 
             dispatch(findSamples(query.find, query.page));
+        },
+
+        onHide: () => {
+            dispatch(push({state: {}}));
         }
     };
 };
