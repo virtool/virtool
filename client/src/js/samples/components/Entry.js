@@ -57,16 +57,15 @@ class SampleEntry extends React.Component {
         );
 
         const analyzeIcon = (
-            <FlexItem>
-                <Icon
-                    name="bars"
-                    tip="Quick Analyze"
-                    tipPlacement="left"
-                    bsStyle="success"
-                    onClick={this.handleQuickAnalyze}
-                    style={{fontSize: "17px", zIndex: 10000}}
-                />
-            </FlexItem>
+            <Icon
+                name="bars"
+                tip="Quick Analyze"
+                tipPlacement="left"
+                bsStyle="success"
+                onClick={this.handleQuickAnalyze}
+                style={{fontSize: "17px", zIndex: 10000}}
+                pullRight
+            />
         );
 
         return (
@@ -95,7 +94,7 @@ class SampleEntry extends React.Component {
                                 </Flex>
                             </Col>
 
-                            <Col xs={5} md={3}>
+                            <Col xs={5} md={4}>
                                 <span className="hidden-xs hidden-sm">
                                     Created <RelativeTime time={this.props.created_at} /> by {this.props.userId}
                                 </span>
@@ -108,10 +107,8 @@ class SampleEntry extends React.Component {
                                 <Icon name="user" /> {this.props.userId}
                             </Col>
 
-                            <Col md={2} xsHidden smHidden>
-                                <Flex grow={0} shrink={0} className="pull-right">
-                                    {analyzeIcon}
-                                </Flex>
+                            <Col md={1} xsHidden smHidden>
+                                {analyzeIcon}
                             </Col>
                         </Row>
                     </FlexItem>
