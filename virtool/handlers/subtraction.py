@@ -45,7 +45,7 @@ async def get(req):
     document = await db.subtraction.find_one(subtraction_id)
 
     if document:
-        linked_samples = await db.samples.find({"subtraction": subtraction_id}, ["name"]).to_list(None)
+        linked_samples = await db.samples.find({"subtraction.id": subtraction_id}, ["name"]).to_list(None)
         document["linked_samples"] = [virtool.utils.base_processor(d) for d in linked_samples]
 
         return json_response(virtool.utils.base_processor(document))
