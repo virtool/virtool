@@ -11,15 +11,15 @@
 
 import React from "react";
 import CX from "classnames";
-import PropTypes from "prop-types";
+import { push } from "react-router-redux";
+import { connect } from "react-redux";
 import { mapValues } from "lodash";
-import { LinkContainer } from "react-router-bootstrap";
 import { Row, Col } from "react-bootstrap";
 
-import { ListGroupItem, Icon, Flex, FlexItem, Checkbox, RelativeTime } from "../../base";
-import { stringOrBool } from "../../propTypes";
+import { analyze } from "../actions";
+import { Icon, Flex, FlexItem, RelativeTime } from "../../base";
 
-export default class SampleEntry extends React.Component {
+class SampleEntry extends React.Component {
 
     constructor (props) {
         super(props);
@@ -28,22 +28,13 @@ export default class SampleEntry extends React.Component {
         };
     }
 
-    static propTypes = {
-        id: PropTypes.string.isRequired,
-        name: PropTypes.string.isRequired,
-        created_at: PropTypes.string.isRequired,
-        userId: PropTypes.string.isRequired,
-        imported: stringOrBool.isRequired,
-        pathoscope: stringOrBool.isRequired,
-        nuvs: stringOrBool.isRequired,
-        selected: PropTypes.bool,
-        selecting: PropTypes.bool,
-        toggleSelect: PropTypes.func
-    };
-
-    static defaultProps = {
-        selected: false,
-        selecting: false
+    handleQuickAnalyze = (event) => {
+        event.stopPropagation();
+        if (this.props.skipDialog) {
+            this.props.onAnalyze(this.props.id, this.props.algorithm || "pathoscope_bowtie");
+        } else {
+            this.props.onQuickAnalyze(this.props.id, this.props.name);
+        }
     };
 
     render () {
@@ -65,87 +56,91 @@ export default class SampleEntry extends React.Component {
             </FlexItem>
         );
 
-        let analyzeIcon;
-
-        if (!this.props.selected) {
-            analyzeIcon = (
-                <FlexItem>
-                    <Icon
-                        name="bars"
-                        tip="Quick Analyze"
-                        tipPlacement="left"
-                        bsStyle="success"
-                        onClick={this.quickAnalyze}
-                        style={{fontSize: "17px"}}
-                    />
-                </FlexItem>
-            );
-        }
+        const analyzeIcon = (
+            <Icon
+                name="bars"
+                tip="Quick Analyze"
+                tipPlacement="left"
+                bsStyle="success"
+                onClick={this.handleQuickAnalyze}
+                style={{fontSize: "17px", zIndex: 10000}}
+                pullRight
+            />
+        );
 
         return (
-            <LinkContainer className="spaced" to={`/samples/${this.props.id}`}>
-                <ListGroupItem  onClick={this.props.selecting ? this.toggleSelect: this.showDetail}>
-                    <Flex alignItems="center">
-                        <FlexItem grow={0} style={{paddingRight: "12px"}}>
-                            <Checkbox
-                                checked={this.props.selected}
-                                onClick={this.toggleSelect}
-                                className="hidden-xs hidden-sm"
-                            />
-                            <Checkbox
-                                checked={this.props.selected}
-                                onClick={this.toggleSelect}
-                                className="hidden-md hidden-lg"
-                                style={{fontSize: "20px"}}
-                            />
-                        </FlexItem>
+            <div className="list-group-item hoverable spaced" onClick={() => this.props.onNavigate(this.props.id)}>
+                <Flex alignItems="center">
+                    <FlexItem grow={1}>
+                        <Row>
+                            <Col xs={9} md={4}>
+                                <strong>{this.props.name}</strong>
+                            </Col>
 
-                        <FlexItem grow={1}>
-                            <Row>
-                                <Col xs={9} md={4}>
-                                    <strong>{this.props.name}</strong>
-                                </Col>
+                            <Col xs={3} md={3}>
+                                <Flex>
+                                    <FlexItem
+                                        className={CX("bg-primary", "sample-label")}
+                                    >
+                                        <Flex alignItems="center">
+                                            <Icon name={this.props.imported === "ip" ? "play": "filing"} />
+                                            <span style={{paddingLeft: "3px"}} className="hidden-xs hidden-sm">
+                                                Import
+                                            </span>
+                                        </Flex>
+                                    </FlexItem>
+                                    {labels.pathoscope}
+                                    {labels.nuvs}
+                                </Flex>
+                            </Col>
 
-                                <Col xs={3} md={3}>
-                                    <Flex>
-                                        <FlexItem
-                                            className={CX("bg-primary", "sample-label")}
-                                        >
-                                            <Flex alignItems="center">
-                                                <Icon name={this.props.imported === "ip" ? "play": "filing"} />
-                                                <span style={{paddingLeft: "3px"}} className="hidden-xs hidden-sm">
-                                                    Import
-                                                </span>
-                                            </Flex>
-                                        </FlexItem>
-                                        {labels.pathoscope}
-                                        {labels.nuvs}
-                                    </Flex>
-                                </Col>
+                            <Col xs={5} md={4}>
+                                <span className="hidden-xs hidden-sm">
+                                    Created <RelativeTime time={this.props.created_at} /> by {this.props.userId}
+                                </span>
+                                <span className="hidden-md hidden-lg">
+                                    <Icon name="meter" /> <RelativeTime time={this.props.created_at} />
+                                </span>
+                            </Col>
 
-                                <Col xs={5} md={3}>
-                                    <span className="hidden-xs hidden-sm">
-                                        Created <RelativeTime time={this.props.created_at} /> by {this.props.userId}
-                                    </span>
-                                    <span className="hidden-md hidden-lg">
-                                        <Icon name="meter" /> <RelativeTime time={this.props.created_at} />
-                                    </span>
-                                </Col>
+                            <Col xs={3} mdHidden lgHidden>
+                                <Icon name="user" /> {this.props.userId}
+                            </Col>
 
-                                <Col xs={3} mdHidden lgHidden>
-                                    <Icon name="user" /> {this.props.userId}
-                                </Col>
-
-                                <Col md={2} xsHidden smHidden>
-                                    <Flex grow={0} shrink={0} className="pull-right">
-                                        {analyzeIcon}
-                                    </Flex>
-                                </Col>
-                            </Row>
-                        </FlexItem>
-                    </Flex>
-                </ListGroupItem>
-            </LinkContainer>
+                            <Col md={1} xsHidden smHidden>
+                                {analyzeIcon}
+                            </Col>
+                        </Row>
+                    </FlexItem>
+                </Flex>
+            </div>
         );
     }
 }
+
+const mapStateToProps = (state) => {
+    return {
+        skipDialog: state.account.settings.skip_quick_analyze_dialog,
+        algorithm: state.account.settings.quick_analyze_algorithm
+    };
+};
+
+const mapDispatchToProps = (dispatch) => {
+    return {
+        onNavigate: (sampleId) => {
+            dispatch(push(`/samples/${sampleId}`));
+        },
+
+        onAnalyze: (id, algorithm) => {
+            dispatch(analyze(id, algorithm));
+        },
+
+        onQuickAnalyze: (id, name) => {
+            dispatch(push({state: {quickAnalyze: {id, name}}}));
+        }
+    };
+};
+
+const Container = connect(mapStateToProps, mapDispatchToProps)(SampleEntry);
+
+export default Container;

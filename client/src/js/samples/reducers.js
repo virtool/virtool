@@ -157,7 +157,7 @@ export default function reducer (state = initialState, action) {
 
         case ANALYZE.SUCCEEDED:
             return assign({}, state, {
-                analyses: state.analyses.concat([action.data])
+                analyses: state.analyses === null ? null: state.analyses.concat([action.data])
             });
 
         case BLAST_NUVS.REQUESTED:
