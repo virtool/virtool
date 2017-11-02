@@ -14,7 +14,7 @@ import virtool.errors
 
 logger = logging.getLogger(__name__)
 
-INSTALL_PATH = sys.argv[0]
+INSTALL_PATH = sys.path[0]
 
 SOFTWARE_REPO = "virtool/virtool"
 
