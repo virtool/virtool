@@ -63,6 +63,6 @@ if __name__ == "__main__":
     app = create_app(loop, skip_setup=skip_setup, force_version=args.force_version)
 
     host = args.host or settings_temp.get("server_host", "localhost")
-    port = args.port or settings_temp.get("server_port", 9950)
+    port = int(args.port) or settings_temp.get("server_port", 9950)
 
     web.run_app(app, host=host, port=port, ssl_context=ssl_context)
