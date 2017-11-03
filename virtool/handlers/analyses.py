@@ -1,3 +1,5 @@
+import asyncio
+
 import virtool.bio
 import virtool.utils
 import virtool.sample
@@ -8,7 +10,7 @@ from virtool.handlers.utils import bad_request, conflict, json_response, no_cont
 async def get(req):
     """
     Get a complete analysis document.
-    
+
     """
     db = req.app["db"]
 
@@ -108,13 +110,13 @@ async def blast(req):
 
     # Wait on BLAST request as a Task until the it completes on NCBI. At that point the sequence in the DB will be
     # updated with the BLAST result.
-    req.app.loop.create_task(virtool.bio.wait_for_blast_result(
+    asyncio.ensure_future(virtool.bio.wait_for_blast_result(
         db,
         req.app["dispatcher"].dispatch,
         analysis_id,
         sequence_index,
         rid
-    ))
+    ), loop=req.app.loop)
 
     headers = {
         "Location": "/api/analyses/{}/{}/blast".format(analysis_id, sequence_index)

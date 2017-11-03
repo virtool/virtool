@@ -1,3 +1,4 @@
+import asyncio
 import pymongo
 
 import virtool.app
@@ -81,12 +82,12 @@ async def upgrade(req):
 
     download_url = latest_release["download_url"]
 
-    req.app.loop.create_task(virtool.updates.install(
+    await asyncio.ensure_future(virtool.updates.install(
         db,
         dispatch,
         req.app.loop,
         download_url,
         latest_release["size"]
-    ))
+    ), loop=req.app.loop)
 
     return json_response(document)

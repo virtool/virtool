@@ -53,9 +53,9 @@ class Manager:
 
     async def start(self):
         if self.clean_interval is not None:
-            self.loop.create_task(self.clean())
+            asyncio.ensure_future(self.clean(), loop=self.loop)
 
-        self.loop.create_task(self.run())
+        asyncio.ensure_future(self.run(), loop=self.loop)
         self.queue.get(block=True, timeout=3)
 
         self._run_alive = True

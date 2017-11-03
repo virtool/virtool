@@ -40,7 +40,7 @@ class Manager:
 
     def start(self):
         self.started = True
-        self.loop.create_task(self.run())
+        asyncio.ensure_future(self.run(), loop=self.loop)
 
     async def run(self):
         while True:

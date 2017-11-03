@@ -75,7 +75,7 @@ class Job:
         self._log_buffer = list()
 
     def start(self):
-        self._task = self.loop.create_task(self.run())
+        self._task = asyncio.ensure_future(self.run(), loop=self.loop)
         self.started = True
 
     async def run(self):
