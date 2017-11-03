@@ -12,80 +12,53 @@
 import React from "react";
 import PropTypes from "prop-types";
 import { LinkContainer } from "react-router-bootstrap";
-import { DropdownButton, MenuItem } from "react-bootstrap";
+
 import { Icon, Button } from "../../base";
 
 /**
  * A toolbar component rendered at the top of the virus manager table. Allows searching of viruses by name and
  * abbreviation. Includes a button for creating a new virus.
  */
-const VirusToolbar = (props) => {
+const VirusToolbar = (props) => (
+    <div className="toolbar">
+        <div className="form-group">
+            <div className="input-group">
+                <span id="find-addon" className="input-group-addon">
+                    <Icon name="search" />
+                </span>
+                <input
+                    aria-describedby="find-addon"
+                    className="form-control"
+                    type="text"
+                    placeholder="Name or abbreviation"
+                    onChange={e => {props.onChangeTerm(e.target.value)}}
+                />
+            </div>
+        </div>
 
-    let menu;
-    let createButton;
+        <LinkContainer to="/viruses/hmms">
+            <Button
+                icon="table"
+                tip="Profile HMMs"
+            />
+        </LinkContainer>
 
-    if (props.canModify) {
-        menu = (
-            <DropdownButton id="virus-dropdown" title={<Icon name="menu" />} noCaret pullRight>
-                <LinkContainer to="/viruses/export">
-                    <MenuItem>
-                        <Icon name="export" /> Export
-                    </MenuItem>
-                </LinkContainer>
-                <LinkContainer to="/viruses/import">
-                    <MenuItem>
-                        <Icon name="new-entry" /> Import
-                    </MenuItem>
-                </LinkContainer>
-            </DropdownButton>
-        );
+        <LinkContainer to="/viruses/indexes">
+            <Button
+                icon="filing"
+                tip="Indexes"
+            />
+        </LinkContainer>
 
-        createButton = (
+        {props.canModify ? (
             <LinkContainer to="/viruses/create">
                 <Button bsStyle="primary" tip="Create">
                     <Icon name="new-entry" />
                 </Button>
             </LinkContainer>
-        );
-    }
-
-    return (
-        <div className="toolbar">
-            <div className="form-group">
-                <div className="input-group">
-                    <span id="find-addon" className="input-group-addon">
-                        <Icon name="search" />
-                    </span>
-                    <input
-                        aria-describedby="find-addon"
-                        className="form-control"
-                        type="text"
-                        placeholder="Name or abbreviation"
-                        onChange={e => {props.onChangeTerm(e.target.value)}}
-                    />
-                </div>
-            </div>
-
-            <Button
-                onClick={props.onToggleModifiedOnly}
-                active={props.modifiedOnly}
-                icon="flag"
-                iconStyle="warning"
-                tip="Modified Only"
-            />
-
-            <LinkContainer to="/viruses/indexes">
-                <Button
-                    icon="filing"
-                    tip="Indexes"
-                />
-            </LinkContainer>
-
-            {createButton}
-            {menu}
-        </div>
-    );
-};
+        ): null}
+    </div>
+);
 
 VirusToolbar.propTypes = {
     canModify: PropTypes.bool,
