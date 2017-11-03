@@ -50,6 +50,7 @@ async def upgrade(req):
 
         document = await db.status.find_one_and_update({"_id": "software_update"}, {
             "$set": {
+                "current_version": req.app["version"],
                 "releases": await virtool.updates.get_releases(db, req.app["version"], username, token)
             }
         }, return_document=pymongo.ReturnDocument)
