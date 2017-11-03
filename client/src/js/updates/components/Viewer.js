@@ -39,8 +39,17 @@ class SoftwareUpdateViewer extends React.Component {
         const releases = filter(this.props.updates.releases, release => {
             const [ number, pre ] = release.name.replace("v", "").split("-").map(part => part.split("."));
 
-            if (currentNumber[0] > number[0] || currentNumber[1] > number[1] || currentNumber[2] > number[2]) {
-                return false;
+            // Return false if the version number is
+            if (currentNumber[0] !== number[0]) {
+                return number[0] > currentNumber[0];
+            }
+
+            if (currentNumber[1] !== number[1]) {
+                return number[1] > currentNumber[1];
+            }
+
+            if (currentNumber[1] !== number[1]) {
+                return number[2] > currentNumber[2];
             }
 
             // Reject if release is a pre-release, but current one isn't.
@@ -49,7 +58,7 @@ class SoftwareUpdateViewer extends React.Component {
             }
 
             // Reject if the release is alpha, but current on is beta.
-            if (currentPre[0] === "beta" && pre[0] === "alpha") {
+            if (currentPre && currentPre[0] === "beta" && pre[0] === "alpha") {
                 return false;
             }
 
