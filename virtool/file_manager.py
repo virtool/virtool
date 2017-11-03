@@ -8,7 +8,6 @@ import pymongo
 import queue
 import setproctitle
 import shutil
-import time
 
 import virtool.file
 import virtool.utils
@@ -17,7 +16,6 @@ import virtool.utils
 TYPE_NAME_DICT = {
     "IN_CREATE": "create",
     "IN_MOVED_TO": "move",
-    "IN_MODIFY": "modify",
     "IN_DELETE": "delete",
     "IN_MOVED_FROM": "delete",
     "IN_CLOSE_WRITE": "close"
@@ -208,8 +206,6 @@ class Watcher(multiprocessing.Process):
         notifier.add_watch(bytes(self.files_path, encoding="utf-8"))
         notifier.add_watch(bytes(self.watch_path, encoding="utf-8"))
 
-        last_modification = time.time()
-
         try:
             # This tells the FileManager object that the watcher is ready to start sending messages.
             self.queue.put("alive")
@@ -228,26 +224,15 @@ class Watcher(multiprocessing.Process):
                         filename = filename.decode()
                         dirname = dirname.decode()
 
-                        now = time.time()
-
                         if dirname.endswith("files") and action != "move":
-                            if action in ["create", "modify", "close"]:
+                            if action == "create" or action == "close":
                                 file_entry = virtool.utils.file_stats(os.path.join(self.files_path, filename))
                                 file_entry["filename"] = filename
 
-                                if action == "modify" and (now - last_modification) > interval:
-                                    self.queue.put({
-                                        "action": action,
-                                        "file": file_entry
-                                    })
-
-                                    last_modification = now
-
-                                else:
-                                    self.queue.put({
-                                        "action": action,
-                                        "file": file_entry
-                                    })
+                                self.queue.put({
+                                    "action": action,
+                                    "file": file_entry
+                                })
 
                             if action == "delete":
                                 self.queue.put({
