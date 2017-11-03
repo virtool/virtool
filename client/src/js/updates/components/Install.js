@@ -48,10 +48,11 @@ class SoftwareInstallModal extends React.Component {
             content = (
                 <div>
                     <Modal.Body>
-                        <strong>
-                            Update to <Label>{this.props.releases[0].name}</Label>
-                        </strong>
-                        <strong>Changes</strong>
+                        <h5>
+                            <strong>
+                                Update to <Label>{this.props.releases[0].name}</Label>
+                            </strong>
+                        </h5>
                         {renderReleaseMarkdown(mergedBody)}
                     </Modal.Body>
                     <Modal.Footer>

@@ -6,7 +6,7 @@ import { Row, Col, Panel, ListGroup } from "react-bootstrap";
 
 import { getSoftwareUpdates, showInstallModal } from "../actions";
 import { updateSetting } from "../../settings/actions";
-import { Button, Icon, Radio } from "../../base";
+import { Button, Flex, FlexItem, Icon, Radio } from "../../base";
 import Release from "./Release";
 import InstallModal from "./Install";
 
@@ -77,21 +77,22 @@ class SoftwareUpdateViewer extends React.Component {
 
             updateComponent = (
                 <Panel>
-                    <h5>
-                        <strong className="text-warning">
-                            <Icon name="info" /> Update{releases.length === 1 ? "": "s"} Available
-                        </strong>
-                    </h5>
+                    <Flex alignItems="center" style={{marginBottom: "15px"}}>
+                        <FlexItem grow={1} shrink={0}>
+                            <strong className="text-warning">
+                                <Icon name="info" /> Update{releases.length === 1 ? "": "s"} Available
+                            </strong>
+                        </FlexItem>
+                        <FlexItem grow={0} shrink={0} pad={15}>
+                            <Button icon="download" bsStyle="primary" onClick={this.props.onShowModal}>
+                                Install
+                            </Button>
+                        </FlexItem>
+                    </Flex>
 
                     <ListGroup>
                         {releaseComponents}
                     </ListGroup>
-
-                    <span className="pull-right">
-                        <Button icon="download" bsStyle="primary" onClick={this.props.onShowModal}>
-                            Install
-                        </Button>
-                    </span>
                 </Panel>
             );
         } else {
