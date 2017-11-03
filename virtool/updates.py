@@ -133,7 +133,7 @@ async def install(db, dispatch, loop, download_url, size):
 
         document = await db.status.find_one_and_update({"_id": "software_update"}, {
             "$set": {
-                "current_version": await virtool.app.find_server_version(loop)
+                "current_version": app["version"]
             }
         }, return_document=pymongo.ReturnDocument.AFTER)
 
