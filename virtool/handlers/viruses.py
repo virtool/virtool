@@ -1,3 +1,4 @@
+import asyncio
 import os
 import json
 import gzip
@@ -1018,12 +1019,12 @@ async def import_viruses(req):
     if not data_version:
         return bad_request("File is not compatible with this version of Virtool")
 
-    req.app.loop.create_task(virtool.virus_import.import_data(
+    asyncio.ensure_future(virtool.virus_import.import_data(
         db,
         req.app["dispatcher"].dispatch,
         data,
         req["client"].user_id
-    ))
+    ), loop=req.app.loop)
 
     return json_response({}, status=201, headers={"Location": "/api/viruses"})
 
