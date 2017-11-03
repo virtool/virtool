@@ -131,14 +131,6 @@ async def install(db, dispatch, loop, download_url, size):
     """
     with get_temp_dir() as tempdir:
 
-        document = await db.status.find_one_and_update({"_id": "software_update"}, {
-            "$set": {
-                "current_version": await virtool.app.find_server_version(loop)
-            }
-        }, return_document=pymongo.ReturnDocument.AFTER)
-
-        await dispatch("status", "update", virtool.utils.base_processor(document))
-
         # Start download release step, reporting this to the DB.
         await update_software_process(db, dispatch, 0, "download")
 

@@ -36,6 +36,14 @@ def get_args():
         help="write a pidfile on start"
     )
 
+    parser.add_argument(
+        "--force-version",
+        dest="force_version",
+        help="make the server think it is the passed FORCE_VERSION or v1.8.5 if none provided",
+        nargs="?",
+        const="v1.8.5"
+    )
+
     return parser.parse_args()
 
 

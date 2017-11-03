@@ -26,6 +26,10 @@ import virtool.utils
 logger = logging.getLogger(__name__)
 
 
+async def init_version(app):
+    if app["version"] is None:
+        app["version"] = await find_server_version(app.loop, sys.path[0])
+
 def init_executors(app):
     """
     An application ``on_startup`` callback that initializes a :class:`~ThreadPoolExecutor` and attaches it to the
@@ -227,7 +231,7 @@ async def on_shutdown(app):
         await file_manager.close()
 
 
-def create_app(loop, db_name=None, disable_job_manager=False, disable_file_manager=False, skip_setup=False):
+def create_app(loop, db_name=None, disable_job_manager=False, disable_file_manager=False, skip_setup=False, force_version=None):
     """
     Creates the Virtool application.
 
@@ -245,6 +249,7 @@ def create_app(loop, db_name=None, disable_job_manager=False, disable_file_manag
 
     app = web.Application(loop=loop, middlewares=middlewares)
 
+    app["version"] = force_version
     app["db_name"] = db_name
 
     for client_path in [os.path.join(sys.path[0], "client"), os.path.join(sys.path[0], "client", "dist")]:
@@ -263,6 +268,7 @@ def create_app(loop, db_name=None, disable_job_manager=False, disable_file_manag
     else:
         virtool.app_routes.setup_routes(app)
 
+        app.on_startup.append(init_version)
         app.on_startup.append(init_executors)
         app.on_startup.append(init_dispatcher)
         app.on_startup.append(init_db)
