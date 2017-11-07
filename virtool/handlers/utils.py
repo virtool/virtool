@@ -28,7 +28,7 @@ def dumps(obj):
 
     :return: a JSON string
     :rtype: str
-     
+
     """
     return json.dumps(obj, indent=4, sort_keys=False, cls=CustomEncoder)
 
@@ -67,19 +67,19 @@ def compose_regex_query(term, fields):
 def json_response(data, status=200, headers=None):
     """
     A wrapper for ``aiohttp.web.json_response`` that uses :func:``.dumps`` to pretty format the JSON response.
-    
+
     :param data: the data to send in the response as JSON
     :type data: object
-    
+
     :param status: the HTTP status code for the response
     :type status: int
 
     :param headers: HTTP response headers
     :type headers: dict
-    
+
     :return: the response
     :rtype: :class:`aiohttp.web.Response`
-      
+
     """
     headers = headers or {}
 
@@ -101,7 +101,7 @@ def bad_request(message="Bad request"):
     """
     A shortcut for creating a :class:`~aiohttp.web.Response` object with a ``400`` status the JSON body
     ``{"message": "Bad request"}``.
-    
+
     :param message: text to send instead of 'Bad request'
     :type message: str
 
@@ -154,8 +154,8 @@ def conflict(message="Conflict"):
 def invalid_input(errors):
     """
     A shortcut for creating a :class:`~aiohttp.web.Response` object with a ``422`` status the JSON body
-    ``{"message": "Invalid input", "errors": <errors>}``.    
-    
+    ``{"message": "Invalid input", "errors": <errors>}``.
+
     :param errors: error output from a :class:`cerberus.Validator` that led to the error response
     :type errors: dict
 
