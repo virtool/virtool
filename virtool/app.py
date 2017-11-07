@@ -260,14 +260,13 @@ def create_app(loop, db_name=None, disable_job_manager=False, disable_file_manag
     if "client_path" not in app:
         raise FileNotFoundError("Could not find client path")
 
-    app.on_startup.append(init_settings)
-
     if not skip_setup:
         virtool.setup.setup_routes(app)
         app.on_startup.append(init_setup)
     else:
         virtool.app_routes.setup_routes(app)
 
+        app.on_startup.append(init_settings)
         app.on_startup.append(init_version)
         app.on_startup.append(init_executors)
         app.on_startup.append(init_dispatcher)
