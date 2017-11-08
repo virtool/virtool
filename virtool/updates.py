@@ -51,24 +51,14 @@ async def get_releases(db, channel, server_version, username=None, token=None):
     :rtype: Coroutine[list]
 
     """
-    headers = {
-        "user-agent": "virtool/{}".format(server_version),
-        "Accept": "application/vnd.github.v3+json"
-    }
-
-    auth = None
-
-    if token is not None:
-        auth = aiohttp.BasicAuth(login=username, password=token)
-
     url = "https://api.github.com/repos/{}/releases".format(SOFTWARE_REPO)
 
-    async with aiohttp.ClientSession(auth=auth) as session:
-        async with session.get(url, headers=headers) as resp:
-            data = await resp.json()
+    resp = await virtool.utils.github_get(url, server_version, username, token)
 
     if resp.status != 200:
         raise virtool.errors.GitHubError("Could not retrieve GitHub data: {}".format(resp.status))
+
+    data = await resp.json()
 
     # Reformat the release dicts to make them more palatable. If the response code was not 200, the releases list
     # will be empty. This is interpreted by the web client as an error.
@@ -257,6 +247,7 @@ async def download_release(db, dispatch, url, size, target_path):
             async with aiofiles.open(target_path, "wb") as handle:
                 while True:
                     chunk = await resp.content.read(4096)
+
                     if not chunk:
                         break
 
