@@ -13,7 +13,7 @@ class CustomEncoder(json.JSONEncoder):
 
     def default(self, obj):
         if isinstance(obj, datetime.datetime):
-            return virtool.utils.to_isoformat(obj)
+            return obj.replace(tzinfo=datetime.timezone.utc).isoformat().replace("+00:00", "Z")
 
         return json.JSONEncoder.default(self, obj)
 
