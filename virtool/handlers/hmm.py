@@ -7,7 +7,8 @@ from pymongo import ReturnDocument
 
 import virtool.utils
 import virtool.virus_hmm
-from virtool.handlers.utils import unpack_request, json_response, not_found, validation, protected
+from virtool.handlers.utils import compose_regex_query, unpack_request, json_response, not_found, validation, paginate,\
+    protected
 
 
 async def find(req):
@@ -15,15 +16,29 @@ async def find(req):
     Find HMM annotation documents.
 
     """
-    documents = await req.app["db"].hmm.find({}, projection=virtool.virus_hmm.projection).to_list(length=10)
 
-    return json_response([virtool.utils.base_processor(d) for d in documents])
+    db = req.app["db"]
+
+    term = req.query.get("find", None)
+
+    db_query = dict()
+
+    if term:
+        db_query.update(compose_regex_query(term, ["label"]))
+
+    data = await paginate(db.hmm, db_query, req.query, "cluster", projection=virtool.virus_hmm.PROJECTION)
+
+    profiles_path = os.path.join(req.app["settings"].get("data_path"), "hmm", "profiles.hmm")
+
+    data["file_exists"] = os.path.isfile(profiles_path)
+
+    return json_response(data)
 
 
-async def get(req):
+async def get_annotation(req):
     """
     Get a complete individual HMM annotation document.
-     
+
     """
     document = await req.app["db"].hmm.find_one({"_id": req.match_info["hmm_id"]})
 
