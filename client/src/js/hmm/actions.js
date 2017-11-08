@@ -8,15 +8,14 @@
  */
 import { FIND_HMMS, GET_HMM, IMPORT_HMMS } from "../actionTypes";
 
-export const findHMMs = (term, page) => {
+export const findHMMs = (url) => {
     return {
         type: FIND_HMMS.REQUESTED,
-        term,
-        page
+        url
     };
 };
 
-export const getHMM = (hmmId) => {
+export const getHmm = (hmmId) => {
     return {
         type: GET_HMM.REQUESTED,
         hmmId: hmmId

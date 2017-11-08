@@ -24,6 +24,7 @@ import settingsReducer from "./settings/reducers";
 import usersReducer from "./users/reducers";
 import groupsReducer from "./groups/reducers";
 import updatesReducer from "./updates/reducers";
+import hmmsReducer from "./hmm/reducer";
 import rootSaga from "./sagas";
 
 export * from "../style/style.less";
@@ -68,6 +69,7 @@ const store = createStore(
         groups: groupsReducer,
         account: accountReducer,
         updates: updatesReducer,
+        hmms: hmmsReducer,
         router: routerReducer
     }),
     applyMiddleware(sagaMiddleware, routerMiddleware(history)),
