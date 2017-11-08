@@ -222,18 +222,7 @@ async def update_software_process(db, dispatch, progress, step=None):
     :type step: str
 
     """
-    set_dict = {
-        "process.progress": progress
-    }
-
-    if step:
-        set_dict["process.step"] = step
-
-    document = await db.status.find_one_and_update({"_id": "software_update"}, {
-        "$set": set_dict
-    }, return_document=pymongo.ReturnDocument.AFTER)
-
-    await dispatch("status", "update", virtool.utils.base_processor(document))
+    return await virtool.utils.update_status_process(db, dispatch, "software_update", progress, step)
 
 
 async def download_release(db, dispatch, url, size, target_path):

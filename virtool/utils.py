@@ -1,5 +1,9 @@
 import arrow
 import datetime
+import os
+import pymongo
+import shutil
+import sys
 
 from random import choice
 from string import ascii_letters, ascii_lowercase, digits
@@ -154,3 +158,53 @@ def reload():
         os.execv(exe, sys.argv)
 
     raise SystemError("Could not determine executable type")
+
+
+async def update_status_process(db, dispatch, _id, progress, step=None, error=None):
+    """
+    Update the process field in a status document. These fields are used to track long-running asynchronous processes
+    such as software updates or data imports.
+
+    More specific update function can be built around this utility.
+
+    :param db: the application database client
+    :type db: :class:`~motor.motor_asyncio.AsyncIOMotorClient`
+
+    :param dispatch: a reference to the dispatcher's dispatch method
+    :type dispatch: func
+
+    :param _id: the database _id for the status document
+    :type _id: str
+
+    :param progress: the numeric progress number for the step
+    :type progress: Union(int, float)
+
+    :param step: the name of the step in progress
+    :type step: Coroutine[str]
+
+    :param error: an error that stopped the process
+    :type error: str
+
+    :return: processed status document
+    :rtype: Coroutine[dict]
+
+    """
+    set_dict = {
+        "process.progress": progress
+    }
+
+    if step:
+        set_dict["process.step"] = step
+
+    if error:
+        set_dict["process.error"] = error
+
+    document = await db.status.find_one_and_update({"_id": _id}, {
+        "$set": set_dict
+    }, return_document=pymongo.ReturnDocument.AFTER)
+
+    document = base_processor(document)
+
+    await dispatch("status", "update", document)
+
+    return document
