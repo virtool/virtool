@@ -57,6 +57,9 @@ async def download_asset(url, size, target_path, progress_handler=None):
     :param target_path: the path to write the downloaded file to.
     :type target_path: str
 
+    :param progress_handler: a callable that will be called with the current progress when it changes
+    :type progress_handler: Callable[[Union[float, int]]]
+
     """
     counter = 0
     last_reported = 0
@@ -76,9 +79,10 @@ async def download_asset(url, size, target_path, progress_handler=None):
 
                     await handle.write(chunk)
 
-                    if handler:
+                    if progress_handler:
                         counter += len(chunk)
                         progress = round(counter / size, 2)
+
                         if progress - last_reported >= 0.01:
                             last_reported = progress
-                            await handler(progress)
+                            await progress_handler(progress)
