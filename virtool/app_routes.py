@@ -172,12 +172,9 @@ def setup_history_routes(app):
 
 def setup_hmm_routes(app):
     app.router.add_get("/api/hmms", hmm.find)
-
-    app.router.add_get("/api/hmms/annotations/{hmm_id}", hmm.get)
-    app.router.add_patch("/api/hmms/annotations/{hmm_id}", hmm.update)
-
-    app.router.add_get("/api/hmms/check", hmm.check)
-    app.router.add_get("/api/hmms/clean", hmm.clean)
+    app.router.add_post("/api/hmms", hmm.install)
+    app.router.add_get("/api/hmms/file", hmm.get_file)
+    app.router.add_get("/api/hmms/annotations/{hmm_id}", hmm.get_annotation)
 
 
 def setup_subtraction_routes(app):
