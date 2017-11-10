@@ -30,7 +30,7 @@ async def user_exists(db, user_id):
     """
     Check if the user with the passed ``user_id`` exists in the database.
 
-    :param db: a application database client
+    :param db: the application database client
     :type db: :class:`~motor.motor_asyncio.AsyncIOMotorClient`
 
     :param user_id: the user id to check for
