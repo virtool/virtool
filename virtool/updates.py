@@ -52,7 +52,7 @@ async def get_releases(db, channel, server_version, username=None, token=None):
     """
     url = "https://api.github.com/repos/{}/releases".format(SOFTWARE_REPO)
 
-    resp = await virtool.utils.github_get(url, server_version, username, token)
+    resp = await virtool.github.get(url, server_version, username, token)
 
     if resp.status != 200:
         raise virtool.errors.GitHubError("Could not retrieve GitHub data: {}".format(resp.status))

@@ -1,5 +1,6 @@
 import aiofiles
 import aiohttp
+import tarfile
 
 import virtool.errors
 
@@ -21,13 +22,11 @@ def get_headers(server_version):
     }
 
 
-async def create_session(username, token):
-    auth = None
+def create_auth(username, token):
+    if username is not None and token is not None:
+        return aiohttp.BasicAuth(login=username, password=token)
 
-    if token is not None:
-        auth = aiohttp.BasicAuth(login=username, password=token)
-
-    return aiohttp.ClientSession(auth=auth)
+    return None
 
 
 async def get(url, server_version, username, token):
@@ -50,8 +49,13 @@ async def get(url, server_version, username, token):
     """
     headers = get_headers(server_version)
 
-    async with create_session(username, token) as session:
+    auth = create_auth(username, token)
+
+    async with aiohttp.ClientSession(auth=auth) as session:
         async with session.get(url, headers=headers) as resp:
+            if resp.status != 200:
+                raise virtool.errors.GitHubError("Encountered error {}".format(resp.status))
+
             return await resp.json()
 
 

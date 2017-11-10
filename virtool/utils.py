@@ -1,5 +1,6 @@
 import arrow
 import datetime
+import gzip
 import os
 import pymongo
 import shutil
@@ -208,3 +209,4 @@ async def update_status_process(db, dispatch, _id, progress, step=None, error=No
     await dispatch("status", "update", document)
 
     return document
+

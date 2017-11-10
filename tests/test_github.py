@@ -8,8 +8,36 @@ import virtool.errors
 import virtool.github
 
 
+def test_get_headers():
+    assert virtool.github.get_headers("v1.9.2-beta.2") == {
+        "user-agent": "virtool/v1.9.2-beta.2",
+        "Accept": "application/vnd.github.v3+json"
+    }
+
+
+@pytest.mark.parametrize("username,token", [
+    (None, None),
+    ("fred", None),
+    (None, "abc123"),
+    ("fred", "abc123")
+])
+async def test_create_session(username, token):
+    """
+    Test that a GitHub API compatible session is created as expected. When any auth parameters are missing, auth will
+    not be used.
+
+    """
+    auth = virtool.github.create_auth(username, token)
+
+    if username and token:
+        assert auth.login == "fred"
+        assert auth.password == "abc123"
+    else:
+        assert auth is None
+
+
 @pytest.mark.parametrize("error", [None, "url", "write"])
-async def test_download_asset(error, tmpdir, capsys):
+async def test_download_asset(error, tmpdir):
     url = "https://github.com/linux-test-project/ltp/releases/download/20170516/ltp-full-20170516.tar.bz2"
 
     if error == "url":
