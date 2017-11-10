@@ -1,4 +1,5 @@
 import concurrent.futures
+import filecmp
 import gzip
 import json
 import operator
@@ -7,6 +8,8 @@ import pytest
 import shutil
 import subprocess
 import sys
+from aiohttp import web
+from aiohttp.test_utils import make_mocked_coro
 
 import virtool.virus_hmm
 
@@ -14,89 +17,210 @@ import virtool.virus_hmm
 TEST_FILE_PATH = os.path.join(sys.path[0], "tests", "test_files")
 
 
-class TestHMMStat:
+@pytest.fixture
+def mock_gh_server(monkeypatch, loop, test_server):
+    async def get_handler(req):
+        data = {
+            "assets": [
+                {
+                    "id": 5265064,
+                    "name": "annotations.json.gz",
+                    "content_type": "application/gzip",
+                    "state": "uploaded",
+                    "size": 792158,
+                    "download_count": 0,
+                    "created_at": "2017-11-06T20:56:09Z",
+                    "updated_at": "2017-11-06T20:56:12Z",
+                    "browser_download_url": "https://github.com/virtool/virtool-hmm/releases/download/v0.1.0/annotation"
+                                            "s.json.gz"
+                },
+                {
+                    "id": 5263449,
+                    "name": "profiles.hmm.gz",
+                    "content_type": "application/gzip",
+                    "state": "uploaded",
+                    "size": 85106197,
+                    "download_count": 0,
+                    "created_at": "2017-11-06T18:45:13Z",
+                    "updated_at": "2017-11-06T18:49:29Z",
+                    "browser_download_url": "https://github.com/virtool/virtool-hmm/releases/download/v0.1.0/profiles.h"
+                                            "mm.gz"
+                }
+            ]
+        }
 
-    async def test_valid(self, loop, tmpdir):
-        """
-        Test that the correct values are return when hmmstat is run on the test file
+        return web.json_response(data)
 
-        """
-        path = os.path.join(str(tmpdir), "profiles.hmm")
+    app = web.Application()
 
+    app.router.add_get("/latest", get_handler)
+
+    server = loop.run_until_complete(test_server(app))
+
+    monkeypatch.setattr("virtool.virus_hmm.LATEST_RELEASE_URL", "http://{}:{}/latest".format(server.host, server.port))
+
+    return server
+
+
+@pytest.mark.parametrize("error", [None, "missing", "bad"], ids=["good", "missing", "bad"])
+async def test_hmm_stat(error, loop, tmpdir):
+    loop.set_default_executor(concurrent.futures.ThreadPoolExecutor())
+
+    path = os.path.join(str(tmpdir), "profiles.hmm")
+
+    if error != "missing":
         shutil.copyfile(os.path.join(TEST_FILE_PATH, "test.hmm"), path)
 
-        loop.set_default_executor(concurrent.futures.ThreadPoolExecutor())
-
-        assert await virtool.virus_hmm.hmmstat(loop, path) == [
-            {'cluster': 2, 'count': 253, 'length': 356},
-            {'cluster': 3, 'count': 216, 'length': 136},
-            {'cluster': 4, 'count': 210, 'length': 96},
-            {'cluster': 5, 'count': 208, 'length': 133},
-            {'cluster': 8, 'count': 101, 'length': 612},
-            {'cluster': 9, 'count': 97, 'length': 500},
-            {'cluster': 10, 'count': 113, 'length': 505}
-        ]
-
-    async def test_bad_file(self, loop, bad_hmm_path):
-        """
-        Make sure hmmstat call fails for a damaged hmm file.
-
-        """
-        loop.set_default_executor(concurrent.futures.ThreadPoolExecutor())
+    if error == "bad":
+        with open(path, "a") as f:
+            f.write("foo1bar2hello3world4")
 
         with pytest.raises(subprocess.CalledProcessError) as err:
-            await virtool.virus_hmm.hmmstat(loop, bad_hmm_path)
+            await virtool.virus_hmm.hmmstat(loop, path)
 
         assert "returned non-zero" in str(err)
 
-    async def test_missing_file(self, loop):
-        """
-        Make sure hmmstat fails when the provided path does not exist
-
-        """
-        loop.set_default_executor(concurrent.futures.ThreadPoolExecutor())
-
+    elif error == "missing":
         with pytest.raises(FileNotFoundError) as err:
             await virtool.virus_hmm.hmmstat(loop, "/home/watson/crick.hmm")
 
         assert "HMM file does not exist" in str(err)
 
+    else:
+        assert await virtool.virus_hmm.hmmstat(loop, path) == [
+            {"cluster": 2, "count": 253, "length": 356},
+            {"cluster": 3, "count": 216, "length": 136},
+            {"cluster": 4, "count": 210, "length": 96},
+            {"cluster": 5, "count": 208, "length": 133},
+            {"cluster": 8, "count": 101, "length": 612},
+            {"cluster": 9, "count": 97, "length": 500},
+            {"cluster": 10, "count": 113, "length": 505}
+        ]
 
-class TestVFamToJSON:
 
-    def test_valid(self, annotation_path, expected_annotations):
-        """
-        Test that the collection of vFam text files is correctly translated to JSON.
+@pytest.mark.parametrize("step", [False, None, "decompress_profiles"])
+async def test_update_process(step, mocker):
+    m = mocker.patch("virtool.utils.update_status_process", new=make_mocked_coro())
 
-        """
-        result = virtool.virus_hmm.vfam_text_to_json(annotation_path)
+    if step is False:
+        await virtool.virus_hmm.update_process("db", "dispatch", 0.65)
+    else:
+        await virtool.virus_hmm.update_process("db", "dispatch", 0.65, step=step)
 
-        to_check = [{key: r[key] for key in r if key not in ("entries", "genera", "families")} for r in result]
+    assert m.call_args[0] == ("db", "dispatch", "hmm_install", 0.65, step or None)
 
-        to_check = sorted(to_check, key=operator.itemgetter("cluster"))
-        expected_annotations = sorted(to_check, key=operator.itemgetter("cluster"))
 
-        assert all(x == y for x, y in zip(to_check, expected_annotations))
+async def test_get_assets(mocker):
+    # This data doesn"t represent a complete response from the GitHub API. It is reduced for brevity.
+    m = make_mocked_coro({
+        "assets": [
+            {
+                "id": 5265064,
+                "name": "annotations.json.gz",
+                "content_type": "application/gzip",
+                "state": "uploaded",
+                "size": 792158,
+                "download_count": 0,
+                "created_at": "2017-11-06T20:56:09Z",
+                "updated_at": "2017-11-06T20:56:12Z",
+                "browser_download_url": "https://github.com/virtool/virtool-hmm/releases/download/v0.1.0/annotation"
+                                        "s.json.gz"
+            },
+            {
+                "id": 5263449,
+                "name": "profiles.hmm.gz",
+                "content_type": "application/gzip",
+                "state": "uploaded",
+                "size": 85106197,
+                "download_count": 0,
+                "created_at": "2017-11-06T18:45:13Z",
+                "updated_at": "2017-11-06T18:49:29Z",
+                "browser_download_url": "https://github.com/virtool/virtool-hmm/releases/download/v0.1.0/profiles.h"
+                                        "mm.gz"
+            }
+        ]
+    })
 
-        assert not os.path.isfile("./annotations.json.gz")
+    mocker.patch("virtool.github.get", new=m)
 
-    def test_write_file(self, annotation_path, expected_annotations, tmpdir):
-        """
-        Test that the JSON data is written to the output path when it is provided.
+    assets = await virtool.virus_hmm.get_assets("v1.9.2-beta.2", "fred", "abc123")
 
-        """
-        path = os.path.join(str(tmpdir), "annotations.json.gz")
+    assert assets == {
+        "profiles": (
+            "https://github.com/virtool/virtool-hmm/releases/download/v0.1.0/profiles.hmm.gz",
+            85106197
+        ),
+        "annotations": (
+            "https://github.com/virtool/virtool-hmm/releases/download/v0.1.0/annotations.json.gz",
+            792158
+        )
+    }
 
-        virtool.virus_hmm.vfam_text_to_json(annotation_path, path)
 
-        assert os.path.isfile(path)
+def test_decompress_profiles(tmpdir):
+    shutil.copy(os.path.join(TEST_FILE_PATH, "test.hmm.gz"), str(tmpdir))
 
-        with gzip.open(path, "rt") as json_file:
-            output = json.load(json_file)
+    src_path = os.path.join(str(tmpdir), "test.hmm.gz")
+    dest_path = os.path.join(str(tmpdir), "test.hmm")
 
-        to_check = [{key: r[key] for key in r if key not in ["entries", "genera", "families"]} for r in output]
+    virtool.virus_hmm.decompress_profiles(src_path, dest_path)
 
-        to_check = sorted(to_check, key=operator.itemgetter("cluster"))
-        expected_annotations = sorted(to_check, key=operator.itemgetter("cluster"))
+    assert filecmp.cmp(dest_path, os.path.join(TEST_FILE_PATH, "test.hmm"))
 
-        assert all(x == y for x, y in zip(to_check, expected_annotations))
+
+async def test_install_official(loop, mocker, tmpdir, test_motor, test_dispatch):
+    tmpdir.mkdir("hmm")
+
+    settings = {
+        "data_path": str(tmpdir)
+    }
+
+    m_download_asset = mocker.stub(name="download_asset")
+
+    async def download_asset(url, size, target_path, progress_handler):
+        m_download_asset(url, size, target_path, progress_handler)
+
+        if "profiles" in url:
+            shutil.copyfile(os.path.join(TEST_FILE_PATH, "test.hmm.gz"), os.path.join(target_path))
+        else:
+            shutil.copyfile(os.path.join(TEST_FILE_PATH, "annotations.json.gz"), os.path.join(target_path))
+
+    m_update_process = make_mocked_coro()
+
+    mocker.patch("virtool.virus_hmm.update_process", new=m_update_process)
+    mocker.patch("virtool.github.download_asset", new=download_asset)
+
+    await virtool.virus_hmm.install_official(
+        loop,
+        test_motor,
+        settings,
+        test_dispatch,
+        "v1.9.2-beta.2"
+    )
+
+
+@pytest.mark.parametrize("duplicate", [False, True])
+async def test_insert_annotations(duplicate, test_motor, test_random_alphanumeric):
+    with gzip.open(os.path.join(TEST_FILE_PATH, "annotations.json.gz"), "rt") as f:
+        annotations = json.load(f)
+
+    if duplicate:
+        await test_motor.hmms.insert_one({
+            "_id": "g5cpjjvk"
+        })
+
+    await virtool.virus_hmm.insert_annotations(test_motor, annotations)
+
+    expected_ids = {"9pfsom1b", "g5cpjjvk", "kfvw9vd2", "u3cuwaoq", "v4xryery", "xjqvxigh", "yglirxr7"}
+
+    if duplicate:
+        expected_ids.add("kl84fg06")
+
+    assert set(await test_motor.hmms.distinct("_id")) == expected_ids
+
+    if duplicate:
+        await test_motor.hmms.delete_one({"_id": "g5cpjjvk"})
+
+    annotations = sorted(annotations, key=operator.itemgetter("cluster"))
+
+    assert await test_motor.hmms.find({}, sort=[("cluster", 1)]).to_list(None) == annotations
