@@ -1,3 +1,5 @@
+import aiofiles
+import json
 import os
 import pymongo.errors
 import subprocess
@@ -78,16 +80,10 @@ async def get_assets(server_version, username, token):
     """
     release = await virtool.github.get(LATEST_RELEASE_URL, server_version, username, token)
 
-    assets = dict()
+    assets = list()
 
     for asset in release["assets"]:
-        download_url = asset["browser_download_url"]
-
-        if "annotations" in download_url:
-            assets["annotations"] = (download_url, asset["size"])
-
-        elif "profiles.hmm.gz" in download_url:
-            assets["profiles"] = (download_url, asset["size"])
+        assets.append((asset["browser_download_url"], asset["size"]))
 
     return assets
 
@@ -106,9 +102,9 @@ async def install_official(loop, db, settings, dispatch, server_version, usernam
 
         1. check_github
         2. download
-        4. decompress
-        5. install_profiles
-        6. import_annotations
+        3. decompress
+        4. install_profiles
+        5. import_annotations
 
     :param loop: the application event loop
 
@@ -135,6 +131,12 @@ async def install_official(loop, db, settings, dispatch, server_version, usernam
 
     assets = await get_assets(server_version, username, token)
 
+    await db.status.update_one({"_id": "hmm_install"}, {
+        "$set": {
+            "download_size": int(assets[0][1])
+        }
+    })
+
     await update_process(db, dispatch, 0.5)
 
     if len(assets) == 0:
@@ -145,10 +147,6 @@ async def install_official(loop, db, settings, dispatch, server_version, usernam
         await update_process(db, dispatch, progress)
 
     with tempfile.TemporaryDirectory() as temp_path:
-
-        profiles_path = os.path.join(temp_path, "profiles.hmm.gz")
-        annotations_path = os.path.join(temp_path, "annotations.json.gz")
-
         target_path = os.path.join(temp_path, "vthmm.tar.gz")
 
         url, size = assets[0]
@@ -158,58 +156,52 @@ async def install_official(loop, db, settings, dispatch, server_version, usernam
 
         await update_process(db, dispatch, 0, step="decompress")
 
-        decompressed_path = os.path.join(temp_path, "profiles.hmm")
-        await loop.run_in_executor(None, decompress_profiles, profiles_path, decompressed_path)
+        await loop.run_in_executor(None, virtool.github.decompress_asset_file, target_path, temp_path)
 
         await update_process(db, dispatch, 0, step="install_profiles")
 
+        decompressed_path = os.path.join(temp_path, "hmm")
         install_path = os.path.join(settings.get("data_path"), "hmm", "profiles.hmm")
-        await loop.run_in_executor(None, os.rename, decompressed_path, install_path)
+        await loop.run_in_executor(None, os.rename, os.path.join(decompressed_path, "profiles.hmm"), install_path)
 
         await update_process(db, dispatch, 0, step="import_annotations")
-        annotations = await loop.run_in_executor(None, decompress_annotations, annotations_path)
 
-        await insert_annotations(db, annotations)
+        async with aiofiles.open(os.path.join(decompressed_path, "annotations.json"), "r") as f:
+            annotations = json.loads(await f.read())
 
+        await insert_annotations(db, annotations, handler)
 
-async def check_installed(loop, db, settings):
-    hmm_dir_path = os.path.join(settings.get("data_path"), "hmm")
+        await db.status.update_one({"_id": "hmm_install"}, {
+            "$set": {
+                "ready": True
+            }
+        })
 
-    if not os.path.isdir(hmm_dir_path):
-        os.mkdir(hmm_dir_path)
-
-    hmm_file_path = os.path.join(hmm_dir_path, "profiles.hmm")
-
-    hmm_stats = await hmmstat(loop, hmm_file_path)
-
-    annotations = await db.hmm.find({}, ["cluster", "count", "length"]).to_list(None)
-
-    clusters_in_file = {entry["cluster"] for entry in hmm_stats}
-    clusters_in_database = {entry["cluster"] for entry in annotations}
-
-    # Calculate which cluster ids are unique to the HMM file and/or the annotation database.
-    errors["not_in_file"] = list(clusters_in_database - clusters_in_file) or False
-    errors["not_in_database"] = list(clusters_in_file - clusters_in_database) or False
-
-    await db.status.update_one("hmm", {
-        "$set": errors
-    }, upsert=True)
-
-    return errors
+        await update_process(db, dispatch, 1.0)
 
 
-async def insert_annotations(db, annotations):
-    for i in range(0, len(annotations), 20):
-        existing_ids = set(await db.hmms.distinct("_id"))
 
-        chunk = annotations[i:i + 20]
 
-        while True:
-            for annotation in chunk:
-                annotation["_id"] = virtool.utils.random_alphanumeric(8, excluded=existing_ids)
+async def insert_annotations(db, annotations, progress_handler=None):
+    existing_ids = set()
 
-            try:
-                await db.hmms.insert_many(annotations)
-                break
-            except pymongo.errors.DuplicateKeyError:
-                pass
+    count = 0
+    total_count = len(annotations)
+
+    for i in range(0, total_count, 30):
+        chunk = annotations[i:i + 30]
+
+        for annotation in chunk:
+            _id = virtool.utils.random_alphanumeric(8, excluded=existing_ids)
+            existing_ids.add(_id)
+            annotation["_id"] = _id
+
+        await db.hmm.insert_many(chunk)
+
+        if progress_handler:
+            count += len(chunk)
+            await progress_handler(count / total_count)
+
+
+
+

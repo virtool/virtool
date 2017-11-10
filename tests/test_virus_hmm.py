@@ -157,17 +157,6 @@ async def test_get_assets(mocker):
     }
 
 
-def test_decompress_profiles(tmpdir):
-    shutil.copy(os.path.join(TEST_FILE_PATH, "test.hmm.gz"), str(tmpdir))
-
-    src_path = os.path.join(str(tmpdir), "test.hmm.gz")
-    dest_path = os.path.join(str(tmpdir), "test.hmm")
-
-    virtool.virus_hmm.decompress_profiles(src_path, dest_path)
-
-    assert filecmp.cmp(dest_path, os.path.join(TEST_FILE_PATH, "test.hmm"))
-
-
 async def test_install_official(loop, mocker, tmpdir, test_motor, test_dispatch):
     tmpdir.mkdir("hmm")
 

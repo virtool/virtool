@@ -1,7 +1,6 @@
 import os
 import sys
 import shutil
-import tarfile
 import pymongo
 import asyncio
 import logging
@@ -52,12 +51,7 @@ async def get_releases(db, channel, server_version, username=None, token=None):
     """
     url = "https://api.github.com/repos/{}/releases".format(SOFTWARE_REPO)
 
-    resp = await virtool.github.get(url, server_version, username, token)
-
-    if resp.status != 200:
-        raise virtool.errors.GitHubError("Could not retrieve GitHub data: {}".format(resp.status))
-
-    data = await resp.json()
+    data = await virtool.github.get(url, server_version, username, token)
 
     # Reformat the release dicts to make them more palatable. If the response code was not 200, the releases list
     # will be empty. This is interpreted by the web client as an error.
@@ -155,7 +149,7 @@ async def install(db, dispatch, loop, download_url, size):
         await update_software_process(db, dispatch, 0, "decompress")
 
         # Decompress the gzipped tarball to the root of the temporary directory.
-        await loop.run_in_executor(None, decompress_file, compressed_path, str(tempdir))
+        await loop.run_in_executor(None, virtool.github.decompress_asset_file, compressed_path, str(tempdir))
 
         # Start check tree step, reporting this to the DB.
         await update_software_process(db, dispatch, 0, "check_tree")
