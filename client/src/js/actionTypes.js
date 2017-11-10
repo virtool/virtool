@@ -81,7 +81,7 @@ export const HIDE_VIRUS_MODAL = "HIDE_VIRUS_MODAL";
 // HMMs
 export const FIND_HMMS = createRequestActionType("GET_HMMS");
 export const GET_HMM = createRequestActionType("GET_HMM");
-export const IMPORT_HMMS = createRequestActionType("IMPORT_HMMS");
+export const INSTALL_HMMS = createRequestActionType("IMPORT_HMMS");
 
 // Indexes
 export const WS_UPDATE_INDEX = "WS_UPDATE_INDEX";

@@ -7,16 +7,29 @@
  *
  */
 
-import { FIND_HMMS, GET_HMM } from "../actionTypes";
+import { WS_UPDATE_STATUS, FIND_HMMS, GET_HMM } from "../actionTypes";
 
 const initialState = {
     list: null,
-    detail: null
+    detail: null,
+    process: null
 };
 
 const hmmsReducer = (state = initialState, action) => {
 
     switch (action.type) {
+
+        case WS_UPDATE_STATUS:
+            if (action.data.id === "hmm_install") {
+                return {
+                    ...state,
+                    process: action.data.process,
+                    ready: action.data.ready,
+                    size: action.data.size
+                };
+            }
+
+            return state;
 
         case FIND_HMMS.SUCCEEDED:
             return {

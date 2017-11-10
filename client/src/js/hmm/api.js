@@ -19,6 +19,10 @@ const hmmsAPI = {
             .query(query);
     },
 
+    install: () => {
+        return Request.post("/api/hmms");
+    },
+
     get: (hmmId) => {
         return Request.get(`/api/hmms/annotations/${hmmId}`);
     }

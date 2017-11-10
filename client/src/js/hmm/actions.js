@@ -6,7 +6,7 @@
  * @author igboyes
  *
  */
-import { FIND_HMMS, GET_HMM, IMPORT_HMMS } from "../actionTypes";
+import { FIND_HMMS, GET_HMM, INSTALL_HMMS } from "../actionTypes";
 
 export const findHMMs = (url) => {
     return {
@@ -22,8 +22,8 @@ export const getHmm = (hmmId) => {
     };
 };
 
-export const importHMMs = () => {
+export const installHMMs = () => {
     return {
-        type: IMPORT_HMMS.REQUESTED
+        type: INSTALL_HMMS.REQUESTED
     }
 };
