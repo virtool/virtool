@@ -1,5 +1,7 @@
 import os
 import pytest
+import shutil
+import sys
 from aiohttp.test_utils import make_mocked_coro
 
 import virtool.errors
@@ -54,5 +56,21 @@ async def test_download_asset(error, tmpdir, capsys):
 
     if not error:
         assert os.path.getsize(target_path) == 3664835
+
+
+def test_decompress_asset_file(tmpdir):
+    path = str(tmpdir)
+
+    src_path = os.path.join(sys.path[0], "tests", "test_files", "virtool.tar.gz")
+
+    shutil.copy(src_path, path)
+
+    virtool.github.decompress_asset_file(os.path.join(path, "virtool.tar.gz"), os.path.join(path, "de"))
+
+    assert set(os.listdir(path)) == {"virtool.tar.gz", "de"}
+
+    assert os.listdir(os.path.join(path, "de")) == ["virtool"]
+
+    assert set(os.listdir(os.path.join(path, "de", "virtool"))) == {"run", "client", "VERSION", "install.sh"}
 
 

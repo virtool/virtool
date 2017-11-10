@@ -86,3 +86,18 @@ async def download_asset(url, size, target_path, progress_handler=None):
                         if progress - last_reported >= 0.01:
                             last_reported = progress
                             await progress_handler(progress)
+
+
+def decompress_asset_file(path, target):
+    """
+    Decompress the tar.gz file at ``path`` to the directory ``target``.
+
+    :param path: the path to the tar.gz file.
+    :type path: str
+
+    :param target: the path to directory into which to decompress the tar.gz file.
+    :type target: str
+
+    """
+    with tarfile.open(path, "r:gz") as tar:
+        tar.extractall(target)

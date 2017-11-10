@@ -216,21 +216,6 @@ async def update_software_process(db, dispatch, progress, step=None):
     return await virtool.utils.update_status_process(db, dispatch, "software_update", progress, step)
 
 
-def decompress_file(path, target):
-    """
-    Decompress the tar.gz file at ``path`` to the directory ``target``.
-
-    :param path: the path to the tar.gz file.
-    :type path: str
-
-    :param target: the path to directory into which to decompress the tar.gz file.
-    :type target: str
-
-    """
-    with tarfile.open(path, "r:gz") as tar:
-        tar.extractall(target)
-
-
 def check_tree(path):
     if not {"client", "run", "VERSION"}.issubset(set(os.listdir(path))):
         return False

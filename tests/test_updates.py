@@ -60,7 +60,7 @@ async def test_install(download_release_error, loop, tmpdir, monkeypatch, mocker
         temp_dir = tempfile.TemporaryDirectory(dir=str(tmpdir))
         return temp_dir
 
-    async def m_download_release(db, dispatch, url, size, target_path):
+    async def m_download_asset(url, size, target_path, progress_handler=None):
         if download_release_error:
             raise download_release_error
 
@@ -77,7 +77,7 @@ async def test_install(download_release_error, loop, tmpdir, monkeypatch, mocker
         }
     })
 
-    monkeypatch.setattr("virtool.updates.download_release", m_download_release)
+    monkeypatch.setattr("virtool.github.download_asset", m_download_asset)
 
     monkeypatch.setattr("virtool.updates.get_temp_dir", m_get_tempdir)
 
@@ -142,22 +142,6 @@ async def test_update_software_process(progress, step, test_motor, test_dispatch
             "progress": progress
         }
     }
-
-
-def test_decompress_file(tmpdir):
-    path = str(tmpdir)
-
-    src_path = os.path.join(sys.path[0], "tests", "test_files", "virtool.tar.gz")
-
-    shutil.copy(src_path, path)
-
-    virtool.updates.decompress_file(os.path.join(path, "virtool.tar.gz"), os.path.join(path, "de"))
-
-    assert set(os.listdir(path)) == {"virtool.tar.gz", "de"}
-
-    assert os.listdir(os.path.join(path, "de")) == ["virtool"]
-
-    assert set(os.listdir(os.path.join(path, "de", "virtool"))) == {"run", "client", "VERSION", "install.sh"}
 
 
 @pytest.mark.parametrize("missing_path,p_result", [(None, True), ("run", False), ("VERSION", False)])
