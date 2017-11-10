@@ -17,7 +17,6 @@ import { push } from "react-router-redux";
 import { connect } from "react-redux";
 import { ClipLoader } from "halogenium";
 import {
-    Alert,
     Badge,
     Col,
     FormControl,
@@ -30,7 +29,8 @@ import {
 } from "react-bootstrap";
 
 import { findHMMs } from "../actions";
-import { Button, Icon, ListGroupItem, PageHint } from "../../base"
+import { Icon, ListGroupItem, PageHint } from "../../base"
+import HMMInstaller from "./Installer";
 
 /**
  * A main component that shows a history of all index builds and the changes that comprised them.
@@ -44,7 +44,7 @@ class HMMList extends React.Component {
     }
 
     componentWillReceiveProps (nextProps) {
-        if (!isEqual(nextProps.location, this.props.location)) {
+        if (!isEqual(nextProps.location, this.props.location) || (nextProps.ready && !this.props.ready)) {
             this.props.onFind(window.location.href);
         }
     }
@@ -62,57 +62,6 @@ class HMMList extends React.Component {
 
     render () {
 
-        let errors;
-
-        /*
-
-        if (this.state.status.not_in_database.length > 0 && !alert) {
-            const value = this.state.status.not_in_database;
-
-            errors.push(
-                <Alert key="not_in_database" bsStyle="danger">
-                    <strong>
-                        There {makeSpecifier(value.length, "profile")} in <code>profiles.hmm</code> that do not have
-                        annotations in the database.
-                    </strong>
-                    &nbsp;
-                    <span>
-                        Ensure the annotation database and HMM file match by importing annotations or uploading a new
-                        HMM file
-                    </span>
-                </Alert>
-            )
-        }
-
-        if (this.state.status.not_in_file.length && !alert) {
-            const value = this.state.status.not_in_file.length;
-
-            errors.push(
-                <Alert key="not_in_file" bsStyle="warning">
-                    <Flex>
-                        <FlexItem>
-                            <strong>
-                                There {makeSpecifier(value.length, "annotation")} in the database for which no
-                                profiles exist in the HMM file.
-                            </strong>
-                            &nbsp;
-                            <span>
-                                Repairing this problem will remove extra annotations from the database.
-                            </span>
-                        </FlexItem>
-
-                        <FlexItem grow={0} shrink={0} pad={30}>
-                            <Button icon="hammer" onClick={this.clean}>
-                                Repair
-                            </Button>
-                        </FlexItem>
-                    </Flex>
-                </Alert>
-            );
-        }
-
-        */
-
         if (this.props.list === null) {
             return(
                 <div className="text-center" style={{paddingTop: "130px"}}>
@@ -124,35 +73,7 @@ class HMMList extends React.Component {
         let noFilePanel;
 
         if (!this.props.fileExists) {
-            if (this.props.totalCount) {
-                noFilePanel = (
-                    <Alert bsStyle="warning" className="text-center">
-                        <h5 className="text-warning">
-                            <strong>
-                                <Icon name="warning"/> No profile HMM file found.
-                            </strong>
-                        </h5>
-
-                        <Button icon="download">
-                            Download Official
-                        </Button>
-                    </Alert>
-                );
-            } else {
-                noFilePanel = (
-                    <Alert bsStyle="warning" className="text-center">
-                        <h5 className="text-warning">
-                            <strong>
-                                <Icon name="warning"/> No profile HMM file or annotations found.
-                            </strong>
-                        </h5>
-
-                        <Button icon="download">
-                            Download Official
-                        </Button>
-                    </Alert>
-                );
-            }
+            noFilePanel = <HMMInstaller />;
         }
 
         let rowComponents = this.props.list.map(document => {
