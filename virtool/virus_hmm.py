@@ -1,7 +1,6 @@
 import aiofiles
 import json
 import os
-import pymongo.errors
 import subprocess
 import tempfile
 
@@ -52,18 +51,9 @@ async def update_process(db, dispatch, progress, step=None, error=None):
     return await virtool.utils.update_status_process(db, dispatch, "hmm_install", progress, step)
 
 
-async def get_assets(server_version, username, token):
+async def get_asset(server_version, username, token):
     """
     Get the asset information associated with the latest HMM release.
-
-    Returns data in the format:
-
-    ```
-    {
-        "annotations": (<url>, <size>),
-        "profiles": (<url>, <size>)
-    }
-    ```
 
     :param server_version: the current server version
     :type server_version: str
@@ -129,7 +119,7 @@ async def install_official(loop, db, settings, dispatch, server_version, usernam
     """
     await update_process(db, dispatch, 0, step="check_github")
 
-    assets = await get_assets(server_version, username, token)
+    assets = await get_asset(server_version, username, token)
 
     await db.status.update_one({"_id": "hmm_install"}, {
         "$set": {

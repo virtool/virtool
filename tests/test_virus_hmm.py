@@ -125,36 +125,18 @@ async def test_get_assets(mocker):
                 "updated_at": "2017-11-06T20:56:12Z",
                 "browser_download_url": "https://github.com/virtool/virtool-hmm/releases/download/v0.1.0/annotation"
                                         "s.json.gz"
-            },
-            {
-                "id": 5263449,
-                "name": "profiles.hmm.gz",
-                "content_type": "application/gzip",
-                "state": "uploaded",
-                "size": 85106197,
-                "download_count": 0,
-                "created_at": "2017-11-06T18:45:13Z",
-                "updated_at": "2017-11-06T18:49:29Z",
-                "browser_download_url": "https://github.com/virtool/virtool-hmm/releases/download/v0.1.0/profiles.h"
-                                        "mm.gz"
             }
         ]
     })
 
     mocker.patch("virtool.github.get", new=m)
 
-    assets = await virtool.virus_hmm.get_assets("v1.9.2-beta.2", "fred", "abc123")
+    assets = await virtool.virus_hmm.get_asset("v1.9.2-beta.2", "fred", "abc123")
 
-    assert assets == {
-        "profiles": (
-            "https://github.com/virtool/virtool-hmm/releases/download/v0.1.0/profiles.hmm.gz",
-            85106197
-        ),
-        "annotations": (
-            "https://github.com/virtool/virtool-hmm/releases/download/v0.1.0/annotations.json.gz",
-            792158
-        )
-    }
+    assert assets == [(
+        "https://github.com/virtool/virtool-hmm/releases/download/v0.1.0/annotations.json.gz",
+        792158
+    )]
 
 
 async def test_install_official(loop, mocker, tmpdir, test_motor, test_dispatch):
@@ -168,11 +150,7 @@ async def test_install_official(loop, mocker, tmpdir, test_motor, test_dispatch)
 
     async def download_asset(url, size, target_path, progress_handler):
         m_download_asset(url, size, target_path, progress_handler)
-
-        if "profiles" in url:
-            shutil.copyfile(os.path.join(TEST_FILE_PATH, "test.hmm.gz"), os.path.join(target_path))
-        else:
-            shutil.copyfile(os.path.join(TEST_FILE_PATH, "annotations.json.gz"), os.path.join(target_path))
+        shutil.copyfile(os.path.join(TEST_FILE_PATH, "vthmm.tar.gz"), os.path.join(target_path))
 
     m_update_process = make_mocked_coro()
 
@@ -188,28 +166,16 @@ async def test_install_official(loop, mocker, tmpdir, test_motor, test_dispatch)
     )
 
 
-@pytest.mark.parametrize("duplicate", [False, True])
-async def test_insert_annotations(duplicate, test_motor, test_random_alphanumeric):
+async def test_insert_annotations(test_motor, test_random_alphanumeric):
     with gzip.open(os.path.join(TEST_FILE_PATH, "annotations.json.gz"), "rt") as f:
         annotations = json.load(f)
-
-    if duplicate:
-        await test_motor.hmms.insert_one({
-            "_id": "g5cpjjvk"
-        })
 
     await virtool.virus_hmm.insert_annotations(test_motor, annotations)
 
     expected_ids = {"9pfsom1b", "g5cpjjvk", "kfvw9vd2", "u3cuwaoq", "v4xryery", "xjqvxigh", "yglirxr7"}
 
-    if duplicate:
-        expected_ids.add("kl84fg06")
-
-    assert set(await test_motor.hmms.distinct("_id")) == expected_ids
-
-    if duplicate:
-        await test_motor.hmms.delete_one({"_id": "g5cpjjvk"})
+    assert set(await test_motor.hmm.distinct("_id")) == expected_ids
 
     annotations = sorted(annotations, key=operator.itemgetter("cluster"))
 
-    assert await test_motor.hmms.find({}, sort=[("cluster", 1)]).to_list(None) == annotations
+    assert await test_motor.hmm.find({}, sort=[("cluster", 1)]).to_list(None) == annotations
