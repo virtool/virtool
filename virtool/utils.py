@@ -1,8 +1,10 @@
-import os
-import sys
 import arrow
-import shutil
 import datetime
+import gzip
+import os
+import pymongo
+import shutil
+import sys
 
 from random import choice
 from string import ascii_letters, ascii_lowercase, digits
@@ -40,56 +42,6 @@ def rm(path, recursive=False):
         raise
 
 
-def write_file(path, body, is_bytes=False):
-    """
-    Writes the data in ``body`` to a file at ``path``. Write in bytes mode if ``is_bytes`` is ``True``.
-
-    :param path: path to write the file to.
-    :type path: string
-
-    :param body: the content to write to the file.
-    :type body: string
-
-    :param is_bytes: whether the write in bytes mode.
-    :type is_bytes: bool
-
-    """
-    mode = "w"
-
-    if is_bytes:
-        mode += "b"
-
-    with open(path, mode) as handle:
-        handle.write(body)
-
-
-def list_files(directory, excluded=None):
-    """
-    Get a list of dicts describing the files in the passed directory. Each dict contains the information:
-
-    * _id: the file name
-    * size: the size in bytes of the file
-    * access: the timestamp for when the file was last accessed
-    * modify:  the timestamp for when the file was last modified
-
-    :param directory: the directory to look in.
-    :type directory: str
-
-    :param excluded: names of files to exclude from the list.
-    :type excluded: list
-
-    :returns: a list of dicts describing the files in the directory.
-    :rtype: list
-
-    """
-    file_list = os.listdir(directory)
-
-    if excluded:
-        return {name: file_stats(os.path.join(directory, name)) for name in file_list if name not in excluded}
-
-    return {name: file_stats(os.path.join(directory, name)) for name in file_list}
-
-
 def file_stats(path):
     stats = os.stat(path)
 
@@ -116,21 +68,6 @@ def timestamp():
     dt = dt.replace(microsecond=int(str(dt.microsecond)[0:3] + "000"))
 
     return dt
-
-
-def to_isoformat(dt):
-    """
-    Returns the ISO formatted string for the passed datetime object. Uses Z at the end of the string instead of +00:00.
-    Suitable for sending to clients.
-
-    :param dt: the time to format
-    :type dt: the :class:`datetime.datetime`
-
-    :return: an ISO formatted time string
-    :rtype: str
-
-    """
-    return dt.replace(tzinfo=datetime.timezone.utc).isoformat().replace("+00:00", "Z")
 
 
 def random_alphanumeric(length=6, mixed_case=False, excluded=None):
@@ -187,11 +124,6 @@ async def get_new_id(collection, excluded=None):
     return random_alphanumeric(length=8, excluded=excluded)
 
 
-def format_doc_id(prefix, document):
-    document[prefix + "_id"] = document.pop("_id")
-    return document
-
-
 def coerce_list(obj):
     """
     Takes an object of any type and returns a list. If ``obj`` is a list it will be passed back with modification.
@@ -227,3 +159,54 @@ def reload():
         os.execv(exe, sys.argv)
 
     raise SystemError("Could not determine executable type")
+
+
+async def update_status_process(db, dispatch, _id, progress, step=None, error=None):
+    """
+    Update the process field in a status document. These fields are used to track long-running asynchronous processes
+    such as software updates or data imports.
+
+    More specific update function can be built around this utility.
+
+    :param db: the application database client
+    :type db: :class:`~motor.motor_asyncio.AsyncIOMotorClient`
+
+    :param dispatch: a reference to the dispatcher's dispatch method
+    :type dispatch: func
+
+    :param _id: the database _id for the status document
+    :type _id: str
+
+    :param progress: the numeric progress number for the step
+    :type progress: Union(int, float)
+
+    :param step: the name of the step in progress
+    :type step: Coroutine[str]
+
+    :param error: an error that stopped the process
+    :type error: str
+
+    :return: processed status document
+    :rtype: Coroutine[dict]
+
+    """
+    set_dict = {
+        "process.progress": progress
+    }
+
+    if step:
+        set_dict["process.step"] = step
+
+    if error:
+        set_dict["process.error"] = error
+
+    document = await db.status.find_one_and_update({"_id": _id}, {
+        "$set": set_dict
+    }, return_document=pymongo.ReturnDocument.AFTER)
+
+    document = base_processor(document)
+
+    await dispatch("status", "update", document)
+
+    return document
+

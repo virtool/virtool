@@ -11,7 +11,7 @@ parameters = [
     ("post", ("/api/viruses/foobar/isolates/test/sequences", {})),
     ("patch", ("/api/viruses/foobar/isolates/test/sequences/foobar", {})),
 
-    ("patch", ("/api/hmm/annotations/foobar", {})),
+
 
     ("get", ("/api/groups",)),
     ("post", ("/api/groups", {})),

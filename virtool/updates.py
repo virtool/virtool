@@ -1,17 +1,15 @@
 import os
 import sys
 import shutil
-import tarfile
 import pymongo
 import asyncio
 import logging
-import aiohttp
-import aiofiles
 import tempfile
 
 import virtool.app
-import virtool.utils
 import virtool.errors
+import virtool.github
+import virtool.utils
 
 logger = logging.getLogger(__name__)
 
@@ -51,24 +49,9 @@ async def get_releases(db, channel, server_version, username=None, token=None):
     :rtype: Coroutine[list]
 
     """
-    headers = {
-        "user-agent": "virtool/{}".format(server_version),
-        "Accept": "application/vnd.github.v3+json"
-    }
-
-    auth = None
-
-    if token is not None:
-        auth = aiohttp.BasicAuth(login=username, password=token)
-
     url = "https://api.github.com/repos/{}/releases".format(SOFTWARE_REPO)
 
-    async with aiohttp.ClientSession(auth=auth) as session:
-        async with session.get(url, headers=headers) as resp:
-            data = await resp.json()
-
-    if resp.status != 200:
-        raise virtool.errors.GitHubError("Could not retrieve GitHub data: {}".format(resp.status))
+    data = await virtool.github.get(url, server_version, username, token)
 
     # Reformat the release dicts to make them more palatable. If the response code was not 200, the releases list
     # will be empty. This is interpreted by the web client as an error.
@@ -130,15 +113,17 @@ async def install(db, dispatch, loop, download_url, size):
 
     """
     with get_temp_dir() as tempdir:
-
         # Start download release step, reporting this to the DB.
         await update_software_process(db, dispatch, 0, "download")
 
         # Download the release from GitHub and write it to a temporary directory.
         compressed_path = os.path.join(str(tempdir), "release.tar.gz")
 
+        async def handler(progress):
+            await update_software_process(db, dispatch, progress)
+
         try:
-            await download_release(db, dispatch, download_url, size, compressed_path)
+            await virtool.github.download_asset(download_url, size, compressed_path, progress_handler=handler)
         except virtool.errors.GitHubError:
             document = await db.status.find_one_and_update({"_id": "software_update"}, {
                 "$set": {
@@ -164,7 +149,7 @@ async def install(db, dispatch, loop, download_url, size):
         await update_software_process(db, dispatch, 0, "decompress")
 
         # Decompress the gzipped tarball to the root of the temporary directory.
-        await loop.run_in_executor(None, decompress_file, compressed_path, str(tempdir))
+        await loop.run_in_executor(None, virtool.github.decompress_asset_file, compressed_path, str(tempdir))
 
         # Start check tree step, reporting this to the DB.
         await update_software_process(db, dispatch, 0, "check_tree")
@@ -222,77 +207,7 @@ async def update_software_process(db, dispatch, progress, step=None):
     :type step: str
 
     """
-    set_dict = {
-        "process.progress": progress
-    }
-
-    if step:
-        set_dict["process.step"] = step
-
-    document = await db.status.find_one_and_update({"_id": "software_update"}, {
-        "$set": set_dict
-    }, return_document=pymongo.ReturnDocument.AFTER)
-
-    await dispatch("status", "update", virtool.utils.base_processor(document))
-
-
-async def download_release(db, dispatch, url, size, target_path):
-    """
-    Download the GitHub release at ``url`` to the location specified by ``target_path``.
-
-    :param db: the application database client
-    :type db: :class:`~motor.motor_asyncio.AsyncIOMotorClient`
-
-    :param dispatch: a reference to the dispatcher's dispatch method
-    :type dispatch: func
-
-    :param url: the download URL for the release
-    :type url str
-
-    :param size: the size in bytes of the file to be downloaded.
-    :type size: int
-
-    :param target_path: the path to write the downloaded file to.
-    :type target_path: str
-
-    """
-    counter = 0
-    last_reported = 0
-
-    async with aiohttp.ClientSession() as session:
-        async with session.get(url) as resp:
-
-            if resp.status != 200:
-                raise virtool.errors.GitHubError("Could not download release")
-
-            async with aiofiles.open(target_path, "wb") as handle:
-                while True:
-                    chunk = await resp.content.read(4096)
-                    if not chunk:
-                        break
-
-                    await handle.write(chunk)
-
-                    counter += len(chunk)
-                    progress = round(counter / size, 2)
-                    if progress - last_reported >= 0.01:
-                        last_reported = progress
-                        await update_software_process(db, dispatch, progress)
-
-
-def decompress_file(path, target):
-    """
-    Decompress the tar.gz file at ``path`` to the directory ``target``.
-
-    :param path: the path to the tar.gz file.
-    :type path: str
-
-    :param target: the path to directory into which to decompress the tar.gz file.
-    :type target: str
-
-    """
-    with tarfile.open(path, "r:gz") as tar:
-        tar.extractall(target)
+    return await virtool.utils.update_status_process(db, dispatch, "software_update", progress, step)
 
 
 def check_tree(path):

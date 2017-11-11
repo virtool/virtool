@@ -85,68 +85,6 @@ class TestRm:
         assert set(os.listdir(str(fake_dir))) == {"hello.txt", "world.txt"}
 
 
-class TestWriteFile:
-
-    def test_utf(self, fake_dir):
-        path = os.path.join(str(fake_dir), "utf.txt")
-
-        virtool.utils.write_file(path, "utf8-encoded content", is_bytes=False)
-
-        with open(path, "r") as handle:
-            assert handle.read() == "utf8-encoded content"
-
-    def test_utf_exception(self, fake_dir):
-        path = os.path.join(str(fake_dir), "utf.txt")
-
-        with pytest.raises(TypeError):
-            virtool.utils.write_file(path, "utf8-encoded content", is_bytes=True)
-
-    def test_bytes(self, fake_dir):
-        path = os.path.join(str(fake_dir), "bytes.dat")
-
-        b = "bytes content".encode("utf-8")
-
-        virtool.utils.write_file(path, b, is_bytes=True)
-
-        with open(path, "r") as handle:
-            assert handle.read() == "bytes content"
-
-    def test_bytes_exception(self, fake_dir):
-        path = os.path.join(str(fake_dir), "bytes.dat")
-
-        b = "bytes content".encode("utf-8")
-
-        with pytest.raises(TypeError):
-            virtool.utils.write_file(path, b, is_bytes=False)
-
-
-class TestListFiles:
-
-    def test_valid_path(self, fake_dir):
-        file_list = virtool.utils.list_files(str(fake_dir))
-
-        assert {"hello.txt", "world.txt"} == set(file_list.keys())
-
-        assert file_list["hello.txt"]["size"] < file_list["world.txt"]["size"]
-
-        for file_dict in file_list.values():
-            assert "size" in file_dict
-            assert "modify" in file_dict
-            assert file_dict["modify"]
-
-    def test_invalid_path(self, fake_dir):
-        assert "invalid_dir" not in os.listdir(str(fake_dir))
-
-        invalid_path = os.path.join(str(fake_dir), "invalid_dir")
-
-        with pytest.raises(FileNotFoundError):
-            virtool.utils.list_files(invalid_path)
-
-    def test_excluded(self, fake_dir):
-        file_list = virtool.utils.list_files(str(fake_dir), excluded=["world.txt"])
-        assert "world.txt" not in file_list.keys()
-
-
 class TestTimestamp:
 
     def test(self, mocker):

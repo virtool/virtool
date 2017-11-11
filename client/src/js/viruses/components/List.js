@@ -15,7 +15,7 @@ import { LinkContainer } from "react-router-bootstrap";
 import { Alert, Badge, Row, Col, ListGroup, Pagination } from "react-bootstrap";
 
 import { findViruses } from "../actions";
-import { Flex, FlexItem, Icon, ListGroupItem } from "../../base";
+import { Flex, FlexItem, Icon, ListGroupItem, PageHint } from "../../base";
 import VirusToolbar from "./Toolbar";
 import CreateVirus from "./Create";
 
@@ -115,9 +115,6 @@ class VirusesList extends React.Component {
             );
         }
 
-        const first = 1 + (this.props.page - 1) * 15;
-        const last = first + (virusCount < 15 ? virusCount - 1: 14);
-
         return (
             <div>
                 <h3 className="view-header">
@@ -128,9 +125,12 @@ class VirusesList extends React.Component {
                             </strong>
                         </FlexItem>
 
-                        <span className="text-muted pull-right" style={{fontSize: "12px"}}>
-                            Viewing {first} - {last} of {this.props.foundCount}
-                        </span>
+                        <PageHint
+                            count={virusCount}
+                            totalCount={this.props.totalCount}
+                            page={this.props.page}
+                            pullRight
+                        />
                     </Flex>
                 </h3>
 

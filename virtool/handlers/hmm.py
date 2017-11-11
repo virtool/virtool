@@ -1,13 +1,10 @@
+import asyncio
 import os
-import gzip
-import json
-import shutil
-from collections import Counter
-from pymongo import ReturnDocument
+import pymongo
 
 import virtool.utils
 import virtool.virus_hmm
-from virtool.handlers.utils import unpack_request, json_response, not_found, validation, protected
+from virtool.handlers.utils import compose_regex_query, json_response, not_found, paginate
 
 
 async def find(req):
@@ -15,15 +12,50 @@ async def find(req):
     Find HMM annotation documents.
 
     """
-    documents = await req.app["db"].hmm.find({}, projection=virtool.virus_hmm.projection).to_list(length=10)
 
-    return json_response([virtool.utils.base_processor(d) for d in documents])
+    db = req.app["db"]
+
+    term = req.query.get("find", None)
+
+    db_query = dict()
+
+    if term:
+        db_query.update(compose_regex_query(term, ["label"]))
+
+    data = await paginate(db.hmm, db_query, req.query, "cluster", projection=virtool.virus_hmm.PROJECTION)
+
+    profiles_path = os.path.join(req.app["settings"].get("data_path"), "hmm", "profiles.hmm")
+
+    data["file_exists"] = os.path.isfile(profiles_path)
+
+    return json_response(data)
 
 
-async def get(req):
+async def install(req):
+    db = req.app["db"]
+
+    document = await db.status.find_one_and_update({"_id": "hmm_install"}, {
+        "$set": {
+            "ready": False,
+            "process": {}
+        }
+    }, return_document=pymongo.ReturnDocument.AFTER, upsert=True)
+
+    asyncio.ensure_future(virtool.virus_hmm.install_official(
+        req.app.loop,
+        db,
+        req.app["settings"],
+        req.app["dispatcher"].dispatch,
+        req.app["version"]
+    ), loop=req.app.loop)
+
+    return json_response(virtool.utils.base_processor(document))
+
+
+async def get_annotation(req):
     """
     Get a complete individual HMM annotation document.
-     
+
     """
     document = await req.app["db"].hmm.find_one({"_id": req.match_info["hmm_id"]})
 
@@ -33,96 +65,32 @@ async def get(req):
     return not_found()
 
 
-@protected("modify_hmm")
-@validation({"label": {"type": "string", "required": True}})
-async def update(req):
-    """
-    Update the label field for an HMM annotation document.
-    
-    """
-    db, data = req.app["db"], req["data"]
-
-    hmm_id = req.match_info["hmm_id"]
-
-    if not await db.hmm.find({"_id": hmm_id}).count():
-        return not_found()
-
-    document = await db.hmm.find_one_and_update({"_id": hmm_id}, {
-        "$set": data
-    }, return_document=ReturnDocument.AFTER)
-
-    return json_response(virtool.utils.base_processor(document))
-
-
-async def check(req):
-    result = await virtool.virus_hmm.check(req.app["db"], req.app["settings"])
-    return json_response(result)
-
-
-async def clean(req):
+async def get_file(req):
     db = req.app["db"]
-    settings = req.app["settings"]
 
-    errors = await virtool.virus_hmm.check(db, settings)
+    hmm_dir_path = os.path.join(req.app["settings"].get("data_path"), "hmm")
 
-    if errors["not_in_file"]:
-        hmm_ids = await db.hmm.find({"cluster": {
-            "$in": errors["not_in_file"]
-        }}).distinct("_id")
+    if not os.path.isdir(hmm_dir_path):
+        os.mkdir(hmm_dir_path)
 
-        await db.hmm.delete_many({"_id": {"$in": hmm_ids}})
+    hmm_file_path = os.path.join(hmm_dir_path, "profiles.hmm")
 
-        return json_response(await virtool.virus_hmm.check(db, settings))
+    try:
+        hmm_stats = await virtool.virus_hmm.hmmstat(req.app.loop, hmm_file_path)
+    except FileNotFoundError:
+        return not_found("profiles.hmm file does not exist")
 
-    return json_response({"No problems found"}, status=404)
+    annotations = await db.hmm.find({}, ["cluster", "count", "length"]).to_list(None)
 
+    clusters_in_file = {entry["cluster"] for entry in hmm_stats}
+    clusters_in_database = {entry["cluster"] for entry in annotations}
 
-async def import_hmm(req):
-    db, data = unpack_request(req)
-
-    settings = req.app["settings"]
-
-    src_path = os.path.join(settings.get("data_path"), "files", data["file_id"])
-    dest_path = os.path.join(settings.get("data_path"), "hmm/profiles.hmm")
-
-    shutil.copyfile(src_path, dest_path)
-
-    result = await virtool.virus_hmm.check(db, settings)
+    # Calculate which cluster ids are unique to the HMM file and/or the annotation database.
+    errors["not_in_file"] = list(clusters_in_database - clusters_in_file) or False
+    errors["not_in_database"] = list(clusters_in_file - clusters_in_database) or False
 
     await db.status.update_one("hmm", {
-        "$set": result
+        "$set": errors
     }, upsert=True)
 
-    return json_response(result)
-
-
-async def import_annotations(req):
-    db, data = unpack_request(req)
-
-    settings = req.app["settings"]
-
-    if await db.hmm.count():
-        return json_response({"message": "Annotations collection is not empty"}, status=400)
-
-    with gzip.open(os.path.join(settings.get("data_path"), "files", data["file_id"]), "rt") as input_file:
-        annotations_to_import = json.load(input_file)
-
-    # A list of documents that have to be inserted when chunk_size is met.
-    cache = list()
-
-    for annotation in annotations_to_import:
-        top_three = Counter([entry["name"] for entry in annotation["entries"]]).most_common(3)
-        top_names = [entry[0] for entry in top_three]
-
-        new_id = await virtool.utils.get_new_id(db.hmm)
-
-        annotation.update({
-            "_id": new_id,
-            "definition": top_names,
-            "label": top_names[0],
-            "_version": 0
-        })
-
-        cache.append(annotation)
-
-    return json_response(await virtool.virus_hmm.check(db, settings))
+    return errors

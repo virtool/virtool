@@ -60,7 +60,7 @@ async def test_install(download_release_error, loop, tmpdir, monkeypatch, mocker
         temp_dir = tempfile.TemporaryDirectory(dir=str(tmpdir))
         return temp_dir
 
-    async def m_download_release(db, dispatch, url, size, target_path):
+    async def m_download_asset(url, size, target_path, progress_handler=None):
         if download_release_error:
             raise download_release_error
 
@@ -77,7 +77,7 @@ async def test_install(download_release_error, loop, tmpdir, monkeypatch, mocker
         }
     })
 
-    monkeypatch.setattr("virtool.updates.download_release", m_download_release)
+    monkeypatch.setattr("virtool.github.download_asset", m_download_asset)
 
     monkeypatch.setattr("virtool.updates.get_temp_dir", m_get_tempdir)
 
@@ -142,80 +142,6 @@ async def test_update_software_process(progress, step, test_motor, test_dispatch
             "progress": progress
         }
     }
-
-
-@pytest.mark.parametrize("error", [None, "url", "write"])
-async def test_download_release(error, tmpdir, test_motor, test_dispatch):
-    url = "https://github.com/linux-test-project/ltp/releases/download/20170516/ltp-full-20170516.tar.bz2"
-
-    if error == "url":
-        url = "https://github.com/virtool/virtool/releases/download/v1.8.5/foobar.tar.gz"
-
-    size = 3664835
-
-    path = str(tmpdir)
-
-    target_path = os.path.join(path, "release.tar.gz")
-
-    if error == "write":
-        target_path = "/foobar/this/should/not-exist"
-
-    await test_motor.status.insert_one({
-        "_id": "software_update",
-        "process": {
-            "size": 34091211,
-            "step": "download_release",
-            "progress": 0
-        }
-    })
-
-    task = virtool.updates.download_release(test_motor, test_dispatch, url, size, target_path)
-
-    if error == "url":
-        with pytest.raises(virtool.errors.GitHubError) as err:
-            await task
-
-        assert "Could not download release" in str(err)
-
-    elif error == "write":
-        with pytest.raises(FileNotFoundError):
-            await task
-
-    else:
-        await task
-
-    if error:
-        assert os.listdir(path) == []
-    else:
-        assert os.listdir(path) == ["release.tar.gz"]
-
-    if not error:
-        assert os.path.getsize(target_path) == 3664835
-
-        assert await test_motor.status.find_one("software_update") == {
-            "_id": "software_update",
-            "process": {
-                "size": 34091211,
-                "step": "download_release",
-                "progress": 1
-            }
-        }
-
-
-def test_decompress_file(tmpdir):
-    path = str(tmpdir)
-
-    src_path = os.path.join(sys.path[0], "tests", "test_files", "virtool.tar.gz")
-
-    shutil.copy(src_path, path)
-
-    virtool.updates.decompress_file(os.path.join(path, "virtool.tar.gz"), os.path.join(path, "de"))
-
-    assert set(os.listdir(path)) == {"virtool.tar.gz", "de"}
-
-    assert os.listdir(os.path.join(path, "de")) == ["virtool"]
-
-    assert set(os.listdir(os.path.join(path, "de", "virtool"))) == {"run", "client", "VERSION", "install.sh"}
 
 
 @pytest.mark.parametrize("missing_path,p_result", [(None, True), ("run", False), ("VERSION", False)])

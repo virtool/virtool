@@ -12,6 +12,11 @@ SAM_50_PATH = os.path.join(sys.path[0], "tests", "test_files", "sam_50.sam")
 
 
 @pytest.fixture
+def test_files_path(pytestconfig):
+    return os.path.join(str(pytestconfig.rootdir), "tests/test_files")
+
+
+@pytest.fixture
 def test_random_alphanumeric(monkeypatch):
     class RandomAlphanumericTester:
 
@@ -19,7 +24,14 @@ def test_random_alphanumeric(monkeypatch):
             self.choices = [
                 "aB67nm89jL56hj34AL90",
                 "fX1l90Rt45JK34bA7890",
-                "kl84Fg067jJa109lmQ021"
+                "kl84Fg067jJa109lmQ021",
+                "yGlirXr7TSv4x6byFLUJ",
+                "G5cPJjvKH7g9lB9tpb3Q",
+                "v4xrYERY71lJD1JbIdcX",
+                "KfVw9vD27KGMly2qf45K",
+                "xjQVxIGHKsTQrVisJiKo",
+                "U3cuWAoQ3TDsy0wU7z0l",
+                "9PfsOM1B99KfaMz2Wu3C"
             ]
 
             self.history = list()

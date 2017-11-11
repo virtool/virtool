@@ -272,7 +272,10 @@ class TestCreate:
 
         assert resp.status == 201
 
-        assert resp.headers["Location"] == "/api/indexes/kl84fg06"
+        expected_id = test_random_alphanumeric.history[0]
+        expected_job_id = test_random_alphanumeric.history[1]
+
+        assert resp.headers["Location"] == "/api/indexes/{}".format(expected_id)
 
         # Make sure history is updated to use the build's new index id and version.
         assert 2 == await client.db.history.count({
@@ -282,7 +285,7 @@ class TestCreate:
 
         # Make sure a new index document is inserted.
         assert await client.db.indexes.find_one({"version": 1}) == {
-            "_id": test_random_alphanumeric.history[0],
+            "_id": expected_id,
             "version": 1,
             "created_at": static_time,
             "virus_count": None,
@@ -293,16 +296,16 @@ class TestCreate:
                 "id": "test"
             },
             "job": {
-                "id": test_random_alphanumeric.history[1]
+                "id": expected_job_id
             }
         }
 
         assert await resp.json() == {
             "created_at": "2017-10-06T20:00:00Z",
             "has_files": True,
-            "id": "kl84fg06",
+            "id": expected_id,
             "job": {
-                "id": "fx1l90rt"
+                "id": expected_job_id
             },
             "ready": False,
             "manifest": {},
@@ -317,7 +320,7 @@ class TestCreate:
         assert m.call_args[0] == (
             "rebuild_index",
             {
-                "index_id": "kl84fg06",
+                "index_id": expected_id,
                 "index_version": 1,
                 "user_id": "test",
                 "virus_manifest": {}
@@ -326,7 +329,7 @@ class TestCreate:
         )
 
         assert m.call_args[1] == {
-            "job_id": "fx1l90rt"
+            "job_id": expected_job_id
         }
 
     async def test_conflict(self, spawn_client, resp_is):

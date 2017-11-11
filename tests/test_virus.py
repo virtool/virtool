@@ -56,7 +56,7 @@ class TestJoin:
         """
         Test that the virus is joined using a passed ``document`` when provided. Ensure that another ``find_one`` call
         to the virus collection is NOT made.
-         
+
         """
         stub = mocker.stub(name="find_one")
 
@@ -97,7 +97,7 @@ class TestCheckNameAndAbbreviation:
     async def test(self, name, abbreviation, return_value, test_motor, test_virus):
         """
         Test that the function works properly for all possible inputs.
-         
+
         """
         await test_motor.viruses.insert_one(test_virus)
 
@@ -111,7 +111,7 @@ class TestCheckVirus:
     def test_pass(self, test_merged_virus):
         """
         Test that a valid virus and sequence list results in return value of ``None``.
-         
+
         """
         result = virtool.virus.check_virus(test_merged_virus)
         assert result is None
@@ -119,7 +119,7 @@ class TestCheckVirus:
     def test_empty_isolate(self, test_merged_virus):
         """
         Test that an isolate with no sequences is detected.
-         
+
         """
         test_merged_virus["isolates"][0]["sequences"] = list()
 
@@ -135,7 +135,7 @@ class TestCheckVirus:
     def test_empty_sequence(self, test_merged_virus):
         """
         Test that a sequence with an empty ``sequence`` field is detected.
-         
+
         """
         test_merged_virus["isolates"][0]["sequences"][0]["sequence"] = ""
 
@@ -158,7 +158,7 @@ class TestCheckVirus:
     def test_empty_virus(self, test_merged_virus):
         """
         Test that an virus with no isolates is detected.
-         
+
         """
         test_merged_virus["isolates"] = []
 
@@ -198,7 +198,7 @@ class TestUpdateLastIndexedVersion:
     async def test(self, test_motor, test_virus):
         """
         Test that function works as expected.
-         
+
         """
         virus_1 = test_virus
         virus_2 = deepcopy(test_virus)
@@ -226,7 +226,7 @@ class TestGetDefaultIsolate:
     def test(self, test_virus, test_isolate):
         """
         Test that the function can find the default isolate.
-         
+
         """
         default_isolate = dict(test_isolate, isolate_id="foobar3", default=True)
 
@@ -242,7 +242,7 @@ class TestGetDefaultIsolate:
     def test_processor(self, test_virus, test_isolate):
         """
         Test that the ``processor`` argument works.
-         
+
         """
 
         default_isolate = dict(test_isolate, isolate_id="foobar3", default=True)
@@ -304,7 +304,7 @@ class TestGetNewIsolateId:
         """
         next_choice = test_random_alphanumeric.next_choice[:8].lower()
 
-        expected = test_random_alphanumeric.choices[1][:8].lower()
+        expected = test_random_alphanumeric.choices[-2][:8].lower()
 
         test_virus["isolates"][0]["id"] = next_choice
 
@@ -321,7 +321,7 @@ class TestGetNewIsolateId:
         """
         excluded = [test_random_alphanumeric.next_choice[:8].lower()]
 
-        expected = test_random_alphanumeric.choices[1][:8].lower()
+        expected = test_random_alphanumeric.choices[-2][:8].lower()
 
         new_id = await virtool.virus.get_new_isolate_id(test_motor, excluded=excluded)
 
@@ -329,16 +329,16 @@ class TestGetNewIsolateId:
 
     async def test_exists_and_excluded(self, test_motor, test_virus, test_random_alphanumeric):
         """
-        Test that a different ``isolate_id`` is generated if the first generated one is in the ``excluded`` list.        
+        Test that a different ``isolate_id`` is generated if the first generated one is in the ``excluded`` list.
 
         """
-        excluded = [test_random_alphanumeric.choices[2][:8].lower()]
+        excluded = [test_random_alphanumeric.choices[-2][:8].lower()]
 
-        test_virus["isolates"][0]["id"] = test_random_alphanumeric.choices[1][:8].lower()
+        test_virus["isolates"][0]["id"] = test_random_alphanumeric.next_choice[:8].lower()
 
         await test_motor.viruses.insert(test_virus)
 
-        expected = test_random_alphanumeric.choices[0][:8].lower()
+        expected = test_random_alphanumeric.choices[-3][:8].lower()
 
         new_id = await virtool.virus.get_new_isolate_id(test_motor, excluded=excluded)
 
@@ -452,7 +452,7 @@ class TestFormatIsolateName:
         """
         Test that a formatted isolate name is produced for a full ``source_type`` and ``source_name``. Test that if
         either of these fields are missing, "Unnamed isolate" is returned.
-         
+
         """
         test_isolate.update({
             "source_type": source_type,
