@@ -13,7 +13,7 @@ import virtool.utils
 PROJECTION = [
     "_id",
     "cluster",
-    "label",
+    "names",
     "count",
     "families"
 ]
