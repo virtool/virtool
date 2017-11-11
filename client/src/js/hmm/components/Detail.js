@@ -63,8 +63,8 @@ class HMMDetail extends React.Component {
             )
         });
 
-        const definitions = this.props.detail.definition.map((def, index) => (
-            <span key={index}><Label>{def}</Label> </span>
+        const names = this.props.detail.names.map((name, index) => (
+            <span key={index}><Label>{name}</Label> </span>
         ));
 
         let taxonomy = {
@@ -95,7 +95,7 @@ class HMMDetail extends React.Component {
         return (
             <div>
                 <h3 className="view-header">
-                    <strong>{this.props.detail.label}</strong>
+                    <strong>{this.props.detail.names[0]}</strong>
                 </h3>
 
                 <Table bordered>
@@ -109,7 +109,7 @@ class HMMDetail extends React.Component {
 
                     <tr>
                         <th>Best Definitions</th>
-                        <td>{definitions}</td>
+                        <td>{names}</td>
                     </tr>
 
                     <tr>

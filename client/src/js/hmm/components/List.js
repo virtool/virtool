@@ -91,7 +91,7 @@ class HMMList extends React.Component {
                                 <strong>{document.cluster}</strong>
                             </Col>
                             <Col xs={5}>
-                                {document.label}
+                                {document.names[0]}
                             </Col>
                             <Col xs={5}>
                                 <div className="pull-right">
