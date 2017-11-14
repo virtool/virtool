@@ -1,11 +1,10 @@
 import os
-import math
 from cerberus import Validator
 
-import virtool.utils
 import virtool.job
-from virtool.handlers.utils import json_response, bad_request, not_found, invalid_query, \
-    compose_regex_query, no_content
+import virtool.utils
+from virtool.handlers.utils import compose_regex_query, bad_request, invalid_query, json_response, no_content,\
+    not_found, paginate
 
 
 async def find(req):
@@ -15,7 +14,6 @@ async def find(req):
     """
     db = req.app["db"]
 
-    # Validator for URL query.
     v = Validator({
         "term": {"type": "string", "default": "", "coerce": str},
         "page": {"type": "integer", "coerce": int, "default": 1, "min": 1},
@@ -27,38 +25,23 @@ async def find(req):
 
     query = v.document
 
-    page = query["page"]
-    per_page = query["per_page"]
+    term = query["term"]
 
     db_query = dict()
 
-    if query["term"]:
-        db_query.update(compose_regex_query(query["term"], ["task", "user_id"]))
+    if term:
+        db_query.update(compose_regex_query(term, ["task", "user.id"]))
 
-    total_count = await db.jobs.count()
-
-    cursor = db.jobs.find(
+    data = await paginate(
+        db.jobs,
         db_query,
-        virtool.job.LIST_PROJECTION,
-        sort=[("name", 1)]
+        req.query,
+        "name",
+        projection=virtool.job.LIST_PROJECTION,
         processor=virtool.job.processor
     )
 
-    found_count = await cursor.count()
-
-    if page > 1:
-        cursor.skip((page - 1) * per_page)
-
-    documents = [virtool.job.dispatch_processor(d) for d in await cursor.to_list(per_page)]
-
-    return json_response({
-        "documents": documents,
-        "total_count": total_count,
-        "found_count": found_count,
-        "page": page,
-        "per_page": per_page,
-        "page_count": int(math.ceil(found_count / per_page))
-    })
+    return json_response(data)
 
 
 async def get(req):
