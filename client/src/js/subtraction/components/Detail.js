@@ -42,59 +42,68 @@ class SubtractionDetail extends React.Component {
 
         const data = this.props.detail;
 
-        let linkedSamples;
+        if (data.ready) {
+            let linkedSamples;
 
-        if (data.linked_samples.length) {
-            const linkedSampleComponents = data.linked_samples.map(sample =>
-                <Col key={sample.id} className="linked-sample-button" xs={6} sm={4} md={3} lg={2}>
-                    <LinkContainer  to={`/samples/${sample.id}`}>
-                        <Button block>
-                            {sample.name}
-                        </Button>
-                    </LinkContainer>
-                </Col>
-            );
+            if (data.linked_samples.length) {
+                const linkedSampleComponents = data.linked_samples.map(sample =>
+                    <Col key={sample.id} className="linked-sample-button" xs={6} sm={4} md={3} lg={2}>
+                        <LinkContainer  to={`/samples/${sample.id}`}>
+                            <Button block>
+                                {sample.name}
+                            </Button>
+                        </LinkContainer>
+                    </Col>
+                );
 
-            linkedSamples = (
-                <Row>
-                    {linkedSampleComponents}
-                </Row>
-            );
-        } else {
-            linkedSamples = (
-                <ListGroup>
-                    <ListGroupItem className="text-center">
-                        <Icon name="info" /> No linked samples found.
-                    </ListGroupItem>
-                </ListGroup>
+                linkedSamples = (
+                    <Row>
+                        {linkedSampleComponents}
+                    </Row>
+                );
+            } else {
+                linkedSamples = (
+                    <ListGroup>
+                        <ListGroupItem className="text-center">
+                            <Icon name="info" /> No linked samples found.
+                        </ListGroupItem>
+                    </ListGroup>
+                );
+            }
+
+            return (
+                <div>
+                    <h3 className="view-header">
+                        <strong>{data.id}</strong>
+                    </h3>
+
+                    <Table bordered>
+                        <tbody>
+                            <tr>
+                                <th>File</th>
+                                <td>{data.file.id}</td>
+                            </tr>
+
+                            <tr>
+                                <th>GC Estimate</th>
+                                <td>{calculateGC(data.gc)}</td>
+                            </tr>
+                        </tbody>
+                    </Table>
+
+                    <h4 className="section-header">
+                        <strong>Linked Samples</strong> <Badge>{data.linked_samples.length}</Badge>
+                    </h4>
+
+                    {linkedSamples}
+                </div>
             );
         }
 
         return (
-            <div>
-                <h3 className="view-header">
-                    <strong>{data.id}</strong>
-                </h3>
-
-                <Table bordered>
-                    <tbody>
-                        <tr>
-                            <th>File</th>
-                            <td>{data.file.id}</td>
-                        </tr>
-
-                        <tr>
-                            <th>GC Estimate</th>
-                            <td>{calculateGC(data.gc)}</td>
-                        </tr>
-                    </tbody>
-                </Table>
-
-                <h4 className="section-header">
-                    <strong>Linked Samples</strong> <Badge>{data.linked_samples.length}</Badge>
-                </h4>
-
-                {linkedSamples}
+            <div className="text-center" style={{marginTop: "220px"}}>
+                <p>Subtraction is still being imported.</p>
+                <ClipLoader color="#3c8786" />
             </div>
         )
     }

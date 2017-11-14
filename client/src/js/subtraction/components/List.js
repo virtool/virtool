@@ -13,6 +13,7 @@ import React from "react";
 import PropTypes from "prop-types";
 import { some } from "lodash";
 import { connect } from "react-redux";
+import { ClipLoader } from "halogenium";
 import { Link } from "react-router-dom";
 import { LinkContainer } from "react-router-bootstrap";
 import { Row, Col, Alert, FormGroup, InputGroup, FormControl } from "react-bootstrap";
@@ -41,17 +42,12 @@ class SubtractionList extends React.Component {
 
         let hostComponents = this.props.documents.map((document) => {
 
-            let statusComponent = "Adding";
+            let icon;
 
             if (document.ready) {
-                statusComponent = (
-                    <Flex alignItems="center" className="pull-right">
-                        <Icon name="checkmark" bsStyle="success" />
-                        <FlexItem pad>
-                            <strong>Ready</strong>
-                        </FlexItem>
-                    </Flex>
-                )
+                icon = <Icon name="checkmark" bsStyle="success" />;
+            } else {
+                icon = <ClipLoader size="14px" color="#3c8786" />;
             }
 
             return (
@@ -65,7 +61,12 @@ class SubtractionList extends React.Component {
                                 {document.description}
                             </Col>
                             <Col xs={4} md={5}>
-                                {statusComponent}
+                                <Flex alignItems="center" className="pull-right">
+                                    {icon}
+                                    <FlexItem pad>
+                                        <strong>{document.ready ? "Ready": "Importing"}</strong>
+                                    </FlexItem>
+                                </Flex>
                             </Col>
                         </Row>
                     </ListGroupItem>

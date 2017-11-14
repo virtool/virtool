@@ -146,6 +146,11 @@ async def test_install_official(loop, mocker, tmpdir, test_motor, test_dispatch)
         "data_path": str(tmpdir)
     }
 
+    m_get_assets = make_mocked_coro([(
+        "https://github.com/virtool/virtool-hmm/releases/download/v0.1.0/annotations.json.gz",
+        792158
+    )])
+
     m_download_asset = mocker.stub(name="download_asset")
 
     async def download_asset(url, size, target_path, progress_handler):
@@ -154,6 +159,7 @@ async def test_install_official(loop, mocker, tmpdir, test_motor, test_dispatch)
 
     m_update_process = make_mocked_coro()
 
+    mocker.patch("virtool.virus_hmm.get_asset", new=m_get_assets)
     mocker.patch("virtool.virus_hmm.update_process", new=m_update_process)
     mocker.patch("virtool.github.download_asset", new=download_asset)
 
@@ -164,6 +170,8 @@ async def test_install_official(loop, mocker, tmpdir, test_motor, test_dispatch)
         test_dispatch,
         "v1.9.2-beta.2"
     )
+
+    m_get_assets.assert_called_with("v1.9.2-beta.2", None, None)
 
 
 async def test_insert_annotations(test_motor, test_random_alphanumeric):
