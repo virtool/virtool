@@ -10,6 +10,7 @@ import Welcome from "./home/components/Welcome";
 import Jobs from "./jobs/components/Jobs";
 import Samples from "./samples/components/Samples";
 import Viruses from "./viruses/components/Viruses";
+import HMM from "./hmm/components/HMM";
 import Subtraction from "./subtraction/components/Subtraction";
 import Settings from "./settings/components/Settings";
 import Account from "./account/components/Account";
@@ -29,6 +30,7 @@ const Inner = (props) => {
                     <Route path="/jobs" component={Jobs} />
                     <Route path="/samples" component={Samples} />
                     <Route path="/viruses" component={Viruses} />
+                    <Route path="/hmm" component={HMM} />
                     <Route path="/subtraction" component={Subtraction} />
                     <Route path="/settings" component={Settings} />
                     <Route path="/account" component={Account} />

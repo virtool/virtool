@@ -71,6 +71,12 @@ const Bar = (props) => {
                             </NavItem>
                         </LinkContainer>
 
+                        <LinkContainer to="/hmm">
+                            <NavItem>
+                                HMM
+                            </NavItem>
+                        </LinkContainer>
+
                         <LinkContainer to="/subtraction">
                             <NavItem>
                                 Subtraction
