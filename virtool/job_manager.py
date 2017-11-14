@@ -108,7 +108,7 @@ class Manager:
 
         document = await self.db.jobs.find_one(job_id, virtool.job.LIST_PROJECTION)
 
-        await self.dispatch("jobs", "update", virtool.job.dispatch_processor(document))
+        await self.dispatch("jobs", "update", virtool.job.processor(document))
 
         return virtool.utils.base_processor(document)
 

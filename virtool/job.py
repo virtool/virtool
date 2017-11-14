@@ -19,7 +19,7 @@ LIST_PROJECTION = [
 ]
 
 
-def dispatch_processor(document):
+def processor(document):
     """
     Removes the ``status`` and ``args`` fields from the job document.
     Adds a ``username`` field, an ``added`` date taken from the first status entry in the job document, and
@@ -197,7 +197,7 @@ class Job:
             }
         }, return_document=pymongo.ReturnDocument.AFTER, projection=LIST_PROJECTION)
 
-        await self.dispatch("jobs", "update", dispatch_processor(document))
+        await self.dispatch("jobs", "update", processor(document))
 
     async def add_log(self, line, indent=0):
         timestamp = virtool.utils.timestamp().isoformat()

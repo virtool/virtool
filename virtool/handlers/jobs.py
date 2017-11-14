@@ -41,6 +41,7 @@ async def find(req):
         db_query,
         virtool.job.LIST_PROJECTION,
         sort=[("name", 1)]
+        processor=virtool.job.processor
     )
 
     found_count = await cursor.count()
