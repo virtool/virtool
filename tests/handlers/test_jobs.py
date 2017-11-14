@@ -1,12 +1,20 @@
-class TestGet:
+import pytest
 
-    async def test(self, spawn_client, test_job):
-        client = await spawn_client()
 
+@pytest.mark.parametrize("status", [200, 404])
+async def test_get(status, spawn_client, test_job, resp_is):
+    client = await spawn_client()
+
+    if status == 200:
         await client.db.jobs.insert_one(test_job)
 
-        resp = await client.get("/api/jobs/4c530449")
+    resp = await client.get("/api/jobs/4c530449")
 
+    assert resp.status == status
+
+    if status == 404:
+        assert await resp_is.not_found(resp)
+    else:
         assert await resp.json() == {
             "task": "rebuild_index",
             "mem": 16,
@@ -55,9 +63,6 @@ class TestGet:
             ]
         }
 
-    async def test_not_found(self, spawn_client, resp_is):
-        client = await spawn_client()
 
-        resp = await client.get("/api/jobs/4c530449")
-
-        assert await resp_is.not_found(resp)
+async def test_cancel(spawn_client):
+    pass
