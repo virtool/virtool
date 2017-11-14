@@ -202,8 +202,7 @@ async def format_analysis(db, analysis):
                     hmm = await db.hmm.find_one({"_id": hit["hit"]}, [
                         "cluster",
                         "families",
-                        "definition",
-                        "label"
+                        "names"
                     ])
 
                     hit.update(hmm)

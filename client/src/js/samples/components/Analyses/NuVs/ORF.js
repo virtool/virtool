@@ -1,7 +1,7 @@
-import { select } from "d3-selection";
-import { scaleLinear } from "d3-scale";
 import React from "react";
 import PropTypes from "prop-types";
+import { select } from "d3-selection";
+import { scaleLinear } from "d3-scale";
 import { capitalize } from "lodash";
 import { Flex, FlexItem } from "../../../../base";
 
@@ -76,7 +76,9 @@ export default class NuVsORF extends React.Component {
                 <div className="nuvs-item-header">
                     <Flex>
                         <FlexItem>
-                            {capitalize(hmm.label)}
+                            <a target="_blank" href={`/hmm/${hmm.hit}`}>
+                                {capitalize(hmm.names[0])}
+                            </a>
                         </FlexItem>
                         <FlexItem pad={5}>
                             <small className="text-primary text-strong">
