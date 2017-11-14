@@ -19,7 +19,7 @@ LIST_PROJECTION = [
 ]
 
 
-def dispatch_processor(document):
+def processor(document):
     """
     Removes the ``status`` and ``args`` fields from the job document.
     Adds a ``username`` field, an ``added`` date taken from the first status entry in the job document, and
@@ -44,6 +44,29 @@ def dispatch_processor(document):
     })
 
     return document
+
+
+async def get_waiting_and_running_ids(db):
+    agg = await db.jobs.aggregate([
+        {"$project": {
+            "status": {
+                "$arrayElemAt": ["$status", -1]
+            }
+        }},
+
+        {"$match": {
+            "$or": [
+                {"status.state": "waiting"},
+                {"status.state": "running"},
+            ]
+        }},
+
+        {"$project": {
+            "_id": True
+        }}
+    ]).to_list(None)
+
+    return [a["_id"] for a in agg]
 
 
 class Job:
@@ -197,7 +220,7 @@ class Job:
             }
         }, return_document=pymongo.ReturnDocument.AFTER, projection=LIST_PROJECTION)
 
-        await self.dispatch("jobs", "update", dispatch_processor(document))
+        await self.dispatch("jobs", "update", processor(document))
 
     async def add_log(self, line, indent=0):
         timestamp = virtool.utils.timestamp().isoformat()

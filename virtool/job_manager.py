@@ -31,6 +31,8 @@ class Manager:
         #: A dict to store all the tracked job objects in.
         self._jobs_dict = dict()
 
+        self._run_task = None
+
         #: The main loop
         self._stop = False
         self.started = False
@@ -40,9 +42,11 @@ class Manager:
 
     def start(self):
         self.started = True
-        asyncio.ensure_future(self.run(), loop=self.loop)
+        self._run_task = asyncio.ensure_future(self.run(), loop=self.loop)
 
     async def run(self):
+        iteration = 0
+
         while True:
             to_delete = list()
 
@@ -60,6 +64,19 @@ class Manager:
 
             for job_id in to_delete:
                 del self._jobs_dict[job_id]
+
+            iteration += 1
+
+            if iteration == 100:
+                iteration = 0
+
+                ids = await virtool.job.get_waiting_and_running_ids(self.db)
+
+                await self.db.jobs.delete_many({
+                    "_id": {
+                        "$in": [job_id for job_id in ids if job_id not in self._jobs_dict]
+                    }
+                })
 
             await asyncio.sleep(0.1, loop=self.loop)
 
@@ -108,7 +125,7 @@ class Manager:
 
         document = await self.db.jobs.find_one(job_id, virtool.job.LIST_PROJECTION)
 
-        await self.dispatch("jobs", "update", virtool.job.dispatch_processor(document))
+        await self.dispatch("jobs", "update", virtool.job.processor(document))
 
         return virtool.utils.base_processor(document)
 
