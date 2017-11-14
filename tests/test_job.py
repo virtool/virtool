@@ -1,4 +1,5 @@
 import datetime
+import pytest
 
 import virtool.job
 
@@ -33,3 +34,53 @@ def test_processor(test_db, test_job):
             "id": "igboyes"
         }
     }
+
+
+@pytest.mark.parametrize("empty", [True, False], ids=["empty", "not-empty"])
+async def test_get_waiting_and_running(empty, test_motor):
+    documents = list()
+
+    if not empty:
+        documents.append({
+            "_id": "foo",
+            "status": [
+                {"state": "waiting"},
+                {"state": "running"},
+            ]
+        })
+
+    documents.append({
+        "_id": "bar",
+        "status": [
+            {"state": "waiting"},
+            {"state": "running"},
+            {"state": "complete"}
+        ]
+    })
+
+    if not empty:
+        documents += [
+            {
+                "_id": "baz",
+                "status": [
+                    {"state": "waiting"}
+                ]
+            },
+            {
+                "_id": "bat",
+                "status": [
+                    {"state": "waiting"},
+                    {"state": "running"}
+                ]
+            }
+        ]
+
+    await test_motor.jobs.insert_many(documents)
+
+    expected = list()
+
+    if not empty:
+        expected = ["foo", "baz", "bat"]
+
+    assert await virtool.job.get_waiting_and_running_ids(test_motor) == expected
+

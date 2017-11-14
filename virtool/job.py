@@ -46,6 +46,29 @@ def processor(document):
     return document
 
 
+async def get_waiting_and_running_ids(db):
+    agg = await db.jobs.aggregate([
+        {"$project": {
+            "status": {
+                "$arrayElemAt": ["$status", -1]
+            }
+        }},
+
+        {"$match": {
+            "$or": [
+                {"status.state": "waiting"},
+                {"status.state": "running"},
+            ]
+        }},
+
+        {"$project": {
+            "_id": True
+        }}
+    ]).to_list(None)
+
+    return [a["_id"] for a in agg]
+
+
 class Job:
 
     def __init__(self, loop, executor, db, settings, dispatch, job_id, task_name, task_args, proc, mem):
