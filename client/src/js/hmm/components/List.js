@@ -50,7 +50,7 @@ class HMMList extends React.Component {
     }
 
     setTerm = (event) => {
-        let uri = URI("/viruses/hmms").query({find: event.target.value || undefined});
+        let uri = URI("/hmm").query({find: event.target.value || undefined});
         this.props.onSetURI(uri.toString());
     };
 
@@ -84,7 +84,7 @@ class HMMList extends React.Component {
             ));
 
             return (
-                <LinkContainer key={document.id} to={`/viruses/hmms/${document.id}`}>
+                <LinkContainer key={document.id} to={`/hmm/${document.id}`}>
                     <ListGroupItem className="spaced">
                         <Row>
                             <Col xs={2}>

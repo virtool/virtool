@@ -36,13 +36,6 @@ const VirusToolbar = (props) => (
             </div>
         </div>
 
-        <LinkContainer to="/viruses/hmms">
-            <Button
-                icon="table"
-                tip="Profile HMMs"
-            />
-        </LinkContainer>
-
         <LinkContainer to="/viruses/indexes">
             <Button
                 icon="filing"
