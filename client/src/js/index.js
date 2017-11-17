@@ -29,7 +29,7 @@ import rootSaga from "./sagas";
 
 export * from "../style/style.less";
 
-Raven.config("https://9a2f8d1a3f7a431e873207a70ef3d44d@sentry.io/220532").install();
+Raven.config("https://d9ea493cb0f34ad4a141da5506e6b03b@sentry.io/220541").install();
 
 window.Raven = Raven;
 
