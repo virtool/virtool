@@ -19,6 +19,7 @@ import virtool.job_resources
 import virtool.error_pages
 import virtool.file_manager
 import virtool.organize
+import virtool.sentry
 import virtool.setup
 import virtool.utils
 
@@ -62,6 +63,10 @@ async def init_settings(app):
     """
     app["settings"] = virtool.app_settings.Settings()
     await app["settings"].load()
+
+
+async def init_sentry(app):
+    app["sentry"] = virtool.sentry.setup()
 
 
 def init_dispatcher(app):
@@ -266,6 +271,7 @@ def create_app(loop, db_name=None, disable_job_manager=False, disable_file_manag
     else:
         virtool.app_routes.setup_routes(app)
 
+        app.on_startup.append(init_sentry)
         app.on_startup.append(init_settings)
         app.on_startup.append(init_version)
         app.on_startup.append(init_executors)
