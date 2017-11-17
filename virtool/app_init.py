@@ -29,8 +29,11 @@ def get_args():
     )
 
     parser.add_argument(
+        "--dev",
+        dest="dev",
         action="store_true",
         default=False,
+        help="run in dev mode"
     )
 
     parser.add_argument(
