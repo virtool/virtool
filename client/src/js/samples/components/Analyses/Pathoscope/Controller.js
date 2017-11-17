@@ -13,12 +13,9 @@ export default class PathoscopeController extends React.Component {
         this.state = {
             filterViruses: true,
             filterIsolates: true,
-
             findTerm: "",
-
             sortKey: "coverage",
             sortDescending: true,
-
             showReads: false,
             expanded: []
         };
@@ -73,15 +70,17 @@ export default class PathoscopeController extends React.Component {
 
         let data = sortBy(this.props.data, this.state.sortKey);
 
+        const re = this.state.findTerm ? new RegExp(this.state.findTerm, "i"): null;
+
         if (this.state.filterViruses) {
             const totalReadsMapped = sum(data.map(v => v.reads));
-
-            const re = this.state.findTerm ? new RegExp(this.state.findTerm, "i"): null;
 
             data = filter(data, (virus) => (
                 (virus.pi * totalReadsMapped >= virus.length * 0.8 / this.props.maxReadLength) &&
                 (!re || (re.test(virus.abbreviation) || re.test(virus.name)))
             ));
+        } else {
+            data = filter(data, (virus) => !re || (re.test(virus.abbreviation) || re.test(virus.name)));
         }
 
         if (this.state.filterIsolates) {
