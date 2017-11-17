@@ -29,11 +29,8 @@ def get_args():
     )
 
     parser.add_argument(
-        "-P", "--write-pid",
-        dest="write_pid",
         action="store_true",
         default=False,
-        help="write a pidfile on start"
     )
 
     parser.add_argument(
