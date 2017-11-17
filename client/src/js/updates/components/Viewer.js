@@ -1,5 +1,5 @@
 import React from "react";
-import { capitalize, filter, toNumber } from "lodash";
+import { capitalize } from "lodash";
 import { connect } from "react-redux";
 import { ClipLoader } from "halogenium";
 import { Row, Col, Panel, ListGroup } from "react-bootstrap";
@@ -30,50 +30,7 @@ class SoftwareUpdateViewer extends React.Component {
             );
         }
 
-        const currentVersion = this.props.updates.current_version;
-
-        let [ currentNumber, currentPre ] = currentVersion.replace("v", "").split("-").map(part => part.split("."));
-
-        currentNumber = currentNumber.map(toNumber);
-
-        if (currentPre) {
-            currentPre[1] = toNumber(currentPre[1]);
-        }
-
-        const releases = filter(this.props.updates.releases, release => {
-            let [ number, pre ] = release.name.replace("v", "").split("-").map(part => part.split("."));
-
-            number = number.map(toNumber);
-
-            // Return false if the version number is
-            if (currentNumber[0] !== number[0]) {
-                return number[0] > currentNumber[0];
-            }
-
-            if (currentNumber[1] !== number[1]) {
-                return number[1] > currentNumber[1];
-            }
-
-            if (currentNumber[2] !== number[2]) {
-                return number[2] > currentNumber[2];
-            }
-
-            // Reject if release is a pre-release, but current one isn't.
-            if (!currentPre && pre) {
-                return false;
-            }
-
-            if (pre) {
-                pre[1] = toNumber(pre[1]);
-            }
-
-            // Reject if the release is alpha, but current on is beta.
-            if (currentPre[0] !== pre[0]) {
-                return currentPre[0] === "alpha" && pre[0] === "beta";
-            }
-
-            return currentPre[1] < pre[1];
-        });
+        const releases = this.props.updates.releases;
 
         let installModal;
         let updateComponent;

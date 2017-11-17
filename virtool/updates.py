@@ -1,9 +1,10 @@
-import os
-import sys
-import shutil
-import pymongo
 import asyncio
 import logging
+import pymongo
+import os
+import semver
+import sys
+import shutil
 import tempfile
 
 import virtool.app
@@ -56,12 +57,16 @@ async def get_releases(db, channel, server_version, username=None, token=None):
     # Reformat the release dicts to make them more palatable. If the response code was not 200, the releases list
     # will be empty. This is interpreted by the web client as an error.
     if channel == "stable":
-        data = [release for release in data if "alpha" not in release["name"] and "beta" not in release["name"]]
+        data = [r for r in data if "alpha" not in r["name"] and "beta" not in r["name"]]
 
     elif channel == "beta":
-        data = [release for release in data if "alpha" not in release["name"]]
+        data = [r for r in data if "alpha" not in r["name"]]
 
-    releases = [format_software_release(release) for release in data if release["assets"]]
+    releases = list()
+
+    for release in data:
+        if release["assets"] and semver.compare(release["name"].replace("v", ""), server_version.replace("v", "")) == 1:
+            releases.append(format_software_release(release))
 
     await db.status.update_one({"_id": "software_update"}, {
         "$set": {
