@@ -28,7 +28,7 @@ def merge_group_permissions(groups):
 
 
 async def update_member_users(db, group_id, remove=False):
-    groups = await db.groups.find().to_list(length=None)
+    groups = await db.groups.find().to_list(None)
 
     async for user in db.users.find({"groups": group_id}, ["groups", "permissions", "primary_group"]):
         if remove:

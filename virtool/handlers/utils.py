@@ -254,7 +254,7 @@ async def paginate(collection, db_query, url_query, sort_by, projection=None, pr
     if page > 1:
         cursor.skip((page - 1) * per_page)
 
-    documents = [processor(d) for d in await cursor.to_list(length=per_page)]
+    documents = [processor(d) for d in await cursor.to_list(per_page)]
 
     return {
         "documents": documents,
