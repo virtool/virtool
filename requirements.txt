@@ -1,5 +1,5 @@
 aiofiles==0.3.2
-aiohttp==2.2.5
+aiohttp==2.3.3
 apipkg==1.4
 appdirs==1.4.3
 arrow==0.10.0
@@ -22,7 +22,7 @@ inotify==0.2.8
 Mako==1.0.7
 MarkupSafe==1.0
 motor==1.1
-multidict==3.3.0
+multidict==3.3.2
 olefile==0.44
 packaging==16.8
 Pillow==4.2.1
@@ -50,4 +50,4 @@ six==1.11.0
 svgwrite==1.1.11
 urllib3==1.21.1
 uvloop==0.8.1
-yarl==0.13.0
+yarl==0.14.2
