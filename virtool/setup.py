@@ -44,6 +44,8 @@ async def setup_redirect(req):
 async def setup_get(req):
     template = Template(filename=os.path.join(sys.path[0], "templates", "setup.html"))
 
+    print(req.app["setup"])
+
     setup = copy.deepcopy(req.app["setup"])
 
     if setup["first_user_password"]:
@@ -89,20 +91,30 @@ async def setup_db(req):
             req.app["setup"].update(clear_update)
             req.app["setup"]["errors"].update({
                 "db_exists_error": True,
-                "db_connection_error": False
+                "db_connection_error": False,
+                "db_name_error": False
+            })
+        elif "." in data["db_name"]:
+            req.app["setup"].update(clear_update)
+            req.app["setup"]["errors"].update({
+                "db_exists_error": False,
+                "db_connection_error": False,
+                "db_name_error": True
             })
         else:
             req.app["setup"].update(data)
             req.app["setup"]["errors"].update({
                 "db_exists_error": False,
-                "db_connection_error": False
+                "db_connection_error": False,
+                "db_name_error": False
             })
 
     except (pymongo.errors.ConnectionFailure, TypeError, ValueError):
         req.app["setup"].update(clear_update)
         req.app["setup"]["errors"].update({
             "db_exists_error": False,
-            "db_connection_error": True
+            "db_connection_error": True,
+            "db_name_error": False
         })
 
     return web.HTTPFound("/setup")
@@ -250,6 +262,7 @@ async def clear(req):
         "errors": {
             "db_exists_error": False,
             "db_connection_error": False,
+            "db_name_error": False,
             "password_confirmation_error": False,
             "data_not_empty_error": False,
             "data_not_found_error": False,
