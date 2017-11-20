@@ -94,6 +94,13 @@ SCHEMA = {
 }
 
 
+async def write_settings_file(path, settings_dict):
+    validated = Settings.validate(settings_dict)
+
+    with open(path, "w") as f:
+        json.dump(validated, f)
+
+
 class Settings:
 
     def __init__(self):

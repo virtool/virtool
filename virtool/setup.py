@@ -316,10 +316,11 @@ async def save_and_reload(req):
     for subdir in subdirs:
         os.makedirs(os.path.join(data_path, subdir))
 
-    for key in ["db_host", "db_port", "db_name", "data_path", "watch_path"]:
-        req.app["settings"].set(key, data[key])
+    settings_dict = {key: data[key] for key in ["db_host", "db_port", "db_name", "data_path", "watch_path"]}
 
-    await req.app["settings"].write()
+    settings_path = os.path.join(sys.path[0], "settings.json")
+
+    await virtool.app_settings.write_settings_file(settings_path, settings_dict)
 
     virtool.utils.reload()
 
