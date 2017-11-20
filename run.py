@@ -21,20 +21,6 @@ args = get_args()
 
 configure(verbose=args.verbose)
 
-if args.write_pid:
-    logger.debug("Writing pid file")
-
-    pid = str(os.getpid())
-    pid_path = "/var/run/virtoold/virtoold.pid"
-
-    if os.path.isfile(pid_path):
-        logger.fatal("PID file already exists.")
-        sys.exit(1)
-
-    with open(pid_path, "w") as pidfile:
-        pidfile.write(pid)
-
-
 asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
 
 loop = asyncio.get_event_loop()

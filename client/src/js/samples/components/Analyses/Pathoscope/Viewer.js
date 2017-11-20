@@ -55,7 +55,7 @@ const PathoscopeViewer = (props) => {
                     isolate.best += hit.best;
                     isolate.reads += hit.reads;
 
-                    const hitDepth = max(hit.align);
+                    const hitDepth = hit.align ? max(hit.align.map(p => p[1])): 0;
 
                     if (hitDepth > isolateDepth) {
                         isolateDepth = hitDepth;

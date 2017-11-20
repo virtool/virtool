@@ -51,8 +51,8 @@ const createChart = (element, data, length, meta, yMax, xMin, showYAxis) => {
 
     if (data) {
         const areaDrawer = area()
-            .x((d, i) => x(i))
-            .y0(d => y(d))
+            .x(d => x(d[0]))
+            .y0(d => y(d[1]))
             .y1(height);
 
         svg.append("path")

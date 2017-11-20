@@ -29,11 +29,11 @@ def get_args():
     )
 
     parser.add_argument(
-        "-P", "--write-pid",
-        dest="write_pid",
+        "--dev",
+        dest="dev",
         action="store_true",
         default=False,
-        help="write a pidfile on start"
+        help="run in dev mode"
     )
 
     parser.add_argument(
