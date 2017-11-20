@@ -103,6 +103,13 @@
                 </div>
                 %endif
 
+                %if setup["errors"]["db_name_error"]:
+                <div class="alert alert-danger">
+                    <i class="i-warning"></i>
+                    <strong> Database names may not contain any of the following: <code>/\. "$</code>.</strong>
+                </div>
+                %endif
+
                 <div class="setup-footer">
                     <button type="submit" class="btn btn-primary pull-right">
                         Connect

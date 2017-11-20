@@ -202,6 +202,7 @@ def init_setup(app):
         "errors": {
             "db_exists_error": False,
             "db_connection_error": False,
+            "db_name_error": False,
             "password_confirmation_error": False,
             "data_not_empty_error": False,
             "data_not_found_error": False,

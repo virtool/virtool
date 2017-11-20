@@ -1,6 +1,8 @@
+import motor.motor_asyncio
 import os
 import pytest
-import motor.motor_asyncio
+import sys
+from aiohttp.test_utils import make_mocked_coro
 from cerberus import Validator
 
 import virtool.app_settings
@@ -22,6 +24,7 @@ def mock_setup():
         "errors": {
             "db_exists_error": False,
             "db_connection_error": False,
+            "db_name_error": False,
             "password_confirmation_error": False,
             "data_not_empty_error": False,
             "data_not_found_error": False,
@@ -181,7 +184,7 @@ class TestSetupDB:
 
         assert client.app["setup"] == mock_setup
 
-    async def test_db_exists(self, spawn_client, test_db_name, mock_setup):
+    async def test_exists_error(self, spawn_client, test_db_name, mock_setup):
         client = await spawn_client(setup_mode=True)
 
         foobar_db_name = test_db_name + "-foobar"
@@ -318,6 +321,7 @@ class TestClear:
             "errors": {
                 "db_exists_error": False,
                 "db_connection_error": False,
+                "db_name_error": False,
                 "password_confirmation_error": False,
                 "data_not_empty_error": False,
                 "data_not_found_error": False,
@@ -335,20 +339,7 @@ class TestSaveAndReload:
         client = await spawn_client(setup_mode=True)
 
         m_reload = mocker.patch("virtool.utils.reload")
-
-        class MockSettings:
-
-            def __init__(self):
-                self.m_write = mocker.stub(name="write")
-                self.data = dict()
-
-            def set(self, key, value):
-                self.data[key] = value
-
-            async def write(self):
-                self.m_write()
-
-        client.app["settings"] = MockSettings()
+        m_write_settings_file = mocker.patch("virtool.app_settings.write_settings_file", new=make_mocked_coro())
 
         data = tmpdir.mkdir("data")
         watch = tmpdir.mkdir("watch")
@@ -366,6 +357,7 @@ class TestSaveAndReload:
                 'watch_not_empty_error': False,
                 'password_confirmation_error': False,
                 'db_exists_error': False,
+                "db_name_error": False,
                 'data_not_empty_error': False,
                 'data_permission_error': False,
                 'db_connection_error': False,
@@ -431,24 +423,10 @@ class TestSaveAndReload:
 
         assert m_reload.called
 
-        v = Validator(virtool.app_settings.SCHEMA)
-
-        v({
+        m_write_settings_file.assert_called_with(os.path.join(sys.path[0], "settings.json"), {
             'db_host': "localhost",
             'db_port': 27017,
             'db_name': "foobar",
             'data_path': str(data),
             'watch_path': str(watch)
         })
-
-        for key in ["db_host", "db_port", "db_name"]:
-            assert client.app["settings"].data[key] == {
-                "db_host": "localhost",
-                "db_port": 27017,
-                "db_name": "foobar"
-            }[key]
-
-        for key in ["data_path", "watch_path"]:
-            assert key.split("_")[0] in client.app["settings"].data[key]
-
-        assert client.app["settings"].m_write.called
