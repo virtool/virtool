@@ -199,10 +199,18 @@ async def install_official(loop, db, settings, dispatch, server_version, usernam
         await update_process(db, dispatch, 1.0)
 
 
-
-
 async def insert_annotations(db, annotations, progress_handler=None):
-    existing_ids = set()
+    referenced_ids = await get_referenced_hmm_ids(db)
+
+    await db.hmm.delete_many({"_id": {"$nin": referenced_ids}})
+
+    await db.hmm.update_many({}, {
+        "$set": {
+            "hidden": True
+        }
+    })
+
+    existing_ids = set(await db.hmm.distinct("_id"))
 
     count = 0
     total_count = len(annotations)
@@ -213,7 +221,10 @@ async def insert_annotations(db, annotations, progress_handler=None):
         for annotation in chunk:
             _id = virtool.utils.random_alphanumeric(8, excluded=existing_ids)
             existing_ids.add(_id)
-            annotation["_id"] = _id
+            annotation.update({
+                "_id": _id,
+                "hidden": False
+            })
 
         await db.hmm.insert_many(chunk)
 
