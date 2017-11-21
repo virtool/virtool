@@ -10,7 +10,10 @@ packages = [
     "_cffi_backend",
     "asyncio",
     "asyncio.base_events",
-    "asyncio.compat"
+    "asyncio.compat",
+    "raven.conf",
+    "raven.handlers",
+    "raven.processors"
 ]
 
 # Dependencies are automatically detected, but it might need
