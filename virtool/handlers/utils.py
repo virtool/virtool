@@ -233,22 +233,22 @@ def validation(schema):
     return decorator
 
 
-async def paginate(collection, db_query, url_query, sort_by=None, projection=None, filter=None,
+async def paginate(collection, db_query, url_query, sort_by=None, projection=None, base_query=None,
                    processor=virtool.utils.base_processor, reverse=False):
 
     page = int(url_query.get("page", 1))
     per_page = int(url_query.get("per_page", 15))
 
-    filter = filter or {}
+    base_query = base_query or {}
 
-    total_count = await collection.count(filter)
+    total_count = await collection.count(base_query)
 
     sort = None
 
     if sort_by:
         sort = [(sort_by, -1 if reverse else 1)]
 
-    db_query.update(filter)
+    db_query.update(base_query)
 
     cursor = collection.find(
         db_query,

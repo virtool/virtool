@@ -28,7 +28,7 @@ async def find(req):
         req.query,
         "cluster",
         projection=virtool.virus_hmm.PROJECTION,
-        filter={"hidden": False}
+        base_query={"hidden": False}
     )
 
     profiles_path = os.path.join(req.app["settings"].get("data_path"), "hmm", "profiles.hmm")
