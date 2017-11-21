@@ -65,6 +65,8 @@ class TestFind:
 
         tmpdir.mkdir("hmm")
 
+        hmm_document["hidden"] = False
+
         await client.db.hmm.insert(hmm_document)
 
         resp = await client.get("/api/hmms")
