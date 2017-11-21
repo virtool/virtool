@@ -17,6 +17,7 @@
  */
 
 import React from "react";
+import Numeral from "numeral";
 import { connect } from "react-redux";
 import { Alert, Col, Panel, ProgressBar, Row } from "react-bootstrap";
 
@@ -38,6 +39,14 @@ class HMMInstall extends React.Component {
 
             const progress = 20 * (steps.indexOf(this.props.process.step) + this.props.process.progress);
 
+            let step = this.props.process.step.replace("_", " ");
+
+            if (step === "download") {
+                const size = this.props.size;
+                const part = this.props.size * this.props.process.progress;
+                step += ` (${Numeral(part).format("0.0 b")}/${Numeral(size).format("0.0 b")})`;
+            }
+
             return (
                 <Panel>
                     <Row>
@@ -47,7 +56,7 @@ class HMMInstall extends React.Component {
                                 <ProgressBar now={progress} />
                                 <p>
                                     <small className="text-muted text-capitalize">
-                                        {this.props.process.step.replace("_", " ")}
+                                        {step}
                                     </small>
                                 </p>
                             </div>
@@ -60,7 +69,7 @@ class HMMInstall extends React.Component {
                 <Alert bsStyle="warning" className="text-center">
                     <h5 className="text-warning">
                         <strong>
-                            <Icon name="warning"/> No HMM data found.
+                            <Icon name="warning"/> No HMM file found.
                         </strong>
                     </h5>
 
@@ -75,6 +84,7 @@ class HMMInstall extends React.Component {
 
 const mapStateToProps = (state) => {
     return {
+        size: state.hmms.size,
         ready: state.hmms.ready,
         process: state.hmms.process
     };
