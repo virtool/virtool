@@ -22,7 +22,14 @@ async def find(req):
     if term:
         db_query.update(compose_regex_query(term, ["label"]))
 
-    data = await paginate(db.hmm, db_query, req.query, "cluster", projection=virtool.virus_hmm.PROJECTION)
+    data = await paginate(
+        db.hmm,
+        db_query,
+        req.query,
+        "cluster",
+        projection=virtool.virus_hmm.PROJECTION,
+        filter={"hidden": False}
+    )
 
     profiles_path = os.path.join(req.app["settings"].get("data_path"), "hmm", "profiles.hmm")
 
