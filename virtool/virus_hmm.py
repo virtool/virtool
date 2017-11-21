@@ -47,6 +47,35 @@ async def hmmstat(loop, path):
     } for line in result]
 
 
+async def get_referenced_hmm_ids(db):
+    """
+    Returns a list of HMM document ids that are referenced in analyses documents.
+
+    :param db: the application database client
+    :type db: :class:`~motor.motor_asyncio.AsyncIOMotorClient`
+
+    :return: HMM document ids
+    :rtype: Coroutine[list]
+
+    """
+    agg = await db.analyses.aggregate([
+        {"$match": {
+            "algorithm": "nuvs"
+        }},
+        {"$project": {
+            "results.orfs.hits.hit": True
+        }},
+        {"$unwind": "$results"},
+        {"$unwind": "$results.orfs"},
+        {"$unwind": "$results.orfs.hits"},
+        {"$group": {
+            "_id": "$results.orfs.hits.hit"
+        }}
+    ]).to_list(None)
+
+    return list(set(a["_id"] for a in agg))
+
+
 async def update_process(db, dispatch, progress, step=None, error=None):
     return await virtool.utils.update_status_process(db, dispatch, "hmm_install", progress, step)
 
