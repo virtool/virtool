@@ -99,6 +99,9 @@ async def init_db(app):
     logger.info("Checking viruses...")
     await virtool.organize.organize_viruses(db, logger.info)
 
+    logger.info("Checking hmms...")
+    await virtool.organize.organize_hmms(db)
+
     logger.info("Checking jobs...")
     await virtool.organize.organize_jobs(db)
 
