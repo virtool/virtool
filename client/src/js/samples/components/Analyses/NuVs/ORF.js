@@ -5,12 +5,6 @@ import { scaleLinear } from "d3-scale";
 import { capitalize } from "lodash";
 import { Flex, FlexItem } from "../../../../base";
 
-const DEFAULT_HMM = {
-    label: "Unannotated",
-    best_e: "N/A",
-    family: "N/A"
-};
-
 const HEIGHT = 8;
 
 export default class NuVsORF extends React.Component {
@@ -69,16 +63,30 @@ export default class NuVsORF extends React.Component {
 
     render () {
 
-        const hmm = this.props.hits[0] || DEFAULT_HMM;
+        const hmm = this.props.hits[0];
+
+        let label;
+
+        if (hmm) {
+            label = (
+                <a target="_blank" href={`/hmm/${hmm.hit}`}>
+                    {capitalize(hmm.names[0])}
+                </a>
+            );
+        } else {
+            label = (
+                <span>
+                    Unannotated
+                </span>
+            );
+        }
 
         return (
             <div className="nuvs-item">
                 <div className="nuvs-item-header">
                     <Flex>
                         <FlexItem>
-                            <a target="_blank" href={`/hmm/${hmm.hit}`}>
-                                {capitalize(hmm.names[0])}
-                            </a>
+                            {label}
                         </FlexItem>
                         <FlexItem pad={5}>
                             <small className="text-primary text-strong">
@@ -87,7 +95,7 @@ export default class NuVsORF extends React.Component {
                         </FlexItem>
                         <FlexItem pad={5}>
                             <small className="text-danger text-strong">
-                                {hmm.best_e}
+                                {hmm ? hmm.best_e: null}
                             </small>
                         </FlexItem>
                     </Flex>

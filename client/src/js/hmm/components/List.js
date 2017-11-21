@@ -70,10 +70,10 @@ class HMMList extends React.Component {
             );
         }
 
-        let noFilePanel;
+        let installer;
 
         if (!this.props.fileExists) {
-            noFilePanel = <HMMInstaller />;
+            installer = <HMMInstaller />;
         }
 
         let rowComponents = this.props.list.map(document => {
@@ -125,7 +125,7 @@ class HMMList extends React.Component {
                     />
                 </h3>
 
-                {noFilePanel}
+                {installer}
 
                 <FormGroup>
                     <InputGroup>

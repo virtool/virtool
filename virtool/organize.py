@@ -107,6 +107,25 @@ async def organize_samples(db, settings):
             })
 
 
+async def organize_hmms(db):
+    await virtool.organize_utils.unset_version_field(db.hmm)
+
+    await db.hmm.update_many({"hidden": {"$exists": False}}, {
+        "$set": {
+            "hidden": False
+        }
+    })
+
+    await db.hmm.update_many({}, {
+        "$rename": {
+            "definition": "names"
+        },
+        "$unset": {
+            "label": ""
+        }
+    })
+
+
 async def organize_analyses(db, logger_cb=None):
     """
     Bring analysis documents up-to-date by doing the following:

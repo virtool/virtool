@@ -47,6 +47,35 @@ async def hmmstat(loop, path):
     } for line in result]
 
 
+async def get_referenced_hmm_ids(db):
+    """
+    Returns a list of HMM document ids that are referenced in analyses documents.
+
+    :param db: the application database client
+    :type db: :class:`~motor.motor_asyncio.AsyncIOMotorClient`
+
+    :return: HMM document ids
+    :rtype: Coroutine[list]
+
+    """
+    agg = await db.analyses.aggregate([
+        {"$match": {
+            "algorithm": "nuvs"
+        }},
+        {"$project": {
+            "results.orfs.hits.hit": True
+        }},
+        {"$unwind": "$results"},
+        {"$unwind": "$results.orfs"},
+        {"$unwind": "$results.orfs.hits"},
+        {"$group": {
+            "_id": "$results.orfs.hits.hit"
+        }}
+    ]).to_list(None)
+
+    return list(set(a["_id"] for a in agg))
+
+
 async def update_process(db, dispatch, progress, step=None, error=None):
     return await virtool.utils.update_status_process(db, dispatch, "hmm_install", progress, step)
 
@@ -170,10 +199,18 @@ async def install_official(loop, db, settings, dispatch, server_version, usernam
         await update_process(db, dispatch, 1.0)
 
 
-
-
 async def insert_annotations(db, annotations, progress_handler=None):
-    existing_ids = set()
+    referenced_ids = await get_referenced_hmm_ids(db)
+
+    await db.hmm.delete_many({"_id": {"$nin": referenced_ids}})
+
+    await db.hmm.update_many({}, {
+        "$set": {
+            "hidden": True
+        }
+    })
+
+    existing_ids = set(await db.hmm.distinct("_id"))
 
     count = 0
     total_count = len(annotations)
@@ -184,7 +221,10 @@ async def insert_annotations(db, annotations, progress_handler=None):
         for annotation in chunk:
             _id = virtool.utils.random_alphanumeric(8, excluded=existing_ids)
             existing_ids.add(_id)
-            annotation["_id"] = _id
+            annotation.update({
+                "_id": _id,
+                "hidden": False
+            })
 
         await db.hmm.insert_many(chunk)
 

@@ -25,7 +25,7 @@ const hmmsReducer = (state = initialState, action) => {
                     ...state,
                     process: action.data.process,
                     ready: action.data.ready,
-                    size: action.data.size
+                    size: action.data.download_size
                 };
             }
 

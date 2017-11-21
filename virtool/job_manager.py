@@ -138,6 +138,8 @@ class Manager:
         for job in self._jobs_dict.values():
             await job.cancel()
 
+        self.executor.shutdown(wait=True)
+
     def reserve_resources(self, job):
         """
         Reserve resources for the given job. Throws an :class:`InsufficientResourceError` if the required resources are

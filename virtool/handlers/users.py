@@ -16,7 +16,7 @@ async def find(req):
     Get a list of all user documents in the database.
 
     """
-    users = await req.app["db"].users.find({}, virtool.user.PROJECTION).to_list(length=None)
+    users = await req.app["db"].users.find({}, virtool.user.PROJECTION).to_list(None)
 
     return json_response([virtool.utils.base_processor(user) for user in users])
 
