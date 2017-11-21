@@ -237,12 +237,13 @@ def copy_software_files(src, dest):
         shutil.rmtree(os.path.join(dest, dirname), ignore_errors=True)
 
     for name in os.listdir(src):
+        src_path = os.path.join(src, name)
         dest_path = os.path.join(dest, name)
 
         if os.path.isfile(dest_path):
             os.remove(dest_path)
+            shutil.copy(src_path, dest_path)
 
         if os.path.isdir(dest_path):
             shutil.rmtree(dest_path)
-
-    shutil.copytree(os.path.join(src, "virtool"), dest)
+            shutil.copytree(src_path, dest_path)
