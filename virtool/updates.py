@@ -175,6 +175,8 @@ async def install(db, dispatch, loop, download_url, size):
         # Copy the update files to the install directory.
         await update_software_process(db, dispatch, 0, "copy_files")
 
+        print(decompressed_path, INSTALL_PATH)
+
         await loop.run_in_executor(None, copy_software_files, decompressed_path, INSTALL_PATH)
 
         document = await db.status.find_one_and_update({"_id": "software_update"}, {
@@ -231,18 +233,16 @@ def check_tree(path):
 
 
 def copy_software_files(src, dest):
-    try:
-        shutil.rmtree(os.path.join(dest, "client"))
-    except FileNotFoundError:
-        pass
+    for dirname in ["templates", "lib", "client", "assets"]:
+        shutil.rmtree(os.path.join(dest, dirname), ignore_errors=True)
 
-    shutil.copytree(os.path.join(src, "client"), os.path.join(dest, "client"))
+    for name in os.listdir(src):
+        dest_path = os.path.join(dest, name)
 
-    # Remove the old files and copy in new ones.
-    for filename in ["run", "VERSION"]:
-        try:
-            os.remove(filename)
-        except FileNotFoundError:
-            pass
+        if os.path.isfile(dest_path):
+            os.remove(dest_path)
 
-        shutil.copy(os.path.join(src, filename), dest)
+        if os.path.isdir(dest_path):
+            shutil.rmtree(dest_path)
+
+    shutil.copytree(os.path.join(src, "virtool"), dest)
