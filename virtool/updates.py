@@ -242,8 +242,12 @@ def copy_software_files(src, dest):
 
         if os.path.isfile(dest_path):
             os.remove(dest_path)
+
+        if os.path.isfile(src_path):
             shutil.copy(src_path, dest_path)
 
         if os.path.isdir(dest_path):
             shutil.rmtree(dest_path)
+
+        if os.path.isdir(src_path):
             shutil.copytree(src_path, dest_path)
