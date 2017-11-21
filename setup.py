@@ -11,6 +11,7 @@ packages = [
     "asyncio",
     "asyncio.base_events",
     "asyncio.compat",
+    "raven",
     "raven.conf",
     "raven.handlers",
     "raven.processors"
