@@ -102,3 +102,4 @@ deploy:
   file: gh_build/virtool.tar.gz
   on:
     tags: true
+    draft: true
