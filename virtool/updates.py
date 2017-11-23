@@ -1,4 +1,6 @@
+import aiohttp
 import asyncio
+import json
 import logging
 import pymongo
 import os
@@ -27,7 +29,7 @@ RELEASE_KEYS = [
 ]
 
 
-async def get_releases(db, channel, server_version, username=None, token=None):
+async def get_releases(db, channel, server_version):
     """
     Get a list of releases, from the Virtool Github repository, published since the current server version.
 
@@ -37,22 +39,18 @@ async def get_releases(db, channel, server_version, username=None, token=None):
     :param channel: the software channel to use
     :type channel: str
 
-    :param server_version: the current server version string
-    :type server_version: str
-
-    :param username: a Github username
-    :type username: str
-
-    :param token: a Github personal access token
-    :type token: str
-
     :return: a list of Github releases
     :rtype: Coroutine[list]
 
     """
-    url = "https://api.github.com/repos/{}/releases".format(SOFTWARE_REPO)
+    url = "https://www.virtool.ca/releases"
 
-    data = await virtool.github.get(url, server_version, username, token)
+    async with aiohttp.ClientSession() as session:
+        async with session.get(url) as resp:
+            data = await resp.text()
+            data = json.loads(data)
+
+    data = data["software"]
 
     # Reformat the release dicts to make them more palatable. If the response code was not 200, the releases list
     # will be empty. This is interpreted by the web client as an error.
@@ -65,8 +63,8 @@ async def get_releases(db, channel, server_version, username=None, token=None):
     releases = list()
 
     for release in data:
-        if release["assets"] and semver.compare(release["name"].replace("v", ""), server_version.replace("v", "")) == 1:
-            releases.append(format_software_release(release))
+        if semver.compare(release["name"].replace("v", ""), server_version.replace("v", "")) == 1:
+            releases.append(release)
 
     await db.status.update_one({"_id": "software_update"}, {
         "$set": {
@@ -175,6 +173,8 @@ async def install(db, dispatch, loop, download_url, size):
         # Copy the update files to the install directory.
         await update_software_process(db, dispatch, 0, "copy_files")
 
+        print(decompressed_path, INSTALL_PATH)
+
         await loop.run_in_executor(None, copy_software_files, decompressed_path, INSTALL_PATH)
 
         document = await db.status.find_one_and_update({"_id": "software_update"}, {
@@ -231,18 +231,21 @@ def check_tree(path):
 
 
 def copy_software_files(src, dest):
-    try:
-        shutil.rmtree(os.path.join(dest, "client"))
-    except FileNotFoundError:
-        pass
+    for dirname in ["templates", "lib", "client", "assets"]:
+        shutil.rmtree(os.path.join(dest, dirname), ignore_errors=True)
 
-    shutil.copytree(os.path.join(src, "client"), os.path.join(dest, "client"))
+    for name in os.listdir(src):
+        src_path = os.path.join(src, name)
+        dest_path = os.path.join(dest, name)
 
-    # Remove the old files and copy in new ones.
-    for filename in ["run", "VERSION"]:
-        try:
-            os.remove(filename)
-        except FileNotFoundError:
-            pass
+        if os.path.isfile(dest_path):
+            os.remove(dest_path)
 
-        shutil.copy(os.path.join(src, filename), dest)
+        if os.path.isfile(src_path):
+            shutil.copy(src_path, dest_path)
+
+        if os.path.isdir(dest_path):
+            shutil.rmtree(dest_path)
+
+        if os.path.isdir(src_path):
+            shutil.copytree(src_path, dest_path)

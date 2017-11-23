@@ -48,13 +48,13 @@ class Dispatcher:
                        writer=None):
         """
         Dispatch a ``message`` with a conserved format to a selection of active ``connections``.
-        
+
         :param interface: the name of the interface the client should perform the operation on
         :type interface: str
 
         :param operation: a word used to tell the client what to do in response to the message
         :type operation: str
-        
+
         :param data: the data the client will use
         :type data: dict
 
@@ -99,9 +99,23 @@ class Dispatcher:
                 raise TypeError("writer must be callable")
 
             for connection in connections:
-                await writer(connection, deepcopy(message))
+                try:
+                    await writer(connection, deepcopy(message))
+                except RuntimeError as err:
+                    if "unable to perform operation on <TCPTransport closed=True" in str(err):
+                        try:
+                            self.connections.remove(connection)
+                        except ValueError:
+                            pass
 
             return
 
         for connection in connections:
-            await connection.send(message)
+            try:
+                await connection.send(message)
+            except RuntimeError as err:
+                if "unable to perform operation on <TCPTransport closed=True" in str(err):
+                    try:
+                        self.connections.remove(connection)
+                    except ValueError:
+                        pass

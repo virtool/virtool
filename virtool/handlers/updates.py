@@ -13,9 +13,7 @@ async def get(req):
 
     channel = settings.get("software_channel")
 
-    username, token = settings.get("github_username"), settings.get("github_token")
-
-    releases = await virtool.updates.get_releases(db, channel, req.app["version"], username, token)
+    releases = await virtool.updates.get_releases(db, channel, req.app["version"])
 
     document = await db.status.find_one_and_update({"_id": "software_update"}, {
         "$set": {
@@ -47,12 +45,10 @@ async def upgrade(req):
         await db.status.insert_one(document)
 
     if not document.get("releases", None):
-        username, token = settings.get("github_username"), settings.get("github_token")
-
         document = await db.status.find_one_and_update({"_id": "software_update"}, {
             "$set": {
                 "current_version": req.app["version"],
-                "releases": await virtool.updates.get_releases(db, req.app["version"], username, token)
+                "releases": await virtool.updates.get_releases(db, req.app["version"])
             }
         }, return_document=pymongo.ReturnDocument)
 

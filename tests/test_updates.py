@@ -96,7 +96,7 @@ async def test_install(download_release_error, loop, tmpdir, monkeypatch, mocker
     await virtool.updates.install(test_motor, test_dispatch, loop, "foobar", 1234)
 
     if not download_release_error:
-        assert set(os.listdir(install_path)) == {"run", "client", "VERSION"}
+        assert set(os.listdir(install_path)) == {"run", "client", "VERSION", "install.sh"}
         assert set(os.listdir(os.path.join(install_path, "client"))) == {
             "app.a006b17bf13ea9cb7827.js",
             "favicon.ico",
@@ -201,7 +201,7 @@ async def test_copy_software_files(tmpdir):
 
     virtool.updates.copy_software_files(os.path.join(decomp_path, "virtool"), dest_path)
 
-    assert set(os.listdir(dest_path)) == {"run", "client", "VERSION"}
+    assert set(os.listdir(dest_path)) == {"run", "client", "VERSION", "install.sh"}
 
     assert set(os.listdir(os.path.join(dest_path, "client"))) == {
         "app.a006b17bf13ea9cb7827.js",
