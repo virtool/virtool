@@ -23,7 +23,7 @@ def get_release_data(username, token):
 
             releases += body
 
-            release_data[key] = [virtool.updates.format_software_release(r) for r in releases if r["assets"]]
+        release_data[key] = [virtool.updates.format_software_release(r) for r in releases if r["assets"]]
 
     return release_data
 
