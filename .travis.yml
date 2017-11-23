@@ -102,7 +102,6 @@ deploy:
   file: gh_build/virtool.tar.gz
   on:
     tags: true
-    draft: true
 
 after_deploy:
 - python release.py igboyes $GITHUB_WEBSITE_TOKEN
