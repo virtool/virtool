@@ -1079,10 +1079,6 @@ binary-extensions@^1.0.0:
   version "1.8.0"
   resolved "https://registry.yarnpkg.com/binary-extensions/-/binary-extensions-1.8.0.tgz#48ec8d16df4377eae5fa5884682480af4d95c774"
 
-blacklist@^1.1.2:
-  version "1.1.4"
-  resolved "https://registry.yarnpkg.com/blacklist/-/blacklist-1.1.4.tgz#b2dd09d6177625b2caa69835a37b28995fa9a2f2"
-
 block-stream@*:
   version "0.0.9"
   resolved "https://registry.yarnpkg.com/block-stream/-/block-stream-0.0.9.tgz#13ebfe778a03205cfe03751481ebb4b3300c126a"
@@ -1290,6 +1286,10 @@ center-align@^0.1.1:
   dependencies:
     align-text "^0.1.3"
     lazy-cache "^1.0.3"
+
+chain-function@^1.0.0:
+  version "1.0.0"
+  resolved "https://registry.yarnpkg.com/chain-function/-/chain-function-1.0.0.tgz#0d4ab37e7e18ead0bdc47b920764118ce58733dc"
 
 chalk@^1.0.0, chalk@^1.1.0, chalk@^1.1.1, chalk@^1.1.3:
   version "1.1.3"
@@ -1586,7 +1586,7 @@ create-react-class@^15.5.1:
     fbjs "^0.8.9"
     object-assign "^4.1.1"
 
-create-react-class@^15.5.2, create-react-class@^15.6.0:
+create-react-class@^15.6.0:
   version "15.6.2"
   resolved "https://registry.yarnpkg.com/create-react-class/-/create-react-class-15.6.2.tgz#cf1ed15f12aad7f14ef5f2dfe05e6c42f91ef02a"
   dependencies:
@@ -4514,20 +4514,19 @@ rc@~1.1.6:
     minimist "^1.2.0"
     strip-json-comments "~2.0.1"
 
-react-bootstrap-typeahead@^1.3.0:
-  version "1.4.2"
-  resolved "https://registry.yarnpkg.com/react-bootstrap-typeahead/-/react-bootstrap-typeahead-1.4.2.tgz#1913e32cea4d79becd03acabbd9336116884815b"
+react-bootstrap-typeahead@^2.0.0:
+  version "2.0.0"
+  resolved "https://registry.yarnpkg.com/react-bootstrap-typeahead/-/react-bootstrap-typeahead-2.0.0.tgz#ba195bc252aea007a3c31a86b60be68cff388553"
   dependencies:
     classnames "^2.2.0"
-    create-react-class "^15.5.2"
+    escape-string-regexp "^1.0.5"
     invariant "^2.2.1"
     lodash "^4.17.2"
     prop-types "^15.5.8"
-    react-highlighter "^0.4.0"
-    react-input-autosize "^1.1.4"
-    react-onclickoutside "^5.7.0"
-    react-overlays "^0.7.0"
-    react-prop-types "^0.4.0"
+    prop-types-extra "^1.0.1"
+    react-input-autosize "^2.0.1"
+    react-onclickoutside "^6.1.1"
+    react-overlays "^0.8.1"
     warning "^3.0.0"
 
 react-bootstrap@^0.31.2:
@@ -4581,27 +4580,17 @@ react-helmet@^5.1.3:
     prop-types "^15.5.4"
     react-side-effect "^1.1.0"
 
-react-highlighter@^0.4.0:
-  version "0.4.0"
-  resolved "https://registry.yarnpkg.com/react-highlighter/-/react-highlighter-0.4.0.tgz#593836757348e119b167aa47bcd5288298419fc3"
+react-input-autosize@^2.0.1:
+  version "2.1.0"
+  resolved "https://registry.yarnpkg.com/react-input-autosize/-/react-input-autosize-2.1.0.tgz#90631c093d66d392ddc995903430ee238bb1f01f"
   dependencies:
-    blacklist "^1.1.2"
-    create-react-class "^15.5.2"
-    escape-string-regexp "^1.0.5"
     prop-types "^15.5.8"
 
-react-input-autosize@^1.1.4:
-  version "1.2.0"
-  resolved "https://registry.yarnpkg.com/react-input-autosize/-/react-input-autosize-1.2.0.tgz#87241071159f742123897691da6796ec33b57d05"
-  dependencies:
-    create-react-class "^15.5.2"
-    prop-types "^15.5.8"
+react-onclickoutside@^6.1.1:
+  version "6.7.0"
+  resolved "https://registry.yarnpkg.com/react-onclickoutside/-/react-onclickoutside-6.7.0.tgz#997a4d533114c9a0a104913638aa26afc084f75c"
 
-react-onclickoutside@^5.7.0:
-  version "5.9.0"
-  resolved "https://registry.yarnpkg.com/react-onclickoutside/-/react-onclickoutside-5.9.0.tgz#c47bb506384adc98d686d134b34412ed17b97437"
-
-react-overlays@^0.7.0, react-overlays@^0.7.4:
+react-overlays@^0.7.4:
   version "0.7.4"
   resolved "https://registry.yarnpkg.com/react-overlays/-/react-overlays-0.7.4.tgz#ef2ec652c3444ab8aa014262b18f662068e56d5c"
   dependencies:
@@ -4611,10 +4600,15 @@ react-overlays@^0.7.0, react-overlays@^0.7.4:
     prop-types-extra "^1.0.1"
     warning "^3.0.0"
 
-react-prop-types@^0.4.0:
-  version "0.4.0"
-  resolved "https://registry.yarnpkg.com/react-prop-types/-/react-prop-types-0.4.0.tgz#f99b0bfb4006929c9af2051e7c1414a5c75b93d0"
+react-overlays@^0.8.1:
+  version "0.8.3"
+  resolved "https://registry.yarnpkg.com/react-overlays/-/react-overlays-0.8.3.tgz#fad65eea5b24301cca192a169f5dddb0b20d3ac5"
   dependencies:
+    classnames "^2.2.5"
+    dom-helpers "^3.2.1"
+    prop-types "^15.5.10"
+    prop-types-extra "^1.0.1"
+    react-transition-group "^2.2.0"
     warning "^3.0.0"
 
 react-redux@^5.0.4:
@@ -4680,6 +4674,17 @@ react-side-effect@^1.1.0:
 react-svg-gauge@^1.0.4:
   version "1.0.6"
   resolved "https://registry.yarnpkg.com/react-svg-gauge/-/react-svg-gauge-1.0.6.tgz#31f4a3a9ac175018ba1cc45e26dbdf4775af6d9e"
+
+react-transition-group@^2.2.0:
+  version "2.2.1"
+  resolved "https://registry.yarnpkg.com/react-transition-group/-/react-transition-group-2.2.1.tgz#e9fb677b79e6455fd391b03823afe84849df4a10"
+  dependencies:
+    chain-function "^1.0.0"
+    classnames "^2.2.5"
+    dom-helpers "^3.2.0"
+    loose-envify "^1.3.1"
+    prop-types "^15.5.8"
+    warning "^3.0.0"
 
 react@15:
   version "15.6.2"
