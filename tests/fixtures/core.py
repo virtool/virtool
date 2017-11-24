@@ -1,9 +1,10 @@
-import os
-import sys
 import arrow
-import types
+import os
 import pytest
 import shutil
+import sys
+import types
+from aiohttp.test_utils import make_mocked_coro
 
 import virtool.app_dispatcher
 
@@ -75,9 +76,11 @@ def static_time(monkeypatch):
 
 
 @pytest.fixture
-def test_dispatch(mocker, monkeypatch):
+def test_dispatch(loop, mocker, monkeypatch):
 
-    m = mocker.Mock(spec=virtool.app_dispatcher.Dispatcher())
+    m = mocker.Mock(spec=virtool.app_dispatcher.Dispatcher(loop))
+
+    setattr(m, "close", make_mocked_coro())
 
     m.connections = list()
 
