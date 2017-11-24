@@ -1,4 +1,3 @@
-import asyncio
 import logging
 from aiohttp import web
 
@@ -14,27 +13,14 @@ async def root(req):
     """
     ws = web.WebSocketResponse()
 
+    await ws.prepare(req)
+
     connection = virtool.app_dispatcher.Connection(ws, req["client"])
 
     req.app["dispatcher"].add_connection(connection)
 
-    await ws.prepare(req)
-
-    i = 0
-
-    while not ws.closed:
-        try:
-            if i == 50:
-                print("pinging")
-                ws.ping()
-                i = 0
-            else:
-                i += 1
-        except RuntimeError as err:
-            if "unable to perform operation on <TCPTransport closed=True" in str(err):
-                break
-
-        await asyncio.sleep(0.1, loop=req.app.loop)
+    async for _ in ws:
+        pass
 
     logger.info("Connection closed")
 
