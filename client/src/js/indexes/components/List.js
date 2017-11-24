@@ -21,9 +21,7 @@ import RebuildIndex from "./Rebuild";
 class IndexesList extends React.Component {
 
     componentDidMount () {
-        if (this.props.documents === null) {
-            this.props.onFind();
-        }
+        this.props.onFind();
     }
 
     render () {
