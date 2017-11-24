@@ -12,12 +12,13 @@
 
 import React from "react";
 import PropTypes from "prop-types";
+import { ClipLoader } from "halogenium";
 import { LinkContainer } from "react-router-bootstrap";
 import { Row, Col, Label } from "react-bootstrap";
 import { Icon, RelativeTime, ListGroupItem } from "../../base";
 
 export default class IndexEntry extends React.PureComponent {
-    
+
     static propTypes = {
         ready: PropTypes.bool,
         showReady: PropTypes.bool,
@@ -35,12 +36,20 @@ export default class IndexEntry extends React.PureComponent {
         // spinner with "Building" is shown, if the index is the active index a green check is shown. Otherwise, no
         // content is shown at the right.
         if (this.props.showReady) {
-            ready = (
-                <span className="pull-right">
-                    <Icon name="checkmark" bsStyle="success" pending={!this.props.ready} />
-                    <span> {this.props.ready ? "Active": "Building"}</span>
-                </span>
-            );
+            if (this.props.ready) {
+                ready = (
+                    <span className="pull-right">
+                        <Icon name="checkmark" bsStyle="success"/> <strong>Active</strong>
+                    </span>
+                );
+            } else {
+                ready = (
+                    <div className="pull-right" >
+                        <ClipLoader size="14px" color="#3c8786" style={{display: "inline"}} />
+                        <strong> Building</strong>
+                    </div>
+                );
+            }
         }
 
         // The description of
