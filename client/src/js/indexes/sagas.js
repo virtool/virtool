@@ -58,6 +58,7 @@ export function* createIndex (action) {
     yield setPending(function* () {
         try {
             const response = yield indexesAPI.create();
+            yield put({type: FIND_INDEXES.REQUESTED});
             yield put({type: CREATE_INDEX.SUCCEEDED, data: response.body});
         } catch (error) {
             yield put({type: CREATE_INDEX.FAILED, error: error});
