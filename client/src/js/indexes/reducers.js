@@ -45,7 +45,6 @@ const indexesReducer = (state = initialState, action) => {
             });
 
         case FIND_INDEXES.SUCCEEDED:
-            console.log(action);
             return assign({}, state, {
                 documents: action.data.documents,
                 page: action.data.page,
