@@ -12,17 +12,25 @@ async def find(req):
     """
     db = req.app["db"]
 
-    documents = await db.indexes.find({}, virtool.virus_index.PROJECTION, sort=[("version", -1)]).to_list(None)
-
     modified_virus_count = len(await db.history.find({"index.id": "unbuilt"}, ["virus"]).distinct("virus.name"))
 
     total_virus_count = await db.viruses.count()
 
-    return json_response({
-        "documents": [virtool.utils.base_processor(d) for d in documents],
+    data = await paginate(
+        db.indexes,
+        {},
+        req.query,
+        projection=virtool.virus_index.PROJECTION,
+        sort_by="version",
+        reverse=True
+    )
+
+    data.update({
         "modified_virus_count": modified_virus_count,
         "total_virus_count": total_virus_count
     })
+
+    return json_response(data)
 
 
 async def get(req):
