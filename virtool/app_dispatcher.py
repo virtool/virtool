@@ -99,23 +99,13 @@ class Dispatcher:
                 raise TypeError("writer must be callable")
 
             for connection in connections:
-                try:
-                    await writer(connection, deepcopy(message))
-                except RuntimeError as err:
-                    if "unable to perform operation on <TCPTransport closed=True" in str(err):
-                        try:
-                            self.connections.remove(connection)
-                        except ValueError:
-                            pass
+                await writer(connection, deepcopy(message))
 
             return
 
         for connection in connections:
-            try:
-                await connection.send(message)
-            except RuntimeError as err:
-                if "unable to perform operation on <TCPTransport closed=True" in str(err):
-                    try:
-                        self.connections.remove(connection)
-                    except ValueError:
-                        pass
+            await connection.send(message)
+
+    async def close(self):
+        for connection in self.connections:
+            await connection.close()
