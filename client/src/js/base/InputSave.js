@@ -53,10 +53,6 @@ export class InputSave extends React.Component {
         autoComplete: true
     };
 
-    componentDidMount () {
-        this.focus();
-    }
-
     componentWillReceiveProps (nextProps) {
         // If the initialValue has changed. Remove the pending state on the component. This will remove the spinner on
         // the save button and enable the Input component again.
