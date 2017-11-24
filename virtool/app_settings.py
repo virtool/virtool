@@ -101,6 +101,29 @@ async def write_settings_file(path, settings_dict):
         json.dump(validated, f)
 
 
+async def attach_virus_name(db, settings):
+    internal_control_id = settings.get("internal_control_id")
+
+    virus = None
+
+    if internal_control_id:
+        virus = await db.viruses.find_one(internal_control_id, ["name"])
+
+    if not virus:
+        settings.set("internal_control_id", "")
+        await settings.write()
+        return settings.data
+
+    to_send = dict(settings.data)
+
+    to_send["internal_control_id"] = {
+        "id": internal_control_id,
+        "name": virus["name"]
+    }
+
+    return to_send
+
+
 class Settings:
 
     def __init__(self):

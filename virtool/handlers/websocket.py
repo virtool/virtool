@@ -1,6 +1,9 @@
+import logging
 from aiohttp import web
 
 import virtool.app_dispatcher
+
+logger = logging.getLogger(__name__)
 
 
 async def root(req):
@@ -8,16 +11,18 @@ async def root(req):
     Handles requests for WebSocket connections.
 
     """
-    ws = web.WebSocketResponse(autoping=True, heartbeat=10)
+    ws = web.WebSocketResponse()
+
+    await ws.prepare(req)
 
     connection = virtool.app_dispatcher.Connection(ws, req["client"])
 
     req.app["dispatcher"].add_connection(connection)
 
-    await ws.prepare(req)
-
     async for _ in ws:
         pass
+
+    logger.info("Connection closed")
 
     req.app["dispatcher"].remove_connection(connection)
 

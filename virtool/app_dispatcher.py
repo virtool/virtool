@@ -1,3 +1,4 @@
+import asyncio
 from copy import deepcopy
 
 import virtool.handlers.utils
@@ -14,15 +15,44 @@ class Connection:
     async def send(self, message):
         await self._ws.send_json(message, dumps=virtool.handlers.utils.dumps)
 
+    def ping(self):
+        return self._ws.ping()
+
     async def close(self):
         await self._ws.close()
 
 
 class Dispatcher:
 
-    def __init__(self):
+    def __init__(self, loop):
+        self.loop = loop
+
         #: A dict of all active connections.
         self.connections = list()
+        self.alive = True
+        self._ping_task = asyncio.ensure_future(self.ping_connections(), loop=loop)
+
+    async def ping_connections(self):
+        to_remove = list()
+
+        try:
+            while True:
+                for connection in to_remove:
+                    self.remove_connection(connection)
+
+                to_remove = list()
+
+                for connection in self.connections:
+                    try:
+                        connection.ping()
+                    except RuntimeError as err:
+                        if "unable to perform operation on <TCPTransport closed=True" in str(err):
+                            to_remove.append(connection)
+
+                await asyncio.sleep(5, loop=self.loop)
+
+        except asyncio.CancelledError:
+            pass
 
     def add_connection(self, connection):
         """
@@ -99,23 +129,18 @@ class Dispatcher:
                 raise TypeError("writer must be callable")
 
             for connection in connections:
-                try:
-                    await writer(connection, deepcopy(message))
-                except RuntimeError as err:
-                    if "unable to perform operation on <TCPTransport closed=True" in str(err):
-                        try:
-                            self.connections.remove(connection)
-                        except ValueError:
-                            pass
+                await writer(connection, deepcopy(message))
 
             return
 
         for connection in connections:
-            try:
-                await connection.send(message)
-            except RuntimeError as err:
-                if "unable to perform operation on <TCPTransport closed=True" in str(err):
-                    try:
-                        self.connections.remove(connection)
-                    except ValueError:
-                        pass
+            await connection.send(message)
+
+    async def close(self):
+        self.alive = False
+
+        if self._ping_task is not None:
+            self._ping_task.cancel()
+
+        for connection in self.connections:
+            await connection.close()

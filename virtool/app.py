@@ -78,7 +78,7 @@ def init_dispatcher(app):
     :type app: :class:`aiohttp.web.Application`
 
     """
-    app["dispatcher"] = virtool.app_dispatcher.Dispatcher()
+    app["dispatcher"] = virtool.app_dispatcher.Dispatcher(app.loop)
 
 
 async def init_db(app):
@@ -225,9 +225,7 @@ async def on_shutdown(app):
     :type app: :class:`aiohttp.web.Application`
 
     """
-    for conn in app["dispatcher"].connections:
-        await conn.close()
-        app["dispatcher"].remove_connection(conn)
+    await app["dispatcher"].close()
 
     if "job_manager" in app:
         job_manager = app["job_manager"]

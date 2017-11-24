@@ -10,9 +10,8 @@
  */
 
 import React from "react";
-import { find } from "lodash";
 import { connect } from "react-redux";
-import { Typeahead } from "react-bootstrap-typeahead";
+import { AsyncTypeahead } from "react-bootstrap-typeahead";
 import { Row, Col, Panel } from "react-bootstrap";
 import { Flex, FlexItem, Checkbox } from "../../../base";
 import { updateSetting, getControlReadahead } from "../../actions";
@@ -22,28 +21,16 @@ import { updateSetting, getControlReadahead } from "../../actions";
  */
 class InternalControl extends React.Component {
 
-    componentWillMount () {
-        this.props.onGetReadahead();
-    }
-
-    handleChange = (selected) => {
-        if (this.props.settings.internal_control_id) {
-            return this.props.onUpdate(null);
-        }
-
-        return this.props.onUpdate(selected[0].id);
-    };
-
     render () {
 
         const useInternalControl = this.props.settings.use_internal_control;
 
         const internalControlId = this.props.settings.internal_control_id;
 
-        let selected;
+        let selected = [];
 
-        if (internalControlId && this.props.readahead) {
-            selected = [find(this.props.readahead, {id: internalControlId})];
+        if (internalControlId.id) {
+            selected = [internalControlId];
         }
 
         return (
@@ -74,13 +61,15 @@ class InternalControl extends React.Component {
                     </Col>
                     <Col xs={12} mdPull={6} md={6}>
                         <Panel>
-                            <Typeahead
-                                onBlur={() => this.props.onGetReadahead()}
-                                onChange={this.handleChange}
+                            <AsyncTypeahead
                                 labelKey="name"
+                                allowNew={false}
+                                isLoading={this.props.readaheadPending}
+                                onSearch={this.props.onGetReadahead}
+                                onChange={this.props.onUpdate}
                                 selected={selected}
                                 options={this.props.readahead || []}
-                                disabled={!useInternalControl}
+                                renderMenuItemChildren={option => <option key={option.id}>{option.name}</option>}
                             />
                         </Panel>
                     </Col>
@@ -104,8 +93,8 @@ const mapDispatchToProps = (dispatch) => {
             dispatch(getControlReadahead(term));
         },
 
-        onUpdate: (value) => {
-            dispatch(updateSetting("internal_control_id", value));
+        onUpdate: (selected) => {
+            dispatch(updateSetting("internal_control_id", selected.length ? selected[0].id: ""));
         },
 
         onToggle: (value) => {
