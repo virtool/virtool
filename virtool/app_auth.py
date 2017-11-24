@@ -37,7 +37,7 @@ class Client:
 async def middleware_factory(app, handler):
     async def middleware_handler(req):
         ip = req.transport.get_extra_info("peername")[0]
-        user_agent = req.headers["User-Agent"]
+        user_agent = req.headers.get("User-Agent", None)
 
         req["client"] = Client(ip, user_agent)
 
@@ -68,7 +68,6 @@ async def middleware_factory(app, handler):
 
         document = await app["db"].sessions.find_one({
             "_id": session_id,
-            "ip": ip,
             "user_agent": user_agent
         })
 
