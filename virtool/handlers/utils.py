@@ -250,13 +250,13 @@ async def paginate(collection, db_query, url_query, sort_by=None, projection=Non
 
     db_query.update(base_query)
 
+    found_count = await collection.count(db_query)
+
     cursor = collection.find(
         db_query,
         projection,
         sort=sort
     )
-
-    found_count = await cursor.count()
 
     page_count = int(math.ceil(found_count / per_page))
 
