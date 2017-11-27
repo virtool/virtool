@@ -83,7 +83,7 @@ const IsolateEditor = (props) => {
                     </ListGroup>
                 </Col>
                 <Col md={9}>
-                    <IsolateDetail />
+                    {noIsolatesFound ? null: <IsolateDetail />}
                 </Col>
             </Row>
         </div>
