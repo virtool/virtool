@@ -40,7 +40,7 @@ async def hmmstat(loop, path):
     output = await loop.run_in_executor(None, subprocess.check_output, command)
 
     result = [line.split() for line in output.decode("utf-8").split("\n") if line and line[0] != "#"]
-a
+
     return [{
         "cluster": int(line[1].replace("vFam_", "")),
         "count": int(line[3]),
