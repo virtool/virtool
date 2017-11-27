@@ -28,7 +28,6 @@ async def get(req):
 async def upgrade(req):
 
     db = req.app["db"]
-    settings = req.app["settings"]
     dispatch = req.app["dispatcher"].dispatch
 
     await req.app["job_manager"].close()
