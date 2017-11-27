@@ -22,7 +22,7 @@ import {
 const initialState = {
     documents: null,
     modifiedCount: 0,
-    totalCount: 0,
+    totalVirusCount: 0,
     error: false,
 
     detail: null,
@@ -47,8 +47,11 @@ const indexesReducer = (state = initialState, action) => {
         case FIND_INDEXES.SUCCEEDED:
             return assign({}, state, {
                 documents: action.data.documents,
+                page: action.data.page,
+                foundCount: action.data.found_count,
+                totalCount: action.data.total_count,
                 modifiedCount: action.data.modified_virus_count,
-                totalCount: action.data.total_virus_count
+                totalVirusCount: action.data.total_virus_count
             });
 
         case GET_INDEX.REQUESTED:

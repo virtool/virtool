@@ -7,12 +7,8 @@
  *
  */
 
-import { assign, concat, find, reject } from "lodash";
 import {
-    WS_UPDATE_VIRUS,
-    WS_REMOVE_VIRUS,
     WS_UPDATE_STATUS,
-
     FIND_VIRUSES,
     GET_VIRUS,
     CREATE_VIRUS,
@@ -66,7 +62,8 @@ const virusesInitialState = {
 };
 
 const hideVirusModal = (state) => {
-    return assign({}, state, {
+    return {
+        ...state,
         edit: false,
         remove: false,
         addIsolate: false,
@@ -75,13 +72,14 @@ const hideVirusModal = (state) => {
         addSequence: false,
         editSequence: false,
         removeSequence: false
-    });
+    };
 };
 
 const receivedDetailAfterChange = (state, action) => {
-    return assign({}, hideVirusModal(state), {
+    return {
+        ...hideVirusModal(state),
         detail: action.data
-    })
+    };
 };
 
 export default function virusesReducer (state = virusesInitialState, action) {
@@ -90,81 +88,51 @@ export default function virusesReducer (state = virusesInitialState, action) {
 
         case WS_UPDATE_STATUS:
             if (action.data.id === "virus_import") {
-                return assign({}, state, {
-                    importData: assign({}, state.importData, action.data, {in_progress: true})
-                });
+                return {...state, importData: {...state.importData, ...action.data, in_progress: true}};
             }
 
             return state;
 
-        case WS_UPDATE_VIRUS:
-            return assign({}, state, {
-                viruses: concat(
-                    reject(state.viruses, {id: action.virus_id}),
-                    assign({}, find(state.viruses, {id: action.virus_id}), action.data)
-                )
-            });
-
-        case WS_REMOVE_VIRUS:
-            return assign({}, state, {
-                viruses: reject(state.viruses, {id: action.virus_id})
-            });
-
         case FIND_VIRUSES.REQUESTED:
-            return assign({}, state, action.terms);
+            return {...state, ...action.terms};
 
         case FIND_VIRUSES.SUCCEEDED:
-            return assign({}, state, {
+            return {
+                ...state,
                 documents: action.data.documents,
                 page: action.data.page,
                 pageCount: action.data.page_count,
                 totalCount: action.data.total_count,
                 foundCount: action.data.found_count,
                 modifiedCount: action.data.modified_count
-            });
-
-        case FIND_VIRUSES.FAILED:
-            return assign({}, state, {
-                viruses: []
-            });
+            };
 
         case GET_VIRUS.REQUESTED:
-            return assign({}, state, {
-                detail: null,
-                activeIsolateId: null,
-                activeSequenceId: null
-            });
+            return {...state, detail: null, activeIsolateId: null, activeSequenceId: null};
 
         case GET_VIRUS.SUCCEEDED:
-            return assign({}, state, {
+            return {
+                ...state,
                 detail: action.data,
                 activeIsolateId: action.data.isolates.length ? action.data.isolates[0].id: null
-            });
-
-        case CREATE_VIRUS.REQUESTED:
-            return assign({}, state, {
-                pending: true
-            });
+            };
 
         case CREATE_VIRUS.FAILED:
-            return assign({}, state, {
-                createError: action.error
-            });
+            return {...state, createError: action.error};
 
         case REMOVE_VIRUS.SUCCEEDED:
-            return assign({}, state, {
-                detail: null,
-                actionIsolateId: null,
-                remove: false
-            });
+            return {...state, detail: null, actionIsolateId: null, remove: false};
 
         case EDIT_VIRUS.FAILED:
-            return assign({}, state, {
-                editError: action.message
-            });
+            return {...state, editError: action.message};
+
+        case ADD_ISOLATE.SUCCEEDED:
+            return {
+                ...receivedDetailAfterChange(state, action),
+                activeIsolateId: action.data.isolates[action.data.isolates.length - 1].id
+            };
 
         case EDIT_VIRUS.SUCCEEDED:
-        case ADD_ISOLATE.SUCCEEDED:
         case EDIT_ISOLATE.SUCCEEDED:
         case SET_ISOLATE_AS_DEFAULT.SUCCEEDED:
         case REMOVE_ISOLATE.SUCCEEDED:
@@ -174,76 +142,46 @@ export default function virusesReducer (state = virusesInitialState, action) {
             return receivedDetailAfterChange(state, action);
 
         case GET_VIRUS_HISTORY.REQUESTED:
-            return assign({}, state, {
-                detailHistory: null
-            });
+            return {...state, detailHistory: null};
 
         case GET_VIRUS_HISTORY.SUCCEEDED:
-            return assign({}, state, {
-                detailHistory: action.data
-            });
+            return {...state, detailHistory: action.data};
 
         case REVERT.SUCCEEDED:
-            return assign({}, state, {
-                detail: action.detail,
-                detailHistory: action.history
-            });
+            return {...state, detail: action.detail, detailHistory: action.history};
 
         case UPLOAD_IMPORT.SUCCEEDED:
-            return assign({}, state, {
-                importData: assign({}, action.data, {in_progress: false})
-            });
+            return {...state, importData: {...action.data, in_progress: false}};
 
         case SELECT_ISOLATE:
-            return assign({}, state, {
-               activeIsolateId: action.isolateId
-            });
+            return {...state, activeIsolateId: action.isolateId};
 
         case SELECT_SEQUENCE:
-            return assign({}, state, {
-               activeSequenceId: action.sequenceId
-            });
+            return {...state, activeSequenceId: action.sequenceId};
 
         case SHOW_EDIT_VIRUS:
-            return assign({}, state, {
-                edit: true,
-                editError: ""
-            });
+            return {...state, edit: true, editError: ""};
 
         case SHOW_REMOVE_VIRUS:
-            return assign({}, state, {
-                remove: true
-            });
+            return {...state, remove: true};
 
         case SHOW_ADD_ISOLATE:
-            return assign({}, state, {
-                addIsolate: true
-            });
+            return {...state, addIsolate: true};
 
         case SHOW_EDIT_ISOLATE:
-            return assign({}, state, {
-                editIsolate: true
-            });
+            return {...state, editIsolate: true};
 
         case SHOW_REMOVE_ISOLATE:
-            return assign({}, state, {
-                removeIsolate: true
-            });
+            return {...state, removeIsolate: true};
 
         case SHOW_ADD_SEQUENCE:
-            return assign({}, state, {
-                addSequence: true
-            });
+            return {...state, addSequence: true};
 
         case SHOW_EDIT_SEQUENCE:
-            return assign({}, state, {
-                editSequence: action.sequenceId
-            });
+            return {...state, editSequence: action.sequenceId};
 
         case SHOW_REMOVE_SEQUENCE:
-            return assign({}, state, {
-                removeSequence: action.sequenceId
-            });
+            return {...state, removeSequence: action.sequenceId};
 
         case HIDE_VIRUS_MODAL:
             return hideVirusModal(state);

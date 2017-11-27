@@ -11,9 +11,9 @@
 
 import React from "react";
 import { connect } from "react-redux";
-import { Alert } from "react-bootstrap";
+import { Alert, Badge } from "react-bootstrap";
 
-import { Button, Flex, FlexItem, Icon, ListGroupItem } from "../../base";
+import { Button, Flex, FlexItem, Icon, ListGroupItem, PageHint } from "../../base";
 import { findIndexes, showRebuild } from "../actions";
 import IndexEntry from "./Entry";
 import RebuildIndex from "./Rebuild";
@@ -21,9 +21,7 @@ import RebuildIndex from "./Rebuild";
 class IndexesList extends React.Component {
 
     componentDidMount () {
-        if (this.props.documents === null) {
-            this.props.onFind();
-        }
+        this.props.onFind();
     }
 
     render () {
@@ -34,7 +32,7 @@ class IndexesList extends React.Component {
 
         let content;
 
-        if (this.props.totalCount > 0) {
+        if (this.props.totalVirusCount > 0) {
             // Set to true when a ready index has been seen when mapping through the index documents. Used to mark only
             // the newest ready index with a checkmark in the index list.
             let haveSeenReady = false;
@@ -115,7 +113,18 @@ class IndexesList extends React.Component {
         return (
             <div>
                 <h3 className="view-header">
-                    <strong>Virus Indexes</strong>
+                    <Flex alignItems="flex-end">
+                        <FlexItem grow={0} shrink={0}>
+                            <strong>Virus Indexes</strong> <Badge>{this.props.totalCount}</Badge>
+                        </FlexItem>
+                        <FlexItem grow={1} shrink={0}>
+                            <PageHint
+                                page={this.props.page}
+                                count={this.props.foundCount}
+                                totalCount={this.props.totalCount}
+                            />
+                        </FlexItem>
+                    </Flex>
                 </h3>
 
                 {content}
@@ -126,9 +135,7 @@ class IndexesList extends React.Component {
 
 const mapStateToProps = (state) => {
     return {
-        documents: state.indexes.documents,
-        modifiedCount: state.indexes.modifiedCount,
-        totalCount: state.indexes.totalCount,
+        ...state.indexes,
         canRebuild: state.account.permissions.rebuild_index
     };
 };

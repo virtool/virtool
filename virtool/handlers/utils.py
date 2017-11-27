@@ -55,6 +55,8 @@ def compose_regex_query(term, fields):
     # Stringify fields.
     fields = [str(field) for field in virtool.utils.coerce_list(fields)]
 
+    term = re.escape(term)
+
     # Compile regex, making is case-insensitive.
     regex = re.compile(str(term), re.IGNORECASE)
 

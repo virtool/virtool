@@ -11,7 +11,8 @@
 
 import React from "react";
 import { connect } from "react-redux";
-import { Modal, Panel } from "react-bootstrap";
+import { ClipLoader } from "halogenium";
+import { Modal } from "react-bootstrap";
 
 import { getUnbuilt, createIndex, hideRebuild } from "../actions";
 import { Button } from "../../base";
@@ -33,6 +34,18 @@ class RebuildIndex extends React.Component {
     };
 
     render () {
+        let history;
+
+        if (this.props.unbuilt) {
+            history = <RebuildHistory unbuilt={this.props.unbuilt} />;
+        } else {
+            history = (
+                <div className="text-center" style={{padding: "70px 0"}}>
+                    <ClipLoader color="#3c8786" size={16} />
+                </div>
+            );
+        }
+
         return (
             <Modal bsSize="large" onEntered={this.modalEntered} show={this.props.show} onHide={this.props.onHide}>
                 <Modal.Header>
@@ -40,11 +53,7 @@ class RebuildIndex extends React.Component {
                 </Modal.Header>
                 <form onSubmit={this.save}>
                     <Modal.Body>
-                        <Panel>
-                            Build the changes described below into a new index.
-                        </Panel>
-
-                        <RebuildHistory unbuilt={this.props.unbuilt} />
+                        {history}
                     </Modal.Body>
                     <Modal.Footer>
                         <Button type="submit" bsStyle="primary" icon="hammer">

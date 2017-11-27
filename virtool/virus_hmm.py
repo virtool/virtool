@@ -1,6 +1,7 @@
 import aiofiles
 import json
 import os
+import shutil
 import subprocess
 import tempfile
 
@@ -181,7 +182,7 @@ async def install_official(loop, db, settings, dispatch, server_version, usernam
 
         decompressed_path = os.path.join(temp_path, "hmm")
         install_path = os.path.join(settings.get("data_path"), "hmm", "profiles.hmm")
-        await loop.run_in_executor(None, os.rename, os.path.join(decompressed_path, "profiles.hmm"), install_path)
+        await loop.run_in_executor(None, shutil.move, os.path.join(decompressed_path, "profiles.hmm"), install_path)
 
         await update_process(db, dispatch, 0, step="import_annotations")
 
