@@ -72,6 +72,11 @@ class TestFind:
                     "virus_count": 231
                 }
             ],
+            "total_count": 2,
+            "found_count": 2,
+            "page": 1,
+            "page_count": 1,
+            "per_page": 15,
             "modified_virus_count": 0,
             "total_virus_count": 0
         }
