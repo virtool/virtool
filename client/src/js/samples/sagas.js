@@ -6,8 +6,7 @@
  * @author igboyes
  *
  */
-
-import { takeEvery, takeLatest, throttle, put } from "redux-saga/effects";
+import { put, takeEvery, takeLatest, throttle } from "redux-saga/effects";
 import { push } from "react-router-redux";
 
 import samplesAPI from "./api";
@@ -20,6 +19,7 @@ import {
     REFRESH_SAMPLE,
     CREATE_SAMPLE,
     UPDATE_SAMPLE,
+    REMOVE_SAMPLE,
     FIND_ANALYSES,
     GET_ANALYSIS,
     ANALYZE,
@@ -35,6 +35,7 @@ export function* watchSamples () {
     yield takeLatest(GET_SAMPLE.REQUESTED, getSample);
     yield takeLatest(CREATE_SAMPLE.REQUESTED, createSample);
     yield takeEvery(UPDATE_SAMPLE.REQUESTED, updateSample);
+    yield throttle(300, REMOVE_SAMPLE.REQUESTED, removeSample);
     yield takeLatest(FIND_ANALYSES.REQUESTED, findAnalyses);
     yield takeLatest(GET_ANALYSIS.REQUESTED, getAnalysis);
     yield takeEvery(ANALYZE.REQUESTED, analyze);
@@ -97,6 +98,19 @@ export function* updateSample (action) {
             yield samplesAPI.update(action.sampleId, action.update);
             yield put(push({state: {editSample: false}}));
             yield put({type: REFRESH_SAMPLE.REQUESTED, sampleId: action.sampleId});
+        } catch (error) {
+            yield put({type: UPDATE_SAMPLE.FAILED, error});
+        }
+    }, action);
+}
+
+export function* removeSample (action) {
+    yield setPending(function* (action) {
+        try {
+            yield samplesAPI.remove(action.sampleId);
+            yield put({type: FIND_SAMPLES.REQUESTED});
+
+            yield put(push("/samples"));
         } catch (error) {
             yield put({type: UPDATE_SAMPLE.FAILED, error});
         }

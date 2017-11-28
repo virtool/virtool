@@ -50,6 +50,10 @@ const samplesAPI = {
             })
     },
 
+    remove: (sampleId) => {
+        return Request.delete(`/api/samples/${sampleId}`);
+    },
+
     findAnalyses: (sampleId) => {
         return Request.get(`/api/samples/${sampleId}/analyses`)
     },
