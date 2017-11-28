@@ -11,6 +11,7 @@
 
 import React from "react";
 import { connect } from "react-redux";
+import { push } from "react-router-redux";
 import { withRouter } from "react-router-dom";
 import { Row, Col, Modal, Alert, ButtonToolbar } from "react-bootstrap";
 
@@ -67,7 +68,7 @@ class CreateVirus extends React.Component {
         };
 
         return (
-            <Modal show={true} onHide={this.props.onHide} onExited={this.modalExited}>
+            <Modal show={this.props.show} onHide={() => this.props.onHide(this.props)} onExited={this.modalExited}>
                 <Modal.Header onHide={this.props.onHide} closeButton>
                     Create Virus
                 </Modal.Header>
@@ -117,15 +118,15 @@ const mapStateToProps = (state) => {
     };
 };
 
-const mapDispatchToProps = (dispatch, ownProps) => {
+const mapDispatchToProps = (dispatch) => {
     return {
 
         onSubmit: (name, abbreviation) => {
             dispatch(createVirus(name, abbreviation))
         },
 
-        onHide: () => {
-            ownProps.history.push("/viruses");
+        onHide: ({ location }) => {
+            dispatch(push({...location, state: {createVirus: false}}));
         }
     };
 };

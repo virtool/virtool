@@ -10,6 +10,7 @@
 import React from "react";
 import URI from "urijs";
 import { connect } from "react-redux";
+import { push } from "react-router-redux";
 import { Link, Route } from "react-router-dom";
 import { LinkContainer } from "react-router-bootstrap";
 import { Alert, Badge, Row, Col, ListGroup, Pagination } from "react-bootstrap";
@@ -93,7 +94,7 @@ class VirusesList extends React.Component {
                     <span>
                         <Icon name="info"/> No viruses found. <Link to={{state: {virusImport: true}}}>Import</Link> or
                     </span>
-                    <span> <Link to="/viruses/create">Create</Link> some</span>
+                    <span> <Link to={{state: {createVirus: true}}}>Create</Link> some</span>
                 </ListGroupItem>
             );
         }
@@ -139,6 +140,7 @@ class VirusesList extends React.Component {
                 <VirusToolbar
                     canModify={this.props.account.permissions.modify_virus}
                     onChangeTerm={this.handleChangeTerm}
+                    location={this.props.location}
                 />
 
                 <ListGroup>
@@ -158,9 +160,9 @@ class VirusesList extends React.Component {
                     />
                 </div>
 
-                <Route path="/viruses/create">
-                    <CreateVirus {...this.props} />
-                </Route>
+                <Route children={({ location }) => {
+                    return <CreateVirus {...this.props} show={!!location.state && location.state.createVirus} />;
+                }} />
             </div>
         );
 
@@ -191,6 +193,10 @@ const mapDispatchToProps = (dispatch, ownProps) => {
 
         onToggleModifiedOnly: () => {
             dispatch(findViruses({modified: !ownProps.modified}));
+        },
+
+        onHide: () => {
+            dispatch(push({state: {createVirus: false}}));
         }
     };
 };

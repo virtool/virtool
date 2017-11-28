@@ -44,7 +44,7 @@ const VirusToolbar = (props) => (
         </LinkContainer>
 
         {props.canModify ? (
-            <LinkContainer to="/viruses/create">
+            <LinkContainer to={{...props.location, state: {createVirus: true}}} replace>
                 <Button bsStyle="primary" tip="Create">
                     <Icon name="new-entry" />
                 </Button>
