@@ -29,7 +29,7 @@ const RemoveSample = (props) => (
             <Button
                 bsStyle="danger"
                 icon="checkmark"
-                onClick={() => props.onConfirm(props.id, props.onSuccess)}
+                onClick={() => props.onConfirm(props.id)}
             >
                 Confirm
             </Button>
@@ -42,8 +42,7 @@ RemoveSample.propTypes = {
     name: PropTypes.string,
     show: PropTypes.bool,
     onHide: PropTypes.func,
-    onConfirm: PropTypes.func,
-    onSuccess: PropTypes.func
+    onConfirm: PropTypes.func
 };
 
 const mapStateToProps = (state) => {
@@ -58,8 +57,8 @@ const mapDispatchToProps = (dispatch) => {
             dispatch(hideSampleModal());
         },
 
-        onConfirm: (sampleId, onSuccess) => {
-            dispatch(removeSample(sampleId, onSuccess));
+        onConfirm: (sampleId) => {
+            dispatch(removeSample(sampleId));
         }
     };
 };

@@ -10,8 +10,6 @@
 import { assign, concat, find, reject } from "lodash";
 import {
     WS_UPDATE_SAMPLE,
-    WS_REMOVE_SAMPLE,
-    WS_REMOVE_ANALYSIS,
     FIND_SAMPLES,
     GET_SAMPLE,
     UPDATE_SAMPLE,
@@ -73,14 +71,6 @@ export default function reducer (state = initialState, action) {
                 )
             });
 
-        case WS_REMOVE_SAMPLE:
-            return assign({}, state, {
-                viruses: reject(state.viruses, {id: action.virus_id})
-            });
-
-        case WS_REMOVE_ANALYSIS:
-            return state;
-
         case FIND_SAMPLES.SUCCEEDED:
             return assign({}, state, {
                 documents: action.data.documents,
@@ -119,8 +109,9 @@ export default function reducer (state = initialState, action) {
 
         case REMOVE_SAMPLE.SUCCEEDED:
             return assign({}, state, {
-                analyses: reject(state.analyses, {id: action.id}),
-                analysisDetail: state.analysisDetail.id === action.id ? null: state.analysisDetail
+                detail: null,
+                analyses: null,
+                analysisDetail: null
             });
 
         case SHOW_REMOVE_SAMPLE:

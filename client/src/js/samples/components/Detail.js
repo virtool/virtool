@@ -94,7 +94,7 @@ class SampleDetail extends React.Component {
                     <Route path="/samples/:sampleId/analyses" component={Analyses}/>
                 </Switch>
 
-                <RemoveSample name={detail.name} />
+                <RemoveSample id={detail.id} name={detail.name} />
             </div>
         );
     }

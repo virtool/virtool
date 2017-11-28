@@ -179,7 +179,7 @@ async def install(db, dispatch, loop, download_url, size):
 
         document = await db.status.find_one_and_update({"_id": "software_update"}, {
             "$set": {
-                "process": None
+                "process.complete": True
             }
         }, return_document=pymongo.ReturnDocument.AFTER)
 

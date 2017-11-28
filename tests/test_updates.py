@@ -103,6 +103,10 @@ async def test_install(download_release_error, loop, tmpdir, monkeypatch, mocker
             "index.html"
         }
 
+        document = await test_motor.status.find_one("software_update", ["process"])
+
+        assert document["process"]["complete"] is True
+
         assert m_reload.called
 
     else:

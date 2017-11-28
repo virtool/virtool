@@ -37,8 +37,8 @@ class VirusImport extends React.Component {
         onCommit: PropTypes.func
     };
 
-    handleProgress = (progress) => {
-        this.setState({uploadProgress: progress});
+    handleProgress = (progressEvent) => {
+        this.setState({uploadProgress: progressEvent.loaded / progressEvent.total});
     };
 
     handleCommit = () => {
