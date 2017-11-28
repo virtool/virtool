@@ -64,4 +64,4 @@ async def update_member_users(db, group_id, remove=False):
             projection=["groups", "permissions"]
         )
 
-        await virtool.user.update_users_keys(db, user["_id"], document["groups"], document["permissions"])
+        await virtool.user.update_sessions_and_keys(db, user["_id"], document["groups"], document["permissions"])

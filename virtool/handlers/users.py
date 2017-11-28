@@ -231,7 +231,7 @@ async def add_group(req):
         }
     }, return_document=ReturnDocument.AFTER, projection=virtool.user.PROJECTION)
 
-    await virtool.user.update_users_keys(db, user_id, document["groups"], document["permissions"])
+    await virtool.user.update_sessions_and_keys(db, user_id, document["groups"], document["permissions"])
 
     return json_response(virtool.utils.base_processor(document))
 
@@ -274,7 +274,7 @@ async def remove_group(req):
         "$set": update
     }, return_document=ReturnDocument.AFTER, projection=virtool.user.PROJECTION)
 
-    await virtool.user.update_users_keys(db, user_id, document["groups"], document["permissions"])
+    await virtool.user.update_sessions_and_keys(db, user_id, document["groups"], document["permissions"])
 
     return json_response(virtool.utils.base_processor(document))
 
