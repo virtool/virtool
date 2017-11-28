@@ -29,7 +29,7 @@ import {
 } from "react-bootstrap";
 
 import { findHMMs } from "../actions";
-import { Icon, ListGroupItem, PageHint } from "../../base"
+import { Icon, Flex, FlexItem, ListGroupItem, PageHint } from "../../base"
 import HMMInstaller from "./Installer";
 
 /**
@@ -115,14 +115,19 @@ class HMMList extends React.Component {
         return (
             <div>
                 <h3 className="view-header">
-                    <strong>HMMs</strong> <Badge>{this.props.totalCount}</Badge>
-
-                    <PageHint
-                        count={this.props.list.length}
-                        totalCount={this.props.totalCount}
-                        page={this.props.page}
-                        pullRight
-                    />
+                    <Flex alignItems="flex-end">
+                        <FlexItem grow={0} shrink={0}>
+                            <strong>HMMs</strong> <Badge>{this.props.totalCount}</Badge>
+                        </FlexItem>
+                        <FlexItem grow={1} shrink={0}>
+                            <PageHint
+                                count={this.props.list.length}
+                                totalCount={this.props.totalCount}
+                                page={this.props.page}
+                                pullRight
+                            />
+                        </FlexItem>
+                    </Flex>
                 </h3>
 
                 {installer}
