@@ -30,10 +30,6 @@ class CreateVirus extends React.Component {
         };
     }
 
-    componentDidMount () {
-        this.inputNode.focus();
-    }
-
     modalExited = () => {
         this.setState({
             name: "",
@@ -82,7 +78,6 @@ class CreateVirus extends React.Component {
                             <Col md={9}>
                                 <Input
                                     {...inputProps}
-                                    ref={(node) => this.inputNode = node}
                                     label="Name"
                                     value={this.state.name}
                                     onChange={(e) => this.setState({name: e.target.value})}
