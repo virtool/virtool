@@ -170,3 +170,11 @@ def check_api_key(key, hashed):
     return hash_api_key(key) == hashed
 
 
+async def update_users_keys(db, user_id, groups, permissions):
+    async for api_key in db.keys.find({"user.id": user_id}, ["permissions"]):
+        await db.keys.update_one({"_id": api_key["_id"]}, {
+            "$set": {
+                "groups": groups,
+                "permissions": {p: (api_key["permissions"][p] and permissions[p]) for p in permissions}
+            }
+        })

@@ -1,5 +1,8 @@
+import pymongo
+
+import virtool.user
+import virtool.user_permissions
 import virtool.utils
-from virtool.user_permissions import PERMISSIONS
 
 
 def processor(document):
@@ -14,9 +17,9 @@ def merge_group_permissions(groups):
     :return: a dict keyed by permission names with boolean values indicating the state of the permission
 
     """
-    permission_dict = {permission_name: False for permission_name in PERMISSIONS}
+    permission_dict = {permission_name: False for permission_name in virtool.user_permissions.PERMISSIONS}
 
-    for permission_name in PERMISSIONS:
+    for permission_name in virtool.user_permissions.PERMISSIONS:
         for group in groups:
             try:
                 if group["permissions"][permission_name]:
@@ -54,4 +57,11 @@ async def update_member_users(db, group_id, remove=False):
                 "groups": group_id
             }
 
-        await db.users.update_one({"_id": user["_id"]}, update_dict)
+        document = await db.users.find_one_and_update(
+            {"_id": user["_id"]},
+            update_dict,
+            return_document=pymongo.ReturnDocument.AFTER,
+            projection=["groups", "permissions"]
+        )
+
+        await virtool.user.update_users_keys(db, user["_id"], document["groups"], document["permissions"])
