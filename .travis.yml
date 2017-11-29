@@ -78,7 +78,7 @@ before_script:
 - ./test-reporter-latest-linux-amd64 before-build
 
 script:
-- pytest --loop uvloop --cov --cov-report -vv
+- pytest --loop uvloop --cov --cov-report xml -vv
 - ./test-reporter-latest-linux-amd64 after-build --exit-code $?
 
 after_success:
