@@ -1,14 +1,13 @@
 #: A list of the permission strings used by Virtool.
 PERMISSIONS = [
-    "modify_virus",
-    "remove_virus",
-    "modify_hmm",
-    "create_sample",
-    "modify_host",
-    "remove_host",
     "cancel_job",
-    "remove_job",
-    "rebuild_index",
+    "create_sample",
+    "create_subtraction",
+    "manage_users",
+    "modify_hmm",
     "modify_options",
-    "manage_users"
+    "modify_virus",
+    "rebuild_index",
+    "remove_job",
+    "remove_virus"
 ]
