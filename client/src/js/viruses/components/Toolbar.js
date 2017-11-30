@@ -55,6 +55,7 @@ const VirusToolbar = (props) => (
 
 VirusToolbar.propTypes = {
     canModify: PropTypes.bool,
+    location: PropTypes.object,
     modifiedOnly: PropTypes.bool,
     onChangeTerm: PropTypes.func,
     onToggleModifiedOnly: PropTypes.func
