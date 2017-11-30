@@ -238,7 +238,8 @@ async def on_shutdown(app):
         await file_manager.close()
 
 
-def create_app(loop, db_name=None, disable_job_manager=False, disable_file_manager=False, skip_setup=False, force_version=None):
+def create_app(loop, db_name=None, disable_job_manager=False, disable_file_manager=False, skip_setup=False,
+               force_version=None, no_sentry=False):
     """
     Creates the Virtool application.
 
@@ -273,7 +274,9 @@ def create_app(loop, db_name=None, disable_job_manager=False, disable_file_manag
     else:
         virtool.app_routes.setup_routes(app)
 
-        app.on_startup.append(init_sentry)
+        if no_sentry:
+            app.on_startup.append(init_sentry)
+
         app.on_startup.append(init_settings)
         app.on_startup.append(init_version)
         app.on_startup.append(init_executors)

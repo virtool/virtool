@@ -64,6 +64,7 @@ module.exports = {
     output: {
         path: path.resolve(__dirname, "./dist"),
         filename: "app.[hash:8].js",
+        sourceMapFilename: "[name].js.map",
         publicPath: "/static/"
     },
 

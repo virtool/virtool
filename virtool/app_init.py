@@ -44,6 +44,14 @@ def get_args():
         const="v1.8.5"
     )
 
+    parser.add_argument(
+        "--no-sentry",
+        dest="no_sentry",
+        help="prevent initialization of Sentry error monitoring",
+        action="store_true",
+        default=False
+    )
+
     return parser.parse_args()
 
 

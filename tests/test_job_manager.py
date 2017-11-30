@@ -74,7 +74,7 @@ class TestNew:
             "use_executor": use_executor
         }, "test")
 
-        await asyncio.sleep(1, loop=loop)
+        await asyncio.sleep(5, loop=loop)
 
         assert await test_job_manager.db.jobs.find_one() == {
             "_id": test_random_alphanumeric.last_choice,

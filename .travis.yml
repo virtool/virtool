@@ -25,8 +25,13 @@ env:
 - TRAVIS_NODE_VERSION="6"
 
 before_install:
+
 # Codacy coverage reporter
 - pip install codacy-coverage
+
+# Code climate coverage reporter
+- wget https://codeclimate.com/downloads/test-reporter/test-reporter-latest-linux-amd64
+- chmod ug+x test-reporter-latest-linux-amd64
 
 # HMMER
 - wget http://eddylab.org/software/hmmer3/3.1b2/hmmer-3.1b2-linux-intel-x86_64.tar.gz
@@ -56,7 +61,6 @@ before_install:
 
 install:
 - pip install -r requirements.txt
-- pip install -U -I pytest
 - rm -rf ~/.nvm
 - git clone https://github.com/creationix/nvm.git ~/.nvm
 - cd ~/.nvm
@@ -73,12 +77,16 @@ install:
 
 before_script:
 - sleep 15
+- ./test-reporter-latest-linux-amd64 before-build
 
 script:
 - pytest --loop uvloop --cov --cov-report xml -vv
 
+after_script:
+- if [ "$TRAVIS_PULL_REQUEST" = "false" ]; then python-codacy-coverage -r coverage.xml; fi
+- if [ "$TRAVIS_PULL_REQUEST" = "false" ]; then ./test-reporter-latest-linux-amd64 after-build --exit-code $TRAVIS_TEST_RESULT; fi
+
 after_success:
-- python-codacy-coverage -r coverage.xml
 - mkdir gh_build
 - mkdir gh_build/virtool
 - python setup.py build
