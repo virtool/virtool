@@ -25,7 +25,8 @@ class VTClient:
             self._test_db_name,
             disable_job_manager=not job_manager,
             disable_file_manager=not file_manager,
-            skip_setup=not setup_mode
+            skip_setup=not setup_mode,
+            no_sentry=True
         )
 
         self._client.session.cookie_jar.update_cookies({

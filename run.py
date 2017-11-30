@@ -46,7 +46,7 @@ if __name__ == "__main__":
             ssl_context = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
             ssl_context.load_cert_chain(cert_path, key_path)
 
-    app = create_app(loop, skip_setup=skip_setup, force_version=args.force_version)
+    app = create_app(loop, skip_setup=skip_setup, force_version=args.force_version, no_sentry=args.no_sentry)
 
     host = args.host or settings_temp.get("server_host", "localhost")
 
