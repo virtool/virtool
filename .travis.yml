@@ -84,6 +84,7 @@ after_success:
 - mkdir gh_build
 - mkdir gh_build/virtool
 - python setup.py build
+- echo $?
 - cp -rv build/exe.linux-x86_64-3.6/* gh_build/virtool
 - cp -rv assets gh_build/virtool
 - cp -rv templates gh_build/virtool

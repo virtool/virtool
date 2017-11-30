@@ -93,7 +93,7 @@ export default class NuVsList extends React.Component {
                             <FormControl
                                 value={this.state.findTerm}
                                 onChange={(e) => this.setState({findTerm: e.target.value})}
-                                placeholder="Definition, family"
+                                placeholder="Name, family"
                             />
                         </InputGroup>
                     </FormGroup>
