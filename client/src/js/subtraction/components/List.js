@@ -10,7 +10,6 @@
  */
 
 import React from "react";
-import PropTypes from "prop-types";
 import { some } from "lodash";
 import { connect } from "react-redux";
 import { ClipLoader } from "halogenium";
@@ -18,17 +17,10 @@ import { Link } from "react-router-dom";
 import { LinkContainer } from "react-router-bootstrap";
 import { Row, Col, Alert, FormGroup, InputGroup, FormControl } from "react-bootstrap";
 
-import { findSubtractions, showCreateSubtraction } from "../actions";
+import { findSubtractions } from "../actions";
 import { Flex, FlexItem, Icon, Button, ListGroupItem } from "../../base";
 
 class SubtractionList extends React.Component {
-
-    static propTypes = {
-        documents: PropTypes.arrayOf(PropTypes.object),
-        readyHostCount: PropTypes.number,
-        onFind: PropTypes.func,
-        onShowCreate: PropTypes.func
-    };
 
     componentDidMount () {
         this.props.onFind()
@@ -124,9 +116,11 @@ class SubtractionList extends React.Component {
                         <Button icon="folder-open" tip="Files" />
                     </LinkContainer>
 
-                    <LinkContainer to={{state: {createSubtraction: true}}}>
-                        <Button bsStyle="primary" icon="new-entry" tip="Create" />
-                    </LinkContainer>
+                    {this.props.canModify ? (
+                        <LinkContainer to={{state: {createSubtraction: true}}}>
+                            <Button bsStyle="primary" icon="new-entry" tip="Create" />
+                        </LinkContainer>
+                    ): null}
                 </div>
 
                 <div className="list-group">
@@ -139,6 +133,7 @@ class SubtractionList extends React.Component {
 
 const mapStateToProps = (state) => {
     return {
+        canModify: state.account.permissions.modify_subtraction,
         documents: state.subtraction.documents
     };
 };
@@ -147,10 +142,6 @@ const mapDispatchToProps = (dispatch) => {
     return {
         onFind: () => {
             dispatch(findSubtractions())
-        },
-
-        onShowCreate: () => {
-            dispatch(showCreateSubtraction())
         }
     };
 };

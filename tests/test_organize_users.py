@@ -1,4 +1,5 @@
 import virtool.organize
+from virtool.user_permissions import PERMISSIONS
 
 
 async def test(test_motor, create_user):
@@ -18,19 +19,7 @@ async def test(test_motor, create_user):
         "_id": "foobar",
         "identicon": "c3ab8ff13720e8ad9047dd39466b3c8974e592c2fa383d4a3960714caef0c4f2",
         "api_keys": [],
-        "permissions": {
-            "modify_host": False,
-            "create_sample": False,
-            "cancel_job": False,
-            "manage_users": False,
-            "modify_hmm": False,
-            "modify_options": False,
-            "modify_virus": False,
-            "rebuild_index": False,
-            "remove_host": False,
-            "remove_job": False,
-            "remove_virus": False
-        },
+        "permissions": {p: False for p in PERMISSIONS},
         "primary_group": "",
         "groups": [
             "administrator"

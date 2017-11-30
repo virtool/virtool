@@ -1,6 +1,5 @@
 import arrow
 import datetime
-import gzip
 import os
 import pymongo
 import shutil

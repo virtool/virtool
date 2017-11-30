@@ -10,15 +10,16 @@
  */
 
 import React from "react";
-import PropTypes from "prop-types";
 import Numeral from "numeral";
 import { connect } from "react-redux";
+import { push } from "react-router-redux";
 import { LinkContainer } from "react-router-bootstrap";
 import { ClipLoader } from "halogenium";
 import { ListGroup, ListGroupItem, Row, Col, Badge, Table } from "react-bootstrap";
 
 import { getSubtraction } from "../actions";
-import { Button, Icon } from "../../base";
+import { Button, Flex, FlexItem, Icon } from "../../base";
+import RemoveSubtraction from "./Remove";
 
 const calculateGC = (nucleotides) => {
     return Numeral(1 - nucleotides.a - nucleotides.t - nucleotides.n).format("0.000")
@@ -74,7 +75,23 @@ class SubtractionDetail extends React.Component {
             return (
                 <div>
                     <h3 className="view-header">
-                        <strong>{data.id}</strong>
+                        <Flex alignItems="flex-end">
+                            <FlexItem grow={0} shrink={0}>
+                                <strong>{data.id}</strong>
+                            </FlexItem>
+                            {this.props.canModify ? (
+                                <FlexItem grow={1} shrink={0}>
+                                    <small>
+                                        <Icon
+                                            name="remove"
+                                            bsStyle="danger"
+                                            onClick={this.props.onShowRemove}
+                                            pullRight
+                                        />
+                                    </small>
+                                </FlexItem>
+                            ): null}
+                        </Flex>
                     </h3>
 
                     <Table bordered>
@@ -96,6 +113,8 @@ class SubtractionDetail extends React.Component {
                     </h4>
 
                     {linkedSamples}
+
+                    <RemoveSubtraction id={data.id} />
                 </div>
             );
         }
@@ -109,15 +128,9 @@ class SubtractionDetail extends React.Component {
     }
 }
 
-SubtractionDetail.propTypes = {
-    match: PropTypes.object,
-    detail: PropTypes.object,
-    onHide: PropTypes.func,
-    onGet: PropTypes.func
-};
-
 const mapStateToProps = (state) => {
     return {
+        canModify: state.account.permissions.modify_subtraction,
         detail: state.subtraction.detail
     };
 };
@@ -126,6 +139,10 @@ const mapDispatchToProps = (dispatch) => {
     return {
         onGet: (subtractionId) => {
             dispatch(getSubtraction(subtractionId));
+        },
+
+        onShowRemove: () => {
+            dispatch(push({state: {removeSubtraction: true}}));
         }
     };
 };

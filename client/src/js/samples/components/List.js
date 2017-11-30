@@ -96,6 +96,7 @@ class SamplesList extends React.Component {
                     onTermChange={this.handleTermChange}
                     history={this.props.history}
                     location={this.props.location}
+                    canCreate={this.props.canCreate}
                 />
 
                 <ListGroup>
@@ -136,6 +137,7 @@ class SamplesList extends React.Component {
 
 const mapStateToProps = (state) => {
     return {
+        canCreate: state.account.permissions.create_sample,
         term: state.samples.term,
         samples: state.samples.documents,
         totalCount: state.samples.totalCount,

@@ -5,7 +5,7 @@ import { LinkContainer } from "react-router-bootstrap";
 import { FormGroup, InputGroup, FormControl } from "react-bootstrap";
 import { Icon, Button } from "../../base";
 
-const SampleToolbar = (props) => (
+const SampleToolbar = ({ canCreate, history, location, onTermChange, term }) => (
     <div key="toolbar" className="toolbar">
         <FormGroup>
             <InputGroup>
@@ -14,8 +14,8 @@ const SampleToolbar = (props) => (
                 </InputGroup.Addon>
                 <FormControl
                     type="text"
-                    value={props.term}
-                    onChange={(e) => props.onTermChange(e.target.value)}
+                    value={term}
+                    onChange={(e) => onTermChange(e.target.value)}
                     placeholder="Sample name"
                 />
             </InputGroup>
@@ -25,16 +25,22 @@ const SampleToolbar = (props) => (
             <Button tip="Read Files" icon="folder-open" />
         </LinkContainer>
 
-        <Button
-            tip="Create Sample"
-            icon="new-entry"
-            bsStyle="primary"
-            onClick={() => props.history.replace(props.location.pathname + props.location.search, {create: true})}
-        />
+        {canCreate ? (
+            <Button
+                tip="Create Sample"
+                icon="new-entry"
+                bsStyle="primary"
+                onClick={() => history.replace(location.pathname + location.search, {create: true})}
+            />
+        ): null}
+
+
+
     </div>
 );
 
 SampleToolbar.propTypes = {
+    canCreate: PropTypes.bool,
     term: PropTypes.string,
     onTermChange: PropTypes.func,
     location: PropTypes.object,

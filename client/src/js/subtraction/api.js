@@ -32,8 +32,8 @@ const subtractionAPI = {
             });
     },
 
-    remove: (subId) => {
-        return Request.delete(`/api/subtraction/${subId}`);
+    remove: (subtractionId) => {
+        return Request.delete(`/api/subtraction/${subtractionId}`);
     }
 
 };

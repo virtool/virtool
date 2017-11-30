@@ -297,7 +297,7 @@ async def save_and_reload(req):
             "show_versions": False,
             "quick_analyze_algorithm": "pathoscope_bowtie"
         },
-        "permissions": {permission: True for permission in virtool.user_permissions.PERMISSIONS},
+        "permissions": {p: True for p in virtool.user_permissions.PERMISSIONS},
         "password": req.app["setup"]["first_user_password"],
         "primary_group": "",
         # Should the user be forced to reset their password on their next login?

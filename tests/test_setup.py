@@ -3,9 +3,8 @@ import os
 import pytest
 import sys
 from aiohttp.test_utils import make_mocked_coro
-from cerberus import Validator
 
-import virtool.app_settings
+from virtool.user_permissions import PERMISSIONS
 
 
 @pytest.fixture
@@ -333,100 +332,86 @@ class TestClear:
         }
 
 
-class TestSaveAndReload:
+async def test_save_and_reload(mocker, tmpdir, spawn_client, mock_setup, static_time):
+    client = await spawn_client(setup_mode=True)
 
-    async def test(self, mocker, tmpdir, spawn_client, mock_setup, static_time):
-        client = await spawn_client(setup_mode=True)
+    m_reload = mocker.patch("virtool.utils.reload")
+    m_write_settings_file = mocker.patch("virtool.app_settings.write_settings_file", new=make_mocked_coro())
 
-        m_reload = mocker.patch("virtool.utils.reload")
-        m_write_settings_file = mocker.patch("virtool.app_settings.write_settings_file", new=make_mocked_coro())
+    data = tmpdir.mkdir("data")
+    watch = tmpdir.mkdir("watch")
 
-        data = tmpdir.mkdir("data")
-        watch = tmpdir.mkdir("watch")
-
-        client.app["setup"] = {
-            'db_host': "localhost",
-            'db_port': 27017,
-            'db_name': "foobar",
-            'first_user_id': "fred",
-            'first_user_password': "hashed",
-            'data_path': str(data),
-            'watch_path': str(watch),
-            'errors': {
-                'data_not_found_error': False,
-                'watch_not_empty_error': False,
-                'password_confirmation_error': False,
-                'db_exists_error': False,
-                "db_name_error": False,
-                'data_not_empty_error': False,
-                'data_permission_error': False,
-                'db_connection_error': False,
-                'watch_permission_error': False,
-                'watch_not_found_error': False
-            }
+    client.app["setup"] = {
+        'db_host': "localhost",
+        'db_port': 27017,
+        'db_name': "foobar",
+        'first_user_id': "fred",
+        'first_user_password': "hashed",
+        'data_path': str(data),
+        'watch_path': str(watch),
+        'errors': {
+            'data_not_found_error': False,
+            'watch_not_empty_error': False,
+            'password_confirmation_error': False,
+            'db_exists_error': False,
+            "db_name_error": False,
+            'data_not_empty_error': False,
+            'data_permission_error': False,
+            'db_connection_error': False,
+            'watch_permission_error': False,
+            'watch_not_found_error': False
         }
+    }
 
-        await client.get("/setup/save")
+    await client.get("/setup/save")
 
-        connection = motor.motor_asyncio.AsyncIOMotorClient(
-            io_loop=client.app.loop,
-            host="localhost",
-            port=27017,
-            serverSelectionTimeoutMS=1500
-        )
+    connection = motor.motor_asyncio.AsyncIOMotorClient(
+        io_loop=client.app.loop,
+        host="localhost",
+        port=27017,
+        serverSelectionTimeoutMS=1500
+    )
 
-        assert await connection.foobar.users.find_one() == {
-            "_id": "fred",
-            "groups": ["administrator"],
-            "invalidate_sessions": False,
-            "password": "hashed",
-            "last_password_change": static_time,
-            "force_reset": False,
-            "primary_group": "",
-            "settings": {
-                "skip_quick_analyze_dialog": True,
-                "quick_analyze_algorithm": "pathoscope_bowtie",
-                "show_ids": False,
-                "show_versions": False
-            },
-            "permissions": {
-                "modify_options": True,
-                "modify_hmm": True,
-                "remove_virus": True,
-                "rebuild_index": True,
-                "remove_host": True,
-                "modify_virus": True,
-                "cancel_job": True,
-                "manage_users": True,
-                "remove_job": True,
-                "create_sample": True,
-                "modify_host": True
-            }
-        }
+    assert await connection.foobar.users.find_one() == {
+        "_id": "fred",
+        "groups": ["administrator"],
+        "invalidate_sessions": False,
+        "password": "hashed",
+        "last_password_change": static_time,
+        "force_reset": False,
+        "primary_group": "",
+        "settings": {
+            "skip_quick_analyze_dialog": True,
+            "quick_analyze_algorithm": "pathoscope_bowtie",
+            "show_ids": False,
+            "show_versions": False
+        },
+        "permissions": {p: True for p in PERMISSIONS}
+    }
 
-        await connection.drop_database("foobar")
+    await connection.drop_database("foobar")
 
-        assert os.path.isdir(str(data))
-        assert os.path.isdir(str(watch))
+    assert os.path.isdir(str(data))
+    assert os.path.isdir(str(watch))
 
-        subdirs = [
-            "files",
-            "reference/viruses",
-            "reference/subtraction",
-            "samples",
-            "hmm",
-            "logs/jobs"
-        ]
+    subdirs = [
+        "files",
+        "reference/viruses",
+        "reference/subtraction",
+        "samples",
+        "hmm",
+        "logs/jobs"
+    ]
 
-        for sub in subdirs:
-            assert os.path.isdir(os.path.join(str(data), sub))
+    for sub in subdirs:
+        assert os.path.isdir(os.path.join(str(data), sub))
 
-        assert m_reload.called
+    assert m_reload.called
 
-        m_write_settings_file.assert_called_with(os.path.join(sys.path[0], "settings.json"), {
-            'db_host': "localhost",
-            'db_port': 27017,
-            'db_name': "foobar",
-            'data_path': str(data),
-            'watch_path': str(watch)
-        })
+    m_write_settings_file.assert_called_with(os.path.join(sys.path[0], "settings.json"), {
+        'db_host': "localhost",
+        'db_port': 27017,
+        'db_name': "foobar",
+        'data_path': str(data),
+        'watch_path': str(watch)
+    })
