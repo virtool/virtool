@@ -2,10 +2,10 @@
 PERMISSIONS = [
     "cancel_job",
     "create_sample",
-    "create_subtraction",
     "manage_users",
     "modify_hmm",
     "modify_options",
+    "modify_subtraction",
     "modify_virus",
     "rebuild_index",
     "remove_job",
