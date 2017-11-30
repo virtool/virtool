@@ -2,6 +2,7 @@ import datetime
 from operator import itemgetter
 
 from virtool.user import check_password
+from virtool.user_permissions import PERMISSIONS
 
 
 class TestFind:
@@ -25,19 +26,7 @@ class TestFind:
             "force_reset": False,
             "groups": [],
             "last_password_change": "2015-10-06T20:00:00Z",
-            "permissions": {
-                "modify_host": False,
-                "create_sample": False,
-                "cancel_job": False,
-                "modify_hmm": False,
-                "manage_users": False,
-                "modify_options": False,
-                "modify_virus": False,
-                "rebuild_index": False,
-                "remove_host": False,
-                "remove_job": False,
-                "remove_virus": False
-            },
+            "permissions": {p: False for p in PERMISSIONS},
             "primary_group": "technician"
         }
 
@@ -57,9 +46,9 @@ class TestGet:
         """
         client = await spawn_client(authorize=True, permissions=["manage_users"])
 
-        user_ids = ["bob", "fred"]
+        bob, fred = [create_user(user_id) for user_id in ("bob", "fred")]
 
-        await client.db.users.insert_many([create_user(user_id) for user_id in user_ids])
+        await client.db.users.insert_many([bob, fred])
 
         resp = await client.get("/api/users/fred")
 
@@ -70,19 +59,7 @@ class TestGet:
             "force_reset": False,
             "groups": [],
             "last_password_change": "2015-10-06T20:00:00Z",
-            "permissions": {
-                "modify_host": False,
-                "create_sample": False,
-                "cancel_job": False,
-                "modify_hmm": False,
-                "manage_users": False,
-                "modify_options": False,
-                "modify_virus": False,
-                "rebuild_index": False,
-                "remove_host": False,
-                "remove_job": False,
-                "remove_virus": False
-            },
+            "permissions": bob["permissions"],
             "primary_group": "technician"
         }
 
@@ -99,7 +76,7 @@ class TestGet:
 
 class TestCreate:
 
-    async def test(self, monkeypatch, spawn_client, static_time):
+    async def test(self, monkeypatch, spawn_client, create_user, static_time):
         """
         Test that a valid request results in a user document being properly inserted.
 
@@ -130,19 +107,7 @@ class TestCreate:
             "groups": [],
             "last_password_change": "2017-10-06T20:00:00Z",
             "identicon": "81b637d8fcd2c6da6359e6963113a1170de795e4b725b84d1e0b4cfd9ec58ce9",
-            "permissions": {
-                "modify_host": False,
-                "create_sample": False,
-                "cancel_job": False,
-                "modify_hmm": False,
-                "manage_users": False,
-                "modify_options": False,
-                "modify_virus": False,
-                "rebuild_index": False,
-                "remove_host": False,
-                "remove_job": False,
-                "remove_virus": False
-            },
+            "permissions": create_user()["permissions"],
             "primary_group": ""
         }
 
@@ -228,19 +193,7 @@ class TestSetPassword:
             "groups": [],
             "id": "bob",
             "last_password_change": "2017-10-06T20:00:00Z",
-            "permissions": {
-                "modify_host": False,
-                "create_sample": False,
-                "cancel_job": False,
-                "manage_users": False,
-                "modify_hmm": False,
-                "modify_options": False,
-                "modify_virus": False,
-                "rebuild_index": False,
-                "remove_host": False,
-                "remove_job": False,
-                "remove_virus": False
-            },
+            "permissions": bob["permissions"],
             "primary_group": "technician"
         }
 
@@ -285,7 +238,9 @@ class TestSetForceReset:
         """
         client = await spawn_client(authorize=True, permissions=["manage_users"])
 
-        await client.db.users.insert_one(create_user("bob"))
+        bob = create_user("bob")
+
+        await client.db.users.insert_one(bob)
 
         data = {
             "force_reset": True
@@ -300,19 +255,7 @@ class TestSetForceReset:
             "groups": [],
             "id": "bob",
             "last_password_change": "2015-10-06T20:00:00Z",
-            "permissions": {
-                "modify_host": False,
-                "create_sample": False,
-                "cancel_job": False,
-                "manage_users": False,
-                "modify_hmm": False,
-                "modify_options": False,
-                "modify_virus": False,
-                "rebuild_index": False,
-                "remove_host": False,
-                "remove_job": False,
-                "remove_virus": False
-            },
+            "permissions": bob["permissions"],
             "primary_group": "technician"
         }
 
@@ -373,7 +316,9 @@ class TestAddGroup:
             }
         ])
 
-        await client.db.users.insert(create_user("bob"))
+        bob = create_user("bob")
+
+        await client.db.users.insert(bob)
 
         data = {
             "group_id": "tech"
@@ -388,19 +333,7 @@ class TestAddGroup:
             "groups": ["tech"],
             "id": "bob",
             "last_password_change": "2015-10-06T20:00:00Z",
-            "permissions": {
-                "cancel_job": False,
-                "create_sample": False,
-                "manage_users": False,
-                "modify_hmm": False,
-                "modify_host": False,
-                "modify_options": False,
-                "modify_virus": True,
-                "rebuild_index": False,
-                "remove_host": False,
-                "remove_job": False,
-                "remove_virus": False
-            },
+            "permissions": dict(bob["permissions"], modify_virus=True),
             "primary_group": "technician"
         }
 
@@ -481,11 +414,13 @@ class TestRemoveGroup:
             }
         ])
 
-        await client.db.users.insert_one(create_user(
+        bob = create_user(
             "bob",
             groups=["tech", "test"],
             permissions=["modify_virus", "rebuild_index"]
-        ))
+        )
+
+        await client.db.users.insert_one(bob)
 
         await client.db.users.update_one({"_id": "bob"}, {
             "$set": {
@@ -508,19 +443,7 @@ class TestRemoveGroup:
             "groups": ["test"],
             "id": "bob",
             "last_password_change": "2015-10-06T20:00:00Z",
-            "permissions": {
-                "cancel_job": False,
-                "create_sample": False,
-                "manage_users": False,
-                "modify_hmm": False,
-                "modify_host": False,
-                "modify_options": False,
-                "modify_virus": False,
-                "rebuild_index": True,
-                "remove_host": False,
-                "remove_job": False,
-                "remove_virus": False
-            },
+            "permissions": dict(bob["permissions"], modify_virus=False),
             "primary_group": ""
         }
 

@@ -1,5 +1,7 @@
 import pytest
 
+import virtool.user_permissions
+
 
 @pytest.fixture
 def user_document():
@@ -15,18 +17,6 @@ def user_document():
             "show_versions": True,
             "skip_quick_analyze_dialog": True
         },
-        "permissions": {
-            "modify_options": False,
-            "remove_virus": False,
-            "add_virus": False,
-            "modify_host": False,
-            "create_sample": False,
-            "remove_job": False,
-            "cancel_job": False,
-            "remove_host": False,
-            "modify_hmm": False,
-            "modify_virus": False,
-            "rebuild_index": False
-        },
+        "permissions": {p: False for p in virtool.user_permissions.PERMISSIONS},
         "force_reset": False
     }

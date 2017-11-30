@@ -1,5 +1,7 @@
 import pytest
+
 from virtool.user import check_password
+from virtool.user_permissions import PERMISSIONS
 
 
 async def test_get(spawn_client):
@@ -13,19 +15,7 @@ async def test_get(spawn_client):
         "groups": [],
         "id": "test",
         "last_password_change": "2015-10-06T20:00:00Z",
-        "permissions": {
-            "modify_host": False,
-            "create_sample": False,
-            "cancel_job": False,
-            "manage_users": False,
-            "modify_hmm": False,
-            "modify_options": False,
-            "modify_virus": False,
-            "rebuild_index": False,
-            "remove_host": False,
-            "remove_job": False,
-            "remove_virus": False
-        },
+        "permissions": {p: False for p in PERMISSIONS},
         "primary_group": "technician",
         "settings": {
             "quick_analyze_algorithm": "pathoscope_bowtie",
@@ -199,7 +189,7 @@ class TestCreateAPIKey:
             "create_sample": True
         },
         {
-            "modify_host": True,
+            "modify_subtraction": True,
             "rebuild_index": True
         },
         {
@@ -207,11 +197,9 @@ class TestCreateAPIKey:
             "create_sample": True,
             "manage_users": True,
             "modify_hmm": True,
-            "modify_host": True,
             "modify_options": True,
             "modify_virus": True,
             "rebuild_index": True,
-            "remove_host": True,
             "remove_job": True,
             "remove_virus": True
         }
@@ -245,19 +233,7 @@ class TestCreateAPIKey:
                 "id": "test"
             },
             "groups": [],
-            "permissions": {
-                "cancel_job": False,
-                "create_sample": False,
-                "manage_users": False,
-                "modify_hmm": False,
-                "modify_host": False,
-                "modify_options": False,
-                "modify_virus": False,
-                "rebuild_index": False,
-                "remove_host": False,
-                "remove_job": False,
-                "remove_virus": False
-            }
+            "permissions": {p: False for p in PERMISSIONS}
         }
 
         if req_permissions:
@@ -307,19 +283,7 @@ class TestCreateAPIKey:
                 "id": "test"
             },
             "groups": [],
-            "permissions": {
-                "cancel_job": False,
-                "create_sample": False,
-                "manage_users": False,
-                "modify_hmm": False,
-                "modify_host": False,
-                "modify_options": False,
-                "modify_virus": False,
-                "rebuild_index": False,
-                "remove_host": False,
-                "remove_job": False,
-                "remove_virus": False
-            }
+            "permissions": {p: False for p in PERMISSIONS}
         }
 
         assert await client.db.keys.find_one({"id": "foobar_1"}) == expected
