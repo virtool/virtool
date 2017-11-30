@@ -54,7 +54,7 @@ export default class NuVsExport extends React.Component {
                         const bestHit = orf.hits.reduce((best, hit) => {
                             if (hit.full_e < best.e) {
                                 best.e = hit.full_e;
-                                best.name = hit.definition[0];
+                                best.name = hit.names[0];
                             }
 
                             return best;
@@ -86,7 +86,7 @@ export default class NuVsExport extends React.Component {
                     const bestHit = orf.hits.reduce((result, hit) => {
                         if (hit.full_e < result.e) {
                             result.e = hit.full_e;
-                            result.name = hit.definition[0];
+                            result.name = hit.names[0];
                         }
 
                         return result;
