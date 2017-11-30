@@ -26,6 +26,9 @@ env:
 
 before_install:
 
+# Codacy coverage reporter
+- pip install codacy-coverage
+
 # Code climate coverage reporter
 - wget https://codeclimate.com/downloads/test-reporter/test-reporter-latest-linux-amd64
 - chmod ug+x test-reporter-latest-linux-amd64
@@ -58,7 +61,6 @@ before_install:
 
 install:
 - pip install -r requirements.txt
-- pip install -U -I pytest==3.2.5
 - rm -rf ~/.nvm
 - git clone https://github.com/creationix/nvm.git ~/.nvm
 - cd ~/.nvm
@@ -79,6 +81,7 @@ before_script:
 
 script:
 - pytest --loop uvloop --cov --cov-report xml -vv
+- python-codacy-coverage -r coverage.xml
 - ./test-reporter-latest-linux-amd64 after-build --exit-code $?
 
 after_success:
