@@ -8,7 +8,7 @@ import virtool.organize
 def subtraction_documents():
     return [
         {"_id": 1, "ready": True, "job": {"id": "345asd"}},
-        {"_id": 2, "ready": False, "job": {"id": "3i4l1s"}},
+        {"_id": 2, "ready": True, "job": {"id": "3i4l1s"}},
         {"_id": 3, "ready": True, "job": {"id": "8jj3lq"}}
     ]
 
@@ -92,7 +92,7 @@ class TestAddedReady:
 
         assert all(["added" not in d for d in docs])
 
-        assert {d["ready"] for d in docs} == {True, False, True}
+        assert {d["ready"] for d in docs} == {True, True, True}
 
     async def test_has_ready(self, tmpdir, test_motor, subtraction_documents):
         """
@@ -113,7 +113,7 @@ class TestAddedReady:
 
         assert all(["added" not in d for d in docs])
 
-        assert {d["ready"] for d in docs} == {True, False, True}
+        assert {d["ready"] for d in docs} == {True, True, True}
 
     async def test_neither(self, tmpdir, test_motor, subtraction_documents):
         """
