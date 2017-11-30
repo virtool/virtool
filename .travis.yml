@@ -73,7 +73,6 @@ install:
 
 before_script:
 - sleep 15
-- ./test-reporter-latest-linux-amd64 before-build
 
 script:
 - pytest --loop uvloop --cov --cov-report xml -vv
