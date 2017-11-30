@@ -1,2 +1,8 @@
 output-format: json
 strictness: medium
+
+mccabe:
+  run: true
+
+pep8:
+  full: true
