@@ -82,7 +82,7 @@ before_script:
 script:
 - pytest --loop uvloop --cov --cov-report xml -vv
 - python-codacy-coverage -r coverage.xml
-- ./test-reporter-latest-linux-amd64 after-build --exit-code $?
+- ./test-reporter-latest-linux-amd64 after-build --exit-code $TRAVIS_TEST_RESULT
 
 after_success:
 - mkdir gh_build
