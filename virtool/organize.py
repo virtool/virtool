@@ -357,6 +357,8 @@ async def organize_subtraction(db, settings):
         }
     })
 
+    await db.subtraction.delete_many({"ready": False})
+
 
 async def organize_users(db):
     await virtool.organize_utils.unset_version_field(db.users)
