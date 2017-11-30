@@ -17,7 +17,7 @@ import { Link } from "react-router-dom";
 import { LinkContainer } from "react-router-bootstrap";
 import { Row, Col, Alert, FormGroup, InputGroup, FormControl } from "react-bootstrap";
 
-import { findSubtractions, showCreateSubtraction } from "../actions";
+import { findSubtractions } from "../actions";
 import { Flex, FlexItem, Icon, Button, ListGroupItem } from "../../base";
 
 class SubtractionList extends React.Component {
@@ -116,7 +116,7 @@ class SubtractionList extends React.Component {
                         <Button icon="folder-open" tip="Files" />
                     </LinkContainer>
 
-                    {this.props.canCreate ? (
+                    {this.props.canModify ? (
                         <LinkContainer to={{state: {createSubtraction: true}}}>
                             <Button bsStyle="primary" icon="new-entry" tip="Create" />
                         </LinkContainer>
@@ -133,7 +133,7 @@ class SubtractionList extends React.Component {
 
 const mapStateToProps = (state) => {
     return {
-        canCreate: state.account.permissions.create_subtraction,
+        canModify: state.account.permissions.modify_subtraction,
         documents: state.subtraction.documents
     };
 };

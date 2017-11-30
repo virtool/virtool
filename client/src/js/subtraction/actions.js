@@ -14,7 +14,7 @@ import {
     LIST_SUBTRACTION_IDS,
     GET_SUBTRACTION,
     CREATE_SUBTRACTION,
-    SHOW_CREATE_SUBTRACTION
+    REMOVE_SUBTRACTION
 } from "../actionTypes";
 
 export const wsUpdateSubtraction = (data) => {
@@ -24,10 +24,10 @@ export const wsUpdateSubtraction = (data) => {
     };
 };
 
-export const wsRemoveSubtraction = (hostId) => {
+export const wsRemoveSubtraction = (subtractionId) => {
     return {
         type: WS_REMOVE_SUBTRACTION,
-        hostId
+        subtractionId
     };
 };
 
@@ -58,15 +58,9 @@ export const createSubtraction = (subtractionId, fileId) => {
     };
 };
 
-export const removeSubtraction = (hostId) => {
+export const removeSubtraction = (subtractionId) => {
     return {
-        type: GET_SUBTRACTION.REQUESTED,
-        hostId
-    };
-};
-
-export const showCreateSubtraction = () => {
-    return {
-        type: SHOW_CREATE_SUBTRACTION
+        type: REMOVE_SUBTRACTION.REQUESTED,
+        subtractionId
     };
 };

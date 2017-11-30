@@ -7,17 +7,25 @@
  *
  */
 
+import { push } from "react-router-redux";
 import { put, takeLatest, throttle } from "redux-saga/effects";
 
 import subtractionAPI from "./api";
 import { setPending } from "../wrappers";
-import { FIND_SUBTRACTIONS, LIST_SUBTRACTION_IDS, GET_SUBTRACTION, CREATE_SUBTRACTION }  from "../actionTypes";
+import {
+    FIND_SUBTRACTIONS,
+    LIST_SUBTRACTION_IDS,
+    GET_SUBTRACTION,
+    CREATE_SUBTRACTION,
+    REMOVE_SUBTRACTION
+}  from "../actionTypes";
 
 export function* watchSubtraction () {
     yield throttle(500, FIND_SUBTRACTIONS.REQUESTED, findSubtractions);
     yield takeLatest(LIST_SUBTRACTION_IDS.REQUESTED, listSubtractionIds);
     yield takeLatest(GET_SUBTRACTION.REQUESTED, getSubtraction);
     yield throttle(500, CREATE_SUBTRACTION.REQUESTED, createSubtraction);
+    yield throttle(300, REMOVE_SUBTRACTION.REQUESTED, removeSubtraction);
 }
 
 export function* findSubtractions (action) {
@@ -52,6 +60,17 @@ export function* createSubtraction (action) {
             yield put({type: CREATE_SUBTRACTION.SUCCEEDED, data: response.body});
         } catch (error) {
             yield put({type: CREATE_SUBTRACTION.FAILED, error});
+        }
+    }, action);
+}
+
+export function* removeSubtraction (action) {
+    yield setPending(function* (action) {
+        try {
+            yield subtractionAPI.remove(action.subtractionId);
+            yield put(push("/subtraction"));
+        } catch (error) {
+            yield put({type: REMOVE_SUBTRACTION.FAILED, error});
         }
     }, action);
 }

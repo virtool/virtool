@@ -1,7 +1,10 @@
+import os
+import shutil
+
 import virtool.sample
 import virtool.subtraction
 import virtool.utils
-from virtool.handlers.utils import unpack_request, json_response, not_found
+from virtool.handlers.utils import unpack_request, json_response, no_content, not_found
 
 
 async def find(req):
@@ -112,3 +115,25 @@ async def authorize_upload(req):
     )
 
     return json_response({"file_id": file_id})
+
+
+async def remove(req):
+    db = req.app["db"]
+
+    subtraction_id = req.match_info["subtraction_id"]
+
+    reference_path = os.path.join(
+        req.app["settings"].get("data_path"),
+        "reference",
+        "subtraction",
+        subtraction_id.replace(" ", "_").lower()
+    )
+
+    delete_result = await db.subtraction.delete_one({"_id": subtraction_id})
+
+    if delete_result.deleted_count == 0:
+        return not_found()
+
+    await req.loop.run_in_executor(None, shutil.rmtree, reference_path, True)
+
+    return no_content()
