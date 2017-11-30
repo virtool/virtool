@@ -31,11 +31,7 @@ const attemptReload = () => {
     Request.get(`${window.location.origin}/api`)
         .end((err, res) => {
             if (!err && res.ok) {
-                if (window.location.href === window.location.origin) {
-                    window.location.reload();
-                } else {
-                    window.location = window.location.origin;
-                }
+                window.location = window.location.origin;
             }
         });
 };
