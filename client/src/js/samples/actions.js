@@ -8,9 +8,10 @@
  */
 
 import {
+    WS_UPDATE_SAMPLE,
+    WS_REMOVE_SAMPLE,
     WS_UPDATE_ANALYSIS,
     WS_REMOVE_ANALYSIS,
-
     FIND_SAMPLES,
     FIND_READY_HOSTS,
     GET_SAMPLE,
@@ -22,10 +23,23 @@ import {
     ANALYZE,
     BLAST_NUVS,
     REMOVE_ANALYSIS,
-
     SHOW_REMOVE_SAMPLE,
     HIDE_SAMPLE_MODAL
 } from "../actionTypes";
+
+export const wsUpdateSample = (update) => {
+    return {
+        type: WS_UPDATE_SAMPLE,
+        update
+    };
+};
+
+export const wsRemoveSample = (removed) => {
+    return {
+        type: WS_REMOVE_SAMPLE,
+        removed
+    };
+};
 
 export const wsUpdateAnalysis = (update) => {
     return {

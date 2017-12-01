@@ -7,9 +7,8 @@
  *
  */
 
-import { assign, concat, find, includes, reject, union } from "lodash";
+import { assign, reject } from "lodash";
 import {
-    WS_UPDATE_SAMPLE,
     FIND_SAMPLES,
     GET_SAMPLE,
     UPDATE_SAMPLE,
@@ -23,7 +22,6 @@ import {
     BLAST_NUVS,
     REMOVE_ANALYSIS
 } from "../actionTypes";
-import {CREATE_SAMPLE} from "../actionTypes";
 
 const setNuvsBLAST = (state, analysisId, sequenceIndex, data = "ip") => {
     const analysisDetail = state.analysisDetail;
@@ -65,14 +63,6 @@ export default function reducer (state = initialState, action) {
 
     switch (action.type) {
 
-        case WS_UPDATE_SAMPLE:
-            return assign({}, state, {
-                viruses: concat(
-                    reject(state.viruses, {id: action.virus_id}),
-                    assign({}, find(state.viruses, {id: action.virus_id}), action.data)
-                )
-            });
-
         case FIND_SAMPLES.SUCCEEDED:
             return assign({}, state, {
                 documents: action.data.documents,
@@ -95,12 +85,6 @@ export default function reducer (state = initialState, action) {
         case GET_SAMPLE.SUCCEEDED:
             return {...state, detail: action.data};
 
-        case CREATE_SAMPLE.REQUESTED:
-            return {...state, reservedFiles: union(state.reservedFiles, action.files)};
-
-        case CREATE_SAMPLE.FAILED:
-            return {...state, reservedFiles: reject(state.reservedFiles, fileId => includes(action.files, fileId))};
-
         case UPDATE_SAMPLE.SUCCEEDED: {
             if (state.list === null) {
                 return state;
@@ -112,11 +96,7 @@ export default function reducer (state = initialState, action) {
         }
 
         case REMOVE_SAMPLE.SUCCEEDED:
-            return assign({}, state, {
-                detail: null,
-                analyses: null,
-                analysisDetail: null
-            });
+            return {...state, detail: null, analyses: null, analysisDetail: null};
 
         case SHOW_REMOVE_SAMPLE:
             return assign({}, state, {
