@@ -66,20 +66,34 @@ async def create(db, dispatch, filename, file_type, user_id=None):
     return document
 
 
-async def reserve(db, file_ids):
+async def reserve(db, dispatch, file_ids):
     await db.files.update_many({"_id": {"$in": file_ids}}, {
         "$set": {
             "reserved": True
         }
     })
 
+    async for document in db.files.find({"_id": {"$in": file_ids}}, PROJECTION):
+        await dispatch(
+            "files",
+            "update",
+            virtool.utils.base_processor(document)
+        )
 
-async def release_reservations(db, file_ids):
+
+async def release_reservations(db, dispatch, file_ids):
     await db.files.update_many({"_id": {"$in": file_ids}}, {
         "$set": {
             "reserve": False
         }
     })
+
+    async for document in db.files.find({"_id": {"$in": file_ids}}, PROJECTION):
+        await dispatch(
+            "files",
+            "update",
+            virtool.utils.base_processor(document)
+        )
 
 
 async def remove(loop, db, settings, dispatch, file_id):
