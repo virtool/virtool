@@ -72,9 +72,8 @@ script:
 - pytest --loop uvloop --cov --cov-report xml -vv
 - mkdir gh_build
 - mkdir gh_build/virtool
-- python setup.py build
-- echo $?
-- cp -rv build/exe.linux-x86_64-3.6/* gh_build/virtool
+- pyinstaller --clean -F -y run.py
+- cp -v dist/run gh_build/virtool
 - cp -rv assets gh_build/virtool
 - cp -rv templates gh_build/virtool
 - cp -rv client/dist gh_build/virtool/client
@@ -90,6 +89,13 @@ after_script:
 - if [ "$TRAVIS_PULL_REQUEST" = "false" ]; then python-codacy-coverage -r coverage.xml; fi
 
 deploy:
+  - provider: s3
+    skip_cleanup: true
+    bucket: "virtool-releases"
+    access_key_id: AKIAJPK6SJ6V7C67G7AQ
+    secret_access_key:
+      secure: Hnu+FzjVYJTLfKrDp1HLe6H2FLYEuhqG/OndUCpM7Nd7ScTNd7yUDqbNpI7zle733gTWWyjXsQhi802vQ/19MMDprMBB0NkV9wUgyQ0R2ad8E9b1W9Y/RqERBwqVDYDTB/D9j9hE1bNGZwOEKZya60oRtOo5VEo5loSexoxwljUZFUwst+O1FIry0oetfZxXaHUTmfIr6zM9qsumZ0FkAUiU7+K0gVti0KODtjFmdcc1V9+frO/UacGj/FLUpVISeCWFSABc+/85YE4BPJ+BIPAsOgAk14Znd1KOnefUWPJQ4cAW2odjBuFBuxlf2nm1KuFDboAAHH/5h/0cLE576RBSYnptg2TyxWWCT8JvnVn8ul8R+ZfZfvm4WlpZUFBN2ka9Y6CdL/8btAfcJQManqFbw1ui4Md98XpST5pnd05salUgWVkzqX7egJEPL6SMe7Wuud/IsSC3G6Dn9OfogvfjskkK4aYX97l2KJctY8P8q8fjQBd0FQ4lxMCL6Z5as33eXOUrMq4P7X5QNA56BSXCi3fv4CtTaBuB/DqdMUg6ssBWxZgFr5LD1r50oOjkDnLsP/BSbPYbQBTJ2F7LRQr7pwMdxMEWGZ5pzFznnxQoOjYeBi8UnZekL7/bpc5ZBbJFXUC2NF43GSYjpA+Tsvj5IirHJTSvfO5ym6S7ObA=
+
   - provider: releases
     skip_cleanup: true
     api_key:
@@ -97,12 +103,6 @@ deploy:
     file: gh_build/virtool.tar.gz
     on:
       tags: true
-  - provider: s3
-    skip_cleanup: true
-    bucket: "virtool-releases"
-    access_key_id: AKIAJPK6SJ6V7C67G7AQ
-    secret_access_key:
-      secure: Hnu+FzjVYJTLfKrDp1HLe6H2FLYEuhqG/OndUCpM7Nd7ScTNd7yUDqbNpI7zle733gTWWyjXsQhi802vQ/19MMDprMBB0NkV9wUgyQ0R2ad8E9b1W9Y/RqERBwqVDYDTB/D9j9hE1bNGZwOEKZya60oRtOo5VEo5loSexoxwljUZFUwst+O1FIry0oetfZxXaHUTmfIr6zM9qsumZ0FkAUiU7+K0gVti0KODtjFmdcc1V9+frO/UacGj/FLUpVISeCWFSABc+/85YE4BPJ+BIPAsOgAk14Znd1KOnefUWPJQ4cAW2odjBuFBuxlf2nm1KuFDboAAHH/5h/0cLE576RBSYnptg2TyxWWCT8JvnVn8ul8R+ZfZfvm4WlpZUFBN2ka9Y6CdL/8btAfcJQManqFbw1ui4Md98XpST5pnd05salUgWVkzqX7egJEPL6SMe7Wuud/IsSC3G6Dn9OfogvfjskkK4aYX97l2KJctY8P8q8fjQBd0FQ4lxMCL6Z5as33eXOUrMq4P7X5QNA56BSXCi3fv4CtTaBuB/DqdMUg6ssBWxZgFr5LD1r50oOjkDnLsP/BSbPYbQBTJ2F7LRQr7pwMdxMEWGZ5pzFznnxQoOjYeBi8UnZekL7/bpc5ZBbJFXUC2NF43GSYjpA+Tsvj5IirHJTSvfO5ym6S7ObA=
 
 after_deploy:
 - python release.py igboyes $GITHUB_WEBSITE_TOKEN
