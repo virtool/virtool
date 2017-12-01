@@ -76,11 +76,6 @@ before_script:
 
 script:
 - pytest --loop uvloop --cov --cov-report xml -vv
-
-after_script:
-- if [ "$TRAVIS_PULL_REQUEST" = "false" ]; then python-codacy-coverage -r coverage.xml; fi
-
-after_success:
 - mkdir gh_build
 - mkdir gh_build/virtool
 - python setup.py build
@@ -96,6 +91,9 @@ after_success:
 - tar -cvzf virtool.tar.gz virtool
 - tar -tvf virtool.tar.gz
 - cd ..
+
+after_script:
+- if [ "$TRAVIS_PULL_REQUEST" = "false" ]; then python-codacy-coverage -r coverage.xml; fi
 
 deploy:
   skip_cleanup: true
