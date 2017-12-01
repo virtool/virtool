@@ -1,12 +1,8 @@
 language: python
-
 sudo: false
-
 python: '3.6'
-
 services:
 - mongodb
-
 addons:
   apt:
     sources:
@@ -16,16 +12,13 @@ addons:
     - libtbb-dev
     - mongodb-org-server
     - mongodb-org-shell
-
 cache:
   pip: true
   apt: true
   directories:
   - client/node_modules
-
 env:
 - TRAVIS_NODE_VERSION="6"
-
 before_install:
 - pip install codacy-coverage
 - wget http://eddylab.org/software/hmmer3/3.1b2/hmmer-3.1b2-linux-intel-x86_64.tar.gz
@@ -46,7 +39,6 @@ before_install:
 - tar -xvf SPAdes-3.11.0-Linux.tar.gz
 - export PATH=${PATH}:${PWD}/SPAdes-3.11.0-Linux/bin
 - spades.py --version
-
 install:
 - pip install -r requirements.txt
 - rm -rf ~/.nvm
@@ -62,10 +54,8 @@ install:
 - yarn install
 - webpack --config webpack.production.config.js
 - cd $TRAVIS_BUILD_DIR
-
 before_script:
 - sleep 15
-
 script:
 - pytest --loop uvloop --cov --cov-report xml -vv
 - mkdir gh_build
@@ -82,27 +72,16 @@ script:
 - tar -cvzf virtool.tar.gz virtool
 - tar -tvf virtool.tar.gz
 - cd ..
-
 after_script:
-- if [ "$TRAVIS_PULL_REQUEST" = "false" ]; then python-codacy-coverage -r coverage.xml; fi
-
+- if [ "$TRAVIS_PULL_REQUEST" = "false" ]; then python-codacy-coverage -r coverage.xml;
+  fi
 deploy:
-  - provider: s3
-    skip_cleanup: true
-    bucket: "virtool-releases"
-    access_key_id: AKIAJPK6SJ6V7C67G7AQ
-    secret_access_key:
-      secure: Hnu+FzjVYJTLfKrDp1HLe6H2FLYEuhqG/OndUCpM7Nd7ScTNd7yUDqbNpI7zle733gTWWyjXsQhi802vQ/19MMDprMBB0NkV9wUgyQ0R2ad8E9b1W9Y/RqERBwqVDYDTB/D9j9hE1bNGZwOEKZya60oRtOo5VEo5loSexoxwljUZFUwst+O1FIry0oetfZxXaHUTmfIr6zM9qsumZ0FkAUiU7+K0gVti0KODtjFmdcc1V9+frO/UacGj/FLUpVISeCWFSABc+/85YE4BPJ+BIPAsOgAk14Znd1KOnefUWPJQ4cAW2odjBuFBuxlf2nm1KuFDboAAHH/5h/0cLE576RBSYnptg2TyxWWCT8JvnVn8ul8R+ZfZfvm4WlpZUFBN2ka9Y6CdL/8btAfcJQManqFbw1ui4Md98XpST5pnd05salUgWVkzqX7egJEPL6SMe7Wuud/IsSC3G6Dn9OfogvfjskkK4aYX97l2KJctY8P8q8fjQBd0FQ4lxMCL6Z5as33eXOUrMq4P7X5QNA56BSXCi3fv4CtTaBuB/DqdMUg6ssBWxZgFr5LD1r50oOjkDnLsP/BSbPYbQBTJ2F7LRQr7pwMdxMEWGZ5pzFznnxQoOjYeBi8UnZekL7/bpc5ZBbJFXUC2NF43GSYjpA+Tsvj5IirHJTSvfO5ym6S7ObA=
-    file: gh_build/virtool.tar.gz
-
-  - provider: releases
-
-    skip_cleanup: true
-    api_key:
-      secure: Otm5EqAcBp2i/KghWT/LZkLlpY1qHbYolCRk/Mwgqr0IQvy1ryM8IQot88/mntzKjVFbUIlJDVU8UmWgXac0cBCCT4rvzpRqMXEiWK+sl0Lqqg4tiOMS5gdQF5ywYVinT8e5Zl7O4g05zjU7mUMnSLRlTCNtcffdwOAqp9tfNJ4/FqlmHK+mhufmThQOdschbPLo7dFfSA7oioXesPWSA33lwG8PQWwQjmm55oMOqZiN38HG0wdZQgoH3QsVXLlTwqxAuyBfmOjrwkhTLhTfJ1EWwnlq1RF9uzxZF7J7bYR+IWm8Ws7z9n9kMX0F6/onnAS4D3QLue59jzfR7MJqyaDpyEONjjaP/8wC0afJ8vdc3X5SEdLz5S3/4X8d0llJLEZPL2i1PNfJzDIF7GDerF+0UARhtnHjMQFy5oV6UO6Pd3UuFaoaQUQff4Gw6ZYxVGEkbCUwYqMn4JaiDBrViUK2fzFQzWqiMnI3CrYYW19lcC4ppHLuTJz8YlpNwCsxpCU5YB14m6ra5ZPSJ+dqBLuF46KU+4uW+cXi+oAoS6t4Mb9Jz5Nhfgum965uFuOcsYaEilQSGzqRdIJFhBxyp+ow9Cnq0acmffm+W7jT+m0v2IvUlDkthAPSIBDLRrjOECTUXB7VorSusrK6J3hBcdkl6J58DfNi55N2px8KB7w=
-    file: gh_build/virtool.tar.gz
-    on:
-      tags: true
-
+  provider: releases
+  skip_cleanup: true
+  api_key:
+    secure: Otm5EqAcBp2i/KghWT/LZkLlpY1qHbYolCRk/Mwgqr0IQvy1ryM8IQot88/mntzKjVFbUIlJDVU8UmWgXac0cBCCT4rvzpRqMXEiWK+sl0Lqqg4tiOMS5gdQF5ywYVinT8e5Zl7O4g05zjU7mUMnSLRlTCNtcffdwOAqp9tfNJ4/FqlmHK+mhufmThQOdschbPLo7dFfSA7oioXesPWSA33lwG8PQWwQjmm55oMOqZiN38HG0wdZQgoH3QsVXLlTwqxAuyBfmOjrwkhTLhTfJ1EWwnlq1RF9uzxZF7J7bYR+IWm8Ws7z9n9kMX0F6/onnAS4D3QLue59jzfR7MJqyaDpyEONjjaP/8wC0afJ8vdc3X5SEdLz5S3/4X8d0llJLEZPL2i1PNfJzDIF7GDerF+0UARhtnHjMQFy5oV6UO6Pd3UuFaoaQUQff4Gw6ZYxVGEkbCUwYqMn4JaiDBrViUK2fzFQzWqiMnI3CrYYW19lcC4ppHLuTJz8YlpNwCsxpCU5YB14m6ra5ZPSJ+dqBLuF46KU+4uW+cXi+oAoS6t4Mb9Jz5Nhfgum965uFuOcsYaEilQSGzqRdIJFhBxyp+ow9Cnq0acmffm+W7jT+m0v2IvUlDkthAPSIBDLRrjOECTUXB7VorSusrK6J3hBcdkl6J58DfNi55N2px8KB7w=
+  file: gh_build/virtool.tar.gz
+  on:
+    tags: true
 after_deploy:
 - python release.py igboyes $GITHUB_WEBSITE_TOKEN
