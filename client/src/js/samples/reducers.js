@@ -7,7 +7,7 @@
  *
  */
 
-import { assign, concat, find, reject } from "lodash";
+import { assign, concat, find, includes, reject, union } from "lodash";
 import {
     WS_UPDATE_SAMPLE,
     FIND_SAMPLES,
@@ -23,6 +23,7 @@ import {
     BLAST_NUVS,
     REMOVE_ANALYSIS
 } from "../actionTypes";
+import {CREATE_SAMPLE} from "../actionTypes";
 
 const setNuvsBLAST = (state, analysisId, sequenceIndex, data = "ip") => {
     const analysisDetail = state.analysisDetail;
@@ -56,6 +57,7 @@ const initialState = {
 
     editError: false,
 
+    reservedFiles: [],
     readyHosts: null
 };
 
@@ -81,9 +83,7 @@ export default function reducer (state = initialState, action) {
             });
 
         case FIND_READY_HOSTS.SUCCEEDED:
-            return assign({}, state, {
-                readyHosts: action.data.documents
-            });
+            return {...state, readyHosts: action.data.documents};
 
         case GET_SAMPLE.REQUESTED:
             return assign({}, state, {
@@ -93,9 +93,13 @@ export default function reducer (state = initialState, action) {
             });
 
         case GET_SAMPLE.SUCCEEDED:
-            return assign({}, state, {
-                detail: action.data
-            });
+            return {...state, detail: action.data};
+
+        case CREATE_SAMPLE.REQUESTED:
+            return {...state, reservedFiles: union(state.reservedFiles, action.files)};
+
+        case CREATE_SAMPLE.FAILED:
+            return {...state, reservedFiles: reject(state.reservedFiles, fileId => includes(action.files, fileId))};
 
         case UPDATE_SAMPLE.SUCCEEDED: {
             if (state.list === null) {
