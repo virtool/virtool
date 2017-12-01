@@ -103,4 +103,4 @@ async def remove(loop, db, settings, dispatch, file_id):
 
     file_path = os.path.join(settings.get("data_path"), "files", file_id)
 
-    virtool.utils.rm(file_path)
+    await loop.run_in_executor(None, virtool.utils.rm, file_path)
