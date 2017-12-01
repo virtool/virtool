@@ -47,6 +47,7 @@ async def create(db, dispatch, filename, file_type, user_id=None):
         "uploaded_at": uploaded_at,
         "expires_at": expires_at,
         "created": False,
+        "reserved": False,
         "ready": False
     }
 

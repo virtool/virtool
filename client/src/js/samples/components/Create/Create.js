@@ -12,9 +12,8 @@
 
 import React from "react";
 import PropTypes from "prop-types";
-import { filter } from "lodash";
+import { capitalize, filter, includes } from "lodash";
 import { connect } from "react-redux";
-import { capitalize } from "lodash";
 import {
     Alert,
     Modal,
@@ -311,7 +310,7 @@ const mapStateToProps = (state) => {
     return {
         groups: state.account.groups,
         readyHosts: state.samples.readyHosts,
-        readyReads: filter(state.files.documents, {type: "reads"}),
+        readyReads: filter(state.files.documents, {type: "reads", reserved: false}),
         forceGroupChoice: state.settings.sample_group === "force_choice"
     };
 };
