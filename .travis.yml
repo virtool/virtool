@@ -60,8 +60,9 @@ script:
 - pytest --loop uvloop --cov --cov-report xml -vv
 - mkdir gh_build
 - mkdir gh_build/virtool
-- pyinstaller --clean -F -y run.py
-- cp -v dist/run gh_build/virtool
+- python setup.py build
+- echo $?
+- cp -rv build/exe.linux-x86_64-3.6/* gh_build/virtool
 - cp -rv assets gh_build/virtool
 - cp -rv templates gh_build/virtool
 - cp -rv client/dist gh_build/virtool/client
