@@ -151,6 +151,7 @@ const mapStateToProps = (state) => {
     return {
         documents: state.files.documents,
         page: state.files.page,
+        pageCount: state.files.pageCount,
         perPage: state.files.perPage,
         totalCount: state.files.totalCount
     };

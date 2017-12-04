@@ -52,6 +52,7 @@ export default function reducer (state = initialState, action) {
                 documents: action.data.documents,
                 foundCount: action.data.found_count,
                 page: action.data.page,
+                pageCount: action.data.page_count,
                 perPage: action.data.per_page,
                 totalCount: action.data.total_count,
                 fileType: action.fileType
