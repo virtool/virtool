@@ -15,10 +15,10 @@ import { connect } from "react-redux";
 import { ClipLoader } from "halogenium";
 import { Link } from "react-router-dom";
 import { LinkContainer } from "react-router-bootstrap";
-import { Row, Col, Alert, FormGroup, InputGroup, FormControl } from "react-bootstrap";
+import { Alert, Badge, Col, FormControl, FormGroup, InputGroup, Row } from "react-bootstrap";
 
 import { findSubtractions } from "../actions";
-import { Flex, FlexItem, Icon, Button, ListGroupItem } from "../../base";
+import { Button, Flex, FlexItem, Icon, ListGroupItem, PageHint } from "../../base";
 
 class SubtractionList extends React.Component {
 
@@ -93,7 +93,20 @@ class SubtractionList extends React.Component {
         return (
             <div>
                 <h3 className="view-header">
-                    <strong>Subtraction</strong>
+                    <Flex alignItems="flex-end">
+                        <FlexItem grow={0} shrink={0}>
+                            <strong>Subtraction</strong> <Badge>{this.props.totalCount}</Badge>
+                        </FlexItem>
+                        <FlexItem grow={1} shrink={0}>
+                            <PageHint
+                                page={this.props.page}
+                                count={this.props.documents.length}
+                                totalCount={this.props.totalCount}
+                                perPage={this.props.perPage}
+                                pullRight
+                            />
+                        </FlexItem>
+                    </Flex>
                 </h3>
 
                 {alert}
@@ -133,8 +146,8 @@ class SubtractionList extends React.Component {
 
 const mapStateToProps = (state) => {
     return {
-        canModify: state.account.permissions.modify_subtraction,
-        documents: state.subtraction.documents
+        ...state.subtraction,
+        canModify: state.account.permissions.modify_subtraction
     };
 };
 
