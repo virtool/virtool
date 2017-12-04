@@ -126,6 +126,9 @@ async def init_db(app):
     logger.info("Checking status...")
     await virtool.organize.organize_status(db)
 
+    logger.info("Checking files...")
+    await virtool.organize.organize_files(db)
+
     logger.info("Creating database indexes...")
 
     await db.analyses.create_index("sample.id")
