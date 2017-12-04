@@ -1,4 +1,5 @@
 import aiohttp
+from aiohttp.client_exceptions import ServerTimeoutError
 import asyncio
 import io
 import json
@@ -6,6 +7,7 @@ import pymongo
 import re
 import zipfile
 
+import virtool.errors
 import virtool.sample_analysis
 import virtool.utils
 
@@ -343,7 +345,7 @@ async def check_rid(rid):
     with aiohttp.ClientSession() as session:
         async with session.get(BLAST_CGI_URL, params=params) as resp:
             if resp.status != 200:
-                raise NCBIError("RID check request returned status {}".format(resp.status))
+                raise virtool.errors.NCBIError("RID check request returned status {}".format(resp.status))
 
             return "Status=WAITING" not in await resp.text()
 
@@ -368,12 +370,12 @@ def parse_blast_content(content, rid):
     result = json.loads(string)
 
     if len(result) != 1:
-        raise NCBIError("Unexpected BLAST result count {} returned".format(len(result)))
+        raise virtool.errors.NCBIError("Unexpected BLAST result count {} returned".format(len(result)))
 
     result = result["BlastOutput2"]
 
     if len(result) != 1:
-        raise NCBIError("Unexpected BLAST result count {} returned".format(len(result)))
+        raise virtool.errors.NCBIError("Unexpected BLAST result count {} returned".format(len(result)))
 
     result = result["report"]
 
@@ -455,7 +457,3 @@ async def wait_for_blast_result(db, dispatch, analysis_id, sequence_index, rid):
         formatted = await virtool.sample_analysis.format_analysis(db, document)
 
         await dispatch("analyses", "update", virtool.utils.base_processor(formatted))
-
-
-class NCBIError(Exception):
-    pass
