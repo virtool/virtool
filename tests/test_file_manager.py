@@ -288,6 +288,7 @@ class TestManager:
             "expires_at": None,
             "created": False,
             "uploaded_at": static_time,
+            "reserved": False,
             "ready": False,
             "user": None
         }
