@@ -14,13 +14,12 @@ PROJECTION = [
     "user",
     "uploaded_at",
     "type",
-    "ready"
+    "ready",
+    "reserved"
 ]
 
 
 async def create(db, dispatch, filename, file_type, user_id=None):
-    print(user_id)
-
     file_id = None
 
     while file_id is None or file_id in await db.files.distinct("_id"):
@@ -48,6 +47,7 @@ async def create(db, dispatch, filename, file_type, user_id=None):
         "uploaded_at": uploaded_at,
         "expires_at": expires_at,
         "created": False,
+        "reserved": False,
         "ready": False
     }
 
@@ -67,20 +67,34 @@ async def create(db, dispatch, filename, file_type, user_id=None):
     return document
 
 
-async def reserve(db, file_ids):
+async def reserve(db, dispatch, file_ids):
     await db.files.update_many({"_id": {"$in": file_ids}}, {
         "$set": {
-            "reserve": True
+            "reserved": True
         }
     })
 
+    async for document in db.files.find({"_id": {"$in": file_ids}}, PROJECTION):
+        await dispatch(
+            "files",
+            "update",
+            virtool.utils.base_processor(document)
+        )
 
-async def release_reservations(db, file_ids):
+
+async def release_reservations(db, dispatch, file_ids):
     await db.files.update_many({"_id": {"$in": file_ids}}, {
         "$set": {
             "reserve": False
         }
     })
+
+    async for document in db.files.find({"_id": {"$in": file_ids}}, PROJECTION):
+        await dispatch(
+            "files",
+            "update",
+            virtool.utils.base_processor(document)
+        )
 
 
 async def remove(loop, db, settings, dispatch, file_id):
@@ -90,4 +104,4 @@ async def remove(loop, db, settings, dispatch, file_id):
 
     file_path = os.path.join(settings.get("data_path"), "files", file_id)
 
-    virtool.utils.rm(file_path)
+    await loop.run_in_executor(None, virtool.utils.rm, file_path)

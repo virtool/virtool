@@ -12,6 +12,8 @@ import { push } from "react-router-redux";
 import samplesAPI from "./api";
 import { setPending } from "../wrappers";
 import {
+    WS_UPDATE_SAMPLE,
+    WS_REMOVE_SAMPLE,
     WS_UPDATE_ANALYSIS,
     FIND_SAMPLES,
     FIND_READY_HOSTS,
@@ -28,6 +30,8 @@ import {
 }  from "../actionTypes";
 
 export function* watchSamples () {
+    yield takeEvery(WS_UPDATE_SAMPLE, findSamples);
+    yield takeEvery(WS_REMOVE_SAMPLE, findSamples);
     yield takeEvery(WS_UPDATE_ANALYSIS, wsUpdateAnalysis);
     yield takeLatest(FIND_SAMPLES.REQUESTED, findSamples);
     yield takeLatest(FIND_READY_HOSTS.REQUESTED, findReadyHosts);

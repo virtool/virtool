@@ -134,7 +134,7 @@ async def create(req):
 
     await db.samples.insert_one(document)
 
-    await virtool.file.reserve(db, data["files"])
+    await virtool.file.reserve(db, req.app["dispatcher"].dispatch, data["files"])
 
     task_args = {
         "sample_id": sample_id,

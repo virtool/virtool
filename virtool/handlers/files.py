@@ -9,7 +9,8 @@ async def find(req):
     db = req.app["db"]
 
     query = {
-        "ready": True
+        "ready": True,
+        "reserved": False
     }
 
     file_type = req.query.get("type", None)

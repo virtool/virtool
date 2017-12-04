@@ -39,6 +39,7 @@ class TestUpload:
             "name": "Test.fq.gz",
             "type": "reads",
             "ready": False,
+            "reserved": False,
             "uploaded_at": "2017-10-06T20:00:00Z",
             "id": "{}-Test.fq.gz".format(test_random_alphanumeric.last_choice),
             "user": {
@@ -53,6 +54,7 @@ class TestUpload:
                 "name": "Test.fq.gz",
                 "type": "reads",
                 "ready": False,
+                "reserved": False,
                 "uploaded_at": static_time,
                 "id": "{}-Test.fq.gz".format(test_random_alphanumeric.last_choice),
                 "user": {

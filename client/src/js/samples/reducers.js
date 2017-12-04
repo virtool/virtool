@@ -7,9 +7,8 @@
  *
  */
 
-import { assign, concat, find, reject } from "lodash";
+import { assign, reject } from "lodash";
 import {
-    WS_UPDATE_SAMPLE,
     FIND_SAMPLES,
     GET_SAMPLE,
     UPDATE_SAMPLE,
@@ -56,20 +55,13 @@ const initialState = {
 
     editError: false,
 
+    reservedFiles: [],
     readyHosts: null
 };
 
 export default function reducer (state = initialState, action) {
 
     switch (action.type) {
-
-        case WS_UPDATE_SAMPLE:
-            return assign({}, state, {
-                viruses: concat(
-                    reject(state.viruses, {id: action.virus_id}),
-                    assign({}, find(state.viruses, {id: action.virus_id}), action.data)
-                )
-            });
 
         case FIND_SAMPLES.SUCCEEDED:
             return assign({}, state, {
@@ -81,9 +73,7 @@ export default function reducer (state = initialState, action) {
             });
 
         case FIND_READY_HOSTS.SUCCEEDED:
-            return assign({}, state, {
-                readyHosts: action.data.documents
-            });
+            return {...state, readyHosts: action.data.documents};
 
         case GET_SAMPLE.REQUESTED:
             return assign({}, state, {
@@ -93,9 +83,7 @@ export default function reducer (state = initialState, action) {
             });
 
         case GET_SAMPLE.SUCCEEDED:
-            return assign({}, state, {
-                detail: action.data
-            });
+            return {...state, detail: action.data};
 
         case UPDATE_SAMPLE.SUCCEEDED: {
             if (state.list === null) {
@@ -108,11 +96,7 @@ export default function reducer (state = initialState, action) {
         }
 
         case REMOVE_SAMPLE.SUCCEEDED:
-            return assign({}, state, {
-                detail: null,
-                analyses: null,
-                analysisDetail: null
-            });
+            return {...state, detail: null, analyses: null, analysisDetail: null};
 
         case SHOW_REMOVE_SAMPLE:
             return assign({}, state, {

@@ -14,7 +14,7 @@ async def get(req):
     accession = req.match_info["accession"]
 
     tool = "Virtool"
-    email = "dev@virtool.ca"
+    email = "igboyes@virtool.ca"
 
     params = {
         "db": "nucleotide",
