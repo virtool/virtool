@@ -2,32 +2,27 @@ import os
 
 import virtool.file
 import virtool.utils
-from virtool.handlers.utils import json_response, not_found
+from virtool.handlers.utils import json_response, not_found, paginate
 
 
 async def find(req):
     db = req.app["db"]
 
-    query = {
+    base_query = {
         "ready": True,
         "reserved": False
     }
 
     file_type = req.query.get("type", None)
 
+    db_query = dict()
+
     if file_type:
-        query["type"] = file_type
+        db_query["type"] = file_type
 
-    cursor = db.files.find(query, virtool.file.PROJECTION)
+    data = await paginate(db.files, db_query, req.query, sort_by="uploaded_at", projection=virtool.file.PROJECTION)
 
-    found_count = await cursor.count()
-
-    documents = [virtool.utils.base_processor(d) for d in await cursor.to_list(15)]
-
-    return json_response({
-        "documents": documents,
-        "found_count": found_count
-    })
+    return json_response(data)
 
 
 async def remove(req):
