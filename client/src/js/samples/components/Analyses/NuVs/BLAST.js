@@ -16,24 +16,25 @@ const NuVsBLAST = (props) => {
     if (props.blast) {
 
         if (props.blast.ready) {
-            const hitComponents = props.blast.result.hits.map((hit, index) =>
-                <tr key={index}>
-                    <td>
-                        <a target="_blank" href={`https://www.ncbi.nlm.nih.gov/nuccore/${hit.accession}`}>
-                            {hit.accession}
-                        </a>
-                    </td>
-                    <td>{hit.name}</td>
-                    <td>{hit.evalue}</td>
-                    <td>{hit.score}</td>
-                    <td>{Numeral(hit.identity / hit.align_len).format("0.00")}</td>
-                </tr>
-            );
+            if (props.blast.result.hits.length) {
+                const hitComponents = props.blast.result.hits.map((hit, index) =>
+                    <tr key={index}>
+                        <td>
+                            <a target="_blank" href={`https://www.ncbi.nlm.nih.gov/nuccore/${hit.accession}`}>
+                                {hit.accession}
+                            </a>
+                        </td>
+                        <td>{hit.name}</td>
+                        <td>{hit.evalue}</td>
+                        <td>{hit.score}</td>
+                        <td>{Numeral(hit.identity / hit.align_len).format("0.00")}</td>
+                    </tr>
+                );
 
-            return (
-                <Panel header="NCBI BLAST">
-                    <Table fill condensed>
-                        <thead>
+                return (
+                    <Panel header="NCBI BLAST">
+                        <Table fill condensed>
+                            <thead>
                             <tr>
                                 <th>Accession</th>
                                 <th>Name</th>
@@ -41,11 +42,18 @@ const NuVsBLAST = (props) => {
                                 <th>Score</th>
                                 <th>Identity</th>
                             </tr>
-                        </thead>
-                        <tbody>
+                            </thead>
+                            <tbody>
                             {hitComponents}
-                        </tbody>
-                    </Table>
+                            </tbody>
+                        </Table>
+                    </Panel>
+                );
+            }
+
+            return (
+                <Panel header="NCBI BLAST">
+                    No BLAST hits found.
                 </Panel>
             );
         }
