@@ -3,11 +3,11 @@ import PropTypes from "prop-types";
 import { capitalize, filter } from "lodash";
 import { connect } from "react-redux";
 import Dropzone from "react-dropzone";
-import { Badge, Row, Col, ListGroup } from "react-bootstrap";
+import { Badge, Col, ListGroup, Pagination, Row } from "react-bootstrap";
 
 import { byteSize, createRandomString } from "../../utils";
 import { findFiles, removeFile, upload, uploadProgress } from "../actions";
-import { Button, Icon, ListGroupItem, RelativeTime } from "../../base";
+import { Button, Flex, FlexItem, Icon, ListGroupItem, PageHint, RelativeTime } from "../../base";
 
 const File = (props) => {
     let creation;
@@ -59,16 +59,8 @@ File.propTypes = {
 
 class FileManager extends React.Component {
 
-    static propTypes = {
-        fileType: PropTypes.string.isRequired,
-        documents: PropTypes.arrayOf(PropTypes.object),
-        onFind: PropTypes.func,
-        onDrop: PropTypes.func,
-        onRemove: PropTypes.func
-    };
-
     componentDidMount () {
-        this.props.onFind();
+        this.props.onFind(this.props.fileType);
     }
 
     handleDrop = (acceptedFiles) => {
@@ -101,7 +93,21 @@ class FileManager extends React.Component {
         return (
             <div>
                 <h3 className="view-header">
-                    <strong>{titleType} Files</strong> <Badge>{fileComponents.length}</Badge>
+                    <Flex alignItems="flex-end">
+                        <FlexItem grow={0} shrink={0}>
+                            <strong>{titleType} Files</strong> <Badge>{this.props.totalCount}</Badge>
+                        </FlexItem>
+                        <FlexItem grow={1} shrink={0}>
+                            <PageHint
+                                page={this.props.page}
+                                count={this.props.documents.length}
+                                totalCount={this.props.totalCount}
+                                perPage={this.props.perPage}
+                                pullRight
+                            />
+                        </FlexItem>
+                    </Flex>
+
                 </h3>
 
                 <div className="toolbar">
@@ -121,6 +127,21 @@ class FileManager extends React.Component {
                 <ListGroup>
                     {fileComponents}
                 </ListGroup>
+
+                {this.props.pageCount > 1 ? (
+                    <div className="text-center">
+                        <Pagination
+                            items={this.props.pageCount}
+                            maxButtons={10}
+                            activePage={this.props.page}
+                            onSelect={this.handlePage}
+                            first
+                            last
+                            next
+                            prev
+                        />
+                    </div>
+                ): null}
             </div>
         )
     }
@@ -128,14 +149,17 @@ class FileManager extends React.Component {
 
 const mapStateToProps = (state) => {
     return {
-        documents: state.files.documents
+        documents: state.files.documents,
+        page: state.files.page,
+        perPage: state.files.perPage,
+        totalCount: state.files.totalCount
     };
 };
 
 const mapDispatchProps = (dispatch) => {
     return {
-        onFind: () => {
-            dispatch(findFiles());
+        onFind: (fileType) => {
+            dispatch(findFiles(fileType));
         },
 
         onRemove: (fileId) => {

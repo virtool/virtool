@@ -19,6 +19,12 @@ import {
 
 const initialState = {
     documents: null,
+    fileType: null,
+    foundCount: 0,
+    page: 0,
+    perPage: 0,
+    totalCount: 0,
+
     uploads: [],
     uploadsComplete: true,
     showUploadOverlay: false
@@ -32,10 +38,24 @@ export default function reducer (state = initialState, action) {
 
     switch (action.type) {
 
+        case FIND_FILES.REQUESTED:
+            return {
+                ...initialState,
+                showUploadOverlay: state.showUploadOverlay,
+                uploads: state.uploads,
+                uploadsComplete: state.uploadsComplete
+            };
+
         case FIND_FILES.SUCCEEDED:
-            return assign({}, state, {
-                documents: action.data.documents
-            });
+            return {
+                ...state,
+                documents: action.data.documents,
+                foundCount: action.data.found_count,
+                page: action.data.page,
+                perPage: action.data.per_page,
+                totalCount: action.data.total_count,
+                fileType: action.fileType
+            };
 
         case REMOVE_FILE.SUCCEEDED:
             return assign({}, state, {
