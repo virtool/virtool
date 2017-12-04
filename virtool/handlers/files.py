@@ -18,9 +18,16 @@ async def find(req):
     db_query = dict()
 
     if file_type:
-        db_query["type"] = file_type
+        base_query["type"] = file_type
 
-    data = await paginate(db.files, db_query, req.query, sort_by="uploaded_at", projection=virtool.file.PROJECTION)
+    data = await paginate(
+        db.files,
+        db_query,
+        req.query,
+        sort_by="uploaded_at",
+        projection=virtool.file.PROJECTION,
+        base_query=base_query
+    )
 
     return json_response(data)
 
