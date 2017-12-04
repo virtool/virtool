@@ -29,7 +29,14 @@ export default function subtractionReducer (state = initialState, action) {
     switch (action.type) {
 
         case FIND_SUBTRACTIONS.SUCCEEDED:
-            return {...state, documents: action.data.documents};
+            return {
+                ...state,
+                documents: action.data.documents,
+                foundCount: action.data.found_count,
+                page: action.data.page,
+                perPage: action.data.per_page,
+                totalCount: action.data.total_count
+            };
 
         case LIST_SUBTRACTION_IDS.SUCCEEDED:
             return {...state, ids: action.data};

@@ -29,9 +29,10 @@ export function wsRemoveFile () {
     };
 }
 
-export function findFiles () {
+export function findFiles (fileType) {
     return {
-        type: FIND_FILES.REQUESTED
+        type: FIND_FILES.REQUESTED,
+        fileType
     };
 }
 

@@ -4,36 +4,36 @@ import shutil
 import virtool.sample
 import virtool.subtraction
 import virtool.utils
-from virtool.handlers.utils import unpack_request, json_response, no_content, not_found
+from virtool.handlers.utils import unpack_request, json_response, no_content, not_found, compose_regex_query, paginate
 
 
 async def find(req):
     db = req.app["db"]
 
-    total_count = await db.subtraction.count()
+    ids = req.query.get("ids", False)
+
+    if ids:
+        return json_response(await db.subtraction.distinct("_id"))
 
     host_count = await db.subtraction.count({"is_host": True})
 
     ready_host_count = await db.subtraction.count({"is_host": True, "ready": True})
 
-    ids = req.query.get("ids", False)
+    term = req.query.get("term", None)
 
-    if ids:
-        return json_response(await req.app["db"].subtraction.distinct("_id"))
+    db_query = dict()
 
-    cursor = req.app["db"].subtraction.find({}, virtool.subtraction.PROJECTION)
+    if term:
+        db_query.update(compose_regex_query(term, ["_id"]))
 
-    found_count = await cursor.count()
+    data = await paginate(db.subtraction, db_query, req.query, "_id", projection=virtool.subtraction.PROJECTION)
 
-    documents = [virtool.utils.base_processor(d) for d in await cursor.to_list(length=15)]
-
-    return json_response({
-        "documents": documents,
+    data.update({
         "host_count": host_count,
-        "total_count": total_count,
-        "found_count": found_count,
         "ready_host_count": ready_host_count
     })
+
+    return json_response(data)
 
 
 async def get(req):

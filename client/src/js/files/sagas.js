@@ -7,7 +7,7 @@
  *
  */
 
-import { call, put, takeEvery, takeLatest } from "redux-saga/effects";
+import { call, put, select, takeEvery, takeLatest } from "redux-saga/effects";
 
 import filesAPI from "./api";
 import { setPending } from "../wrappers";
@@ -22,8 +22,10 @@ export function* watchFiles () {
 }
 
 export function* wsUpdateFile () {
+    const fileType = yield select(state => state.files.fileType);
+
     try {
-        const response = yield call(filesAPI.find);
+        const response = yield filesAPI.find(fileType);
         yield put({type: FIND_FILES.SUCCEEDED, data: response.body});
     } catch (error) {
         yield put({type: FIND_FILES.FAILED}, error);
@@ -33,8 +35,8 @@ export function* wsUpdateFile () {
 export function* findFiles (action) {
     yield setPending(function* () {
         try {
-            const response = yield call(filesAPI.find);
-            yield put({type: FIND_FILES.SUCCEEDED, data: response.body});
+            const response = yield filesAPI.find(action.fileType);
+            yield put({type: FIND_FILES.SUCCEEDED, data: response.body, fileType: action.fileType});
         } catch (error) {
             yield put({type: FIND_FILES.FAILED}, error);
         }
