@@ -36,7 +36,6 @@ class CreateSubtraction extends React.Component {
 
     modalEnter = () => {
         this.props.onFindFiles();
-        this.idNode.focus()
     };
 
     modalExited = () => {
@@ -96,7 +95,6 @@ class CreateSubtraction extends React.Component {
                 <form onSubmit={this.handleSubmit}>
                     <Modal.Body>
                         <Input
-                            ref={(node) => this.idNode = node}
                             type="text"
                             label="Unique Name"
                             value={this.state.subtractionId}
