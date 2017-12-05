@@ -26,9 +26,9 @@ export function* wsUpdateFile () {
     yield findFiles(fileType);
 }
 
-export function* findFiles (fileType) {
+export function* findFiles (fileType, page) {
     try {
-        const response = yield filesAPI.find(fileType);
+        const response = yield filesAPI.find(fileType, page);
         yield put({type: FIND_FILES.SUCCEEDED, data: response.body, fileType});
     } catch (error) {
         yield put({type: FIND_FILES.FAILED}, error);
@@ -37,7 +37,7 @@ export function* findFiles (fileType) {
 
 export function* findFilesWithPending (action) {
     yield setPending(function* () {
-        yield findFiles(action.fileType);
+        yield findFiles(action.fileType, action.page);
     }, action);
 }
 

@@ -1,5 +1,6 @@
 import React from "react";
 import PropTypes from "prop-types";
+import { push } from "react-router-redux";
 import { capitalize, filter } from "lodash";
 import { connect } from "react-redux";
 import Dropzone from "react-dropzone";
@@ -65,6 +66,10 @@ class FileManager extends React.Component {
 
     handleDrop = (acceptedFiles) => {
         this.props.onDrop(this.props.fileType, acceptedFiles);
+    };
+
+    handlePage = (page) => {
+        this.props.onFind(this.props.fileType, page);
     };
 
     render () {
@@ -159,8 +164,12 @@ const mapStateToProps = (state) => {
 
 const mapDispatchProps = (dispatch) => {
     return {
-        onFind: (fileType) => {
-            dispatch(findFiles(fileType));
+
+        onFind: (fileType, page = 1) => {
+            const url = new window.URL(window.location);
+            url.searchParams.set("page", page);
+            dispatch(push(url.pathname + url.search));
+            dispatch(findFiles(fileType, page));
         },
 
         onRemove: (fileId) => {
