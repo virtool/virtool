@@ -132,7 +132,7 @@ const mapStateToProps = (state) => {
 const mapDispatchToProps = (dispatch) => {
     return {
         onFindFiles: () => {
-            dispatch(findFiles());
+            dispatch(findFiles("subtraction"));
         },
 
         onCreate: (subtractionId, fileId) => {
