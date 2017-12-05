@@ -27,17 +27,16 @@ const setNuvsBLAST = (state, analysisId, sequenceIndex, data = "ip") => {
     const analysisDetail = state.analysisDetail;
 
     if (analysisDetail.id === analysisId) {
-        return assign({}, state, {
-            analysisDetail: assign({}, analysisDetail, {
-                results: analysisDetail.results.map(sequence => {
-                    if (sequenceIndex === sequenceIndex) {
-                        return assign({}, sequence, {blast: data});
-                    }
+        return {...state, analysisDetail: {
+            ...analysisDetail,
+            results: analysisDetail.results.map(sequence => {
+                if (sequence.index === sequenceIndex) {
+                    return {...sequence, blast: data};
+                }
 
-                    return sequence;
-                })
+                return sequence;
             })
-        });
+        }};
     }
 
     return state;
@@ -146,7 +145,7 @@ export default function reducer (state = initialState, action) {
                 return state;
             }
 
-            return assign({}, state, {analyses: reject(state.analyses, {id: action.id})});
+            return {...state, analyses: reject(state.analyses, {id: action.id})};
 
         default:
             return state;

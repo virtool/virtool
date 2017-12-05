@@ -17,22 +17,25 @@ import {
     HIDE_UPLOAD_OVERLAY
 } from "../actionTypes";
 
-export function wsUpdateFile () {
+export function wsUpdateFile (data) {
     return {
-        type: WS_UPDATE_FILE
+        type: WS_UPDATE_FILE,
+        data
     };
 }
 
-export function wsRemoveFile () {
+export function wsRemoveFile (data) {
     return {
-        type: WS_REMOVE_FILE
+        type: WS_REMOVE_FILE,
+        data
     };
 }
 
-export function findFiles (fileType) {
+export function findFiles (fileType, page) {
     return {
         type: FIND_FILES.REQUESTED,
-        fileType
+        fileType,
+        page
     };
 }
 

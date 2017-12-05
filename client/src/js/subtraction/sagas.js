@@ -56,8 +56,9 @@ export function* getSubtraction (action) {
 export function* createSubtraction (action) {
     yield setPending(function* (action) {
         try {
-            const response = yield subtractionAPI.create(action.subtractionId, action.fileId);
-            yield put({type: CREATE_SUBTRACTION.SUCCEEDED, data: response.body});
+            yield subtractionAPI.create(action.subtractionId, action.fileId);
+            yield put({type: FIND_SUBTRACTIONS.REQUESTED});
+            yield put(push({...window.location, state: {createSubtraction: false}}));
         } catch (error) {
             yield put({type: CREATE_SUBTRACTION.FAILED, error});
         }

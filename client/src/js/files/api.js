@@ -11,9 +11,12 @@ import Request from "superagent";
 
 const filesAPI = {
 
-    find: (fileType) => {
+    find: (fileType, page) => {
         return Request.get("/api/files")
-            .query({type: fileType});
+            .query({
+                type: fileType,
+                page
+            });
     },
 
     remove: (fileId) => {

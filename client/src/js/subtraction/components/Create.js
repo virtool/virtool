@@ -36,7 +36,6 @@ class CreateSubtraction extends React.Component {
 
     modalEnter = () => {
         this.props.onFindFiles();
-        this.idNode.focus()
     };
 
     modalExited = () => {
@@ -66,10 +65,10 @@ class CreateSubtraction extends React.Component {
                     onClick={() => this.setState({fileId: active ? "": file.id})}
                 >
                     <Row>
-                        <Col xs={4}>
-                            {file.name}
+                        <Col xs={7}>
+                            <strong>{file.name}</strong>
                         </Col>
-                        <Col xs={8}>
+                        <Col xs={5}>
                             Uploaded <RelativeTime time={file.uploaded_at} /> by {file.user.id}
                         </Col>
                     </Row>
@@ -86,7 +85,7 @@ class CreateSubtraction extends React.Component {
         }
 
         return (
-            <Modal show={this.props.show} onHide={this.props.onHide} onEnter={this.modalEnter}
+            <Modal bsSize="large" show={this.props.show} onHide={this.props.onHide} onEnter={this.modalEnter}
                    onExited={this.modalExited}
             >
                 <Modal.Header>
@@ -96,7 +95,6 @@ class CreateSubtraction extends React.Component {
                 <form onSubmit={this.handleSubmit}>
                     <Modal.Body>
                         <Input
-                            ref={(node) => this.idNode = node}
                             type="text"
                             label="Unique Name"
                             value={this.state.subtractionId}
@@ -134,7 +132,7 @@ const mapStateToProps = (state) => {
 const mapDispatchToProps = (dispatch) => {
     return {
         onFindFiles: () => {
-            dispatch(findFiles());
+            dispatch(findFiles("subtraction"));
         },
 
         onCreate: (subtractionId, fileId) => {

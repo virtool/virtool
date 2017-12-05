@@ -16,30 +16,28 @@ import { WS_UPDATE_FILE, WS_REMOVE_FILE, FIND_FILES, REMOVE_FILE, UPLOAD }  from
 export function* watchFiles () {
     yield takeLatest(WS_REMOVE_FILE, wsUpdateFile);
     yield takeLatest(WS_UPDATE_FILE, wsUpdateFile);
-    yield takeLatest(FIND_FILES.REQUESTED, findFiles);
+    yield takeLatest(FIND_FILES.REQUESTED, findFilesWithPending);
     yield takeEvery(REMOVE_FILE.REQUESTED, removeFile);
     yield takeEvery(UPLOAD.REQUESTED, upload);
 }
 
 export function* wsUpdateFile () {
     const fileType = yield select(state => state.files.fileType);
+    yield findFiles(fileType);
+}
 
+export function* findFiles (fileType, page) {
     try {
-        const response = yield filesAPI.find(fileType);
-        yield put({type: FIND_FILES.SUCCEEDED, data: response.body});
+        const response = yield filesAPI.find(fileType, page);
+        yield put({type: FIND_FILES.SUCCEEDED, data: response.body, fileType});
     } catch (error) {
         yield put({type: FIND_FILES.FAILED}, error);
     }
 }
 
-export function* findFiles (action) {
+export function* findFilesWithPending (action) {
     yield setPending(function* () {
-        try {
-            const response = yield filesAPI.find(action.fileType);
-            yield put({type: FIND_FILES.SUCCEEDED, data: response.body, fileType: action.fileType});
-        } catch (error) {
-            yield put({type: FIND_FILES.FAILED}, error);
-        }
+        yield findFiles(action.fileType, action.page);
     }, action);
 }
 
@@ -54,10 +52,10 @@ export function* removeFile (action) {
     }, action)
 }
 
-export function * upload (action) {
+export function* upload (action) {
     try {
-        const response = yield call(filesAPI.upload, action.file, action.fileType, action.onProgress);
-        yield put({type: UPLOAD.SUCCEEDED, data: response.body});
+        yield filesAPI.upload(action.file, action.fileType, action.onProgress);
+        yield findFiles(action.fileType);
     } catch (error) {
         yield put({type: UPLOAD.FAILED}, error);
     }

@@ -14,7 +14,6 @@ const ridRoot = "https://blast.ncbi.nlm.nih.gov/Blast.cgi?\
 const NuVsBLAST = (props) => {
 
     if (props.blast) {
-
         if (props.blast.ready) {
             if (props.blast.result.hits.length) {
                 const hitComponents = props.blast.result.hits.map((hit, index) =>

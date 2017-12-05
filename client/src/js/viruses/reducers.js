@@ -7,6 +7,8 @@
  *
  */
 
+import { some } from "lodash";
+
 import {
     WS_UPDATE_STATUS,
     FIND_VIRUSES,
@@ -73,6 +75,19 @@ const hideVirusModal = (state) => {
         editSequence: false,
         removeSequence: false
     };
+};
+
+const recalculateActiveIsolateId = (prevActiveIsolateId, nextDetail) => {
+    if (!nextDetail.isolates.length) {
+        return null;
+    }
+
+    // No isolates before (activeIsolateId=null), now there is one.
+    if (prevActiveIsolateId === null || !some(nextDetail.isolates, {id: prevActiveIsolateId})) {
+        return nextDetail.isolates[0].id;
+    }
+
+    return prevActiveIsolateId;
 };
 
 const receivedDetailAfterChange = (state, action) => {
@@ -148,7 +163,12 @@ export default function virusesReducer (state = virusesInitialState, action) {
             return {...state, detailHistory: action.data};
 
         case REVERT.SUCCEEDED:
-            return {...state, detail: action.detail, detailHistory: action.history};
+            return {
+                ...state,
+                detail: action.detail,
+                detailHistory: action.history,
+                activeIsolateId: recalculateActiveIsolateId(state.activeIsolateId, action.detail)
+            };
 
         case UPLOAD_IMPORT.SUCCEEDED:
             return {...state, importData: {...action.data, in_progress: false}};
