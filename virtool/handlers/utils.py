@@ -1,7 +1,9 @@
-import re
-import math
-import json
+import asyncio.base_futures
 import datetime
+import json
+import logging
+import math
+import re
 from aiohttp import web
 from cerberus import Validator
 
@@ -238,6 +240,8 @@ def validation(schema):
 async def paginate(collection, db_query, url_query, sort_by=None, projection=None, base_query=None,
                    processor=virtool.utils.base_processor, reverse=False):
 
+    logger = logging.getLogger("paginate")
+
     page = int(url_query.get("page", 1))
     per_page = int(url_query.get("per_page", 15))
 
@@ -270,7 +274,16 @@ async def paginate(collection, db_query, url_query, sort_by=None, projection=Non
         if page > 1:
             cursor.skip((page - 1) * per_page)
 
-        documents = [processor(d) for d in await cursor.to_list(per_page)]
+        try:
+            documents = [processor(d) for d in await cursor.to_list(per_page)]
+        except asyncio.base_futures.InvalidStateError:
+            print({
+                "found_count": found_count,
+                "page_count": page_count,
+                "per_page": per_page,
+                "page": page
+            })
+            logger.warning("Encountered InvalidStateError")
 
     total_count = await collection.count(base_query)
 
