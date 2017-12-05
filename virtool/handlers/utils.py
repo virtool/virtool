@@ -1,3 +1,4 @@
+import asyncio
 import asyncio.base_futures
 import datetime
 import json
@@ -260,7 +261,7 @@ async def paginate(collection, db_query, url_query, sort_by=None, projection=Non
         sort=sort
     )
 
-    found_count = await cursor.count()
+    found_count = await asyncio.shield(cursor.count())
 
     page_count = int(math.ceil(found_count / per_page))
 
@@ -274,16 +275,7 @@ async def paginate(collection, db_query, url_query, sort_by=None, projection=Non
         if page > 1:
             cursor.skip((page - 1) * per_page)
 
-        try:
-            documents = [processor(d) for d in await cursor.to_list(per_page)]
-        except asyncio.base_futures.InvalidStateError:
-            print({
-                "found_count": found_count,
-                "page_count": page_count,
-                "per_page": per_page,
-                "page": page
-            })
-            logger.warning("Encountered InvalidStateError")
+        documents = [processor(d) for d in await asyncio.shield(cursor.to_list(per_page))]
 
     total_count = await collection.count(base_query)
 
