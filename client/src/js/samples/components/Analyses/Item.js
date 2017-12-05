@@ -38,7 +38,7 @@ const AnalysisItem = (props) => {
     }
 
     return (
-        <div className={itemClass} onClick={props.onClick}>
+        <div className={itemClass} onClick={props.ready ? props.onClick: null}>
             <Row>
                 <Col md={3}>
                     <strong>{getTaskDisplayName(props.algorithm)}</strong>
