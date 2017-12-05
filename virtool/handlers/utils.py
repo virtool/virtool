@@ -2,7 +2,6 @@ import asyncio
 import asyncio.base_futures
 import datetime
 import json
-import logging
 import math
 import re
 from aiohttp import web
@@ -240,8 +239,6 @@ def validation(schema):
 
 async def paginate(collection, db_query, url_query, sort_by=None, projection=None, base_query=None,
                    processor=virtool.utils.base_processor, reverse=False):
-
-    logger = logging.getLogger("paginate")
 
     page = int(url_query.get("page", 1))
     per_page = int(url_query.get("per_page", 15))
