@@ -243,8 +243,6 @@ async def paginate(collection, db_query, url_query, sort_by=None, projection=Non
 
     base_query = base_query or {}
 
-    total_count = await collection.count(base_query)
-
     sort = None
 
     if sort_by:
@@ -252,20 +250,29 @@ async def paginate(collection, db_query, url_query, sort_by=None, projection=Non
 
     db_query.update(base_query)
 
-    found_count = await collection.count(db_query)
-
     cursor = collection.find(
         db_query,
         projection,
         sort=sort
     )
 
+    found_count = await cursor.count()
+
     page_count = int(math.ceil(found_count / per_page))
 
-    if page > 1:
-        cursor.skip((page - 1) * per_page)
+    documents = list()
 
-    documents = [processor(d) for d in await cursor.to_list(per_page)]
+    if found_count:
+
+        if page > page_count:
+            return not_found("Page outside range: {}".format(page))
+
+        if page > 1:
+            cursor.skip((page - 1) * per_page)
+
+        documents = [processor(d) for d in await cursor.to_list(per_page)]
+
+    total_count = await collection.count(base_query)
 
     return {
         "documents": documents,
