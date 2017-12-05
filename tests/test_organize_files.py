@@ -1,33 +1,26 @@
 import pytest
 
-from virtool.organize import organize_files
+import virtool.organize
 
 
 @pytest.fixture
 def file_documents():
     return [
-        {"_id": 1},
-        {"_id": 2},
-        {"_id": 3, "reserved": False},
-        {"_id": 4, "reserved": False}
+
     ]
 
 
-class TestOrganizeFiles:
+async def test_organize_files(test_motor):
+    documents = [
+        {"_id": 1},
+        {"_id": 2},
+        {"_id": 3, "reserved": False},
+        {"_id": 4, "reserved": True}
+    ]
 
-    def test_add_reserved(self, test_db, file_documents):
-        test_db.files.insert_many(file_documents)
+    await test_motor.files.insert_many(documents)
 
-        organize_files(test_db)
+    await virtool.organize.organize_files(test_motor)
 
-        assert all([document["reserved"] is False for document in test_db.files.find()])
-
-    def test_retain_existing(self, test_db, file_documents):
-        file_documents[0]["reserved"] = True
-        file_documents[1]["reserved"] = True
-
-        test_db.files.insert_many(file_documents)
-
-        organize_files(test_db)
-
-        assert [d["reserved"] for d in test_db.files.find()] == [True, True, False, False]
+    async for document in test_motor.files.find():
+        assert document["reserved"] is False

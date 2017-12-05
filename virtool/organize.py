@@ -429,7 +429,7 @@ async def organize_groups(db):
 
 
 async def organize_files(db):
-    await db.files.update_many({"reserved": {"$exists": False}}, {
+    await db.files.update_many({}, {
         "$set": {
             "reserved": False
         }
