@@ -44,8 +44,8 @@ class VirusesList extends React.Component {
         } else {
             uri.removeSearch("find");
         }
-
-        this.props.history.push(uri.toString());
+        
+        this.props.history.push(uri);
     };
 
     handlePage = (page) => {
