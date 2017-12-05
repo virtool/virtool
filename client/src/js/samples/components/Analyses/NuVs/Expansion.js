@@ -85,7 +85,6 @@ export default class NuVsExpansion extends React.Component {
                     blast={this.props.blast}
                     sequence={this.props.sequence}
                 />
-
             </ListGroupItem>
         );
     }
