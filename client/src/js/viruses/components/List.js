@@ -37,15 +37,15 @@ class VirusesList extends React.Component {
     }
 
     handleChangeTerm = (term) => {
-        const uri = new URI(this.props.location.pathname + this.props.location.search);
+        const url = new window.URL(window.location);
 
         if (term) {
-            uri.setSearch({find: term});
+            url.searchParams.set("find", term);
         } else {
-            uri.removeSearch("find");
+            url.searchParams.delete("find");
         }
-        
-        this.props.history.push(uri);
+
+        this.props.history.push(url.pathname + url.search);
     };
 
     handlePage = (page) => {
