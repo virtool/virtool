@@ -14,7 +14,6 @@ import { Switch, Route } from "react-router-dom";
 
 import SubtractionList from "./List";
 import SubtractionDetail from "./Detail";
-import CreateSubtraction from "./Create";
 import Files from "../../files/components/Files";
 
 const Subtraction = () => (
@@ -24,13 +23,6 @@ const Subtraction = () => (
             <Route path="/subtraction/files" render={() => <Files fileType="subtraction" />} />
             <Route path="/subtraction/:subtractionId" component={SubtractionDetail} />
         </Switch>
-
-        <Route path="/subtraction" children={({ history }) => (
-             <CreateSubtraction
-                show={history.location.state && history.location.state.createSubtraction}
-                onHide={() => history.push(history.location.pathname, {createSubtraction: false})}
-             />
-        )} />
     </div>
 );
 

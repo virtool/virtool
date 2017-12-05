@@ -105,9 +105,6 @@ export const GET_SUBTRACTION = createRequestActionType("GET_SUBTRACTION");
 export const CREATE_SUBTRACTION = createRequestActionType("CREATE_SUBTRACTION");
 export const REMOVE_SUBTRACTION = createRequestActionType("REMOVE_SUBTRACTION");
 
-export const SHOW_CREATE_SUBTRACTION = "SHOW_CREATE_SUBTRACTION";
-export const HIDE_SUBTRACTION_MODAL = "HIDE_SUBTRACTION_MODALS";
-
 // Files
 export const WS_UPDATE_FILE = "WS_UPDATE_FILE";
 export const WS_REMOVE_FILE = "WS_REMOVE_FILE";

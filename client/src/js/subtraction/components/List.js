@@ -11,20 +11,35 @@
 
 import React from "react";
 import { some } from "lodash";
+import { push } from "react-router-redux";
 import { connect } from "react-redux";
 import { ClipLoader } from "halogenium";
 import { Link } from "react-router-dom";
 import { LinkContainer } from "react-router-bootstrap";
 import { Alert, Badge, Col, FormControl, FormGroup, InputGroup, Row } from "react-bootstrap";
 
+import CreateSubtraction from "./Create";
 import { findSubtractions } from "../actions";
 import { Button, Flex, FlexItem, Icon, ListGroupItem, PageHint } from "../../base";
+
 
 class SubtractionList extends React.Component {
 
     componentDidMount () {
-        this.props.onFind()
+        this.props.onFind(new window.URL(window.location));
     }
+
+    handleChangeTerm = (term) => {
+        const url = new window.URL(window.location);
+
+        if (term) {
+            url.searchParams.set("find", term);
+        } else {
+            url.searchParams.delete("find");
+        }
+
+        this.props.onFind(url);
+    };
 
     render () {
 
@@ -119,7 +134,7 @@ class SubtractionList extends React.Component {
                             </InputGroup.Addon>
                             <FormControl
                                 type="text"
-                                onChange={(event) => window.console.log(event.target.value)}
+                                onChange={(e) => this.handleChangeTerm(e.target.value)}
                                 placeholder="Host name"
                             />
                         </InputGroup>
@@ -139,6 +154,11 @@ class SubtractionList extends React.Component {
                 <div className="list-group">
                     {hostComponents}
                 </div>
+
+                <CreateSubtraction
+                    show={!!this.props.history.location.state && this.props.history.location.state.createSubtraction}
+                    onHide={this.props.onHide}
+                 />
             </div>
         );
     }
@@ -153,8 +173,13 @@ const mapStateToProps = (state) => {
 
 const mapDispatchToProps = (dispatch) => {
     return {
-        onFind: () => {
-            dispatch(findSubtractions())
+        onFind: (url) => {
+            dispatch(push(url.pathname + url.search));
+            dispatch(findSubtractions(url.searchParams.get("find")));
+        },
+
+        onHide: () => {
+            dispatch(push({state: {createSubtraction: false}}));
         }
     };
 };

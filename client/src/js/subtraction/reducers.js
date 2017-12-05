@@ -10,18 +10,13 @@
 import {
     FIND_SUBTRACTIONS,
     LIST_SUBTRACTION_IDS,
-    GET_SUBTRACTION,
-    CREATE_SUBTRACTION,
-    SHOW_CREATE_SUBTRACTION,
-    HIDE_SUBTRACTION_MODAL
+    GET_SUBTRACTION
 } from "../actionTypes";
 
 const initialState = {
     documents: null,
     detail: null,
-    ids: null,
-
-    showCreate: false
+    ids: null
 };
 
 export default function subtractionReducer (state = initialState, action) {
@@ -46,15 +41,6 @@ export default function subtractionReducer (state = initialState, action) {
 
         case GET_SUBTRACTION.SUCCEEDED:
             return {...state, detail: action.data};
-
-        case CREATE_SUBTRACTION.SUCCEEDED:
-            return {...state, showCreate: false};
-
-        case SHOW_CREATE_SUBTRACTION:
-            return {...state, showCreate: true};
-
-        case HIDE_SUBTRACTION_MODAL:
-            return {...state, showCreate: false};
 
         default:
             return state;
