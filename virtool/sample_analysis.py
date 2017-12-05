@@ -4,6 +4,7 @@ Functions and job classes for sample analysis.
 """
 import collections
 import os
+import shlex
 import shutil
 import tempfile
 import aiofiles
@@ -18,7 +19,6 @@ import virtool.virus
 import virtool.virus_history
 import virtool.virus_hmm
 import virtool.virus_index
-
 
 LIST_PROJECTION = [
     "_id",
@@ -794,7 +794,7 @@ class PathoscopeBowtie(Pathoscope):
             "--local",
             "-N", "0",
             "-p", str(self.proc - 1),
-            "-x", self.subtraction_path,
+            "-x", shlex.quote(self.subtraction_path),
             "-U", os.path.join(self.analysis_path, "mapped.fastq")
         ]
 
@@ -884,7 +884,7 @@ class NuVs(Base):
             "--very-fast-local",
             "-k", str(1),
             "-p", str(self.proc),
-            "-x", self.subtraction_path,
+            "-x", shlex.quote(self.subtraction_path),
             "--un", os.path.join(self.analysis_path, "unmapped_hosts.fq"),
             "-U", os.path.join(self.analysis_path, "unmapped_viruses.fq"),
         ]
