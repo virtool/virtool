@@ -8,10 +8,11 @@
  */
 import { FIND_HMMS, GET_HMM, INSTALL_HMMS } from "../actionTypes";
 
-export const findHMMs = (url) => {
+export const findHMMs = (term, page) => {
     return {
         type: FIND_HMMS.REQUESTED,
-        url
+        term,
+        page
     };
 };
 

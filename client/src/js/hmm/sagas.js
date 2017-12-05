@@ -7,7 +7,6 @@
  *
  */
 
-import URI from "urijs";
 import { put, takeLatest, throttle } from "redux-saga/effects";
 
 import hmmsAPI from "./api";
@@ -22,10 +21,8 @@ export function* watchHmms () {
 
 export function* findHmms (action) {
     yield setPending(function* (action) {
-        const uri = URI(action.url);
-
         try {
-            const response = yield hmmsAPI.find(uri.search(true));
+            const response = yield hmmsAPI.find(action.term, action.page);
             yield put({type: FIND_HMMS.SUCCEEDED, data: response.body});
         } catch (error) {
             yield put({type: FIND_HMMS.FAILED});
@@ -41,7 +38,6 @@ export function* installHmms () {
         yield put({type: INSTALL_HMMS.FAILED});
     }
 }
-
 
 export function* getHmm (action) {
     yield setPending(function* () {

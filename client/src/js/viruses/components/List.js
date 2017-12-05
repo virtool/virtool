@@ -8,7 +8,6 @@
  */
 
 import React from "react";
-import URI from "urijs";
 import { connect } from "react-redux";
 import { push } from "react-router-redux";
 import { Link, Route } from "react-router-dom";
@@ -27,13 +26,7 @@ class VirusesList extends React.Component {
     }
 
     componentDidMount () {
-        this.props.onFind(this.props.location);
-    }
-
-    componentDidUpdate (prevProps) {
-        if (prevProps.location !== this.props.location) {
-            this.props.onFind(this.props.location);
-        }
+        this.props.onFind();
     }
 
     handleChangeTerm = (term) => {
@@ -45,14 +38,13 @@ class VirusesList extends React.Component {
             url.searchParams.delete("find");
         }
 
-        this.props.history.push(url.pathname + url.search);
+        this.props.onFind(url);
     };
 
     handlePage = (page) => {
-        const uri = new URI(this.props.location.pathname + this.props.location.search);
-        uri.setSearch({page: page});
-
-        this.props.history.push(uri.toString());
+        const url = new window.URL(window.location);
+        url.searchParams.set("page", page);
+        this.props.onFind(url);
     };
 
     render () {
@@ -184,11 +176,9 @@ const mapStateToProps = (state) => {
 
 const mapDispatchToProps = (dispatch, ownProps) => {
     return {
-        onFind: (location) => {
-            const uri = new URI(location.search);
-            const query = uri.search(true);
-
-            dispatch(findViruses(query.find, query.page));
+        onFind: (url = new window.URL(window.location)) => {
+            dispatch(push(url.pathname + url.search));
+            dispatch(findViruses(url.searchParams.get("find"), url.searchParams.get("page") || 1));
         },
 
         onToggleModifiedOnly: () => {

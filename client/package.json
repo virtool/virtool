@@ -61,7 +61,6 @@
     "redux-saga": "^0.15.1",
     "style-loader": "^0.13.1",
     "superagent": "^3.5.2",
-    "urijs": "^1.18.10",
     "url-loader": "^0.5.7",
     "webpack": "^3.8.1",
     "webpack-bundle-analyzer": "^2.8.2",

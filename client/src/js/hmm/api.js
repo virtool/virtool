@@ -11,8 +11,14 @@ import Request from "superagent";
 
 const hmmsAPI = {
 
-    find: (query) => {
-        query.page = query.page || 1;
+    find: (term, page) => {
+        let query = {
+            page: page || 1
+        };
+
+        if (term) {
+            query.term = term;
+        }
 
         return Request
             .get("/api/hmms")
