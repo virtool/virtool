@@ -25,15 +25,9 @@ const initialState = {
 };
 
 const updateJob = (state, action) => {
-    return assign({}, state, {
-        documents: state.documents.map(doc => {
-            if (doc.id !== action.data.id) {
-                return doc;
-            }
-
-            return assign({}, doc, action.data);
-        })
-    });
+    return {...state, documents: state.documents.map(doc =>
+        doc.id !== action.data.id ? doc: {...doc, ...action.data}
+    )};
 };
 
 export default function reducer (state = initialState, action) {
@@ -44,42 +38,33 @@ export default function reducer (state = initialState, action) {
             return state.documents === null ? state: updateJob(state, action);
 
         case WS_REMOVE_JOB:
-            return assign({}, state, {
-                documents: reject(state.documents, {id: action.jobId})
-            });
+            return {...state, documents: reject(state.documents, {id: action.jobId})};
 
         case FIND_JOBS.SUCCEEDED:
-            return assign({}, state, {
+            return {
+                ...state,
                 foundCount: action.data.found_count,
                 page: action.data.page,
                 pageCount: action.data.page_count,
                 perPage: action.data.per_page,
                 totalCount: action.data.total_count,
                 documents: action.data.documents
-            });
+            };
 
         case GET_JOB.REQUESTED:
-            return assign({}, state, {
-                detail: null
-            });
+            return {...state, detail: null};
 
         case GET_JOB.SUCCEEDED:
-            return assign({}, state, {
-                detail: action.data
-            });
+            return {...state, detail: action.data};
 
         case CANCEL_JOB.SUCCEEDED:
             return updateJob(state, action);
 
         case REMOVE_JOB.SUCCEEDED:
-            return assign({}, state, {
-                documents: reject(state.documents, {id: action.jobId})
-            });
+            return {...state, documents: reject(state.documents, {id: action.jobId})};
 
         case GET_RESOURCES.SUCCEEDED:
-            return assign({}, state, {
-                resources: action.data
-            });
+            return {...state, resources: action.data};
 
         default:
             return state;
