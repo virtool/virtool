@@ -23,8 +23,8 @@ import {
 
 export function* watchJobs () {
     yield takeLatest(WS_UPDATE_JOB, wsUpdateJob);
-    yield takeLatest(FIND_JOBS.REQUESTED, findJobs);
-    yield takeLatest(GET_JOB.REQUESTED, getJob);
+    yield takeLatest(FIND_JOBS.REQUESTED, findJobsWithPending);
+    yield takeLatest(GET_JOB.REQUESTED, getJobWithPending);
     yield takeEvery(CANCEL_JOB.REQUESTED, cancelJob);
     yield takeEvery(REMOVE_JOB.REQUESTED, removeJob);
     yield takeLatest(CLEAR_JOBS.REQUESTED, clearJobs);
@@ -32,19 +32,15 @@ export function* watchJobs () {
 }
 
 export function* wsUpdateJob (action) {
-    yield bgFindJobs(action);
+    yield findJobs(action);
     const detail = yield select(state => state.jobs.detail);
 
     if (detail !== null && detail.id === action.data.id) {
-        yield bgGetJob({id: detail.id});
+        yield getJob({id: detail.id});
     }
 }
 
-export function* findJobs (action) {
-    yield setPending(bgFindJobs, action);
-}
-
-export function* bgFindJobs () {
+export function* findJobs () {
     try {
         const response = yield call(jobsAPI.find);
         yield put({type: FIND_JOBS.SUCCEEDED, data: response.body});
@@ -53,17 +49,21 @@ export function* bgFindJobs () {
     }
 }
 
-export function* getJob (action) {
-    yield setPending(bgGetJob, action);
+export function* findJobsWithPending (action) {
+    yield setPending(findJobs, action);
 }
 
-export function* bgGetJob (action) {
+export function* getJob (action) {
     try {
         const response = yield call(jobsAPI.get, action.jobId);
         yield put({type: GET_JOB.SUCCEEDED, data: response.body});
     } catch (error) {
         yield put({type: GET_JOB.FAILED}, error);
     }
+}
+
+export function* getJobWithPending (action) {
+    yield setPending(getJob, action);
 }
 
 export function* cancelJob (action) {

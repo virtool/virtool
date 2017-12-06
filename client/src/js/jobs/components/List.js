@@ -9,6 +9,7 @@
 
 import React from "react";
 import PropTypes from "prop-types";
+import { push } from "react-router-redux";
 import { connect } from "react-redux";
 import { ListGroup, ListGroupItem } from "react-bootstrap";
 
@@ -30,6 +31,18 @@ class JobsList extends React.Component {
     componentDidMount () {
         this.props.onFind();
     }
+
+    handleChange = (term) => {
+        const url = new window.URL(window.location);
+
+        if (term) {
+            url.searchParams.set("find", term);
+        } else {
+            url.searchParams.delete("find")
+        }
+
+        this.props.onFind(url);
+    };
 
     render () {
 
@@ -60,13 +73,17 @@ class JobsList extends React.Component {
             )
         }
 
+        const url = new window.URL(window.location);
+
+        const term = url.searchParams.get("find") || "";
+
         return (
             <div>
                 <h3 className="view-header">
                     <strong>Jobs</strong>
                 </h3>
 
-                <JobsToolbar />
+                <JobsToolbar value={term} onChange={this.handleChange} />
 
                 <ListGroup>
                     {components}
@@ -84,8 +101,9 @@ const mapStateToProps = (state) => {
 
 const mapDispatchToProps = (dispatch) => {
     return {
-        onFind: () => {
-            dispatch(findJobs());
+        onFind: (url = new window.URL(window.location)) => {
+            dispatch(push(url.pathname + url.search));
+            dispatch(findJobs(url.searchParams.get("term"), url.searchParams.get("page") || 1));
         },
 
         onCancel: (jobId) => {

@@ -32,9 +32,11 @@ export const wsRemoveJob = (jobId) => {
     };
 };
 
-export const findJobs = () => {
+export const findJobs = (term, page) => {
     return {
-        type: FIND_JOBS.REQUESTED
+        type: FIND_JOBS.REQUESTED,
+        term,
+        page
     };
 };
 
