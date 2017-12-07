@@ -104,7 +104,7 @@ async def middleware_factory(app, handler):
 def decode_authorization(authorization):
     split = authorization.split(" ")
 
-    if len(split) != 2 or split[0] == "Basic":
+    if len(split) != 2 or split[0] != "Basic":
         raise virtool.errors.AuthError("Malformed authorization header")
 
     decoded = base64.b64decode(split[1]).decode("utf-8")
