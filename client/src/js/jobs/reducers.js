@@ -7,7 +7,7 @@
  *
  */
 
-import { assign, reject } from "lodash";
+import { reject } from "lodash";
 import {
     WS_UPDATE_JOB,
     WS_REMOVE_JOB,

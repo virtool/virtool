@@ -14,7 +14,7 @@ const jobsAPI = {
     find: (term, page) => {
         return Request.get("/api/jobs")
             .query({
-                find: term,
+                find: term || undefined,
                 page
             });
     },
