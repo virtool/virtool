@@ -17,7 +17,7 @@ class SamplesList extends React.Component {
         this.props.onFind();
     }
 
-    handleTermChange = (value) => {
+    handleChange = (value) => {
         const url = new window.URL(window.location);
 
         if (value) {
@@ -26,13 +26,13 @@ class SamplesList extends React.Component {
             url.searchParams.delete("find");
         }
 
-        this.onFind(url);
+        this.props.onFind(url);
     };
 
     handlePage = (page) => {
         const url = new window.URL(window.location);
         url.searchParams.set("page", page);
-        this.onFind(url);
+        this.props.onFind(url);
     };
 
     render () {
@@ -85,7 +85,7 @@ class SamplesList extends React.Component {
 
                 <SampleToolbar
                     term={term}
-                    onTermChange={this.handleTermChange}
+                    onTermChange={this.handleChange}
                     history={this.props.history}
                     location={this.props.location}
                     canCreate={this.props.canCreate}
