@@ -7,10 +7,11 @@ from raven_aiohttp import AioHttpTransport
 ACCESS_TOKEN = "c52c9c3a9f1811e7bdaa4201c0a8d02a"
 
 
-def setup():
+def setup(server_version):
     client = Client(
         "https://9a2f8d1a3f7a431e873207a70ef3d44d:ca6db07b82934005beceae93560a6794@sentry.io/220532",
-        transport=AioHttpTransport
+        transport=AioHttpTransport,
+        release=server_version
     )
 
     handler = SentryHandler(client)

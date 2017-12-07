@@ -1,10 +1,8 @@
 import os
-from cerberus import Validator
 
 import virtool.job
 import virtool.utils
-from virtool.handlers.utils import compose_regex_query, bad_request, invalid_query, json_response, no_content,\
-    not_found, paginate
+from virtool.handlers.utils import compose_regex_query, bad_request, json_response, no_content, not_found, paginate
 
 
 async def find(req):
@@ -14,18 +12,7 @@ async def find(req):
     """
     db = req.app["db"]
 
-    v = Validator({
-        "term": {"type": "string", "default": "", "coerce": str},
-        "page": {"type": "integer", "coerce": int, "default": 1, "min": 1},
-        "per_page": {"type": "integer", "coerce": int, "default": 15, "min": 1, "max": 100}
-    })
-
-    if not v(dict(req.query)):
-        return invalid_query(v.errors)
-
-    query = v.document
-
-    term = query["term"]
+    term = req.query.get("term", None)
 
     db_query = dict()
 

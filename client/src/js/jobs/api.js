@@ -11,8 +11,12 @@ import Request from "superagent";
 
 const jobsAPI = {
 
-    find: () => {
-        return Request.get("/api/jobs");
+    find: (term, page) => {
+        return Request.get("/api/jobs")
+            .query({
+                find: term || undefined,
+                page
+            });
     },
 
     get: (jobId) => {

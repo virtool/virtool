@@ -53,10 +53,6 @@ module.exports = {
         ]
     },
 
-    resolve: {
-        alias: {virtool: path.resolve(__dirname, "./src")}
-    },
-
     node: {
         fs: "empty"
     },
@@ -67,6 +63,8 @@ module.exports = {
         sourceMapFilename: "[name].js.map",
         publicPath: "/static/"
     },
+
+    devtool: "source-map",
 
     plugins: [
         new webpack.DefinePlugin({

@@ -47,7 +47,7 @@ const JobsToolbar = (props) => {
                     <InputGroup.Addon>
                         <Icon name="search" />
                     </InputGroup.Addon>
-                    <FormControl />
+                    <FormControl value={props.term} onChange={(e) => props.onChange(e.target.value)} />
                 </InputGroup>
             </FormGroup>
 

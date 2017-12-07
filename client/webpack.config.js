@@ -63,8 +63,6 @@ module.exports = {
         publicPath: "/static/"
     },
 
-    devtool: "source-map",
-
     plugins: [
         new ExtractTextPlugin("style.[hash:8].css"),
 

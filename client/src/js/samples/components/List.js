@@ -1,5 +1,4 @@
 import React from "react";
-import URI from "urijs";
 import { Route } from "react-router-dom";
 import { push } from "react-router-redux";
 import { connect } from "react-redux";
@@ -15,32 +14,25 @@ import QuickAnalyze from "./QuickAnalyze";
 class SamplesList extends React.Component {
 
     componentDidMount () {
-        this.props.onFind(this.props.location);
+        this.props.onFind();
     }
 
-    componentDidUpdate (prevProps) {
-        if (prevProps.location !== this.props.location) {
-            this.props.onFind(this.props.location);
-        }
-    }
-
-    handleTermChange = (value) => {
-        const url = new URI(this.props.location.pathname + this.props.location.search);
+    handleChange = (value) => {
+        const url = new window.URL(window.location);
 
         if (value) {
-            url.setSearch("find", value);
+            url.searchParams.set("find", value);
         } else {
-            url.removeSearch("find");
+            url.searchParams.delete("find");
         }
 
-        this.props.history.push(url.toString());
+        this.props.onFind(url);
     };
 
-    handleSelect = (eventKey) => {
-        const url = new URI(this.props.location.pathname + this.props.location.search);
-        url.setSearch({page: eventKey});
-
-        this.props.history.push(url.toString());
+    handlePage = (page) => {
+        const url = new window.URL(window.location);
+        url.searchParams.set("page", page);
+        this.props.onFind(url);
     };
 
     render () {
@@ -93,7 +85,7 @@ class SamplesList extends React.Component {
 
                 <SampleToolbar
                     term={term}
-                    onTermChange={this.handleTermChange}
+                    onTermChange={this.handleChange}
                     history={this.props.history}
                     location={this.props.location}
                     canCreate={this.props.canCreate}
@@ -105,7 +97,7 @@ class SamplesList extends React.Component {
 
                 <div className="text-center">
                     <Pagination
-                        onSelect={this.handleSelect}
+                        onSelect={this.handlePage}
                         items={this.props.pageCount}
                         maxButtons={10}
                         activePage={this.props.page}
@@ -149,11 +141,9 @@ const mapStateToProps = (state) => {
 
 const mapDispatchToProps = (dispatch) => {
     return {
-        onFind: (location) => {
-            const uri = new URI(location.search);
-            const query = uri.search(true);
-
-            dispatch(findSamples(query.find, query.page));
+        onFind: (url = new window.URL(window.location)) => {
+            dispatch(push(url.pathname + url.search));
+            dispatch(findSamples(url.searchParams.get("find"), url.searchParams.get("page") || 1));
         },
 
         onHide: () => {

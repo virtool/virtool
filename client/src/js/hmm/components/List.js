@@ -10,9 +10,8 @@
  */
 
 import React from "react";
-import URI from "urijs";
 import { LinkContainer } from "react-router-bootstrap";
-import { isEqual, keys, reject } from "lodash";
+import { keys, reject } from "lodash";
 import { push } from "react-router-redux";
 import { connect } from "react-redux";
 import { ClipLoader } from "halogenium";
@@ -40,24 +39,25 @@ import HMMInstaller from "./Installer";
 class HMMList extends React.Component {
 
     componentDidMount () {
-        this.props.onFind(this.props.location);
-    }
-
-    componentWillReceiveProps (nextProps) {
-        if (!isEqual(nextProps.location, this.props.location) || (nextProps.ready && !this.props.ready)) {
-            this.props.onFind(window.location.href);
-        }
+        this.props.onFind();
     }
 
     setTerm = (event) => {
-        let uri = URI("/hmm").query({find: event.target.value || undefined});
-        this.props.onSetURI(uri.toString());
+        let url = new window.URL(window.location);
+
+        if (event.target.value) {
+            url.searchParams.set("find", event.target.value);
+        } else {
+            url.searchParams.delete("find");
+        }
+
+        this.props.onFind(url);
     };
 
     setPage = (page) => {
-        const uri = new URI(window.location.pathname + window.location.search);
-        uri.setSearch({page: page});
-        this.props.onSetURI(uri.toString());
+        const url = new window.URL(window.location);
+        url.searchParams.set("page", page);
+        this.props.onFind(url);
     };
 
     render () {
@@ -176,12 +176,9 @@ const mapStateToProps = (state) => {
 
 const mapDispatchToProps = (dispatch) => {
     return {
-        onFind: (uri) => {
-            dispatch(findHMMs(uri));
-        },
-
-        onSetURI: (uri) => {
-            dispatch(push(uri));
+        onFind: (url = new window.URL(window.location)) => {
+            dispatch(push(url.pathname + url.search));
+            dispatch(findHMMs(url.searchParams.get("find"), url.searchParams.get("page") || 1));
         }
     };
 };
