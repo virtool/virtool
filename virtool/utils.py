@@ -155,10 +155,10 @@ async def reload(app):
         await callback(app)
 
     if exe.endswith("python") or "python3" in exe:
-        os.execl(exe, exe, *sys.argv)
+        return os.execl(exe, exe, *sys.argv)
 
     if exe.endswith("run"):
-        os.execv(exe, sys.argv)
+        return os.execv(exe, sys.argv)
 
     raise SystemError("Could not determine executable type")
 

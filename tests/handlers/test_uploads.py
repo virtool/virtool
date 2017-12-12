@@ -31,7 +31,7 @@ class TestUpload:
 
         resp = await client.post_form("/upload/reads?name=Test.fq.gz", data=files)
 
-        assert resp.status == 200
+        assert resp.status == 201
 
         assert os.listdir(str(files_dir)) == ["{}-Test.fq.gz".format(test_random_alphanumeric.last_choice)]
 
