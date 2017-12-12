@@ -10,5 +10,6 @@ PERMISSIONS = [
     "rebuild_index",
     "remove_file",
     "remove_job",
-    "remove_virus"
+    "remove_virus",
+    "upload_file"
 ]
