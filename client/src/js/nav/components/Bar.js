@@ -83,7 +83,7 @@ const Bar = (props) => {
                             </NavItem>
                         </LinkContainer>
 
-                        {props.permissions.modify_options ? (
+                        {props.permissions.modify_settings ? (
                             <LinkContainer to="/settings">
                                 <NavItem>
                                     Settings

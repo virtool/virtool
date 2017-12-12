@@ -4,7 +4,7 @@ PERMISSIONS = [
     "create_sample",
     "manage_users",
     "modify_hmm",
-    "modify_options",
+    "modify_settings",
     "modify_subtraction",
     "modify_virus",
     "rebuild_index",
