@@ -230,9 +230,9 @@ async def on_shutdown(app):
     """
     await app["dispatcher"].close()
 
-    if "job_manager" in app:
-        job_manager = app["job_manager"]
+    job_manager = app.get("job_manager", None)
 
+    if job_manager is not None:
         await job_manager.close()
 
     file_manager = app.get("file_manager", None)
