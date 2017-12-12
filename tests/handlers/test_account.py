@@ -197,7 +197,7 @@ class TestCreateAPIKey:
             "create_sample": True,
             "manage_users": True,
             "modify_hmm": True,
-            "modify_options": True,
+            "modify_settings": True,
             "modify_virus": True,
             "rebuild_index": True,
             "remove_job": True,
@@ -221,6 +221,8 @@ class TestCreateAPIKey:
             body["permissions"] = req_permissions
 
         resp = await client.post("/api/account/keys", body)
+
+        print(await resp.json())
 
         assert resp.status == 201
 
