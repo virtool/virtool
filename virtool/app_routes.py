@@ -52,7 +52,6 @@ def setup_routes(app):
     setup_indexes_routes(app)
     setup_history_routes(app)
     setup_hmm_routes(app)
-    setup_hmm_routes(app)
     setup_subtraction_routes(app)
     setup_settings_routes(app)
     setup_files_routes(app)
