@@ -5,7 +5,7 @@ from aiohttp import web
 from virtool.utils import get_static_hash
 from virtool.user_login import get_login_template, generate_verification_keys, login_handler
 from virtool.handlers import root, jobs, samples, viruses, history, hmm, subtraction, settings, account, groups, users,\
-    genbank, status, lifecycle, websocket, resources, analyses, indexes, files, uploads, downloads, updates
+    genbank, status, websocket, resources, analyses, indexes, files, uploads, downloads, updates
 
 
 logger = logging.getLogger(__name__)
@@ -52,7 +52,6 @@ def setup_routes(app):
     setup_indexes_routes(app)
     setup_history_routes(app)
     setup_hmm_routes(app)
-    setup_hmm_routes(app)
     setup_subtraction_routes(app)
     setup_settings_routes(app)
     setup_files_routes(app)
@@ -97,7 +96,6 @@ def setup_file_routes(app):
 
 def setup_basic_api_routes(app):
     app.router.add_get("/api", root.get)
-    app.router.add_get("/api/lifecycle/shutdown", lifecycle.shutdown)
     app.router.add_get("/api/status", status.list_status)
 
 

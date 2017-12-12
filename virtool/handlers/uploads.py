@@ -3,7 +3,7 @@ from cerberus import Validator
 
 import virtool.file
 import virtool.utils
-from virtool.handlers.utils import json_response, not_found, invalid_query
+from virtool.handlers.utils import invalid_query, json_response, not_found, protected
 
 FILE_TYPES = {
     "/upload/viruses": "viruses",
@@ -14,6 +14,7 @@ FILE_TYPES = {
 }
 
 
+@protected("upload_file")
 async def upload(req):
     try:
         file_type = FILE_TYPES[req.path]

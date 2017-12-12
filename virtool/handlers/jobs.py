@@ -2,7 +2,8 @@ import os
 
 import virtool.job
 import virtool.utils
-from virtool.handlers.utils import compose_regex_query, bad_request, json_response, no_content, not_found, paginate
+from virtool.handlers.utils import compose_regex_query, bad_request, json_response, no_content, not_found, paginate,\
+    protected
 
 
 async def find(req):
@@ -47,6 +48,7 @@ async def get(req):
     return json_response(virtool.utils.base_processor(document))
 
 
+@protected("cancel_job")
 async def cancel(req):
     """
     Cancel a job.
@@ -71,6 +73,7 @@ async def cancel(req):
     return json_response(virtool.utils.base_processor(document))
 
 
+@protected("remove_job")
 async def remove(req):
     """
     Remove a job.
@@ -106,6 +109,7 @@ async def remove(req):
     return no_content()
 
 
+@protected("remove_job")
 async def clear(req):
     db = req.app["db"]
 

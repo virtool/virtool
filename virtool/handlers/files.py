@@ -2,7 +2,7 @@ import os
 
 import virtool.file
 import virtool.utils
-from virtool.handlers.utils import json_response, not_found, paginate
+from virtool.handlers.utils import json_response, not_found, paginate, protected
 
 
 async def find(req):
@@ -32,6 +32,7 @@ async def find(req):
     return json_response(data)
 
 
+@protected("remove_file")
 async def remove(req):
     file_id = req.match_info["file_id"]
 

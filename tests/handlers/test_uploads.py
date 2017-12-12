@@ -1,6 +1,6 @@
 import os
-import sys
 import pytest
+import sys
 
 
 class TestUpload:
@@ -13,7 +13,7 @@ class TestUpload:
         ("/upload/host", "host")
     ])
     async def test(self, path, file_type, tmpdir, spawn_client, test_dispatch, static_time, test_random_alphanumeric):
-        client = await spawn_client(authorize=True)
+        client = await spawn_client(authorize=True, permissions=["upload_file"])
 
         client.app["settings"] = {
             "data_path": str(tmpdir)
@@ -64,7 +64,7 @@ class TestUpload:
         )
 
     async def test_invalid_query(self, spawn_client, resp_is):
-        client = await spawn_client()
+        client = await spawn_client(authorize=True, permissions=["upload_file"])
 
         path = os.path.join(sys.path[0], "tests", "test_files", "files", "test.fq.gz")
 
@@ -79,7 +79,7 @@ class TestUpload:
         })
 
     async def test_not_found(self, spawn_client, resp_is):
-        client = await spawn_client()
+        client = await spawn_client(authorize=True, permissions=["upload_file"])
 
         path = os.path.join(sys.path[0], "tests", "test_files", "files", "test.fq.gz")
 

@@ -192,7 +192,7 @@ class TestRemove:
         Test that a request for a non-existent ``change_id`` results in a ``404`` response.
          
         """
-        client = await spawn_client()
+        client = await spawn_client(authorize=True, permissions=["modify_virus"])
 
         resp = await client.delete("/api/history/6116cba1.1")
 

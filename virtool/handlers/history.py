@@ -1,7 +1,7 @@
 import virtool.utils
 import virtool.virus
 import virtool.virus_history
-from virtool.handlers.utils import json_response, not_found, paginate
+from virtool.handlers.utils import json_response, not_found, paginate, protected
 
 
 async def find(req):
@@ -40,6 +40,7 @@ async def get(req):
     return json_response(virtool.utils.base_processor(document))
 
 
+@protected("modify_virus")
 async def revert(req):
     """
     Remove the change document with the given ``change_id`` and any subsequent changes.

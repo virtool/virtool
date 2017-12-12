@@ -81,7 +81,8 @@ module.exports = {
         new BundleAnalyzerPlugin({
             analyzerMode: "server",
             analyzerHost: "localhost",
-            analyzerPort: 8890
+            analyzerPort: 8890,
+            openAnalyzer: false
         })
     ],
 
