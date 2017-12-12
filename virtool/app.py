@@ -277,7 +277,7 @@ def create_app(loop, db_name=None, disable_job_manager=False, disable_file_manag
     else:
         app.on_startup.append(init_version)
 
-        if no_sentry:
+        if not no_sentry:
             app.on_startup.append(init_sentry)
 
         virtool.app_routes.setup_routes(app)
