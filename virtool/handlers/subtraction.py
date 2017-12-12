@@ -4,7 +4,8 @@ import shutil
 import virtool.sample
 import virtool.subtraction
 import virtool.utils
-from virtool.handlers.utils import unpack_request, json_response, no_content, not_found, compose_regex_query, paginate
+from virtool.handlers.utils import unpack_request, json_response, no_content, not_found, compose_regex_query, paginate, \
+    protected
 
 
 async def find(req):
@@ -56,6 +57,7 @@ async def get(req):
     return not_found()
 
 
+@protected("modify_subtraction")
 async def create(req):
     """
     Adds a new host described by the transaction. Starts an :class:`.CreateSubtraction` job process.
@@ -117,6 +119,7 @@ async def authorize_upload(req):
     return json_response({"file_id": file_id})
 
 
+@protected("modify_subtraction")
 async def remove(req):
     db = req.app["db"]
 

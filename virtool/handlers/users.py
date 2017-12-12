@@ -100,10 +100,7 @@ async def create(req):
 
 @protected("manage_users")
 async def set_password(req):
-    """
-    Used by users with the *modify_options* permission to change other users passwords.
 
-    """
     db, data = await unpack_request(req)
 
     v = Validator({

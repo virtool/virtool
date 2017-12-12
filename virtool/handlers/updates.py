@@ -4,7 +4,7 @@ import pymongo
 import virtool.app
 import virtool.utils
 import virtool.updates
-from virtool.handlers.utils import json_response, not_found
+from virtool.handlers.utils import json_response, not_found, protected
 
 
 async def get(req):
@@ -25,6 +25,7 @@ async def get(req):
     return json_response(virtool.utils.base_processor(document))
 
 
+@protected("modify_settings")
 async def upgrade(req):
 
     db = req.app["db"]

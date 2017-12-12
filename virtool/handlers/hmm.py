@@ -4,7 +4,7 @@ import pymongo
 
 import virtool.utils
 import virtool.virus_hmm
-from virtool.handlers.utils import compose_regex_query, json_response, not_found, paginate
+from virtool.handlers.utils import compose_regex_query, json_response, not_found, paginate, protected
 
 
 async def find(req):
@@ -38,6 +38,7 @@ async def find(req):
     return json_response(data)
 
 
+@protected("modify_hmm")
 async def install(req):
     db = req.app["db"]
 

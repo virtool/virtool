@@ -2,6 +2,52 @@ import pytest
 
 
 parameters = [
+    # Files
+    ("delete", ("/api/files/foobar",)),
+
+    # Groups
+    ("get", ("/api/groups",)),
+    ("post", ("/api/groups", {})),
+    ("get", ("/api/groups/foobar",)),
+    ("patch", ("/api/groups/foobar", {})),
+    ("delete", ("/api/groups/foobar",)),
+
+    # History
+    ("delete", ("/api/history/foobar",)),
+
+    # HMMs
+    ("post", ("/api/hmms", {})),
+
+    # Indexes
+    ("post", ("/api/indexes", {})),
+
+    # Jobs
+    ("post", ("/api/jobs/foobar/cancel", {})),
+    ("delete", ("/api/jobs/foobar",)),
+    ("delete", ("/api/jobs",)),
+
+    # Settings
+    ("patch", ("/api/settings", {})),
+
+    # Subtraction
+    ("post", ("/api/subtraction", {})),
+    ("delete", ("/api/subtraction/foobar",)),
+
+    # Updates
+    ("post", ("/api/updates/software", {})),
+
+    # Users
+    ("get", ("/api/users",)),
+    ("get", ("/api/users/foobar",)),
+    ("post", ("/api/users", {})),
+    ("put", ("/api/users/foobar/password", {})),
+    ("put", ("/api/users/foobar/reset", {})),
+    ("put", ("/api/users/foobar/primary", {})),
+    ("post", ("/api/users/foobar/groups", {})),
+    ("delete", ("/api/users/foobar/groups/baz",)),
+    ("delete", ("/api/users/foobar",)),
+
+    # Viruses
     ("post", ("/api/viruses", {})),
     ("patch", ("/api/viruses/foobar", {})),
     ("delete", ("/api/viruses/foobar",)),
@@ -11,13 +57,6 @@ parameters = [
     ("post", ("/api/viruses/foobar/isolates/test/sequences", {})),
     ("patch", ("/api/viruses/foobar/isolates/test/sequences/foobar", {})),
 
-
-
-    ("get", ("/api/groups",)),
-    ("post", ("/api/groups", {})),
-    ("get", ("/api/groups/foobar",)),
-    ("patch", ("/api/groups/foobar", {})),
-    ("delete", ("/api/groups/foobar",))
 ]
 
 authorized_only = [
