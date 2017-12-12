@@ -230,9 +230,9 @@ async def on_shutdown(app):
     """
     await app["dispatcher"].close()
 
-    if "job_manager" in app:
-        job_manager = app["job_manager"]
+    job_manager = app.get("job_manager", None)
 
+    if job_manager is not None:
         await job_manager.close()
 
     file_manager = app.get("file_manager", None)
@@ -277,7 +277,7 @@ def create_app(loop, db_name=None, disable_job_manager=False, disable_file_manag
     else:
         app.on_startup.append(init_version)
 
-        if no_sentry:
+        if not no_sentry:
             app.on_startup.append(init_sentry)
 
         virtool.app_routes.setup_routes(app)

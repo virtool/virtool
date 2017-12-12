@@ -107,7 +107,7 @@ def format_software_release(release):
     return formatted
 
 
-async def install(db, dispatch, loop, download_url, size):
+async def install(app, db, dispatch, loop, download_url, size):
     """
     Installs the update described by the passed release document.
 
@@ -187,7 +187,7 @@ async def install(db, dispatch, loop, download_url, size):
 
         await asyncio.sleep(1.5, loop=loop)
 
-        await virtool.utils.reload()
+        await virtool.utils.reload(app)
 
 
 def get_temp_dir():

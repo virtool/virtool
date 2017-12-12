@@ -54,4 +54,4 @@ async def upload(req):
             size += len(chunk)
             handle.write(chunk)
 
-    return json_response(document)
+    return json_response(document, status=201)

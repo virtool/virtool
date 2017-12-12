@@ -2,6 +2,7 @@ import os
 import arrow
 import pytest
 import datetime
+from aiohttp.test_utils import make_mocked_coro
 
 import virtool.utils
 
@@ -151,21 +152,31 @@ class TestAverageList:
 
 class TestReload:
 
-    @pytest.mark.parametrize("method", ["execl", "execv"])
-    def test(self, method, monkeypatch, mocker):
-        monkeypatch.setattr("sys.executable", "python" if method == "execl" else "run")
+    @pytest.mark.parametrize("method", ["execl", "execv", None], ids=["execl", "execv", "error"])
+    async def test(self, method, monkeypatch, mocker):
+        if method:
+            monkeypatch.setattr("sys.executable", "python" if method == "execl" else "run")
+        else:
+            monkeypatch.setattr("sys.executable", "foobar")
 
         execl = mocker.patch("os.execl")
         execv = mocker.patch("os.execv")
 
-        with pytest.raises(SystemError):
-            virtool.utils.reload()
+        app = mocker.Mock()
+
+        setattr(app, "on_shutdown", [
+            make_mocked_coro(),
+            make_mocked_coro()
+        ])
+
+        if method:
+            await virtool.utils.reload(app)
+        else:
+            with pytest.raises(SystemError):
+                await virtool.utils.reload(app)
 
         assert execl.called is (method == "execl")
         assert execv.called is (method == "execv")
 
-    def test_error(self, monkeypatch):
+    async def test_error(self, monkeypatch):
         monkeypatch.setattr("sys.executable", "foobar")
-
-        with pytest.raises(SystemError):
-            virtool.utils.reload()

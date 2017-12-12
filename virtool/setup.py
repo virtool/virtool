@@ -335,6 +335,6 @@ async def save_and_reload(req):
 
     await virtool.app_settings.write_settings_file(settings_path, settings_dict)
 
-    virtool.utils.reload()
+    await virtool.utils.reload(req.app)
 
     return web.HTTPFound("/")

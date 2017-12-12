@@ -93,7 +93,14 @@ async def test_install(download_release_error, loop, tmpdir, monkeypatch, mocker
 
     loop.set_default_executor(ThreadPoolExecutor())
 
-    await virtool.updates.install(test_motor, test_dispatch, loop, "foobar", 1234)
+    app = mocker.Mock()
+
+    setattr(app, "on_shutdown", [
+        make_mocked_coro(),
+        make_mocked_coro()
+    ])
+
+    await virtool.updates.install(app, test_motor, test_dispatch, loop, "foobar", 1234)
 
     if not download_release_error:
         assert set(os.listdir(install_path)) == {"run", "client", "VERSION", "install.sh"}
