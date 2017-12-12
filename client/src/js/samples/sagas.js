@@ -6,7 +6,7 @@
  * @author igboyes
  *
  */
-import { put, takeEvery, takeLatest, throttle } from "redux-saga/effects";
+import { put, select, takeEvery, takeLatest, throttle } from "redux-saga/effects";
 import { push } from "react-router-redux";
 
 import samplesAPI from "./api";
@@ -28,6 +28,7 @@ import {
     BLAST_NUVS,
     REMOVE_ANALYSIS
 }  from "../actionTypes";
+import {includes} from "lodash";
 
 export function* watchSamples () {
     yield takeEvery(WS_UPDATE_SAMPLE, findSamples);
@@ -79,7 +80,18 @@ export function* findReadyHosts () {
 export function* getSample (action) {
     try {
         const response = yield samplesAPI.get(action.sampleId);
-        yield put({type: GET_SAMPLE.SUCCEEDED, data: response.body});
+
+        const account = yield select(state => state.account);
+
+        const data = response.body;
+
+        const canModify = (
+            data.user.id === account.id ||
+            data.all_write ||
+            data.group_write && includes(account.groups, data.group)
+        );
+
+        yield put({type: GET_SAMPLE.SUCCEEDED, data: {...response.body, canModify}});
     } catch (error) {
         yield put({type: GET_SAMPLE.FAILED, error});
     }
@@ -89,9 +101,9 @@ export function* createSample (action) {
     yield setPending(function* ({name, isolate, host, locale, subtraction, files}) {
         try {
         const response = yield samplesAPI.create(name, isolate, host, locale, subtraction, files);
-        yield put({type: GET_SAMPLE.SUCCEEDED, data: response.body});
+        yield put({type: CREATE_SAMPLE.SUCCEEDED, data: response.body});
     } catch (error) {
-        yield put({type: GET_SAMPLE.FAILED, error});
+        yield put({type: CREATE_SAMPLE.FAILED, error});
     }
     }, action);
 }

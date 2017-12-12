@@ -11,7 +11,7 @@
 
 import React from "react";
 import { LinkContainer } from "react-router-bootstrap";
-import { includes, sortBy } from "lodash";
+import { sortBy } from "lodash";
 import { connect } from "react-redux";
 import { ListGroup, FormGroup, InputGroup, FormControl } from "react-bootstrap";
 
@@ -36,12 +36,6 @@ class AnalysesList extends React.Component {
             return <div />;
         }
 
-        const canModify = (
-            this.props.detail.user.id === this.props.account.id ||
-            this.props.detail.all_write ||
-            this.props.detail.group_write && includes(this.props.account.groups, this.props.detail.group)
-        );
-
         // The content that will be shown below the "New Analysis" form.
         let listContent;
 
@@ -54,7 +48,7 @@ class AnalysesList extends React.Component {
             listContent = sorted.map(document =>
                 <LinkContainer key={document.id} to={`/samples/${this.props.detail.id}/analyses/${document.id}`}>
                     <AnalysisItem
-                        canModify={canModify}
+                        canModify={this.props.detail.canModify}
                         onRemove={() => this.props.onRemove(document.id)}
                         {...document}
                     />
