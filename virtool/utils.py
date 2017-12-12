@@ -148,8 +148,11 @@ def get_static_hash(client_path):
             return file_name.split(".")[1]
 
 
-def reload():
+async def reload(app):
     exe = sys.executable
+
+    for callback in app.on_shutdown:
+        await callback(app)
 
     if exe.endswith("python") or "python3" in exe:
         os.execl(exe, exe, *sys.argv)

@@ -78,6 +78,7 @@ async def upgrade(req):
     download_url = latest_release["download_url"]
 
     await asyncio.ensure_future(virtool.updates.install(
+        req.app,
         db,
         dispatch,
         req.app.loop,
