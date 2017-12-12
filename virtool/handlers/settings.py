@@ -43,7 +43,3 @@ async def update(req):
     await settings.write()
 
     return json_response(settings.data)
-
-
-async def reload(req):
-    await virtool.utils.reload(req.app)
