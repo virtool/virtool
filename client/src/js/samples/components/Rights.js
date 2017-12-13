@@ -1,74 +1,113 @@
 import React from "react";
-import PropTypes from "prop-types";
-import { Panel } from "react-bootstrap";
-import { forEach, capitalize } from "lodash";
+import { forEach, includes } from "lodash";
+import { connect } from "react-redux";
+import { ClipLoader } from "halogenium";
+import { Alert, Panel } from "react-bootstrap";
 import { Input } from "../../base";
+import { listGroups } from "../../groups/actions";
 
-export default class SampleDetailRights extends React.PureComponent {
+class SampleRights extends React.Component {
 
-    static propTypes = {
-        id: PropTypes.string,
-        group: PropTypes.string,
-        group_read: PropTypes.bool,
-        group_write: PropTypes.bool,
-        all_read: PropTypes.bool,
-        all_write: PropTypes.bool
-    };
-
-    changeGroup = (event) => {
-        dispatcher.db.samples.request("set_group", {
-            _id: this.props.id,
-            group_id: event.target.value
-        });
-    };
-
-    changeRights = (event) => {
-        let newRights = {};
-
-        forEach({"read": false, "write": false}, (value, key) => {
-            newRights[`${event.target.name}_${key}`] = event.target.value.includes(key[0]);
-        });
-
-        dispatcher.db.samples.request("set_rights", {
-            _id: this.props._id,
-            changes: newRights
-        });
-    };
+    componentDidMount () {
+        this.props.onListGroups();
+    }
 
     render () {
-
-        const rightProps = {
-            onChange: this.changeRights,
-            type: "select"
-        };
+        if (this.props.groups === null) {
+            return (
+                <div className="text-center" style={{marginTop: "130px"}}>
+                    <ClipLoader color="#3c8786" />
+                </div>
+            );
+        }
 
         const groupRights = (this.props.group_read ? "r": "") + (this.props.group_write ? "w": "");
         const allRights = (this.props.all_read ? "r": "") + (this.props.all_write ? "w": "");
 
-        const nameOptionComponents = dispatcher.user.groups.map(groupId =>
-            <option key={groupId} value={groupId}>{capitalize(groupId)}</option>
+        const nameOptionComponents = this.props.groups.map(group =>
+            <option key={group.id} value={group.id}>{group.id}</option>
         );
 
         return (
-            <Panel className="tab-panel">
-                <Input type="select" label="Group" value={this.props.group} onChange={this.changeGroup}>
-                    <option value="none">None</option>
-                    {nameOptionComponents}
-                </Input>
+            <div>
+                <Alert bsStyle="warning">
+                    Restrict who can read and write this sample and which user group owns the sample.
+                </Alert>
 
-                <Input name="group" {...rightProps} label="Group Rights" value={groupRights}>
-                    <option value="">None</option>
-                    <option value="r">Read</option>
-                    <option value="rw">Read & write</option>
-                </Input>
+                <Panel>
+                    <Input
+                        type="select"
+                        label="Group"
+                        value={this.props.group}
+                        onChange={(e) => this.props.onChangeGroup(this.props.sampleId, e.target.value)}
+                    >
+                        <option value="none">None</option>
+                        {nameOptionComponents}
+                    </Input>
 
-                <Input name="all" {...rightProps} label="All Users' Rights" value={allRights}>
-                    <option value="">None</option>
-                    <option value="r">Read</option>
-                    <option value="rw">Read & write</option>
-                </Input>
-            </Panel>
+                    <Input
+                        type="select"
+                        label="Group Rights"
+                        value={groupRights}
+                        onChange={(e) => this.props.onChangeRights(this.props.sampleId, "group", e.target.value)}
+                    >
+                        <option value="">None</option>
+                        <option value="r">Read</option>
+                        <option value="rw">Read & write</option>
+                    </Input>
+
+                    <Input
+                        type="select"
+                        label="All Users' Rights"
+                        value={allRights}
+                        onChange={(e) => this.props.onChangeRights(this.props.sampleId, "all", e.target.value)}
+                    >
+                        <option value="">None</option>
+                        <option value="r">Read</option>
+                        <option value="rw">Read & write</option>
+                    </Input>
+                </Panel>
+            </div>
         );
     }
-
 }
+
+const mapStateToProps = state => {
+    const { group_read, group_write, all_read, all_write } = state.samples.detail;
+
+    return {
+        groups: state.groups.list,
+        sampleId: state.samples.detail.id,
+        group_read,
+        group_write,
+        all_read,
+        all_write
+    };
+};
+
+const mapDispatchToProps = dispatch => {
+    return {
+        onListGroups: () => {
+            dispatch(listGroups());
+        },
+
+        onChangeGroup: (sampleId, groupId) => {
+            console.log(sampleId, groupId);
+        },
+
+        onChangeRights: (sampleId, name, value) => {
+            console.log(sampleId, name, value);
+
+            const update = {};
+
+            update[`${name}_read`] = value.includes("r");
+            update[`${name}_write`] = value.includes("w");
+
+            console.log(update);
+        }
+    }
+};
+
+const Container = connect(mapStateToProps, mapDispatchToProps)(SampleRights);
+
+export default Container;

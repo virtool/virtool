@@ -21,6 +21,7 @@ import General from "./General";
 import Quality from "./Quality/Quality";
 import Analyses from "./Analyses/Analyses";
 import RemoveSample from "./Remove";
+import Rights from "./Rights";
 
 class SampleDetail extends React.Component {
 
@@ -85,6 +86,13 @@ class SampleDetail extends React.Component {
                     <LinkContainer to={`/samples/${sampleId}/analyses`}>
                         <NavItem>Analyses</NavItem>
                     </LinkContainer>
+                    {this.props.detail.canModify ? (
+                        <LinkContainer to={`/samples/${sampleId}/rights`}>
+                            <NavItem>
+                                <Icon name="key" />
+                            </NavItem>
+                        </LinkContainer>
+                    ): null}
                 </Nav>
 
                 <Switch>
@@ -92,6 +100,7 @@ class SampleDetail extends React.Component {
                     <Route path="/samples/:sampleId/general" component={General}/>
                     <Route path="/samples/:sampleId/quality" component={Quality}/>
                     <Route path="/samples/:sampleId/analyses" component={Analyses}/>
+                    <Route path="/samples/:sampleId/rights" component={Rights}/>
                 </Switch>
 
                 <RemoveSample id={detail.id} name={detail.name} />
