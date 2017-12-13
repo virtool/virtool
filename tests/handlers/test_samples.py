@@ -52,7 +52,7 @@ class TestFind:
         })
     ])
     async def test(self, term, per_page, page, d_range, meta, spawn_client, static_time):
-        client = await spawn_client()
+        client = await spawn_client(authorize=True)
 
         time_1 = arrow.get(static_time).datetime
         time_2 = arrow.get(static_time).shift(hours=1).datetime
@@ -72,7 +72,8 @@ class TestFind:
                 "archived": True,
                 "_id": "beb1eb10",
                 "name": "16GVP042",
-                "pathoscope": False
+                "pathoscope": False,
+                "all_read": True
             },
             {
                 "user": {
@@ -87,7 +88,8 @@ class TestFind:
                 "archived": True,
                 "_id": "72bb8b31",
                 "name": "16GVP043",
-                "pathoscope": False
+                "pathoscope": False,
+                "all_read": True
             },
             {
                 "user": {
@@ -102,7 +104,8 @@ class TestFind:
                 "archived": False,
                 "_id": "cb400e6d",
                 "name": "16SPP044",
-                "pathoscope": False
+                "pathoscope": False,
+                "all_read": True
             }
         ])
 

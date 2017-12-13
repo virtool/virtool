@@ -48,18 +48,13 @@ async def find(req):
         })
 
     base_query = {
-        "$and": [
-            {"$or": rights_filter}
-        ]
+        "$or": rights_filter
     }
 
-    db_query = deepcopy(base_query)
+    db_query = dict()
 
     if query["term"]:
-        db_query["$and"].append(compose_regex_query(query["term"], ["name", "user.id"]))
-
-    import pprint
-    pprint.pprint(db_query)
+        db_query = compose_regex_query(query["term"], ["name", "user.id"])
 
     data = await paginate(
         db.samples,
