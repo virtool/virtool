@@ -28,10 +28,38 @@ async def find(req):
 
     query = v.document
 
-    db_query = dict()
+    rights_filter = [
+        # The requesting user is the sample owner
+        {
+            "user.id": req["client"].user_id
+        },
+        # The sample rights allow all users to view the sample.
+        {
+            "all_read": True
+        }
+    ]
+
+    if req["client"].groups:
+        # The sample rights allow owner group members to view the sample and the requesting user is a member of
+        # the owner group.
+        rights_filter.append({
+            "group_read": True,
+            "group": {"$in": req["client"].groups}
+        })
+
+    base_query = {
+        "$and": [
+            {"$or": rights_filter}
+        ]
+    }
+
+    db_query = deepcopy(base_query)
 
     if query["term"]:
-        db_query.update(compose_regex_query(query["term"], ["name", "user.id"]))
+        db_query["$and"].append(compose_regex_query(query["term"], ["name", "user.id"]))
+
+    import pprint
+    pprint.pprint(db_query)
 
     data = await paginate(
         db.samples,
@@ -39,6 +67,7 @@ async def find(req):
         req.query,
         "created_at",
         projection=virtool.sample.LIST_PROJECTION,
+        base_query=base_query,
         reverse=True
     )
 
