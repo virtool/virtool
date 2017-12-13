@@ -17,6 +17,8 @@ import {
     GET_SAMPLE,
     CREATE_SAMPLE,
     UPDATE_SAMPLE,
+    UPDATE_SAMPLE_GROUP,
+    UPDATE_SAMPLE_RIGHTS,
     REMOVE_SAMPLE,
     FIND_ANALYSES,
     GET_ANALYSIS,
@@ -91,6 +93,22 @@ export const createSample = (name, isolate, host, locale, subtraction, files) =>
 export const editSample = (sampleId, update) => {
     return {
         type: UPDATE_SAMPLE.REQUESTED,
+        sampleId,
+        update
+    };
+};
+
+export const updateSampleGroup = (sampleId, groupId) => {
+    return {
+        type: UPDATE_SAMPLE_GROUP.REQUESTED,
+        sampleId,
+        groupId
+    };
+};
+
+export const updateSampleRights = (sampleId, update) => {
+    return {
+        type: UPDATE_SAMPLE_RIGHTS.REQUESTED,
         sampleId,
         update
     };

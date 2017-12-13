@@ -6,6 +6,7 @@
  * @author igboyes
  *
  */
+import { includes } from "lodash";
 import { put, select, takeEvery, takeLatest, throttle } from "redux-saga/effects";
 import { push } from "react-router-redux";
 
@@ -21,6 +22,8 @@ import {
     REFRESH_SAMPLE,
     CREATE_SAMPLE,
     UPDATE_SAMPLE,
+    UPDATE_SAMPLE_GROUP,
+    UPDATE_SAMPLE_RIGHTS,
     REMOVE_SAMPLE,
     FIND_ANALYSES,
     GET_ANALYSIS,
@@ -28,7 +31,6 @@ import {
     BLAST_NUVS,
     REMOVE_ANALYSIS
 }  from "../actionTypes";
-import {includes} from "lodash";
 
 export function* watchSamples () {
     yield takeEvery(WS_UPDATE_SAMPLE, findSamples);
@@ -40,6 +42,8 @@ export function* watchSamples () {
     yield takeLatest(GET_SAMPLE.REQUESTED, getSample);
     yield takeLatest(CREATE_SAMPLE.REQUESTED, createSample);
     yield takeEvery(UPDATE_SAMPLE.REQUESTED, updateSample);
+    yield takeEvery(UPDATE_SAMPLE_GROUP.REQUESTED, updateSampleGroup);
+    yield takeEvery(UPDATE_SAMPLE_RIGHTS.REQUESTED, updateSampleRights);
     yield throttle(300, REMOVE_SAMPLE.REQUESTED, removeSample);
     yield takeLatest(FIND_ANALYSES.REQUESTED, findAnalyses);
     yield takeLatest(GET_ANALYSIS.REQUESTED, getAnalysis);
@@ -118,6 +122,28 @@ export function* updateSample (action) {
             yield put({type: UPDATE_SAMPLE.FAILED, error});
         }
     }, action);
+}
+
+export function* updateSampleGroup (action) {
+    yield setPending(function* (action) {
+        try {
+            yield samplesAPI.updateGroup(action.sampleId, action.groupId);
+            yield put({type: GET_SAMPLE.REQUESTED, sampleId: action.sampleId});
+        } catch (error) {
+            yield put({type: UPDATE_SAMPLE_GROUP.FAILED, error});
+        }
+    }, action)
+}
+
+export function* updateSampleRights (action) {
+    yield setPending(function* (action) {
+        try {
+            yield samplesAPI.updateRights(action.sampleId, action.update);
+            yield put({type: GET_SAMPLE.REQUESTED, sampleId: action.sampleId});
+        } catch (error) {
+            yield put({type: UPDATE_SAMPLE_GROUP.FAILED, error});
+        }
+    }, action)
 }
 
 export function* removeSample (action) {

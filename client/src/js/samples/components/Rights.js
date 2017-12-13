@@ -1,9 +1,10 @@
 import React from "react";
-import { forEach, includes } from "lodash";
 import { connect } from "react-redux";
 import { ClipLoader } from "halogenium";
 import { Alert, Panel } from "react-bootstrap";
+
 import { Input } from "../../base";
+import { updateSampleGroup, updateSampleRights } from "../actions";
 import { listGroups } from "../../groups/actions";
 
 class SampleRights extends React.Component {
@@ -78,6 +79,7 @@ const mapStateToProps = state => {
     return {
         groups: state.groups.list,
         sampleId: state.samples.detail.id,
+        group: state.samples.detail.group,
         group_read,
         group_write,
         all_read,
@@ -92,18 +94,16 @@ const mapDispatchToProps = dispatch => {
         },
 
         onChangeGroup: (sampleId, groupId) => {
-            console.log(sampleId, groupId);
+            dispatch(updateSampleGroup(sampleId, groupId));
         },
 
         onChangeRights: (sampleId, name, value) => {
-            console.log(sampleId, name, value);
-
             const update = {};
 
             update[`${name}_read`] = value.includes("r");
             update[`${name}_write`] = value.includes("w");
 
-            console.log(update);
+            dispatch(updateSampleRights(sampleId, update));
         }
     }
 };
