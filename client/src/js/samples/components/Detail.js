@@ -39,19 +39,35 @@ class SampleDetail extends React.Component {
         const sampleId = this.props.match.params.sampleId;
 
         let editIcon;
+        let removeIcon;
 
-        if (includes(this.props.history.location.pathname, "general")) {
-            editIcon = (
+        if (this.props.detail.canModify) {
+            if (includes(this.props.history.location.pathname, "general")) {
+                editIcon = (
+                    <small style={{paddingLeft: "5px"}}>
+                        <Icon
+                            bsStyle="warning"
+                            name="pencil"
+                            tip="Edit Sample"
+                            onClick={this.props.showEdit}
+                        />
+                    </small>
+                );
+            }
+
+            removeIcon = (
                 <small style={{paddingLeft: "5px"}}>
                     <Icon
-                        bsStyle="warning"
-                        name="pencil"
-                        tip="Edit Sample"
-                        onClick={this.props.showEdit}
+                        bsStyle="danger"
+                        name="remove"
+                        tip="Remove Sample"
+                        onClick={() => this.props.showRemove(sampleId, detail.name)}
                     />
                 </small>
             );
         }
+
+
 
         const isOwnerOrAdministrator = (
             includes(this.props.account.groups, this.props.detail.group) ||
@@ -69,15 +85,7 @@ class SampleDetail extends React.Component {
                         </FlexItem>
 
                         {editIcon}
-
-                        <small style={{paddingLeft: "5px"}}>
-                            <Icon
-                                bsStyle="danger"
-                                name="remove"
-                                tip="Remove Sample"
-                                onClick={() => this.props.showRemove(sampleId, detail.name)}
-                            />
-                        </small>
+                        {removeIcon}
                     </Flex>
                 </h3>
 

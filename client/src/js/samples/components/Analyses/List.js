@@ -20,6 +20,26 @@ import { Icon, Button, ListGroupItem } from "../../../base";
 import AnalysisItem from "./Item";
 import CreateAnalysis from "./Create";
 
+
+const AnalysesToolbar = ({ onClick }) => (
+    <div className="toolbar">
+        <FormGroup>
+            <InputGroup>
+                <InputGroup.Addon>
+                    <Icon name="search" />
+                </InputGroup.Addon>
+                <FormControl type="text" />
+            </InputGroup>
+        </FormGroup>
+        <Button
+            icon="new-entry"
+            tip="New Analysis"
+            bsStyle="primary"
+            onClick={onClick}
+        />
+    </div>
+);
+
 class AnalysesList extends React.Component {
 
     constructor (props) {
@@ -67,22 +87,7 @@ class AnalysesList extends React.Component {
 
         return (
             <div>
-                <div className="toolbar">
-                    <FormGroup>
-                        <InputGroup>
-                            <InputGroup.Addon>
-                                <Icon name="search" />
-                            </InputGroup.Addon>
-                            <FormControl type="text" />
-                        </InputGroup>
-                    </FormGroup>
-                    <Button
-                        icon="new-entry"
-                        tip="New Analysis"
-                        bsStyle="primary"
-                        onClick={() => this.setState({show: true})}
-                    />
-                </div>
+                {this.props.detail.canModify ? <AnalysesToolbar onClick={() => this.setState({show: true})} />: null}
 
                 <ListGroup>
                     {listContent}
