@@ -184,23 +184,25 @@ async def set_owner_group(req):
     """
     db, data = await unpack_request(req)
 
+    print(data)
+
     sample_id = req.match_info["sample_id"]
 
-    sample_owner = (await db.users.find_one(sample_id, "user_id"))["user_id"]
+    await virtool.sample.get_sample_owner(db, sample_id)
 
-    requesting_user = None
-
-    if "administrator" not in requesting_user["groups"] and requesting_user["_id"] != sample_owner:
+    if "administrator" not in req["client"].groups and req["client"].user_id != sample_owner:
         return json_response({"message": "Must be administrator or sample owner."}, status=403)
 
     existing_group_ids = await db.groups.distinct("_id")
 
+    existing_group_ids.append("none")
+
     if data["group_id"] not in existing_group_ids:
         return not_found("Group does not exist")
 
-    await req.app["db"].samples.update_one({"_id": sample_id}, {
+    await db.samples.update_one({"_id": sample_id}, {
         "$set": {
-            "group_id": data["group_id"]
+            "group": data["group_id"]
         }
     })
 
@@ -212,7 +214,7 @@ async def set_rights(req):
     Change rights setting for the specified sample document.
 
     """
-    data = await req.json()
+    db, data = await unpack_request(req)
 
     user_id = req["client"].user_id
     user_groups = req["client"].groups
@@ -220,19 +222,20 @@ async def set_rights(req):
     sample_id = req.match_info["sample_id"]
 
     # Only update the document if the connected user owns the samples or is an administrator.
-    if "administrator" in user_groups or user_id == await virtool.sample.get_sample_owner(req.app["db"], sample_id):
+    if "administrator" in user_groups or user_id == await virtool.sample.get_sample_owner(db, sample_id):
         valid_fields = ["all_read", "all_write", "group_read", "group_write"]
 
         # Make a dict for updating the rights fields. Fail the transaction if there is an unknown right key.
-        if any(field not in valid_fields for field in data.keys()):
-            return bad_request("Unknown right name.")
+        for field in data:
+            if field not in valid_fields:
+                return bad_request("Unknown right name: {}".format(field))
 
         # Update the sample document with the new rights.
-        document = await req.app["db"].find_one_and_update(data["_id"], {
-            "$set": data["changes"]
-        })
+        document = await db.samples.find_one_and_update({"_id": sample_id}, {
+            "$set": data
+        }, return_document=ReturnDocument.AFTER, projection=valid_fields)
 
-        return json_response({field: document[field] for field in valid_fields})
+        return json_response(document)
 
     return json_response({"message": "Must be administrator or sample owner."}, status=403)
 
