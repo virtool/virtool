@@ -21,6 +21,7 @@ import General from "./General";
 import Quality from "./Quality/Quality";
 import Analyses from "./Analyses/Analyses";
 import RemoveSample from "./Remove";
+import Rights from "./Rights";
 
 class SampleDetail extends React.Component {
 
@@ -38,19 +39,40 @@ class SampleDetail extends React.Component {
         const sampleId = this.props.match.params.sampleId;
 
         let editIcon;
+        let removeIcon;
 
-        if (includes(this.props.history.location.pathname, "general")) {
-            editIcon = (
+        if (this.props.detail.canModify) {
+            if (includes(this.props.history.location.pathname, "general")) {
+                editIcon = (
+                    <small style={{paddingLeft: "5px"}}>
+                        <Icon
+                            bsStyle="warning"
+                            name="pencil"
+                            tip="Edit Sample"
+                            onClick={this.props.showEdit}
+                        />
+                    </small>
+                );
+            }
+
+            removeIcon = (
                 <small style={{paddingLeft: "5px"}}>
                     <Icon
-                        bsStyle="warning"
-                        name="pencil"
-                        tip="Edit Sample"
-                        onClick={this.props.showEdit}
+                        bsStyle="danger"
+                        name="remove"
+                        tip="Remove Sample"
+                        onClick={() => this.props.showRemove(sampleId, detail.name)}
                     />
                 </small>
             );
         }
+
+
+
+        const isOwnerOrAdministrator = (
+            includes(this.props.account.groups, this.props.detail.group) ||
+            this.props.account.id === detail.user.id
+        );
 
         return (
             <div>
@@ -63,15 +85,7 @@ class SampleDetail extends React.Component {
                         </FlexItem>
 
                         {editIcon}
-
-                        <small style={{paddingLeft: "5px"}}>
-                            <Icon
-                                bsStyle="danger"
-                                name="remove"
-                                tip="Remove Sample"
-                                onClick={() => this.props.showRemove(sampleId, detail.name)}
-                            />
-                        </small>
+                        {removeIcon}
                     </Flex>
                 </h3>
 
@@ -85,6 +99,13 @@ class SampleDetail extends React.Component {
                     <LinkContainer to={`/samples/${sampleId}/analyses`}>
                         <NavItem>Analyses</NavItem>
                     </LinkContainer>
+                    {isOwnerOrAdministrator ? (
+                        <LinkContainer to={`/samples/${sampleId}/rights`}>
+                            <NavItem>
+                                <Icon name="key" />
+                            </NavItem>
+                        </LinkContainer>
+                    ): null}
                 </Nav>
 
                 <Switch>
@@ -92,6 +113,7 @@ class SampleDetail extends React.Component {
                     <Route path="/samples/:sampleId/general" component={General}/>
                     <Route path="/samples/:sampleId/quality" component={Quality}/>
                     <Route path="/samples/:sampleId/analyses" component={Analyses}/>
+                    <Route path="/samples/:sampleId/rights" component={Rights}/>
                 </Switch>
 
                 <RemoveSample id={detail.id} name={detail.name} />
@@ -102,7 +124,8 @@ class SampleDetail extends React.Component {
 
 const mapStateToProps = (state) => {
     return {
-        detail: state.samples.detail
+        detail: state.samples.detail,
+        account: state.account
     };
 };
 

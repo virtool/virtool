@@ -41,6 +41,9 @@ const hmmsReducer = (state = initialState, action) => {
                 totalCount: action.data.total_count
             };
 
+        case GET_HMM.REQUESTED:
+            return {...state, detail: null};
+
         case GET_HMM.SUCCEEDED:
             return {...state, detail: action.data};
 

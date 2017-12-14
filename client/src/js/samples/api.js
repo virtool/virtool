@@ -33,11 +33,6 @@ const samplesAPI = {
         return Request.get(`/api/samples/${sampleId}`);
     },
 
-    update: (sampleId, update) => {
-        return Request.patch(`/api/samples/${sampleId}`)
-            .send(update);
-    },
-
     create: (name, isolate, host, locale, subtraction, files) => {
         return Request.post("/api/samples")
             .send({
@@ -47,7 +42,24 @@ const samplesAPI = {
                 locale,
                 subtraction,
                 files
-            })
+            });
+    },
+
+    update: (sampleId, update) => {
+        return Request.patch(`/api/samples/${sampleId}`)
+            .send(update);
+    },
+
+    updateGroup: (sampleId, groupId) => {
+        return Request.put(`/api/samples/${sampleId}/group`)
+            .send({
+                group_id: groupId
+            });
+    },
+
+    updateRights: (sampleId, update) => {
+        return Request.patch(`/api/samples/${sampleId}/rights`)
+            .send(update);
     },
 
     remove: (sampleId) => {

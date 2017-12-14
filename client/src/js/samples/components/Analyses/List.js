@@ -11,7 +11,7 @@
 
 import React from "react";
 import { LinkContainer } from "react-router-bootstrap";
-import { includes, sortBy } from "lodash";
+import { sortBy } from "lodash";
 import { connect } from "react-redux";
 import { ListGroup, FormGroup, InputGroup, FormControl } from "react-bootstrap";
 
@@ -19,6 +19,26 @@ import { analyze, removeAnalysis } from "../../actions";
 import { Icon, Button, ListGroupItem } from "../../../base";
 import AnalysisItem from "./Item";
 import CreateAnalysis from "./Create";
+
+
+const AnalysesToolbar = ({ onClick }) => (
+    <div className="toolbar">
+        <FormGroup>
+            <InputGroup>
+                <InputGroup.Addon>
+                    <Icon name="search" />
+                </InputGroup.Addon>
+                <FormControl type="text" />
+            </InputGroup>
+        </FormGroup>
+        <Button
+            icon="new-entry"
+            tip="New Analysis"
+            bsStyle="primary"
+            onClick={onClick}
+        />
+    </div>
+);
 
 class AnalysesList extends React.Component {
 
@@ -36,12 +56,6 @@ class AnalysesList extends React.Component {
             return <div />;
         }
 
-        const canModify = (
-            this.props.detail.user.id === this.props.account.id ||
-            this.props.detail.all_write ||
-            this.props.detail.group_write && includes(this.props.account.groups, this.props.detail.group)
-        );
-
         // The content that will be shown below the "New Analysis" form.
         let listContent;
 
@@ -54,7 +68,7 @@ class AnalysesList extends React.Component {
             listContent = sorted.map(document =>
                 <LinkContainer key={document.id} to={`/samples/${this.props.detail.id}/analyses/${document.id}`}>
                     <AnalysisItem
-                        canModify={canModify}
+                        canModify={this.props.detail.canModify}
                         onRemove={() => this.props.onRemove(document.id)}
                         {...document}
                     />
@@ -73,22 +87,7 @@ class AnalysesList extends React.Component {
 
         return (
             <div>
-                <div className="toolbar">
-                    <FormGroup>
-                        <InputGroup>
-                            <InputGroup.Addon>
-                                <Icon name="search" />
-                            </InputGroup.Addon>
-                            <FormControl type="text" />
-                        </InputGroup>
-                    </FormGroup>
-                    <Button
-                        icon="new-entry"
-                        tip="New Analysis"
-                        bsStyle="primary"
-                        onClick={() => this.setState({show: true})}
-                    />
-                </div>
+                {this.props.detail.canModify ? <AnalysesToolbar onClick={() => this.setState({show: true})} />: null}
 
                 <ListGroup>
                     {listContent}

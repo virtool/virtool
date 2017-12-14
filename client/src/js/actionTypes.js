@@ -36,6 +36,8 @@ export const GET_SAMPLE = createRequestActionType("GET_SAMPLE");
 export const REFRESH_SAMPLE = createRequestActionType("REFRESH_SAMPLE");
 export const CREATE_SAMPLE = createRequestActionType("CREATE_SAMPLE");
 export const UPDATE_SAMPLE = createRequestActionType("UPDATE_SAMPLE");
+export const UPDATE_SAMPLE_GROUP = createRequestActionType("UPDATE_SAMPLE_GROUP");
+export const UPDATE_SAMPLE_RIGHTS = createRequestActionType("UPDATE_SAMPLE_RIGHTS");
 export const REMOVE_SAMPLE = createRequestActionType("REMOVE_SAMPLE");
 export const FIND_ANALYSES = createRequestActionType("FIND_ANALYSES");
 export const GET_ANALYSIS = createRequestActionType("GET_ANALYSIS");
@@ -128,7 +130,7 @@ export const LOGOUT = createRequestActionType("LOGOUT");
 
 // Administrative Settings
 export const GET_SETTINGS = createRequestActionType("GET_SETTINGS");
-export const UPDATE_SETTING = createRequestActionType("UPDATE_SETTING");
+export const UPDATE_SETTINGS = createRequestActionType("UPDATE_SETTINGS");
 
 export const SET_SOURCE_TYPE_VALUE = "SET_SOURCE_TYPE_VALUE";
 export const GET_CONTROL_READAHEAD = createRequestActionType("GET_CONTROL_READAHEAD");

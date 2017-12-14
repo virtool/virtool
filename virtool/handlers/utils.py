@@ -250,7 +250,9 @@ async def paginate(collection, db_query, url_query, sort_by=None, projection=Non
     if sort_by:
         sort = [(sort_by, -1 if reverse else 1)]
 
-    db_query.update(base_query)
+    db_query = {
+        "$and": [base_query, db_query]
+    }
 
     cursor = collection.find(
         db_query,
