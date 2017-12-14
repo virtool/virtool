@@ -130,7 +130,7 @@ export const LOGOUT = createRequestActionType("LOGOUT");
 
 // Administrative Settings
 export const GET_SETTINGS = createRequestActionType("GET_SETTINGS");
-export const UPDATE_SETTING = createRequestActionType("UPDATE_SETTING");
+export const UPDATE_SETTINGS = createRequestActionType("UPDATE_SETTINGS");
 
 export const SET_SOURCE_TYPE_VALUE = "SET_SOURCE_TYPE_VALUE";
 export const GET_CONTROL_READAHEAD = createRequestActionType("GET_CONTROL_READAHEAD");

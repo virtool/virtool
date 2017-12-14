@@ -17,7 +17,7 @@ import { LinkContainer } from "react-router-bootstrap";
 import SourceTypes from "./General/SourceTypes";
 import InternalControl from "./General/InternalControl";
 import UniqueNames from "./General/UniqueNames";
-import SamplePermissions from "./General/SamplePermissions";
+import SampleRights from "./General/SampleRights";
 import HTTP from "./Server/HTTP";
 import SSL from "./Server/SSL";
 import Data from "./Data";
@@ -31,7 +31,7 @@ const General = () => (
         <SourceTypes />
         <InternalControl />
         <UniqueNames />
-        <SamplePermissions />
+        <SampleRights />
     </div>
 );
 

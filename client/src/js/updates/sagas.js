@@ -13,12 +13,12 @@ import {
     GET_SOFTWARE_UPDATES,
     GET_DATABASE_UPDATES,
     INSTALL_SOFTWARE_UPDATES,
-    UPDATE_SETTING
+    UPDATE_SETTINGS
 } from "../actionTypes";
 
 export function* watchUpdates () {
     yield takeLatest(GET_SOFTWARE_UPDATES.REQUESTED, getSoftwareUpdates);
-    yield takeLatest(UPDATE_SETTING.SUCCEEDED, setSoftwareChannel);
+    yield takeLatest(UPDATE_SETTINGS.SUCCEEDED, setSoftwareChannel);
     yield takeLatest(GET_DATABASE_UPDATES.REQUESTED, getDatabaseUpdates);
     yield takeLatest(INSTALL_SOFTWARE_UPDATES.REQUESTED, installSoftwareUpdates);
 }
