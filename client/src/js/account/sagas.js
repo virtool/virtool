@@ -7,7 +7,7 @@
  *
  */
 
-import { put, takeEvery, takeLatest } from "redux-saga/effects";
+import { call, put, takeEvery, takeLatest } from "redux-saga/effects";
 
 import accountAPI from "./api";
 import { setPending } from "../wrappers";
@@ -18,10 +18,10 @@ import {
     CHANGE_ACCOUNT_PASSWORD,
     GET_API_KEYS,
     CREATE_API_KEY,
+    UPDATE_API_KEY,
     REMOVE_API_KEY,
     LOGOUT
 } from "../actionTypes";
-import {UPDATE_API_KEY} from "../actionTypes";
 
 export function* watchAccount () {
     yield takeLatest(GET_ACCOUNT.REQUESTED, getAccount);
@@ -128,5 +128,5 @@ export function* removeAPIKey (action) {
 
 export function* logout () {
     yield accountAPI.logout();
-    yield put({type: LOGOUT.SUCCEEDED});
+    yield call(window.location.reload);
 }

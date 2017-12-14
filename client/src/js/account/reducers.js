@@ -35,10 +35,6 @@ export default function accountReducer (state = initialState, action) {
         case GET_API_KEYS.SUCCEEDED:
             return assign({}, state, {apiKeys: action.data});
 
-        case LOGOUT.SUCCEEDED:
-            window.location.reload();
-            return state;
-
         default:
             return state;
     }
