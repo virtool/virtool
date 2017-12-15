@@ -80,8 +80,8 @@ class JobsList extends React.Component {
                     title="Jobs"
                     page={this.props.page}
                     count={this.props.documents.length}
-                    foundCount={this.props.foundCount}
-                    totalCount={this.props.totalCount}
+                    foundCount={this.props.found_count}
+                    totalCount={this.props.total_count}
                 />
 
                 <JobsToolbar value={term} onChange={this.handleChange} />
@@ -93,7 +93,7 @@ class JobsList extends React.Component {
                 {this.props.documents.length ? (
                     <div className="text-center">
                         <Pagination
-                            items={this.props.pageCount}
+                            items={this.props.page_count}
                             maxButtons={10}
                             activePage={this.props.page}
                             onSelect={this.handlePage}

@@ -41,15 +41,7 @@ export default function jobsReducer (state = initialState, action) {
             return {...state, documents: reject(state.documents, {id: action.jobId})};
 
         case FIND_JOBS.SUCCEEDED:
-            return {
-                ...state,
-                foundCount: action.data.found_count,
-                page: action.data.page,
-                pageCount: action.data.page_count,
-                perPage: action.data.per_page,
-                totalCount: action.data.total_count,
-                documents: action.data.documents
-            };
+            return {...state, ...action.data};
 
         case GET_JOB.REQUESTED:
             return {...state, detail: null};
