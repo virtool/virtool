@@ -7,7 +7,6 @@ import WSConnection from "./websocket";
 import createHistory from "history/createBrowserHistory";
 import { getAccount } from "./account/actions";
 import { getSettings } from "./settings/actions";
-import { assign } from "lodash";
 import { createStore, combineReducers, applyMiddleware } from "redux";
 import createSagaMiddleware from "redux-saga";
 import { routerReducer, routerMiddleware } from "react-router-redux";
@@ -44,10 +43,10 @@ const appReducer = (state = appInitialState, action) => {
     switch (action.type) {
 
         case SET_APP_PENDING:
-            return assign({}, state, {pending: true});
+            return {...state, pending: true};
 
         case UNSET_APP_PENDING:
-            return assign({}, state, {pending: false});
+            return {...state, pending: false};
     }
 
     return state;

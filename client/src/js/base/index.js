@@ -13,5 +13,4 @@ export * from "./PageHint";
 export * from "./ProgressBar";
 export * from "./Radio";
 export * from "./RelativeTime";
-export * from "./Scroll";
 export * from "./Tooltip";
