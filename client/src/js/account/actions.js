@@ -7,24 +7,15 @@
  *
  */
 import {
-    WS_UPDATE_ACCOUNT,
     GET_ACCOUNT,
     UPDATE_ACCOUNT_SETTINGS,
     CHANGE_ACCOUNT_PASSWORD,
+    GET_API_KEYS,
     CREATE_API_KEY,
     UPDATE_API_KEY,
     REMOVE_API_KEY,
     LOGOUT
 } from "../actionTypes";
-import {GET_API_KEYS} from "../actionTypes";
-
-
-export function wsUpdateAccount (data) {
-    return {
-        type: WS_UPDATE_ACCOUNT,
-        data
-    };
-}
 
 export function getAccount () {
     return {
