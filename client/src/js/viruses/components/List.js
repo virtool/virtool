@@ -12,10 +12,10 @@ import { connect } from "react-redux";
 import { push } from "react-router-redux";
 import { Link, Route } from "react-router-dom";
 import { LinkContainer } from "react-router-bootstrap";
-import { Alert, Badge, Row, Col, ListGroup, Pagination } from "react-bootstrap";
+import { Alert, Row, Col, ListGroup, Pagination } from "react-bootstrap";
 
 import { findViruses } from "../actions";
-import { Flex, FlexItem, Icon, ListGroupItem, PageHint } from "../../base";
+import { Flex, FlexItem, Icon, ListGroupItem, ViewHeader } from "../../base";
 import VirusToolbar from "./Toolbar";
 import CreateVirus from "./Create";
 
@@ -110,22 +110,13 @@ class VirusesList extends React.Component {
 
         return (
             <div>
-                <h3 className="view-header">
-                    <Flex alignItems="flex-end">
-                        <FlexItem grow={1}>
-                            <strong>
-                                Viruses <Badge>{this.props.totalCount}</Badge>
-                            </strong>
-                        </FlexItem>
-
-                        <PageHint
-                            count={virusCount}
-                            totalCount={this.props.totalCount}
-                            page={this.props.page}
-                            pullRight
-                        />
-                    </Flex>
-                </h3>
+                <ViewHeader
+                    title="Samples"
+                    page={this.props.page}
+                    count={virusCount}
+                    foundCount={this.props.found_count}
+                    totalCount={this.props.total_count}
+                />
 
                 {alert}
 

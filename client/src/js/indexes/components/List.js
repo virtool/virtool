@@ -11,9 +11,9 @@
 
 import React from "react";
 import { connect } from "react-redux";
-import { Alert, Badge } from "react-bootstrap";
+import { Alert } from "react-bootstrap";
 
-import { Button, Flex, FlexItem, Icon, ListGroupItem, PageHint } from "../../base";
+import { Button, Flex, FlexItem, Icon, ListGroupItem, ViewHeader } from "../../base";
 import { findIndexes, showRebuild } from "../actions";
 import IndexEntry from "./Entry";
 import RebuildIndex from "./Rebuild";
@@ -112,20 +112,13 @@ class IndexesList extends React.Component {
 
         return (
             <div>
-                <h3 className="view-header">
-                    <Flex alignItems="flex-end">
-                        <FlexItem grow={0} shrink={0}>
-                            <strong>Virus Indexes</strong> <Badge>{this.props.totalCount}</Badge>
-                        </FlexItem>
-                        <FlexItem grow={1} shrink={0}>
-                            <PageHint
-                                page={this.props.page}
-                                count={this.props.foundCount}
-                                totalCount={this.props.totalCount}
-                            />
-                        </FlexItem>
-                    </Flex>
-                </h3>
+                <ViewHeader
+                    title="Virus Indexes"
+                    page={this.props.page}
+                    count={this.props.documents.length}
+                    foundCount={this.props.found_count}
+                    totalCount={this.props.total_count}
+                />
 
                 {content}
             </div>

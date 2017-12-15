@@ -20,11 +20,9 @@ import {
 const initialState = {
     documents: null,
     fileType: null,
-    foundCount: 0,
+    found_count: 0,
     page: 0,
-    perPage: 0,
-    totalCount: 0,
-
+    total_count: 0,
     uploads: [],
     uploadsComplete: true,
     showUploadOverlay: false
@@ -47,16 +45,7 @@ export default function fileReducer (state = initialState, action) {
             };
 
         case FIND_FILES.SUCCEEDED:
-            return {
-                ...state,
-                documents: action.data.documents,
-                foundCount: action.data.found_count,
-                page: action.data.page,
-                pageCount: action.data.page_count,
-                perPage: action.data.per_page,
-                totalCount: action.data.total_count,
-                fileType: action.fileType
-            };
+            return {...state, ...action.data};
 
         case REMOVE_FILE.SUCCEEDED:
             return {...state, documents: reject(state.documents, {id: action.data.file_id})};
@@ -85,12 +74,7 @@ export default function fileReducer (state = initialState, action) {
                 return {...upload, progress: action.progress};
             });
 
-            const newState = {
-                ...state,
-                uploads
-            };
-
-            return assignUploadsComplete(newState);
+            return assignUploadsComplete({...state, uploads});
         }
 
         case HIDE_UPLOAD_OVERLAY:

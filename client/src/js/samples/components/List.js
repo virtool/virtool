@@ -2,10 +2,10 @@ import React from "react";
 import { Route } from "react-router-dom";
 import { push } from "react-router-redux";
 import { connect } from "react-redux";
-import { Badge, ListGroup, Pagination } from "react-bootstrap";
+import { ListGroup, Pagination } from "react-bootstrap";
 
 import { findSamples } from "../actions";
-import { Flex, FlexItem, Icon, ListGroupItem } from "../../base";
+import { Icon, ListGroupItem, ViewHeader } from "../../base";
 import SampleEntry from "./Entry";
 import SampleToolbar from "./Toolbar";
 import CreateSample from "./Create/Create";
@@ -37,26 +37,22 @@ class SamplesList extends React.Component {
 
     render () {
 
-        if (this.props.samples === null) {
+        if (this.props.documents === null) {
             return <div />;
         }
 
         const term = this.props.match.params.term;
 
-        const samplesCount = this.props.samples.length;
+        let sampleComponents = this.props.documents.map(document =>
+            <SampleEntry
+                key={document.id}
+                id={document.id}
+                userId={document.user.id}
+                {...document}
+            />
+        );
 
-        let sampleComponents;
-
-        if (samplesCount) {
-            sampleComponents = this.props.samples.map(document =>
-                <SampleEntry
-                    key={document.id}
-                    id={document.id}
-                    userId={document.user.id}
-                    {...document}
-                />
-            );
-        } else {
+        if (!sampleComponents.length) {
             sampleComponents = (
                 <ListGroupItem key="noSample" className="text-center">
                     <Icon name="info"/> No samples found.
@@ -64,24 +60,15 @@ class SamplesList extends React.Component {
             );
         }
 
-        const first = 1 + (this.props.page - 1) * 15;
-        const last = first + (samplesCount < 15 ? samplesCount - 1: 14);
-
         return (
             <div>
-                <h3 className="view-header">
-                    <Flex alignItems="flex-end">
-                        <FlexItem grow={1}>
-                            <strong>
-                                Samples <Badge>{this.props.totalCount}</Badge>
-                            </strong>
-                        </FlexItem>
-
-                        <span className="text-muted pull-right" style={{fontSize: "12px"}}>
-                            Viewing {first} - {last} of {this.props.foundCount}
-                        </span>
-                    </Flex>
-                </h3>
+                <ViewHeader
+                    title="Samples"
+                    page={this.props.page}
+                    count={this.props.documents.length}
+                    foundCount={this.props.found_count}
+                    totalCount={this.props.total_count}
+                />
 
                 <SampleToolbar
                     term={term}
@@ -98,7 +85,7 @@ class SamplesList extends React.Component {
                 <div className="text-center">
                     <Pagination
                         onSelect={this.handlePage}
-                        items={this.props.pageCount}
+                        items={this.props.page_count}
                         maxButtons={10}
                         activePage={this.props.page}
                         first
@@ -128,15 +115,7 @@ class SamplesList extends React.Component {
 }
 
 const mapStateToProps = (state) => {
-    return {
-        canCreate: state.account.permissions.create_sample,
-        term: state.samples.term,
-        samples: state.samples.documents,
-        totalCount: state.samples.totalCount,
-        foundCount: state.samples.foundCount,
-        pageCount: state.samples.pageCount,
-        page: state.samples.page
-    };
+    return {...state.samples, canCreate: state.account.permissions.create_sample};
 };
 
 const mapDispatchToProps = (dispatch) => {

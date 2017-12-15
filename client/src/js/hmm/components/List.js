@@ -15,20 +15,10 @@ import { keys, reject } from "lodash";
 import { push } from "react-router-redux";
 import { connect } from "react-redux";
 import { ClipLoader } from "halogenium";
-import {
-    Badge,
-    Col,
-    FormControl,
-    FormGroup,
-    InputGroup,
-    Label,
-    ListGroup,
-    Pagination,
-    Row
-} from "react-bootstrap";
+import { Col, FormControl, FormGroup, InputGroup, Label, ListGroup, Pagination, Row } from "react-bootstrap";
 
 import { findHMMs } from "../actions";
-import { Icon, Flex, FlexItem, ListGroupItem, PageHint } from "../../base"
+import { Icon, ListGroupItem, ViewHeader } from "../../base"
 import HMMInstaller from "./Installer";
 
 /**
@@ -62,7 +52,7 @@ class HMMList extends React.Component {
 
     render () {
 
-        if (this.props.list === null) {
+        if (this.props.documents === null) {
             return(
                 <div className="text-center" style={{paddingTop: "130px"}}>
                     <ClipLoader color="#3c8786" />
@@ -70,13 +60,7 @@ class HMMList extends React.Component {
             );
         }
 
-        let installer;
-
-        if (!this.props.fileExists) {
-            installer = <HMMInstaller />;
-        }
-
-        let rowComponents = this.props.list.map(document => {
+        let rowComponents = this.props.documents.map(document => {
             const families = reject(keys(document.families), family => family === "None");
 
             const labelComponents = families.slice(0, 3).map((family, i) => (
@@ -114,23 +98,15 @@ class HMMList extends React.Component {
 
         return (
             <div>
-                <h3 className="view-header">
-                    <Flex alignItems="flex-end">
-                        <FlexItem grow={0} shrink={0}>
-                            <strong>HMMs</strong> <Badge>{this.props.totalCount}</Badge>
-                        </FlexItem>
-                        <FlexItem grow={1} shrink={0}>
-                            <PageHint
-                                count={this.props.list.length}
-                                totalCount={this.props.totalCount}
-                                page={this.props.page}
-                                pullRight
-                            />
-                        </FlexItem>
-                    </Flex>
-                </h3>
+                <ViewHeader
+                    title="HMMs"
+                    page={this.props.page}
+                    count={this.props.documents.length}
+                    foundCount={this.props.found_count}
+                    totalCount={this.props.total_count}
+                />
 
-                {installer}
+                {this.props.file_exists ? null: <HMMInstaller />}
 
                 <FormGroup>
                     <InputGroup>
@@ -153,7 +129,7 @@ class HMMList extends React.Component {
 
                 <div className="text-center">
                     <Pagination
-                        items={this.props.pageCount}
+                        items={this.props.page_count}
                         maxButtons={10}
                         activePage={this.props.page}
                         onSelect={this.setPage}
@@ -169,9 +145,7 @@ class HMMList extends React.Component {
 }
 
 const mapStateToProps = (state) => {
-    return {
-        ...state.hmms
-    };
+    return {...state.hmms};
 };
 
 const mapDispatchToProps = (dispatch) => {

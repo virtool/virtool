@@ -11,7 +11,7 @@ import { reject, sortBy, unionBy } from "lodash";
 import { LIST_GROUPS, CREATE_GROUP, SET_GROUP_PERMISSION, REMOVE_GROUP } from "../actionTypes";
 
 const initialState = {
-    list: null,
+    documents: null,
     pending: false,
     createError: false
 };
@@ -24,7 +24,7 @@ export default function groupsReducer (state = initialState, action) {
     switch (action.type) {
 
         case LIST_GROUPS.SUCCEEDED:
-            return {...state, list: action.data};
+            return {...state, documents: action.data};
 
         case CREATE_GROUP.REQUESTED:
         case REMOVE_GROUP.REQUESTED:

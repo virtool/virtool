@@ -10,10 +10,10 @@
 import React from "react";
 import { push } from "react-router-redux";
 import { connect } from "react-redux";
-import { Badge, ListGroup, ListGroupItem, Pagination } from "react-bootstrap";
+import { ListGroup, ListGroupItem, Pagination } from "react-bootstrap";
 
 import { findJobs, cancelJob, removeJob } from "../actions";
-import { Flex, FlexItem, Icon, PageHint } from "../../base";
+import { Flex, FlexItem, Icon, ViewHeader } from "../../base";
 import Job from "./Entry";
 import JobsToolbar from "./Toolbar";
 
@@ -76,22 +76,13 @@ class JobsList extends React.Component {
 
         return (
             <div>
-                <h3 className="view-header">
-                    <Flex alignItems="flex-end">
-                        <FlexItem grow={0} shrink={0}>
-                            <strong>Jobs</strong> <Badge>{this.props.totalCount}</Badge>
-                        </FlexItem>
-                        <FlexItem grow={1} shrink={0}>
-                            <PageHint
-                                page={this.props.page}
-                                count={this.props.documents.length}
-                                totalCount={this.props.foundCount}
-                                perPage={this.props.perPage}
-                                pullRight
-                            />
-                        </FlexItem>
-                    </Flex>
-                </h3>
+                <ViewHeader
+                    title="Jobs"
+                    page={this.props.page}
+                    count={this.props.documents.length}
+                    foundCount={this.props.foundCount}
+                    totalCount={this.props.totalCount}
+                />
 
                 <JobsToolbar value={term} onChange={this.handleChange} />
 

@@ -16,11 +16,11 @@ import { connect } from "react-redux";
 import { ClipLoader } from "halogenium";
 import { Link } from "react-router-dom";
 import { LinkContainer } from "react-router-bootstrap";
-import { Alert, Badge, Col, FormControl, FormGroup, InputGroup, Row } from "react-bootstrap";
+import { Alert, Col, FormControl, FormGroup, InputGroup, Row } from "react-bootstrap";
 
 import CreateSubtraction from "./Create";
 import { findSubtractions } from "../actions";
-import { Button, Flex, FlexItem, Icon, ListGroupItem, PageHint } from "../../base";
+import { Button, Flex, FlexItem, Icon, ListGroupItem, ViewHeader } from "../../base";
 
 
 class SubtractionList extends React.Component {
@@ -107,22 +107,13 @@ class SubtractionList extends React.Component {
 
         return (
             <div>
-                <h3 className="view-header">
-                    <Flex alignItems="flex-end">
-                        <FlexItem grow={0} shrink={0}>
-                            <strong>Subtraction</strong> <Badge>{this.props.totalCount}</Badge>
-                        </FlexItem>
-                        <FlexItem grow={1} shrink={0}>
-                            <PageHint
-                                page={this.props.page}
-                                count={this.props.documents.length}
-                                totalCount={this.props.totalCount}
-                                perPage={this.props.perPage}
-                                pullRight
-                            />
-                        </FlexItem>
-                    </Flex>
-                </h3>
+                <ViewHeader
+                    title="Subtraction"
+                    page={this.props.page}
+                    count={this.props.documents.length}
+                    foundCount={this.props.found_count}
+                    totalCount={this.props.total_count}
+                />
 
                 {alert}
 

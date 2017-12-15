@@ -1,14 +1,14 @@
 import React from "react";
 import PropTypes from "prop-types";
+import Dropzone from "react-dropzone";
 import { push } from "react-router-redux";
 import { capitalize, filter } from "lodash";
 import { connect } from "react-redux";
-import Dropzone from "react-dropzone";
-import { Badge, Col, ListGroup, Pagination, Row } from "react-bootstrap";
+import { Col, ListGroup, Pagination, Row } from "react-bootstrap";
 
 import { byteSize, createRandomString } from "../../utils";
 import { findFiles, removeFile, upload, uploadProgress } from "../actions";
-import { Button, Flex, FlexItem, Icon, ListGroupItem, PageHint, RelativeTime } from "../../base";
+import { Button, Icon, ListGroupItem, RelativeTime, ViewHeader } from "../../base";
 
 const File = (props) => {
     let creation;
@@ -97,23 +97,13 @@ class FileManager extends React.Component {
 
         return (
             <div>
-                <h3 className="view-header">
-                    <Flex alignItems="flex-end">
-                        <FlexItem grow={0} shrink={0}>
-                            <strong>{titleType} Files</strong> <Badge>{this.props.totalCount}</Badge>
-                        </FlexItem>
-                        <FlexItem grow={1} shrink={0}>
-                            <PageHint
-                                page={this.props.page}
-                                count={this.props.documents.length}
-                                totalCount={this.props.totalCount}
-                                perPage={this.props.perPage}
-                                pullRight
-                            />
-                        </FlexItem>
-                    </Flex>
-
-                </h3>
+                <ViewHeader
+                    title={`${titleType} Files`}
+                    page={this.props.page}
+                    count={this.props.documents.length}
+                    foundCount={this.props.found_count}
+                    totalCount={this.props.total_count}
+                />
 
                 <div className="toolbar">
                     <Dropzone
@@ -133,10 +123,10 @@ class FileManager extends React.Component {
                     {fileComponents}
                 </ListGroup>
 
-                {this.props.pageCount > 1 ? (
+                {this.props.page_count > 1 ? (
                     <div className="text-center">
                         <Pagination
-                            items={this.props.pageCount}
+                            items={this.props.page_count}
                             maxButtons={10}
                             activePage={this.props.page}
                             onSelect={this.handlePage}
@@ -153,13 +143,7 @@ class FileManager extends React.Component {
 }
 
 const mapStateToProps = (state) => {
-    return {
-        documents: state.files.documents,
-        page: state.files.page,
-        pageCount: state.files.pageCount,
-        perPage: state.files.perPage,
-        totalCount: state.files.totalCount
-    };
+    return {...state.files};
 };
 
 const mapDispatchProps = (dispatch) => {
