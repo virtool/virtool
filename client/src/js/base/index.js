@@ -9,7 +9,6 @@ export * from "./Identicon";
 export * from "./Input";
 export * from "./InputSave";
 export * from "./ListGroupItem";
-export * from "./PageHint";
 export * from "./ProgressBar";
 export * from "./Radio";
 export * from "./RelativeTime";
