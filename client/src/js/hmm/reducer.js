@@ -15,7 +15,7 @@ const initialState = {
     process: null
 };
 
-const hmmsReducer = (state = initialState, action) => {
+export default function hmmsReducer (state = initialState, action) {
 
     switch (action.type) {
 
@@ -51,6 +51,4 @@ const hmmsReducer = (state = initialState, action) => {
             return state;
 
     }
-};
-
-export default hmmsReducer;
+}

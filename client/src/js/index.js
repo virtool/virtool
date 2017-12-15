@@ -12,17 +12,17 @@ import createSagaMiddleware from "redux-saga";
 import { routerReducer, routerMiddleware } from "react-router-redux";
 
 import { SET_APP_PENDING, UNSET_APP_PENDING } from "./actionTypes";
-import jobsReducer from "./jobs/reducers";
-import samplesReducer from "./samples/reducers";
-import indexesReducer from "./indexes/reducers";
-import virusesReducer from "./viruses/reducers";
-import subtractionReducer from "./subtraction/reducers";
+import jobsReducer from "./jobs/reducer";
+import samplesReducer from "./samples/reducer";
+import indexesReducer from "./indexes/reducer";
+import virusesReducer from "./viruses/reducer";
+import subtractionReducer from "./subtraction/reducer";
 import filesReducer from "./files/reducer";
-import accountReducer from "./account/reducers";
-import settingsReducer from "./settings/reducers";
+import accountReducer from "./account/reducer";
+import settingsReducer from "./settings/reducer";
 import usersReducer from "./users/reducers";
-import groupsReducer from "./groups/reducers";
-import updatesReducer from "./updates/reducers";
+import groupsReducer from "./groups/reducer";
+import updatesReducer from "./updates/reducer";
 import hmmsReducer from "./hmm/reducer";
 import rootSaga from "./sagas";
 

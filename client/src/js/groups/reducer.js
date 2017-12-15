@@ -20,7 +20,7 @@ const updateGroup = (state, update) => {
     return {...state, pending: false, list: sortBy(unionBy([update], state.list, "id"), "id")};
 };
 
-const reducer = (state = initialState, action) => {
+export default function groupsReducer (state = initialState, action) {
     switch (action.type) {
 
         case LIST_GROUPS.SUCCEEDED:
@@ -45,6 +45,4 @@ const reducer = (state = initialState, action) => {
             return state;
 
     }
-};
-
-export default reducer;
+}

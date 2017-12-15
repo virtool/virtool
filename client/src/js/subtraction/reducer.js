@@ -19,7 +19,7 @@ const initialState = {
     ids: null
 };
 
-export default function subtractionReducer (state = initialState, action) {
+export default function subtractionsReducer (state = initialState, action) {
 
     switch (action.type) {
 

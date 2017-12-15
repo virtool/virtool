@@ -34,7 +34,7 @@ const assignUploadsComplete = (newState) => {
     return {...newState, uploadsComplete: every(newState.uploads, {progress: 100})};
 };
 
-export default function reducer (state = initialState, action) {
+export default function fileReducer (state = initialState, action) {
 
     switch (action.type) {
 

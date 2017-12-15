@@ -41,10 +41,8 @@ import {
 
 const virusesInitialState = {
     documents: null,
-
     detail: null,
     detailHistory: null,
-
     edit: false,
     remove: false,
     addIsolate: false,
@@ -53,13 +51,10 @@ const virusesInitialState = {
     addSequence: false,
     editSequence: false,
     removeSequence: false,
-
     activeIsolateId: null,
     activeSequenceId: null,
-
     createError: "",
     editError: "",
-
     importData: null
 };
 

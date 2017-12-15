@@ -20,7 +20,7 @@ const initialState = {
     readaheadPending: false
 };
 
-const reducer = (state = initialState, action) => {
+export default function settingsReducer (state = initialState, action) {
 
     switch (action.type) {
 
@@ -43,6 +43,4 @@ const reducer = (state = initialState, action) => {
             return state;
     }
 
-};
-
-export default reducer;
+}

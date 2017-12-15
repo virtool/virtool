@@ -24,15 +24,13 @@ const initialState = {
     modifiedCount: 0,
     totalVirusCount: 0,
     error: false,
-
     detail: null,
     history: null,
     unbuilt: null,
-
     showRebuild: false
 };
 
-const indexesReducer = (state = initialState, action) => {
+export default function indexesReducer (state = initialState, action) {
 
     switch (action.type) {
 
@@ -89,6 +87,4 @@ const indexesReducer = (state = initialState, action) => {
         default:
             return state;
     }
-};
-
-export default indexesReducer;
+}

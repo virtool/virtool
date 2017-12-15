@@ -30,7 +30,7 @@ const updateJob = (state, action) => {
     )};
 };
 
-export default function reducer (state = initialState, action) {
+export default function jobsReducer (state = initialState, action) {
 
     switch (action.type) {
 

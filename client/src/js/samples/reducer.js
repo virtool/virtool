@@ -45,20 +45,16 @@ const setNuvsBLAST = (state, analysisId, sequenceIndex, data = "ip") => {
 const initialState = {
     documents: null,
     detail: null,
-
     analyses: null,
     analysisDetail: null,
-
     showEdit: false,
     showRemove: false,
-
     editError: false,
-
     reservedFiles: [],
     readyHosts: null
 };
 
-export default function reducer (state = initialState, action) {
+export default function samplesReducer (state = initialState, action) {
 
     switch (action.type) {
 
