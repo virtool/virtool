@@ -10,40 +10,22 @@
  */
 
 import React from "react";
-import PropTypes from "prop-types";
 import { connect } from "react-redux";
 import { push } from "react-router-redux";
-import { Modal } from "react-bootstrap";
 
 import { removeSubtraction } from "../actions";
-import { Button } from "../../base";
+import { RemoveModal } from "../../base";
 
-const RemoveSubtraction = (props) => (
-    <Modal show={props.show} onHide={props.onHide} dialogClassName="modal-danger">
-        <Modal.Header onHide={props.onHide} closeButton>
-            Remove Subtraction
-        </Modal.Header>
-        <Modal.Body>
-            Are you sure you want to remove <strong>{props.id}</strong>?
-        </Modal.Body>
-        <Modal.Footer>
-            <Button
-                bsStyle="danger"
-                icon="checkmark"
-                onClick={() => props.onConfirm(props.id)}
-            >
-                Confirm
-            </Button>
-        </Modal.Footer>
-    </Modal>
+const RemoveSubtraction = ({ id, show, onHide, onConfirm }) => (
+    <RemoveModal
+        id={id}
+        name={id}
+        noun="Subtraction"
+        show={show}
+        onHide={onHide}
+        onConfirm={onConfirm}
+    />
 );
-
-RemoveSubtraction.propTypes = {
-    id: PropTypes.string,
-    show: PropTypes.bool,
-    onHide: PropTypes.func,
-    onConfirm: PropTypes.func
-};
 
 const mapStateToProps = (state) => {
     return {

@@ -11,6 +11,7 @@ export * from "./InputSave";
 export * from "./ListGroupItem";
 export * from "./ProgressBar";
 export * from "./Radio";
+export * from "./RemoveModal";
 export * from "./RelativeTime";
 export * from "./Tooltip";
 export * from "./ViewHeader";
