@@ -6,7 +6,7 @@
  *
  */
 
-import { assign, concat, find, reject } from "lodash";
+import { concat, find, reject } from "lodash";
 import {
     WS_UPDATE_INDEX,
     FIND_INDEXES,
@@ -37,72 +37,54 @@ const indexesReducer = (state = initialState, action) => {
     switch (action.type) {
 
         case WS_UPDATE_INDEX:
-            return assign({}, state, {
+            return {
+                ...state,
                 viruses: concat(
                     reject(state.documents, {index_id: action.index_id}),
-                    assign({}, find(state.documents, {index_id: action.index_id}), action.data)
+                    {...find(state.documents, {index_id: action.index_id}), ...action.data}
                 )
-            });
+            };
 
         case FIND_INDEXES.SUCCEEDED:
-            return assign({}, state, {
+            return {
+                ...state,
                 documents: action.data.documents,
                 page: action.data.page,
                 foundCount: action.data.found_count,
                 totalCount: action.data.total_count,
                 modifiedCount: action.data.modified_virus_count,
                 totalVirusCount: action.data.total_virus_count
-            });
+            };
 
         case GET_INDEX.REQUESTED:
-            return assign({}, state, {
-                detail: null
-            });
+            return {...state, detail: null};
 
         case GET_INDEX.SUCCEEDED:
-            return assign({}, state, {
-                detail: action.data
-            });
+            return {...state, detail: action.data};
 
         case GET_UNBUILT.REQUESTED:
-            return assign({}, state, {
-                unbuilt: null
-            });
+            return {...state, unbuilt: null};
 
         case GET_UNBUILT.SUCCEEDED:
-            return assign({}, state, {
-                unbuilt: action.data
-            });
+            return {...state, unbuilt: action.data};
 
         case CREATE_INDEX.FAILED:
-            return assign({}, state, {
-                error: true
-            });
+            return {...state, error: true};
 
         case GET_INDEX_HISTORY.REQUESTED:
-            return assign({}, state, {
-                history: null
-            });
+            return {...state, history: null};
 
         case GET_INDEX_HISTORY.SUCCEEDED:
-            return assign({}, state, {
-                history: action.data
-            });
+            return {...state, history: action.data};
 
         case SHOW_REBUILD:
-            return assign({}, state, {
-                showRebuild: true
-            });
+            return {...state, showRebuild: true};
 
         case HIDE_REBUILD:
-            return assign({}, state, {
-                showRebuild: false
-            });
+            return {...state, showRebuild: false};
 
         case CLEAR_INDEX_ERROR:
-            return assign({}, state, {
-                error: false
-            });
+            return {...state, error: false};
 
         default:
             return state;

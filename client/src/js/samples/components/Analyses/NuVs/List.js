@@ -3,7 +3,7 @@ import PropTypes from "prop-types";
 import FlipMove from "react-flip-move";
 import { LinkContainer } from "react-router-bootstrap";
 import { FormControl, FormGroup, InputGroup, Table } from "react-bootstrap";
-import { assign, flatten, reject, includes, xor } from "lodash";
+import { flatten, reject, includes, xor } from "lodash";
 
 import { Button, Icon } from "../../../../base";
 import NuVsEntry from "./Entry";
@@ -38,7 +38,7 @@ export default class NuVsList extends React.Component {
 
         if (this.state.filter) {
             data = this.props.data.map(sequence => {
-                return assign({}, sequence, {orfs: reject(sequence.orfs, orf => orf.hits.length === 0)});
+                return {...sequence, orfs: reject(sequence.orfs, orf => orf.hits.length === 0)};
             });
         }
 

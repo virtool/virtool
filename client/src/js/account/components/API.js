@@ -13,7 +13,7 @@ import Moment from "moment";
 import PropTypes from "prop-types";
 import { ClipLoader } from "halogenium";
 import { CopyToClipboard } from "react-copy-to-clipboard";
-import { assign, isEqual, map, mapValues, reduce, sortBy  } from "lodash";
+import { isEqual, map, mapValues, reduce, sortBy  } from "lodash";
 import { connect } from "react-redux";
 import { LinkContainer } from "react-router-bootstrap";
 import { ButtonToolbar, Col, ListGroup, Modal, Panel, Row } from "react-bootstrap";
@@ -96,7 +96,7 @@ class CreateAPIKey extends React.Component {
         let update = {};
         update[key] = value;
 
-        this.setState({permissions: assign({}, this.state.permissions, update)});
+        this.setState({permissions: {...this.state.permissions, ...update}});
     };
 
     render () {
@@ -214,7 +214,7 @@ class APIKey extends React.Component {
         let update = {};
         update[key] = value;
 
-        const permissions = assign({}, this.state.permissions, update);
+        const permissions = {...this.state.permissions, update};
 
         this.setState({
             changed: !isEqual(permissions, this.props.apiKey.permissions),

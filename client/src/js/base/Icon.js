@@ -12,7 +12,6 @@
 import CX from "classnames";
 import React from "react";
 import PropTypes from "prop-types";
-import { assign } from "lodash";
 import { Tooltip, OverlayTrigger } from "react-bootstrap";
 
 /**
@@ -38,7 +37,7 @@ export const Icon = (props) => {
         }
     );
 
-    const style = assign(props.pad ? {marginLeft: "3px"}: {}, props.style);
+    const style = {...(props.pad ? {marginLeft: "3px"}: {}), ...props.style};
 
     const icon = <i className={className} style={style} onClick={props.onClick ? handleClick: null} />;
 

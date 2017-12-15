@@ -7,7 +7,7 @@
  *
  */
 
-import { assign, every, reject } from "lodash";
+import { every, reject } from "lodash";
 
 import {
     FIND_FILES,
@@ -31,7 +31,7 @@ const initialState = {
 };
 
 const assignUploadsComplete = (newState) => {
-    return assign({}, newState, {uploadsComplete: every(newState.uploads, {progress: 100})});
+    return {...newState, uploadsComplete: every(newState.uploads, {progress: 100})};
 };
 
 export default function reducer (state = initialState, action) {
@@ -59,9 +59,7 @@ export default function reducer (state = initialState, action) {
             };
 
         case REMOVE_FILE.SUCCEEDED:
-            return assign({}, state, {
-                documents: reject(state.documents, {id: action.data.file_id})
-            });
+            return {...state, documents: reject(state.documents, {id: action.data.file_id})};
 
         case UPLOAD.REQUESTED: {
             const fileMeta = {
@@ -70,32 +68,33 @@ export default function reducer (state = initialState, action) {
                 type: action.file.type
             };
 
-            const newState = assign({}, state, {
-                uploads: state.uploads.concat([assign({}, {localId: action.localId}, {progress: 0}, fileMeta)]),
+            const newState = {...state,
+                uploads: state.uploads.concat([{localId: action.localId, progress: 0, ...fileMeta}]),
                 showUploadOverlay: true
-            });
+            };
 
             return assignUploadsComplete(newState);
         }
 
         case UPLOAD_PROGRESS: {
-            const newState = assign({}, state, {
-                uploads: state.uploads.map(upload => {
-                    if (upload.localId !== action.localId) {
-                        return upload;
-                    }
+            const uploads = state.uploads.map(upload => {
+                if (upload.localId !== action.localId) {
+                    return upload;
+                }
 
-                    return assign({}, upload, {
-                        progress: action.progress
-                    });
-                })
+                return {...upload, progress: action.progress};
             });
+
+            const newState = {
+                ...state,
+                uploads
+            };
 
             return assignUploadsComplete(newState);
         }
 
         case HIDE_UPLOAD_OVERLAY:
-            return assign({}, state, {showUploadOverlay: false});
+            return {...state, showUploadOverlay: false};
 
     }
 

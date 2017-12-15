@@ -11,7 +11,7 @@
 
 import React from "react";
 import PropTypes from "prop-types";
-import { pick, join, assign } from "lodash";
+import { join } from "lodash";
 
 export class Flex extends React.Component {
 
@@ -60,13 +60,18 @@ export class Flex extends React.Component {
 
     render () {
 
-        let style = pick(this.props, ["justifyContent", "alignItems", "alignContent"]);
+        const { justifyContent, alignItems, alignContent } = this.props;
 
-        style.flexFlow = join([this.props.direction, this.props.wrap], " ");
-        style.display = "flex";
+        let style = {
+            alignContent,
+            alignItems,
+            display: "flex",
+            flexFlow: join([this.props.direction, this.props.wrap], " "),
+            justifyContent
+        };
 
         if (this.props.style) {
-            assign(style, this.props.style);
+            style = {...style, ...this.props.style};
         }
 
         return (
@@ -109,10 +114,8 @@ export class FlexItem extends React.Component {
         }
 
         if (this.props.style) {
-            assign(style, this.props.style)
+            style = {...style, ...this.props.style};
         }
-
-        assign(style, this.props.style);
         
         return (
             <div style={style} className={this.props.className}>

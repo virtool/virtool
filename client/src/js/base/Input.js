@@ -10,7 +10,6 @@
  */
 
 import React from "react";
-import { assign } from "lodash";
 import PropTypes from "prop-types";
 import { ControlLabel, FormControl, FormGroup, Overlay, Popover } from "react-bootstrap";
 
@@ -101,10 +100,10 @@ export class Input extends React.Component {
             );
         }
 
-        let groupStyle = assign({}, this.props.formGroupStyle);
+        let groupStyle = {...this.props.formGroupStyle};
 
         if (this.props.noMargin) {
-            assign(groupStyle, {marginBottom: 0});
+            groupStyle.marginBottom = 0;
         }
 
         return (

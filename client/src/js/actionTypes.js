@@ -45,7 +45,6 @@ export const ANALYZE = createRequestActionType("ANALYZE");
 export const BLAST_NUVS = createRequestActionType("BLAST_NUVS");
 export const REMOVE_ANALYSIS = createRequestActionType("REMOVE_ANALYSIS");
 
-export const SHOW_EDIT_SAMPLE = "SHOW_EDIT_SAMPLE";
 export const SHOW_REMOVE_SAMPLE = "SHOW_REMOVE_SAMPLE";
 export const HIDE_SAMPLE_MODAL = "HIDE_SAMPLE_MODAL";
 
@@ -81,9 +80,7 @@ export const SHOW_REMOVE_SEQUENCE = "SHOW_REMOVE_SEQUENCE";
 export const HIDE_VIRUS_MODAL = "HIDE_VIRUS_MODAL";
 
 // HMMs
-export const FIND_HMMS = createRequestActionType("GET_HMMS");
-export const GET_HMM = createRequestActionType("GET_HMM");
-export const INSTALL_HMMS = createRequestActionType("IMPORT_HMMS");
+["FIND_HMMS", "GET_HMM", "INSTALL_HMMS"].forEach(type => createRequestActionType(type));
 
 // Indexes
 export const WS_UPDATE_INDEX = "WS_UPDATE_INDEX";
@@ -131,8 +128,6 @@ export const LOGOUT = createRequestActionType("LOGOUT");
 // Administrative Settings
 export const GET_SETTINGS = createRequestActionType("GET_SETTINGS");
 export const UPDATE_SETTINGS = createRequestActionType("UPDATE_SETTINGS");
-
-export const SET_SOURCE_TYPE_VALUE = "SET_SOURCE_TYPE_VALUE";
 export const GET_CONTROL_READAHEAD = createRequestActionType("GET_CONTROL_READAHEAD");
 
 // Users

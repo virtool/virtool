@@ -1,6 +1,6 @@
 import React from "react";
 import PropTypes from "prop-types";
-import { assign, xor, sortBy, sum, filter } from "lodash";
+import { xor, sortBy, sum, filter } from "lodash";
 import { Icon, Flex, FlexItem, Button, Checkbox } from "../../../../base";
 import { Row, Col, Dropdown, MenuItem, FormGroup, InputGroup, FormControl } from "react-bootstrap";
 
@@ -85,9 +85,7 @@ export default class PathoscopeController extends React.Component {
 
         if (this.state.filterIsolates) {
             data = data.map(virus => {
-                return assign({}, virus, {
-                    isolates: filter(virus.isolates, isolate => isolate.pi >= 0.03 * virus.pi)
-                });
+                return {...virus, isolates: filter(virus.isolates, isolate => isolate.pi >= 0.03 * virus.pi)};
             });
         }
 

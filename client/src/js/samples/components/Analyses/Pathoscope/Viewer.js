@@ -2,7 +2,7 @@ import React from "react";
 import PropTypes from "prop-types";
 import { Alert } from "react-bootstrap";
 import { Icon } from "../../../../base";
-import { assign, forEach, sortBy, max } from "lodash";
+import { forEach, sortBy, max } from "lodash";
 import { formatIsolateName } from "../../../../utils";
 
 import PathoscopeController from "./Controller";
@@ -15,14 +15,15 @@ const PathoscopeViewer = (props) => {
 
         const data = props.diagnosis.map((baseVirus) => {
 
-            let virus = assign({}, {
+            let virus = {
                 pi: 0,
                 best: 0,
                 reads: 0,
                 coverage: 0,
                 maxGenomeLength: 0,
-                maxDepth: 0
-            }, baseVirus);
+                maxDepth: 0,
+                ...baseVirus
+            };
 
             // Go through each isolate associated with the virus, adding properties for weight, best-hit, read count,
             // and coverage. These values will be calculated from the sequences owned by each isolate.
@@ -37,12 +38,7 @@ const PathoscopeViewer = (props) => {
                     isolate.name = "Unnamed Isolate";
                 }
 
-                assign(isolate, {
-                    pi: 0,
-                    best: 0,
-                    reads: 0,
-                    coverage: 0
-                });
+                isolate = {...isolate, pi: 0, best: 0, reads: 0, coverage: 0};
 
                 // Go through each hit/sequence owned by the isolate and composite its values into the overall isolate
                 // values of weight, best-hit, read count, and coverage.

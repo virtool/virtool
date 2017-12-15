@@ -8,7 +8,6 @@
  */
 import React from "react";
 import PropTypes from "prop-types";
-import { assign } from "lodash";
 import { ButtonGroup, Modal, Table, Well } from "react-bootstrap";
 
 import { followDynamicDownload } from "../../../../utils";
@@ -152,7 +151,7 @@ export default class NuVsExport extends React.Component {
                                 <Button
                                     type="button"
                                     active={this.state.mode === "contigs"}
-                                    onClick={() => this.setState(assign(getInitialState(), {mode: "contigs"}))}
+                                    onClick={() => this.setState({...getInitialState(), mode: "contigs"})}
                                 >
                                     Contigs
                                 </Button>
@@ -161,7 +160,7 @@ export default class NuVsExport extends React.Component {
                                 <Button
                                     type="button"
                                     active={this.state.mode === "orfs"}
-                                    onClick={() => this.setState(assign(getInitialState(), {mode: "orfs"}))}
+                                    onClick={() => this.setState({...getInitialState(), mode: "orfs"})}
                                 >
                                     ORFs
                                 </Button>

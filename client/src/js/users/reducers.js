@@ -7,7 +7,6 @@
  *
  */
 
-import { assign } from "lodash";
 import {
     LIST_USERS,
     FILTER_USERS,
@@ -41,21 +40,14 @@ const reducer = (state = initialState, action) => {
 
     switch (action.type) {
 
-        case LIST_USERS.REQUESTED:
-            return assign({}, state);
-
         case LIST_USERS.SUCCEEDED: {
             const activeData = action.users[0];
 
-            return assign({}, state, {
-                list: action.users,
-                activeId: activeData.id,
-                activeData: activeData
-            });
+            return {...state, list: action.users, activeId: activeData.id, activeData: activeData};
         }
 
         case FILTER_USERS: {
-            return assign({}, state, {filter: action.term});
+            return {...state, filter: action.term};
         }
 
         case CREATE_USER.SUCCEEDED:
@@ -68,22 +60,20 @@ const reducer = (state = initialState, action) => {
         }
 
         case CREATE_USER.REQUESTED:
-            return assign({}, state, {createPending: true, createError: null});
+            return {...state, createPending: true, createError: null};
 
         case CREATE_USER.FAILED:
-            return assign({}, state, {createPending: false, createError: action.error});
+            return {...state, createPending: false, createError: action.error};
 
         case SET_PASSWORD.REQUESTED: {
             return updateUser(state, {passwordPending: true, passwordError: null});
         }
 
         case SET_PASSWORD.FAILED:
-            return updateUser(state, assign({}, state, {passwordPending: false, passwordError: action.error}));
+            return updateUser(state, {...state, passwordPending: false, passwordError: action.error});
 
         case SET_FORCE_RESET.REQUESTED:
-            return assign({}, state, {
-                forceResetChangePending: true
-            });
+            return {...state, forceResetChangePending: true};
 
         default:
             return state;
