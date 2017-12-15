@@ -1,4 +1,5 @@
 import React from "react";
+import { includes } from "lodash";
 import { connect } from "react-redux";
 import { ClipLoader } from "halogenium";
 import { Alert, Panel } from "react-bootstrap";
@@ -10,10 +11,24 @@ import { listGroups } from "../../groups/actions";
 class SampleRights extends React.Component {
 
     componentDidMount () {
-        this.props.onListGroups();
+        if (this.isOwnerOrAdministrator()) {
+            this.props.onListGroups();
+        }
     }
 
+    isOwnerOrAdministrator = () => (
+        includes(this.props.groups, this.props.group) || this.props.accountId === this.props.ownerId
+    );
+
     render () {
+        if (!this.isOwnerOrAdministrator()) {
+            return (
+                <Panel>
+                    No allowed
+                </Panel>
+            )
+        }
+
         if (this.props.groups === null) {
             return (
                 <div className="text-center" style={{marginTop: "130px"}}>
@@ -77,9 +92,11 @@ const mapStateToProps = state => {
     const { group_read, group_write, all_read, all_write } = state.samples.detail;
 
     return {
-        groups: state.groups.list,
-        sampleId: state.samples.detail.id,
+        accountId: state.account.id,
         group: state.samples.detail.group,
+        groups: state.groups.documents,
+        ownerId: state.samples.detail.user.id,
+        sampleId: state.samples.detail.id,
         group_read,
         group_write,
         all_read,

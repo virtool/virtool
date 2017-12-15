@@ -77,13 +77,6 @@ class SampleDetail extends React.Component {
             );
         }
 
-
-
-        const isOwnerOrAdministrator = (
-            includes(this.props.account.groups, this.props.detail.group) ||
-            this.props.account.id === detail.user.id
-        );
-
         return (
             <div>
                 <h3 style={{marginBottom: "20px"}}>
@@ -109,13 +102,11 @@ class SampleDetail extends React.Component {
                     <LinkContainer to={`/samples/${sampleId}/analyses`}>
                         <NavItem>Analyses</NavItem>
                     </LinkContainer>
-                    {isOwnerOrAdministrator ? (
-                        <LinkContainer to={`/samples/${sampleId}/rights`}>
-                            <NavItem>
-                                <Icon name="key" />
-                            </NavItem>
-                        </LinkContainer>
-                    ): null}
+                    <LinkContainer to={`/samples/${sampleId}/rights`}>
+                        <NavItem>
+                            <Icon name="key" />
+                        </NavItem>
+                    </LinkContainer>
                 </Nav>
 
                 <Switch>
@@ -134,8 +125,7 @@ class SampleDetail extends React.Component {
 
 const mapStateToProps = (state) => {
     return {
-        detail: state.samples.detail,
-        account: state.account
+        detail: state.samples.detail
     };
 };
 
