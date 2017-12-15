@@ -21,8 +21,8 @@ import {
 
 const initialState = {
     documents: null,
-    modifiedCount: 0,
-    totalVirusCount: 0,
+    modified_count: 0,
+    total_virus_count: 0,
     error: false,
     detail: null,
     history: null,
@@ -37,22 +37,14 @@ export default function indexesReducer (state = initialState, action) {
         case WS_UPDATE_INDEX:
             return {
                 ...state,
-                viruses: concat(
+                documents: concat(
                     reject(state.documents, {index_id: action.index_id}),
                     {...find(state.documents, {index_id: action.index_id}), ...action.data}
                 )
             };
 
         case FIND_INDEXES.SUCCEEDED:
-            return {
-                ...state,
-                documents: action.data.documents,
-                page: action.data.page,
-                foundCount: action.data.found_count,
-                totalCount: action.data.total_count,
-                modifiedCount: action.data.modified_virus_count,
-                totalVirusCount: action.data.total_virus_count
-            };
+            return {...state, ...action.data};
 
         case GET_INDEX.REQUESTED:
             return {...state, detail: null};

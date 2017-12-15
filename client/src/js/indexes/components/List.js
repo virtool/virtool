@@ -32,7 +32,7 @@ class IndexesList extends React.Component {
 
         let content;
 
-        if (this.props.totalVirusCount > 0) {
+        if (this.props.total_virus_count > 0) {
             // Set to true when a ready index has been seen when mapping through the index documents. Used to mark only
             // the newest ready index with a checkmark in the index list.
             let haveSeenReady = false;
@@ -55,7 +55,7 @@ class IndexesList extends React.Component {
 
             let alert;
 
-            if (this.props.modifiedCount) {
+            if (this.props.modified_virus_count) {
                 let button;
 
                 if (this.props.canRebuild) {
@@ -127,10 +127,7 @@ class IndexesList extends React.Component {
 }
 
 const mapStateToProps = (state) => {
-    return {
-        ...state.indexes,
-        canRebuild: state.account.permissions.rebuild_index
-    };
+    return {...state.indexes, canRebuild: state.account.permissions.rebuild_index};
 };
 
 const mapDispatchToProps = (dispatch) => {
