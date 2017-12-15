@@ -7,7 +7,7 @@
  *
  */
 
-import { call, put, select, takeEvery, takeLatest } from "redux-saga/effects";
+import { put, select, takeEvery, takeLatest } from "redux-saga/effects";
 
 import filesAPI from "./api";
 import { setPending } from "../wrappers";
@@ -44,7 +44,7 @@ export function* findFilesWithPending (action) {
 export function* removeFile (action) {
     yield setPending(function* (action) {
         try {
-            const response = yield call(filesAPI.remove, action.fileId);
+            const response = yield filesAPI.remove(action.fileId);
             yield put({type: REMOVE_FILE.SUCCEEDED, data: response.body});
         } catch (error) {
             yield put({type: REMOVE_FILE.FAILED}, error);

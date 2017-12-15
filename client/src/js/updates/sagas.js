@@ -7,7 +7,7 @@
  *
  */
 
-import { call, put, takeLatest } from "redux-saga/effects";
+import { put, takeLatest } from "redux-saga/effects";
 import updatesAPI from "./api";
 import {
     GET_SOFTWARE_UPDATES,
@@ -25,7 +25,7 @@ export function* watchUpdates () {
 
 function* getSoftwareUpdates () {
     try {
-        const response = yield call(updatesAPI.getSoftware);
+        const response = yield updatesAPI.getSoftware();
         yield put({type: GET_SOFTWARE_UPDATES.SUCCEEDED, data: response.body});
     } catch(error) {
         yield put({type: GET_SOFTWARE_UPDATES.FAILED})
@@ -40,7 +40,7 @@ function* setSoftwareChannel (action) {
 
 function* getDatabaseUpdates () {
     try {
-        const response = yield call(updatesAPI.getDatabase);
+        const response = yield updatesAPI.getDatabase();
         yield put({type: GET_DATABASE_UPDATES.SUCCEEDED, data: response.body});
     } catch(error) {
         yield put({type: GET_DATABASE_UPDATES.FAILED})
@@ -49,7 +49,7 @@ function* getDatabaseUpdates () {
 
 function* installSoftwareUpdates () {
     try {
-        const response = yield call(updatesAPI.installSoftwareUpdates);
+        const response = yield updatesAPI.installSoftwareUpdates();
         yield put({type: INSTALL_SOFTWARE_UPDATES.SUCCEEDED, data: response.body});
     } catch(error) {
         yield put({type: INSTALL_SOFTWARE_UPDATES.FAILED})

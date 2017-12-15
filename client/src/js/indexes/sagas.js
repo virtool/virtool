@@ -7,7 +7,7 @@
  *
  */
 
-import { call, put, takeEvery, takeLatest } from "redux-saga/effects";
+import { put, takeEvery, takeLatest } from "redux-saga/effects";
 
 import indexesAPI from "./api";
 import { setPending } from "../wrappers";
@@ -24,7 +24,7 @@ export function* watchIndexes () {
 export function* findIndexes (action) {
     yield setPending(function* () {
         try {
-            const response = yield call(indexesAPI.find);
+            const response = yield indexesAPI.find();
             yield put({type: FIND_INDEXES.SUCCEEDED, data: response.body});
         } catch (error) {
             yield put({type: FIND_INDEXES.FAILED}, error);
@@ -35,7 +35,7 @@ export function* findIndexes (action) {
 export function* getIndex (action) {
     yield setPending(function* (action) {
         try {
-            const response = yield call(indexesAPI.get, action.indexVersion);
+            const response = yield indexesAPI.get(action.indexVersion);
             yield put({type: GET_INDEX.SUCCEEDED, data: response.body});
         } catch (error) {
             yield put({type: GET_INDEX.FAILED}, error);
@@ -46,7 +46,7 @@ export function* getIndex (action) {
 export function* getUnbuilt (action) {
     yield setPending(function* () {
         try {
-            const response = yield call(indexesAPI.getUnbuilt);
+            const response = yield indexesAPI.getUnbuilt();
             yield put({type: GET_UNBUILT.SUCCEEDED, data: response.body});
         } catch (error) {
             yield put({type: GET_UNBUILT.FAILED}, error);
@@ -69,7 +69,7 @@ export function* createIndex (action) {
 export function* getIndexHistory (action) {
     yield setPending(function* (action) {
         try {
-            const response = yield call(indexesAPI.getHistory, action.indexVersion);
+            const response = yield indexesAPI.getHistory(action.indexVersion);
             yield put({type: GET_INDEX_HISTORY.SUCCEEDED, data: response.body});
         } catch (error) {
             yield put({type: GET_INDEX_HISTORY.FAILED}, error);
