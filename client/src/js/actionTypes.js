@@ -80,7 +80,9 @@ export const SHOW_REMOVE_SEQUENCE = "SHOW_REMOVE_SEQUENCE";
 export const HIDE_VIRUS_MODAL = "HIDE_VIRUS_MODAL";
 
 // HMMs
-["FIND_HMMS", "GET_HMM", "INSTALL_HMMS"].forEach(type => createRequestActionType(type));
+export const FIND_HMMS = createRequestActionType("FIND_HMMS");
+export const GET_HMM = createRequestActionType("GET_HMM");
+export const INSTALL_HMMS = createRequestActionType("IMPORT_HMMS");
 
 // Indexes
 export const WS_UPDATE_INDEX = "WS_UPDATE_INDEX";
