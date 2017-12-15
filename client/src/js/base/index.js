@@ -14,3 +14,4 @@ export * from "./ProgressBar";
 export * from "./Radio";
 export * from "./RelativeTime";
 export * from "./Tooltip";
+export * from "./ViewHeader";
