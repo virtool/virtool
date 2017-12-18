@@ -3,8 +3,7 @@ import PropTypes from "prop-types";
 import Numeral from "numeral";
 import { connect } from "react-redux";
 import { Label, Table } from "react-bootstrap";
-import { ClipLoader } from "halogenium";
-import { RelativeTime } from "../../../base";
+import { IDRow, LoadingPlaceholder, RelativeTime } from "../../../base";
 
 import { getAnalysis } from "../../actions";
 import { getTaskDisplayName } from "../../../utils";
@@ -30,11 +29,7 @@ class AnalysisDetail extends React.Component {
     render () {
 
         if (this.props.detail === null) {
-            return (
-                <div className="text-center" style={{height: "500px", paddingTop: "220px"}}>
-                    <ClipLoader color="#3c8786" />
-                </div>
-            );
+            return <LoadingPlaceholder />;
         }
 
         const detail = this.props.detail;
@@ -69,6 +64,7 @@ class AnalysisDetail extends React.Component {
                             <th>Index Version</th>
                             <td><Label>{detail.index.version}</Label></td>
                         </tr>
+                        <IDRow id={detail.id} />
                         <tr>
                             <th>Library Read Count</th>
                             <td>{Numeral(detail.read_count).format()}</td>
@@ -90,20 +86,18 @@ class AnalysisDetail extends React.Component {
     }
 }
 
-const mapStateToProps = (state) => {
-    return {
-        detail: state.samples.analysisDetail,
-        quality: state.samples.detail.quality
-    };
-};
+const mapStateToProps = (state) => ({
+    detail: state.samples.analysisDetail,
+    quality: state.samples.detail.quality
+});
 
-const mapDispatchToProps = (dispatch) => {
-    return {
-        getAnalysis: (analysisId) => {
-            dispatch(getAnalysis(analysisId));
-        }
-    };
-};
+const mapDispatchToProps = (dispatch) => ({
+
+    getAnalysis: (analysisId) => {
+        dispatch(getAnalysis(analysisId));
+    }
+
+});
 
 const Container = connect(mapStateToProps, mapDispatchToProps)(AnalysisDetail);
 

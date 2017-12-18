@@ -1,18 +1,7 @@
-/**
- * @license
- * The MIT License (MIT)
- * Copyright 2015 Government of Canada
- *
- * @author
- * Ian Boyes
- *
- * @exports JobsToolbar
- */
-
 import React from "react";
 import { connect } from "react-redux";
 import { LinkContainer } from "react-router-bootstrap";
-import {InputGroup, FormGroup, FormControl, Dropdown, MenuItem} from "react-bootstrap";
+import { InputGroup, FormGroup, FormControl, Dropdown, MenuItem } from "react-bootstrap";
 
 import { clearJobs } from "../actions";
 import { Icon, Button } from "../../base";
@@ -60,19 +49,17 @@ const JobsToolbar = (props) => {
     );
 };
 
-const mapStateToProps = (state) => {
-    return {
-        canRemove: state.account.permissions.remove_job
-    };
-};
+const mapStateToProps = (state) => ({
+    canRemove: state.account.permissions.remove_job
+});
 
-const mapDispatchToProps = (dispatch) => {
-    return {
-        onClear: (scope) => {
-            dispatch(clearJobs(scope));
-        }
-    };
-};
+const mapDispatchToProps = (dispatch) => ({
+
+    onClear: (scope) => {
+        dispatch(clearJobs(scope));
+    }
+
+});
 
 const Container = connect(mapStateToProps, mapDispatchToProps)(JobsToolbar);
 

@@ -1,21 +1,10 @@
-/**
- * @license
- * The MIT License (MIT)
- * Copyright 2015 Government of Canada
- *
- * @author
- * Ian Boyes
- *
- * @exports Welcome
- */
-
 import React from "react";
 import { get } from "lodash";
 import { connect } from "react-redux";
 import { Panel } from "react-bootstrap";
 
 import { getSoftwareUpdates } from "../../updates/actions";
-import { Icon } from "../../base";
+import { Icon, LoadingPlaceholder } from "../../base";
 
 class Welcome extends React.Component {
 
@@ -24,39 +13,47 @@ class Welcome extends React.Component {
     }
 
     render () {
-        if (!this.props.version) {
-            return <div />;
-        }
+        let content;
 
-        return (
-            <div className="container">
+        if (this.props.version) {
+            content = (
                 <Panel>
                     <h3>Virtool <small className="text-muted">{this.props.version}</small></h3>
                     <p>Viral infection diagnostics using next-generation sequencing</p>
 
                     <a className="btn btn-default" href="http://www.virtool.ca/" target="_blank"
-                       rel="noopener noreferrer">
+                        rel="noopener noreferrer">
                         <Icon name="vtlogo"/> Website
                     </a>
                 </Panel>
+            );
+        } else {
+            content = (
+                <Panel>
+                    <LoadingPlaceholder margin={0} />
+                </Panel>
+            );
+        }
+
+        return (
+            <div className="container">
+                {content}
             </div>
         );
     }
 }
 
-const mapStateToProps = (state) => {
-    return {
-        version: get(state.updates.software, "current_version")
-    };
-};
+const mapStateToProps = (state) => ({
+    version: get(state.updates.software, "current_version")
+});
 
-const mapDispatchToProps = (dispatch) => {
-    return {
-        onGet: () => {
-            dispatch(getSoftwareUpdates());
-        }
-    };
-};
+const mapDispatchToProps = (dispatch) => ({
+
+    onGet: () => {
+        dispatch(getSoftwareUpdates());
+    }
+
+});
 
 const Container = connect(mapStateToProps, mapDispatchToProps)(Welcome);
 

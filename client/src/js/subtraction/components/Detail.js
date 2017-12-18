@@ -1,29 +1,15 @@
-/**
- * @license
- * The MIT License (MIT)
- * Copyright 2015 Government of Canada
- *
- * @author
- * Ian Boyes
- *
- * @exports SubtractionDetail
- */
-
 import React from "react";
 import Numeral from "numeral";
 import { connect } from "react-redux";
 import { push } from "react-router-redux";
 import { LinkContainer } from "react-router-bootstrap";
-import { ClipLoader } from "halogenium";
-import { ListGroup, ListGroupItem, Row, Col, Badge, Table } from "react-bootstrap";
+import { Badge, Col, Row, Table } from "react-bootstrap";
 
 import { getSubtraction } from "../actions";
-import { Button, Flex, FlexItem, Icon } from "../../base";
+import { Button, Flex, FlexItem, Icon, LoadingPlaceholder, NoneFound } from "../../base";
 import RemoveSubtraction from "./Remove";
 
-const calculateGC = (nucleotides) => {
-    return Numeral(1 - nucleotides.a - nucleotides.t - nucleotides.n).format("0.000")
-};
+const calculateGC = (nucleotides) => Numeral(1 - nucleotides.a - nucleotides.t - nucleotides.n).format("0.000");
 
 class SubtractionDetail extends React.Component {
 
@@ -34,11 +20,7 @@ class SubtractionDetail extends React.Component {
     render () {
 
         if (this.props.detail === null) {
-            return (
-                <div className="text-center" style={{marginTop: "220px"}}>
-                    <ClipLoader color="#3c8786" />
-                </div>
-            );
+            return <LoadingPlaceholder />;
         }
 
         const data = this.props.detail;
@@ -49,7 +31,7 @@ class SubtractionDetail extends React.Component {
             if (data.linked_samples.length) {
                 const linkedSampleComponents = data.linked_samples.map(sample =>
                     <Col key={sample.id} className="linked-sample-button" xs={6} sm={4} md={3} lg={2}>
-                        <LinkContainer  to={`/samples/${sample.id}`}>
+                        <LinkContainer to={`/samples/${sample.id}`}>
                             <Button block>
                                 {sample.name}
                             </Button>
@@ -63,13 +45,7 @@ class SubtractionDetail extends React.Component {
                     </Row>
                 );
             } else {
-                linkedSamples = (
-                    <ListGroup>
-                        <ListGroupItem className="text-center">
-                            <Icon name="info" /> No linked samples found.
-                        </ListGroupItem>
-                    </ListGroup>
-                );
+                linkedSamples = <NoneFound noun="linked samples" />;
             }
 
             return (
@@ -90,7 +66,7 @@ class SubtractionDetail extends React.Component {
                                         />
                                     </small>
                                 </FlexItem>
-                            ): null}
+                            ) : null}
                         </Flex>
                     </h3>
 
@@ -119,33 +95,26 @@ class SubtractionDetail extends React.Component {
             );
         }
 
-        return (
-            <div className="text-center" style={{marginTop: "220px"}}>
-                <p>Subtraction is still being imported.</p>
-                <ClipLoader color="#3c8786" />
-            </div>
-        )
+        return <LoadingPlaceholder message="Subtraction is still being imported" />;
     }
 }
 
-const mapStateToProps = (state) => {
-    return {
-        canModify: state.account.permissions.modify_subtraction,
-        detail: state.subtraction.detail
-    };
-};
+const mapStateToProps = (state) => ({
+    canModify: state.account.permissions.modify_subtraction,
+    detail: state.subtraction.detail
+});
 
-const mapDispatchToProps = (dispatch) => {
-    return {
-        onGet: (subtractionId) => {
-            dispatch(getSubtraction(subtractionId));
-        },
+const mapDispatchToProps = (dispatch) => ({
 
-        onShowRemove: () => {
-            dispatch(push({state: {removeSubtraction: true}}));
-        }
-    };
-};
+    onGet: (subtractionId) => {
+        dispatch(getSubtraction(subtractionId));
+    },
+
+    onShowRemove: () => {
+        dispatch(push({state: {removeSubtraction: true}}));
+    }
+
+});
 
 const Container = connect(mapStateToProps, mapDispatchToProps)(SubtractionDetail);
 

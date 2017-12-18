@@ -10,7 +10,7 @@
 import React from "react";
 import { connect } from "react-redux";
 import { push } from "react-router-redux";
-import { Link, Route } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { LinkContainer } from "react-router-bootstrap";
 import { Alert, Row, Col, ListGroup, Pagination } from "react-bootstrap";
 
@@ -18,12 +18,9 @@ import { findViruses } from "../actions";
 import { Flex, FlexItem, Icon, ListGroupItem, ViewHeader } from "../../base";
 import VirusToolbar from "./Toolbar";
 import CreateVirus from "./Create";
+import VirusImport from "./Import";
 
 class VirusesList extends React.Component {
-
-    constructor (props) {
-        super(props)
-    }
 
     componentDidMount () {
         this.props.onFind();
@@ -60,7 +57,7 @@ class VirusesList extends React.Component {
         if (virusCount > 0) {
             virusComponents = this.props.documents.map(document =>
                 <LinkContainer to={`/viruses/${document.id}`} key={document.id} className="spaced">
-                    <ListGroupItem bsStyle={document.verified ? null: "warning"}>
+                    <ListGroupItem bsStyle={document.verified ? null : "warning"}>
                         <Row>
                             <Col xs={11} md={7}>
                                 <strong>{document.name}</strong>
@@ -73,7 +70,7 @@ class VirusesList extends React.Component {
                             </Col>
                             <Col xs={1} md={1}>
                                 <span className="pull-right">
-                                    {document.modified ? <Icon bsStyle="warning" name="flag" />: null}
+                                    {document.modified ? <Icon bsStyle="warning" name="flag" /> : null}
                                 </span>
                             </Col>
                         </Row>
@@ -143,48 +140,35 @@ class VirusesList extends React.Component {
                     />
                 </div>
 
-                <Route children={({ location }) => {
-                    return <CreateVirus {...this.props} show={!!location.state && location.state.createVirus} />;
-                }} />
+                <CreateVirus {...this.props} />
+
+                <VirusImport />
             </div>
         );
 
     }
 }
 
-const mapStateToProps = (state) => {
-    return {
-        documents: state.viruses.documents,
-        modified: state.viruses.modified,
-        page: state.viruses.page,
-        pageCount: state.viruses.pageCount,
-        totalCount: state.viruses.totalCount,
-        foundCount: state.viruses.foundCount,
-        modifiedCount: state.viruses.modifiedCount,
-        account: state.account
-    };
-};
+const mapStateToProps = state => ({
+    ...state.viruses,
+    account: state.account
+});
 
-const mapDispatchToProps = (dispatch, ownProps) => {
-    return {
-        onFind: (url = new window.URL(window.location)) => {
-            dispatch(push(url.pathname + url.search));
-            dispatch(findViruses(url.searchParams.get("find"), url.searchParams.get("page") || 1));
-        },
+const mapDispatchToProps = (dispatch, ownProps) => ({
+    onFind: (url = new window.URL(window.location)) => {
+        dispatch(push(url.pathname + url.search));
+        dispatch(findViruses(url.searchParams.get("find"), url.searchParams.get("page") || 1));
+    },
 
-        onToggleModifiedOnly: () => {
-            dispatch(findViruses({modified: !ownProps.modified}));
-        },
+    onToggleModifiedOnly: () => {
+        dispatch(findViruses({modified: !ownProps.modified}));
+    },
 
-        onHide: () => {
-            dispatch(push({state: {createVirus: false}}));
-        }
-    };
-};
+    onHide: () => {
+        dispatch(push({state: {createVirus: false}}));
+    }
+});
 
-const Container = connect(
-    mapStateToProps,
-    mapDispatchToProps
-)(VirusesList);
+const Container = connect(mapStateToProps, mapDispatchToProps)(VirusesList);
 
 export default Container;

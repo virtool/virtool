@@ -1,25 +1,8 @@
-/**
- *
- *
- * @copyright 2017 Government of Canada
- * @license MIT
- * @author igboyes
- *
- */
-/**
- *
- *
- * @copyright 2017 Government of Canada
- * @license MIT
- * @author igboyes
- *
- */
-
 import React from "react";
+import Gauge from "react-svg-gauge";
 import { mean } from "lodash";
 import { connect } from "react-redux";
-import Gauge from "react-svg-gauge";
-import { Flex, FlexItem } from "../../base";
+import { Flex, FlexItem, LoadingPlaceholder } from "../../base";
 
 import { getResources } from "../actions";
 
@@ -31,12 +14,12 @@ class JobsResources extends React.Component {
     }
 
     componentWillUnmount () {
-        window.clearInterval(this.timer)
+        window.clearInterval(this.timer);
     }
 
     render () {
         if (this.props.resources === null) {
-            return <div />;
+            return <LoadingPlaceholder />;
         }
 
         const color = "#d44b40";
@@ -108,23 +91,18 @@ class JobsResources extends React.Component {
     }
 }
 
-const mapStateToProps = (state) => {
-    return {
-        resources: state.jobs.resources
-    };
-};
+const mapStateToProps = (state) => ({
+    resources: state.jobs.resources
+});
 
-const mapDispatchToProps = (dispatch) => {
-    return {
-        onGet: () => {
-            dispatch(getResources());
-        }
-    };
-};
+const mapDispatchToProps = (dispatch) => ({
 
-const Container = connect(
-    mapStateToProps,
-    mapDispatchToProps
-)(JobsResources);
+    onGet: () => {
+        dispatch(getResources());
+    }
+
+});
+
+const Container = connect(mapStateToProps, mapDispatchToProps)(JobsResources);
 
 export default Container;

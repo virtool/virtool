@@ -94,20 +94,18 @@ class CreateUser extends React.PureComponent {
     );
 }
 
-const mapStateToProps = (state) => {
-    return {
-        error: state.users.createError,
-        pending: state.users.createPending
-    };
-};
+const mapStateToProps = state => ({
+    error: state.users.createError,
+    pending: state.users.createPending
+});
 
-const mapDispatchToProps = (dispatch) => {
-    return {
-        onCreate: (userId, password, forceReset) => {
-            dispatch(createUser(userId, password, forceReset));
-        }
-    };
-};
+const mapDispatchToProps = dispatch => ({
+
+    onCreate: (userId, password, forceReset) => {
+        dispatch(createUser(userId, password, forceReset));
+    }
+
+});
 
 const Container = connect(mapStateToProps, mapDispatchToProps)(CreateUser);
 

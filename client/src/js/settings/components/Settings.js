@@ -1,12 +1,3 @@
-/**
- *
- *
- * @copyright 2017 Government of Canada
- * @license MIT
- * @author igboyes
- *
- */
-
 import React from "react";
 import { connect } from "react-redux";
 import { Switch, Redirect, Route } from "react-router-dom";
@@ -57,7 +48,7 @@ const Settings = ({ settings }) => {
             <div className="text-center" style={{marginTop: "220px"}}>
                 <ClipLoader color="#3c8786" />
             </div>
-        )
+        );
     } else {
         content = (
             <Switch>
@@ -111,11 +102,9 @@ const Settings = ({ settings }) => {
     );
 };
 
-const mapStateToProps = (state) => {
-    return {
-        settings: state.settings.data
-    };
-};
+const mapStateToProps = (state) => ({
+    settings: state.settings.data
+});
 
 const Container = connect(mapStateToProps)(Settings);
 

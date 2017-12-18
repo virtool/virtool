@@ -5,7 +5,7 @@ import { Row, Col, Label } from "react-bootstrap";
 import { Flex, FlexItem } from "../../../../base";
 
 export default class NuVsEntry extends React.Component {
-    
+
     static propTypes = {
         in: PropTypes.bool,
         index: PropTypes.number,
@@ -25,7 +25,7 @@ export default class NuVsEntry extends React.Component {
             height: "21px"
         };
 
-        const className = CX("list-group-item", "spaced", {"hoverable": !this.props.in});
+        const className = CX("list-group-item", "spaced", {hoverable: !this.props.in});
 
         let closeButton;
 
@@ -40,7 +40,7 @@ export default class NuVsEntry extends React.Component {
         }
 
         return (
-            <div className={className} onClick={() => {if (!this.props.in) this.props.toggleIn(this.props.index)}}>
+            <div className={className} onClick={this.props.in ? null : () => this.props.toggleIn(this.props.index)}>
                 <Row>
                     <Col md={3}>
                         <strong>Sequence {this.props.index}</strong>

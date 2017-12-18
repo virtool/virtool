@@ -1,12 +1,3 @@
-/**
- *
- *
- * @copyright 2017 Government of Canada
- * @license MIT
- * @author igboyes
- *
- */
-
 import { reject, sortBy, unionBy } from "lodash";
 import { LIST_GROUPS, CREATE_GROUP, SET_GROUP_PERMISSION, REMOVE_GROUP } from "../actionTypes";
 
@@ -16,9 +7,11 @@ const initialState = {
     createError: false
 };
 
-const updateGroup = (state, update) => {
-    return {...state, pending: false, list: sortBy(unionBy([update], state.list, "id"), "id")};
-};
+const updateGroup = (state, update) => ({
+    ...state,
+    pending: false,
+    list: sortBy(unionBy([update], state.list, "id"), "id")
+});
 
 export default function groupsReducer (state = initialState, action) {
     switch (action.type) {

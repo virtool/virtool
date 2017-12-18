@@ -1,17 +1,8 @@
-/**
- *
- *
- * @copyright 2017 Government of Canada
- * @license MIT
- * @author igboyes
- *
- */
-
 import { put, select, takeEvery, takeLatest } from "redux-saga/effects";
 
 import filesAPI from "./api";
 import { setPending } from "../wrappers";
-import { WS_UPDATE_FILE, WS_REMOVE_FILE, FIND_FILES, REMOVE_FILE, UPLOAD }  from "../actionTypes";
+import { WS_UPDATE_FILE, WS_REMOVE_FILE, FIND_FILES, REMOVE_FILE, UPLOAD } from "../actionTypes";
 
 export function* watchFiles () {
     yield takeLatest(WS_REMOVE_FILE, wsUpdateFile);
@@ -49,7 +40,7 @@ export function* removeFile (action) {
         } catch (error) {
             yield put({type: REMOVE_FILE.FAILED}, error);
         }
-    }, action)
+    }, action);
 }
 
 export function* upload (action) {

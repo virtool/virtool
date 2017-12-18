@@ -1,40 +1,20 @@
-/**
- * Actions and action creators for working with administrative settings.
- *
- * @copyright 2017 Government of Canada
- * @license MIT
- * @author igboyes
- *
- */
+import { simpleActionCreator } from "../utils";
+import { GET_SETTINGS, UPDATE_SETTINGS, GET_CONTROL_READAHEAD } from "../actionTypes";
 
-import {
-    GET_SETTINGS,
-    UPDATE_SETTINGS,
-    GET_CONTROL_READAHEAD
-} from "../actionTypes";
+export const getSettings = simpleActionCreator(GET_SETTINGS.REQUESTED);
 
-export function getSettings () {
-    return {
-        type: GET_SETTINGS.REQUESTED
-    }
-}
+export const updateSettings = (update) => ({
+    type: UPDATE_SETTINGS.REQUESTED,
+    update
+});
 
-export function updateSetting (key, value) {
-    let update = {};
+export const updateSetting = (key, value) => {
+    const update = {};
     update[key] = value;
     return updateSettings(update);
-}
+};
 
-export function updateSettings (update) {
-    return {
-        type: UPDATE_SETTINGS.REQUESTED,
-        update
-    };
-}
-
-export function getControlReadahead (term) {
-    return {
-        type: GET_CONTROL_READAHEAD.REQUESTED,
-        term
-    }
-}
+export const getControlReadahead = (term) => ({
+    type: GET_CONTROL_READAHEAD.REQUESTED,
+    term
+});

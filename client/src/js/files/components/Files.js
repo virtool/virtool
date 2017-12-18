@@ -4,11 +4,11 @@ import Dropzone from "react-dropzone";
 import { push } from "react-router-redux";
 import { capitalize, filter } from "lodash";
 import { connect } from "react-redux";
-import { Col, ListGroup, Pagination, Row } from "react-bootstrap";
+import { Col, ListGroup, Row } from "react-bootstrap";
 
 import { byteSize, createRandomString } from "../../utils";
 import { findFiles, removeFile, upload, uploadProgress } from "../actions";
-import { Button, Icon, ListGroupItem, RelativeTime, ViewHeader } from "../../base";
+import { Button, Icon, ListGroupItem, LoadingPlaceholder, Pagination, RelativeTime, ViewHeader } from "../../base";
 
 const File = (props) => {
     let creation;
@@ -74,7 +74,7 @@ class FileManager extends React.Component {
 
     render () {
         if (this.props.documents === null) {
-            return <div />;
+            return <LoadingPlaceholder />;
         }
 
         let fileComponents = filter(this.props.documents, {type: this.props.fileType}).map(document =>
@@ -93,7 +93,7 @@ class FileManager extends React.Component {
             );
         }
 
-        const titleType = this.props.fileType === "reads" ? "Read": capitalize(this.props.fileType);
+        const titleType = this.props.fileType === "reads" ? "Read" : capitalize(this.props.fileType);
 
         return (
             <div>
@@ -123,51 +123,40 @@ class FileManager extends React.Component {
                     {fileComponents}
                 </ListGroup>
 
-                {this.props.page_count > 1 ? (
-                    <div className="text-center">
-                        <Pagination
-                            items={this.props.page_count}
-                            maxButtons={10}
-                            activePage={this.props.page}
-                            onSelect={this.handlePage}
-                            first
-                            last
-                            next
-                            prev
-                        />
-                    </div>
-                ): null}
+                <Pagination
+                    documentCount={this.props.documents.length}
+                    page={this.props.page}
+                    pageCount={this.props.page_count}
+                    onPage={this.handlePage}
+                />
             </div>
-        )
+        );
     }
 }
 
-const mapStateToProps = (state) => {
-    return {...state.files};
-};
+const mapStateToProps = (state) => ({...state.files});
 
-const mapDispatchProps = (dispatch) => {
-    return {
+const mapDispatchProps = (dispatch) => ({
 
-        onFind: (fileType, page = 1) => {
-            const url = new window.URL(window.location);
-            url.searchParams.set("page", page);
-            dispatch(push(url.pathname + url.search));
-            dispatch(findFiles(fileType, page));
-        },
+    onFind: (fileType, page = 1) => {
+        const url = new window.URL(window.location);
+        url.searchParams.set("page", page);
+        dispatch(push(url.pathname + url.search));
+        dispatch(findFiles(fileType, page));
+    },
 
-        onRemove: (fileId) => {
-            dispatch(removeFile(fileId));
-        },
+    onRemove: (fileId) => {
+        dispatch(removeFile(fileId));
+    },
 
-        onDrop: (fileType, acceptedFiles) => {
-            acceptedFiles.forEach(file => {
-                const localId = createRandomString();
-                dispatch(upload(localId, file, fileType, (e) => dispatch(uploadProgress(localId, e.percent))));
-            });
-        }
-    };
-};
+    onDrop: (fileType, acceptedFiles) => {
+        acceptedFiles.forEach(file => {
+            const localId = createRandomString();
+            dispatch(upload(localId, file, fileType, (e) => dispatch(uploadProgress(localId, e.percent))));
+        });
+    }
+
+});
 
 const Container = connect(mapStateToProps, mapDispatchProps)(FileManager);
 

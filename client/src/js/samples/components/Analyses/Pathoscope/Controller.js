@@ -70,7 +70,7 @@ export default class PathoscopeController extends React.Component {
 
         let data = sortBy(this.props.data, this.state.sortKey);
 
-        const re = this.state.findTerm ? new RegExp(this.state.findTerm, "i"): null;
+        const re = this.state.findTerm ? new RegExp(this.state.findTerm, "i") : null;
 
         if (this.state.filterViruses) {
             const totalReadsMapped = sum(data.map(v => v.reads));
@@ -84,9 +84,10 @@ export default class PathoscopeController extends React.Component {
         }
 
         if (this.state.filterIsolates) {
-            data = data.map(virus => {
-                return {...virus, isolates: filter(virus.isolates, isolate => isolate.pi >= 0.03 * virus.pi)};
-            });
+            data = data.map(virus => ({
+                ...virus,
+                isolates: filter(virus.isolates, isolate => isolate.pi >= 0.03 * virus.pi)
+            }));
         }
 
         if (this.state.sortDescending) {
@@ -116,7 +117,7 @@ export default class PathoscopeController extends React.Component {
                                 <InputGroup>
                                     <InputGroup.Button>
                                         <Button title="Sort Direction" onClick={this.toggleSortDescending}>
-                                            <Icon name={this.state.sortDescending ? "sort-desc": "sort-asc"} />
+                                            <Icon name={this.state.sortDescending ? "sort-desc" : "sort-asc"} />
                                         </Button>
                                     </InputGroup.Button>
                                     <FormControl

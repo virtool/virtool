@@ -1,14 +1,3 @@
-/**
- * @license
- * The MIT License (MIT)
- * Copyright 2015 Government of Canada
- *
- * @author
- * Ian Boyes
- *
- * @exports RemoveSample
- */
-
 import React from "react";
 import { connect } from "react-redux";
 
@@ -25,23 +14,21 @@ const RemoveSample = ({ id, name, show, onHide, onConfirm }) => (
     />
 );
 
-const mapStateToProps = (state) => {
-    return {
-        show: state.samples.showRemove
-    };
-};
+const mapStateToProps = (state) => ({
+    show: state.samples.showRemove
+});
 
-const mapDispatchToProps = (dispatch) => {
-    return {
-        onHide: () => {
-            dispatch(hideSampleModal());
-        },
+const mapDispatchToProps = (dispatch) => ({
 
-        onConfirm: (sampleId) => {
-            dispatch(removeSample(sampleId));
-        }
-    };
-};
+    onHide: () => {
+        dispatch(hideSampleModal());
+    },
+
+    onConfirm: (sampleId) => {
+        dispatch(removeSample(sampleId));
+    }
+
+});
 
 const Container = connect(mapStateToProps, mapDispatchToProps)(RemoveSample);
 

@@ -13,7 +13,8 @@ import React from "react";
 import { capitalize, find } from "lodash";
 import { connect } from "react-redux";
 import { Badge, Label, Panel, Table, ListGroup } from "react-bootstrap";
-
+import { Icon, IDRow, ListGroupItem, NoneFound } from "../../../base";
+import { formatIsolateName, followDownload } from "../../../utils";
 import {
     setIsolateAsDefault,
     showEditIsolate,
@@ -22,8 +23,6 @@ import {
     showEditSequence,
     showRemoveSequence
 } from "../../actions";
-import { Icon, ListGroupItem } from "../../../base";
-import { formatIsolateName, followDownload } from "../../../utils";
 import Sequence from "./Sequence";
 import EditIsolate from "./EditIsolate";
 import RemoveIsolate from "./RemoveIsolate";
@@ -38,7 +37,7 @@ const IsolateDetail = (props) => {
     const isolateName = formatIsolateName(isolate);
 
     const defaultIsolateLabel = (
-        <Label bsStyle="info" style={{visibility: props.default ? "visible": "hidden"}}>
+        <Label bsStyle="info" style={{visibility: props.default ? "visible" : "hidden"}}>
             <Icon name="star" /> Default Isolate
         </Label>
     );
@@ -55,11 +54,7 @@ const IsolateDetail = (props) => {
     );
 
     if (!sequenceComponents.length) {
-        sequenceComponents = (
-            <ListGroupItem className="text-center">
-                <Icon name="info" /> No sequences added
-            </ListGroupItem>
-        );
+        sequenceComponents = <NoneFound noun="sequences" noListGroup />;
     }
 
     let modifyIcons;
@@ -75,7 +70,7 @@ const IsolateDetail = (props) => {
                     style={{paddingLeft: "7px"}}
                 />
 
-                {isolate.default ? null: (
+                {isolate.default ? null : (
                     <Icon
                         name="star"
                         bsStyle="success"
@@ -109,7 +104,7 @@ const IsolateDetail = (props) => {
                 virusId={props.virusId}
                 isolateId={isolate.id}
                 isolateName={isolateName}
-                nextIsolateId={props.isolates.length ? props.isolates[0].id: null}
+                nextIsolateId={props.isolates.length ? props.isolates[0].id : null}
             />
 
             <AddSequence
@@ -164,17 +159,12 @@ const IsolateDetail = (props) => {
                                 <tr>
                                     <th>Default</th>
                                     <td>
-                                        <Label bsStyle={isolate.default ? "success": "default"}>
-                                            {isolate.default ? "Yes": "No"}
+                                        <Label bsStyle={isolate.default ? "success" : "default"}>
+                                            {isolate.default ? "Yes" : "No"}
                                         </Label>
                                     </td>
                                 </tr>
-                                {props.showIds ? (
-                                    <tr>
-                                        <th>Unique ID</th>
-                                        <td>{isolate.id}</td>
-                                    </tr>
-                                ): null}
+                                <IDRow id={isolate.id} />
                             </tbody>
                         </Table>
 
@@ -191,7 +181,7 @@ const IsolateDetail = (props) => {
                                     onClick={() => props.showAddSequence()}
                                     pullRight
                                 />
-                            ): null}
+                            ) : null}
                         </div>
                     </ListGroupItem>
 
@@ -202,48 +192,45 @@ const IsolateDetail = (props) => {
     );
 };
 
-const mapStateToProps = (state) => {
-    return {
-        isolates: state.viruses.detail.isolates,
-        virusId: state.viruses.detail.id,
-        activeIsolateId: state.viruses.activeIsolateId,
-        activeSequenceId: state.viruses.activeSequenceId,
-        editing: state.viruses.editingIsolate,
-        editingSequence: state.viruses.editSequence,
-        allowedSourceTypes: state.settings.data.allowed_source_types,
-        restrictSourceTypes: state.settings.data.restrict_source_types,
-        showIds: state.account.settings.show_ids,
-        canModify: state.account.permissions.modify_virus
-    };
-};
+const mapStateToProps = state => ({
+    isolates: state.viruses.detail.isolates,
+    virusId: state.viruses.detail.id,
+    activeIsolateId: state.viruses.activeIsolateId,
+    activeSequenceId: state.viruses.activeSequenceId,
+    editing: state.viruses.editingIsolate,
+    editingSequence: state.viruses.editSequence,
+    allowedSourceTypes: state.settings.data.allowed_source_types,
+    restrictSourceTypes: state.settings.data.restrict_source_types,
+    canModify: state.account.permissions.modify_virus
+});
 
-const mapDispatchToProps = (dispatch) => {
-    return {
-        setIsolateAsDefault: (virusId, isolateId) => {
-            dispatch(setIsolateAsDefault(virusId, isolateId));
-        },
+const mapDispatchToProps = (dispatch) => ({
 
-        showEditIsolate: (virusId, isolateId, sourceType, sourceName) => {
-            dispatch(showEditIsolate(virusId, isolateId, sourceType, sourceName));
-        },
+    setIsolateAsDefault: (virusId, isolateId) => {
+        dispatch(setIsolateAsDefault(virusId, isolateId));
+    },
 
-        showRemoveIsolate: () => {
-            dispatch(showRemoveIsolate());
-        },
+    showEditIsolate: (virusId, isolateId, sourceType, sourceName) => {
+        dispatch(showEditIsolate(virusId, isolateId, sourceType, sourceName));
+    },
 
-        showAddSequence: () => {
-            dispatch(showAddSequence());
-        },
+    showRemoveIsolate: () => {
+        dispatch(showRemoveIsolate());
+    },
 
-        showEditSequence: (sequenceId) => {
-            dispatch(showEditSequence(sequenceId));
-        },
+    showAddSequence: () => {
+        dispatch(showAddSequence());
+    },
 
-        showRemoveSequence: (sequenceId) => {
-            dispatch(showRemoveSequence(sequenceId));
-        }
-    };
-};
+    showEditSequence: (sequenceId) => {
+        dispatch(showEditSequence(sequenceId));
+    },
+
+    showRemoveSequence: (sequenceId) => {
+        dispatch(showRemoveSequence(sequenceId));
+    }
+
+});
 
 const Container = connect(mapStateToProps, mapDispatchToProps)(IsolateDetail);
 

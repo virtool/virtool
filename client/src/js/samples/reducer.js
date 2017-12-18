@@ -1,12 +1,3 @@
-/**
- * Redux reducers for working with virus data.
- *
- * @copyright 2017 Government of Canada
- * @license MIT
- * @author igboyes
- *
- */
-
 import { reject } from "lodash";
 import {
     FIND_SAMPLES,
@@ -83,7 +74,7 @@ export default function samplesReducer (state = initialState, action) {
             }
 
             return {...state, documents: state.documents.map(sample =>
-                sample.id === action.data.id ? {...sample, ...action.data}: sample
+                sample.id === action.data.id ? {...sample, ...action.data} : sample
             )};
         }
 
@@ -91,7 +82,7 @@ export default function samplesReducer (state = initialState, action) {
             return {...state, detail: null, analyses: null, analysisDetail: null};
 
         case SHOW_REMOVE_SAMPLE:
-            return {...state, showEdit: false, showRemove: true};
+            return {...state, showRemove: true};
 
         case HIDE_SAMPLE_MODAL:
             return {...state, showRemove: false};
@@ -109,7 +100,7 @@ export default function samplesReducer (state = initialState, action) {
             return {...state, analysisDetail: action.data};
 
         case ANALYZE.SUCCEEDED:
-            return {...state, analyses: state.analyses === null ? null: state.analyses.concat([action.data])};
+            return {...state, analyses: state.analyses === null ? null : state.analyses.concat([action.data])};
 
         case BLAST_NUVS.REQUESTED:
             return setNuvsBLAST(state, action.analysisId, action.sequenceIndex, {ready: false});

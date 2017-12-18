@@ -1,12 +1,3 @@
-/**
- *
- *
- * @copyright 2017 Government of Canada
- * @license MIT
- * @author igboyes
- *
- */
-
 import { put, takeLatest, throttle } from "redux-saga/effects";
 
 import hmmsAPI from "./api";
@@ -27,7 +18,7 @@ export function* findHmms (action) {
         } catch (error) {
             yield put({type: FIND_HMMS.FAILED});
         }
-    }, action)
+    }, action);
 }
 
 export function* installHmms () {

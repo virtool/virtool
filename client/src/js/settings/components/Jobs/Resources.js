@@ -1,14 +1,3 @@
-/**
- * @license
- * The MIT License (MIT)
- * Copyright 2015 Government of Canada
- *
- * @author
- * Ian Boyes
- *
- * @exports JobOptions
- */
-
 import React from "react";
 import { connect } from "react-redux";
 import { Row, Col, Panel } from "react-bootstrap";
@@ -17,10 +6,6 @@ import { updateSetting } from "../../actions";
 import { InputSave } from "../../../base";
 
 
-/**
- * A component the contains child components that modify options for resource limits on the server and on specific
- * tasks.
- */
 const Resources = (props) => (
     <Row>
         <Col md={12}>
@@ -50,24 +35,22 @@ const Resources = (props) => (
     </Row>
 );
 
-const mapStateToProps = (state) => {
-    return {
-        proc: state.settings.data.proc,
-        mem: state.settings.data.mem
-    };
-};
+const mapStateToProps = (state) => ({
+    proc: state.settings.data.proc,
+    mem: state.settings.data.mem
+});
 
-const mapDispatchToProps = (dispatch) => {
-    return {
-        onUpdateProc: (value) => {
-            dispatch(updateSetting("proc", value));
-        },
+const mapDispatchToProps = (dispatch) => ({
 
-        onUpdateMem: (value) => {
-            dispatch(updateSetting("mem", value));
-        }
-    };
-};
+    onUpdateProc: (value) => {
+        dispatch(updateSetting("proc", value));
+    },
+
+    onUpdateMem: (value) => {
+        dispatch(updateSetting("mem", value));
+    }
+
+});
 
 const Container = connect(mapStateToProps, mapDispatchToProps)(Resources);
 

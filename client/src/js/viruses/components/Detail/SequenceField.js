@@ -11,7 +11,6 @@
 
 
 import React from "react";
-import PropTypes from "prop-types";
 import { Badge, FormGroup, FormControl, ControlLabel } from "react-bootstrap";
 
 /**
@@ -19,30 +18,22 @@ import { Badge, FormGroup, FormControl, ControlLabel } from "react-bootstrap";
  *
  * @class
  */
-const SequenceField = (props) => {
-    return (
-        <FormGroup>
-            <ControlLabel>
-                Sequence <Badge>{props.sequence.length}</Badge>
-            </ControlLabel>
-            <FormControl
-                name="sequence"
-                className="sequence"
-                componentClass="textarea"
-                value={props.sequence}
-                onChange={props.onChange}
-                readOnly={props.readOnly}
-                rows={5}
-            />
-        </FormGroup>
-    );
-};
-
-SequenceField.propTypes = {
-    sequence: PropTypes.string,
-    readOnly: PropTypes.bool,
-    onChange: PropTypes.func
-};
+const SequenceField = ({ sequence, readOnly, onChange }) => (
+    <FormGroup>
+        <ControlLabel>
+            Sequence <Badge>{sequence.length}</Badge>
+        </ControlLabel>
+        <FormControl
+            name="sequence"
+            className="sequence"
+            componentClass="textarea"
+            value={sequence}
+            onChange={onChange}
+            readOnly={readOnly}
+            rows={5}
+        />
+    </FormGroup>
+);
 
 SequenceField.defaultProps = {
     sequence: "",

@@ -15,10 +15,9 @@ import { connect } from "react-redux";
 import { Switch, Route, Redirect } from "react-router-dom";
 import { LinkContainer } from "react-router-bootstrap";
 import { Label, Nav, NavItem } from "react-bootstrap";
-import { ClipLoader } from "halogenium";
 
 import { getVirus, showEditVirus, showRemoveVirus } from "../../actions";
-import { Flex, FlexItem, Icon } from "../../../base";
+import { Flex, FlexItem, Icon, LoadingPlaceholder } from "../../../base";
 import IsolateEditor from "./Editor";
 import General from "./General";
 import AddIsolate from "./AddIsolate";
@@ -45,27 +44,10 @@ class VirusDetail extends React.Component {
     render = () => {
 
         if (this.props.detail === null || this.props.detail.id !== this.props.match.params.virusId) {
-            return (
-                <div className="text-center">
-                    <ClipLoader size="12px" />
-                </div>
-            );
+            return <LoadingPlaceholder />;
         }
 
         const virusId = this.props.detail.id;
-
-        let modifiedLabel;
-
-        if (this.props.detail.modified) {
-            modifiedLabel = (
-                <small>
-                    <Label bsStyle="warning" className="with-icon">
-                        <Icon name="flag" />
-                        Modified
-                    </Label>
-                </small>
-            );
-        }
 
         const { name, abbreviation } = this.props.detail;
 
@@ -115,7 +97,15 @@ class VirusDetail extends React.Component {
                             </Flex>
                         </FlexItem>
 
-                        {modifiedLabel}
+                        {this.props.detail.modified ? (
+                            <small>
+                                <Label bsStyle="warning" className="with-icon">
+                                    <Icon name="flag" />
+                                    Modified
+                                </Label>
+                            </small>
+                        ) : null}
+
                         {iconButtons}
                     </Flex>
                 </h3>
@@ -154,28 +144,26 @@ class VirusDetail extends React.Component {
     };
 }
 
-const mapStateToProps = (state) => {
-    return {
-        detail: state.viruses.detail,
-        canModify: state.account.permissions.modify_virus
-    };
-};
+const mapStateToProps = state => ({
+    detail: state.viruses.detail,
+    canModify: state.account.permissions.modify_virus
+});
 
-const mapDispatchToProps = (dispatch) => {
-    return {
-        getVirus: (virusId) => {
-            dispatch(getVirus(virusId));
-        },
+const mapDispatchToProps = dispatch => ({
 
-        showEdit: () => {
-            dispatch(showEditVirus());
-        },
+    getVirus: (virusId) => {
+        dispatch(getVirus(virusId));
+    },
 
-        showRemove: () => {
-            dispatch(showRemoveVirus());
-        }
-    };
-};
+    showEdit: () => {
+        dispatch(showEditVirus());
+    },
+
+    showRemove: () => {
+        dispatch(showRemoveVirus());
+    }
+
+});
 
 const Container = connect(mapStateToProps, mapDispatchToProps)(VirusDetail);
 

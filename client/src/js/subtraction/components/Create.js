@@ -1,14 +1,3 @@
-/**
- * @license
- * The MIT License (MIT)
- * Copyright 2015 Government of Canada
- *
- * @author
- * Ian Boyes
- *
- * @exports AddHost
- */
-
 import React from "react";
 import { filter } from "lodash";
 import { connect } from "react-redux";
@@ -21,12 +10,9 @@ import { Button, Icon, Input, ListGroupItem, RelativeTime } from "../../base";
 
 const getInitialState = () => ({
     subtractionId: "",
-    fileId: "",
+    fileId: ""
 });
 
-/**
- * A component based on React-Bootstrap Modal that presents a form used to add a new host from a FASTA file.
- */
 class CreateSubtraction extends React.Component {
 
     constructor (props) {
@@ -42,14 +28,8 @@ class CreateSubtraction extends React.Component {
         this.setState(getInitialState());
     };
 
-    /**
-     * Callback triggered by the form submit event. Sends a request to the server requesting a new job for adding a new
-     * host. If the request is successful, the modal will close.
-     *
-     * @param event {object} - the submit event; used only to prevent the default behaviour
-     */
-    handleSubmit = (event) => {
-        event.preventDefault();
+    handleSubmit = (e) => {
+        e.preventDefault();
         this.props.onCreate(this.state.subtractionId, this.state.fileId);
     };
 
@@ -62,7 +42,7 @@ class CreateSubtraction extends React.Component {
                 <ListGroupItem
                     key={file.id}
                     active={active}
-                    onClick={() => this.setState({fileId: active ? "": file.id})}
+                    onClick={() => this.setState({fileId: active ? "" : file.id})}
                 >
                     <Row>
                         <Col xs={7}>
@@ -86,8 +66,8 @@ class CreateSubtraction extends React.Component {
 
         return (
             <Modal bsSize="large" show={this.props.show} onHide={this.props.onHide} onEnter={this.modalEnter}
-                   onExited={this.modalExited}
-            >
+                onExited={this.modalExited}>
+
                 <Modal.Header>
                     Create Subtraction
                 </Modal.Header>
@@ -123,23 +103,20 @@ class CreateSubtraction extends React.Component {
     }
 }
 
-const mapStateToProps = (state) => {
-    return {
-        files: state.files.documents
+const mapStateToProps = (state) => ({
+    files: state.files.documents
+});
+
+const mapDispatchToProps = (dispatch) => ({
+
+    onFindFiles: () => {
+        dispatch(findFiles("subtraction"));
+    },
+
+    onCreate: (subtractionId, fileId) => {
+        dispatch(createSubtraction(subtractionId, fileId));
     }
-};
-
-const mapDispatchToProps = (dispatch) => {
-    return {
-        onFindFiles: () => {
-            dispatch(findFiles("subtraction"));
-        },
-
-        onCreate: (subtractionId, fileId) => {
-            dispatch(createSubtraction(subtractionId, fileId));
-        }
-    };
-};
+});
 
 const Container = connect(mapStateToProps, mapDispatchToProps)(CreateSubtraction);
 

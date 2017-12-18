@@ -1,25 +1,9 @@
-/**
- * @license
- * The MIT License (MIT)
- * Copyright 2015 Government of Canada
- *
- * @author
- * Ian Boyes
- *
- * @exports VirusToolbar
- */
-
+import { LinkContainer } from "react-router-bootstrap";
+import { Icon, Button } from "../../base";
 import React from "react";
 import PropTypes from "prop-types";
-import { LinkContainer } from "react-router-bootstrap";
 
-import { Icon, Button } from "../../base";
-
-/**
- * A toolbar component rendered at the top of the virus manager table. Allows searching of viruses by name and
- * abbreviation. Includes a button for creating a new virus.
- */
-const VirusToolbar = (props) => (
+const VirusToolbar = ({ canModify, location, onChangeTerm }) => (
     <div className="toolbar">
         <div className="form-group">
             <div className="input-group">
@@ -31,7 +15,7 @@ const VirusToolbar = (props) => (
                     className="form-control"
                     type="text"
                     placeholder="Name or abbreviation"
-                    onChange={e => {props.onChangeTerm(e.target.value)}}
+                    onChange={e => onChangeTerm(e.target.value)}
                 />
             </div>
         </div>
@@ -43,22 +27,20 @@ const VirusToolbar = (props) => (
             />
         </LinkContainer>
 
-        {props.canModify ? (
-            <LinkContainer to={{...props.location, state: {createVirus: true}}} replace>
+        {canModify ? (
+            <LinkContainer to={{location, state: {createVirus: true}}} replace>
                 <Button bsStyle="primary" tip="Create">
                     <Icon name="new-entry" />
                 </Button>
             </LinkContainer>
-        ): null}
+        ) : null}
     </div>
 );
 
 VirusToolbar.propTypes = {
     canModify: PropTypes.bool,
     location: PropTypes.object,
-    modifiedOnly: PropTypes.bool,
-    onChangeTerm: PropTypes.func,
-    onToggleModifiedOnly: PropTypes.func
+    onChangeTerm: PropTypes.func
 };
 
 export default VirusToolbar;

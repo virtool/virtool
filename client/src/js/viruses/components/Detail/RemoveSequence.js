@@ -17,7 +17,7 @@ import { Modal } from "react-bootstrap";
 import { removeSequence, hideVirusModal } from "../../actions";
 import { Button } from "../../../base";
 
-const RemoveSequence = (props) => (
+const RemoveSequence = props => (
     <Modal show={Boolean(props.sequenceId)} onHide={props.onHide} dialogClassName="modal-danger">
         <Modal.Header onHide={props.onHide} closeButton>
             Remove Sequence
@@ -48,23 +48,21 @@ RemoveSequence.propTypes = {
     onSuccess: PropTypes.func
 };
 
-const mapStateToProps = (state) => {
-    return {
-        sequenceId: state.viruses.removeSequence
-    };
-};
+const mapStateToProps = state => ({
+    sequenceId: state.viruses.removeSequence
+});
 
-const mapDispatchToProps = (dispatch) => {
-    return {
-        onHide: () => {
-            dispatch(hideVirusModal());
-        },
+const mapDispatchToProps = dispatch => ({
 
-        onConfirm: (virusId, isolateId, onSuccess) => {
-            dispatch(removeSequence(virusId, isolateId, onSuccess));
-        }
-    };
-};
+    onHide: () => {
+        dispatch(hideVirusModal());
+    },
+
+    onConfirm: (virusId, isolateId, onSuccess) => {
+        dispatch(removeSequence(virusId, isolateId, onSuccess));
+    }
+
+});
 
 const Container = connect(mapStateToProps, mapDispatchToProps)(RemoveSequence);
 

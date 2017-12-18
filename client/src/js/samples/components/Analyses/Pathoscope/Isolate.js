@@ -64,7 +64,7 @@ export default class PathoscopeIsolate extends React.Component {
             />
         );
 
-        const piValue = this.props.showReads ? this.props.reads: toScientificNotation(this.props.pi);
+        const piValue = this.props.showReads ? this.props.reads : toScientificNotation(this.props.pi);
 
         return (
             <div>

@@ -2,7 +2,7 @@ import React from "react";
 import PropTypes from "prop-types";
 import { Alert } from "react-bootstrap";
 import { Icon } from "../../../../base";
-import { forEach, sortBy, max } from "lodash";
+import { sortBy, max } from "lodash";
 import { formatIsolateName } from "../../../../utils";
 
 import PathoscopeController from "./Controller";
@@ -15,7 +15,7 @@ const PathoscopeViewer = (props) => {
 
         const data = props.diagnosis.map((baseVirus) => {
 
-            let virus = {
+            const virus = {
                 pi: 0,
                 best: 0,
                 reads: 0,
@@ -27,7 +27,8 @@ const PathoscopeViewer = (props) => {
 
             // Go through each isolate associated with the virus, adding properties for weight, best-hit, read count,
             // and coverage. These values will be calculated from the sequences owned by each isolate.
-            forEach(virus.isolates, (isolate) => {
+            virus.isolates.forEach(isolate => {
+
                 let isolateDepth = 0;
                 let genomeLength = 0;
 
@@ -42,7 +43,7 @@ const PathoscopeViewer = (props) => {
 
                 // Go through each hit/sequence owned by the isolate and composite its values into the overall isolate
                 // values of weight, best-hit, read count, and coverage.
-                forEach(isolate.sequences, hit => {
+                isolate.sequences.forEach(hit => {
 
                     hit.reads = Math.round(hit.pi * mappedReadCount);
 
@@ -51,7 +52,7 @@ const PathoscopeViewer = (props) => {
                     isolate.best += hit.best;
                     isolate.reads += hit.reads;
 
-                    const hitDepth = hit.align ? max(hit.align.map(p => p[1])): 0;
+                    const hitDepth = hit.align ? max(hit.align.map(p => p[1])) : 0;
 
                     if (hitDepth > isolateDepth) {
                         isolateDepth = hitDepth;
@@ -81,7 +82,6 @@ const PathoscopeViewer = (props) => {
                 if (isolate.coverage > virus.coverage) {
                     virus.coverage = isolate.coverage;
                 }
-
             });
 
             virus.isolates = sortBy(virus.isolates, "coverage").reverse();

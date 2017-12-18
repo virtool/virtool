@@ -22,23 +22,13 @@ import {
     REMOVE_USER_FROM_GROUP
 } from "../actionTypes";
 
-export function* watchUsers () {
-    yield takeLatest(LIST_USERS.REQUESTED, listUsers);
-    yield throttle(200, CREATE_USER.REQUESTED, createUser);
-    yield takeLatest(SET_PASSWORD.REQUESTED, setPassword);
-    yield takeLatest(SET_FORCE_RESET.REQUESTED, setForceReset);
-    yield takeLatest(SET_PRIMARY_GROUP.REQUESTED, setPrimaryGroup);
-    yield takeEvery(ADD_USER_TO_GROUP.REQUESTED, addToGroup);
-    yield takeEvery(REMOVE_USER_FROM_GROUP.REQUESTED, removeFromGroup);
-}
-
 function* listUsers (action) {
     yield setPending(function* () {
         try {
             const response = yield usersAPI.list();
             yield put({type: LIST_USERS.SUCCEEDED, users: response.body});
         } catch (error) {
-            yield put({type: LIST_USERS.FAILED}, error);
+            yield put({type: LIST_USERS.FAILED, error});
         }
     }, action);
 }
@@ -52,7 +42,7 @@ function* createUser (action) {
             // Close the create user modal and navigate to the new user.
             yield put(push(`/settings/users/${action.userId}`, {state: {createUser: false}}));
         } catch (error) {
-            yield put({type: CREATE_USER.FAILED}, error);
+            yield put({type: CREATE_USER.FAILED, error});
         }
     }, action);
 }
@@ -93,7 +83,7 @@ function* addToGroup (action) {
         const response = yield usersAPI.addUserToGroup(action.userId, action.groupId);
         yield put({type: ADD_USER_TO_GROUP.SUCCEEDED, data: response.body});
     } catch (error) {
-        yield put({type: ADD_USER_TO_GROUP.FAILED, error: error});
+        yield put({type: ADD_USER_TO_GROUP.FAILED, error});
     }
 }
 
@@ -102,6 +92,16 @@ function* removeFromGroup (action) {
         const response = yield usersAPI.removeUserFromGroup(action.userId, action.groupId);
         yield put({type: REMOVE_USER_FROM_GROUP.SUCCEEDED, data: response.body});
     } catch (error) {
-        yield put({type: REMOVE_USER_FROM_GROUP.FAILED, error: error});
+        yield put({type: REMOVE_USER_FROM_GROUP.FAILED, error});
     }
+}
+
+export function* watchUsers () {
+    yield takeLatest(LIST_USERS.REQUESTED, listUsers);
+    yield throttle(200, CREATE_USER.REQUESTED, createUser);
+    yield takeLatest(SET_PASSWORD.REQUESTED, setPassword);
+    yield takeLatest(SET_FORCE_RESET.REQUESTED, setForceReset);
+    yield takeLatest(SET_PRIMARY_GROUP.REQUESTED, setPrimaryGroup);
+    yield takeEvery(ADD_USER_TO_GROUP.REQUESTED, addToGroup);
+    yield takeEvery(REMOVE_USER_FROM_GROUP.REQUESTED, removeFromGroup);
 }

@@ -16,7 +16,7 @@ import { Badge, Row, Col, ListGroup } from "react-bootstrap";
 
 import { formatIsolateName } from "../../../utils";
 import { selectIsolate, showAddIsolate } from "../../actions";
-import { FlexItem, Icon, ListGroupItem } from "../../../base";
+import { FlexItem, Icon, ListGroupItem, NoneFound } from "../../../base";
 import IsolateDetail from "./IsolateDetail";
 
 const IsolateEditor = (props) => {
@@ -32,7 +32,7 @@ const IsolateEditor = (props) => {
                 <span>{formatIsolateName(isolate)}</span>
             </div>
             <div className="isolate-item-icon">
-                <span>{isolate.default ? <Icon className="pull-right" name="star" />: null}</span>
+                <span>{isolate.default ? <Icon className="pull-right" name="star" /> : null}</span>
             </div>
         </ListGroupItem>
     );
@@ -42,9 +42,7 @@ const IsolateEditor = (props) => {
     if (!isolateComponents.length) {
         noIsolatesFound = (
             <Col md={12}>
-                <ListGroupItem className="text-center">
-                    <Icon name="info" /> No isolates found
-                </ListGroupItem>
+                <NoneFound noun="isolates" />
             </Col>
         );
     }
@@ -72,7 +70,7 @@ const IsolateEditor = (props) => {
                         style={{fontSize: "15px"}}
                         onClick={props.showAddIsolate}
                     />
-                ): null}
+                ) : null}
             </h4>
 
             <Row>
@@ -83,33 +81,31 @@ const IsolateEditor = (props) => {
                     </ListGroup>
                 </Col>
                 <Col md={9}>
-                    {noIsolatesFound ? null: <IsolateDetail />}
+                    {noIsolatesFound ? null : <IsolateDetail />}
                 </Col>
             </Row>
         </div>
     );
 };
 
-const mapStateToProps = (state) => {
-    return {
-        virusId: state.viruses.detail.id,
-        isolates: state.viruses.detail.isolates,
-        activeIsolateId: state.viruses.activeIsolateId,
-        canModify: state.account.permissions.modify_virus
-    };
-};
+const mapStateToProps = state => ({
+    virusId: state.viruses.detail.id,
+    isolates: state.viruses.detail.isolates,
+    activeIsolateId: state.viruses.activeIsolateId,
+    canModify: state.account.permissions.modify_virus
+});
 
-const mapDispatchToProps = (dispatch) => {
-    return {
-        onSelectIsolate: (isolateId) => {
-            dispatch(selectIsolate(isolateId));
-        },
+const mapDispatchToProps = dispatch => ({
 
-        showAddIsolate: () => {
-            dispatch(showAddIsolate());
-        }
-    };
-};
+    onSelectIsolate: isolateId => {
+        dispatch(selectIsolate(isolateId));
+    },
+
+    showAddIsolate: () => {
+        dispatch(showAddIsolate());
+    }
+
+});
 
 const Container = withRouter(connect(mapStateToProps, mapDispatchToProps)(IsolateEditor));
 

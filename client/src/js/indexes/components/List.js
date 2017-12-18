@@ -1,19 +1,8 @@
-/**
- * @license
- * The MIT License (MIT)
- * Copyright 2015 Government of Canada
- *
- * @author
- * Ian Boyes
- *
- * @exports Index
- */
-
 import React from "react";
 import { connect } from "react-redux";
 import { Alert } from "react-bootstrap";
 
-import { Button, Flex, FlexItem, Icon, ListGroupItem, ViewHeader } from "../../base";
+import { Button, Flex, FlexItem, Icon, LoadingPlaceholder, NoneFound, ViewHeader } from "../../base";
 import { findIndexes, showRebuild } from "../actions";
 import IndexEntry from "./Entry";
 import RebuildIndex from "./Rebuild";
@@ -27,12 +16,12 @@ class IndexesList extends React.Component {
     render () {
 
         if (this.props.documents === null) {
-            return <div />;
+            return <LoadingPlaceholder />;
         }
 
         let content;
 
-        if (this.props.total_virus_count > 0) {
+        if (this.props.total_virus_count) {
             // Set to true when a ready index has been seen when mapping through the index documents. Used to mark only
             // the newest ready index with a checkmark in the index list.
             let haveSeenReady = false;
@@ -45,12 +34,8 @@ class IndexesList extends React.Component {
                 return entry;
             });
 
-            if (!indexComponents.length) {
-                indexComponents = (
-                    <ListGroupItem className="text-center">
-                        <p><Icon name="info" /> No indexes have been built</p>
-                    </ListGroupItem>
-                );
+            if (!this.props.documents.length) {
+                indexComponents = <NoneFound noun="indexes" noListGroup />;
             }
 
             let alert;
@@ -126,21 +111,22 @@ class IndexesList extends React.Component {
     }
 }
 
-const mapStateToProps = (state) => {
-    return {...state.indexes, canRebuild: state.account.permissions.rebuild_index};
-};
+const mapStateToProps = (state) => ({
+    ...state.indexes,
+    canRebuild: state.account.permissions.rebuild_index
+});
 
-const mapDispatchToProps = (dispatch) => {
-    return {
-        onFind: () => {
-            dispatch(findIndexes());
-        },
+const mapDispatchToProps = (dispatch) => ({
 
-        showRebuild: () => {
-            dispatch(showRebuild());
-        }
-    };
-};
+    onFind: () => {
+        dispatch(findIndexes());
+    },
+
+    showRebuild: () => {
+        dispatch(showRebuild());
+    }
+
+});
 
 const Container = connect(mapStateToProps, mapDispatchToProps)(IndexesList);
 

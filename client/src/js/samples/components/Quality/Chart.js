@@ -1,23 +1,7 @@
-/**
- * @license
- * The MIT License (MIT)
- * Copyright 2015 Government of Canada
- *
- * @author
- * Ian Boyes
- *
- * @exports QualityChart
- */
-
 import "d3-transition";
 import React from "react";
 import PropTypes from "prop-types";
 
-/**
- * A React component that renders a d3 chart object.
- *
- * @class
- */
 export default class QualityChart extends React.Component {
 
     static propTypes = {
@@ -39,11 +23,6 @@ export default class QualityChart extends React.Component {
         return false;
     }
 
-    /**
-     * Re-renders the d3 chart using jQuery and d3.
-     *
-     * @func
-     */
     update = () => {
         // Find the chart DOM node and get its width.
 

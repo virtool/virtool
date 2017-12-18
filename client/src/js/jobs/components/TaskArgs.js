@@ -1,12 +1,3 @@
-/**
- *
- *
- * @copyright 2017 Government of Canada
- * @license MIT
- * @author igboyes
- *
- */
-
 import React from "react";
 import PropTypes from "prop-types";
 import { Link } from "react-router-dom";
@@ -63,7 +54,7 @@ const TaskArgs = (props) => {
                         </tr>
                     </tbody>
                 </Table>
-            )
+            );
     }
 
     const rowComponents = values(mapValues(props.taskArgs, (value, key) =>

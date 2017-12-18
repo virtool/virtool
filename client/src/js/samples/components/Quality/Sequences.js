@@ -1,20 +1,16 @@
-/**
- * @license
- * The MIT License (MIT)
- * Copyright 2015 Government of Canada
- *
- * @author
- * Ian Boyes
- *
- * @exports CreateSequencesChart
- */
-
 import { select } from "d3-selection";
 import { line } from "d3-shape";
 import { scaleLinear } from "d3-scale";
 import { axisBottom, axisLeft } from "d3-axis";
 import { max } from "lodash";
 import Numeral from "numeral";
+
+const formatter = (number) => {
+    number = number.toExponential().split("e");
+    return Numeral(number[0]).format("0.0") + "E" + number[1].replace("+", "");
+};
+
+const height = 300;
 
 const margin = {
     top: 20,
@@ -23,30 +19,9 @@ const margin = {
     right: 20
 };
 
-const height = 300;
-
-/**
- * A function that create a chart showing abundance of reads with different mean quality scores.
- *
- * @param element - the element in which to render the chart.
- * @param data - the data used to render the chart.
- * @param baseWidth - the width of the element the chart will be rendered in.
- * @function
- */
 const CreateSequencesChart = (element, data, baseWidth) => {
 
     const width = baseWidth - margin.left - margin.right;
-
-    /**
-     * A function for formatting integer read counts into readable scientific notation.
-     *
-     * @param number {number} - the integer to format.
-     * @returns {string} - the passed number formatted in scientific notation.
-     */
-    const formatter = (number) => {
-        number = number.toExponential().split("e");
-        return Numeral(number[0]).format("0.0") + "E" + number[1].replace("+", "");
-    };
 
     // Set up scales.
     const y = scaleLinear()
@@ -64,11 +39,11 @@ const CreateSequencesChart = (element, data, baseWidth) => {
 
     // Build a d3 line function for rendering the plot line.
     const lineDrawer = line()
-        .x((d,i) => x(i))
+        .x((d, i) => x(i))
         .y(d => y(d));
 
     // Build SVG canvas.
-    let svg = select(element).append("svg")
+    const svg = select(element).append("svg")
         .attr("width", width + margin.left + margin.right)
         .attr("height", height + margin.top + margin.bottom)
         .append("g")

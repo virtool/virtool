@@ -13,15 +13,13 @@ import { ButtonGroup, Modal, Table, Well } from "react-bootstrap";
 import { followDynamicDownload } from "../../../../utils";
 import { Button } from "../../../../base";
 
-const getInitialState = () => {
-    return {
-        mode: "contigs",
-        evalue: false,
-        orfs: false,
-        pos: false,
-        family: false
-    };
-};
+const getInitialState = () => ({
+    mode: "contigs",
+    evalue: false,
+    orfs: false,
+    pos: false,
+    family: false
+});
 
 export default class NuVsExport extends React.Component {
 
@@ -42,8 +40,8 @@ export default class NuVsExport extends React.Component {
         this.setState(getInitialState());
     };
 
-    handleSubmit = (event) => {
-        event.preventDefault();
+    handleSubmit = (e) => {
+        e.preventDefault();
 
         if (this.state.mode === "contigs") {
             const content = this.props.results.map(result => {
@@ -67,7 +65,7 @@ export default class NuVsExport extends React.Component {
                     return names;
                 }, []);
 
-                return `>sequence_${result.index}|${this.props.sampleName}|${orfNames.join("|")}\n${result.sequence}`
+                return `>sequence_${result.index}|${this.props.sampleName}|${orfNames.join("|")}\n${result.sequence}`;
             });
 
             return followDynamicDownload(
@@ -106,8 +104,6 @@ export default class NuVsExport extends React.Component {
             `nuvs.${this.props.sampleName.replace(" ", "_")}.${this.props.analysisId}.orfs.fa`,
             content.join("\n")
         );
-
-
     };
 
     render () {

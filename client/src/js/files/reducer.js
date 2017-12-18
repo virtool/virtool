@@ -1,12 +1,3 @@
-/**
- *
- *
- * @copyright 2017 Government of Canada
- * @license MIT
- * @author igboyes
- *
- */
-
 import { every, reject } from "lodash";
 
 import {
@@ -28,9 +19,10 @@ const initialState = {
     showUploadOverlay: false
 };
 
-const assignUploadsComplete = (newState) => {
-    return {...newState, uploadsComplete: every(newState.uploads, {progress: 100})};
-};
+const assignUploadsComplete = (newState) => ({
+    ...newState,
+    uploadsComplete: every(newState.uploads, {progress: 100})
+});
 
 export default function fileReducer (state = initialState, action) {
 

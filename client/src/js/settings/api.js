@@ -11,13 +11,13 @@ import Request from "superagent";
 
 const settingsAPI = {
 
-    get: () => {
-        return Request.get("/api/settings");
-    },
+    get: () => (
+        Request.get("/api/settings")
+    ),
 
-    update: (update) => {
-        return Request.patch("/api/settings", update);
-    }
+    update: (update) => (
+        Request.patch("/api/settings", update)
+    )
 
 };
 

@@ -1,12 +1,3 @@
-/**
- * Redux reducers for working with job data.
- *
- * @copyright 2017 Government of Canada
- * @license MIT
- * @author igboyes
- *
- */
-
 import {
     FIND_SUBTRACTIONS,
     LIST_SUBTRACTION_IDS,

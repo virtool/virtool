@@ -24,11 +24,7 @@ export const numberDictionary = {
 
 const alphanumeric = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
 
-export const createRandomString = (length=8) => {
-    return sampleSize(alphanumeric, length).join("")
-};
-
-export const numberToWord = (number) => numberDictionary[Number(number)] || number;
+export const createRandomString = (length = 8) => sampleSize(alphanumeric, length).join("");
 
 export const byteSize = bytes => Numeral(bytes).format("0.0 b");
 
@@ -77,3 +73,9 @@ export const followDynamicDownload = (filename, text) => {
 
     document.body.removeChild(a);
 };
+
+export const simpleActionCreator = (type) => (
+    function actionCreator () {
+        return {type};
+    }
+);

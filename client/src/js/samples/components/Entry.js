@@ -1,14 +1,3 @@
-/**
- * @license
- * The MIT License (MIT)
- * Copyright 2015 Government of Canada
- *
- * @author
- * Ian Boyes
- *
- * @exports SampleEntry
- */
-
 import React from "react";
 import CX from "classnames";
 import { push } from "react-router-redux";
@@ -42,15 +31,15 @@ class SampleEntry extends React.Component {
         const labels = mapValues({pathoscope: null, nuvs: null}, (value, key) =>
             <FlexItem className={CX("sample-label", {"bg-primary": this.props[key]})} pad>
                 <Flex alignItems="center" className="hidden-xs hidden-sm">
-                    <Icon name={this.props[key] === "ip" ? "play": "bars"} />
+                    <Icon name={this.props[key] === "ip" ? "play" : "bars"} />
                     <span style={{paddingLeft: "3px"}}>
-                        {key === "pathoscope" ? "Pathoscope": "NuVs"}
+                        {key === "pathoscope" ? "Pathoscope" : "NuVs"}
                     </span>
                 </Flex>
 
                 <Flex alignItems="center" className="hidden-md hidden-lg">
-                    {this.props[key] === "ip" ? <Icon name="play" />:
-                        <strong>{key === "pathoscope" ? "P": "N"}</strong>
+                    {this.props[key] === "ip" ? <Icon name="play" /> :
+                        <strong>{key === "pathoscope" ? "P" : "N"}</strong>
                     }
                 </Flex>
             </FlexItem>
@@ -83,7 +72,7 @@ class SampleEntry extends React.Component {
                                         className={CX("bg-primary", "sample-label")}
                                     >
                                         <Flex alignItems="center">
-                                            <Icon name={this.props.imported === "ip" ? "play": "filing"} />
+                                            <Icon name={this.props.imported === "ip" ? "play" : "filing"} />
                                             <span style={{paddingLeft: "3px"}} className="hidden-xs hidden-sm">
                                                 Import
                                             </span>
@@ -118,28 +107,26 @@ class SampleEntry extends React.Component {
     }
 }
 
-const mapStateToProps = (state) => {
-    return {
-        skipDialog: state.account.settings.skip_quick_analyze_dialog,
-        algorithm: state.account.settings.quick_analyze_algorithm
-    };
-};
+const mapStateToProps = (state) => ({
+    skipDialog: state.account.settings.skip_quick_analyze_dialog,
+    algorithm: state.account.settings.quick_analyze_algorithm
+});
 
-const mapDispatchToProps = (dispatch) => {
-    return {
-        onNavigate: (sampleId) => {
-            dispatch(push(`/samples/${sampleId}`));
-        },
+const mapDispatchToProps = (dispatch) => ({
 
-        onAnalyze: (id, algorithm) => {
-            dispatch(analyze(id, algorithm));
-        },
+    onNavigate: (sampleId) => {
+        dispatch(push(`/samples/${sampleId}`));
+    },
 
-        onQuickAnalyze: (id, name) => {
-            dispatch(push({state: {quickAnalyze: {id, name}}}));
-        }
-    };
-};
+    onAnalyze: (id, algorithm) => {
+        dispatch(analyze(id, algorithm));
+    },
+
+    onQuickAnalyze: (id, name) => {
+        dispatch(push({state: {quickAnalyze: {id, name}}}));
+    }
+
+});
 
 const Container = connect(mapStateToProps, mapDispatchToProps)(SampleEntry);
 

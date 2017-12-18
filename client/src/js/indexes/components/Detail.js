@@ -1,23 +1,13 @@
-/**
- *
- *
- * @copyright 2017 Government of Canada
- * @license MIT
- * @author igboyes
- *
- */
-
 import React from "react";
-import PropTypes from "prop-types";
 import { connect } from "react-redux";
 import { Switch, Redirect, Route } from "react-router-dom";
 import { LinkContainer } from "react-router-bootstrap";
 import { Badge, Nav, NavItem } from "react-bootstrap";
-import { ClipLoader } from "halogenium";
 
 import IndexGeneral from "./General";
 import IndexChanges from "./Changes";
 import { getIndex } from "../actions";
+import { LoadingPlaceholder } from "../../base";
 
 class IndexDetail extends React.Component {
 
@@ -25,20 +15,10 @@ class IndexDetail extends React.Component {
         this.props.onGet(this.props.match.params.indexVersion);
     }
 
-    static propTypes = {
-        match: PropTypes.object,
-        detail: PropTypes.object,
-        onGet: PropTypes.func
-    };
-
     render () {
 
         if (this.props.detail === null) {
-            return (
-                <div className="text-center" style={{marginTop: "200px"}}>
-                    <ClipLoader color="#3c8786" />
-                </div>
-            );
+            return <LoadingPlaceholder />;
         }
 
         const indexVersion = this.props.match.params.indexVersion;
@@ -73,19 +53,17 @@ class IndexDetail extends React.Component {
 
 }
 
-const mapStateToProps = (state) => {
-    return {
-        detail: state.indexes.detail
-    };
-};
+const mapStateToProps = (state) => ({
+    detail: state.indexes.detail
+});
 
-const mapDispatchToProps = (dispatch) => {
-    return {
-        onGet: (indexVersion) => {
-            dispatch(getIndex(indexVersion));
-        }
-    };
-};
+const mapDispatchToProps = (dispatch) => ({
+
+    onGet: (indexVersion) => {
+        dispatch(getIndex(indexVersion));
+    }
+
+});
 
 const Container = connect(mapStateToProps, mapDispatchToProps)(IndexDetail);
 

@@ -1,24 +1,9 @@
-/**
- * @license
- * The MIT License (MIT)
- * Copyright 2015 Government of Canada
- *
- * @author
- * Ian Boyes
- *
- * @exports TaskField
- */
-
 import CX from "classnames";
 import React from "react";
 import PropTypes from "prop-types";
 import { toNumber } from "lodash";
 import { Icon } from "../../../base";
 
-/**
- * A component centered around an input element that updates a task-specific setting on the server. Shows pending save
- * requests by disabling the input and showing a spinner.
- */
 export default class TaskField extends React.PureComponent {
 
     constructor (props) {
@@ -50,15 +35,15 @@ export default class TaskField extends React.PureComponent {
         }
     };
 
-    handleChange = (event) => {
+    handleChange = (e) => {
         this.setState({
-            value: toNumber(event.target.value)
+            value: toNumber(e.target.value)
         });
     };
 
-    handleSubmit = (event) => {
-        event.preventDefault();
-        this.setState({pending: true},  () => {
+    handleSubmit = (e) => {
+        e.preventDefault();
+        this.setState({pending: true}, () => {
             this.props.onChange(this.state.value);
             this.inputNode.blur();
         });

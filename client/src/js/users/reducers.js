@@ -21,20 +21,20 @@ import {
 const initialState = {
     list: null,
     filter: "",
-
     createPending: false,
     createError: null
 };
 
-const updateUser = (state, update) => {
-    return {...state, list: state.list.map(user => {
+const updateUser = (state, update) => ({
+    ...state,
+    list: state.list.map(user => {
         if (user.id === update.id) {
             return {...user, ...update};
         }
 
         return user;
-    })};
-};
+    })
+});
 
 const reducer = (state = initialState, action) => {
 
@@ -43,7 +43,7 @@ const reducer = (state = initialState, action) => {
         case LIST_USERS.SUCCEEDED: {
             const activeData = action.users[0];
 
-            return {...state, list: action.users, activeId: activeData.id, activeData: activeData};
+            return {...state, list: action.users, activeId: activeData.id, activeData};
         }
 
         case FILTER_USERS: {

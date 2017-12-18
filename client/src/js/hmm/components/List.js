@@ -1,31 +1,14 @@
-/**
- * @license
- * The MIT License (MIT)
- * Copyright 2015 Government of Canada
- *
- * @author
- * Ian Boyes
- *
- * @exports HMM
- */
-
 import React from "react";
 import { LinkContainer } from "react-router-bootstrap";
 import { keys, reject } from "lodash";
 import { push } from "react-router-redux";
 import { connect } from "react-redux";
-import { ClipLoader } from "halogenium";
-import { Col, FormControl, FormGroup, InputGroup, Label, ListGroup, Pagination, Row } from "react-bootstrap";
+import { Col, FormControl, FormGroup, InputGroup, Label, ListGroup, Row } from "react-bootstrap";
 
-import { findHMMs } from "../actions";
-import { Icon, ListGroupItem, ViewHeader } from "../../base"
 import HMMInstaller from "./Installer";
+import { findHMMs } from "../actions";
+import { Icon, ListGroupItem, LoadingPlaceholder, NoneFound, Pagination, ViewHeader } from "../../base";
 
-/**
- * A main component that shows a history of all index builds and the changes that comprised them.
- *
- * @class
- */
 class HMMList extends React.Component {
 
     componentDidMount () {
@@ -33,7 +16,7 @@ class HMMList extends React.Component {
     }
 
     setTerm = (event) => {
-        let url = new window.URL(window.location);
+        const url = new window.URL(window.location);
 
         if (event.target.value) {
             url.searchParams.set("find", event.target.value);
@@ -53,19 +36,15 @@ class HMMList extends React.Component {
     render () {
 
         if (this.props.documents === null) {
-            return(
-                <div className="text-center" style={{paddingTop: "130px"}}>
-                    <ClipLoader color="#3c8786" />
-                </div>
-            );
+            return <LoadingPlaceholder />;
         }
 
         let rowComponents = this.props.documents.map(document => {
             const families = reject(keys(document.families), family => family === "None");
 
-            const labelComponents = families.slice(0, 3).map((family, i) => (
+            const labelComponents = families.slice(0, 3).map((family, i) =>
                 <span key={i}><Label>{family}</Label> </span>
-            ));
+            );
 
             return (
                 <LinkContainer key={document.id} to={`/hmm/${document.id}`}>
@@ -89,11 +68,7 @@ class HMMList extends React.Component {
         });
 
         if (!rowComponents.length) {
-            rowComponents = (
-                <ListGroupItem className="text-center">
-                    <Icon name="info" /> No profiles found
-                </ListGroupItem>
-            );
+            rowComponents = <NoneFound noun="profiles" noListGroup />;
         }
 
         return (
@@ -106,7 +81,7 @@ class HMMList extends React.Component {
                     totalCount={this.props.total_count}
                 />
 
-                {this.props.file_exists ? null: <HMMInstaller />}
+                {this.props.file_exists ? null : <HMMInstaller />}
 
                 <FormGroup>
                     <InputGroup>
@@ -127,35 +102,27 @@ class HMMList extends React.Component {
                     {rowComponents}
                 </ListGroup>
 
-                <div className="text-center">
-                    <Pagination
-                        items={this.props.page_count}
-                        maxButtons={10}
-                        activePage={this.props.page}
-                        onSelect={this.setPage}
-                        first
-                        last
-                        next
-                        prev
-                    />
-                </div>
+                <Pagination
+                    documentCount={this.props.documents.length}
+                    page={this.props.page}
+                    pageCount={this.props.page_count}
+                    onPage={this.setPage}
+                />
             </div>
         );
     }
 }
 
-const mapStateToProps = (state) => {
-    return {...state.hmms};
-};
+const mapStateToProps = (state) => ({...state.hmms});
 
-const mapDispatchToProps = (dispatch) => {
-    return {
-        onFind: (url = new window.URL(window.location)) => {
-            dispatch(push(url.pathname + url.search));
-            dispatch(findHMMs(url.searchParams.get("find"), url.searchParams.get("page") || 1));
-        }
-    };
-};
+const mapDispatchToProps = (dispatch) => ({
+
+    onFind: (url = new window.URL(window.location)) => {
+        dispatch(push(url.pathname + url.search));
+        dispatch(findHMMs(url.searchParams.get("find"), url.searchParams.get("page") || 1));
+    }
+
+});
 
 const Container = connect(mapStateToProps, mapDispatchToProps)(HMMList);
 

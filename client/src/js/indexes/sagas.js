@@ -1,17 +1,8 @@
-/**
- *
- *
- * @copyright 2017 Government of Canada
- * @license MIT
- * @author igboyes
- *
- */
-
 import { put, takeEvery, takeLatest } from "redux-saga/effects";
 
 import indexesAPI from "./api";
 import { setPending } from "../wrappers";
-import { FIND_INDEXES, GET_INDEX, GET_UNBUILT, CREATE_INDEX, GET_INDEX_HISTORY }  from "../actionTypes";
+import { FIND_INDEXES, GET_INDEX, GET_UNBUILT, CREATE_INDEX, GET_INDEX_HISTORY } from "../actionTypes";
 
 export function* watchIndexes () {
     yield takeLatest(FIND_INDEXES.REQUESTED, findIndexes);
@@ -61,7 +52,7 @@ export function* createIndex (action) {
             yield put({type: FIND_INDEXES.REQUESTED});
             yield put({type: CREATE_INDEX.SUCCEEDED, data: response.body});
         } catch (error) {
-            yield put({type: CREATE_INDEX.FAILED, error: error});
+            yield put({type: CREATE_INDEX.FAILED, error});
         }
     }, action);
 }

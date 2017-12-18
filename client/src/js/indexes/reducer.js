@@ -1,11 +1,3 @@
-/**
- *
- * @copyright 2017 Government of Canada
- * @license MIT
- * @author igboyes
- *
- */
-
 import { concat, find, reject } from "lodash";
 import {
     WS_UPDATE_INDEX,

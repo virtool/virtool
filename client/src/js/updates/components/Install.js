@@ -37,6 +37,7 @@ const attemptReload = () => {
 };
 
 const Process = ({ complete, progress, size, step }) => {
+
     if (complete && !window.reloadInterval) {
         window.setTimeout(() => {
             window.reloadInterval = window.setInterval(attemptReload, 1000);
@@ -126,24 +127,22 @@ class SoftwareInstallModal extends React.Component {
     }
 }
 
-const mapStateToProps = (state) => {
-    return {
-        show: state.updates.showInstallModal,
-        process: state.updates.software.process
-    };
-};
+const mapStateToProps = (state) => ({
+    show: state.updates.showInstallModal,
+    process: state.updates.software.process
+});
 
-const mapDispatchToProps = (dispatch) => {
-    return {
-        onInstall: () => {
-            dispatch(installSoftwareUpdates());
-        },
+const mapDispatchToProps = (dispatch) => ({
 
-        onHide: () => {
-            dispatch(hideInstallModal());
-        }
-    };
-};
+    onInstall: () => {
+        dispatch(installSoftwareUpdates());
+    },
+
+    onHide: () => {
+        dispatch(hideInstallModal());
+    }
+
+});
 
 const Container = connect(mapStateToProps, mapDispatchToProps)(SoftwareInstallModal);
 

@@ -48,24 +48,18 @@ const Inner = (props) => {
     );
 };
 
-const mapStateToProps = (state) => {
-    return {
-        ready: state.account.ready && Boolean(Object.keys(state.settings).length)
-    };
-};
+const mapStateToProps = state => ({
+    ready: state.account.ready && Boolean(Object.keys(state.settings).length)
+});
 
-const InnerContainer = withRouter(connect(
-    mapStateToProps
-)(Inner));
+const InnerContainer = withRouter(connect(mapStateToProps)(Inner));
 
-const App = ({ store, history }) => {
-    return (
-        <Provider store={store}>
-            <ConnectedRouter history={history}>
-                <InnerContainer />
-            </ConnectedRouter>
-        </Provider>
-    );
-};
+const App = ({ store, history }) => (
+    <Provider store={store}>
+        <ConnectedRouter history={history}>
+            <InnerContainer />
+        </ConnectedRouter>
+    </Provider>
+);
 
 export default App;

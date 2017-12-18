@@ -19,7 +19,7 @@ import { Button } from "../../../base";
 import IsolateForm from "./IsolateForm";
 
 const getInitialState = (props) => ({
-    sourceType: props.restrictSourceTypes ? "unknown": "",
+    sourceType: props.restrictSourceTypes ? "unknown" : "",
     sourceName: ""
 });
 
@@ -44,7 +44,6 @@ class AddIsolate extends React.Component {
     };
 
     save = () => {
-
         this.props.onSave(this.props.virusId, this.state.sourceType, this.state.sourceName);
     };
 
@@ -75,25 +74,23 @@ class AddIsolate extends React.Component {
     }
 }
 
-const mapStateToProps = (state) => {
-    return {
-        show: state.viruses.addIsolate,
-        allowedSourceTypes: state.settings.data.allowed_source_types,
-        restrictSourceTypes: state.settings.data.restrict_source_types
-    };
-};
+const mapStateToProps = state => ({
+    show: state.viruses.addIsolate,
+    allowedSourceTypes: state.settings.data.allowed_source_types,
+    restrictSourceTypes: state.settings.data.restrict_source_types
+});
 
-const mapDispatchToProps = (dispatch) => {
-    return {
-        onHide: () => {
-            dispatch(hideVirusModal());
-        },
+const mapDispatchToProps = dispatch => ({
 
-        onSave: (virusId, sourceType, sourceName) => {
-            dispatch(addIsolate(virusId, sourceType, sourceName))
-        }
-    };
-};
+    onHide: () => {
+        dispatch(hideVirusModal());
+    },
+
+    onSave: (virusId, sourceType, sourceName) => {
+        dispatch(addIsolate(virusId, sourceType, sourceName));
+    }
+
+});
 
 const Container = connect(mapStateToProps, mapDispatchToProps)(AddIsolate);
 

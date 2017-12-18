@@ -18,6 +18,11 @@ import { Row, Col, Modal, Alert, ButtonToolbar } from "react-bootstrap";
 import { Icon, Flex, FlexItem, Input, Button } from "../../base";
 import { createVirus } from "../actions";
 
+const getInitialState = () => ({
+    name: "",
+    abbreviation: ""
+});
+
 /**
  * A form for adding a new virus, defining its name and abbreviation.
  */
@@ -25,17 +30,11 @@ class CreateVirus extends React.Component {
 
     constructor (props) {
         super(props);
-        this.state = {
-            name: "",
-            abbreviation: ""
-        };
+        this.state = getInitialState();
     }
 
     modalExited = () => {
-        this.setState({
-            name: "",
-            abbreviation: ""
-        });
+        this.setState(getInitialState());
     };
 
     handleSubmit = (e) => {
@@ -62,11 +61,6 @@ class CreateVirus extends React.Component {
             );
         }
 
-        const inputProps = {
-            type: "text",
-            onChange: this.handleChange
-        };
-
         return (
             <Modal show={this.props.show} onHide={() => this.props.onHide(this.props)} onExited={this.modalExited}>
                 <Modal.Header onHide={this.props.onHide} closeButton>
@@ -78,7 +72,7 @@ class CreateVirus extends React.Component {
                         <Row>
                             <Col md={9}>
                                 <Input
-                                    {...inputProps}
+                                    type="text"
                                     label="Name"
                                     value={this.state.name}
                                     onChange={(e) => this.setState({name: e.target.value})}
@@ -86,7 +80,7 @@ class CreateVirus extends React.Component {
                             </Col>
                             <Col md={3}>
                                 <Input
-                                    {...inputProps}
+                                    type="text"
                                     label="Abbreviation"
                                     value={this.state.abbreviation}
                                     onChange={(e) => this.setState({abbreviation: e.target.value})}
@@ -111,30 +105,25 @@ class CreateVirus extends React.Component {
 
 }
 
-const mapStateToProps = (state) => {
-    return {
-        error: state.viruses.createError,
-        pending: state.viruses.createPending
-    };
-};
+const mapStateToProps = state => ({
+    show: !!state.router.location.state && state.router.location.state.createVirus,
+    error: state.viruses.createError,
+    pending: state.viruses.createPending
+});
 
-const mapDispatchToProps = (dispatch) => {
-    return {
+const mapDispatchToProps = dispatch => ({
 
-        onSubmit: (name, abbreviation) => {
-            dispatch(createVirus(name, abbreviation))
-        },
+    onSubmit: (name, abbreviation) => {
+        dispatch(createVirus(name, abbreviation));
+    },
 
-        onHide: ({ location }) => {
-            dispatch(push({...location, state: {createVirus: false}}));
-        }
-    };
-};
+    onHide: ({ location }) => {
+        dispatch(push({...location, state: {createVirus: false}}));
+    }
 
-const CreateVirusContainer = withRouter(connect(
-    mapStateToProps,
-    mapDispatchToProps
-)(CreateVirus));
+});
+
+const CreateVirusContainer = withRouter(connect(mapStateToProps, mapDispatchToProps)(CreateVirus));
 
 export default CreateVirusContainer;
 

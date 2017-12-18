@@ -1,14 +1,3 @@
-/**
- * @license
- * The MIT License (MIT)
- * Copyright 2015 Government of Canada
- *
- * @author
- * Ian Boyes
- *
- * @exports AnalysisItem
- */
-
 import React from "react";
 import CX from "classnames";
 import PropTypes from "prop-types";
@@ -19,9 +8,7 @@ import { Icon, RelativeTime } from "../../../base";
 
 const AnalysisItem = (props) => {
 
-    const itemClass = CX("list-group-item spaced", {
-        "hoverable": props.ready
-    });
+    const itemClass = CX("list-group-item spaced", {hoverable: props.ready});
 
     let end;
 
@@ -34,11 +21,11 @@ const AnalysisItem = (props) => {
             <strong className="pull-right">
                 In Progress
             </strong>
-        )
+        );
     }
 
     return (
-        <div className={itemClass} onClick={props.ready ? props.onClick: null}>
+        <div className={itemClass} onClick={props.ready ? props.onClick : null}>
             <Row>
                 <Col md={3}>
                     <strong>{getTaskDisplayName(props.algorithm)}</strong>

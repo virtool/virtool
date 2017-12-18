@@ -1,15 +1,3 @@
-/**
- * @license
- * The MIT License (MIT)
- * Copyright 2015 Government of Canada
- *
- * @author
- * Ian Boyes
- *
- * @exports IndexEntry
- */
-
-
 import React from "react";
 import PropTypes from "prop-types";
 import { ClipLoader } from "halogenium";
@@ -63,7 +51,7 @@ export default class IndexEntry extends React.PureComponent {
             // This should always test true in practice. Shows the number of changes and the number of viruses
             // affected.
             if (this.props.modification_count > 0) {
-               changeDescription = (
+                changeDescription = (
                     <span>
                         {this.props.modification_count} changes made in {this.props.modified_virus_count} viruses
                     </span>

@@ -1,26 +1,14 @@
-/**
- * @license
- * The MIT License (MIT)
- * Copyright 2015 Government of Canada
- *
- * @author
- * Ian Boyes
- *
- * @exports ManageHosts
- */
-
 import React from "react";
 import { some } from "lodash";
 import { push } from "react-router-redux";
 import { connect } from "react-redux";
 import { ClipLoader } from "halogenium";
-import { Link } from "react-router-dom";
 import { LinkContainer } from "react-router-bootstrap";
 import { Alert, Col, FormControl, FormGroup, InputGroup, Row } from "react-bootstrap";
 
 import CreateSubtraction from "./Create";
 import { findSubtractions } from "../actions";
-import { Button, Flex, FlexItem, Icon, ListGroupItem, ViewHeader } from "../../base";
+import { Button, Flex, FlexItem, Icon, ListGroupItem, LoadingPlaceholder, NoneFound, ViewHeader } from "../../base";
 
 
 class SubtractionList extends React.Component {
@@ -44,7 +32,7 @@ class SubtractionList extends React.Component {
     render () {
 
         if (this.props.documents === null) {
-            return <div />;
+            return <LoadingPlaceholder/>;
         }
 
         let hostComponents = this.props.documents.map((document) => {
@@ -71,7 +59,7 @@ class SubtractionList extends React.Component {
                                 <Flex alignItems="center" className="pull-right">
                                     {icon}
                                     <FlexItem pad>
-                                        <strong>{document.ready ? "Ready": "Importing"}</strong>
+                                        <strong>{document.ready ? "Ready" : "Importing"}</strong>
                                     </FlexItem>
                                 </Flex>
                             </Col>
@@ -82,17 +70,12 @@ class SubtractionList extends React.Component {
         });
 
         if (!hostComponents.length) {
-            hostComponents = (
-                <ListGroupItem key="noSample" className="text-center">
-                    <Icon name="info" /> No hosts found.
-                    <span> <Link to={{state: {createSubtraction: true}}}>Create one</Link>.</span>
-                </ListGroupItem>
-            );
+            hostComponents = <NoneFound noun="Subtractions" noListGroup />;
         }
 
         let alert;
 
-        if (!some(this.props.documents, {"ready": true})) {
+        if (!some(this.props.documents, {ready: true})) {
             alert = (
                 <Alert bsStyle="warning">
                     <Flex alignItems="center">
@@ -139,7 +122,7 @@ class SubtractionList extends React.Component {
                         <LinkContainer to={{state: {createSubtraction: true}}}>
                             <Button bsStyle="primary" icon="new-entry" tip="Create" />
                         </LinkContainer>
-                    ): null}
+                    ) : null}
                 </div>
 
                 <div className="list-group">
@@ -149,31 +132,29 @@ class SubtractionList extends React.Component {
                 <CreateSubtraction
                     show={!!this.props.history.location.state && this.props.history.location.state.createSubtraction}
                     onHide={this.props.onHide}
-                 />
+                />
             </div>
         );
     }
 }
 
-const mapStateToProps = (state) => {
-    return {
-        ...state.subtraction,
-        canModify: state.account.permissions.modify_subtraction
-    };
-};
+const mapStateToProps = (state) => ({
+    ...state.subtraction,
+    canModify: state.account.permissions.modify_subtraction
+});
 
-const mapDispatchToProps = (dispatch) => {
-    return {
-        onFind: (url) => {
-            dispatch(push(url.pathname + url.search));
-            dispatch(findSubtractions(url.searchParams.get("find")));
-        },
+const mapDispatchToProps = (dispatch) => ({
 
-        onHide: () => {
-            dispatch(push({state: {createSubtraction: false}}));
-        }
-    };
-};
+    onFind: (url) => {
+        dispatch(push(url.pathname + url.search));
+        dispatch(findSubtractions(url.searchParams.get("find")));
+    },
+
+    onHide: () => {
+        dispatch(push({state: {createSubtraction: false}}));
+    }
+
+});
 
 const Container = connect(mapStateToProps, mapDispatchToProps)(SubtractionList);
 

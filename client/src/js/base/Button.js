@@ -1,23 +1,9 @@
-/**
- * @license
- * The MIT License (MIT)
- * Copyright 2015 Government of Canada
- *
- * @author
- * Ian Boyes
- *
- * @exports Button
- */
-
 import React from "react";
 import PropTypes from "prop-types";
 import CX from "classnames";
 import { Tooltip, OverlayTrigger } from "react-bootstrap";
-import { Icon, bsStyles } from "./";
+import { Icon, bsStyles } from "./index";
 
-/**
- * A react-bootstrap button that does not retain focus when clicked.
- */
 export class Button extends React.Component {
 
     static propTypes = {

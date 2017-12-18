@@ -1,11 +1,3 @@
-/**
- *
- *
- * @copyright 2017 Government of Canada
- * @license MIT
- * @author igboyes
- *
- */
 import { includes } from "lodash";
 import { put, select, takeEvery, takeLatest, throttle } from "redux-saga/effects";
 import { push } from "react-router-redux";
@@ -30,27 +22,7 @@ import {
     ANALYZE,
     BLAST_NUVS,
     REMOVE_ANALYSIS
-}  from "../actionTypes";
-
-export function* watchSamples () {
-    yield takeEvery(WS_UPDATE_SAMPLE, findSamples);
-    yield takeEvery(WS_REMOVE_SAMPLE, findSamples);
-    yield takeEvery(WS_UPDATE_ANALYSIS, wsUpdateAnalysis);
-    yield takeLatest(FIND_SAMPLES.REQUESTED, findSamples);
-    yield takeLatest(FIND_READY_HOSTS.REQUESTED, findReadyHosts);
-    yield takeLatest(REFRESH_SAMPLE.REQUESTED, getSample);
-    yield takeLatest(GET_SAMPLE.REQUESTED, getSample);
-    yield takeLatest(CREATE_SAMPLE.REQUESTED, createSample);
-    yield takeEvery(UPDATE_SAMPLE.REQUESTED, updateSample);
-    yield takeEvery(UPDATE_SAMPLE_GROUP.REQUESTED, updateSampleGroup);
-    yield takeEvery(UPDATE_SAMPLE_RIGHTS.REQUESTED, updateSampleRights);
-    yield throttle(300, REMOVE_SAMPLE.REQUESTED, removeSample);
-    yield takeLatest(FIND_ANALYSES.REQUESTED, findAnalyses);
-    yield takeLatest(GET_ANALYSIS.REQUESTED, getAnalysis);
-    yield takeEvery(ANALYZE.REQUESTED, analyze);
-    yield throttle(150, BLAST_NUVS.REQUESTED, blastNuvs);
-    yield takeLatest(REMOVE_ANALYSIS.REQUESTED, removeAnalysis);
-}
+} from "../actionTypes";
 
 export function* wsUpdateAnalysis (action) {
     try {
@@ -104,11 +76,11 @@ export function* getSample (action) {
 export function* createSample (action) {
     yield setPending(function* ({name, isolate, host, locale, subtraction, files}) {
         try {
-        const response = yield samplesAPI.create(name, isolate, host, locale, subtraction, files);
-        yield put({type: CREATE_SAMPLE.SUCCEEDED, data: response.body});
-    } catch (error) {
-        yield put({type: CREATE_SAMPLE.FAILED, error});
-    }
+            const response = yield samplesAPI.create(name, isolate, host, locale, subtraction, files);
+            yield put({type: CREATE_SAMPLE.SUCCEEDED, data: response.body});
+        } catch (error) {
+            yield put({type: CREATE_SAMPLE.FAILED, error});
+        }
     }, action);
 }
 
@@ -132,7 +104,7 @@ export function* updateSampleGroup (action) {
         } catch (error) {
             yield put({type: UPDATE_SAMPLE_GROUP.FAILED, error});
         }
-    }, action)
+    }, action);
 }
 
 export function* updateSampleRights (action) {
@@ -143,7 +115,7 @@ export function* updateSampleRights (action) {
         } catch (error) {
             yield put({type: UPDATE_SAMPLE_GROUP.FAILED, error});
         }
-    }, action)
+    }, action);
 }
 
 export function* removeSample (action) {
@@ -212,4 +184,24 @@ export function* removeAnalysis (action) {
             yield put({type: REMOVE_ANALYSIS.FAILED, error});
         }
     }, action);
+}
+
+export function* watchSamples () {
+    yield takeEvery(WS_UPDATE_SAMPLE, findSamples);
+    yield takeEvery(WS_REMOVE_SAMPLE, findSamples);
+    yield takeEvery(WS_UPDATE_ANALYSIS, wsUpdateAnalysis);
+    yield takeLatest(FIND_SAMPLES.REQUESTED, findSamples);
+    yield takeLatest(FIND_READY_HOSTS.REQUESTED, findReadyHosts);
+    yield takeLatest(REFRESH_SAMPLE.REQUESTED, getSample);
+    yield takeLatest(GET_SAMPLE.REQUESTED, getSample);
+    yield takeLatest(CREATE_SAMPLE.REQUESTED, createSample);
+    yield takeEvery(UPDATE_SAMPLE.REQUESTED, updateSample);
+    yield takeEvery(UPDATE_SAMPLE_GROUP.REQUESTED, updateSampleGroup);
+    yield takeEvery(UPDATE_SAMPLE_RIGHTS.REQUESTED, updateSampleRights);
+    yield throttle(300, REMOVE_SAMPLE.REQUESTED, removeSample);
+    yield takeLatest(FIND_ANALYSES.REQUESTED, findAnalyses);
+    yield takeLatest(GET_ANALYSIS.REQUESTED, getAnalysis);
+    yield takeEvery(ANALYZE.REQUESTED, analyze);
+    yield throttle(150, BLAST_NUVS.REQUESTED, blastNuvs);
+    yield takeLatest(REMOVE_ANALYSIS.REQUESTED, removeAnalysis);
 }

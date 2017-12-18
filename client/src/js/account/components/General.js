@@ -11,9 +11,8 @@ import { capitalize } from "lodash";
 import { connect } from "react-redux";
 import { Label } from "react-bootstrap";
 
-import { Flex, FlexItem } from "../../base";
+import { Flex, FlexItem, Identicon } from "../../base";
 import ChangePassword from "./Password";
-import { Identicon } from "../../base";
 
 const AccountGeneral = ({ id, groups, hash }) => {
 

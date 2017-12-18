@@ -1,40 +1,31 @@
-/**
- *
- *
- * @copyright 2017 Government of Canada
- * @license MIT
- * @author igboyes
- *
- */
-
 import Request from "superagent";
 
 const subtractionAPI = {
 
-    find: () => {
-        return Request.get("/api/subtraction");
-    },
+    find: () => (
+        Request.get("/api/subtraction")
+    ),
 
-    listIds: () => {
-        return Request.get("/api/subtraction")
-            .query({ids: true});
-    },
+    listIds: () => (
+        Request.get("/api/subtraction")
+            .query({ids: true})
+    ),
 
-    get: (subtractionId) => {
-        return Request.get(`/api/subtraction/${subtractionId}`);
-    },
+    get: (subtractionId) => (
+        Request.get(`/api/subtraction/${subtractionId}`)
+    ),
 
-    create: (subtractionId, fileId) => {
-        return Request.post("/api/subtraction")
+    create: (subtractionId, fileId) => (
+        Request.post("/api/subtraction")
             .send({
                 subtraction_id: subtractionId,
                 file_id: fileId
-            });
-    },
+            })
+    ),
 
-    remove: (subtractionId) => {
-        return Request.delete(`/api/subtraction/${subtractionId}`);
-    }
+    remove: (subtractionId) => (
+        Request.delete(`/api/subtraction/${subtractionId}`)
+    )
 
 };
 

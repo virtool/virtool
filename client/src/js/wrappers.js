@@ -7,9 +7,9 @@
  *
  */
 
-import { put, call } from "redux-saga/effects";
-
 import { SET_APP_PENDING, UNSET_APP_PENDING } from "./actionTypes";
+import { call, put } from "redux-saga/effects";
+
 
 export function* setPending (generator, action) {
     yield put({type: SET_APP_PENDING});

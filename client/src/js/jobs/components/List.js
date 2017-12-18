@@ -1,19 +1,10 @@
-/**
- *
- *
- * @copyright 2017 Government of Canada
- * @license MIT
- * @author igboyes
- *
- */
-
 import React from "react";
 import { push } from "react-router-redux";
 import { connect } from "react-redux";
-import { ListGroup, ListGroupItem, Pagination } from "react-bootstrap";
+import { ListGroup } from "react-bootstrap";
 
 import { findJobs, cancelJob, removeJob } from "../actions";
-import { Flex, FlexItem, Icon, ViewHeader } from "../../base";
+import { LoadingPlaceholder, Pagination, NoneFound, ViewHeader } from "../../base";
 import Job from "./Entry";
 import JobsToolbar from "./Toolbar";
 
@@ -29,7 +20,7 @@ class JobsList extends React.Component {
         if (term) {
             url.searchParams.set("find", term);
         } else {
-            url.searchParams.delete("find")
+            url.searchParams.delete("find");
         }
 
         this.props.onFind(url);
@@ -44,7 +35,7 @@ class JobsList extends React.Component {
     render () {
 
         if (this.props.documents === null) {
-            return <div />;
+            return <LoadingPlaceholder />;
         }
 
         let components = this.props.documents.map(doc =>
@@ -57,17 +48,8 @@ class JobsList extends React.Component {
             />
         );
 
-        if (!components.length) {
-            components = (
-                <ListGroupItem>
-                    <Flex justifyContent="center" alignItems="center">
-                        <Icon name="info" />
-                        <FlexItem pad={5}>
-                            No Jobs Found
-                        </FlexItem>
-                    </Flex>
-                </ListGroupItem>
-            )
+        if (!this.props.documents.length) {
+            components = <NoneFound noun="jobs" noListGroup />;
         }
 
         const url = new window.URL(window.location);
@@ -90,49 +72,36 @@ class JobsList extends React.Component {
                     {components}
                 </ListGroup>
 
-                {this.props.documents.length ? (
-                    <div className="text-center">
-                        <Pagination
-                            items={this.props.page_count}
-                            maxButtons={10}
-                            activePage={this.props.page}
-                            onSelect={this.handlePage}
-                            first
-                            last
-                            next
-                            prev
-                        />
-                    </div>
-                ): null}
+                <Pagination
+                    documentCount={this.props.documents.length}
+                    onPage={this.handlePage}
+                    page={this.props.page}
+                    pageCount={this.props.page_count}
+                />
             </div>
         );
     }
 }
 
-const mapStateToProps = (state) => {
-    return {...state.jobs};
-};
+const mapStateToProps = (state) => ({...state.jobs});
 
-const mapDispatchToProps = (dispatch) => {
-    return {
-        onFind: (url = new window.URL(window.location)) => {
-            dispatch(push(url.pathname + url.search));
-            dispatch(findJobs(url.searchParams.get("find"), url.searchParams.get("page") || 1));
-        },
+const mapDispatchToProps = (dispatch) => ({
 
-        onCancel: (jobId) => {
-            dispatch(cancelJob(jobId));
-        },
+    onFind: (url = new window.URL(window.location)) => {
+        dispatch(push(url.pathname + url.search));
+        dispatch(findJobs(url.searchParams.get("find"), url.searchParams.get("page") || 1));
+    },
 
-        onRemove: (jobId) => {
-            dispatch(removeJob(jobId))
-        }
-    };
-};
+    onCancel: (jobId) => {
+        dispatch(cancelJob(jobId));
+    },
 
-const Container = connect(
-    mapStateToProps,
-    mapDispatchToProps
-)(JobsList);
+    onRemove: (jobId) => {
+        dispatch(removeJob(jobId));
+    }
+
+});
+
+const Container = connect(mapStateToProps, mapDispatchToProps)(JobsList);
 
 export default Container;

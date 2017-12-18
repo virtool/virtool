@@ -33,26 +33,7 @@ import {
     SELECT_SEQUENCE,
     SET_APP_PENDING,
     UNSET_APP_PENDING
-}  from "../actionTypes";
-
-export function* watchViruses () {
-    yield throttle(200, FIND_VIRUSES.REQUESTED, findViruses);
-    yield takeLatest(GET_VIRUS.REQUESTED, getVirus);
-    yield takeLatest(GET_VIRUS_HISTORY.REQUESTED, getVirusHistory);
-    yield takeEvery(CREATE_VIRUS.REQUESTED, createVirus);
-    yield takeEvery(EDIT_VIRUS.REQUESTED, editVirus);
-    yield takeEvery(REMOVE_VIRUS.REQUESTED, removeVirus);
-    yield takeEvery(ADD_ISOLATE.REQUESTED, addIsolate);
-    yield takeEvery(EDIT_ISOLATE.REQUESTED, editIsolate);
-    yield takeEvery(SET_ISOLATE_AS_DEFAULT.REQUESTED, setIsolateAsDefault);
-    yield takeEvery(REMOVE_ISOLATE.REQUESTED, removeIsolate);
-    yield takeEvery(ADD_SEQUENCE.REQUESTED, addSequence);
-    yield takeEvery(EDIT_SEQUENCE.REQUESTED, editSequence);
-    yield takeEvery(REMOVE_SEQUENCE.REQUESTED, removeSequence);
-    yield takeEvery(REVERT.REQUESTED, revert);
-    yield takeLatest(UPLOAD_IMPORT.REQUESTED, uploadImport);
-    yield takeLatest(COMMIT_IMPORT.REQUESTED, commitImport);
-}
+} from "../actionTypes";
 
 export function* findViruses (action) {
     yield put({type: SET_APP_PENDING});
@@ -61,7 +42,7 @@ export function* findViruses (action) {
         const response = yield virusesAPI.find(action.term, action.page);
         yield put({type: FIND_VIRUSES.SUCCEEDED, data: response.body});
     } catch (error) {
-        yield put({type: FIND_VIRUSES.FAILED}, error);
+        yield put({type: FIND_VIRUSES.FAILED, error});
     }
 
     yield put({type: UNSET_APP_PENDING});
@@ -73,7 +54,7 @@ export function* getVirus (action) {
             const response = yield virusesAPI.get(action.virusId);
             yield put({type: GET_VIRUS.SUCCEEDED, data: response.body});
         } catch (error) {
-            yield put({type: GET_VIRUS.FAILED, error: error});
+            yield put({type: GET_VIRUS.FAILED, error});
         }
     }, action);
 }
@@ -84,7 +65,7 @@ export function* getVirusHistory (action) {
             const response = yield virusesAPI.getHistory(action.virusId);
             yield put({type: GET_VIRUS_HISTORY.SUCCEEDED, data: response.body});
         } catch (error) {
-            yield put({type: GET_VIRUS_HISTORY.FAILED, error: error});
+            yield put({type: GET_VIRUS_HISTORY.FAILED, error});
         }
     }, action);
 }
@@ -95,7 +76,7 @@ export function* createVirus (action) {
             const response = yield virusesAPI.create(action.name, action.abbreviation);
             yield put({type: CREATE_VIRUS.SUCCEEDED, data: response.body});
         } catch (error) {
-            yield put({type: CREATE_VIRUS.FAILED, error: error});
+            yield put({type: CREATE_VIRUS.FAILED, error});
         }
     }, action);
 }
@@ -109,7 +90,7 @@ export function* editVirus (action) {
         } catch (error) {
             if (error.response.status === 409) {
                 yield put({type: EDIT_VIRUS.FAILED, message: error.response.body.message});
-            } else{
+            } else {
                 throw error;
             }
         }
@@ -125,7 +106,7 @@ export function* setIsolateAsDefault (action) {
         } catch (error) {
             if (error.response.status === 409) {
                 yield put({type: SET_ISOLATE_AS_DEFAULT.FAILED, message: error.response.body.message});
-            } else{
+            } else {
                 throw error;
             }
         }
@@ -139,7 +120,7 @@ export function* removeVirus (action) {
             yield call(action.history.push, "/viruses");
             yield put({type: REMOVE_VIRUS.SUCCEEDED});
         } catch (error) {
-            yield put({type: REMOVE_VIRUS.FAILED, error: error});
+            yield put({type: REMOVE_VIRUS.FAILED, error});
         }
     });
 }
@@ -151,7 +132,7 @@ export function* addIsolate (action) {
             const response = yield virusesAPI.get(action.virusId);
             yield put({type: ADD_ISOLATE.SUCCEEDED, data: response.body});
         } catch (error) {
-            yield put({type: ADD_ISOLATE.FAILED, error: error});
+            yield put({type: ADD_ISOLATE.FAILED, error});
         }
     }, action);
 }
@@ -163,7 +144,7 @@ export function* editIsolate (action) {
             const response = yield virusesAPI.get(action.virusId);
             yield put({type: EDIT_ISOLATE.SUCCEEDED, data: response.body});
         } catch (error) {
-            yield put({type: EDIT_ISOLATE.FAILED, error: error});
+            yield put({type: EDIT_ISOLATE.FAILED, error});
         }
     }, action);
 }
@@ -179,7 +160,7 @@ export function* removeIsolate (action) {
             ]);
             yield put({type: REMOVE_ISOLATE.SUCCEEDED, data: response.body});
         } catch (error) {
-            yield put({type: REMOVE_ISOLATE.FAILED, error: error});
+            yield put({type: REMOVE_ISOLATE.FAILED, error});
         }
     }, action);
 }
@@ -198,7 +179,7 @@ export function* addSequence (action) {
             const response = yield virusesAPI.get(action.virusId);
             yield put({type: ADD_SEQUENCE.SUCCEEDED, data: response.body});
         } catch (error) {
-            yield put({type: ADD_SEQUENCE.FAILED, error: error});
+            yield put({type: ADD_SEQUENCE.FAILED, error});
         }
     }, action);
 }
@@ -217,7 +198,7 @@ export function* editSequence (action) {
             const response = yield virusesAPI.get(action.virusId);
             yield put({type: EDIT_SEQUENCE.SUCCEEDED, data: response.body});
         } catch (error) {
-            yield put({type: EDIT_SEQUENCE.FAILED, error: error});
+            yield put({type: EDIT_SEQUENCE.FAILED, error});
         }
     }, action);
 }
@@ -229,7 +210,7 @@ export function* removeSequence (action) {
             const response = yield virusesAPI.get(action.virusId);
             yield put({type: REMOVE_SEQUENCE.SUCCEEDED, data: response.body});
         } catch (error) {
-            yield put({type: REMOVE_SEQUENCE.FAILED, error: error});
+            yield put({type: REMOVE_SEQUENCE.FAILED, error});
         }
     }, action);
 }
@@ -243,9 +224,9 @@ export function* revert (action) {
 
             yield put({type: REVERT.SUCCEEDED, detail: virusResponse.body, history: historyResponse.body});
         } catch (error) {
-            yield put({type: REVERT.FAILED, error: error});
+            yield put({type: REVERT.FAILED, error});
         }
-    }, action)
+    }, action);
 }
 
 export function* uploadImport (action) {
@@ -254,7 +235,7 @@ export function* uploadImport (action) {
         const getResponse = yield virusesAPI.getImport(uploadResponse.body.id);
         yield put({type: UPLOAD_IMPORT.SUCCEEDED, data: getResponse.body});
     } catch (error) {
-        yield put({type: UPLOAD_IMPORT.FAILED, error: error});
+        yield put({type: UPLOAD_IMPORT.FAILED, error});
     }
 }
 
@@ -263,6 +244,25 @@ export function* commitImport (action) {
         const response = yield virusesAPI.commitImport(action.fileId);
         yield put({type: COMMIT_IMPORT.SUCCEEDED, data: response.body});
     } catch (error) {
-        yield put({type: COMMIT_IMPORT.FAILED, error: error});
+        yield put({type: COMMIT_IMPORT.FAILED, error});
     }
+}
+
+export function* watchViruses () {
+    yield throttle(200, FIND_VIRUSES.REQUESTED, findViruses);
+    yield takeLatest(GET_VIRUS.REQUESTED, getVirus);
+    yield takeLatest(GET_VIRUS_HISTORY.REQUESTED, getVirusHistory);
+    yield takeEvery(CREATE_VIRUS.REQUESTED, createVirus);
+    yield takeEvery(EDIT_VIRUS.REQUESTED, editVirus);
+    yield takeEvery(REMOVE_VIRUS.REQUESTED, removeVirus);
+    yield takeEvery(ADD_ISOLATE.REQUESTED, addIsolate);
+    yield takeEvery(EDIT_ISOLATE.REQUESTED, editIsolate);
+    yield takeEvery(SET_ISOLATE_AS_DEFAULT.REQUESTED, setIsolateAsDefault);
+    yield takeEvery(REMOVE_ISOLATE.REQUESTED, removeIsolate);
+    yield takeEvery(ADD_SEQUENCE.REQUESTED, addSequence);
+    yield takeEvery(EDIT_SEQUENCE.REQUESTED, editSequence);
+    yield takeEvery(REMOVE_SEQUENCE.REQUESTED, removeSequence);
+    yield takeEvery(REVERT.REQUESTED, revert);
+    yield takeLatest(UPLOAD_IMPORT.REQUESTED, uploadImport);
+    yield takeLatest(COMMIT_IMPORT.REQUESTED, commitImport);
 }

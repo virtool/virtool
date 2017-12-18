@@ -1,27 +1,11 @@
-/**
- * @license
- * The MIT License (MIT)
- * Copyright 2015 Government of Canada
- *
- * @author
- * Ian Boyes
- *
- * @exports HMMDetail
- */
-
 import React from "react";
-import { ClipLoader } from "halogenium";
 import { connect } from "react-redux";
 import { sortBy, transform } from "lodash";
 import { Row, Col, Table, Badge, Label, Panel, ListGroup } from "react-bootstrap";
 
-import { ListGroupItem } from "../../base";
+import { IDRow, ListGroupItem, LoadingPlaceholder } from "../../base";
 import { getHmm } from "../actions";
 
-/**
- * A component the contains child components that modify certain general options. A small explanation of each
- * subcomponent is also rendered.
- */
 class HMMDetail extends React.Component {
 
     componentDidMount () {
@@ -31,61 +15,37 @@ class HMMDetail extends React.Component {
     render () {
 
         if (this.props.detail === null) {
-            return(
-                <div className="text-center" style={{paddingTop: "130px"}}>
-                    <ClipLoader color="#3c8786" />
-                </div>
-            );
+            return <LoadingPlaceholder maring="130px" />;
         }
 
-        let idField;
+        const clusterMembers = this.props.detail.entries.map((entry, index) =>
+            <tr key={index}>
+                <td>
+                    <a href={`http://www.ncbi.nlm.nih.gov/protein/${entry.accession}`} target="_blank">
+                        {entry.accession}
+                    </a>
+                </td>
+                <td>{entry.name}</td>
+                <td>{entry.organism}</td>
+            </tr>
+        );
 
-        if (this.props.showIds) {
-            idField = (
-                <tr>
-                    <th>Database ID</th>
-                    <td>{this.props.detail.id}</td>
-                </tr>
-            );
-        }
+        const names = this.props.detail.names.map((name, index) => <span key={index}><Label>{name}</Label> </span>);
 
-        const clusterMembers = this.props.detail.entries.map((entry, index) => {
-            return (
-                <tr key={index}>
-                    <td>
-                        <a href={`http://www.ncbi.nlm.nih.gov/protein/${entry.accession}`} target="_blank">
-                            {entry.accession}
-                        </a>
-                    </td>
-                    <td>{entry.name}</td>
-                    <td>{entry.organism}</td>
-                </tr>
-            )
-        });
-
-        const names = this.props.detail.names.map((name, index) => (
-            <span key={index}><Label>{name}</Label> </span>
-        ));
-
-        let taxonomy = {
-            "families": [],
-            "genera": []
-        };
-
-        ["families", "genera"].forEach((key) => {
+        const taxonomy = ["families", "genera"].reduce((result, key) => {
             const entries = sortBy(transform(this.props.detail[key], (result, count, name) => {
                 result.push({
-                    name: name,
-                    count: count
+                    name,
+                    count
                 });
             }, []), "count").reverse();
 
-            taxonomy[key] = entries.map(entry =>
+            result[key] = entries.map(entry =>
                 <ListGroupItem key={entry.name}>
                     {entry.name} <Badge>{entry.count}</Badge>
                 </ListGroupItem>
             );
-        });
+        }, {});
 
         const listGroupStyle = {
             maxHeight: 210,
@@ -100,67 +60,69 @@ class HMMDetail extends React.Component {
 
                 <Table bordered>
                     <tbody>
-                    <tr>
-                        <th className="col-md-3">Cluster</th>
-                        <td className="col-md-9">{this.props.detail.cluster}</td>
-                    </tr>
+                        <tr>
+                            <th className="col-md-3">Cluster</th>
+                            <td className="col-md-9">{this.props.detail.cluster}</td>
+                        </tr>
 
-                    {idField}
+                        <IDRow id={this.props.detail.id} />
 
-                    <tr>
-                        <th>Best Definitions</th>
-                        <td>{names}</td>
-                    </tr>
+                        <tr>
+                            <th>Best Definitions</th>
+                            <td>{names}</td>
+                        </tr>
 
-                    <tr>
-                        <th>Length</th>
-                        <td>{this.props.detail.length}</td>
-                    </tr>
+                        <tr>
+                            <th>Length</th>
+                            <td>{this.props.detail.length}</td>
+                        </tr>
 
-                    <tr>
-                        <th>Mean Entropy</th>
-                        <td>{this.props.detail.mean_entropy}</td>
-                    </tr>
+                        <tr>
+                            <th>Mean Entropy</th>
+                            <td>{this.props.detail.mean_entropy}</td>
+                        </tr>
 
-                    <tr>
-                        <th>Total Entropy</th>
-                        <td>{this.props.detail.total_entropy}</td>
-                    </tr>
+                        <tr>
+                            <th>Total Entropy</th>
+                            <td>{this.props.detail.total_entropy}</td>
+                        </tr>
                     </tbody>
                 </Table>
 
-                <h5><strong>
-                    Cluster Members <Badge>{this.props.detail.entries.length}</Badge>
-                </strong></h5>
+                <h5>
+                    <strong>Cluster Members</strong> <Badge>{this.props.detail.entries.length}</Badge>
+                </h5>
 
                 <Panel style={{height: "408px"}}>
                     <Table className="cluster-table" fill>
                         <thead>
-                        <tr>
-                            <th>Accession</th>
-                            <th>Name</th>
-                            <th>Organism</th>
-                        </tr>
+                            <tr>
+                                <th>Accession</th>
+                                <th>Name</th>
+                                <th>Organism</th>
+                            </tr>
                         </thead>
                         <tbody>
-                        {clusterMembers}
+                            {clusterMembers}
                         </tbody>
                     </Table>
                 </Panel>
 
                 <Row>
                     <Col md={6}>
-                        <h5><strong>
-                            Families
-                        </strong></h5>
+                        <h5>
+                            <strong>Families</strong>
+                        </h5>
                         <ListGroup style={listGroupStyle}>
                             {taxonomy.families}
                         </ListGroup>
                     </Col>
                     <Col md={6}>
-                        <h5><strong>
-                            Genera
-                        </strong></h5>
+                        <h5>
+                            <strong>
+                                Genera
+                            </strong>
+                        </h5>
                         <ListGroup style={listGroupStyle}>
                             {taxonomy.genera}
                         </ListGroup>
@@ -171,20 +133,17 @@ class HMMDetail extends React.Component {
     }
 }
 
-const mapStateToProps = (state) => {
-    return {
-        detail: state.hmms.detail,
-        showIds: state.account.settings.show_ids
-    };
-};
+const mapStateToProps = (state) => ({
+    detail: state.hmms.detail
+});
 
-const mapDispatchToProps = (dispatch) => {
-    return {
-        onGet: (hmmId) => {
-            dispatch(getHmm(hmmId));
-        }
-    };
-};
+const mapDispatchToProps = (dispatch) => ({
+
+    onGet: (hmmId) => {
+        dispatch(getHmm(hmmId));
+    }
+
+});
 
 const Container = connect(mapStateToProps, mapDispatchToProps)(HMMDetail);
 

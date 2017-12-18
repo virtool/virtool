@@ -1,12 +1,3 @@
-/**
- *
- *
- * @copyright 2017 Government of Canada
- * @license MIT
- * @author igboyes
- *
- */
-
 import { push } from "react-router-redux";
 import { put, takeLatest, throttle } from "redux-saga/effects";
 
@@ -18,15 +9,7 @@ import {
     GET_SUBTRACTION,
     CREATE_SUBTRACTION,
     REMOVE_SUBTRACTION
-}  from "../actionTypes";
-
-export function* watchSubtraction () {
-    yield throttle(500, FIND_SUBTRACTIONS.REQUESTED, findSubtractions);
-    yield takeLatest(LIST_SUBTRACTION_IDS.REQUESTED, listSubtractionIds);
-    yield takeLatest(GET_SUBTRACTION.REQUESTED, getSubtraction);
-    yield throttle(500, CREATE_SUBTRACTION.REQUESTED, createSubtraction);
-    yield throttle(300, REMOVE_SUBTRACTION.REQUESTED, removeSubtraction);
-}
+} from "../actionTypes";
 
 export function* findSubtractions (action) {
     yield setPending(function* (action) {
@@ -74,4 +57,12 @@ export function* removeSubtraction (action) {
             yield put({type: REMOVE_SUBTRACTION.FAILED, error});
         }
     }, action);
+}
+
+export function* watchSubtraction () {
+    yield throttle(500, FIND_SUBTRACTIONS.REQUESTED, findSubtractions);
+    yield takeLatest(LIST_SUBTRACTION_IDS.REQUESTED, listSubtractionIds);
+    yield takeLatest(GET_SUBTRACTION.REQUESTED, getSubtraction);
+    yield throttle(500, CREATE_SUBTRACTION.REQUESTED, createSubtraction);
+    yield throttle(300, REMOVE_SUBTRACTION.REQUESTED, removeSubtraction);
 }

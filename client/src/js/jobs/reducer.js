@@ -1,12 +1,3 @@
-/**
- * Redux reducers for working with job data.
- *
- * @copyright 2017 Government of Canada
- * @license MIT
- * @author igboyes
- *
- */
-
 import { reject } from "lodash";
 import {
     WS_UPDATE_JOB,
@@ -24,18 +15,17 @@ const initialState = {
     resources: null
 };
 
-const updateJob = (state, action) => {
-    return {...state, documents: state.documents.map(doc =>
-        doc.id !== action.data.id ? doc: {...doc, ...action.data}
-    )};
-};
+const updateJob = (state, action) => ({
+    ...state,
+    documents: state.documents.map(doc => doc.id === action.data.id ? {...doc, ...action.data} : doc)
+});
 
 export default function jobsReducer (state = initialState, action) {
 
     switch (action.type) {
 
         case WS_UPDATE_JOB:
-            return state.documents === null ? state: updateJob(state, action);
+            return state.documents === null ? state : updateJob(state, action);
 
         case WS_REMOVE_JOB:
             return {...state, documents: reject(state.documents, {id: action.jobId})};

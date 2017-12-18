@@ -27,10 +27,8 @@ export const Checkbox = (props) => {
 
     if (props.checked) {
         name = "checked";
-    } else {
-        if (props.partial) {
-            name = "partial";
-        }
+    } else if (props.partial) {
+        name = "partial";
     }
 
     let className = CX("pointer", {

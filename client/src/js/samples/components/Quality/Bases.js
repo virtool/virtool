@@ -1,14 +1,3 @@
-/**
- * @license
- * The MIT License (MIT)
- * Copyright 2015 Government of Canada
- *
- * @author
- * Ian Boyes
- *
- * @exports BasesChart
- */
-
 import { select } from "d3-selection";
 import { line, area, symbol, symbolSquare } from "d3-shape";
 import { scaleOrdinal, scaleLinear } from "d3-scale";
@@ -16,27 +5,19 @@ import { axisBottom, axisLeft } from "d3-axis";
 import { min, values } from "lodash";
 import { legendColor } from "d3-svg-legend";
 
-/**
- * A function for creating a chart showing the distribution of base quality at each position in a libraries reads.
- *
- * @param element - the element in which to render the chart.
- * @param data {array} - the data used to render the chart.
- * @param width {number} - the width of the element to render in.
- * @func
- */
-const CreateBasesChart = (element, data, width) => {
+const height = 300;
 
-    const margin = {
-        top: 20,
-        left: 60,
-        bottom: 60,
-        right: 20
-    };
+const margin = {
+    top: 20,
+    left: 60,
+    bottom: 60,
+    right: 20
+};
+
+const CreateBasesChart = (element, data, width) => {
 
     // Find the absolute minimum quality found in the data set.
     const minQuality = min(data.map(document => min(values(document))));
-
-    const height = 300;
 
     width = width - margin.left - margin.right;
 
@@ -95,7 +76,7 @@ const CreateBasesChart = (element, data, width) => {
     ];
 
     // Create base SVG canvas.
-    let svg = select(element).append("svg")
+    const svg = select(element).append("svg")
         .attr("width", width + margin.left + margin.right)
         .attr("height", height + margin.top + margin.bottom)
         .append("g")
@@ -107,7 +88,7 @@ const CreateBasesChart = (element, data, width) => {
             .attr("d", area.func(data))
             .attr("class", "graph-line")
             .style("stroke", "none")
-            .style("fill", area.name === "quartile" ? "#3C763D": "#FFF475")
+            .style("fill", area.name === "quartile" ? "#3C763D" : "#FFF475")
             .style("opacity", 0.5);
     });
 

@@ -32,10 +32,7 @@ const SampleToolbar = ({ canCreate, history, location, onTermChange, term }) => 
                 bsStyle="primary"
                 onClick={() => history.replace(location.pathname + location.search, {create: true})}
             />
-        ): null}
-
-
-
+        ) : null}
     </div>
 );
 
@@ -44,7 +41,7 @@ SampleToolbar.propTypes = {
     term: PropTypes.string,
     onTermChange: PropTypes.func,
     location: PropTypes.object,
-    history: PropTypes.object,
+    history: PropTypes.object
 };
 
 export default SampleToolbar;

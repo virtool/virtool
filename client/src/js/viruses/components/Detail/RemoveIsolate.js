@@ -1,14 +1,3 @@
-/**
- * @license
- * The MIT License (MIT)
- * Copyright 2015 Government of Canada
- *
- * @author
- * Ian Boyes
- *
- * @exports RemoveIsolate
- */
-
 import React from "react";
 import PropTypes from "prop-types";
 import { connect } from "react-redux";
@@ -17,7 +6,7 @@ import { Modal } from "react-bootstrap";
 import { removeIsolate, hideVirusModal } from "../../actions";
 import { Button } from "../../../base";
 
-const RemoveIsolate = (props) => (
+const RemoveIsolate = props => (
     <Modal show={props.show} onHide={props.onHide} dialogClassName="modal-danger">
         <Modal.Header onHide={props.onHide} closeButton>
             Remove Isolate
@@ -48,23 +37,21 @@ RemoveIsolate.propTypes = {
     onSuccess: PropTypes.func
 };
 
-const mapStateToProps = (state) => {
-    return {
-        show: state.viruses.removeIsolate
-    };
-};
+const mapStateToProps = state => ({
+    show: state.viruses.removeIsolate
+});
 
-const mapDispatchToProps = (dispatch) => {
-    return {
-        onHide: () => {
-            dispatch(hideVirusModal());
-        },
+const mapDispatchToProps = dispatch => ({
 
-        onConfirm: (virusId, isolateId, nextIsolateId) => {
-            dispatch(removeIsolate(virusId, isolateId, nextIsolateId));
-        }
-    };
-};
+    onHide: () => {
+        dispatch(hideVirusModal());
+    },
+
+    onConfirm: (virusId, isolateId, nextIsolateId) => {
+        dispatch(removeIsolate(virusId, isolateId, nextIsolateId));
+    }
+
+});
 
 const Container = connect(mapStateToProps, mapDispatchToProps)(RemoveIsolate);
 

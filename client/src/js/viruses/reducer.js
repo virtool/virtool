@@ -58,19 +58,17 @@ const virusesInitialState = {
     importData: null
 };
 
-const hideVirusModal = (state) => {
-    return {
-        ...state,
-        edit: false,
-        remove: false,
-        addIsolate: false,
-        editIsolate: false,
-        removeIsolate: false,
-        addSequence: false,
-        editSequence: false,
-        removeSequence: false
-    };
-};
+const hideVirusModal = state => ({
+    ...state,
+    edit: false,
+    remove: false,
+    addIsolate: false,
+    editIsolate: false,
+    removeIsolate: false,
+    addSequence: false,
+    editSequence: false,
+    removeSequence: false
+});
 
 const recalculateActiveIsolateId = (prevActiveIsolateId, nextDetail) => {
     if (!nextDetail.isolates.length) {
@@ -85,12 +83,10 @@ const recalculateActiveIsolateId = (prevActiveIsolateId, nextDetail) => {
     return prevActiveIsolateId;
 };
 
-const receivedDetailAfterChange = (state, action) => {
-    return {
-        ...hideVirusModal(state),
-        detail: action.data
-    };
-};
+const receivedDetailAfterChange = (state, action) => ({
+    ...hideVirusModal(state),
+    detail: action.data
+});
 
 export default function virusesReducer (state = virusesInitialState, action) {
 
@@ -98,7 +94,7 @@ export default function virusesReducer (state = virusesInitialState, action) {
 
         case WS_UPDATE_STATUS:
             if (action.data.id === "virus_import") {
-                return {...state, importData: {...state.importData, ...action.data, in_progress: true}};
+                return {...state, importData: {...state.importData, ...action.data, inProgress: true}};
             }
 
             return state;
@@ -124,7 +120,7 @@ export default function virusesReducer (state = virusesInitialState, action) {
             return {
                 ...state,
                 detail: action.data,
-                activeIsolateId: action.data.isolates.length ? action.data.isolates[0].id: null
+                activeIsolateId: action.data.isolates.length ? action.data.isolates[0].id : null
             };
 
         case CREATE_VIRUS.FAILED:
@@ -166,7 +162,7 @@ export default function virusesReducer (state = virusesInitialState, action) {
             };
 
         case UPLOAD_IMPORT.SUCCEEDED:
-            return {...state, importData: {...action.data, in_progress: false}};
+            return {...state, importData: {...action.data, inProgress: false}};
 
         case SELECT_ISOLATE:
             return {...state, activeIsolateId: action.isolateId};

@@ -49,8 +49,8 @@ class AddSequence extends React.Component {
         this.accessionNode.focus();
     };
 
-    save = (event) => {
-        event.preventDefault();
+    save = (e) => {
+        e.preventDefault();
 
         this.props.onSave(
             this.props.virusId,
@@ -77,10 +77,10 @@ class AddSequence extends React.Component {
             }, (err) => {
                 this.setState({
                     autofillPending: false,
-                    error: err.status === 404 ? "Accession not found": false
+                    error: err.status === 404 ? "Accession not found" : false
                 });
                 return err;
-            })
+            });
         });
     };
 
@@ -94,7 +94,7 @@ class AddSequence extends React.Component {
                         <ClipLoader color="#fff" />
                     </span>
                 </div>
-            )
+            );
         }
 
         return (
@@ -112,7 +112,7 @@ class AddSequence extends React.Component {
 
                     <form onSubmit={this.save}>
                         <Row>
-                            <Col xs={12}  md={6}>
+                            <Col xs={12} md={6}>
                                 <FormGroup>
                                     <ControlLabel>Accession (ID)</ControlLabel>
                                     <InputGroup>
@@ -131,13 +131,11 @@ class AddSequence extends React.Component {
                                         <FormControl
                                             inputRef={(node) => this.accessionNode = node}
                                             value={this.state.id}
-                                            onChange={(e) => {
-                                                this.setState({id: e.target.value, error: false})
-                                            }}
+                                            onChange={(e) => this.setState({id: e.target.value, error: false})}
                                         />
                                         <InputGroup.Button>
                                             <Button type="button" onClick={this.autofill}>
-                                                <Icon name="wand"  />
+                                                <Icon name="wand" />
                                             </Button>
                                         </InputGroup.Button>
                                     </InputGroup>
@@ -184,23 +182,21 @@ class AddSequence extends React.Component {
     }
 }
 
-const mapStateToProps = (state) => {
-    return {
-        show: state.viruses.addSequence
-    };
-};
+const mapStateToProps = state => ({
+    show: state.viruses.addSequence
+});
 
-const mapDispatchToProps = (dispatch) => {
-    return {
-        onHide: () => {
-            dispatch(hideVirusModal());
-        },
+const mapDispatchToProps = dispatch => ({
 
-        onSave: (virusId, isolateId, sequenceId, definition, host, sequence) => {
-            dispatch(addSequence(virusId, isolateId, sequenceId, definition, host, sequence))
-        }
-    };
-};
+    onHide: () => {
+        dispatch(hideVirusModal());
+    },
+
+    onSave: (virusId, isolateId, sequenceId, definition, host, sequence) => {
+        dispatch(addSequence(virusId, isolateId, sequenceId, definition, host, sequence));
+    }
+
+});
 
 const Container = connect(mapStateToProps, mapDispatchToProps)(AddSequence);
 

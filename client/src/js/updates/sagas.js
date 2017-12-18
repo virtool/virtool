@@ -16,19 +16,12 @@ import {
     UPDATE_SETTINGS
 } from "../actionTypes";
 
-export function* watchUpdates () {
-    yield takeLatest(GET_SOFTWARE_UPDATES.REQUESTED, getSoftwareUpdates);
-    yield takeLatest(UPDATE_SETTINGS.SUCCEEDED, setSoftwareChannel);
-    yield takeLatest(GET_DATABASE_UPDATES.REQUESTED, getDatabaseUpdates);
-    yield takeLatest(INSTALL_SOFTWARE_UPDATES.REQUESTED, installSoftwareUpdates);
-}
-
 function* getSoftwareUpdates () {
     try {
         const response = yield updatesAPI.getSoftware();
         yield put({type: GET_SOFTWARE_UPDATES.SUCCEEDED, data: response.body});
-    } catch(error) {
-        yield put({type: GET_SOFTWARE_UPDATES.FAILED})
+    } catch (error) {
+        yield put({type: GET_SOFTWARE_UPDATES.FAILED});
     }
 }
 
@@ -42,8 +35,8 @@ function* getDatabaseUpdates () {
     try {
         const response = yield updatesAPI.getDatabase();
         yield put({type: GET_DATABASE_UPDATES.SUCCEEDED, data: response.body});
-    } catch(error) {
-        yield put({type: GET_DATABASE_UPDATES.FAILED})
+    } catch (error) {
+        yield put({type: GET_DATABASE_UPDATES.FAILED});
     }
 }
 
@@ -51,7 +44,14 @@ function* installSoftwareUpdates () {
     try {
         const response = yield updatesAPI.installSoftwareUpdates();
         yield put({type: INSTALL_SOFTWARE_UPDATES.SUCCEEDED, data: response.body});
-    } catch(error) {
-        yield put({type: INSTALL_SOFTWARE_UPDATES.FAILED})
+    } catch (error) {
+        yield put({type: INSTALL_SOFTWARE_UPDATES.FAILED});
     }
+}
+
+export function* watchUpdates () {
+    yield takeLatest(GET_SOFTWARE_UPDATES.REQUESTED, getSoftwareUpdates);
+    yield takeLatest(UPDATE_SETTINGS.SUCCEEDED, setSoftwareChannel);
+    yield takeLatest(GET_DATABASE_UPDATES.REQUESTED, getDatabaseUpdates);
+    yield takeLatest(INSTALL_SOFTWARE_UPDATES.REQUESTED, installSoftwareUpdates);
 }

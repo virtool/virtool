@@ -1,36 +1,25 @@
-/**
- *
- *
- * @copyright 2017 Government of Canada
- * @license MIT
- * @author igboyes
- *
- */
-
 import Request from "superagent";
 
 const filesAPI = {
 
-    find: (fileType, page) => {
-        return Request.get("/api/files")
+    find: (fileType, page) => (
+        Request.get("/api/files")
             .query({
                 type: fileType,
                 page
-            });
-    },
+            })
+    ),
 
-    remove: (fileId) => {
-        return Request.delete(`/api/files/${fileId}`);
-    },
+    remove: (fileId) => (
+        Request.delete(`/api/files/${fileId}`)
+    ),
 
-    upload: (file, fileType, onProgress) => {
-        return Request.post(`/upload/${fileType}`)
+    upload: (file, fileType, onProgress) => (
+        Request.post(`/upload/${fileType}`)
             .query({name: file.name})
             .attach("file", file)
-            .on("progress", onProgress);
-    }
+            .on("progress", onProgress)
+    )
 };
-
-
 
 export default filesAPI;

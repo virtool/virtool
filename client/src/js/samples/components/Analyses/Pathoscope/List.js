@@ -1,14 +1,18 @@
 import React from "react";
 import PropTypes from "prop-types";
-import FlipMove from "react-flip-move"
+import FlipMove from "react-flip-move";
 import { Panel } from "react-bootstrap";
 import { forIn, includes, sortBy, flatten } from "lodash";
-
 import PathoscopeEntry from "./Entry";
 import PathoscopeIsolate from "./Isolate";
 import { Icon } from "../../../../base";
 
 export default class PathoscopeList extends React.Component {
+
+    constructor (props) {
+        super(props);
+        this.itemRefs = {};
+    }
 
     static propTypes = {
         expanded: PropTypes.arrayOf(PropTypes.string),
@@ -18,7 +22,7 @@ export default class PathoscopeList extends React.Component {
     };
 
     setScroll = (virusId, scrollLeft) => {
-        forIn(this.refs, (ref, key) => {
+        forIn(this.itemRefs, (ref, key) => {
             if (key.split("-")[0] === virusId) {
                 ref.scrollTo(scrollLeft);
             }
@@ -28,7 +32,7 @@ export default class PathoscopeList extends React.Component {
     render () {
 
         if (this.props.data.length) {
-            let rows = this.props.data.map((item, index) => {
+            const rows = this.props.data.map((item, index) => {
 
                 const expanded = includes(this.props.expanded, item.id);
 
@@ -47,7 +51,7 @@ export default class PathoscopeList extends React.Component {
                         const key = `${item.id}-${isolate.id}`;
 
                         return <PathoscopeIsolate
-                            ref={key}
+                            ref={(node) => this.itemRefs[key] = node}
                             key={key}
                             virusId={item._id}
                             maxDepth={item.maxDepth}
@@ -55,7 +59,7 @@ export default class PathoscopeList extends React.Component {
                             {...isolate}
                             setScroll={this.setScroll}
                             showReads={this.props.showReads}
-                        />
+                        />;
                     });
 
                     return components.concat(

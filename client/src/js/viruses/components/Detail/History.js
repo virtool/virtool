@@ -116,7 +116,7 @@ HistoryList.propTypes = {
 class VirusHistory extends React.Component {
 
     componentDidMount () {
-        this.props.getHistory(this.props.virusId)
+        this.props.getHistory(this.props.virusId);
     }
 
     render () {
@@ -124,9 +124,7 @@ class VirusHistory extends React.Component {
             return <div />;
         }
 
-        const changes = groupBy(this.props.history, change => {
-            return change.index.version === "unbuilt" ? "unbuilt": "built";
-        });
+        const changes = groupBy(this.props.history, change => change.index.version === "unbuilt" ? "unbuilt" : "built");
 
         let built;
         let unbuilt;
@@ -167,25 +165,23 @@ class VirusHistory extends React.Component {
 
 }
 
-const mapStateToProps = (state) => {
-    return {
-        virusId: state.viruses.detail.id,
-        history: state.viruses.detailHistory,
-        canModify: state.account.permissions.modify_virus
-    };
-};
+const mapStateToProps = state => ({
+    virusId: state.viruses.detail.id,
+    history: state.viruses.detailHistory,
+    canModify: state.account.permissions.modify_virus
+});
 
-const mapDispatchToProps = (dispatch) => {
-    return {
-        getHistory: (virusId) => {
-            dispatch(getVirusHistory(virusId));
-        },
+const mapDispatchToProps = dispatch => ({
 
-        revert: (virusId, version) => {
-            dispatch(revert(virusId, version));
-        }
-    };
-};
+    getHistory: (virusId) => {
+        dispatch(getVirusHistory(virusId));
+    },
+
+    revert: (virusId, version) => {
+        dispatch(revert(virusId, version));
+    }
+
+});
 
 const Container = connect(mapStateToProps, mapDispatchToProps)(VirusHistory);
 

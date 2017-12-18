@@ -17,9 +17,9 @@ import { Row, Col, Modal, FormGroup, ControlLabel, FormControl } from "react-boo
 import { editVirus, hideVirusModal } from "../../actions";
 import { Icon, Button } from "../../../base";
 
-const getInitialState = (props) => ({
-    name: props.name || "",
-    abbreviation: props.abbreviation || ""
+const getInitialState = ({ name, abbreviation }) => ({
+    name: name || "",
+    abbreviation: abbreviation || ""
 });
 
 class EditVirus extends React.Component {
@@ -30,7 +30,7 @@ class EditVirus extends React.Component {
     }
 
     modalEnter = () => {
-        this.setState(getInitialState(this.props))
+        this.setState(getInitialState(this.props));
     };
 
     static propTypes = {
@@ -43,8 +43,8 @@ class EditVirus extends React.Component {
         onSave: PropTypes.func
     };
 
-    save = (event) => {
-        event.preventDefault();
+    save = (e) => {
+        e.preventDefault();
         this.props.onSave(this.props.virusId, this.state.name, this.state.abbreviation);
     };
 
@@ -104,24 +104,22 @@ class EditVirus extends React.Component {
     }
 }
 
-const mapStateToProps = (state) => {
-    return {
-        show: state.viruses.edit,
-        error: state.viruses.editError
-    };
-};
+const mapStateToProps = (state) => ({
+    show: state.viruses.edit,
+    error: state.viruses.editError
+});
 
-const mapDispatchToProps = (dispatch) => {
-    return {
-        onHide: () => {
-            dispatch(hideVirusModal());
-        },
+const mapDispatchToProps = (dispatch) => ({
 
-        onSave: (virusId, name, abbreviation) => {
-            dispatch(editVirus(virusId, name, abbreviation))
-        }
-    };
-};
+    onHide: () => {
+        dispatch(hideVirusModal());
+    },
+
+    onSave: (virusId, name, abbreviation) => {
+        dispatch(editVirus(virusId, name, abbreviation));
+    }
+
+});
 
 const Container = connect(mapStateToProps, mapDispatchToProps)(EditVirus);
 

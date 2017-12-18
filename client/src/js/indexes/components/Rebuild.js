@@ -1,37 +1,21 @@
-/**
- * @license
- * The MIT License (MIT)
- * Copyright 2015 Government of Canada
- *
- * @author
- * Ian Boyes
- *
- * @exports IndexRebuild
- */
-
 import React from "react";
 import { connect } from "react-redux";
-import { ClipLoader } from "halogenium";
 import { Modal } from "react-bootstrap";
 
 import { getUnbuilt, createIndex, hideRebuild } from "../actions";
-import { Button } from "../../base";
+import { Button, LoadingPlaceholder } from "../../base";
 import RebuildHistory from "./History";
 
 class RebuildIndex extends React.Component {
 
-    constructor (props) {
-        super(props);
+    modalEntered () {
+        this.props.onGetUnbuilt();
     }
 
-    modalEntered = () => {
-        this.props.onGetUnbuilt();
-    };
-
-    save = (event) => {
-        event.preventDefault();
+    save (e) {
+        e.preventDefault();
         this.props.onRebuild();
-    };
+    }
 
     render () {
         let history;
@@ -39,11 +23,7 @@ class RebuildIndex extends React.Component {
         if (this.props.unbuilt) {
             history = <RebuildHistory unbuilt={this.props.unbuilt} />;
         } else {
-            history = (
-                <div className="text-center" style={{padding: "70px 0"}}>
-                    <ClipLoader color="#3c8786" size={16} />
-                </div>
-            );
+            history = <LoadingPlaceholder margin="70px" />;
         }
 
         return (
@@ -66,28 +46,26 @@ class RebuildIndex extends React.Component {
     }
 }
 
-const mapStateToProps = (state) => {
-    return {
-        show: Boolean(state.indexes.showRebuild),
-        unbuilt: state.indexes.unbuilt
-    };
-};
+const mapStateToProps = (state) => ({
+    show: !!state.indexes.showRebuild,
+    unbuilt: state.indexes.unbuilt
+});
 
-const mapDispatchToProps = (dispatch) => {
-    return {
-        onGetUnbuilt: () => {
-            dispatch(getUnbuilt());
-        },
+const mapDispatchToProps = (dispatch) => ({
 
-        onRebuild: () => {
-            dispatch(createIndex());
-        },
+    onGetUnbuilt: () => {
+        dispatch(getUnbuilt());
+    },
 
-        onHide: () => {
-            dispatch(hideRebuild());
-        }
-    };
-};
+    onRebuild: () => {
+        dispatch(createIndex());
+    },
+
+    onHide: () => {
+        dispatch(hideRebuild());
+    }
+
+});
 
 const Container = connect(mapStateToProps, mapDispatchToProps)(RebuildIndex);
 

@@ -1,10 +1,8 @@
 import React from "react";
 import { includes } from "lodash";
 import { connect } from "react-redux";
-import { ClipLoader } from "halogenium";
 import { Alert, Panel } from "react-bootstrap";
-
-import { Input } from "../../base";
+import { Input, LoadingPlaceholder } from "../../base";
 import { updateSampleGroup, updateSampleRights } from "../actions";
 import { listGroups } from "../../groups/actions";
 
@@ -22,23 +20,15 @@ class SampleRights extends React.Component {
 
     render () {
         if (!this.isOwnerOrAdministrator()) {
-            return (
-                <Panel>
-                    No allowed
-                </Panel>
-            )
+            return <Panel>Not allowed</Panel>;
         }
 
         if (this.props.groups === null) {
-            return (
-                <div className="text-center" style={{marginTop: "130px"}}>
-                    <ClipLoader color="#3c8786" />
-                </div>
-            );
+            return <LoadingPlaceholder />;
         }
 
-        const groupRights = (this.props.group_read ? "r": "") + (this.props.group_write ? "w": "");
-        const allRights = (this.props.all_read ? "r": "") + (this.props.all_write ? "w": "");
+        const groupRights = (this.props.group_read ? "r" : "") + (this.props.group_write ? "w" : "");
+        const allRights = (this.props.all_read ? "r" : "") + (this.props.all_write ? "w" : "");
 
         const nameOptionComponents = this.props.groups.map(group =>
             <option key={group.id} value={group.id}>{group.id}</option>
@@ -104,26 +94,26 @@ const mapStateToProps = state => {
     };
 };
 
-const mapDispatchToProps = dispatch => {
-    return {
-        onListGroups: () => {
-            dispatch(listGroups());
-        },
+const mapDispatchToProps = dispatch => ({
 
-        onChangeGroup: (sampleId, groupId) => {
-            dispatch(updateSampleGroup(sampleId, groupId));
-        },
+    onListGroups: () => {
+        dispatch(listGroups());
+    },
 
-        onChangeRights: (sampleId, name, value) => {
-            const update = {};
+    onChangeGroup: (sampleId, groupId) => {
+        dispatch(updateSampleGroup(sampleId, groupId));
+    },
 
-            update[`${name}_read`] = value.includes("r");
-            update[`${name}_write`] = value.includes("w");
+    onChangeRights: (sampleId, name, value) => {
+        const update = {};
 
-            dispatch(updateSampleRights(sampleId, update));
-        }
+        update[`${name}_read`] = value.includes("r");
+        update[`${name}_write`] = value.includes("w");
+
+        dispatch(updateSampleRights(sampleId, update));
     }
-};
+
+});
 
 const Container = connect(mapStateToProps, mapDispatchToProps)(SampleRights);
 

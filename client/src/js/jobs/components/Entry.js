@@ -1,14 +1,3 @@
-/**
- * @license
- * The MIT License (MIT)
- * Copyright 2015 Government of Canada
- *
- * @author
- * Ian Boyes
- *
- * @exports JobEntry
- */
-
 import React from "react";
 import PropTypes from "prop-types";
 import { capitalize } from "lodash";
@@ -25,19 +14,18 @@ export default class JobEntry extends React.Component {
         progress: PropTypes.number.isRequired,
         created_at: PropTypes.string.isRequired,
         user: PropTypes.object.isRequired,
-
         navigate: PropTypes.func,
         cancel: PropTypes.func,
         remove: PropTypes.func
     };
 
-    cancel = (event) => {
-        event.stopPropagation();
+    cancel = (e) => {
+        e.stopPropagation();
         this.props.cancel(this.props.id);
     };
 
-    remove = (event) => {
-        event.stopPropagation();
+    remove = (e) => {
+        e.stopPropagation();
         this.props.remove(this.props.id);
     };
 
@@ -69,7 +57,8 @@ export default class JobEntry extends React.Component {
         }
 
         let progressStyle;
-        let progressValue = this.props.progress * 100;
+
+        const progressValue = this.props.progress * 100;
 
         if (this.props.state === "running") {
             progressStyle = "success";
@@ -100,8 +89,8 @@ export default class JobEntry extends React.Component {
                         <strong>{getTaskDisplayName(this.props.task)}</strong>
                     </Col>
                     <Col md={5}>
-                         Started <RelativeTime time={this.props.created_at} /> by {this.props.user.id}
-                     </Col>
+                        Started <RelativeTime time={this.props.created_at} /> by {this.props.user.id}
+                    </Col>
                     <Col md={3}>
                         {icon}
                     </Col>

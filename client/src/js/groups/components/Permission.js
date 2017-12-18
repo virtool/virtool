@@ -1,14 +1,3 @@
-/**
- * @license
- * The MIT License (MIT)
- * Copyright 2015 Government of Canada
- *
- * @author
- * Ian Boyes
- *
- * @exports Permission
- */
-
 import React from "react";
 import PropTypes from "prop-types";
 import { startCase } from "lodash";
@@ -39,7 +28,7 @@ export default class Permission extends React.Component {
     }
 
     handleClick = () => {
-        let permissionUpdate = {};
+        const permissionUpdate = {};
 
         permissionUpdate[this.props.name] = !this.props.value;
 

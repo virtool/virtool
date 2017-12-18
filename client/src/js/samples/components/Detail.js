@@ -1,12 +1,3 @@
-/**
- *
- *
- * @copyright 2017 Government of Canada
- * @license MIT
- * @author igboyes
- *
- */
-
 import React from "react";
 import { push } from "react-router-redux";
 import { includes } from "lodash";
@@ -17,7 +8,7 @@ import { LinkContainer } from "react-router-bootstrap";
 import { Nav, NavItem } from "react-bootstrap";
 
 import { getSample, showRemoveSample } from "../actions";
-import { Flex, FlexItem, Icon } from "../../base";
+import { Flex, FlexItem, Icon, LoadingPlaceholder } from "../../base";
 import General from "./General";
 import Quality from "./Quality/Quality";
 import Analyses from "./Analyses/Analyses";
@@ -33,7 +24,7 @@ class SampleDetail extends React.Component {
     render () {
 
         if (this.props.detail === null) {
-            return <div />;
+            return <LoadingPlaceholder margin={130} />;
         }
 
         if (this.props.detail.imported === "ip") {
@@ -123,27 +114,25 @@ class SampleDetail extends React.Component {
     }
 }
 
-const mapStateToProps = (state) => {
-    return {
-        detail: state.samples.detail
-    };
-};
+const mapStateToProps = (state) => ({
+    detail: state.samples.detail
+});
 
-const mapDispatchToProps = (dispatch) => {
-    return {
-        getSample: (sampleId) => {
-            dispatch(getSample(sampleId));
-        },
+const mapDispatchToProps = (dispatch) => ({
 
-        showEdit: () => {
-            dispatch(push({state: {editSample: true}}));
-        },
+    getSample: (sampleId) => {
+        dispatch(getSample(sampleId));
+    },
 
-        showRemove: (sampleId, sampleName) => {
-            dispatch(showRemoveSample(sampleId, sampleName));
-        }
-    };
-};
+    showEdit: () => {
+        dispatch(push({state: {editSample: true}}));
+    },
+
+    showRemove: (sampleId, sampleName) => {
+        dispatch(showRemoveSample(sampleId, sampleName));
+    }
+
+});
 
 const Container = connect(mapStateToProps, mapDispatchToProps)(SampleDetail);
 

@@ -24,17 +24,20 @@ const samplesAPI = {
             .query(params);
     },
 
-    findReadyHosts: () => {
-        return Request.get("/api/subtraction")
-            .query({"ready": true, "is_host": true});
-    },
+    findReadyHosts: () => (
+        Request.get("/api/subtraction")
+            .query({
+                ready: true,
+                is_host: true
+            })
+    ),
 
-    get: (sampleId) => {
-        return Request.get(`/api/samples/${sampleId}`);
-    },
+    get: (sampleId) => (
+        Request.get(`/api/samples/${sampleId}`)
+    ),
 
-    create: (name, isolate, host, locale, subtraction, files) => {
-        return Request.post("/api/samples")
+    create: (name, isolate, host, locale, subtraction, files) => (
+        Request.post("/api/samples")
             .send({
                 name,
                 isolate,
@@ -42,52 +45,51 @@ const samplesAPI = {
                 locale,
                 subtraction,
                 files
-            });
-    },
+            })
+    ),
 
-    update: (sampleId, update) => {
-        return Request.patch(`/api/samples/${sampleId}`)
-            .send(update);
-    },
+    update: (sampleId, update) => (
+        Request.patch(`/api/samples/${sampleId}`)
+            .send(update)
+    ),
 
-    updateGroup: (sampleId, groupId) => {
-        return Request.put(`/api/samples/${sampleId}/group`)
+    updateGroup: (sampleId, groupId) => (
+        Request.put(`/api/samples/${sampleId}/group`)
             .send({
                 group_id: groupId
-            });
-    },
+            })
+    ),
 
-    updateRights: (sampleId, update) => {
-        return Request.patch(`/api/samples/${sampleId}/rights`)
-            .send(update);
-    },
+    updateRights: (sampleId, update) => (
+        Request.patch(`/api/samples/${sampleId}/rights`)
+            .send(update)
+    ),
 
-    remove: (sampleId) => {
-        return Request.delete(`/api/samples/${sampleId}`);
-    },
+    remove: (sampleId) => (
+        Request.delete(`/api/samples/${sampleId}`)
+    ),
 
-    findAnalyses: (sampleId) => {
-        return Request.get(`/api/samples/${sampleId}/analyses`)
-    },
+    findAnalyses: (sampleId) => (
+        Request.get(`/api/samples/${sampleId}/analyses`)
+    ),
 
-    getAnalysis: (analysisId) => {
-        return Request.get(`/api/analyses/${analysisId}`);
-    },
+    getAnalysis: (analysisId) => (
+        Request.get(`/api/analyses/${analysisId}`)
+    ),
 
-    analyze: (sampleId, algorithm) => {
-        return Request.post(`/api/samples/${sampleId}/analyses`)
-            .send({
-                algorithm: algorithm
-            });
-    },
+    analyze: (sampleId, algorithm) => (
+        Request.post(`/api/samples/${sampleId}/analyses`)
+            .send({algorithm})
+    ),
 
-    blastNuvs: (analysisId, sequenceIndex) => {
-        return Request.put(`/api/analyses/${analysisId}/${sequenceIndex}/blast`, {});
-    },
+    blastNuvs: (analysisId, sequenceIndex) => (
+        Request.put(`/api/analyses/${analysisId}/${sequenceIndex}/blast`, {})
+    ),
 
-    removeAnalysis: (analysisId) => {
-        return Request.delete(`/api/analyses/${analysisId}`);
-    }
+    removeAnalysis: (analysisId) => (
+        Request.delete(`/api/analyses/${analysisId}`)
+    )
+
 };
 
 export default samplesAPI;

@@ -1,14 +1,3 @@
-/**
- * @license
- * The MIT License (MIT)
- * Copyright 2015 Government of Canada
- *
- * @author
- * Ian Boyes
- *
- * @exports Task
- */
-
 import React from "react";
 import PropTypes from "prop-types";
 import { includes } from "lodash";
@@ -18,12 +7,11 @@ import { getTaskDisplayName } from "../../../utils";
 
 import TaskField from "./TaskField";
 
-/**
- * A ListGroupItem-based form component that allows editing of task-specific resource limits in form child components.
- */
+const readOnlyFields = ["create_subtraction", "rebuild_index"];
+
 const Task = (props) => {
 
-    const readOnly = includes(["create_subtraction", "rebuild_index"], props.taskPrefix);
+    const readOnly = includes(readOnlyFields, props.taskPrefix);
 
     return (
         <ListGroupItem allowFocus>

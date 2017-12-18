@@ -1,12 +1,3 @@
-/**
- *
- *
- * @copyright 2017 Government of Canada
- * @license MIT
- * @author igboyes
- *
- */
-
 import { put, takeEvery, takeLatest, throttle } from "redux-saga/effects";
 import groupsAPI from "./api";
 import { LIST_GROUPS, CREATE_GROUP, SET_GROUP_PERMISSION, REMOVE_GROUP } from "../actionTypes";
@@ -35,7 +26,7 @@ function* createGroup (action) {
         if (error.response.body.message === "Group already exists") {
             yield put({type: CREATE_GROUP.FAILED, error: "Group already exists"});
         } else {
-            throw(error);
+            throw (error);
         }
     }
 }

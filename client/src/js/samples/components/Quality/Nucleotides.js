@@ -1,14 +1,3 @@
-/**
- * @license
- * The MIT License (MIT)
- * Copyright 2015 Government of Canada
- *
- * @author
- * Ian Boyes
- *
- * @exports CreateNucleotidesChart
- */
-
 import { select } from "d3-selection";
 import { line, symbol, symbolSquare } from "d3-shape";
 import { scaleOrdinal, scaleLinear } from "d3-scale";
@@ -32,14 +21,6 @@ const series = [
     {color: "#777", label: "Cytosine"}
 ];
 
-/**
- * A function for creating a chart showing the frequency of a given nucleotide at each position in a libraries reads.
- *
- * @param element - the element in which to render the chart.
- * @param data {array} - the data used to render the chart.
- * @param baseWidth {number} - the width of the element to render in.
- * @func
- */
 const CreateNucleotidesChart = (element, data, baseWidth) => {
 
     const width = baseWidth - margin.left - margin.right;
@@ -71,7 +52,7 @@ const CreateNucleotidesChart = (element, data, baseWidth) => {
         .scale(legendScale);
 
     // Generate base SVG.
-    let svg = select(element).append("svg")
+    const svg = select(element).append("svg")
         .attr("width", width + margin.left + margin.right)
         .attr("height", height + margin.top + margin.bottom)
         .append("g")

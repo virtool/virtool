@@ -5,7 +5,7 @@ import { connect } from "react-redux";
 import { ListGroup, Pagination } from "react-bootstrap";
 
 import { findSamples } from "../actions";
-import { Icon, ListGroupItem, ViewHeader } from "../../base";
+import { LoadingPlaceholder, NoneFound, ViewHeader } from "../../base";
 import SampleEntry from "./Entry";
 import SampleToolbar from "./Toolbar";
 import CreateSample from "./Create/Create";
@@ -38,7 +38,7 @@ class SamplesList extends React.Component {
     render () {
 
         if (this.props.documents === null) {
-            return <div />;
+            return <LoadingPlaceholder />;
         }
 
         const term = this.props.match.params.term;
@@ -52,12 +52,8 @@ class SamplesList extends React.Component {
             />
         );
 
-        if (!sampleComponents.length) {
-            sampleComponents = (
-                <ListGroupItem key="noSample" className="text-center">
-                    <Icon name="info"/> No samples found.
-                </ListGroupItem>
-            );
+        if (!this.props.documents.length) {
+            sampleComponents = <NoneFound key="noSample" noun="samples" noListGroup />;
         }
 
         return (
@@ -105,7 +101,7 @@ class SamplesList extends React.Component {
                 <Route path="/samples" render={({ history }) =>
                     <QuickAnalyze
                         show={!!(history.location.state && history.location.state.quickAnalyze)}
-                        {...(history.location.state ? history.location.state.quickAnalyze: {})}
+                        {...(history.location.state ? history.location.state.quickAnalyze : {})}
                         onHide={this.props.onHide}
                     />
                 } />
@@ -114,22 +110,23 @@ class SamplesList extends React.Component {
     }
 }
 
-const mapStateToProps = (state) => {
-    return {...state.samples, canCreate: state.account.permissions.create_sample};
-};
+const mapStateToProps = (state) => ({
+    ...state.samples,
+    canCreate: state.account.permissions.create_sample
+});
 
-const mapDispatchToProps = (dispatch) => {
-    return {
-        onFind: (url = new window.URL(window.location)) => {
-            dispatch(push(url.pathname + url.search));
-            dispatch(findSamples(url.searchParams.get("find"), url.searchParams.get("page") || 1));
-        },
+const mapDispatchToProps = (dispatch) => ({
 
-        onHide: () => {
-            dispatch(push({state: {}}));
-        }
-    };
-};
+    onFind: (url = new window.URL(window.location)) => {
+        dispatch(push(url.pathname + url.search));
+        dispatch(findSamples(url.searchParams.get("find"), url.searchParams.get("page") || 1));
+    },
+
+    onHide: () => {
+        dispatch(push({state: {}}));
+    }
+
+});
 
 const Container = connect(mapStateToProps, mapDispatchToProps)(SamplesList);
 

@@ -34,16 +34,16 @@ const NuVsBLAST = (props) => {
                     <Panel header="NCBI BLAST">
                         <Table fill condensed>
                             <thead>
-                            <tr>
-                                <th>Accession</th>
-                                <th>Name</th>
-                                <th>E-value</th>
-                                <th>Score</th>
-                                <th>Identity</th>
-                            </tr>
+                                <tr>
+                                    <th>Accession</th>
+                                    <th>Name</th>
+                                    <th>E-value</th>
+                                    <th>Score</th>
+                                    <th>Identity</th>
+                                </tr>
                             </thead>
                             <tbody>
-                            {hitComponents}
+                                {hitComponents}
                             </tbody>
                         </Table>
                     </Panel>
@@ -121,19 +121,17 @@ const NuVsBLAST = (props) => {
     );
 };
 
-const mapStateToProps = (state) => {
-    return {
-        analysisId: state.samples.analysisDetail.id
-    };
-};
+const mapStateToProps = (state) => ({
+    analysisId: state.samples.analysisDetail.id
+});
 
-const mapDispatchToProps = (dispatch) => {
-    return {
-        onBlast: (analysisId, sequenceIndex) => {
-            dispatch(blastNuvs(analysisId, sequenceIndex));
-        }
-    };
-};
+const mapDispatchToProps = (dispatch) => ({
+
+    onBlast: (analysisId, sequenceIndex) => {
+        dispatch(blastNuvs(analysisId, sequenceIndex));
+    }
+
+});
 
 const Container = connect(mapStateToProps, mapDispatchToProps)(NuVsBLAST);
 

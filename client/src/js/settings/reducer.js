@@ -37,7 +37,7 @@ export default function settingsReducer (state = initialState, action) {
             return {...state, readahead: action.data, readaheadPending: false};
 
         case GET_CONTROL_READAHEAD.FAILED:
-            return {...state, readaheadPending:false};
+            return {...state, readaheadPending: false};
 
         default:
             return state;
