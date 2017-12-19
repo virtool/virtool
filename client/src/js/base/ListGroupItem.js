@@ -1,5 +1,6 @@
 import React from "react";
 import PropTypes from "prop-types";
+import { pick } from "lodash";
 import { ListGroupItem as BsListGroupItem } from "react-bootstrap";
 
 export class ListGroupItem extends React.Component {
@@ -14,8 +15,21 @@ export class ListGroupItem extends React.Component {
     };
 
     render () {
+
+        const props = pick(this.props, [
+            "active",
+            "style",
+            "className",
+            "bsStyle",
+            "disabled",
+            "header",
+            "href",
+            "onClick",
+            "type"
+        ]);
+
         return (
-            <BsListGroupItem {...this.props} onFocus={this.props.allowFocus ? null : e => e.target.blur()}>
+            <BsListGroupItem {...props} onFocus={this.props.allowFocus ? null : e => e.target.blur()}>
                 {this.props.children}
             </BsListGroupItem>
         );
