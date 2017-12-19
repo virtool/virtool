@@ -2,10 +2,10 @@ import React from "react";
 import { Route } from "react-router-dom";
 import { push } from "react-router-redux";
 import { connect } from "react-redux";
-import { ListGroup, Pagination } from "react-bootstrap";
+import { ListGroup } from "react-bootstrap";
 
 import { findSamples } from "../actions";
-import { LoadingPlaceholder, NoneFound, ViewHeader } from "../../base";
+import { LoadingPlaceholder, NoneFound, Pagination, ViewHeader } from "../../base";
 import SampleEntry from "./Entry";
 import SampleToolbar from "./Toolbar";
 import CreateSample from "./Create/Create";
@@ -78,18 +78,12 @@ class SamplesList extends React.Component {
                     {sampleComponents}
                 </ListGroup>
 
-                <div className="text-center">
-                    <Pagination
-                        onSelect={this.handlePage}
-                        items={this.props.page_count}
-                        maxButtons={10}
-                        activePage={this.props.page}
-                        first
-                        last
-                        next
-                        prev
-                    />
-                </div>
+                <Pagination
+                    documentCount={this.props.documents.length}
+                    onPage={this.handlePage}
+                    page={this.props.page}
+                    pageCount={this.props.page_count}
+                />
 
                 <Route path="/samples" render={({ history }) =>
                     <CreateSample

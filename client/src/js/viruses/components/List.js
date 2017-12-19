@@ -12,13 +12,36 @@ import { connect } from "react-redux";
 import { push } from "react-router-redux";
 import { Link } from "react-router-dom";
 import { LinkContainer } from "react-router-bootstrap";
-import { Alert, Row, Col, ListGroup, Pagination } from "react-bootstrap";
+import { Alert, Row, Col, ListGroup } from "react-bootstrap";
 
 import { findViruses } from "../actions";
-import { Flex, FlexItem, Icon, ListGroupItem, ViewHeader } from "../../base";
+import { Flex, FlexItem, Icon, ListGroupItem, Pagination, ViewHeader } from "../../base";
 import VirusToolbar from "./Toolbar";
 import CreateVirus from "./Create";
 import VirusImport from "./Import";
+
+const VirusItem = ({ abbreviation, id, name, modified, verified }) => (
+    <LinkContainer to={`/viruses/${id}`} key={id} className="spaced">
+        <ListGroupItem bsStyle={verified ? null : "warning"}>
+            <Row>
+                <Col xs={11} md={7}>
+                    <strong>{name}</strong>
+                    <small className="hidden-md hidden-lg text-muted" style={{marginLeft: "5px"}}>
+                        {abbreviation}
+                    </small>
+                </Col>
+                <Col xsHidden md={4}>
+                    {abbreviation}
+                </Col>
+                <Col xs={1} md={1}>
+                    <span className="pull-right">
+                        {modified ? <Icon bsStyle="warning" name="flag" /> : null}
+                    </span>
+                </Col>
+            </Row>
+        </ListGroupItem>
+    </LinkContainer>
+);
 
 class VirusesList extends React.Component {
 
@@ -54,29 +77,8 @@ class VirusesList extends React.Component {
 
         const virusCount = this.props.documents.length;
 
-        if (virusCount > 0) {
-            virusComponents = this.props.documents.map(document =>
-                <LinkContainer to={`/viruses/${document.id}`} key={document.id} className="spaced">
-                    <ListGroupItem bsStyle={document.verified ? null : "warning"}>
-                        <Row>
-                            <Col xs={11} md={7}>
-                                <strong>{document.name}</strong>
-                                <small className="hidden-md hidden-lg text-muted" style={{marginLeft: "5px"}}>
-                                    {document.abbreviation}
-                                </small>
-                            </Col>
-                            <Col xsHidden md={4}>
-                                {document.abbreviation}
-                            </Col>
-                            <Col xs={1} md={1}>
-                                <span className="pull-right">
-                                    {document.modified ? <Icon bsStyle="warning" name="flag" /> : null}
-                                </span>
-                            </Col>
-                        </Row>
-                    </ListGroupItem>
-                </LinkContainer>
-            );
+        if (virusCount) {
+            virusComponents = this.props.documents.map(document => <VirusItem key={document.id} {...document} />);
         } else {
             virusComponents = (
                 <ListGroupItem key="noViruses" className="text-center">
@@ -127,18 +129,12 @@ class VirusesList extends React.Component {
                     {virusComponents}
                 </ListGroup>
 
-                <div className="text-center">
-                    <Pagination
-                        items={this.props.pageCount}
-                        maxButtons={10}
-                        activePage={this.props.page}
-                        onSelect={this.handlePage}
-                        first
-                        last
-                        next
-                        prev
-                    />
-                </div>
+                <Pagination
+                    documentCount={virusCount}
+                    onPage={this.handlePage}
+                    page={this.props.page}
+                    pageCount={this.props.pageCount}
+                />
 
                 <CreateVirus {...this.props} />
 
