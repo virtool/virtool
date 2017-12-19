@@ -1,14 +1,6 @@
-/**
- *
- *
- * @copyright 2017 Government of Canada
- * @license MIT
- * @author igboyes
- *
- */
-
 import { put, takeLatest } from "redux-saga/effects";
 import updatesAPI from "./api";
+import { putGenericError } from "../sagaHelpers";
 import {
     GET_SOFTWARE_UPDATES,
     GET_DATABASE_UPDATES,
@@ -36,7 +28,7 @@ function* getDatabaseUpdates () {
         const response = yield updatesAPI.getDatabase();
         yield put({type: GET_DATABASE_UPDATES.SUCCEEDED, data: response.body});
     } catch (error) {
-        yield put({type: GET_DATABASE_UPDATES.FAILED});
+        yield putGenericError(GET_DATABASE_UPDATES, error);
     }
 }
 
@@ -45,7 +37,7 @@ function* installSoftwareUpdates () {
         const response = yield updatesAPI.installSoftwareUpdates();
         yield put({type: INSTALL_SOFTWARE_UPDATES.SUCCEEDED, data: response.body});
     } catch (error) {
-        yield put({type: INSTALL_SOFTWARE_UPDATES.FAILED});
+        yield putGenericError(INSTALL_SOFTWARE_UPDATES, error);
     }
 }
 

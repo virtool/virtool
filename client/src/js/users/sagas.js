@@ -1,16 +1,7 @@
-/**
- *
- *
- * @copyright 2017 Government of Canada
- * @license MIT
- * @author igboyes
- *
- */
-
 import { push } from "react-router-redux";
 import { takeEvery, takeLatest, throttle, put } from "redux-saga/effects";
 
-import { setPending } from "../wrappers";
+import { putGenericError, setPending } from "../sagaHelpers";
 import usersAPI from "./api";
 import {
     LIST_USERS,
@@ -28,7 +19,7 @@ function* listUsers (action) {
             const response = yield usersAPI.list();
             yield put({type: LIST_USERS.SUCCEEDED, users: response.body});
         } catch (error) {
-            yield put({type: LIST_USERS.FAILED, error});
+            yield putGenericError(LIST_USERS, error);
         }
     }, action);
 }
@@ -42,7 +33,7 @@ function* createUser (action) {
             // Close the create user modal and navigate to the new user.
             yield put(push(`/settings/users/${action.userId}`, {state: {createUser: false}}));
         } catch (error) {
-            yield put({type: CREATE_USER.FAILED, error});
+            yield putGenericError(CREATE_USER, error);
         }
     }, action);
 }
@@ -66,15 +57,19 @@ function* setForceReset (action) {
             const response = yield usersAPI.setForceReset(action.userId, action.enabled);
             yield put({type: SET_FORCE_RESET.SUCCEEDED, data: response.body});
         } catch (error) {
-            yield put({type: SET_FORCE_RESET.FAILED});
+            yield putGenericError(SET_FORCE_RESET, error);
         }
     }, action);
 }
 
 function* setPrimaryGroup (action) {
     yield setPending(function* (action) {
-        const response = yield usersAPI.setPrimaryGroup(action.userId, action.primaryGroup);
-        yield put({type: SET_PRIMARY_GROUP.SUCCEEDED, data: response.body});
+        try {
+            const response = yield usersAPI.setPrimaryGroup(action.userId, action.primaryGroup);
+            yield put({type: SET_PRIMARY_GROUP.SUCCEEDED, data: response.body});
+        } catch (error) {
+            yield putGenericError(SET_PRIMARY_GROUP, error);
+        }
     }, action);
 }
 
@@ -83,7 +78,7 @@ function* addToGroup (action) {
         const response = yield usersAPI.addUserToGroup(action.userId, action.groupId);
         yield put({type: ADD_USER_TO_GROUP.SUCCEEDED, data: response.body});
     } catch (error) {
-        yield put({type: ADD_USER_TO_GROUP.FAILED, error});
+        yield putGenericError(ADD_USER_TO_GROUP, error);
     }
 }
 
@@ -92,7 +87,7 @@ function* removeFromGroup (action) {
         const response = yield usersAPI.removeUserFromGroup(action.userId, action.groupId);
         yield put({type: REMOVE_USER_FROM_GROUP.SUCCEEDED, data: response.body});
     } catch (error) {
-        yield put({type: REMOVE_USER_FROM_GROUP.FAILED, error});
+        yield putGenericError(REMOVE_USER_FROM_GROUP, error);
     }
 }
 

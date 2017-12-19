@@ -1,7 +1,7 @@
 import { put, select, takeEvery, takeLatest, throttle } from "redux-saga/effects";
 
 import jobsAPI from "./api";
-import { setPending } from "../wrappers";
+import { setPending } from "../sagaHelpers";
 import { WS_UPDATE_JOB, FIND_JOBS, GET_JOB, CANCEL_JOB, REMOVE_JOB, CLEAR_JOBS, GET_RESOURCES } from "../actionTypes";
 
 export function* wsUpdateJob (action) {

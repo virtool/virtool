@@ -1,8 +1,7 @@
 import { push } from "react-router-redux";
 import { put, takeLatest, throttle } from "redux-saga/effects";
-
 import subtractionAPI from "./api";
-import { setPending } from "../wrappers";
+import { pushHistoryState, putGenericError, setPending } from "../sagaHelpers";
 import {
     FIND_SUBTRACTIONS,
     LIST_SUBTRACTION_IDS,
@@ -17,14 +16,18 @@ export function* findSubtractions (action) {
             const response = yield subtractionAPI.find(action.term, action.page);
             yield put({type: FIND_SUBTRACTIONS.SUCCEEDED, data: response.body});
         } catch (error) {
-            yield put({type: FIND_SUBTRACTIONS.FAILED, error});
+            yield putGenericError(FIND_SUBTRACTIONS, error);
         }
     }, action);
 }
 
 export function* listSubtractionIds () {
-    const response = yield subtractionAPI.listIds();
-    yield put({type: LIST_SUBTRACTION_IDS.SUCCEEDED, data: response.body});
+    try {
+        const response = yield subtractionAPI.listIds();
+        yield put({type: LIST_SUBTRACTION_IDS.SUCCEEDED, data: response.body});
+    } catch (error) {
+        yield putGenericError(LIST_SUBTRACTION_IDS, error);
+    }
 }
 
 export function* getSubtraction (action) {
@@ -32,7 +35,7 @@ export function* getSubtraction (action) {
         const response = yield subtractionAPI.get(action.subtractionId);
         yield put({type: GET_SUBTRACTION.SUCCEEDED, data: response.body});
     } catch (error) {
-        yield put({type: GET_SUBTRACTION.FAILED, error});
+        yield putGenericError(GET_SUBTRACTION, error);
     }
 }
 
@@ -41,9 +44,9 @@ export function* createSubtraction (action) {
         try {
             yield subtractionAPI.create(action.subtractionId, action.fileId);
             yield put({type: FIND_SUBTRACTIONS.REQUESTED});
-            yield put(push({...window.location, state: {createSubtraction: false}}));
+            yield pushHistoryState({createSubtraction: false});
         } catch (error) {
-            yield put({type: CREATE_SUBTRACTION.FAILED, error});
+            yield putGenericError(CREATE_SUBTRACTION, error);
         }
     }, action);
 }
@@ -54,7 +57,7 @@ export function* removeSubtraction (action) {
             yield subtractionAPI.remove(action.subtractionId);
             yield put(push("/subtraction"));
         } catch (error) {
-            yield put({type: REMOVE_SUBTRACTION.FAILED, error});
+            yield putGenericError(REMOVE_SUBTRACTION, error);
         }
     }, action);
 }

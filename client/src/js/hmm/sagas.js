@@ -1,7 +1,7 @@
 import { put, takeLatest, throttle } from "redux-saga/effects";
 
 import hmmsAPI from "./api";
-import { setPending } from "../wrappers";
+import { setPending } from "../sagaHelpers";
 import { FIND_HMMS, INSTALL_HMMS, GET_HMM } from "../actionTypes";
 
 export function* watchHmms () {

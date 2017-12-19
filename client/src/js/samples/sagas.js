@@ -1,9 +1,8 @@
-import { includes } from "lodash";
-import { put, select, takeEvery, takeLatest, throttle } from "redux-saga/effects";
 import { push } from "react-router-redux";
+import { put, select, takeEvery, takeLatest, throttle } from "redux-saga/effects";
 
 import samplesAPI from "./api";
-import { setPending } from "../wrappers";
+import { pushHistoryState, putGenericError, setPending } from "../sagaHelpers";
 import {
     WS_UPDATE_SAMPLE,
     WS_REMOVE_SAMPLE,
@@ -29,7 +28,7 @@ export function* wsUpdateAnalysis (action) {
         const response = yield samplesAPI.getAnalysis(action.update.id);
         yield put({type: GET_ANALYSIS.SUCCEEDED, data: response.body});
     } catch (error) {
-        yield put({type: GET_ANALYSIS.FAILED, error});
+        yield putGenericError(GET_ANALYSIS, error);
     }
 }
 
@@ -39,7 +38,7 @@ export function* findSamples (action) {
             const response = yield samplesAPI.find(action.term, action.page);
             yield put({type: FIND_SAMPLES.SUCCEEDED, data: response.body});
         } catch (error) {
-            yield put({type: FIND_SAMPLES.FAILED, error});
+            yield putGenericError(FIND_SAMPLES, error);
         }
     }, action);
 }
@@ -49,7 +48,7 @@ export function* findReadyHosts () {
         const response = yield samplesAPI.findReadyHosts();
         yield put({type: FIND_READY_HOSTS.SUCCEEDED, data: response.body});
     } catch (error) {
-        yield put({type: FIND_READY_HOSTS.FAILED, error});
+        yield putGenericError(FIND_READY_HOSTS, error);
     }
 }
 
@@ -69,7 +68,7 @@ export function* getSample (action) {
 
         yield put({type: GET_SAMPLE.SUCCEEDED, data: {...response.body, canModify}});
     } catch (error) {
-        yield put({type: GET_SAMPLE.FAILED, error});
+        yield putGenericError(GET_SAMPLE, error);
     }
 }
 
@@ -79,7 +78,7 @@ export function* createSample (action) {
             const response = yield samplesAPI.create(name, isolate, host, locale, subtraction, files);
             yield put({type: CREATE_SAMPLE.SUCCEEDED, data: response.body});
         } catch (error) {
-            yield put({type: CREATE_SAMPLE.FAILED, error});
+            yield putGenericError(CREATE_SAMPLE, error);
         }
     }, action);
 }
@@ -88,10 +87,10 @@ export function* updateSample (action) {
     yield setPending(function* (action) {
         try {
             yield samplesAPI.update(action.sampleId, action.update);
-            yield put(push({state: {editSample: false}}));
             yield put({type: REFRESH_SAMPLE.REQUESTED, sampleId: action.sampleId});
+            yield pushHistoryState({editSample: false});
         } catch (error) {
-            yield put({type: UPDATE_SAMPLE.FAILED, error});
+            yield putGenericError(UPDATE_SAMPLE, error);
         }
     }, action);
 }
@@ -102,7 +101,7 @@ export function* updateSampleGroup (action) {
             yield samplesAPI.updateGroup(action.sampleId, action.groupId);
             yield put({type: GET_SAMPLE.REQUESTED, sampleId: action.sampleId});
         } catch (error) {
-            yield put({type: UPDATE_SAMPLE_GROUP.FAILED, error});
+            yield putGenericError(UPDATE_SAMPLE_GROUP, error);
         }
     }, action);
 }
@@ -113,7 +112,7 @@ export function* updateSampleRights (action) {
             yield samplesAPI.updateRights(action.sampleId, action.update);
             yield put({type: GET_SAMPLE.REQUESTED, sampleId: action.sampleId});
         } catch (error) {
-            yield put({type: UPDATE_SAMPLE_GROUP.FAILED, error});
+            yield putGenericError(UPDATE_SAMPLE_RIGHTS, error);
         }
     }, action);
 }
@@ -126,7 +125,7 @@ export function* removeSample (action) {
 
             yield put(push("/samples"));
         } catch (error) {
-            yield put({type: UPDATE_SAMPLE.FAILED, error});
+            yield putGenericError(REMOVE_SAMPLE, error);
         }
     }, action);
 }
@@ -136,7 +135,7 @@ export function* findAnalyses (action) {
         const response = yield samplesAPI.findAnalyses(action.sampleId);
         yield put({type: FIND_ANALYSES.SUCCEEDED, data: response.body});
     } catch (error) {
-        yield put({type: FIND_ANALYSES.FAILED, error});
+        yield putGenericError(FIND_ANALYSES, error);
     }
 }
 
@@ -146,7 +145,7 @@ export function* getAnalysis (action) {
             const response = yield samplesAPI.getAnalysis(action.analysisId);
             yield put({type: GET_ANALYSIS.SUCCEEDED, data: response.body});
         } catch (error) {
-            yield put({type: GET_ANALYSIS.FAILED, error});
+            yield putGenericError(GET_ANALYSIS, error);
         }
     }, action);
 }
@@ -155,9 +154,9 @@ export function* analyze (action) {
     try {
         const response = yield samplesAPI.analyze(action.sampleId, action.algorithm);
         yield put({type: ANALYZE.SUCCEEDED, data: response.body});
-        yield put(push({state: {quickAnalyze: false}}));
+        yield pushHistoryState({quickAnalyze: false});
     } catch (error) {
-        yield put({type: ANALYZE.FAILED, error});
+        yield putGenericError(ANALYZE, error);
     }
 }
 
@@ -170,8 +169,8 @@ export function* blastNuvs (action) {
             sequenceIndex: action.sequenceIndex,
             data: response.body
         });
-    } catch (err) {
-        yield put({type: BLAST_NUVS.FAILED, err});
+    } catch (error) {
+        yield putGenericError(BLAST_NUVS, error);
     }
 }
 
@@ -181,7 +180,7 @@ export function* removeAnalysis (action) {
             yield samplesAPI.removeAnalysis(action.analysisId);
             yield put({type: REMOVE_ANALYSIS.SUCCEEDED, id: action.analysisId});
         } catch (error) {
-            yield put({type: REMOVE_ANALYSIS.FAILED, error});
+            yield putGenericError(REMOVE_ANALYSIS, error);
         }
     }, action);
 }

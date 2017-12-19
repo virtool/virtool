@@ -1,7 +1,7 @@
 import { call, put, takeEvery, takeLatest } from "redux-saga/effects";
 
 import accountAPI from "./api";
-import { setPending } from "../wrappers";
+import { setPending } from "../sagaHelpers";
 import {
     GET_ACCOUNT,
     GET_ACCOUNT_SETTINGS,

@@ -1,7 +1,7 @@
 import { put, select, takeEvery, takeLatest } from "redux-saga/effects";
 
 import filesAPI from "./api";
-import { setPending } from "../wrappers";
+import { setPending } from "../sagaHelpers";
 import { WS_UPDATE_FILE, WS_REMOVE_FILE, FIND_FILES, REMOVE_FILE, UPLOAD } from "../actionTypes";
 
 export function* watchFiles () {

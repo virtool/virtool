@@ -1,17 +1,8 @@
-/**
- *
- *
- * @copyright 2017 Government of Canada
- * @license MIT
- * @author igboyes
- *
- */
-
 import { put, takeEvery, takeLatest, throttle } from "redux-saga/effects";
 
 import settingsAPI from "./api";
 import virusesAPI from "../viruses/api";
-import { setPending } from "../wrappers";
+import { setPending } from "../sagaHelpers";
 import { GET_SETTINGS, UPDATE_SETTINGS, GET_CONTROL_READAHEAD } from "../actionTypes";
 
 function* getSettings () {

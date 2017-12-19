@@ -1,7 +1,7 @@
 import { put, takeEvery, takeLatest } from "redux-saga/effects";
 
 import indexesAPI from "./api";
-import { setPending } from "../wrappers";
+import { setPending } from "../sagaHelpers";
 import { FIND_INDEXES, GET_INDEX, GET_UNBUILT, CREATE_INDEX, GET_INDEX_HISTORY } from "../actionTypes";
 
 export function* watchIndexes () {
