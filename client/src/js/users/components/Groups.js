@@ -11,7 +11,6 @@
 
 import React from "react";
 import { connect } from "react-redux";
-import { includes} from "lodash";
 import { Row, Col, Panel } from "react-bootstrap";
 import { ListGroupItem, Checkbox } from "../../base";
 
@@ -21,7 +20,7 @@ const UserGroups = (props) => {
 
     const groupComponents = props.allGroups.map(groupId => {
 
-        const toggled = includes(props.memberGroups, groupId);
+        const toggled = props.memberGroups.includes(groupId);
 
         return (
             <Col xs={12} md={4} key={groupId}>

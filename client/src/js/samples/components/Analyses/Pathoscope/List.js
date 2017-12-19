@@ -2,7 +2,7 @@ import React from "react";
 import PropTypes from "prop-types";
 import FlipMove from "react-flip-move";
 import { Panel } from "react-bootstrap";
-import { forIn, includes, sortBy, flatten } from "lodash";
+import { forIn, sortBy, flatten } from "lodash";
 import PathoscopeEntry from "./Entry";
 import PathoscopeIsolate from "./Isolate";
 import { Icon } from "../../../../base";
@@ -34,7 +34,7 @@ export default class PathoscopeList extends React.Component {
         if (this.props.data.length) {
             const rows = this.props.data.map((item, index) => {
 
-                const expanded = includes(this.props.expanded, item.id);
+                const expanded = this.props.expanded.includes(item.id);
 
                 const components = [
                     <PathoscopeEntry

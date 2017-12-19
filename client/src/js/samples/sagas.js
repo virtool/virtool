@@ -63,7 +63,7 @@ export function* getSample (action) {
         const canModify = (
             data.user.id === account.id ||
             data.all_write ||
-            data.group_write && includes(account.groups, data.group)
+            data.group_write && account.groups.includes(data.group)
         );
 
         yield put({type: GET_SAMPLE.SUCCEEDED, data: {...response.body, canModify}});

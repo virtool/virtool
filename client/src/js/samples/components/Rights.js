@@ -1,5 +1,4 @@
 import React from "react";
-import { includes } from "lodash";
 import { connect } from "react-redux";
 import { Alert, Panel } from "react-bootstrap";
 import { Input, LoadingPlaceholder } from "../../base";
@@ -15,7 +14,7 @@ class SampleRights extends React.Component {
     }
 
     isOwnerOrAdministrator = () => (
-        includes(this.props.groups, this.props.group) || this.props.accountId === this.props.ownerId
+        this.props.groups.includes(this.props.group) || this.props.accountId === this.props.ownerId
     );
 
     render () {

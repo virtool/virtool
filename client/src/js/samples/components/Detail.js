@@ -1,7 +1,5 @@
 import React from "react";
 import { push } from "react-router-redux";
-import { includes } from "lodash";
-import { ClipLoader } from "halogenium";
 import { Switch, Route, Redirect } from "react-router-dom";
 import { connect } from "react-redux";
 import { LinkContainer } from "react-router-bootstrap";
@@ -43,7 +41,7 @@ class SampleDetail extends React.Component {
         let removeIcon;
 
         if (this.props.detail.canModify) {
-            if (includes(this.props.history.location.pathname, "general")) {
+            if (this.props.history.location.pathname.includes("general")) {
                 editIcon = (
                     <small style={{paddingLeft: "5px"}}>
                         <Icon

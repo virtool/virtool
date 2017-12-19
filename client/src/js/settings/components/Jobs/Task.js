@@ -1,6 +1,5 @@
 import React from "react";
 import PropTypes from "prop-types";
-import { includes } from "lodash";
 import { Row, Col } from "react-bootstrap";
 import { ListGroupItem } from "../../../base";
 import { getTaskDisplayName } from "../../../utils";
@@ -11,7 +10,7 @@ const readOnlyFields = ["create_subtraction", "rebuild_index"];
 
 const Task = (props) => {
 
-    const readOnly = includes(readOnlyFields, props.taskPrefix);
+    const readOnly = readOnlyFields.includes(props.taskPrefix);
 
     return (
         <ListGroupItem allowFocus>

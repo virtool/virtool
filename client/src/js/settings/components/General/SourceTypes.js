@@ -1,5 +1,5 @@
 import React from "react";
-import { includes, without } from "lodash";
+import { without } from "lodash";
 import { connect } from "react-redux";
 import { Row, Col, Panel, Overlay, Popover, FormGroup, InputGroup, FormControl } from "react-bootstrap";
 
@@ -32,10 +32,10 @@ class SourceTypes extends React.Component {
             const newSourceType = this.state.value.toLowerCase();
 
 
-            if (includes(this.props.settings.allowed_source_types, newSourceType)) {
+            if (this.props.settings.allowed_source_types.includes(newSourceType)) {
                 // Show error if the source type already exists in the list.
                 this.setState({error: "Source type already exists."});
-            } else if (includes(newSourceType, " ")) {
+            } else if (newSourceType.includes(" ")) {
                 // Show error if the input string includes a space character.
                 this.setState({error: "Source types may not contain spaces."});
             } else {
