@@ -7,8 +7,6 @@ import { Icon, bsStyles } from "./index";
 export class Button extends React.Component {
 
     static propTypes = {
-        type: PropTypes.oneOf(["button", "submit"]),
-        bsSize: PropTypes.oneOf(["xsmall", "small", "large"]),
         bsStyle: PropTypes.oneOf(bsStyles),
         active: PropTypes.bool,
         disabled: PropTypes.bool,
@@ -19,11 +17,26 @@ export class Button extends React.Component {
         icon: PropTypes.string,
         iconStyle: PropTypes.oneOf(bsStyles),
         pad: PropTypes.bool,
-
-        tip: PropTypes.oneOfType([PropTypes.string, PropTypes.element]),
-        tipPlacement: PropTypes.oneOf(["top", "right", "bottom", "left"]),
-
-        children: PropTypes.node
+        children: PropTypes.node,
+        type: PropTypes.oneOf([
+            "button",
+            "submit"
+        ]),
+        bsSize: PropTypes.oneOf([
+            "xsmall",
+            "small",
+            "large"
+        ]),
+        tip: PropTypes.oneOfType([
+            PropTypes.string,
+            PropTypes.element
+        ]),
+        tipPlacement: PropTypes.oneOf([
+            "top",
+            "right",
+            "bottom",
+            "left"
+        ])
     };
 
     static defaultProps = {
@@ -31,16 +44,16 @@ export class Button extends React.Component {
         pullRight: false
     };
 
-    blur = () =>  {
+    blur () {
         this.buttonNode.blur();
-    };
+    }
 
     render () {
 
         const className = CX("btn", `btn-${this.props.bsStyle}`, {
             "btn-block": this.props.block,
             "pull-right": this.props.pullRight,
-            "active": this.props.active,
+            active: this.props.active,
             "btn-xs": this.props.bsSize === "xsmall",
             "btn-sm": this.props.bsSize === "small",
             "btn-lg": this.props.bsSize === "large",
@@ -54,12 +67,6 @@ export class Button extends React.Component {
             icon = <Icon name={this.props.icon} className={`text-${this.props.iconStyle}`} />;
         }
 
-        let children;
-
-        if (this.props.children) {
-            children = <span>{this.props.children}</span>
-        }
-
         const button = (
             <button
                 type={this.props.type}
@@ -71,7 +78,7 @@ export class Button extends React.Component {
                 disabled={this.props.disabled}
             >
                 <div>
-                    {icon}{children}
+                    {icon}{this.props.children ? <span>{this.props.children}</span> : null}
                 </div>
             </button>
         );
@@ -88,7 +95,7 @@ export class Button extends React.Component {
                 <OverlayTrigger placement={this.props.tipPlacement || "top"} overlay={tooltip}>
                     {button}
                 </OverlayTrigger>
-            )
+            );
         }
 
         return button;

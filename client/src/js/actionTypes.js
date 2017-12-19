@@ -2,13 +2,11 @@
  * Created by igboyes on 03/05/17.
  */
 
-const createRequestActionType = (root) => {
-    return {
-        REQUESTED: `${root}_REQUESTED`,
-        SUCCEEDED: `${root}_SUCCEEDED`,
-        FAILED: `${root}_FAILED`
-    };
-};
+const createRequestActionType = (root) => ({
+    REQUESTED: `${root}_REQUESTED`,
+    SUCCEEDED: `${root}_SUCCEEDED`,
+    FAILED: `${root}_FAILED`
+});
 
 export const SET_APP_PENDING = "SET_APP_PENDING";
 export const UNSET_APP_PENDING = "UNSET_APP_PENDING";

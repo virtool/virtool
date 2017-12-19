@@ -1,24 +1,8 @@
-/**
- * @license
- * The MIT License (MIT)
- * Copyright 2015 Government of Canada
- *
- * @author
- * Ian Boyes
- *
- * @exports Input
- */
-
 import React from "react";
 import PropTypes from "prop-types";
 import { ControlLabel, FormControl, FormGroup, Overlay, Popover } from "react-bootstrap";
 
 export class Input extends React.Component {
-
-    constructor (props) {
-        super(props);
-
-    }
 
     static propTypes = {
         label: PropTypes.oneOfType([PropTypes.string, PropTypes.element]),
@@ -29,15 +13,12 @@ export class Input extends React.Component {
         readOnly: PropTypes.bool,
         placeholder: PropTypes.any,
         autoComplete: PropTypes.bool,
-
         error: PropTypes.oneOfType([PropTypes.string, PropTypes.element]),
         errorPlacement: PropTypes.string,
-
         onHide: PropTypes.func,
         onBlur: PropTypes.func,
         onFocus: PropTypes.func,
         onChange: PropTypes.func,
-
         style: PropTypes.object,
         formGroupStyle: PropTypes.object,
         children: PropTypes.node,
@@ -51,13 +32,9 @@ export class Input extends React.Component {
         formGroupStyle: {}
     };
 
-    focus = () => {
+    focus () {
         this.inputNode.focus();
-    };
-
-    blur = () => {
-        this.inputNode.blur();
-    };
+    }
 
     render () {
 
@@ -100,7 +77,7 @@ export class Input extends React.Component {
             );
         }
 
-        let groupStyle = {...this.props.formGroupStyle};
+        const groupStyle = {...this.props.formGroupStyle};
 
         if (this.props.noMargin) {
             groupStyle.marginBottom = 0;
@@ -120,7 +97,7 @@ export class Input extends React.Component {
                     onChange={this.props.onChange}
                     readOnly={this.props.readOnly}
                     placeholder={this.props.placeholder}
-                    autoComplete={this.props.autoComplete ? "on": "off"}
+                    autoComplete={this.props.autoComplete ? "on" : "off"}
                     componentClass={componentClass}
                     style={this.props.style}
                 >

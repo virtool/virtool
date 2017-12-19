@@ -1,7 +1,7 @@
 import React from "react";
 import { Pagination as BSPagination } from "react-bootstrap";
 
-export const Pagination = ({ documentCount, onPage, page, pageCount, }) => {
+export const Pagination = ({ documentCount, onPage, page, pageCount }) => {
     if (documentCount) {
         return (
             <div className="text-center">

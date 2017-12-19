@@ -1,14 +1,3 @@
-/**
- * @license
- * The MIT License (MIT)
- * Copyright 2015 Government of Canada
- *
- * @author
- * Ian Boyes
- *
- * @exports Help
- */
-
 import React from "react";
 import PropTypes from "prop-types";
 import CX from "classnames";
@@ -23,13 +12,13 @@ export const Help = (props) => {
         </Popover>
     );
 
-    const classes = CX("pointer", {
+    const className = CX("pointer", {
         "pull-right": props.pullRight
     });
 
     return (
         <OverlayTrigger trigger="click" placement="top" overlay={popover} rootClose>
-            <span className={classes}>
+            <span className={className}>
                 <Icon name="question" />
             </span>
         </OverlayTrigger>

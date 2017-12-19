@@ -1,14 +1,3 @@
-/**
- * @license
- * The MIT License (MIT)
- * Copyright 2015 Government of Canada
- *
- * @author
- * Ian Boyes
- *
- * @exports ByteSize
- */
-
 import React from "react";
 import PropTypes from "prop-types";
 import { join } from "lodash";
@@ -16,9 +5,17 @@ import { join } from "lodash";
 export class Flex extends React.Component {
 
     static propTypes = {
-        direction: PropTypes.oneOf(["row", "row-reverse", "column", "column-reverse"]),
-        wrap: PropTypes.oneOf(["nowrap", "wrap", "wrap-reverse"]),
-
+        direction: PropTypes.oneOf([
+            "row",
+            "row-reverse",
+            "column",
+            "column-reverse"
+        ]),
+        wrap: PropTypes.oneOf([
+            "nowrap",
+            "wrap",
+            "wrap-reverse"
+        ]),
         justifyContent: PropTypes.oneOf([
             "flex-start",
             "flex-end",
@@ -87,12 +84,25 @@ export class FlexItem extends React.Component {
     static propTypes = {
         grow: PropTypes.number,
         shrink: PropTypes.number,
-        basis: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
-        alignSelf: PropTypes.oneOf(["auto", "flex-start", "flex-end", "center", "baseline", "stretch"]),
-        pad: PropTypes.oneOfType([PropTypes.bool, PropTypes.number]),
         style: PropTypes.object,
         className: PropTypes.string,
-        children: PropTypes.node
+        children: PropTypes.node,
+        basis: PropTypes.oneOfType([
+            PropTypes.string,
+            PropTypes.number
+        ]),
+        alignSelf: PropTypes.oneOf([
+            "auto",
+            "flex-start",
+            "flex-end",
+            "center",
+            "baseline",
+            "stretch"
+        ]),
+        pad: PropTypes.oneOfType([
+            PropTypes.bool,
+            PropTypes.number
+        ])
     };
 
     static defaultProps = {
@@ -110,13 +120,13 @@ export class FlexItem extends React.Component {
         };
 
         if (this.props.pad) {
-            style.marginLeft = this.props.pad === true ? "3px": this.props.pad + "px";
+            style.marginLeft = this.props.pad === true ? "3px" : this.props.pad + "px";
         }
 
         if (this.props.style) {
             style = {...style, ...this.props.style};
         }
-        
+
         return (
             <div style={style} className={this.props.className}>
                 {this.props.children}

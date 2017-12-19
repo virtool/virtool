@@ -1,11 +1,3 @@
-/**
- *
- *
- * @copyright 2017 Government of Canada
- * @license MIT
- * @author igboyes
- *
- */
 import React from "react";
 import { capitalize } from "lodash";
 import { connect } from "react-redux";
@@ -21,7 +13,7 @@ const AccountGeneral = ({ id, groups, hash }) => {
             {capitalize(groupId)}
         </Label>
     );
-    
+
     return (
         <div>
             <Flex alignItems="stretch" style={{marginBottom: "15px"}}>
@@ -45,13 +37,11 @@ const AccountGeneral = ({ id, groups, hash }) => {
     );
 };
 
-const mapStateToProps = (state) => {
-    return {
-        id: state.account.id,
-        hash: state.account.identicon,
-        groups: state.account.groups
-    };
-};
+const mapStateToProps = (state) => ({
+    id: state.account.id,
+    hash: state.account.identicon,
+    groups: state.account.groups
+});
 
 const Container = connect(mapStateToProps)(AccountGeneral);
 

@@ -1,12 +1,3 @@
-/**
- *
- *
- * @copyright 2017 Government of Canada
- * @license MIT
- * @author igboyes
- *
- */
-
 import { call, put, takeEvery, takeLatest } from "redux-saga/effects";
 
 import accountAPI from "./api";
@@ -76,7 +67,7 @@ export function* changeAccountPassword (action) {
             // The only handled error should be when the old password is wrong. Other new password issue are dealt
             // with before making the request.
             if (err.response.body.message !== "Invalid old password") {
-                throw(err);
+                throw (err);
             }
 
             // The UI shows the 'Old password is invalid' message.

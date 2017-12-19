@@ -1,11 +1,4 @@
-/**
- *
- *
- * @copyright 2017 Government of Canada
- * @license MIT
- * @author igboyes
- *
- */
+import { simpleActionCreator } from "../utils";
 import {
     GET_ACCOUNT,
     UPDATE_ACCOUNT_SETTINGS,
@@ -17,59 +10,37 @@ import {
     LOGOUT
 } from "../actionTypes";
 
-export function getAccount () {
-    return {
-        type: GET_ACCOUNT.REQUESTED
-    }
-}
+export const getAccount = simpleActionCreator(GET_ACCOUNT.REQUESTED);
 
-export function updateAccountSettings (update) {
-    return {
-        type: UPDATE_ACCOUNT_SETTINGS.REQUESTED,
-        update
-    };
-}
+export const updateAccountSettings = (update) => ({
+    type: UPDATE_ACCOUNT_SETTINGS.REQUESTED,
+    update
+});
 
-export function changePassword (oldPassword, newPassword) {
-    return {
-        type: CHANGE_ACCOUNT_PASSWORD.REQUESTED,
-        oldPassword,
-        newPassword
-    };
-}
+export const changePassword = (oldPassword, newPassword) => ({
+    type: CHANGE_ACCOUNT_PASSWORD.REQUESTED,
+    oldPassword,
+    newPassword
+});
 
-export function getAPIKeys () {
-    return {
-        type: GET_API_KEYS.REQUESTED
-    };
-}
+export const getAPIKeys = simpleActionCreator(GET_API_KEYS.REQUESTED);
 
-export function createAPIKey (name, permissions, callback) {
-    return {
-        type: CREATE_API_KEY.REQUESTED,
-        name,
-        permissions,
-        callback
-    };
-}
+export const createAPIKey = (name, permissions, callback) => ({
+    type: CREATE_API_KEY.REQUESTED,
+    name,
+    permissions,
+    callback
+});
 
-export function updateAPIKey (keyId, permissions) {
-    return {
-        type: UPDATE_API_KEY.REQUESTED,
-        keyId,
-        permissions
-    };
-}
+export const updateAPIKey = (keyId, permissions) => ({
+    type: UPDATE_API_KEY.REQUESTED,
+    keyId,
+    permissions
+});
 
-export function removeAPIKey (keyId) {
-    return {
-        type: REMOVE_API_KEY.REQUESTED,
-        keyId
-    };
-}
+export const removeAPIKey = (keyId) => ({
+    type: REMOVE_API_KEY.REQUESTED,
+    keyId
+});
 
-export function logout () {
-    return {
-        type: LOGOUT.REQUESTED
-    }
-}
+export const logout = simpleActionCreator(LOGOUT.REQUESTED);

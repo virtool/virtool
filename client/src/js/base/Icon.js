@@ -1,45 +1,29 @@
-/**
- * @license
- * The MIT License (MIT)
- * Copyright 2015 Government of Canada
- *
- * @author
- * Ian Boyes
- *
- * @exports Icon
- */
-
 import CX from "classnames";
 import React from "react";
 import PropTypes from "prop-types";
 import { Tooltip, OverlayTrigger } from "react-bootstrap";
 
-/**
- * Wrapper an IcoMoon icon in an easy React interface.
- *
- * @class
- */
 export const Icon = (props) => {
 
-    function handleClick (event) {
-        event.stopPropagation();
-        props.onClick(event);
+    function handleClick (e) {
+        e.stopPropagation();
+        props.onClick(e);
     }
 
     const className = CX(
         props.className,
-        props.pending ? "i-spinner spinning": (`i-${props.name}`),
-        props.bsStyle && !props.pending ? `text-${props.bsStyle}`: false,
+        props.pending ? "i-spinner spinning" : (`i-${props.name}`),
+        props.bsStyle && !props.pending ? `text-${props.bsStyle}` : false,
         {
             "pull-right": props.pullRight,
             "fixed-width": props.fixedWidth,
-            "hoverable pointer": props.onClick,
+            "hoverable pointer": props.onClick
         }
     );
 
-    const style = {...(props.pad ? {marginLeft: "3px"}: {}), ...props.style};
+    const style = {...(props.pad ? {marginLeft: "3px"} : {}), ...props.style};
 
-    const icon = <i className={className} style={style} onClick={props.onClick ? handleClick: null} />;
+    const icon = <i className={className} style={style} onClick={props.onClick ? handleClick : null} />;
 
     if (props.tip) {
 
@@ -53,7 +37,7 @@ export const Icon = (props) => {
             <OverlayTrigger placement={props.tipPlacement || "top"} overlay={tooltip}>
                 {icon}
             </OverlayTrigger>
-        )
+        );
     }
 
     return icon;

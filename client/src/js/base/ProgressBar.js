@@ -1,15 +1,3 @@
-/**
- * @license
- * The MIT License (MIT)
- * Copyright 2015 Government of Canada
- *
- * @author
- * Ian Boyes
- *
- * @exports ProgressBar, AutoProgressBar
- *
- */
-
 import React from "react";
 import PropTypes from "prop-types";
 import CX from "classnames";
@@ -55,11 +43,11 @@ export class AutoProgressBar extends React.Component {
         }
     }
 
-    componentWillUnmount = () => {
+    componentWillUnmount () {
         this.stop();
-    };
+    }
 
-    move = () => {
+    move () {
         // Calculate how far the bar should be filled for this iteration.
         const fill = this.state.fill + round(this.props.step * Math.random());
 
@@ -70,20 +58,18 @@ export class AutoProgressBar extends React.Component {
         }
 
         // Update the fill so the progress bar moves.
-        this.setState({
-            fill: fill
-        });
-    };
+        this.setState({fill});
+    }
 
-    handleMoved = (now) => {
+    handleMoved (now) {
         if (now === 100) {
             this.setState({fill: 0});
         }
-    };
+    }
 
-    stop = () => {
+    stop () {
         window.clearInterval(this.interval);
-    };
+    }
 
     render () {
         if (this.state.fill === 0) {
@@ -130,7 +116,7 @@ export class ProgressBar extends React.PureComponent {
         this.barNode.removeEventListener("transitionend", this.onTransitionend);
     }
 
-    onTransitionend = () => {
+    onTransitionend () {
         // Stop listening for the transition end once it is complete. Only listen again if the "now" prop changes.
         this.barNode.removeEventListener("transitionend", this.onTransitionend);
 
@@ -138,7 +124,7 @@ export class ProgressBar extends React.PureComponent {
         if (this.props.onMoved) {
             this.props.onMoved(this.props.now);
         }
-    };
+    }
 
     render () {
         return (

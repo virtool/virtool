@@ -1,14 +1,3 @@
-/**
- * @license
- * The MIT License (MIT)
- * Copyright 2015 Government of Canada
- *
- * @author
- * Ian Boyes
- *
- * @exports ChangePassword
- */
-
 import React from "react";
 import { connect } from "react-redux";
 import { Alert, Col, Panel, Row } from "react-bootstrap";
@@ -16,18 +5,13 @@ import { Alert, Col, Panel, Row } from "react-bootstrap";
 import { changePassword } from "../actions";
 import { Button, Input, RelativeTime } from "../../base";
 
-const getInitialState = () => {
-    return {
-        oldPassword: "",
-        newPassword: "",
-        confirmPassword: "",
-        errors: []
-    };
-};
+const getInitialState = () => ({
+    oldPassword: "",
+    newPassword: "",
+    confirmPassword: "",
+    errors: []
+});
 
-/**
- * A form used by user to change their password.
- */
 class ChangePassword extends React.Component {
 
     constructor (props) {
@@ -37,7 +21,7 @@ class ChangePassword extends React.Component {
 
     componentWillReceiveProps (nextProps) {
         if (nextProps.oldPasswordError) {
-            this.setState({errors: ["Old password is invalid"]})
+            this.setState({errors: ["Old password is invalid"]});
         }
 
         if (nextProps.lastPasswordChange !== this.props.lastPasswordChange) {
@@ -45,10 +29,10 @@ class ChangePassword extends React.Component {
         }
     }
 
-    handleSubmit = (event) => {
-        event.preventDefault();
+    handleSubmit (e) {
+        e.preventDefault();
 
-        let errors = [];
+        const errors = [];
 
         const minLength = this.props.settings.minimum_password_length;
 
@@ -61,12 +45,12 @@ class ChangePassword extends React.Component {
         }
 
         if (errors.length) {
-            return this.setState({errors: errors});
+            return this.setState({errors});
         }
 
         // Set state to show that the user attempted to submit the form.
         this.props.onChangePassword(this.state.oldPassword, this.state.newPassword, this.state.confirmPassword);
-    };
+    }
 
     render () {
         if (!this.props.settings) {
@@ -129,21 +113,19 @@ class ChangePassword extends React.Component {
     }
 }
 
-const mapStateToProps = (state) => {
-    return {
-        lastPasswordChange: state.account.last_password_change,
-        oldPasswordError: state.account.oldPasswordError,
-        settings: state.settings.data
-    };
-};
+const mapStateToProps = (state) => ({
+    lastPasswordChange: state.account.last_password_change,
+    oldPasswordError: state.account.oldPasswordError,
+    settings: state.settings.data
+});
 
-const mapDispatchToProps = (dispatch) => {
-    return {
-        onChangePassword: (oldPassword, newPassword) => {
-            dispatch(changePassword(oldPassword, newPassword));
-        }
-    };
-};
+const mapDispatchToProps = (dispatch) => ({
+
+    onChangePassword: (oldPassword, newPassword) => {
+        dispatch(changePassword(oldPassword, newPassword));
+    }
+
+});
 
 const Container = connect(mapStateToProps, mapDispatchToProps)(ChangePassword);
 

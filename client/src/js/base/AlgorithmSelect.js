@@ -5,13 +5,16 @@ import { Input } from "./";
 import { getTaskDisplayName } from "../utils";
 
 
-export const algorithms = ["pathoscope_bowtie", "nuvs"];
+export const algorithms = [
+    "pathoscope_bowtie",
+    "nuvs"
+];
 
 export const AlgorithmSelect = (props) => (
     <Input
         name="algorithm"
         type="select"
-        label={props.noLabel ? null: "Algorithm"}
+        label={props.noLabel ? null : "Algorithm"}
         value={props.value}
         onChange={props.onChange}
     >
