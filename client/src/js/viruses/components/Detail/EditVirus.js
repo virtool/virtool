@@ -1,21 +1,10 @@
-/**
- * @license
- * The MIT License (MIT)
- * Copyright 2015 Government of Canada
- *
- * @author
- * Ian Boyes
- *
- * @exports IsolateAdd
- */
-
 import React from "react";
 import PropTypes from "prop-types";
 import { connect } from "react-redux";
-import { Row, Col, Modal, FormGroup, ControlLabel, FormControl } from "react-bootstrap";
+import { Row, Col, Modal } from "react-bootstrap";
 
 import { editVirus, hideVirusModal } from "../../actions";
-import { Icon, Button } from "../../../base";
+import { Button, Icon, Input } from "../../../base";
 
 const getInitialState = ({ name, abbreviation }) => ({
     name: name || "",
@@ -29,9 +18,9 @@ class EditVirus extends React.Component {
         this.state = getInitialState(this.props);
     }
 
-    modalEnter = () => {
+    modalEnter () {
         this.setState(getInitialState(this.props));
-    };
+    }
 
     static propTypes = {
         virusId: PropTypes.string,
@@ -43,10 +32,10 @@ class EditVirus extends React.Component {
         onSave: PropTypes.func
     };
 
-    save = (e) => {
+    save (e) {
         e.preventDefault();
         this.props.onSave(this.props.virusId, this.state.name, this.state.abbreviation);
-    };
+    }
 
     render () {
 
@@ -69,24 +58,18 @@ class EditVirus extends React.Component {
                     <Modal.Body>
                         <Row>
                             <Col md={6} xs={12}>
-                                <FormGroup>
-                                    <ControlLabel>Name</ControlLabel>
-                                    <FormControl
-                                        type="text"
-                                        value={this.state.name}
-                                        onChange={(e) => this.setState({name: e.target.value})}
-                                    />
-                                </FormGroup>
+                                <Input
+                                    label="Name"
+                                    value={this.state.name}
+                                    onChange={(e) => this.setState({name: e.target.value})}
+                                />
                             </Col>
                             <Col md={6} xs={12}>
-                                <FormGroup>
-                                    <ControlLabel>Abbreviation</ControlLabel>
-                                    <FormControl
-                                        type="text"
-                                        value={this.state.abbreviation}
-                                        onChange={(e) => this.setState({abbreviation: e.target.value})}
-                                    />
-                                </FormGroup>
+                                <Input
+                                    label="Abbreviation"
+                                    value={this.state.abbreviation}
+                                    onChange={(e) => this.setState({abbreviation: e.target.value})}
+                                />
                             </Col>
                         </Row>
 

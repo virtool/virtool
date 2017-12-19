@@ -2,10 +2,10 @@ import React from "react";
 import { get } from "lodash";
 import { push } from "react-router-redux";
 import { connect } from "react-redux";
-import { Row, Col, Modal, FormGroup, ControlLabel, FormControl } from "react-bootstrap";
+import { Row, Col, Modal } from "react-bootstrap";
 
 import { editSample } from "../actions";
-import { Icon, Button } from "../../base";
+import { Button, Icon, Input } from "../../base";
 
 const getInitialState = (props) => ({
     name: props.name || "",
@@ -50,34 +50,25 @@ class EditSample extends React.Component {
                     <Modal.Body>
                         <Row>
                             <Col xs={12}>
-                                <FormGroup>
-                                    <ControlLabel>Name</ControlLabel>
-                                    <FormControl
-                                        type="text"
-                                        value={this.state.name}
-                                        onChange={(e) => this.setState({name: e.target.value})}
-                                    />
-                                </FormGroup>
+                                <Input
+                                    label="Name"
+                                    value={this.state.name}
+                                    onChange={(e) => this.setState({name: e.target.value})}
+                                />
                             </Col>
                             <Col xs={12} md={6}>
-                                <FormGroup>
-                                    <ControlLabel>Isolate</ControlLabel>
-                                    <FormControl
-                                        type="text"
-                                        value={this.state.isolate}
-                                        onChange={(e) => this.setState({isolate: e.target.value})}
-                                    />
-                                </FormGroup>
+                                <Input
+                                    label="Isolate"
+                                    value={this.state.isolate}
+                                    onChange={(e) => this.setState({isolate: e.target.value})}
+                                />
                             </Col>
                             <Col xs={12} md={6}>
-                                <FormGroup>
-                                    <ControlLabel>Host</ControlLabel>
-                                    <FormControl
-                                        type="text"
-                                        value={this.state.host}
-                                        onChange={(e) => this.setState({host: e.target.value})}
-                                    />
-                                </FormGroup>
+                                <Input
+                                    label="Host"
+                                    value={this.state.host}
+                                    onChange={(e) => this.setState({host: e.target.value})}
+                                />
                             </Col>
                         </Row>
 

@@ -40,17 +40,25 @@ class Password extends React.Component {
         this.setState(getInitialState());
     }
 
-    handleSubmit = (e) => {
+    handleChange (e, key) {
+        const state = {
+            error: this.state.error && this.state.newPassword === this.state.confirmPassword
+        };
+
+        state[key] = e.target.value;
+
+        this.setState(state);
+    }
+
+    handleSubmit (e) {
         e.preventDefault();
 
         if (this.state.newPassword === this.state.confirmPassword) {
             this.props.onSubmit(this.props.id, this.state.newPassword);
         } else {
-            this.setState({
-                error: true
-            });
+            this.setState({error: true});
         }
-    };
+    }
 
     render = () => (
         <Panel>
@@ -61,29 +69,21 @@ class Password extends React.Component {
 
             <form onSubmit={this.handleSubmit}>
                 <Row>
-                    <Col xs={16} md={6}>
+                    <Col xs={12} md={6}>
                         <Input
                             type="password"
-                            name="password"
                             placeholder="New Password"
                             value={this.state.newPassword}
-                            onChange={(e) => this.setState({
-                                newPassword: e.target.value,
-                                error: this.state.error && this.state.newPassword === this.state.confirmPassword
-                            })}
+                            onChange={(e) => this.handleChange(e, "password")}
                         />
                     </Col>
 
                     <Col xs={12} md={6}>
                         <Input
                             type="password"
-                            name="confirm"
                             placeholder="Confirm Password"
                             value={this.state.confirmPassword}
-                            onChange={(e) => this.setState({
-                                confirmPassword: e.target.value,
-                                error: this.state.error && this.state.newPassword === this.state.confirmPassword
-                            })}
+                            onChange={(e) => this.handleChange(e, "confirm")}
                         />
                     </Col>
                 </Row>

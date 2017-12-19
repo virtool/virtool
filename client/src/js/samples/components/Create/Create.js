@@ -188,7 +188,6 @@ class CreateSample extends React.Component {
                                     <InputGroup>
                                         <FormControl
                                             type="text"
-                                            name="name"
                                             value={this.state.name}
                                             onChange={(e) => this.setState({name: e.target.value})}
                                             autoComplete={false}
@@ -208,8 +207,6 @@ class CreateSample extends React.Component {
                             </Col>
                             <Col md={3}>
                                 <Input
-                                    type="text"
-                                    name="isolate"
                                     label="Isolate"
                                     value={this.state.isolate}
                                     onChange={(e) => this.setState({isolate: e.target.value})}
@@ -220,8 +217,6 @@ class CreateSample extends React.Component {
                         <Row>
                             <Col md={6}>
                                 <Input
-                                    type="text"
-                                    name="host"
                                     label="True Host"
                                     value={this.state.host}
                                     onChange={(e) => this.setState({host: e.target.value})}
@@ -229,8 +224,6 @@ class CreateSample extends React.Component {
                             </Col>
                             <Col md={6}>
                                 <Input
-                                    name="subtraction"
-                                    type="select"
                                     label="Subtraction Host"
                                     value={this.state.subtraction}
                                     onChange={(e) => this.setState({subtraction: e.target.value})}
@@ -243,8 +236,6 @@ class CreateSample extends React.Component {
                         <Row>
                             <Col md={this.state.forceGroupChoice ? 6 : 8}>
                                 <Input
-                                    type="text"
-                                    name="locale"
                                     label="Locale"
                                     value={this.state.locale}
                                     onChange={(e) => this.setState({locale: e.target.value})}

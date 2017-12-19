@@ -16,7 +16,7 @@ import { Row, Col, Modal, FormGroup, FormControl, InputGroup, ControlLabel, Popo
 import { ClipLoader } from "halogenium";
 
 import { addSequence, hideVirusModal } from "../../actions";
-import { Icon, Button } from "../../../base";
+import { Button, Icon, Input } from "../../../base";
 import SequenceField from "./SequenceField";
 import virusAPI from "../../api";
 
@@ -142,24 +142,20 @@ class AddSequence extends React.Component {
                                 </FormGroup>
                             </Col>
                             <Col xs={12} md={6}>
-                                <FormGroup>
-                                    <ControlLabel>Host</ControlLabel>
-                                    <FormControl
-                                        value={this.state.host}
-                                        onChange={(e) => this.setState({host: e.target.value})}
-                                    />
-                                </FormGroup>
+                                <Input
+                                    label="Host"
+                                    value={this.state.host}
+                                    onChange={(e) => this.setState({host: e.target.value})}
+                                />
                             </Col>
                         </Row>
                         <Row>
                             <Col xs={12}>
-                                <FormGroup>
-                                    <ControlLabel>Definition</ControlLabel>
-                                    <FormControl
-                                        value={this.state.definition}
-                                        onChange={(e) => this.setState({definition: e.target.value})}
-                                    />
-                                </FormGroup>
+                                <Input
+                                    label="Definition"
+                                    value={this.state.definition}
+                                    onChange={(e) => this.setState({definition: e.target.value})}
+                                />
                             </Col>
                         </Row>
                         <Row>
