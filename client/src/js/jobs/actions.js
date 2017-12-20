@@ -20,11 +20,7 @@ export const wsRemoveJob = (jobId) => ({
     jobId
 });
 
-export const findJobs = (term, page) => ({
-    type: FIND_JOBS.REQUESTED,
-    term,
-    page
-});
+export const findJobs = simpleActionCreator(FIND_JOBS.REQUESTED);
 
 export const getJob = (jobId) => ({
     type: GET_JOB.REQUESTED,

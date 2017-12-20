@@ -7,30 +7,13 @@ import { findJobs, cancelJob, removeJob } from "../actions";
 import { LoadingPlaceholder, Pagination, NoneFound, ViewHeader } from "../../base";
 import Job from "./Entry";
 import JobsToolbar from "./Toolbar";
+import {createFindURL} from "../../utils";
 
 class JobsList extends React.Component {
 
     componentDidMount () {
-        this.props.onFind();
+        this.props.onPage();
     }
-
-    handleChange = (term) => {
-        const url = new window.URL(window.location);
-
-        if (term) {
-            url.searchParams.set("find", term);
-        } else {
-            url.searchParams.delete("find");
-        }
-
-        this.props.onFind(url);
-    };
-
-    handlePage = (page) => {
-        const url = new window.URL(window.location);
-        url.searchParams.set("page", page);
-        this.props.onFind(url);
-    };
 
     render () {
 
@@ -52,10 +35,6 @@ class JobsList extends React.Component {
             components = <NoneFound noun="jobs" noListGroup />;
         }
 
-        const url = new window.URL(window.location);
-
-        const term = url.searchParams.get("find") || "";
-
         return (
             <div>
                 <ViewHeader
@@ -66,7 +45,7 @@ class JobsList extends React.Component {
                     totalCount={this.props.total_count}
                 />
 
-                <JobsToolbar value={term} onChange={this.handleChange} />
+                <JobsToolbar />
 
                 <ListGroup>
                     {components}
@@ -74,7 +53,7 @@ class JobsList extends React.Component {
 
                 <Pagination
                     documentCount={this.props.documents.length}
-                    onPage={this.handlePage}
+                    onPage={this.props.onPage}
                     page={this.props.page}
                     pageCount={this.props.page_count}
                 />
@@ -87,9 +66,10 @@ const mapStateToProps = (state) => ({...state.jobs});
 
 const mapDispatchToProps = (dispatch) => ({
 
-    onFind: (url = new window.URL(window.location)) => {
+    onPage: (page) => {
+        const url = createFindURL({ page });
         dispatch(push(url.pathname + url.search));
-        dispatch(findJobs(url.searchParams.get("find"), url.searchParams.get("page") || 1));
+        dispatch(findJobs());
     },
 
     onCancel: (jobId) => {

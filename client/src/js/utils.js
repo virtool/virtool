@@ -79,3 +79,30 @@ export const simpleActionCreator = (type) => (
         return {type};
     }
 );
+
+export const createFindURL = ({ find, page }) => {
+    console.log(find, page);
+
+    const url = new window.URL(window.location);
+
+    if (find !== undefined) {
+        if (find) {
+            url.searchParams.set("find", find);
+        } else {
+            url.searchParams.delete("find");
+        }
+    }
+
+    if (page) {
+        url.searchParams.set("page", page);
+    }
+
+    return url;
+};
+
+export const getFindTerm = (url = new window.URL(window.location)) => {
+    console.log(url);
+    const find = url.searchParams.get("find");
+    console.log(url, find);
+    return find || "";
+};

@@ -3,8 +3,10 @@ import { connect } from "react-redux";
 import { LinkContainer } from "react-router-bootstrap";
 import { InputGroup, FormGroup, FormControl, Dropdown, MenuItem } from "react-bootstrap";
 
-import { clearJobs } from "../actions";
+import { clearJobs, findJobs } from "../actions";
 import { Icon, Button } from "../../base";
+import { push } from "react-router-redux";
+import { createFindURL, getFindTerm } from "../../utils";
 
 const JobsToolbar = (props) => {
 
@@ -36,7 +38,7 @@ const JobsToolbar = (props) => {
                     <InputGroup.Addon>
                         <Icon name="search" />
                     </InputGroup.Addon>
-                    <FormControl value={props.term} onChange={(e) => props.onChange(e.target.value)} />
+                    <FormControl value={props.term} onChange={(e) => props.onFind(e.target.value)} />
                 </InputGroup>
             </FormGroup>
 
@@ -50,10 +52,17 @@ const JobsToolbar = (props) => {
 };
 
 const mapStateToProps = (state) => ({
+    term: getFindTerm(),
     canRemove: state.account.permissions.remove_job
 });
 
 const mapDispatchToProps = (dispatch) => ({
+
+    onFind: (find) => {
+        const url = createFindURL({ find });
+        dispatch(push(url.pathname + url.search));
+        dispatch(findJobs());
+    },
 
     onClear: (scope) => {
         dispatch(clearJobs(scope));

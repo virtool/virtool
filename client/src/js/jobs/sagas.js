@@ -4,7 +4,6 @@ import jobsAPI from "./api";
 import { apiCall, setPending } from "../sagaUtils";
 import { WS_UPDATE_JOB, FIND_JOBS, GET_JOB, CANCEL_JOB, REMOVE_JOB, CLEAR_JOBS, GET_RESOURCES } from "../actionTypes";
 
-
 export function* watchJobs () {
     yield takeLatest(WS_UPDATE_JOB, wsUpdateJob);
     yield throttle(250, FIND_JOBS.REQUESTED, findJobsWithPending);
