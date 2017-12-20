@@ -20,7 +20,7 @@ async def find(req):
 
     ready_host_count = await db.subtraction.count({"is_host": True, "ready": True})
 
-    term = req.query.get("term", None)
+    term = req.query.get("find", None)
 
     db_query = dict()
 

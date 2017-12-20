@@ -20,7 +20,7 @@ async def find(req):
     db_query = dict()
 
     if term:
-        db_query.update(compose_regex_query(term, ["label"]))
+        db_query.update(compose_regex_query(term, ["names"]))
 
     data = await paginate(
         db.hmm,

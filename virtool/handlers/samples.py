@@ -18,7 +18,7 @@ async def find(req):
     db = req.app["db"]
 
     v = Validator({
-        "term": {"type": "string", "default": "", "coerce": str},
+        "find": {"type": "string", "default": "", "coerce": str},
         "page": {"type": "integer", "coerce": int, "default": 1, "min": 1},
         "per_page": {"type": "integer", "coerce": int, "default": 15, "min": 1, "max": 100}
     })
@@ -53,8 +53,10 @@ async def find(req):
 
     db_query = dict()
 
-    if query["term"]:
-        db_query = compose_regex_query(query["term"], ["name", "user.id"])
+    term = query.get("find", None)
+
+    if term:
+        db_query = compose_regex_query(term, ["name", "user.id"])
 
     data = await paginate(
         db.samples,
