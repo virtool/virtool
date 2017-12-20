@@ -150,14 +150,10 @@ const mapStateToProps = state => ({
     account: state.account
 });
 
-const mapDispatchToProps = (dispatch, ownProps) => ({
+const mapDispatchToProps = (dispatch) => ({
     onFind: (url = new window.URL(window.location)) => {
         dispatch(push(url.pathname + url.search));
-        dispatch(findViruses(url.searchParams.get("find"), url.searchParams.get("page") || 1));
-    },
-
-    onToggleModifiedOnly: () => {
-        dispatch(findViruses({modified: !ownProps.modified}));
+        dispatch(findViruses());
     },
 
     onHide: () => {

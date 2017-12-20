@@ -113,7 +113,7 @@ const mapDispatchToProps = (dispatch) => ({
 
     onFind: (url = new window.URL(window.location)) => {
         dispatch(push(url.pathname + url.search));
-        dispatch(findSamples(url.searchParams.get("find"), url.searchParams.get("page") || 1));
+        dispatch(findSamples());
     },
 
     onHide: () => {

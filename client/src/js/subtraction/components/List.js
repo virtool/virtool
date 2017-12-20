@@ -147,7 +147,7 @@ const mapDispatchToProps = (dispatch) => ({
 
     onFind: (url) => {
         dispatch(push(url.pathname + url.search));
-        dispatch(findSubtractions(url.searchParams.get("find")));
+        dispatch(findSubtractions());
     },
 
     onHide: () => {
