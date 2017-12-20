@@ -9,6 +9,35 @@ import HMMInstaller from "./Installer";
 import { findHMMs } from "../actions";
 import { Icon, ListGroupItem, LoadingPlaceholder, NoneFound, Pagination, ViewHeader } from "../../base";
 
+const HMMItem = ({ cluster, families, id, names }) => {
+
+    const filteredFamilies = reject(keys(families), family => family === "None");
+
+    const labelComponents = filteredFamilies.slice(0, 3).map((family, i) =>
+        <span key={i}><Label>{family}</Label> </span>
+    );
+
+    return (
+        <LinkContainer to={`/hmm/${id}`}>
+            <ListGroupItem className="spaced">
+                <Row>
+                    <Col xs={2}>
+                        <strong>{cluster}</strong>
+                    </Col>
+                    <Col xs={5}>
+                        {names[0]}
+                    </Col>
+                    <Col xs={5}>
+                        <div className="pull-right">
+                            {labelComponents} {filteredFamilies.length > 3 ? "..." : null}
+                        </div>
+                    </Col>
+                </Row>
+            </ListGroupItem>
+        </LinkContainer>
+    );
+};
+
 class HMMList extends React.Component {
 
     componentDidMount () {
@@ -39,35 +68,13 @@ class HMMList extends React.Component {
             return <LoadingPlaceholder />;
         }
 
-        let rowComponents = this.props.documents.map(document => {
-            const families = reject(keys(document.families), family => family === "None");
+        let rowComponents;
 
-            const labelComponents = families.slice(0, 3).map((family, i) =>
-                <span key={i}><Label>{family}</Label> </span>
+        if (this.props.documents.length) {
+            rowComponents = this.props.documents.map(document =>
+                <HMMItem key={document.id} {...document} />
             );
-
-            return (
-                <LinkContainer key={document.id} to={`/hmm/${document.id}`}>
-                    <ListGroupItem className="spaced">
-                        <Row>
-                            <Col xs={2}>
-                                <strong>{document.cluster}</strong>
-                            </Col>
-                            <Col xs={5}>
-                                {document.names[0]}
-                            </Col>
-                            <Col xs={5}>
-                                <div className="pull-right">
-                                    {labelComponents} {families.length > 3 ? "..." : null}
-                                </div>
-                            </Col>
-                        </Row>
-                    </ListGroupItem>
-                </LinkContainer>
-            );
-        });
-
-        if (!rowComponents.length) {
+        } else {
             rowComponents = <NoneFound noun="profiles" noListGroup />;
         }
 
@@ -119,7 +126,7 @@ const mapDispatchToProps = (dispatch) => ({
 
     onFind: (url = new window.URL(window.location)) => {
         dispatch(push(url.pathname + url.search));
-        dispatch(findHMMs(url.searchParams.get("find"), url.searchParams.get("page") || 1));
+        dispatch(findHMMs());
     }
 
 });
