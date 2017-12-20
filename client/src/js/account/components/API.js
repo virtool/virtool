@@ -69,23 +69,23 @@ class CreateAPIKey extends React.Component {
         onCreate: PropTypes.func.isRequired
     };
 
-    modalExited () {
+    modalExited = () => {
         this.setState(getInitialState(this.props));
-    }
+    };
 
-    handleSubmit (e) {
+    handleSubmit = (e) => {
         e.preventDefault();
 
         this.setState({submitted: true}, () => {
             this.props.onCreate(this.state.name, this.state.permissions, (key) => this.setState({key}));
         });
-    }
+    };
 
-    handlePermissionChange (key, value) {
+    handlePermissionChange = (key, value) => {
         const update = {};
         update[key] = value;
         this.setState({permissions: {...this.state.permissions, ...update}});
-    }
+    };
 
     render () {
         let content;

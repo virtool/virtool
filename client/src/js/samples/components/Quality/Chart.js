@@ -18,7 +18,7 @@ export default class QualityChart extends React.Component {
         window.removeEventListener("resize", this.update);
     }
 
-    static shouldComponentUpdate () {
+    shouldComponentUpdate () {
         // Don"t ever render the component. All changes are done via d3.
         return false;
     }

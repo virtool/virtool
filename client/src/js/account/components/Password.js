@@ -29,7 +29,7 @@ class ChangePassword extends React.Component {
         }
     }
 
-    handleSubmit (e) {
+    handleSubmit = (e) => {
         e.preventDefault();
 
         const errors = [];

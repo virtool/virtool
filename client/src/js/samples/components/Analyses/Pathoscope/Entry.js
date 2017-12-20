@@ -24,7 +24,7 @@ export default class PathoscopeEntry extends React.Component {
         return this.props.in !== nextProps.in || this.props.showReads !== nextProps.showReads;
     }
 
-    toggleIn () {
+    toggleIn = () => {
         this.props.toggleIn(this.props.id);
     }
 

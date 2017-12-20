@@ -49,7 +49,7 @@ export class RelativeTime extends React.Component {
         }
     }
 
-    getTimeString () {
+    getTimeString = () => {
         // Make the time string using Moment.js
         const timeString = Moment(this.props.time).fromNow();
 
@@ -57,15 +57,15 @@ export class RelativeTime extends React.Component {
         // If this is the case the string will contain the substring 'in a'. If this substring is present, return the
         // alternative time string 'just now'.
         return timeString.includes("in a") || timeString.includes("a few") ? "just now" : timeString;
-    }
+    };
 
-    update () {
+    update = () => {
         const newTimeString = this.getTimeString();
 
         if (newTimeString !== this.state.timeString) {
             this.setState({timeString: newTimeString});
         }
-    }
+    };
 
     render () {
         return <span>{this.state.timeString}</span>;

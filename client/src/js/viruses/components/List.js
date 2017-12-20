@@ -49,7 +49,7 @@ class VirusesList extends React.Component {
         this.props.onFind();
     }
 
-    handleChangeTerm = (term) => {
+    handleFind = (term) => {
         const url = new window.URL(window.location);
 
         if (term) {

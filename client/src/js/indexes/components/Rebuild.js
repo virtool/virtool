@@ -8,14 +8,14 @@ import RebuildHistory from "./History";
 
 class RebuildIndex extends React.Component {
 
-    modalEntered () {
+    modalEntered = () => {
         this.props.onGetUnbuilt();
-    }
+    };
 
-    save (e) {
+    save = (e) => {
         e.preventDefault();
         this.props.onRebuild();
-    }
+    };
 
     render () {
         let history;

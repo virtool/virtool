@@ -32,9 +32,9 @@ export class Input extends React.Component {
         formGroupStyle: {}
     };
 
-    focus () {
+    focus = () => {
         this.inputNode.focus();
-    }
+    };
 
     render () {
 

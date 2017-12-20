@@ -6,7 +6,7 @@ import { Row, Col, Panel, Overlay, Popover, FormGroup, InputGroup, FormControl }
 import { Flex, FlexItem, Icon, Button, Checkbox, ListGroupItem } from "../../../base";
 import { updateSetting } from "../../actions";
 
-const getInitialState = ({
+const getInitialState = () => ({
     value: "",
     error: null
 });

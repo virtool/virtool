@@ -44,9 +44,9 @@ export class Button extends React.Component {
         pullRight: false
     };
 
-    blur () {
+    blur = () => {
         this.buttonNode.blur();
-    }
+    };
 
     render () {
 

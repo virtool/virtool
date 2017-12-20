@@ -6,21 +6,21 @@ import { Row, Col, Modal } from "react-bootstrap";
 import { editVirus, hideVirusModal } from "../../actions";
 import { Button, Icon, Input } from "../../../base";
 
-const getInitialState = ({ name, abbreviation }) => ({
-    name: name || "",
-    abbreviation: abbreviation || ""
+const getInitialState = ({ name = "", abbreviation = "" }) => ({
+    name,
+    abbreviation
 });
 
 class EditVirus extends React.Component {
 
     constructor (props) {
         super(props);
-        this.state = getInitialState(this.props);
+        this.state = getInitialState(props);
     }
 
-    modalEnter () {
+    modalEnter = () => {
         this.setState(getInitialState(this.props));
-    }
+    };
 
     static propTypes = {
         virusId: PropTypes.string,
@@ -32,10 +32,10 @@ class EditVirus extends React.Component {
         onSave: PropTypes.func
     };
 
-    save (e) {
+    save = (e) => {
         e.preventDefault();
         this.props.onSave(this.props.virusId, this.state.name, this.state.abbreviation);
-    }
+    };
 
     render () {
 
