@@ -112,7 +112,7 @@ class VirusesList extends React.Component {
 
                 <VirusToolbar
                     canModify={this.props.account.permissions.modify_virus}
-                    onChangeTerm={this.handleChangeTerm}
+                    onChangeTerm={this.handleFind}
                     location={this.props.location}
                 />
 
@@ -124,7 +124,7 @@ class VirusesList extends React.Component {
                     documentCount={virusCount}
                     onPage={this.handlePage}
                     page={this.props.page}
-                    pageCount={this.props.pageCount}
+                    pageCount={this.props.page_count}
                 />
 
                 <CreateVirus {...this.props} />
