@@ -5,14 +5,13 @@ import { Row, Col, Panel } from "react-bootstrap";
 import { updateSetting } from "../actions";
 import { Icon, InputSave } from "../../base";
 
-const WarningFooter = (
+const WarningFooter = () => (
     <small className="text-danger">
         <Icon name="warning" /> Changing these settings can make Virtool non-functional
     </small>
 );
 
-
-const DataOptions = (props) => (
+const DataOptions = ({ db_name, db_host, db_port, data_path, watch_path, onSave }) => (
     <div>
         <Row>
             <Col md={12}>
@@ -27,19 +26,19 @@ const DataOptions = (props) => (
                 <Panel>
                     <InputSave
                         label="Database Name"
-                        onSave={(e) => props.onSave("db_name", e.value)}
-                        initialValue={props.db_name}
+                        onSave={(e) => onSave("db_name", e.value)}
+                        initialValue={db_name}
                     />
                     <InputSave
                         label="MongoDB Host"
-                        onSave={(e) => props.onSave("db_host", e.value)}
-                        initialValue={props.db_host}
+                        onSave={(e) => onSave("db_host", e.value)}
+                        initialValue={db_host}
                     />
                     <InputSave
                         label="MongoDB Port"
                         type="number"
-                        onSave={(e) => props.onSave("db_port", Number(e.value))}
-                        initialValue={props.db_port}
+                        onSave={(e) => onSave("db_port", Number(e.value))}
+                        initialValue={db_port}
                     />
                 </Panel>
             </Col>
@@ -57,13 +56,13 @@ const DataOptions = (props) => (
                 <Panel>
                     <InputSave
                         label="Virtool Data"
-                        onSave={(e) => props.onSave("watch_path", e.value)}
-                        initialValue={props.data_path}
+                        onSave={(e) => onSave("watch_path", e.value)}
+                        initialValue={data_path}
                     />
                     <InputSave
                         label="Watch Folder"
-                        onSave={(e) => props.onSave("watch_path", e.value)}
-                        initialValue={props.watch_path}
+                        onSave={(e) => onSave("watch_path", e.value)}
+                        initialValue={watch_path}
                     />
                 </Panel>
             </Col>
