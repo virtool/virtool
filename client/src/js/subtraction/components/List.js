@@ -70,7 +70,7 @@ class SubtractionList extends React.Component {
         });
 
         if (!hostComponents.length) {
-            hostComponents = <NoneFound noun="Subtractions" noListGroup />;
+            hostComponents = <NoneFound noun="subtractions" noListGroup />;
         }
 
         let alert;
