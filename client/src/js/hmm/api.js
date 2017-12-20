@@ -2,25 +2,15 @@ import Request from "superagent";
 
 const hmmsAPI = {
 
-    find: (term, page) => {
-        const query = {
-            page: page || 1
-        };
-
-        if (term) {
-            query.term = term;
-        }
-
-        return Request
-            .get("/api/hmms")
-            .query(query);
-    },
+    find: () => (
+        Request.get(`/api/hmms${window.location.search}`)
+    ),
 
     install: () => (
         Request.post("/api/hmms")
     ),
 
-    get: (hmmId) => (
+    get: ({ hmmId }) => (
         Request.get(`/api/hmms/annotations/${hmmId}`)
     )
 

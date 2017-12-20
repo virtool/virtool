@@ -1,8 +1,7 @@
-import { push } from "react-router-redux";
 import { put, select, takeEvery, takeLatest, throttle } from "redux-saga/effects";
 
 import samplesAPI from "./api";
-import { pushHistoryState, putGenericError, setPending } from "../sagaHelpers";
+import { apiCall, pushHistoryState, putGenericError, setPending } from "../sagaUtils";
 import {
     WS_UPDATE_SAMPLE,
     WS_REMOVE_SAMPLE,
@@ -24,37 +23,20 @@ import {
 } from "../actionTypes";
 
 export function* wsUpdateAnalysis (action) {
-    try {
-        const response = yield samplesAPI.getAnalysis(action.update.id);
-        yield put({type: GET_ANALYSIS.SUCCEEDED, data: response.body});
-    } catch (error) {
-        yield putGenericError(GET_ANALYSIS, error);
-    }
+    yield getAnalysis(action);
 }
 
 export function* findSamples (action) {
-    yield setPending(function* (action) {
-        try {
-            const response = yield samplesAPI.find(action.term, action.page);
-            yield put({type: FIND_SAMPLES.SUCCEEDED, data: response.body});
-        } catch (error) {
-            yield putGenericError(FIND_SAMPLES, error);
-        }
-    }, action);
+    yield setPending(apiCall(samplesAPI.find, action, FIND_SAMPLES));
 }
 
 export function* findReadyHosts () {
-    try {
-        const response = yield samplesAPI.findReadyHosts();
-        yield put({type: FIND_READY_HOSTS.SUCCEEDED, data: response.body});
-    } catch (error) {
-        yield putGenericError(FIND_READY_HOSTS, error);
-    }
+    yield apiCall(samplesAPI.findReadyHosts, {}, FIND_READY_HOSTS);
 }
 
 export function* getSample (action) {
     try {
-        const response = yield samplesAPI.get(action.sampleId);
+        const response = yield samplesAPI.get(action);
 
         const account = yield select(state => state.account);
 
@@ -73,86 +55,45 @@ export function* getSample (action) {
 }
 
 export function* createSample (action) {
-    yield setPending(function* ({name, isolate, host, locale, subtraction, files}) {
-        try {
-            const response = yield samplesAPI.create(name, isolate, host, locale, subtraction, files);
-            yield put({type: CREATE_SAMPLE.SUCCEEDED, data: response.body});
-        } catch (error) {
-            yield putGenericError(CREATE_SAMPLE, error);
-        }
-    }, action);
+    yield setPending(apiCall(samplesAPI.create, action, CREATE_SAMPLE));
 }
 
 export function* updateSample (action) {
-    yield setPending(function* (action) {
-        try {
-            yield samplesAPI.update(action.sampleId, action.update);
-            yield put({type: REFRESH_SAMPLE.REQUESTED, sampleId: action.sampleId});
-            yield pushHistoryState({editSample: false});
-        } catch (error) {
-            yield putGenericError(UPDATE_SAMPLE, error);
-        }
-    }, action);
+    yield setPending(apiCall(samplesAPI.update, action, UPDATE_SAMPLE));
+    yield getSample(action);
+    yield pushHistoryState({editSample: false});
 }
 
 export function* updateSampleGroup (action) {
-    yield setPending(function* (action) {
-        try {
-            yield samplesAPI.updateGroup(action.sampleId, action.groupId);
-            yield put({type: GET_SAMPLE.REQUESTED, sampleId: action.sampleId});
-        } catch (error) {
-            yield putGenericError(UPDATE_SAMPLE_GROUP, error);
-        }
-    }, action);
+    yield setPending(apiCall(samplesAPI.updateGroup, action, UPDATE_SAMPLE_GROUP));
+    yield getSample(action);
 }
 
 export function* updateSampleRights (action) {
-    yield setPending(function* (action) {
-        try {
-            yield samplesAPI.updateRights(action.sampleId, action.update);
-            yield put({type: GET_SAMPLE.REQUESTED, sampleId: action.sampleId});
-        } catch (error) {
-            yield putGenericError(UPDATE_SAMPLE_RIGHTS, error);
-        }
-    }, action);
+    yield setPending(apiCall(samplesAPI.updateRights, action, UPDATE_SAMPLE_RIGHTS));
+    yield getSample(action);
 }
 
 export function* removeSample (action) {
-    yield setPending(function* (action) {
-        try {
-            yield samplesAPI.remove(action.sampleId);
-            yield put({type: FIND_SAMPLES.REQUESTED});
-
-            yield put(push("/samples"));
-        } catch (error) {
-            yield putGenericError(REMOVE_SAMPLE, error);
-        }
-    }, action);
+    yield setPending(apiCall(samplesAPI.remove, action, REMOVE_SAMPLE));
+    yield findSamples();
 }
 
 export function* findAnalyses (action) {
-    try {
-        const response = yield samplesAPI.findAnalyses(action.sampleId);
-        yield put({type: FIND_ANALYSES.SUCCEEDED, data: response.body});
-    } catch (error) {
-        yield putGenericError(FIND_ANALYSES, error);
-    }
+    yield setPending(apiCall(samplesAPI.findAnalyses, action, FIND_ANALYSES));
 }
 
 export function* getAnalysis (action) {
-    yield setPending(function* (action) {
-        try {
-            const response = yield samplesAPI.getAnalysis(action.analysisId);
-            yield put({type: GET_ANALYSIS.SUCCEEDED, data: response.body});
-        } catch (error) {
-            yield putGenericError(GET_ANALYSIS, error);
-        }
-    }, action);
+    yield apiCall(samplesAPI.getAnalysis, action, GET_ANALYSIS);
+}
+
+export function* getAnalysisWithPending (action) {
+    yield setPending(getAnalysis(action));
 }
 
 export function* analyze (action) {
     try {
-        const response = yield samplesAPI.analyze(action.sampleId, action.algorithm);
+        const response = yield samplesAPI.analyze(action);
         yield put({type: ANALYZE.SUCCEEDED, data: response.body});
         yield pushHistoryState({quickAnalyze: false});
     } catch (error) {
@@ -199,7 +140,7 @@ export function* watchSamples () {
     yield takeEvery(UPDATE_SAMPLE_RIGHTS.REQUESTED, updateSampleRights);
     yield throttle(300, REMOVE_SAMPLE.REQUESTED, removeSample);
     yield takeLatest(FIND_ANALYSES.REQUESTED, findAnalyses);
-    yield takeLatest(GET_ANALYSIS.REQUESTED, getAnalysis);
+    yield takeLatest(GET_ANALYSIS.REQUESTED, getAnalysisWithPending);
     yield takeEvery(ANALYZE.REQUESTED, analyze);
     yield throttle(150, BLAST_NUVS.REQUESTED, blastNuvs);
     yield takeLatest(REMOVE_ANALYSIS.REQUESTED, removeAnalysis);

@@ -1,12 +1,3 @@
-/**
- * Redux actions and action creators for working with virus data.
- *
- * @copyright 2017 Government of Canada
- * @license MIT
- * @author igboyes
- *
- */
-
 import { simpleActionCreator } from "../utils";
 import {
     FIND_VIRUSES,
@@ -37,11 +28,7 @@ import {
     HIDE_VIRUS_MODAL
 } from "../actionTypes";
 
-export const findViruses = (term, page) => ({
-    type: FIND_VIRUSES.REQUESTED,
-    term,
-    page
-});
+export const findViruses = simpleActionCreator(FIND_VIRUSES.REQUESTED);
 
 export const getVirus = (virusId) => ({
     type: GET_VIRUS.REQUESTED,

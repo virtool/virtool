@@ -50,14 +50,7 @@ export default function samplesReducer (state = initialState, action) {
     switch (action.type) {
 
         case FIND_SAMPLES.SUCCEEDED:
-            return {
-                ...state,
-                documents: action.data.documents,
-                totalCount: action.data.total_count,
-                foundCount: action.data.found_count,
-                pageCount: action.data.page_count,
-                page: action.data.page
-            };
+            return {...state, ...action.data};
 
         case FIND_READY_HOSTS.SUCCEEDED:
             return {...state, readyHosts: action.data.documents};

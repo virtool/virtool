@@ -1,12 +1,3 @@
-/**
- * Redux reducers for working with virus data.
- *
- * @copyright 2017 Government of Canada
- * @license MIT
- * @author igboyes
- *
- */
-
 import { some } from "lodash";
 
 import {
@@ -103,15 +94,7 @@ export default function virusesReducer (state = virusesInitialState, action) {
             return {...state, ...action.terms};
 
         case FIND_VIRUSES.SUCCEEDED:
-            return {
-                ...state,
-                documents: action.data.documents,
-                page: action.data.page,
-                pageCount: action.data.page_count,
-                totalCount: action.data.total_count,
-                foundCount: action.data.found_count,
-                modifiedCount: action.data.modified_count
-            };
+            return {...state, ...action.data};
 
         case GET_VIRUS.REQUESTED:
             return {...state, detail: null, activeIsolateId: null, activeSequenceId: null};
@@ -130,7 +113,11 @@ export default function virusesReducer (state = virusesInitialState, action) {
             return {...state, detail: null, actionIsolateId: null, remove: false};
 
         case EDIT_VIRUS.FAILED:
-            return {...state, editError: action.message};
+            if (action.status === 409) {
+                return {...state, editError: action.message};
+            }
+
+            return state;
 
         case ADD_ISOLATE.SUCCEEDED:
             return {

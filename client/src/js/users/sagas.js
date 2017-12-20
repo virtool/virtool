@@ -1,7 +1,7 @@
 import { push } from "react-router-redux";
 import { takeEvery, takeLatest, throttle, put } from "redux-saga/effects";
 
-import { putGenericError, setPending } from "../sagaHelpers";
+import { apiCall, setPending } from "../sagaUtils";
 import usersAPI from "./api";
 import {
     LIST_USERS,
@@ -14,81 +14,36 @@ import {
 } from "../actionTypes";
 
 function* listUsers (action) {
-    yield setPending(function* () {
-        try {
-            const response = yield usersAPI.list();
-            yield put({type: LIST_USERS.SUCCEEDED, users: response.body});
-        } catch (error) {
-            yield putGenericError(LIST_USERS, error);
-        }
-    }, action);
+    yield setPending(apiCall(usersAPI.list, action, LIST_USERS));
 }
 
 function* createUser (action) {
     yield setPending(function* () {
-        try {
-            const response = yield usersAPI.create(action.userId, action.password, action.forceReset);
-            yield put({type: CREATE_USER.SUCCEEDED, data: response.body});
+        yield apiCall(usersAPI.create, action, CREATE_USER);
 
-            // Close the create user modal and navigate to the new user.
-            yield put(push(`/settings/users/${action.userId}`, {state: {createUser: false}}));
-        } catch (error) {
-            yield putGenericError(CREATE_USER, error);
-        }
-    }, action);
+        // Close the create user modal and navigate to the new user.
+        yield put(push(`/settings/users/${action.userId}`, {state: {createUser: false}}));
+    });
 }
 
 function* setPassword (action) {
-    yield setPending(function* (action) {
-        try {
-            const response = yield usersAPI.setPassword(action.userId, action.password);
-            yield put({type: SET_PASSWORD.SUCCEEDED, data: response.body});
-        } catch (error) {
-            if (error.response.body.message.id === "invalid_input") {
-                yield put({type: SET_PASSWORD.FAILED});
-            }
-        }
-    }, action);
+    yield setPending(apiCall(usersAPI.setPassword, action, SET_PASSWORD));
 }
 
 function* setForceReset (action) {
-    yield setPending(function* (action) {
-        try {
-            const response = yield usersAPI.setForceReset(action.userId, action.enabled);
-            yield put({type: SET_FORCE_RESET.SUCCEEDED, data: response.body});
-        } catch (error) {
-            yield putGenericError(SET_FORCE_RESET, error);
-        }
-    }, action);
+    yield setPending(apiCall(usersAPI.setForceReset, action, SET_FORCE_RESET));
 }
 
 function* setPrimaryGroup (action) {
-    yield setPending(function* (action) {
-        try {
-            const response = yield usersAPI.setPrimaryGroup(action.userId, action.primaryGroup);
-            yield put({type: SET_PRIMARY_GROUP.SUCCEEDED, data: response.body});
-        } catch (error) {
-            yield putGenericError(SET_PRIMARY_GROUP, error);
-        }
-    }, action);
+    yield setPending(apiCall(usersAPI.setPrimaryGroup, action, SET_PRIMARY_GROUP));
 }
 
 function* addToGroup (action) {
-    try {
-        const response = yield usersAPI.addUserToGroup(action.userId, action.groupId);
-        yield put({type: ADD_USER_TO_GROUP.SUCCEEDED, data: response.body});
-    } catch (error) {
-        yield putGenericError(ADD_USER_TO_GROUP, error);
-    }
+    yield setPending(apiCall(usersAPI.addUserToGroup, action, ADD_USER_TO_GROUP));
 }
 
 function* removeFromGroup (action) {
-    try {
-        const response = yield usersAPI.removeUserFromGroup(action.userId, action.groupId);
-        yield put({type: REMOVE_USER_FROM_GROUP.SUCCEEDED, data: response.body});
-    } catch (error) {
-        yield putGenericError(REMOVE_USER_FROM_GROUP, error);
-    }
+    yield setPending(apiCall(usersAPI.removeUserFromGroup, action, REMOVE_USER_FROM_GROUP));
 }
 
 export function* watchUsers () {

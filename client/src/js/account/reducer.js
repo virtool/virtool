@@ -20,7 +20,12 @@ export default function accountReducer (state = initialState, action) {
             return {...state, oldPasswordError: false};
 
         case CHANGE_ACCOUNT_PASSWORD.FAILED:
-            return {...state, oldPasswordError: true};
+            if (action.message === "Invalid old password") {
+                return {...state, oldPasswordError: true};
+            }
+
+            return state;
+
 
         case GET_API_KEYS.SUCCEEDED:
             return {...state, apiKeys: action.data};

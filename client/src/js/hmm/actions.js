@@ -1,11 +1,7 @@
 import { simpleActionCreator } from "../utils";
 import { FIND_HMMS, GET_HMM, INSTALL_HMMS } from "../actionTypes";
 
-export const findHMMs = (term, page) => ({
-    type: FIND_HMMS.REQUESTED,
-    term,
-    page
-});
+export const findHMMs = simpleActionCreator(FIND_HMMS.REQUESTED);
 
 export const getHmm = (hmmId) => ({
     type: GET_HMM.REQUESTED,

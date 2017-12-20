@@ -19,7 +19,7 @@ const usersAPI = {
         Request.get(`/api/users/${userId}`)
     ),
 
-    create: (userId, password, forceReset) => (
+    create: ({ userId, password, forceReset }) => (
         Request.post("/api/users")
             .send({
                 user_id: userId,
@@ -28,28 +28,28 @@ const usersAPI = {
             })
     ),
 
-    setPassword: (userId, password) => (
+    setPassword: ({ userId, password }) => (
         Request.put(`/api/users/${userId}/password`)
             .send({password})
     ),
 
-    setForceReset: (userId, enabled) => (
+    setForceReset: ({ userId, enabled }) => (
         Request.put(`/api/users/${userId}/reset`)
             .send({force_reset: enabled})
     ),
 
-    setPrimaryGroup: (userId, primaryGroup) => (
+    setPrimaryGroup: ({ userId, primaryGroup }) => (
         Request.put(`/api/users/${userId}/primary`)
             .send({primary_group: primaryGroup})
     ),
 
-    addUserToGroup: (userId, groupId) => (
+    addUserToGroup: ({ userId, groupId }) => (
         Request.post(`/api/users/${userId}/groups`, {
             group_id: groupId
         })
     ),
 
-    removeUserFromGroup: (userId, groupId) => (
+    removeUserFromGroup: ({ userId, groupId }) => (
         Request.delete(`/api/users/${userId}/groups/${groupId}`)
     )
 

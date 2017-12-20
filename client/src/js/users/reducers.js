@@ -1,12 +1,3 @@
-/**
- * Redux reducer for working with the logged in user's account data.
- *
- * @copyright 2017 Government of Canada
- * @license MIT
- * @author igboyes
- *
- */
-
 import {
     LIST_USERS,
     FILTER_USERS,
@@ -41,9 +32,8 @@ const reducer = (state = initialState, action) => {
     switch (action.type) {
 
         case LIST_USERS.SUCCEEDED: {
-            const activeData = action.users[0];
-
-            return {...state, list: action.users, activeId: activeData.id, activeData};
+            const activeData = action.data[0];
+            return {...state, list: action.data, activeId: activeData.id, activeData};
         }
 
         case FILTER_USERS: {
@@ -70,7 +60,11 @@ const reducer = (state = initialState, action) => {
         }
 
         case SET_PASSWORD.FAILED:
-            return updateUser(state, {...state, passwordPending: false, passwordError: action.error});
+            if (action.id === "invalid_input") {
+                return updateUser(state, {...state, passwordPending: false, passwordError: action.message});
+            }
+
+            return state;
 
         case SET_FORCE_RESET.REQUESTED:
             return {...state, forceResetChangePending: true};

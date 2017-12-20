@@ -6,7 +6,7 @@ const indexesAPI = {
         Request.get("/api/indexes")
     ),
 
-    get: (indexVersion) => (
+    get: ({ indexVersion }) => (
         Request.get(`/api/indexes/${indexVersion}`)
     ),
 
@@ -18,7 +18,7 @@ const indexesAPI = {
         Request.post("/api/indexes")
     ),
 
-    getHistory: (indexVersion) => (
+    getHistory: ({ indexVersion }) => (
         Request.get(`/api/indexes/${indexVersion}/history`)
     )
 };

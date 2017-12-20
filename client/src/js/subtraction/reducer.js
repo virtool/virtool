@@ -1,8 +1,4 @@
-import {
-    FIND_SUBTRACTIONS,
-    LIST_SUBTRACTION_IDS,
-    GET_SUBTRACTION
-} from "../actionTypes";
+import { FIND_SUBTRACTIONS, LIST_SUBTRACTION_IDS, GET_SUBTRACTION } from "../actionTypes";
 
 const initialState = {
     documents: null,

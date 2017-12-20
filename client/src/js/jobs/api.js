@@ -2,27 +2,23 @@ import Request from "superagent";
 
 const jobsAPI = {
 
-    find: (term, page) => (
-        Request.get("/api/jobs")
-            .query({
-                find: term || undefined,
-                page
-            })
+    find: () => (
+        Request.get(`/api/jobs${window.location.search}`)
     ),
 
-    get: (jobId) => (
+    get: ({ jobId }) => (
         Request.get(`/api/jobs/${jobId}`)
     ),
 
-    cancel: (jobId) => (
+    cancel: ({ jobId }) => (
         Request.post(`/api/jobs/${jobId}/cancel`)
     ),
 
-    remove: (jobId) => (
+    remove: ({ jobId }) => (
         Request.delete(`/api/jobs/${jobId}`)
     ),
 
-    clear: (scope) => {
+    clear: ({ scope }) => {
         let suffix;
 
         if (scope === "complete") {

@@ -1,7 +1,8 @@
 import { push } from "react-router-redux";
 import { put, takeLatest, throttle } from "redux-saga/effects";
+
 import subtractionAPI from "./api";
-import { pushHistoryState, putGenericError, setPending } from "../sagaHelpers";
+import { apiCall, pushHistoryState, putGenericError, setPending } from "../sagaUtils";
 import {
     FIND_SUBTRACTIONS,
     LIST_SUBTRACTION_IDS,
@@ -11,32 +12,15 @@ import {
 } from "../actionTypes";
 
 export function* findSubtractions (action) {
-    yield setPending(function* (action) {
-        try {
-            const response = yield subtractionAPI.find(action.term, action.page);
-            yield put({type: FIND_SUBTRACTIONS.SUCCEEDED, data: response.body});
-        } catch (error) {
-            yield putGenericError(FIND_SUBTRACTIONS, error);
-        }
-    }, action);
+    yield setPending(apiCall(subtractionAPI.find, action, FIND_SUBTRACTIONS));
 }
 
-export function* listSubtractionIds () {
-    try {
-        const response = yield subtractionAPI.listIds();
-        yield put({type: LIST_SUBTRACTION_IDS.SUCCEEDED, data: response.body});
-    } catch (error) {
-        yield putGenericError(LIST_SUBTRACTION_IDS, error);
-    }
+export function* listSubtractionIds (action) {
+    yield setPending(apiCall(subtractionAPI.listIds, action, LIST_SUBTRACTION_IDS));
 }
 
 export function* getSubtraction (action) {
-    try {
-        const response = yield subtractionAPI.get(action.subtractionId);
-        yield put({type: GET_SUBTRACTION.SUCCEEDED, data: response.body});
-    } catch (error) {
-        yield putGenericError(GET_SUBTRACTION, error);
-    }
+    yield setPending(apiCall(subtractionAPI.get, action, GET_SUBTRACTION));
 }
 
 export function* createSubtraction (action) {
@@ -52,14 +36,10 @@ export function* createSubtraction (action) {
 }
 
 export function* removeSubtraction (action) {
-    yield setPending(function* (action) {
-        try {
-            yield subtractionAPI.remove(action.subtractionId);
-            yield put(push("/subtraction"));
-        } catch (error) {
-            yield putGenericError(REMOVE_SUBTRACTION, error);
-        }
-    }, action);
+    yield setPending(function* () {
+        yield apiCall(subtractionAPI.remove, action, REMOVE_SUBTRACTION);
+        yield put(push("/subtraction"));
+    });
 }
 
 export function* watchSubtraction () {

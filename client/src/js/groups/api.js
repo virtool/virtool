@@ -6,12 +6,12 @@ const groupsAPI = {
         Request.get("/api/groups")
     ),
 
-    create: (groupId) => (
+    create: ({ groupId }) => (
         Request.post("/api/groups")
             .send({group_id: groupId})
     ),
 
-    setPermission: (groupId, permission, value) => {
+    setPermission: ({ groupId, permission, value }) => {
         const update = {};
         update[permission] = value;
 
@@ -19,7 +19,7 @@ const groupsAPI = {
             .send(update);
     },
 
-    remove: (groupId) => (
+    remove: ({ groupId }) => (
         Request.delete(`/api/groups/${groupId}`)
     )
 

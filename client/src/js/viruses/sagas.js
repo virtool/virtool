@@ -1,8 +1,9 @@
-import { all, call, put, takeEvery, takeLatest, throttle } from "redux-saga/effects";
+import { push } from "react-router-redux";
+import { all, put, takeEvery, takeLatest, throttle } from "redux-saga/effects";
 
 import filesAPI from "../files/api";
 import virusesAPI from "./api";
-import { setPending } from "../sagaHelpers";
+import { apiCall, setPending } from "../sagaUtils";
 import {
     FIND_VIRUSES,
     GET_VIRUS,
@@ -21,9 +22,7 @@ import {
     UPLOAD_IMPORT,
     COMMIT_IMPORT,
     SELECT_ISOLATE,
-    SELECT_SEQUENCE,
-    SET_APP_PENDING,
-    UNSET_APP_PENDING
+    SELECT_SEQUENCE
 } from "../actionTypes";
 
 export function* getUpdatedVirus (actionType, virusId) {
@@ -31,147 +30,59 @@ export function* getUpdatedVirus (actionType, virusId) {
     yield put({type: actionType, data: response.body});
 }
 
-export function* findViruses (action) {
-    yield put({type: SET_APP_PENDING});
-
-    try {
-        const response = yield virusesAPI.find(action.term, action.page);
-        yield put({type: FIND_VIRUSES.SUCCEEDED, data: response.body});
-    } catch (error) {
-        yield put({type: FIND_VIRUSES.FAILED, error});
-    }
-
-    yield put({type: UNSET_APP_PENDING});
+export function* findViruses () {
+    yield setPending(apiCall(virusesAPI.find, {}, FIND_VIRUSES));
 }
 
 export function* getVirus (action) {
-    yield setPending(function* () {
-        try {
-            const response = yield virusesAPI.get(action.virusId);
-            yield put({type: GET_VIRUS.SUCCEEDED, data: response.body});
-        } catch (error) {
-            yield put({type: GET_VIRUS.FAILED, error});
-        }
-    }, action);
+    yield setPending(apiCall(virusesAPI.get, action, GET_VIRUS));
 }
 
 export function* getVirusHistory (action) {
-    yield setPending(function* () {
-        try {
-            const response = yield virusesAPI.getHistory(action.virusId);
-            yield put({type: GET_VIRUS_HISTORY.SUCCEEDED, data: response.body});
-        } catch (error) {
-            yield put({type: GET_VIRUS_HISTORY.FAILED, error});
-        }
-    }, action);
+    yield setPending(apiCall(virusesAPI.getHistory, action, GET_VIRUS_HISTORY));
 }
 
 export function* createVirus (action) {
-    yield setPending(function* () {
-        try {
-            const response = yield virusesAPI.create(action.name, action.abbreviation);
-            yield put({type: CREATE_VIRUS.SUCCEEDED, data: response.body});
-        } catch (error) {
-            yield put({type: CREATE_VIRUS.FAILED, error});
-        }
-    }, action);
+    yield setPending(apiCall(virusesAPI.create, action, CREATE_VIRUS));
 }
 
 export function* editVirus (action) {
-    yield setPending(function* (action) {
-        try {
-            yield virusesAPI.edit(action.virusId, action.name, action.abbreviation);
-            yield getUpdatedVirus(EDIT_VIRUS.SUCCEEDED, action.virusId);
-        } catch (error) {
-            if (error.response.status === 409) {
-                yield put({type: EDIT_VIRUS.FAILED, message: error.response.body.message});
-            } else {
-                throw error;
-            }
-        }
-    }, action);
+    yield setPending(apiCall(virusesAPI.edit, action, EDIT_VIRUS));
 }
 
 export function* setIsolateAsDefault (action) {
-    yield setPending(function* (action) {
-        try {
-            yield virusesAPI.setIsolateAsDefault(action.virusId, action.isolateId);
-            yield getUpdatedVirus(SET_ISOLATE_AS_DEFAULT.SUCCEEDED, action.virusId);
-        } catch (error) {
-            if (error.response.status === 409) {
-                yield put({type: SET_ISOLATE_AS_DEFAULT.FAILED, message: error.response.body.message});
-            } else {
-                throw error;
-            }
-        }
-    }, action);
+    yield setPending(apiCall(virusesAPI.setIsolateAsDefault, action, SET_ISOLATE_AS_DEFAULT));
 }
 
 export function* removeVirus (action) {
-    yield setPending(function* () {
-        try {
-            yield virusesAPI.remove(action.virusId);
-            yield call(action.history.push, "/viruses");
-            yield put({type: REMOVE_VIRUS.SUCCEEDED});
-        } catch (error) {
-            yield put({type: REMOVE_VIRUS.FAILED, error});
-        }
-    });
+    yield setPending(apiCall(virusesAPI.remove, action, REMOVE_VIRUS));
+    yield put(push("/viruses"));
 }
 
 export function* addIsolate (action) {
-    yield setPending(function* (action) {
-        try {
-            yield virusesAPI.addIsolate(action.virusId, action.sourceType, action.sourceName);
-            yield getUpdatedVirus(ADD_ISOLATE.SUCCEEDED, action.virusId);
-        } catch (error) {
-            yield put({type: ADD_ISOLATE.FAILED, error});
-        }
-    }, action);
+    yield setPending(apiCall(virusesAPI.addIsolate, action, ADD_ISOLATE));
 }
 
 export function* editIsolate (action) {
-    yield setPending(function* (action) {
-        try {
-            yield virusesAPI.editIsolate(action.virusId, action.isolateId, action.sourceType, action.sourceName);
-            yield getUpdatedVirus(EDIT_ISOLATE.SUCCEEDED, action.virusId);
-        } catch (error) {
-            yield put({type: EDIT_ISOLATE.FAILED, error});
-        }
-    }, action);
+    yield setPending(apiCall(virusesAPI.editIsolate, action, EDIT_ISOLATE));
 }
 
 export function* removeIsolate (action) {
-    yield setPending(function* (action) {
-        try {
-            yield virusesAPI.removeIsolate(action.virusId, action.isolateId);
-            yield getUpdatedVirus(REMOVE_ISOLATE.SUCCEEDED, action.virusId);
-            yield all([
-                put({type: SELECT_SEQUENCE, sequenceId: null}),
-                put({type: SELECT_ISOLATE, isolateId: action.nextIsolateId})
-            ]);
-        } catch (error) {
-            yield put({type: REMOVE_ISOLATE.FAILED, error});
-        }
-    }, action);
+    yield setPending(function* () {
+        yield apiCall(virusesAPI.removeIsolate, action, REMOVE_ISOLATE);
+        yield getUpdatedVirus(REMOVE_ISOLATE.SUCCEEDED, action.virusId);
+        yield all([
+            put({type: SELECT_SEQUENCE, sequenceId: null}),
+            put({type: SELECT_ISOLATE, isolateId: action.nextIsolateId})
+        ]);
+    });
 }
 
 export function* addOrEditSequence (action, apiMethod, actionTypeRoot) {
-    yield setPending(function* (action) {
-        try {
-            yield apiMethod(
-                action.virusId,
-                action.isolateId,
-                action.sequenceId,
-                action.definition,
-                action.host,
-                action.sequence
-            );
-            yield getUpdatedVirus(actionTypeRoot.SUCCEEDED, action.virusId);
-        } catch (error) {
-            yield put({type: actionTypeRoot.FAILED, error});
-        }
-    }, action);
+    yield setPending(function* () {
+        yield apiCall(apiMethod, action, actionTypeRoot);
+        yield getUpdatedVirus(actionTypeRoot.SUCCEEDED, action.virusId);
+    });
 }
 
 export function* addSequence (action) {
@@ -183,22 +94,15 @@ export function* editSequence (action) {
 }
 
 export function* removeSequence (action) {
-    yield setPending(function* (action) {
-        try {
-            yield virusesAPI.removeSequence(action.virusId, action.isolateId, action.sequenceId);
-            yield getUpdatedVirus(REMOVE_SEQUENCE.SUCCEEDED, action.virusId);
-        } catch (error) {
-            yield put({type: REMOVE_SEQUENCE.FAILED, error});
-        }
-    }, action);
+    yield setPending(apiCall(virusesAPI.removeSequence, action, REMOVE_SEQUENCE));
 }
 
 export function* revert (action) {
     yield setPending(function* (action) {
         try {
-            yield virusesAPI.revert(action.virusId, action.version);
-            const virusResponse = yield virusesAPI.get(action.virusId);
-            const historyResponse = yield virusesAPI.getHistory(action.virusId);
+            yield virusesAPI.revert(action);
+            const virusResponse = yield virusesAPI.get(action);
+            const historyResponse = yield virusesAPI.getHistory(action);
             yield put({type: REVERT.SUCCEEDED, detail: virusResponse.body, history: historyResponse.body});
         } catch (error) {
             yield put({type: REVERT.FAILED, error});
@@ -217,12 +121,7 @@ export function* uploadImport (action) {
 }
 
 export function* commitImport (action) {
-    try {
-        const response = yield virusesAPI.commitImport(action.fileId);
-        yield put({type: COMMIT_IMPORT.SUCCEEDED, data: response.body});
-    } catch (error) {
-        yield put({type: COMMIT_IMPORT.FAILED, error});
-    }
+    yield setPending(apiCall(virusesAPI.commitImport, action, COMMIT_IMPORT));
 }
 
 export function* watchViruses () {

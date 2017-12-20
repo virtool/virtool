@@ -2,16 +2,11 @@ import { put, takeEvery, takeLatest, throttle } from "redux-saga/effects";
 
 import settingsAPI from "./api";
 import virusesAPI from "../viruses/api";
-import { setPending } from "../sagaHelpers";
+import { apiCall, setPending } from "../sagaUtils";
 import { GET_SETTINGS, UPDATE_SETTINGS, GET_CONTROL_READAHEAD } from "../actionTypes";
 
-function* getSettings () {
-    try {
-        const response = yield settingsAPI.get();
-        yield put({type: GET_SETTINGS.SUCCEEDED, data: response.body});
-    } catch (error) {
-        yield put({type: GET_SETTINGS.FAILED}, error);
-    }
+function* getSettings (action) {
+    yield setPending(apiCall(settingsAPI.get, action, GET_SETTINGS));
 }
 
 function* updateSettings (action) {
@@ -30,13 +25,8 @@ function* updateSettings (action) {
     }, action);
 }
 
-function* getControlReadahead () {
-    try {
-        const response = yield virusesAPI.listNames();
-        yield put({type: GET_CONTROL_READAHEAD.SUCCEEDED, data: response.body});
-    } catch (error) {
-        yield put({type: GET_CONTROL_READAHEAD.FAILED});
-    }
+function* getControlReadahead (action) {
+    yield setPending(apiCall(virusesAPI.listNames, action, GET_CONTROL_READAHEAD));
 }
 
 export function* watchSettings () {

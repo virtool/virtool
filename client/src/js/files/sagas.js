@@ -1,7 +1,7 @@
 import { put, select, takeEvery, takeLatest } from "redux-saga/effects";
 
 import filesAPI from "./api";
-import { setPending } from "../sagaHelpers";
+import { putGenericError, setPending, apiCall } from "../sagaUtils";
 import { WS_UPDATE_FILE, WS_REMOVE_FILE, FIND_FILES, REMOVE_FILE, UPLOAD } from "../actionTypes";
 
 export function* watchFiles () {
@@ -22,25 +22,16 @@ export function* findFiles (fileType, page) {
         const response = yield filesAPI.find(fileType, page);
         yield put({type: FIND_FILES.SUCCEEDED, data: response.body, fileType});
     } catch (error) {
-        yield put({type: FIND_FILES.FAILED}, error);
+        yield putGenericError(FIND_FILES, error);
     }
 }
 
 export function* findFilesWithPending (action) {
-    yield setPending(function* () {
-        yield findFiles(action.fileType, action.page);
-    }, action);
+    yield setPending(findFiles(action.fileType, action.page));
 }
 
 export function* removeFile (action) {
-    yield setPending(function* (action) {
-        try {
-            const response = yield filesAPI.remove(action.fileId);
-            yield put({type: REMOVE_FILE.SUCCEEDED, data: response.body});
-        } catch (error) {
-            yield put({type: REMOVE_FILE.FAILED}, error);
-        }
-    }, action);
+    yield setPending(apiCall(filesAPI.remove, action, REMOVE_FILE));
 }
 
 export function* upload (action) {
@@ -48,7 +39,7 @@ export function* upload (action) {
         yield filesAPI.upload(action.file, action.fileType, action.onProgress);
         yield findFiles(action.fileType);
     } catch (error) {
-        yield put({type: UPLOAD.FAILED}, error);
+        yield putGenericError(UPLOAD, error);
     }
 }
 

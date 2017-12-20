@@ -1,6 +1,6 @@
 import { put, takeLatest } from "redux-saga/effects";
 import updatesAPI from "./api";
-import { putGenericError } from "../sagaHelpers";
+import { apiCall, setPending } from "../sagaUtils";
 import {
     GET_SOFTWARE_UPDATES,
     GET_DATABASE_UPDATES,
@@ -8,13 +8,8 @@ import {
     UPDATE_SETTINGS
 } from "../actionTypes";
 
-function* getSoftwareUpdates () {
-    try {
-        const response = yield updatesAPI.getSoftware();
-        yield put({type: GET_SOFTWARE_UPDATES.SUCCEEDED, data: response.body});
-    } catch (error) {
-        yield put({type: GET_SOFTWARE_UPDATES.FAILED});
-    }
+function* getSoftwareUpdates (action) {
+    yield setPending(apiCall(updatesAPI.getSoftware, action, GET_SOFTWARE_UPDATES));
 }
 
 function* setSoftwareChannel (action) {
@@ -23,22 +18,12 @@ function* setSoftwareChannel (action) {
     }
 }
 
-function* getDatabaseUpdates () {
-    try {
-        const response = yield updatesAPI.getDatabase();
-        yield put({type: GET_DATABASE_UPDATES.SUCCEEDED, data: response.body});
-    } catch (error) {
-        yield putGenericError(GET_DATABASE_UPDATES, error);
-    }
+function* getDatabaseUpdates (action) {
+    yield setPending(apiCall(updatesAPI.getDatabase, action, GET_DATABASE_UPDATES));
 }
 
-function* installSoftwareUpdates () {
-    try {
-        const response = yield updatesAPI.installSoftwareUpdates();
-        yield put({type: INSTALL_SOFTWARE_UPDATES.SUCCEEDED, data: response.body});
-    } catch (error) {
-        yield putGenericError(INSTALL_SOFTWARE_UPDATES, error);
-    }
+function* installSoftwareUpdates (action) {
+    yield apiCall(updatesAPI.installSoftwareUpdates, action, INSTALL_SOFTWARE_UPDATES);
 }
 
 export function* watchUpdates () {

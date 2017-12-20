@@ -3,7 +3,7 @@ import Request from "superagent";
 const subtractionAPI = {
 
     find: () => (
-        Request.get("/api/subtraction")
+        Request.get(`/api/subtraction${window.location.search}`)
     ),
 
     listIds: () => (
@@ -11,11 +11,11 @@ const subtractionAPI = {
             .query({ids: true})
     ),
 
-    get: (subtractionId) => (
+    get: ({ subtractionId }) => (
         Request.get(`/api/subtraction/${subtractionId}`)
     ),
 
-    create: (subtractionId, fileId) => (
+    create: ({ subtractionId, fileId }) => (
         Request.post("/api/subtraction")
             .send({
                 subtraction_id: subtractionId,
@@ -23,7 +23,7 @@ const subtractionAPI = {
             })
     ),
 
-    remove: (subtractionId) => (
+    remove: ({ subtractionId }) => (
         Request.delete(`/api/subtraction/${subtractionId}`)
     )
 

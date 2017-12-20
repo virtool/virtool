@@ -10,7 +10,7 @@ const filesAPI = {
             })
     ),
 
-    remove: (fileId) => (
+    remove: ({ fileId }) => (
         Request.delete(`/api/files/${fileId}`)
     ),
 

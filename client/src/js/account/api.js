@@ -10,12 +10,12 @@ const accountAPI = {
         Request.get("/api/account/settings")
     ),
 
-    updateSettings: (update) => (
+    updateSettings: ({ update }) => (
         Request.patch("/api/account/settings")
             .send(update)
     ),
 
-    changePassword: (oldPassword, newPassword) => (
+    changePassword: ({ oldPassword, newPassword }) => (
         Request.put("/api/account/password")
             .send({
                 old_password: oldPassword,
@@ -35,14 +35,14 @@ const accountAPI = {
             })
     ),
 
-    updateAPIKey: (keyId, permissions) => (
+    updateAPIKey: ({ keyId, permissions }) => (
         Request.patch(`/api/account/keys/${keyId}`)
             .send({
                 permissions
             })
     ),
 
-    removeAPIKey: (keyId) => (
+    removeAPIKey: ({ keyId }) => (
         Request.delete(`/api/account/keys/${keyId}`)
     ),
 

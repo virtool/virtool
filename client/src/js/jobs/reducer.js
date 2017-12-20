@@ -1,13 +1,5 @@
 import { reject } from "lodash";
-import {
-    WS_UPDATE_JOB,
-    WS_REMOVE_JOB,
-    FIND_JOBS,
-    GET_JOB,
-    CANCEL_JOB,
-    REMOVE_JOB,
-    GET_RESOURCES
-} from "../actionTypes";
+import { WS_UPDATE_JOB, WS_REMOVE_JOB, FIND_JOBS, GET_JOB, CANCEL_JOB, GET_RESOURCES } from "../actionTypes";
 
 const initialState = {
     documents: null,
@@ -41,9 +33,6 @@ export default function jobsReducer (state = initialState, action) {
 
         case CANCEL_JOB.SUCCEEDED:
             return updateJob(state, action);
-
-        case REMOVE_JOB.SUCCEEDED:
-            return {...state, documents: reject(state.documents, {id: action.jobId})};
 
         case GET_RESOURCES.SUCCEEDED:
             return {...state, resources: action.data};

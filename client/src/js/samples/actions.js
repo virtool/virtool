@@ -41,11 +41,7 @@ export const wsRemoveAnalysis = (removed) => ({
     removed
 });
 
-export const findSamples = (term, page) => ({
-    type: FIND_SAMPLES.REQUESTED,
-    term,
-    page
-});
+export const findSamples = simpleActionCreator(FIND_SAMPLES.REQUESTED);
 
 export const findReadyHosts = simpleActionCreator(FIND_READY_HOSTS.REQUESTED);
 
