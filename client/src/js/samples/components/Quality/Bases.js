@@ -1,29 +1,29 @@
-import { select } from "d3-selection";
-import { line, area, symbol, symbolSquare } from "d3-shape";
-import { scaleOrdinal, scaleLinear } from "d3-scale";
+import { line, area } from "d3-shape";
+import { scaleLinear } from "d3-scale";
 import { axisBottom, axisLeft } from "d3-axis";
 import { min, values } from "lodash";
-import { legendColor } from "d3-svg-legend";
 
-const height = 300;
+import { appendLegend, createSVG } from "../../chartUtils";
 
-const margin = {
-    top: 20,
-    left: 60,
-    bottom: 60,
-    right: 20
-};
+const series = [
+    {label: "Mean", color: "#a94442"},
+    {label: "Median", color: "#428bca"},
+    {label: "Quartile", color: "#3C763D"},
+    {label: "Decile", color: "#FFF475"}
+];
 
 const CreateBasesChart = (element, data, width) => {
 
     // Find the absolute minimum quality found in the data set.
     const minQuality = min(data.map(document => min(values(document))));
 
-    width = width - margin.left - margin.right;
+    const svg = createSVG(element, width);
+
+    width = width - svg.margin.left - svg.margin.right;
 
     // Set up scales and axes.
     const y = scaleLinear()
-        .range([height, 0])
+        .range([svg.height, 0])
         .domain([minQuality - 5, 48]);
 
     const x = scaleLinear()
@@ -75,13 +75,6 @@ const CreateBasesChart = (element, data, width) => {
         }
     ];
 
-    // Create base SVG canvas.
-    const svg = select(element).append("svg")
-        .attr("width", width + margin.left + margin.right)
-        .attr("height", height + margin.top + margin.bottom)
-        .append("g")
-        .attr("transform", `translate(${margin.left}, ${margin.top})`);
-
     // Append the areas to the chart.
     areas.forEach(area => {
         svg.append("path")
@@ -91,16 +84,6 @@ const CreateBasesChart = (element, data, width) => {
             .style("fill", area.name === "quartile" ? "#3C763D" : "#FFF475")
             .style("opacity", 0.5);
     });
-
-    // Define a scale and a d3-legend for rendering a legend on the chart.
-    const legendScale = scaleOrdinal()
-        .domain(["Mean", "Median", "Quartile", "Decile"])
-        .range(["#a94442", "#428bca", "#3C763D", "#FFF475"]);
-
-    const legend = legendColor()
-        .shape("path", symbol().type(symbolSquare).size(150))
-        .shapePadding(10)
-        .scale(legendScale);
 
     // Append the median line to the chart. Color is blue.
     svg.append("path")
@@ -117,7 +100,7 @@ const CreateBasesChart = (element, data, width) => {
     // Append the x-axis to the chart.
     svg.append("g")
         .attr("class", "x axis")
-        .attr("transform", `translate(0, ${height})`)
+        .attr("transform", `translate(0, ${svg.height})`)
         .call(xAxis)
         .append("text")
         .attr("x", width / 2)
@@ -136,11 +119,7 @@ const CreateBasesChart = (element, data, width) => {
         .style("text-anchor", "end")
         .attr("transform", "rotate(-90)");
 
-    // Append the legend to the chart.
-    svg.append("g")
-        .attr("class", "legendOrdinal")
-        .attr("transform", `translate(${width - 60}, 5)`)
-        .call(legend);
+    appendLegend(svg, width, series);
 };
 
 export default CreateBasesChart;
