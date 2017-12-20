@@ -101,7 +101,7 @@ class VirusesList extends React.Component {
         return (
             <div>
                 <ViewHeader
-                    title="Samples"
+                    title="Viruses"
                     page={this.props.page}
                     count={virusCount}
                     foundCount={this.props.found_count}
