@@ -1,6 +1,6 @@
 import React from "react";
 import PropTypes from "prop-types";
-import { Flex, FlexItem, Input, Button } from "./";
+import { Flex, FlexItem, Input, Button } from "./index";
 
 export class InputSave extends React.Component {
 
@@ -62,10 +62,10 @@ export class InputSave extends React.Component {
      * A spinner is shown to indicate the change is pending. The spinner will be removed when a new initialValue is
      * received in props.
      *
-     * @param event {object} - the submit event.
+     * @param e {object} - the submit event.
      */
-    handleSubmit = (event) => {
-        event.preventDefault();
+    handleSubmit = (e) => {
+        e.preventDefault();
 
         if (this.state.value === this.props.initialValue) {
             // Drop focus from the form children even though no information has been sent to the server or passed to the
@@ -89,11 +89,6 @@ export class InputSave extends React.Component {
         this.inputNode.focus();
     };
 
-    /**
-     * Blur all focus-sensitive elements in the component.
-     *
-     * @func
-     */
     blur = () => {
         this.inputNode.blur();
         this.buttonNode.blur();

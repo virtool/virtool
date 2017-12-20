@@ -32,6 +32,10 @@ export class Input extends React.Component {
         formGroupStyle: {}
     };
 
+    blur = () => {
+        this.inputNode.blur();
+    };
+
     focus = () => {
         this.inputNode.focus();
     };
@@ -87,7 +91,7 @@ export class Input extends React.Component {
             <FormGroup style={groupStyle}>
                 {label}
                 <FormControl
-                    inputRef={ref => this.inputNode = ref}
+                    inputRef={(ref) => this.inputNode = ref}
                     type={this.props.type}
                     name={this.props.name}
                     rows={this.props.rows}
