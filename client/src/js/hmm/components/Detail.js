@@ -1,10 +1,24 @@
 import React from "react";
 import { connect } from "react-redux";
-import { sortBy, transform } from "lodash";
+import { map, sortBy } from "lodash";
 import { Row, Col, Table, Badge, Label, Panel, ListGroup } from "react-bootstrap";
 
 import { IDRow, ListGroupItem, LoadingPlaceholder } from "../../base";
 import { getHmm } from "../actions";
+
+const HMMTaxonomy = ({ counts }) => {
+    const components = sortBy(map(counts, (count, name) => ({name, count})), "name").map(entry =>
+        <ListGroupItem key={entry.name}>
+            {entry.name} <Badge>{entry.count}</Badge>
+        </ListGroupItem>
+    );
+
+    return (
+        <ListGroup style={{maxHeight: 210, overflowY: "auto"}}>
+            {components}
+        </ListGroup>
+    );
+};
 
 class HMMDetail extends React.Component {
 
@@ -31,26 +45,6 @@ class HMMDetail extends React.Component {
         );
 
         const names = this.props.detail.names.map((name, index) => <span key={index}><Label>{name}</Label> </span>);
-
-        const taxonomy = ["families", "genera"].reduce((result, key) => {
-            const entries = sortBy(transform(this.props.detail[key], (result, count, name) => {
-                result.push({
-                    name,
-                    count
-                });
-            }, []), "count").reverse();
-
-            result[key] = entries.map(entry =>
-                <ListGroupItem key={entry.name}>
-                    {entry.name} <Badge>{entry.count}</Badge>
-                </ListGroupItem>
-            );
-        }, {});
-
-        const listGroupStyle = {
-            maxHeight: 210,
-            overflowY: "auto"
-        };
 
         return (
             <div>
@@ -113,9 +107,7 @@ class HMMDetail extends React.Component {
                         <h5>
                             <strong>Families</strong>
                         </h5>
-                        <ListGroup style={listGroupStyle}>
-                            {taxonomy.families}
-                        </ListGroup>
+                        <HMMTaxonomy counts={this.props.detail.families} />
                     </Col>
                     <Col md={6}>
                         <h5>
@@ -123,9 +115,7 @@ class HMMDetail extends React.Component {
                                 Genera
                             </strong>
                         </h5>
-                        <ListGroup style={listGroupStyle}>
-                            {taxonomy.genera}
-                        </ListGroup>
+                        <HMMTaxonomy counts={this.props.detail.genera} />
                     </Col>
                 </Row>
             </div>
