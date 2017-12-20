@@ -203,8 +203,8 @@ class Groups extends React.Component {
 }
 
 const mapStateToProps = (state) => ({
-    users: state.users.documents,
-    groups: state.groups.documents,
+    users: state.users.list,
+    groups: state.groups.list,
     pending: state.groups.pending,
     createError: state.groups.createError
 });
