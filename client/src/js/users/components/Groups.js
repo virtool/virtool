@@ -1,14 +1,3 @@
-/**
- * @license
- * The MIT License (MIT)
- * Copyright 2015 Government of Canada
- *
- * @author
- * Ian Boyes
- *
- * @exports GroupsPermissions
- */
-
 import React from "react";
 import { connect } from "react-redux";
 import { Row, Col, Panel } from "react-bootstrap";

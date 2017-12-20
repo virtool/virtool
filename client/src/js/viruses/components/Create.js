@@ -1,14 +1,3 @@
-/**
- * @license
- * The MIT License (MIT)
- * Copyright 2015 Government of Canada
- *
- * @author
- * Ian Boyes
- *
- * @exports AddVirus
- */
-
 import React from "react";
 import { connect } from "react-redux";
 import { push } from "react-router-redux";
@@ -23,9 +12,6 @@ const getInitialState = () => ({
     abbreviation: ""
 });
 
-/**
- * A form for adding a new virus, defining its name and abbreviation.
- */
 class CreateVirus extends React.Component {
 
     constructor (props) {

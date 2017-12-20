@@ -1,12 +1,3 @@
-/**
- *
- *
- * @copyright 2017 Government of Canada
- * @license MIT
- * @author igboyes
- *
- */
-
 import React from "react";
 import { connect } from "react-redux";
 import { push } from "react-router-redux";
