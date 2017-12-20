@@ -1,5 +1,4 @@
 import React from "react";
-import { some } from "lodash";
 import { push } from "react-router-redux";
 import { connect } from "react-redux";
 import { ClipLoader } from "halogenium";
@@ -75,7 +74,7 @@ class SubtractionList extends React.Component {
 
         let alert;
 
-        if (!some(this.props.documents, {ready: true})) {
+        if (!this.props.ready_host_count) {
             alert = (
                 <Alert bsStyle="warning">
                     <Flex alignItems="center">
