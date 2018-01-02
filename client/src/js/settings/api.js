@@ -6,8 +6,9 @@ const settingsAPI = {
         Request.get("/api/settings")
     ),
 
-    update: (update) => (
-        Request.patch("/api/settings", update)
+    update: ({ update }) => (
+        Request.patch("/api/settings")
+            .send(update)
     )
 
 };
