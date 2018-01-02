@@ -11,6 +11,13 @@ const getInitialState = () => ({
     error: null
 });
 
+const SourceTypeItem = ({ onRemove, sourceType, restrictSourceTypes }) => (
+    <ListGroupItem key={sourceType} disabled={!restrictSourceTypes}>
+        <span className="text-capitalize">{sourceType}</span>
+        {restrictSourceTypes ? <Icon name="remove" onClick={() => onRemove(sourceType)} pullRight /> : null}
+    </ListGroupItem>
+);
+
 class SourceTypes extends React.Component {
 
     constructor (props) {
@@ -31,7 +38,6 @@ class SourceTypes extends React.Component {
             // capitalized when rendered in the application.
             const newSourceType = this.state.value.toLowerCase();
 
-
             if (this.props.settings.allowed_source_types.includes(newSourceType)) {
                 // Show error if the source type already exists in the list.
                 this.setState({error: "Source type already exists."});
@@ -50,23 +56,14 @@ class SourceTypes extends React.Component {
 
         const restrictSourceTypes = this.props.settings.restrict_source_types;
 
-        const listComponents = this.props.settings.allowed_source_types.sort().map((sourceType) => {
-            let removeButton;
-
-            // Only show remove button is the sourceTypes feature is enabled.
-            if (restrictSourceTypes) {
-                removeButton = (
-                    <Icon name="remove" onClick={() => this.remove(sourceType)} pullRight />
-                );
-            }
-
-            return (
-                <ListGroupItem key={sourceType} disabled={!restrictSourceTypes}>
-                    <span className="text-capitalize">{sourceType}</span>
-                    {removeButton}
-                </ListGroupItem>
-            );
-        });
+        const listComponents = this.props.settings.allowed_source_types.sort().map(sourceType =>
+            <SourceTypeItem
+                key={sourceType}
+                onRemove={this.remove}
+                sourceType={sourceType}
+                restrictSourceTypes={restrictSourceTypes}
+            />
+        );
 
         return (
             <div>
