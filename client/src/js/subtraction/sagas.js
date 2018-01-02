@@ -1,8 +1,8 @@
-import { push } from "react-router-redux";
+import { LOCATION_CHANGE, push } from "react-router-redux";
 import { put, takeLatest, throttle } from "redux-saga/effects";
 
 import subtractionAPI from "./api";
-import { apiCall, pushHistoryState, putGenericError, setPending } from "../sagaUtils";
+import { apiCall, apiFind, pushHistoryState, putGenericError, setPending } from "../sagaUtils";
 import {
     FIND_SUBTRACTIONS,
     LIST_SUBTRACTION_IDS,
@@ -12,7 +12,7 @@ import {
 } from "../actionTypes";
 
 export function* findSubtractions (action) {
-    yield setPending(apiCall(subtractionAPI.find, action, FIND_SUBTRACTIONS));
+    yield setPending(apiFind("/subtraction", subtractionAPI.find, action, FIND_SUBTRACTIONS));
 }
 
 export function* listSubtractionIds (action) {
@@ -43,7 +43,7 @@ export function* removeSubtraction (action) {
 }
 
 export function* watchSubtraction () {
-    yield throttle(500, FIND_SUBTRACTIONS.REQUESTED, findSubtractions);
+    yield throttle(300, LOCATION_CHANGE, findSubtractions);
     yield takeLatest(LIST_SUBTRACTION_IDS.REQUESTED, listSubtractionIds);
     yield takeLatest(GET_SUBTRACTION.REQUESTED, getSubtraction);
     yield throttle(500, CREATE_SUBTRACTION.REQUESTED, createSubtraction);

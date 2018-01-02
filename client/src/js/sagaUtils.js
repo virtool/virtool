@@ -13,12 +13,12 @@ export function* apiCall (apiMethod, action, actionType) {
 }
 
 export function* apiFind (path, apiMethod, action, actionType) {
-    const { pathname, search } = action.payload;
+    const { pathname } = action.payload;
 
     const match = matchPath(pathname, {path, exact: true});
 
     if (match) {
-        yield apiCall(apiMethod, {search}, actionType);
+        yield apiCall(apiMethod, {}, actionType);
     }
 }
 

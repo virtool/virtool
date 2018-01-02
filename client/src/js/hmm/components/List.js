@@ -6,8 +6,8 @@ import { connect } from "react-redux";
 import { Col, FormControl, FormGroup, InputGroup, Label, ListGroup, Row } from "react-bootstrap";
 
 import HMMInstaller from "./Installer";
-import { findHMMs } from "../actions";
 import { Icon, ListGroupItem, LoadingPlaceholder, NoneFound, Pagination, ViewHeader } from "../../base";
+import {createFindURL, getFindTerm} from "../../utils";
 
 const HMMItem = ({ cluster, families, id, names }) => {
 
@@ -38,95 +38,73 @@ const HMMItem = ({ cluster, families, id, names }) => {
     );
 };
 
-class HMMList extends React.Component {
+const HMMList = (props) => {
 
-    componentDidMount () {
-        this.props.onFind();
+    if (props.documents === null) {
+        return <LoadingPlaceholder />;
     }
 
-    setTerm = (event) => {
-        const url = new window.URL(window.location);
+    let rowComponents;
 
-        if (event.target.value) {
-            url.searchParams.set("find", event.target.value);
-        } else {
-            url.searchParams.delete("find");
-        }
-
-        this.props.onFind(url);
-    };
-
-    setPage = (page) => {
-        const url = new window.URL(window.location);
-        url.searchParams.set("page", page);
-        this.props.onFind(url);
-    };
-
-    render () {
-
-        if (this.props.documents === null) {
-            return <LoadingPlaceholder />;
-        }
-
-        let rowComponents;
-
-        if (this.props.documents.length) {
-            rowComponents = this.props.documents.map(document =>
-                <HMMItem key={document.id} {...document} />
-            );
-        } else {
-            rowComponents = <NoneFound noun="profiles" noListGroup />;
-        }
-
-        return (
-            <div>
-                <ViewHeader
-                    title="HMMs"
-                    page={this.props.page}
-                    count={this.props.documents.length}
-                    foundCount={this.props.found_count}
-                    totalCount={this.props.total_count}
-                />
-
-                {this.props.file_exists ? null : <HMMInstaller />}
-
-                <FormGroup>
-                    <InputGroup>
-                        <InputGroup.Addon>
-                            <Icon name="search" />
-                        </InputGroup.Addon>
-
-                        <FormControl
-                            type="text"
-                            placeholder="Definition, cluster, family"
-                            onChange={this.setTerm}
-                            value={this.props.term}
-                        />
-                    </InputGroup>
-                </FormGroup>
-
-                <ListGroup>
-                    {rowComponents}
-                </ListGroup>
-
-                <Pagination
-                    documentCount={this.props.documents.length}
-                    page={this.props.page}
-                    pageCount={this.props.page_count}
-                    onPage={this.setPage}
-                />
-            </div>
+    if (props.documents.length) {
+        rowComponents = props.documents.map(document =>
+            <HMMItem key={document.id} {...document} />
         );
+    } else {
+        rowComponents = <NoneFound noun="profiles" noListGroup />;
     }
-}
 
-const mapStateToProps = (state) => ({...state.hmms});
+    return (
+        <div>
+            <ViewHeader
+                title="HMMs"
+                page={props.page}
+                count={props.documents.length}
+                foundCount={props.found_count}
+                totalCount={props.total_count}
+            />
+
+            {props.file_exists ? null : <HMMInstaller />}
+
+            <FormGroup>
+                <InputGroup>
+                    <InputGroup.Addon>
+                        <Icon name="search" />
+                    </InputGroup.Addon>
+
+                    <FormControl
+                        type="text"
+                        placeholder="Definition, cluster, family"
+                        onChange={(e) => props.onFind({find: e.target.value})}
+                        value={props.term}
+                    />
+                </InputGroup>
+            </FormGroup>
+
+            <ListGroup>
+                {rowComponents}
+            </ListGroup>
+
+            <Pagination
+                documentCount={props.documents.length}
+                page={props.page}
+                pageCount={props.page_count}
+                onPage={(page) => props.onFind({page})}
+            />
+        </div>
+    );
+};
+
+const mapStateToProps = (state) => ({
+    ...state.hmms,
+    term: getFindTerm()
+});
 
 const mapDispatchToProps = (dispatch) => ({
 
-    onFind: (url = new window.URL(window.location)) => {
+    onFind: ({find, page}) => {
+        const url = createFindURL({find, page});
         dispatch(push(url.pathname + url.search));
-        dispatch(findHMMs());
     }
 
 });

@@ -3,7 +3,7 @@ import { connect } from "react-redux";
 import { LinkContainer } from "react-router-bootstrap";
 import { InputGroup, FormGroup, FormControl, Dropdown, MenuItem } from "react-bootstrap";
 
-import { clearJobs, findJobs } from "../actions";
+import { clearJobs } from "../actions";
 import { Icon, Button } from "../../base";
 import { push } from "react-router-redux";
 import { createFindURL, getFindTerm } from "../../utils";
@@ -61,7 +61,6 @@ const mapDispatchToProps = (dispatch) => ({
     onFind: (find) => {
         const url = createFindURL({ find });
         dispatch(push(url.pathname + url.search));
-        dispatch(findJobs());
     },
 
     onClear: (scope) => {

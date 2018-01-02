@@ -1,9 +1,9 @@
-import { push } from "react-router-redux";
+import { LOCATION_CHANGE, push } from "react-router-redux";
 import { all, put, takeEvery, takeLatest, throttle } from "redux-saga/effects";
 
 import filesAPI from "../files/api";
 import virusesAPI from "./api";
-import { apiCall, setPending } from "../sagaUtils";
+import {apiCall, apiFind, setPending} from "../sagaUtils";
 import {
     FIND_VIRUSES,
     GET_VIRUS,
@@ -30,8 +30,8 @@ export function* getUpdatedVirus (actionType, virusId) {
     yield put({type: actionType, data: response.body});
 }
 
-export function* findViruses () {
-    yield setPending(apiCall(virusesAPI.find, {}, FIND_VIRUSES));
+export function* findViruses (action) {
+    yield apiFind("/viruses", virusesAPI.find, action, FIND_VIRUSES);
 }
 
 export function* getVirus (action) {
@@ -125,7 +125,7 @@ export function* commitImport (action) {
 }
 
 export function* watchViruses () {
-    yield throttle(200, FIND_VIRUSES.REQUESTED, findViruses);
+    yield throttle(300, LOCATION_CHANGE, findViruses);
     yield takeLatest(GET_VIRUS.REQUESTED, getVirus);
     yield takeLatest(GET_VIRUS_HISTORY.REQUESTED, getVirusHistory);
     yield takeEvery(CREATE_VIRUS.REQUESTED, createVirus);

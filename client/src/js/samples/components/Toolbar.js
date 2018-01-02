@@ -5,7 +5,6 @@ import { LinkContainer } from "react-router-bootstrap";
 import { createFindURL, getFindTerm } from "../../utils";
 import { FormGroup, InputGroup, FormControl } from "react-bootstrap";
 import { Icon, Button } from "../../base";
-import { findSamples } from "../actions";
 import { push } from "react-router-redux";
 
 const SampleToolbar = ({canCreate, onFind, term}) => (
@@ -50,7 +49,6 @@ const mapDispatchToProps = (dispatch) => ({
     onFind: (term) => {
         const url = createFindURL({ find: term });
         dispatch(push(url.pathname + url.search));
-        dispatch(findSamples());
     }
 
 });

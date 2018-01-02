@@ -1,9 +1,11 @@
+import React from "react";
+import { connect } from "react-redux";
+import { push } from "react-router-redux";
 import { LinkContainer } from "react-router-bootstrap";
 import { Icon, Button } from "../../base";
-import React from "react";
-import PropTypes from "prop-types";
+import {createFindURL, getFindTerm} from "../../utils";
 
-const VirusToolbar = ({ canModify, location, onChangeTerm }) => (
+const VirusToolbar = ({ canModify, onFind, term }) => (
     <div className="toolbar">
         <div className="form-group">
             <div className="input-group">
@@ -15,7 +17,8 @@ const VirusToolbar = ({ canModify, location, onChangeTerm }) => (
                     className="form-control"
                     type="text"
                     placeholder="Name or abbreviation"
-                    onChange={e => onChangeTerm(e.target.value)}
+                    value={term}
+                    onChange={e => onFind(e.target.value)}
                 />
             </div>
         </div>
@@ -28,7 +31,7 @@ const VirusToolbar = ({ canModify, location, onChangeTerm }) => (
         </LinkContainer>
 
         {canModify ? (
-            <LinkContainer to={{location, state: {createVirus: true}}} replace>
+            <LinkContainer to={{...window.location, state: {createVirus: true}}} replace>
                 <Button bsStyle="primary" tip="Create">
                     <Icon name="new-entry" />
                 </Button>
@@ -37,10 +40,20 @@ const VirusToolbar = ({ canModify, location, onChangeTerm }) => (
     </div>
 );
 
-VirusToolbar.propTypes = {
-    canModify: PropTypes.bool,
-    location: PropTypes.object,
-    onChangeTerm: PropTypes.func
-};
+const mapStateToProps = (state) => ({
+    canModify: state.account.permissions.modify_virus,
+    term: getFindTerm()
+});
 
-export default VirusToolbar;
+const mapDispatchToProps = (dispatch) => ({
+
+    onFind: (find) => {
+        const url = createFindURL({ find });
+        dispatch(push(url.pathname + url.search));
+    }
+
+});
+
+const Container = connect(mapStateToProps, mapDispatchToProps)(VirusToolbar);
+
+export default Container;

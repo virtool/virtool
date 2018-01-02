@@ -3,64 +3,57 @@ import { push } from "react-router-redux";
 import { connect } from "react-redux";
 import { ListGroup } from "react-bootstrap";
 
-import { findJobs, cancelJob, removeJob } from "../actions";
+import { cancelJob, removeJob } from "../actions";
 import { LoadingPlaceholder, Pagination, NoneFound, ViewHeader } from "../../base";
 import Job from "./Entry";
 import JobsToolbar from "./Toolbar";
 import {createFindURL} from "../../utils";
 
-class JobsList extends React.Component {
+const JobsList = (props) => {
 
-    componentDidMount () {
-        this.props.onPage();
+    if (props.documents === null) {
+        return <LoadingPlaceholder />;
     }
 
-    render () {
+    let components = props.documents.map(doc =>
+        <Job
+            key={doc.id}
+            {...doc}
+            cancel={props.onCancel}
+            remove={props.onRemove}
+            navigate={() => props.history.push(`/jobs/${doc.id}`)}
+        />
+    );
 
-        if (this.props.documents === null) {
-            return <LoadingPlaceholder />;
-        }
+    if (!props.documents.length) {
+        components = <NoneFound noun="jobs" noListGroup />;
+    }
 
-        let components = this.props.documents.map(doc =>
-            <Job
-                key={doc.id}
-                {...doc}
-                cancel={this.props.onCancel}
-                remove={this.props.onRemove}
-                navigate={() => this.props.history.push(`/jobs/${doc.id}`)}
+    return (
+        <div>
+            <ViewHeader
+                title="Jobs"
+                page={props.page}
+                count={props.documents.length}
+                foundCount={props.found_count}
+                totalCount={props.total_count}
             />
-        );
 
-        if (!this.props.documents.length) {
-            components = <NoneFound noun="jobs" noListGroup />;
-        }
+            <JobsToolbar />
 
-        return (
-            <div>
-                <ViewHeader
-                    title="Jobs"
-                    page={this.props.page}
-                    count={this.props.documents.length}
-                    foundCount={this.props.found_count}
-                    totalCount={this.props.total_count}
-                />
+            <ListGroup>
+                {components}
+            </ListGroup>
 
-                <JobsToolbar />
-
-                <ListGroup>
-                    {components}
-                </ListGroup>
-
-                <Pagination
-                    documentCount={this.props.documents.length}
-                    onPage={this.props.onPage}
-                    page={this.props.page}
-                    pageCount={this.props.page_count}
-                />
-            </div>
-        );
-    }
-}
+            <Pagination
+                documentCount={props.documents.length}
+                onPage={props.onPage}
+                page={props.page}
+                pageCount={props.page_count}
+            />
+        </div>
+    );
+};
 
 const mapStateToProps = (state) => ({...state.jobs});
 
@@ -69,7 +62,6 @@ const mapDispatchToProps = (dispatch) => ({
     onPage: (page) => {
         const url = createFindURL({ page });
         dispatch(push(url.pathname + url.search));
-        dispatch(findJobs());
     },
 
     onCancel: (jobId) => {
