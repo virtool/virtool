@@ -81,8 +81,6 @@ export const simpleActionCreator = (type) => (
 );
 
 export const createFindURL = ({ find, page }) => {
-    console.log(find, page);
-
     const url = new window.URL(window.location);
 
     if (find !== undefined) {
@@ -100,9 +98,6 @@ export const createFindURL = ({ find, page }) => {
     return url;
 };
 
-export const getFindTerm = (url = new window.URL(window.location)) => {
-    console.log(url);
-    const find = url.searchParams.get("find");
-    console.log(url, find);
-    return find || "";
-};
+export const getFindTerm = (url = new window.URL(window.location)) => (
+    url.searchParams.get("find") || ""
+);
