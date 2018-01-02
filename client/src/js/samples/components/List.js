@@ -4,116 +4,80 @@ import { push } from "react-router-redux";
 import { connect } from "react-redux";
 import { ListGroup } from "react-bootstrap";
 
-import { findSamples } from "../actions";
-import { LoadingPlaceholder, NoneFound, Pagination, ViewHeader } from "../../base";
 import SampleEntry from "./Entry";
 import SampleToolbar from "./Toolbar";
 import CreateSample from "./Create/Create";
 import QuickAnalyze from "./QuickAnalyze";
+import { LoadingPlaceholder, NoneFound, Pagination, ViewHeader } from "../../base";
+import { createFindURL } from "../../utils";
 
-class SamplesList extends React.Component {
+const SamplesList = (props) => {
 
-    componentDidMount () {
-        this.props.onFind();
+    if (props.documents === null) {
+        return <LoadingPlaceholder />;
     }
 
-    handleChange = (value) => {
-        const url = new window.URL(window.location);
+    let sampleComponents = props.documents.map(document =>
+        <SampleEntry
+            key={document.id}
+            id={document.id}
+            userId={document.user.id}
+            {...document}
+        />
+    );
 
-        if (value) {
-            url.searchParams.set("find", value);
-        } else {
-            url.searchParams.delete("find");
-        }
+    if (!props.documents.length) {
+        sampleComponents = <NoneFound key="noSample" noun="samples" noListGroup />;
+    }
 
-        this.props.onFind(url);
-    };
-
-    handlePage = (page) => {
-        const url = new window.URL(window.location);
-        url.searchParams.set("page", page);
-        this.props.onFind(url);
-    };
-
-    render () {
-
-        if (this.props.documents === null) {
-            return <LoadingPlaceholder />;
-        }
-
-        const term = this.props.match.params.term;
-
-        let sampleComponents = this.props.documents.map(document =>
-            <SampleEntry
-                key={document.id}
-                id={document.id}
-                userId={document.user.id}
-                {...document}
+    return (
+        <div>
+            <ViewHeader
+                title="Samples"
+                page={props.page}
+                count={props.documents.length}
+                foundCount={props.found_count}
+                totalCount={props.total_count}
             />
-        );
 
-        if (!this.props.documents.length) {
-            sampleComponents = <NoneFound key="noSample" noun="samples" noListGroup />;
-        }
+            <SampleToolbar />
 
-        return (
-            <div>
-                <ViewHeader
-                    title="Samples"
-                    page={this.props.page}
-                    count={this.props.documents.length}
-                    foundCount={this.props.found_count}
-                    totalCount={this.props.total_count}
+            <ListGroup>
+                {sampleComponents}
+            </ListGroup>
+
+            <Pagination
+                documentCount={props.documents.length}
+                onPage={props.onFind}
+                page={props.page}
+                pageCount={props.page_count}
+            />
+
+            <Route path="/samples" render={({ history }) =>
+                <CreateSample
+                    show={!!(history.location.state && history.location.state.create)}
+                    onHide={props.onHide}
                 />
+            } />
 
-                <SampleToolbar
-                    term={term}
-                    onTermChange={this.handleChange}
-                    history={this.props.history}
-                    location={this.props.location}
-                    canCreate={this.props.canCreate}
+            <Route path="/samples" render={({ history }) =>
+                <QuickAnalyze
+                    show={!!(history.location.state && history.location.state.quickAnalyze)}
+                    {...(history.location.state ? history.location.state.quickAnalyze : {})}
+                    onHide={props.onHide}
                 />
+            } />
+        </div>
+    );
+};
 
-                <ListGroup>
-                    {sampleComponents}
-                </ListGroup>
-
-                <Pagination
-                    documentCount={this.props.documents.length}
-                    onPage={this.handlePage}
-                    page={this.props.page}
-                    pageCount={this.props.page_count}
-                />
-
-                <Route path="/samples" render={({ history }) =>
-                    <CreateSample
-                        show={!!(history.location.state && history.location.state.create)}
-                        onHide={this.props.onHide}
-                    />
-                } />
-
-                <Route path="/samples" render={({ history }) =>
-                    <QuickAnalyze
-                        show={!!(history.location.state && history.location.state.quickAnalyze)}
-                        {...(history.location.state ? history.location.state.quickAnalyze : {})}
-                        onHide={this.props.onHide}
-                    />
-                } />
-            </div>
-        );
-    }
-}
-
-const mapStateToProps = (state) => ({
-    ...state.samples,
-    canCreate: state.account.permissions.create_sample
-});
+const mapStateToProps = (state) => ({...state.samples});
 
 const mapDispatchToProps = (dispatch) => ({
 
-    onFind: (url = new window.URL(window.location)) => {
+    onFind: (page) => {
+        const url = createFindURL({page});
         dispatch(push(url.pathname + url.search));
-        dispatch(findSamples());
     },
 
     onHide: () => {

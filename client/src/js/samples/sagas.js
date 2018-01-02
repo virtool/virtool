@@ -1,7 +1,8 @@
+import { LOCATION_CHANGE } from "react-router-redux";
 import { put, select, takeEvery, takeLatest, throttle } from "redux-saga/effects";
 
 import samplesAPI from "./api";
-import { apiCall, pushHistoryState, putGenericError, setPending } from "../sagaUtils";
+import { apiCall, apiFind, pushHistoryState, putGenericError, setPending } from "../sagaUtils";
 import {
     WS_UPDATE_SAMPLE,
     WS_REMOVE_SAMPLE,
@@ -27,7 +28,7 @@ export function* wsUpdateAnalysis (action) {
 }
 
 export function* findSamples (action) {
-    yield setPending(apiCall(samplesAPI.find, action, FIND_SAMPLES));
+    yield apiFind("/samples", samplesAPI.find, action, FIND_SAMPLES);
 }
 
 export function* findReadyHosts () {
@@ -127,10 +128,10 @@ export function* removeAnalysis (action) {
 }
 
 export function* watchSamples () {
+    yield throttle(200, LOCATION_CHANGE, findSamples);
     yield takeEvery(WS_UPDATE_SAMPLE, findSamples);
     yield takeEvery(WS_REMOVE_SAMPLE, findSamples);
     yield takeEvery(WS_UPDATE_ANALYSIS, wsUpdateAnalysis);
-    yield takeLatest(FIND_SAMPLES.REQUESTED, findSamples);
     yield takeLatest(FIND_READY_HOSTS.REQUESTED, findReadyHosts);
     yield takeLatest(REFRESH_SAMPLE.REQUESTED, getSample);
     yield takeLatest(GET_SAMPLE.REQUESTED, getSample);

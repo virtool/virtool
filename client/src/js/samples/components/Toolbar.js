@@ -1,47 +1,60 @@
 import React from "react";
-import PropTypes from "prop-types";
+import { connect } from "react-redux";
 import { LinkContainer } from "react-router-bootstrap";
 
+import { createFindURL, getFindTerm } from "../../utils";
 import { FormGroup, InputGroup, FormControl } from "react-bootstrap";
 import { Icon, Button } from "../../base";
+import { findSamples } from "../actions";
+import { push } from "react-router-redux";
 
-const SampleToolbar = ({ canCreate, history, location, onTermChange, term }) => (
+const SampleToolbar = ({canCreate, onFind, term}) => (
     <div key="toolbar" className="toolbar">
         <FormGroup>
             <InputGroup>
                 <InputGroup.Addon>
-                    <Icon name="search" />
+                    <Icon name="search"/>
                 </InputGroup.Addon>
                 <FormControl
                     type="text"
                     value={term}
-                    onChange={(e) => onTermChange(e.target.value)}
+                    onChange={(e) => onFind(e.target.value)}
                     placeholder="Sample name"
                 />
             </InputGroup>
         </FormGroup>
 
         <LinkContainer to="/samples/files">
-            <Button tip="Read Files" icon="folder-open" />
+            <Button tip="Read Files" icon="folder-open"/>
         </LinkContainer>
 
         {canCreate ? (
-            <Button
-                tip="Create Sample"
-                icon="new-entry"
-                bsStyle="primary"
-                onClick={() => history.replace(location.pathname + location.search, {create: true})}
-            />
+            <LinkContainer to={{state: {create: true}}}>
+                <Button
+                    tip="Create Sample"
+                    icon="new-entry"
+                    bsStyle="primary"
+                />
+            </LinkContainer>
         ) : null}
     </div>
 );
 
-SampleToolbar.propTypes = {
-    canCreate: PropTypes.bool,
-    term: PropTypes.string,
-    onTermChange: PropTypes.func,
-    location: PropTypes.object,
-    history: PropTypes.object
-};
+const mapStateToProps = (state) => ({
+    term: getFindTerm(),
+    canCreate: state.account.permissions.create_sample
+});
 
-export default SampleToolbar;
+const mapDispatchToProps = (dispatch) => ({
+
+    onFind: (term) => {
+        const url = createFindURL({ find: term });
+        dispatch(push(url.pathname + url.search));
+        dispatch(findSamples());
+    }
+
+});
+
+const Container = connect(mapStateToProps, mapDispatchToProps)(SampleToolbar);
+
+export default Container;

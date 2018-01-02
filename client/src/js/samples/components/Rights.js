@@ -8,9 +8,7 @@ import { listGroups } from "../../groups/actions";
 class SampleRights extends React.Component {
 
     componentDidMount () {
-        if (this.isOwnerOrAdministrator()) {
-            this.props.onListGroups();
-        }
+        this.props.onListGroups();
     }
 
     isOwnerOrAdministrator = () => (
@@ -18,12 +16,12 @@ class SampleRights extends React.Component {
     );
 
     render () {
-        if (!this.isOwnerOrAdministrator()) {
-            return <Panel>Not allowed</Panel>;
-        }
-
         if (this.props.groups === null) {
             return <LoadingPlaceholder />;
+        }
+
+        if (!this.isOwnerOrAdministrator()) {
+            return <Panel>Not allowed</Panel>;
         }
 
         const groupRights = (this.props.group_read ? "r" : "") + (this.props.group_write ? "w" : "");
@@ -83,7 +81,7 @@ const mapStateToProps = state => {
     return {
         accountId: state.account.id,
         group: state.samples.detail.group,
-        groups: state.groups.documents,
+        groups: state.groups.list,
         ownerId: state.samples.detail.user.id,
         sampleId: state.samples.detail.id,
         group_read,
