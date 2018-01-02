@@ -1,12 +1,3 @@
-/**
- * Redux reducer for working with the logged in user's account data.
- *
- * @copyright 2017 Government of Canada
- * @license MIT
- * @author igboyes
- *
- */
-
 import {
     GET_SETTINGS,
     UPDATE_SETTINGS,

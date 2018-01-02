@@ -1,7 +1,3 @@
-/**
- * Created by igboyes on 03/05/17.
- */
-
 const createRequestActionType = (root) => ({
     REQUESTED: `${root}_REQUESTED`,
     SUCCEEDED: `${root}_SUCCEEDED`,
