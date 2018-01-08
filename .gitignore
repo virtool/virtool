@@ -6,6 +6,7 @@ __pycache__
 /data
 /client/node_modules
 /client/dist
+/client/doc
 /.idea
 settings.json
 /doc/_build
