@@ -1,3 +1,8 @@
+/**
+ * Redux action creators for use with the active user account.
+ *
+ * @module account/actions
+ */
 import { simpleActionCreator } from "../utils";
 import {
     GET_ACCOUNT,
@@ -10,21 +15,57 @@ import {
     LOGOUT
 } from "../actionTypes";
 
+/**
+ * Returns action that can trigger an API call for getting the current account data.
+ *
+ * @func
+ * @returns {object}
+ */
 export const getAccount = simpleActionCreator(GET_ACCOUNT.REQUESTED);
 
+/**
+ * Returns an action that can trigger an API call for updating the settings for the current account.
+ *
+ * @func
+ * @param update {object} the update to apply to the account
+ * @returns {object}
+ */
 export const updateAccountSettings = (update) => ({
     type: UPDATE_ACCOUNT_SETTINGS.REQUESTED,
     update
 });
 
+/**
+ * Returns an action that can trigger an API call for changing the password for the current account.
+ *
+ * @func
+ * @param oldPassword {string} the old account password (used for verification)
+ * @param newPassword {string} the new account password
+ * @returns {object}
+ */
 export const changePassword = (oldPassword, newPassword) => ({
     type: CHANGE_ACCOUNT_PASSWORD.REQUESTED,
     oldPassword,
     newPassword
 });
 
+/**
+ * Returns action that can trigger an API call for getting the API keys owned by the current account.
+ *
+ * @func
+ * @returns {object}
+ */
 export const getAPIKeys = simpleActionCreator(GET_API_KEYS.REQUESTED);
 
+/**
+ * Returns action that can trigger an API call for creating a new API key for the current account.
+ *
+ * @func
+ * @param name {string} a name for the API key
+ * @param permissions {object} permissions configuration object for the new API key
+ * @param callback {function} a function to call when the request completes
+ * @returns {object}
+ */
 export const createAPIKey = (name, permissions, callback) => ({
     type: CREATE_API_KEY.REQUESTED,
     name,
@@ -32,15 +73,36 @@ export const createAPIKey = (name, permissions, callback) => ({
     callback
 });
 
+/**
+ * Returns action that can trigger an API call for updating the permissions for an API key owned by the current account.
+ *
+ * @func
+ * @param keyId {string} the unique id for the API key
+ * @param permissions {object} permissions configuration object for the new API key
+ * @returns {object}
+ */
 export const updateAPIKey = (keyId, permissions) => ({
     type: UPDATE_API_KEY.REQUESTED,
     keyId,
     permissions
 });
 
+/**
+ * Returns action that can trigger an API call for removing an API key owned by the current account.
+ *
+ * @func
+ * @param keyId {string} the unique id for the API key
+ * @returns {object}
+ */
 export const removeAPIKey = (keyId) => ({
     type: REMOVE_API_KEY.REQUESTED,
     keyId
 });
 
+/**
+ * Returns action that can trigger an API call that will logout the current session.
+ *
+ * @func
+ * @returns {object}
+ */
 export const logout = simpleActionCreator(LOGOUT.REQUESTED);

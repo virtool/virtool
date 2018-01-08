@@ -7,6 +7,7 @@ import { IDRow, ListGroupItem, LoadingPlaceholder } from "../../base";
 import { getHmm } from "../actions";
 
 const HMMTaxonomy = ({ counts }) => {
+
     const components = sortBy(map(counts, (count, name) => ({name, count})), "name").map(entry =>
         <ListGroupItem key={entry.name}>
             {entry.name} <Badge>{entry.count}</Badge>

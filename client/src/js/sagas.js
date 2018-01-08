@@ -1,3 +1,9 @@
+/**
+ * Exports the rootSaga which ties together all of the sagas in the application.
+ *
+ * @module sagas
+ */
+
 import { watchAccount } from "./account/sagas";
 import { watchFiles } from "./files/sagas";
 import { watchGroups } from "./groups/sagas";
@@ -11,7 +17,13 @@ import { watchUpdates } from "./updates/sagas";
 import { watchUsers } from "./users/sagas";
 import { watchViruses } from "./viruses/sagas";
 
-export default function* rootSaga () {
+
+/**
+ * Yields all of the sagas in the application. Intended for use with the ``react-saga`` middleware.
+ *
+ * @generator
+ */
+function* rootSaga () {
     yield [
         watchAccount(),
         watchFiles(),
@@ -27,3 +39,5 @@ export default function* rootSaga () {
         watchViruses()
     ];
 }
+
+export default rootSaga;

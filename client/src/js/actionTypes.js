@@ -1,3 +1,19 @@
+/**
+ * @module actionTypes
+ */
+
+/**
+ * Create a special action type used for requests.
+ *
+ * The request is an object with three properties assigned with action types used for API requests.
+ *
+ * - REQUESTED
+ * - SUCCEEDED
+ * - FAILED
+ *
+ * @param root {string} the root name of the action type
+ * @returns {object} a request-style action type
+ */
 const createRequestActionType = (root) => ({
     REQUESTED: `${root}_REQUESTED`,
     SUCCEEDED: `${root}_SUCCEEDED`,

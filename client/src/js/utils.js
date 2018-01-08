@@ -52,8 +52,10 @@ export const createFindURL = ({ find, page }) => {
 };
 
 /**
- * Create a random string of {@link length} from {@getTaskDisplayName}.
- * @param length
+ * Create a random string of {@link length} from [alphanumeric]{@link module:utils.alphanumeric}.
+ *
+ * @func
+ * @param length {number} the length of string to return
  */
 export const createRandomString = (length = 8) => (
     sampleSize(alphanumeric, length).join("")
@@ -75,7 +77,7 @@ export const followDownload = (path) => {
 };
 
 /**
- * Download a file with the given {@link filename} with the given {@link text} content. This allows downloads of
+ * Download a file with the given ``filename`` with the given ``text`` content. This allows downloads of
  * dynamically generated files.
  *
  * @func
@@ -96,7 +98,7 @@ export const followDynamicDownload = (filename, text) => {
 };
 
 /**
- * Return a formatted isolate name given an isolate object.
+ * Return a formatted isolate name given an ``isolate`` object.
  *
  * @func
  * @param isolate {object}
@@ -132,7 +134,7 @@ export const getTaskDisplayName = (taskName) => (
 );
 
 /**
- * Returns an action creator that returns an action with {@link type} as the only property.
+ * Returns an action creator that returns an action with ``type`` as the only property.
  *
  * @func
  * @param type {string} the value to use for the type property
@@ -156,7 +158,7 @@ export const taskDisplayNames = {
 };
 
 /**
- * Converts a {@link number} to
+ * Converts a ``number`` to a scientific notation string.
  *
  * @func
  * @param {number} number

@@ -1,6 +1,6 @@
 import { call, put, takeEvery, takeLatest } from "redux-saga/effects";
 
-import accountAPI from "./api";
+import * as accountAPI from "./api";
 import { setPending, apiCall } from "../sagaUtils";
 import {
     GET_ACCOUNT,

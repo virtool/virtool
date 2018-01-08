@@ -1,3 +1,7 @@
+/**
+ * JobsToolbar module
+ * @module jobs/Toolbar
+ */
 import React from "react";
 import { connect } from "react-redux";
 import { LinkContainer } from "react-router-bootstrap";
@@ -8,6 +12,11 @@ import { Icon, Button } from "../../base";
 import { push } from "react-router-redux";
 import { createFindURL, getFindTerm } from "../../utils";
 
+/**
+ * A toolbar component for the jobs list view.
+ * @param props
+ * @returns {*}
+ */
 const JobsToolbar = (props) => {
 
     let removalDropdown;

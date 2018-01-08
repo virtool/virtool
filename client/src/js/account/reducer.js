@@ -1,5 +1,15 @@
+/**
+ * @module account/reducer
+ */
+
 import { GET_ACCOUNT, UPDATE_ACCOUNT_SETTINGS, CHANGE_ACCOUNT_PASSWORD, GET_API_KEYS } from "../actionTypes";
 
+/**
+ * The state that should initially be stored.
+ *
+ * @const
+ * @type {object}
+ */
 const initialState = {
     ready: false,
     oldPasswordError: false,
