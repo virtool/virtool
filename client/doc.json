@@ -1,6 +1,10 @@
 {
   "source": {
-    "include": ["src/js"]
+    "include": [
+      "src/js",
+      "src/js/account",
+      "src/js/files"
+    ]
   },
   "templates": {
     "cleverLinks": true
@@ -8,7 +12,8 @@
   "plugins": [
     "plugins/markdown"
   ],
-  "recurseDepth": 10,
+  "recurseDepth": 10
+,
   "opts": {
     "destination": "./doc"
   }
