@@ -1,4 +1,4 @@
-import { LOCATION_CHANGE } from "react-router-redux";
+import { getLocation, LOCATION_CHANGE } from "react-router-redux";
 import { put, select, takeEvery, takeLatest, throttle } from "redux-saga/effects";
 
 import jobsAPI from "./api";
@@ -16,7 +16,8 @@ export function* watchJobs () {
 }
 
 export function* wsUpdateJob (action) {
-    yield findJobs(action);
+    yield findJobs({payload: yield select(getLocation)});
+
     const detail = yield select(state => state.jobs.detail);
 
     if (detail !== null && detail.id === action.data.id) {
