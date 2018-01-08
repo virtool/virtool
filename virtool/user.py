@@ -176,6 +176,6 @@ async def update_sessions_and_keys(db, user_id, groups, permissions):
             await collection.update_one({"_id": document["_id"]}, {
                 "$set": {
                     "groups": groups,
-                    "permissions": {p: (document["permissions"][p] and permissions[p]) for p in permissions}
+                    "permissions": {p: (document["permissions"].get(p, False) and permissions[p]) for p in permissions}
                 }
             })
