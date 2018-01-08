@@ -1,6 +1,5 @@
 import React from "react";
 import Moment from "moment";
-import PropTypes from "prop-types";
 import { connect } from "react-redux";
 import { Table } from "react-bootstrap";
 
@@ -10,14 +9,34 @@ import { Flex, FlexItem, Icon, LoadingPlaceholder, ProgressBar } from "../../bas
 import TaskArgs from "./TaskArgs";
 import JobError from "./Error";
 
+const JobTable = ({id, mem, proc, status, user}) => (
+    <Table bordered>
+        <tbody>
+            <tr>
+                <th>Cores</th>
+                <td>{proc}</td>
+            </tr>
+            <tr>
+                <th>Memory</th>
+                <td>{mem} GB</td>
+            </tr>
+            <tr>
+                <th>Started By</th>
+                <td>{user.id}</td>
+            </tr>
+            <tr>
+                <th>Started At</th>
+                <td>{Moment(status[0].timestamp).format("YY/MM/DD")}</td>
+            </tr>
+            <tr>
+                <th>Unique ID</th>
+                <td>{id}</td>
+            </tr>
+        </tbody>
+    </Table>
+);
 
 class JobDetail extends React.Component {
-
-    static propTypes = {
-        match: PropTypes.object,
-        detail: PropTypes.object,
-        getDetail: PropTypes.func
-    };
 
     componentDidMount () {
         this.props.getDetail(this.props.match.params.jobId);
@@ -73,30 +92,7 @@ class JobDetail extends React.Component {
 
                 <JobError error={latest.error} />
 
-                <Table bordered>
-                    <tbody>
-                        <tr>
-                            <th>Cores</th>
-                            <td>{detail.proc}</td>
-                        </tr>
-                        <tr>
-                            <th>Memory</th>
-                            <td>{detail.mem} GB</td>
-                        </tr>
-                        <tr>
-                            <th>Started By</th>
-                            <td>{detail.user.id}</td>
-                        </tr>
-                        <tr>
-                            <th>Started At</th>
-                            <td>{Moment(detail.status[0].timestamp).format("YY/MM/DD")}</td>
-                        </tr>
-                        <tr>
-                            <th>Unique ID</th>
-                            <td>{detail.id}</td>
-                        </tr>
-                    </tbody>
-                </Table>
+                <JobTable {...detail} />
 
                 <h4>
                     <strong>Task Arguments</strong>
