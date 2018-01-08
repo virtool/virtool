@@ -1,4 +1,6 @@
 /**
+ * Exports a reducer for dealing with the account of the session user.
+ *
  * @module account/reducer
  */
 
@@ -16,6 +18,13 @@ const initialState = {
     apiKeys: null
 };
 
+/**
+ * A reducer for dealing with the account of the session user.
+ *
+ * @param state {object}
+ * @param action {object}
+ * @returns {*}
+ */
 export default function accountReducer (state = initialState, action) {
 
     switch (action.type) {
@@ -35,7 +44,6 @@ export default function accountReducer (state = initialState, action) {
             }
 
             return state;
-
 
         case GET_API_KEYS.SUCCEEDED:
             return {...state, apiKeys: action.data};
