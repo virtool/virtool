@@ -221,6 +221,8 @@ class TestCreate:
 
         client = await spawn_client(authorize=True, permissions=["create_sample"], job_manager=True)
 
+        print(client.app["settings"].data)
+
         await client.db.subtraction.insert_one({
             "_id": "apple",
             "is_host": True
@@ -283,9 +285,9 @@ class TestCreate:
             "hold": True,
             "archived": False,
             "group_read": True,
-            "group_write": False,
+            "group_write": True,
             "all_read": True,
-            "all_write": False,
+            "all_write": True,
             "user": {
                 "id": "test"
             },
