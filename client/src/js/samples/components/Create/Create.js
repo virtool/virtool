@@ -19,8 +19,6 @@ import {
     Modal,
     Row,
     Col,
-    Overlay,
-    Popover,
     FormGroup,
     ControlLabel,
     FormControl,
@@ -90,6 +88,12 @@ class CreateSample extends React.Component {
     handleSubmit = (event) => {
         event.preventDefault();
 
+        if (!this.state.selected.length) {
+            return this.setState({
+                error: "At least one file must be selected."
+            });
+        }
+
         this.props.onCreate(
             this.state.name,
             this.state.isolate,
@@ -98,11 +102,6 @@ class CreateSample extends React.Component {
             this.state.subtraction,
             this.state.selected
         );
-        if (!this.state.files.length) {
-            return this.setState({
-                error: "At least one file must be selected"
-            });
-        }
     };
 
     autofill = () => {
@@ -164,41 +163,17 @@ class CreateSample extends React.Component {
             );
         }
 
-        let errors = [];
-
-        if (this.state.nameExistsError) {
-            errors.push("Sample name already exists");
-        }
-
-        if (this.state.nameEmptyError) {
-            errors.push("The name field cannot be empty");
-        }
-
-        let overlay;
-
-        if (errors.length > 0) {
-
-            const errorComponents = errors.map((error, index) =>
-                <div key={index} className="text-danger">{error}</div>
-            );
-
-            overlay = (
-                <Overlay
-                    show={true}
-                    placement="top"
-                    container={this}
-                    target={this.nameNode}
-                >
-                    <Popover id="name-warning-popover">
-                        <div>
-                            {errorComponents}
-                        </div>
-                    </Popover>
-                </Overlay>
-            );
-        }
-
         const libraryType = this.state.selected.length === 2 ? "Paired": "Unpaired";
+
+        let alert;
+
+        if (this.state.error) {
+            alert = (
+                <Alert bsStyle="danger">
+                    <Icon name="warning" /> {this.state.error}
+                </Alert>
+            );
+        }
 
         return (
             <Modal bsSize="large" show={this.props.show} onHide={this.props.onHide} onEnter={this.modalEnter}>
@@ -211,7 +186,6 @@ class CreateSample extends React.Component {
                         {noHostsAlert}
 
                         <Row>
-                            {overlay}
                             <Col md={9}>
                                 <FormGroup>
                                     <ControlLabel>
@@ -299,6 +273,7 @@ class CreateSample extends React.Component {
                             onSelect={(selected) => this.setState({selected: selected})}
                         />
 
+                        {alert}
                     </Modal.Body>
 
                     <Modal.Footer>
