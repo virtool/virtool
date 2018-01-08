@@ -45,7 +45,8 @@ const getInitialState = (props) => {
         isolate: "",
         locale: "",
         subtraction: getReadyHosts(props),
-        group: props.forceGroupChoice ? "none": ""
+        group: props.forceGroupChoice ? "none": "",
+        error: null
     };
 };
 
@@ -97,6 +98,11 @@ class CreateSample extends React.Component {
             this.state.subtraction,
             this.state.selected
         );
+        if (!this.state.files.length) {
+            return this.setState({
+                error: "At least one file must be selected"
+            });
+        }
     };
 
     autofill = () => {
