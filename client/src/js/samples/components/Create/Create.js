@@ -36,14 +36,14 @@ const getReadyHosts = (props) => (
 );
 
 const getInitialState = (props) => ({
-        selected: [],
-        name: "",
-        host: "",
-        isolate: "",
-        locale: "",
-        subtraction: getReadyHosts(props),
-        group: props.forceGroupChoice ? "none": "",
-        error: null
+    selected: [],
+    name: "",
+    host: "",
+    isolate: "",
+    locale: "",
+    subtraction: getReadyHosts(props),
+    group: props.forceGroupChoice ? "none" : "",
+    error: null
 });
 
 class CreateSample extends React.Component {
@@ -167,7 +167,7 @@ class CreateSample extends React.Component {
             );
         }
 
-        const libraryType = this.state.selected.length === 2 ? "Paired": "Unpaired";
+        const libraryType = this.state.selected.length === 2 ? "Paired" : "Unpaired";
 
         return (
             <Modal bsSize="large" show={this.props.show} onHide={this.props.onHide} onEnter={this.modalEnter}>
@@ -257,7 +257,7 @@ class CreateSample extends React.Component {
                             selected={this.state.selected}
                             onSelect={(selected) => this.setState({selected})}
                         />
-                        
+
                         {alert}
                     </Modal.Body>
 

@@ -2,6 +2,7 @@ import React from "react";
 import { push } from "react-router-redux";
 import { Switch, Route, Redirect } from "react-router-dom";
 import { connect } from "react-redux";
+import { ClipLoader } from "halogenium";
 import { LinkContainer } from "react-router-bootstrap";
 import { Nav, NavItem } from "react-bootstrap";
 
