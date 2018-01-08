@@ -235,7 +235,13 @@ class TestCreate:
             {"_id": "technician"}
         ])
 
-        client.app["settings"].set("sample_group", group_setting)
+        client.app["settings"].data.update({
+            "sample_group": group_setting,
+            "sample_all_read": True,
+            "sample_all_write": True,
+            "sample_group_read": True,
+            "sample_group_write": True
+        })
 
         m_reserve = make_mocked_coro()
         monkeypatch.setattr("virtool.file.reserve", m_reserve)
@@ -283,9 +289,9 @@ class TestCreate:
             "hold": True,
             "archived": False,
             "group_read": True,
-            "group_write": False,
+            "group_write": True,
             "all_read": True,
-            "all_write": False,
+            "all_write": True,
             "user": {
                 "id": "test"
             },

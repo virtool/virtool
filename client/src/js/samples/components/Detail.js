@@ -10,6 +10,7 @@
 import React from "react";
 import { push } from "react-router-redux";
 import { includes } from "lodash";
+import { ClipLoader } from "halogenium";
 import { Switch, Route, Redirect } from "react-router-dom";
 import { connect } from "react-redux";
 import { LinkContainer } from "react-router-bootstrap";
@@ -33,6 +34,15 @@ class SampleDetail extends React.Component {
 
         if (this.props.detail === null) {
             return <div />;
+        }
+
+        if (this.props.detail.imported === "ip") {
+            return (
+                <div className="text-center" style={{marginTop: "220px"}}>
+                    <p>Sample is still being imported.</p>
+                    <ClipLoader color="#3c8786" />
+                </div>
+            );
         }
 
         const detail = this.props.detail;
