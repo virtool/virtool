@@ -221,8 +221,6 @@ class TestCreate:
 
         client = await spawn_client(authorize=True, permissions=["create_sample"], job_manager=True)
 
-        print(client.app["settings"].data)
-
         await client.db.subtraction.insert_one({
             "_id": "apple",
             "is_host": True
@@ -237,7 +235,13 @@ class TestCreate:
             {"_id": "technician"}
         ])
 
-        client.app["settings"].set("sample_group", group_setting)
+        client.app["settings"].data.update({
+            "sample_group": group_setting,
+            "sample_all_read": True,
+            "sample_all_write": True,
+            "sample_group_read": True,
+            "sample_group_write": True
+        })
 
         m_reserve = make_mocked_coro()
         monkeypatch.setattr("virtool.file.reserve", m_reserve)
