@@ -2,7 +2,7 @@ import React from "react";
 import PropTypes from "prop-types";
 import CX from "classnames";
 import { round } from "lodash";
-import { bsStyles } from "./";
+import { bsStyles } from "./utils";
 
 export class AutoProgressBar extends React.Component {
 

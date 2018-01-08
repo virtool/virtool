@@ -5,7 +5,7 @@ import { Input } from "./";
 import { getTaskDisplayName } from "../utils";
 
 
-export const algorithms = [
+const algorithms = [
     "pathoscope_bowtie",
     "nuvs"
 ];

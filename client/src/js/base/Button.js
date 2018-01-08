@@ -2,7 +2,8 @@ import React from "react";
 import PropTypes from "prop-types";
 import CX from "classnames";
 import { Tooltip, OverlayTrigger } from "react-bootstrap";
-import { Icon, bsStyles } from "./index";
+import { Icon } from "./Icon";
+import { bsStyles } from "./utils";
 
 export class Button extends React.Component {
 
@@ -84,7 +85,6 @@ export class Button extends React.Component {
         );
 
         if (this.props.tip) {
-
             const tooltip = (
                 <Tooltip id={this.props.tip}>
                     {this.props.tip}
