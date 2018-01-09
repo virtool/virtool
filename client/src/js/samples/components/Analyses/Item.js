@@ -1,6 +1,7 @@
 import React from "react";
 import CX from "classnames";
 import PropTypes from "prop-types";
+import { ClipLoader } from "halogenium";
 import { Row, Col, Label } from "react-bootstrap";
 
 import { getTaskDisplayName } from "../../../utils";
@@ -19,7 +20,7 @@ const AnalysisItem = (props) => {
     } else {
         end = (
             <strong className="pull-right">
-                In Progress
+                <ClipLoader size="14px" color="#3c8786" style={{display: "inline"}} /> In Progress
             </strong>
         );
     }
