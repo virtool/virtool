@@ -52,8 +52,8 @@ class Groups extends React.Component {
         });
     };
 
-    handleSubmit = (event) => {
-        event.preventDefault();
+    handleSubmit = (e) => {
+        e.preventDefault();
 
         if (this.state.createGroupId !== "") {
             if (this.state.createGroupId.includes(" ")) {

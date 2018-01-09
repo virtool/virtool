@@ -1,7 +1,7 @@
 import { LOCATION_CHANGE } from "react-router-redux";
 import { takeLatest, throttle } from "redux-saga/effects";
 
-import hmmsAPI from "./api";
+import * as hmmsAPI from "./api";
 import { apiCall, apiFind, setPending } from "../sagaUtils";
 import { FIND_HMMS, INSTALL_HMMS, GET_HMM } from "../actionTypes";
 

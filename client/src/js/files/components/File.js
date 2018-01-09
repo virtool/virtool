@@ -1,6 +1,5 @@
 import React from "react";
 import PropTypes from "prop-types";
-import { capitalize, filter } from "lodash";
 import { Col, Row } from "react-bootstrap";
 
 import { byteSize } from "../../utils";

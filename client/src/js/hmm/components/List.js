@@ -1,42 +1,12 @@
 import React from "react";
-import { LinkContainer } from "react-router-bootstrap";
-import { keys, reject } from "lodash";
 import { push } from "react-router-redux";
 import { connect } from "react-redux";
-import { Col, FormControl, FormGroup, InputGroup, Label, ListGroup, Row } from "react-bootstrap";
+import { FormControl, FormGroup, InputGroup, ListGroup } from "react-bootstrap";
 
+import HMMItem from "./Item";
 import HMMInstaller from "./Installer";
-import { Icon, ListGroupItem, LoadingPlaceholder, NoneFound, Pagination, ViewHeader } from "../../base";
-import {createFindURL, getFindTerm} from "../../utils";
-
-const HMMItem = ({ cluster, families, id, names }) => {
-
-    const filteredFamilies = reject(keys(families), family => family === "None");
-
-    const labelComponents = filteredFamilies.slice(0, 3).map((family, i) =>
-        <span key={i}><Label>{family}</Label> </span>
-    );
-
-    return (
-        <LinkContainer to={`/hmm/${id}`}>
-            <ListGroupItem className="spaced">
-                <Row>
-                    <Col xs={2}>
-                        <strong>{cluster}</strong>
-                    </Col>
-                    <Col xs={5}>
-                        {names[0]}
-                    </Col>
-                    <Col xs={5}>
-                        <div className="pull-right">
-                            {labelComponents} {filteredFamilies.length > 3 ? "..." : null}
-                        </div>
-                    </Col>
-                </Row>
-            </ListGroupItem>
-        </LinkContainer>
-    );
-};
+import { Icon, LoadingPlaceholder, NoneFound, Pagination, ViewHeader } from "../../base";
+import { createFindURL, getFindTerm } from "../../utils";
 
 const HMMList = (props) => {
 

@@ -1,19 +1,13 @@
 import Request from "superagent";
 
-const hmmsAPI = {
+export const find = () => (
+    Request.get(`/api/hmms${window.location.search}`)
+);
 
-    find: () => (
-        Request.get(`/api/hmms${window.location.search}`)
-    ),
+export const install = () => (
+    Request.post("/api/hmms")
+);
 
-    install: () => (
-        Request.post("/api/hmms")
-    ),
-
-    get: ({ hmmId }) => (
-        Request.get(`/api/hmms/annotations/${hmmId}`)
-    )
-
-};
-
-export default hmmsAPI;
+export const get = ({ hmmId }) => (
+    Request.get(`/api/hmms/annotations/${hmmId}`)
+);
