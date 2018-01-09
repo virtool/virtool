@@ -2,6 +2,9 @@ import React from "react";
 import PropTypes from "prop-types";
 import { Flex, FlexItem, Input, Button } from "./index";
 
+/**
+ * An Input component combined with a save button addon.
+ */
 export class InputSave extends React.Component {
 
     constructor (props) {
@@ -42,8 +45,8 @@ export class InputSave extends React.Component {
      * Resets the setting value to the initialValue if the form component loses focus. Clicking the saveButton does not
      * make the form lose focus. The form is intentionally blurred once an updated initialValue is received in props.
      */
-    handleBlur = (event) => {
-        if (!this.state.pending && event.relatedTarget && event.relatedTarget.type !== "submit") {
+    handleBlur = (e) => {
+        if (!this.state.pending && e.relatedTarget && e.relatedTarget.type !== "submit") {
             this.setState({value: this.props.initialValue});
         }
     };
@@ -53,8 +56,8 @@ export class InputSave extends React.Component {
      *
      * @param event {event} - the change event from the FormControl
      */
-    handleChange = (event) => {
-        this.setState({value: event.target.value});
+    handleChange = (e) => {
+        this.setState({value: e.target.value});
     };
 
     /**

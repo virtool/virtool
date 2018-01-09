@@ -2,6 +2,9 @@ import React from "react";
 import PropTypes from "prop-types";
 import { ControlLabel, FormControl, FormGroup, Overlay, Popover } from "react-bootstrap";
 
+/**
+ * A reusable composition of form components from react-bootstrap.
+ */
 export class Input extends React.Component {
 
     static propTypes = {
@@ -32,10 +35,16 @@ export class Input extends React.Component {
         formGroupStyle: {}
     };
 
+    /**
+     * Blurs the <input /> element. Not used internally. It is intended for use by the parent component.
+     */
     blur = () => {
         this.inputNode.blur();
     };
 
+    /**
+     * Focus the <input /> element.
+     */
     focus = () => {
         this.inputNode.focus();
     };

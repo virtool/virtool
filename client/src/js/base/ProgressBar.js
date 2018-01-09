@@ -4,6 +4,9 @@ import CX from "classnames";
 import { round } from "lodash";
 import { bsStyles } from "./utils";
 
+/**
+ *
+ */
 export class AutoProgressBar extends React.Component {
 
     constructor (props) {
@@ -30,7 +33,6 @@ export class AutoProgressBar extends React.Component {
     componentWillReceiveProps (nextProps) {
         if (this.props.active && !nextProps.active) {
             this.stop();
-
             this.setState({
                 fill: 100
             });
@@ -87,7 +89,6 @@ export class AutoProgressBar extends React.Component {
     }
 
 }
-
 
 export class ProgressBar extends React.PureComponent {
 

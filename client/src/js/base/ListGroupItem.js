@@ -3,6 +3,10 @@ import PropTypes from "prop-types";
 import { pick } from "lodash";
 import { ListGroupItem as BsListGroupItem } from "react-bootstrap";
 
+/**
+ * Extends the ListGroupItem component from react-bootstrap by adding the allowFocus prop. This prop can prevent the
+ * ListGroupItem from taking focus, even when clicked. *
+ */
 export class ListGroupItem extends React.Component {
 
     static propTypes = {
@@ -12,6 +16,10 @@ export class ListGroupItem extends React.Component {
 
     static defaultProps = {
         allowFocus: false
+    };
+
+    handleFocus = (e) => {
+        e.target.blur();
     };
 
     render () {
@@ -29,7 +37,7 @@ export class ListGroupItem extends React.Component {
         ]);
 
         return (
-            <BsListGroupItem {...props} onFocus={this.props.allowFocus ? null : e => e.target.blur()}>
+            <BsListGroupItem {...props} onFocus={this.props.allowFocus ? null : this.handleFocus}>
                 {this.props.children}
             </BsListGroupItem>
         );

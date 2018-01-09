@@ -20,8 +20,6 @@ import { RemoveModal } from "./RemoveModal";
 import { Tooltip } from "./Tooltip";
 import { ViewHeader } from "./ViewHeader";
 
-console.log(bsStyles);
-
 export {
     AlgorithmSelect,
     AutoProgressBar,

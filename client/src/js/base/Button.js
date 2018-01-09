@@ -5,6 +5,13 @@ import { Tooltip, OverlayTrigger } from "react-bootstrap";
 import { Icon } from "./Icon";
 import { bsStyles } from "./utils";
 
+/**
+ * A extension of the <Button /> component from react-bootstrap. Adds the features:
+ *  - blur on click
+ *  - optional tooltip
+ *
+ * @class
+ */
 export class Button extends React.Component {
 
     static propTypes = {
@@ -42,7 +49,8 @@ export class Button extends React.Component {
 
     static defaultProps = {
         bsStyle: "default",
-        pullRight: false
+        pullRight: false,
+        tipPlacement: "top"
     };
 
     blur = () => {
@@ -71,7 +79,7 @@ export class Button extends React.Component {
         const button = (
             <button
                 type={this.props.type}
-                ref={(button) => this.buttonNode = button}
+                ref={(node) => this.buttonNode = node}
                 onFocus={this.blur}
                 className={className}
                 onClick={this.props.onClick}
@@ -92,7 +100,7 @@ export class Button extends React.Component {
             );
 
             return (
-                <OverlayTrigger placement={this.props.tipPlacement || "top"} overlay={tooltip}>
+                <OverlayTrigger placement={this.props.tipPlacement} overlay={tooltip}>
                     {button}
                 </OverlayTrigger>
             );

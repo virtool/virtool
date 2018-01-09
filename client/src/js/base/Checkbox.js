@@ -2,6 +2,13 @@ import CX from "classnames";
 import React from "react";
 import PropTypes from "prop-types";
 
+/**
+ * A simple checkbox component based on the application icon font.
+ *
+ * @param props
+ * @returns {*}
+ * @constructor
+ */
 export const Checkbox = (props) => {
 
     let name;

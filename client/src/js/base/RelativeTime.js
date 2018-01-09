@@ -8,11 +8,17 @@ window.setInterval(1000, () => {
     window.relativeTimeCallbacks.forEach(callback => callback());
 });
 
+/**
+ * Shows the passed time prop relative to the current time (eg. 3 days ago). The relative time string is updates
+ * automatically as time passes.
+ */
 export class RelativeTime extends React.Component {
 
     constructor (props) {
         super(props);
-        this.state = {timeString: this.getTimeString()};
+        this.state = {
+            timeString: this.getTimeString()
+        };
     }
 
     static propTypes = {
