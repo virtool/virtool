@@ -1,7 +1,7 @@
 import React from "react";
 import { Switch, Route } from "react-router-dom";
 
-import FileManager from "../../files/components/Files";
+import FileManager from "../../files/components/Manager";
 import SamplesList from "./List";
 import SampleDetail from "./Detail";
 
