@@ -1,6 +1,6 @@
 import { put, select, takeEvery, takeLatest } from "redux-saga/effects";
 
-import filesAPI from "./api";
+import * as filesAPI from "./api";
 import { putGenericError, setPending, apiCall } from "../sagaUtils";
 import { WS_UPDATE_FILE, WS_REMOVE_FILE, FIND_FILES, REMOVE_FILE, UPLOAD } from "../actionTypes";
 
@@ -36,7 +36,7 @@ export function* removeFile (action) {
 
 export function* upload (action) {
     try {
-        yield filesAPI.upload(action.file, action.fileType, action.onProgress);
+        yield filesAPI.upload(action);
         yield findFiles(action.fileType);
     } catch (error) {
         yield putGenericError(UPLOAD, error);

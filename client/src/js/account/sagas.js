@@ -35,13 +35,11 @@ export function* getAccountSettings () {
 }
 
 export function* updateAccountSettings (action) {
-    const promise = apiCall(accountAPI.updateSettings, action, UPDATE_ACCOUNT_SETTINGS);
-    yield setPending(promise);
+    yield setPending(apiCall(accountAPI.updateSettings, action, UPDATE_ACCOUNT_SETTINGS));
 }
 
 export function* changeAccountPassword (action) {
-    const promise = apiCall(accountAPI.changePassword, action, CHANGE_ACCOUNT_PASSWORD);
-    yield setPending(promise);
+    yield setPending(apiCall(accountAPI.changePassword, action, CHANGE_ACCOUNT_PASSWORD));
     yield put({type: GET_ACCOUNT.REQUESTED});
 }
 

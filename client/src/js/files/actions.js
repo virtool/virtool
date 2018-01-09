@@ -56,11 +56,12 @@ export const findFiles = (fileType, page) => ({
 /**
  * Returns an action that can trigger the upload of a file to the server.
  *
+ * @func
  * @param localId
  * @param file
  * @param fileType
  * @param onProgress
- * @returns {{type: string, localId: *, file: *, fileType: *, onProgress: *}}
+ * @returns {object}
  */
 export const upload = (localId, file, fileType, onProgress) => ({
     type: UPLOAD.REQUESTED,
@@ -70,15 +71,36 @@ export const upload = (localId, file, fileType, onProgress) => ({
     onProgress
 });
 
+/**
+ * Returns an action that can trigger an API call that removes a file by its fileId.
+ *
+ * @func
+ * @param fileId {string} the unique id for the file
+ * @returns {object}
+ */
 export const removeFile = (fileId) => ({
     type: REMOVE_FILE.REQUESTED,
     fileId
 });
 
+/**
+ * Returns and action that updates the progress of an ongoing upload.
+ *
+ * @func
+ * @param localId {string} the local id for the upload (NOT the fileId)
+ * @param progress {number} the new progress value
+ * @returns {object}
+ */
 export const uploadProgress = (localId, progress) => ({
     type: UPLOAD_PROGRESS,
     localId,
     progress
 });
 
+/**
+ * A simple action that causes the upload dialog overlay to be hidden.
+ *
+ * @func
+ * @returns {object}
+ */
 export const hideUploadOverlay = simpleActionCreator(HIDE_UPLOAD_OVERLAY);

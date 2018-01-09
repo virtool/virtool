@@ -23,7 +23,7 @@ const initialState = {
  *
  * @param state {object}
  * @param action {object}
- * @returns {*}
+ * @returns {object}
  */
 export default function accountReducer (state = initialState, action) {
 
