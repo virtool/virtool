@@ -133,6 +133,10 @@ export const getTaskDisplayName = (taskName) => (
     get(taskDisplayNames, taskName, startCase(taskName))
 );
 
+export const routerLocationHasState = (state, key, value) => (
+    !!state.router.location.state && state.router.location.state[key] === value
+);
+
 /**
  * Returns an action creator that returns an action with ``type`` as the only property.
  *
