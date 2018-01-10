@@ -8,7 +8,6 @@
  *
  * @exports ReadSelector
  */
-
 import React from "react";
 import PropTypes from "prop-types";
 import { Link } from "react-router-dom";
@@ -40,7 +39,7 @@ export default class ReadSelector extends React.PureComponent {
         }
     }
 
-    handleSelect = (selectedId) => {
+    onSelect = (selectedId) => {
         let selected;
 
         if (this.props.selected.includes(selectedId)) {
@@ -56,8 +55,8 @@ export default class ReadSelector extends React.PureComponent {
         this.props.onSelect(selected);
     };
 
-    reset = (event) => {
-        event.preventDefault();
+    reset = (e) => {
+        e.preventDefault();
         this.setState({filter: ""}, () => this.props.onSelect([]));
     };
 

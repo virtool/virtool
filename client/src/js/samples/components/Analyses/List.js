@@ -51,11 +51,11 @@ class AnalysesList extends React.Component {
             const sorted = sortBy(this.props.analyses, "timestamp").reverse();
 
             // The components that detail individual analyses.
-            listContent = sorted.map(document =>
+            listContent = sorted.map((document) =>
                 <LinkContainer key={document.id} to={`/samples/${this.props.detail.id}/analyses/${document.id}`}>
                     <AnalysisItem
                         canModify={this.props.detail.canModify}
-                        onRemove={() => this.props.onRemove(document.id)}
+                        onRemove={this.props.onRemove}
                         {...document}
                     />
                 </LinkContainer>

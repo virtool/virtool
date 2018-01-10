@@ -15,7 +15,15 @@ const AnalysisItem = (props) => {
 
     if (props.ready) {
         if (props.canModify) {
-            end = <Icon name="remove" bsStyle="danger" onClick={props.onRemove} pullRight/>;
+            end = (
+                <Icon
+                    name="remove"
+                    bsStyle="danger"
+                    onClick={() => props.onRemove(props.id)}
+                    style={{fontSize: "17px"}}
+                    pullRight
+                />
+            );
         }
     } else {
         end = (

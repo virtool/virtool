@@ -1,7 +1,7 @@
 import React from "react";
 import { connect } from "react-redux";
 import { Alert, Panel } from "react-bootstrap";
-import { Input, LoadingPlaceholder } from "../../base";
+import { Icon, Input, LoadingPlaceholder } from "../../base";
 import { updateSampleGroup, updateSampleRights } from "../actions";
 import { listGroups } from "../../groups/actions";
 
@@ -33,8 +33,8 @@ class SampleRights extends React.Component {
 
         return (
             <div>
-                <Alert bsStyle="warning">
-                    Restrict who can read and write this sample and which user group owns the sample.
+                <Alert bsStyle="info">
+                    <Icon name="info" /> Restrict who can read and write this sample and which user group owns the sample.
                 </Alert>
 
                 <Panel>

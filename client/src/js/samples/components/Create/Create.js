@@ -46,6 +46,25 @@ const getInitialState = (props) => ({
     error: null
 });
 
+const SampleUserGroup = ({ group, groups, onChange }) => {
+    const groupComponents = groups.map(groupId =>
+        <option key={groupId} value={groupId} className="text-capitalize">
+            {groupId}
+        </option>
+    );
+
+    return (
+        <Col md={3}>
+            <Input type="select" label="User Group" value={group} onChange={onChange}>
+                <option key="none" value="none">None</option>
+                {groupComponents}
+            </Input>
+        </Col>
+    );
+};
+
+
+
 class CreateSample extends React.Component {
 
     constructor (props) {
@@ -90,14 +109,7 @@ class CreateSample extends React.Component {
             });
         }
 
-        this.props.onCreate(
-            this.state.name,
-            this.state.isolate,
-            this.state.host,
-            this.state.locale,
-            this.state.subtraction,
-            this.state.selected
-        );
+        this.props.onCreate(this.state);
     };
 
     autofill = () => {
@@ -137,25 +149,13 @@ class CreateSample extends React.Component {
             );
         }
 
-        let userGroup;
-
-        if (this.state.forceGroupChoice) {
-
-            const groupComponents = this.props.groups.map(groupId =>
-                <option key={groupId} value={groupId} className="text-capitalize">
-                    {groupId}
-                </option>
-            );
-
-            userGroup = (
-                <Col md={3}>
-                    <Input type="select" label="User Group" value={this.state.group}>
-                        <option key="none" value="none">None</option>
-                        {groupComponents}
-                    </Input>
-                </Col>
-            );
-        }
+        const userGroup = this.props.forceGroupChoice ? (
+            <SampleUserGroup
+                group={this.props.group}
+                groups={this.props.groups}
+                onChange={(e) => this.setState({group: e})}
+            />
+        ) : null;
 
         let alert;
 
@@ -289,7 +289,7 @@ const mapDispatchToProps = (dispatch) => ({
         dispatch(findFiles());
     },
 
-    onCreate: (name, isolate, host, locale, subtraction, files) => {
+    onCreate: ({ name, isolate, host, locale, subtraction, files }) => {
         dispatch(createSample(name, isolate, host, locale, subtraction, files));
     }
 

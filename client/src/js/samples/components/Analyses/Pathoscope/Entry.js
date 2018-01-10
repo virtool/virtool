@@ -2,6 +2,8 @@ import CX from "classnames";
 import React from "react";
 import PropTypes from "prop-types";
 import { Row, Col, Label } from "react-bootstrap";
+
+import AnalysisValueLabel from "../ValueLabel";
 import { Flex, FlexItem } from "../../../../base";
 import { toScientificNotation } from "../../../../utils";
 
@@ -26,7 +28,7 @@ export default class PathoscopeEntry extends React.Component {
 
     toggleIn = () => {
         this.props.toggleIn(this.props.id);
-    }
+    };
 
     render () {
 
@@ -69,16 +71,11 @@ export default class PathoscopeEntry extends React.Component {
                     </Col>
 
                     <Col xs={6} sm={4} md={2}>
-                        <Flex alignItems="center" style={flexStyle}>
-                            <FlexItem>
-                                <Label>{this.props.showReads ? "Reads" : "Weight"}</Label>
-                            </FlexItem>
-                            <FlexItem pad={5}>
-                                <strong className="text-success">
-                                    {piValue}
-                                </strong>
-                            </FlexItem>
-                        </Flex>
+                        <AnalysisValueLabel
+                            bsStyle="success"
+                            label={this.props.showReads ? "Reads" : "Weight"}
+                            value={piValue}
+                        />
                     </Col>
                     <Col xs={6} sm={4} md={2}>
                         <Flex alignItems="center" alignContent="center" style={flexStyle}>
