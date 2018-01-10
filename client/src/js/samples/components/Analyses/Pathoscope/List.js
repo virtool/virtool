@@ -47,13 +47,14 @@ export default class PathoscopeList extends React.Component {
                 ];
 
                 if (expanded) {
+
                     const isolateComponents = sortBy(item.isolates, "pi").reverse().map((isolate) => {
                         const key = `${item.id}-${isolate.id}`;
 
                         return <PathoscopeIsolate
                             ref={(node) => this.itemRefs[key] = node}
                             key={key}
-                            virusId={item._id}
+                            virusId={item.id}
                             maxDepth={item.maxDepth}
                             maxGenomeLength={item.maxGenomeLength}
                             {...isolate}

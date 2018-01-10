@@ -2,11 +2,32 @@ import React from "react";
 import CX from "classnames";
 import { push } from "react-router-redux";
 import { connect } from "react-redux";
-import { mapValues } from "lodash";
 import { Row, Col } from "react-bootstrap";
+import { ClipLoader } from "halogenium";
 
 import { analyze } from "../actions";
 import { Icon, Flex, FlexItem, RelativeTime } from "../../base";
+
+const SampleEntryLabel = ({ icon, label, ready }) => (
+    <Flex>
+        <FlexItem className={CX("sample-label", {"bg-primary": ready})}>
+            <Flex alignItems="center">
+                {ready === "ip" ? <ClipLoader size="10px" color="white" /> : <Icon name={icon} />}
+                <span style={{paddingLeft: "3px"}} className="hidden-xs hidden-sm">
+                    {label}
+                </span>
+            </Flex>
+        </FlexItem>
+    </Flex>
+);
+
+const SampleEntryLabels = ({ imported, nuvs, pathoscope }) => (
+    <Flex>
+        <SampleEntryLabel icon="filing" label="Import" ready={imported || true} />&nbsp;
+        <SampleEntryLabel icon="bars" label="Pathoscope" ready={pathoscope} />&nbsp;
+        <SampleEntryLabel icon="bars" label="NuVs" ready={nuvs} />
+    </Flex>
+);
 
 class SampleEntry extends React.Component {
 
@@ -17,8 +38,12 @@ class SampleEntry extends React.Component {
         };
     }
 
-    handleQuickAnalyze = (event) => {
-        event.stopPropagation();
+    onClick = () => {
+        this.props.onNavigate(this.props.id);
+    };
+
+    handleQuickAnalyze = (e) => {
+        e.stopPropagation();
         if (this.props.skipDialog) {
             this.props.onAnalyze(this.props.id, this.props.algorithm || "pathoscope_bowtie");
         } else {
@@ -27,38 +52,8 @@ class SampleEntry extends React.Component {
     };
 
     render () {
-
-        const labels = mapValues({pathoscope: null, nuvs: null}, (value, key) =>
-            <FlexItem className={CX("sample-label", {"bg-primary": this.props[key]})} pad>
-                <Flex alignItems="center" className="hidden-xs hidden-sm">
-                    <Icon name={this.props[key] === "ip" ? "play" : "bars"} />
-                    <span style={{paddingLeft: "3px"}}>
-                        {key === "pathoscope" ? "Pathoscope" : "NuVs"}
-                    </span>
-                </Flex>
-
-                <Flex alignItems="center" className="hidden-md hidden-lg">
-                    {this.props[key] === "ip" ? <Icon name="play" /> :
-                        <strong>{key === "pathoscope" ? "P" : "N"}</strong>
-                    }
-                </Flex>
-            </FlexItem>
-        );
-
-        const analyzeIcon = (
-            <Icon
-                name="bars"
-                tip="Quick Analyze"
-                tipPlacement="left"
-                bsStyle="success"
-                onClick={this.handleQuickAnalyze}
-                style={{fontSize: "17px", zIndex: 10000}}
-                pullRight
-            />
-        );
-
         return (
-            <div className="list-group-item hoverable spaced" onClick={() => this.props.onNavigate(this.props.id)}>
+            <div className="list-group-item hoverable spaced" onClick={this.onClick}>
                 <Flex alignItems="center">
                     <FlexItem grow={1}>
                         <Row>
@@ -67,20 +62,7 @@ class SampleEntry extends React.Component {
                             </Col>
 
                             <Col xs={3} md={3}>
-                                <Flex>
-                                    <FlexItem
-                                        className={CX("bg-primary", "sample-label")}
-                                    >
-                                        <Flex alignItems="center">
-                                            <Icon name={this.props.imported === "ip" ? "play" : "filing"} />
-                                            <span style={{paddingLeft: "3px"}} className="hidden-xs hidden-sm">
-                                                Import
-                                            </span>
-                                        </Flex>
-                                    </FlexItem>
-                                    {labels.pathoscope}
-                                    {labels.nuvs}
-                                </Flex>
+                                <SampleEntryLabels {...this.props} />
                             </Col>
 
                             <Col xs={5} md={4}>
@@ -97,7 +79,15 @@ class SampleEntry extends React.Component {
                             </Col>
 
                             <Col md={1} xsHidden smHidden>
-                                {analyzeIcon}
+                                <Icon
+                                    name="bars"
+                                    tip="Quick Analyze"
+                                    tipPlacement="left"
+                                    bsStyle="success"
+                                    onClick={this.handleQuickAnalyze}
+                                    style={{fontSize: "17px", zIndex: 10000}}
+                                    pullRight
+                                />
                             </Col>
                         </Row>
                     </FlexItem>

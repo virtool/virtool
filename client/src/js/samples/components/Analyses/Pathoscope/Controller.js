@@ -75,7 +75,7 @@ export default class PathoscopeController extends React.Component {
         if (this.state.filterViruses) {
             const totalReadsMapped = sum(data.map(v => v.reads));
 
-            data = filter(data, (virus) => (
+            data = filter(data, virus => (
                 (virus.pi * totalReadsMapped >= virus.length * 0.8 / this.props.maxReadLength) &&
                 (!re || (re.test(virus.abbreviation) || re.test(virus.name)))
             ));
@@ -86,7 +86,7 @@ export default class PathoscopeController extends React.Component {
         if (this.state.filterIsolates) {
             data = data.map(virus => ({
                 ...virus,
-                isolates: filter(virus.isolates, isolate => isolate.pi >= 0.03 * virus.pi)
+                isolates: filter(virus.isolates, isolate => (isolate.pi >= 0.03 * virus.pi))
             }));
         }
 

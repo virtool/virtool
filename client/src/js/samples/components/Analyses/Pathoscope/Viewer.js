@@ -2,10 +2,16 @@ import React from "react";
 import PropTypes from "prop-types";
 import { Alert } from "react-bootstrap";
 import { Icon } from "../../../../base";
-import { sortBy, max } from "lodash";
+import { sortBy, max, maxBy, sumBy } from "lodash";
 import { formatIsolateName } from "../../../../utils";
 
 import PathoscopeController from "./Controller";
+
+const calculateIsolateCoverage = (isolate, length) => (
+    isolate.sequences.reduce((sum, sequence) => (
+        sum + sequence.coverage * (sequence.length / length)
+    ), 0)
+);
 
 const PathoscopeViewer = (props) => {
 
@@ -14,80 +20,61 @@ const PathoscopeViewer = (props) => {
         const mappedReadCount = props.read_count;
 
         const data = props.diagnosis.map((baseVirus) => {
-
-            const virus = {
-                pi: 0,
-                best: 0,
-                reads: 0,
-                coverage: 0,
-                maxGenomeLength: 0,
-                maxDepth: 0,
-                ...baseVirus
-            };
-
             // Go through each isolate associated with the virus, adding properties for weight, best-hit, read count,
             // and coverage. These values will be calculated from the sequences owned by each isolate.
-            virus.isolates.forEach(isolate => {
-
-                let isolateDepth = 0;
-                let genomeLength = 0;
-
+            let isolates = baseVirus.isolates.map(isolate => {
                 // Make a name for the isolate by joining the source type and name, eg. "Isolate" + "Q47".
-                isolate.name = formatIsolateName(isolate);
+                let name = formatIsolateName(isolate);
 
-                if (isolate.name === "unknown unknown") {
-                    isolate.name = "Unnamed Isolate";
+                if (name === "unknown unknown") {
+                    name = "Unnamed Isolate";
                 }
 
-                isolate = {...isolate, pi: 0, best: 0, reads: 0, coverage: 0};
+                const sequences = isolate.sequences.map(sequence => {
+                    const reads = Math.round(sequence.pi * mappedReadCount);
+                    const depth = sequence.align ? max(sequence.align.map(p => p[1])) : 0;
 
-                // Go through each hit/sequence owned by the isolate and composite its values into the overall isolate
-                // values of weight, best-hit, read count, and coverage.
-                isolate.sequences.forEach(hit => {
-
-                    hit.reads = Math.round(hit.pi * mappedReadCount);
-
-                    // Add the following three values to the totals for the isolate.
-                    isolate.pi += hit.pi;
-                    isolate.best += hit.best;
-                    isolate.reads += hit.reads;
-
-                    const hitDepth = hit.align ? max(hit.align.map(p => p[1])) : 0;
-
-                    if (hitDepth > isolateDepth) {
-                        isolateDepth = hitDepth;
-                    }
-
-                    genomeLength += hit.length;
-
-                    if (hit.coverage > isolate.coverage) {
-                        isolate.coverage = hit.coverage;
-                    }
+                    return {...sequence, reads, depth};
                 });
 
-                if (genomeLength > virus.maxGenomeLength) {
-                    virus.maxGenomeLength = genomeLength;
-                }
+                const length = sumBy(sequences, "length");
 
-                if (isolateDepth > virus.maxDepth) {
-                    virus.maxDepth = isolateDepth;
-                }
+                const coverage = calculateIsolateCoverage(isolate, length);
 
-                // Add the following three values onto the totals for the virus.
-                virus.pi += isolate.pi;
-                virus.best += isolate.best;
-                virus.reads += isolate.reads;
-
-                // Set the virus coverage to the highest coverage for all of the isolates.
-                if (isolate.coverage > virus.coverage) {
-                    virus.coverage = isolate.coverage;
-                }
+                return {
+                    ...isolate,
+                    name,
+                    length,
+                    pi: sumBy(sequences, "pi"),
+                    best: sumBy(sequences, "best"),
+                    reads: sumBy(sequences, "reads"),
+                    maxDepth: maxBy(sequences, "depth").depth,
+                    coverage
+                };
             });
 
-            virus.isolates = sortBy(virus.isolates, "coverage").reverse();
+            let coverage;
 
-            return virus;
+            if (isolates.length === 1) {
+                coverage = isolates[0].coverage;
+            } else {
+                coverage = maxBy(isolates, "coverage").coverage;
+            }
 
+            isolates = sortBy(isolates, "coverage").reverse();
+
+            const pi = sumBy(isolates, "pi");
+
+            return {
+                ...baseVirus,
+                pi,
+                coverage,
+                isolates,
+                best: sumBy(isolates, "best"),
+                reads: pi * mappedReadCount,
+                maxGenomeLength: maxBy(isolates, "length"),
+                maxDepth: maxBy(isolates, "maxDepth").maxDepth
+            };
         });
 
         return <PathoscopeController data={data} maxReadLength={props.maxReadLength} />;
