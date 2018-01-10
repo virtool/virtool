@@ -45,7 +45,9 @@ class Account extends React.Component {
     }
 }
 
-const mapStateToProps = (state) => ({account: state.account});
+const mapStateToProps = (state) => ({
+    account: state.account
+});
 
 const mapDispatchToProps = (dispatch) => ({
 

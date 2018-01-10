@@ -54,6 +54,7 @@ const AnalysisItem = (props) => {
 };
 
 AnalysisItem.propTypes = {
+    id: PropTypes.string,
     index: PropTypes.object,
     user: PropTypes.object,
     algorithm: PropTypes.string,

@@ -3,7 +3,6 @@
  *
  * @module account/reducer
  */
-
 import { GET_ACCOUNT, UPDATE_ACCOUNT_SETTINGS, CHANGE_ACCOUNT_PASSWORD, GET_API_KEYS } from "../actionTypes";
 
 /**

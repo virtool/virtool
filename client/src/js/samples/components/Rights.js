@@ -34,7 +34,8 @@ class SampleRights extends React.Component {
         return (
             <div>
                 <Alert bsStyle="info">
-                    <Icon name="info" /> Restrict who can read and write this sample and which user group owns the sample.
+                    <Icon name="info" />
+                    <span> Restrict who can read and write this sample and which user group owns the sample.</span>
                 </Alert>
 
                 <Panel>

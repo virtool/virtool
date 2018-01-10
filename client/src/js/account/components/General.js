@@ -6,7 +6,7 @@ import { Label } from "react-bootstrap";
 import { Flex, FlexItem, Identicon } from "../../base";
 import ChangePassword from "./Password";
 
-const AccountGeneral = ({ id, groups, hash }) => {
+export const AccountGeneral = ({ id, groups, hash }) => {
 
     const groupLabels = groups.map(groupId =>
         <Label key={groupId} style={{marginRight: "3px"}}>
@@ -43,6 +43,4 @@ const mapStateToProps = (state) => ({
     groups: state.account.groups
 });
 
-const Container = connect(mapStateToProps)(AccountGeneral);
-
-export default Container;
+export default connect(mapStateToProps)(AccountGeneral);

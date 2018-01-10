@@ -11,7 +11,6 @@
  */
 
 import React from "react";
-import PropTypes from "prop-types";
 import { filter } from "lodash";
 import { connect } from "react-redux";
 import {
@@ -63,26 +62,12 @@ const SampleUserGroup = ({ group, groups, onChange }) => {
     );
 };
 
-
-
 class CreateSample extends React.Component {
 
     constructor (props) {
         super(props);
         this.state = getInitialState(props);
     }
-
-    static propTypes = {
-        show: PropTypes.bool,
-        onHide: PropTypes.func,
-        groups: PropTypes.array,
-        readyReads: PropTypes.array,
-        readFiles: PropTypes.arrayOf(PropTypes.object),
-        readyHosts: PropTypes.arrayOf(PropTypes.object),
-        onFindFiles: PropTypes.func,
-        onFindHosts: PropTypes.func,
-        onCreate: PropTypes.func
-    };
 
     componentDidMount () {
         this.props.onFindHosts();

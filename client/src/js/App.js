@@ -1,6 +1,5 @@
 import React from "react";
 import { Helmet } from "react-helmet";
-import { ClipLoader } from "halogenium";
 import { Provider, connect } from "react-redux";
 import { ConnectedRouter } from "react-router-redux";
 import { Switch, Route, withRouter } from "react-router-dom";
@@ -15,6 +14,7 @@ import Subtraction from "./subtraction/components/Subtraction";
 import Settings from "./settings/components/Settings";
 import Account from "./account/components/Account";
 import UploadOverlay from "./files/components/UploadOverlay";
+import { LoadingPlaceholder } from "./base";
 
 const Inner = (props) => {
     if (props.ready) {
@@ -41,11 +41,7 @@ const Inner = (props) => {
         );
     }
 
-    return (
-        <div className="text-center" style={{paddingTop: "290px"}}>
-            <ClipLoader />
-        </div>
-    );
+    return <LoadingPlaceholder margin="290px" />;
 };
 
 const mapStateToProps = state => ({
