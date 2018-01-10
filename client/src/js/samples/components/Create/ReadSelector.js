@@ -73,7 +73,7 @@ export default class ReadSelector extends React.PureComponent {
                 key={file.id}
                 {...file}
                 selected={this.props.selected.includes(file.id)}
-                onSelect={this.handleSelect}
+                onSelect={this.onSelect}
             />
         );
 

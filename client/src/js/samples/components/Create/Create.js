@@ -1,16 +1,5 @@
-/**
- * @license
- * The MIT License (MIT)
- * Copyright 2015 Government of Canada
- *
- * @author
- * Ian Boyes
- *
- * @exports SamplesImport
- *
- */
-
 import React from "react";
+import { push } from "react-router-redux";
 import { filter } from "lodash";
 import { connect } from "react-redux";
 import {
@@ -24,11 +13,11 @@ import {
     InputGroup
 } from "react-bootstrap";
 
+import ReadSelector from "./ReadSelector";
 import { findReadyHosts, createSample } from "../../actions";
 import { findFiles } from "../../../files/actions";
 import { Button, Flex, FlexItem, Icon, Input, LoadingPlaceholder } from "../../../base";
-import ReadSelector from "./ReadSelector";
-
+import { routerLocationHasState } from "../../../utils";
 
 const getReadyHosts = (props) => (
     props.readyHosts && props.readyHosts.length ? (props.readyHosts[0].id || "") : ""
@@ -69,11 +58,6 @@ class CreateSample extends React.Component {
         this.state = getInitialState(props);
     }
 
-    componentDidMount () {
-        this.props.onFindHosts();
-        this.props.onFindFiles();
-    }
-
     componentWillReceiveProps (nextProps) {
         if (nextProps.readyHosts !== this.props.readyHosts) {
             this.setState({subtraction: getReadyHosts(nextProps)});
@@ -94,7 +78,7 @@ class CreateSample extends React.Component {
             });
         }
 
-        this.props.onCreate(this.state);
+        this.props.onCreate({...this.state, files: this.state.selected});
     };
 
     autofill = () => {
@@ -107,7 +91,7 @@ class CreateSample extends React.Component {
 
         if (this.props.readyHosts === null || this.props.readFiles) {
             return (
-                <Modal onEnter={this.modalEnter}>
+                <Modal show={this.props.show} onHide={this.props.onHide} onEnter={this.modalEnter}>
                     <Modal.Body>
                         <LoadingPlaceholder margin="36px" />
                     </Modal.Body>
@@ -156,7 +140,7 @@ class CreateSample extends React.Component {
 
         return (
             <Modal bsSize="large" show={this.props.show} onHide={this.props.onHide} onEnter={this.modalEnter}>
-                <Modal.Header onHide={this.hide} closeButton>
+                <Modal.Header onHide={this.props.onHide} closeButton>
                     Create Sample
                 </Modal.Header>
 
@@ -209,6 +193,7 @@ class CreateSample extends React.Component {
                             </Col>
                             <Col md={6}>
                                 <Input
+                                    type="select"
                                     label="Subtraction Host"
                                     value={this.state.subtraction}
                                     onChange={(e) => this.setState({subtraction: e.target.value})}
@@ -257,12 +242,17 @@ class CreateSample extends React.Component {
     }
 }
 
-const mapStateToProps = (state) => ({
-    groups: state.account.groups,
-    readyHosts: state.samples.readyHosts,
-    readyReads: filter(state.files.documents, {type: "reads", reserved: false}),
-    forceGroupChoice: state.settings.sample_group === "force_choice"
-});
+const mapStateToProps = (state) => {
+    const show = routerLocationHasState(state, "create", true);
+
+    return {
+        show,
+        groups: state.account.groups,
+        readyHosts: state.samples.readyHosts,
+        readyReads: filter(state.files.documents, {type: "reads", reserved: false}),
+        forceGroupChoice: state.settings.sample_group === "force_choice"
+    };
+};
 
 const mapDispatchToProps = (dispatch) => ({
 
@@ -271,15 +261,17 @@ const mapDispatchToProps = (dispatch) => ({
     },
 
     onFindFiles: () => {
-        dispatch(findFiles());
+        dispatch(findFiles("reads", 1));
     },
 
     onCreate: ({ name, isolate, host, locale, subtraction, files }) => {
         dispatch(createSample(name, isolate, host, locale, subtraction, files));
+    },
+
+    onHide: () => {
+        dispatch(push({...window.location, state: {create: false}}));
     }
 
 });
 
-const Container = connect(mapStateToProps, mapDispatchToProps)(CreateSample);
-
-export default Container;
+export default connect(mapStateToProps, mapDispatchToProps)(CreateSample);
