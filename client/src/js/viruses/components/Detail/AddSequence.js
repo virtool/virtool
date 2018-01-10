@@ -45,10 +45,6 @@ class AddSequence extends React.Component {
         onSave: PropTypes.func
     };
 
-    modalEntered = () => {
-        this.accessionNode.focus();
-    };
-
     save = (e) => {
         e.preventDefault();
 

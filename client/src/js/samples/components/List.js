@@ -53,12 +53,7 @@ const SamplesList = (props) => {
                 pageCount={props.page_count}
             />
 
-            <Route path="/samples" render={({ history }) =>
-                <CreateSample
-                    show={!!(history.location.state && history.location.state.create)}
-                    onHide={props.onHide}
-                />
-            } />
+            <CreateSample />
 
             <Route path="/samples" render={({ history }) =>
                 <QuickAnalyze
@@ -74,16 +69,10 @@ const SamplesList = (props) => {
 const mapStateToProps = (state) => ({...state.samples});
 
 const mapDispatchToProps = (dispatch) => ({
-
     onFind: (page) => {
         const url = createFindURL({page});
         dispatch(push(url.pathname + url.search));
-    },
-
-    onHide: () => {
-        dispatch(push({state: {}}));
     }
-
 });
 
 const Container = connect(mapStateToProps, mapDispatchToProps)(SamplesList);
