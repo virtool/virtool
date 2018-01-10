@@ -1,7 +1,7 @@
 import { LOCATION_CHANGE } from "react-router-redux";
 import { put, select, takeEvery, takeLatest, throttle } from "redux-saga/effects";
 
-import samplesAPI from "./api";
+import * as samplesAPI from "./api";
 import { apiCall, apiFind, pushHistoryState, putGenericError, setPending } from "../sagaUtils";
 import {
     WS_UPDATE_SAMPLE,
@@ -119,7 +119,7 @@ export function* blastNuvs (action) {
 export function* removeAnalysis (action) {
     yield setPending(function* (action) {
         try {
-            yield samplesAPI.removeAnalysis(action.analysisId);
+            yield samplesAPI.removeAnalysis(action);
             yield put({type: REMOVE_ANALYSIS.SUCCEEDED, id: action.analysisId});
         } catch (error) {
             yield putGenericError(REMOVE_ANALYSIS, error);

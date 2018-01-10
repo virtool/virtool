@@ -1,7 +1,8 @@
 import React from "react";
 import CX from "classnames";
 import PropTypes from "prop-types";
-import { Row, Col, Label } from "react-bootstrap";
+import AnalysisValueLabel from "../ValueLabel";
+import { Row, Col } from "react-bootstrap";
 import { Flex, FlexItem } from "../../../../base";
 
 export default class NuVsEntry extends React.Component {
@@ -20,10 +21,6 @@ export default class NuVsEntry extends React.Component {
     }
 
     render () {
-
-        const flexStyle = {
-            height: "21px"
-        };
 
         const className = CX("list-group-item", "spaced", {hoverable: !this.props.in});
 
@@ -46,42 +43,20 @@ export default class NuVsEntry extends React.Component {
                         <strong>Sequence {this.props.index}</strong>
                     </Col>
                     <Col md={3}>
-                        <Flex alignItems="center" style={flexStyle}>
-                            <FlexItem>
-                                <Label>Length</Label>
-                            </FlexItem>
-                            <FlexItem pad={5}>
-                                <strong className="text-primary">
-                                    {this.props.sequence.length}
-                                </strong>
-                            </FlexItem>
-                        </Flex>
+                        <AnalysisValueLabel bsStyle="primary" label="Length" value={this.props.sequence.length} />
                     </Col>
                     <Col md={3}>
-                        <Flex alignItems="center" style={flexStyle}>
-                            <FlexItem>
-                                <Label>E-value</Label>
-                            </FlexItem>
-                            <FlexItem pad={5}>
-                                <strong className="text-danger">
-                                    {this.props.minE}
-                                </strong>
-                            </FlexItem>
-                        </Flex>
+                        <AnalysisValueLabel bsStyle="danger" label="E-value" value={this.props.minE} />
                     </Col>
                     <Col md={3}>
                         <Flex>
                             <FlexItem grow={1} shrink={0}>
-                                <Flex alignItems="center" style={flexStyle}>
-                                    <FlexItem>
-                                        <Label>ORFs</Label>
-                                    </FlexItem>
-                                    <FlexItem pad={5}>
-                                        <strong className="text-success">
-                                            {this.props.orfs.length}
-                                        </strong>
-                                    </FlexItem>
-                                </Flex>
+                                <AnalysisValueLabel
+                                    bsStyle="success"
+                                    grow={1}
+                                    label="ORFs"
+                                    value={this.props.orfs.length}
+                                />
                             </FlexItem>
                             {closeButton}
                         </Flex>

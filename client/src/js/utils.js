@@ -168,7 +168,7 @@ export const toScientificNotation = (number) => {
     if (number < 0.01 || number > 1000) {
         const split = number.toExponential().split("e");
         const exponent = split[1].replace("+", "");
-        return Numeral(split[0]).format("0.00") + "ₑ" + exponent;
+        return `${Numeral(split[0]).format("0.00")}E${exponent}`;
     }
 
     return Numeral(number).format("0.000");
