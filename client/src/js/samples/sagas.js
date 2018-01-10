@@ -23,6 +23,10 @@ import {
     REMOVE_ANALYSIS
 } from "../actionTypes";
 
+export function* wsSample () {
+    yield apiCall(samplesAPI.find, {}, FIND_SAMPLES);
+}
+
 export function* wsUpdateAnalysis (action) {
     yield getAnalysis(action);
 }
@@ -129,8 +133,8 @@ export function* removeAnalysis (action) {
 
 export function* watchSamples () {
     yield throttle(200, LOCATION_CHANGE, findSamples);
-    yield takeEvery(WS_UPDATE_SAMPLE, findSamples);
-    yield takeEvery(WS_REMOVE_SAMPLE, findSamples);
+    yield takeEvery(WS_UPDATE_SAMPLE, wsSample);
+    yield takeEvery(WS_REMOVE_SAMPLE, wsSample);
     yield takeEvery(WS_UPDATE_ANALYSIS, wsUpdateAnalysis);
     yield takeLatest(FIND_READY_HOSTS.REQUESTED, findReadyHosts);
     yield takeLatest(REFRESH_SAMPLE.REQUESTED, getSample);
