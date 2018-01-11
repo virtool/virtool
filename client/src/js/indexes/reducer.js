@@ -6,9 +6,7 @@ import {
     GET_UNBUILT,
     CREATE_INDEX,
     GET_INDEX_HISTORY,
-    CLEAR_INDEX_ERROR,
-    SHOW_REBUILD,
-    HIDE_REBUILD
+    CLEAR_INDEX_ERROR
 } from "../actionTypes";
 
 const initialState = {
@@ -58,12 +56,6 @@ export default function indexesReducer (state = initialState, action) {
 
         case GET_INDEX_HISTORY.SUCCEEDED:
             return {...state, history: action.data};
-
-        case SHOW_REBUILD:
-            return {...state, showRebuild: true};
-
-        case HIDE_REBUILD:
-            return {...state, showRebuild: false};
 
         case CLEAR_INDEX_ERROR:
             return {...state, error: false};

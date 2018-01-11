@@ -1,13 +1,5 @@
 import { simpleActionCreator } from "../utils";
-import {
-    FIND_INDEXES,
-    GET_INDEX,
-    GET_UNBUILT,
-    CREATE_INDEX,
-    GET_INDEX_HISTORY,
-    SHOW_REBUILD,
-    HIDE_REBUILD
-} from "../actionTypes";
+import { FIND_INDEXES, GET_INDEX, GET_UNBUILT, CREATE_INDEX, GET_INDEX_HISTORY } from "../actionTypes";
 
 export const findIndexes = simpleActionCreator(FIND_INDEXES.REQUESTED);
 
@@ -24,7 +16,3 @@ export const getIndexHistory = (indexVersion) => ({
     type: GET_INDEX_HISTORY.REQUESTED,
     indexVersion
 });
-
-export const showRebuild = () => simpleActionCreator(SHOW_REBUILD);
-
-export const hideRebuild = simpleActionCreator(HIDE_REBUILD);

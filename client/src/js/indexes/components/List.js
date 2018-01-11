@@ -1,9 +1,10 @@
 import React from "react";
+import { LinkContainer } from "react-router-bootstrap";
 import { connect } from "react-redux";
 import { Alert } from "react-bootstrap";
 
 import { Button, Flex, FlexItem, Icon, LoadingPlaceholder, NoneFound, ViewHeader } from "../../base";
-import { findIndexes, showRebuild } from "../actions";
+import { findIndexes } from "../actions";
 import IndexEntry from "./Entry";
 import RebuildIndex from "./Rebuild";
 
@@ -46,9 +47,11 @@ class IndexesList extends React.Component {
                 if (this.props.canRebuild) {
                     button = (
                         <FlexItem pad={20}>
-                            <Button bsStyle="warning" icon="hammer" onClick={this.props.showRebuild} pullRight>
-                                Rebuild
-                            </Button>
+                            <LinkContainer to={{state: {rebuild: true}}}>
+                                <Button bsStyle="warning" icon="hammer" pullRight>
+                                    Rebuild
+                                </Button>
+                            </LinkContainer>
                         </FlexItem>
                     );
                 }
@@ -120,10 +123,6 @@ const mapDispatchToProps = (dispatch) => ({
 
     onFind: () => {
         dispatch(findIndexes());
-    },
-
-    showRebuild: () => {
-        dispatch(showRebuild());
     }
 
 });

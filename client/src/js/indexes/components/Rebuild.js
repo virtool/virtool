@@ -1,10 +1,12 @@
 import React from "react";
+import { push } from "react-router-redux";
 import { connect } from "react-redux";
 import { Modal } from "react-bootstrap";
 
-import { getUnbuilt, createIndex, hideRebuild } from "../actions";
+import { getUnbuilt, createIndex } from "../actions";
 import { Button, LoadingPlaceholder } from "../../base";
 import RebuildHistory from "./History";
+import {routerLocationHasState} from "../../utils";
 
 class RebuildIndex extends React.Component {
 
@@ -47,7 +49,7 @@ class RebuildIndex extends React.Component {
 }
 
 const mapStateToProps = (state) => ({
-    show: !!state.indexes.showRebuild,
+    show: routerLocationHasState(state, "rebuild", true),
     unbuilt: state.indexes.unbuilt
 });
 
@@ -62,7 +64,7 @@ const mapDispatchToProps = (dispatch) => ({
     },
 
     onHide: () => {
-        dispatch(hideRebuild());
+        dispatch(push({...window.location, state: {rebuild: false}}));
     }
 
 });

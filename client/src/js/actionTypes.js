@@ -103,8 +103,6 @@ export const GET_UNBUILT = createRequestActionType("GET_UNBUILT");
 export const CREATE_INDEX = createRequestActionType("CREATE_INDEX");
 export const GET_INDEX_HISTORY = createRequestActionType("GET_INDEX_HISTORY");
 export const CLEAR_INDEX_ERROR = "CLEAR_INDEX_ERROR";
-export const SHOW_REBUILD = "SHOW_REBUILD";
-export const HIDE_REBUILD = "HIDE_REBUILD";
 
 // Subtraction
 export const WS_UPDATE_SUBTRACTION = "WS_UPDATE_SUBTRACTION";
