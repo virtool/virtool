@@ -56,5 +56,5 @@ export function* clearJobs (action) {
 }
 
 export function* getResources () {
-    yield setPending(apiCall(jobsAPI.getResources, {}, GET_RESOURCES));
+    yield apiCall(jobsAPI.getResources, {}, GET_RESOURCES);
 }
