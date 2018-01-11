@@ -16,7 +16,7 @@ export const getHistory = ({ virusId }) => (
     Request.get(`/api/viruses/${virusId}/history`)
 );
 
-export const getGenbank = ({ accession }) => (
+export const getGenbank = (accession) => (
     Request.get(`/api/genbank/${accession}`)
 );
 

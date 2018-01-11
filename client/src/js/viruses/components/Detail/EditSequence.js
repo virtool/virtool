@@ -18,7 +18,7 @@ import { Row, Col, Modal, FormGroup, FormControl, InputGroup, ControlLabel } fro
 import { editSequence, hideVirusModal } from "../../actions";
 import { Button, Icon } from "../../../base";
 import SequenceField from "./SequenceField";
-import virusAPI from "../../api";
+import { getGenbank } from "../../api";
 
 const getInitialState = (props) => {
     if (props.sequenceId) {
@@ -76,7 +76,7 @@ class EditSequence extends React.Component {
 
     autofill = () => {
         this.setState({autofillPending: true}, () => {
-            virusAPI.getGenbank(this.props.sequenceId).then((resp) => {
+            getGenbank(this.props.sequenceId).then((resp) => {
                 // Success
                 const { definition, host, sequence } = resp.body;
 

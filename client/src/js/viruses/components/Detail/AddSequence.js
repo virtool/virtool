@@ -18,7 +18,7 @@ import { ClipLoader } from "halogenium";
 import { addSequence, hideVirusModal } from "../../actions";
 import { Button, Icon, Input } from "../../../base";
 import SequenceField from "./SequenceField";
-import * as virusAPI from "../../api";
+import { getGenbank } from "../../api";
 
 const getInitialState = () => ({
     id: "",
@@ -60,7 +60,7 @@ class AddSequence extends React.Component {
 
     autofill = () => {
         this.setState({autofillPending: true}, () => {
-            virusAPI.getGenbank(this.state.id).then((resp) => {
+            getGenbank(this.state.id).then((resp) => {
                 // Success
                 const { definition, host, sequence } = resp.body;
 
