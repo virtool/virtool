@@ -1,6 +1,6 @@
 import { put, takeEvery, takeLatest } from "redux-saga/effects";
 
-import indexesAPI from "./api";
+import * as indexesAPI from "./api";
 import { apiCall, setPending } from "../sagaUtils";
 import { FIND_INDEXES, GET_INDEX, GET_UNBUILT, CREATE_INDEX, GET_INDEX_HISTORY } from "../actionTypes";
 

@@ -18,7 +18,7 @@ import { ClipLoader } from "halogenium";
 import { addSequence, hideVirusModal } from "../../actions";
 import { Button, Icon, Input } from "../../../base";
 import SequenceField from "./SequenceField";
-import virusAPI from "../../api";
+import * as virusAPI from "../../api";
 
 const getInitialState = () => ({
     id: "",

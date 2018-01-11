@@ -1,7 +1,7 @@
 import { put, takeEvery, takeLatest, throttle } from "redux-saga/effects";
 
-import settingsAPI from "./api";
-import virusesAPI from "../viruses/api";
+import * as settingsAPI from "./api";
+import * as virusesAPI from "../viruses/api";
 import { apiCall, setPending } from "../sagaUtils";
 import { GET_SETTINGS, UPDATE_SETTINGS, GET_CONTROL_READAHEAD } from "../actionTypes";
 

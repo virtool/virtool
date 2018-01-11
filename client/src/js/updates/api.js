@@ -1,18 +1,13 @@
 import Request from "superagent";
 
-const updatesAPI = {
+export const getSoftware = () => (
+    Request.get("/api/updates/software")
+);
 
-    getSoftware: () => (
-        Request.get("/api/updates/software")
-    ),
+export const getDatabase = () => (
+    Request.get("/api/updates/database")
+);
 
-    getDatabase: () => (
-        Request.get("/api/updates/database")
-    ),
-
-    installSoftwareUpdates: () => (
-        Request.post("/api/updates/software")
-    )
-};
-
-export default updatesAPI;
+export const installSoftwareUpdates = () => (
+    Request.post("/api/updates/software")
+);

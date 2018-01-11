@@ -1,6 +1,6 @@
 import { takeEvery, takeLatest, throttle } from "redux-saga/effects";
 
-import groupsAPI from "./api";
+import * as groupsAPI from "./api";
 import { apiCall, setPending } from "../sagaUtils";
 import { LIST_GROUPS, CREATE_GROUP, SET_GROUP_PERMISSION, REMOVE_GROUP } from "../actionTypes";
 

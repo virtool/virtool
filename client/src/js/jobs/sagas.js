@@ -1,7 +1,7 @@
 import { getLocation, LOCATION_CHANGE } from "react-router-redux";
 import { put, select, takeEvery, takeLatest, throttle } from "redux-saga/effects";
 
-import jobsAPI from "./api";
+import * as jobsAPI from "./api";
 import { apiCall, apiFind, setPending } from "../sagaUtils";
 import { WS_UPDATE_JOB, FIND_JOBS, GET_JOB, CANCEL_JOB, REMOVE_JOB, CLEAR_JOBS, GET_RESOURCES } from "../actionTypes";
 

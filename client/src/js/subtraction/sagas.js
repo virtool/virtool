@@ -1,7 +1,7 @@
 import { LOCATION_CHANGE, push } from "react-router-redux";
 import { put, takeLatest, throttle } from "redux-saga/effects";
 
-import subtractionAPI from "./api";
+import * as subtractionAPI from "./api";
 import { apiCall, apiFind, pushHistoryState, putGenericError, setPending } from "../sagaUtils";
 import {
     FIND_SUBTRACTIONS,

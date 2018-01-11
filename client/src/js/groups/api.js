@@ -1,28 +1,22 @@
 import Request from "superagent";
 
-const groupsAPI = {
+export const list = () => (
+    Request.get("/api/groups")
+);
 
-    list: () => (
-        Request.get("/api/groups")
-    ),
+export const create = ({ groupId }) => (
+    Request.post("/api/groups")
+        .send({group_id: groupId})
+);
 
-    create: ({ groupId }) => (
-        Request.post("/api/groups")
-            .send({group_id: groupId})
-    ),
+export const setPermission = ({ groupId, permission, value }) => {
+    const update = {};
+    update[permission] = value;
 
-    setPermission: ({ groupId, permission, value }) => {
-        const update = {};
-        update[permission] = value;
-
-        return Request.patch(`/api/groups/${groupId}`)
-            .send(update);
-    },
-
-    remove: ({ groupId }) => (
-        Request.delete(`/api/groups/${groupId}`)
-    )
-
+    return Request.patch(`/api/groups/${groupId}`)
+        .send(update);
 };
 
-export default groupsAPI;
+export const remove = ({ groupId }) => (
+    Request.delete(`/api/groups/${groupId}`)
+);

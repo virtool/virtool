@@ -2,7 +2,7 @@ import { push } from "react-router-redux";
 import { takeEvery, takeLatest, throttle, put } from "redux-saga/effects";
 
 import { apiCall, setPending } from "../sagaUtils";
-import usersAPI from "./api";
+import * as usersAPI from "./api";
 import {
     LIST_USERS,
     CREATE_USER,

@@ -1,5 +1,5 @@
 import { put, takeLatest } from "redux-saga/effects";
-import updatesAPI from "./api";
+import * as updatesAPI from "./api";
 import { apiCall, setPending } from "../sagaUtils";
 import {
     GET_SOFTWARE_UPDATES,

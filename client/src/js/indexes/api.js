@@ -1,26 +1,21 @@
 import Request from "superagent";
 
-const indexesAPI = {
+export const find = () => (
+    Request.get("/api/indexes")
+);
 
-    find: () => (
-        Request.get("/api/indexes")
-    ),
+export const get = ({ indexVersion }) => (
+    Request.get(`/api/indexes/${indexVersion}`)
+);
 
-    get: ({ indexVersion }) => (
-        Request.get(`/api/indexes/${indexVersion}`)
-    ),
+export const getUnbuilt = () => (
+    Request.get("/api/indexes/unbuilt")
+);
 
-    getUnbuilt: () => (
-        Request.get("/api/indexes/unbuilt")
-    ),
+export const create = () => (
+    Request.post("/api/indexes")
+);
 
-    create: () => (
-        Request.post("/api/indexes")
-    ),
-
-    getHistory: ({ indexVersion }) => (
-        Request.get(`/api/indexes/${indexVersion}/history`)
-    )
-};
-
-export default indexesAPI;
+export const getHistory = ({ indexVersion }) => (
+    Request.get(`/api/indexes/${indexVersion}/history`)
+);

@@ -1,32 +1,27 @@
 import Request from "superagent";
 
-const subtractionAPI = {
 
-    find: () => (
-        Request.get(`/api/subtraction${window.location.search}`)
-    ),
+export const find = () => (
+    Request.get(`/api/subtraction${window.location.search}`)
+);
 
-    listIds: () => (
-        Request.get("/api/subtraction")
-            .query({ids: true})
-    ),
+export const listIds = () => (
+    Request.get("/api/subtraction")
+        .query({ids: true})
+);
 
-    get: ({ subtractionId }) => (
-        Request.get(`/api/subtraction/${subtractionId}`)
-    ),
+export const get = ({ subtractionId }) => (
+    Request.get(`/api/subtraction/${subtractionId}`)
+);
 
-    create: ({ subtractionId, fileId }) => (
-        Request.post("/api/subtraction")
-            .send({
-                subtraction_id: subtractionId,
-                file_id: fileId
-            })
-    ),
+export const create = ({ subtractionId, fileId }) => (
+    Request.post("/api/subtraction")
+        .send({
+            subtraction_id: subtractionId,
+            file_id: fileId
+        })
+);
 
-    remove: ({ subtractionId }) => (
-        Request.delete(`/api/subtraction/${subtractionId}`)
-    )
-
-};
-
-export default subtractionAPI;
+export const remove = ({ subtractionId }) => (
+    Request.delete(`/api/subtraction/${subtractionId}`)
+);

@@ -2,7 +2,7 @@ import { LOCATION_CHANGE, push } from "react-router-redux";
 import { put, takeEvery, takeLatest, throttle } from "redux-saga/effects";
 
 import * as filesAPI from "../files/api";
-import virusesAPI from "./api";
+import * as virusesAPI from "./api";
 import {apiCall, apiFind, putGenericError, setPending} from "../sagaUtils";
 import {
     FIND_VIRUSES,
