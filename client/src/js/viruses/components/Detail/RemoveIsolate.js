@@ -1,29 +1,18 @@
 import React from "react";
 import PropTypes from "prop-types";
 import { connect } from "react-redux";
-import { Modal } from "react-bootstrap";
 
 import { removeIsolate, hideVirusModal } from "../../actions";
-import { Button } from "../../../base";
+import { RemoveModal } from "../../../base";
 
-const RemoveIsolate = props => (
-    <Modal show={props.show} onHide={props.onHide} dialogClassName="modal-danger">
-        <Modal.Header onHide={props.onHide} closeButton>
-            Remove Isolate
-        </Modal.Header>
-        <Modal.Body>
-            Are you sure you want to remove <strong>{props.isolateName}</strong>?
-        </Modal.Body>
-        <Modal.Footer>
-            <Button
-                bsStyle="danger"
-                icon="checkmark"
-                onClick={() => props.onConfirm(props.virusId, props.isolateId, props.nextIsolateId)}
-            >
-                Confirm
-            </Button>
-        </Modal.Footer>
-    </Modal>
+const RemoveIsolate = ({ isolateId, isolateName, nextIsolateId, onConfirm, onHide, show, virusId}) => (
+    <RemoveModal
+        name={isolateName}
+        noun="isolate"
+        onConfirm={() => onConfirm(virusId, isolateId, nextIsolateId)}
+        onHide={onHide}
+        show={show}
+    />
 );
 
 RemoveIsolate.propTypes = {

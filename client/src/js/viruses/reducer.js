@@ -30,7 +30,7 @@ import {
     GET_VIRUS_HISTORY
 } from "../actionTypes";
 
-const virusesInitialState = {
+const initialState = {
     documents: null,
     detail: null,
     detailHistory: null,
@@ -74,12 +74,7 @@ const recalculateActiveIsolateId = (prevActiveIsolateId, nextDetail) => {
     return prevActiveIsolateId;
 };
 
-const receivedDetailAfterChange = (state, action) => ({
-    ...hideVirusModal(state),
-    detail: action.data
-});
-
-export default function virusesReducer (state = virusesInitialState, action) {
+export default function virusesReducer (state = initialState, action) {
 
     switch (action.type) {
 
@@ -120,19 +115,27 @@ export default function virusesReducer (state = virusesInitialState, action) {
             return state;
 
         case ADD_ISOLATE.SUCCEEDED:
-            return {
-                ...receivedDetailAfterChange(state, action),
-                activeIsolateId: action.data.isolates[action.data.isolates.length - 1].id
-            };
+            return hideVirusModal({
+                ...state,
+                detail: action.data,
+                activeIsolateId: recalculateActiveIsolateId(state.activeIsolateId, action.data)
+            });
+
+        case REMOVE_ISOLATE.SUCCEEDED:
+            return hideVirusModal({
+                ...state,
+                detail: action.data,
+                activeIsolateId: recalculateActiveIsolateId(state.activeIsolateId, action.data)
+            });
 
         case EDIT_VIRUS.SUCCEEDED:
         case EDIT_ISOLATE.SUCCEEDED:
-        case SET_ISOLATE_AS_DEFAULT.SUCCEEDED:
-        case REMOVE_ISOLATE.SUCCEEDED:
         case ADD_SEQUENCE.SUCCEEDED:
         case EDIT_SEQUENCE.SUCCEEDED:
         case REMOVE_SEQUENCE.SUCCEEDED:
-            return receivedDetailAfterChange(state, action);
+        case SET_ISOLATE_AS_DEFAULT.SUCCEEDED: {
+            return hideVirusModal({...state, detail: action.data});
+        }
 
         case GET_VIRUS_HISTORY.REQUESTED:
             return {...state, detailHistory: null};

@@ -45,7 +45,12 @@ class EditIsolate extends React.Component {
     };
 
     save = () => {
-        this.props.onSave(this.props.virusId, this.props.isolateId, this.state.sourceType, this.state.sourceName);
+        this.props.onSave(
+            this.props.virusId,
+            this.props.isolateId,
+            this.state.sourceType,
+            this.state.sourceName
+        );
     };
 
     render () {
