@@ -1,14 +1,3 @@
-/**
- * @license
- * The MIT License (MIT)
- * Copyright 2015 Government of Canada
- *
- * @author
- * Ian Boyes
- *
- * @exports VirusDetail
- */
-
 import React from "react";
 import { Helmet } from "react-helmet";
 import { connect } from "react-redux";
@@ -16,15 +5,14 @@ import { Switch, Route, Redirect } from "react-router-dom";
 import { LinkContainer } from "react-router-bootstrap";
 import { Label, Nav, NavItem } from "react-bootstrap";
 
+import AddIsolate from "./AddIsolate";
+import IsolateEditor from "./Editor";
+import EditVirus from "./EditVirus";
+import General from "./General";
+import History from "./History";
+import RemoveVirus from "./RemoveVirus";
 import { getVirus, showEditVirus, showRemoveVirus } from "../../actions";
 import { Flex, FlexItem, Icon, LoadingPlaceholder } from "../../../base";
-import IsolateEditor from "./Editor";
-import General from "./General";
-import AddIsolate from "./AddIsolate";
-import History from "./History";
-import EditVirus from "./EditVirus";
-import RemoveVirus from "./RemoveVirus";
-
 
 const VirusSection = ({ match }) => (
     <div>

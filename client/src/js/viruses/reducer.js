@@ -1,4 +1,4 @@
-import { find, some } from "lodash";
+import { find } from "lodash";
 
 import { formatIsolateName } from "../utils";
 import {
@@ -68,7 +68,7 @@ const getActiveIsolate = (state) => {
 
         return {
             ...state,
-            activeIsolate: activeIsolate,
+            activeIsolate,
             activeIsolateId: activeIsolate.id
         };
     }
