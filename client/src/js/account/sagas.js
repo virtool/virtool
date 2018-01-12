@@ -1,4 +1,4 @@
-import { call, put, takeEvery, takeLatest } from "redux-saga/effects";
+import { put, takeEvery, takeLatest } from "redux-saga/effects";
 
 import * as accountAPI from "./api";
 import { setPending, apiCall } from "../sagaUtils";
@@ -69,5 +69,5 @@ export function* removeAPIKey (action) {
 
 export function* logout () {
     yield accountAPI.logout();
-    yield call(window.location.reload);
+    window.location.reload();
 }
