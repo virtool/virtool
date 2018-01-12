@@ -4,10 +4,11 @@ import { sortBy } from "lodash";
 import { connect } from "react-redux";
 import { ListGroup, FormGroup, InputGroup, FormControl } from "react-bootstrap";
 
-import { analyze, removeAnalysis } from "../../actions";
+import { analyze } from "../../actions";
 import { Icon, Button, LoadingPlaceholder, NoneFound } from "../../../base";
 import AnalysisItem from "./Item";
 import CreateAnalysis from "./Create";
+import {getCanModify} from "../../selectors";
 
 const AnalysesToolbar = ({ onClick }) => (
     <div className="toolbar">
@@ -54,8 +55,6 @@ class AnalysesList extends React.Component {
             listContent = sorted.map((document) =>
                 <LinkContainer key={document.id} to={`/samples/${this.props.detail.id}/analyses/${document.id}`}>
                     <AnalysisItem
-                        canModify={this.props.detail.canModify}
-                        onRemove={this.props.onRemove}
                         {...document}
                     />
                 </LinkContainer>
@@ -66,7 +65,7 @@ class AnalysesList extends React.Component {
 
         return (
             <div>
-                {this.props.detail.canModify ? <AnalysesToolbar onClick={() => this.setState({show: true})} /> : null}
+                {this.props.canModify ? <AnalysesToolbar onClick={() => this.setState({show: true})} /> : null}
 
                 <ListGroup>
                     {listContent}
@@ -84,19 +83,15 @@ class AnalysesList extends React.Component {
 }
 
 const mapStateToProps = (state) => ({
-    account: state.account,
     detail: state.samples.detail,
-    analyses: state.samples.analyses
+    analyses: state.samples.analyses,
+    canModify: getCanModify(state)
 });
 
 const mapDispatchToProps = (dispatch) => ({
 
     onAnalyze: (sampleId, algorithm) => {
         dispatch(analyze(sampleId, algorithm));
-    },
-
-    onRemove: (analysisId) => {
-        dispatch(removeAnalysis(analysisId));
     }
 
 });
