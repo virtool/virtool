@@ -7,7 +7,7 @@ import { WS_UPDATE_JOB, FIND_JOBS, GET_JOB, CANCEL_JOB, REMOVE_JOB, CLEAR_JOBS, 
 
 export function* watchJobs () {
     yield takeLatest(WS_UPDATE_JOB, wsUpdateJob);
-    yield throttle(300, LOCATION_CHANGE, findJobsWithPending);
+    yield throttle(300, LOCATION_CHANGE, findJobs);
     yield takeLatest(GET_JOB.REQUESTED, getJobWithPending);
     yield takeEvery(CANCEL_JOB.REQUESTED, cancelJob);
     yield takeEvery(REMOVE_JOB.REQUESTED, removeJob);
@@ -27,10 +27,6 @@ export function* wsUpdateJob (action) {
 
 export function* findJobs (action) {
     yield apiFind("/jobs", jobsAPI.find, action, FIND_JOBS);
-}
-
-export function* findJobsWithPending (action) {
-    yield setPending(findJobs(action));
 }
 
 export function* getJobWithPending (action) {

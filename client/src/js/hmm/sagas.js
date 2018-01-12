@@ -2,7 +2,7 @@ import { LOCATION_CHANGE } from "react-router-redux";
 import { takeLatest, throttle } from "redux-saga/effects";
 
 import * as hmmsAPI from "./api";
-import { apiCall, apiFind, setPending } from "../sagaUtils";
+import { apiCall, apiFind } from "../sagaUtils";
 import { FIND_HMMS, INSTALL_HMMS, GET_HMM } from "../actionTypes";
 
 export function* watchHmms () {
@@ -12,7 +12,7 @@ export function* watchHmms () {
 }
 
 export function* findHmms (action) {
-    yield setPending(apiFind("/hmm", hmmsAPI.find, action, FIND_HMMS));
+    yield apiFind("/hmm", hmmsAPI.find, action, FIND_HMMS);
 }
 
 export function* installHmms () {
@@ -20,5 +20,5 @@ export function* installHmms () {
 }
 
 export function* getHmm (action) {
-    yield setPending(apiCall(hmmsAPI.get, action, GET_HMM));
+    yield apiCall(hmmsAPI.get, action, GET_HMM);
 }

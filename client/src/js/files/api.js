@@ -13,7 +13,7 @@ import Request from "superagent";
  * @param page {number} the page of results to get
  * @returns {promise}
  */
-export const find = (fileType, page) => (
+export const find = ({ fileType, page }) => (
     Request.get("/api/files")
         .query({
             type: fileType,

@@ -7,7 +7,7 @@ import { WS_UPDATE_FILE, WS_REMOVE_FILE, FIND_FILES, REMOVE_FILE, UPLOAD } from 
 export function* watchFiles () {
     yield takeLatest(WS_REMOVE_FILE, wsUpdateFile);
     yield takeLatest(WS_UPDATE_FILE, wsUpdateFile);
-    yield takeLatest(FIND_FILES.REQUESTED, findFilesWithPending);
+    yield takeLatest(FIND_FILES.REQUESTED, findFiles);
     yield takeEvery(REMOVE_FILE.REQUESTED, removeFile);
     yield takeEvery(UPLOAD.REQUESTED, upload);
 }
@@ -17,17 +17,13 @@ export function* wsUpdateFile () {
     yield findFiles(fileType);
 }
 
-export function* findFiles (fileType, page) {
+export function* findFiles (action) {
     try {
-        const response = yield filesAPI.find(fileType, page);
-        yield put({type: FIND_FILES.SUCCEEDED, data: response.body, fileType});
+        const response = yield filesAPI.find(action);
+        yield put({type: FIND_FILES.SUCCEEDED, data: response.body, fileType: action.fileType});
     } catch (error) {
         yield putGenericError(FIND_FILES, error);
     }
-}
-
-export function* findFilesWithPending (action) {
-    yield setPending(findFiles(action.fileType, action.page));
 }
 
 export function* removeFile (action) {

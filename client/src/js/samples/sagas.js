@@ -85,7 +85,7 @@ export function* removeSample (action) {
 }
 
 export function* findAnalyses (action) {
-    yield setPending(apiCall(samplesAPI.findAnalyses, action, FIND_ANALYSES));
+    yield apiCall(samplesAPI.findAnalyses, action, FIND_ANALYSES);
 }
 
 export function* getAnalysis (action) {

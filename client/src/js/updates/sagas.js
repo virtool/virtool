@@ -1,6 +1,6 @@
 import { put, takeLatest } from "redux-saga/effects";
 import * as updatesAPI from "./api";
-import { apiCall, setPending } from "../sagaUtils";
+import { apiCall } from "../sagaUtils";
 import {
     GET_SOFTWARE_UPDATES,
     GET_DATABASE_UPDATES,
@@ -9,7 +9,7 @@ import {
 } from "../actionTypes";
 
 function* getSoftwareUpdates (action) {
-    yield setPending(apiCall(updatesAPI.getSoftware, action, GET_SOFTWARE_UPDATES));
+    yield apiCall(updatesAPI.getSoftware, action, GET_SOFTWARE_UPDATES);
 }
 
 function* setSoftwareChannel (action) {
@@ -19,7 +19,7 @@ function* setSoftwareChannel (action) {
 }
 
 function* getDatabaseUpdates (action) {
-    yield setPending(apiCall(updatesAPI.getDatabase, action, GET_DATABASE_UPDATES));
+    yield apiCall(updatesAPI.getDatabase, action, GET_DATABASE_UPDATES);
 }
 
 function* installSoftwareUpdates (action) {

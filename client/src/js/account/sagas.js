@@ -44,7 +44,7 @@ export function* changeAccountPassword (action) {
 }
 
 export function* getAPIKeys () {
-    yield setPending(apiCall(accountAPI.getAPIKeys, {}, GET_API_KEYS));
+    yield apiCall(accountAPI.getAPIKeys, {}, GET_API_KEYS);
 }
 
 export function* createAPIKey (action) {

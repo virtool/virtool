@@ -13,15 +13,15 @@ export function* watchIndexes () {
 }
 
 export function* findIndexes () {
-    yield setPending(apiCall(indexesAPI.find, {}, FIND_INDEXES));
+    yield apiCall(indexesAPI.find, {}, FIND_INDEXES);
 }
 
 export function* getIndex (action) {
-    yield setPending(apiCall(indexesAPI.get, action, GET_INDEX));
+    yield apiCall(indexesAPI.get, action, GET_INDEX);
 }
 
 export function* getUnbuilt () {
-    yield setPending(apiCall(indexesAPI.getUnbuilt, {}, GET_UNBUILT));
+    yield apiCall(indexesAPI.getUnbuilt, {}, GET_UNBUILT);
 }
 
 export function* createIndex () {

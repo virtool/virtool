@@ -14,7 +14,7 @@ import {
 } from "../actionTypes";
 
 function* listUsers (action) {
-    yield setPending(apiCall(usersAPI.list, action, LIST_USERS));
+    yield apiCall(usersAPI.list, action, LIST_USERS);
 }
 
 function* createUser (action) {

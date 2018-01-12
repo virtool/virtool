@@ -12,15 +12,15 @@ import {
 } from "../actionTypes";
 
 export function* findSubtractions (action) {
-    yield setPending(apiFind("/subtraction", subtractionAPI.find, action, FIND_SUBTRACTIONS));
+    yield apiFind("/subtraction", subtractionAPI.find, action, FIND_SUBTRACTIONS);
 }
 
 export function* listSubtractionIds (action) {
-    yield setPending(apiCall(subtractionAPI.listIds, action, LIST_SUBTRACTION_IDS));
+    yield apiCall(subtractionAPI.listIds, action, LIST_SUBTRACTION_IDS);
 }
 
 export function* getSubtraction (action) {
-    yield setPending(apiCall(subtractionAPI.get, action, GET_SUBTRACTION));
+    yield apiCall(subtractionAPI.get, action, GET_SUBTRACTION);
 }
 
 export function* createSubtraction (action) {

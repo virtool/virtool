@@ -40,11 +40,11 @@ export function* findViruses (action) {
 }
 
 export function* getVirus (action) {
-    yield setPending(apiCall(virusesAPI.get, action, GET_VIRUS));
+    yield apiCall(virusesAPI.get, action, GET_VIRUS);
 }
 
 export function* getVirusHistory (action) {
-    yield setPending(apiCall(virusesAPI.getHistory, action, GET_VIRUS_HISTORY));
+    yield apiCall(virusesAPI.getHistory, action, GET_VIRUS_HISTORY);
 }
 
 export function* createVirus (action) {
