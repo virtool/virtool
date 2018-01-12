@@ -81,6 +81,7 @@ class Sequence extends React.Component {
 
         return (
             <ListGroupItem
+                className="spaced"
                 componentClass="div"
                 key={accession}
                 onClick={this.state.in ? null : () => this.setState({in: true})}
