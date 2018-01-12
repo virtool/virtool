@@ -30,10 +30,8 @@ export function* createSubtraction (action) {
 }
 
 export function* removeSubtraction (action) {
-    yield setPending(function* () {
-        yield apiCall(subtractionAPI.remove, action, REMOVE_SUBTRACTION);
-        yield put(push("/subtraction"));
-    });
+    yield apiCall(subtractionAPI.remove, action, REMOVE_SUBTRACTION);
+    yield put(push("/subtraction"));
 }
 
 export function* watchSubtraction () {

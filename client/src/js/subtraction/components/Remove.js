@@ -4,6 +4,7 @@ import { push } from "react-router-redux";
 
 import { removeSubtraction } from "../actions";
 import { RemoveModal } from "../../base";
+import {routerLocationHasState} from "../../utils";
 
 const RemoveSubtraction = ({ id, show, onHide, onConfirm }) => (
     <RemoveModal
@@ -12,12 +13,12 @@ const RemoveSubtraction = ({ id, show, onHide, onConfirm }) => (
         noun="Subtraction"
         show={show}
         onHide={onHide}
-        onConfirm={onConfirm}
+        onConfirm={() => onConfirm(id)}
     />
 );
 
 const mapStateToProps = (state) => ({
-    show: !!state.router.location.state && state.router.location.state.removeSubtraction
+    show: routerLocationHasState(state, "removeSubtraction", true)
 });
 
 const mapDispatchToProps = (dispatch) => ({
