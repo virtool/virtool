@@ -18,8 +18,8 @@ import { setForceReset, setPassword } from "../actions";
 import { Input, Checkbox, Button, RelativeTime } from "../../base";
 
 const getInitialState = () => ({
-    newPassword: "",
-    confirmPassword: "",
+    password: "",
+    confirm: "",
     error: false
 });
 
@@ -40,31 +40,32 @@ class Password extends React.Component {
         this.setState(getInitialState());
     }
 
-    handleChange (e, key) {
+    handleChange = (e, key) => {
         const state = {
-            error: this.state.error && this.state.newPassword === this.state.confirmPassword
+            error: this.state.error && this.state.password === this.state.confirm
         };
 
         state[key] = e.target.value;
 
         this.setState(state);
-    }
+    };
 
-    handleSubmit (e) {
+    handleSubmit = (e) => {
         e.preventDefault();
 
-        if (this.state.newPassword === this.state.confirmPassword) {
-            this.props.onSubmit(this.props.id, this.state.newPassword);
+        if (this.state.password === this.state.confirm) {
+            this.props.onSubmit(this.props.id, this.state.password);
         } else {
             this.setState({error: true});
         }
-    }
+    };
 
     render = () => (
         <Panel>
             <p>
-                <em>Last changed </em>
-                <RelativeTime time={this.props.last_password_change} em={true}/>
+                <em>
+                    Last changed <RelativeTime time={this.props.last_password_change} em={true}/>
+                </em>
             </p>
 
             <form onSubmit={this.handleSubmit}>
@@ -73,7 +74,7 @@ class Password extends React.Component {
                         <Input
                             type="password"
                             placeholder="New Password"
-                            value={this.state.newPassword}
+                            value={this.state.password}
                             onChange={(e) => this.handleChange(e, "password")}
                         />
                     </Col>
@@ -82,7 +83,7 @@ class Password extends React.Component {
                         <Input
                             type="password"
                             placeholder="Confirm Password"
-                            value={this.state.confirmPassword}
+                            value={this.state.confirm}
                             onChange={(e) => this.handleChange(e, "confirm")}
                         />
                     </Col>
@@ -107,7 +108,7 @@ class Password extends React.Component {
                         <ButtonToolbar className="pull-right">
                             <Button
                                 type="button"
-                                onClick={() => this.setState({confirmPassword: "", newPassword: ""})}
+                                onClick={() => this.setState({confirm: "", pass: ""})}
                             >
                                 Clear
                             </Button>
