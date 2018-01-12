@@ -19,11 +19,12 @@ import { matchPath } from "react-router-dom";
  * @param apiMethod {function} the function to call with ``action``
  * @param action {object} an action to pass to ``apiMethod``
  * @param actionType {object} a request-style action type
+ * @param extra {object} extra properties to assign to the SUCCEEDED action
  */
-export function* apiCall (apiMethod, action, actionType) {
+export function* apiCall (apiMethod, action, actionType, extra = {}) {
     try {
         const response = yield apiMethod(action);
-        yield put({type: actionType.SUCCEEDED, data: response.body});
+        yield put({type: actionType.SUCCEEDED, data: response.body, ...extra});
     } catch (error) {
         yield putGenericError(actionType, error);
     }
