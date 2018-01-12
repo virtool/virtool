@@ -1,6 +1,5 @@
 import React from "react";
 import CX from "classnames";
-import PropTypes from "prop-types";
 import { ClipLoader } from "halogenium";
 import { Row, Col, Label } from "react-bootstrap";
 
@@ -53,16 +52,5 @@ const AnalysisItem = (props) => {
     );
 };
 
-AnalysisItem.propTypes = {
-    id: PropTypes.string,
-    index: PropTypes.object,
-    user: PropTypes.object,
-    algorithm: PropTypes.string,
-    created_at: PropTypes.string,
-    ready: PropTypes.bool,
-    canModify: PropTypes.bool,
-    onClick: PropTypes.func,
-    onRemove: PropTypes.func
-};
 
 export default AnalysisItem;
