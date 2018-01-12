@@ -1,61 +1,52 @@
-/**
- * @license
- * The MIT License (MIT)
- * Copyright 2015 Government of Canada
- *
- * @author
- * Ian Boyes
- *
- * @exports Isolate
- */
-
 import React from "react";
-import { capitalize, find } from "lodash";
+import { capitalize } from "lodash";
 import { connect } from "react-redux";
-import { Badge, Label, Panel, Table, ListGroup } from "react-bootstrap";
-import { Icon, IDRow, ListGroupItem, NoneFound } from "../../../base";
-import { formatIsolateName, followDownload } from "../../../utils";
-import {
-    setIsolateAsDefault,
-    showEditIsolate,
-    showRemoveIsolate,
-    showAddSequence,
-    showEditSequence,
-    showRemoveSequence
-} from "../../actions";
-import Sequence from "./Sequence";
+import { Label, Panel, Table } from "react-bootstrap";
+
 import EditIsolate from "./EditIsolate";
+import IsolateSequences from "./Sequences";
 import RemoveIsolate from "./RemoveIsolate";
-import AddSequence from "./AddSequence";
-import EditSequence from "./EditSequence";
-import RemoveSequence from "./RemoveSequence";
+import { Icon, IDRow } from "../../../base";
+import { followDownload } from "../../../utils";
+import { setIsolateAsDefault, showEditIsolate, showRemoveIsolate } from "../../actions";
+
+const IsolateTable = ({ id, isDefault, isolateName, sourceName, sourceType }) => (
+    <Table bordered>
+        <tbody>
+            <tr>
+                <th className="col-md-3">Name</th>
+                <td className="col-md-9">{isolateName}</td>
+            </tr>
+            <tr>
+                <th>Source Type</th>
+                <td>{capitalize(sourceType)}</td>
+            </tr>
+            <tr>
+                <th>Source Name</th>
+                <td>{sourceName}</td>
+            </tr>
+            <tr>
+                <th>Default</th>
+                <td>
+                    <Label bsStyle={isDefault ? "success" : "default"}>
+                        {isDefault ? "Yes" : "No"}
+                    </Label>
+                </td>
+            </tr>
+            <IDRow id={id} />
+        </tbody>
+    </Table>
+);
 
 const IsolateDetail = (props) => {
 
-    const isolate = find(props.isolates, {id: props.activeIsolateId});
-
-    const isolateName = formatIsolateName(isolate);
+    const isolate = props.activeIsolate;
 
     const defaultIsolateLabel = (
         <Label bsStyle="info" style={{visibility: props.default ? "visible" : "hidden"}}>
             <Icon name="star" /> Default Isolate
         </Label>
     );
-
-    let sequenceComponents = isolate.sequences.map(sequence =>
-        <Sequence
-            key={sequence.id}
-            active={sequence.accession === props.activeSequenceId}
-            canModify={props.canModify}
-            showEditSequence={props.showEditSequence}
-            showRemoveSequence={props.showRemoveSequence}
-            {...sequence}
-        />
-    );
-
-    if (!sequenceComponents.length) {
-        sequenceComponents = <NoneFound noun="sequences" noListGroup />;
-    }
 
     let modifyIcons;
 
@@ -103,90 +94,36 @@ const IsolateDetail = (props) => {
             <RemoveIsolate
                 virusId={props.virusId}
                 isolateId={isolate.id}
-                isolateName={isolateName}
+                isolateName={isolate.name}
                 nextIsolateId={props.isolates.length ? props.isolates[0].id : null}
             />
 
-            <AddSequence
-                virusId={props.virusId}
-                isolateId={isolate.id}
-            />
-
-            <EditSequence
-                virusId={props.virusId}
-                isolateId={isolate.id}
-            />
-
-            <RemoveSequence
-                virusId={props.virusId}
-                isolateId={isolate.id}
-                isolateName={isolateName}
-            />
-
             <Panel>
-                <ListGroup fill>
-                    <ListGroupItem>
-                        <h5 style={{display: "flex", alignItems: "center", marginBottom: "15px"}}>
-                            <strong style={{flex: "1 0 auto"}}>{isolateName}</strong>
+                <h5 style={{display: "flex", alignItems: "center", marginBottom: "15px"}}>
+                    <strong style={{flex: "1 0 auto"}}>{isolate.name}</strong>
 
-                            {defaultIsolateLabel}
-                            {modifyIcons}
+                    {defaultIsolateLabel}
+                    {modifyIcons}
 
-                            <Icon
-                                name="download"
-                                tip="Download FASTA"
-                                style={{paddingLeft: "3px"}}
-                                onClick={() => followDownload(
-                                    `/download/viruses/${props.virusId}/isolates/${isolate.id}`
-                                )}
-                            />
-                        </h5>
+                    <Icon
+                        name="download"
+                        tip="Download FASTA"
+                        style={{paddingLeft: "3px"}}
+                        onClick={() => followDownload(
+                            `/download/viruses/${props.virusId}/isolates/${isolate.id}`
+                        )}
+                    />
+                </h5>
 
-                        <Table bordered>
-                            <tbody>
-                                <tr>
-                                    <th className="col-md-3">Name</th>
-                                    <td className="col-md-9">{isolateName}</td>
-                                </tr>
-                                <tr>
-                                    <th>Source Type</th>
-                                    <td>{capitalize(isolate.source_type)}</td>
-                                </tr>
-                                <tr>
-                                    <th>Source Name</th>
-                                    <td>{isolate.source_name}</td>
-                                </tr>
-                                <tr>
-                                    <th>Default</th>
-                                    <td>
-                                        <Label bsStyle={isolate.default ? "success" : "default"}>
-                                            {isolate.default ? "Yes" : "No"}
-                                        </Label>
-                                    </td>
-                                </tr>
-                                <IDRow id={isolate.id} />
-                            </tbody>
-                        </Table>
+                <IsolateTable
+                    id={isolate.id}
+                    isDefault={isolate.default}
+                    isolateName={isolate.name}
+                    sourceName={isolate.sourceName}
+                    sourceType={isolate.sourceType}
+                />
 
-                        <div style={{marginTop: "45px", display: "flex", alignItems: "center"}}>
-                            <strong style={{flex: "0 1 auto"}}>Sequences</strong>
-                            <span style={{flex: "1 0 auto", marginLeft: "5px"}}>
-                                <Badge>{isolate.sequences.length}</Badge>
-                            </span>
-                            {props.canModify ? (
-                                <Icon
-                                    name="new-entry"
-                                    bsStyle="primary"
-                                    tip="Add Sequence"
-                                    onClick={() => props.showAddSequence()}
-                                    pullRight
-                                />
-                            ) : null}
-                        </div>
-                    </ListGroupItem>
-
-                    {sequenceComponents}
-                </ListGroup>
+                <IsolateSequences />
             </Panel>
         </div>
     );
@@ -195,10 +132,10 @@ const IsolateDetail = (props) => {
 const mapStateToProps = state => ({
     isolates: state.viruses.detail.isolates,
     virusId: state.viruses.detail.id,
+    activeIsolate: state.viruses.activeIsolate,
     activeIsolateId: state.viruses.activeIsolateId,
     activeSequenceId: state.viruses.activeSequenceId,
     editing: state.viruses.editingIsolate,
-    editingSequence: state.viruses.editSequence,
     allowedSourceTypes: state.settings.data.allowed_source_types,
     restrictSourceTypes: state.settings.data.restrict_source_types,
     canModify: state.account.permissions.modify_virus
@@ -216,18 +153,6 @@ const mapDispatchToProps = (dispatch) => ({
 
     showRemoveIsolate: () => {
         dispatch(showRemoveIsolate());
-    },
-
-    showAddSequence: () => {
-        dispatch(showAddSequence());
-    },
-
-    showEditSequence: (sequenceId) => {
-        dispatch(showEditSequence(sequenceId));
-    },
-
-    showRemoveSequence: (sequenceId) => {
-        dispatch(showRemoveSequence(sequenceId));
     }
 
 });

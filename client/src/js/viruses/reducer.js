@@ -1,5 +1,6 @@
-import { some } from "lodash";
+import { find, some } from "lodash";
 
+import { formatIsolateName } from "../utils";
 import {
     WS_UPDATE_STATUS,
     FIND_VIRUSES,
@@ -17,7 +18,6 @@ import {
     REVERT,
     UPLOAD_IMPORT,
     SELECT_ISOLATE,
-    SELECT_SEQUENCE,
     SHOW_EDIT_VIRUS,
     SHOW_REMOVE_VIRUS,
     SHOW_ADD_ISOLATE,
@@ -43,7 +43,6 @@ const initialState = {
     editSequence: false,
     removeSequence: false,
     activeIsolateId: null,
-    activeSequenceId: null,
     createError: "",
     editError: "",
     importData: null
@@ -61,17 +60,33 @@ const hideVirusModal = state => ({
     removeSequence: false
 });
 
-const recalculateActiveIsolateId = (prevActiveIsolateId, nextDetail) => {
-    if (!nextDetail.isolates.length) {
-        return null;
+const getActiveIsolate = (state) => {
+    const isolates = state.detail.isolates;
+
+    if (isolates.length) {
+        const activeIsolate = find(isolates, {id: state.activeIsolateId}) || isolates[0];
+
+        return {
+            ...state,
+            activeIsolate: activeIsolate,
+            activeIsolateId: activeIsolate.id
+        };
     }
 
-    // No isolates before (activeIsolateId=null), now there is one.
-    if (prevActiveIsolateId === null || !some(nextDetail.isolates, {id: prevActiveIsolateId})) {
-        return nextDetail.isolates[0].id;
-    }
+    return {
+        ...state,
+        activeIsolate: null,
+        activeIsolateId: null
+    };
+};
 
-    return prevActiveIsolateId;
+const receiveVirus = (state, action) => {
+    const detail = {
+        ...action.data,
+        isolates: action.data.isolates.map(isolate => ({...isolate, name: formatIsolateName(isolate)}))
+    };
+
+    return getActiveIsolate({...state, detail});
 };
 
 export default function virusesReducer (state = initialState, action) {
@@ -91,21 +106,12 @@ export default function virusesReducer (state = initialState, action) {
         case FIND_VIRUSES.SUCCEEDED:
             return {...state, ...action.data};
 
-        case GET_VIRUS.REQUESTED:
-            return {...state, detail: null, activeIsolateId: null, activeSequenceId: null};
-
-        case GET_VIRUS.SUCCEEDED:
-            return {
-                ...state,
-                detail: action.data,
-                activeIsolateId: action.data.isolates.length ? action.data.isolates[0].id : null
-            };
-
         case CREATE_VIRUS.FAILED:
             return {...state, createError: action.error};
 
+        case GET_VIRUS.REQUESTED:
         case REMOVE_VIRUS.SUCCEEDED:
-            return {...state, detail: null, actionIsolateId: null, remove: false};
+            return hideVirusModal({...state, detail: null, activeIsolateId: null});
 
         case EDIT_VIRUS.FAILED:
             if (action.status === 409) {
@@ -114,27 +120,16 @@ export default function virusesReducer (state = initialState, action) {
 
             return state;
 
-        case ADD_ISOLATE.SUCCEEDED:
-            return hideVirusModal({
-                ...state,
-                detail: action.data,
-                activeIsolateId: recalculateActiveIsolateId(state.activeIsolateId, action.data)
-            });
-
-        case REMOVE_ISOLATE.SUCCEEDED:
-            return hideVirusModal({
-                ...state,
-                detail: action.data,
-                activeIsolateId: recalculateActiveIsolateId(state.activeIsolateId, action.data)
-            });
-
+        case GET_VIRUS.SUCCEEDED:
         case EDIT_VIRUS.SUCCEEDED:
         case EDIT_ISOLATE.SUCCEEDED:
         case ADD_SEQUENCE.SUCCEEDED:
         case EDIT_SEQUENCE.SUCCEEDED:
         case REMOVE_SEQUENCE.SUCCEEDED:
-        case SET_ISOLATE_AS_DEFAULT.SUCCEEDED: {
-            return hideVirusModal({...state, detail: action.data});
+        case SET_ISOLATE_AS_DEFAULT.SUCCEEDED:
+        case ADD_ISOLATE.SUCCEEDED:
+        case REMOVE_ISOLATE.SUCCEEDED: {
+            return hideVirusModal(receiveVirus(state, action));
         }
 
         case GET_VIRUS_HISTORY.REQUESTED:
@@ -144,21 +139,17 @@ export default function virusesReducer (state = initialState, action) {
             return {...state, detailHistory: action.data};
 
         case REVERT.SUCCEEDED:
-            return {
-                ...state,
-                detail: action.detail,
-                detailHistory: action.history,
-                activeIsolateId: recalculateActiveIsolateId(state.activeIsolateId, action.detail)
-            };
+            return {...receiveVirus(state, action), detailHistory: action.history};
 
         case UPLOAD_IMPORT.SUCCEEDED:
             return {...state, importData: {...action.data, inProgress: false}};
 
         case SELECT_ISOLATE:
-            return {...state, activeIsolateId: action.isolateId};
-
-        case SELECT_SEQUENCE:
-            return {...state, activeSequenceId: action.sequenceId};
+            return {
+                ...state,
+                activeIsolate: find(state.detail.isolates, {id: action.isolateId}),
+                activeIsolateId: action.isolateId
+            };
 
         case SHOW_EDIT_VIRUS:
             return {...state, edit: true, editError: ""};

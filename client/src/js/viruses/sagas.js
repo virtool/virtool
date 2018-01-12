@@ -93,7 +93,7 @@ export function* revert (action) {
         yield virusesAPI.revert(action);
         const virusResponse = yield virusesAPI.get(action);
         const historyResponse = yield virusesAPI.getHistory(action);
-        yield put({type: REVERT.SUCCEEDED, detail: virusResponse.body, history: historyResponse.body});
+        yield put({type: REVERT.SUCCEEDED, data: virusResponse.body, history: historyResponse.body});
     } catch (error) {
         yield put({type: REVERT.FAILED, error});
     }
