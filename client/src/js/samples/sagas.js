@@ -92,10 +92,6 @@ export function* getAnalysis (action) {
     yield apiCall(samplesAPI.getAnalysis, action, GET_ANALYSIS);
 }
 
-export function* getAnalysisWithPending (action) {
-    yield setPending(getAnalysis(action));
-}
-
 export function* analyze (action) {
     try {
         const response = yield samplesAPI.analyze(action);
@@ -121,14 +117,7 @@ export function* blastNuvs (action) {
 }
 
 export function* removeAnalysis (action) {
-    yield setPending(function* (action) {
-        try {
-            yield samplesAPI.removeAnalysis(action);
-            yield put({type: REMOVE_ANALYSIS.SUCCEEDED, id: action.analysisId});
-        } catch (error) {
-            yield putGenericError(REMOVE_ANALYSIS, error);
-        }
-    }, action);
+    yield apiCall(samplesAPI.removeAnalysis, action, REMOVE_ANALYSIS, {id: action.analysisId});
 }
 
 export function* watchSamples () {
@@ -145,7 +134,7 @@ export function* watchSamples () {
     yield takeEvery(UPDATE_SAMPLE_RIGHTS.REQUESTED, updateSampleRights);
     yield throttle(300, REMOVE_SAMPLE.REQUESTED, removeSample);
     yield takeLatest(FIND_ANALYSES.REQUESTED, findAnalyses);
-    yield takeLatest(GET_ANALYSIS.REQUESTED, getAnalysisWithPending);
+    yield takeLatest(GET_ANALYSIS.REQUESTED, getAnalysis);
     yield takeEvery(ANALYZE.REQUESTED, analyze);
     yield throttle(150, BLAST_NUVS.REQUESTED, blastNuvs);
     yield takeLatest(REMOVE_ANALYSIS.REQUESTED, removeAnalysis);

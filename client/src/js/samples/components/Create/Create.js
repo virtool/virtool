@@ -16,7 +16,7 @@ import {
 import ReadSelector from "./ReadSelector";
 import { findReadyHosts, createSample } from "../../actions";
 import { findFiles } from "../../../files/actions";
-import { Button, Flex, FlexItem, Icon, Input, LoadingPlaceholder } from "../../../base";
+import { Button, Icon, Input, LoadingPlaceholder } from "../../../base";
 import { routerLocationHasState } from "../../../utils";
 
 const getReadyHosts = (props) => (
@@ -108,12 +108,8 @@ class CreateSample extends React.Component {
         if (!hostComponents.length) {
             noHostsAlert = (
                 <Alert bsStyle="danger">
-                    <Flex alignItems="center">
-                        <Icon name="warning" />
-                        <FlexItem pad={5}>
-                            A host genome must be added to Virtool before samples can be created and analyzed.
-                        </FlexItem>
-                    </Flex>
+                    <Icon name="warning" /> A host genome must be added to Virtool before samples can be created and
+                    analyzed.
                 </Alert>
             );
         }

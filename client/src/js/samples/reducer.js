@@ -14,6 +14,18 @@ import {
     REMOVE_ANALYSIS
 } from "../actionTypes";
 
+const initialState = {
+    documents: null,
+    detail: null,
+    analyses: null,
+    analysisDetail: null,
+    showEdit: false,
+    showRemove: false,
+    editError: false,
+    reservedFiles: [],
+    readyHosts: null
+};
+
 const setNuvsBLAST = (state, analysisId, sequenceIndex, data = "ip") => {
     const analysisDetail = state.analysisDetail;
 
@@ -31,18 +43,6 @@ const setNuvsBLAST = (state, analysisId, sequenceIndex, data = "ip") => {
     }
 
     return state;
-};
-
-const initialState = {
-    documents: null,
-    detail: null,
-    analyses: null,
-    analysisDetail: null,
-    showEdit: false,
-    showRemove: false,
-    editError: false,
-    reservedFiles: [],
-    readyHosts: null
 };
 
 export default function samplesReducer (state = initialState, action) {
