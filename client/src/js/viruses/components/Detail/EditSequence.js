@@ -10,7 +10,6 @@
  */
 
 import React from "react";
-import PropTypes from "prop-types";
 import { find } from "lodash";
 import { connect } from "react-redux";
 import { Row, Col, Modal, FormGroup, FormControl, InputGroup, ControlLabel } from "react-bootstrap";
@@ -22,7 +21,7 @@ import { getGenbank } from "../../api";
 
 const getInitialState = (props) => {
     if (props.sequenceId) {
-        const isolate = find(props.detail.isolates, {id: props.isolateId});
+        const isolate = {...props.isolate};
         const sequence = find(isolate.sequences, {id: props.sequenceId});
 
         return {
@@ -47,15 +46,6 @@ class EditSequence extends React.Component {
         super(props);
         this.state = getInitialState(this.props);
     }
-
-    static propTypes = {
-        virusId: PropTypes.string,
-        isolateId: PropTypes.string,
-        sequenceId: PropTypes.oneOfType([PropTypes.bool, PropTypes.string]),
-        detail: PropTypes.object,
-        onHide: PropTypes.func,
-        onSave: PropTypes.func
-    };
 
     modalEnter = () => {
         this.setState(getInitialState(this.props));
@@ -174,8 +164,10 @@ class EditSequence extends React.Component {
 }
 
 const mapStateToProps = state => ({
+    detail: state.viruses.detail,
+    isolate: state.viruses.activeIsolate,
     sequenceId: state.viruses.editSequence,
-    detail: state.viruses.detail
+    virusId: state.viruses.detail.id
 });
 
 const mapDispatchToProps = dispatch => ({

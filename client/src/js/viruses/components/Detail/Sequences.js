@@ -52,10 +52,7 @@ const IsolateSequences = (props) => {
                 {sequenceComponents}
             </ListGroup>
 
-            <AddSequence
-                virusId={props.virusId}
-                isolateId={props.activeIsolateId}
-            />
+            <AddSequence />
 
             <EditSequence
                 virusId={props.virusId}
@@ -85,6 +82,7 @@ const mapStateToProps = (state) => {
     return {
         activeIsolateId,
         sequences,
+        virusId: state.viruses.detail.id,
         canModify: state.account.permissions.modify_virus,
         editing: state.viruses.editSequence,
         isolateName: formatIsolateName(activeIsolate),

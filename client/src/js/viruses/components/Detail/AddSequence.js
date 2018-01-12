@@ -10,7 +10,6 @@
  */
 
 import React from "react";
-import PropTypes from "prop-types";
 import { connect } from "react-redux";
 import { Row, Col, Modal, FormGroup, FormControl, InputGroup, ControlLabel, Popover, Overlay } from "react-bootstrap";
 import { ClipLoader } from "halogenium";
@@ -36,14 +35,6 @@ class AddSequence extends React.Component {
         super(props);
         this.state = getInitialState(this.props);
     }
-
-    static propTypes = {
-        virusId: PropTypes.string,
-        isolateId: PropTypes.string,
-        show: PropTypes.bool,
-        onHide: PropTypes.func,
-        onSave: PropTypes.func
-    };
 
     save = (e) => {
         e.preventDefault();
@@ -175,7 +166,9 @@ class AddSequence extends React.Component {
 }
 
 const mapStateToProps = state => ({
-    show: state.viruses.addSequence
+    show: state.viruses.addSequence,
+    virusId: state.viruses.detail.id,
+    isolateId: state.viruses.activeIsolateId
 });
 
 const mapDispatchToProps = dispatch => ({
