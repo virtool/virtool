@@ -27,11 +27,9 @@ export const filterUsers = (term) => ({
     term
 });
 
-export const createUser = (userId, password, forceReset) => ({
+export const createUser = (data) => ({
     type: CREATE_USER.REQUESTED,
-    userId,
-    password,
-    forceReset
+    ...data
 });
 
 export const setForceReset = (userId, enabled) => ({

@@ -18,12 +18,10 @@ function* listUsers (action) {
 }
 
 function* createUser (action) {
-    yield setPending(function* () {
-        yield apiCall(usersAPI.create, action, CREATE_USER);
+    yield setPending(apiCall(usersAPI.create, action, CREATE_USER));
 
-        // Close the create user modal and navigate to the new user.
-        yield put(push(`/settings/users/${action.userId}`, {state: {createUser: false}}));
-    });
+    // Close the create user modal and navigate to the new user.
+    yield put(push(`/settings/users/${action.userId}`, {state: {createUser: false}}));
 }
 
 function* setPassword (action) {

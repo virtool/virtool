@@ -41,6 +41,8 @@ const reducer = (state = initialState, action) => {
         }
 
         case CREATE_USER.SUCCEEDED:
+            return {...state, list: state.list.concat([action.data])};
+
         case SET_PASSWORD.SUCCEEDED:
         case SET_FORCE_RESET.SUCCEEDED:
         case SET_PRIMARY_GROUP.SUCCEEDED:
