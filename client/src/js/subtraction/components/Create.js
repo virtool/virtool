@@ -30,7 +30,7 @@ class CreateSubtraction extends React.Component {
 
     handleSubmit = (e) => {
         e.preventDefault();
-        this.props.onCreate(this.state.subtractionId, this.state.fileId);
+        this.props.onCreate(this.state);
     };
 
     render () {
@@ -113,7 +113,7 @@ const mapDispatchToProps = (dispatch) => ({
         dispatch(findFiles("subtraction"));
     },
 
-    onCreate: (subtractionId, fileId) => {
+    onCreate: ({ subtractionId, fileId }) => {
         dispatch(createSubtraction(subtractionId, fileId));
     }
 });
