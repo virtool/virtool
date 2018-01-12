@@ -1,5 +1,5 @@
 import { getLocation, LOCATION_CHANGE } from "react-router-redux";
-import { put, select, takeEvery, takeLatest, throttle } from "redux-saga/effects";
+import { select, takeEvery, takeLatest, throttle } from "redux-saga/effects";
 
 import * as jobsAPI from "./api";
 import { apiCall, apiFind, setPending } from "../sagaUtils";
@@ -48,7 +48,7 @@ export function* removeJob (action) {
 
 export function* clearJobs (action) {
     yield setPending(apiCall(jobsAPI.clear, action, REMOVE_JOB));
-    yield put({type: FIND_JOBS.REQUESTED});
+    yield apiCall(jobsAPI.find, {}, FIND_JOBS);
 }
 
 export function* getResources () {
