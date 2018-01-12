@@ -21,7 +21,6 @@ import { Flex, FlexItem, Icon, LoadingPlaceholder } from "../../../base";
 import IsolateEditor from "./Editor";
 import General from "./General";
 import AddIsolate from "./AddIsolate";
-import Schema from "./Schema";
 import History from "./History";
 import EditVirus from "./EditVirus";
 import RemoveVirus from "./RemoveVirus";
@@ -117,12 +116,6 @@ class VirusDetail extends React.Component {
                         </NavItem>
                     </LinkContainer>
 
-                    <LinkContainer to={`/viruses/${virusId}/schema`}>
-                        <NavItem>
-                            Schema
-                        </NavItem>
-                    </LinkContainer>
-
                     <LinkContainer to={`/viruses/${virusId}/history`}>
                         <NavItem>
                             History
@@ -136,7 +129,6 @@ class VirusDetail extends React.Component {
                 <Switch>
                     <Redirect from="/viruses/:virusId" to={`/viruses/${virusId}/virus`} exact />
                     <Route path="/viruses/:virusId/virus" component={VirusSection} />
-                    <Route path="/viruses/:virusId/schema" component={Schema} />
                     <Route path="/viruses/:virusId/history" component={History} />
                 </Switch>
             </div>
