@@ -7,6 +7,7 @@ import { LinkContainer } from "react-router-bootstrap";
 import { Nav, NavItem } from "react-bootstrap";
 
 import { getSample, showRemoveSample } from "../actions";
+import {getCanModify} from "../selectors";
 import { Flex, FlexItem, Icon, LoadingPlaceholder } from "../../base";
 import General from "./General";
 import Quality from "./Quality/Quality";
@@ -41,7 +42,7 @@ class SampleDetail extends React.Component {
         let editIcon;
         let removeIcon;
 
-        if (this.props.detail.canModify) {
+        if (this.props.canModify) {
             if (this.props.history.location.pathname.includes("general")) {
                 editIcon = (
                     <small style={{paddingLeft: "5px"}}>
@@ -92,11 +93,13 @@ class SampleDetail extends React.Component {
                     <LinkContainer to={`/samples/${sampleId}/analyses`}>
                         <NavItem>Analyses</NavItem>
                     </LinkContainer>
-                    <LinkContainer to={`/samples/${sampleId}/rights`}>
-                        <NavItem>
-                            <Icon name="key" />
-                        </NavItem>
-                    </LinkContainer>
+                    {this.props.canModify ? (
+                        <LinkContainer to={`/samples/${sampleId}/rights`}>
+                            <NavItem>
+                                <Icon name="key" />
+                            </NavItem>
+                        </LinkContainer>
+                    ) : null}
                 </Nav>
 
                 <Switch>
@@ -114,7 +117,8 @@ class SampleDetail extends React.Component {
 }
 
 const mapStateToProps = (state) => ({
-    detail: state.samples.detail
+    detail: state.samples.detail,
+    canModify: getCanModify(state)
 });
 
 const mapDispatchToProps = (dispatch) => ({

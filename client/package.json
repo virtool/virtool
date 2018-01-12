@@ -60,6 +60,7 @@
     "react-svg-gauge": "^1.0.4",
     "redux": "^3.6.0",
     "redux-saga": "^0.15.1",
+    "reselect": "^3.0.1",
     "style-loader": "^0.13.1",
     "superagent": "^3.5.2",
     "url-loader": "^0.5.7",
