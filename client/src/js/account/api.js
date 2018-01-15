@@ -71,7 +71,7 @@ export const getAPIKeys = () => (
  * @param permissions {object} the permissions to assign to the API key
  * @returns {promise}
  */
-export const createAPIKey = (name, permissions) => (
+export const createAPIKey = ({ name, permissions }) => (
     Request.post("/api/account/keys")
         .send({
             name,

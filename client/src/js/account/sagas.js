@@ -48,13 +48,8 @@ export function* getAPIKeys () {
 }
 
 export function* createAPIKey (action) {
-    try {
-        const response = yield accountAPI.createAPIKey(action.name, action.permissions);
-        action.callback(response.body.key);
-        yield put({type: GET_API_KEYS.REQUESTED});
-    } catch (error) {
-        yield put({type: CREATE_API_KEY.FAILED}, error);
-    }
+    yield apiCall(accountAPI.createAPIKey, action, CREATE_API_KEY);
+    yield getAPIKeys();
 }
 
 export function* updateAPIKey (action) {

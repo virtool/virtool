@@ -43,8 +43,6 @@ export class APIKey extends React.Component {
     };
 
     render () {
-        console.log(this.props);
-
         let lower;
         let closeButton;
 
