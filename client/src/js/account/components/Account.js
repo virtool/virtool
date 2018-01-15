@@ -7,7 +7,7 @@ import { Nav, NavItem } from "react-bootstrap";
 import { getAccount } from "../actions";
 import AccountGeneral from "./General";
 import AccountSettings from "./Settings";
-import APIKeys from "./API";
+import APIKeys from "./API/API";
 
 class Account extends React.Component {
 
