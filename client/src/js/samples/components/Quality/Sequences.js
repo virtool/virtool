@@ -1,31 +1,24 @@
-import { select } from "d3-selection";
 import { line } from "d3-shape";
 import { scaleLinear } from "d3-scale";
 import { axisBottom, axisLeft } from "d3-axis";
 import { max } from "lodash";
 import Numeral from "numeral";
+import { createSVG } from "../../chartUtils";
 
 const formatter = (number) => {
     number = number.toExponential().split("e");
     return Numeral(number[0]).format("0.0") + "E" + number[1].replace("+", "");
 };
 
-const height = 300;
-
-const margin = {
-    top: 20,
-    left: 60,
-    bottom: 60,
-    right: 20
-};
-
 const CreateSequencesChart = (element, data, baseWidth) => {
 
-    const width = baseWidth - margin.left - margin.right;
+    const svg = createSVG(element, baseWidth);
+
+    const width = baseWidth - svg.margin.right - svg.margin.left;
 
     // Set up scales.
     const y = scaleLinear()
-        .range([height, 0])
+        .range([svg.height, 0])
         .domain([0, max(data)]);
 
     const x = scaleLinear()
@@ -42,13 +35,6 @@ const CreateSequencesChart = (element, data, baseWidth) => {
         .x((d, i) => x(i))
         .y(d => y(d));
 
-    // Build SVG canvas.
-    const svg = select(element).append("svg")
-        .attr("width", width + margin.left + margin.right)
-        .attr("height", height + margin.top + margin.bottom)
-        .append("g")
-        .attr("transform", `translate(${margin.left}, ${margin.top})`);
-
     // Append the plot line to the SVG.
     svg.append("path")
         .attr("d", lineDrawer(data))
@@ -57,7 +43,7 @@ const CreateSequencesChart = (element, data, baseWidth) => {
     // Append a labelled x-axis to the SVG.
     svg.append("g")
         .attr("class", "x axis")
-        .attr("transform", `translate(0, ${height})`)
+        .attr("transform", `translate(0, ${svg.height})`)
         .call(xAxis)
         .append("text")
         .attr("y", "30")

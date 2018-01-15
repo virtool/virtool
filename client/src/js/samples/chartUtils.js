@@ -41,7 +41,6 @@ export const createSVG = (element, width) => {
         .attr("transform", `translate(${margin.left}, ${margin.top})`);
 
     svg.margin = margin;
-
     svg.height = height;
 
     return svg;
