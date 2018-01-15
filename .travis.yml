@@ -57,7 +57,7 @@ install:
 before_script:
 - sleep 15
 script:
-- pytest --loop uvloop --cov --cov-report xml -vv
+- pytest --loop uvloop --cov --cov-report xml
 - mkdir gh_build
 - mkdir gh_build/virtool
 - python setup.py build
