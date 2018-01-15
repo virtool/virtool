@@ -137,7 +137,7 @@ export const reportAPIError = (action) => (
     window.Raven.captureException(action.error)
 );
 
-export const routerLocationHasState = (state, key, value) => (
+export const routerLocationHasState = (state, key, value = true) => (
     !!state.router.location.state && state.router.location.state[key] === value
 );
 
