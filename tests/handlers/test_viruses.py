@@ -4,7 +4,7 @@ from copy import deepcopy
 import virtool.virus
 
 
-@pytest.mark.parametrize("term,verified,modified,per_page,page,d_range,meta", [
+@pytest.mark.parametrize("find,verified,modified,per_page,page,d_range,meta", [
     (None, None, False, None, None, range(0, 3), {
         "page": 1,
         "per_page": 15,
@@ -31,7 +31,7 @@ import virtool.virus
         "total_count": 3,
         "modified_count": 0,
     }),
-    # Test ``term`` query param and ``found_count`` response field.
+    # Test ``find`` query param and ``found_count`` response field.
     ("pvf", None, False, None, None, range(1, 2), {
         "page": 1,
         "per_page": 15,
@@ -68,7 +68,7 @@ import virtool.virus
         "modified_count": 1
     })
 ])
-async def test_find(term, verified, modified, per_page, page, d_range, meta, spawn_client):
+async def test_find(find, verified, modified, per_page, page, d_range, meta, spawn_client):
     client = await spawn_client()
 
     await client.db.viruses.insert_many([
@@ -107,8 +107,8 @@ async def test_find(term, verified, modified, per_page, page, d_range, meta, spa
     path = "/api/viruses"
     query = list()
 
-    if term is not None:
-        query.append("term={}".format(term))
+    if find is not None:
+        query.append("find={}".format(find))
 
     if verified is not None:
         query.append("verified={}".format(str(verified).lower()))
