@@ -38,9 +38,7 @@ export class CreateAPIKey extends React.Component {
     };
 
     handlePermissionChange = (key, value) => {
-        const update = {};
-        update[key] = value;
-        this.setState({permissions: {...this.state.permissions, ...update}});
+        this.setState({permissions: {...this.state.permissions, [key]: value}});
     };
 
     render () {
@@ -126,7 +124,8 @@ export class CreateAPIKey extends React.Component {
 }
 
 const mapStateToProps = (state) => ({
-    show: routerLocationHasState(state, "createAPIKey")
+    show: routerLocationHasState(state, "createAPIKey"),
+    permissions: state.account.permissions
 });
 
 const mapDispatchToProps = (dispatch) => ({

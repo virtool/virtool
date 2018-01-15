@@ -1,30 +1,25 @@
 import React from "react";
 import Moment from "moment";
-import PropTypes from "prop-types";
+import { connect } from "react-redux";
 import { isEqual, reduce } from "lodash";
 import { ButtonToolbar, Col, Row } from "react-bootstrap";
 
 import APIPermissions from "./Permissions";
 import { Button, ListGroupItem, RelativeTime } from "../../../base/index";
+import { removeAPIKey, updateAPIKey } from "../../actions";
 
-export default class APIKey extends React.Component {
+const getInitialState = (props) => ({
+    in: false,
+    changed: false,
+    permissions: props.apiKey.permissions
+});
+
+export class APIKey extends React.Component {
 
     constructor (props) {
         super(props);
-
-        this.state = {
-            in: false,
-            changed: false,
-            permissions: props.apiKey.permissions
-        };
+        this.state = getInitialState(props);
     }
-
-    static propTypes = {
-        apiKey: PropTypes.object,
-        permissions: PropTypes.object,
-        onRemove: PropTypes.func,
-        onUpdate: PropTypes.func
-    };
 
     toggleIn = () => {
         const state = {
@@ -38,10 +33,9 @@ export default class APIKey extends React.Component {
         this.setState(state);
     };
 
-    handlePermissionChange = (key, value) => {
-        const update = {};
-        update[key] = value;
-        const permissions = {...this.state.permissions, update};
+    onPermissionChange = (key, value) => {
+        const permissions = {...this.state.permissions, [key]: value};
+
         this.setState({
             changed: !isEqual(permissions, this.props.apiKey.permissions),
             permissions
@@ -49,6 +43,8 @@ export default class APIKey extends React.Component {
     };
 
     render () {
+        console.log(this.props);
+
         let lower;
         let closeButton;
 
@@ -61,7 +57,7 @@ export default class APIKey extends React.Component {
                                 style={{marginTop: "15px"}}
                                 userPermissions={this.props.permissions}
                                 keyPermissions={this.state.permissions}
-                                onChange={this.handlePermissionChange}
+                                onChange={this.onPermissionChange}
                             />
                         </Col>
                     </Row>
@@ -127,3 +123,19 @@ export default class APIKey extends React.Component {
         );
     }
 }
+
+const mapStateToProps = (state) => ({
+    permissions: state.account.permissions
+});
+
+const mapDispatchToProps = (dispatch) => ({
+    onUpdate: (keyId, permissions) => {
+        dispatch(updateAPIKey(keyId, permissions));
+    },
+
+    onRemove: (keyId) => {
+        dispatch(removeAPIKey(keyId));
+    }
+});
+
+export default connect(mapStateToProps, mapDispatchToProps)(APIKey);

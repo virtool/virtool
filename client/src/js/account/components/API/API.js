@@ -6,7 +6,7 @@ import { ListGroup } from "react-bootstrap";
 
 import APIKey from "./Key";
 import CreateAPIKey from "./Create";
-import { getAPIKeys, createAPIKey, updateAPIKey, removeAPIKey } from "../../actions";
+import { getAPIKeys, createAPIKey } from "../../actions";
 import { Button, Icon, Flex, FlexItem, ListGroupItem } from "../../../base/index";
 
 class APIKeys extends React.Component {
@@ -29,9 +29,6 @@ class APIKeys extends React.Component {
             <APIKey
                 key={apiKey.id}
                 apiKey={apiKey}
-                permissions={this.props.permissions}
-                onUpdate={this.props.onUpdate}
-                onRemove={this.props.onRemove}
             />
         );
 
@@ -80,8 +77,7 @@ class APIKeys extends React.Component {
 }
 
 const mapStateToProps = (state) => ({
-    apiKeys: state.account.apiKeys,
-    permissions: state.account.permissions
+    apiKeys: state.account.apiKeys
 });
 
 const mapDispatchToProps = (dispatch) => ({
@@ -92,14 +88,6 @@ const mapDispatchToProps = (dispatch) => ({
 
     onCreate: (name, permissions, callback) => {
         dispatch(createAPIKey(name, permissions, callback));
-    },
-
-    onUpdate: (keyId, permissions) => {
-        dispatch(updateAPIKey(keyId, permissions));
-    },
-
-    onRemove: (keyId) => {
-        dispatch(removeAPIKey(keyId));
     }
 
 });
