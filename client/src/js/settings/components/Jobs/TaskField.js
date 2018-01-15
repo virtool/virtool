@@ -76,7 +76,7 @@ export default class TaskField extends React.PureComponent {
                         className="form-control"
                         value={this.state.value}
                         onBlur={this.handleBlur}
-                        onChange={(event) => this.handleChange(event)}
+                        onChange={this.handleChange}
                         disabled={this.state.pending || this.props.readOnly}
                     />
                     {feedbackIcon}

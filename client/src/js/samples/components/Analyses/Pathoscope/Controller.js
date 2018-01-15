@@ -40,8 +40,8 @@ export default class PathoscopeController extends React.Component {
         });
     };
 
-    setSortKey = (event) => {
-        this.setState({sortKey: event.target.value});
+    setSortKey = (e) => {
+        this.setState({sortKey: e.target.value});
     };
 
     toggleSortDescending = () => {

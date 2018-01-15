@@ -35,8 +35,8 @@ export default class PathoscopeIsolate extends React.Component {
         this.chartNode.scrollLeft = scrollLeft;
     };
 
-    handleScroll = (event) => {
-        this.props.setScroll(this.props.virusId, event.target.scrollLeft);
+    handleScroll = (e) => {
+        this.props.setScroll(this.props.virusId, e.target.scrollLeft);
     };
 
     render () {

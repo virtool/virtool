@@ -47,8 +47,8 @@ export default function WSConnection (dispatch) {
 
         this.connection = new window.WebSocket(`${protocol}://${window.location.host}/ws`);
 
-        this.connection.onmessage = (event) => {
-            this.handle(JSON.parse(event.data));
+        this.connection.onmessage = (e) => {
+            this.handle(JSON.parse(e.data));
         };
 
         this.connection.onclose = () => {

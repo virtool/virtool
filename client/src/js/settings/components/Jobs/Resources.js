@@ -21,13 +21,13 @@ const Resources = (props) => (
                 <InputSave
                     label="CPU Limit"
                     type="number"
-                    onSave={(event) => props.onUpdateProc(event.value)}
+                    onSave={(e) => props.onUpdateProc(e.value)}
                     initialValue={props.proc}
                 />
                 <InputSave
                     label="Memory Limit (GB)"
                     type="number"
-                    onSave={(event) => props.onUpdateMem(event.value)}
+                    onSave={(e) => props.onUpdateMem(e.value)}
                     initialValue={props.mem}
                 />
             </Panel>
