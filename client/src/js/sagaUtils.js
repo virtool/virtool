@@ -74,10 +74,13 @@ export function* pushHistoryState (update) {
  * @param error {object} the HTTP error from Superagent
  */
 export function* putGenericError (actionType, error) {
+    const { body, status } = error.response;
+
     yield put({
         type: actionType.FAILED,
-        status: error.response.status,
-        ...error.response.body.message
+        message: body.message,
+        error,
+        status
     });
 }
 

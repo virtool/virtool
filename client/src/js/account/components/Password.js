@@ -29,7 +29,7 @@ class ChangePassword extends React.Component {
         }
     }
 
-    handleSubmit = (e) => {
+    onSubmit = (e) => {
         e.preventDefault();
 
         const errors = [];
@@ -37,7 +37,7 @@ class ChangePassword extends React.Component {
         const minLength = this.props.settings.minimum_password_length;
 
         if (this.state.confirmPassword.length < minLength || this.state.newPassword.length < minLength) {
-            errors.push(`Password must be contain least ${minLength} characters`);
+            errors.push(`Password must contain at least ${minLength} characters`);
         }
 
         if (this.state.confirmPassword !== this.state.newPassword) {
@@ -50,9 +50,10 @@ class ChangePassword extends React.Component {
 
         // Set state to show that the user attempted to submit the form.
         this.props.onChangePassword(this.state.oldPassword, this.state.newPassword, this.state.confirmPassword);
-    }
+    };
 
     render () {
+
         if (!this.props.settings) {
             return <div />;
         }
@@ -73,7 +74,7 @@ class ChangePassword extends React.Component {
 
         return (
             <Panel header="Password">
-                <form onSubmit={this.handleSubmit}>
+                <form onSubmit={this.onSubmit}>
                     <Input
                         label="Old Password"
                         type="password"

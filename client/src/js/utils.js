@@ -133,6 +133,10 @@ export const getTaskDisplayName = (taskName) => (
     get(taskDisplayNames, taskName, startCase(taskName))
 );
 
+export const reportAPIError = (action) => (
+    window.Raven.captureException(action.error)
+);
+
 export const routerLocationHasState = (state, key, value) => (
     !!state.router.location.state && state.router.location.state[key] === value
 );

@@ -4,6 +4,7 @@
  * @module account/reducer
  */
 import { GET_ACCOUNT, UPDATE_ACCOUNT_SETTINGS, CHANGE_ACCOUNT_PASSWORD, GET_API_KEYS } from "../actionTypes";
+import { reportAPIError } from "../utils";
 
 /**
  * The state that should initially be stored.
@@ -38,11 +39,11 @@ export default function accountReducer (state = initialState, action) {
             return {...state, oldPasswordError: false};
 
         case CHANGE_ACCOUNT_PASSWORD.FAILED:
-            if (action.message === "Invalid old password") {
+            if (action.message === "Invalid old password.") {
                 return {...state, oldPasswordError: true};
             }
 
-            return state;
+            return reportAPIError(action);
 
         case GET_API_KEYS.SUCCEEDED:
             return {...state, apiKeys: action.data};
