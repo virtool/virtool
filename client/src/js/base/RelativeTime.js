@@ -1,46 +1,32 @@
-/**
- * @license
- * The MIT License (MIT)
- * Copyright 2015 Government of Canada
- *
- * @author
- * Ian Boyes
- *
- * @exports RelativeTime
- */
-
 import React from "react";
-import PropTypes from "prop-types";
 import Moment from "moment";
-import { includes } from "lodash";
+import PropTypes from "prop-types";
+
+window.relativeTimeCallbacks = [];
+
+window.setInterval(1000, () => {
+    window.relativeTimeCallbacks.forEach(callback => callback());
+});
 
 /**
- * Renders a timestamp into a readable relative time (eg. 2 hours ago). On mount it sets an interval that updates the
- * displayed time every second. This allows the relative time to be constantly accurate if the component is mounted
- * for a longer span of time.
+ * Shows the passed time prop relative to the current time (eg. 3 days ago). The relative time string is updates
+ * automatically as time passes.
  */
 export class RelativeTime extends React.Component {
 
     constructor (props) {
         super(props);
-
         this.state = {
             timeString: this.getTimeString()
-        }
+        };
     }
 
     static propTypes = {
-        time: PropTypes.string.isRequired,
-        em: PropTypes.bool
+        time: PropTypes.string.isRequired
     };
 
-    static defaultProps = {
-        em: false
-    };
-
-    componentDidMount () {
-        // Start the update interval when the component mounts.
-        this.interval = window.setInterval(this.update, 1000);
+    componentWillMount () {
+        window.relativeTimeCallbacks.push(this.update);
     }
 
     componentWillReceiveProps (nextProps) {
@@ -62,8 +48,11 @@ export class RelativeTime extends React.Component {
     }
 
     componentWillUnmount () {
-        // Clear the interval when the component unmounts.
-        window.clearInterval(this.interval);
+        const index = window.relativeTimeCallbacks.indexOf(this.update);
+
+        if (index !== -1) {
+            window.relativeTimeCallbacks.splice(index, 1);
+        }
     }
 
     getTimeString = () => {
@@ -73,24 +62,18 @@ export class RelativeTime extends React.Component {
         // It is possible that the relative time could be in the future if the browser time lags behind the server time.
         // If this is the case the string will contain the substring 'in a'. If this substring is present, return the
         // alternative time string 'just now'.
-        return includes(timeString, "in a") || includes(timeString, "a few") ? "just now": timeString;
+        return timeString.includes("in a") || timeString.includes("a few") ? "just now" : timeString;
     };
 
     update = () => {
         const newTimeString = this.getTimeString();
 
         if (newTimeString !== this.state.timeString) {
-            this.setState({
-                timeString: newTimeString
-            });
+            this.setState({timeString: newTimeString});
         }
     };
 
     render () {
-        return (
-            <span style={this.props.em ? {fontStyle: "italic"}: null}>
-                {this.state.timeString}
-            </span>
-        );
+        return <span>{this.state.timeString}</span>;
     }
 }

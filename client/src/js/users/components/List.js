@@ -17,7 +17,7 @@ import { LinkContainer } from "react-router-bootstrap";
 import { ListGroup, ListGroupItem } from "react-bootstrap";
 
 import { setPrimaryGroup } from "../actions";
-import { Flex, FlexItem ,Identicon, Input } from "../../base";
+import { Flex, FlexItem, Identicon, Input } from "../../base";
 import Password from "./Password";
 import UserPermissions from "./Permissions";
 import UserGroups from "./Groups";
@@ -30,7 +30,7 @@ const UserEntry = (props) => {
             <button type="button" className="close" onClick={props.onClose}>
                 <span>×</span>
             </button>
-        )
+        );
     }
 
 
@@ -114,24 +114,22 @@ const UsersList = (props) => {
     );
 };
 
-const mapStateToProps = (state) => {
-    return {
-        users: state.users.list,
-        filter: state.users.filter
-    };
-};
+const mapStateToProps = state => ({
+    users: state.users.list,
+    filter: state.users.filter
+});
 
-const mapDispatchToProps = (dispatch) => {
-    return {
-        onClose: () => {
-            dispatch(push("/settings/users"));
-        },
+const mapDispatchToProps = dispatch => ({
 
-        onSetPrimaryGroup: (userId, groupId) => {
-            dispatch(setPrimaryGroup(userId, groupId));
-        }
-    };
-};
+    onClose: () => {
+        dispatch(push("/settings/users"));
+    },
+
+    onSetPrimaryGroup: (userId, groupId) => {
+        dispatch(setPrimaryGroup(userId, groupId));
+    }
+
+});
 
 const Container = connect(mapStateToProps, mapDispatchToProps)(UsersList);
 

@@ -1,30 +1,17 @@
-/**
- * @license
- * The MIT License (MIT)
- * Copyright 2015 Government of Canada
- *
- * @author
- * Ian Boyes
- *
- * @exports IsolateAdd
- */
-
 import React from "react";
 import { get } from "lodash";
 import { push } from "react-router-redux";
 import { connect } from "react-redux";
-import { Row, Col, Modal, FormGroup, ControlLabel, FormControl } from "react-bootstrap";
+import { Row, Col, Modal } from "react-bootstrap";
 
 import { editSample } from "../actions";
-import { Icon, Button } from "../../base";
+import { Button, Icon, Input } from "../../base";
 
-const getInitialState = (props) => {
-    return {
-        name: props.name || "",
-        isolate: props.isolate || "",
-        host: props.host || "",
-    };
-};
+const getInitialState = (props) => ({
+    name: props.name || "",
+    isolate: props.isolate || "",
+    host: props.host || ""
+});
 
 class EditSample extends React.Component {
 
@@ -34,11 +21,11 @@ class EditSample extends React.Component {
     }
 
     modalEnter = () => {
-        this.setState(getInitialState(this.props))
+        this.setState(getInitialState(this.props));
     };
 
-    handleSubmit = (event) => {
-        event.preventDefault();
+    handleSubmit = (e) => {
+        e.preventDefault();
         this.props.onEdit(this.props.id, this.state);
     };
 
@@ -63,34 +50,25 @@ class EditSample extends React.Component {
                     <Modal.Body>
                         <Row>
                             <Col xs={12}>
-                                <FormGroup>
-                                    <ControlLabel>Name</ControlLabel>
-                                    <FormControl
-                                        type="text"
-                                        value={this.state.name}
-                                        onChange={(e) => this.setState({name: e.target.value})}
-                                    />
-                                </FormGroup>
+                                <Input
+                                    label="Name"
+                                    value={this.state.name}
+                                    onChange={(e) => this.setState({name: e.target.value})}
+                                />
                             </Col>
                             <Col xs={12} md={6}>
-                                <FormGroup>
-                                    <ControlLabel>Isolate</ControlLabel>
-                                    <FormControl
-                                        type="text"
-                                        value={this.state.isolate}
-                                        onChange={(e) => this.setState({isolate: e.target.value})}
-                                    />
-                                </FormGroup>
+                                <Input
+                                    label="Isolate"
+                                    value={this.state.isolate}
+                                    onChange={(e) => this.setState({isolate: e.target.value})}
+                                />
                             </Col>
                             <Col xs={12} md={6}>
-                                <FormGroup>
-                                    <ControlLabel>Host</ControlLabel>
-                                    <FormControl
-                                        type="text"
-                                        value={this.state.host}
-                                        onChange={(e) => this.setState({host: e.target.value})}
-                                    />
-                                </FormGroup>
+                                <Input
+                                    label="Host"
+                                    value={this.state.host}
+                                    onChange={(e) => this.setState({host: e.target.value})}
+                                />
                             </Col>
                         </Row>
 
@@ -108,25 +86,23 @@ class EditSample extends React.Component {
     }
 }
 
-const mapStateToProps = (state) => {
-    return {
-        ...state.samples.detail,
-        show: get(state.router.location.state, "editSample", false),
-        error: state.samples.editError
-    };
-};
+const mapStateToProps = (state) => ({
+    ...state.samples.detail,
+    show: get(state.router.location.state, "editSample", false),
+    error: state.samples.editError
+});
 
-const mapDispatchToProps = (dispatch) => {
-    return {
-        onHide: () => {
-            dispatch(push({state: {showEdit: false}}));
-        },
+const mapDispatchToProps = (dispatch) => ({
 
-        onEdit: (sampleId, update) => {
-            dispatch(editSample(sampleId, update));
-        }
-    };
-};
+    onHide: () => {
+        dispatch(push({state: {showEdit: false}}));
+    },
+
+    onEdit: (sampleId, update) => {
+        dispatch(editSample(sampleId, update));
+    }
+
+});
 
 const Container = connect(mapStateToProps, mapDispatchToProps)(EditSample);
 

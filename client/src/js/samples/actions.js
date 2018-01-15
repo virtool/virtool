@@ -1,18 +1,9 @@
-/**
- *
- *
- * @copyright 2017 Government of Canada
- * @license MIT
- * @author igboyes
- *
- */
-
+import { simpleActionCreator } from "../utils";
 import {
     WS_UPDATE_SAMPLE,
     WS_REMOVE_SAMPLE,
     WS_UPDATE_ANALYSIS,
     WS_REMOVE_ANALYSIS,
-    FIND_SAMPLES,
     FIND_READY_HOSTS,
     GET_SAMPLE,
     CREATE_SAMPLE,
@@ -29,143 +20,93 @@ import {
     HIDE_SAMPLE_MODAL
 } from "../actionTypes";
 
-export const wsUpdateSample = (update) => {
-    return {
-        type: WS_UPDATE_SAMPLE,
-        update
-    };
-};
+export const wsUpdateSample = (update) => ({
+    type: WS_UPDATE_SAMPLE,
+    update
+});
 
-export const wsRemoveSample = (removed) => {
-    return {
-        type: WS_REMOVE_SAMPLE,
-        removed
-    };
-};
+export const wsRemoveSample = (removed) => ({
+    type: WS_REMOVE_SAMPLE,
+    removed
+});
 
-export const wsUpdateAnalysis = (update) => {
-    return {
-        type: WS_UPDATE_ANALYSIS,
-        update
-    };
-};
+export const wsUpdateAnalysis = (update) => ({
+    type: WS_UPDATE_ANALYSIS,
+    update
+});
 
-export const wsRemoveAnalysis = (removed) => {
-    return {
-        type: WS_REMOVE_ANALYSIS,
-        removed
-    };
-};
+export const wsRemoveAnalysis = (removed) => ({
+    type: WS_REMOVE_ANALYSIS,
+    removed
+});
 
-export const findSamples = (term, page) => {
-    return {
-        type: FIND_SAMPLES.REQUESTED,
-        term,
-        page
-    };
-};
+export const findReadyHosts = simpleActionCreator(FIND_READY_HOSTS.REQUESTED);
 
-export const findReadyHosts = () => {
-    return {
-        type: FIND_READY_HOSTS.REQUESTED
-    };
-};
+export const getSample = (sampleId) => ({
+    type: GET_SAMPLE.REQUESTED,
+    sampleId
+});
 
-export const getSample = (sampleId) => {
-    return {
-        type: GET_SAMPLE.REQUESTED,
-        sampleId: sampleId
-    }
-};
+export const createSample = (name, isolate, host, locale, subtraction, files) => ({
+    type: CREATE_SAMPLE.REQUESTED,
+    name,
+    isolate,
+    host,
+    locale,
+    subtraction,
+    files
+});
 
-export const createSample = (name, isolate, host, locale, subtraction, files) => {
-    return {
-        type: CREATE_SAMPLE.REQUESTED,
-        name,
-        isolate,
-        host,
-        locale,
-        subtraction,
-        files
-    };
-};
+export const editSample = (sampleId, update) => ({
+    type: UPDATE_SAMPLE.REQUESTED,
+    sampleId,
+    update
+});
 
-export const editSample = (sampleId, update) => {
-    return {
-        type: UPDATE_SAMPLE.REQUESTED,
-        sampleId,
-        update
-    };
-};
+export const updateSampleGroup = (sampleId, groupId) => ({
+    type: UPDATE_SAMPLE_GROUP.REQUESTED,
+    sampleId,
+    groupId
+});
 
-export const updateSampleGroup = (sampleId, groupId) => {
-    return {
-        type: UPDATE_SAMPLE_GROUP.REQUESTED,
-        sampleId,
-        groupId
-    };
-};
+export const updateSampleRights = (sampleId, update) => ({
+    type: UPDATE_SAMPLE_RIGHTS.REQUESTED,
+    sampleId,
+    update
+});
 
-export const updateSampleRights = (sampleId, update) => {
-    return {
-        type: UPDATE_SAMPLE_RIGHTS.REQUESTED,
-        sampleId,
-        update
-    };
-};
+export const removeSample = (sampleId) => ({
+    type: REMOVE_SAMPLE.REQUESTED,
+    sampleId
+});
 
-export const removeSample = (sampleId) => {
-    return {
-        type: REMOVE_SAMPLE.REQUESTED,
-        sampleId
-    };
-};
+export const showRemoveSample = simpleActionCreator(SHOW_REMOVE_SAMPLE);
 
-export const showRemoveSample = () => {
-    return {
-        type: SHOW_REMOVE_SAMPLE
-    };
-};
+export const hideSampleModal = simpleActionCreator(HIDE_SAMPLE_MODAL);
 
-export const hideSampleModal = () => {
-    return {
-        type: HIDE_SAMPLE_MODAL
-    };
-};
+export const findAnalyses = (sampleId) => ({
+    type: FIND_ANALYSES.REQUESTED,
+    sampleId
+});
 
-export const findAnalyses = (sampleId) => {
-    return {
-        type: FIND_ANALYSES.REQUESTED,
-        sampleId
-    };
-};
+export const getAnalysis = (analysisId) => ({
+    type: GET_ANALYSIS.REQUESTED,
+    analysisId
+});
 
-export const getAnalysis = (analysisId) => {
-    return {
-        type: GET_ANALYSIS.REQUESTED,
-        analysisId
-    };
-};
+export const analyze = (sampleId, algorithm) => ({
+    type: ANALYZE.REQUESTED,
+    sampleId,
+    algorithm
+});
 
-export const analyze = (sampleId, algorithm) => {
-    return {
-        type: ANALYZE.REQUESTED,
-        sampleId,
-        algorithm
-    };
-};
+export const blastNuvs = (analysisId, sequenceIndex) => ({
+    type: BLAST_NUVS.REQUESTED,
+    analysisId,
+    sequenceIndex
+});
 
-export const blastNuvs = (analysisId, sequenceIndex) => {
-    return {
-        type: BLAST_NUVS.REQUESTED,
-        analysisId,
-        sequenceIndex
-    };
-};
-
-export const removeAnalysis = (analysisId) => {
-    return {
-        type: REMOVE_ANALYSIS.REQUESTED,
-        analysisId
-    };
-};
+export const removeAnalysis = (analysisId) => ({
+    type: REMOVE_ANALYSIS.REQUESTED,
+    analysisId
+});

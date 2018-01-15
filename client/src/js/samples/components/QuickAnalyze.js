@@ -41,8 +41,8 @@ class QuickAnalyze extends React.Component {
         this.setState(getInitialState(this.props));
     };
 
-    handleSubmit = (event) => {
-        event.preventDefault();
+    handleSubmit = (e) => {
+        e.preventDefault();
         this.props.onAnalyze({id: this.props.id, ...this.state});
     };
 
@@ -90,29 +90,27 @@ class QuickAnalyze extends React.Component {
     }
 }
 
-const mapStateToProps = (state) => {
-    return {
-        algorithm: state.account.settings.quick_analyze_algorithm
-    };
-};
+const mapStateToProps = (state) => ({
+    algorithm: state.account.settings.quick_analyze_algorithm
+});
 
-const mapDispatchToProps = (dispatch) => {
-    return {
-        onAnalyze: ({ id, algorithm, useAsDefault, skipQuickAnalyzeDialog }) => {
-            dispatch(analyze(id, algorithm));
+const mapDispatchToProps = (dispatch) => ({
 
-            let settingsUpdate = {
-                skip_quick_analyze_dialog: skipQuickAnalyzeDialog
-            };
+    onAnalyze: ({ id, algorithm, useAsDefault, skipQuickAnalyzeDialog }) => {
+        dispatch(analyze(id, algorithm));
 
-            if (useAsDefault) {
-                settingsUpdate["quick_analyze_algorithm"] = algorithm;
-            }
+        const settingsUpdate = {
+            skip_quick_analyze_dialog: skipQuickAnalyzeDialog
+        };
 
-            dispatch(updateAccountSettings(settingsUpdate));
+        if (useAsDefault) {
+            settingsUpdate.quick_analyze_algorithm = algorithm;
         }
-    };
-};
+
+        dispatch(updateAccountSettings(settingsUpdate));
+    }
+
+});
 
 const Container = connect(mapStateToProps, mapDispatchToProps)(QuickAnalyze);
 

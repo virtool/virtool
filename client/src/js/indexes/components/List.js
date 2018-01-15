@@ -1,20 +1,10 @@
-/**
- * @license
- * The MIT License (MIT)
- * Copyright 2015 Government of Canada
- *
- * @author
- * Ian Boyes
- *
- * @exports Index
- */
-
 import React from "react";
+import { LinkContainer } from "react-router-bootstrap";
 import { connect } from "react-redux";
-import { Alert, Badge } from "react-bootstrap";
+import { Alert } from "react-bootstrap";
 
-import { Button, Flex, FlexItem, Icon, ListGroupItem, PageHint } from "../../base";
-import { findIndexes, showRebuild } from "../actions";
+import { Button, Flex, FlexItem, Icon, LoadingPlaceholder, NoneFound, ViewHeader } from "../../base";
+import { findIndexes } from "../actions";
 import IndexEntry from "./Entry";
 import RebuildIndex from "./Rebuild";
 
@@ -27,12 +17,12 @@ class IndexesList extends React.Component {
     render () {
 
         if (this.props.documents === null) {
-            return <div />;
+            return <LoadingPlaceholder />;
         }
 
         let content;
 
-        if (this.props.totalVirusCount > 0) {
+        if (this.props.total_virus_count) {
             // Set to true when a ready index has been seen when mapping through the index documents. Used to mark only
             // the newest ready index with a checkmark in the index list.
             let haveSeenReady = false;
@@ -45,25 +35,23 @@ class IndexesList extends React.Component {
                 return entry;
             });
 
-            if (!indexComponents.length) {
-                indexComponents = (
-                    <ListGroupItem className="text-center">
-                        <p><Icon name="info" /> No indexes have been built</p>
-                    </ListGroupItem>
-                );
+            if (!this.props.documents.length) {
+                indexComponents = <NoneFound noun="indexes" noListGroup />;
             }
 
             let alert;
 
-            if (this.props.modifiedCount) {
+            if (this.props.modified_virus_count) {
                 let button;
 
                 if (this.props.canRebuild) {
                     button = (
                         <FlexItem pad={20}>
-                            <Button bsStyle="warning" icon="hammer" onClick={this.props.showRebuild} pullRight>
-                                Rebuild
-                            </Button>
+                            <LinkContainer to={{state: {rebuild: true}}}>
+                                <Button bsStyle="warning" icon="hammer" pullRight>
+                                    Rebuild
+                                </Button>
+                            </LinkContainer>
                         </FlexItem>
                     );
                 }
@@ -112,20 +100,13 @@ class IndexesList extends React.Component {
 
         return (
             <div>
-                <h3 className="view-header">
-                    <Flex alignItems="flex-end">
-                        <FlexItem grow={0} shrink={0}>
-                            <strong>Virus Indexes</strong> <Badge>{this.props.totalCount}</Badge>
-                        </FlexItem>
-                        <FlexItem grow={1} shrink={0}>
-                            <PageHint
-                                page={this.props.page}
-                                count={this.props.foundCount}
-                                totalCount={this.props.totalCount}
-                            />
-                        </FlexItem>
-                    </Flex>
-                </h3>
+                <ViewHeader
+                    title="Virus Indexes"
+                    page={this.props.page}
+                    count={this.props.documents.length}
+                    foundCount={this.props.found_count}
+                    totalCount={this.props.total_count}
+                />
 
                 {content}
             </div>
@@ -133,24 +114,18 @@ class IndexesList extends React.Component {
     }
 }
 
-const mapStateToProps = (state) => {
-    return {
-        ...state.indexes,
-        canRebuild: state.account.permissions.rebuild_index
-    };
-};
+const mapStateToProps = (state) => ({
+    ...state.indexes,
+    canRebuild: state.account.permissions.rebuild_index
+});
 
-const mapDispatchToProps = (dispatch) => {
-    return {
-        onFind: () => {
-            dispatch(findIndexes());
-        },
+const mapDispatchToProps = (dispatch) => ({
 
-        showRebuild: () => {
-            dispatch(showRebuild());
-        }
-    };
-};
+    onFind: () => {
+        dispatch(findIndexes());
+    }
+
+});
 
 const Container = connect(mapStateToProps, mapDispatchToProps)(IndexesList);
 

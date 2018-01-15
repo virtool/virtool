@@ -1,14 +1,3 @@
-/**
- * @license
- * The MIT License (MIT)
- * Copyright 2015 Government of Canada
- *
- * @author
- * Ian Boyes
- *
- * @exports JobOptions
- */
-
 import React from "react";
 import { connect } from "react-redux";
 import { Row, Col, ListGroup, Panel } from "react-bootstrap";
@@ -17,7 +6,13 @@ import { updateSetting } from "../../actions";
 import { Flex, FlexItem, ListGroupItem, Icon } from "../../../base";
 import Task from "./Task";
 
-const taskNames = ["create_sample", "rebuild_index", "create_subtraction", "pathoscope_bowtie", "nuvs"];
+const taskNames = [
+    "create_sample",
+    "rebuild_index",
+    "create_subtraction",
+    "pathoscope_bowtie",
+    "nuvs"
+];
 
 const TasksFooter = () => (
     <small>
@@ -40,10 +35,6 @@ const TasksFooter = () => (
     </small>
 );
 
-/**
- * A component the contains child components that modify options for resource limits on the server and on specific
- * tasks.
- */
 const TaskLimits = (props) => {
 
     const taskComponents = taskNames.map(taskPrefix =>
@@ -84,7 +75,7 @@ const TaskLimits = (props) => {
 };
 
 const mapStateToProps = (state) => {
-    let limits = {};
+    const limits = {};
 
     taskNames.forEach(taskName => {
         limits[taskName] = {
@@ -94,18 +85,16 @@ const mapStateToProps = (state) => {
         };
     });
 
-    return {
-        limits: limits
-    };
+    return {limits};
 };
 
-const mapDispatchToProps = (dispatch) => {
-    return {
-        onChangeLimit: (taskPrefix, key, value) => {
-            dispatch(updateSetting(`${taskPrefix}_${key}`, value));
-        }
+const mapDispatchToProps = (dispatch) => ({
+
+    onChangeLimit: (taskPrefix, key, value) => {
+        dispatch(updateSetting(`${taskPrefix}_${key}`, value));
     }
-};
+
+});
 
 const Container = connect(mapStateToProps, mapDispatchToProps)(TaskLimits);
 

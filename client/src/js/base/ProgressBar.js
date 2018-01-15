@@ -1,21 +1,12 @@
-/**
- * @license
- * The MIT License (MIT)
- * Copyright 2015 Government of Canada
- *
- * @author
- * Ian Boyes
- *
- * @exports ProgressBar, AutoProgressBar
- *
- */
-
 import React from "react";
 import PropTypes from "prop-types";
 import CX from "classnames";
 import { round } from "lodash";
-import { bsStyles } from "./";
+import { bsStyles } from "./utils";
 
+/**
+ *
+ */
 export class AutoProgressBar extends React.Component {
 
     constructor (props) {
@@ -42,7 +33,6 @@ export class AutoProgressBar extends React.Component {
     componentWillReceiveProps (nextProps) {
         if (this.props.active && !nextProps.active) {
             this.stop();
-
             this.setState({
                 fill: 100
             });
@@ -55,9 +45,9 @@ export class AutoProgressBar extends React.Component {
         }
     }
 
-    componentWillUnmount = () => {
+    componentWillUnmount () {
         this.stop();
-    };
+    }
 
     move = () => {
         // Calculate how far the bar should be filled for this iteration.
@@ -70,9 +60,7 @@ export class AutoProgressBar extends React.Component {
         }
 
         // Update the fill so the progress bar moves.
-        this.setState({
-            fill: fill
-        });
+        this.setState({fill});
     };
 
     handleMoved = (now) => {
@@ -101,7 +89,6 @@ export class AutoProgressBar extends React.Component {
     }
 
 }
-
 
 export class ProgressBar extends React.PureComponent {
 

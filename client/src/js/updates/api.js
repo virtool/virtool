@@ -1,27 +1,13 @@
-/**
- *
- *
- * @copyright 2017 Government of Canada
- * @license MIT
- * @author igboyes
- *
- */
-
 import Request from "superagent";
 
-const updatesAPI = {
+export const getSoftware = () => (
+    Request.get("/api/updates/software")
+);
 
-    getSoftware: () => {
-        return Request.get("/api/updates/software");
-    },
+export const getDatabase = () => (
+    Request.get("/api/updates/database")
+);
 
-    getDatabase: () => {
-        return Request.get("/api/updates/database");
-    },
-
-    installSoftwareUpdates: () => {
-        return Request.post("/api/updates/software");
-    }
-};
-
-export default updatesAPI;
+export const installSoftwareUpdates = () => (
+    Request.post("/api/updates/software")
+);

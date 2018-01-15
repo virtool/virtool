@@ -1,7 +1,7 @@
 import React from "react";
 import PropTypes from "prop-types";
 import { select } from "d3-selection";
-import { scaleLinear } from "d3-scale"
+import { scaleLinear } from "d3-scale";
 import { axisTop } from "d3-axis";
 import { ListGroupItem } from "../../../../base";
 
@@ -37,12 +37,12 @@ export default class NuVsExpansion extends React.Component {
             .domain([0, this.props.maxSequenceLength]);
 
         // Construct the SVG canvas.
-        let svg = select(element).append("svg")
+        const svg = select(element).append("svg")
             .attr("width", width)
             .attr("height", 26);
 
         // Create a mother group that will hold all chart elements.
-        let group = svg.append("g")
+        const group = svg.append("g")
             .attr("transform", "translate(15,0)");
 
         group.append("rect")

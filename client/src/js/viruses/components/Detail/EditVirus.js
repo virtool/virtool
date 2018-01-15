@@ -1,36 +1,25 @@
-/**
- * @license
- * The MIT License (MIT)
- * Copyright 2015 Government of Canada
- *
- * @author
- * Ian Boyes
- *
- * @exports IsolateAdd
- */
-
 import React from "react";
 import PropTypes from "prop-types";
 import { connect } from "react-redux";
-import { Row, Col, Modal, FormGroup, ControlLabel, FormControl } from "react-bootstrap";
+import { Row, Col, Modal } from "react-bootstrap";
 
 import { editVirus, hideVirusModal } from "../../actions";
-import { Icon, Button } from "../../../base";
+import { Button, Icon, Input } from "../../../base";
 
-const getInitialState = (props) => ({
-    name: props.name || "",
-    abbreviation: props.abbreviation || ""
+const getInitialState = ({ name = "", abbreviation = "" }) => ({
+    name,
+    abbreviation
 });
 
 class EditVirus extends React.Component {
 
     constructor (props) {
         super(props);
-        this.state = getInitialState(this.props);
+        this.state = getInitialState(props);
     }
 
     modalEnter = () => {
-        this.setState(getInitialState(this.props))
+        this.setState(getInitialState(this.props));
     };
 
     static propTypes = {
@@ -43,8 +32,8 @@ class EditVirus extends React.Component {
         onSave: PropTypes.func
     };
 
-    save = (event) => {
-        event.preventDefault();
+    save = (e) => {
+        e.preventDefault();
         this.props.onSave(this.props.virusId, this.state.name, this.state.abbreviation);
     };
 
@@ -69,24 +58,18 @@ class EditVirus extends React.Component {
                     <Modal.Body>
                         <Row>
                             <Col md={6} xs={12}>
-                                <FormGroup>
-                                    <ControlLabel>Name</ControlLabel>
-                                    <FormControl
-                                        type="text"
-                                        value={this.state.name}
-                                        onChange={(e) => this.setState({name: e.target.value})}
-                                    />
-                                </FormGroup>
+                                <Input
+                                    label="Name"
+                                    value={this.state.name}
+                                    onChange={(e) => this.setState({name: e.target.value})}
+                                />
                             </Col>
                             <Col md={6} xs={12}>
-                                <FormGroup>
-                                    <ControlLabel>Abbreviation</ControlLabel>
-                                    <FormControl
-                                        type="text"
-                                        value={this.state.abbreviation}
-                                        onChange={(e) => this.setState({abbreviation: e.target.value})}
-                                    />
-                                </FormGroup>
+                                <Input
+                                    label="Abbreviation"
+                                    value={this.state.abbreviation}
+                                    onChange={(e) => this.setState({abbreviation: e.target.value})}
+                                />
                             </Col>
                         </Row>
 
@@ -104,24 +87,22 @@ class EditVirus extends React.Component {
     }
 }
 
-const mapStateToProps = (state) => {
-    return {
-        show: state.viruses.edit,
-        error: state.viruses.editError
-    };
-};
+const mapStateToProps = (state) => ({
+    show: state.viruses.edit,
+    error: state.viruses.editError
+});
 
-const mapDispatchToProps = (dispatch) => {
-    return {
-        onHide: () => {
-            dispatch(hideVirusModal());
-        },
+const mapDispatchToProps = (dispatch) => ({
 
-        onSave: (virusId, name, abbreviation) => {
-            dispatch(editVirus(virusId, name, abbreviation))
-        }
-    };
-};
+    onHide: () => {
+        dispatch(hideVirusModal());
+    },
+
+    onSave: (virusId, name, abbreviation) => {
+        dispatch(editVirus(virusId, name, abbreviation));
+    }
+
+});
 
 const Container = connect(mapStateToProps, mapDispatchToProps)(EditVirus);
 

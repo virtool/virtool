@@ -1,21 +1,13 @@
-/**
- *
- *
- * @copyright 2017 Government of Canada
- * @license MIT
- * @author igboyes
- *
- */
+import { getLocation, LOCATION_CHANGE } from "react-router-redux";
+import { select, takeEvery, takeLatest, throttle } from "redux-saga/effects";
 
-import { put, select, takeEvery, takeLatest, throttle } from "redux-saga/effects";
-
-import jobsAPI from "./api";
-import { setPending } from "../wrappers";
+import * as jobsAPI from "./api";
+import { apiCall, apiFind, setPending } from "../sagaUtils";
 import { WS_UPDATE_JOB, FIND_JOBS, GET_JOB, CANCEL_JOB, REMOVE_JOB, CLEAR_JOBS, GET_RESOURCES } from "../actionTypes";
 
 export function* watchJobs () {
     yield takeLatest(WS_UPDATE_JOB, wsUpdateJob);
-    yield throttle(250, FIND_JOBS.REQUESTED, findJobsWithPending);
+    yield throttle(300, LOCATION_CHANGE, findJobs);
     yield takeLatest(GET_JOB.REQUESTED, getJobWithPending);
     yield takeEvery(CANCEL_JOB.REQUESTED, cancelJob);
     yield takeEvery(REMOVE_JOB.REQUESTED, removeJob);
@@ -24,7 +16,8 @@ export function* watchJobs () {
 }
 
 export function* wsUpdateJob (action) {
-    yield findJobs(action);
+    yield findJobs({payload: yield select(getLocation)});
+
     const detail = yield select(state => state.jobs.detail);
 
     if (detail !== null && detail.id === action.data.id) {
@@ -33,70 +26,31 @@ export function* wsUpdateJob (action) {
 }
 
 export function* findJobs (action) {
-    try {
-        const response = yield jobsAPI.find(action.term, action.page);
-        yield put({type: FIND_JOBS.SUCCEEDED, data: response.body});
-    } catch (error) {
-        yield put({type: FIND_JOBS.FAILED}, error);
-    }
-}
-
-export function* findJobsWithPending (action) {
-    yield setPending(findJobs, action);
-}
-
-export function* getJob (action) {
-    try {
-        const response = yield jobsAPI.get(action.jobId);
-        yield put({type: GET_JOB.SUCCEEDED, data: response.body});
-    } catch (error) {
-        yield put({type: GET_JOB.FAILED}, error);
-    }
+    yield apiFind("/jobs", jobsAPI.find, action, FIND_JOBS);
 }
 
 export function* getJobWithPending (action) {
-    yield setPending(getJob, action);
+    yield setPending(getJob(action));
+}
+
+export function* getJob (action) {
+    yield apiCall(jobsAPI.get, action, GET_JOB);
 }
 
 export function* cancelJob (action) {
-    yield setPending(function* () {
-        try {
-            const response = yield jobsAPI.cancel(action.jobId);
-            yield put({type: CANCEL_JOB.SUCCEEDED, data: response.body});
-        } catch (error) {
-            yield put({type: CANCEL_JOB.FAILED}, error);
-        }
-    }, action);
+    yield setPending(apiCall(jobsAPI.cancel, action, CANCEL_JOB));
 }
 
 export function* removeJob (action) {
-    yield setPending(function* () {
-        try {
-            yield jobsAPI.remove(action.jobId);
-            yield put({type: REMOVE_JOB.SUCCEEDED, jobId: action.jobId});
-        } catch (error) {
-            yield put({type: REMOVE_JOB.FAILED}, error);
-        }
-    }, action);
+    yield setPending(apiCall(jobsAPI.remove, action, REMOVE_JOB));
+    yield apiCall(jobsAPI.find, {}, FIND_JOBS);
 }
 
 export function* clearJobs (action) {
-    yield setPending(function* (action) {
-        try {
-            yield jobsAPI.clear(action.scope);
-            yield put({type: REMOVE_JOB.SUCCEEDED});
-            yield put({type: FIND_JOBS.REQUESTED});
-        } catch (error) {
-            yield put({type: REMOVE_JOB.FAILED}, error);
-        }
-    }, action);
+    yield setPending(apiCall(jobsAPI.clear, action, REMOVE_JOB));
+    yield apiCall(jobsAPI.find, {}, FIND_JOBS);
 }
 
 export function* getResources () {
-    try {
-        const response = yield jobsAPI.getResources();
-        yield put({type: GET_RESOURCES.SUCCEEDED, data: response.body});
-    } catch (error) {
-        yield put({type: GET_RESOURCES.FAILED}, error);
-    }
+    yield apiCall(jobsAPI.getResources, {}, GET_RESOURCES);
 }

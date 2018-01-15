@@ -48,8 +48,10 @@ const VirusIssues = (props) => {
 
     // One or more isolates have no sequences associated with them.
     if (props.issues.empty_isolate) {
+
         // The empty_isolate property is an array of isolate_ids of empty isolates.
         const emptyIsolates = props.issues.empty_isolate.map((isolateId, index) => {
+
             // Get the entire isolate identified by isolate_id from the detail data.
             const isolate = find(props.isolates, {id: isolateId});
 
@@ -91,7 +93,7 @@ const VirusIssues = (props) => {
     }
 
     return (
-        <Alert bsStyle={props.issues ? "danger": "warning"} className="clearfix">
+        <Alert bsStyle={props.issues ? "danger" : "warning"} className="clearfix">
             <h5>
                 <strong>
                     There are some issues that must be resolved before this virus can be included in the next index

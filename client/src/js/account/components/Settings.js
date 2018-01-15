@@ -1,14 +1,3 @@
-/**
- * @license
- * The MIT License (MIT)
- * Copyright 2015 Government of Canada
- *
- * @author
- * Ian Boyes
- *
- * @exports UserSettings
- */
-
 import React from "react";
 import { connect } from "react-redux";
 import { Panel, ListGroup, ListGroupItem } from "react-bootstrap";
@@ -84,21 +73,19 @@ const AccountSettings = (props) => {
     );
 };
 
-const mapStateToProps = (state) => {
-    return {
-        account: state.account
-    };
-};
+const mapStateToProps = (state) => ({
+    account: state.account
+});
 
-const mapDispatchToProps = (dispatch) => {
-    return {
-        onUpdateSetting: (key, value) => {
-            let update = {};
-            update[key] = value;
-            dispatch(updateAccountSettings(update));
-        }
-    };
-};
+const mapDispatchToProps = (dispatch) => ({
+
+    onUpdateSetting: (key, value) => {
+        const update = {};
+        update[key] = value;
+        dispatch(updateAccountSettings(update));
+    }
+
+});
 
 const Container = connect(mapStateToProps, mapDispatchToProps)(AccountSettings);
 

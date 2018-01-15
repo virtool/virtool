@@ -1,17 +1,7 @@
-/**
- *
- *
- * @copyright 2017 Government of Canada
- * @license MIT
- * @author igboyes
- *
- */
-
 import React from "react";
 import { connect } from "react-redux";
 import { Switch, Redirect, Route } from "react-router-dom";
 import { Nav, NavItem } from "react-bootstrap";
-import { ClipLoader } from "halogenium";
 import { LinkContainer } from "react-router-bootstrap";
 
 import SourceTypes from "./General/SourceTypes";
@@ -25,6 +15,7 @@ import Resources from "./Jobs/Resources";
 import Tasks from "./Jobs/Tasks";
 import Users from "../../users/components/Users";
 import Updates from "../../updates/components/Viewer";
+import { LoadingPlaceholder } from "../../base";
 
 const General = () => (
     <div>
@@ -53,11 +44,7 @@ const Settings = ({ settings }) => {
     let content;
 
     if (settings === null) {
-        content = (
-            <div className="text-center" style={{marginTop: "220px"}}>
-                <ClipLoader color="#3c8786" />
-            </div>
-        )
+        content = <LoadingPlaceholder />;
     } else {
         content = (
             <Switch>
@@ -111,11 +98,9 @@ const Settings = ({ settings }) => {
     );
 };
 
-const mapStateToProps = (state) => {
-    return {
-        settings: state.settings.data
-    };
-};
+const mapStateToProps = (state) => ({
+    settings: state.settings.data
+});
 
 const Container = connect(mapStateToProps)(Settings);
 

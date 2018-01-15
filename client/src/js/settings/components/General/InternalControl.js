@@ -1,14 +1,3 @@
-/**
- * @license
- * The MIT License (MIT)
- * Copyright 2015 Government of Canada
- *
- * @author
- * Ian Boyes
- *
- * @exports InternalControlOptions
- */
-
 import React from "react";
 import { connect } from "react-redux";
 import { AsyncTypeahead } from "react-bootstrap-typeahead";
@@ -16,9 +5,6 @@ import { Row, Col, Panel } from "react-bootstrap";
 import { Flex, FlexItem, Checkbox } from "../../../base";
 import { updateSetting, getControlReadahead } from "../../actions";
 
-/**
- * A form component for setting whether an internal control should be used and which virus to use as a control.
- */
 class InternalControl extends React.Component {
 
     render () {
@@ -27,11 +13,7 @@ class InternalControl extends React.Component {
 
         const internalControlId = this.props.settings.internal_control_id;
 
-        let selected = [];
-
-        if (internalControlId.id) {
-            selected = [internalControlId];
-        }
+        const selected = internalControlId.id ? [internalControlId] : [];
 
         return (
             <div>
@@ -79,29 +61,27 @@ class InternalControl extends React.Component {
     }
 }
 
-const mapStateToProps = (state) => {
-    return {
-        settings: state.settings.data,
-        readahead: state.settings.readahead,
-        readaheadPending: state.settings.readaheadPending
-    };
-};
+const mapStateToProps = (state) => ({
+    settings: state.settings.data,
+    readahead: state.settings.readahead,
+    readaheadPending: state.settings.readaheadPending
+});
 
-const mapDispatchToProps = (dispatch) => {
-    return {
-        onGetReadahead: (term) => {
-            dispatch(getControlReadahead(term));
-        },
+const mapDispatchToProps = (dispatch) => ({
 
-        onUpdate: (selected) => {
-            dispatch(updateSetting("internal_control_id", selected.length ? selected[0].id: ""));
-        },
+    onGetReadahead: (term) => {
+        dispatch(getControlReadahead(term));
+    },
 
-        onToggle: (value) => {
-            dispatch(updateSetting("use_internal_control", value));
-        }
-    };
-};
+    onUpdate: (selected) => {
+        dispatch(updateSetting("internal_control_id", selected.length ? selected[0].id : ""));
+    },
+
+    onToggle: (value) => {
+        dispatch(updateSetting("use_internal_control", value));
+    }
+
+});
 
 const Container = connect(mapStateToProps, mapDispatchToProps)(InternalControl);
 

@@ -3,13 +3,12 @@ import React from "react";
 import NuVsExport from "./Export";
 import NuVsList from "./List";
 
-
 const NuVsViewer = (props) => {
 
     // The length of the longest sequence will be stored here.
     let maxSequenceLength = 0;
 
-    let sequences = [];
+    const sequences = [];
 
     props.results.forEach(result => {
         // Don't include sequence if there are no ORFs.

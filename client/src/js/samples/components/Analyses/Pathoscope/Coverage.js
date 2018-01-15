@@ -1,6 +1,5 @@
 import React from "react";
 import PropTypes from "prop-types";
-import { pick } from "lodash";
 import { select } from "d3-selection";
 import { area } from "d3-shape";
 import { scaleLinear } from "d3-scale";
@@ -12,7 +11,7 @@ const createChart = (element, data, length, meta, yMax, xMin, showYAxis) => {
 
     const margin = {
         top: 10,
-        left: 15 + (showYAxis ? 30: 0),
+        left: 15 + (showYAxis ? 30 : 0),
         bottom: 50,
         right: 10
     };
@@ -47,7 +46,7 @@ const createChart = (element, data, length, meta, yMax, xMin, showYAxis) => {
         .attr("width", width + margin.left + margin.right)
         .attr("height", height + margin.top + margin.bottom)
         .append("g")
-            .attr("transform", `translate(${margin.left},${margin.top})`);
+        .attr("transform", `translate(${margin.left},${margin.top})`);
 
     if (data) {
         const areaDrawer = area()
@@ -67,10 +66,10 @@ const createChart = (element, data, length, meta, yMax, xMin, showYAxis) => {
         .attr("transform", `translate(0,${height})`)
         .call(xAxis)
         .selectAll("text")
-            .style("text-anchor", "end")
-            .attr("dx", "-0.8em")
-            .attr("dy", "0.15em")
-            .attr("transform", "rotate(-65)");
+        .style("text-anchor", "end")
+        .attr("dx", "-0.8em")
+        .attr("dy", "0.15em")
+        .attr("transform", "rotate(-65)");
 
     if (showYAxis) {
         svg.append("g")
@@ -87,6 +86,8 @@ const createChart = (element, data, length, meta, yMax, xMin, showYAxis) => {
 export default class CoverageChart extends React.Component {
 
     static propTypes = {
+        id: PropTypes.string,
+        definition: PropTypes.string,
         yMax: PropTypes.number,
         data: PropTypes.array,
         length: PropTypes.number,
@@ -109,18 +110,20 @@ export default class CoverageChart extends React.Component {
             this.chartNode.removeChild(this.chartNode.firstChild);
         }
 
+        const { id, definition } = this.props;
+
         createChart(
             this.chartNode,
             this.props.data,
             this.props.length,
-            pick(this.props, ["id", "definition"]),
+            { id, definition},
             this.props.yMax,
             this.chartNode.offsetWidth,
             this.props.showYAxis
         );
     };
 
-    render = () => (
-        <div className="coverage-chart" ref={(node) => this.chartNode = node} />
-    );
+    render () {
+        return <div className="coverage-chart" ref={(node) => this.chartNode = node}/>;
+    }
 }

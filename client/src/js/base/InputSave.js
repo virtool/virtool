@@ -1,26 +1,14 @@
-/**
- * @license
- * The MIT License (MIT)
- * Copyright 2015 Government of Canada
- *
- * @author
- * Ian Boyes
- *
- * @exports InputSave
- */
-
 import React from "react";
 import PropTypes from "prop-types";
-import { Flex, FlexItem, Input, Button } from "./";
+import { Flex, FlexItem, Input, Button } from "./index";
 
 /**
- * A single input form component with a submit addon button that behaves well for updated VT settings.
+ * An Input component combined with a save button addon.
  */
 export class InputSave extends React.Component {
 
     constructor (props) {
         super(props);
-
         this.state = {
             value: this.props.initialValue,
             pending: false
@@ -29,22 +17,11 @@ export class InputSave extends React.Component {
 
     static propTypes = {
         name: PropTypes.string,
-
-        // The function to call with the newValue when the form is submitted.
         onSave: PropTypes.func.isRequired,
-
-        // The label to apply to the Input component.
         label: PropTypes.string,
-
-        // The type attribute to apply to the Input component.
         type: PropTypes.string,
-
-        // The value that should initially be given to the Input component.
         initialValue: PropTypes.any,
-
-        // The autocomplete attribute to be passed to the
         autoComplete: PropTypes.bool,
-
         disabled: PropTypes.bool
     };
 
@@ -68,8 +45,8 @@ export class InputSave extends React.Component {
      * Resets the setting value to the initialValue if the form component loses focus. Clicking the saveButton does not
      * make the form lose focus. The form is intentionally blurred once an updated initialValue is received in props.
      */
-    handleBlur = (event) => {
-        if (!this.state.pending && event.relatedTarget && event.relatedTarget.type !== "submit") {
+    handleBlur = (e) => {
+        if (!this.state.pending && e.relatedTarget && e.relatedTarget.type !== "submit") {
             this.setState({value: this.props.initialValue});
         }
     };
@@ -79,8 +56,8 @@ export class InputSave extends React.Component {
      *
      * @param event {event} - the change event from the FormControl
      */
-    handleChange = (event) => {
-        this.setState({value: event.target.value});
+    handleChange = (e) => {
+        this.setState({value: e.target.value});
     };
 
     /**
@@ -88,12 +65,16 @@ export class InputSave extends React.Component {
      * A spinner is shown to indicate the change is pending. The spinner will be removed when a new initialValue is
      * received in props.
      *
-     * @param event {object} - the submit event.
+     * @param e {object} - the submit event.
      */
-    handleSubmit = (event) => {
-        event.preventDefault();
+    handleSubmit = (e) => {
+        e.preventDefault();
 
-        if (this.state.value !== this.props.initialValue) {
+        if (this.state.value === this.props.initialValue) {
+            // Drop focus from the form children even though no information has been sent to the server or passed to the
+            // parent component.
+            this.blur();
+        } else {
             // If the new value is different to the initial one, show a spinner and call the onSave function. Show a
             // spinner to indicate the request is pending. Drop focus from the form children.
             this.setState({pending: true}, () => {
@@ -104,10 +85,6 @@ export class InputSave extends React.Component {
 
                 this.blur();
             });
-        } else {
-            // Drop focus from the form children even though no information has been sent to the server or passed to the
-            // parent component.
-            this.blur();
         }
     };
 
@@ -115,11 +92,6 @@ export class InputSave extends React.Component {
         this.inputNode.focus();
     };
 
-    /**
-     * Blur all focus-sensitive elements in the component.
-     *
-     * @func
-     */
     blur = () => {
         this.inputNode.blur();
         this.buttonNode.blur();
@@ -155,9 +127,5 @@ export class InputSave extends React.Component {
                 </Flex>
             </form>
         );
-
-
     }
-
 }
-

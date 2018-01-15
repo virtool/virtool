@@ -1,25 +1,11 @@
-/**
- * @license
- * The MIT License (MIT)
- * Copyright 2015 Government of Canada
- *
- * @author
- * Ian Boyes
- *
- * @exports VirusToolbar
- */
-
 import React from "react";
-import PropTypes from "prop-types";
+import { connect } from "react-redux";
+import { push } from "react-router-redux";
 import { LinkContainer } from "react-router-bootstrap";
-
 import { Icon, Button } from "../../base";
+import {createFindURL, getFindTerm} from "../../utils";
 
-/**
- * A toolbar component rendered at the top of the virus manager table. Allows searching of viruses by name and
- * abbreviation. Includes a button for creating a new virus.
- */
-const VirusToolbar = (props) => (
+const VirusToolbar = ({ canModify, onFind, term }) => (
     <div className="toolbar">
         <div className="form-group">
             <div className="input-group">
@@ -31,7 +17,8 @@ const VirusToolbar = (props) => (
                     className="form-control"
                     type="text"
                     placeholder="Name or abbreviation"
-                    onChange={e => {props.onChangeTerm(e.target.value)}}
+                    value={term}
+                    onChange={e => onFind(e.target.value)}
                 />
             </div>
         </div>
@@ -43,22 +30,30 @@ const VirusToolbar = (props) => (
             />
         </LinkContainer>
 
-        {props.canModify ? (
-            <LinkContainer to={{...props.location, state: {createVirus: true}}} replace>
+        {canModify ? (
+            <LinkContainer to={{...window.location, state: {createVirus: true}}} replace>
                 <Button bsStyle="primary" tip="Create">
                     <Icon name="new-entry" />
                 </Button>
             </LinkContainer>
-        ): null}
+        ) : null}
     </div>
 );
 
-VirusToolbar.propTypes = {
-    canModify: PropTypes.bool,
-    location: PropTypes.object,
-    modifiedOnly: PropTypes.bool,
-    onChangeTerm: PropTypes.func,
-    onToggleModifiedOnly: PropTypes.func
-};
+const mapStateToProps = (state) => ({
+    canModify: state.account.permissions.modify_virus,
+    term: getFindTerm()
+});
 
-export default VirusToolbar;
+const mapDispatchToProps = (dispatch) => ({
+
+    onFind: (find) => {
+        const url = createFindURL({ find });
+        dispatch(push(url.pathname + url.search));
+    }
+
+});
+
+const Container = connect(mapStateToProps, mapDispatchToProps)(VirusToolbar);
+
+export default Container;

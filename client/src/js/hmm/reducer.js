@@ -1,21 +1,12 @@
-/**
- *
- *
- * @copyright 2017 Government of Canada
- * @license MIT
- * @author igboyes
- *
- */
-
 import { WS_UPDATE_STATUS, FIND_HMMS, GET_HMM } from "../actionTypes";
 
 const initialState = {
-    list: null,
+    documents: null,
     detail: null,
     process: null
 };
 
-const hmmsReducer = (state = initialState, action) => {
+export default function hmmsReducer (state = initialState, action) {
 
     switch (action.type) {
 
@@ -32,14 +23,7 @@ const hmmsReducer = (state = initialState, action) => {
             return state;
 
         case FIND_HMMS.SUCCEEDED:
-            return {
-                ...state,
-                fileExists: action.data.file_exists,
-                list: action.data.documents,
-                page: action.data.page,
-                pageCount: action.data.page_count,
-                totalCount: action.data.total_count
-            };
+            return {...state, ...action.data};
 
         case GET_HMM.REQUESTED:
             return {...state, detail: null};
@@ -51,6 +35,4 @@ const hmmsReducer = (state = initialState, action) => {
             return state;
 
     }
-};
-
-export default hmmsReducer;
+}

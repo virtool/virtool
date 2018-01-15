@@ -1,21 +1,11 @@
-/**
- * @license
- * The MIT License (MIT)
- * Copyright 2015 Government of Canada
- *
- * @author
- * Ian Boyes
- *
- * @exports ListGroupItem
- */
-
 import React from "react";
 import PropTypes from "prop-types";
 import { pick } from "lodash";
 import { ListGroupItem as BsListGroupItem } from "react-bootstrap";
 
 /**
- * An extension of the React-Bootstrap ListGroupItem component, except it doesn't gain focus when clicked.
+ * Extends the ListGroupItem component from react-bootstrap by adding the allowFocus prop. This prop can prevent the
+ * ListGroupItem from taking focus, even when clicked. *
  */
 export class ListGroupItem extends React.Component {
 
@@ -28,13 +18,8 @@ export class ListGroupItem extends React.Component {
         allowFocus: false
     };
 
-    /**
-     * A callback the blurs focus on the target element associated with the passed onFocus event.
-     *
-     * @param event {object} - the onFocus event object that triggered the callback.
-     */
-    handleFocus = (event) => {
-        event.target.blur();
+    handleFocus = (e) => {
+        e.target.blur();
     };
 
     render () {
@@ -52,7 +37,7 @@ export class ListGroupItem extends React.Component {
         ]);
 
         return (
-            <BsListGroupItem {...props} onFocus={this.props.allowFocus ? null: this.handleFocus}>
+            <BsListGroupItem {...props} onFocus={this.props.allowFocus ? null : this.handleFocus}>
                 {this.props.children}
             </BsListGroupItem>
         );

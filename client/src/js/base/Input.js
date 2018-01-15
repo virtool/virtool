@@ -1,25 +1,11 @@
-/**
- * @license
- * The MIT License (MIT)
- * Copyright 2015 Government of Canada
- *
- * @author
- * Ian Boyes
- *
- * @exports Input
- */
-
 import React from "react";
-import { assign } from "lodash";
 import PropTypes from "prop-types";
 import { ControlLabel, FormControl, FormGroup, Overlay, Popover } from "react-bootstrap";
 
+/**
+ * A reusable composition of form components from react-bootstrap.
+ */
 export class Input extends React.Component {
-
-    constructor (props) {
-        super(props);
-
-    }
 
     static propTypes = {
         label: PropTypes.oneOfType([PropTypes.string, PropTypes.element]),
@@ -30,15 +16,12 @@ export class Input extends React.Component {
         readOnly: PropTypes.bool,
         placeholder: PropTypes.any,
         autoComplete: PropTypes.bool,
-
         error: PropTypes.oneOfType([PropTypes.string, PropTypes.element]),
         errorPlacement: PropTypes.string,
-
         onHide: PropTypes.func,
         onBlur: PropTypes.func,
         onFocus: PropTypes.func,
         onChange: PropTypes.func,
-
         style: PropTypes.object,
         formGroupStyle: PropTypes.object,
         children: PropTypes.node,
@@ -52,12 +35,18 @@ export class Input extends React.Component {
         formGroupStyle: {}
     };
 
-    focus = () => {
-        this.inputNode.focus();
-    };
-
+    /**
+     * Blurs the <input /> element. Not used internally. It is intended for use by the parent component.
+     */
     blur = () => {
         this.inputNode.blur();
+    };
+
+    /**
+     * Focus the <input /> element.
+     */
+    focus = () => {
+        this.inputNode.focus();
     };
 
     render () {
@@ -101,17 +90,17 @@ export class Input extends React.Component {
             );
         }
 
-        let groupStyle = assign({}, this.props.formGroupStyle);
+        const groupStyle = {...this.props.formGroupStyle};
 
         if (this.props.noMargin) {
-            assign(groupStyle, {marginBottom: 0});
+            groupStyle.marginBottom = 0;
         }
 
         return (
             <FormGroup style={groupStyle}>
                 {label}
                 <FormControl
-                    inputRef={ref => this.inputNode = ref}
+                    inputRef={(ref) => this.inputNode = ref}
                     type={this.props.type}
                     name={this.props.name}
                     rows={this.props.rows}
@@ -121,7 +110,7 @@ export class Input extends React.Component {
                     onChange={this.props.onChange}
                     readOnly={this.props.readOnly}
                     placeholder={this.props.placeholder}
-                    autoComplete={this.props.autoComplete ? "on": "off"}
+                    autoComplete={this.props.autoComplete ? "on" : "off"}
                     componentClass={componentClass}
                     style={this.props.style}
                 >

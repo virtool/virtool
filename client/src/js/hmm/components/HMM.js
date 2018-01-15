@@ -1,14 +1,3 @@
-/**
- * @license
- * The MIT License (MIT)
- * Copyright 2015 Government of Canada
- *
- * @author
- * Ian Boyes
- *
- * @exports HMM
- */
-
 import React from "react";
 import { Route, Switch } from "react-router-dom";
 

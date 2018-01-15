@@ -19,8 +19,12 @@ export default class ReadItem extends React.PureComponent {
         selected: false
     };
 
+    onSelect = () => {
+        this.props.onSelect(this.props.id);
+    };
+
     render = () => (
-        <ListGroupItem onClick={() => this.props.onSelect(this.props.id)} active={this.props.selected}>
+        <ListGroupItem onClick={this.onSelect} active={this.props.selected}>
             <Row>
                 <Col md={8}>
                     <Icon name="file" /> {this.props.name}

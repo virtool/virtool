@@ -3,7 +3,7 @@ import PropTypes from "prop-types";
 import FlipMove from "react-flip-move";
 import { LinkContainer } from "react-router-bootstrap";
 import { FormControl, FormGroup, InputGroup, Table } from "react-bootstrap";
-import { assign, flatten, reject, includes, xor } from "lodash";
+import { flatten, reject, xor } from "lodash";
 
 import { Button, Icon } from "../../../../base";
 import NuVsEntry from "./Entry";
@@ -37,20 +37,19 @@ export default class NuVsList extends React.Component {
         let data;
 
         if (this.state.filter) {
-            data = this.props.data.map(sequence => {
-                return assign({}, sequence, {orfs: reject(sequence.orfs, orf => orf.hits.length === 0)});
-            });
-        }
-
-        else {
+            data = this.props.data.map(sequence => ({
+                ...sequence,
+                orfs: reject(sequence.orfs, orf => orf.hits.length === 0)
+            }));
+        } else {
             data = this.props.data;
         }
 
-        let rows = flatten(data.map((item, index) => {
+        const rows = flatten(data.map((item, index) => {
 
-            const expanded = includes(this.state.expanded, item.index);
+            const expanded = this.state.expanded.includes(item.index);
 
-            let components = [
+            const components = [
                 <NuVsEntry
                     key={`sequence_${item.index}`}
                     {...item}

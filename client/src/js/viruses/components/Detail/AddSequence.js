@@ -10,15 +10,14 @@
  */
 
 import React from "react";
-import PropTypes from "prop-types";
 import { connect } from "react-redux";
 import { Row, Col, Modal, FormGroup, FormControl, InputGroup, ControlLabel, Popover, Overlay } from "react-bootstrap";
 import { ClipLoader } from "halogenium";
 
 import { addSequence, hideVirusModal } from "../../actions";
-import { Icon, Button } from "../../../base";
+import { Button, Icon, Input } from "../../../base";
 import SequenceField from "./SequenceField";
-import virusAPI from "../../api";
+import { getGenbank } from "../../api";
 
 const getInitialState = () => ({
     id: "",
@@ -37,20 +36,8 @@ class AddSequence extends React.Component {
         this.state = getInitialState(this.props);
     }
 
-    static propTypes = {
-        virusId: PropTypes.string,
-        isolateId: PropTypes.string,
-        show: PropTypes.bool,
-        onHide: PropTypes.func,
-        onSave: PropTypes.func
-    };
-
-    modalEntered = () => {
-        this.accessionNode.focus();
-    };
-
-    save = (event) => {
-        event.preventDefault();
+    save = (e) => {
+        e.preventDefault();
 
         this.props.onSave(
             this.props.virusId,
@@ -64,7 +51,7 @@ class AddSequence extends React.Component {
 
     autofill = () => {
         this.setState({autofillPending: true}, () => {
-            virusAPI.getGenbank(this.state.id).then((resp) => {
+            getGenbank(this.state.id).then((resp) => {
                 // Success
                 const { definition, host, sequence } = resp.body;
 
@@ -77,10 +64,10 @@ class AddSequence extends React.Component {
             }, (err) => {
                 this.setState({
                     autofillPending: false,
-                    error: err.status === 404 ? "Accession not found": false
+                    error: err.status === 404 ? "Accession not found" : false
                 });
                 return err;
-            })
+            });
         });
     };
 
@@ -94,7 +81,7 @@ class AddSequence extends React.Component {
                         <ClipLoader color="#fff" />
                     </span>
                 </div>
-            )
+            );
         }
 
         return (
@@ -112,7 +99,7 @@ class AddSequence extends React.Component {
 
                     <form onSubmit={this.save}>
                         <Row>
-                            <Col xs={12}  md={6}>
+                            <Col xs={12} md={6}>
                                 <FormGroup>
                                     <ControlLabel>Accession (ID)</ControlLabel>
                                     <InputGroup>
@@ -131,37 +118,31 @@ class AddSequence extends React.Component {
                                         <FormControl
                                             inputRef={(node) => this.accessionNode = node}
                                             value={this.state.id}
-                                            onChange={(e) => {
-                                                this.setState({id: e.target.value, error: false})
-                                            }}
+                                            onChange={(e) => this.setState({id: e.target.value, error: false})}
                                         />
                                         <InputGroup.Button>
                                             <Button type="button" onClick={this.autofill}>
-                                                <Icon name="wand"  />
+                                                <Icon name="wand" />
                                             </Button>
                                         </InputGroup.Button>
                                     </InputGroup>
                                 </FormGroup>
                             </Col>
                             <Col xs={12} md={6}>
-                                <FormGroup>
-                                    <ControlLabel>Host</ControlLabel>
-                                    <FormControl
-                                        value={this.state.host}
-                                        onChange={(e) => this.setState({host: e.target.value})}
-                                    />
-                                </FormGroup>
+                                <Input
+                                    label="Host"
+                                    value={this.state.host}
+                                    onChange={(e) => this.setState({host: e.target.value})}
+                                />
                             </Col>
                         </Row>
                         <Row>
                             <Col xs={12}>
-                                <FormGroup>
-                                    <ControlLabel>Definition</ControlLabel>
-                                    <FormControl
-                                        value={this.state.definition}
-                                        onChange={(e) => this.setState({definition: e.target.value})}
-                                    />
-                                </FormGroup>
+                                <Input
+                                    label="Definition"
+                                    value={this.state.definition}
+                                    onChange={(e) => this.setState({definition: e.target.value})}
+                                />
                             </Col>
                         </Row>
                         <Row>
@@ -184,23 +165,23 @@ class AddSequence extends React.Component {
     }
 }
 
-const mapStateToProps = (state) => {
-    return {
-        show: state.viruses.addSequence
-    };
-};
+const mapStateToProps = state => ({
+    show: state.viruses.addSequence,
+    virusId: state.viruses.detail.id,
+    isolateId: state.viruses.activeIsolateId
+});
 
-const mapDispatchToProps = (dispatch) => {
-    return {
-        onHide: () => {
-            dispatch(hideVirusModal());
-        },
+const mapDispatchToProps = dispatch => ({
 
-        onSave: (virusId, isolateId, sequenceId, definition, host, sequence) => {
-            dispatch(addSequence(virusId, isolateId, sequenceId, definition, host, sequence))
-        }
-    };
-};
+    onHide: () => {
+        dispatch(hideVirusModal());
+    },
+
+    onSave: (virusId, isolateId, sequenceId, definition, host, sequence) => {
+        dispatch(addSequence(virusId, isolateId, sequenceId, definition, host, sequence));
+    }
+
+});
 
 const Container = connect(mapStateToProps, mapDispatchToProps)(AddSequence);
 

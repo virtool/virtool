@@ -1,10 +1,10 @@
-var path = require("path");
-var HTMLPlugin = require("html-webpack-plugin");
-var CleanPlugin = require("clean-webpack-plugin");
-var ExtractTextPlugin = require("extract-text-webpack-plugin");
-var BundleAnalyzerPlugin = require("webpack-bundle-analyzer").BundleAnalyzerPlugin;
+import path from "path";
+import HTMLPlugin from "html-webpack-plugin";
+import CleanPlugin from "clean-webpack-plugin";
+import ExtractTextPlugin from "extract-text-webpack-plugin";
+import { BundleAnalyzerPlugin } from "webpack-bundle-analyzer";
 
-module.exports = {
+export default {
 
     entry: ["babel-polyfill", "./src/js/index.js"],
 

@@ -1,54 +1,36 @@
-/**
- *
- *
- * @copyright 2017 Government of Canada
- * @license MIT
- * @author igboyes
- *
- */
-
 import Request from "superagent";
 
-const jobsAPI = {
 
-    find: (term, page) => {
-        return Request.get("/api/jobs")
-            .query({
-                find: term || undefined,
-                page
-            });
-    },
+export const find = () => (
+    Request.get(`/api/jobs${window.location.search}`)
+);
 
-    get: (jobId) => {
-        return Request.get(`/api/jobs/${jobId}`);
-    },
+export const get = ({ jobId }) => (
+    Request.get(`/api/jobs/${jobId}`)
+);
 
-    cancel: (jobId) => {
-        return Request.post(`/api/jobs/${jobId}/cancel`);
-    },
+export const cancel = ({ jobId }) => (
+    Request.post(`/api/jobs/${jobId}/cancel`)
+);
 
-    remove: (jobId) => {
-        return Request.delete(`/api/jobs/${jobId}`);
-    },
+export const remove = ({ jobId }) => (
+    Request.delete(`/api/jobs/${jobId}`)
+);
 
-    clear: (scope) => {
-        let url = "/api/jobs";
+export const clear = ({ scope }) => {
+    let suffix;
 
-        if (scope === "complete") {
-            url = "/api/jobs/complete";
-        }
-
-        if (scope === "failed") {
-            url = "/api/jobs/failed";
-        }
-
-        return Request.delete(url)
-    },
-
-    getResources: () => {
-        return Request.get("/api/resources");
+    if (scope === "complete") {
+        suffix = "/complete";
+    } else if (scope === "failed")
+        suffix = "/failed";
+    else {
+        suffix = "";
     }
 
+    return Request.delete(`/api/jobs${suffix}`);
 };
 
-export default jobsAPI;
+export const getResources = () => (
+    Request.get("/api/resources")
+);

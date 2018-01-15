@@ -1,29 +1,11 @@
-/**
- * @license
- * The MIT License (MIT)
- * Copyright 2015 Government of Canada
- *
- * @author
- * Ian Boyes
- *
- * @exports Groups
- */
-
 import React from "react";
-import { difference, filter, find, includes, some, sortBy, transform } from "lodash";
+import { difference, filter, find, some, sortBy, transform } from "lodash";
 import { connect } from "react-redux";
-import { ClipLoader } from "halogenium";
 import { Col, FormControl, Label, ListGroup, Modal, Overlay, Panel, Popover, Row } from "react-bootstrap";
 
 import { listGroups, createGroup, setGroupPermission, removeGroup } from "../actions";
-import { AutoProgressBar, Button, Flex, FlexItem, Icon, ListGroupItem } from "../../base";
+import { AutoProgressBar, Button, Flex, FlexItem, Icon, ListGroupItem, LoadingPlaceholder } from "../../base";
 
-/**
- * Renders either a table describing the sessions associated with the user or a panel with a message indicating no
- * sessions are associated with that user.
- *
- * @class
- */
 class Groups extends React.Component {
 
     constructor (props) {
@@ -47,7 +29,7 @@ class Groups extends React.Component {
     }
 
     componentWillReceiveProps (nextProps) {
-        let state = {};
+        const state = {};
 
         // What to do if the active group was removed OR the active group id in state if onList response is incoming.
         if (!some(nextProps.groups, {id: this.state.activeId}) || (this.props.groups === null && nextProps.groups)) {
@@ -70,12 +52,8 @@ class Groups extends React.Component {
         });
     };
 
-    select = (groupId) => {
-        this.setState({activeId: groupId});
-    };
-
-    handleSubmit = (event) => {
-        event.preventDefault();
+    handleSubmit = (e) => {
+        e.preventDefault();
 
         if (this.state.createGroupId !== "") {
             if (this.state.createGroupId.includes(" ")) {
@@ -91,17 +69,13 @@ class Groups extends React.Component {
     render () {
 
         if (this.props.groups === null || this.props.users === null) {
-            return (
-                <div className="text-center" style={{marginTop: "120px"}}>
-                    <ClipLoader />
-                </div>
-            );
+            return <LoadingPlaceholder margin="130px" />;
         }
 
         const groupComponents = sortBy(this.props.groups, "id").map((group) =>
             <ListGroupItem key={group.id}
                 active={this.state.activeId === group.id}
-                onClick={() => this.select(group.id)}
+                onClick={() => this.setState({activeId: group.id})}
             >
                 <span className="text-capitalize">{group.id}</span>
             </ListGroupItem>
@@ -109,7 +83,7 @@ class Groups extends React.Component {
 
         const activeGroup = find(this.props.groups, {id: this.state.activeId});
 
-        let memberComponents = filter(this.props.users, user => includes(user.groups, activeGroup.id)).map(member =>
+        let memberComponents = filter(this.props.users, user => user.groups.includes(activeGroup.id)).map(member =>
             <Label key={member.id} style={{marginRight: "5px"}}>
                 {member.id}
             </Label>
@@ -120,7 +94,7 @@ class Groups extends React.Component {
                 <div className="text-center">
                     <Icon name="info" /> No members found.
                 </div>
-            )
+            );
         }
 
         let error;
@@ -140,10 +114,10 @@ class Groups extends React.Component {
             result.push(
                 <ListGroupItem
                     key={key}
-                    onClick={readOnly ? null: () => this.props.onSetPermission(activeGroup.id, key, !value)}
+                    onClick={readOnly ? null : () => this.props.onSetPermission(activeGroup.id, key, !value)}
                     disabled={readOnly}
                 >
-                    <code>{key}</code> <Icon name={`checkbox-${value ? "checked": "unchecked"}`} pullRight />
+                    <code>{key}</code> <Icon name={`checkbox-${value ? "checked" : "unchecked"}`} pullRight />
                 </ListGroupItem>
             );
 
@@ -228,34 +202,32 @@ class Groups extends React.Component {
     }
 }
 
-const mapStateToProps = (state) => {
-    return {
-        users: state.users.list,
-        groups: state.groups.list,
-        pending: state.groups.pending,
-        createError: state.groups.createError
-    };
-};
+const mapStateToProps = (state) => ({
+    users: state.users.list,
+    groups: state.groups.list,
+    pending: state.groups.pending,
+    createError: state.groups.createError
+});
 
-const mapDispatchToProps = (dispatch) => {
-    return {
-        onList: () => {
-            dispatch(listGroups());
-        },
+const mapDispatchToProps = (dispatch) => ({
 
-        onCreate: (groupId) => {
-            dispatch(createGroup(groupId));
-        },
+    onList: () => {
+        dispatch(listGroups());
+    },
 
-        onSetPermission: (groupId, permission, value) => {
-            dispatch(setGroupPermission(groupId, permission, value));
-        },
+    onCreate: (groupId) => {
+        dispatch(createGroup(groupId));
+    },
 
-        onRemove: (groupId) => {
-            dispatch(removeGroup(groupId));
-        }
-    };
-};
+    onSetPermission: (groupId, permission, value) => {
+        dispatch(setGroupPermission(groupId, permission, value));
+    },
+
+    onRemove: (groupId) => {
+        dispatch(removeGroup(groupId));
+    }
+
+});
 
 const Container = connect(mapStateToProps, mapDispatchToProps)(Groups);
 

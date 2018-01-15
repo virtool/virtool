@@ -1,12 +1,11 @@
 import React from "react";
 import { capitalize } from "lodash";
 import { connect } from "react-redux";
-import { ClipLoader } from "halogenium";
 import { Row, Col, Panel, ListGroup } from "react-bootstrap";
 
 import { getSoftwareUpdates, showInstallModal } from "../actions";
 import { updateSetting } from "../../settings/actions";
-import { Button, Flex, FlexItem, Icon, Radio } from "../../base";
+import { Button, Flex, FlexItem, Icon, Radio, LoadingPlaceholder } from "../../base";
 import Release from "./Release";
 import InstallModal from "./Install";
 
@@ -23,11 +22,7 @@ class SoftwareUpdateViewer extends React.Component {
     render () {
 
         if (this.props.updates === null) {
-            return (
-                <div className="text-center" style={{marginTop: "220px"}}>
-                    <ClipLoader color="#3c8786" size="24px" />
-                </div>
-            );
+            return <LoadingPlaceholder />;
         }
 
         const releases = this.props.updates.releases;
@@ -47,7 +42,7 @@ class SoftwareUpdateViewer extends React.Component {
                     <Flex alignItems="center" style={{marginBottom: "15px"}}>
                         <FlexItem grow={1} shrink={0}>
                             <strong className="text-warning">
-                                <Icon name="info" /> Update{releases.length === 1 ? "": "s"} Available
+                                <Icon name="info" /> Update{releases.length === 1 ? "" : "s"} Available
                             </strong>
                         </FlexItem>
                         <FlexItem grow={0} shrink={0} pad={15}>
@@ -75,7 +70,7 @@ class SoftwareUpdateViewer extends React.Component {
             <Radio
                 key={channel}
                 checked={this.props.channel === channel}
-                label={`${capitalize(channel)}${channel === "stable" ? " (recommended)": ""}`}
+                label={`${capitalize(channel)}${channel === "stable" ? " (recommended)" : ""}`}
                 onClick={() => this.props.onSetSoftwareChannel(channel)}
             />
         );
@@ -108,28 +103,26 @@ class SoftwareUpdateViewer extends React.Component {
     }
 }
 
-const mapStateToProps = (state) => {
-    return {
-        updates: state.updates.software,
-        channel: state.settings.data.software_channel
-    };
-};
+const mapStateToProps = (state) => ({
+    updates: state.updates.software,
+    channel: state.settings.data.software_channel
+});
 
-const mapDispatchToProps = (dispatch) => {
-    return {
-        onGet: () => {
-            dispatch(getSoftwareUpdates());
-        },
+const mapDispatchToProps = (dispatch) => ({
 
-        onSetSoftwareChannel: (value) => {
-            dispatch(updateSetting("software_channel", value));
-        },
+    onGet: () => {
+        dispatch(getSoftwareUpdates());
+    },
 
-        onShowModal: () => {
-            dispatch(showInstallModal());
-        }
-    };
-};
+    onSetSoftwareChannel: (value) => {
+        dispatch(updateSetting("software_channel", value));
+    },
+
+    onShowModal: () => {
+        dispatch(showInstallModal());
+    }
+
+});
 
 const Container = connect(mapStateToProps, mapDispatchToProps)(SoftwareUpdateViewer);
 

@@ -1,13 +1,4 @@
-/**
- * Redux reducers for working with virus data.
- *
- * @copyright 2017 Government of Canada
- * @license MIT
- * @author igboyes
- *
- */
-
-import { assign, reject } from "lodash";
+import { reject } from "lodash";
 import {
     FIND_SAMPLES,
     GET_SAMPLE,
@@ -22,6 +13,18 @@ import {
     BLAST_NUVS,
     REMOVE_ANALYSIS
 } from "../actionTypes";
+
+const initialState = {
+    documents: null,
+    detail: null,
+    analyses: null,
+    analysisDetail: null,
+    showEdit: false,
+    showRemove: false,
+    editError: false,
+    reservedFiles: [],
+    readyHosts: null
+};
 
 const setNuvsBLAST = (state, analysisId, sequenceIndex, data = "ip") => {
     const analysisDetail = state.analysisDetail;
@@ -42,44 +45,18 @@ const setNuvsBLAST = (state, analysisId, sequenceIndex, data = "ip") => {
     return state;
 };
 
-const initialState = {
-    documents: null,
-    detail: null,
-
-    analyses: null,
-    analysisDetail: null,
-
-    showEdit: false,
-    showRemove: false,
-
-    editError: false,
-
-    reservedFiles: [],
-    readyHosts: null
-};
-
-export default function reducer (state = initialState, action) {
+export default function samplesReducer (state = initialState, action) {
 
     switch (action.type) {
 
         case FIND_SAMPLES.SUCCEEDED:
-            return assign({}, state, {
-                documents: action.data.documents,
-                totalCount: action.data.total_count,
-                foundCount: action.data.found_count,
-                pageCount: action.data.page_count,
-                page: action.data.page
-            });
+            return {...state, ...action.data};
 
         case FIND_READY_HOSTS.SUCCEEDED:
             return {...state, readyHosts: action.data.documents};
 
         case GET_SAMPLE.REQUESTED:
-            return assign({}, state, {
-                detail: null,
-                analyses: null,
-                analysisDetail: null
-            });
+            return {...state, detail: null, analyses: null, analysisDetail: null};
 
         case GET_SAMPLE.SUCCEEDED:
             return {...state, detail: action.data};
@@ -90,7 +67,7 @@ export default function reducer (state = initialState, action) {
             }
 
             return {...state, documents: state.documents.map(sample =>
-                sample.id === action.data.id ? {...sample, ...action.data}: sample
+                sample.id === action.data.id ? {...sample, ...action.data} : sample
             )};
         }
 
@@ -98,41 +75,25 @@ export default function reducer (state = initialState, action) {
             return {...state, detail: null, analyses: null, analysisDetail: null};
 
         case SHOW_REMOVE_SAMPLE:
-            return assign({}, state, {
-                showEdit: false,
-                showRemove: true
-            });
+            return {...state, showRemove: true};
 
         case HIDE_SAMPLE_MODAL:
-            return assign({}, state, {
-                showRemove: false
-            });
+            return {...state, showRemove: false};
 
         case FIND_ANALYSES.REQUESTED:
-            return assign({}, state, {
-                analyses: null,
-                analysisDetail: null
-            });
+            return {...state, analyses: null, analysisDetail: null};
 
         case FIND_ANALYSES.SUCCEEDED:
-            return assign({}, state, {
-                analyses: action.data.documents
-            });
+            return {...state, analyses: action.data.documents};
 
         case GET_ANALYSIS.REQUESTED:
-            return assign({}, state, {
-                analysisDetail: null
-            });
+            return {...state, analysisDetail: null};
 
         case GET_ANALYSIS.SUCCEEDED:
-            return assign({}, state, {
-                analysisDetail: action.data
-            });
+            return {...state, analysisDetail: action.data};
 
         case ANALYZE.SUCCEEDED:
-            return assign({}, state, {
-                analyses: state.analyses === null ? null: state.analyses.concat([action.data])
-            });
+            return {...state, analyses: state.analyses === null ? null : state.analyses.concat([action.data])};
 
         case BLAST_NUVS.REQUESTED:
             return setNuvsBLAST(state, action.analysisId, action.sequenceIndex, {ready: false});

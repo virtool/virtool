@@ -1,14 +1,3 @@
-/**
- * @license
- * The MIT License (MIT)
- * Copyright 2015 Government of Canada
- *
- * @author
- * Ian Boyes
- *
- * @exports ChangePassword
- */
-
 import React from "react";
 import { connect } from "react-redux";
 import { Alert, Col, Panel, Row } from "react-bootstrap";
@@ -16,18 +5,13 @@ import { Alert, Col, Panel, Row } from "react-bootstrap";
 import { changePassword } from "../actions";
 import { Button, Input, RelativeTime } from "../../base";
 
-const getInitialState = () => {
-    return {
-        oldPassword: "",
-        newPassword: "",
-        confirmPassword: "",
-        errors: []
-    };
-};
+const getInitialState = () => ({
+    oldPassword: "",
+    newPassword: "",
+    confirmPassword: "",
+    errors: []
+});
 
-/**
- * A form used by user to change their password.
- */
 class ChangePassword extends React.Component {
 
     constructor (props) {
@@ -37,7 +21,7 @@ class ChangePassword extends React.Component {
 
     componentWillReceiveProps (nextProps) {
         if (nextProps.oldPasswordError) {
-            this.setState({errors: ["Old password is invalid"]})
+            this.setState({errors: ["Old password is invalid"]});
         }
 
         if (nextProps.lastPasswordChange !== this.props.lastPasswordChange) {
@@ -45,15 +29,15 @@ class ChangePassword extends React.Component {
         }
     }
 
-    handleSubmit = (event) => {
-        event.preventDefault();
+    onSubmit = (e) => {
+        e.preventDefault();
 
-        let errors = [];
+        const errors = [];
 
         const minLength = this.props.settings.minimum_password_length;
 
         if (this.state.confirmPassword.length < minLength || this.state.newPassword.length < minLength) {
-            errors.push(`Password must be contain least ${minLength} characters`);
+            errors.push(`Password must contain at least ${minLength} characters`);
         }
 
         if (this.state.confirmPassword !== this.state.newPassword) {
@@ -61,7 +45,7 @@ class ChangePassword extends React.Component {
         }
 
         if (errors.length) {
-            return this.setState({errors: errors});
+            return this.setState({errors});
         }
 
         // Set state to show that the user attempted to submit the form.
@@ -69,6 +53,7 @@ class ChangePassword extends React.Component {
     };
 
     render () {
+
         if (!this.props.settings) {
             return <div />;
         }
@@ -89,7 +74,7 @@ class ChangePassword extends React.Component {
 
         return (
             <Panel header="Password">
-                <form onSubmit={this.handleSubmit}>
+                <form onSubmit={this.onSubmit}>
                     <Input
                         label="Old Password"
                         type="password"
@@ -129,21 +114,19 @@ class ChangePassword extends React.Component {
     }
 }
 
-const mapStateToProps = (state) => {
-    return {
-        lastPasswordChange: state.account.last_password_change,
-        oldPasswordError: state.account.oldPasswordError,
-        settings: state.settings.data
-    };
-};
+const mapStateToProps = (state) => ({
+    lastPasswordChange: state.account.last_password_change,
+    oldPasswordError: state.account.oldPasswordError,
+    settings: state.settings.data
+});
 
-const mapDispatchToProps = (dispatch) => {
-    return {
-        onChangePassword: (oldPassword, newPassword) => {
-            dispatch(changePassword(oldPassword, newPassword));
-        }
-    };
-};
+const mapDispatchToProps = (dispatch) => ({
+
+    onChangePassword: (oldPassword, newPassword) => {
+        dispatch(changePassword(oldPassword, newPassword));
+    }
+
+});
 
 const Container = connect(mapStateToProps, mapDispatchToProps)(ChangePassword);
 
