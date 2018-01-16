@@ -3,6 +3,7 @@ Functions and job classes for sample analysis.
 
 """
 import collections
+import json
 import os
 import shlex
 import shutil
@@ -534,7 +535,20 @@ class Pathoscope(Base):
         """
         vta_path = os.path.join(self.analysis_path, "to_isolates.vta")
 
-        u, nu, refs, reads = await self.run_in_executor(virtool.pathoscope.build_matrix, vta_path)
+        matrix = await self.run_in_executor(virtool.pathoscope.build_matrix, self.analysis_path, vta_path)
+
+        if matrix is None:
+            u = None
+            nu = None
+            refs = None
+            reads = None
+
+            for obj in [u, nu, refs, reads]:
+                filename = "{}.json".format(obj.__name__)
+                with open(os.path.join(self.analysis_path, filename), "r") as f:
+                    obj = json.load(f)
+        else:
+            u, nu, refs, reads = matrix
 
         best_hit_initial_reads, best_hit_initial, level_1_initial, level_2_initial = await self.run_in_executor(
             virtool.pathoscope.compute_best_hit,
