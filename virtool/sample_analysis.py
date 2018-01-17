@@ -2,13 +2,14 @@
 Functions and job classes for sample analysis.
 
 """
+import aiofiles
 import collections
 import json
 import os
+import pymongo.errors
 import shlex
 import shutil
 import tempfile
-import aiofiles
 
 import virtool.app_settings
 import virtool.bio
@@ -1081,12 +1082,24 @@ class NuVs(Base):
         indexes that are no longer being used by an active analysis job.
 
         """
-        await self.db.analyses.find_one_and_update({"_id": self.analysis_id}, {
-            "$set": {
-                "results": self.results,
-                "ready": True
-            }
-        })
+        try:
+            await self.db.analyses.find_one_and_update({"_id": self.analysis_id}, {
+                "$set": {
+                    "results": self.results,
+                    "ready": True
+                }
+            })
+        except pymongo.errors.DocumentTooLarge:
+            async with aiofiles.open(os.path.join(self.analysis_path, "nuvs.json"), "w") as f:
+                json_string = json.dumps(self.results)
+                await f.write(json_string)
+
+            await self.db.analyses.find_one_and_update({"_id": self.analysis_id}, {
+                "$set": {
+                    "results": "file",
+                    "ready": True
+                }
+            })
 
         document = await virtool.sample.recalculate_algorithm_tags(self.db, self.sample_id)
 
