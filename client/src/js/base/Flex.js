@@ -1,93 +1,110 @@
 /**
- * @license
- * The MIT License (MIT)
- * Copyright 2015 Government of Canada
+ * Components for simplifying one-off uses of Flex box.
  *
- * @author
- * Ian Boyes
- *
- * @exports ByteSize
  */
-
 import React from "react";
 import PropTypes from "prop-types";
-import { pick, join, assign } from "lodash";
+import { join } from "lodash";
 
-export class Flex extends React.Component {
+/**
+ * A configurable component that acts as a flex container.
+ */
+export function Flex (props) {
 
-    static propTypes = {
-        direction: PropTypes.oneOf(["row", "row-reverse", "column", "column-reverse"]),
-        wrap: PropTypes.oneOf(["nowrap", "wrap", "wrap-reverse"]),
+    const { alignContent, alignItems, children, className, direction, justifyContent, wrap } = props;
 
-        justifyContent: PropTypes.oneOf([
-            "flex-start",
-            "flex-end",
-            "center",
-            "space-between",
-            "space-around"
-        ]),
-
-        alignItems: PropTypes.oneOf([
-            "flex-start",
-            "flex-end",
-            "center",
-            "stretch",
-            "baseline"
-        ]),
-
-        alignContent: PropTypes.oneOf([
-            "flex-start",
-            "flex-end",
-            "center",
-            "stretch",
-            "space-between",
-            "space-around"
-        ]),
-
-        children: PropTypes.node.isRequired,
-
-        className: PropTypes.string,
-        style: PropTypes.object
+    let style = {
+        alignContent,
+        alignItems,
+        display: "flex",
+        flexFlow: join([direction, wrap], " "),
+        justifyContent
     };
 
-    static defaultProps = {
-        direction: "row",
-        wrap: "nowrap",
-        justifyContent: "flex-start",
-        alignItems: "stretch",
-        alignContent: "stretch"
-    };
-
-    render () {
-
-        let style = pick(this.props, ["justifyContent", "alignItems", "alignContent"]);
-
-        style.flexFlow = join([this.props.direction, this.props.wrap], " ");
-        style.display = "flex";
-
-        if (this.props.style) {
-            assign(style, this.props.style);
-        }
-
-        return (
-            <div style={style} className={this.props.className}>
-                {this.props.children}
-            </div>
-        );
+    if (props.style) {
+        style = {...style, ...props.style};
     }
+
+    return (
+        <div style={style} className={className}>
+            {children}
+        </div>
+    );
 }
+
+Flex.propTypes = {
+    direction: PropTypes.oneOf([
+        "row",
+        "row-reverse",
+        "column",
+        "column-reverse"
+    ]),
+    wrap: PropTypes.oneOf([
+        "nowrap",
+        "wrap",
+        "wrap-reverse"
+    ]),
+    justifyContent: PropTypes.oneOf([
+        "flex-start",
+        "flex-end",
+        "center",
+        "space-between",
+        "space-around"
+    ]),
+
+    alignItems: PropTypes.oneOf([
+        "flex-start",
+        "flex-end",
+        "center",
+        "stretch",
+        "baseline"
+    ]),
+
+    alignContent: PropTypes.oneOf([
+        "flex-start",
+        "flex-end",
+        "center",
+        "stretch",
+        "space-between",
+        "space-around"
+    ]),
+    children: PropTypes.node.isRequired,
+    className: PropTypes.string,
+    style: PropTypes.object
+};
+
+Flex.defaultProps = {
+    direction: "row",
+    wrap: "nowrap",
+    justifyContent: "flex-start",
+    alignItems: "stretch",
+    alignContent: "stretch"
+};
 
 export class FlexItem extends React.Component {
 
     static propTypes = {
         grow: PropTypes.number,
         shrink: PropTypes.number,
-        basis: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
-        alignSelf: PropTypes.oneOf(["auto", "flex-start", "flex-end", "center", "baseline", "stretch"]),
-        pad: PropTypes.oneOfType([PropTypes.bool, PropTypes.number]),
         style: PropTypes.object,
         className: PropTypes.string,
-        children: PropTypes.node
+        children: PropTypes.node,
+        basis: PropTypes.oneOfType([
+            PropTypes.string,
+            PropTypes.number
+        ]),
+        alignSelf: PropTypes.oneOf([
+            "auto",
+            "flex-start",
+            "flex-end",
+            "center",
+            "baseline",
+            "stretch"
+        ]),
+        pad: PropTypes.oneOfType([
+            PropTypes.bool,
+            PropTypes.number
+        ])
     };
 
     static defaultProps = {
@@ -105,15 +122,13 @@ export class FlexItem extends React.Component {
         };
 
         if (this.props.pad) {
-            style.marginLeft = this.props.pad === true ? "3px": this.props.pad + "px";
+            style.marginLeft = this.props.pad === true ? "3px" : this.props.pad + "px";
         }
 
         if (this.props.style) {
-            assign(style, this.props.style)
+            style = {...style, ...this.props.style};
         }
 
-        assign(style, this.props.style);
-        
         return (
             <div style={style} className={this.props.className}>
                 {this.props.children}

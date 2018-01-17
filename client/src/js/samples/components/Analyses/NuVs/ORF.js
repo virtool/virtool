@@ -2,7 +2,6 @@ import React from "react";
 import PropTypes from "prop-types";
 import { select } from "d3-selection";
 import { scaleLinear } from "d3-scale";
-import { capitalize } from "lodash";
 import { Flex, FlexItem } from "../../../../base";
 
 const HEIGHT = 8;
@@ -13,7 +12,7 @@ export default class NuVsORF extends React.Component {
         hits: PropTypes.arrayOf(PropTypes.object),
         maxSequenceLength: PropTypes.number,
         pos: PropTypes.array,
-        strand: PropTypes.number,
+        strand: PropTypes.number
     };
 
     componentDidMount () {
@@ -42,9 +41,9 @@ export default class NuVsORF extends React.Component {
             .range([0, width])
             .domain([0, this.props.maxSequenceLength]);
 
-        const x0 = x(Math.abs(this.props.pos[this.props.strand === 1 ? 0: 1]));
-        const x1 = x(Math.abs(this.props.pos[this.props.strand === 1 ? 1: 0]));
-        const x2 = x1 + (this.props.strand === 1 ? -5: 5);
+        const x0 = x(Math.abs(this.props.pos[this.props.strand === 1 ? 0 : 1]));
+        const x1 = x(Math.abs(this.props.pos[this.props.strand === 1 ? 1 : 0]));
+        const x2 = x1 + (this.props.strand === 1 ? -5 : 5);
 
         const yBase = HEIGHT - 4;
 
@@ -69,8 +68,8 @@ export default class NuVsORF extends React.Component {
 
         if (hmm) {
             label = (
-                <a target="_blank" href={`/hmm/${hmm.hit}`}>
-                    {capitalize(hmm.names[0])}
+                <a target="_blank" href={`/hmm/${hmm.hit}`} className="text-capitalize">
+                    {hmm.names[0]}
                 </a>
             );
         } else {
@@ -95,7 +94,7 @@ export default class NuVsORF extends React.Component {
                         </FlexItem>
                         <FlexItem pad={5}>
                             <small className="text-danger text-strong">
-                                {hmm ? hmm.best_e: null}
+                                {hmm ? hmm.best_e : null}
                             </small>
                         </FlexItem>
                     </Flex>

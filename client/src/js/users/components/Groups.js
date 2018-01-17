@@ -1,17 +1,5 @@
-/**
- * @license
- * The MIT License (MIT)
- * Copyright 2015 Government of Canada
- *
- * @author
- * Ian Boyes
- *
- * @exports GroupsPermissions
- */
-
 import React from "react";
 import { connect } from "react-redux";
-import { includes} from "lodash";
 import { Row, Col, Panel } from "react-bootstrap";
 import { ListGroupItem, Checkbox } from "../../base";
 
@@ -21,13 +9,13 @@ const UserGroups = (props) => {
 
     const groupComponents = props.allGroups.map(groupId => {
 
-        const toggled = includes(props.memberGroups, groupId);
+        const toggled = props.memberGroups.includes(groupId);
 
         return (
             <Col xs={12} md={4} key={groupId}>
                 <ListGroupItem
                     className="text-capitalize"
-                    onClick={() => (toggled ? props.removeFromGroup: props.addToGroup)(props.userId, groupId)}
+                    onClick={() => (toggled ? props.removeFromGroup : props.addToGroup)(props.userId, groupId)}
                     disabled={groupId === "administrator" && props.userId === props.accountUserId}
                 >
                     {groupId}
@@ -46,24 +34,22 @@ const UserGroups = (props) => {
     );
 };
 
-const mapStateToProps = (state) => {
-    return {
-        accountUserId: state.account.id,
-        allGroups: state.groups.list.map(group => group.id)
-    };
-};
+const mapStateToProps = state => ({
+    accountUserId: state.account.id,
+    allGroups: state.groups.list.map(group => group.id)
+});
 
-const mapDispatchToProps = (dispatch) => {
-    return {
-        addToGroup: (userId, groupId) => {
-            dispatch(addUserToGroup(userId, groupId));
-        },
+const mapDispatchToProps = dispatch => ({
 
-        removeFromGroup: (userId, groupId) => {
-            dispatch(removeUserFromGroup(userId, groupId));
-        }
-    };
-};
+    addToGroup: (userId, groupId) => {
+        dispatch(addUserToGroup(userId, groupId));
+    },
+
+    removeFromGroup: (userId, groupId) => {
+        dispatch(removeUserFromGroup(userId, groupId));
+    }
+
+});
 
 const Container = connect(mapStateToProps, mapDispatchToProps)(UserGroups);
 

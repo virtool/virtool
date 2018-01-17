@@ -1,23 +1,14 @@
-/**
- *
- *
- * @copyright 2017 Government of Canada
- * @license MIT
- * @author igboyes
- *
- */
-
 import React from "react";
 import { push } from "react-router-redux";
-import { includes } from "lodash";
-import { ClipLoader } from "halogenium";
 import { Switch, Route, Redirect } from "react-router-dom";
 import { connect } from "react-redux";
+import { ClipLoader } from "halogenium";
 import { LinkContainer } from "react-router-bootstrap";
 import { Nav, NavItem } from "react-bootstrap";
 
 import { getSample, showRemoveSample } from "../actions";
-import { Flex, FlexItem, Icon } from "../../base";
+import {getCanModify} from "../selectors";
+import { Flex, FlexItem, Icon, LoadingPlaceholder } from "../../base";
 import General from "./General";
 import Quality from "./Quality/Quality";
 import Analyses from "./Analyses/Analyses";
@@ -33,7 +24,7 @@ class SampleDetail extends React.Component {
     render () {
 
         if (this.props.detail === null) {
-            return <div />;
+            return <LoadingPlaceholder margin={130} />;
         }
 
         if (this.props.detail.imported === "ip") {
@@ -51,8 +42,8 @@ class SampleDetail extends React.Component {
         let editIcon;
         let removeIcon;
 
-        if (this.props.detail.canModify) {
-            if (includes(this.props.history.location.pathname, "general")) {
+        if (this.props.canModify) {
+            if (this.props.history.location.pathname.includes("general")) {
                 editIcon = (
                     <small style={{paddingLeft: "5px"}}>
                         <Icon
@@ -76,13 +67,6 @@ class SampleDetail extends React.Component {
                 </small>
             );
         }
-
-
-
-        const isOwnerOrAdministrator = (
-            includes(this.props.account.groups, this.props.detail.group) ||
-            this.props.account.id === detail.user.id
-        );
 
         return (
             <div>
@@ -109,13 +93,13 @@ class SampleDetail extends React.Component {
                     <LinkContainer to={`/samples/${sampleId}/analyses`}>
                         <NavItem>Analyses</NavItem>
                     </LinkContainer>
-                    {isOwnerOrAdministrator ? (
+                    {this.props.canModify ? (
                         <LinkContainer to={`/samples/${sampleId}/rights`}>
                             <NavItem>
                                 <Icon name="key" />
                             </NavItem>
                         </LinkContainer>
-                    ): null}
+                    ) : null}
                 </Nav>
 
                 <Switch>
@@ -132,28 +116,26 @@ class SampleDetail extends React.Component {
     }
 }
 
-const mapStateToProps = (state) => {
-    return {
-        detail: state.samples.detail,
-        account: state.account
-    };
-};
+const mapStateToProps = (state) => ({
+    detail: state.samples.detail,
+    canModify: getCanModify(state)
+});
 
-const mapDispatchToProps = (dispatch) => {
-    return {
-        getSample: (sampleId) => {
-            dispatch(getSample(sampleId));
-        },
+const mapDispatchToProps = (dispatch) => ({
 
-        showEdit: () => {
-            dispatch(push({state: {editSample: true}}));
-        },
+    getSample: (sampleId) => {
+        dispatch(getSample(sampleId));
+    },
 
-        showRemove: (sampleId, sampleName) => {
-            dispatch(showRemoveSample(sampleId, sampleName));
-        }
-    };
-};
+    showEdit: () => {
+        dispatch(push({state: {editSample: true}}));
+    },
+
+    showRemove: (sampleId, sampleName) => {
+        dispatch(showRemoveSample(sampleId, sampleName));
+    }
+
+});
 
 const Container = connect(mapStateToProps, mapDispatchToProps)(SampleDetail);
 

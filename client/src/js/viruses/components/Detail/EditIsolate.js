@@ -18,12 +18,10 @@ import { editIsolate, hideVirusModal } from "../../actions";
 import { Button } from "../../../base";
 import IsolateForm from "./IsolateForm";
 
-const getInitialState = (props) => {
-    return {
-        sourceType: props.sourceType || (props.restrictSourceTypes ? "unknown": ""),
-        sourceName: props.sourceName || ""
-    };
-};
+const getInitialState = props => ({
+    sourceType: props.sourceType || (props.restrictSourceTypes ? "unknown" : ""),
+    sourceName: props.sourceName || ""
+});
 
 class EditIsolate extends React.Component {
 
@@ -47,7 +45,12 @@ class EditIsolate extends React.Component {
     };
 
     save = () => {
-        this.props.onSave(this.props.virusId, this.props.isolateId, this.state.sourceType, this.state.sourceName);
+        this.props.onSave(
+            this.props.virusId,
+            this.props.isolateId,
+            this.state.sourceType,
+            this.state.sourceName
+        );
     };
 
     render () {
@@ -76,25 +79,23 @@ class EditIsolate extends React.Component {
     }
 }
 
-const mapStateToProps = (state) => {
-    return {
-        show: state.viruses.editIsolate,
-        allowedSourceTypes: state.settings.data.allowed_source_types,
-        restrictSourceTypes: state.settings.data.restrict_source_types
-    };
-};
+const mapStateToProps = state => ({
+    show: state.viruses.editIsolate,
+    allowedSourceTypes: state.settings.data.allowed_source_types,
+    restrictSourceTypes: state.settings.data.restrict_source_types
+});
 
-const mapDispatchToProps = (dispatch) => {
-    return {
-        onHide: () => {
-            dispatch(hideVirusModal());
-        },
+const mapDispatchToProps = dispatch => ({
 
-        onSave: (virusId, isolateId, sourceType, sourceName) => {
-            dispatch(editIsolate(virusId, isolateId, sourceType, sourceName))
-        }
-    };
-};
+    onHide: () => {
+        dispatch(hideVirusModal());
+    },
+
+    onSave: (virusId, isolateId, sourceType, sourceName) => {
+        dispatch(editIsolate(virusId, isolateId, sourceType, sourceName));
+    }
+
+});
 
 const Container = connect(mapStateToProps, mapDispatchToProps)(EditIsolate);
 

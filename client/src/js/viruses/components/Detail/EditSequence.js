@@ -10,7 +10,6 @@
  */
 
 import React from "react";
-import PropTypes from "prop-types";
 import { find } from "lodash";
 import { connect } from "react-redux";
 import { Row, Col, Modal, FormGroup, FormControl, InputGroup, ControlLabel } from "react-bootstrap";
@@ -18,11 +17,11 @@ import { Row, Col, Modal, FormGroup, FormControl, InputGroup, ControlLabel } fro
 import { editSequence, hideVirusModal } from "../../actions";
 import { Button, Icon } from "../../../base";
 import SequenceField from "./SequenceField";
-import virusAPI from "../../api";
+import { getGenbank } from "../../api";
 
 const getInitialState = (props) => {
     if (props.sequenceId) {
-        const isolate = find(props.detail.isolates, {id: props.isolateId});
+        const isolate = {...props.isolate};
         const sequence = find(isolate.sequences, {id: props.sequenceId});
 
         return {
@@ -30,7 +29,7 @@ const getInitialState = (props) => {
             host: sequence.host,
             sequence: sequence.sequence,
             autofillPending: false
-        }
+        };
     }
 
     return {
@@ -38,7 +37,7 @@ const getInitialState = (props) => {
         host: "",
         sequence: "",
         autofillPending: false
-    }
+    };
 };
 
 class EditSequence extends React.Component {
@@ -48,21 +47,12 @@ class EditSequence extends React.Component {
         this.state = getInitialState(this.props);
     }
 
-    static propTypes = {
-        virusId: PropTypes.string,
-        isolateId: PropTypes.string,
-        sequenceId: PropTypes.oneOfType([PropTypes.bool, PropTypes.string]),
-        detail: PropTypes.object,
-        onHide: PropTypes.func,
-        onSave: PropTypes.func
-    };
-
     modalEnter = () => {
         this.setState(getInitialState(this.props));
     };
 
-    save = (event) => {
-        event.preventDefault();
+    save = (e) => {
+        e.preventDefault();
 
         this.props.onSave(
             this.props.virusId,
@@ -76,7 +66,7 @@ class EditSequence extends React.Component {
 
     autofill = () => {
         this.setState({autofillPending: true}, () => {
-            virusAPI.getGenbank(this.props.sequenceId).then((resp) => {
+            getGenbank(this.props.sequenceId).then((resp) => {
                 // Success
                 const { definition, host, sequence } = resp.body;
 
@@ -88,7 +78,7 @@ class EditSequence extends React.Component {
                 });
             }, () => {
                 this.setState({autofillPending: false});
-            })
+            });
         });
     };
 
@@ -102,7 +92,7 @@ class EditSequence extends React.Component {
                         Loading
                     </span>
                 </div>
-            )
+            );
         }
 
         return (
@@ -115,53 +105,52 @@ class EditSequence extends React.Component {
                     <Modal.Body>
                         {overlay}
 
-
-                            <Row>
-                                <Col xs={12}  md={6}>
-                                    <FormGroup>
-                                        <ControlLabel>Accession (ID)</ControlLabel>
-                                        <InputGroup>
-                                            <FormControl
-                                                value={this.props.sequenceId}
-                                                readOnly
-                                            />
-                                            <InputGroup.Button>
-                                                <Button onClick={this.autofill}>
-                                                    <Icon name="wand"  />
-                                                </Button>
-                                            </InputGroup.Button>
-                                        </InputGroup>
-                                    </FormGroup>
-                                </Col>
-                                <Col xs={12} md={6}>
-                                    <FormGroup>
-                                        <ControlLabel>Host</ControlLabel>
+                        <Row>
+                            <Col xs={12} md={6}>
+                                <FormGroup>
+                                    <ControlLabel>Accession (ID)</ControlLabel>
+                                    <InputGroup>
                                         <FormControl
-                                            value={this.state.host}
-                                            onChange={(e) => this.setState({host: e.target.value})}
+                                            value={this.props.sequenceId}
+                                            readOnly
                                         />
-                                    </FormGroup>
-                                </Col>
-                            </Row>
-                            <Row>
-                                <Col xs={12}>
-                                    <FormGroup>
-                                        <ControlLabel>Definition</ControlLabel>
-                                        <FormControl
-                                            value={this.state.definition}
-                                            onChange={(e) => this.setState({definition: e.target.value})}
-                                        />
-                                    </FormGroup>
-                                </Col>
-                            </Row>
-                            <Row>
-                                <Col xs={12}>
-                                    <SequenceField
-                                        sequence={this.state.sequence}
-                                        onChange={(e) => this.setState({sequence: e.target.value})}
+                                        <InputGroup.Button>
+                                            <Button onClick={this.autofill}>
+                                                <Icon name="wand" />
+                                            </Button>
+                                        </InputGroup.Button>
+                                    </InputGroup>
+                                </FormGroup>
+                            </Col>
+                            <Col xs={12} md={6}>
+                                <FormGroup>
+                                    <ControlLabel>Host</ControlLabel>
+                                    <FormControl
+                                        value={this.state.host}
+                                        onChange={(e) => this.setState({host: e.target.value})}
                                     />
-                                </Col>
-                            </Row>
+                                </FormGroup>
+                            </Col>
+                        </Row>
+                        <Row>
+                            <Col xs={12}>
+                                <FormGroup>
+                                    <ControlLabel>Definition</ControlLabel>
+                                    <FormControl
+                                        value={this.state.definition}
+                                        onChange={(e) => this.setState({definition: e.target.value})}
+                                    />
+                                </FormGroup>
+                            </Col>
+                        </Row>
+                        <Row>
+                            <Col xs={12}>
+                                <SequenceField
+                                    sequence={this.state.sequence}
+                                    onChange={(e) => this.setState({sequence: e.target.value})}
+                                />
+                            </Col>
+                        </Row>
                     </Modal.Body>
                     <Modal.Footer>
                         <Button type="submit" bsStyle="primary" icon="floppy">
@@ -174,24 +163,24 @@ class EditSequence extends React.Component {
     }
 }
 
-const mapStateToProps = (state) => {
-    return {
-        sequenceId: state.viruses.editSequence,
-        detail: state.viruses.detail
-    };
-};
+const mapStateToProps = state => ({
+    detail: state.viruses.detail,
+    isolate: state.viruses.activeIsolate,
+    sequenceId: state.viruses.editSequence,
+    virusId: state.viruses.detail.id
+});
 
-const mapDispatchToProps = (dispatch) => {
-    return {
-        onHide: () => {
-            dispatch(hideVirusModal());
-        },
+const mapDispatchToProps = dispatch => ({
 
-        onSave: (virusId, isolateId, sequenceId, definition, host, sequence) => {
-            dispatch(editSequence(virusId, isolateId, sequenceId, definition, host, sequence))
-        }
-    };
-};
+    onHide: () => {
+        dispatch(hideVirusModal());
+    },
+
+    onSave: (virusId, isolateId, sequenceId, definition, host, sequence) => {
+        dispatch(editSequence(virusId, isolateId, sequenceId, definition, host, sequence));
+    }
+
+});
 
 const Container = connect(mapStateToProps, mapDispatchToProps)(EditSequence);
 

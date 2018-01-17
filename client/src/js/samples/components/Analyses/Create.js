@@ -21,8 +21,8 @@ export default class CreateAnalysis extends React.Component {
         onHide: PropTypes.func
     };
 
-    handleSubmit = (event) => {
-        event.preventDefault();
+    handleSubmit = (e) => {
+        e.preventDefault();
         this.props.onSubmit(this.props.id, this.state.algorithm);
         this.props.onHide();
     };

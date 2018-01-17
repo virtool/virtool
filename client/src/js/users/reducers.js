@@ -1,13 +1,3 @@
-/**
- * Redux reducer for working with the logged in user's account data.
- *
- * @copyright 2017 Government of Canada
- * @license MIT
- * @author igboyes
- *
- */
-
-import { assign } from "lodash";
 import {
     LIST_USERS,
     FILTER_USERS,
@@ -22,43 +12,37 @@ import {
 const initialState = {
     list: null,
     filter: "",
-
     createPending: false,
     createError: null
 };
 
-const updateUser = (state, update) => {
-    return {...state, list: state.list.map(user => {
+const updateUser = (state, update) => ({
+    ...state,
+    list: state.list.map(user => {
         if (user.id === update.id) {
             return {...user, ...update};
         }
 
         return user;
-    })};
-};
+    })
+});
 
 const reducer = (state = initialState, action) => {
 
     switch (action.type) {
 
-        case LIST_USERS.REQUESTED:
-            return assign({}, state);
-
         case LIST_USERS.SUCCEEDED: {
-            const activeData = action.users[0];
-
-            return assign({}, state, {
-                list: action.users,
-                activeId: activeData.id,
-                activeData: activeData
-            });
+            const activeData = action.data[0];
+            return {...state, list: action.data, activeId: activeData.id, activeData};
         }
 
         case FILTER_USERS: {
-            return assign({}, state, {filter: action.term});
+            return {...state, filter: action.term};
         }
 
         case CREATE_USER.SUCCEEDED:
+            return {...state, list: state.list.concat([action.data])};
+
         case SET_PASSWORD.SUCCEEDED:
         case SET_FORCE_RESET.SUCCEEDED:
         case SET_PRIMARY_GROUP.SUCCEEDED:
@@ -68,22 +52,24 @@ const reducer = (state = initialState, action) => {
         }
 
         case CREATE_USER.REQUESTED:
-            return assign({}, state, {createPending: true, createError: null});
+            return {...state, createPending: true, createError: null};
 
         case CREATE_USER.FAILED:
-            return assign({}, state, {createPending: false, createError: action.error});
+            return {...state, createPending: false, createError: action.error};
 
         case SET_PASSWORD.REQUESTED: {
             return updateUser(state, {passwordPending: true, passwordError: null});
         }
 
         case SET_PASSWORD.FAILED:
-            return updateUser(state, assign({}, state, {passwordPending: false, passwordError: action.error}));
+            if (action.id === "invalid_input") {
+                return updateUser(state, {...state, passwordPending: false, passwordError: action.message});
+            }
+
+            return state;
 
         case SET_FORCE_RESET.REQUESTED:
-            return assign({}, state, {
-                forceResetChangePending: true
-            });
+            return {...state, forceResetChangePending: true};
 
         default:
             return state;

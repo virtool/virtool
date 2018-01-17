@@ -1,28 +1,19 @@
-/**
- *
- *
- * @copyright 2017 Government of Canada
- * @license MIT
- * @author igboyes
- *
- */
 import React from "react";
 import { capitalize } from "lodash";
 import { connect } from "react-redux";
 import { Label } from "react-bootstrap";
 
-import { Flex, FlexItem } from "../../base";
+import { Flex, FlexItem, Identicon } from "../../base";
 import ChangePassword from "./Password";
-import { Identicon } from "../../base";
 
-const AccountGeneral = ({ id, groups, hash }) => {
+export const AccountGeneral = ({ id, groups, hash }) => {
 
     const groupLabels = groups.map(groupId =>
         <Label key={groupId} style={{marginRight: "3px"}}>
             {capitalize(groupId)}
         </Label>
     );
-    
+
     return (
         <div>
             <Flex alignItems="stretch" style={{marginBottom: "15px"}}>
@@ -46,14 +37,10 @@ const AccountGeneral = ({ id, groups, hash }) => {
     );
 };
 
-const mapStateToProps = (state) => {
-    return {
-        id: state.account.id,
-        hash: state.account.identicon,
-        groups: state.account.groups
-    };
-};
+const mapStateToProps = (state) => ({
+    id: state.account.id,
+    hash: state.account.identicon,
+    groups: state.account.groups
+});
 
-const Container = connect(mapStateToProps)(AccountGeneral);
-
-export default Container;
+export default connect(mapStateToProps)(AccountGeneral);

@@ -1,35 +1,21 @@
-/**
- *
- *
- * @copyright 2017 Government of Canada
- * @license MIT
- * @author igboyes
- *
- */
-
 import Request from "superagent";
 
-const indexesAPI = {
+export const find = () => (
+    Request.get("/api/indexes")
+);
 
-    find: () => {
-        return Request.get("/api/indexes")
-    },
+export const get = ({ indexVersion }) => (
+    Request.get(`/api/indexes/${indexVersion}`)
+);
 
-    get: (indexVersion) => {
-        return Request.get(`/api/indexes/${indexVersion}`);
-    },
+export const getUnbuilt = () => (
+    Request.get("/api/indexes/unbuilt")
+);
 
-    getUnbuilt: () => {
-        return Request.get("/api/indexes/unbuilt");
-    },
+export const create = () => (
+    Request.post("/api/indexes")
+);
 
-    create: () => {
-        return Request.post("/api/indexes");
-    },
-
-    getHistory: (indexVersion) => {
-        return Request.get(`/api/indexes/${indexVersion}/history`);
-    }
-};
-
-export default indexesAPI;
+export const getHistory = ({ indexVersion }) => (
+    Request.get(`/api/indexes/${indexVersion}/history`)
+);

@@ -1,9 +1,8 @@
 import { WS_CLOSED } from "./actionTypes";
+import { wsUpdateSample, wsRemoveSample, wsUpdateAnalysis, wsRemoveAnalysis } from "./samples/actions";
 import { wsUpdateFile, wsRemoveFile } from "./files/actions";
 import { wsUpdateJob, wsRemoveJob } from "./jobs/actions";
-import { wsUpdateSample, wsRemoveSample, wsUpdateAnalysis, wsRemoveAnalysis } from "./samples/actions";
 import { wsUpdateStatus } from "./status/actions";
-
 
 const documentUpdaters = {
     analyses: wsUpdateAnalysis,
@@ -34,11 +33,11 @@ export default function WSConnection (dispatch) {
         window.console.log(`${iface}.${operation}`);
 
         if (operation === "update" && documentUpdaters.hasOwnProperty(iface)) {
-            return dispatch(documentUpdaters[iface](message.data))
+            return dispatch(documentUpdaters[iface](message.data));
         }
 
         if (operation === "remove" && documentRemovers.hasOwnProperty(iface)) {
-            return dispatch(documentRemovers[iface](message.data))
+            return dispatch(documentRemovers[iface](message.data));
         }
     };
 
@@ -48,8 +47,8 @@ export default function WSConnection (dispatch) {
 
         this.connection = new window.WebSocket(`${protocol}://${window.location.host}/ws`);
 
-        this.connection.onmessage = (event) => {
-            this.handle(JSON.parse(event.data));
+        this.connection.onmessage = (e) => {
+            this.handle(JSON.parse(e.data));
         };
 
         this.connection.onclose = () => {

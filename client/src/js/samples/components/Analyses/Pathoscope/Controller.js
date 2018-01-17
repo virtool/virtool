@@ -1,6 +1,6 @@
 import React from "react";
 import PropTypes from "prop-types";
-import { assign, xor, sortBy, sum, filter } from "lodash";
+import { xor, sortBy, sum, filter } from "lodash";
 import { Icon, Flex, FlexItem, Button, Checkbox } from "../../../../base";
 import { Row, Col, Dropdown, MenuItem, FormGroup, InputGroup, FormControl } from "react-bootstrap";
 
@@ -40,8 +40,8 @@ export default class PathoscopeController extends React.Component {
         });
     };
 
-    setSortKey = (event) => {
-        this.setState({sortKey: event.target.value});
+    setSortKey = (e) => {
+        this.setState({sortKey: e.target.value});
     };
 
     toggleSortDescending = () => {
@@ -70,12 +70,12 @@ export default class PathoscopeController extends React.Component {
 
         let data = sortBy(this.props.data, this.state.sortKey);
 
-        const re = this.state.findTerm ? new RegExp(this.state.findTerm, "i"): null;
+        const re = this.state.findTerm ? new RegExp(this.state.findTerm, "i") : null;
 
         if (this.state.filterViruses) {
             const totalReadsMapped = sum(data.map(v => v.reads));
 
-            data = filter(data, (virus) => (
+            data = filter(data, virus => (
                 (virus.pi * totalReadsMapped >= virus.length * 0.8 / this.props.maxReadLength) &&
                 (!re || (re.test(virus.abbreviation) || re.test(virus.name)))
             ));
@@ -84,11 +84,10 @@ export default class PathoscopeController extends React.Component {
         }
 
         if (this.state.filterIsolates) {
-            data = data.map(virus => {
-                return assign({}, virus, {
-                    isolates: filter(virus.isolates, isolate => isolate.pi >= 0.03 * virus.pi)
-                });
-            });
+            data = data.map(virus => ({
+                ...virus,
+                isolates: filter(virus.isolates, isolate => (isolate.pi >= 0.03 * virus.pi))
+            }));
         }
 
         if (this.state.sortDescending) {
@@ -118,7 +117,7 @@ export default class PathoscopeController extends React.Component {
                                 <InputGroup>
                                     <InputGroup.Button>
                                         <Button title="Sort Direction" onClick={this.toggleSortDescending}>
-                                            <Icon name={this.state.sortDescending ? "sort-desc": "sort-asc"} />
+                                            <Icon name={this.state.sortDescending ? "sort-desc" : "sort-asc"} />
                                         </Button>
                                     </InputGroup.Button>
                                     <FormControl

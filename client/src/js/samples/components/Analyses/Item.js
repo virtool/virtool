@@ -1,71 +1,71 @@
-/**
- * @license
- * The MIT License (MIT)
- * Copyright 2015 Government of Canada
- *
- * @author
- * Ian Boyes
- *
- * @exports AnalysisItem
- */
-
 import React from "react";
 import CX from "classnames";
-import PropTypes from "prop-types";
+import { connect } from "react-redux";
+import { ClipLoader } from "halogenium";
 import { Row, Col, Label } from "react-bootstrap";
 
 import { getTaskDisplayName } from "../../../utils";
 import { Icon, RelativeTime } from "../../../base";
+import { removeAnalysis } from "../../actions";
+import { getCanModify } from "../../selectors";
 
-const AnalysisItem = (props) => {
+export class AnalysisItem extends React.Component {
 
-    const itemClass = CX("list-group-item spaced", {
-        "hoverable": props.ready
-    });
+    render () {
 
-    let end;
+        const itemClass = CX("list-group-item spaced", {hoverable: this.props.ready});
 
-    if (props.ready) {
-        if (props.canModify) {
-            end = <Icon name="remove" bsStyle="danger" onClick={props.onRemove} pullRight/>;
+        let end;
+
+        if (this.props.ready) {
+            if (this.props.canModify) {
+                end = (
+                    <Icon
+                        name="remove"
+                        bsStyle="danger"
+                        onClick={() => this.props.onRemove(this.props.id)}
+                        style={{fontSize: "17px"}}
+                        pullRight
+                    />
+                );
+            }
+        } else {
+            end = (
+                <strong className="pull-right">
+                    <ClipLoader size="14px" color="#3c8786" style={{display: "inline"}}/> In Progress
+                </strong>
+            );
         }
-    } else {
-        end = (
-            <strong className="pull-right">
-                In Progress
-            </strong>
-        )
+
+        return (
+            <div className={itemClass} onClick={this.props.ready ? this.props.onRemove : null}>
+                <Row>
+                    <Col md={3}>
+                        <strong>{getTaskDisplayName(this.props.algorithm)}</strong>
+                    </Col>
+                    <Col md={4}>
+                        Started <RelativeTime time={this.props.created_at}/> by {this.props.user.id}
+                    </Col>
+                    <Col md={1}>
+                        <Label>{this.props.index.version}</Label>
+                    </Col>
+                    <Col md={4}>
+                        {end}
+                    </Col>
+                </Row>
+            </div>
+        );
     }
+}
 
-    return (
-        <div className={itemClass} onClick={props.ready ? props.onClick: null}>
-            <Row>
-                <Col md={3}>
-                    <strong>{getTaskDisplayName(props.algorithm)}</strong>
-                </Col>
-                <Col md={4}>
-                    Started <RelativeTime time={props.created_at}/> by {props.user.id}
-                </Col>
-                <Col md={1}>
-                    <Label>{props.index.version}</Label>
-                </Col>
-                <Col md={4}>
-                    {end}
-                </Col>
-            </Row>
-        </div>
-    );
-};
+const mapStateToProps = (state) => ({
+    canModify: getCanModify(state)
+});
 
-AnalysisItem.propTypes = {
-    index: PropTypes.object,
-    user: PropTypes.object,
-    algorithm: PropTypes.string,
-    created_at: PropTypes.string,
-    ready: PropTypes.bool,
-    canModify: PropTypes.bool,
-    onClick: PropTypes.func,
-    onRemove: PropTypes.func
-};
+const mapDispatchToProps = (dispatch, ownProps) => ({
+    onRemove: () => {
+        dispatch(removeAnalysis(ownProps.id));
+    }
+});
 
-export default AnalysisItem;
+export default connect(mapStateToProps, mapDispatchToProps)(AnalysisItem);

@@ -1,22 +1,22 @@
 /**
- * @license
- * The MIT License (MIT)
- * Copyright 2015 Government of Canada
- *
- * @author
- * Ian Boyes
- *
- * @exports JobsToolbar
+ * JobsToolbar module
+ * @module jobs/Toolbar
  */
-
 import React from "react";
 import { connect } from "react-redux";
 import { LinkContainer } from "react-router-bootstrap";
-import {InputGroup, FormGroup, FormControl, Dropdown, MenuItem} from "react-bootstrap";
+import { InputGroup, FormGroup, FormControl, Dropdown, MenuItem } from "react-bootstrap";
 
 import { clearJobs } from "../actions";
 import { Icon, Button } from "../../base";
+import { push } from "react-router-redux";
+import { createFindURL, getFindTerm } from "../../utils";
 
+/**
+ * A toolbar component for the jobs list view.
+ * @param props
+ * @returns {*}
+ */
 const JobsToolbar = (props) => {
 
     let removalDropdown;
@@ -47,7 +47,7 @@ const JobsToolbar = (props) => {
                     <InputGroup.Addon>
                         <Icon name="search" />
                     </InputGroup.Addon>
-                    <FormControl value={props.term} onChange={(e) => props.onChange(e.target.value)} />
+                    <FormControl value={props.term} onChange={(e) => props.onFind(e.target.value)} />
                 </InputGroup>
             </FormGroup>
 
@@ -60,19 +60,23 @@ const JobsToolbar = (props) => {
     );
 };
 
-const mapStateToProps = (state) => {
-    return {
-        canRemove: state.account.permissions.remove_job
-    };
-};
+const mapStateToProps = (state) => ({
+    term: getFindTerm(),
+    canRemove: state.account.permissions.remove_job
+});
 
-const mapDispatchToProps = (dispatch) => {
-    return {
-        onClear: (scope) => {
-            dispatch(clearJobs(scope));
-        }
-    };
-};
+const mapDispatchToProps = (dispatch) => ({
+
+    onFind: (find) => {
+        const url = createFindURL({ find });
+        dispatch(push(url.pathname + url.search));
+    },
+
+    onClear: (scope) => {
+        dispatch(clearJobs(scope));
+    }
+
+});
 
 const Container = connect(mapStateToProps, mapDispatchToProps)(JobsToolbar);
 

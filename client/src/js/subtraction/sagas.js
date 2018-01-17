@@ -1,77 +1,43 @@
-/**
- *
- *
- * @copyright 2017 Government of Canada
- * @license MIT
- * @author igboyes
- *
- */
-
-import { push } from "react-router-redux";
+import { LOCATION_CHANGE, push } from "react-router-redux";
 import { put, takeLatest, throttle } from "redux-saga/effects";
 
-import subtractionAPI from "./api";
-import { setPending } from "../wrappers";
+import * as subtractionAPI from "./api";
+import { apiCall, apiFind, pushHistoryState, setPending } from "../sagaUtils";
 import {
     FIND_SUBTRACTIONS,
     LIST_SUBTRACTION_IDS,
     GET_SUBTRACTION,
     CREATE_SUBTRACTION,
     REMOVE_SUBTRACTION
-}  from "../actionTypes";
+} from "../actionTypes";
+
+export function* findSubtractions (action) {
+    yield apiFind("/subtraction", subtractionAPI.find, action, FIND_SUBTRACTIONS);
+}
+
+export function* listSubtractionIds (action) {
+    yield apiCall(subtractionAPI.listIds, action, LIST_SUBTRACTION_IDS);
+}
+
+export function* getSubtraction (action) {
+    yield apiCall(subtractionAPI.get, action, GET_SUBTRACTION);
+}
+
+export function* createSubtraction (action) {
+    yield setPending(apiCall(subtractionAPI.create, action, CREATE_SUBTRACTION));
+    yield put({type: FIND_SUBTRACTIONS.REQUESTED});
+    yield pushHistoryState({createSubtraction: false});
+}
+
+export function* removeSubtraction (action) {
+    yield apiCall(subtractionAPI.remove, action, REMOVE_SUBTRACTION);
+    yield put(push("/subtraction"));
+}
 
 export function* watchSubtraction () {
-    yield throttle(500, FIND_SUBTRACTIONS.REQUESTED, findSubtractions);
+    yield throttle(300, LOCATION_CHANGE, findSubtractions);
     yield takeLatest(LIST_SUBTRACTION_IDS.REQUESTED, listSubtractionIds);
     yield takeLatest(GET_SUBTRACTION.REQUESTED, getSubtraction);
     yield throttle(500, CREATE_SUBTRACTION.REQUESTED, createSubtraction);
     yield throttle(300, REMOVE_SUBTRACTION.REQUESTED, removeSubtraction);
-}
-
-export function* findSubtractions (action) {
-    yield setPending(function* (action) {
-        try {
-            const response = yield subtractionAPI.find(action.term, action.page);
-            yield put({type: FIND_SUBTRACTIONS.SUCCEEDED, data: response.body});
-        } catch (error) {
-            yield put({type: FIND_SUBTRACTIONS.FAILED, error});
-        }
-    }, action);
-}
-
-export function* listSubtractionIds () {
-    const response = yield subtractionAPI.listIds();
-    yield put({type: LIST_SUBTRACTION_IDS.SUCCEEDED, data: response.body});
-}
-
-export function* getSubtraction (action) {
-    try {
-        const response = yield subtractionAPI.get(action.subtractionId);
-        yield put({type: GET_SUBTRACTION.SUCCEEDED, data: response.body});
-    } catch (error) {
-        yield put({type: GET_SUBTRACTION.FAILED, error});
-    }
-}
-
-export function* createSubtraction (action) {
-    yield setPending(function* (action) {
-        try {
-            yield subtractionAPI.create(action.subtractionId, action.fileId);
-            yield put({type: FIND_SUBTRACTIONS.REQUESTED});
-            yield put(push({...window.location, state: {createSubtraction: false}}));
-        } catch (error) {
-            yield put({type: CREATE_SUBTRACTION.FAILED, error});
-        }
-    }, action);
-}
-
-export function* removeSubtraction (action) {
-    yield setPending(function* (action) {
-        try {
-            yield subtractionAPI.remove(action.subtractionId);
-            yield put(push("/subtraction"));
-        } catch (error) {
-            yield put({type: REMOVE_SUBTRACTION.FAILED, error});
-        }
-    }, action);
 }

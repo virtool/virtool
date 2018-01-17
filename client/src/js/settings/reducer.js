@@ -1,12 +1,3 @@
-/**
- * Redux reducer for working with the logged in user's account data.
- *
- * @copyright 2017 Government of Canada
- * @license MIT
- * @author igboyes
- *
- */
-
 import {
     GET_SETTINGS,
     UPDATE_SETTINGS,
@@ -20,7 +11,7 @@ const initialState = {
     readaheadPending: false
 };
 
-const reducer = (state = initialState, action) => {
+export default function settingsReducer (state = initialState, action) {
 
     switch (action.type) {
 
@@ -37,12 +28,10 @@ const reducer = (state = initialState, action) => {
             return {...state, readahead: action.data, readaheadPending: false};
 
         case GET_CONTROL_READAHEAD.FAILED:
-            return {...state, readaheadPending:false};
+            return {...state, readaheadPending: false};
 
         default:
             return state;
     }
 
-};
-
-export default reducer;
+}

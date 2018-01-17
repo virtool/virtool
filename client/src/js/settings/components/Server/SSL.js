@@ -1,14 +1,3 @@
-/**
- * @license
- * The MIT License (MIT)
- * Copyright 2015 Government of Canada
- *
- * @author
- * Ian Boyes
- *
- * @exports Security
- */
-
 import React from "react";
 import { connect } from "react-redux";
 import { Row, Col, Panel } from "react-bootstrap";
@@ -22,9 +11,6 @@ const SSLFooter = () => (
     </small>
 );
 
-/**
- * A form component for setting whether an internal control should be used and which virus to use as a control.
- */
 const SSLOptions = (props) => (
     <div>
         <Row>
@@ -70,29 +56,27 @@ const SSLOptions = (props) => (
     </div>
 );
 
-const mapStateToProps = (state) => {
-    return {
-        enabled: state.settings.data.use_ssl,
-        certPath: state.settings.data.cert_path,
-        keyPath: state.settings.data.key_path
-    };
-};
+const mapStateToProps = (state) => ({
+    enabled: state.settings.data.use_ssl,
+    certPath: state.settings.data.cert_path,
+    keyPath: state.settings.data.key_path
+});
 
-const mapDispatchToProps = (dispatch) => {
-    return {
-        onToggle: (value) => {
-            dispatch(updateSetting("use_ssl", value));
-        },
+const mapDispatchToProps = (dispatch) => ({
 
-        onUpdateCertPath: (path) => {
-            dispatch(updateSetting("cert_path", path));
-        },
+    onToggle: (value) => {
+        dispatch(updateSetting("use_ssl", value));
+    },
 
-        onUpdateKeyPath: (path) => {
-            dispatch(updateSetting("key_path", path));
-        }
-    };
-};
+    onUpdateCertPath: (path) => {
+        dispatch(updateSetting("cert_path", path));
+    },
+
+    onUpdateKeyPath: (path) => {
+        dispatch(updateSetting("key_path", path));
+    }
+
+});
 
 const Container = connect(mapStateToProps, mapDispatchToProps)(SSLOptions);
 

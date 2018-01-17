@@ -1,57 +1,43 @@
-/**
- *
- *
- * @copyright 2017 Government of Canada
- * @license MIT
- * @author igboyes
- *
- */
-
 import Request from "superagent";
 
-const usersAPI = {
+export const list = () => (
+    Request.get("/api/users")
+);
 
-    list: () => {
-        return Request.get("/api/users");
-    },
+export const get = (userId) => (
+    Request.get(`/api/users/${userId}`)
+);
 
-    get: (userId) => {
-        return Request.get(`/api/users/${userId}`);
-    },
+export const create = ({ userId, password, forceReset }) => (
+    Request.post("/api/users")
+        .send({
+            user_id: userId,
+            password,
+            force_reset: forceReset
+        })
+);
 
-    create: (userId, password, forceReset) => {
-        return Request.post("/api/users")
-            .send({
-                user_id: userId,
-                password,
-                force_reset: forceReset
-            });
-    },
+export const setPassword = ({ userId, password }) => (
+    Request.put(`/api/users/${userId}/password`)
+        .send({password})
+);
 
-    setPassword: (userId, password) => {
-        return Request.put(`/api/users/${userId}/password`)
-            .send({password: password});
-    },
+export const setForceReset = ({ userId, enabled }) => (
+    Request.put(`/api/users/${userId}/reset`)
+        .send({force_reset: enabled})
+);
 
-    setForceReset: (userId, enabled) => {
-        return Request.put(`/api/users/${userId}/reset`)
-            .send({force_reset: enabled});
-    },
+export const setPrimaryGroup = ({ userId, primaryGroup }) => (
+    Request.put(`/api/users/${userId}/primary`)
+        .send({primary_group: primaryGroup})
+);
 
-    setPrimaryGroup: (userId, primaryGroup) => {
-        return Request.put(`/api/users/${userId}/primary`)
-            .send({primary_group: primaryGroup});
-    },
+export const addUserToGroup = ({ userId, groupId }) => (
+    Request.post(`/api/users/${userId}/groups`, {
+        group_id: groupId
+    })
+);
 
-    addUserToGroup: (userId, groupId) => {
-        return Request.post(`/api/users/${userId}/groups`, {
-            group_id: groupId
-        });
-    },
-
-    removeUserFromGroup: (userId, groupId) => {
-        return Request.delete(`/api/users/${userId}/groups/${groupId}`);
-    }
-};
-
-export default usersAPI;
+export const removeUserFromGroup = ({ userId, groupId }) => (
+    Request.delete(`/api/users/${userId}/groups/${groupId}`)
+);

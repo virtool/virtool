@@ -1,16 +1,4 @@
-/**
- * @license
- * The MIT License (MIT)
- * Copyright 2015 Government of Canada
- *
- * @author
- * Ian Boyes
- *
- * @exports Quality
- */
-
 import React from "react";
-import { pick } from "lodash";
 import { connect } from "react-redux";
 
 import { Button } from "../../../base";
@@ -47,7 +35,13 @@ const SampleDetailQuality = (props) => (
 );
 
 const mapStateToProps = (state) => {
-    return pick(state.samples.detail.quality, ["bases", "composition", "sequences"]);
+    const { bases, composition, sequences } = state.samples.detail.quality;
+
+    return {
+        bases,
+        composition,
+        sequences
+    };
 };
 
 const Container = connect(mapStateToProps)(SampleDetailQuality);

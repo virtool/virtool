@@ -1,18 +1,6 @@
-/**
- * @license
- * The MIT License (MIT)
- * Copyright 2015 Government of Canada
- *
- * @author
- * Ian Boyes
- *
- * @exports SamplesImport
- *
- */
-
 import React from "react";
-import PropTypes from "prop-types";
-import { capitalize, filter } from "lodash";
+import { push } from "react-router-redux";
+import { filter } from "lodash";
 import { connect } from "react-redux";
 import {
     Alert,
@@ -25,27 +13,42 @@ import {
     InputGroup
 } from "react-bootstrap";
 
+import ReadSelector from "./ReadSelector";
 import { findReadyHosts, createSample } from "../../actions";
 import { findFiles } from "../../../files/actions";
-import { Flex, FlexItem, Icon, Input, Button } from "../../../base";
-import ReadSelector from "./ReadSelector";
+import { Button, Icon, Input, LoadingPlaceholder } from "../../../base";
+import { routerLocationHasState } from "../../../utils";
 
+const getReadyHosts = (props) => (
+    props.readyHosts && props.readyHosts.length ? (props.readyHosts[0].id || "") : ""
+);
 
-const getReadyHosts = (props) => {
-    return props.readyHosts && props.readyHosts.length ? (props.readyHosts[0].id || ""): "";
-};
+const getInitialState = (props) => ({
+    selected: [],
+    name: "",
+    host: "",
+    isolate: "",
+    locale: "",
+    subtraction: getReadyHosts(props),
+    group: props.forceGroupChoice ? "none" : "",
+    error: null
+});
 
-const getInitialState = (props) => {
-    return {
-        selected: [],
-        name: "",
-        host: "",
-        isolate: "",
-        locale: "",
-        subtraction: getReadyHosts(props),
-        group: props.forceGroupChoice ? "none": "",
-        error: null
-    };
+const SampleUserGroup = ({ group, groups, onChange }) => {
+    const groupComponents = groups.map(groupId =>
+        <option key={groupId} value={groupId} className="text-capitalize">
+            {groupId}
+        </option>
+    );
+
+    return (
+        <Col md={3}>
+            <Input type="select" label="User Group" value={group} onChange={onChange}>
+                <option key="none" value="none">None</option>
+                {groupComponents}
+            </Input>
+        </Col>
+    );
 };
 
 class CreateSample extends React.Component {
@@ -55,28 +58,9 @@ class CreateSample extends React.Component {
         this.state = getInitialState(props);
     }
 
-    static propTypes = {
-        show: PropTypes.bool,
-        onHide: PropTypes.func,
-        groups: PropTypes.array,
-        readyReads: PropTypes.array,
-        readFiles: PropTypes.arrayOf(PropTypes.object),
-        readyHosts: PropTypes.arrayOf(PropTypes.object),
-        onFindFiles: PropTypes.func,
-        onFindHosts: PropTypes.func,
-        onCreate: PropTypes.func
-    };
-
-    componentDidMount () {
-        this.props.onFindHosts();
-        this.props.onFindFiles();
-    }
-
     componentWillReceiveProps (nextProps) {
         if (nextProps.readyHosts !== this.props.readyHosts) {
-            this.setState({
-                subtraction: getReadyHosts(nextProps),
-            });
+            this.setState({subtraction: getReadyHosts(nextProps)});
         }
     }
 
@@ -85,8 +69,8 @@ class CreateSample extends React.Component {
         this.props.onFindFiles();
     };
 
-    handleSubmit = (event) => {
-        event.preventDefault();
+    handleSubmit = (e) => {
+        e.preventDefault();
 
         if (!this.state.selected.length) {
             return this.setState({
@@ -94,14 +78,7 @@ class CreateSample extends React.Component {
             });
         }
 
-        this.props.onCreate(
-            this.state.name,
-            this.state.isolate,
-            this.state.host,
-            this.state.locale,
-            this.state.subtraction,
-            this.state.selected
-        );
+        this.props.onCreate({...this.state, files: this.state.selected});
     };
 
     autofill = () => {
@@ -114,14 +91,12 @@ class CreateSample extends React.Component {
 
         if (this.props.readyHosts === null || this.props.readFiles) {
             return (
-                <Modal onEnter={this.modalEnter}>
+                <Modal show={this.props.show} onHide={this.props.onHide} onEnter={this.modalEnter}>
                     <Modal.Body>
-                        <div className="text-center">
-                            Loading
-                        </div>
+                        <LoadingPlaceholder margin="36px" />
                     </Modal.Body>
                 </Modal>
-            )
+            );
         }
 
         const hostComponents = this.props.readyHosts.map(host =>
@@ -133,37 +108,19 @@ class CreateSample extends React.Component {
         if (!hostComponents.length) {
             noHostsAlert = (
                 <Alert bsStyle="danger">
-                    <Flex alignItems="center">
-                        <Icon name="warning" />
-                        <FlexItem pad={5}>
-                            A host genome must be added to Virtool before samples can be created and analyzed.
-                        </FlexItem>
-                    </Flex>
+                    <Icon name="warning" /> A host genome must be added to Virtool before samples can be created and
+                    analyzed.
                 </Alert>
             );
         }
 
-        let userGroup;
-
-        if (this.state.forceGroupChoice) {
-
-            const groupComponents = this.props.groups.map(groupId =>
-                <option key={groupId} value={groupId}>
-                    {capitalize(groupId)}
-                </option>
-            );
-
-            userGroup = (
-                <Col md={3}>
-                    <Input type="select" label="User Group" value={this.state.group}>
-                        <option key="none" value="none">None</option>
-                        {groupComponents}
-                    </Input>
-                </Col>
-            );
-        }
-
-        const libraryType = this.state.selected.length === 2 ? "Paired": "Unpaired";
+        const userGroup = this.props.forceGroupChoice ? (
+            <SampleUserGroup
+                group={this.props.group}
+                groups={this.props.groups}
+                onChange={(e) => this.setState({group: e})}
+            />
+        ) : null;
 
         let alert;
 
@@ -175,9 +132,11 @@ class CreateSample extends React.Component {
             );
         }
 
+        const libraryType = this.state.selected.length === 2 ? "Paired" : "Unpaired";
+
         return (
             <Modal bsSize="large" show={this.props.show} onHide={this.props.onHide} onEnter={this.modalEnter}>
-                <Modal.Header onHide={this.hide} closeButton>
+                <Modal.Header onHide={this.props.onHide} closeButton>
                     Create Sample
                 </Modal.Header>
 
@@ -194,7 +153,6 @@ class CreateSample extends React.Component {
                                     <InputGroup>
                                         <FormControl
                                             type="text"
-                                            name="name"
                                             value={this.state.name}
                                             onChange={(e) => this.setState({name: e.target.value})}
                                             autoComplete={false}
@@ -214,8 +172,6 @@ class CreateSample extends React.Component {
                             </Col>
                             <Col md={3}>
                                 <Input
-                                    type="text"
-                                    name="isolate"
                                     label="Isolate"
                                     value={this.state.isolate}
                                     onChange={(e) => this.setState({isolate: e.target.value})}
@@ -226,8 +182,6 @@ class CreateSample extends React.Component {
                         <Row>
                             <Col md={6}>
                                 <Input
-                                    type="text"
-                                    name="host"
                                     label="True Host"
                                     value={this.state.host}
                                     onChange={(e) => this.setState({host: e.target.value})}
@@ -235,7 +189,6 @@ class CreateSample extends React.Component {
                             </Col>
                             <Col md={6}>
                                 <Input
-                                    name="subtraction"
                                     type="select"
                                     label="Subtraction Host"
                                     value={this.state.subtraction}
@@ -249,8 +202,6 @@ class CreateSample extends React.Component {
                         <Row>
                             <Col md={this.state.forceGroupChoice ? 6 : 8}>
                                 <Input
-                                    type="text"
-                                    name="locale"
                                     label="Locale"
                                     value={this.state.locale}
                                     onChange={(e) => this.setState({locale: e.target.value})}
@@ -270,7 +221,7 @@ class CreateSample extends React.Component {
                         <ReadSelector
                             files={this.props.readyReads}
                             selected={this.state.selected}
-                            onSelect={(selected) => this.setState({selected: selected})}
+                            onSelect={(selected) => this.setState({selected})}
                         />
 
                         {alert}
@@ -288,7 +239,10 @@ class CreateSample extends React.Component {
 }
 
 const mapStateToProps = (state) => {
+    const show = routerLocationHasState(state, "create", true);
+
     return {
+        show,
         groups: state.account.groups,
         readyHosts: state.samples.readyHosts,
         readyReads: filter(state.files.documents, {type: "reads", reserved: false}),
@@ -296,22 +250,24 @@ const mapStateToProps = (state) => {
     };
 };
 
-const mapDispatchToProps = (dispatch) => {
-    return {
-        onFindHosts: () => {
-            dispatch(findReadyHosts());
-        },
+const mapDispatchToProps = (dispatch) => ({
 
-        onFindFiles: () => {
-            dispatch(findFiles());
-        },
+    onFindHosts: () => {
+        dispatch(findReadyHosts());
+    },
 
-        onCreate: (name, isolate, host, locale, subtraction, files) => {
-            dispatch(createSample(name, isolate, host, locale, subtraction, files));
-        }
-    };
-};
+    onFindFiles: () => {
+        dispatch(findFiles("reads", 1));
+    },
 
-const Container = connect(mapStateToProps, mapDispatchToProps)(CreateSample);
+    onCreate: ({ name, isolate, host, locale, subtraction, files }) => {
+        dispatch(createSample(name, isolate, host, locale, subtraction, files));
+    },
 
-export default Container;
+    onHide: () => {
+        dispatch(push({...window.location, state: {create: false}}));
+    }
+
+});
+
+export default connect(mapStateToProps, mapDispatchToProps)(CreateSample);

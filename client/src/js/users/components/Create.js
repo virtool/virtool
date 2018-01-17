@@ -1,13 +1,3 @@
-/**
- * @license
- * The MIT License (MIT)
- * Copyright 2015 Government of Canada
- *
- * @author
- * Ian Boyes
- *
- */
-
 import React from "react";
 import { connect } from "react-redux";
 import { Row, Col, Modal, ButtonToolbar } from "react-bootstrap";
@@ -16,22 +6,22 @@ import { createUser } from "../actions";
 import { Icon, Input, Checkbox, Button } from "../../base";
 
 const getInitialState = () => ({
-    username: "",
+    userId: "",
     password: "",
     confirm: "",
     forceReset: false
 });
 
-class CreateUser extends React.PureComponent {
+export class CreateUser extends React.PureComponent {
 
     constructor (props) {
         super(props);
         this.state = getInitialState();
     }
 
-    handleSubmit = (event) => {
-        event.preventDefault();
-        this.props.onCreate(this.state.username, this.state.password, this.state.forceReset);
+    handleSubmit = (e) => {
+        e.preventDefault();
+        this.props.onCreate(this.state);
     };
 
     render = () => (
@@ -44,11 +34,9 @@ class CreateUser extends React.PureComponent {
                     <Row>
                         <Col xs={12}>
                             <Input
-                                type="text"
-                                name="username"
                                 label="Username"
-                                value={this.state.username}
-                                onChange={(e) => this.setState({username: e.target.value})}
+                                value={this.state.userId}
+                                onChange={(e) => this.setState({userId: e.target.value})}
                             />
                         </Col>
                     </Row>
@@ -56,7 +44,6 @@ class CreateUser extends React.PureComponent {
                         <Col xs={6}>
                             <Input
                                 type="password"
-                                name="password"
                                 label="Password"
                                 value={this.state.password}
                                 onChange={(e) => this.setState({password: e.target.value})}
@@ -65,7 +52,6 @@ class CreateUser extends React.PureComponent {
                         <Col xs={6}>
                             <Input
                                 type="password"
-                                name="confirm"
                                 label="Confirm"
                                 value={this.state.confirm}
                                 onChange={(e) => this.setState({confirm: e.target.value})}
@@ -94,21 +80,17 @@ class CreateUser extends React.PureComponent {
     );
 }
 
-const mapStateToProps = (state) => {
-    return {
-        error: state.users.createError,
-        pending: state.users.createPending
-    };
-};
+const mapStateToProps = state => ({
+    error: state.users.createError,
+    pending: state.users.createPending
+});
 
-const mapDispatchToProps = (dispatch) => {
-    return {
-        onCreate: (userId, password, forceReset) => {
-            dispatch(createUser(userId, password, forceReset));
-        }
-    };
-};
+const mapDispatchToProps = dispatch => ({
 
-const Container = connect(mapStateToProps, mapDispatchToProps)(CreateUser);
+    onCreate: (data) => {
+        dispatch(createUser(data));
+    }
 
-export default Container;
+});
+
+export default connect(mapStateToProps, mapDispatchToProps)(CreateUser);

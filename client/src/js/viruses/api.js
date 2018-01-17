@@ -1,127 +1,102 @@
-/**
- *
- *
- * @copyright 2017 Government of Canada
- * @license MIT
- * @author igboyes
- *
- */
-
 import Request from "superagent";
 
-const virusesAPI = {
+export const find = () => (
+    Request.get(`/api/viruses${window.location.search}`)
+);
 
-    find: (term, page) => {
-        let query = {};
+export const listNames = () => (
+    Request.get("/api/viruses?names=true")
+);
 
-        if (term) {
-            query.term = term;
-        }
+export const get = ({ virusId }) => (
+    Request.get(`/api/viruses/${virusId}`)
+);
 
-        query.page = page;
+export const getHistory = ({ virusId }) => (
+    Request.get(`/api/viruses/${virusId}/history`)
+);
 
-        return Request
-            .get("/api/viruses")
-            .query(query);
-    },
+export const getGenbank = (accession) => (
+    Request.get(`/api/genbank/${accession}`)
+);
 
-    listNames: () => {
-        return Request
-            .get("/api/viruses")
-            .query({names: true});
-    },
-
-    get: (virusId) => {
-        return Request.get(`/api/viruses/${virusId}`);
-    },
-
-    getHistory: (virusId) => {
-        return Request.get(`/api/viruses/${virusId}/history`);
-    },
-
-    getGenbank: (accession) => {
-        return Request.get(`/api/genbank/${accession}`);
-    },
-
-    create: (name, abbreviation) => {
-        return Request.post("/api/viruses")
-            .send({
-                name,
-                abbreviation
-            });
-    },
-
-    edit: (virusId, name, abbreviation) => {
-        return Request.patch(`/api/viruses/${virusId}`, {
+export const create = ({ name, abbreviation }) => (
+    Request.post("/api/viruses")
+        .send({
             name,
             abbreviation
-        });
-    },
+        })
+);
 
-    remove: (virusId) => {
-        return Request.delete(`/api/viruses/${virusId}`);
-    },
+export const edit = ({ virusId, name, abbreviation }) => (
+    Request.patch(`/api/viruses/${virusId}`)
+        .send({
+            name,
+            abbreviation
+        })
+);
 
-    addIsolate: (virusId, sourceType, sourceName) => {
-        return Request.post(`/api/viruses/${virusId}/isolates`)
-            .send({
-                source_type: sourceType,
-                source_name: sourceName
-            });
-    },
+export const remove = ({ virusId }) => (
+    Request.delete(`/api/viruses/${virusId}`)
+);
 
-    editIsolate: (virusId, isolateId, sourceType, sourceName) => {
-        return Request.patch(`/api/viruses/${virusId}/isolates/${isolateId}`)
-            .send({
-                source_type: sourceType,
-                source_name: sourceName
-            });
-    },
+export const addIsolate = ({ virusId, sourceType, sourceName }) => (
+    Request.post(`/api/viruses/${virusId}/isolates`)
+        .send({
+            source_type: sourceType,
+            source_name: sourceName
+        })
+);
 
-    setIsolateAsDefault: (virusId, isolateId) => {
-        return Request.put(`/api/viruses/${virusId}/isolates/${isolateId}/default`);
-    },
+export const editIsolate = ({ virusId, isolateId, sourceType, sourceName }) => (
+    Request.patch(`/api/viruses/${virusId}/isolates/${isolateId}`)
+        .send({
+            source_type: sourceType,
+            source_name: sourceName
+        })
+);
 
-    removeIsolate: (virusId, isolateId) => {
-        return Request.delete(`/api/viruses/${virusId}/isolates/${isolateId}`);
-    },
+export const setIsolateAsDefault = ({ virusId, isolateId }) => (
+    Request.put(`/api/viruses/${virusId}/isolates/${isolateId}/default`)
+);
 
-    addSequence: (virusId, isolateId, sequenceId, definition, host, sequence) => {
-        return Request.post(`/api/viruses/${virusId}/isolates/${isolateId}/sequences`)
-            .send({
-                id: sequenceId,
-                definition,
-                host,
-                sequence
-            });
-    },
+export const removeIsolate = ({ virusId, isolateId }) => (
+    Request.delete(`/api/viruses/${virusId}/isolates/${isolateId}`)
+);
 
-    editSequence: (virusId, isolateId, sequenceId, definition, host, sequence) => {
-        return Request.patch(`/api/viruses/${virusId}/isolates/${isolateId}/sequences/${sequenceId}`)
-            .send({
-                definition,
-                host,
-                sequence
-            });
-    },
+export const addSequence = ({ virusId, isolateId, sequenceId, definition, host, sequence }) => (
+    Request.post(`/api/viruses/${virusId}/isolates/${isolateId}/sequences`)
+        .send({
+            id: sequenceId,
+            definition,
+            host,
+            sequence
+        })
+);
 
-    removeSequence: (virusId, isolateId, sequenceId) => {
-        return Request.delete(`/api/viruses/${virusId}/isolates/${isolateId}/sequences/${sequenceId}`);
-    },
+export const editSequence = ({ virusId, isolateId, sequenceId, definition, host, sequence }) => (
+    Request.patch(`/api/viruses/${virusId}/isolates/${isolateId}/sequences/${sequenceId}`)
+        .send({
+            definition,
+            host,
+            sequence
+        })
+);
 
-    revert: (virusId, version) => {
-        return Request.delete(`/api/history/${virusId}.${version}`);
-    },
+export const removeSequence = ({ virusId, isolateId, sequenceId }) => (
+    Request.delete(`/api/viruses/${virusId}/isolates/${isolateId}/sequences/${sequenceId}`)
+);
 
-    getImport: (fileId) => {
-        return Request.get("/api/viruses/import")
-            .query({file_id: fileId});
-    },
+export const revert = ({ virusId, version }) => (
+    Request.delete(`/api/history/${virusId}.${version}`)
+);
 
-    commitImport: (fileId) => {
-        return Request.post("/api/viruses/import")
-            .send({file_id: fileId});
-    }
-};
+export const getImport = ({ fileId }) => (
+    Request.get("/api/viruses/import")
+        .query({file_id: fileId})
+);
 
-export default virusesAPI;
+export const commitImport = ({ fileId }) => (
+    Request.post("/api/viruses/import")
+        .send({file_id: fileId})
+);

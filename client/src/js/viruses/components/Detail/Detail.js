@@ -1,32 +1,18 @@
-/**
- * @license
- * The MIT License (MIT)
- * Copyright 2015 Government of Canada
- *
- * @author
- * Ian Boyes
- *
- * @exports VirusDetail
- */
-
 import React from "react";
 import { Helmet } from "react-helmet";
 import { connect } from "react-redux";
 import { Switch, Route, Redirect } from "react-router-dom";
 import { LinkContainer } from "react-router-bootstrap";
 import { Label, Nav, NavItem } from "react-bootstrap";
-import { ClipLoader } from "halogenium";
 
-import { getVirus, showEditVirus, showRemoveVirus } from "../../actions";
-import { Flex, FlexItem, Icon } from "../../../base";
-import IsolateEditor from "./Editor";
-import General from "./General";
 import AddIsolate from "./AddIsolate";
-import Schema from "./Schema";
-import History from "./History";
+import IsolateEditor from "./Editor";
 import EditVirus from "./EditVirus";
+import General from "./General";
+import History from "./History";
 import RemoveVirus from "./RemoveVirus";
-
+import { getVirus, showEditVirus, showRemoveVirus } from "../../actions";
+import { Flex, FlexItem, Icon, LoadingPlaceholder } from "../../../base";
 
 const VirusSection = ({ match }) => (
     <div>
@@ -45,27 +31,10 @@ class VirusDetail extends React.Component {
     render = () => {
 
         if (this.props.detail === null || this.props.detail.id !== this.props.match.params.virusId) {
-            return (
-                <div className="text-center">
-                    <ClipLoader size="12px" />
-                </div>
-            );
+            return <LoadingPlaceholder />;
         }
 
         const virusId = this.props.detail.id;
-
-        let modifiedLabel;
-
-        if (this.props.detail.modified) {
-            modifiedLabel = (
-                <small>
-                    <Label bsStyle="warning" className="with-icon">
-                        <Icon name="flag" />
-                        Modified
-                    </Label>
-                </small>
-            );
-        }
 
         const { name, abbreviation } = this.props.detail;
 
@@ -115,7 +84,15 @@ class VirusDetail extends React.Component {
                             </Flex>
                         </FlexItem>
 
-                        {modifiedLabel}
+                        {this.props.detail.modified ? (
+                            <small>
+                                <Label bsStyle="warning" className="with-icon">
+                                    <Icon name="flag" />
+                                    Modified
+                                </Label>
+                            </small>
+                        ) : null}
+
                         {iconButtons}
                     </Flex>
                 </h3>
@@ -124,12 +101,6 @@ class VirusDetail extends React.Component {
                     <LinkContainer to={`/viruses/${virusId}/virus`}>
                         <NavItem>
                             Virus
-                        </NavItem>
-                    </LinkContainer>
-
-                    <LinkContainer to={`/viruses/${virusId}/schema`}>
-                        <NavItem>
-                            Schema
                         </NavItem>
                     </LinkContainer>
 
@@ -146,7 +117,6 @@ class VirusDetail extends React.Component {
                 <Switch>
                     <Redirect from="/viruses/:virusId" to={`/viruses/${virusId}/virus`} exact />
                     <Route path="/viruses/:virusId/virus" component={VirusSection} />
-                    <Route path="/viruses/:virusId/schema" component={Schema} />
                     <Route path="/viruses/:virusId/history" component={History} />
                 </Switch>
             </div>
@@ -154,28 +124,26 @@ class VirusDetail extends React.Component {
     };
 }
 
-const mapStateToProps = (state) => {
-    return {
-        detail: state.viruses.detail,
-        canModify: state.account.permissions.modify_virus
-    };
-};
+const mapStateToProps = state => ({
+    detail: state.viruses.detail,
+    canModify: state.account.permissions.modify_virus
+});
 
-const mapDispatchToProps = (dispatch) => {
-    return {
-        getVirus: (virusId) => {
-            dispatch(getVirus(virusId));
-        },
+const mapDispatchToProps = dispatch => ({
 
-        showEdit: () => {
-            dispatch(showEditVirus());
-        },
+    getVirus: (virusId) => {
+        dispatch(getVirus(virusId));
+    },
 
-        showRemove: () => {
-            dispatch(showRemoveVirus());
-        }
-    };
-};
+    showEdit: () => {
+        dispatch(showEditVirus());
+    },
+
+    showRemove: () => {
+        dispatch(showRemoveVirus());
+    }
+
+});
 
 const Container = connect(mapStateToProps, mapDispatchToProps)(VirusDetail);
 

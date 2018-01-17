@@ -1,15 +1,19 @@
-import { assign } from "lodash";
+/**
+ * Utility constants for use with base components.
+ *
+ * @module base/utils
+ */
 
-export const bsStyles = ["primary", "success", "danger", "warning", "info", "default"];
-
-const flipMoveProps = {
-    typeName: "div",
-    className: "list-group",
-    duration: 200,
-    staggerDurationBy: 20,
-    leaveAnimation: false
-};
-
-export const getFlipMoveProps = (options) => {
-    return assign({}, flipMoveProps, options);
-};
+/**
+ * An array of all the acceptable Bootstrap styles that can be used in react-bootstrap.
+ *
+ * @type object
+ */
+export const bsStyles = [
+    "primary",
+    "success",
+    "danger",
+    "warning",
+    "info",
+    "default"
+];

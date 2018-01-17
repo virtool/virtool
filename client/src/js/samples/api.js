@@ -1,93 +1,71 @@
-/**
- *
- *
- * @copyright 2017 Government of Canada
- * @license MIT
- * @author igboyes
- *
- */
-
 import Request from "superagent";
 
-const samplesAPI = {
+export const find = () => (
+    Request.get(`/api/samples${window.location.search}`)
+);
 
-    find: (term, page) => {
-        const params = {};
+export const findReadyHosts = () => (
+    Request.get("/api/subtraction")
+        .query({
+            ready: true,
+            is_host: true
+        })
+);
 
-        if (term) {
-            params["term"] = term;
-        }
+export const get = ({ sampleId }) => (
+    Request.get(`/api/samples/${sampleId}`)
+);
 
-        params["page"] = page;
+export const create = ({ name, isolate, host, locale, subtraction, files }) => (
+    Request.post("/api/samples")
+        .send({
+            name,
+            isolate,
+            host,
+            locale,
+            subtraction,
+            files
+        })
+);
 
-        return Request.get("/api/samples")
-            .query(params);
-    },
+export const update = ({ sampleId, update }) => (
+    Request.patch(`/api/samples/${sampleId}`)
+        .send(update)
+);
 
-    findReadyHosts: () => {
-        return Request.get("/api/subtraction")
-            .query({"ready": true, "is_host": true});
-    },
+export const updateGroup = ({ sampleId, groupId }) => (
+    Request.put(`/api/samples/${sampleId}/group`)
+        .send({
+            group_id: groupId
+        })
+);
 
-    get: (sampleId) => {
-        return Request.get(`/api/samples/${sampleId}`);
-    },
+export const updateRights = ({ sampleId, update }) => (
+    Request.patch(`/api/samples/${sampleId}/rights`)
+        .send(update)
+);
 
-    create: (name, isolate, host, locale, subtraction, files) => {
-        return Request.post("/api/samples")
-            .send({
-                name,
-                isolate,
-                host,
-                locale,
-                subtraction,
-                files
-            });
-    },
+export const remove = ({ sampleId }) => (
+    Request.delete(`/api/samples/${sampleId}`)
+);
 
-    update: (sampleId, update) => {
-        return Request.patch(`/api/samples/${sampleId}`)
-            .send(update);
-    },
+export const findAnalyses = ({ sampleId }) => (
+    Request.get(`/api/samples/${sampleId}/analyses`)
+);
 
-    updateGroup: (sampleId, groupId) => {
-        return Request.put(`/api/samples/${sampleId}/group`)
-            .send({
-                group_id: groupId
-            });
-    },
+export const getAnalysis = ({ analysisId }) => (
+    Request.get(`/api/analyses/${analysisId}`)
+);
 
-    updateRights: (sampleId, update) => {
-        return Request.patch(`/api/samples/${sampleId}/rights`)
-            .send(update);
-    },
+export const analyze = ({ sampleId, algorithm }) => (
+    Request.post(`/api/samples/${sampleId}/analyses`)
+        .send({algorithm})
+);
 
-    remove: (sampleId) => {
-        return Request.delete(`/api/samples/${sampleId}`);
-    },
+export const blastNuvs = ({ analysisId, sequenceIndex}) => (
+    Request.put(`/api/analyses/${analysisId}/${sequenceIndex}/blast`, {})
+);
 
-    findAnalyses: (sampleId) => {
-        return Request.get(`/api/samples/${sampleId}/analyses`)
-    },
-
-    getAnalysis: (analysisId) => {
-        return Request.get(`/api/analyses/${analysisId}`);
-    },
-
-    analyze: (sampleId, algorithm) => {
-        return Request.post(`/api/samples/${sampleId}/analyses`)
-            .send({
-                algorithm: algorithm
-            });
-    },
-
-    blastNuvs: (analysisId, sequenceIndex) => {
-        return Request.put(`/api/analyses/${analysisId}/${sequenceIndex}/blast`, {});
-    },
-
-    removeAnalysis: (analysisId) => {
-        return Request.delete(`/api/analyses/${analysisId}`);
-    }
-};
-
-export default samplesAPI;
+export const removeAnalysis = ({ analysisId }) => (
+    Request.delete(`/api/analyses/${analysisId}`)
+);

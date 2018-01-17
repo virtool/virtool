@@ -4,7 +4,7 @@ from aiohttp.test_utils import make_mocked_coro
 
 
 class TestFind:
-    @pytest.mark.parametrize("term,per_page,page,d_range,meta", [
+    @pytest.mark.parametrize("find,per_page,page,d_range,meta", [
         (None, None, None, range(0, 3), {
             "page": 1,
             "per_page": 15,
@@ -28,7 +28,7 @@ class TestFind:
             "found_count": 3,
             "total_count": 3
         }),
-        # Test ``term`` query param and ``found_count`` response field.
+        # Test ``find`` query param and ``found_count`` response field.
         ("gv", None, None, range(1, 3), {
             "page": 1,
             "per_page": 15,
@@ -51,7 +51,7 @@ class TestFind:
             "total_count": 3
         })
     ])
-    async def test(self, term, per_page, page, d_range, meta, spawn_client, static_time):
+    async def test(self, find, per_page, page, d_range, meta, spawn_client, static_time):
         client = await spawn_client(authorize=True)
 
         time_1 = arrow.get(static_time).datetime
@@ -112,8 +112,8 @@ class TestFind:
         path = "/api/samples"
         query = list()
 
-        if term is not None:
-            query.append("term={}".format(term))
+        if find is not None:
+            query.append("find={}".format(find))
 
         if per_page is not None:
             query.append("per_page={}".format(per_page))

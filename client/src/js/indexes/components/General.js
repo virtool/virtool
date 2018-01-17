@@ -1,12 +1,3 @@
-/**
- *
- *
- * @copyright 2017 Government of Canada
- * @license MIT
- * @author igboyes
- *
- */
-
 import React from "react";
 import { connect } from "react-redux";
 import { Link } from "react-router-dom";
@@ -14,45 +5,43 @@ import { Badge, Panel, ListGroup, ListGroupItem, Table } from "react-bootstrap";
 
 import { Flex, FlexItem, RelativeTime } from "../../base";
 
-const IndexGeneral = (props) => {
+const PanelBadgeHeader = ({ title, count }) => (
+    <Flex alignItems="center">
+        <FlexItem>
+            {title}
+        </FlexItem>
+        <FlexItem pad>
+            <Badge>{count}</Badge>
+        </FlexItem>
+    </Flex>
+);
 
-    const contributors = props.detail.contributors.map(contributor =>
+const IndexVirusEntry = ({ changeCount, id, name}) => (
+    <ListGroupItem>
+        <Link to={`/viruses/${id}`}>
+            {name}
+        </Link>
+        <Badge>
+            {changeCount} {`change${changeCount > 1 ? "s" : ""}`}
+        </Badge>
+    </ListGroupItem>
+);
+
+const IndexGeneral = ({ detail }) => {
+
+    const contributors = detail.contributors.map(contributor =>
         <ListGroupItem key={contributor.id}>
-            {contributor.id} <Badge>{contributor.count} {`change${contributor.count > 1 ? "s": ""}`}</Badge>
+            {contributor.id} <Badge>{contributor.count} {`change${contributor.count > 1 ? "s" : ""}`}</Badge>
         </ListGroupItem>
     );
 
-    const viruses = props.detail.viruses.map(virus =>
-        <ListGroupItem key={virus.id}>
-            <Link to={`/viruses/${virus.id}`}>
-                {virus.name}
-            </Link>
-            <Badge>
-                {virus.change_count} {`change${virus.change_count > 1 ? "s": ""}`}
-            </Badge>
-        </ListGroupItem>
-    );
-
-    const contributorsHeader = (
-        <Flex alignItems="center">
-            <FlexItem>
-                Contributors
-            </FlexItem>
-            <FlexItem pad>
-                <Badge>{contributors.length}</Badge>
-            </FlexItem>
-        </Flex>
-    );
-
-    const virusesHeader = (
-        <Flex alignItems="center">
-            <FlexItem>
-                Viruses
-            </FlexItem>
-            <FlexItem pad>
-                <Badge>{viruses.length}</Badge>
-            </FlexItem>
-        </Flex>
+    const viruses = detail.viruses.map(virus =>
+        <IndexVirusEntry
+            key={virus.id}
+            name={virus.name}
+            id={virus.id}
+            changeCount={virus.change_count}
+        />
     );
 
     return (
@@ -61,30 +50,30 @@ const IndexGeneral = (props) => {
                 <tbody>
                     <tr>
                         <th>Change Count</th>
-                        <td>{props.detail.change_count}</td>
+                        <td>{detail.change_count}</td>
                     </tr>
                     <tr>
                         <th>Created</th>
-                        <td><RelativeTime time={props.detail.created_at} /></td>
+                        <td><RelativeTime time={detail.created_at} /></td>
                     </tr>
                     <tr>
                         <th>Created By</th>
-                        <td>{props.detail.user.id}</td>
+                        <td>{detail.user.id}</td>
                     </tr>
                     <tr>
                         <th>Unique ID</th>
-                        <td>{props.detail.id}</td>
+                        <td>{detail.id}</td>
                     </tr>
                 </tbody>
             </Table>
 
-            <Panel header={contributorsHeader}>
+            <Panel header={<PanelBadgeHeader title="Contributors" count={contributors.length} />}>
                 <ListGroup fill>
                     {contributors}
                 </ListGroup>
             </Panel>
 
-            <Panel header={virusesHeader}>
+            <Panel header={<PanelBadgeHeader title="Viruses" count={viruses.length} />}>
                 <ListGroup fill>
                     {viruses}
                 </ListGroup>
@@ -93,11 +82,9 @@ const IndexGeneral = (props) => {
     );
 };
 
-const mapStateToProps = (state) => {
-    return {
-        detail: state.indexes.detail
-    };
-};
+const mapStateToProps = (state) => ({
+    detail: state.indexes.detail
+});
 
 const Container = connect(mapStateToProps)(IndexGeneral);
 

@@ -1,29 +1,32 @@
 import React from "react";
 import PropTypes from "prop-types";
 
-export const Tooltip = (props) => {
+/**
+ * A custom implementation of the Bootstrap tooltip component.
+ *
+ * @func
+ * @param children
+ * @param header {string} a header for the tooltip
+ * @param x {number} x position of the tooltip
+ * @param y {number} y position of the tooltip
+ */
+export const Tooltip = ({ children, header, x, y}) => {
 
     const tooltipStyle = {
-        left: (props.x - 10) + "px",
-        top: (props.y - window.pageYOffset - 10) + "px",
+        left: (x - 10) + "px",
+        top: (y - window.pageYOffset - 10) + "px",
         zIndex: 10000
     };
 
-    let header;
-
-    if (props.header) {
-        header = (
-            <div className="tooltip-header">
-                {props.header}
-            </div>
-        );
-    }
-
     return (
         <div className="tooltip" style={tooltipStyle}>
-            {header}
+            {header ? (
+                <div className="tooltip-header">
+                    {header}
+                </div>
+            ) : null}
             <div className="tooltip-body">
-                {props.children}
+                {children}
             </div>
         </div>
     );

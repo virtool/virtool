@@ -1,14 +1,7 @@
-/**
- *
- *
- * @copyright 2017 Government of Canada
- * @license MIT
- * @author igboyes
- *
- */
+import { takeEvery, takeLatest, throttle } from "redux-saga/effects";
 
-import { put, takeEvery, takeLatest, throttle } from "redux-saga/effects";
-import groupsAPI from "./api";
+import * as groupsAPI from "./api";
+import { apiCall, setPending } from "../sagaUtils";
 import { LIST_GROUPS, CREATE_GROUP, SET_GROUP_PERMISSION, REMOVE_GROUP } from "../actionTypes";
 
 export function* watchGroups () {
@@ -19,41 +12,19 @@ export function* watchGroups () {
 }
 
 function* listGroups () {
-    try {
-        const response = yield groupsAPI.list();
-        yield put({type: LIST_GROUPS.SUCCEEDED, data: response.body});
-    } catch (error) {
-        yield put({type: LIST_GROUPS.FAILED}, error);
-    }
+    yield apiCall(yield groupsAPI.list, {}, LIST_GROUPS);
 }
 
 function* createGroup (action) {
-    try {
-        const response = yield groupsAPI.create(action.groupId);
-        yield put({type: CREATE_GROUP.SUCCEEDED, data: response.body});
-    } catch (error) {
-        if (error.response.body.message === "Group already exists") {
-            yield put({type: CREATE_GROUP.FAILED, error: "Group already exists"});
-        } else {
-            throw(error);
-        }
-    }
+    yield setPending(apiCall(groupsAPI.create, action, CREATE_GROUP));
+    yield listGroups();
 }
 
 function* setGroupPermission (action) {
-    try {
-        const response = yield groupsAPI.setPermission(action.groupId, action.permission, action.value);
-        yield put({type: SET_GROUP_PERMISSION.SUCCEEDED, data: response.body});
-    } catch (error) {
-        yield put({type: SET_GROUP_PERMISSION.FAILED}, error);
-    }
+    yield setPending(apiCall(groupsAPI.setPermission, action, SET_GROUP_PERMISSION));
 }
 
 function* removeGroup (action) {
-    try {
-        yield groupsAPI.remove(action.groupId);
-        yield put({type: REMOVE_GROUP.SUCCEEDED, id: action.groupId});
-    } catch (error) {
-        yield put({type: REMOVE_GROUP.FAILED}, error);
-    }
+    yield setPending(apiCall(groupsAPI.remove, action, REMOVE_GROUP));
+    yield listGroups();
 }

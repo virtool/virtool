@@ -17,13 +17,11 @@ import { Row, Col, Alert, Panel, ButtonToolbar } from "react-bootstrap";
 import { setForceReset, setPassword } from "../actions";
 import { Input, Checkbox, Button, RelativeTime } from "../../base";
 
-const getInitialState = () => {
-    return {
-        newPassword: "",
-        confirmPassword: "",
-        error: false
-    };
-};
+const getInitialState = () => ({
+    password: "",
+    confirm: "",
+    error: false
+});
 
 class Password extends React.Component {
 
@@ -39,130 +37,121 @@ class Password extends React.Component {
     }
 
     componentWillUnmount () {
-        this.setState({
-            newPassword: "",
-            confirmPassword: ""
-        });
+        this.setState(getInitialState());
     }
 
-    handleSubmit = (event) => {
-        event.preventDefault();
+    handleChange = (e, key) => {
+        const state = {
+            error: this.state.error && this.state.password === this.state.confirm
+        };
 
-        if (this.state.newPassword === this.state.confirmPassword) {
-            this.props.onSubmit(this.props.id, this.state.newPassword);
+        state[key] = e.target.value;
+
+        this.setState(state);
+    };
+
+    handleSubmit = (e) => {
+        e.preventDefault();
+
+        if (this.state.password === this.state.confirm) {
+            this.props.onSubmit(this.props.id, this.state.password);
         } else {
-            this.setState({
-                error: true
-            });
+            this.setState({error: true});
         }
     };
 
-    render () {
-        let alert;
+    render = () => (
+        <Panel>
+            <p>
+                <em>
+                    Last changed <RelativeTime time={this.props.last_password_change} em={true}/>
+                </em>
+            </p>
 
-        if (this.props.error) {
-            alert = (
+            <form onSubmit={this.handleSubmit}>
+                <Row>
+                    <Col xs={12} md={6}>
+                        <Input
+                            type="password"
+                            placeholder="New Password"
+                            value={this.state.password}
+                            onChange={(e) => this.handleChange(e, "password")}
+                        />
+                    </Col>
+
+                    <Col xs={12} md={6}>
+                        <Input
+                            type="password"
+                            placeholder="Confirm Password"
+                            value={this.state.confirm}
+                            onChange={(e) => this.handleChange(e, "confirm")}
+                        />
+                    </Col>
+                </Row>
+                <Row>
+                    <Col xs={12} md={6}>
+                        <Checkbox
+                            label="Force user to reset password on next login"
+                            checked={this.props.force_reset}
+                            onClick={() => this.props.onSetForceReset(
+                                this.props.id,
+                                !this.props.force_reset
+                            )}
+                        />
+                    </Col>
+
+                    <Col xs={12} mdHidden lgHidden>
+                        <div style={{height: "15px"}}/>
+                    </Col>
+
+                    <Col xs={12} md={6}>
+                        <ButtonToolbar className="pull-right">
+                            <Button
+                                type="button"
+                                onClick={() => this.setState({confirm: "", pass: ""})}
+                            >
+                                Clear
+                            </Button>
+
+                            <Button
+                                icon="floppy"
+                                type="submit"
+                                bsStyle="primary"
+                            >
+                                Save
+                            </Button>
+                        </ButtonToolbar>
+                    </Col>
+
+                    <Col xs={12} className={CX({hidden: !this.state.error})}>
+                        <h5 className="text-danger">
+                            Passwords do not match
+                        </h5>
+                    </Col>
+                </Row>
+            </form>
+
+            {this.props.error ? (
                 <Alert bsStyle="danger">
                     {this.props.error}
                 </Alert>
-            );
-        }
+            ) : null}
 
-        return (
-            <Panel>
-                <p>
-                    <em>Last changed </em>
-                    <RelativeTime time={this.props.last_password_change} em={true}/>
-                </p>
-
-                <form onSubmit={this.handleSubmit}>
-                    <Row>
-                        <Col xs={16} md={6}>
-                            <Input
-                                type="password"
-                                name="password"
-                                placeholder="New Password"
-                                value={this.state.newPassword}
-                                onChange={(e) => this.setState({
-                                    newPassword: e.target.value,
-                                    error: this.state.error && this.state.newPassword === this.state.confirmPassword
-                                })}
-                            />
-                        </Col>
-
-                        <Col xs={12} md={6}>
-                            <Input
-                                type="password"
-                                name="confirm"
-                                placeholder="Confirm Password"
-                                value={this.state.confirmPassword}
-                                onChange={(e) => this.setState({
-                                    confirmPassword: e.target.value,
-                                    error: this.state.error && this.state.newPassword === this.state.confirmPassword
-                                })}
-                            />
-                        </Col>
-                    </Row>
-                    <Row>
-                        <Col xs={12} md={6}>
-                            <Checkbox
-                                label="Force user to reset password on next login"
-                                checked={this.props.force_reset}
-                                onClick={() => this.props.onSetForceReset(
-                                    this.props.id,
-                                    !this.props.force_reset
-                                )}
-                            />
-                        </Col>
-
-                        <Col xs={12} mdHidden lgHidden>
-                            <div style={{height: "15px"}}/>
-                        </Col>
-
-                        <Col xs={12} md={6}>
-                            <ButtonToolbar className="pull-right">
-                                <Button
-                                    type="button"
-                                    onClick={() => this.setState({confirmPassword: "", newPassword: ""})}
-                                >
-                                    Clear
-                                </Button>
-
-                                <Button
-                                    icon="floppy"
-                                    type="submit"
-                                    bsStyle="primary"
-                                >
-                                    Save
-                                </Button>
-                            </ButtonToolbar>
-                        </Col>
-
-                        <Col xs={12} className={CX({"hidden": !this.state.error})}>
-                            <h5 className="text-danger">
-                                Passwords do not match
-                            </h5>
-                        </Col>
-                    </Row>
-                </form>
-
-                {alert}
-            </Panel>
-        );
-    }
+        </Panel>
+    );
 }
 
-const mapDispatchToProps = (dispatch) => {
-    return {
-        onSubmit: (userId, password) => {
-            dispatch(setPassword(userId, password));
-        },
+const mapDispatchToProps = (dispatch) => ({
 
-        onSetForceReset: (userId, enabled) => {
-            dispatch(setForceReset(userId, enabled));
-        }
-    };
-};
+    onSubmit: (userId, password) => {
+        dispatch(setPassword(userId, password));
+    },
+
+    onSetForceReset: (userId, enabled) => {
+        dispatch(setForceReset(userId, enabled));
+    }
+
+});
 
 const Container = connect(() => ({}), mapDispatchToProps)(Password);
 

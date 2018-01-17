@@ -8,11 +8,10 @@
  *
  * @exports ReadSelector
  */
-
 import React from "react";
 import PropTypes from "prop-types";
 import { Link } from "react-router-dom";
-import { includes, without, intersection, filter, sortBy } from "lodash";
+import { without, intersection, filter, sortBy } from "lodash";
 import { Overlay, Popover, Panel } from "react-bootstrap";
 
 import { Icon, Input, Button, ListGroupItem } from "../../../base";
@@ -40,10 +39,10 @@ export default class ReadSelector extends React.PureComponent {
         }
     }
 
-    handleSelect = (selectedId) => {
+    onSelect = (selectedId) => {
         let selected;
 
-        if (includes(this.props.selected, selectedId)) {
+        if (this.props.selected.includes(selectedId)) {
             selected = without(this.props.selected, selectedId);
         } else {
             selected = this.props.selected.concat([selectedId]);
@@ -56,8 +55,8 @@ export default class ReadSelector extends React.PureComponent {
         this.props.onSelect(selected);
     };
 
-    reset = (event) => {
-        event.preventDefault();
+    reset = (e) => {
+        e.preventDefault();
         this.setState({filter: ""}, () => this.props.onSelect([]));
     };
 
@@ -66,15 +65,15 @@ export default class ReadSelector extends React.PureComponent {
         const loweredFilter = this.state.filter.toLowerCase();
 
         const files = filter(this.props.files, file =>
-            !this.state.filter || includes(file.name.toLowerCase(), loweredFilter)
+            !this.state.filter || file.name.toLowerCase().includes(loweredFilter)
         );
 
         let fileComponents = sortBy(files, "uploaded_at").reverse().map((file) =>
             <ReadItem
                 key={file.id}
                 {...file}
-                selected={includes(this.props.selected, file.id)}
-                onSelect={this.handleSelect}
+                selected={this.props.selected.includes(file.id)}
+                onSelect={this.onSelect}
             />
         );
 

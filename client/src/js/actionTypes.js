@@ -1,14 +1,24 @@
 /**
- * Created by igboyes on 03/05/17.
+ * @module actionTypes
  */
 
-const createRequestActionType = (root) => {
-    return {
-        REQUESTED: `${root}_REQUESTED`,
-        SUCCEEDED: `${root}_SUCCEEDED`,
-        FAILED: `${root}_FAILED`
-    };
-};
+/**
+ * Create a special action type used for requests.
+ *
+ * The request is an object with three properties assigned with action types used for API requests.
+ *
+ * - REQUESTED
+ * - SUCCEEDED
+ * - FAILED
+ *
+ * @param root {string} the root name of the action type
+ * @returns {object} a request-style action type
+ */
+const createRequestActionType = (root) => ({
+    REQUESTED: `${root}_REQUESTED`,
+    SUCCEEDED: `${root}_SUCCEEDED`,
+    FAILED: `${root}_FAILED`
+});
 
 export const SET_APP_PENDING = "SET_APP_PENDING";
 export const UNSET_APP_PENDING = "UNSET_APP_PENDING";
@@ -45,7 +55,6 @@ export const ANALYZE = createRequestActionType("ANALYZE");
 export const BLAST_NUVS = createRequestActionType("BLAST_NUVS");
 export const REMOVE_ANALYSIS = createRequestActionType("REMOVE_ANALYSIS");
 
-export const SHOW_EDIT_SAMPLE = "SHOW_EDIT_SAMPLE";
 export const SHOW_REMOVE_SAMPLE = "SHOW_REMOVE_SAMPLE";
 export const HIDE_SAMPLE_MODAL = "HIDE_SAMPLE_MODAL";
 
@@ -81,7 +90,7 @@ export const SHOW_REMOVE_SEQUENCE = "SHOW_REMOVE_SEQUENCE";
 export const HIDE_VIRUS_MODAL = "HIDE_VIRUS_MODAL";
 
 // HMMs
-export const FIND_HMMS = createRequestActionType("GET_HMMS");
+export const FIND_HMMS = createRequestActionType("FIND_HMMS");
 export const GET_HMM = createRequestActionType("GET_HMM");
 export const INSTALL_HMMS = createRequestActionType("IMPORT_HMMS");
 
@@ -94,8 +103,6 @@ export const GET_UNBUILT = createRequestActionType("GET_UNBUILT");
 export const CREATE_INDEX = createRequestActionType("CREATE_INDEX");
 export const GET_INDEX_HISTORY = createRequestActionType("GET_INDEX_HISTORY");
 export const CLEAR_INDEX_ERROR = "CLEAR_INDEX_ERROR";
-export const SHOW_REBUILD = "SHOW_REBUILD";
-export const HIDE_REBUILD = "HIDE_REBUILD";
 
 // Subtraction
 export const WS_UPDATE_SUBTRACTION = "WS_UPDATE_SUBTRACTION";
@@ -131,8 +138,6 @@ export const LOGOUT = createRequestActionType("LOGOUT");
 // Administrative Settings
 export const GET_SETTINGS = createRequestActionType("GET_SETTINGS");
 export const UPDATE_SETTINGS = createRequestActionType("UPDATE_SETTINGS");
-
-export const SET_SOURCE_TYPE_VALUE = "SET_SOURCE_TYPE_VALUE";
 export const GET_CONTROL_READAHEAD = createRequestActionType("GET_CONTROL_READAHEAD");
 
 // Users

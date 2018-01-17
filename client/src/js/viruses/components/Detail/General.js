@@ -12,70 +12,37 @@
 import React from "react";
 import { connect } from "react-redux";
 import { Table } from "react-bootstrap";
+import { IDRow } from "../../../base";
 
 import Issues from "./Issues";
 
+const VirusGeneral = ({ abbreviation, id, issues, isolates, name, version }) => (
+    <div>
+        {issues ? <Issues issues={issues} isolates={isolates} /> : null}
 
-/**
- * Displays general information about the virus whose detail is displayed. Also provided some InputCell components to
- * edit some of the mutable information for the virus: name, abbreviation.
- *
- * @class
- */
-const VirusGeneral = (props) => {
+        <Table bordered>
+            <tbody>
+                <tr>
+                    <th className="col-xs-4">Name</th>
+                    <td className="col-xs-8">{name}</td>
+                </tr>
+                <tr>
+                    <th>Abbreviation</th>
+                    <td>{abbreviation}</td>
+                </tr>
+                <tr>
+                    <th>Version</th>
+                    <td>{version}</td>
+                </tr>
+                <IDRow id={id} />
+            </tbody>
+        </Table>
+    </div>
+);
 
-    const uniqueIdRow = props.showIds ? (
-        <tr>
-            <th>Unique ID</th>
-            <td>{props.virusId}</td>
-        </tr>
-    ): null;
-
-    let issues;
-
-    if (props.issues) {
-        issues = <Issues issues={props.issues} isolates={props.isolates} />
-    }
-
-    return (
-        <div>
-            {issues}
-
-            <Table bordered>
-                <tbody>
-                    <tr>
-                        <th className="col-xs-4">Name</th>
-                        <td className="col-xs-8">{props.name}</td>
-                    </tr>
-                    <tr>
-                        <th>Abbreviation</th>
-                        <td>{props.abbreviation}</td>
-                    </tr>
-                    <tr>
-                        <th>Version</th>
-                        <td>{props.version}</td>
-                    </tr>
-                    {uniqueIdRow}
-                </tbody>
-            </Table>
-        </div>
-    );
-};
-
-const mapStateToProps = (state) => {
-    const detail = state.viruses.detail;
-
-    return {
-        showIds: state.account.settings.show_ids,
-        canModify: state.account.permissions.modify_virus,
-        virusId: detail.id,
-        name: detail.name,
-        abbreviation: detail.abbreviation,
-        version: detail.version,
-        issues: detail.issues,
-        isolates: detail.isolates
-    };
-};
+const mapStateToProps = state => ({
+    ...state.viruses.detail
+});
 
 const Container = connect(mapStateToProps)(VirusGeneral);
 

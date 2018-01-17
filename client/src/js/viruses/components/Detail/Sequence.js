@@ -51,7 +51,7 @@ class Sequence extends React.Component {
                                     onClick={() => this.props.showEditSequence(this.props.id)}
                                 />
                             </FlexItem>
-                        ): null}
+                        ) : null}
                         {this.props.canModify ? (
                             <FlexItem grow={0} shrink={0} pad={3}>
                                 <Icon
@@ -61,7 +61,7 @@ class Sequence extends React.Component {
                                     onClick={() => this.props.showRemoveSequence(this.props.id)}
                                 />
                             </FlexItem>
-                        ): null}
+                        ) : null}
                         <FlexItem grow={0} shrink={0} pad={3}>
                             <Icon
                                 name="download"
@@ -81,9 +81,10 @@ class Sequence extends React.Component {
 
         return (
             <ListGroupItem
+                className="spaced"
                 componentClass="div"
                 key={accession}
-                onClick={this.state.in ? null: () => this.setState({in: true})}
+                onClick={this.state.in ? null : () => this.setState({in: true})}
             >
                 <div>
                     <Flex alignItems="center">

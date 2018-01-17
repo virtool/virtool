@@ -1,31 +1,14 @@
-/**
- * @license
- * The MIT License (MIT)
- * Copyright 2015 Government of Canada
- *
- * @author
- * Ian Boyes
- *
- * @exports Bar
- */
-
 import React from "react";
 import { startsWith } from "lodash";
 import { connect } from "react-redux";
 import { withRouter } from "react-router-dom";
 import { LinkContainer } from "react-router-bootstrap";
 import { Navbar, Nav, NavItem, NavDropdown, MenuItem } from "react-bootstrap";
-
 import { logout } from "../../account/actions";
-import { Icon, AutoProgressBar } from "../../base"
+import { Icon, AutoProgressBar } from "../../base";
 
-const isHomeActive = (match, location) => {
-    return location.pathname === "/" || startsWith(location.pathname, "/home")
-};
+const isHomeActive = (match, location) => location.pathname === "/" || startsWith(location.pathname, "/home");
 
-/**
- * A container component that renders the primary and secondary navigation bars.
- */
 const Bar = (props) => {
 
     const dropdownTitle = (
@@ -89,7 +72,7 @@ const Bar = (props) => {
                                     Settings
                                 </NavItem>
                             </LinkContainer>
-                        ): null}
+                        ) : null}
                     </Nav>
 
                     <Nav pullRight>
@@ -119,21 +102,17 @@ const Bar = (props) => {
     );
 };
 
-const mapStateToProps = (state) => {
-    return {...state.account, pending: state.app.pending};
-};
+const mapStateToProps = (state) => ({
+    ...state.account,
+    pending: state.app.pending
+});
 
-const mapDispatchToProps = (dispatch) => {
-    return {
-        logout: () => {
-            dispatch(logout())
-        }
-    };
-};
+const mapDispatchToProps = (dispatch) => ({
+    logout: () => {
+        dispatch(logout());
+    }
+});
 
-const BarContainer = withRouter(connect(
-    mapStateToProps,
-    mapDispatchToProps
-)(Bar));
+const BarContainer = withRouter(connect(mapStateToProps, mapDispatchToProps)(Bar));
 
 export default BarContainer;

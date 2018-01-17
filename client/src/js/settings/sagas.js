@@ -1,17 +1,8 @@
-/**
- *
- *
- * @copyright 2017 Government of Canada
- * @license MIT
- * @author igboyes
- *
- */
+import { put, takeEvery, takeLatest, throttle } from "redux-saga/effects";
 
-import { put, throttle, takeEvery, takeLatest } from "redux-saga/effects";
-
-import settingsAPI from "./api";
-import virusesAPI from "../viruses/api";
-import { setPending } from "../wrappers";
+import * as settingsAPI from "./api";
+import * as virusesAPI from "../viruses/api";
+import { apiCall, setPending } from "../sagaUtils";
 import { GET_SETTINGS, UPDATE_SETTINGS, GET_CONTROL_READAHEAD } from "../actionTypes";
 
 export function* watchSettings () {
@@ -20,36 +11,26 @@ export function* watchSettings () {
     yield throttle(120, GET_CONTROL_READAHEAD.REQUESTED, getControlReadahead);
 }
 
-function* getSettings () {
-    try {
-        const response = yield settingsAPI.get();
-        yield put({type: GET_SETTINGS.SUCCEEDED, data: response.body});
-    } catch (error) {
-        yield put({type: GET_SETTINGS.FAILED}, error);
-    }
+function* getSettings (action) {
+    yield apiCall(settingsAPI.get, action, GET_SETTINGS);
 }
 
 function* updateSettings (action) {
-    yield setPending(function* () {
+    yield setPending(function* (action) {
         try {
-            const response = yield settingsAPI.update(action.update);
+            const response = yield settingsAPI.update(action);
             yield put({
                 type: UPDATE_SETTINGS.SUCCEEDED,
                 settings: response.body,
                 key: action.key,
                 update: action.update
             });
-        } catch(error) {
+        } catch (error) {
             yield put({type: UPDATE_SETTINGS.FAILED, key: action.key});
         }
-    }, action);
+    }(action));
 }
 
-function* getControlReadahead () {
-    try {
-        const response = yield virusesAPI.listNames();
-        yield put({type: GET_CONTROL_READAHEAD.SUCCEEDED, data: response.body});
-    } catch(error) {
-        yield put({type: GET_CONTROL_READAHEAD.FAILED});
-    }
+function* getControlReadahead (action) {
+    yield setPending(apiCall(virusesAPI.listNames, action, GET_CONTROL_READAHEAD));
 }

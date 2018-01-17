@@ -35,8 +35,8 @@ export default class PathoscopeIsolate extends React.Component {
         this.chartNode.scrollLeft = scrollLeft;
     };
 
-    handleScroll = (event) => {
-        this.props.setScroll(this.props.virusId, event.target.scrollLeft);
+    handleScroll = (e) => {
+        this.props.setScroll(this.props.virusId, e.target.scrollLeft);
     };
 
     render () {
@@ -64,7 +64,7 @@ export default class PathoscopeIsolate extends React.Component {
             />
         );
 
-        const piValue = this.props.showReads ? this.props.reads: toScientificNotation(this.props.pi);
+        const piValue = this.props.showReads ? this.props.reads : toScientificNotation(this.props.pi);
 
         return (
             <div>

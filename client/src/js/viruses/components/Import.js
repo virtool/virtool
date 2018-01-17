@@ -1,26 +1,15 @@
-/**
- *
- *
- * @copyright 2017 Government of Canada
- * @license MIT
- * @author igboyes
- *
- */
-
 import React from "react";
 import PropTypes from "prop-types";
-import { connect } from "react-redux";
 import Dropzone from "react-dropzone";
+import { connect } from "react-redux";
 import { Modal, Panel, Table, ProgressBar } from "react-bootstrap";
-
 import { Button, RelativeTime } from "../../base";
 import { uploadImport, commitImport } from "../actions";
 
-const getInitialState = () => {
-    return {
-        uploadProgress: 0
-    };
-};
+
+const getInitialState = () => ({
+    uploadProgress: 0
+});
 
 class VirusImport extends React.Component {
 
@@ -52,7 +41,7 @@ class VirusImport extends React.Component {
         if (this.props.importData === null) {
             body = (
                 <div>
-                    <Dropzone className="dropzone" onDrop={(files) => this.props.onDrop(files[0], this.handleProgress)}>
+                    <Dropzone className="dropzone" onDrop={files => this.props.onDrop(files[0], this.handleProgress)}>
                         <span>Drag or click here to upload a <strong>viruses.json.gz</strong> file.</span>
                     </Dropzone>
 
@@ -65,14 +54,11 @@ class VirusImport extends React.Component {
             const data = this.props.importData;
 
             if (data.duplicates || data.errors) {
-                body = (
-                    <strong>The import file is invalid.</strong>
-                );
-
+                body = <strong>The import file is invalid.</strong>;
             } else {
                 let progress;
 
-                if (data.in_progress) {
+                if (data.inProgress) {
                     progress = (
                         <Panel>
                             <ProgressBar now={data.inserted || 0 / data.totals.viruses * 100} />
@@ -141,23 +127,21 @@ class VirusImport extends React.Component {
 
 }
 
-const mapStateToProps = (state) => {
-    return {
-        importData: state.viruses.importData
-    };
-};
+const mapStateToProps = state => ({
+    importData: state.viruses.importData
+});
 
-const mapDispatchToProps = (dispatch) => {
-    return {
-        onDrop: (file, onProgress) => {
-            dispatch(uploadImport(file, onProgress));
-        },
+const mapDispatchToProps = dispatch => ({
 
-        onCommit: (fileId) => {
-            dispatch(commitImport(fileId));
-        }
-    };
-};
+    onDrop: (file, onProgress) => {
+        dispatch(uploadImport(file, onProgress));
+    },
+
+    onCommit: (fileId) => {
+        dispatch(commitImport(fileId));
+    }
+
+});
 
 const Container = connect(mapStateToProps, mapDispatchToProps)(VirusImport);
 

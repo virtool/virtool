@@ -18,64 +18,46 @@ import {
     REMOVE_USER_FROM_GROUP
 } from "../actionTypes";
 
-export const listUsers = () => {
-    return {
-        type: LIST_USERS.REQUESTED
-    };
-};
+export const listUsers = () => ({
+    type: LIST_USERS.REQUESTED
+});
 
-export const filterUsers = (term) => {
-    return {
-        type: FILTER_USERS,
-        term
-    };
-};
+export const filterUsers = (term) => ({
+    type: FILTER_USERS,
+    term
+});
 
-export const createUser = (userId, password, forceReset) => {
-    return {
-        type: CREATE_USER.REQUESTED,
-        userId,
-        password,
-        forceReset
-    };
-};
+export const createUser = (data) => ({
+    type: CREATE_USER.REQUESTED,
+    ...data
+});
 
-export const setForceReset = (userId, enabled) => {
-    return {
-        type: SET_FORCE_RESET.REQUESTED,
-        userId: userId,
-        enabled: enabled
-    };
-};
+export const setForceReset = (userId, enabled) => ({
+    type: SET_FORCE_RESET.REQUESTED,
+    userId,
+    enabled
+});
 
-export const setPassword = (userId, password) => {
-    return {
-        type: SET_PASSWORD.REQUESTED,
-        userId,
-        password
-    };
-};
+export const setPassword = (userId, password) => ({
+    type: SET_PASSWORD.REQUESTED,
+    userId,
+    password
+});
 
-export const setPrimaryGroup = (userId, primaryGroup) => {
-    return {
-        type: SET_PRIMARY_GROUP.REQUESTED,
-        userId,
-        primaryGroup
-    };
-};
+export const setPrimaryGroup = (userId, primaryGroup) => ({
+    type: SET_PRIMARY_GROUP.REQUESTED,
+    userId,
+    primaryGroup
+});
 
-export const addUserToGroup = (userId, groupId) => {
-    return {
-        type: ADD_USER_TO_GROUP.REQUESTED,
-        userId,
-        groupId
-    };
-};
+export const addUserToGroup = (userId, groupId) => ({
+    type: ADD_USER_TO_GROUP.REQUESTED,
+    userId,
+    groupId
+});
 
-export const removeUserFromGroup = (userId, groupId) => {
-    return {
-        type: REMOVE_USER_FROM_GROUP.REQUESTED,
-        userId,
-        groupId
-    };
-};
+export const removeUserFromGroup = (userId, groupId) => ({
+    type: REMOVE_USER_FROM_GROUP.REQUESTED,
+    userId,
+    groupId
+});

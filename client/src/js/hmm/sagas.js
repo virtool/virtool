@@ -1,51 +1,24 @@
-/**
- *
- *
- * @copyright 2017 Government of Canada
- * @license MIT
- * @author igboyes
- *
- */
+import { LOCATION_CHANGE } from "react-router-redux";
+import { takeLatest, throttle } from "redux-saga/effects";
 
-import { put, takeLatest, throttle } from "redux-saga/effects";
-
-import hmmsAPI from "./api";
-import { setPending } from "../wrappers";
+import * as hmmsAPI from "./api";
+import { apiCall, apiFind } from "../sagaUtils";
 import { FIND_HMMS, INSTALL_HMMS, GET_HMM } from "../actionTypes";
 
 export function* watchHmms () {
-    yield throttle(150, FIND_HMMS.REQUESTED, findHmms);
+    yield throttle(300, LOCATION_CHANGE, findHmms);
     yield takeLatest(GET_HMM.REQUESTED, getHmm);
     yield throttle(500, INSTALL_HMMS.REQUESTED, installHmms);
 }
 
 export function* findHmms (action) {
-    yield setPending(function* (action) {
-        try {
-            const response = yield hmmsAPI.find(action.term, action.page);
-            yield put({type: FIND_HMMS.SUCCEEDED, data: response.body});
-        } catch (error) {
-            yield put({type: FIND_HMMS.FAILED});
-        }
-    }, action)
+    yield apiFind("/hmm", hmmsAPI.find, action, FIND_HMMS);
 }
 
 export function* installHmms () {
-    try {
-        const response = yield hmmsAPI.install();
-        yield put({type: INSTALL_HMMS.SUCCEEDED, data: response.body});
-    } catch (error) {
-        yield put({type: INSTALL_HMMS.FAILED});
-    }
+    yield apiCall(hmmsAPI.install, {}, INSTALL_HMMS);
 }
 
 export function* getHmm (action) {
-    yield setPending(function* () {
-        try {
-            const response = yield hmmsAPI.get(action.hmmId);
-            yield put({type: GET_HMM.SUCCEEDED, data: response.body});
-        } catch (error) {
-            yield put({type: GET_HMM.FAILED});
-        }
-    }, action);
+    yield apiCall(hmmsAPI.get, action, GET_HMM);
 }

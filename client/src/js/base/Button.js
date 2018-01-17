@@ -1,28 +1,20 @@
-/**
- * @license
- * The MIT License (MIT)
- * Copyright 2015 Government of Canada
- *
- * @author
- * Ian Boyes
- *
- * @exports Button
- */
-
 import React from "react";
 import PropTypes from "prop-types";
 import CX from "classnames";
 import { Tooltip, OverlayTrigger } from "react-bootstrap";
-import { Icon, bsStyles } from "./";
+import { Icon } from "./Icon";
+import { bsStyles } from "./utils";
 
 /**
- * A react-bootstrap button that does not retain focus when clicked.
+ * A extension of the <Button /> component from react-bootstrap. Adds the features:
+ *  - blur on click
+ *  - optional tooltip
+ *
+ * @class
  */
 export class Button extends React.Component {
 
     static propTypes = {
-        type: PropTypes.oneOf(["button", "submit"]),
-        bsSize: PropTypes.oneOf(["xsmall", "small", "large"]),
         bsStyle: PropTypes.oneOf(bsStyles),
         active: PropTypes.bool,
         disabled: PropTypes.bool,
@@ -33,19 +25,35 @@ export class Button extends React.Component {
         icon: PropTypes.string,
         iconStyle: PropTypes.oneOf(bsStyles),
         pad: PropTypes.bool,
-
-        tip: PropTypes.oneOfType([PropTypes.string, PropTypes.element]),
-        tipPlacement: PropTypes.oneOf(["top", "right", "bottom", "left"]),
-
-        children: PropTypes.node
+        children: PropTypes.node,
+        type: PropTypes.oneOf([
+            "button",
+            "submit"
+        ]),
+        bsSize: PropTypes.oneOf([
+            "xsmall",
+            "small",
+            "large"
+        ]),
+        tip: PropTypes.oneOfType([
+            PropTypes.string,
+            PropTypes.element
+        ]),
+        tipPlacement: PropTypes.oneOf([
+            "top",
+            "right",
+            "bottom",
+            "left"
+        ])
     };
 
     static defaultProps = {
         bsStyle: "default",
-        pullRight: false
+        pullRight: false,
+        tipPlacement: "top"
     };
 
-    blur = () =>  {
+    blur = () => {
         this.buttonNode.blur();
     };
 
@@ -54,7 +62,7 @@ export class Button extends React.Component {
         const className = CX("btn", `btn-${this.props.bsStyle}`, {
             "btn-block": this.props.block,
             "pull-right": this.props.pullRight,
-            "active": this.props.active,
+            active: this.props.active,
             "btn-xs": this.props.bsSize === "xsmall",
             "btn-sm": this.props.bsSize === "small",
             "btn-lg": this.props.bsSize === "large",
@@ -68,16 +76,10 @@ export class Button extends React.Component {
             icon = <Icon name={this.props.icon} className={`text-${this.props.iconStyle}`} />;
         }
 
-        let children;
-
-        if (this.props.children) {
-            children = <span>{this.props.children}</span>
-        }
-
         const button = (
             <button
                 type={this.props.type}
-                ref={(button) => this.buttonNode = button}
+                ref={(node) => this.buttonNode = node}
                 onFocus={this.blur}
                 className={className}
                 onClick={this.props.onClick}
@@ -85,13 +87,12 @@ export class Button extends React.Component {
                 disabled={this.props.disabled}
             >
                 <div>
-                    {icon}{children}
+                    {icon}{this.props.children ? <span>{this.props.children}</span> : null}
                 </div>
             </button>
         );
 
         if (this.props.tip) {
-
             const tooltip = (
                 <Tooltip id={this.props.tip}>
                     {this.props.tip}
@@ -99,10 +100,10 @@ export class Button extends React.Component {
             );
 
             return (
-                <OverlayTrigger placement={this.props.tipPlacement || "top"} overlay={tooltip}>
+                <OverlayTrigger placement={this.props.tipPlacement} overlay={tooltip}>
                     {button}
                 </OverlayTrigger>
-            )
+            );
         }
 
         return button;

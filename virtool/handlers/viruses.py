@@ -26,7 +26,7 @@ async def find(req):
     """
     db = req.app["db"]
 
-    term = req.query.get("term", None)
+    term = req.query.get("find", None)
     verified = req.query.get("verified", None)
     names = req.query.get("names", False)
 

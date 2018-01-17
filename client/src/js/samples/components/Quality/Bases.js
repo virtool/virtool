@@ -1,105 +1,87 @@
-/**
- * @license
- * The MIT License (MIT)
- * Copyright 2015 Government of Canada
- *
- * @author
- * Ian Boyes
- *
- * @exports BasesChart
- */
-
-import { select } from "d3-selection";
-import { line, area, symbol, symbolSquare } from "d3-shape";
-import { scaleOrdinal, scaleLinear } from "d3-scale";
+import { line, area } from "d3-shape";
+import { scaleLinear } from "d3-scale";
 import { axisBottom, axisLeft } from "d3-axis";
 import { min, values } from "lodash";
-import { legendColor } from "d3-svg-legend";
+
+import { appendLegend, createSVG } from "../../chartUtils";
+
+const series = [
+    {label: "Mean", color: "#a94442"},
+    {label: "Median", color: "#428bca"},
+    {label: "Quartile", color: "#3C763D"},
+    {label: "Decile", color: "#FFF475"}
+];
 
 /**
- * A function for creating a chart showing the distribution of base quality at each position in a libraries reads.
- *
- * @param element - the element in which to render the chart.
- * @param data {array} - the data used to render the chart.
- * @param width {number} - the width of the element to render in.
  * @func
+ * @param name
+ * @param areaX
+ * @param y
+ * @param a
+ * @param b
  */
-const CreateBasesChart = (element, data, width) => {
+const getArea = (name, areaX, y, a, b) => ({
+    name,
+    func: area()
+        .x(areaX)
+        .y0(d => y(d[a]))
+        .y1(d => y(d[b]))
+});
 
-    const margin = {
-        top: 20,
-        left: 60,
-        bottom: 60,
-        right: 20
-    };
+/**
+ * @func
+ * @param data
+ * @returns {*}
+ */
+const getMinQuality = (data) => (
+    min(data.map(document => min(values(document))))
+);
 
-    // Find the absolute minimum quality found in the data set.
-    const minQuality = min(data.map(document => min(values(document))));
+/**
+ * Generates the lines representing mean and median base quality.
+ *
+ * @func
+ * @param data
+ * @param key
+ * @param x
+ * @param y
+ */
+const lineDrawer = (data, key, x, y) => {
+    const column = {
+        mean: 0,
+        median: 1
+    }[key];
 
-    const height = 300;
+    const generator = line()
+        .x((d, i) => x(i))
+        .y(d => y(d[column]));
 
-    width = width - margin.left - margin.right;
+    return generator(data);
+};
+
+const CreateBasesChart = (element, data, baseWidth) => {
+
+    const svg = createSVG(element, baseWidth);
+
+    const width = baseWidth - svg.margin.left - svg.margin.right;
 
     // Set up scales and axes.
     const y = scaleLinear()
-        .range([height, 0])
-        .domain([minQuality - 5, 48]);
+        .range([svg.height, 0])
+        .domain([getMinQuality(data) - 5, 48]);
 
     const x = scaleLinear()
         .range([0, width])
         .domain([0, data.length]);
 
-    const xAxis = axisBottom(x);
-
-    const yAxis = axisLeft(y);
-
-    // A function for generating the lines representing mean and median base quality.
-    const lineDrawer = (data, key) => {
-        const column = {
-            mean: 0,
-            median: 1
-        }[key];
-
-        const generator = line()
-            .x((d, i) => x(i))
-            .y(d => y(d[column]));
-
-        return generator(data);
-    };
-
     const areaX = (d, i) => x(i);
 
     // Define the d3 area functions to render the inter-quartile and upper and lower decile plot areas.
     const areas = [
-        {
-            name: "upper",
-            func: area()
-                .x(areaX)
-                .y0(d => y(d[3]))
-                .y1(d => y(d[5]))
-        },
-        {
-            name: "lower",
-            func: area()
-                .x(areaX)
-                .y0(d => y(d[2]))
-                .y1(d => y(d[4]))
-        },
-        {
-            name: "quartile",
-            func: area()
-                .x(areaX)
-                .y0(d => y(d[2]))
-                .y1(d => y(d[3]))
-        }
+        getArea("upper", areaX, y, 3, 5),
+        getArea("lower", areaX, y, 2, 4),
+        getArea("quartile", areaX, y, 2, 3)
     ];
-
-    // Create base SVG canvas.
-    let svg = select(element).append("svg")
-        .attr("width", width + margin.left + margin.right)
-        .attr("height", height + margin.top + margin.bottom)
-        .append("g")
-        .attr("transform", `translate(${margin.left}, ${margin.top})`);
 
     // Append the areas to the chart.
     areas.forEach(area => {
@@ -107,37 +89,27 @@ const CreateBasesChart = (element, data, width) => {
             .attr("d", area.func(data))
             .attr("class", "graph-line")
             .style("stroke", "none")
-            .style("fill", area.name === "quartile" ? "#3C763D": "#FFF475")
+            .style("fill", area.name === "quartile" ? "#3C763D" : "#FFF475")
             .style("opacity", 0.5);
     });
 
-    // Define a scale and a d3-legend for rendering a legend on the chart.
-    const legendScale = scaleOrdinal()
-        .domain(["Mean", "Median", "Quartile", "Decile"])
-        .range(["#a94442", "#428bca", "#3C763D", "#FFF475"]);
-
-    const legend = legendColor()
-        .shape("path", symbol().type(symbolSquare).size(150))
-        .shapePadding(10)
-        .scale(legendScale);
-
     // Append the median line to the chart. Color is blue.
     svg.append("path")
-        .attr("d", lineDrawer(data, "median"))
+        .attr("d", lineDrawer(data, "median", x, y))
         .attr("class", "graph-line")
         .style("stroke", "#428bca");
 
     // Append the median line to the chart. Color is red.
     svg.append("path")
-        .attr("d", lineDrawer(data, "mean"))
+        .attr("d", lineDrawer(data, "mean", x, y))
         .attr("class", "graph-line")
         .style("stroke", "#a94442");
 
     // Append the x-axis to the chart.
     svg.append("g")
         .attr("class", "x axis")
-        .attr("transform", `translate(0, ${height})`)
-        .call(xAxis)
+        .attr("transform", `translate(0, ${svg.height})`)
+        .call(axisBottom(x))
         .append("text")
         .attr("x", width / 2)
         .attr("y", 30)
@@ -147,7 +119,7 @@ const CreateBasesChart = (element, data, width) => {
     // Append the y-axis to the chart.
     svg.append("g")
         .attr("class", "y axis")
-        .call(yAxis)
+        .call(axisLeft(y))
         .append("text")
         .text("Quality")
         .attr("dy", "10px")
@@ -155,11 +127,7 @@ const CreateBasesChart = (element, data, width) => {
         .style("text-anchor", "end")
         .attr("transform", "rotate(-90)");
 
-    // Append the legend to the chart.
-    svg.append("g")
-        .attr("class", "legendOrdinal")
-        .attr("transform", `translate(${width - 60}, 5)`)
-        .call(legend);
+    appendLegend(svg, width, series);
 };
 
 export default CreateBasesChart;
