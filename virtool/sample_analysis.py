@@ -1095,7 +1095,7 @@ class NuVs(Base):
 
 def run_patho(analysis_path, vta_path, reassigned_path):
 
-    u, nu, refs, reads = virtool.pathoscope.build_matrix(analysis_path, vta_path)
+    u, nu, refs, reads = virtool.pathoscope.build_matrix(vta_path)
 
     best_hit_initial_reads, best_hit_initial, level_1_initial, level_2_initial = virtool.pathoscope.compute_best_hit(
         u,

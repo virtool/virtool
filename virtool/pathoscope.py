@@ -60,7 +60,7 @@ def find_sam_align_score(fields):
     raise ValueError("Could not find alignment score")
 
 
-def build_matrix(analysis_path, vta_path, p_score_cutoff=0.01):
+def build_matrix(vta_path, p_score_cutoff=0.01):
     u = dict()
     nu = dict()
 
@@ -133,18 +133,7 @@ def build_matrix(analysis_path, vta_path, p_score_cutoff=0.01):
         # Normalize p_score.
         nu[read_index][2] = [k / p_score_sum for k in nu[read_index][1]]
 
-    try:
-        return u, nu, refs, reads
-    except struct.error as err:
-        if "format requires -2147483648" in str(err):
-            for obj in [u, nu, refs, reads]:
-                filename = "{}.json".format(obj.__name__)
-                with open(os.path.join(analysis_path, filename), "w") as f:
-                    json.dump(obj, f)
-
-            return None
-
-        raise
+    return u, nu, refs, reads
 
 
 def em(u, nu, genomes, max_iter, epsilon, pi_prior, theta_prior):
