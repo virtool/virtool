@@ -1,4 +1,7 @@
+import aiofiles
 import asyncio
+import json
+import os
 
 import virtool.bio
 import virtool.errors
@@ -18,6 +21,23 @@ async def get(req):
     analysis_id = req.match_info["analysis_id"]
 
     document = await db.analyses.find_one(analysis_id)
+
+    if document["algorithm"] == "nuvs" and document["results"] == "file":
+
+        sample_id = document["sample"]["id"]
+
+        path = os.path.join(
+            req.app["settings"].get("data_path"),
+            "samples",
+            sample_id,
+            "analysis",
+            analysis_id,
+            "nuvs.json"
+        )
+
+        async with aiofiles.open(path, "r") as f:
+            json_string = await f.read()
+            document["results"] = json.loads(json_string)
 
     formatted = await virtool.sample_analysis.format_analysis(db, document)
 
