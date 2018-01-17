@@ -60,7 +60,7 @@ export const AnalysisItem = (props) => {
 };
 
 const mapStateToProps = (state) => ({
-    sampleId: get(state.viruses.detail, "id"),
+    sampleId: get(state.samples.detail, "id"),
     canModify: getCanModify(state)
 });
 
