@@ -3,6 +3,7 @@ Functions and job classes for sample analysis.
 
 """
 import collections
+import json
 import os
 import shlex
 import shutil
@@ -533,26 +534,22 @@ class Pathoscope(Base):
 
         """
         vta_path = os.path.join(self.analysis_path, "to_isolates.vta")
+        reassigned_path = os.path.join(self.analysis_path, "reassigned.vta")
 
-        u, nu, refs, reads = await self.run_in_executor(virtool.pathoscope.build_matrix, vta_path)
-
-        best_hit_initial_reads, best_hit_initial, level_1_initial, level_2_initial = await self.run_in_executor(
-            virtool.pathoscope.compute_best_hit,
-            u,
-            nu,
+        (
+            best_hit_initial_reads,
+            best_hit_initial,
+            level_1_initial,
+            level_2_initial,
+            best_hit_final_reads,
+            best_hit_final,
+            level_1_final,
+            level_2_final,
+            init_pi,
+            pi,
             refs,
             reads
-        )
-
-        init_pi, pi, _, nu = await self.run_in_executor(virtool.pathoscope.em, u, nu, refs, 50, 1e-7, 0, 0)
-
-        best_hit_final_reads, best_hit_final, level_1_final, level_2_final = await self.run_in_executor(
-            virtool.pathoscope.compute_best_hit,
-            u,
-            nu,
-            refs,
-            reads
-        )
+        ) = await self.run_in_executor(run_patho, self.analysis_path, vta_path, reassigned_path)
 
         read_count = len(reads)
 
@@ -572,10 +569,6 @@ class Pathoscope(Base):
             level_1_final,
             level_2_final
         )
-
-        reassigned_path = os.path.join(self.analysis_path, "reassigned.vta")
-
-        await self.run_in_executor(virtool.pathoscope.rewrite_align, u, nu, vta_path, 0.01, reassigned_path)
 
         self.intermediate["coverage"] = await self.run_in_executor(
             virtool.pathoscope.calculate_coverage,
@@ -1098,3 +1091,41 @@ class NuVs(Base):
         document = await virtool.sample.recalculate_algorithm_tags(self.db, self.sample_id)
 
         await self.dispatch("samples", "update", document)
+
+
+def run_patho(analysis_path, vta_path, reassigned_path):
+
+    u, nu, refs, reads = virtool.pathoscope.build_matrix(vta_path)
+
+    best_hit_initial_reads, best_hit_initial, level_1_initial, level_2_initial = virtool.pathoscope.compute_best_hit(
+        u,
+        nu,
+        refs,
+        reads
+    )
+
+    init_pi, pi, _, nu = virtool.pathoscope.em(u, nu, refs, 50, 1e-7, 0, 0)
+
+    best_hit_final_reads, best_hit_final, level_1_final, level_2_final = virtool.pathoscope.compute_best_hit(
+        u,
+        nu,
+        refs,
+        reads
+    )
+
+    virtool.pathoscope.rewrite_align(u, nu, vta_path, 0.01, reassigned_path)
+
+    return (
+        best_hit_initial_reads,
+        best_hit_initial,
+        level_1_initial,
+        level_2_initial,
+        best_hit_final_reads,
+        best_hit_final,
+        level_1_final,
+        level_2_final,
+        init_pi,
+        pi,
+        refs,
+        reads
+    )
