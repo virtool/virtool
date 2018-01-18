@@ -13,8 +13,8 @@ SAM_50_PATH = os.path.join(sys.path[0], "tests", "test_files", "sam_50.sam")
 
 
 @pytest.fixture
-def test_files_path(pytestconfig):
-    return os.path.join(str(pytestconfig.rootdir), "tests/test_files")
+def test_files_path():
+    return os.path.join(sys.path[0], "tests/test_files")
 
 
 @pytest.fixture
