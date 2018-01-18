@@ -22,6 +22,9 @@ async def get(req):
 
     document = await db.analyses.find_one(analysis_id)
 
+    if document is None:
+        return not_found()
+
     if document["algorithm"] == "nuvs" and document["results"] == "file":
 
         sample_id = document["sample"]["id"]
@@ -41,10 +44,7 @@ async def get(req):
 
     formatted = await virtool.sample_analysis.format_analysis(db, document)
 
-    if document:
-        return json_response(virtool.utils.base_processor(formatted))
-
-    return not_found()
+    return json_response(virtool.utils.base_processor(formatted))
 
 
 async def remove(req):
