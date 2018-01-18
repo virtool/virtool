@@ -1048,8 +1048,8 @@ class NuVs(Base):
         hits = collections.defaultdict(lambda: collections.defaultdict(list))
 
         # Go through the raw HMMER results and annotate the HMM hits with data from the database.
-        with open(tsv_path, "r") as hmm_file:
-            for line in hmm_file:
+        async with aiofiles.open(tsv_path, "r") as hmm_file:
+            async for line in hmm_file:
                 if line.startswith("vFam"):
                     line = line.split()
 
@@ -1072,6 +1072,11 @@ class NuVs(Base):
         for sequence_index in hits:
             for orf_index in hits[sequence_index]:
                 self.results[sequence_index]["orfs"][orf_index]["hits"] = hits[sequence_index][orf_index]
+
+            sequence = self.results[sequence_index]
+
+            if all(len(o["hits"]) == 0 for o in sequence["orfs"]):
+                self.results.remove(sequence)
 
     @virtool.job.stage_method
     async def import_results(self):
