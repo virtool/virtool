@@ -1,5 +1,4 @@
 import React from "react";
-import { LinkContainer } from "react-router-bootstrap";
 import { sortBy } from "lodash";
 import { connect } from "react-redux";
 import { ListGroup, FormGroup, InputGroup, FormControl } from "react-bootstrap";
@@ -53,11 +52,7 @@ class AnalysesList extends React.Component {
 
             // The components that detail individual analyses.
             listContent = sorted.map((document) =>
-                <LinkContainer key={document.id} to={`/samples/${this.props.detail.id}/analyses/${document.id}`}>
-                    <AnalysisItem
-                        {...document}
-                    />
-                </LinkContainer>
+                <AnalysisItem key={document.id} {...document} />
             );
         } else {
             listContent = <NoneFound noun="analyses" noListGroup />;

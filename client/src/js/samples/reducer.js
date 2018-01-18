@@ -11,7 +11,7 @@ import {
     GET_ANALYSIS,
     ANALYZE,
     BLAST_NUVS,
-    REMOVE_ANALYSIS
+    REMOVE_ANALYSIS, GET_ANALYSIS_PROGRESS
 } from "../actionTypes";
 
 const initialState = {
@@ -19,6 +19,7 @@ const initialState = {
     detail: null,
     analyses: null,
     analysisDetail: null,
+    getAnalysisProgress: 0,
     showEdit: false,
     showRemove: false,
     editError: false,
@@ -87,10 +88,13 @@ export default function samplesReducer (state = initialState, action) {
             return {...state, analyses: action.data.documents};
 
         case GET_ANALYSIS.REQUESTED:
-            return {...state, analysisDetail: null};
+            return {...state, analysisDetail: null, getAnalysisProgress: 0};
 
         case GET_ANALYSIS.SUCCEEDED:
             return {...state, analysisDetail: action.data};
+
+        case GET_ANALYSIS_PROGRESS:
+            return {...state, getAnalysisProgress: action.progress};
 
         case ANALYZE.SUCCEEDED:
             return {...state, analyses: state.analyses === null ? null : state.analyses.concat([action.data])};

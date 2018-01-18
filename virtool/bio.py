@@ -1,5 +1,4 @@
 import aiohttp
-from aiohttp.client_exceptions import ServerTimeoutError
 import asyncio
 import io
 import json

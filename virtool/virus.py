@@ -33,12 +33,12 @@ SEQUENCE_PROJECTION = [
 async def dispatch_version_only(req, new):
     """
     Dispatch a virus update. Should be called when the document itself is not being modified.
-    
+
     :param req: the request object
-    
+
     :param new: the virus document
     :type new: Coroutine[dict]
-    
+
     """
     await req.app["dispatcher"].dispatch(
         "viruses",
@@ -51,7 +51,7 @@ async def join(db, virus_id, document=None):
     """
     Join the virus associated with the supplied virus id with its sequences. If a virus entry is also passed, the
     database will not be queried for the virus based on its id.
-    
+
     :param db: the application database client
     :type db: :class:`~motor.motor_asyncio.AsyncIOMotorClient`
 
@@ -136,16 +136,16 @@ async def check_name_and_abbreviation(db, name=None, abbreviation=None):
     """
     Check is a virus name and abbreviation are already in use in the database. Returns a message if the ``name`` or
     ``abbreviation`` are already in use. Returns ``False`` if they are not in use.
-    
+
     :param db: the application database client
     :type db: :class:`~motor.motor_asyncio.AsyncIOMotorClient`
-    
+
     :param name: a virus name
     :type name: str
-    
+
     :param abbreviation: a virus abbreviation
     :type abbreviation: str
-    
+
     """
     name_count = 0
 
@@ -180,13 +180,13 @@ def check_virus(joined):
     * empty_isolate - isolates that have no sequences associated with them.
     * empty_sequence - sequences that have a zero length sequence field.
     * isolate_inconsistency - virus has isolates containing different numbers of sequences.
-    
+
     :param joined: a joined virus
     :type joined: dict
-    
+
     :return: return any errors or False if there are no errors.
     :rtype: Union[dict, None]
-    
+
     """
     errors = {
         "empty_virus": len(joined["isolates"]) == 0,
@@ -252,16 +252,16 @@ async def update_last_indexed_version(db, virus_ids, version):
     """
     Called from a index rebuild job. Updates the last indexed version and _version fields
     of all viruses involved in the rebuild when the build completes.
-    
+
     :param db: the application database client
     :type db: :class:`~motor.motor_asyncio.AsyncIOMotorClient`
-    
+
     :param virus_ids: a list the ``virus_id`` of each virus to update
     :type virus_ids: list
-    
+
     :param version: the value to set for the viruses ``version`` and ``last_indexed_version`` fields
     :type: int
-    
+
     :return: the Pymongo update result
     :rtype: :class:`~pymongo.results.UpdateResult`
 
@@ -282,10 +282,10 @@ def get_default_isolate(virus, isolate_processor=None):
 
     :param virus: a virus document.
     :type virus: dict
-    
+
     :param isolate_processor: a function to process the default isolate into a desired format.
     :type: func
-    
+
     :return: the default isolate dict.
     :rtype: dict
 
@@ -319,7 +319,7 @@ async def get_new_isolate_id(db, excluded=None):
 
     :return: a new unique isolate id
     :rtype: Coroutine[str]
-    
+
     """
     used_isolate_ids = excluded or list()
 
@@ -386,16 +386,16 @@ def extract_isolate_ids(virus):
 def find_isolate(isolates, isolate_id):
     """
     Return the isolate identified by ``isolate_id`` from a list of isolates.
-    
+
     :param isolates: a list of isolate dicts
     :type isolates: list
-    
+
     :param isolate_id: the isolate_id of the isolate to return
     :type isolate_id: str
-    
+
     :return: an isolate
     :rtype: dict
-    
+
     """
     return next((isolate for isolate in isolates if isolate["id"] == isolate_id), None)
 
@@ -436,7 +436,7 @@ def get_default_sequences(joined_virus):
 
     :param joined_virus: the joined virus document.
     :type joined_virus: dict
-    
+
     :return: a list of sequences associated with the default isolate.
     :rtype: list
 
@@ -449,13 +449,13 @@ def get_default_sequences(joined_virus):
 def format_isolate_name(isolate):
     """
     Take a complete or partial isolate ``dict`` and return a readable isolate name.
-    
+
     :param isolate: a complete or partial isolate ``dict`` containing ``source_type`` and ``source_name`` fields.
     :type isolate: dict
-    
+
     :return: an isolate name
     :rtype: str
-     
+
     """
     if not isolate["source_type"] or not isolate["source_name"]:
         return "Unnamed Isolate"
