@@ -221,9 +221,6 @@ class Watcher(multiprocessing.Process):
 
                         action = TYPE_NAME_DICT[type_names[0]]
 
-                        filename = filename.decode()
-                        dirname = dirname.decode()
-
                         if dirname.endswith("files") and action != "move":
                             if action == "create" or action == "close":
                                 file_entry = virtool.utils.file_stats(os.path.join(self.files_path, filename))
