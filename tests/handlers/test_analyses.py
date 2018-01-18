@@ -9,7 +9,9 @@ async def test_get(mocker, not_found, spawn_client):
 
     document = {
         "_id": "foobar",
-        "formatted": False
+        "formatted": False,
+        "algorithm": "pathoscope_bowtie",
+        "results": {}
     }
 
     if not not_found:
@@ -34,7 +36,9 @@ async def test_get(mocker, not_found, spawn_client):
 
         assert await resp.json() == {
             "id": "foobar",
-            "formatted": True
+            "formatted": True,
+            "algorithm": "pathoscope_bowtie",
+            "results": {}
         }
 
         assert m.call_args[0] == (

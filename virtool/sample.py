@@ -124,10 +124,10 @@ async def remove_samples(db, settings, id_list):
     - removes all analyses associated with the sample from the analyses collection
     - removes the sample from the samples collection
     - removes the sample directory from the file system
-    
+
     :param db: a Motor client
     :type db: :class:`.motor.motor_asyncio.AsyncIOMotorClient``
-    
+
     :param settings: a Virtool settings object
     :type settings: :class:`.Settings`
 

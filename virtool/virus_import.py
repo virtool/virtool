@@ -74,7 +74,7 @@ async def import_data(db, dispatch, data, user_id):
     for virus in viruses:
         isolates = virus["isolates"]
         isolate_counts.append(len(isolates))
-        
+
         for isolate in isolates:
             sequence_counts.append(len(isolate["sequences"]))
 
@@ -233,16 +233,16 @@ async def check_import_abbreviation(db, virus_document, lower_name=None):
     Check if the abbreviation for a virus document to be imported already exists in the database. If the abbreviation
     exists, set the ``abbreviation`` field in the virus document to an empty string and return warning text to
     send to the client.
-    
+
     :param db: the application database client
     :type db: :class:`~motor.motor_asyncio.AsyncIOMotorClient`
-    
+
     :param virus_document: the virus document that is being imported
     :type virus_document: dict
-    
+
     :param lower_name: the name of the virus coerced to lowercase
     :type lower_name: str
-     
+
     """
     lower_name = lower_name or virus_document["name"].lower()
 
@@ -269,19 +269,19 @@ async def send_import_dispatches(dispatch, insertions, replacements, flush=False
     """
     Dispatch all possible insertion and replacement messages for a running virus reference import. Called many times
     during an import process.
-    
+
     :param dispatch: the dispatch function
     :type dispatch: func
-    
+
     :param insertions: a list of tuples describing insertions
     :type insertions: list
-    
+
     :param replacements: a list of tuples describing replacements and their component removals and an insertions
     :type replacements: list
-    
+
     :param flush: override the length check and flush all data to the dispatcher
     :type flush: bool
-     
+
     """
 
     if len(insertions) == 30 or (flush and insertions):
@@ -306,13 +306,13 @@ async def insert_from_import(db, virus_document, user_id):
     """
     :param db: the application database client
     :type db: :class:`~motor.motor_asyncio.AsyncIOMotorClient`
-    
+
     :param virus_document: the virus document to add
     :type virus_document: dict
-    
+
     :param user_id: the requesting ``user_id``
     :type user_id: str
-    
+
     """
     # Modified is set to ``False`` so the user does not have to verify every single imported virus.
     virus_document.update({
@@ -360,16 +360,16 @@ async def insert_from_import(db, virus_document, user_id):
 async def delete_for_import(db, virus_id, user_id):
     """
     Delete a virus document and its sequences as part of an import process.
-    
+
     :param db: the application database client
     :type db: :class:`~motor.motor_asyncio.AsyncIOMotorClient`
-    
+
     :param virus_id: the ``virus_id`` to remove
     :type virus_id: str
-    
+
     :param user_id: the requesting ``user_id``
     :type user_id: str
-     
+
     """
     joined = await virtool.virus.join(db, virus_id)
 

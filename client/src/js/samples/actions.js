@@ -17,7 +17,7 @@ import {
     BLAST_NUVS,
     REMOVE_ANALYSIS,
     SHOW_REMOVE_SAMPLE,
-    HIDE_SAMPLE_MODAL
+    HIDE_SAMPLE_MODAL, GET_ANALYSIS_PROGRESS
 } from "../actionTypes";
 
 export const wsUpdateSample = (update) => ({
@@ -92,6 +92,11 @@ export const findAnalyses = (sampleId) => ({
 export const getAnalysis = (analysisId) => ({
     type: GET_ANALYSIS.REQUESTED,
     analysisId
+});
+
+export const getAnalysisProgress = (progress) => ({
+    type: GET_ANALYSIS_PROGRESS,
+    progress
 });
 
 export const analyze = (sampleId, algorithm) => ({

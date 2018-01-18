@@ -2,13 +2,14 @@
 Functions and job classes for sample analysis.
 
 """
+import aiofiles
 import collections
 import json
 import os
+import pymongo.errors
 import shlex
 import shutil
 import tempfile
-import aiofiles
 
 import virtool.app_settings
 import virtool.bio
@@ -1047,8 +1048,8 @@ class NuVs(Base):
         hits = collections.defaultdict(lambda: collections.defaultdict(list))
 
         # Go through the raw HMMER results and annotate the HMM hits with data from the database.
-        with open(tsv_path, "r") as hmm_file:
-            for line in hmm_file:
+        async with aiofiles.open(tsv_path, "r") as hmm_file:
+            async for line in hmm_file:
                 if line.startswith("vFam"):
                     line = line.split()
 
@@ -1072,6 +1073,11 @@ class NuVs(Base):
             for orf_index in hits[sequence_index]:
                 self.results[sequence_index]["orfs"][orf_index]["hits"] = hits[sequence_index][orf_index]
 
+            sequence = self.results[sequence_index]
+
+            if all(len(o["hits"]) == 0 for o in sequence["orfs"]):
+                self.results.remove(sequence)
+
     @virtool.job.stage_method
     async def import_results(self):
         """
@@ -1081,12 +1087,24 @@ class NuVs(Base):
         indexes that are no longer being used by an active analysis job.
 
         """
-        await self.db.analyses.find_one_and_update({"_id": self.analysis_id}, {
-            "$set": {
-                "results": self.results,
-                "ready": True
-            }
-        })
+        try:
+            await self.db.analyses.find_one_and_update({"_id": self.analysis_id}, {
+                "$set": {
+                    "results": self.results,
+                    "ready": True
+                }
+            })
+        except pymongo.errors.DocumentTooLarge:
+            async with aiofiles.open(os.path.join(self.analysis_path, "nuvs.json"), "w") as f:
+                json_string = json.dumps(self.results)
+                await f.write(json_string)
+
+            await self.db.analyses.find_one_and_update({"_id": self.analysis_id}, {
+                "$set": {
+                    "results": "file",
+                    "ready": True
+                }
+            })
 
         document = await virtool.sample.recalculate_algorithm_tags(self.db, self.sample_id)
 

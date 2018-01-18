@@ -1,7 +1,9 @@
 import { LOCATION_CHANGE } from "react-router-redux";
-import { put, select, takeEvery, takeLatest, throttle } from "redux-saga/effects";
+import { buffers, END, eventChannel } from "redux-saga";
+import { call, put, select, take, takeEvery, takeLatest, throttle } from "redux-saga/effects";
 
 import * as samplesAPI from "./api";
+import { getAnalysisProgress } from "./actions";
 import { apiCall, apiFind, pushHistoryState, putGenericError, setPending } from "../sagaUtils";
 import {
     WS_UPDATE_SAMPLE,
@@ -88,8 +90,46 @@ export function* findAnalyses (action) {
     yield apiCall(samplesAPI.findAnalyses, action, FIND_ANALYSES);
 }
 
+const createGetAnalysisChannel = (analysisId) => (
+    eventChannel(emitter => {
+        const onProgress = (e) => {
+            if (e.lengthComputable) {
+                emitter({progress: e.percent});
+            }
+        };
+
+        const onSuccess = (response) => {
+            emitter({response});
+            emitter(END);
+        };
+
+        const onFailure = (err) => {
+            emitter({err});
+            emitter(END);
+        };
+
+        samplesAPI.getAnalysis(analysisId, onProgress, onSuccess, onFailure);
+
+        return () => {};
+    }, buffers.sliding(2))
+);
+
 export function* getAnalysis (action) {
-    yield apiCall(samplesAPI.getAnalysis, action, GET_ANALYSIS);
+    const channel = yield call(createGetAnalysisChannel, action.analysisId);
+
+    while (true) {
+        const { progress = 0, response, err } = yield take(channel);
+
+        if (err) {
+            return yield put(putGenericError(GET_ANALYSIS, err));
+        }
+
+        if (response) {
+            return yield put({type: GET_ANALYSIS.SUCCEEDED, data: response.body});
+        }
+
+        yield put(getAnalysisProgress(progress));
+    }
 }
 
 export function* analyze (action) {

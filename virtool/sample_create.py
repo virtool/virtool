@@ -271,7 +271,7 @@ class CreateSample(virtool.job.Job):
             await virtool.file.remove(self.loop, self.db, self.settings, self.dispatch, file_id)
 
     async def cleanup(self):
-        await virtool.file.release_reservations(self.db, self.task_args["files"])
+        await virtool.file.release_reservations(self.db, self.dispatch, self.task_args["files"])
 
         try:
             await self.loop.run_in_executor(None, shutil.rmtree, self.sample_path)

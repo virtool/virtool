@@ -1,5 +1,4 @@
 import concurrent.futures
-import filecmp
 import gzip
 import json
 import operator

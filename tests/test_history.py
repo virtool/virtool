@@ -90,7 +90,7 @@ class TestAdd:
     async def test_remove(self, test_motor, static_time, test_virus_edit, test_change):
         """
         Test that the addition of a change due to virus removal inserts the expected change document.
-        
+
         """
         # There is no new document because this is a change document for a virus removal operation.
         new = None
@@ -132,7 +132,7 @@ class TestCalculateDiff:
         """
         Test that a diff is correctly calculated. Should work since the tested function is a very light wrapper for the
         dictdiffer function.
-         
+
         """
         old, new = test_virus_edit
 
@@ -192,7 +192,7 @@ class TestGetMostRecentChange:
         ])
 
         most_recent = await virtool.virus_history.get_most_recent_change(test_motor, "6116cba1")
-        
+
         assert most_recent == {
             "_id": "6116cba1.2",
             "description": "Description number 2",
@@ -211,7 +211,7 @@ class TestGetMostRecentChange:
     async def test_none(self, test_motor, static_time):
         """
         Test that ``None`` is returned if no change documents exist for the given ``virus_id``.
-         
+
         """
         most_recent = await virtool.virus_history.get_most_recent_change(test_motor, "6116cba1.1")
         assert most_recent is None
