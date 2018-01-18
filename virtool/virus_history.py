@@ -34,25 +34,25 @@ async def add(db, method_name, old, new, description, user_id):
 
     :param db: the application database client
     :type db: :class:`~motor.motor_asyncio.AsyncIOMotorClient`
-    
+
     :param method_name: the name of the handler method that executed the change
     :type method_name: str
-    
+
     :param old: the virus document prior to the change
     :type new: Union[dict, None]
-    
+
     :param new: the virus document after the change
     :type new: Union[dict, None]
-    
+
     :param description: a human readable description of the change
     :type description: str
-    
+
     :param user_id: the id of the requesting user
     :type user_id: str
-    
+
     :return: the change document
     :rtype: Coroutine[dict]
-    
+
     """
     try:
         virus_id = old["_id"]
@@ -105,16 +105,16 @@ async def add(db, method_name, old, new, description, user_id):
 def calculate_diff(old, new):
     """
     Calculate the diff for a joined virus document before and after modification.
-    
+
     :param old: the joined virus document before modification
     :type old: dict
-    
+
     :param new: the joined virus document after modification
     :type new: dict
-    
+
     :return: the diff
     :rtype: list
-    
+
     """
     return list(dictdiffer.diff(old, new))
 
@@ -122,16 +122,16 @@ def calculate_diff(old, new):
 async def get_most_recent_change(db, virus_id):
     """
     Get the most recent change for the virus identified by the passed ``virus_id``.
-    
+
     :param db: the application database client
     :type db: :class:`~motor.motor_asyncio.AsyncIOMotorClient`
-    
+
     :param virus_id: the target virus_id
     :type virus_id: str
-    
+
     :return: the most recent change document
     :rtype: Coroutine[dict]
-    
+
     """
     return await db.history.find_one({
         "virus.id": virus_id,
@@ -142,20 +142,20 @@ async def get_most_recent_change(db, virus_id):
 async def patch_virus_to_version(db, virus_id, version):
     """
     Take a joined virus back in time to the passed ``version``. Uses the diffs in the change documents associated with
-    the virus.    
-    
+    the virus.
+
     :param db: the application database client
     :type db: :class:`~motor.motor_asyncio.AsyncIOMotorClient`
-     
+
     :param virus_id: the id of the virus to patch
     :type virus_id: str
-    
+
     :param version: the version to patch to
     :type version: str or int
-    
+
     :return: the current joined virus, patched virus, and the ids of changes reverted in the process
     :rtype: Coroutine[tuple]
-    
+
     """
     # A list of history_ids reverted to produce the patched entry.
     reverted_history_ids = list()

@@ -44,7 +44,7 @@ async def get(req):
 async def revert(req):
     """
     Remove the change document with the given ``change_id`` and any subsequent changes.
-     
+
     """
     db = req.app["db"]
 
