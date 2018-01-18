@@ -26,7 +26,7 @@ async def find(req):
         db.hmm,
         db_query,
         req.query,
-        "cluster",
+        sort="cluster",
         projection=virtool.virus_hmm.PROJECTION,
         base_query={"hidden": False}
     )

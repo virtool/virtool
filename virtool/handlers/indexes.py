@@ -20,8 +20,8 @@ async def find(req):
         db.indexes,
         {},
         req.query,
+        sort="version",
         projection=virtool.virus_index.PROJECTION,
-        sort_by="version",
         reverse=True
     )
 
