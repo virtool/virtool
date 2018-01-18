@@ -128,7 +128,14 @@ class Settings:
 
     def __init__(self):
         self.data = None
+        self.update = self.data.update
         self.path = os.path.join(sys.path[0], "settings.json")
+
+    def __getitem__(self, key):
+        return self.data.get(key)
+
+    def __setitem__(self, key, value):
+        return self.data.set(key, value)
 
     def get(self, key):
         return self.data[key]
