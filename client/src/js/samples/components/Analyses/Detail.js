@@ -2,8 +2,8 @@ import React from "react";
 import PropTypes from "prop-types";
 import Numeral from "numeral";
 import { connect } from "react-redux";
-import { Label, Table } from "react-bootstrap";
-import { IDRow, LoadingPlaceholder, RelativeTime } from "../../../base";
+import { Col, Label, ProgressBar, Row, Table } from "react-bootstrap";
+import {IDRow, RelativeTime} from "../../../base";
 
 import { getAnalysis } from "../../actions";
 import { getTaskDisplayName } from "../../../utils";
@@ -29,7 +29,17 @@ class AnalysisDetail extends React.Component {
     render () {
 
         if (this.props.detail === null) {
-            return <LoadingPlaceholder />;
+            return (
+                <div style={{paddingTop: "130px"}}>
+                    <Row>
+                        <Col xs={12} md={4} mdOffset={4}>
+                            <div className="progress-small">
+                                <ProgressBar now={this.props.progress || 15} active/>
+                            </div>
+                        </Col>
+                    </Row>
+                </div>
+            );
         }
 
         const detail = this.props.detail;
@@ -88,6 +98,7 @@ class AnalysisDetail extends React.Component {
 
 const mapStateToProps = (state) => ({
     detail: state.samples.analysisDetail,
+    progress: state.samples.getAnalysisProgress,
     quality: state.samples.detail.quality
 });
 

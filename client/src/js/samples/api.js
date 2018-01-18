@@ -53,8 +53,11 @@ export const findAnalyses = ({ sampleId }) => (
     Request.get(`/api/samples/${sampleId}/analyses`)
 );
 
-export const getAnalysis = ({ analysisId }) => (
+export const getAnalysis = (analysisId, onProgress, onSuccess, onFailure) => (
     Request.get(`/api/analyses/${analysisId}`)
+        .on("progress", onProgress)
+        .then(res => onSuccess(res))
+        .catch(err => onFailure(err))
 );
 
 export const analyze = ({ sampleId, algorithm }) => (
