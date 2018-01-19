@@ -235,7 +235,7 @@ class TestCreate:
             {"_id": "technician"}
         ])
 
-        client.app["settings"].data.update({
+        client.app["settings"].update({
             "sample_group": group_setting,
             "sample_all_read": True,
             "sample_all_write": True,
@@ -352,7 +352,7 @@ class TestCreate:
         """
         client = await spawn_client(authorize=True, permissions=["create_sample"])
 
-        client.app["settings"].set("sample_group", "force_choice")
+        client.app["settings"]["sample_group"] = "force_choice"
 
         resp = await client.post("/api/samples", {
             "name": "Foobar",
@@ -365,7 +365,7 @@ class TestCreate:
     async def test_group_dne(self, spawn_client, resp_is):
         client = await spawn_client(authorize=True, permissions=["create_sample"])
 
-        client.app["settings"].set("sample_group", "force_choice")
+        client.app["settings"]["sample_group"] = "force_choice"
 
         resp = await client.post("/api/samples", {
             "name": "Foobar",

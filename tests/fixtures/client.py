@@ -25,6 +25,8 @@ class VTClient:
             self._test_db_name,
             disable_job_manager=not job_manager,
             disable_file_manager=not file_manager,
+            ignore_settings=True,
+            skip_db_checks=True,
             skip_setup=not setup_mode,
             no_sentry=True
         )
@@ -45,7 +47,7 @@ class VTClient:
             await self.db.sessions.insert_one({
                 "_id": "foobar",
                 "ip": "127.0.0.1",
-                "user_agent": "Python/3.6 aiohttp/2.3.3",
+                "user_agent": "Python/3.6 aiohttp/2.3.9",
                 "user": {
                     "id": "test"
                 },

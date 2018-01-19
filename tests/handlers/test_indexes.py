@@ -489,7 +489,7 @@ class TestFindHistory:
 
         assert resp.status == 200
 
-        assert await resp.json() == {
+        expected = {
             "found_count": 4,
             "page": 1,
             "page_count": 1,
@@ -559,6 +559,18 @@ class TestFindHistory:
                 }
             ]
         }
+
+        import pprint
+
+        print("EXPECTED")
+        pprint.pprint(expected["documents"])
+
+        resp_json = await resp.json()
+
+        print("RESPONSE")
+        pprint.pprint(resp_json["documents"])
+
+        assert resp_json == expected
 
     async def test_not_found(self, spawn_client, resp_is):
         client = await spawn_client()

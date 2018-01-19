@@ -62,7 +62,7 @@ async def find(req):
         db.samples,
         db_query,
         req.query,
-        "created_at",
+        sort="created_at",
         projection=virtool.sample.LIST_PROJECTION,
         base_query=base_query,
         reverse=True

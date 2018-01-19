@@ -1,4 +1,5 @@
 import os
+import pytest
 import ssl
 import motor.motor_asyncio
 import concurrent.futures
@@ -10,74 +11,53 @@ import virtool.app_dispatcher
 import virtool.job_manager
 
 
-class TestInitDB:
+@pytest.mark.parametrize("override", [True, False])
+async def test_init_db(override, loop, tmpdir, test_db_name):
+    """
+    Test that the ``db_name`` and ``db`` keys and values are added to the ``app`` object.
+    """
+    app = web.Application(loop=loop)
 
-    async def test(self, tmpdir, loop, test_db_name):
-        """
-        Test that the ``db_name`` and ``db`` keys and values are added to the ``app`` object.
-        """
-        app = web.Application(loop=loop)
+    tmpdir.mkdir("samples")
 
-        tmpdir.mkdir("samples")
+    app["settings"] = {
+        "db_name": test_db_name,
+        "data_path": str(tmpdir)
+    }
 
-        temp_db_name = "foobar" + test_db_name
+    expected_db_name = test_db_name
 
-        app["settings"] = {
-            "db_name": temp_db_name,
-            "data_path": str(tmpdir)
-        }
-
-        await virtool.app.init_db(app)
-
-        assert app["db_name"] == temp_db_name
-        assert app["db"].name == temp_db_name
-        assert isinstance(app["db"], motor.motor_asyncio.AsyncIOMotorDatabase)
-
-        client = motor.motor_asyncio.AsyncIOMotorClient()
-
-        await client.drop_database(temp_db_name)
-
-    async def test_override(self, tmpdir, loop):
-        """
-        Test that a ``db_name`` value from Virtool settings is overridden by one assigned to ``app`` state with the
-        key ``db_name``. This would be used for passing a ``db_name`` from the CLI.
-        """
-        app = web.Application(loop=loop)
-
-        tmpdir.mkdir("samples")
-
-        app["settings"] = {
-            "db_name": "foobar",
-            "data_path": str(tmpdir)
-        }
-
+    if override:
+        expected_db_name = "test"
         app["db_name"] = "test"
 
-        await virtool.app.init_db(app)
+    await virtool.app.init_db(app)
 
-        assert app["db_name"] == "test"
-        assert app["db"].name == "test"
-        assert isinstance(app["db"], motor.motor_asyncio.AsyncIOMotorDatabase)
+    assert app["db_name"] == expected_db_name
+    assert app["db"].name == expected_db_name
+    assert isinstance(app["db"], motor.motor_asyncio.AsyncIOMotorDatabase)
+
+    client = motor.motor_asyncio.AsyncIOMotorClient()
+
+    await client.drop_database(expected_db_name)
 
 
-class TestInitExecutors:
+async def test_init_executors(loop):
+    """
+    Test that an instance of :class:`.ThreadPoolExecutor` is added to ``app`` state and that it works.
+    """
+    app = web.Application(loop=loop)
 
-    async def test(self, loop):
-        """
-        Test that an instance of :class:`.ThreadPoolExecutor` is added to ``app`` state and that it works.
-        """
-        app = web.Application(loop=loop)
+    virtool.app.init_executors(app)
 
-        virtool.app.init_executors(app)
+    assert isinstance(app["executor"], concurrent.futures.ThreadPoolExecutor)
 
-        assert isinstance(app["executor"], concurrent.futures.ThreadPoolExecutor)
+    def func(*args):
+        return sum(args)
 
-        def func(*args):
-            return sum(args)
+    result = await app.loop.run_in_executor(None, func, 1, 5, 6, 2)
 
-        result = await app.loop.run_in_executor(None, func, 1, 5, 6, 2)
-
-        assert result == 14
+    assert result == 14
 
 
 class TestInitSettings:
@@ -113,45 +93,40 @@ class TestInitSettings:
         assert app["settings"].stub.called
 
 
-class TestInitDispatcher:
+def test_init_dispatcher(loop):
+    """
+    Test that a instance of :class:`~virtool.app_dispatcher.Dispatcher` is attached to the app state.
 
-    def test(self, loop):
-        """
-        Test that a instance of :class:`~virtool.app_dispatcher.Dispatcher` is attached to the app state.
+    """
+    app = web.Application(loop=loop)
 
-        """
-        app = web.Application(loop=loop)
+    virtool.app.init_dispatcher(app)
 
-        virtool.app.init_dispatcher(app)
-
-        assert isinstance(app["dispatcher"], virtool.app_dispatcher.Dispatcher)
+    assert isinstance(app["dispatcher"], virtool.app_dispatcher.Dispatcher)
 
 
-class TestInitJobManager:
+async def test_init_job_manager(mocker, loop):
+    app = web.Application(loop=loop)
 
-    async def test(self, mocker, loop):
-        app = web.Application(loop=loop)
+    app["db"] = None
+    app["settings"] = None
+    app["dispatcher"] = mocker.MagicMock()
 
-        app["db"] = None
-        app["settings"] = None
-        app["dispatcher"] = mocker.MagicMock()
+    await virtool.app.init_job_manager(app)
 
-        await virtool.app.init_job_manager(app)
+    assert isinstance(app["job_manager"], virtool.job_manager.Manager)
 
-        assert isinstance(app["job_manager"], virtool.job_manager.Manager)
-
-        assert app["job_manager"].loop == loop
-        assert app["job_manager"].db is None
-        assert app["job_manager"].settings is None
-        assert app["job_manager"].dispatch == app["dispatcher"].dispatch
+    assert app["job_manager"].loop == loop
+    assert app["job_manager"].db is None
+    assert app["job_manager"].settings is None
+    assert app["job_manager"].dispatch == app["dispatcher"].dispatch
 
 
-class TestConfigureSSL:
+async def test_configure_ssl(test_files_path):
 
-    async def test(self, test_files_path):
-        cert_path = os.path.join(test_files_path, "test.crt")
-        key_path = os.path.join(test_files_path, "test.key")
+    cert_path = os.path.join(test_files_path, "test.crt")
+    key_path = os.path.join(test_files_path, "test.key")
 
-        ctx = virtool.app.configure_ssl(cert_path, key_path)
+    ctx = virtool.app.configure_ssl(cert_path, key_path)
 
-        assert isinstance(ctx, ssl.SSLContext)
+    assert isinstance(ctx, ssl.SSLContext)

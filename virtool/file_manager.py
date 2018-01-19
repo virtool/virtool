@@ -203,8 +203,8 @@ class Watcher(multiprocessing.Process):
         notifier = inotify.adapters.Inotify()
 
         # The ``add_watch`` method only takes paths as bytestrings.
-        notifier.add_watch(bytes(self.files_path, encoding="utf-8"))
-        notifier.add_watch(bytes(self.watch_path, encoding="utf-8"))
+        notifier.add_watch(self.files_path)
+        notifier.add_watch(self.watch_path)
 
         try:
             # This tells the FileManager object that the watcher is ready to start sending messages.
@@ -220,9 +220,6 @@ class Watcher(multiprocessing.Process):
                             raise ValueError("Unexpected number of type_names")
 
                         action = TYPE_NAME_DICT[type_names[0]]
-
-                        filename = filename.decode()
-                        dirname = dirname.decode()
 
                         if dirname.endswith("files") and action != "move":
                             if action == "create" or action == "close":

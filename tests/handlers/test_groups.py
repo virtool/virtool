@@ -27,10 +27,6 @@ class TestFind:
 
         assert await resp.json() == [
             {
-                "id": "administrator",
-                "permissions": all_permissions
-            },
-            {
                 "id": "test",
                 "permissions": all_permissions
             },

@@ -24,7 +24,7 @@ async def find(req):
         db.files,
         db_query,
         req.query,
-        sort_by="uploaded_at",
+        sort="uploaded_at",
         projection=virtool.file.PROJECTION,
         base_query=base_query
     )
