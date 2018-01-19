@@ -135,7 +135,7 @@ export function* getAnalysis (action) {
 export function* analyze (action) {
     try {
         const response = yield samplesAPI.analyze(action);
-        yield put({type: ANALYZE.SUCCEEDED, data: response.body});
+        yield put({type: ANALYZE.SUCCEEDED, data: response.body, placeholder: action.placeholder});
         yield pushHistoryState({quickAnalyze: false});
     } catch (error) {
         yield putGenericError(ANALYZE, error);

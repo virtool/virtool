@@ -51,8 +51,8 @@ class AnalysesList extends React.Component {
             const sorted = sortBy(this.props.analyses, "timestamp").reverse();
 
             // The components that detail individual analyses.
-            listContent = sorted.map((document) =>
-                <AnalysisItem key={document.id} {...document} />
+            listContent = sorted.map((document, index) =>
+                <AnalysisItem key={index} {...document} />
             );
         } else {
             listContent = <NoneFound noun="analyses" noListGroup />;

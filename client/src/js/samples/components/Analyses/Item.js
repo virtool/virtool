@@ -37,24 +37,32 @@ export const AnalysisItem = (props) => {
         );
     }
 
+    const content = (
+        <div className={itemClass}>
+            <Row>
+                <Col md={3}>
+                    <strong>{getTaskDisplayName(props.algorithm)}</strong>
+                </Col>
+                <Col md={4}>
+                    Started <RelativeTime time={props.created_at}/>{props.placeholder ? null : ` by ${props.user.id}`}
+                </Col>
+                <Col md={1}>
+                    {props.placeholder ? null : <Label>{props.index.version}</Label>}
+                </Col>
+                <Col md={4}>
+                    {end}
+                </Col>
+            </Row>
+        </div>
+    );
+
+    if (props.placeholder) {
+        return content;
+    }
+
     return (
         <LinkContainer to={`/samples/${props.sampleId}/analyses/${props.id}`}>
-            <div className={itemClass}>
-                <Row>
-                    <Col md={3}>
-                        <strong>{getTaskDisplayName(props.algorithm)}</strong>
-                    </Col>
-                    <Col md={4}>
-                        Started <RelativeTime time={props.created_at}/> by {props.user.id}
-                    </Col>
-                    <Col md={1}>
-                        <Label>{props.index.version}</Label>
-                    </Col>
-                    <Col md={4}>
-                        {end}
-                    </Col>
-                </Row>
-            </div>
+            {content}
         </LinkContainer>
     );
 };
