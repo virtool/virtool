@@ -1,9 +1,8 @@
 import React from "react";
-import PropTypes from "prop-types";
 import Numeral from "numeral";
 import { connect } from "react-redux";
 import { Col, Label, ProgressBar, Row, Table } from "react-bootstrap";
-import {IDRow, RelativeTime} from "../../../base";
+import { IDRow, RelativeTime } from "../../../base";
 
 import { getAnalysis } from "../../actions";
 import { getTaskDisplayName } from "../../../utils";
@@ -11,16 +10,6 @@ import PathoscopeViewer from "./Pathoscope/Viewer";
 import NuVsViewer from "./NuVs/Viewer";
 
 class AnalysisDetail extends React.Component {
-
-    static propTypes = {
-        history: PropTypes.object,
-        location: PropTypes.object,
-        match: PropTypes.object,
-        name: PropTypes.string,
-        detail: PropTypes.object,
-        quality: PropTypes.object,
-        getAnalysis: PropTypes.func
-    };
 
     componentDidMount () {
         this.props.getAnalysis(this.props.match.params.analysisId);
@@ -34,7 +23,7 @@ class AnalysisDetail extends React.Component {
                     <Row>
                         <Col xs={12} md={4} mdOffset={4}>
                             <div className="progress-small">
-                                <ProgressBar now={this.props.progress || 15} active/>
+                                <ProgressBar now={this.props.progress || 15} active />
                             </div>
                         </Col>
                     </Row>
