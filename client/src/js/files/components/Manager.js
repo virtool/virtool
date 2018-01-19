@@ -98,6 +98,7 @@ const mapStateToProps = (state) => {
     };
 };
 
+const mapDispatchToProps = (dispatch) => ({
 
     onDrop: (fileType, acceptedFiles) => {
         acceptedFiles.forEach(file => {
@@ -115,12 +116,10 @@ const mapStateToProps = (state) => {
 
     onRemove: (fileId) => {
         dispatch(removeFile(fileId));
-    },
-
     }
 
 });
 
-const Container = connect(mapStateToProps, mapDispatchProps)(FileManager);
+const Container = connect(mapStateToProps, mapDispatchToProps)(FileManager);
 
 export default Container;
