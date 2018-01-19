@@ -51,7 +51,7 @@ export default function fileReducer (state = initialState, action) {
             };
 
         case FIND_FILES.SUCCEEDED:
-            return {...state, ...action.data};
+            return {...state, ...action.data, fileType: action.fileType };
 
         case REMOVE_FILE.SUCCEEDED:
             return {...state, documents: reject(state.documents, {id: action.data.file_id})};

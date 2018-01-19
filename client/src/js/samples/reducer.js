@@ -96,8 +96,35 @@ export default function samplesReducer (state = initialState, action) {
         case GET_ANALYSIS_PROGRESS:
             return {...state, getAnalysisProgress: action.progress};
 
-        case ANALYZE.SUCCEEDED:
-            return {...state, analyses: state.analyses === null ? null : state.analyses.concat([action.data])};
+        case ANALYZE.REQUESTED:
+            return {
+                ...state,
+                analyses: state.analyses === null ? null : state.analyses.concat([action.placeholder])
+            };
+
+        case ANALYZE.SUCCEEDED: {
+            let analyses = state.analyses;
+
+            if (analyses !== null) {
+                analyses = analyses.map(analysis => {
+                    if (analysis === action.placeholder) {
+                        return action.data;
+                    }
+
+                    return analysis;
+                });
+            }
+
+            return {...state, analyses};
+        }
+
+        case ANALYZE.FAILED:
+            return {
+                ...state,
+                analyses: state.analyses === null ? null : state.analyses.filter(
+                    analysis => analysis !== action.placeholder
+                )
+            };
 
         case BLAST_NUVS.REQUESTED:
             return setNuvsBLAST(state, action.analysisId, action.sequenceIndex, {ready: false});

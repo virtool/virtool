@@ -14,7 +14,7 @@ export function* watchFiles () {
 
 export function* wsUpdateFile () {
     const fileType = yield select(state => state.files.fileType);
-    yield findFiles(fileType);
+    yield findFiles({fileType});
 }
 
 export function* findFiles (action) {
