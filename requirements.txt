@@ -12,7 +12,7 @@ cffi==1.11.4
 chardet==3.0.4
 coloredlogs==9.0
 coverage==4.4.2
-cx-Freeze==5.0.2
+cx-Freeze==5.1.1
 dictdiffer==0.7.0
 execnet==1.5.0
 humanfriendly==4.7
