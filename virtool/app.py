@@ -23,7 +23,6 @@ import virtool.sentry
 import virtool.setup
 import virtool.utils
 
-
 logger = logging.getLogger(__name__)
 
 
