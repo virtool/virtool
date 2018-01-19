@@ -1,20 +1,16 @@
 from cx_Freeze import setup, Executable
 
 packages = [
-    "encodings",
-    "uvloop",
-    "motor",
-    "appdirs",
-    "packaging",
-    "packaging.version",
     "_cffi_backend",
+    "appdirs",
     "asyncio",
     "asyncio.base_events",
     "asyncio.compat",
-    "raven",
-    "raven.conf",
-    "raven.handlers",
-    "raven.processors"
+    "encodings",
+    "motor",
+    "packaging",
+    "packaging.version",
+    "uvloop"
 ]
 
 # Dependencies are automatically detected, but it might need
