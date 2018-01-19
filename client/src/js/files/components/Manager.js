@@ -25,6 +25,7 @@ class FileManager extends React.Component {
     };
 
     render () {
+
         if (this.props.documents === null) {
             return <LoadingPlaceholder />;
         }
@@ -97,7 +98,13 @@ const mapStateToProps = (state) => {
     };
 };
 
-const mapDispatchProps = (dispatch) => ({
+
+    onDrop: (fileType, acceptedFiles) => {
+        acceptedFiles.forEach(file => {
+            const localId = createRandomString();
+            dispatch(upload(localId, file, fileType, (e) => dispatch(uploadProgress(localId, e.percent))));
+        });
+    },
 
     onFind: (fileType, page = 1) => {
         const url = new window.URL(window.location);
@@ -110,11 +117,6 @@ const mapDispatchProps = (dispatch) => ({
         dispatch(removeFile(fileId));
     },
 
-    onDrop: (fileType, acceptedFiles) => {
-        acceptedFiles.forEach(file => {
-            const localId = createRandomString();
-            dispatch(upload(localId, file, fileType, (e) => dispatch(uploadProgress(localId, e.percent))));
-        });
     }
 
 });
