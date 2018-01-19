@@ -237,7 +237,7 @@ def validation(schema):
     return decorator
 
 
-async def paginate(collection, db_query, url_query, sort_by=None, projection=None, base_query=None,
+async def paginate(collection, db_query, url_query, sort=None, projection=None, base_query=None,
                    processor=virtool.utils.base_processor, reverse=False):
 
     page = int(url_query.get("page", 1))
@@ -245,10 +245,8 @@ async def paginate(collection, db_query, url_query, sort_by=None, projection=Non
 
     base_query = base_query or {}
 
-    sort = None
-
-    if sort_by:
-        sort = [(sort_by, -1 if reverse else 1)]
+    if isinstance(sort, str):
+        sort = [(sort, -1 if reverse else 1)]
 
     db_query = {
         "$and": [base_query, db_query]

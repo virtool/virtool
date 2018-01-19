@@ -20,8 +20,8 @@ async def find(req):
         db.indexes,
         {},
         req.query,
+        sort="version",
         projection=virtool.virus_index.PROJECTION,
-        sort_by="version",
         reverse=True
     )
 
@@ -210,7 +210,7 @@ async def find_history(req):
         db.history,
         db_query,
         req.query,
-        "created_at",
+        sort=[("virus.name", 1), ("virus.version", -1)],
         projection=virtool.virus_history.LIST_PROJECTION,
         reverse=True
     )

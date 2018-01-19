@@ -84,7 +84,7 @@ class TestWatcher:
             handle.write("hello world")
 
         # This will be an 'alive' message
-        test_watcher_instance.queue.get(block=True, timeout=2)
+        test_watcher_instance.queue.get(block=True, timeout=3)
 
         os.remove(path)
 

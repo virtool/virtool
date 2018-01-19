@@ -15,7 +15,7 @@ async def find(req):
         db.history,
         {},
         req.query,
-        "created_at",
+        sort="created_at",
         projection=virtool.virus_history.LIST_PROJECTION,
         reverse=True
     )

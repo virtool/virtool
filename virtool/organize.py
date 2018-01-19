@@ -10,122 +10,6 @@ from virtool.user_permissions import PERMISSIONS
 from virtool.user_groups import merge_group_permissions
 
 
-async def organize_viruses(db, logger_cb=None):
-    count = 0
-
-    for virus_id in await db.history.distinct("entry_id"):
-        await virtool.virus.upgrade_legacy_virus_and_history(db, virus_id)
-        count += 1
-
-        if logger_cb and count % 100 == 0:
-            logger_cb("  {}".format(count))
-
-
-async def organize_jobs(db):
-    """
-    Unset deprecated fields ``_version`` and ``archived``. Update document to use new ``user`` subdocument structure.
-
-    :param db: a Motor connection to the database to update
-    :type db: :class:`motor.motor_asyncio.AsyncIOMotorCollection`
-
-    """
-    await virtool.organize_utils.update_user_field(db.jobs)
-    await virtool.organize_utils.unset_version_field(db.jobs)
-
-    await db.jobs.update_many({}, {
-        "$unset": {
-            "archived": ""
-        }
-    })
-
-    async for document in db.jobs.find({"status.date": {"$exists": True}}, ["status"]):
-        status = document["status"]
-
-        for s in status:
-            s["timestamp"] = s.pop("date")
-
-        await db.jobs.update_one({"_id": document["_id"]}, {
-            "$set": {
-                "status": status
-            }
-        })
-
-
-async def organize_samples(db, settings):
-    """
-    Bring sample documents up-to-date by doing the following:
-
-        - rename ``added`` field to ``created_at``
-        - unset deprecated ``_version`` field
-        - update documents to use new ``user`` subdocument structure
-        - update algorithm tags to reflect status of associated analyses (ie. which ones are complete)
-
-    :param db: a Motor connection to the database to update
-    :type db: :class:`motor.motor_asyncio.AsyncIOMotorCollection`
-
-    """
-    samples_path = os.path.join(settings.get("data_path"), "samples")
-
-    if os.path.isdir(samples_path):
-        for dirname in [n for n in os.listdir(samples_path) if n.startswith("sample_")]:
-            os.rename(
-                os.path.join(samples_path, dirname),
-                os.path.join(samples_path, dirname.replace("sample_", ""))
-            )
-
-    await virtool.organize_utils.update_user_field(db.samples)
-    await virtool.organize_utils.unset_version_field(db.samples)
-
-    await db.samples.update_many({}, {
-        "$rename": {
-            "added": "created_at"
-        }
-    })
-
-    async for sample in db.samples.find({}, ["_id", "created_at"]):
-        analyses = await db.analyses.find({"sample.id": sample["_id"]}, ["ready", "algorithm"]).to_list(None)
-
-        await db.samples.update_one({"_id": sample["_id"]}, {
-            "$set": virtool.sample.calculate_algorithm_tags(analyses)
-        })
-
-        if isinstance(sample["created_at"], str):
-            await db.samples.update_one({"_id": sample["_id"]}, {
-                "$set": {
-                    "created_at": arrow.get(sample["created_at"]).datetime
-                }
-            })
-
-    async for sample in db.samples.find({"subtraction": {"$exists": True}}, ["subtraction"]):
-        if isinstance(sample["subtraction"], str):
-            await db.samples.update_one({"_id": sample["_id"]}, {
-                "$set": {
-                    "subtraction": {
-                        "id": sample["subtraction"]
-                    }
-                }
-            })
-
-
-async def organize_hmms(db):
-    await virtool.organize_utils.unset_version_field(db.hmm)
-
-    await db.hmm.update_many({"hidden": {"$exists": False}}, {
-        "$set": {
-            "hidden": False
-        }
-    })
-
-    await db.hmm.update_many({}, {
-        "$rename": {
-            "definition": "names"
-        },
-        "$unset": {
-            "label": ""
-        }
-    })
-
-
 async def organize_analyses(db, logger_cb=None):
     """
     Bring analysis documents up-to-date by doing the following:
@@ -257,6 +141,57 @@ async def organize_analyses(db, logger_cb=None):
         })
 
 
+async def organize_files(db):
+    await db.files.update_many({}, {
+        "$set": {
+            "reserved": False
+        }
+    })
+
+
+async def organize_groups(db):
+    if not await db.groups.count({"_id": "administrator"}):
+        await db.groups.insert_one({
+            "_id": "administrator"
+        })
+
+    async for group in db.groups.find():
+        default_setting = True if group["_id"] == "administrator" else False
+
+        permissions = {perm: default_setting for perm in PERMISSIONS}
+
+        for perm in permissions:
+            try:
+                permissions[perm] = group["permissions"][perm]
+            except KeyError:
+                pass
+
+        await db.groups.update_one({"_id": group["_id"]}, {
+            "$set": {
+                "permissions": permissions
+            }
+        })
+
+
+async def organize_hmms(db):
+    await virtool.organize_utils.unset_version_field(db.hmm)
+
+    await db.hmm.update_many({"hidden": {"$exists": False}}, {
+        "$set": {
+            "hidden": False
+        }
+    })
+
+    await db.hmm.update_many({}, {
+        "$rename": {
+            "definition": "names"
+        },
+        "$unset": {
+            "label": ""
+        }
+    })
+
+
 async def organize_indexes(db):
     await db.indexes.update_many({}, {
         "$unset": {
@@ -279,6 +214,100 @@ async def organize_indexes(db):
                 "username": ""
             }
         })
+
+
+async def organize_jobs(db):
+    """
+    Unset deprecated fields ``_version`` and ``archived``. Update document to use new ``user`` subdocument structure.
+
+    :param db: a Motor connection to the database to update
+    :type db: :class:`motor.motor_asyncio.AsyncIOMotorCollection`
+
+    """
+    await virtool.organize_utils.update_user_field(db.jobs)
+    await virtool.organize_utils.unset_version_field(db.jobs)
+
+    await db.jobs.update_many({}, {
+        "$unset": {
+            "archived": ""
+        }
+    })
+
+    async for document in db.jobs.find({"status.date": {"$exists": True}}, ["status"]):
+        status = document["status"]
+
+        for s in status:
+            s["timestamp"] = s.pop("date")
+
+        await db.jobs.update_one({"_id": document["_id"]}, {
+            "$set": {
+                "status": status
+            }
+        })
+
+
+async def organize_samples(db, settings):
+    """
+    Bring sample documents up-to-date by doing the following:
+
+        - rename ``added`` field to ``created_at``
+        - unset deprecated ``_version`` field
+        - update documents to use new ``user`` subdocument structure
+        - update algorithm tags to reflect status of associated analyses (ie. which ones are complete)
+
+    :param db: a Motor connection to the database to update
+    :type db: :class:`motor.motor_asyncio.AsyncIOMotorCollection`
+
+    """
+    samples_path = os.path.join(settings.get("data_path"), "samples")
+
+    if os.path.isdir(samples_path):
+        for dirname in [n for n in os.listdir(samples_path) if n.startswith("sample_")]:
+            os.rename(
+                os.path.join(samples_path, dirname),
+                os.path.join(samples_path, dirname.replace("sample_", ""))
+            )
+
+    await virtool.organize_utils.update_user_field(db.samples)
+    await virtool.organize_utils.unset_version_field(db.samples)
+
+    await db.samples.update_many({}, {
+        "$rename": {
+            "added": "created_at"
+        }
+    })
+
+    async for sample in db.samples.find({}, ["_id", "created_at"]):
+        analyses = await db.analyses.find({"sample.id": sample["_id"]}, ["ready", "algorithm"]).to_list(None)
+
+        await db.samples.update_one({"_id": sample["_id"]}, {
+            "$set": virtool.sample.calculate_algorithm_tags(analyses)
+        })
+
+        if isinstance(sample["created_at"], str):
+            await db.samples.update_one({"_id": sample["_id"]}, {
+                "$set": {
+                    "created_at": arrow.get(sample["created_at"]).datetime
+                }
+            })
+
+    async for sample in db.samples.find({"subtraction": {"$exists": True}}, ["subtraction"]):
+        if isinstance(sample["subtraction"], str):
+            await db.samples.update_one({"_id": sample["_id"]}, {
+                "$set": {
+                    "subtraction": {
+                        "id": sample["subtraction"]
+                    }
+                }
+            })
+
+
+async def organize_status(db):
+    await db.status.update_one({"_id": "software_update"}, {
+        "$set": {
+            "process": None
+        }
+    }, upsert=True)
 
 
 async def organize_subtraction(db, settings):
@@ -404,41 +433,12 @@ async def organize_users(db):
         })
 
 
-async def organize_groups(db):
-    if not await db.groups.count({"_id": "administrator"}):
-        await db.groups.insert_one({
-            "_id": "administrator"
-        })
+async def organize_viruses(db, logger_cb=None):
+    count = 0
 
-    async for group in db.groups.find():
-        default_setting = True if group["_id"] == "administrator" else False
+    for virus_id in await db.history.distinct("entry_id"):
+        await virtool.virus.upgrade_legacy_virus_and_history(db, virus_id)
+        count += 1
 
-        permissions = {perm: default_setting for perm in PERMISSIONS}
-
-        for perm in permissions:
-            try:
-                permissions[perm] = group["permissions"][perm]
-            except KeyError:
-                pass
-
-        await db.groups.update_one({"_id": group["_id"]}, {
-            "$set": {
-                "permissions": permissions
-            }
-        })
-
-
-async def organize_files(db):
-    await db.files.update_many({}, {
-        "$set": {
-            "reserved": False
-        }
-    })
-
-
-async def organize_status(db):
-    await db.status.update_one({"_id": "software_update"}, {
-        "$set": {
-            "process": None
-        }
-    }, upsert=True)
+        if logger_cb and count % 100 == 0:
+            logger_cb("  {}".format(count))

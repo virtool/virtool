@@ -23,13 +23,13 @@ import virtool.sentry
 import virtool.setup
 import virtool.utils
 
-
 logger = logging.getLogger(__name__)
 
 
 async def init_version(app):
     if app["version"] is None:
         app["version"] = await find_server_version(app.loop, sys.path[0])
+
 
 def init_executors(app):
     """
@@ -92,9 +92,13 @@ async def init_db(app):
     """
     app["db_name"] = app.get("db_name", None) or app["settings"].get("db_name")
 
-    db = motor_asyncio.AsyncIOMotorClient(io_loop=app.loop)[app["db_name"]]
+    app["db"] = motor_asyncio.AsyncIOMotorClient(io_loop=app.loop)[app["db_name"]]
 
+
+async def init_check_db(app):
     logger.info("Starting database checks. Do not interrupt. This may take several minutes.")
+
+    db = app["db"]
 
     logger.info("Checking viruses...")
     await virtool.organize.organize_viruses(db, logger.info)
@@ -142,8 +146,6 @@ async def init_db(app):
     await db.sequences.create_index("virus_id")
     await db.viruses.create_index("name")
     await db.viruses.create_index("abbreviation")
-
-    app["db"] = db
 
 
 async def init_job_manager(app):
@@ -241,8 +243,8 @@ async def on_shutdown(app):
         await file_manager.close()
 
 
-def create_app(loop, db_name=None, disable_job_manager=False, disable_file_manager=False, skip_setup=False,
-               force_version=None, no_sentry=False):
+def create_app(loop, db_name=None, disable_job_manager=False, disable_file_manager=False, force_version=None,
+               ignore_settings=False, no_sentry=False, skip_db_checks=False, skip_setup=False):
     """
     Creates the Virtool application.
 
@@ -281,10 +283,21 @@ def create_app(loop, db_name=None, disable_job_manager=False, disable_file_manag
             app.on_startup.append(init_sentry)
 
         virtool.app_routes.setup_routes(app)
-        app.on_startup.append(init_settings)
+
+        if not ignore_settings:
+            app.on_startup.append(init_settings)
+        else:
+            app["settings"] = dict()
+
         app.on_startup.append(init_executors)
         app.on_startup.append(init_dispatcher)
         app.on_startup.append(init_db)
+
+        if skip_db_checks:
+            logger.info("Skipping database checks.")
+        else:
+            app.on_startup.append(init_check_db)
+
         app.on_startup.append(init_resources)
 
         if not disable_job_manager:
