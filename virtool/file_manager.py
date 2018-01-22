@@ -52,6 +52,11 @@ def get_event_type(event):
         return "close"
 
 
+def has_read_extension(filename):
+    return any(filename.endswith(ext) for ext in FILE_EXTENSION_FILTER)
+
+
+
 class Manager:
 
     def __init__(self, loop, executor, db, dispatch, files_path, watch_path, clean_interval=20):
@@ -66,7 +71,7 @@ class Manager:
         self.watcher = aionotify.Watcher()
 
         self.watcher.watch(self.files_path, FLAGS, alias="files")
-        self.watcher.watch(self.watch_path, FLAGS, alias="watch")
+        self.watcher.watch(self.watch_path, aionotify.Flags.CLOSE_WRITE, alias="watch")
 
         self._watch_task = asyncio.ensure_future(self.watch(), loop=self.loop)
 
@@ -111,67 +116,18 @@ class Manager:
                 event_type = get_event_type(event)
                 filename = event.name
 
-                if alias == "watch":
-                    if event_type == "close":
+                if alias == "watch" and event_type == "close":
+                    await self.handle_watch_close(filename)
 
-                        has_read_ext = any(filename.endswith(ext) for ext in FILE_EXTENSION_FILTER)
-
-                        old_path = os.path.join(self.watch_path, filename)
-
-                        if has_read_ext:
-                            document = await virtool.file.create(self.db, self.dispatch, filename, "reads")
-
-                            await self.loop.run_in_executor(
-                                self.executor,
-                                shutil.copy,
-                                old_path,
-                                os.path.join(self.files_path, document["id"])
-                            )
-
-                        await self.loop.run_in_executor(
-                            self.executor,
-                            os.remove,
-                            old_path
-                        )
-
-                else:
-                    path = os.path.join(self.files_path, filename)
-
+                elif alias == "files":
                     if event_type == "delete":
-                        document = await self.db.files.find_one({"_id": filename})
+                        await  self.handle_file_deletion(filename)
 
-                        if document:
-                            await self.db.files.delete_one({"_id": filename})
+                    elif event_type == "create":
+                        await self.handle_file_creation(filename)
 
-                            await self.dispatch(
-                                "files",
-                                "remove",
-                                [document["_id"]]
-                            )
-
-                    else:
-                        file_entry = dict(virtool.utils.file_stats(path), filename=filename)
-
-                        if event_type == "create":
-                            await self.db.files.update_one({"_id": filename}, {
-                                "$set": {
-                                    "created": True
-                                }
-                            })
-
-                        elif event_type == "close":
-                            document = await self.db.files.find_one_and_update({"_id": filename}, {
-                                "$set": {
-                                    "size": file_entry["size"],
-                                    "ready": True
-                                }
-                            }, return_document=pymongo.ReturnDocument.AFTER, projection=virtool.file.PROJECTION)
-
-                            await self.dispatch(
-                                "files",
-                                "update",
-                                virtool.utils.base_processor(document)
-                            )
+                    elif event_type == "close":
+                        await self.handle_file_close(filename)
 
         except asyncio.CancelledError:
             pass
@@ -179,6 +135,62 @@ class Manager:
         self.watcher.close()
 
         logging.debug("Stopped file manager")
+
+    async def handle_watch_close(self, filename):
+        path = os.path.join(self.watch_path, filename)
+
+        if has_read_extension(filename):
+            document = await virtool.file.create(self.db, self.dispatch, filename, "reads")
+
+            await self.loop.run_in_executor(
+                self.executor,
+                shutil.copy,
+                path,
+                os.path.join(self.files_path, document["id"])
+            )
+
+        await self.loop.run_in_executor(
+            self.executor,
+            os.remove,
+            path
+        )
+
+    async def handle_file_close(self, filename):
+        path = os.path.join(self.files_path, filename)
+
+        file_entry = dict(virtool.utils.file_stats(path), filename=filename)
+
+        document = await self.db.files.find_one_and_update({"_id": filename}, {
+            "$set": {
+                "size": file_entry["size"],
+                "ready": True
+            }
+        }, return_document=pymongo.ReturnDocument.AFTER, projection=virtool.file.PROJECTION)
+
+        await self.dispatch(
+            "files",
+            "update",
+            virtool.utils.base_processor(document)
+        )
+
+    async def handle_file_creation(self, filename):
+        await self.db.files.update_one({"_id": filename}, {
+            "$set": {
+                "created": True
+            }
+        })
+
+    async def handle_file_deletion(self, filename):
+        document = await self.db.files.find_one({"_id": filename})
+
+        if document:
+            await self.db.files.delete_one({"_id": filename})
+
+            await self.dispatch(
+                "files",
+                "remove",
+                [document["_id"]]
+            )
 
     async def close(self):
         self._clean_task.cancel()
