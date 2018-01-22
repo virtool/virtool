@@ -68,14 +68,10 @@ class Manager:
         self.watcher.watch(self.files_path, FLAGS, alias="files")
         self.watcher.watch(self.watch_path, FLAGS, alias="watch")
 
-        self._clean_task = None
-        self._watch_task = None
+        self._watch_task = asyncio.ensure_future(self.watch(), loop=self.loop)
 
-    async def start(self):
         if self.clean_interval is not None:
             self._clean_task = asyncio.ensure_future(self.clean(), loop=self.loop)
-
-        self._watch_task = asyncio.ensure_future(self.watch(), loop=self.loop)
 
     async def clean(self):
         try:
