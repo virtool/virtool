@@ -1,5 +1,6 @@
 aiofiles==0.3.2
 aiohttp==2.3.9
+aionotify==0.2.0
 apipkg==1.4
 appdirs==1.4.3
 arrow==0.12.0
@@ -17,7 +18,6 @@ dictdiffer==0.7.0
 execnet==1.5.0
 humanfriendly==4.7
 idna==2.6
-inotify==0.2.9
 Mako==1.0.7
 MarkupSafe==1.0
 motor==1.2.1
