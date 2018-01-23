@@ -325,7 +325,7 @@ async def format_analysis(db, analysis):
 
                     if "align" in sequence:
                         coordinates = coverage_to_coordinates(sequence["align"])
-                        sequence["align"] = smooth_coverage_coordinates(coordinates, tolerance=3)
+                        sequence["align"] = smooth_coverage_coordinates(coordinates, tolerance=0.05)
 
                     del sequence["sequence"]
 
