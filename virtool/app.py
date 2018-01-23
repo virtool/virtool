@@ -267,11 +267,11 @@ def create_app(loop, db_name=None, disable_job_manager=False, disable_file_manag
 
     """
     middlewares = [
-        virtool.error_pages.middleware_factory
+        virtool.error_pages.middleware
     ]
 
     if skip_setup:
-        middlewares.append(virtool.app_auth.middleware_factory)
+        middlewares.append(virtool.app_auth.middleware)
 
     app = web.Application(loop=loop, middlewares=middlewares)
 
