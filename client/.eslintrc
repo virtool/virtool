@@ -84,7 +84,30 @@
     "quotes": [1, "double"],
 
     // React
+    "react/prop-types": [1, {"skipUndeclared": true}],
+
+    // JSX
     "jsx-quotes": [1],
-    "react/prop-types": [1, {"skipUndeclared": true}]
+    "react/jsx-closing-bracket-location": [1],
+    "react/jsx-closing-tag-location": [1],
+    "react/jsx-curly-spacing": [1],
+    "react/jsx-equals-spacing": [1],
+    "react/jsx-first-prop-new-line": [1],
+    "react/jsx-handler-names": [1],
+    "react/jsx-indent": [1],
+    "react/jsx-indent-props": [1],
+    "react/jsx-key": [2],
+    "react/jsx-no-bind": [1],
+    "react/jsx-no-comment-textnodes": [1],
+    "react/jsx-no-duplicate-props": [2],
+    "react/jsx-no-target-blank": [2],
+    "react/jsx-no-undef": [2],
+    "react/jsx-one-expression-per-line": [1],
+    "react/jsx-curly-brace-presence": [1, "never"],
+    "react/jsx-pascal-case": [1],
+    "react/jsx-tag-spacing": [1],
+    "react/jsx-uses-react": [1],
+    "react/jsx-uses-vars": [1],
+    "react/jsx-wrap-multilines": [1]
   }
 }
