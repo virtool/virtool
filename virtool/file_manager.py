@@ -1,13 +1,8 @@
 import aionotify
-import arrow
 import asyncio
-import inotify.adapters
 import logging
-import multiprocessing
 import os
 import pymongo
-import queue
-import setproctitle
 import shutil
 
 import virtool.file
@@ -54,7 +49,6 @@ def get_event_type(event):
 
 def has_read_extension(filename):
     return any(filename.endswith(ext) for ext in FILE_EXTENSION_FILTER)
-
 
 
 class Manager:
@@ -125,7 +119,7 @@ class Manager:
 
                 elif alias == "files":
                     if event_type == "delete":
-                        await  self.handle_file_deletion(filename)
+                        await self.handle_file_deletion(filename)
 
                     elif event_type == "create":
                         await self.handle_file_creation(filename)
@@ -171,11 +165,18 @@ class Manager:
             }
         }, return_document=pymongo.ReturnDocument.AFTER, projection=virtool.file.PROJECTION)
 
-        await self.dispatch(
-            "files",
-            "update",
-            virtool.utils.base_processor(document)
-        )
+        if document:
+            await self.dispatch(
+                "files",
+                "update",
+                virtool.utils.base_processor(document)
+            )
+        else:
+            await self.loop.run_in_executor(
+                self.executor,
+                os.remove,
+                path
+            )
 
     async def handle_file_creation(self, filename):
         await self.db.files.update_one({"_id": filename}, {
