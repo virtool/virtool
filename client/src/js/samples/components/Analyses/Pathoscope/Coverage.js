@@ -23,7 +23,7 @@ const createChart = (element, data, length, meta, yMax, xMin, showYAxis) => {
 
     const height = 200 - margin.top - margin.bottom;
 
-    let width = length / 5;
+    let width = length > 800 ? length / 5: length;
 
     if (width < xMin) {
         width = xMin;
