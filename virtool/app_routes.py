@@ -1,8 +1,9 @@
-import os
 import logging
+import os
+import sys
 from aiohttp import web
 
-from virtool.utils import get_static_hash
+import virtool.utils
 from virtool.user_login import get_login_template, generate_verification_keys, login_handler
 from virtool.handlers import root, jobs, samples, viruses, history, hmm, subtraction, settings, account, groups, users,\
     genbank, status, websocket, resources, analyses, indexes, files, uploads, downloads, updates
@@ -12,7 +13,17 @@ logger = logging.getLogger(__name__)
 
 
 async def index_handler(req):
-    static_hash = get_static_hash(req.app["client_path"])
+    if req.app["client_path"] is None:
+        client_path = await virtool.utils.get_client_path()
+
+        if client_path is None:
+            with open(os.path.join(sys.path[0], "templates/client_path_error.html"), "r") as handle:
+                return web.Response(body=handle.read(), content_type="text/html")
+
+        req.app["client_path"] = client_path
+        req.app.router.add_static("/static", client_path)
+
+    static_hash = virtool.utils.get_static_hash(req.app["client_path"])
 
     if not req["client"].user_id:
         keys = generate_verification_keys()
@@ -78,7 +89,6 @@ def setup_basic_routes(app):
 
     app.router.add_get("/ws", websocket.root)
     app.router.add_post("/login", login_handler)
-    app.router.add_static("/static", app["client_path"])
 
 
 def setup_file_routes(app):
