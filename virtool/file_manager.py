@@ -1,12 +1,8 @@
-import arrow
+import aionotify
 import asyncio
-import inotify.adapters
 import logging
-import multiprocessing
 import os
 import pymongo
-import queue
-import setproctitle
 import shutil
 
 import virtool.file
@@ -14,12 +10,20 @@ import virtool.utils
 
 #: A dict for mapping inotify type names of interest to simple file operation verbs used in Virtool.
 TYPE_NAME_DICT = {
-    "IN_CREATE": "create",
-    "IN_MOVED_TO": "move",
-    "IN_DELETE": "delete",
-    "IN_MOVED_FROM": "delete",
-    "IN_CLOSE_WRITE": "close"
+    "CREATE": "create",
+    "MOVED_TO": "move",
+    "DELETE": "delete",
+    "MOVED_FROM": "delete",
+    "CLOSE_WRITE": "close"
 }
+
+FLAGS = (
+    aionotify.Flags.CLOSE_WRITE |
+    aionotify.Flags.CREATE |
+    aionotify.Flags.DELETE |
+    aionotify.Flags.MOVED_TO |
+    aionotify.Flags.MOVED_FROM
+)
 
 #: Files with these extensions will be consumed from the watch folder and be entered into Virtool's file manager.
 FILE_EXTENSION_FILTER = (
@@ -28,6 +32,23 @@ FILE_EXTENSION_FILTER = (
     ".fq",
     ".fastq"
 )
+
+
+def get_event_type(event):
+    flags = aionotify.Flags.parse(event.flags)
+
+    if aionotify.Flags.CREATE in flags or aionotify.Flags.MOVED_TO in flags:
+        return "create"
+
+    if aionotify.Flags.DELETE in flags or aionotify.Flags.MOVED_FROM in flags:
+        return "delete"
+
+    if aionotify.Flags.CLOSE_WRITE in flags:
+        return "close"
+
+
+def has_read_extension(filename):
+    return any(filename.endswith(ext) for ext in FILE_EXTENSION_FILTER)
 
 
 class Manager:
@@ -41,225 +62,147 @@ class Manager:
         self.watch_path = watch_path
         self.clean_interval = clean_interval
 
-        self.queue = multiprocessing.Queue()
-        self.watcher = Watcher(self.files_path, self.watch_path, self.queue)
-        self.watcher.start()
+        self.watcher = aionotify.Watcher()
 
-        self._kill = False
-        self._clean_alive = False
-        self._run_alive = False
+        self.watcher.watch(self.files_path, FLAGS, alias="files")
+        self.watcher.watch(self.watch_path, aionotify.Flags.CLOSE_WRITE, alias="watch")
 
-    async def start(self):
+        self._watch_task = None
+        self._clean_task = None
+
+    def start(self):
+        self._watch_task = asyncio.ensure_future(self.watch(), loop=self.loop)
+
         if self.clean_interval is not None:
-            asyncio.ensure_future(self.clean(), loop=self.loop)
-
-        asyncio.ensure_future(self.run(), loop=self.loop)
-        self.queue.get(block=True, timeout=3)
-
-        self._run_alive = True
+            self._clean_task = asyncio.ensure_future(self.clean(), loop=self.loop)
 
     async def clean(self):
-        self._clean_alive = True
-
-        looped_once = False
-
-        while not (self._kill and looped_once):
-            dir_list = os.listdir(self.files_path)
-            db_list = await self.db.files.distinct("_id")
-
-            for filename in dir_list:
-                if filename not in db_list:
-                    await self.loop.run_in_executor(self.executor, os.remove, os.path.join(self.files_path, filename))
-
-            db_created_list = await self.db.files.find({"created": True}).distinct("_id")
-
-            await self.db.files.delete_many({
-                "_id": {
-                    "$in": [filename for filename in db_created_list if filename not in dir_list]
-                }
-            })
-
-            count = 0
-            threshold = self.clean_interval / 0.3
-
-            while not self._kill and count < threshold:
-                await asyncio.sleep(0.3, loop=self.loop)
-
-            looped_once = True
-
-        self._clean_alive = False
-
-    async def run(self):
-        looped_once = False
-
-        while not (self._kill and looped_once):
+        try:
             while True:
-                try:
-                    event = self.queue.get(block=False)
-                except queue.Empty:
-                    break
+                dir_list = os.listdir(self.files_path)
+                db_list = await self.db.files.distinct("_id")
 
-                filename = event["file"]["filename"]
+                for filename in dir_list:
+                    if filename not in db_list:
+                        await self.loop.run_in_executor(self.executor, os.remove, os.path.join(self.files_path, filename))
 
-                if event["action"] == "create":
-                    await self.db.files.update_one({"_id": filename}, {
-                        "$set": {
-                            "created": True
-                        }
-                    })
+                db_created_list = await self.db.files.find({"created": True}).distinct("_id")
 
-                elif event["action"] == "close":
-                    document = await self.db.files.find_one_and_update({"_id": filename}, {
-                        "$set": {
-                            "size": event["file"]["size"],
-                            "ready": True
-                        }
-                    }, return_document=pymongo.ReturnDocument.AFTER, projection=virtool.file.PROJECTION)
+                await self.db.files.delete_many({
+                    "_id": {
+                        "$in": [filename for filename in db_created_list if filename not in dir_list]
+                    }
+                })
 
-                    await self.dispatch(
-                        "files",
-                        "update",
-                        virtool.utils.base_processor(document)
-                    )
+                count = 0
+                threshold = self.clean_interval / 0.3
 
-                elif event["action"] == "delete":
-                    document = await self.db.files.find_one({"_id": filename})
+                while count < threshold:
+                    await asyncio.sleep(0.3, loop=self.loop)
 
-                    if document:
-                        await self.db.files.delete_one({"_id": filename})
+        except asyncio.CancelledError:
+            pass
 
-                        await self.dispatch(
-                            "files",
-                            "remove",
-                            [document["_id"]]
-                        )
+    async def watch(self):
+        await self.watcher.setup(self.loop)
 
-                elif event["action"] == "watch":
-                    document = await virtool.file.create(self.db, self.dispatch, filename, "reads")
+        try:
+            while True:
+                event = await self.watcher.get_event()
 
-                    old_path = os.path.join(self.watch_path, filename)
+                alias = event.alias
+                event_type = get_event_type(event)
+                filename = event.name
 
-                    await self.loop.run_in_executor(
-                        self.executor,
-                        shutil.copy,
-                        old_path,
-                        os.path.join(self.files_path, document["id"])
-                    )
+                if alias == "watch" and event_type == "close":
+                    await self.handle_watch_close(filename)
 
-                    await self.loop.run_in_executor(
-                        self.executor,
-                        os.remove,
-                        old_path
-                    )
+                elif alias == "files":
+                    if event_type == "delete":
+                        await self.handle_file_deletion(filename)
 
-            async for document in self.db.files.find({"expires_at": {"$ne": None}}, ["expires_at"]):
-                if arrow.get(document["expires_at"]) <= arrow.utcnow():
-                    await self.db.files.delete_one({"_id": document["_id"]})
-                    os.remove(os.path.join(self.files_path, document["_id"]))
+                    elif event_type == "create":
+                        await self.handle_file_creation(filename)
 
-            await asyncio.sleep(0.1, loop=self.loop)
+                    elif event_type == "close":
+                        await self.handle_file_close(filename)
 
-            looped_once = True
+        except asyncio.CancelledError:
+            pass
 
-        self.watcher.terminate()
-
-        self._run_alive = False
+        self.watcher.close()
 
         logging.debug("Stopped file manager")
 
-    @property
-    def alive(self):
-        return self._run_alive or self._clean_alive
+    async def handle_watch_close(self, filename):
+        path = os.path.join(self.watch_path, filename)
 
-    async def wait_for_dead(self):
-        while self._run_alive or self._clean_alive:
-            await asyncio.sleep(0.1, loop=self.loop)
+        if has_read_extension(filename):
+            document = await virtool.file.create(self.db, self.dispatch, filename, "reads")
+
+            await self.loop.run_in_executor(
+                self.executor,
+                shutil.copy,
+                path,
+                os.path.join(self.files_path, document["id"])
+            )
+
+        await self.loop.run_in_executor(
+            self.executor,
+            os.remove,
+            path
+        )
+
+    async def handle_file_close(self, filename):
+        path = os.path.join(self.files_path, filename)
+
+        file_entry = dict(virtool.utils.file_stats(path), filename=filename)
+
+        document = await self.db.files.find_one_and_update({"_id": filename}, {
+            "$set": {
+                "size": file_entry["size"],
+                "ready": True
+            }
+        }, return_document=pymongo.ReturnDocument.AFTER, projection=virtool.file.PROJECTION)
+
+        if document:
+            await self.dispatch(
+                "files",
+                "update",
+                virtool.utils.base_processor(document)
+            )
+        else:
+            await self.loop.run_in_executor(
+                self.executor,
+                os.remove,
+                path
+            )
+
+    async def handle_file_creation(self, filename):
+        await self.db.files.update_one({"_id": filename}, {
+            "$set": {
+                "created": True
+            }
+        })
+
+    async def handle_file_deletion(self, filename):
+        document = await self.db.files.find_one({"_id": filename})
+
+        if document:
+            await self.db.files.delete_one({"_id": filename})
+
+            await self.dispatch(
+                "files",
+                "remove",
+                [document["_id"]]
+            )
 
     async def close(self):
-        self._kill = True
-        await self.wait_for_dead()
+        self._clean_task.cancel()
+        self._watch_task.cancel()
 
+        while not (self._clean_task.done() and self._watch_task.done()):
+            await asyncio.sleep(0.1, loop=self.loop)
 
-class Watcher(multiprocessing.Process):
-
-    def __init__(self, files_path, watch_path, queue):
-        super().__init__()
-
-        self.files_path = files_path
-        self.watch_path = watch_path
-
-        self.watch_files = set()
-
-        self.queue = queue
-
-    def run(self):
-        # This title will show up in output from ``top`` and ``ps`` etc.
-        setproctitle.setproctitle("virtool-inotify")
-
-        # A ton of "IN_MODIFY" type events can be produced. We minimize the number of messages being sent to the
-        # main process by only allowing one to be put in ``self.queue`` every 300 ms.
-        interval = 0.300
-
-        notifier = inotify.adapters.Inotify()
-
-        # The ``add_watch`` method only takes paths as bytestrings.
-        notifier.add_watch(self.files_path)
-        notifier.add_watch(self.watch_path)
-
-        try:
-            # This tells the FileManager object that the watcher is ready to start sending messages.
-            self.queue.put("alive")
-
-            for event in notifier.event_gen():
-                if event is not None:
-                    _, type_names, dirname, filename = event
-
-                    # Only paying attention to a select few type names.
-                    if filename and type_names[0] in TYPE_NAME_DICT:
-                        if len(type_names) != 1:
-                            raise ValueError("Unexpected number of type_names")
-
-                        action = TYPE_NAME_DICT[type_names[0]]
-
-                        if dirname.endswith("files") and action != "move":
-                            if action == "create" or action == "close":
-                                file_entry = virtool.utils.file_stats(os.path.join(self.files_path, filename))
-                                file_entry["filename"] = filename
-
-                                self.queue.put({
-                                    "action": action,
-                                    "file": file_entry
-                                })
-
-                            if action == "delete":
-                                self.queue.put({
-                                    "action": "delete",
-                                    "file": {
-                                        "filename": filename
-                                    }
-                                })
-
-                        elif dirname.endswith("watch"):
-
-                            has_read_ext = any(filename.endswith(ext) for ext in FILE_EXTENSION_FILTER)
-
-                            if action in ("close", "move") and has_read_ext and filename not in self.watch_files:
-                                self.watch_files.add(filename)
-
-                                file_entry = virtool.utils.file_stats(os.path.join(self.watch_path, filename))
-
-                                file_entry["filename"] = filename
-
-                                self.queue.put({
-                                    "action": "watch",
-                                    "file": file_entry
-                                })
-
-                            elif action == "delete":
-                                try:
-                                    self.watch_files.remove(filename)
-                                except KeyError:
-                                    pass
-
-        except KeyboardInterrupt:
-            logging.debug("Stopped file watcher")
+        await self._clean_task
+        await self._watch_task

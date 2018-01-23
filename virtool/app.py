@@ -189,7 +189,7 @@ async def init_file_manager(app):
             clean_interval=20
         )
 
-        await app["file_manager"].start()
+        app["file_manager"].start()
     else:
         logger.warning("Did not initialize file manager. Path does not exist: {}".format(files_path))
         app["file_manager"] = None
