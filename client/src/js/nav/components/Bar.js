@@ -1,5 +1,5 @@
 import React from "react";
-import { startsWith } from "lodash";
+import { startsWith } from "lodash-es";
 import { connect } from "react-redux";
 import { withRouter } from "react-router-dom";
 import { LinkContainer } from "react-router-bootstrap";

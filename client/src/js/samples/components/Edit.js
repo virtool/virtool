@@ -1,5 +1,5 @@
 import React from "react";
-import { get } from "lodash";
+import { get } from "lodash-es";
 import { push } from "react-router-redux";
 import { connect } from "react-redux";
 import { Row, Col, Modal } from "react-bootstrap";

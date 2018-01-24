@@ -1,6 +1,6 @@
 import React from "react";
 import { LinkContainer } from "react-router-bootstrap";
-import { keys, reject } from "lodash";
+import { keys, reject } from "lodash-es";
 import { Col, Label, Row } from "react-bootstrap";
 
 import { ListGroupItem } from "../../base";

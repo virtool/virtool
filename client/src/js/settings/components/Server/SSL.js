@@ -40,13 +40,13 @@ const SSLOptions = (props) => (
                 <Panel>
                     <InputSave
                         label="Certificate Path"
-                        onSave={e => props.onUpdateCertPath(e.value)}
+                        onSave={props.onUpdateCertPath}
                         initialValue={props.certPath}
                         disabled={!props.enabled}
                     />
                     <InputSave
                         label="Key Path"
-                        onSave={e => props.onUpdateKeyPath(e.value)}
+                        onSave={props.onUpdateKeyPath}
                         initialValue={props.keyPath}
                         disabled={!props.enabled}
                     />
@@ -68,12 +68,12 @@ const mapDispatchToProps = (dispatch) => ({
         dispatch(updateSetting("use_ssl", value));
     },
 
-    onUpdateCertPath: (path) => {
-        dispatch(updateSetting("cert_path", path));
+    onUpdateCertPath: (e) => {
+        dispatch(updateSetting("cert_path", e.value));
     },
 
-    onUpdateKeyPath: (path) => {
-        dispatch(updateSetting("key_path", path));
+    onUpdateKeyPath: (e) => {
+        dispatch(updateSetting("key_path", e.value));
     }
 
 });

@@ -1,5 +1,5 @@
 import React from "react";
-import { filter } from "lodash";
+import { filter, map } from "lodash-es";
 import { connect } from "react-redux";
 import { Link } from "react-router-dom";
 import { Row, Col, ListGroup, Modal } from "react-bootstrap";
@@ -7,6 +7,28 @@ import { Row, Col, ListGroup, Modal } from "react-bootstrap";
 import { findFiles } from "../../files/actions";
 import { createSubtraction } from "../actions";
 import { Button, Icon, Input, ListGroupItem, RelativeTime } from "../../base";
+
+class SubtractionFileItem extends React.Component {
+
+    handleClick = () => {
+        this.onClick(this.props.id);
+    };
+
+    render () {
+        return (
+            <ListGroupItem active={this.props.active} onClick={this.handleClick}>
+                <Row>
+                    <Col xs={7}>
+                        <strong>{this.props.file.name}</strong>
+                    </Col>
+                    <Col xs={5}>
+                        Uploaded <RelativeTime time={this.props.uploaded_at} /> by {this.props.user.id}
+                    </Col>
+                </Row>
+            </ListGroupItem>
+        );
+    }
+}
 
 const getInitialState = () => ({
     subtractionId: "",
@@ -20,12 +42,22 @@ class CreateSubtraction extends React.Component {
         this.state = getInitialState();
     }
 
-    modalEnter = () => {
+    handleChange = (e) => {
+        this.setState({subtractionId: e.target.value});
+    };
+
+    handleModalEnter = () => {
         this.props.onFindFiles();
     };
 
-    modalExited = () => {
+    handleModalExited = () => {
         this.setState(getInitialState());
+    };
+
+    handleSelectFile = (fileId) => {
+        this.setState({
+            fileId: fileId === this.state.fileId ? "" : fileId
+        });
     };
 
     handleSubmit = (e) => {
@@ -35,26 +67,16 @@ class CreateSubtraction extends React.Component {
 
     render () {
 
-        let fileComponents = filter(this.props.files, {type: "subtraction"}).map(file => {
-            const active = file.id === this.state.fileId;
+        const files = filter(this.props.files, {type: "subtraction"});
 
-            return (
-                <ListGroupItem
-                    key={file.id}
-                    active={active}
-                    onClick={() => this.setState({fileId: active ? "" : file.id})}
-                >
-                    <Row>
-                        <Col xs={7}>
-                            <strong>{file.name}</strong>
-                        </Col>
-                        <Col xs={5}>
-                            Uploaded <RelativeTime time={file.uploaded_at} /> by {file.user.id}
-                        </Col>
-                    </Row>
-                </ListGroupItem>
-            );
-        });
+        let fileComponents = map(files, file =>
+            <SubtractionFileItem
+                key={file.id}
+                {...file}
+                active={file.id === this.state.fileId}
+                onClick={this.handleSelectFile}
+            />
+        );
 
         if (!fileComponents.length) {
             fileComponents = (
@@ -65,8 +87,13 @@ class CreateSubtraction extends React.Component {
         }
 
         return (
-            <Modal bsSize="large" show={this.props.show} onHide={this.props.onHide} onEnter={this.modalEnter}
-                onExited={this.modalExited}>
+            <Modal
+                bsSize="large"
+                show={this.props.show}
+                onHide={this.props.onHide}
+                onEnter={this.handleModalEnter}
+                onExited={this.handleModalExited}
+            >
 
                 <Modal.Header>
                     Create Subtraction
@@ -78,7 +105,7 @@ class CreateSubtraction extends React.Component {
                             type="text"
                             label="Unique Name"
                             value={this.state.subtractionId}
-                            onChange={(e) => this.setState({subtractionId: e.target.value})}
+                            onChange={this.handleChange}
                         />
 
                         <h5><strong>Files</strong></h5>

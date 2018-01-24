@@ -1,5 +1,5 @@
 import React from "react";
-import { sortBy } from "lodash";
+import { sortBy } from "lodash-es";
 import { Row, Col, ListGroup, ListGroupItem, Panel } from "react-bootstrap";
 
 import { LoadingPlaceholder } from "../../base";

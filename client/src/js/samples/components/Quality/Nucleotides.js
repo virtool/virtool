@@ -1,7 +1,7 @@
 import { line } from "d3-shape";
 import { scaleLinear } from "d3-scale";
 import { axisBottom, axisLeft } from "d3-axis";
-import { unzip } from "lodash";
+import { unzip } from "lodash-es";
 
 import { appendLegend, createSVG } from "../../chartUtils";
 

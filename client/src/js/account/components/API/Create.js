@@ -3,7 +3,7 @@ import React from "react";
 import { push } from "react-router-redux";
 import { connect } from "react-redux";
 import { CopyToClipboard } from "react-copy-to-clipboard";
-import { mapValues } from "lodash";
+import { mapValues } from "lodash-es";
 import { Col, Modal, Row } from "react-bootstrap";
 
 import APIPermissions from "./Permissions";

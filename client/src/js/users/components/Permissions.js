@@ -11,7 +11,7 @@
 
 import React from "react";
 import PropTypes from "prop-types";
-import { transform } from "lodash";
+import { transform } from "lodash-es";
 import { Col, Panel, Row } from "react-bootstrap";
 import { ListGroupItem, Icon } from "../../base";
 

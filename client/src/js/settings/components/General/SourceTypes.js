@@ -1,5 +1,5 @@
 import React from "react";
-import { without } from "lodash";
+import { without } from "lodash-es";
 import { connect } from "react-redux";
 import { Row, Col, Panel, Overlay, Popover, FormGroup, InputGroup, FormControl } from "react-bootstrap";
 

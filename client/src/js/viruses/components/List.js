@@ -1,4 +1,5 @@
 import React from "react";
+import { map } from "lodash-es";
 import { connect } from "react-redux";
 import { push } from "react-router-redux";
 import { Link } from "react-router-dom";
@@ -45,12 +46,12 @@ const VirusesList = (props) => {
     const virusCount = props.documents.length;
 
     if (virusCount) {
-        virusComponents = props.documents.map(document => <VirusItem key={document.id} {...document} />);
+        virusComponents = map(props.documents, document => <VirusItem key={document.id} {...document} />);
     } else {
         virusComponents = (
             <ListGroupItem key="noViruses" className="text-center">
                 <span>
-                    <Icon name="info"/> No viruses found. <Link to={{state: {virusImport: true}}}>Import</Link> or
+                    <Icon name="info" /> No viruses found. <Link to={{state: {virusImport: true}}}>Import</Link> or
                 </span>
                 <span> <Link to={{state: {createVirus: true}}}>Create</Link> some</span>
             </ListGroupItem>

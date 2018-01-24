@@ -11,7 +11,7 @@
 import React from "react";
 import PropTypes from "prop-types";
 import { Link } from "react-router-dom";
-import { without, intersection, filter, sortBy } from "lodash";
+import { without, intersection, filter, sortBy } from "lodash-es";
 import { Overlay, Popover, Panel } from "react-bootstrap";
 
 import { Icon, Input, Button, ListGroupItem } from "../../../base";

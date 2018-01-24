@@ -1,4 +1,5 @@
 import React from "react";
+import { map } from "lodash-es";
 import { push } from "react-router-redux";
 import { connect } from "react-redux";
 import { ClipLoader } from "halogenium";
@@ -9,14 +10,13 @@ import CreateSubtraction from "./Create";
 import { Button, Flex, FlexItem, Icon, ListGroupItem, LoadingPlaceholder, NoneFound, ViewHeader } from "../../base";
 import {createFindURL, getFindTerm} from "../../utils";
 
-
 const SubtractionList = (props) => {
 
     if (props.documents === null) {
-        return <LoadingPlaceholder/>;
+        return <LoadingPlaceholder />;
     }
 
-    let hostComponents = props.documents.map((document) => {
+    let hostComponents = map(props.documents, document => {
 
         let icon;
 
@@ -90,7 +90,7 @@ const SubtractionList = (props) => {
                         <FormControl
                             type="text"
                             value={props.term}
-                            onChange={(e) => props.onFind(e.target.value)}
+                            onChange={props.onFind}
                             placeholder="Host name"
                         />
                     </InputGroup>
@@ -127,8 +127,8 @@ const mapStateToProps = (state) => ({
 
 const mapDispatchToProps = (dispatch) => ({
 
-    onFind: (find) => {
-        const url = createFindURL({find});
+    onFind: (e) => {
+        const url = createFindURL({find: e.target.value});
         dispatch(push(url.pathname + url.search));
     },
 

@@ -1,5 +1,5 @@
 import React from "react";
-import { capitalize } from "lodash";
+import { capitalize, map } from "lodash-es";
 import { connect } from "react-redux";
 import { Row, Col, Panel, ListGroup } from "react-bootstrap";
 
@@ -8,6 +8,23 @@ import { updateSetting } from "../../settings/actions";
 import { Button, Flex, FlexItem, Icon, Radio, LoadingPlaceholder } from "../../base";
 import Release from "./Release";
 import InstallModal from "./Install";
+
+class ChannelButton extends React.Component {
+
+    handleClick = () => {
+        this.props.onSetSoftwareChannel(this.props.channel);
+    };
+
+    render () {
+        return (
+            <Radio
+                label={`${capitalize(this.props.channel)}${this.props.channel === "stable" ? " (recommended)" : ""}`}
+                checked={this.props.checked}
+                onClick={this.handleClick}
+            />
+        );
+    }
+}
 
 class SoftwareUpdateViewer extends React.Component {
 
@@ -31,7 +48,7 @@ class SoftwareUpdateViewer extends React.Component {
         let updateComponent;
 
         if (releases.length) {
-            const releaseComponents = releases.map(release =>
+            const releaseComponents = map(releases, release =>
                 <Release key={release.name} {...release} />
             );
 
@@ -66,12 +83,10 @@ class SoftwareUpdateViewer extends React.Component {
             );
         }
 
-        const radioComponents = ["stable", "beta", "alpha"].map((channel) =>
-            <Radio
-                key={channel}
-                checked={this.props.channel === channel}
-                label={`${capitalize(channel)}${channel === "stable" ? " (recommended)" : ""}`}
-                onClick={() => this.props.onSetSoftwareChannel(channel)}
+        const radioComponents = map(["stable", "beta", "alpha"], channel =>
+            <ChannelButton
+                checked={channel === this.props.channel}
+                onClick={this.props.onSetSoftwareChannel}
             />
         );
 

@@ -1,6 +1,6 @@
 import React from "react";
 import PropTypes from "prop-types";
-import { map, sortBy } from "lodash";
+import { map, sortBy } from "lodash-es";
 import { ListGroup, Panel } from "react-bootstrap";
 
 import { Icon, ListGroupItem } from "../../../base/index";

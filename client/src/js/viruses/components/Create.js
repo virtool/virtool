@@ -19,7 +19,18 @@ class CreateVirus extends React.Component {
         this.state = getInitialState();
     }
 
-    modalExited = () => {
+    handleChange = (e) => {
+        const { name, value } = e.target;
+        this.setState({
+            [name]: value
+        });
+    };
+
+    handleHide = () => {
+        this.props.onHide(this.props);
+    };
+
+    handleModalExited = () => {
         this.setState(getInitialState());
     };
 
@@ -48,7 +59,7 @@ class CreateVirus extends React.Component {
         }
 
         return (
-            <Modal show={this.props.show} onHide={() => this.props.onHide(this.props)} onExited={this.modalExited}>
+            <Modal show={this.props.show} onHide={this.handleHide} onExited={this.handleModalExited}>
                 <Modal.Header onHide={this.props.onHide} closeButton>
                     Create Virus
                 </Modal.Header>
@@ -58,18 +69,18 @@ class CreateVirus extends React.Component {
                         <Row>
                             <Col md={9}>
                                 <Input
-                                    type="text"
                                     label="Name"
+                                    name="name"
                                     value={this.state.name}
-                                    onChange={(e) => this.setState({name: e.target.value})}
+                                    onChange={this.handleChange}
                                 />
                             </Col>
                             <Col md={3}>
                                 <Input
-                                    type="text"
                                     label="Abbreviation"
+                                    name="abbreviation"
                                     value={this.state.abbreviation}
-                                    onChange={(e) => this.setState({abbreviation: e.target.value})}
+                                    onChange={this.handleChange}
                                 />
                             </Col>
                         </Row>

@@ -1,4 +1,4 @@
-import { concat, find, reject } from "lodash";
+import { concat, find, reject } from "lodash-es";
 import {
     WS_UPDATE_INDEX,
     FIND_INDEXES,

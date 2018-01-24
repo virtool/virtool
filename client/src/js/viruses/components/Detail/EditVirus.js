@@ -1,5 +1,4 @@
 import React from "react";
-import PropTypes from "prop-types";
 import { connect } from "react-redux";
 import { Row, Col, Modal } from "react-bootstrap";
 
@@ -18,21 +17,18 @@ class EditVirus extends React.Component {
         this.state = getInitialState(props);
     }
 
-    modalEnter = () => {
+    handleChange = (e) => {
+        const { name, value } = e.target;
+        this.setState({
+            [name]: value
+        });
+    };
+
+    handleModalEnter = () => {
         this.setState(getInitialState(this.props));
     };
 
-    static propTypes = {
-        virusId: PropTypes.string,
-        name: PropTypes.string,
-        abbreviation: PropTypes.string,
-        show: PropTypes.bool,
-        error: PropTypes.string,
-        onHide: PropTypes.func,
-        onSave: PropTypes.func
-    };
-
-    save = (e) => {
+    handleSave = (e) => {
         e.preventDefault();
         this.props.onSave(this.props.virusId, this.state.name, this.state.abbreviation);
     };
@@ -50,25 +46,27 @@ class EditVirus extends React.Component {
         }
 
         return (
-            <Modal show={this.props.show} onEnter={this.modalEnter} onHide={this.props.onHide}>
+            <Modal show={this.props.show} onEnter={this.handleModalEnter} onHide={this.props.onHide}>
                 <Modal.Header onHide={this.props.onHide} closeButton>
                     Edit Virus
                 </Modal.Header>
-                <form onSubmit={this.save}>
+                <form onSubmit={this.handleSave}>
                     <Modal.Body>
                         <Row>
                             <Col md={6} xs={12}>
                                 <Input
                                     label="Name"
+                                    name="name"
                                     value={this.state.name}
-                                    onChange={(e) => this.setState({name: e.target.value})}
+                                    onChange={this.handleChange}
                                 />
                             </Col>
                             <Col md={6} xs={12}>
                                 <Input
                                     label="Abbreviation"
+                                    name="abbreviation"
                                     value={this.state.abbreviation}
-                                    onChange={(e) => this.setState({abbreviation: e.target.value})}
+                                    onChange={this.handleChange}
                                 />
                             </Col>
                         </Row>

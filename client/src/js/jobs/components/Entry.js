@@ -1,6 +1,6 @@
 import React from "react";
 import PropTypes from "prop-types";
-import { capitalize } from "lodash";
+import { capitalize } from "lodash-es";
 import { Row, Col } from "react-bootstrap";
 import { Icon, RelativeTime, ProgressBar } from "../../base";
 import { getTaskDisplayName } from "../../utils";

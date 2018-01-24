@@ -7,20 +7,9 @@
  *
  */
 
-/**
- * @license
- * The MIT License (MIT)
- * Copyright 2015 Government of Canada
- *
- * @author
- * Ian Boyes
- *
- * @exports ConfirmVirus
- */
-
 import React from "react";
 import PropTypes from "prop-types";
-import { find } from "lodash";
+import { find, map } from "lodash-es";
 import { Alert } from "react-bootstrap";
 import { formatIsolateName } from "../../../utils";
 
@@ -50,7 +39,7 @@ const VirusIssues = (props) => {
     if (props.issues.empty_isolate) {
 
         // The empty_isolate property is an array of isolate_ids of empty isolates.
-        const emptyIsolates = props.issues.empty_isolate.map((isolateId, index) => {
+        const emptyIsolates = map(props.issues.empty_isolate, (isolateId, index) => {
 
             // Get the entire isolate identified by isolate_id from the detail data.
             const isolate = find(props.isolates, {id: isolateId});
@@ -73,7 +62,7 @@ const VirusIssues = (props) => {
     // One or more sequence documents have no sequence field.
     if (props.issues.empty_sequence) {
         // Make a list of sequences that have no defined sequence field.
-        const emptySequences = props.issues.empty_sequence.map((errorObject, index) => {
+        const emptySequences = map(props.issues.empty_sequence, (errorObject, index) => {
             // Get the entire isolate object identified by the isolate_id.
             const isolate = find(props.isolates, {id: errorObject.isolate_id});
 

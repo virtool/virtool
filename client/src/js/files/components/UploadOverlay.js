@@ -1,5 +1,5 @@
 import CX from "classnames";
-import { sortBy } from "lodash";
+import { sortBy } from "lodash-es";
 import React from "react";
 import PropTypes from "prop-types";
 import { connect } from "react-redux";

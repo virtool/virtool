@@ -1,6 +1,6 @@
 import React from "react";
 import { connect } from "react-redux";
-import { map, sortBy } from "lodash";
+import { map, sortBy } from "lodash-es";
 import { Row, Col, Table, Badge, Label, Panel, ListGroup } from "react-bootstrap";
 
 import { IDRow, ListGroupItem, LoadingPlaceholder } from "../../base";

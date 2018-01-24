@@ -10,6 +10,7 @@
  */
 
 import React from "react";
+import { map } from "lodash-es";
 import { connect } from "react-redux";
 import { withRouter } from "react-router-dom";
 import { Badge, Row, Col, ListGroup } from "react-bootstrap";
@@ -19,22 +20,35 @@ import { selectIsolate, showAddIsolate } from "../../actions";
 import { FlexItem, Icon, ListGroupItem, NoneFound } from "../../../base";
 import IsolateDetail from "./IsolateDetail";
 
+export class IsolateButton extends React.Component {
+
+    handleSelectIsolate = () => {
+        this.props.onClick(this.props.id);
+    };
+
+    render () {
+        return (
+            <ListGroupItem className="isolate-item" active={this.props.active} onClick={this.handleSelectIsolate}>
+                <div className="isolate-item-name">
+                    <span>{formatIsolateName(this.props)}</span>
+                </div>
+                <div className="isolate-item-icon">
+                    <span>{this.props.default ? <Icon className="pull-right" name="star" /> : null}</span>
+                </div>
+            </ListGroupItem>
+        );
+    }
+}
+
 const IsolateEditor = (props) => {
 
-    const isolateComponents = props.isolates.map(isolate =>
-        <ListGroupItem
-            key={isolate.id}
-            className="isolate-item"
+    const isolateComponents = map(props.isolates, (isolate, index) =>
+        <IsolateButton
+            key={index}
+            {...isolate}
             active={isolate.id === props.activeIsolateId}
-            onClick={() => props.onSelectIsolate(isolate.id)}
-        >
-            <div className="isolate-item-name">
-                <span>{formatIsolateName(isolate)}</span>
-            </div>
-            <div className="isolate-item-icon">
-                <span>{isolate.default ? <Icon className="pull-right" name="star" /> : null}</span>
-            </div>
-        </ListGroupItem>
+            onClick={props.onSelectIsolate}
+        />
     );
 
     let noIsolatesFound;
@@ -68,7 +82,7 @@ const IsolateEditor = (props) => {
                         name="new-entry"
                         tip="Add Isolate"
                         style={{fontSize: "15px"}}
-                        onClick={props.showAddIsolate}
+                        onClick={props.onShowAddIsolate}
                     />
                 ) : null}
             </h4>
@@ -97,11 +111,11 @@ const mapStateToProps = state => ({
 
 const mapDispatchToProps = dispatch => ({
 
-    onSelectIsolate: isolateId => {
+    onSelectIsolate: (isolateId) => {
         dispatch(selectIsolate(isolateId));
     },
 
-    showAddIsolate: () => {
+    onShowAddIsolate: () => {
         dispatch(showAddIsolate());
     }
 

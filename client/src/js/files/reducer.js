@@ -1,5 +1,5 @@
 
-import { every, reject } from "lodash";
+import { every, reject } from "lodash-es";
 
 import {
     FIND_FILES,

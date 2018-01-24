@@ -3,7 +3,7 @@ import PropTypes from "prop-types";
 import FlipMove from "react-flip-move";
 import { LinkContainer } from "react-router-bootstrap";
 import { FormControl, FormGroup, InputGroup, Table } from "react-bootstrap";
-import { flatten, reject, xor } from "lodash";
+import { flatten, reject, xor } from "lodash-es";
 
 import { Button, Icon } from "../../../../base";
 import NuVsEntry from "./Entry";

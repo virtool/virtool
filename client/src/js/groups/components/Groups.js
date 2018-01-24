@@ -1,5 +1,5 @@
 import React from "react";
-import { difference, filter, find, some, sortBy, transform } from "lodash";
+import { difference, filter, find, some, sortBy, transform } from "lodash-es";
 import { connect } from "react-redux";
 import { Col, FormControl, Label, ListGroup, Modal, Overlay, Panel, Popover, Row } from "react-bootstrap";
 

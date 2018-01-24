@@ -8,15 +8,14 @@
  *
  * @exports IsolateAdd
  */
-
 import React from "react";
 import { connect } from "react-redux";
 import { Row, Col, Modal, FormGroup, FormControl, InputGroup, ControlLabel, Popover, Overlay } from "react-bootstrap";
 import { ClipLoader } from "halogenium";
 
+import SequenceField from "./SequenceField";
 import { addSequence, hideVirusModal } from "../../actions";
 import { Button, Icon, Input } from "../../../base";
-import SequenceField from "./SequenceField";
 import { getGenbank } from "../../api";
 
 const getInitialState = () => ({
@@ -24,7 +23,6 @@ const getInitialState = () => ({
     definition: "",
     host: "",
     sequence: "",
-
     autofillPending: false,
     error: false
 });
@@ -33,23 +31,10 @@ class AddSequence extends React.Component {
 
     constructor (props) {
         super(props);
-        this.state = getInitialState(this.props);
+        this.state = getInitialState();
     }
 
-    save = (e) => {
-        e.preventDefault();
-
-        this.props.onSave(
-            this.props.virusId,
-            this.props.isolateId,
-            this.state.id,
-            this.state.definition,
-            this.state.host,
-            this.state.sequence
-        );
-    };
-
-    autofill = () => {
+    handleAutofill = () => {
         this.setState({autofillPending: true}, () => {
             getGenbank(this.state.id).then((resp) => {
                 // Success
@@ -71,6 +56,36 @@ class AddSequence extends React.Component {
         });
     };
 
+    handleChange = (e) => {
+        const { name, value } = e.target;
+
+        this.setState({
+            [name]: value,
+            error: name === "id" ? false : this.state.error
+        });
+    };
+
+    handleHideError = () => {
+        this.setState({error: false});
+    };
+
+    handleModalExited = () => {
+        this.setState(getInitialState());
+    };
+
+    handleSubmit = (e) => {
+        e.preventDefault();
+
+        this.props.onSave(
+            this.props.virusId,
+            this.props.isolateId,
+            this.state.id,
+            this.state.definition,
+            this.state.host,
+            this.state.sequence
+        );
+    };
+
     render () {
         let overlay;
 
@@ -85,19 +100,14 @@ class AddSequence extends React.Component {
         }
 
         return (
-            <Modal
-                show={this.props.show}
-                onHide={this.props.onHide}
-                onEntered={this.modalEntered}
-                onExited={() => this.setState(getInitialState())}
-            >
+            <Modal show={this.props.show} onHide={this.props.onHide} onExited={this.handleModalExited}>
                 <Modal.Header onHide={this.props.onHide} closeButton>
                     Add Sequence
                 </Modal.Header>
-                <Modal.Body>
-                    {overlay}
 
-                    <form onSubmit={this.save}>
+                <form onSubmit={this.handleSubmit}>
+                    <Modal.Body>
+                        {overlay}
                         <Row>
                             <Col xs={12} md={6}>
                                 <FormGroup>
@@ -108,7 +118,7 @@ class AddSequence extends React.Component {
                                             target={this.accessionNode}
                                             placement="top"
                                             container={this}
-                                            onHide={() => this.setState({error: false})}
+                                            onHide={this.handleHideError}
                                             animation={false}
                                         >
                                             <Popover id="error-popover">
@@ -116,12 +126,13 @@ class AddSequence extends React.Component {
                                             </Popover>
                                         </Overlay>
                                         <FormControl
-                                            inputRef={(node) => this.accessionNode = node}
+                                            ref={(node) => this.accessionNode = node}
+                                            name="id"
                                             value={this.state.id}
-                                            onChange={(e) => this.setState({id: e.target.value, error: false})}
+                                            onChange={this.handleChange}
                                         />
                                         <InputGroup.Button>
-                                            <Button type="button" onClick={this.autofill}>
+                                            <Button type="button" onClick={this.handleAutofill}>
                                                 <Icon name="wand" />
                                             </Button>
                                         </InputGroup.Button>
@@ -131,8 +142,9 @@ class AddSequence extends React.Component {
                             <Col xs={12} md={6}>
                                 <Input
                                     label="Host"
+                                    name="host"
                                     value={this.state.host}
-                                    onChange={(e) => this.setState({host: e.target.value})}
+                                    onChange={this.handleChange}
                                 />
                             </Col>
                         </Row>
@@ -140,8 +152,9 @@ class AddSequence extends React.Component {
                             <Col xs={12}>
                                 <Input
                                     label="Definition"
+                                    name="definition"
                                     value={this.state.definition}
-                                    onChange={(e) => this.setState({definition: e.target.value})}
+                                    onChange={this.handleChange}
                                 />
                             </Col>
                         </Row>
@@ -149,17 +162,18 @@ class AddSequence extends React.Component {
                             <Col xs={12}>
                                 <SequenceField
                                     sequence={this.state.sequence}
-                                    onChange={(e) => this.setState({sequence: e.target.value})}
+                                    onChange={this.handleChange}
                                 />
                             </Col>
                         </Row>
-                    </form>
-                </Modal.Body>
-                <Modal.Footer>
-                    <Button bsStyle="primary" icon="floppy" onClick={this.save}>
-                        Save
-                    </Button>
-                </Modal.Footer>
+
+                    </Modal.Body>
+                    <Modal.Footer>
+                        <Button type="submit" bsStyle="primary" icon="floppy">
+                            Save
+                        </Button>
+                    </Modal.Footer>
+                </form>
             </Modal>
         );
     }

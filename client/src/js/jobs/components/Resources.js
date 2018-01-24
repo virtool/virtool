@@ -1,6 +1,6 @@
 import React from "react";
 import Gauge from "react-svg-gauge";
-import { mean } from "lodash";
+import { mean } from "lodash-es";
 import { connect } from "react-redux";
 import { Flex, FlexItem, LoadingPlaceholder } from "../../base";
 

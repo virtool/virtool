@@ -1,4 +1,4 @@
-import { reject } from "lodash";
+import { reject } from "lodash-es";
 import {
     FIND_SAMPLES,
     GET_SAMPLE,

@@ -1,7 +1,7 @@
 import React from "react";
 import Moment from "moment";
 import { connect } from "react-redux";
-import { isEqual, reduce } from "lodash";
+import { isEqual, reduce } from "lodash-es";
 import { ButtonToolbar, Col, Row } from "react-bootstrap";
 
 import APIPermissions from "./Permissions";

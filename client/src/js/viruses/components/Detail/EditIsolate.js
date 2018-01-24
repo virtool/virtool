@@ -8,9 +8,7 @@
  *
  * @exports IsolateAdd
  */
-
 import React from "react";
-import PropTypes from "prop-types";
 import { connect } from "react-redux";
 import { Modal } from "react-bootstrap";
 
@@ -34,17 +32,11 @@ class EditIsolate extends React.Component {
         this.setState(getInitialState(nextProps));
     }
 
-    static propTypes = {
-        virusId: PropTypes.string,
-        isolateId: PropTypes.string,
-        allowedSourceTypes: PropTypes.array,
-        restrictSourceTypes: PropTypes.bool,
-        show: PropTypes.bool,
-        onHide: PropTypes.func,
-        onSave: PropTypes.func
+    handleChange = (update) => {
+        this.setState(update);
     };
 
-    save = () => {
+    handleSubmit = () => {
         this.props.onSave(
             this.props.virusId,
             this.props.isolateId,
@@ -65,8 +57,8 @@ class EditIsolate extends React.Component {
                         sourceName={this.state.sourceName}
                         allowedSourceTypes={this.props.allowedSourceTypes}
                         restrictSourceTypes={this.props.restrictSourceTypes}
-                        onChange={(update) => this.setState(update)}
-                        onSubmit={this.save}
+                        onChange={this.handleChange}
+                        onSubmit={this.handleSubmit}
                     />
                 </Modal.Body>
                 <Modal.Footer>

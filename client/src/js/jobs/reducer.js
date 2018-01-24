@@ -1,4 +1,4 @@
-import { reject } from "lodash";
+import { reject } from "lodash-es";
 import { WS_UPDATE_JOB, WS_REMOVE_JOB, FIND_JOBS, GET_JOB, CANCEL_JOB, GET_RESOURCES } from "../actionTypes";
 
 const initialState = {

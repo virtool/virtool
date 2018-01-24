@@ -1,5 +1,5 @@
 import React from "react";
-import { get } from "lodash";
+import { get } from "lodash-es";
 import { connect } from "react-redux";
 import { Panel } from "react-bootstrap";
 

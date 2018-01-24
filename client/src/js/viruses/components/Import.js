@@ -26,12 +26,16 @@ class VirusImport extends React.Component {
         onCommit: PropTypes.func
     };
 
-    handleProgress = (progressEvent) => {
-        this.setState({uploadProgress: progressEvent.loaded / progressEvent.total});
-    };
-
     handleCommit = () => {
         this.props.onCommit(this.props.importData.file_id);
+    };
+
+    handleDrop = (files) => {
+        this.props.onDrop(files[0], this.handleProgress);
+    };
+
+    handleProgress = (e) => {
+        this.setState({uploadProgress: e.loaded / e.total});
     };
 
     render () {
@@ -41,7 +45,7 @@ class VirusImport extends React.Component {
         if (this.props.importData === null) {
             body = (
                 <div>
-                    <Dropzone className="dropzone" onDrop={files => this.props.onDrop(files[0], this.handleProgress)}>
+                    <Dropzone className="dropzone" onDrop={this.handleDrop}>
                         <span>Drag or click here to upload a <strong>viruses.json.gz</strong> file.</span>
                     </Dropzone>
 

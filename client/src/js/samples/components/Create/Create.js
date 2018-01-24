@@ -1,6 +1,6 @@
 import React from "react";
 import { push } from "react-router-redux";
-import { filter } from "lodash";
+import { filter } from "lodash-es";
 import { connect } from "react-redux";
 import {
     Alert,

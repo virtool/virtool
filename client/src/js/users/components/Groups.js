@@ -1,29 +1,52 @@
 import React from "react";
+import { includes, map } from "lodash-es";
 import { connect } from "react-redux";
 import { Row, Col, Panel } from "react-bootstrap";
 import { ListGroupItem, Checkbox } from "../../base";
 
 import { addUserToGroup, removeUserFromGroup } from "../actions";
 
-const UserGroups = (props) => {
+class UserGroup extends React.Component {
 
-    const groupComponents = props.allGroups.map(groupId => {
+    handleClick = () => {
+        const { groupId, userId } = this.props;
 
-        const toggled = props.memberGroups.includes(groupId);
+        if (this.props.toggled) {
+            return this.props.removeFromGroup(userId, groupId);
+        }
 
+        this.props.addToGroup(userId, groupId);
+    };
+
+    render () {
         return (
-            <Col xs={12} md={4} key={groupId}>
+            <Col xs={12} md={4} key={this.props.groupId}>
                 <ListGroupItem
                     className="text-capitalize"
-                    onClick={() => (toggled ? props.removeFromGroup : props.addToGroup)(props.userId, groupId)}
-                    disabled={groupId === "administrator" && props.userId === props.accountUserId}
+                    onClick={this.handleClick}
+                    disabled={this.props.disabled}
                 >
-                    {groupId}
-                    <Checkbox checked={toggled} pullRight />
+                    {this.props.groupId}
+                    <Checkbox checked={this.props.toggled} pullRight />
                 </ListGroupItem>
             </Col>
         );
-    });
+    }
+}
+
+const UserGroups = ({ accountUserId, addToGroup, allGroups, memberGroups, removeFromGroup, userId }) => {
+
+    const groupComponents = map(allGroups, groupId =>
+        <UserGroup
+            key={groupId}
+            groupId={groupId}
+            accountUserId={accountUserId}
+            disabled={groupId === "administrator" && userId === accountUserId}
+            toggled={includes(memberGroups, groupId)}
+            onAddToGroup={addToGroup}
+            onRemoveFromGroup={removeFromGroup}
+        />
+    );
 
     return (
         <Panel>
@@ -36,7 +59,7 @@ const UserGroups = (props) => {
 
 const mapStateToProps = state => ({
     accountUserId: state.account.id,
-    allGroups: state.groups.list.map(group => group.id)
+    allGroups: map(state.groups.list, "id")
 });
 
 const mapDispatchToProps = dispatch => ({

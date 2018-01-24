@@ -1,5 +1,5 @@
 import React from "react";
-import { find } from "lodash";
+import { find, map } from "lodash-es";
 import { connect } from "react-redux";
 import { Badge, ListGroup } from "react-bootstrap";
 
@@ -16,7 +16,7 @@ const IsolateSequences = (props) => {
     let sequenceComponents;
 
     if (props.sequences.length) {
-        sequenceComponents = props.sequences.map(sequence =>
+        sequenceComponents = map(props.sequences.map, sequence =>
             <Sequence
                 key={sequence.id}
                 active={sequence.accession === props.activeSequenceId}
@@ -42,7 +42,7 @@ const IsolateSequences = (props) => {
                         name="new-entry"
                         bsStyle="primary"
                         tip="Add Sequence"
-                        onClick={() => props.showAddSequence()}
+                        onClick={props.showAddSequence}
                         pullRight
                     />
                 ) : null}

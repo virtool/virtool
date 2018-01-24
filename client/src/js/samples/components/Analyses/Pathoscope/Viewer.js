@@ -2,7 +2,7 @@ import React from "react";
 import PropTypes from "prop-types";
 import { Alert } from "react-bootstrap";
 import { Icon } from "../../../../base";
-import { sortBy, max, maxBy, sumBy } from "lodash";
+import { sortBy, max, maxBy, sumBy } from "lodash-es";
 import { formatIsolateName } from "../../../../utils";
 
 import PathoscopeController from "./Controller";

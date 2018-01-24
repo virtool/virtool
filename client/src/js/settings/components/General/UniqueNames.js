@@ -5,7 +5,7 @@ import { Row, Col, Panel } from "react-bootstrap";
 import { updateSetting } from "../../actions";
 import { Checkbox, Button } from "../../../base";
 
-const UniqueNames = (props) => (
+const UniqueNames = ({ enabled, onToggle }) => (
     <div>
         <Row>
             <Col md={12}>
@@ -19,8 +19,8 @@ const UniqueNames = (props) => (
             </Col>
             <Col xs={12} md={6} mdPull={6}>
                 <Panel>
-                    <Button onClick={() => {props.onToggle(!props.enabled)}} block>
-                        <Checkbox checked={props.enabled} /> Enable
+                    <Button onClick={() => {onToggle(!enabled)}} block>
+                        <Checkbox checked={enabled} /> Enable
                     </Button>
                 </Panel>
             </Col>

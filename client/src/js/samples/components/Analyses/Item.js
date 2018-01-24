@@ -1,6 +1,6 @@
 import React from "react";
 import CX from "classnames";
-import { get } from "lodash";
+import { get } from "lodash-es";
 import { connect } from "react-redux";
 import { LinkContainer } from "react-router-bootstrap";
 import { ClipLoader } from "halogenium";

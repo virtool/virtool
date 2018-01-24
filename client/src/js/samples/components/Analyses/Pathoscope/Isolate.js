@@ -1,6 +1,6 @@
 import React from "react";
 import PropTypes from "prop-types";
-import { sortBy } from "lodash";
+import { sortBy } from "lodash-es";
 import { Flex, FlexItem } from "../../../../base";
 import { toScientificNotation } from "../../../../utils";
 import Coverage from "./Coverage";

@@ -1,5 +1,6 @@
 import React from "react";
 import Numeral from "numeral";
+import { map } from "lodash-es";
 import { connect } from "react-redux";
 import { push } from "react-router-redux";
 import { LinkContainer } from "react-router-bootstrap";
@@ -29,7 +30,7 @@ class SubtractionDetail extends React.Component {
             let linkedSamples;
 
             if (data.linked_samples.length) {
-                const linkedSampleComponents = data.linked_samples.map(sample =>
+                const linkedSampleComponents = map(data.linked_samples, sample =>
                     <Col key={sample.id} className="linked-sample-button" xs={6} sm={4} md={3} lg={2}>
                         <LinkContainer to={`/samples/${sample.id}`}>
                             <Button block>

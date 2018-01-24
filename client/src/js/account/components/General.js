@@ -1,5 +1,5 @@
 import React from "react";
-import { capitalize } from "lodash";
+import { capitalize } from "lodash-es";
 import { connect } from "react-redux";
 import { Label } from "react-bootstrap";
 

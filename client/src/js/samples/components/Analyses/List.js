@@ -1,5 +1,5 @@
 import React from "react";
-import { sortBy } from "lodash";
+import { sortBy } from "lodash-es";
 import { connect } from "react-redux";
 import { ListGroup, FormGroup, InputGroup, FormControl } from "react-bootstrap";
 

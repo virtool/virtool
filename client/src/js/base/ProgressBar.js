@@ -1,7 +1,7 @@
 import React from "react";
 import PropTypes from "prop-types";
 import CX from "classnames";
-import { round } from "lodash";
+import { round } from "lodash-es";
 import { bsStyles } from "./utils";
 
 /**

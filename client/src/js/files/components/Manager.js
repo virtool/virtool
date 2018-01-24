@@ -1,7 +1,7 @@
 import React from "react";
 import Dropzone from "react-dropzone";
 import { push } from "react-router-redux";
-import { capitalize, filter } from "lodash";
+import { capitalize, filter } from "lodash-es";
 import { connect } from "react-redux";
 import { ListGroup } from "react-bootstrap";
 

@@ -1,7 +1,7 @@
 import { line } from "d3-shape";
 import { scaleLinear } from "d3-scale";
 import { axisBottom, axisLeft } from "d3-axis";
-import { max } from "lodash";
+import { max } from "lodash-es";
 import Numeral from "numeral";
 import { createSVG } from "../../chartUtils";
 

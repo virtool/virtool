@@ -2,7 +2,7 @@ import React from "react";
 import PropTypes from "prop-types";
 import FlipMove from "react-flip-move";
 import { Panel } from "react-bootstrap";
-import { forIn, sortBy, flatten } from "lodash";
+import { forIn, sortBy, flatten } from "lodash-es";
 import PathoscopeEntry from "./Entry";
 import PathoscopeIsolate from "./Isolate";
 import { Icon } from "../../../../base";

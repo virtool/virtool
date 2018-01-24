@@ -1,6 +1,6 @@
 import React from "react";
 import PropTypes from "prop-types";
-import { xor, sortBy, sum, filter } from "lodash";
+import { xor, sortBy, sum, filter } from "lodash-es";
 import { Icon, Flex, FlexItem, Button, Checkbox } from "../../../../base";
 import { Row, Col, Dropdown, MenuItem, FormGroup, InputGroup, FormControl } from "react-bootstrap";
 

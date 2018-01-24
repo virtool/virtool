@@ -5,7 +5,7 @@
  * @author igboyes
  */
 import Numeral from "numeral";
-import { sampleSize, get, startCase, capitalize } from "lodash";
+import { capitalize, get, replace, sampleSize, split, startCase } from "lodash-es";
 
 /**
  * A string containing all alphanumeric digits in both cases.
@@ -174,9 +174,8 @@ export const taskDisplayNames = {
  */
 export const toScientificNotation = (number) => {
     if (number < 0.01 || number > 1000) {
-        const split = number.toExponential().split("e");
-        const exponent = split[1].replace("+", "");
-        return `${Numeral(split[0]).format("0.00")}E${exponent}`;
+        const [ number, exponent ] = split(number.toExponential(), "e");
+        return `${Numeral(number).format("0.00")}E${replace(exponent, "+", "")}`;
     }
 
     return Numeral(number).format("0.000");
