@@ -12,14 +12,17 @@ import InstallModal from "./Install";
 class ChannelButton extends React.Component {
 
     handleClick = () => {
-        this.props.onSetSoftwareChannel(this.props.channel);
+        this.props.onClick(this.props.channel);
     };
 
     render () {
+
+        const { channel, checked } = this.props;
+
         return (
             <Radio
-                label={`${capitalize(this.props.channel)}${this.props.channel === "stable" ? " (recommended)" : ""}`}
-                checked={this.props.checked}
+                label={`${capitalize(channel)}${channel === "stable" ? " (recommended)" : ""}`}
+                checked={checked}
                 onClick={this.handleClick}
             />
         );
@@ -85,6 +88,8 @@ class SoftwareUpdateViewer extends React.Component {
 
         const radioComponents = map(["stable", "beta", "alpha"], channel =>
             <ChannelButton
+                key={channel}
+                channel={channel}
                 checked={channel === this.props.channel}
                 onClick={this.props.onSetSoftwareChannel}
             />
