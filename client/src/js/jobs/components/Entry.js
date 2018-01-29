@@ -1,11 +1,15 @@
 import React from "react";
 import PropTypes from "prop-types";
-import { capitalize } from "lodash-es";
+import { capitalize, noop } from "lodash-es";
 import { Row, Col } from "react-bootstrap";
+import { connect } from "react-redux";
+import { push } from "react-router-redux";
+
 import { Icon, RelativeTime, ProgressBar } from "../../base";
 import { getTaskDisplayName } from "../../utils";
+import { cancelJob, removeJob } from "../actions";
 
-export default class JobEntry extends React.Component {
+export class JobEntry extends React.Component {
 
     static propTypes = {
         id: PropTypes.string.isRequired,
@@ -14,19 +18,24 @@ export default class JobEntry extends React.Component {
         progress: PropTypes.number.isRequired,
         created_at: PropTypes.string.isRequired,
         user: PropTypes.object.isRequired,
-        navigate: PropTypes.func,
-        cancel: PropTypes.func,
-        remove: PropTypes.func
+        onNavigate: PropTypes.func,
+        onCancel: PropTypes.func,
+        onRemove: PropTypes.func
     };
 
-    cancel = (e) => {
+    handleCancel = (e) => {
         e.stopPropagation();
-        this.props.cancel(this.props.id);
+        this.props.onCancel(this.props.id);
     };
 
-    remove = (e) => {
+    handleNavigate = (e) => {
         e.stopPropagation();
-        this.props.remove(this.props.id);
+        this.props.onNavigate(this.props.id);
+    };
+
+    handleRemove = (e) => {
+        e.stopPropagation();
+        this.props.onRemove(this.props.id);
     };
 
     render () {
@@ -41,7 +50,7 @@ export default class JobEntry extends React.Component {
                 <Icon
                     bsStyle="danger"
                     name="cancel-circle"
-                    onClick={this.cancel}
+                    onClick={this.handleCancel}
                     pullRight
                 />
             );
@@ -50,7 +59,7 @@ export default class JobEntry extends React.Component {
                 <Icon
                     bsStyle="danger"
                     name="remove"
-                    onClick={this.remove}
+                    onClick={this.handleRemove}
                     pullRight
                 />
             );
@@ -70,7 +79,7 @@ export default class JobEntry extends React.Component {
 
         // Create the option components for the selected fields.
         return (
-            <div className="spaced job list-group-item" onClick={this.props.navigate}>
+            <div className="spaced job list-group-item" onClick={this.handleNavigate}>
 
                 <div className="job-overlay">
                     <Row>
@@ -99,3 +108,20 @@ export default class JobEntry extends React.Component {
         );
     }
 }
+
+const mapDispatchToProps = (dispatch) => ({
+
+    onCancel: (jobId) => {
+        dispatch(cancelJob(jobId));
+    },
+
+    onNavigate: (jobId) => {
+        dispatch(push(`/jobs/${jobId}`));
+    },
+
+    onRemove: (jobId) => {
+        dispatch(removeJob(jobId));
+    }
+});
+
+export default connect(noop(), mapDispatchToProps)(JobEntry);

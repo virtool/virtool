@@ -1,10 +1,30 @@
 import React from "react";
-import { difference, filter, find, some, sortBy, transform } from "lodash-es";
+import { difference, filter, find, includes, map, some, sortBy, transform } from "lodash-es";
 import { connect } from "react-redux";
 import { Col, FormControl, Label, ListGroup, Modal, Overlay, Panel, Popover, Row } from "react-bootstrap";
 
 import { listGroups, createGroup, setGroupPermission, removeGroup } from "../actions";
 import { AutoProgressBar, Button, Flex, FlexItem, Icon, ListGroupItem, LoadingPlaceholder } from "../../base";
+
+class Group extends React.Component {
+
+    handleClick = () => {
+        this.props.onSelect(this.props.id);
+    };
+
+    render () {
+        const { id, active } = this.props;
+
+        return (
+            <ListGroupItem key={id} active={active} onClick={this.handleClick}>
+                <span className="text-capitalize">
+                    {id}
+                </span>
+            </ListGroupItem>
+        );
+    }
+
+}
 
 class Groups extends React.Component {
 
@@ -44,7 +64,7 @@ class Groups extends React.Component {
         this.setState(state);
     }
 
-    modalExited = () => {
+    handleModalExited = () => {
         this.setState({
             createGroupId: "",
             spaceError: false,
@@ -52,11 +72,17 @@ class Groups extends React.Component {
         });
     };
 
+    handleSelect = (activeId) => {
+        this.setState({
+            activeId
+        });
+    };
+
     handleSubmit = (e) => {
         e.preventDefault();
 
         if (this.state.createGroupId !== "") {
-            if (this.state.createGroupId.includes(" ")) {
+            if (includes(this.state.createGroupId, " ")) {
                 this.setState({
                     spaceError: true
                 });
@@ -72,18 +98,15 @@ class Groups extends React.Component {
             return <LoadingPlaceholder margin="130px" />;
         }
 
-        const groupComponents = sortBy(this.props.groups, "id").map((group) =>
-            <ListGroupItem key={group.id}
-                active={this.state.activeId === group.id}
-                onClick={() => this.setState({activeId: group.id})}
-            >
-                <span className="text-capitalize">{group.id}</span>
-            </ListGroupItem>
+        const groupComponents = map(sortBy(this.props.groups, "id"), group =>
+            <Group key={group.id} {...group} active={this.state.activeId === group.id} onSelect={this.handleSelect} />
         );
 
         const activeGroup = find(this.props.groups, {id: this.state.activeId});
 
-        let memberComponents = filter(this.props.users, user => user.groups.includes(activeGroup.id)).map(member =>
+        const members = filter(this.props.users, user => includes(user.groups, activeGroup.id));
+
+        let memberComponents = map(members, member =>
             <Label key={member.id} style={{marginRight: "5px"}}>
                 {member.id}
             </Label>
@@ -125,7 +148,7 @@ class Groups extends React.Component {
         }, []);
 
         return (
-            <Modal show={this.props.show} onHide={this.props.onHide} onExited={this.modalExited}>
+            <Modal show={this.props.show} onHide={this.props.onHide} onExited={this.handleModalExited}>
                 <Modal.Header onHide={this.props.onHide} closeButton>
                     Groups
                 </Modal.Header>
@@ -154,7 +177,7 @@ class Groups extends React.Component {
                                             value={this.state.createGroupId}
                                             onChange={(e) => this.setState({
                                                 createGroupId: e.target.value,
-                                                spaceError: this.state.spaceError && e.target.value.includes(" "),
+                                                spaceError: this.state.spaceError && includes(e.target.value, " "),
                                                 submitted: false
                                             })}
                                         />

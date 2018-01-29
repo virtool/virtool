@@ -1,5 +1,5 @@
 import React from "react";
-import { capitalize } from "lodash-es";
+import { capitalize, map } from "lodash-es";
 import { connect } from "react-redux";
 import { Label } from "react-bootstrap";
 
@@ -8,7 +8,7 @@ import ChangePassword from "./Password";
 
 export const AccountGeneral = ({ id, groups, hash }) => {
 
-    const groupLabels = groups.map(groupId =>
+    const groupLabels = map(groups, groupId =>
         <Label key={groupId} style={{marginRight: "3px"}}>
             {capitalize(groupId)}
         </Label>

@@ -21,9 +21,13 @@ class Welcome extends React.Component {
                     <h3>Virtool <small className="text-muted">{this.props.version}</small></h3>
                     <p>Viral infection diagnostics using next-generation sequencing</p>
 
-                    <a className="btn btn-default" href="http://www.virtool.ca/" target="_blank"
-                        rel="noopener noreferrer">
-                        <Icon name="vtlogo"/> Website
+                    <a
+                        className="btn btn-default"
+                        href="http://www.virtool.ca/"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                    >
+                        <Icon name="vtlogo" /> Website
                     </a>
                 </Panel>
             );

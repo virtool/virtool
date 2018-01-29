@@ -1,5 +1,5 @@
-import CX from "classnames";
 import React from "react";
+import CX from "classnames";
 import PropTypes from "prop-types";
 import { Row, Col, Label } from "react-bootstrap";
 

@@ -1,9 +1,9 @@
-import CX from "classnames";
-import { sortBy } from "lodash-es";
 import React from "react";
+import CX from "classnames";
 import PropTypes from "prop-types";
-import { connect } from "react-redux";
+import { map, sortBy } from "lodash-es";
 import { Badge, ListGroup } from "react-bootstrap";
+import { connect } from "react-redux";
 
 import { byteSize } from "../../utils";
 import { hideUploadOverlay } from "../actions";
@@ -27,7 +27,7 @@ const UploadOverlay = (props) => {
 
     const classNames = CX("upload-overlay", {hidden: !props.showUploadOverlay});
 
-    const uploadComponents = sortBy(props.uploads, "progress").reverse().map(upload =>
+    const uploadComponents = map(sortBy(props.uploads, "progress").reverse(), upload =>
         <UploadItem key={upload.localId} {...upload} />
     );
 

@@ -1,4 +1,4 @@
-import { reject } from "lodash-es";
+import { map, reject } from "lodash-es";
 import { WS_UPDATE_JOB, WS_REMOVE_JOB, FIND_JOBS, GET_JOB, CANCEL_JOB, GET_RESOURCES } from "../actionTypes";
 
 const initialState = {
@@ -9,7 +9,7 @@ const initialState = {
 
 const updateJob = (state, action) => ({
     ...state,
-    documents: state.documents.map(doc => doc.id === action.data.id ? {...doc, ...action.data} : doc)
+    documents: map(state.documents, doc => doc.id === action.data.id ? {...doc, ...action.data} : doc)
 });
 
 export default function jobsReducer (state = initialState, action) {

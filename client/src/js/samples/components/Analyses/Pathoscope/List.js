@@ -1,8 +1,9 @@
 import React from "react";
 import PropTypes from "prop-types";
 import FlipMove from "react-flip-move";
+import { flatten, forIn, includes, map, sortBy, split } from "lodash-es";
 import { Panel } from "react-bootstrap";
-import { forIn, sortBy, flatten } from "lodash-es";
+
 import PathoscopeEntry from "./Entry";
 import PathoscopeIsolate from "./Isolate";
 import { Icon } from "../../../../base";
@@ -23,7 +24,7 @@ export default class PathoscopeList extends React.Component {
 
     setScroll = (virusId, scrollLeft) => {
         forIn(this.itemRefs, (ref, key) => {
-            if (key.split("-")[0] === virusId) {
+            if (split(key, "-")[0] === virusId) {
                 ref.scrollTo(scrollLeft);
             }
         });
@@ -32,9 +33,9 @@ export default class PathoscopeList extends React.Component {
     render () {
 
         if (this.props.data.length) {
-            const rows = this.props.data.map((item, index) => {
+            const rows = map(this.props.data, (item, index) => {
 
-                const expanded = this.props.expanded.includes(item.id);
+                const expanded = includes(this.props.expanded, item.id);
 
                 const components = [
                     <PathoscopeEntry
@@ -48,19 +49,21 @@ export default class PathoscopeList extends React.Component {
 
                 if (expanded) {
 
-                    const isolateComponents = sortBy(item.isolates, "pi").reverse().map((isolate) => {
+                    const isolateComponents = map(sortBy(item.isolates, "pi").reverse(), isolate => {
                         const key = `${item.id}-${isolate.id}`;
 
-                        return <PathoscopeIsolate
-                            ref={(node) => this.itemRefs[key] = node}
-                            key={key}
-                            virusId={item.id}
-                            maxDepth={item.maxDepth}
-                            maxGenomeLength={item.maxGenomeLength}
-                            {...isolate}
-                            setScroll={this.setScroll}
-                            showReads={this.props.showReads}
-                        />;
+                        return (
+                            <PathoscopeIsolate
+                                ref={(node) => this.itemRefs[key] = node}
+                                key={key}
+                                virusId={item.id}
+                                maxDepth={item.maxDepth}
+                                maxGenomeLength={item.maxGenomeLength}
+                                {...isolate}
+                                setScroll={this.setScroll}
+                                showReads={this.props.showReads}
+                            />
+                        );
                     });
 
                     return components.concat(

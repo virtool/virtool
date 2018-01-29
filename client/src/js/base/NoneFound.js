@@ -12,7 +12,7 @@ import { Icon } from "./Icon";
 export const NoneFound = ({ noun, noListGroup }) => {
     const item = (
         <ListGroupItem className="text-center">
-            <Icon name="info"/> No {noun} found
+            <Icon name="info" /> No {noun} found
         </ListGroupItem>
     );
 

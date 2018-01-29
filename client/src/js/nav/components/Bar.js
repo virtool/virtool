@@ -22,7 +22,7 @@ const Bar = (props) => {
             <Navbar fixedTop>
                 <Navbar.Header>
                     <Navbar.Brand>
-                        <Icon name="vtlogo" className="vtlogo"/>
+                        <Icon name="vtlogo" className="vtlogo" />
                     </Navbar.Brand>
 
                     <Navbar.Toggle />

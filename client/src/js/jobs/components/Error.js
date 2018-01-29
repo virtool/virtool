@@ -1,4 +1,5 @@
 import React from "react";
+import { map } from "lodash-es";
 import { Alert } from "react-bootstrap";
 
 const JobError = ({ error }) => {
@@ -7,7 +8,7 @@ const JobError = ({ error }) => {
     }
 
     // Traceback from a Python exception.
-    const tracebackLines = error.traceback.map((line, index) =>
+    const tracebackLines = map(error.traceback, (line, index) =>
         <div key={index} className="traceback-line">{line}</div>
     );
 

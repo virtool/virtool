@@ -17,6 +17,7 @@ import { Flex, FlexItem, ListGroupItem, RelativeTime, Icon } from "../../../base
 
 
 const getMethodIcon = (change) => {
+
     switch (change.method_name) {
         case "create":
             return <Icon name="new-entry" bsStyle="primary" />;
@@ -110,7 +111,13 @@ export class HistoryList extends React.Component {
         const changes = reverse(sortBy(this.props.history, "virus.version"));
 
         const changeComponents = map(changes, (change, index) =>
-            <Change key={index} {...change} canModify={this.props.canModify} unbuilt={this.props.unbuilt} />
+            <Change
+                key={index}
+                {...change}
+                canModify={this.props.canModify}
+                unbuilt={this.props.unbuilt}
+                revert={this.props.revert}
+            />
         );
 
         return (

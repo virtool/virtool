@@ -23,7 +23,7 @@ const createChart = (element, data, length, meta, yMax, xMin, showYAxis) => {
 
     const height = 200 - margin.top - margin.bottom;
 
-    let width = length > 800 ? length / 5: length;
+    let width = length > 800 ? length / 5 : length;
 
     if (width < xMin) {
         width = xMin;
@@ -124,6 +124,6 @@ export default class CoverageChart extends React.Component {
     };
 
     render () {
-        return <div className="coverage-chart" ref={(node) => this.chartNode = node}/>;
+        return <div className="coverage-chart" ref={(node) => this.chartNode = node} />;
     }
 }

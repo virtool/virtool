@@ -1,19 +1,19 @@
 import React from "react";
+import { includes } from "lodash-es";
+import { Nav, NavItem } from "react-bootstrap";
+import { connect } from "react-redux";
+import { LinkContainer } from "react-router-bootstrap";
 import { push } from "react-router-redux";
 import { Switch, Route, Redirect } from "react-router-dom";
-import { connect } from "react-redux";
-import { ClipLoader } from "halogenium";
-import { LinkContainer } from "react-router-bootstrap";
-import { Nav, NavItem } from "react-bootstrap";
 
-import { getSample, showRemoveSample } from "../actions";
-import {getCanModify} from "../selectors";
-import { Flex, FlexItem, Icon, LoadingPlaceholder } from "../../base";
+import Analyses from "./Analyses/Analyses";
 import General from "./General";
 import Quality from "./Quality/Quality";
-import Analyses from "./Analyses/Analyses";
 import RemoveSample from "./Remove";
 import Rights from "./Rights";
+import { getSample, showRemoveSample } from "../actions";
+import { Flex, FlexItem, Icon, LoadingPlaceholder } from "../../base";
+import { getCanModify } from "../selectors";
 
 class SampleDetail extends React.Component {
 
@@ -29,10 +29,10 @@ class SampleDetail extends React.Component {
 
         if (this.props.detail.imported === "ip") {
             return (
-                <div className="text-center" style={{marginTop: "220px"}}>
-                    <p>Sample is still being imported.</p>
-                    <ClipLoader color="#3c8786" />
-                </div>
+                <LoadingPlaceholder
+                    message="Sample is still being imported."
+                    margin={220}
+                />
             );
         }
 
@@ -43,7 +43,7 @@ class SampleDetail extends React.Component {
         let removeIcon;
 
         if (this.props.canModify) {
-            if (this.props.history.location.pathname.includes("general")) {
+            if (includes(this.props.history.location.pathname, "general")) {
                 editIcon = (
                     <small style={{paddingLeft: "5px"}}>
                         <Icon
@@ -103,11 +103,11 @@ class SampleDetail extends React.Component {
                 </Nav>
 
                 <Switch>
-                    <Redirect from="/samples/:sampleId" to={`/samples/${sampleId}/general`} exact/>
-                    <Route path="/samples/:sampleId/general" component={General}/>
-                    <Route path="/samples/:sampleId/quality" component={Quality}/>
-                    <Route path="/samples/:sampleId/analyses" component={Analyses}/>
-                    <Route path="/samples/:sampleId/rights" component={Rights}/>
+                    <Redirect from="/samples/:sampleId" to={`/samples/${sampleId}/general`} exact />
+                    <Route path="/samples/:sampleId/general" component={General} />
+                    <Route path="/samples/:sampleId/quality" component={Quality} />
+                    <Route path="/samples/:sampleId/analyses" component={Analyses} />
+                    <Route path="/samples/:sampleId/rights" component={Rights} />
                 </Switch>
 
                 <RemoveSample id={detail.id} name={detail.name} />

@@ -28,10 +28,6 @@ export default class IsolateForm extends React.Component {
         onSubmit: PropTypes.func
     };
 
-    focus = () => {
-        this.sourceTypeNode.focus();
-    };
-
     changeSourceType = (e) => {
         this.props.onChange({
             sourceType: toLower(e.target.value),
@@ -51,7 +47,6 @@ export default class IsolateForm extends React.Component {
         let sourceTypeInput;
 
         const sourceTypeInputProps = {
-            ref: (node) => this.sourceTypeNode = node,
             label: "Source Type",
             value: this.props.sourceType,
             onChange: this.changeSourceType

@@ -106,7 +106,9 @@
     "lodash/prefer-get": [1],
     "lodash/prefer-includes": [1],
     "lodash/prefer-is-nil": [1],
-    "lodash/prefer-lodash-method": [1],
+    "lodash/prefer-lodash-method": [1, "ignoreMethods":[
+      "find"
+    ]],
     "lodash/prefer-lodash-typecheck": [1],
     "lodash/prefer-matches": [1],
     "lodash/prefer-noop": [1],

@@ -1,6 +1,6 @@
 import React from "react";
 import { LinkContainer } from "react-router-bootstrap";
-import { keys, reject } from "lodash-es";
+import { keys, map, reject } from "lodash-es";
 import { Col, Label, Row } from "react-bootstrap";
 
 import { ListGroupItem } from "../../base";
@@ -9,7 +9,7 @@ export default function HMMItem ({ cluster, families, id, names }) {
 
     const filteredFamilies = reject(keys(families), family => family === "None");
 
-    const labelComponents = filteredFamilies.slice(0, 3).map((family, i) =>
+    const labelComponents = map(filteredFamilies.slice(0, 3), (family, i) =>
         <span key={i}><Label>{family}</Label> </span>
     );
 

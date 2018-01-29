@@ -1,13 +1,13 @@
 import React from "react";
 import PropTypes from "prop-types";
 import FlipMove from "react-flip-move";
-import { LinkContainer } from "react-router-bootstrap";
+import { flatten, includes, isEmpty, map, reject, xor } from "lodash-es";
 import { FormControl, FormGroup, InputGroup, Table } from "react-bootstrap";
-import { flatten, reject, xor } from "lodash-es";
+import { LinkContainer } from "react-router-bootstrap";
 
-import { Button, Icon } from "../../../../base";
 import NuVsEntry from "./Entry";
 import NuVsExpansion from "./Expansion";
+import { Button, Icon } from "../../../../base";
 
 export default class NuVsList extends React.Component {
 
@@ -37,17 +37,17 @@ export default class NuVsList extends React.Component {
         let data;
 
         if (this.state.filter) {
-            data = this.props.data.map(sequence => ({
+            data = map(this.props.data, sequence => ({
                 ...sequence,
-                orfs: reject(sequence.orfs, orf => orf.hits.length === 0)
+                orfs: reject(sequence.orfs, orf => isEmpty(orf.hits))
             }));
         } else {
             data = this.props.data;
         }
 
-        const rows = flatten(data.map((item, index) => {
+        const rows = map(flatten(data), (item, index) => {
 
-            const expanded = this.state.expanded.includes(item.index);
+            const expanded = includes(this.state.expanded, item.index);
 
             const components = [
                 <NuVsEntry
@@ -70,7 +70,7 @@ export default class NuVsList extends React.Component {
             }
 
             return components;
-        }));
+        });
 
         return (
             <div>

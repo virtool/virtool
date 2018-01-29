@@ -1,6 +1,6 @@
 import React from "react";
 import Gauge from "react-svg-gauge";
-import { mean } from "lodash-es";
+import { map, mean } from "lodash-es";
 import { connect } from "react-redux";
 import { Flex, FlexItem, LoadingPlaceholder } from "../../base";
 
@@ -24,7 +24,7 @@ class JobsResources extends React.Component {
 
         const color = "#d44b40";
 
-        const coreGauges = this.props.resources.proc.map((value, index) =>
+        const coreGauges = map(this.props.resources.proc, (value, index) =>
             <Gauge
                 key={index}
                 color={color}

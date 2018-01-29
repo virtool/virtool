@@ -44,6 +44,7 @@ class SampleEntry extends React.Component {
 
     handleQuickAnalyze = (e) => {
         e.stopPropagation();
+
         if (this.props.skipDialog) {
             this.props.onAnalyze(this.props.id, this.props.algorithm || "pathoscope_bowtie");
         } else {

@@ -1,12 +1,13 @@
 import React from "react";
 import PropTypes from "prop-types";
-import { select } from "d3-selection";
-import { scaleLinear } from "d3-scale";
+import { map } from "lodash-es";
 import { axisTop } from "d3-axis";
-import { ListGroupItem } from "../../../../base";
+import { scaleLinear } from "d3-scale";
+import { select } from "d3-selection";
 
-import NuVsORF from "./ORF";
 import NuVsBLAST from "./BLAST";
+import NuVsORF from "./ORF";
+import { ListGroupItem } from "../../../../base";
 
 export default class NuVsExpansion extends React.Component {
 
@@ -22,6 +23,10 @@ export default class NuVsExpansion extends React.Component {
     componentDidMount () {
         this.draw();
     }
+
+    handleSetContainerNode = (node) => {
+        this.containerNode = node;
+    };
 
     draw = () => {
 
@@ -59,7 +64,7 @@ export default class NuVsExpansion extends React.Component {
 
     render () {
 
-        const orfComponents = this.props.orfs.map((orf, index) =>
+        const orfComponents = map(this.props.orfs, (orf, index) =>
             <NuVsORF
                 key={index}
                 {...orf}
@@ -69,10 +74,9 @@ export default class NuVsExpansion extends React.Component {
 
         return (
             <ListGroupItem className="pathoscope-virus-detail spaced">
-
                 <div className="nuvs-layout">
                     <div className="nuvs-item nuvs-sequence">
-                        <div ref={(node) => this.containerNode = node} />
+                        <div ref={this.handleSetContainerNode} />
                     </div>
                     <div className="nuvs-orfs">
                         {orfComponents}

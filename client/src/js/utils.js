@@ -137,8 +137,9 @@ export const reportAPIError = (action) => (
     window.Raven.captureException(action.error)
 );
 
-export const routerLocationHasState = (state, key, value = true) => (
-    !!state.router.location.state && state.router.location.state[key] === value
+export const routerLocationHasState = (state, key, value) => (
+    !!state.router.location.state &&
+    (value ? state.router.location.state[key] === value : state.router.location.state[key])
 );
 
 /**
@@ -174,8 +175,8 @@ export const taskDisplayNames = {
  */
 export const toScientificNotation = (number) => {
     if (number < 0.01 || number > 1000) {
-        const [ number, exponent ] = split(number.toExponential(), "e");
-        return `${Numeral(number).format("0.00")}E${replace(exponent, "+", "")}`;
+        const [ coefficient, exponent ] = split(number.toExponential(), "e");
+        return `${Numeral(coefficient).format("0.00")}E${replace(exponent, "+", "")}`;
     }
 
     return Numeral(number).format("0.000");

@@ -1,24 +1,22 @@
 import React from "react";
 import PropTypes from "prop-types";
-import { sortBy } from "lodash-es";
 import { Flex, FlexItem } from "../../../../base";
-import { toScientificNotation } from "../../../../utils";
+import { map, sortBy } from "lodash-es";
+
 import Coverage from "./Coverage";
+import { toScientificNotation } from "../../../../utils";
 
 export default class PathoscopeIsolate extends React.Component {
 
     static propTypes = {
         virusId: PropTypes.string,
         name: PropTypes.string,
-
         pi: PropTypes.number,
         best: PropTypes.number,
         coverage: PropTypes.number,
         maxDepth: PropTypes.number,
         reads: PropTypes.number,
-
         sequences: PropTypes.arrayOf(PropTypes.object),
-
         setScroll: PropTypes.func,
         showReads: PropTypes.bool
     };
@@ -51,7 +49,7 @@ export default class PathoscopeIsolate extends React.Component {
             whiteSpace: "nowrap"
         };
 
-        const hitComponents = sortBy(this.props.sequences, hit => hit.length).map((hit, i) =>
+        const hitComponents = map(sortBy(this.props.sequences, hit => hit.length), (hit, i) =>
             <Coverage
                 key={i}
                 data={hit.align}

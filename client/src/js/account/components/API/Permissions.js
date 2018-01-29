@@ -9,7 +9,7 @@ export default function APIPermissions ({ style, userPermissions, keyPermissions
 
     const permissions = map(keyPermissions, (value, key) => ({name: key, allowed: value}));
 
-    const rowComponents = sortBy(permissions, "name").map(permission => {
+    const rowComponents = map(sortBy(permissions, "name"), permission => {
         const disabled = !userPermissions[permission.name];
 
         return (

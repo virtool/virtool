@@ -1,4 +1,5 @@
 import React from "react";
+import { keys } from "lodash-es";
 import { Helmet } from "react-helmet";
 import { Provider, connect } from "react-redux";
 import { ConnectedRouter } from "react-router-redux";
@@ -45,7 +46,7 @@ const Inner = (props) => {
 };
 
 const mapStateToProps = state => ({
-    ready: state.account.ready && Boolean(Object.keys(state.settings).length)
+    ready: state.account.ready && Boolean(keys(state.settings).length)
 });
 
 const InnerContainer = withRouter(connect(mapStateToProps)(Inner));

@@ -1,5 +1,5 @@
 import React from "react";
-import { ClipLoader } from "halogenium";
+import { map } from "lodash-es";
 import { connect } from "react-redux";
 import { LinkContainer } from "react-router-bootstrap";
 import { ListGroup } from "react-bootstrap";
@@ -7,7 +7,7 @@ import { ListGroup } from "react-bootstrap";
 import APIKey from "./Key";
 import CreateAPIKey from "./Create";
 import { getAPIKeys, createAPIKey } from "../../actions";
-import { Button, Icon, Flex, FlexItem, ListGroupItem } from "../../../base/index";
+import { Button, Flex, FlexItem, LoadingPlaceholder, NoneFound } from "../../../base/index";
 
 class APIKeys extends React.Component {
 
@@ -19,13 +19,11 @@ class APIKeys extends React.Component {
 
         if (this.props.apiKeys === null) {
             return (
-                <div className="text-center" style={{marginTop: "150px"}}>
-                    <ClipLoader color="#3c8786" size="24px"/>
-                </div>
+                <LoadingPlaceholder margin="150px" />
             );
         }
 
-        let keyComponents = this.props.apiKeys.map(apiKey =>
+        let keyComponents = map(this.props.apiKeys, apiKey =>
             <APIKey
                 key={apiKey.id}
                 apiKey={apiKey}
@@ -34,9 +32,7 @@ class APIKeys extends React.Component {
 
         if (!keyComponents.length) {
             keyComponents = (
-                <ListGroupItem className="text-center">
-                    <Icon name="info"/> No API keys found.
-                </ListGroupItem>
+                <NoneFound noun="API keys" />
             );
         }
 
@@ -49,8 +45,11 @@ class APIKeys extends React.Component {
                             <a
                                 href="https://docs.virtool.ca/web-api/authentication.html"
                                 rel="noopener noreferrer"
-                                target="_blank">Virtool API
-                            </a>.
+                                target="_blank"
+                            >
+                                Virtool API
+                            </a>
+                            <span>.</span>
                         </div>
                     </FlexItem>
                     <FlexItem grow={1} shrink={0} pad={7}>

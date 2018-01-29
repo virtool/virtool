@@ -1,4 +1,5 @@
 import React from "react";
+import { includes } from "lodash-es";
 import { connect } from "react-redux";
 import { Row, Col, Panel } from "react-bootstrap";
 import { updateSetting, updateSettings } from "../../actions";
@@ -89,8 +90,8 @@ const mapDispatchToProps = dispatch => ({
     onChangeRights: (level, value) => {
         const update = {};
 
-        update[`sample_${level}_read`] = value.includes("r");
-        update[`sample_${level}_write`] = value.includes("w");
+        update[`sample_${level}_read`] = includes(value, "r");
+        update[`sample_${level}_write`] = includes(value, "w");
 
         dispatch(updateSettings(update));
     }

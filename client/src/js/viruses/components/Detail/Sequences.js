@@ -16,7 +16,7 @@ const IsolateSequences = (props) => {
     let sequenceComponents;
 
     if (props.sequences.length) {
-        sequenceComponents = map(props.sequences.map, sequence =>
+        sequenceComponents = map(props.sequences, sequence =>
             <Sequence
                 key={sequence.id}
                 active={sequence.accession === props.activeSequenceId}

@@ -1,14 +1,14 @@
 import React from "react";
 import Dropzone from "react-dropzone";
-import { push } from "react-router-redux";
-import { capitalize, filter } from "lodash-es";
-import { connect } from "react-redux";
+import { capitalize, filter, forEach, map } from "lodash-es";
 import { ListGroup } from "react-bootstrap";
+import { connect } from "react-redux";
+import { push } from "react-router-redux";
 
 import File from "./File";
-import { createRandomString } from "../../utils";
 import { findFiles, removeFile, upload, uploadProgress } from "../actions";
-import { Button, Icon, ListGroupItem, LoadingPlaceholder, Pagination, ViewHeader } from "../../base";
+import { Button, LoadingPlaceholder, NoneFound, Pagination, ViewHeader } from "../../base";
+import { createRandomString } from "../../utils";
 
 class FileManager extends React.Component {
 
@@ -30,19 +30,17 @@ class FileManager extends React.Component {
             return <LoadingPlaceholder />;
         }
 
-        let fileComponents = filter(this.props.documents, {type: this.props.fileType}).map(document =>
-            <File
-                key={document.id}
-                {...document}
-                onRemove={this.props.onRemove}
-            />
-        );
+        const filtered = filter(this.props.documents, {type: this.props.fileType});
 
-        if (!fileComponents.length) {
+        let fileComponents;
+
+        if (filtered.length) {
+            fileComponents = map(filtered, document =>
+                <File key={document.id} {...document} onRemove={this.props.onRemove} />
+            );
+        } else {
             fileComponents = (
-                <ListGroupItem className="text-center">
-                    <Icon name="info" /> No files found
-                </ListGroupItem>
+                <NoneFound noun="files" />
             );
         }
 
@@ -69,7 +67,7 @@ class FileManager extends React.Component {
                         Drag file here to upload
                     </Dropzone>
 
-                    <Button icon="folder-open" onClick={() => this.dropzone.open()}/>
+                    <Button icon="folder-open" onClick={() => this.dropzone.open()} />
                 </div>
 
                 <ListGroup>
@@ -101,7 +99,7 @@ const mapStateToProps = (state) => {
 const mapDispatchToProps = (dispatch) => ({
 
     onDrop: (fileType, acceptedFiles) => {
-        acceptedFiles.forEach(file => {
+        forEach(acceptedFiles, file => {
             const localId = createRandomString();
             dispatch(upload(localId, file, fileType, (e) => dispatch(uploadProgress(localId, e.percent))));
         });

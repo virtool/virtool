@@ -21,8 +21,8 @@ class Analyses extends React.Component {
 
         return (
             <Switch>
-                <Route path="/samples/:sampleId/analyses" component={AnalysesList} exact/>
-                <Route path="/samples/:sampleId/analyses/:analysisId" component={AnalysisDetail}/>
+                <Route path="/samples/:sampleId/analyses" component={AnalysesList} exact />
+                <Route path="/samples/:sampleId/analyses/:analysisId" component={AnalysisDetail} />
             </Switch>
         );
     }

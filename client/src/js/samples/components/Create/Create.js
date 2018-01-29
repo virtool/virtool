@@ -1,6 +1,5 @@
 import React from "react";
-import { push } from "react-router-redux";
-import { filter } from "lodash-es";
+import { filter, map, replace, split } from "lodash-es";
 import { connect } from "react-redux";
 import {
     Alert,
@@ -12,11 +11,12 @@ import {
     FormControl,
     InputGroup
 } from "react-bootstrap";
+import { push } from "react-router-redux";
 
 import ReadSelector from "./ReadSelector";
 import { findReadyHosts, createSample } from "../../actions";
-import { findFiles } from "../../../files/actions";
 import { Button, Icon, Input, LoadingPlaceholder } from "../../../base";
+import { findFiles } from "../../../files/actions";
 import { routerLocationHasState } from "../../../utils";
 
 const getReadyHosts = (props) => (
@@ -35,7 +35,7 @@ const getInitialState = (props) => ({
 });
 
 const SampleUserGroup = ({ group, groups, onChange }) => {
-    const groupComponents = groups.map(groupId =>
+    const groupComponents = map(groups, groupId =>
         <option key={groupId} value={groupId} className="text-capitalize">
             {groupId}
         </option>
@@ -83,7 +83,7 @@ class CreateSample extends React.Component {
 
     autofill = () => {
         this.setState({
-            name: this.state.selected[0].replace(/[0-9a-z]{8}-/, "").split(/_S\d+/)[0]
+            name: split(replace(this.state.selected[0], /[0-9a-z]{8}-/, ""), /_S\d+/)[0]
         });
     };
 
@@ -99,7 +99,7 @@ class CreateSample extends React.Component {
             );
         }
 
-        const hostComponents = this.props.readyHosts.map(host =>
+        const hostComponents = map(this.props.readyHosts, host =>
             <option key={host.id}>{host.id}</option>
         );
 

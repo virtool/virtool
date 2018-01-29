@@ -62,7 +62,7 @@ class EditIsolate extends React.Component {
                     />
                 </Modal.Body>
                 <Modal.Footer>
-                    <Button bsStyle="primary" icon="floppy" onClick={this.save}>
+                    <Button bsStyle="primary" icon="floppy" onClick={this.handleSubmit}>
                         Save
                     </Button>
                 </Modal.Footer>

@@ -20,6 +20,12 @@ export default class NuVsEntry extends React.Component {
         return nextProps.in !== this.props.in;
     }
 
+    handleToggleIn = () => {
+        if (!this.props.in) {
+            this.props.toggleIn(this.props.index);
+        }
+    };
+
     render () {
 
         const className = CX("list-group-item", "spaced", {hoverable: !this.props.in});
@@ -37,7 +43,7 @@ export default class NuVsEntry extends React.Component {
         }
 
         return (
-            <div className={className} onClick={this.props.in ? null : () => this.props.toggleIn(this.props.index)}>
+            <div className={className} onClick={this.handleToggleIn}>
                 <Row>
                     <Col md={3}>
                         <strong>Sequence {this.props.index}</strong>

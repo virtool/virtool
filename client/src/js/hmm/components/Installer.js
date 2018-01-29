@@ -1,7 +1,8 @@
 import React from "react";
 import Numeral from "numeral";
-import { connect } from "react-redux";
+import { replace } from "lodash-es";
 import { Alert, Col, Panel, ProgressBar, Row } from "react-bootstrap";
+import { connect } from "react-redux";
 
 import { installHMMs } from "../actions";
 import { Button, Icon } from "../../base";
@@ -21,7 +22,7 @@ class HMMInstall extends React.Component {
 
             const progress = 20 * (steps.indexOf(this.props.process.step) + this.props.process.progress);
 
-            let step = this.props.process.step.replace("_", " ");
+            let step = replace(this.props.process.step, "_", " ");
 
             if (step === "download") {
                 const size = this.props.size;
@@ -52,7 +53,7 @@ class HMMInstall extends React.Component {
             <Alert bsStyle="warning" className="text-center">
                 <h5 className="text-warning">
                     <strong>
-                        <Icon name="warning"/> No HMM file found.
+                        <Icon name="warning" /> No HMM file found.
                     </strong>
                 </h5>
 

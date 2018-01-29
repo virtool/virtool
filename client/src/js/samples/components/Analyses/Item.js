@@ -23,7 +23,7 @@ export const AnalysisItem = (props) => {
                 <Icon
                     name="remove"
                     bsStyle="danger"
-                    onClick={() => props.onRemove(props.id)}
+                    onClick={props.onRemove}
                     style={{fontSize: "17px"}}
                     pullRight
                 />
@@ -32,7 +32,7 @@ export const AnalysisItem = (props) => {
     } else {
         end = (
             <strong className="pull-right">
-                <ClipLoader size="14px" color="#3c8786" style={{display: "inline"}}/> In Progress
+                <ClipLoader size="14px" color="#3c8786" style={{display: "inline"}} /> In Progress
             </strong>
         );
     }
@@ -44,7 +44,7 @@ export const AnalysisItem = (props) => {
                     <strong>{getTaskDisplayName(props.algorithm)}</strong>
                 </Col>
                 <Col md={4}>
-                    Started <RelativeTime time={props.created_at}/>{props.placeholder ? null : ` by ${props.user.id}`}
+                    Started <RelativeTime time={props.created_at} />{props.placeholder ? null : ` by ${props.user.id}`}
                 </Col>
                 <Col md={1}>
                     {props.placeholder ? null : <Label>{props.index.version}</Label>}

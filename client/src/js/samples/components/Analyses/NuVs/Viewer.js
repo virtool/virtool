@@ -1,4 +1,5 @@
 import React from "react";
+import { forEach, reduce } from "lodash-es";
 
 import NuVsExport from "./Export";
 import NuVsList from "./List";
@@ -10,14 +11,14 @@ const NuVsViewer = (props) => {
 
     const sequences = [];
 
-    props.results.forEach(result => {
+    forEach(props.results, result => {
         // Don't include sequence if there are no ORFs.
         if (result.orfs.length === 0) {
             return;
         }
 
-        const minE = result.orfs.reduce((result, orf) => {
-            const orfMinE = orf.hits.reduce((result, hit) => {
+        const minE = reduce(result.orfs, (result, orf) => {
+            const orfMinE = reduce(orf.hits, (result, hit) => {
                 if (hit.full_e < result) {
                     return hit.full_e;
                 }

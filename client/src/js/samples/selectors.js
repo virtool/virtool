@@ -1,3 +1,4 @@
+import { includes } from "lodash-es";
 import { createSelector } from "reselect";
 
 const getAccount = state => state.account;
@@ -12,8 +13,8 @@ export const getCanModify = createSelector(
 
         return (
             sample.all_write ||
-            account.groups.includes("administrator") ||
-            sample.group_write && account.groups.includes(sample.group)
+            includes(account.groups, "administrator") ||
+            sample.group_write && includes(account.groups, sample.group)
         );
     }
 );
