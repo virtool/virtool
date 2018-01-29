@@ -1,6 +1,6 @@
 import React from "react";
 import { connect } from "react-redux";
-import { includes, map } from "lodash-es";
+import { capitalize, includes, map } from "lodash-es";
 import { Alert, Panel } from "react-bootstrap";
 import { Icon, Input, LoadingPlaceholder } from "../../base";
 import { updateSampleGroup, updateSampleRights } from "../actions";
@@ -38,7 +38,7 @@ class SampleRights extends React.Component {
 
         const nameOptionComponents = map(this.props.groups, group =>
             <option key={group.id} value={group.id}>
-                {group.id}
+                {capitalize(group.id)}
             </option>
         );
 
