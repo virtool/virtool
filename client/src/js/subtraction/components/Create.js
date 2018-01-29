@@ -1,28 +1,34 @@
 import React from "react";
 import { filter, map } from "lodash-es";
+import { Row, Col, ListGroup, Modal } from "react-bootstrap";
 import { connect } from "react-redux";
 import { Link } from "react-router-dom";
-import { Row, Col, ListGroup, Modal } from "react-bootstrap";
+import { push } from "react-router-redux";
+
 
 import { findFiles } from "../../files/actions";
 import { createSubtraction } from "../actions";
 import { Button, Icon, Input, ListGroupItem, RelativeTime } from "../../base";
+import {routerLocationHasState} from "../../utils";
 
 class SubtractionFileItem extends React.Component {
 
     handleClick = () => {
-        this.onClick(this.props.id);
+        this.props.onClick(this.props.id);
     };
 
     render () {
+
+        const { active, name, uploaded_at, user } = this.props;
+
         return (
-            <ListGroupItem active={this.props.active} onClick={this.handleClick}>
+            <ListGroupItem active={active} onClick={this.handleClick}>
                 <Row>
                     <Col xs={7}>
-                        <strong>{this.props.file.name}</strong>
+                        <strong>{name}</strong>
                     </Col>
                     <Col xs={5}>
-                        Uploaded <RelativeTime time={this.props.uploaded_at} /> by {this.props.user.id}
+                        Uploaded <RelativeTime time={uploaded_at} /> by {user.id}
                     </Col>
                 </Row>
             </ListGroupItem>
@@ -69,16 +75,18 @@ class CreateSubtraction extends React.Component {
 
         const files = filter(this.props.files, {type: "subtraction"});
 
-        let fileComponents = map(files, file =>
-            <SubtractionFileItem
-                key={file.id}
-                {...file}
-                active={file.id === this.state.fileId}
-                onClick={this.handleSelectFile}
-            />
-        );
+        let fileComponents;
 
-        if (!fileComponents.length) {
+        if (files.length) {
+            fileComponents = map(files, file =>
+                <SubtractionFileItem
+                    key={file.id}
+                    {...file}
+                    active={file.id === this.state.fileId}
+                    onClick={this.handleSelectFile}
+                />
+            );
+        } else {
             fileComponents = (
                 <ListGroupItem className="text-center">
                     <Icon name="info" /> No files found. <Link to="/subtraction/files">Upload some</Link>.
@@ -131,18 +139,24 @@ class CreateSubtraction extends React.Component {
 }
 
 const mapStateToProps = (state) => ({
+    show: routerLocationHasState(state, "createSubtraction"),
     files: state.files.documents
 });
 
 const mapDispatchToProps = (dispatch) => ({
 
+    onCreate: ({ subtractionId, fileId }) => {
+        dispatch(createSubtraction(subtractionId, fileId));
+    },
+
     onFindFiles: () => {
         dispatch(findFiles("subtraction"));
     },
 
-    onCreate: ({ subtractionId, fileId }) => {
-        dispatch(createSubtraction(subtractionId, fileId));
+    onHide: () => {
+        dispatch(push({...window.location, state: {createSubtraction: false}}));
     }
+
 });
 
 const Container = connect(mapStateToProps, mapDispatchToProps)(CreateSubtraction);

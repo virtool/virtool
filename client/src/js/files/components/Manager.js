@@ -73,7 +73,7 @@ class FileManager extends React.Component {
                     <strong> {"You do not have permission to upload files."} </strong>
                     <span>Contact an administrator.</span>
                 </Alert>
-            )
+            );
         }
 
         return (

@@ -62,7 +62,9 @@ const SubtractionList = (props) => {
                 <Flex alignItems="center">
                     <Icon name="notification" />
                     <FlexItem pad={5}>
-                        A host genome must be added to Virtool before samples can be created and analyzed.
+                        <strong>
+                            A host genome must be added before samples can be created and analyzed.
+                        </strong>
                     </FlexItem>
                 </Flex>
             </Alert>
@@ -111,10 +113,7 @@ const SubtractionList = (props) => {
                 {hostComponents}
             </div>
 
-            <CreateSubtraction
-                show={!!props.history.location.state && props.history.location.state.createSubtraction}
-                onHide={props.onHide}
-            />
+            <CreateSubtraction />
         </div>
     );
 };
@@ -130,10 +129,6 @@ const mapDispatchToProps = (dispatch) => ({
     onFind: (e) => {
         const url = createFindURL({find: e.target.value});
         dispatch(push(url.pathname + url.search));
-    },
-
-    onHide: () => {
-        dispatch(push({state: {createSubtraction: false}}));
     }
 
 });
