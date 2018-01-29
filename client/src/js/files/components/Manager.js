@@ -1,13 +1,13 @@
 import React from "react";
 import Dropzone from "react-dropzone";
 import { capitalize, filter, forEach, map } from "lodash-es";
-import { ListGroup } from "react-bootstrap";
+import { Alert, ListGroup } from "react-bootstrap";
 import { connect } from "react-redux";
 import { push } from "react-router-redux";
 
 import File from "./File";
 import { findFiles, removeFile, upload, uploadProgress } from "../actions";
-import { Button, LoadingPlaceholder, NoneFound, Pagination, ViewHeader } from "../../base";
+import { Button, Icon, LoadingPlaceholder, NoneFound, Pagination, ViewHeader } from "../../base";
 import { createRandomString } from "../../utils";
 
 class FileManager extends React.Component {
@@ -17,7 +17,9 @@ class FileManager extends React.Component {
     }
 
     handleDrop = (acceptedFiles) => {
-        this.props.onDrop(this.props.fileType, acceptedFiles);
+        if (this.props.canUpload) {
+            this.props.onDrop(this.props.fileType, acceptedFiles);
+        }
     };
 
     handlePage = (page) => {
@@ -46,16 +48,10 @@ class FileManager extends React.Component {
 
         const titleType = this.props.fileType === "reads" ? "Read" : capitalize(this.props.fileType);
 
-        return (
-            <div>
-                <ViewHeader
-                    title={`${titleType} Files`}
-                    page={this.props.page}
-                    count={this.props.documents.length}
-                    foundCount={this.props.found_count}
-                    totalCount={this.props.total_count}
-                />
+        let toolbar;
 
+        if (this.props.canUpload) {
+            toolbar = (
                 <div className="toolbar">
                     <Dropzone
                         ref={(node) => this.dropzone = node}
@@ -69,6 +65,28 @@ class FileManager extends React.Component {
 
                     <Button icon="folder-open" onClick={() => this.dropzone.open()} />
                 </div>
+            );
+        } else {
+            toolbar = (
+                <Alert bsStyle="warning">
+                    <Icon name="warning" />
+                    <strong> {"You do not have permission to upload files."} </strong>
+                    <span>Contact an administrator.</span>
+                </Alert>
+            )
+        }
+
+        return (
+            <div>
+                <ViewHeader
+                    title={`${titleType} Files`}
+                    page={this.props.page}
+                    count={this.props.documents.length}
+                    foundCount={this.props.found_count}
+                    totalCount={this.props.total_count}
+                />
+
+                {toolbar}
 
                 <ListGroup>
                     {fileComponents}
@@ -92,7 +110,8 @@ const mapStateToProps = (state) => {
         documents,
         page,
         found_count,
-        total_count
+        total_count,
+        canUpload: state.account.permissions.upload_file
     };
 };
 
