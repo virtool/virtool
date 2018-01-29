@@ -1,11 +1,13 @@
 import React from "react";
 import PropTypes from "prop-types";
 import Dropzone from "react-dropzone";
-import { connect } from "react-redux";
 import { Modal, Panel, Table, ProgressBar } from "react-bootstrap";
-import { Button, RelativeTime } from "../../base";
-import { uploadImport, commitImport } from "../actions";
+import { connect } from "react-redux";
+import { push } from "react-router-redux";
 
+import { uploadImport, commitImport } from "../actions";
+import { Button, RelativeTime } from "../../base";
+import { routerLocationHasState } from "../../utils";
 
 const getInitialState = () => ({
     uploadProgress: 0
@@ -35,7 +37,7 @@ class VirusImport extends React.Component {
     };
 
     handleProgress = (e) => {
-        this.setState({uploadProgress: e.loaded / e.total});
+        this.setState({uploadProgress: e.percent});
     };
 
     render () {
@@ -132,17 +134,22 @@ class VirusImport extends React.Component {
 }
 
 const mapStateToProps = state => ({
+    show: routerLocationHasState(state, "virusImport"),
     importData: state.viruses.importData
 });
 
 const mapDispatchToProps = dispatch => ({
 
+    onCommit: (fileId) => {
+        dispatch(commitImport(fileId));
+    },
+
     onDrop: (file, onProgress) => {
         dispatch(uploadImport(file, onProgress));
     },
 
-    onCommit: (fileId) => {
-        dispatch(commitImport(fileId));
+    onHide: () => {
+        dispatch(push({...window.location, state: {importViruses: false}}));
     }
 
 });

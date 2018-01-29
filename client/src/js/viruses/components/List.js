@@ -60,7 +60,7 @@ const VirusesList = (props) => {
 
     let alert;
 
-    if (props.modifiedCount) {
+    if (props.modified_count) {
         alert = (
             <Alert bsStyle="warning">
                 <Flex alignItems="center">

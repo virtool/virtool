@@ -101,8 +101,12 @@ export function* revert (action) {
 
 export function* uploadImport (action) {
     try {
-        const uploadResponse = yield filesAPI.upload(action.file, "viruses", action.onProgress);
-        const getResponse = yield virusesAPI.getImport(uploadResponse.body.id);
+        const uploadResponse = yield filesAPI.upload({
+            file: action.file,
+            fileType: "viruses",
+            onProgress: action.onProgress
+        });
+        const getResponse = yield virusesAPI.getImport({fileId: uploadResponse.body.id});
         yield put({type: UPLOAD_IMPORT.SUCCEEDED, data: getResponse.body});
     } catch (error) {
         yield put({type: UPLOAD_IMPORT.FAILED, error});
