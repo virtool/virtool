@@ -12,10 +12,10 @@ class UserGroup extends React.Component {
         const { groupId, userId } = this.props;
 
         if (this.props.toggled) {
-            return this.props.removeFromGroup(userId, groupId);
+            return this.props.onRemoveFromGroup(userId, groupId);
         }
 
-        this.props.addToGroup(userId, groupId);
+        this.props.onAddToGroup(userId, groupId);
     };
 
     render () {
@@ -41,6 +41,7 @@ const UserGroups = ({ accountUserId, addToGroup, allGroups, memberGroups, remove
             key={groupId}
             groupId={groupId}
             accountUserId={accountUserId}
+            userId={userId}
             disabled={groupId === "administrator" && userId === accountUserId}
             toggled={includes(memberGroups, groupId)}
             onAddToGroup={addToGroup}
