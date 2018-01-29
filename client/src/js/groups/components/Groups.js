@@ -1,10 +1,12 @@
 import React from "react";
 import { difference, filter, find, includes, map, some, sortBy, transform } from "lodash-es";
-import { connect } from "react-redux";
 import { Col, FormControl, Label, ListGroup, Modal, Overlay, Panel, Popover, Row } from "react-bootstrap";
+import { connect } from "react-redux";
+import { push } from "react-router-redux";
 
 import { listGroups, createGroup, setGroupPermission, removeGroup } from "../actions";
 import { AutoProgressBar, Button, Flex, FlexItem, Icon, ListGroupItem, LoadingPlaceholder } from "../../base";
+import {routerLocationHasState} from "../../utils";
 
 class Group extends React.Component {
 
@@ -226,6 +228,7 @@ class Groups extends React.Component {
 }
 
 const mapStateToProps = (state) => ({
+    show: routerLocationHasState(state, "groups"),
     users: state.users.list,
     groups: state.groups.list,
     pending: state.groups.pending,
@@ -234,20 +237,24 @@ const mapStateToProps = (state) => ({
 
 const mapDispatchToProps = (dispatch) => ({
 
-    onList: () => {
-        dispatch(listGroups());
-    },
-
     onCreate: (groupId) => {
         dispatch(createGroup(groupId));
     },
 
-    onSetPermission: (groupId, permission, value) => {
-        dispatch(setGroupPermission(groupId, permission, value));
+    onHide: () => {
+        dispatch(push({...window.location, state: {groups: false}}));
+    },
+
+    onList: () => {
+        dispatch(listGroups());
     },
 
     onRemove: (groupId) => {
         dispatch(removeGroup(groupId));
+    },
+
+    onSetPermission: (groupId, permission, value) => {
+        dispatch(setGroupPermission(groupId, permission, value));
     }
 
 });
