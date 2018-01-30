@@ -1,4 +1,4 @@
-import { reject } from "lodash";
+import { filter, map, reject } from "lodash-es";
 import {
     FIND_SAMPLES,
     GET_SAMPLE,
@@ -33,7 +33,7 @@ const setNuvsBLAST = (state, analysisId, sequenceIndex, data = "ip") => {
     if (analysisDetail.id === analysisId) {
         return {...state, analysisDetail: {
             ...analysisDetail,
-            results: analysisDetail.results.map(sequence => {
+            results: map(analysisDetail.results, sequence => {
                 if (sequence.index === sequenceIndex) {
                     return {...sequence, blast: data};
                 }
@@ -67,7 +67,7 @@ export default function samplesReducer (state = initialState, action) {
                 return state;
             }
 
-            return {...state, documents: state.documents.map(sample =>
+            return {...state, documents: map(state.documents, sample =>
                 sample.id === action.data.id ? {...sample, ...action.data} : sample
             )};
         }
@@ -96,8 +96,35 @@ export default function samplesReducer (state = initialState, action) {
         case GET_ANALYSIS_PROGRESS:
             return {...state, getAnalysisProgress: action.progress};
 
-        case ANALYZE.SUCCEEDED:
-            return {...state, analyses: state.analyses === null ? null : state.analyses.concat([action.data])};
+        case ANALYZE.REQUESTED:
+            return {
+                ...state,
+                analyses: state.analyses === null ? null : state.analyses.concat([action.placeholder])
+            };
+
+        case ANALYZE.SUCCEEDED: {
+            let analyses = state.analyses;
+
+            if (analyses !== null) {
+                analyses = map(analyses, analysis => {
+                    if (analysis === action.placeholder) {
+                        return action.data;
+                    }
+
+                    return analysis;
+                });
+            }
+
+            return {...state, analyses};
+        }
+
+        case ANALYZE.FAILED:
+            return {
+                ...state,
+                analyses: state.analyses === null ? null : filter(state.analyses,
+                    analysis => analysis !== action.placeholder
+                )
+            };
 
         case BLAST_NUVS.REQUESTED:
             return setNuvsBLAST(state, action.analysisId, action.sequenceIndex, {ready: false});

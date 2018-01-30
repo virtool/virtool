@@ -4,7 +4,7 @@
  */
 import React from "react";
 import PropTypes from "prop-types";
-import { join } from "lodash";
+import { join } from "lodash-es";
 
 /**
  * A configurable component that acts as a flex container.

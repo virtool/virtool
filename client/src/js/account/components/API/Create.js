@@ -3,7 +3,7 @@ import React from "react";
 import { push } from "react-router-redux";
 import { connect } from "react-redux";
 import { CopyToClipboard } from "react-copy-to-clipboard";
-import { mapValues } from "lodash";
+import { mapValues } from "lodash-es";
 import { Col, Modal, Row } from "react-bootstrap";
 
 import APIPermissions from "./Permissions";
@@ -25,7 +25,7 @@ export class CreateAPIKey extends React.Component {
         this.state = getInitialState(props);
     }
 
-    modalExited = () => {
+    handleModalExited = () => {
         this.setState(getInitialState(this.props));
     };
 
@@ -65,7 +65,7 @@ export class CreateAPIKey extends React.Component {
                                         style={{marginBottom: 0}}
                                         formGroupStyle={{marginBottom: 0}}
                                         className="text-center"
-                                        value={this.state.key} onChange={() => {}}
+                                        value={this.state.key}
                                     />
                                 </FlexItem>
                                 <CopyToClipboard
@@ -112,7 +112,7 @@ export class CreateAPIKey extends React.Component {
         }
 
         return (
-            <Modal show={this.props.show} onHide={this.props.onHide} onExited={this.modalExited}>
+            <Modal show={this.props.show} onHide={this.props.onHide} onExited={this.handleModalExited}>
                 <Modal.Header onHide={this.props.onHide} closeButton>
                     Create API Key
                 </Modal.Header>

@@ -1,9 +1,10 @@
 import React from "react";
 import Moment from "moment";
 import Numeral from "numeral";
-import { connect } from "react-redux";
 import { ClipLoader } from "halogenium";
+import { map } from "lodash-es";
 import { Panel, Alert, Table } from "react-bootstrap";
+import { connect } from "react-redux";
 
 import { blastNuvs } from "../../../actions";
 import { Button, Flex, FlexItem, Icon, RelativeTime } from "../../../../base";
@@ -54,7 +55,7 @@ const BLASTInProgress = ({ interval, lastCheckedAt, rid }) => {
 };
 
 const BLASTResults = ({ hits }) => {
-    const components = hits.map((hit, index) =>
+    const components = map(hits, (hit, index) =>
         <tr key={index}>
             <td>
                 <a target="_blank" href={`https://www.ncbi.nlm.nih.gov/nuccore/${hit.accession}`}>

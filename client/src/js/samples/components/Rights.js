@@ -1,5 +1,6 @@
 import React from "react";
 import { connect } from "react-redux";
+import { capitalize, includes, map } from "lodash-es";
 import { Alert, Panel } from "react-bootstrap";
 import { Icon, Input, LoadingPlaceholder } from "../../base";
 import { updateSampleGroup, updateSampleRights } from "../actions";
@@ -12,8 +13,16 @@ class SampleRights extends React.Component {
     }
 
     isOwnerOrAdministrator = () => (
-        this.props.groups.includes(this.props.group) || this.props.accountId === this.props.ownerId
+        includes(this.props.groups, this.props.group) || this.props.accountId === this.props.ownerId
     );
+
+    handleChangeGroup = (e) => {
+        this.props.onChangeGroup(this.props.sampleId, e.target.value);
+    };
+
+    handleChangeRights = (e) => {
+        this.props.onChangeRights(this.props.sampleId, "group", e.target.value);
+    };
 
     render () {
         if (this.props.groups === null) {
@@ -27,8 +36,10 @@ class SampleRights extends React.Component {
         const groupRights = (this.props.group_read ? "r" : "") + (this.props.group_write ? "w" : "");
         const allRights = (this.props.all_read ? "r" : "") + (this.props.all_write ? "w" : "");
 
-        const nameOptionComponents = this.props.groups.map(group =>
-            <option key={group.id} value={group.id}>{group.id}</option>
+        const nameOptionComponents = map(this.props.groups, group =>
+            <option key={group.id} value={group.id}>
+                {capitalize(group.id)}
+            </option>
         );
 
         return (
@@ -43,7 +54,7 @@ class SampleRights extends React.Component {
                         type="select"
                         label="Group"
                         value={this.props.group}
-                        onChange={(e) => this.props.onChangeGroup(this.props.sampleId, e.target.value)}
+                        onChange={this.handleChangeGroup}
                     >
                         <option value="none">None</option>
                         {nameOptionComponents}
@@ -53,7 +64,7 @@ class SampleRights extends React.Component {
                         type="select"
                         label="Group Rights"
                         value={groupRights}
-                        onChange={(e) => this.props.onChangeRights(this.props.sampleId, "group", e.target.value)}
+                        onChange={this.handleChangeRights}
                     >
                         <option value="">None</option>
                         <option value="r">Read</option>
@@ -64,7 +75,7 @@ class SampleRights extends React.Component {
                         type="select"
                         label="All Users' Rights"
                         value={allRights}
-                        onChange={(e) => this.props.onChangeRights(this.props.sampleId, "all", e.target.value)}
+                        onChange={this.handleChangeRights}
                     >
                         <option value="">None</option>
                         <option value="r">Read</option>
@@ -77,14 +88,15 @@ class SampleRights extends React.Component {
 }
 
 const mapStateToProps = state => {
-    const { group_read, group_write, all_read, all_write } = state.samples.detail;
+
+    const { all_read, all_write, group, group_read, group_write, id, user } = state.samples.detail;
 
     return {
         accountId: state.account.id,
-        group: state.samples.detail.group,
         groups: state.groups.list,
-        ownerId: state.samples.detail.user.id,
-        sampleId: state.samples.detail.id,
+        ownerId: user.id,
+        sampleId: id,
+        group,
         group_read,
         group_write,
         all_read,
@@ -103,10 +115,10 @@ const mapDispatchToProps = dispatch => ({
     },
 
     onChangeRights: (sampleId, name, value) => {
-        const update = {};
-
-        update[`${name}_read`] = value.includes("r");
-        update[`${name}_write`] = value.includes("w");
+        const update = {
+            [`${name}_read`]: includes(value, "r"),
+            [`${name}_write`]: includes(value, "w")
+        };
 
         dispatch(updateSampleRights(sampleId, update));
     }

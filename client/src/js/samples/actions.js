@@ -99,11 +99,23 @@ export const getAnalysisProgress = (progress) => ({
     progress
 });
 
-export const analyze = (sampleId, algorithm) => ({
-    type: ANALYZE.REQUESTED,
-    sampleId,
-    algorithm
-});
+export const analyze = (sampleId, algorithm) => {
+    const createdAt = new Date();
+
+    const placeholder = {
+        algorithm,
+        created_at: createdAt.toISOString(),
+        ready: false,
+        placeholder: true
+    };
+
+    return {
+        type: ANALYZE.REQUESTED,
+        algorithm,
+        placeholder,
+        sampleId
+    };
+};
 
 export const blastNuvs = (analysisId, sequenceIndex) => ({
     type: BLAST_NUVS.REQUESTED,

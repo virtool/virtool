@@ -5,11 +5,15 @@ import SubtractionList from "./List";
 import SubtractionDetail from "./Detail";
 import FileManager from "../../files/components/Manager";
 
+const SubtractionFileManager = () => (
+    <FileManager fileType="subtraction" />
+);
+
 const Subtraction = () => (
     <div className="container">
         <Switch>
             <Route path="/subtraction" component={SubtractionList} exact />
-            <Route path="/subtraction/files" render={() => <FileManager fileType="subtraction" />} />
+            <Route path="/subtraction/files" component={SubtractionFileManager} />
             <Route path="/subtraction/:subtractionId" component={SubtractionDetail} />
         </Switch>
     </div>

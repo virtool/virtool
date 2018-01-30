@@ -9,13 +9,14 @@
  * @exports ReadSelector
  */
 import React from "react";
+import { filter, includes, intersection, map, sortBy, toLower, without} from "lodash-es";
 import PropTypes from "prop-types";
-import { Link } from "react-router-dom";
-import { without, intersection, filter, sortBy } from "lodash";
 import { Overlay, Popover, Panel } from "react-bootstrap";
+import { Link } from "react-router-dom";
 
-import { Icon, Input, Button, ListGroupItem } from "../../../base";
 import ReadItem from "./ReadItem";
+import { Icon, Input, Button, ListGroupItem } from "../../../base";
+
 
 export default class ReadSelector extends React.PureComponent {
 
@@ -35,14 +36,14 @@ export default class ReadSelector extends React.PureComponent {
 
     componentWillReceiveProps (nextProps) {
         if (nextProps.files !== this.props.files) {
-            this.props.onSelect(intersection(this.props.selected, nextProps.files.map(f => f["id"])));
+            this.props.onSelect(intersection(this.props.selected, map(nextProps.files, "id")));
         }
     }
 
     onSelect = (selectedId) => {
         let selected;
 
-        if (this.props.selected.includes(selectedId)) {
+        if (includes(this.props.selected, selectedId)) {
             selected = without(this.props.selected, selectedId);
         } else {
             selected = this.props.selected.concat([selectedId]);
@@ -62,17 +63,17 @@ export default class ReadSelector extends React.PureComponent {
 
     render () {
 
-        const loweredFilter = this.state.filter.toLowerCase();
+        const loweredFilter = toLower(this.state.filter);
 
         const files = filter(this.props.files, file =>
-            !this.state.filter || file.name.toLowerCase().includes(loweredFilter)
+            !this.state.filter || includes(toLower(file.name), loweredFilter)
         );
 
-        let fileComponents = sortBy(files, "uploaded_at").reverse().map((file) =>
+        let fileComponents = map(sortBy(files, "uploaded_at").reverse(), file =>
             <ReadItem
                 key={file.id}
                 {...file}
-                selected={this.props.selected.includes(file.id)}
+                selected={includes(this.props.selected, file.id)}
                 onSelect={this.onSelect}
             />
         );

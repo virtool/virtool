@@ -1,14 +1,16 @@
 import React from "react";
-import { connect } from "react-redux";
-import { map, sortBy } from "lodash";
+import { map, sortBy } from "lodash-es";
 import { Row, Col, Table, Badge, Label, Panel, ListGroup } from "react-bootstrap";
+import { connect } from "react-redux";
 
 import { IDRow, ListGroupItem, LoadingPlaceholder } from "../../base";
 import { getHmm } from "../actions";
 
 const HMMTaxonomy = ({ counts }) => {
 
-    const components = sortBy(map(counts, (count, name) => ({name, count})), "name").map(entry =>
+    const sorted = sortBy(map(counts, (count, name) => ({name, count})), "name");
+
+    const components = map(sorted, entry =>
         <ListGroupItem key={entry.name}>
             {entry.name} <Badge>{entry.count}</Badge>
         </ListGroupItem>
@@ -33,19 +35,23 @@ class HMMDetail extends React.Component {
             return <LoadingPlaceholder maring="130px" />;
         }
 
-        const clusterMembers = this.props.detail.entries.map((entry, index) =>
+        const clusterMembers = map(this.props.detail.entries, ({ name, accession, organism }, index) =>
             <tr key={index}>
                 <td>
-                    <a href={`http://www.ncbi.nlm.nih.gov/protein/${entry.accession}`} target="_blank">
-                        {entry.accession}
+                    <a href={`http://www.ncbi.nlm.nih.gov/protein/${accession}`} target="_blank">
+                        {accession}
                     </a>
                 </td>
-                <td>{entry.name}</td>
-                <td>{entry.organism}</td>
+                <td>{name}</td>
+                <td>{organism}</td>
             </tr>
         );
 
-        const names = this.props.detail.names.map((name, index) => <span key={index}><Label>{name}</Label> </span>);
+        const names = map(this.props.detail.names, (name, index) =>
+            <span key={index}>
+                <Label>{name}</Label>&nbsp;
+            </span>
+        );
 
         return (
             <div>

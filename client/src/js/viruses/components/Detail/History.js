@@ -8,7 +8,7 @@
  */
 import React from "react";
 import PropTypes from "prop-types";
-import { sortBy, groupBy } from "lodash";
+import { groupBy, map, reverse, sortBy } from "lodash-es";
 import { connect } from "react-redux";
 import { Row, Col, ListGroup, Label } from "react-bootstrap";
 
@@ -17,6 +17,7 @@ import { Flex, FlexItem, ListGroupItem, RelativeTime, Icon } from "../../../base
 
 
 const getMethodIcon = (change) => {
+
     switch (change.method_name) {
         case "create":
             return <Icon name="new-entry" bsStyle="primary" />;
@@ -56,40 +57,43 @@ const getMethodIcon = (change) => {
     }
 };
 
-const HistoryList = (props) => {
+export class Change extends React.Component {
 
-    const changeComponents = sortBy(props.history, "virus.version").reverse().map((change, index) => {
+    handleRevert = () => {
+        this.props.revert(this.props.virus.id, this.props.virus.version);
+    };
 
+    render () {
         let revertIcon;
 
-        if (props.unbuilt && props.canModify) {
+        if (this.props.unbuilt && this.props.canModify) {
             revertIcon = (
                 <Icon
                     name="undo"
                     bsStyle="primary"
                     tip="Revert"
-                    onClick={() => props.revert(change.virus.id, change.virus.version)}
+                    onClick={this.handleRevert}
                     pullRight
                 />
             );
         }
 
         return (
-            <ListGroupItem key={index}>
+            <ListGroupItem>
                 <Row>
                     <Col md={1}>
-                        <Label>{change.virus.version}</Label>
+                        <Label>{this.props.virus.version}</Label>
                     </Col>
                     <Col md={6}>
                         <Flex alignItems="center">
-                            {getMethodIcon(change)}
+                            {getMethodIcon(this.props)}
                             <FlexItem pad={5}>
-                                {change.description || "No Description"}
+                                {this.props.description || "No Description"}
                             </FlexItem>
                         </Flex>
                     </Col>
                     <Col md={4}>
-                        <RelativeTime time={change.created_at} /> by {change.user.id}
+                        <RelativeTime time={this.props.created_at} /> by {this.props.user.id}
                     </Col>
                     <Col md={1}>
                         {revertIcon}
@@ -97,14 +101,32 @@ const HistoryList = (props) => {
                 </Row>
             </ListGroupItem>
         );
-    });
+    }
+}
 
-    return (
-        <ListGroup>
-            {changeComponents}
-        </ListGroup>
-    );
-};
+export class HistoryList extends React.Component {
+
+    render () {
+
+        const changes = reverse(sortBy(this.props.history, "virus.version"));
+
+        const changeComponents = map(changes, (change, index) =>
+            <Change
+                key={index}
+                {...change}
+                canModify={this.props.canModify}
+                unbuilt={this.props.unbuilt}
+                revert={this.props.revert}
+            />
+        );
+
+        return (
+            <ListGroup>
+                {changeComponents}
+            </ListGroup>
+        );
+    }
+}
 
 HistoryList.propTypes = {
     history: PropTypes.arrayOf(PropTypes.object),

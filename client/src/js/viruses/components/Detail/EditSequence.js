@@ -10,7 +10,7 @@
  */
 
 import React from "react";
-import { find } from "lodash";
+import { find } from "lodash-es";
 import { connect } from "react-redux";
 import { Row, Col, Modal, FormGroup, FormControl, InputGroup, ControlLabel } from "react-bootstrap";
 
@@ -47,11 +47,18 @@ class EditSequence extends React.Component {
         this.state = getInitialState(this.props);
     }
 
-    modalEnter = () => {
+    handleChange = (e) => {
+        const { name, value } = e.target;
+        this.setState({
+            [name]: value
+        });
+    };
+
+    handleModalEnter = () => {
         this.setState(getInitialState(this.props));
     };
 
-    save = (e) => {
+    handleSubmit = (e) => {
         e.preventDefault();
 
         this.props.onSave(
@@ -64,7 +71,7 @@ class EditSequence extends React.Component {
         );
     };
 
-    autofill = () => {
+    handleAutofill = () => {
         this.setState({autofillPending: true}, () => {
             getGenbank(this.props.sequenceId).then((resp) => {
                 // Success
@@ -96,12 +103,12 @@ class EditSequence extends React.Component {
         }
 
         return (
-            <Modal show={!!this.props.sequenceId} onEnter={this.modalEnter} onHide={this.props.onHide}>
+            <Modal show={!!this.props.sequenceId} onEnter={this.handleModalEnter} onHide={this.props.onHide}>
                 <Modal.Header onHide={this.props.onHide} closeButton>
                     Edit Sequence
                 </Modal.Header>
 
-                <form onSubmit={this.save}>
+                <form onSubmit={this.handleSubmit}>
                     <Modal.Body>
                         {overlay}
 
@@ -115,7 +122,7 @@ class EditSequence extends React.Component {
                                             readOnly
                                         />
                                         <InputGroup.Button>
-                                            <Button onClick={this.autofill}>
+                                            <Button onClick={this.handleAutofill}>
                                                 <Icon name="wand" />
                                             </Button>
                                         </InputGroup.Button>
@@ -126,8 +133,9 @@ class EditSequence extends React.Component {
                                 <FormGroup>
                                     <ControlLabel>Host</ControlLabel>
                                     <FormControl
+                                        name="host"
                                         value={this.state.host}
-                                        onChange={(e) => this.setState({host: e.target.value})}
+                                        onChange={this.handleChange}
                                     />
                                 </FormGroup>
                             </Col>
@@ -137,8 +145,9 @@ class EditSequence extends React.Component {
                                 <FormGroup>
                                     <ControlLabel>Definition</ControlLabel>
                                     <FormControl
+                                        name="definition"
                                         value={this.state.definition}
-                                        onChange={(e) => this.setState({definition: e.target.value})}
+                                        onChange={this.handleChange}
                                     />
                                 </FormGroup>
                             </Col>
@@ -146,8 +155,9 @@ class EditSequence extends React.Component {
                         <Row>
                             <Col xs={12}>
                                 <SequenceField
+                                    name="sequence"
                                     sequence={this.state.sequence}
-                                    onChange={(e) => this.setState({sequence: e.target.value})}
+                                    onChange={this.handleChange}
                                 />
                             </Col>
                         </Row>

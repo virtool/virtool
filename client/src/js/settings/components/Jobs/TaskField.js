@@ -1,7 +1,7 @@
 import CX from "classnames";
 import React from "react";
 import PropTypes from "prop-types";
-import { toNumber } from "lodash";
+import { toNumber } from "lodash-es";
 import { Icon } from "../../../base";
 
 export default class TaskField extends React.PureComponent {

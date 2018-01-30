@@ -6,11 +6,11 @@
  * @author igboyes
  *
  */
-
 import React from "react";
 import Request from "superagent";
 import PropTypes from "prop-types";
 import { connect } from "react-redux";
+import { map, replace } from "lodash-es";
 import { ClipLoader } from "halogenium";
 import { Label, Modal, ProgressBar } from "react-bootstrap";
 
@@ -55,7 +55,7 @@ const Process = ({ complete, progress, size, step }) => {
 
     const now = (stepIndex + 1) / 5 + (progress * 0.2);
 
-    const text = step.replace("_", " ");
+    const text = replace(step, "_", " ");
 
     let ratio;
 
@@ -90,7 +90,7 @@ class SoftwareInstallModal extends React.Component {
     };
 
     render () {
-        const mergedBody = this.props.releases.map(release => release.body).join("\n");
+        const mergedBody = map(this.props.releases, "body").join("\n");
 
         let content;
 

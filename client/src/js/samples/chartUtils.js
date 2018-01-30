@@ -1,5 +1,5 @@
 import { select } from "d3-selection";
-import { map } from "lodash";
+import { map } from "lodash-es";
 import { symbol, symbolSquare } from "d3-shape";
 import { scaleOrdinal } from "d3-scale";
 import { legendColor } from "d3-svg-legend";

@@ -1,3 +1,4 @@
+import { includes, noop } from "lodash-es";
 import { LOCATION_CHANGE } from "react-router-redux";
 import { buffers, END, eventChannel } from "redux-saga";
 import { call, put, select, take, takeEvery, takeLatest, throttle } from "redux-saga/effects";
@@ -52,7 +53,7 @@ export function* getSample (action) {
         const canModify = (
             data.user.id === account.id ||
             data.all_write ||
-            data.group_write && account.groups.includes(data.group)
+            data.group_write && includes(account.groups, data.group)
         );
 
         yield put({type: GET_SAMPLE.SUCCEEDED, data: {...response.body, canModify}});
@@ -110,7 +111,7 @@ const createGetAnalysisChannel = (analysisId) => (
 
         samplesAPI.getAnalysis(analysisId, onProgress, onSuccess, onFailure);
 
-        return () => {};
+        return noop;
     }, buffers.sliding(2))
 );
 
@@ -135,7 +136,7 @@ export function* getAnalysis (action) {
 export function* analyze (action) {
     try {
         const response = yield samplesAPI.analyze(action);
-        yield put({type: ANALYZE.SUCCEEDED, data: response.body});
+        yield put({type: ANALYZE.SUCCEEDED, data: response.body, placeholder: action.placeholder});
         yield pushHistoryState({quickAnalyze: false});
     } catch (error) {
         yield putGenericError(ANALYZE, error);

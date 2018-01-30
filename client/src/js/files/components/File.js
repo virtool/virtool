@@ -5,50 +5,65 @@ import { Col, Row } from "react-bootstrap";
 import { byteSize } from "../../utils";
 import { Icon, ListGroupItem, RelativeTime } from "../../base";
 
-export default function File (props) {
-    let creation;
+export default class File extends React.Component {
 
-    if (props.user === null) {
-        creation = (
-            <span>
-                Retrieved <RelativeTime time={props.uploaded_at} />
-            </span>
+    static propTypes = {
+        id: PropTypes.string,
+        name: PropTypes.string,
+        size: PropTypes.number,
+        file: PropTypes.object,
+        uploaded_at: PropTypes.string,
+        user: PropTypes.object,
+        onRemove: PropTypes.func
+    };
+
+    handleRemove = () => {
+        this.props.onRemove(this.props.id);
+    };
+
+    render () {
+
+        const { name, size, uploaded_at, user } = this.props;
+
+        let creation;
+
+        if (user === null) {
+            creation = (
+                <span>
+                    Retrieved <RelativeTime time={uploaded_at} />
+                </span>
+            );
+        } else {
+            creation = (
+                <span>
+                    Uploaded <RelativeTime time={uploaded_at} /> by {user.id}
+                </span>
+            );
+        }
+
+        return (
+            <ListGroupItem className="spaced">
+                <Row>
+                    <Col md={5}>
+                        <strong>{name}</strong>
+                    </Col>
+                    <Col md={2}>
+                        {byteSize(size)}
+                    </Col>
+                    <Col md={4}>
+                        {creation}
+                    </Col>
+                    <Col md={1}>
+                        <Icon
+                            name="remove"
+                            bsStyle="danger"
+                            style={{fontSize: "17px"}}
+                            onClick={this.handleRemove}
+                            pullRight
+                        />
+                    </Col>
+                </Row>
+            </ListGroupItem>
         );
-    } else {
-        creation = <span>Uploaded <RelativeTime time={props.uploaded_at} /> by {props.user.id}</span>;
     }
-
-    return (
-        <ListGroupItem className="spaced">
-            <Row>
-                <Col md={5}>
-                    <strong>{props.name}</strong>
-                </Col>
-                <Col md={2}>
-                    {byteSize(props.size)}
-                </Col>
-                <Col md={4}>
-                    {creation}
-                </Col>
-                <Col md={1}>
-                    <Icon
-                        name="remove"
-                        bsStyle="danger"
-                        style={{fontSize: "17px"}}
-                        pullRight onClick={() => props.onRemove(props.id)}
-                    />
-                </Col>
-            </Row>
-        </ListGroupItem>
-    );
 }
-
-File.propTypes = {
-    id: PropTypes.string,
-    name: PropTypes.string,
-    size: PropTypes.number,
-    file: PropTypes.object,
-    uploaded_at: PropTypes.string,
-    user: PropTypes.object,
-    onRemove: PropTypes.func
-};

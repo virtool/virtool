@@ -39,17 +39,21 @@ class AddIsolate extends React.Component {
         onSave: PropTypes.func
     };
 
-    modalEntered = () => {
+    handleChange = (update) => {
+        this.setState(update);
+    };
+
+    handleModalEntered = () => {
         this.formNode.focus();
     };
 
-    save = () => {
+    handleSubmit = () => {
         this.props.onSave(this.props.virusId, this.state.sourceType, this.state.sourceName);
     };
 
     render () {
         return (
-            <Modal show={this.props.show} onEntered={this.modalEntered} onHide={this.props.onHide}>
+            <Modal show={this.props.show} onEntered={this.handleModalEntered} onHide={this.props.onHide}>
                 <Modal.Header onHide={this.props.onHide} closeButton>
                     Add Isolate
                 </Modal.Header>
@@ -60,8 +64,8 @@ class AddIsolate extends React.Component {
                         sourceName={this.state.sourceName}
                         allowedSourceTypes={this.props.allowedSourceTypes}
                         restrictSourceTypes={this.props.restrictSourceTypes}
-                        onChange={(update) => this.setState(update)}
-                        onSubmit={this.save}
+                        onChange={this.handleChange}
+                        onSubmit={this.handleSubmit}
                     />
                 </Modal.Body>
                 <Modal.Footer>

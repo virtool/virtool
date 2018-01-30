@@ -1,5 +1,5 @@
 import React from "react";
-import { sortBy } from "lodash";
+import { map, sortBy } from "lodash-es";
 import { Row, Col, ListGroup, ListGroupItem, Panel } from "react-bootstrap";
 
 import { LoadingPlaceholder } from "../../base";
@@ -11,7 +11,7 @@ export default function RebuildHistory ({ unbuilt }) {
     if (unbuilt === null) {
         content = <LoadingPlaceholder margin="22px" />;
     } else {
-        const historyComponents = sortBy(unbuilt.history, "virus.name").map(change =>
+        const historyComponents = map(sortBy(unbuilt.history, "virus.name"), change =>
             <ListGroupItem key={change.id}>
                 <Row>
                     <Col md={5}>

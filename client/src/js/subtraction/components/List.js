@@ -1,4 +1,5 @@
 import React from "react";
+import { map } from "lodash-es";
 import { push } from "react-router-redux";
 import { connect } from "react-redux";
 import { ClipLoader } from "halogenium";
@@ -9,14 +10,13 @@ import CreateSubtraction from "./Create";
 import { Button, Flex, FlexItem, Icon, ListGroupItem, LoadingPlaceholder, NoneFound, ViewHeader } from "../../base";
 import {createFindURL, getFindTerm} from "../../utils";
 
-
 const SubtractionList = (props) => {
 
     if (props.documents === null) {
-        return <LoadingPlaceholder/>;
+        return <LoadingPlaceholder />;
     }
 
-    let hostComponents = props.documents.map((document) => {
+    let hostComponents = map(props.documents, document => {
 
         let icon;
 
@@ -62,7 +62,9 @@ const SubtractionList = (props) => {
                 <Flex alignItems="center">
                     <Icon name="notification" />
                     <FlexItem pad={5}>
-                        A host genome must be added to Virtool before samples can be created and analyzed.
+                        <strong>
+                            A host genome must be added before samples can be created and analyzed.
+                        </strong>
                     </FlexItem>
                 </Flex>
             </Alert>
@@ -90,7 +92,7 @@ const SubtractionList = (props) => {
                         <FormControl
                             type="text"
                             value={props.term}
-                            onChange={(e) => props.onFind(e.target.value)}
+                            onChange={props.onFind}
                             placeholder="Host name"
                         />
                     </InputGroup>
@@ -111,10 +113,7 @@ const SubtractionList = (props) => {
                 {hostComponents}
             </div>
 
-            <CreateSubtraction
-                show={!!props.history.location.state && props.history.location.state.createSubtraction}
-                onHide={props.onHide}
-            />
+            <CreateSubtraction />
         </div>
     );
 };
@@ -127,13 +126,9 @@ const mapStateToProps = (state) => ({
 
 const mapDispatchToProps = (dispatch) => ({
 
-    onFind: (find) => {
-        const url = createFindURL({find});
+    onFind: (e) => {
+        const url = createFindURL({find: e.target.value});
         dispatch(push(url.pathname + url.search));
-    },
-
-    onHide: () => {
-        dispatch(push({state: {createSubtraction: false}}));
     }
 
 });

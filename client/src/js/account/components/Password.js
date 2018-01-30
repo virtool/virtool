@@ -1,4 +1,5 @@
 import React from "react";
+import { map } from "lodash-es";
 import { connect } from "react-redux";
 import { Alert, Col, Panel, Row } from "react-bootstrap";
 
@@ -61,8 +62,10 @@ class ChangePassword extends React.Component {
         let errorAlert;
 
         if (this.state.errors.length) {
-            const errorComponents = this.state.errors.map(error =>
-                <li key={error}>{error}</li>
+            const errorComponents = map(this.state.errors, error =>
+                <li key={error}>
+                    {error}
+                </li>
             );
 
             errorAlert = (

@@ -1,4 +1,4 @@
-import { find } from "lodash";
+import { find, map } from "lodash-es";
 
 import { formatIsolateName } from "../utils";
 import {
@@ -83,7 +83,7 @@ const getActiveIsolate = (state) => {
 const receiveVirus = (state, action) => {
     const detail = {
         ...action.data,
-        isolates: action.data.isolates.map(isolate => ({...isolate, name: formatIsolateName(isolate)}))
+        isolates: map(action.data.isolates, isolate => ({...isolate, name: formatIsolateName(isolate)}))
     };
 
     return getActiveIsolate({...state, detail});

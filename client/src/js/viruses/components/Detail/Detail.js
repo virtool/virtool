@@ -48,7 +48,7 @@ class VirusDetail extends React.Component {
                             bsStyle="warning"
                             name="pencil"
 
-                            onClick={() => this.props.showEdit()}
+                            onClick={this.props.showEdit}
                         />
                     </small>
 
@@ -56,7 +56,7 @@ class VirusDetail extends React.Component {
                         <Icon
                             bsStyle="danger"
                             name="remove"
-                            onClick={() => this.props.showRemove()}
+                            onClick={this.props.showRemove}
                         />
                     </small>
                 </span>

@@ -1,14 +1,15 @@
 import React from "react";
+import { map, max, maxBy, sumBy, reduce, sortBy } from "lodash-es";
 import PropTypes from "prop-types";
 import { Alert } from "react-bootstrap";
+
 import { Icon } from "../../../../base";
-import { sortBy, max, maxBy, sumBy } from "lodash";
 import { formatIsolateName } from "../../../../utils";
 
 import PathoscopeController from "./Controller";
 
 const calculateIsolateCoverage = (isolate, length) => (
-    isolate.sequences.reduce((sum, sequence) => (
+    reduce(isolate.sequences, (sum, sequence) => (
         sum + sequence.coverage * (sequence.length / length)
     ), 0)
 );
@@ -19,10 +20,10 @@ const PathoscopeViewer = (props) => {
 
         const mappedReadCount = props.read_count;
 
-        const data = props.diagnosis.map((baseVirus) => {
+        const data = map(props.diagnosis, baseVirus => {
             // Go through each isolate associated with the virus, adding properties for weight, best-hit, read count,
             // and coverage. These values will be calculated from the sequences owned by each isolate.
-            let isolates = baseVirus.isolates.map(isolate => {
+            let isolates = map(baseVirus.isolates, isolate => {
                 // Make a name for the isolate by joining the source type and name, eg. "Isolate" + "Q47".
                 let name = formatIsolateName(isolate);
 
@@ -30,10 +31,9 @@ const PathoscopeViewer = (props) => {
                     name = "Unnamed Isolate";
                 }
 
-                const sequences = isolate.sequences.map(sequence => {
+                const sequences = map(isolate.sequences, sequence => {
                     const reads = Math.round(sequence.pi * mappedReadCount);
-                    const depth = sequence.align ? max(sequence.align.map(p => p[1])) : 0;
-
+                    const depth = sequence.align ? max(map(sequence.align, p => p[1])) : 0;
                     return {...sequence, reads, depth};
                 });
 

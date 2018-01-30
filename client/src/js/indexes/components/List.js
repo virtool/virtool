@@ -1,7 +1,9 @@
 import React from "react";
-import { LinkContainer } from "react-router-bootstrap";
-import { connect } from "react-redux";
+import { map } from "lodash-es";
 import { Alert } from "react-bootstrap";
+import { connect } from "react-redux";
+import { LinkContainer } from "react-router-bootstrap";
+
 
 import { Button, Flex, FlexItem, Icon, LoadingPlaceholder, NoneFound, ViewHeader } from "../../base";
 import { findIndexes } from "../actions";
@@ -27,15 +29,17 @@ class IndexesList extends React.Component {
             // the newest ready index with a checkmark in the index list.
             let haveSeenReady = false;
 
-            // Render a ListGroupItem for each index version. Mark the first ready index with a checkmark by setting the
-            // showReady prop to true.
-            let indexComponents = this.props.documents.map(doc => {
-                const entry = <IndexEntry key={doc.id} showReady={!doc.ready || !haveSeenReady} {...doc} />;
-                haveSeenReady = haveSeenReady || doc.ready;
-                return entry;
-            });
+            let indexComponents;
 
-            if (!this.props.documents.length) {
+            if (this.props.documents.length) {
+                // Render a ListGroupItem for each index version. Mark the first ready index with a checkmark by setting
+                // the showReady prop to true.
+                indexComponents = map(this.props.documents, doc => {
+                    const entry = <IndexEntry key={doc.id} showReady={!doc.ready || !haveSeenReady} {...doc} />;
+                    haveSeenReady = haveSeenReady || doc.ready;
+                    return entry;
+                });
+            } else {
                 indexComponents = <NoneFound noun="indexes" noListGroup />;
             }
 

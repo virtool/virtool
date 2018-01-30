@@ -1,7 +1,9 @@
 import React from "react";
+import { map } from "lodash-es";
+import { Badge, Panel, ListGroup, ListGroupItem, Table } from "react-bootstrap";
 import { connect } from "react-redux";
 import { Link } from "react-router-dom";
-import { Badge, Panel, ListGroup, ListGroupItem, Table } from "react-bootstrap";
+
 
 import { Flex, FlexItem, RelativeTime } from "../../base";
 
@@ -29,13 +31,13 @@ const IndexVirusEntry = ({ changeCount, id, name}) => (
 
 const IndexGeneral = ({ detail }) => {
 
-    const contributors = detail.contributors.map(contributor =>
+    const contributors = map(detail.contributors, contributor =>
         <ListGroupItem key={contributor.id}>
             {contributor.id} <Badge>{contributor.count} {`change${contributor.count > 1 ? "s" : ""}`}</Badge>
         </ListGroupItem>
     );
 
-    const viruses = detail.viruses.map(virus =>
+    const viruses = map(detail.viruses, virus =>
         <IndexVirusEntry
             key={virus.id}
             name={virus.name}

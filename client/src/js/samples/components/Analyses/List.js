@@ -1,5 +1,5 @@
 import React from "react";
-import { sortBy } from "lodash";
+import { map, sortBy } from "lodash-es";
 import { connect } from "react-redux";
 import { ListGroup, FormGroup, InputGroup, FormControl } from "react-bootstrap";
 
@@ -47,12 +47,9 @@ class AnalysesList extends React.Component {
         let listContent;
 
         if (this.props.analyses.length) {
-            // Sort by timestamp so the newest analyses are at the top.
-            const sorted = sortBy(this.props.analyses, "timestamp").reverse();
-
             // The components that detail individual analyses.
-            listContent = sorted.map((document) =>
-                <AnalysisItem key={document.id} {...document} />
+            listContent = map(sortBy(this.props.analyses, "timestamp").reverse(), (document, index) =>
+                <AnalysisItem key={index} {...document} />
             );
         } else {
             listContent = <NoneFound noun="analyses" noListGroup />;

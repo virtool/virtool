@@ -1,7 +1,8 @@
 import React from "react";
-import { push } from "react-router-redux";
-import { connect } from "react-redux";
+import { map } from "lodash-es";
 import { FormControl, FormGroup, InputGroup, ListGroup } from "react-bootstrap";
+import { connect } from "react-redux";
+import { push } from "react-router-redux";
 
 import HMMItem from "./Item";
 import HMMInstaller from "./Installer";
@@ -17,7 +18,7 @@ const HMMList = (props) => {
     let rowComponents;
 
     if (props.documents.length) {
-        rowComponents = props.documents.map(document =>
+        rowComponents = map(props.documents, document =>
             <HMMItem key={document.id} {...document} />
         );
     } else {

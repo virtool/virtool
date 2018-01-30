@@ -16,6 +16,12 @@ def base_processor(document):
     return document
 
 
+async def get_client_path():
+    for client_path in [os.path.join(sys.path[0], "client"), os.path.join(sys.path[0], "client", "dist")]:
+        if os.path.exists(os.path.join(client_path, "index.html")):
+            return client_path
+
+
 def rm(path, recursive=False):
     """
     A function that removes files or directories in a separate thread. Wraps :func:`os.remove` and func:`shutil.rmtree`.

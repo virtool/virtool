@@ -148,6 +148,13 @@ async def init_check_db(app):
     await db.viruses.create_index("abbreviation")
 
 
+async def init_client_path(app):
+    app["client_path"] = await virtool.utils.get_client_path()
+
+    if app["client_path"]:
+        app.router.add_static("/static", app["client_path"])
+
+
 async def init_job_manager(app):
     """
     An application ``on_startup`` callback that initializes a Virtool :class:`virtool.job_manager.Manager` object and
@@ -189,13 +196,19 @@ async def init_file_manager(app):
             clean_interval=20
         )
 
-        await app["file_manager"].start()
+        app["file_manager"].start()
     else:
         logger.warning("Did not initialize file manager. Path does not exist: {}".format(files_path))
         app["file_manager"] = None
 
 
+def init_routes(app):
+    virtool.app_routes.setup_routes(app)
+
+
 def init_setup(app):
+    virtool.setup.setup_routes(app)
+
     app["setup"] = {
         "db_host": None,
         "db_port": None,
@@ -254,27 +267,20 @@ def create_app(loop, db_name=None, disable_job_manager=False, disable_file_manag
 
     """
     middlewares = [
-        virtool.error_pages.middleware_factory
+        virtool.error_pages.middleware
     ]
 
     if skip_setup:
-        middlewares.append(virtool.app_auth.middleware_factory)
+        middlewares.append(virtool.app_auth.middleware)
 
     app = web.Application(loop=loop, middlewares=middlewares)
 
     app["version"] = force_version
     app["db_name"] = db_name
 
-    for client_path in [os.path.join(sys.path[0], "client"), os.path.join(sys.path[0], "client", "dist")]:
-        if os.path.exists(os.path.join(client_path, "index.html")):
-            app["client_path"] = client_path
-            break
-
-    if "client_path" not in app:
-        raise FileNotFoundError("Could not find client path")
+    app.on_startup.append(init_client_path)
 
     if not skip_setup:
-        virtool.setup.setup_routes(app)
         app.on_startup.append(init_setup)
     else:
         app.on_startup.append(init_version)
@@ -282,7 +288,7 @@ def create_app(loop, db_name=None, disable_job_manager=False, disable_file_manag
         if not no_sentry:
             app.on_startup.append(init_sentry)
 
-        virtool.app_routes.setup_routes(app)
+        app.on_startup.append(init_routes)
 
         if not ignore_settings:
             app.on_startup.append(init_settings)
@@ -353,3 +359,6 @@ async def find_server_version(loop, install_path="."):
     except FileNotFoundError:
         logger.critical("Could not determine software version.")
         return "Unknown"
+
+
+

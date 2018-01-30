@@ -1,14 +1,3 @@
-/**
- * @license
- * The MIT License (MIT)
- * Copyright 2015 Government of Canada
- *
- * @author
- * Ian Boyes
- *
- * @exports RemoveIsolate
- */
-
 import React from "react";
 import PropTypes from "prop-types";
 import { connect } from "react-redux";
@@ -17,26 +6,35 @@ import { Modal } from "react-bootstrap";
 import { removeSequence, hideVirusModal } from "../../actions";
 import { Button } from "../../../base";
 
-const RemoveSequence = props => (
-    <Modal show={Boolean(props.sequenceId)} onHide={props.onHide} dialogClassName="modal-danger">
-        <Modal.Header onHide={props.onHide} closeButton>
-            Remove Sequence
-        </Modal.Header>
-        <Modal.Body>
-            Are you sure you want to remove the sequence <strong>{props.sequenceId}</strong> from
-            <strong> {props.isolateName}</strong>?
-        </Modal.Body>
-        <Modal.Footer>
-            <Button
-                bsStyle="danger"
-                icon="checkmark"
-                onClick={() => props.onConfirm(props.virusId, props.isolateId, props.sequenceId, props.onSuccess)}
-            >
-                Confirm
-            </Button>
-        </Modal.Footer>
-    </Modal>
-);
+class RemoveSequence extends React.Component {
+
+    handleConfirm = () => {
+        this.props.onConfirm(this.props.virusId, this.props.isolateId, this.props.sequenceId, this.props.onSuccess);
+    };
+
+    render () {
+        return (
+            <Modal show={Boolean(this.props.sequenceId)} onHide={this.props.onHide} dialogClassName="modal-danger">
+                <Modal.Header onHide={this.props.onHide} closeButton>
+                    Remove Sequence
+                </Modal.Header>
+                <Modal.Body>
+                    Are you sure you want to remove the sequence <strong>{this.props.sequenceId}</strong> from
+                    <strong> {this.props.isolateName}</strong>?
+                </Modal.Body>
+                <Modal.Footer>
+                    <Button
+                        bsStyle="danger"
+                        icon="checkmark"
+                        onClick={this.handleConfirm}
+                    >
+                        Confirm
+                    </Button>
+                </Modal.Footer>
+            </Modal>
+        );
+    }
+}
 
 RemoveSequence.propTypes = {
     virusId: PropTypes.string,

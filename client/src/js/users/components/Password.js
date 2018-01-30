@@ -40,14 +40,24 @@ class Password extends React.Component {
         this.setState(getInitialState());
     }
 
-    handleChange = (e, key) => {
-        const state = {
+    handleChange = (e) => {
+        const { name, value } = e.target;
+
+        this.setState({
+            [name]: value,
             error: this.state.error && this.state.password === this.state.confirm
-        };
+        });
+    };
 
-        state[key] = e.target.value;
+    handleClear = () => {
+        this.setState({
+            confirm: "",
+            pass: ""
+        });
+    };
 
-        this.setState(state);
+    handleSetForceReset = () => {
+        this.props.onSetForceReset(this.props.id, !this.props.force_reset);
     };
 
     handleSubmit = (e) => {
@@ -64,7 +74,7 @@ class Password extends React.Component {
         <Panel>
             <p>
                 <em>
-                    Last changed <RelativeTime time={this.props.last_password_change} em={true}/>
+                    Last changed <RelativeTime time={this.props.last_password_change} em={true} />
                 </em>
             </p>
 
@@ -73,18 +83,20 @@ class Password extends React.Component {
                     <Col xs={12} md={6}>
                         <Input
                             type="password"
+                            name="password"
                             placeholder="New Password"
                             value={this.state.password}
-                            onChange={(e) => this.handleChange(e, "password")}
+                            onChange={this.handleChange}
                         />
                     </Col>
 
                     <Col xs={12} md={6}>
                         <Input
                             type="password"
+                            name="confirm"
                             placeholder="Confirm Password"
                             value={this.state.confirm}
-                            onChange={(e) => this.handleChange(e, "confirm")}
+                            onChange={this.handleChange}
                         />
                     </Col>
                 </Row>
@@ -93,22 +105,19 @@ class Password extends React.Component {
                         <Checkbox
                             label="Force user to reset password on next login"
                             checked={this.props.force_reset}
-                            onClick={() => this.props.onSetForceReset(
-                                this.props.id,
-                                !this.props.force_reset
-                            )}
+                            onClick={this.handleSetForceReset}
                         />
                     </Col>
 
                     <Col xs={12} mdHidden lgHidden>
-                        <div style={{height: "15px"}}/>
+                        <div style={{height: "15px"}} />
                     </Col>
 
                     <Col xs={12} md={6}>
                         <ButtonToolbar className="pull-right">
                             <Button
                                 type="button"
-                                onClick={() => this.setState({confirm: "", pass: ""})}
+                                onClick={this.handleClear}
                             >
                                 Clear
                             </Button>

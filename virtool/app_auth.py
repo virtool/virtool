@@ -1,4 +1,5 @@
 import base64
+from aiohttp import web
 
 import virtool.user
 import virtool.utils
@@ -34,71 +35,69 @@ class Client:
         self.session_id = session_id
 
 
-async def middleware_factory(app, handler):
-    async def middleware_handler(req):
-        ip = req.transport.get_extra_info("peername")[0]
-        user_agent = req.headers.get("User-Agent", None)
+@web.middleware
+async def middleware(req, handler):
+    ip = req.transport.get_extra_info("peername")[0]
+    user_agent = req.headers.get("User-Agent", None)
 
-        req["client"] = Client(ip, user_agent)
+    req["client"] = Client(ip, user_agent)
 
-        authorization = req.headers.get("AUTHORIZATION", None)
+    authorization = req.headers.get("AUTHORIZATION", None)
 
-        # Try API key authorization if there was no session_id.
-        if authorization and app["settings"].get("enable_api") and req.path[0:4] == "/api":
-            if authorization:
-                try:
-                    user_id, key = decode_authorization(authorization)
-                except virtool.errors.AuthError:
-                    return bad_request("Malformed Authorization header")
+    # Try API key authorization if there was no session_id.
+    if authorization and req.app["settings"].get("enable_api") and req.path[0:4] == "/api":
+        if authorization:
+            try:
+                user_id, key = decode_authorization(authorization)
+            except virtool.errors.AuthError:
+                return bad_request("Malformed Authorization header")
 
-                document = await app["db"].keys.find_one({
-                    "_id": virtool.user.hash_api_key(key),
-                    "user.id": user_id
-                }, AUTHORIZATION_PROJECTION)
+            document = await req.app["db"].keys.find_one({
+                "_id": virtool.user.hash_api_key(key),
+                "user.id": user_id
+            }, AUTHORIZATION_PROJECTION)
 
-                if not document:
-                    return bad_request("Invalid Authorization header")
+            if not document:
+                return bad_request("Invalid Authorization header")
 
-                req["client"].authorize(document, True)
+            req["client"].authorize(document, True)
 
-                return await handler(req)
+            return await handler(req)
 
-        # Check if there is a session_id in cookies.
-        session_id = req.cookies.get("session_id", None)
+    # Check if there is a session_id in cookies.
+    session_id = req.cookies.get("session_id", None)
 
-        document = await app["db"].sessions.find_one({
+    document = await req.app["db"].sessions.find_one({
+        "_id": session_id,
+        "user_agent": user_agent
+    })
+
+    if document:
+        user_id = None
+
+        try:
+            user_id = document["user"]["id"]
+        except KeyError:
+            pass
+
+        if user_id:
+            req["client"].authorize(document, False)
+    else:
+        session_id = virtool.utils.random_alphanumeric(128, mixed_case=True)
+
+        await req.app["db"].sessions.insert_one({
             "_id": session_id,
+            "ip": ip,
             "user_agent": user_agent
         })
 
-        if document:
-            user_id = None
+    req["client"].set_session_id(session_id)
 
-            try:
-                user_id = document["user"]["id"]
-            except KeyError:
-                pass
+    response = await handler(req)
 
-            if user_id:
-                req["client"].authorize(document, False)
-        else:
-            session_id = virtool.utils.random_alphanumeric(128, mixed_case=True)
+    response.set_cookie("session_id", session_id)
 
-            await app["db"].sessions.insert_one({
-                "_id": session_id,
-                "ip": ip,
-                "user_agent": user_agent
-            })
-
-        req["client"].set_session_id(session_id)
-
-        response = await handler(req)
-
-        response.set_cookie("session_id", session_id)
-
-        return response
-
-    return middleware_handler
+    return response
 
 
 def decode_authorization(authorization):

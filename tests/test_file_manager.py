@@ -1,29 +1,14 @@
+import asyncio
 import concurrent.futures
-import multiprocessing
 import os
 import pytest
-import queue
+from aiohttp.test_utils import make_mocked_coro
 
 import virtool.file_manager
 
 
 @pytest.fixture
-def test_watcher_instance(tmpdir):
-    files_path = str(tmpdir.mkdir("files"))
-    watch_path = str(tmpdir.mkdir("watch"))
-
-    watcher = virtool.file_manager.Watcher(files_path, watch_path, multiprocessing.Queue())
-
-    watcher.start()
-
-    yield watcher
-
-    watcher.terminate()
-
-
-@pytest.fixture
-def test_manager_instance(loop, test_motor, test_dispatch, tmpdir, test_queue):
-
+def test_manager_instance(loop, test_motor, test_dispatch, tmpdir):
     files_path = str(tmpdir.mkdir("files"))
     watch_path = str(tmpdir.mkdir("watch"))
 
@@ -34,343 +19,188 @@ def test_manager_instance(loop, test_motor, test_dispatch, tmpdir, test_queue):
     return manager
 
 
-class TestWatcher:
+@pytest.fixture
+def patched_test_manager_instance(monkeypatch, test_manager_instance):
+    for key in ["handle_watch_close", "handle_file_close", "handle_file_creation", "handle_file_deletion"]:
+        monkeypatch.setattr(test_manager_instance, key, make_mocked_coro())
 
-    async def test_alive(self, test_watcher_instance):
-        assert test_watcher_instance.queue.get(block=True, timeout=2) == "alive"
+    test_manager_instance.start()
 
-    async def test_create(self, test_watcher_instance):
-        # This will be an 'alive' message
-        test_watcher_instance.queue.get(block=True, timeout=2)
+    yield test_manager_instance
 
-        path = os.path.join(test_watcher_instance.files_path, "test.dat")
+    test_manager_instance.loop.run_until_complete(test_manager_instance.close())
 
-        with open(path, "w") as handle:
-            handle.write("hello world")
 
-        first_message = test_watcher_instance.queue.get(block=True, timeout=3)
+def touch(path):
+    with open(path, "w") as f:
+        f.write("hello world")
 
-        assert first_message["action"] == "create"
 
-        file = dict(first_message["file"])
-        file.pop("modify")
+@pytest.mark.parametrize("filename,expected", [
+    ("test.fq.gz", True),
+    ("test.fastq.gz", True),
+    ("test.fq", True),
+    ("test.fastq", True),
+    ("test.fa.gz", False),
+    ("test.zip", False),
+    ("test.fa", False),
+    ("test.gz", False)
+])
+def test_has_read_extension(filename,expected):
+    assert virtool.file_manager.has_read_extension(filename) == expected
 
-        assert file == {
-            "filename": "test.dat",
-            "size": 11
-        }
 
-        action = "modify"
-        next_message = None
+@pytest.mark.parametrize("called", [True, False])
+async def test_detect_watch(called, patched_test_manager_instance):
+    path = patched_test_manager_instance.watch_path if called else patched_test_manager_instance.files_path
 
-        while action == "modify":
-            next_message = test_watcher_instance.queue.get(block=True, timeout=3)
-            action = next_message["action"]
+    touch(os.path.join(path, "test.fq"))
 
-        assert next_message["action"] == "close"
+    await asyncio.sleep(0.1)
 
-        file = dict(first_message["file"])
-        file.pop("modify")
+    if called:
+        patched_test_manager_instance.handle_watch_close.assert_called_with("test.fq")
+    else:
+        assert patched_test_manager_instance.handle_watch_close.called is False
 
-        assert file == {
-            "filename": "test.dat",
-            "size": 11
-        }
 
-    async def test_delete(self, test_watcher_instance):
-        path = os.path.join(test_watcher_instance.files_path, "test.dat")
+@pytest.mark.parametrize("called", [True, False])
+async def test_detect_create_close_and_delete(called, patched_test_manager_instance):
+    """
+    Test that calls are made to ``handle_file_creation``, ``handle_file_close``, ``handle_file_deletion`` with the
+    filename when appropriate.
 
-        with open(path, "w") as handle:
-            handle.write("hello world")
+    """
+    path = patched_test_manager_instance.files_path if called else patched_test_manager_instance.watch_path
 
-        # This will be an 'alive' message
-        test_watcher_instance.queue.get(block=True, timeout=3)
+    file_path = os.path.join(path, "test.fq")
 
-        os.remove(path)
+    touch(file_path)
 
-        message = test_watcher_instance.queue.get(block=True, timeout=3)
+    await asyncio.sleep(0.1)
 
-        assert message == {
-            "action": "delete",
-            "file": {
-                "filename": "test.dat"
-            }
-        }
+    if called:
+        patched_test_manager_instance.handle_file_creation.assert_called_with("test.fq")
+        patched_test_manager_instance.handle_file_close.assert_called_with("test.fq")
+    else:
+        assert patched_test_manager_instance.handle_file_creation.called is False
+        assert patched_test_manager_instance.handle_file_close.called is False
 
-    @pytest.mark.parametrize("move", [True, False], ids=["move", "write"])
-    @pytest.mark.parametrize("fastq", [True, False], ids=["fastq", "not_fastq"])
-    async def test_watch(self, move, fastq, tmpdir, test_watcher_instance):
-        target_watch_path = os.path.join(test_watcher_instance.watch_path, "test.fq" if fastq else "test.dat")
+    os.remove(file_path)
 
-        if move:
-            path = os.path.join(str(tmpdir), "test.fq" if fastq else "test.dat")
-        else:
-            path = target_watch_path
+    await asyncio.sleep(0.1)
 
-        # This will be an 'alive' message
-        test_watcher_instance.queue.get(block=True, timeout=2)
+    if called:
+        patched_test_manager_instance.handle_file_deletion.assert_called_with("test.fq")
+    else:
+        assert patched_test_manager_instance.handle_file_deletion.called is False
 
-        with open(path, "w") as f:
-            f.write("hello world")
 
-        if move:
-            os.rename(path, target_watch_path)
+@pytest.mark.parametrize("has_ext", [True, False])
+async def test_handle_watch_close(has_ext, mocker, test_motor, static_time, test_random_alphanumeric,
+                                  test_manager_instance):
 
-        if fastq:
-            message = test_watcher_instance.queue.get(block=True, timeout=1)
+    mocker.patch("virtool.file_manager.has_read_extension", return_value=has_ext)
 
-            assert message["action"] == "watch"
+    filename = "test.fq" if has_ext else "test.txt"
 
-            file = dict(message["file"])
-            file.pop("modify")
+    touch(os.path.join(test_manager_instance.watch_path, filename))
 
-            assert file == {
-                "filename": "test.fq",
-                "size": 11
-            }
-        else:
-            with pytest.raises(queue.Empty):
-                test_watcher_instance.queue.get(block=True, timeout=1)
+    await test_manager_instance.handle_watch_close(filename)
 
-    async def test_watch_delete(self, test_watcher_instance):
-        """
-        Make sure no exception is raised when deleting from the watch folder.
-
-        """
-        path = os.path.join(test_watcher_instance.watch_path, "test.fq")
-
-        # This will be an 'alive' message
-        test_watcher_instance.queue.get(block=True, timeout=2)
-
-        with open(path, "w") as f:
-            f.write("hello world")
-
-        test_watcher_instance.queue.get(block=True, timeout=3)
-
-        os.remove(path)
-
-
-class TestManager:
-
-    async def test_create(self, test_manager_instance):
-        """
-        Test that a ``create`` action results in the ``created`` field on the matching file document in the database
-        to be set to ``True``.
-
-        """
-        await test_manager_instance.db.files.insert_one({
-            "_id": "test.dat"
-        })
-
-        # Do this so the the clean task doesn't remove the database record.
-        with open(os.path.join(test_manager_instance.files_path, "test.dat"), "w") as f:
-            f.write("hello world")
-
-        test_manager_instance.queue.put("alive")
-
-        test_manager_instance.queue.put({
-            "action": "create",
-            "file": {
-                "filename": "test.dat",
-                "size": 50
-            }
-        })
-
-        await test_manager_instance.start()
-        await test_manager_instance.close()
-
-        assert await test_manager_instance.db.files.find_one() == {
-            "_id": "test.dat",
-            "created": True
-        }
-
-    async def test_close(self, test_manager_instance):
-        """
-        Test that a ``close`` action results in ``ready`` being set to ``True`` on the matching file document in the
-        database.
-
-        """
-        await test_manager_instance.db.files.insert_one({
-            "_id": "test.dat",
-            "expires_at": None,
-            "created": True
-        })
-
-        # Do this so the the clean task doesn't remove the database record.
-        with open(os.path.join(test_manager_instance.files_path, "test.dat"), "w") as f:
-            f.write("hello world")
-
-        test_manager_instance.queue.put("alive")
-
-        test_manager_instance.queue.put({
-            "action": "close",
-            "file": {
-                "filename": "test.dat",
-                "size": 100
-            }
-        })
-
-        await test_manager_instance.start()
-        await test_manager_instance.close()
-
-        assert test_manager_instance.dispatch.stub.call_args[0] == (
-            "files",
-            "update",
-            {
-                "id": "test.dat",
-                "ready": True,
-                "size": 100
-            }
-        )
-
-        assert await test_manager_instance.db.files.find_one() == {
-            "_id": "test.dat",
-            "expires_at": None,
-            "created": True,
-            "ready": True,
-            "size": 100
-        }
-
-    async def test_delete(self, test_manager_instance):
-        """
-        Test that a ``delete`` action from the Watcher results in the deletion of the matching file document in the
-        database.
-
-        """
-        await test_manager_instance.db.files.insert_one({
-            "_id": "test.dat",
-            "created": True,
-            "ready": True,
-            "size": 100
-        })
-
-        test_manager_instance.queue.put("alive")
-
-        test_manager_instance.queue.put({
-            "action": "delete",
-            "file": {
-                "filename": "test.dat"
-            }
-        })
-
-        await test_manager_instance.start()
-        await test_manager_instance.close()
-
-        assert await test_manager_instance.db.files.count() == 0
-
-    async def test_watch(self, test_manager_instance, static_time):
-        """
-        Test that a ``watch`` action results in the creation of a file document and copying of the file to the
-        files path. We'll assume that the file document is updated with ``{"created": True, "ready": True}`` afterwards.
-
-        """
-        assert await test_manager_instance.db.files.count() == 0
-
-        with open(os.path.join(test_manager_instance.watch_path, "test.fq"), "w") as f:
-            f.write("hello world")
-
-        test_manager_instance.queue.put("alive")
-
-        test_manager_instance.queue.put({
-            "action": "watch",
-            "file": {
-                "filename": "test.fq",
-                "size": 50
-            }
-        })
-
-        await test_manager_instance.start()
-        await test_manager_instance.close()
-
-        assert await test_manager_instance.db.files.find_one({}, {"_id": False}) == {
+    await asyncio.sleep(0.1)
+
+    if has_ext:
+        # Check if a new file document was created if the file had a valid extension.
+        assert await test_motor.files.find_one() == {
+            "_id": "9pfsom1b-test.fq",
             "name": "test.fq",
             "type": "reads",
-            "expires_at": None,
-            "created": False,
+            "user": None,
             "uploaded_at": static_time,
+            "expires_at": None,
             "reserved": False,
-            "ready": False,
-            "user": None
+
+            # Both of these keys should be ``False`` as the ``CLOSE_WRITE`` and ``CREATE`` flags are not being
+            # listened for in the ``test_manager_instance``.
+            "created": False,
+            "ready": False
         }
 
-        assert os.listdir(test_manager_instance.watch_path) == list()
-        assert os.listdir(test_manager_instance.files_path)[0].endswith("test.fq")
+    # Make sure the watched file was moved to the files directory ONLY if it had a valid extension.
+    assert os.listdir(test_manager_instance.files_path) == (["9pfsom1b-test.fq"] if has_ext else [])
 
-    async def test_start_and_close(self, tmpdir, loop, test_motor, test_dispatch):
-        """
-        Test the starting and closing the file manager work as designed. The manager should wait for the watch to
-        send and "alive" message on the Queue before returning. This results in the ``alive`` attribute being set to
-        ``True`` on the manager.
+    # Make sure watched file was removed, whether it had a valid extension or not.
+    assert os.listdir(test_manager_instance.watch_path) == []
 
-        Closing the manager should result in ``alive`` being set to ``False``.
 
-        """
-        manager = virtool.file_manager.Manager(
-            loop,
-            concurrent.futures.ThreadPoolExecutor(),
-            test_motor,
-            test_dispatch,
-            str(tmpdir.mkdir("files")),
-            str(tmpdir.mkdir("watch"))
-        )
+@pytest.mark.parametrize("has_document", [True, False])
+async def test_handle_file_creation(has_document, test_motor, test_manager_instance):
+    filename = "foobar-test.fq"
 
-        assert manager.alive is False
+    path = os.path.join(test_manager_instance.files_path, filename)
 
-        await manager.start()
+    touch(path)
 
-        assert manager.alive is True
-
-        await manager.close()
-
-        assert manager.alive is False
-
-    async def test_clean_dir(self, tmpdir, loop, test_motor, test_dispatch):
-        await test_motor.files.insert_one({
-            "_id": "test.dat",
-            "created": True
+    if has_document:
+        await test_motor.files.insert({
+            "_id": "foobar-test.fq",
+            "created": False
         })
 
-        files = tmpdir.mkdir("files")
+    await test_manager_instance.handle_file_creation(filename)
 
-        for filename in ("test.dat", "invalid.dat"):
-            files.join(filename).write(filename)
+    document = await test_motor.files.find_one()
 
-        manager = virtool.file_manager.Manager(
-            loop,
-            concurrent.futures.ThreadPoolExecutor(),
-            test_motor,
-            test_dispatch,
-            str(files),
-            str(tmpdir.mkdir("watch"))
-        )
+    if has_document:
+        assert document == {
+            "_id": "foobar-test.fq",
+            "created": True
+        }
+    else:
+        assert document is None
 
-        await manager.start()
-        await manager.close()
+    assert os.listdir(test_manager_instance.files_path) == [filename]
 
-        assert os.listdir(str(files)) == ["test.dat"]
 
-    async def test_clean_db(self, tmpdir, loop, test_motor, test_dispatch):
+@pytest.mark.parametrize("has_document", [True, False])
+async def test_handle_file_close(has_document, test_motor, test_manager_instance):
+    filename = "foobar-test.fq"
 
-        await test_motor.files.insert_many([
-            {"_id": "test.dat", "created": True},
-            {"_id": "invalid.dat", "created": True}
-        ])
+    path = os.path.join(test_manager_instance.files_path, filename)
 
-        files = tmpdir.mkdir("files")
+    touch(path)
 
-        file_a = files.join("test.dat")
-        file_a.write("hello world")
+    if has_document:
+        await test_motor.files.insert({
+            "_id": filename,
+            "ready": False
+        })
 
-        manager = virtool.file_manager.Manager(
-            loop,
-            concurrent.futures.ThreadPoolExecutor(),
-            test_motor,
-            test_dispatch,
-            str(files),
-            str(tmpdir.mkdir("watch"))
-        )
+    await test_manager_instance.handle_file_close(filename)
 
-        await manager.start()
-        await manager.close()
+    document = await test_motor.files.find_one()
 
-        assert list(await test_motor.files.find().to_list(None)) == [{"_id": "test.dat", "created": True}]
+    if has_document:
+        assert document == {
+            "_id": filename,
+            "ready": True,
+            "size": 11
+        }
+    else:
+        assert document is None
+        assert os.listdir(test_manager_instance.files_path) == []
+
+
+async def test_handle_file_deletion(test_motor, test_manager_instance):
+    filename = "foobar-test.fq"
+
+    await test_motor.files.insert({
+        "_id": filename,
+        "created": True,
+        "ready": True
+    })
+
+    await test_manager_instance.handle_file_deletion(filename)
+
+    assert not await test_motor.files.count()

@@ -32,11 +32,11 @@ export default function WSConnection (dispatch) {
 
         window.console.log(`${iface}.${operation}`);
 
-        if (operation === "update" && documentUpdaters.hasOwnProperty(iface)) {
+        if (operation === "update" && documentUpdaters[iface]) {
             return dispatch(documentUpdaters[iface](message.data));
         }
 
-        if (operation === "remove" && documentRemovers.hasOwnProperty(iface)) {
+        if (operation === "remove" && documentRemovers[iface]) {
             return dispatch(documentRemovers[iface](message.data));
         }
     };

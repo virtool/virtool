@@ -1,32 +1,30 @@
 import React from "react";
-import { push } from "react-router-redux";
-import { connect } from "react-redux";
+import { map } from "lodash-es";
 import { ListGroup } from "react-bootstrap";
+import { connect } from "react-redux";
+import { push } from "react-router-redux";
 
-import { cancelJob, removeJob } from "../actions";
-import { LoadingPlaceholder, Pagination, NoneFound, ViewHeader } from "../../base";
 import Job from "./Entry";
 import JobsToolbar from "./Toolbar";
-import {createFindURL} from "../../utils";
+import { LoadingPlaceholder, Pagination, NoneFound, ViewHeader } from "../../base";
+import { createFindURL } from "../../utils";
 
-const JobsList = (props) => {
+export const JobsList = (props) => {
 
     if (props.documents === null) {
         return <LoadingPlaceholder />;
     }
 
-    let components = props.documents.map(doc =>
-        <Job
-            key={doc.id}
-            {...doc}
-            cancel={props.onCancel}
-            remove={props.onRemove}
-            navigate={() => props.history.push(`/jobs/${doc.id}`)}
-        />
-    );
+    let jobComponents;
+
+    if (props.documents.length) {
+        jobComponents = map(props.documents, doc =>
+            <Job key={doc.id} {...doc} />
+        );
+    }
 
     if (!props.documents.length) {
-        components = <NoneFound noun="jobs" noListGroup />;
+        jobComponents = <NoneFound noun="jobs" noListGroup />;
     }
 
     return (
@@ -42,7 +40,7 @@ const JobsList = (props) => {
             <JobsToolbar />
 
             <ListGroup>
-                {components}
+                {jobComponents}
             </ListGroup>
 
             <Pagination
@@ -55,25 +53,24 @@ const JobsList = (props) => {
     );
 };
 
-const mapStateToProps = (state) => ({...state.jobs});
+const mapStateToProps = (state) => {
+
+    const { cancel_job, remove_job } = state.account.permissions;
+
+    return {
+        ...state.jobs,
+        canCancel: cancel_job,
+        canRemove: remove_job
+    };
+};
 
 const mapDispatchToProps = (dispatch) => ({
 
     onPage: (page) => {
         const url = createFindURL({ page });
         dispatch(push(url.pathname + url.search));
-    },
-
-    onCancel: (jobId) => {
-        dispatch(cancelJob(jobId));
-    },
-
-    onRemove: (jobId) => {
-        dispatch(removeJob(jobId));
     }
 
 });
 
-const Container = connect(mapStateToProps, mapDispatchToProps)(JobsList);
-
-export default Container;
+export default connect(mapStateToProps, mapDispatchToProps)(JobsList);
