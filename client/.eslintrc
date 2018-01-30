@@ -15,13 +15,15 @@
   },
   "extends": [
     "eslint:recommended",
-    "plugin:react/recommended"
+    "plugin:react/recommended",
   ],
   "plugins": [
+    "import",
+    "lodash",
     "react"
   ],
   "rules": {
-    // ES6
+    // Basic
     "array-bracket-newline": [1, {"multiline": true, "minItems": 5}],
     "arrow-body-style": [1, "as-needed"],
     "arrow-spacing": [1],
@@ -37,7 +39,6 @@
     "line-comment-position": [1],
     "lines-between-class-members": [1],
     "max-len": [1, 120, 2],
-    // "max-params": [1],
     "newline-per-chained-call": [1, {"ignoreChainWithDepth": 4}],
     "no-children-prop": [0],
     "no-console": [1, {"allow": ["warn", "error"]}],
@@ -83,8 +84,63 @@
     "quote-props": [1, "as-needed"],
     "quotes": [1, "double"],
 
+    // Import
+    "import/named": [2],
+
+    // Lodash
+    "lodash/callback-binding": [1],
+    "lodash/collection-return": [1],
+    "lodash/no-double-unwrap": [1],
+    "lodash/no-extra-args": [1],
+    "lodash/no-unbound-this": [1],
+    "lodash/chaining": [2, "never"],
+    "lodash/identity-shorthand": [1],
+    "lodash/matches-prop-shorthand": [1],
+    "lodash/matches-shorthand": [1],
+    "lodash/prefer-compact": [1],
+    "lodash/prefer-filter": [1],
+    "lodash/prefer-flat-map": [1],
+    "lodash/prefer-map": [1],
+    "lodash/prefer-reject": [1],
+    "lodash/preferred-alias": [1],
+    "lodash/prefer-get": [1],
+    "lodash/prefer-includes": [1],
+    "lodash/prefer-is-nil": [1],
+    "lodash/prefer-lodash-method": [1, "ignoreMethods":[
+      "find"
+    ]],
+    "lodash/prefer-lodash-typecheck": [1],
+    "lodash/prefer-matches": [1],
+    "lodash/prefer-noop": [1],
+    "lodash/prefer-over-quantifier": [1],
+    "lodash/prefer-some": [1],
+    "lodash/prefer-startswith": [1],
+    "lodash/prefer-times": [1],
+
     // React
+    "react/prop-types": [1, {"skipUndeclared": true}],
+
+    // JSX
     "jsx-quotes": [1],
-    "react/prop-types": [1, {"skipUndeclared": true}]
+    "react/jsx-closing-bracket-location": [1],
+    "react/jsx-closing-tag-location": [1],
+    "react/jsx-curly-spacing": [1],
+    "react/jsx-equals-spacing": [1],
+    "react/jsx-first-prop-new-line": [1],
+    "react/jsx-indent": [1],
+    "react/jsx-indent-props": [1],
+    "react/jsx-key": [2],
+    "react/jsx-no-comment-textnodes": [1],
+    "react/jsx-no-duplicate-props": [2],
+    "react/jsx-no-target-blank": [2],
+    "react/jsx-no-undef": [2],
+    "react/jsx-curly-brace-presence": [1, "never"],
+    "react/jsx-pascal-case": [1, {
+      "allowAllCaps": true
+    }],
+    "react/jsx-tag-spacing": [1],
+    "react/jsx-uses-react": [1],
+    "react/jsx-uses-vars": [1],
+    "react/jsx-wrap-multilines": [1, {"arrow": "ignore"}],
   }
 }

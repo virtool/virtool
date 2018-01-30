@@ -12,7 +12,7 @@ const SampleToolbar = ({canCreate, onFind, term}) => (
         <FormGroup>
             <InputGroup>
                 <InputGroup.Addon>
-                    <Icon name="search"/>
+                    <Icon name="search" />
                 </InputGroup.Addon>
                 <FormControl
                     type="text"
@@ -24,7 +24,7 @@ const SampleToolbar = ({canCreate, onFind, term}) => (
         </FormGroup>
 
         <LinkContainer to="/samples/files">
-            <Button tip="Read Files" icon="folder-open"/>
+            <Button tip="Read Files" icon="folder-open" />
         </LinkContainer>
 
         {canCreate ? (

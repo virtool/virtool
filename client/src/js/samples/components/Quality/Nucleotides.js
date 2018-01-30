@@ -1,7 +1,7 @@
-import { line } from "d3-shape";
-import { scaleLinear } from "d3-scale";
 import { axisBottom, axisLeft } from "d3-axis";
-import { unzip } from "lodash";
+import { scaleLinear } from "d3-scale";
+import { line } from "d3-shape";
+import { forEach, unzip } from "lodash-es";
 
 import { appendLegend, createSVG } from "../../chartUtils";
 
@@ -32,7 +32,7 @@ const CreateNucleotidesChart = (element, data, baseWidth) => {
         .y(d => y(d));
 
     // Append the four plot lines to the SVG.
-    unzip(data).forEach((set, index) => {
+    forEach(unzip(data), (set, index) => {
         svg.append("path")
             .attr("d", () => lineDrawer(set))
             .attr("stroke", () => series[index].color)

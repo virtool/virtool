@@ -18,7 +18,7 @@ const VirusToolbar = ({ canModify, onFind, term }) => (
                     type="text"
                     placeholder="Name or abbreviation"
                     value={term}
-                    onChange={e => onFind(e.target.value)}
+                    onChange={onFind}
                 />
             </div>
         </div>
@@ -47,8 +47,8 @@ const mapStateToProps = (state) => ({
 
 const mapDispatchToProps = (dispatch) => ({
 
-    onFind: (find) => {
-        const url = createFindURL({ find });
+    onFind: (e) => {
+        const url = createFindURL({ find: e.target.value });
         dispatch(push(url.pathname + url.search));
     }
 

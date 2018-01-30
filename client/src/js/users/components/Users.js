@@ -10,9 +10,7 @@
  */
 
 import React from "react";
-import { get } from "lodash";
 import { connect } from "react-redux";
-import { push } from "react-router-redux";
 import { LinkContainer } from "react-router-bootstrap";
 import { Route, Switch } from "react-router-dom";
 import { Col, FormControl, FormGroup, InputGroup, Row } from "react-bootstrap";
@@ -24,7 +22,7 @@ import UsersList from "./List";
 import CreateUser from "./Create";
 import Groups from "../../groups/components/Groups";
 
-class ManageUsers extends React.Component {
+export class ManageUsers extends React.Component {
 
     constructor (props) {
         super(props);
@@ -44,6 +42,10 @@ class ManageUsers extends React.Component {
         }
     }
 
+    handleFilter = (e) => {
+        this.props.onFilter(e.target.value);
+    };
+
     render () {
 
         if (this.props.users === null || this.props.groups === null) {
@@ -58,12 +60,12 @@ class ManageUsers extends React.Component {
                             <FormGroup>
                                 <InputGroup>
                                     <InputGroup.Addon>
-                                        <Icon name="search"/>
+                                        <Icon name="search" />
                                     </InputGroup.Addon>
                                     <FormControl
                                         type="text"
                                         value={this.props.filter}
-                                        onChange={(e) => this.props.onFilter(e.target.value)}
+                                        onChange={this.handleFilter}
                                     />
                                 </InputGroup>
                             </FormGroup>
@@ -85,19 +87,8 @@ class ManageUsers extends React.Component {
                     </Col>
                 </Row>
 
-                <Route path="/settings/users" render={({ location }) => (
-                    <div>
-                        <CreateUser
-                            show={get(location.state, "createUser")}
-                            onHide={this.props.onHide}
-                        />
-
-                        <Groups
-                            show={get(location.state, "groups")}
-                            onHide={this.props.onHide}
-                        />
-                    </div>
-                )} />
+                <CreateUser />
+                <Groups />
             </div>
         );
     }
@@ -121,14 +112,8 @@ const mapDispatchToProps = dispatch => ({
 
     onFilter: (term) => {
         dispatch(filterUsers(term));
-    },
-
-    onHide: () => {
-        dispatch(push({state: {groups: false, createUser: false}}));
     }
 
 });
 
-const Container = connect(mapStateToProps, mapDispatchToProps)(ManageUsers);
-
-export default Container;
+export default connect(mapStateToProps, mapDispatchToProps)(ManageUsers);

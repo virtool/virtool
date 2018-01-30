@@ -5,6 +5,7 @@
  */
 import React from "react";
 import PropTypes from "prop-types";
+import { replace } from "lodash-es";
 import { Table, Well } from "react-bootstrap";
 
 export default function NuVsExportPreview ({ mode }) {
@@ -32,7 +33,7 @@ export default function NuVsExportPreview ({ mode }) {
         barName = "best annotation";
         barExample = "RNA Polymerase";
 
-        previewHeader = previewHeader.replace("sequence_1", "orf_1_1");
+        previewHeader = replace(previewHeader, "sequence_1", "orf_1_1");
         previewSequence = "ELREECRSLRSRCDQLEERVSAMEDEMNEMKREGKFREKRIKRNEQSLQEIWDYVKRPNLRLIGVPESDGENGTKLENTFREKSAME";
     }
 

@@ -6,18 +6,17 @@
  * @author
  * Ian Boyes
  *
- * @exports QuickAnalyze
- *
+ * @exports QuickAnalyze *
  */
-
-
 import React from "react";
+import { push } from "react-router-redux";
 import { connect } from "react-redux";
 import { Modal } from "react-bootstrap";
 
 import { analyze } from "../actions";
 import { updateAccountSettings } from "../../account/actions";
 import { AlgorithmSelect, Input, Checkbox, Button } from "../../base";
+import { routerLocationHasState } from "../../utils";
 
 const getInitialState = ({ algorithm = "pathoscope_bowtie" }) => ({
     algorithm,
@@ -41,9 +40,27 @@ class QuickAnalyze extends React.Component {
         this.setState(getInitialState(this.props));
     };
 
+    handleSetAlgorithm = (e) => {
+        this.setState({
+            algorithm: e.target.value
+        });
+    };
+
+    handleSkipAnalysisDialog = () => {
+        this.setState({
+            skipQuickAnalyzeDialog: !this.state.skipQuickAnalyzeDialog
+        });
+    };
+
     handleSubmit = (e) => {
         e.preventDefault();
         this.props.onAnalyze({id: this.props.id, ...this.state});
+    };
+
+    handleUseAsDefault = () => {
+        this.setState({
+            useAsDefault: !this.state.useAsDefault
+        });
     };
 
     render () {
@@ -63,19 +80,19 @@ class QuickAnalyze extends React.Component {
 
                         <AlgorithmSelect
                             value={this.state.algorithm}
-                            onChange={(e) => this.setState({algorithm: e.target.value})}
+                            onChange={this.handleSetAlgorithm}
                         />
 
                         <Checkbox
                             label="Set as default algorithm"
                             checked={this.state.useAsDefault || this.state.skipQuickAnalyzeDialog}
-                            onClick={() => this.setState({useAsDefault: !this.state.useAsDefault})}
+                            onClick={this.handleUseAsDefault}
                         />
 
                         <Checkbox
                             label="Skip this dialog from now on"
                             checked={this.state.skipQuickAnalyzeDialog}
-                            onClick={() => this.setState({skipQuickAnalyzeDialog: !this.state.skipQuickAnalyzeDialog})}
+                            onClick={this.handleSkipAnalysisDialog}
                         />
                     </Modal.Body>
 
@@ -91,7 +108,10 @@ class QuickAnalyze extends React.Component {
 }
 
 const mapStateToProps = (state) => ({
-    algorithm: state.account.settings.quick_analyze_algorithm
+    ...(state.router.location.state || {}),
+    algorithm: state.account.settings.quick_analyze_algorithm,
+    show: routerLocationHasState(state, "quickAnalyze")
+
 });
 
 const mapDispatchToProps = (dispatch) => ({
@@ -108,6 +128,10 @@ const mapDispatchToProps = (dispatch) => ({
         }
 
         dispatch(updateAccountSettings(settingsUpdate));
+    },
+
+    onHide: () => {
+        dispatch(push({...window.location, state: {}}));
     }
 
 });

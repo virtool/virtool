@@ -1,11 +1,13 @@
 import React from "react";
 import PropTypes from "prop-types";
 import Dropzone from "react-dropzone";
-import { connect } from "react-redux";
 import { Modal, Panel, Table, ProgressBar } from "react-bootstrap";
-import { Button, RelativeTime } from "../../base";
-import { uploadImport, commitImport } from "../actions";
+import { connect } from "react-redux";
+import { push } from "react-router-redux";
 
+import { uploadImport, commitImport } from "../actions";
+import { Button, RelativeTime } from "../../base";
+import { routerLocationHasState } from "../../utils";
 
 const getInitialState = () => ({
     uploadProgress: 0
@@ -26,12 +28,16 @@ class VirusImport extends React.Component {
         onCommit: PropTypes.func
     };
 
-    handleProgress = (progressEvent) => {
-        this.setState({uploadProgress: progressEvent.loaded / progressEvent.total});
-    };
-
     handleCommit = () => {
         this.props.onCommit(this.props.importData.file_id);
+    };
+
+    handleDrop = (files) => {
+        this.props.onDrop(files[0], this.handleProgress);
+    };
+
+    handleProgress = (e) => {
+        this.setState({uploadProgress: e.percent});
     };
 
     render () {
@@ -41,7 +47,7 @@ class VirusImport extends React.Component {
         if (this.props.importData === null) {
             body = (
                 <div>
-                    <Dropzone className="dropzone" onDrop={files => this.props.onDrop(files[0], this.handleProgress)}>
+                    <Dropzone className="dropzone" onDrop={this.handleDrop}>
                         <span>Drag or click here to upload a <strong>viruses.json.gz</strong> file.</span>
                     </Dropzone>
 
@@ -128,17 +134,22 @@ class VirusImport extends React.Component {
 }
 
 const mapStateToProps = state => ({
+    show: routerLocationHasState(state, "virusImport"),
     importData: state.viruses.importData
 });
 
 const mapDispatchToProps = dispatch => ({
 
+    onCommit: (fileId) => {
+        dispatch(commitImport(fileId));
+    },
+
     onDrop: (file, onProgress) => {
         dispatch(uploadImport(file, onProgress));
     },
 
-    onCommit: (fileId) => {
-        dispatch(commitImport(fileId));
+    onHide: () => {
+        dispatch(push({...window.location, state: {importViruses: false}}));
     }
 
 });

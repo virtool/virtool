@@ -1,5 +1,5 @@
 import React from "react";
-import { without } from "lodash";
+import { includes, map, toLower, without } from "lodash-es";
 import { connect } from "react-redux";
 import { Row, Col, Panel, Overlay, Popover, FormGroup, InputGroup, FormControl } from "react-bootstrap";
 
@@ -26,7 +26,11 @@ class SourceTypes extends React.Component {
     }
 
     remove = (sourceType) => {
-        this.props.onUpdate(without(this.props.settings.allowed_source_types, sourceType));
+        this.props.onUpdate(without(this.props.allowed_source_types, sourceType));
+    };
+
+    handleEnable = () => {
+        this.props.onToggle(!this.props.restrict_source_types);
     };
 
     handleSubmit = (e) => {
@@ -36,16 +40,20 @@ class SourceTypes extends React.Component {
         if (this.state.value !== "") {
             // Convert source type to lowercase. All source types are single words stored in lowercase. They are
             // capitalized when rendered in the application.
-            const newSourceType = this.state.value.toLowerCase();
+            const newSourceType = toLower(this.state.value);
 
-            if (this.props.settings.allowed_source_types.includes(newSourceType)) {
+            if (includes(this.props.allowed_source_types, newSourceType)) {
                 // Show error if the source type already exists in the list.
-                this.setState({error: "Source type already exists."});
-            } else if (newSourceType.includes(" ")) {
+                this.setState({
+                    error: "Source type already exists."
+                });
+            } else if (includes(newSourceType, " ")) {
                 // Show error if the input string includes a space character.
-                this.setState({error: "Source types may not contain spaces."});
+                this.setState({
+                    error: "Source types may not contain spaces."
+                });
             } else {
-                const newSourceTypes = this.props.settings.allowed_source_types.concat([newSourceType]);
+                const newSourceTypes = this.props.allowed_source_types.concat([newSourceType]);
                 this.props.onUpdate(newSourceTypes);
                 this.setState(getInitialState());
             }
@@ -54,9 +62,9 @@ class SourceTypes extends React.Component {
 
     render () {
 
-        const restrictSourceTypes = this.props.settings.restrict_source_types;
+        const restrictSourceTypes = this.props.restrict_source_types;
 
-        const listComponents = this.props.settings.allowed_source_types.sort().map(sourceType =>
+        const listComponents = map(this.props.allowed_source_types.sort(), sourceType =>
             <SourceTypeItem
                 key={sourceType}
                 onRemove={this.remove}
@@ -77,7 +85,7 @@ class SourceTypes extends React.Component {
                                 <Checkbox
                                     label="Enable"
                                     checked={restrictSourceTypes}
-                                    onClick={() => this.props.onToggle(!restrictSourceTypes)}
+                                    onClick={this.handleEnable}
                                 />
                             </FlexItem>
                         </Flex>
@@ -137,9 +145,14 @@ class SourceTypes extends React.Component {
     }
 }
 
-const mapStateToProps = (state) => ({
-    settings: state.settings.data
-});
+const mapStateToProps = (state) => {
+    const { allowed_source_types, restrict_source_types } = state.settings.data;
+
+    return {
+        allowed_source_types,
+        restrict_source_types
+    };
+};
 
 const mapDispatchToProps = (dispatch) => ({
 

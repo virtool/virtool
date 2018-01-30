@@ -1,7 +1,7 @@
 import React from "react";
 import PropTypes from "prop-types";
 import { Link } from "react-router-dom";
-import { mapValues, values } from "lodash";
+import { mapValues, values } from "lodash-es";
 import { Table } from "react-bootstrap";
 
 const TaskArgs = (props) => {

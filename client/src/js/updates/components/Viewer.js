@@ -1,5 +1,5 @@
 import React from "react";
-import { capitalize } from "lodash";
+import { capitalize, map } from "lodash-es";
 import { connect } from "react-redux";
 import { Row, Col, Panel, ListGroup } from "react-bootstrap";
 
@@ -8,6 +8,26 @@ import { updateSetting } from "../../settings/actions";
 import { Button, Flex, FlexItem, Icon, Radio, LoadingPlaceholder } from "../../base";
 import Release from "./Release";
 import InstallModal from "./Install";
+
+class ChannelButton extends React.Component {
+
+    handleClick = () => {
+        this.props.onClick(this.props.channel);
+    };
+
+    render () {
+
+        const { channel, checked } = this.props;
+
+        return (
+            <Radio
+                label={`${capitalize(channel)}${channel === "stable" ? " (recommended)" : ""}`}
+                checked={checked}
+                onClick={this.handleClick}
+            />
+        );
+    }
+}
 
 class SoftwareUpdateViewer extends React.Component {
 
@@ -31,7 +51,7 @@ class SoftwareUpdateViewer extends React.Component {
         let updateComponent;
 
         if (releases.length) {
-            const releaseComponents = releases.map(release =>
+            const releaseComponents = map(releases, release =>
                 <Release key={release.name} {...release} />
             );
 
@@ -66,12 +86,12 @@ class SoftwareUpdateViewer extends React.Component {
             );
         }
 
-        const radioComponents = ["stable", "beta", "alpha"].map((channel) =>
-            <Radio
+        const radioComponents = map(["stable", "beta", "alpha"], channel =>
+            <ChannelButton
                 key={channel}
-                checked={this.props.channel === channel}
-                label={`${capitalize(channel)}${channel === "stable" ? " (recommended)" : ""}`}
-                onClick={() => this.props.onSetSoftwareChannel(channel)}
+                channel={channel}
+                checked={channel === this.props.channel}
+                onClick={this.props.onSetSoftwareChannel}
             />
         );
 

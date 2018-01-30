@@ -1,11 +1,12 @@
 import React from "react";
 import Moment from "moment";
 import PropTypes from "prop-types";
+import { forEach, includes } from "lodash-es";
 
 window.relativeTimeCallbacks = [];
 
 window.setInterval(1000, () => {
-    window.relativeTimeCallbacks.forEach(callback => callback());
+    forEach(window.relativeTimeCallbacks, callback => callback());
 });
 
 /**
@@ -62,7 +63,7 @@ export class RelativeTime extends React.Component {
         // It is possible that the relative time could be in the future if the browser time lags behind the server time.
         // If this is the case the string will contain the substring 'in a'. If this substring is present, return the
         // alternative time string 'just now'.
-        return timeString.includes("in a") || timeString.includes("a few") ? "just now" : timeString;
+        return includes(timeString, "in a") || includes(timeString, "a few") ? "just now" : timeString;
     };
 
     update = () => {

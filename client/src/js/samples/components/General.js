@@ -1,10 +1,12 @@
 import React from "react";
 import Moment from "moment";
 import Numeral from "numeral";
-import { connect } from "react-redux";
+import { map } from "lodash-es";
 import { Panel, Table } from "react-bootstrap";
-import { IDRow } from "../../base";
+import { connect } from "react-redux";
+
 import EditSample from "./Edit";
+import { IDRow } from "../../base";
 
 const cellNames = ["name", "host", "isolate"];
 
@@ -12,7 +14,7 @@ const SampleDetailGeneral = (props) => (
     <div>
         <table className="table table-bordered">
             <tbody>
-                {cellNames.map(field =>
+                {map(cellNames, field =>
                     <tr key={field}>
                         <th className="col-xs-4 text-capitalize">{field}</th>
                         <td className="col-xs-8">{props[field]}</td>

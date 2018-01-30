@@ -1,14 +1,14 @@
 import React from "react";
 import Dropzone from "react-dropzone";
-import { push } from "react-router-redux";
-import { capitalize, filter } from "lodash";
+import { capitalize, filter, forEach, map } from "lodash-es";
+import { Alert, ListGroup } from "react-bootstrap";
 import { connect } from "react-redux";
-import { ListGroup } from "react-bootstrap";
+import { push } from "react-router-redux";
 
 import File from "./File";
-import { createRandomString } from "../../utils";
 import { findFiles, removeFile, upload, uploadProgress } from "../actions";
-import { Button, Icon, ListGroupItem, LoadingPlaceholder, Pagination, ViewHeader } from "../../base";
+import { Button, Icon, LoadingPlaceholder, NoneFound, Pagination, ViewHeader } from "../../base";
+import { createRandomString } from "../../utils";
 
 class FileManager extends React.Component {
 
@@ -17,7 +17,9 @@ class FileManager extends React.Component {
     }
 
     handleDrop = (acceptedFiles) => {
-        this.props.onDrop(this.props.fileType, acceptedFiles);
+        if (this.props.canUpload) {
+            this.props.onDrop(this.props.fileType, acceptedFiles);
+        }
     };
 
     handlePage = (page) => {
@@ -30,34 +32,26 @@ class FileManager extends React.Component {
             return <LoadingPlaceholder />;
         }
 
-        let fileComponents = filter(this.props.documents, {type: this.props.fileType}).map(document =>
-            <File
-                key={document.id}
-                {...document}
-                onRemove={this.props.onRemove}
-            />
-        );
+        const filtered = filter(this.props.documents, {type: this.props.fileType});
 
-        if (!fileComponents.length) {
+        let fileComponents;
+
+        if (filtered.length) {
+            fileComponents = map(filtered, document =>
+                <File key={document.id} {...document} onRemove={this.props.onRemove} />
+            );
+        } else {
             fileComponents = (
-                <ListGroupItem className="text-center">
-                    <Icon name="info" /> No files found
-                </ListGroupItem>
+                <NoneFound noun="files" />
             );
         }
 
         const titleType = this.props.fileType === "reads" ? "Read" : capitalize(this.props.fileType);
 
-        return (
-            <div>
-                <ViewHeader
-                    title={`${titleType} Files`}
-                    page={this.props.page}
-                    count={this.props.documents.length}
-                    foundCount={this.props.found_count}
-                    totalCount={this.props.total_count}
-                />
+        let toolbar;
 
+        if (this.props.canUpload) {
+            toolbar = (
                 <div className="toolbar">
                     <Dropzone
                         ref={(node) => this.dropzone = node}
@@ -69,8 +63,30 @@ class FileManager extends React.Component {
                         Drag file here to upload
                     </Dropzone>
 
-                    <Button icon="folder-open" onClick={() => this.dropzone.open()}/>
+                    <Button icon="folder-open" onClick={() => this.dropzone.open()} />
                 </div>
+            );
+        } else {
+            toolbar = (
+                <Alert bsStyle="warning">
+                    <Icon name="warning" />
+                    <strong> {"You do not have permission to upload files."} </strong>
+                    <span>Contact an administrator.</span>
+                </Alert>
+            );
+        }
+
+        return (
+            <div>
+                <ViewHeader
+                    title={`${titleType} Files`}
+                    page={this.props.page}
+                    count={this.props.documents.length}
+                    foundCount={this.props.found_count}
+                    totalCount={this.props.total_count}
+                />
+
+                {toolbar}
 
                 <ListGroup>
                     {fileComponents}
@@ -94,14 +110,15 @@ const mapStateToProps = (state) => {
         documents,
         page,
         found_count,
-        total_count
+        total_count,
+        canUpload: state.account.permissions.upload_file
     };
 };
 
 const mapDispatchToProps = (dispatch) => ({
 
     onDrop: (fileType, acceptedFiles) => {
-        acceptedFiles.forEach(file => {
+        forEach(acceptedFiles, file => {
             const localId = createRandomString();
             dispatch(upload(localId, file, fileType, (e) => dispatch(uploadProgress(localId, e.percent))));
         });

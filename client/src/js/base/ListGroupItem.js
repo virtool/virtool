@@ -1,6 +1,6 @@
 import React from "react";
 import PropTypes from "prop-types";
-import { pick } from "lodash";
+import { pick } from "lodash-es";
 import { ListGroupItem as BsListGroupItem } from "react-bootstrap";
 
 /**

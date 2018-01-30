@@ -1,5 +1,5 @@
 import React from "react";
-import { startsWith } from "lodash";
+import { startsWith } from "lodash-es";
 import { connect } from "react-redux";
 import { withRouter } from "react-router-dom";
 import { LinkContainer } from "react-router-bootstrap";
@@ -22,7 +22,7 @@ const Bar = (props) => {
             <Navbar fixedTop>
                 <Navbar.Header>
                     <Navbar.Brand>
-                        <Icon name="vtlogo" className="vtlogo"/>
+                        <Icon name="vtlogo" className="vtlogo" />
                     </Navbar.Brand>
 
                     <Navbar.Toggle />

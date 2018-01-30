@@ -1,3 +1,5 @@
+import { map } from "lodash-es";
+
 import {
     LIST_USERS,
     FILTER_USERS,
@@ -18,7 +20,7 @@ const initialState = {
 
 const updateUser = (state, update) => ({
     ...state,
-    list: state.list.map(user => {
+    list: map(state.list, user => {
         if (user.id === update.id) {
             return {...user, ...update};
         }

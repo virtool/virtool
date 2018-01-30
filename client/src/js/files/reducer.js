@@ -1,5 +1,4 @@
-
-import { every, reject } from "lodash";
+import { every, map, reject } from "lodash-es";
 
 import {
     FIND_FILES,
@@ -67,7 +66,7 @@ export default function fileReducer (state = initialState, action) {
         }
 
         case UPLOAD_PROGRESS: {
-            const uploads = state.uploads.map(upload => {
+            const uploads = map(state.uploads, upload => {
                 if (upload.localId !== action.localId) {
                     return upload;
                 }

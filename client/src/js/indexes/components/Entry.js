@@ -27,7 +27,7 @@ export default class IndexEntry extends React.PureComponent {
             if (this.props.ready) {
                 ready = (
                     <span className="pull-right">
-                        <Icon name="checkmark" bsStyle="success"/> <strong>Active</strong>
+                        <Icon name="checkmark" bsStyle="success" /> <strong>Active</strong>
                     </span>
                 );
             } else {

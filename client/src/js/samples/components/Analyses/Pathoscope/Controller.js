@@ -1,6 +1,6 @@
 import React from "react";
 import PropTypes from "prop-types";
-import { xor, sortBy, sum, filter } from "lodash";
+import { filter, map, sortBy, sum, xor } from "lodash-es";
 import { Icon, Flex, FlexItem, Button, Checkbox } from "../../../../base";
 import { Row, Col, Dropdown, MenuItem, FormGroup, InputGroup, FormControl } from "react-bootstrap";
 
@@ -11,13 +11,13 @@ export default class PathoscopeController extends React.Component {
     constructor (props) {
         super(props);
         this.state = {
-            filterViruses: true,
+            expanded: [],
             filterIsolates: true,
+            filterViruses: true,
             findTerm: "",
-            sortKey: "coverage",
-            sortDescending: true,
             showReads: false,
-            expanded: []
+            sortDescending: true,
+            sortKey: "coverage"
         };
     }
 
@@ -26,7 +26,11 @@ export default class PathoscopeController extends React.Component {
         maxReadLength: PropTypes.number
     };
 
-    collapseAll = () => this.setState({expanded: []});
+    collapseAll = () => {
+        this.setState({
+            expanded: []
+        });
+    };
 
     toggleIn = (virusId) => {
         this.setState({
@@ -41,11 +45,15 @@ export default class PathoscopeController extends React.Component {
     };
 
     setSortKey = (e) => {
-        this.setState({sortKey: e.target.value});
+        this.setState({
+            sortKey: e.target.value
+        });
     };
 
     toggleSortDescending = () => {
-        this.setState({sortDescending: !this.state.sortDescending});
+        this.setState({
+            sortDescending: !this.state.sortDescending
+        });
     };
 
     filter = (eventKey) => {
@@ -73,7 +81,7 @@ export default class PathoscopeController extends React.Component {
         const re = this.state.findTerm ? new RegExp(this.state.findTerm, "i") : null;
 
         if (this.state.filterViruses) {
-            const totalReadsMapped = sum(data.map(v => v.reads));
+            const totalReadsMapped = sum(map(data, "reads"));
 
             data = filter(data, virus => (
                 (virus.pi * totalReadsMapped >= virus.length * 0.8 / this.props.maxReadLength) &&
@@ -84,7 +92,7 @@ export default class PathoscopeController extends React.Component {
         }
 
         if (this.state.filterIsolates) {
-            data = data.map(virus => ({
+            data = map(data, virus => ({
                 ...virus,
                 isolates: filter(virus.isolates, isolate => (isolate.pi >= 0.03 * virus.pi))
             }));
@@ -148,7 +156,10 @@ export default class PathoscopeController extends React.Component {
                                 onClick={this.toggleShowReads}
                             />
 
-                            <Dropdown id="job-clear-dropdown" onSelect={this.handleSelect} className="split-dropdown"
+                            <Dropdown
+                                id="job-clear-dropdown"
+                                onSelect={this.handleSelect}
+                                className="split-dropdown"
                                 pullRight
                             >
                                 <Button

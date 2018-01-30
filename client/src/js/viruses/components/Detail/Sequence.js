@@ -32,6 +32,22 @@ class Sequence extends React.Component {
         canModify: PropTypes.bool
     };
 
+    handleCloseClick = () => {
+        this.setState({in: false});
+    };
+
+    handleDownload = () => {
+        followDownload(`/download/sequences/${this.props.id}`);
+    };
+
+    handleShowEditSequence = () => {
+        this.props.showEditSequence(this.props.id);
+    };
+
+    handleShowRemoveSequence = () => {
+        this.props.showRemoveSequence(this.props.id);
+    };
+
     render () {
 
         const accession = this.props.id;
@@ -48,7 +64,7 @@ class Sequence extends React.Component {
                                     name="pencil"
                                     bsStyle="warning"
                                     tip="Edit Sequence"
-                                    onClick={() => this.props.showEditSequence(this.props.id)}
+                                    onClick={this.handleShowEditSequence}
                                 />
                             </FlexItem>
                         ) : null}
@@ -58,7 +74,7 @@ class Sequence extends React.Component {
                                     name="remove"
                                     bsStyle="danger"
                                     tip="Remove Sequence"
-                                    onClick={() => this.props.showRemoveSequence(this.props.id)}
+                                    onClick={this.handleShowRemoveSequence}
                                 />
                             </FlexItem>
                         ) : null}
@@ -66,11 +82,11 @@ class Sequence extends React.Component {
                             <Icon
                                 name="download"
                                 tip="Download FASTA"
-                                onClick={() => followDownload(`/download/sequences/${this.props.id}`)}
+                                onClick={this.handleDownload}
                             />
                         </FlexItem>
                         <FlexItem pad={5}>
-                            <button type="button" className="close" onClick={() => this.setState({in: false})}>
+                            <button type="button" className="close" onClick={this.handleCloseClick}>
                                 <span>×</span>
                             </button>
                         </FlexItem>

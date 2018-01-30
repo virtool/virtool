@@ -6,25 +6,34 @@ import { Modal } from "react-bootstrap";
 import { removeVirus, hideVirusModal } from "../../actions";
 import { Button } from "../../../base";
 
-const RemoveVirus = props => (
-    <Modal show={props.show} onHide={props.onHide} dialogClassName="modal-danger">
-        <Modal.Header onHide={props.onHide} closeButton>
-            Remove Virus
-        </Modal.Header>
-        <Modal.Body>
-            Are you sure you want to remove <strong>{props.virusName}</strong>?
-        </Modal.Body>
-        <Modal.Footer>
-            <Button
-                bsStyle="danger"
-                icon="checkmark"
-                onClick={() => props.onConfirm(props.virusId, props.history)}
-            >
-                Confirm
-            </Button>
-        </Modal.Footer>
-    </Modal>
-);
+class RemoveVirus extends React.Component {
+
+    handleConfirm () {
+        this.props.onConfirm(this.props.virusId, this.props.history);
+    }
+
+    render () {
+        return (
+            <Modal show={this.props.show} onHide={this.props.onHide} dialogClassName="modal-danger">
+                <Modal.Header onHide={this.props.onHide} closeButton>
+                    Remove Virus
+                </Modal.Header>
+                <Modal.Body>
+                    Are you sure you want to remove <strong>{this.props.virusName}</strong>?
+                </Modal.Body>
+                <Modal.Footer>
+                    <Button
+                        bsStyle="danger"
+                        icon="checkmark"
+                        onClick={this.handleConfirm}
+                    >
+                        Confirm
+                    </Button>
+                </Modal.Footer>
+            </Modal>
+        );
+    }
+}
 
 RemoveVirus.propTypes = {
     history: PropTypes.object,

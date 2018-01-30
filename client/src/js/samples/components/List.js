@@ -1,7 +1,7 @@
 import React from "react";
-import { Route } from "react-router-dom";
-import { push } from "react-router-redux";
+import { map } from "lodash-es";
 import { connect } from "react-redux";
+import { push } from "react-router-redux";
 import { ListGroup } from "react-bootstrap";
 
 import SampleEntry from "./Entry";
@@ -17,7 +17,7 @@ const SamplesList = (props) => {
         return <LoadingPlaceholder />;
     }
 
-    let sampleComponents = props.documents.map(document =>
+    let sampleComponents = map(props.documents, document =>
         <SampleEntry
             key={document.id}
             id={document.id}
@@ -55,13 +55,7 @@ const SamplesList = (props) => {
 
             <CreateSample />
 
-            <Route path="/samples" render={({ history }) =>
-                <QuickAnalyze
-                    show={!!(history.location.state && history.location.state.quickAnalyze)}
-                    {...(history.location.state ? history.location.state.quickAnalyze : {})}
-                    onHide={props.onHide}
-                />
-            } />
+            <QuickAnalyze />
         </div>
     );
 };

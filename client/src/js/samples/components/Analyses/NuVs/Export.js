@@ -6,6 +6,7 @@
  */
 import React from "react";
 import PropTypes from "prop-types";
+import { filter, map, reduce, replace } from "lodash-es";
 import { ButtonGroup, Modal } from "react-bootstrap";
 
 import { followDynamicDownload } from "../../../../utils";
@@ -21,7 +22,7 @@ const getInitialState = () => ({
 });
 
 const getBestHit = (items) => (
-    items.reduce((best, hit) => {
+    reduce(items, (best, hit) => {
         if (hit.full_e < best.e) {
             best.e = hit.full_e;
             best.name = hit.names[0];
@@ -32,7 +33,7 @@ const getBestHit = (items) => (
 );
 
 const downloadData = (analysisId, content, sampleName, suffix) => (
-    followDynamicDownload(`nuvs.${sampleName.replace(" ", "_")}.${analysisId}.${suffix}.fa`, content.join("\n"))
+    followDynamicDownload(`nuvs.${replace(sampleName, " ", "_")}.${analysisId}.${suffix}.fa`, content.join("\n"))
 );
 
 export default class NuVsExport extends React.Component {
@@ -50,7 +51,7 @@ export default class NuVsExport extends React.Component {
         onHide: PropTypes.func
     };
 
-    handleExited = () => {
+    handleModalExited = () => {
         this.setState(getInitialState());
     };
 
@@ -62,8 +63,8 @@ export default class NuVsExport extends React.Component {
         e.preventDefault();
 
         if (this.state.mode === "contigs") {
-            const content = this.props.results.map(result => {
-                const orfNames = result.orfs.reduce((names, orf) => {
+            const content = map(this.props.results, result => {
+                const orfNames = reduce(result.orfs, (names, orf) => {
                     // Get the best hit for the current ORF.
                     if (orf.hits.length) {
                         const bestHit = getBestHit(orf.hits);
@@ -84,29 +85,25 @@ export default class NuVsExport extends React.Component {
 
         const sampleName = this.props.sampleName;
 
-        const content = this.props.results.reduce((orfs, result) => {
-            result.orfs.forEach(orf => {
+        const content = map(this.props.results, (orfs, result) =>
+            filter(result.orfs, orf => {
                 // Get the best hit for the current ORF.
                 if (orf.hits.length) {
                     const bestHit = getBestHit(orf.hits);
 
                     if (bestHit.name) {
-                        orfs.push(
-                            `>orf_${result.index}_${orf.index}|${sampleName}|${bestHit.name}\n${orf.pro}`
-                        );
+                        return `>orf_${result.index}_${orf.index}|${sampleName}|${bestHit.name}\n${orf.pro}`;
                     }
                 }
-            });
-
-            return orfs;
-        }, []);
+            })
+        );
 
         downloadData(this.props.analysisId, content, this.props.sampleName, "orfs");
     };
 
     render () {
         return (
-            <Modal show={this.props.show} onHide={this.props.onHide} onExited={this.handleExited}>
+            <Modal show={this.props.show} onHide={this.props.onHide} onExited={this.handleModalExited}>
                 <Modal.Header onHide={this.props.onHide} closeButton>
                     Export NuVs Data
                 </Modal.Header>

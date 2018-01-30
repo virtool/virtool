@@ -1,4 +1,5 @@
 import React from "react";
+import { forEach, map } from "lodash-es";
 import { connect } from "react-redux";
 import { Row, Col, ListGroup, Panel } from "react-bootstrap";
 
@@ -37,7 +38,7 @@ const TasksFooter = () => (
 
 const TaskLimits = (props) => {
 
-    const taskComponents = taskNames.map(taskPrefix =>
+    const taskComponents = map(taskNames, taskPrefix =>
         <Task
             key={taskPrefix}
             taskPrefix={taskPrefix}
@@ -77,7 +78,7 @@ const TaskLimits = (props) => {
 const mapStateToProps = (state) => {
     const limits = {};
 
-    taskNames.forEach(taskName => {
+    forEach(taskNames, taskName => {
         limits[taskName] = {
             proc: state.settings.data[`${taskName}_proc`],
             mem: state.settings.data[`${taskName}_mem`],

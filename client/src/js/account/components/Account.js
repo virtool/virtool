@@ -35,10 +35,10 @@ class Account extends React.Component {
                 </Nav>
 
                 <Switch>
-                    <Redirect from="/account" to="/account/general" exact/>
-                    <Route path="/account/general" component={AccountGeneral}/>
-                    <Route path="/account/settings" component={AccountSettings}/>
-                    <Route path="/account/api" component={APIKeys}/>
+                    <Redirect from="/account" to="/account/general" exact />
+                    <Route path="/account/general" component={AccountGeneral} />
+                    <Route path="/account/settings" component={AccountSettings} />
+                    <Route path="/account/api" component={APIKeys} />
                 </Switch>
             </div>
         );

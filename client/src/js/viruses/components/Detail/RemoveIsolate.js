@@ -1,30 +1,27 @@
 import React from "react";
-import PropTypes from "prop-types";
 import { connect } from "react-redux";
 
 import { removeIsolate, hideVirusModal } from "../../actions";
 import { RemoveModal } from "../../../base";
 
-const RemoveIsolate = ({ isolateId, isolateName, nextIsolateId, onConfirm, onHide, show, virusId}) => (
-    <RemoveModal
-        name={isolateName}
-        noun="isolate"
-        onConfirm={() => onConfirm(virusId, isolateId, nextIsolateId)}
-        onHide={onHide}
-        show={show}
-    />
-);
+export class RemoveIsolate extends React.Component {
 
-RemoveIsolate.propTypes = {
-    virusId: PropTypes.string,
-    isolateId: PropTypes.string,
-    isolateName: PropTypes.string,
-    nextIsolateId: PropTypes.string,
-    show: PropTypes.bool,
-    onHide: PropTypes.func,
-    onConfirm: PropTypes.func,
-    onSuccess: PropTypes.func
-};
+    handleConfirm = () => {
+        this.props.onConfirm(this.props.virusId, this.props.isolateId, this.props.nextIsolateId);
+    };
+
+    render () {
+        return (
+            <RemoveModal
+                name={this.props.isolateName}
+                noun="isolate"
+                onConfirm={this.handleConfirm}
+                onHide={this.props.onHide}
+                show={this.props.show}
+            />
+        );
+    }
+}
 
 const mapStateToProps = state => ({
     show: state.viruses.removeIsolate

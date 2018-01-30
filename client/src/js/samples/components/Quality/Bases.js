@@ -1,7 +1,7 @@
-import { line, area } from "d3-shape";
-import { scaleLinear } from "d3-scale";
 import { axisBottom, axisLeft } from "d3-axis";
-import { min, values } from "lodash";
+import { scaleLinear } from "d3-scale";
+import { line, area } from "d3-shape";
+import { forEach, map, min, values } from "lodash-es";
 
 import { appendLegend, createSVG } from "../../chartUtils";
 
@@ -34,7 +34,7 @@ const getArea = (name, areaX, y, a, b) => ({
  * @returns {*}
  */
 const getMinQuality = (data) => (
-    min(data.map(document => min(values(document))))
+    min(map(data, document => min(values(document))))
 );
 
 /**
@@ -84,7 +84,7 @@ const CreateBasesChart = (element, data, baseWidth) => {
     ];
 
     // Append the areas to the chart.
-    areas.forEach(area => {
+    forEach(areas, area => {
         svg.append("path")
             .attr("d", area.func(data))
             .attr("class", "graph-line")

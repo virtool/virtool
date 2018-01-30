@@ -6,16 +6,20 @@
  * @author igboyes
  *
  */
-
 import React from "react";
 import Marked from "marked";
 import PropTypes from "prop-types";
+import { replace } from "lodash-es";
 import { ListGroupItem, Button, Row, Col } from "react-bootstrap";
 
 export const renderReleaseMarkdown = (body) => {
     let html = Marked(body);
 
-    html = html.replace(/#([0-9]+)/g, "<a target='_blank' href='https://github.com/virtool/virtool/issues/$1'>#$1</a>");
+    html = replace(
+        html,
+        /#([0-9]+)/g,
+        "<a target='_blank' href='https://github.com/virtool/virtool/issues/$1'>#$1</a>"
+    );
 
     return <div style={{marginTop: "10px"}} dangerouslySetInnerHTML={{__html: html}} />;
 };

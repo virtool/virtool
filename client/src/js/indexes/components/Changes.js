@@ -1,6 +1,8 @@
 import React from "react";
-import { connect } from "react-redux";
+import { map } from "lodash-es";
 import { Row, Col, ListGroup, ListGroupItem } from "react-bootstrap";
+import { connect } from "react-redux";
+
 
 import { getIndexHistory } from "../actions";
 import { LoadingPlaceholder, Pagination } from "../../base";
@@ -19,7 +21,7 @@ class IndexChanges extends React.Component {
 
         const history = this.props.history;
 
-        const changeComponents = history.documents.map(change =>
+        const changeComponents = map(history.documents, change =>
             <ListGroupItem key={change.id} className="spaced">
                 <Row>
                     <Col xs={12} md={6}>

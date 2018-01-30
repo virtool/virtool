@@ -1,5 +1,6 @@
 import React from "react";
 import PropTypes from "prop-types";
+import { map } from "lodash-es";
 
 import { Input } from "./";
 import { getTaskDisplayName } from "../utils";
@@ -22,8 +23,8 @@ export const AlgorithmSelect = (props) => (
         value={props.value}
         onChange={props.onChange}
     >
-        {algorithms.map(
-            algorithm => <option key={algorithm} value={algorithm}>{getTaskDisplayName(algorithm)}</option>
+        {map(algorithms, algorithm =>
+            <option key={algorithm} value={algorithm}>{getTaskDisplayName(algorithm)}</option>
         )}
     </Input>
 );

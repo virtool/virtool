@@ -11,6 +11,7 @@
 
 import React from "react";
 import PropTypes from "prop-types";
+import { map, toLower } from "lodash-es";
 import { Row, Col } from "react-bootstrap";
 
 import { formatIsolateName } from "../../../utils";
@@ -27,13 +28,9 @@ export default class IsolateForm extends React.Component {
         onSubmit: PropTypes.func
     };
 
-    focus = () => {
-        this.sourceTypeNode.focus();
-    };
-
     changeSourceType = (e) => {
         this.props.onChange({
-            sourceType: e.target.value.toLowerCase(),
+            sourceType: toLower(e.target.value),
             sourceName: e.target.value === "unknown" ? "" : this.props.sourceName
         });
     };
@@ -50,7 +47,6 @@ export default class IsolateForm extends React.Component {
         let sourceTypeInput;
 
         const sourceTypeInputProps = {
-            ref: (node) => this.sourceTypeNode = node,
             label: "Source Type",
             value: this.props.sourceType,
             onChange: this.changeSourceType
@@ -58,7 +54,7 @@ export default class IsolateForm extends React.Component {
 
         // If the is a restricted list of sourceTypes to choose from display a select field with the choices.
         if (this.props.restrictSourceTypes) {
-            const optionComponents = this.props.allowedSourceTypes.map(sourceType =>
+            const optionComponents = map(this.props.allowedSourceTypes, sourceType =>
                 <option key={sourceType} value={sourceType} className="text-capitalize">
                     {sourceType}
                 </option>

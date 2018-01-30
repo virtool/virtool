@@ -1,5 +1,5 @@
 import React from "react";
-import { toNumber } from "lodash";
+import { toNumber } from "lodash-es";
 import { connect } from "react-redux";
 import { Row, Col, Panel } from "react-bootstrap";
 
@@ -33,14 +33,14 @@ const HTTPOptions = (props) => (
                 <InputSave
                     label="Host"
                     autoComplete={false}
-                    onSave={e => props.onUpdateHost(e.value)}
+                    onSave={props.onUpdateHost}
                     initialValue={props.host}
                 />
                 <InputSave
                     label="Port"
                     type="number"
                     autoComplete={false}
-                    onSave={e => props.onUpdatePort(e.value)}
+                    onSave={props.onUpdatePort}
                     initialValue={props.port}
                 />
                 <Checkbox
@@ -61,12 +61,12 @@ const mapStateToProps = (state) => ({
 
 const mapDispatchToProps = (dispatch) => ({
 
-    onUpdateHost: (value) => {
-        dispatch(updateSetting("server_host", value));
+    onUpdateHost: (e) => {
+        dispatch(updateSetting("server_host", e.value));
     },
 
-    onUpdatePort: (value) => {
-        dispatch(updateSetting("server_port", toNumber(value)));
+    onUpdatePort: (e) => {
+        dispatch(updateSetting("server_port", toNumber(e.value)));
     },
 
     onUpdateAPI: (value) => {
