@@ -12,7 +12,8 @@ export const getUnbuilt = simpleActionCreator(GET_UNBUILT.REQUESTED);
 
 export const createIndex = simpleActionCreator(CREATE_INDEX.REQUESTED);
 
-export const getIndexHistory = (indexVersion) => ({
+export const getIndexHistory = (indexVersion, page) => ({
     type: GET_INDEX_HISTORY.REQUESTED,
-    indexVersion
+    indexVersion,
+    page
 });
