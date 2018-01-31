@@ -16,6 +16,6 @@ export const create = () => (
     Request.post("/api/indexes")
 );
 
-export const getHistory = ({ indexVersion }) => (
-    Request.get(`/api/indexes/${indexVersion}/history`)
+export const getHistory = ({ indexVersion, page = 1 }) => (
+    Request.get(`/api/indexes/${indexVersion}/history?page=${page}`)
 );
