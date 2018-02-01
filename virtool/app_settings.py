@@ -71,6 +71,12 @@ SCHEMA = {
     "server_port": get_default_integer(9950),
     "enable_api": {"type": "boolean", "default": False},
 
+    # Proxy Server
+    "proxy_address": {"type": "string", "default": ""},
+    "proxy_trust": get_default_boolean(False),
+    "proxy_username": {"type": "string", "default": ""},
+    "proxy_password": {"type": "string", "default": ""},
+
     # Github
     "github_token": {"type": "string", "default": None, "nullable": True},
     "github_username": {"type": "string", "default": None, "nullable": True},
