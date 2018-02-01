@@ -113,6 +113,7 @@ const CreateBasesChart = (element, data, baseWidth) => {
         .append("text")
         .attr("x", width / 2)
         .attr("y", 30)
+        .attr("dy", "10px")
         .attr("fill", "black")
         .attr("class", "axis-label")
         .text("Read Position");
