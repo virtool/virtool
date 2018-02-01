@@ -45,6 +45,7 @@ const CreateSequencesChart = (element, data, baseWidth) => {
         .attr("x", width / 2)
         .attr("dy", "10px")
         .attr("class", "axis-label")
+        .attr("fill", "black")
         .text("Read Quality");
 
     // Append a labelled y-axis to the SVG. The label is on the plot-side of the axis and is oriented vertically.
@@ -55,6 +56,8 @@ const CreateSequencesChart = (element, data, baseWidth) => {
         .attr("transform", "rotate(-90)")
         .attr("y", 6)
         .attr("dy", "10px")
+        .attr("fill", "black")
+        .attr("class", "axis-label")
         .style("text-anchor", "end")
         .text("Read Count");
 };
