@@ -4,7 +4,6 @@ import PropTypes from "prop-types";
 import { map, sortBy } from "lodash-es";
 import { Badge, ListGroup } from "react-bootstrap";
 import { connect } from "react-redux";
-import { Prompt } from 'react-router';
 
 import { byteSize } from "../../utils";
 import { hideUploadOverlay } from "../actions";
@@ -32,6 +31,12 @@ const UploadItem = ({ localId, name, progress, size}) => (
 
 class UploadOverlay extends React.Component {
 
+    handlePageLeave (e) {
+        const message = 'Upload(s) still in progress';   //browser security standards don't allow custom messages
+        e.returnValue = message;
+        return message;
+    }
+
     render () {
 
         const classNames = CX("upload-overlay", {hidden: !this.props.showUploadOverlay});
@@ -43,8 +48,12 @@ class UploadOverlay extends React.Component {
         let content;
 
         if (this.props.uploadsComplete) {
-            content = <div />;
+            window.removeEventListener('beforeunload', this.handlePageLeave);
+
+            content = null;
         } else {
+            window.addEventListener('beforeunload', this.handlePageLeave);
+
             content = (
                 <div className={classNames}>
                     <div className="upload-overlay-content">
@@ -59,11 +68,7 @@ class UploadOverlay extends React.Component {
                         <ListGroup style={{height: "auto", maxHeight: "175px", overflowX: "hidden"}}>
                             {uploadComponents}
                         </ListGroup>
-
-                        {/*<Button style={{margin: "0 0 10px 0"}}  >
-                            Clear Completed
-                        </Button> */}
-                        <Prompt message="Are you sure you want to leave? Upload(s) are still in progress." />
+                        
                     </div>
                 </div>
             );
@@ -93,7 +98,6 @@ const mapDispatchToProps = (dispatch) => ({
     },
 
 });
-
 
 const Container = connect(mapStateToProps, mapDispatchToProps)(UploadOverlay);
 
