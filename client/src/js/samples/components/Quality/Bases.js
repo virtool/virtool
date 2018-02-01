@@ -113,6 +113,8 @@ const CreateBasesChart = (element, data, baseWidth) => {
         .append("text")
         .attr("x", width / 2)
         .attr("y", 30)
+        .attr("dy", "10px")
+        .attr("fill", "black")
         .attr("class", "axis-label")
         .text("Read Position");
 
@@ -124,6 +126,8 @@ const CreateBasesChart = (element, data, baseWidth) => {
         .text("Quality")
         .attr("dy", "10px")
         .attr("y", 6)
+        .attr("fill", "black")
+        .attr("class", "axis-label")
         .style("text-anchor", "end")
         .attr("transform", "rotate(-90)");
 

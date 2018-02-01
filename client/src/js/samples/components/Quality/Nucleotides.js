@@ -51,6 +51,7 @@ const CreateNucleotidesChart = (element, data, baseWidth) => {
         .attr("x", width / 2)
         .attr("dy", "10px")
         .attr("class", "axis-label")
+        .attr("fill", "black")
         .text("Read Position");
 
     // Append y-axis and label.
@@ -61,6 +62,8 @@ const CreateNucleotidesChart = (element, data, baseWidth) => {
         .attr("transform", "rotate(-90)")
         .attr("y", 6)
         .attr("dy", "10px")
+        .attr("fill", "black")
+        .attr("class", "axis-label")
         .style("text-anchor", "end")
         .text("% Composition");
 
