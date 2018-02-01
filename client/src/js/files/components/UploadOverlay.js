@@ -19,12 +19,6 @@ const UploadItem = ({ localId, name, progress, size}) => (
                 <FlexItem shrink={0} grow={0} pad={15}>
                     {byteSize(size)}
                 </FlexItem>
-                {   progress === 100 
-                    ? <FlexItem pad={10}>
-                        <Icon name="checkmark" tip="Done" /> 
-                    </FlexItem>
-                    : <div />
-                }
             </Flex>
         </ListGroupItem>
 );
