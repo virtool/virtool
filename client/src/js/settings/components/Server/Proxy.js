@@ -39,82 +39,89 @@ const ProxyTestIcon = ({ proxyTestPending, proxyTestSucceeded, proxyTestFailed }
 
 };
 
-const ProxyOptions = (props) => (
-    <Row>
-        <Col xs={12}>
-            <Row>
-                <Col xs={12} md={6}>
-                    <Flex alignItems="center" style={{marginBottom: "10px"}}>
-                        <FlexItem grow={1}>
-                            <strong>Proxy</strong>
-                        </FlexItem>
-                        <FlexItem>
+const ProxyOptions = (props) => {
+
+    console.log(props.proxyTestFailed);
+
+    const disableInputs = !props.enabled || props.trust;
+
+    return (
+        <Row>
+            <Col xs={12}>
+                <Row>
+                    <Col xs={12} md={6}>
+                        <Flex alignItems="center" style={{marginBottom: "10px"}}>
+                            <FlexItem grow={1}>
+                                <strong>Proxy</strong>
+                            </FlexItem>
+                            <FlexItem>
+                                <Checkbox
+                                    label="Enable"
+                                    checked={props.enabled}
+                                    onClick={() => props.onToggle(!props.enabled)}
+                                />
+                            </FlexItem>
+                        </Flex>
+                    </Col>
+                    <Col smHidden md={6} />
+                </Row>
+            </Col>
+            <Col xs={12} md={6} mdPush={6}>
+                <Panel footer={<ProxyFooter />}>
+                    Configure the server to use a proxy for outgoing requests.
+                </Panel>
+            </Col>
+            <Col xs={12} md={6} mdPull={6}>
+                <Panel>
+                    <InputSave
+                        label="Address"
+                        autoComplete={false}
+                        onSave={props.onUpdateAddress}
+                        initialValue={props.address}
+                        disabled={disableInputs}
+                    />
+                    <InputSave
+                        label="Username"
+                        autoComplete={false}
+                        onSave={props.onUpdateUsername}
+                        initialValue={props.username}
+                        disabled={disableInputs}
+                    />
+                    <InputSave
+                        label="Password"
+                        type="password"
+                        autoComplete={false}
+                        onSave={props.onUpdatePassword}
+                        initialValue={props.password}
+                        disabled={disableInputs}
+                    />
+                    <Flex alignItems="center">
+                        <FlexItem grow={1} shrink={0}>
                             <Checkbox
-                                label="Enable"
-                                checked={props.enabled}
-                                onClick={() => {props.onToggle(!props.enabled)}}
+                                label="Trust Environmental Variables"
+                                checked={props.trust}
+                                onClick={() => props.onUpdateTrust(!props.trust)}
+                                disabled={!props.enabled}
                             />
                         </FlexItem>
+                        <FlexItem grow={0} shrink={0}>
+                            <Button onClick={props.onTest} disabled={!props.enabled} pullRight>
+                                <Flex>
+                                    <FlexItem>
+                                        <ProxyTestIcon {...props} />
+                                    </FlexItem>
+                                    <FlexItem pad>
+                                        Test
+                                    </FlexItem>
+                                </Flex>
+                            </Button>
+                        </FlexItem>
                     </Flex>
-                </Col>
-                <Col smHidden md={6} />
-            </Row>
-        </Col>
-        <Col xs={12} md={6} mdPush={6}>
-            <Panel footer={<ProxyFooter />}>
-                Configure the server to use a proxy for outgoing requests.
-            </Panel>
-        </Col>
-        <Col xs={12} md={6} mdPull={6}>
-            <Panel>
-                <InputSave
-                    label="Address"
-                    autoComplete={false}
-                    onSave={props.onUpdateAddress}
-                    initialValue={props.address}
-                    disabled={!props.enabled}
-                />
-                <InputSave
-                    label="Username"
-                    autoComplete={false}
-                    onSave={props.onUpdateUsername}
-                    initialValue={props.username}
-                    disabled={!props.enabled || props.trust}
-                />
-                <InputSave
-                    label="Password"
-                    type="password"
-                    autoComplete={false}
-                    onSave={props.onUpdatePassword}
-                    initialValue={props.password}
-                    disabled={!props.enabled || props.trust}
-                />
-                <Flex alignItems="center">
-                    <FlexItem grow={1} shrink={0}>
-                        <Checkbox
-                            label="Trust Environmental Variables"
-                            checked={props.trust}
-                            onClick={() => props.onUpdateTrust(!props.trust)}
-                            disabled={!props.enabled}
-                        />
-                    </FlexItem>
-                    <FlexItem grow={0} shrink={0}>
-                        <Button onClick={props.onTest} disabled={!props.enabled} pullRight>
-                            <Flex>
-                                <FlexItem>
-                                    <ProxyTestIcon {...props} />
-                                </FlexItem>
-                                <FlexItem pad>
-                                    Test
-                                </FlexItem>
-                            </Flex>
-                        </Button>
-                    </FlexItem>
-                </Flex>
-            </Panel>
-        </Col>
-    </Row>
-);
+                </Panel>
+            </Col>
+        </Row>
+    );
+};
 
 const mapStateToProps = (state) => {
 
