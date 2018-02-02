@@ -100,8 +100,6 @@ export class InputSave extends React.Component {
     };
 
     render () {
-        console.log(this.state, this.props);
-
         return (
             <form onSubmit={this.handleSubmit}>
                 <h5><strong>{this.props.label}</strong></h5>

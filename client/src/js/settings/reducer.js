@@ -35,7 +35,6 @@ export default function settingsReducer (state = initialState, action) {
             return {...state, proxyTestPending: false, proxyTestSucceeded: true};
 
         case TEST_PROXY.FAILED:
-            console.log(action);
             return {...state, proxyTestPending: false, proxyTestFailed: action.error};
 
         default:
