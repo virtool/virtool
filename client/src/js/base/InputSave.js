@@ -100,8 +100,7 @@ export class InputSave extends React.Component {
     };
 
     render () {
-
-        const disabled = this.state.pending || this.props.disabled;
+        console.log(this.state, this.props);
 
         return (
             <form onSubmit={this.handleSubmit}>
@@ -115,14 +114,14 @@ export class InputSave extends React.Component {
                             onChange={this.handleChange}
                             onBlur={this.handleBlur}
                             value={this.state.value}
-                            disabled={disabled}
+                            disabled={this.props.disabled}
                             noMargin
                         />
                     </FlexItem>
                     <Button
                         type="submit"
                         bsStyle="primary"
-                        disabled={disabled}
+                        disabled={this.state.pending || this.props.disabled}
                         icon="floppy"
                         ref={(button) => this.buttonNode = button}
                     />

@@ -1,15 +1,43 @@
 import React from "react";
+import { ClipLoader } from "halogenium";
 import { connect } from "react-redux";
 import { Row, Col, Panel } from "react-bootstrap";
 
-import { updateSetting } from "../../actions";
-import { Checkbox, Flex, FlexItem, Icon, InputSave } from "../../../base";
+import { testProxy, updateSetting } from "../../actions";
+import { Button, Checkbox, Flex, FlexItem, Icon, InputSave } from "../../../base";
 
 const ProxyFooter = () => (
     <small className="text-danger">
         <Icon name="warning" /> Proxy authentication is stored in plain text in the settings file.
     </small>
 );
+
+const ProxyTestIcon = ({ proxyTestPending, proxyTestSucceeded, proxyTestFailed }) => {
+
+    if (proxyTestPending) {
+        return (
+            <div style={{padding: "0 1px"}}>
+                <ClipLoader size="12px" color="#333" />
+            </div>
+        );
+    }
+
+    let iconName = "cloud";
+    let iconStyle;
+
+    if (proxyTestSucceeded) {
+        iconName = "checkmark";
+        iconStyle = "success";
+    }
+
+    if (proxyTestFailed) {
+        iconName = "blocked";
+        iconStyle = "danger";
+    }
+
+    return <Icon name={iconName} bsStyle={iconStyle} />;
+
+};
 
 const ProxyOptions = (props) => (
     <Row>
@@ -43,7 +71,7 @@ const ProxyOptions = (props) => (
                     label="Address"
                     autoComplete={false}
                     onSave={props.onUpdateAddress}
-                    initialValue={props.host}
+                    initialValue={props.address}
                     disabled={!props.enabled}
                 />
                 <InputSave
@@ -51,7 +79,7 @@ const ProxyOptions = (props) => (
                     autoComplete={false}
                     onSave={props.onUpdateUsername}
                     initialValue={props.username}
-                    disabled={!props.enabled}
+                    disabled={!props.enabled || props.trust}
                 />
                 <InputSave
                     label="Password"
@@ -59,32 +87,57 @@ const ProxyOptions = (props) => (
                     autoComplete={false}
                     onSave={props.onUpdatePassword}
                     initialValue={props.password}
-                    disabled={!props.enabled}
+                    disabled={!props.enabled || props.trust}
                 />
-                <Checkbox
-                    label="Trust Environmental Variables"
-                    checked={props.trust}
-                    onClick={() => props.onUpdateTrust(!props.trust)}
-                    disabled={!props.enabled}
-                />
+                <Flex alignItems="center">
+                    <FlexItem grow={1} shrink={0}>
+                        <Checkbox
+                            label="Trust Environmental Variables"
+                            checked={props.trust}
+                            onClick={() => props.onUpdateTrust(!props.trust)}
+                            disabled={!props.enabled}
+                        />
+                    </FlexItem>
+                    <FlexItem grow={0} shrink={0}>
+                        <Button onClick={props.onTest} disabled={!props.enabled} pullRight>
+                            <Flex>
+                                <FlexItem>
+                                    <ProxyTestIcon {...props} />
+                                </FlexItem>
+                                <FlexItem pad>
+                                    Test
+                                </FlexItem>
+                            </Flex>
+                        </Button>
+                    </FlexItem>
+                </Flex>
             </Panel>
         </Col>
     </Row>
 );
 
 const mapStateToProps = (state) => {
-    const settings = state.settings.data;
+
+    const { data, proxyTestPending, proxyTestSucceeded, proxyTestFailed } = state.settings;
 
     return {
-        address: settings.proxy_address,
-        enabled: settings.proxy_enable,
-        username: settings.proxy_username,
-        password: settings.proxy_password,
-        trust: settings.proxy_trust
+        address: data.proxy_address,
+        enabled: data.proxy_enable,
+        username: data.proxy_username,
+        password: data.proxy_password,
+        trust: data.proxy_trust,
+
+        proxyTestPending,
+        proxyTestSucceeded,
+        proxyTestFailed
     };
 };
 
 const mapDispatchToProps = (dispatch) => ({
+
+    onTest: () => {
+        dispatch(testProxy());
+    },
 
     onToggle: (value) => {
         dispatch(updateSetting("proxy_enable", value));
