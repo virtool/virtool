@@ -4,7 +4,7 @@ from aiohttp import web
 from mako.template import Template
 
 from virtool.utils import get_static_hash
-from virtool.handlers.utils import json_response
+from virtool.handlers.utils import json_response, not_found
 
 
 @web.middleware
@@ -21,10 +21,7 @@ async def middleware(req, handler):
 
     except web.HTTPException as ex:
         if is_api_call:
-            return json_response({
-                "id": "not_found",
-                "message": "Not found"
-            })
+            return not_found()
 
         if ex.status == 404:
             return handle_404(req.app["client_path"])
