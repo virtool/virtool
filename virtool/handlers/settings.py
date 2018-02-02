@@ -58,15 +58,10 @@ async def proxy(req):
     settings = req.app["settings"]
 
     body = {
-        "enabled": False,
-        "example": False,
-        "address": False,
-        "auth": False,
-        "env": False
+        "id": "proxy_failure"
     }
 
     if settings.get("proxy_enable"):
-        data["enabled"] = True
 
         url = "http://www.example.com"
 
@@ -76,13 +71,19 @@ async def proxy(req):
 
         if trust:
             address = os.environ.get("HTTPS_PROXY") or os.environ.get("HTTP_PROXY")
-            data["env"] = bool(address)
+
+            if not address:
+                return json_response(dict(body, message="Environmental variables not found"), status=400)
+
         else:
             address = settings.get("proxy_address", None)
 
+            if not address:
+                return json_response(dict(body, message="Proxy address is invalid"), status=400)
+
             if address:
-                username = settings.get("username", None)
-                password = settings.get("password", None)
+                username = settings.get("proxy_username", None)
+                password = settings.get("proxy_password", None)
 
                 if username and password:
                     auth = aiohttp.BasicAuth(username, password)
@@ -91,16 +92,15 @@ async def proxy(req):
             async with aiohttp.ClientSession() as session:
                 try:
                     async with session.get(url, proxy=address, proxy_auth=auth) as resp:
-                        if "Example" in await resp.text():
-                            return json_response(dict(data, address=True, example=True))
+                        if resp.status == 407:
+                            return json_response(dict(body, message="Proxy authentication failed"), status=400)
 
-                        data["address"] = True
+                        if "Example" in await resp.text():
+                            return json_response({"enabled": True})
+
+                        return json_response(dict(body, message="Could not reach internet"), status=400)
 
                 except aiohttp.client_exceptions.ClientProxyConnectionError:
-                    data["address"] = False
+                    return json_response(dict(body, message="Could not connect to proxy"), status=400)
 
-    return json_response({
-        "id": "proxy_failure",
-        "message": "Proxy is not available or is misconfigured",
-        "data": data
-    }, status=400)
+    return json_response(dict(body, message="Proxy use is not enabled"), status=400)
