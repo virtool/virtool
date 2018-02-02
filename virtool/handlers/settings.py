@@ -1,8 +1,10 @@
+import aiohttp
+import aiohttp.client_exceptions
 from cerberus import Validator
 
 import virtool.app_settings
 import virtool.utils
-from virtool.handlers.utils import invalid_input, json_response, not_found, protected
+from virtool.handlers.utils import bad_request, invalid_input, json_response, not_found, protected
 
 
 async def get_all(req):
@@ -43,3 +45,41 @@ async def update(req):
     await settings.write()
 
     return json_response(settings.data)
+
+
+async def proxy(req):
+    """
+    Test that the proxy settings are working.
+
+    :param req:
+    :return:
+    """
+    settings = req.app["settings"]
+
+    data = {
+        "enabled": False,
+        "example": False,
+        "address": False
+    }
+
+    if settings.get("proxy_enable"):
+        url = "http://www.example.com"
+        # proxy = "http://localhost:3128"
+        address = settings.get("proxy_address")
+
+        async with aiohttp.ClientSession() as session:
+            try:
+                async with session.get(url, proxy=address) as resp:
+                    if "Example" in await resp.text():
+                        return json_response(dict(data, address=True, example=True))
+
+                    data["address"] = True
+
+            except aiohttp.client_exceptions.ClientProxyConnectionError:
+                data["address"] = False
+
+    return json_response({
+        "id": "proxy_failure",
+        "message": "Proxy is not available or is misconfigured",
+        "data": data
+    }, status=400)
