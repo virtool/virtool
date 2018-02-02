@@ -3,7 +3,7 @@ import { connect } from "react-redux";
 import { Row, Col, Panel } from "react-bootstrap";
 
 import { updateSetting } from "../../actions";
-import { Checkbox, Icon, InputSave } from "../../../base";
+import { Checkbox, Flex, FlexItem, Icon, InputSave } from "../../../base";
 
 const ProxyFooter = () => (
     <small className="text-danger">
@@ -14,11 +14,27 @@ const ProxyFooter = () => (
 const ProxyOptions = (props) => (
     <Row>
         <Col xs={12}>
-            <h5><strong>Proxy</strong></h5>
+            <Row>
+                <Col xs={12} md={6}>
+                    <Flex alignItems="center" style={{marginBottom: "10px"}}>
+                        <FlexItem grow={1}>
+                            <strong>Proxy</strong>
+                        </FlexItem>
+                        <FlexItem>
+                            <Checkbox
+                                label="Enable"
+                                checked={props.enabled}
+                                onClick={() => {props.onToggle(!props.enabled)}}
+                            />
+                        </FlexItem>
+                    </Flex>
+                </Col>
+                <Col smHidden md={6} />
+            </Row>
         </Col>
         <Col xs={12} md={6} mdPush={6}>
             <Panel footer={<ProxyFooter />}>
-                Configure the Virtool server to use a proxy server for outgoing requests.
+                Configure the server to use a proxy for outgoing requests.
             </Panel>
         </Col>
         <Col xs={12} md={6} mdPull={6}>
@@ -28,12 +44,14 @@ const ProxyOptions = (props) => (
                     autoComplete={false}
                     onSave={props.onUpdateAddress}
                     initialValue={props.host}
+                    disabled={!props.enabled}
                 />
                 <InputSave
                     label="Username"
                     autoComplete={false}
                     onSave={props.onUpdateUsername}
                     initialValue={props.username}
+                    disabled={!props.enabled}
                 />
                 <InputSave
                     label="Password"
@@ -41,11 +59,13 @@ const ProxyOptions = (props) => (
                     autoComplete={false}
                     onSave={props.onUpdatePassword}
                     initialValue={props.password}
+                    disabled={!props.enabled}
                 />
                 <Checkbox
-                    label="Trust Environment Variables"
+                    label="Trust Environmental Variables"
                     checked={props.trust}
                     onClick={() => props.onUpdateTrust(!props.trust)}
+                    disabled={!props.enabled}
                 />
             </Panel>
         </Col>
@@ -57,6 +77,7 @@ const mapStateToProps = (state) => {
 
     return {
         address: settings.proxy_address,
+        enabled: settings.proxy_enable,
         username: settings.proxy_username,
         password: settings.proxy_password,
         trust: settings.proxy_trust
@@ -64,6 +85,10 @@ const mapStateToProps = (state) => {
 };
 
 const mapDispatchToProps = (dispatch) => ({
+
+    onToggle: (value) => {
+        dispatch(updateSetting("proxy_enable", value));
+    },
 
     onUpdateAddress: (e) => {
         dispatch(updateSetting("proxy_address", e.value));
