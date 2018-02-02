@@ -73,9 +73,11 @@ SCHEMA = {
 
     # Proxy Server
     "proxy_address": {"type": "string", "default": ""},
-    "proxy_trust": get_default_boolean(False),
-    "proxy_username": {"type": "string", "default": ""},
+    "proxy_enable": get_default_boolean(False),
     "proxy_password": {"type": "string", "default": ""},
+    "proxy_username": {"type": "string", "default": ""},
+    "proxy_trust": get_default_boolean(False),
+
 
     # Github
     "github_token": {"type": "string", "default": None, "nullable": True},
