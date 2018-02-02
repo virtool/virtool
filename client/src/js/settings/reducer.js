@@ -9,15 +9,21 @@ const initialState = {
     proxyTestFailed: false
 };
 
+const proxyTestClear = {
+    proxyTestPending: false,
+    proxyTestSucceeded: false,
+    proxyTestFailed: false
+};
+
 export default function settingsReducer (state = initialState, action) {
 
     switch (action.type) {
 
         case GET_SETTINGS.SUCCEEDED:
-            return {...state, data: action.data};
+            return {...state, data: action.data, ...proxyTestClear};
 
         case UPDATE_SETTINGS.SUCCEEDED:
-            return {...state, data: {...state.data, ...action.update}};
+            return {...state, data: {...state.data, ...action.update}, ...proxyTestClear};
 
         case GET_CONTROL_READAHEAD.REQUESTED:
             return {...state, readaheadPending: true};
@@ -29,13 +35,13 @@ export default function settingsReducer (state = initialState, action) {
             return {...state, readaheadPending: false};
 
         case TEST_PROXY.REQUESTED:
-            return {...state, proxyTestPending: true, proxyTestSucceeded: false, proxyTestFailed: false};
+            return {...state, ...proxyTestClear, proxyTestPending: true};
 
         case TEST_PROXY.SUCCEEDED:
-            return {...state, proxyTestPending: false, proxyTestSucceeded: true};
+            return {...state, ...proxyTestClear, proxyTestSucceeded: true};
 
         case TEST_PROXY.FAILED:
-            return {...state, proxyTestPending: false, proxyTestFailed: action.message};
+            return {...state, ...proxyTestClear, proxyTestFailed: action.message};
 
         default:
             return state;
