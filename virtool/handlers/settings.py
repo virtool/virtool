@@ -1,5 +1,6 @@
 import aiohttp
 import aiohttp.client_exceptions
+import os
 from cerberus import Validator
 
 import virtool.app_settings
@@ -56,27 +57,47 @@ async def proxy(req):
     """
     settings = req.app["settings"]
 
-    data = {
+    body = {
         "enabled": False,
         "example": False,
-        "address": False
+        "address": False,
+        "auth": False,
+        "env": False
     }
 
     if settings.get("proxy_enable"):
+        data["enabled"] = True
+
         url = "http://www.example.com"
-        # proxy = "http://localhost:3128"
-        address = settings.get("proxy_address")
 
-        async with aiohttp.ClientSession() as session:
-            try:
-                async with session.get(url, proxy=address) as resp:
-                    if "Example" in await resp.text():
-                        return json_response(dict(data, address=True, example=True))
+        auth = None
 
-                    data["address"] = True
+        trust = settings.get("proxy_trust")
 
-            except aiohttp.client_exceptions.ClientProxyConnectionError:
-                data["address"] = False
+        if trust:
+            address = os.environ.get("HTTPS_PROXY") or os.environ.get("HTTP_PROXY")
+            data["env"] = bool(address)
+        else:
+            address = settings.get("proxy_address", None)
+
+            if address:
+                username = settings.get("username", None)
+                password = settings.get("password", None)
+
+                if username and password:
+                    auth = aiohttp.BasicAuth(username, password)
+
+        if address:
+            async with aiohttp.ClientSession() as session:
+                try:
+                    async with session.get(url, proxy=address, proxy_auth=auth) as resp:
+                        if "Example" in await resp.text():
+                            return json_response(dict(data, address=True, example=True))
+
+                        data["address"] = True
+
+                except aiohttp.client_exceptions.ClientProxyConnectionError:
+                    data["address"] = False
 
     return json_response({
         "id": "proxy_failure",
