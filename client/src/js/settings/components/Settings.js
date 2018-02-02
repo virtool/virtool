@@ -9,6 +9,7 @@ import InternalControl from "./General/InternalControl";
 import UniqueNames from "./General/UniqueNames";
 import SampleRights from "./General/SampleRights";
 import HTTP from "./Server/HTTP";
+import Proxy from "./Server/Proxy";
 import SSL from "./Server/SSL";
 import Data from "./Data";
 import Resources from "./Jobs/Resources";
@@ -29,6 +30,7 @@ const General = () => (
 const Server = () => (
     <div>
         <HTTP />
+        <Proxy />
         <SSL />
     </div>
 );
