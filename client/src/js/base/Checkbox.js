@@ -23,29 +23,37 @@ export const Checkbox = (props) => {
 
     let className = CX("pointer", {
         "pull-right": props.pullRight,
-        "labelled-checkbox": props.label
+        "labelled-checkbox": props.label,
+        "text-muted": props.disabled
     });
 
     if (props.className) {
         className += ` ${props.className}`;
     }
 
+    let style = {cursor: props.disabled ? "not-allowed" : "pointer"};
+
+    if (props.style) {
+        style = {...style, ...props.style};
+    }
+
     return (
-        <span className={className} onClick={props.onClick} style={props.style}>
+        <span className={className} onClick={props.disabled ? null : props.onClick} style={style}>
             <i className={`i-checkbox-${name}`} /> {props.label ? <span>{props.label}</span> : null}
         </span>
     );
 };
 
 Checkbox.propTypes = {
-    label: PropTypes.node,
     checked: PropTypes.bool,
-    partial: PropTypes.bool,
-    onClick: PropTypes.func,
-    pending: PropTypes.bool,
-    style: PropTypes.object,
     className: PropTypes.string,
-    pullRight: PropTypes.bool
+    disabled: PropTypes.bool,
+    label: PropTypes.node,
+    onClick: PropTypes.func,
+    partial: PropTypes.bool,
+    pending: PropTypes.bool,
+    pullRight: PropTypes.bool,
+    style: PropTypes.object
 };
 
 Checkbox.defaultProps = {
