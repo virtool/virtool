@@ -147,8 +147,8 @@ class Settings:
     def update(self, update_dict):
         self.data.update(update_dict)
 
-    def get(self, key):
-        return self.data[key]
+    def get(self, *args, **kwargs):
+        return self.data.get(*args, **kwargs)
 
     def set(self, key, value):
         self.data[key] = value
