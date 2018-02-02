@@ -7,26 +7,26 @@ import { connect } from "react-redux";
 
 import { byteSize } from "../../utils";
 import { hideUploadOverlay } from "../actions";
-import { Flex, FlexItem, ListGroupItem, ProgressBar, Icon, Button } from "../../base";
+import { Flex, FlexItem, ListGroupItem, ProgressBar } from "../../base";
 
 const UploadItem = ({ localId, name, progress, size}) => (
-        <ListGroupItem key={localId} disabled={progress === 0}>
-            <ProgressBar bsStyle={progress === 100 ? "primary" : "success"} now={progress} affixed />
-            <Flex>
-                <FlexItem grow={1}>
-                    {name}
-                </FlexItem>
-                <FlexItem shrink={0} grow={0} pad={15}>
-                    {byteSize(size)}
-                </FlexItem>
-            </Flex>
-        </ListGroupItem>
+    <ListGroupItem key={localId} disabled={progress === 0}>
+        <ProgressBar bsStyle={progress === 100 ? "primary" : "success"} now={progress} affixed />
+        <Flex>
+            <FlexItem grow={1}>
+                {name}
+            </FlexItem>
+            <FlexItem shrink={0} grow={0} pad={15}>
+                {byteSize(size)}
+            </FlexItem>
+        </Flex>
+    </ListGroupItem>
 );
 
 class UploadOverlay extends React.Component {
 
     handlePageLeave (e) {
-        const message = 'Upload(s) still in progress';   //browser security standards don't allow custom messages
+        const message = "Upload(s) still in progress";
         e.returnValue = message;
         return message;
     }
@@ -35,18 +35,18 @@ class UploadOverlay extends React.Component {
 
         const classNames = CX("upload-overlay", {hidden: !this.props.showUploadOverlay});
 
-        let uploadComponents = map(sortBy(this.props.uploads, "progress").reverse(), upload =>
+        const uploadComponents = map(sortBy(this.props.uploads, "progress").reverse(), upload =>
             upload.progress === 100 ? <div key={upload.localId}/> : <UploadItem key={upload.localId} {...upload} />
         );
 
         let content;
 
         if (this.props.uploadsComplete) {
-            window.removeEventListener('beforeunload', this.handlePageLeave);
+            window.removeEventListener("beforeunload", this.handlePageLeave);
 
             content = null;
         } else {
-            window.addEventListener('beforeunload', this.handlePageLeave);
+            window.addEventListener("beforeunload", this.handlePageLeave);
 
             content = (
                 <div className={classNames}>
@@ -62,7 +62,6 @@ class UploadOverlay extends React.Component {
                         <ListGroup style={{height: "auto", maxHeight: "175px", overflowX: "hidden"}}>
                             {uploadComponents}
                         </ListGroup>
-                        
                     </div>
                 </div>
             );
@@ -89,7 +88,7 @@ const mapDispatchToProps = (dispatch) => ({
 
     onClose: () => {
         dispatch(hideUploadOverlay());
-    },
+    }
 
 });
 
