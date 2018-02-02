@@ -173,8 +173,6 @@ async def install(app, db, dispatch, loop, download_url, size):
         # Copy the update files to the install directory.
         await update_software_process(db, dispatch, 0, "copy_files")
 
-        print(decompressed_path, INSTALL_PATH)
-
         await loop.run_in_executor(None, copy_software_files, decompressed_path, INSTALL_PATH)
 
         document = await db.status.find_one_and_update({"_id": "software_update"}, {

@@ -210,8 +210,6 @@ async def set_owner_group(req):
     """
     db, data = await unpack_request(req)
 
-    print(data)
-
     sample_id = req.match_info["sample_id"]
 
     await virtool.sample.get_sample_owner(db, sample_id)
