@@ -57,7 +57,9 @@ export class InputSave extends React.Component {
      * @param event {event} - the change event from the FormControl
      */
     handleChange = (e) => {
-        this.setState({value: e.target.value});
+        if (!this.props.disabled) {
+            this.setState({value: e.target.value});
+        }
     };
 
     /**
