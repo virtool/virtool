@@ -1,7 +1,7 @@
 import React from "react";
 import { ClipLoader } from "halogenium";
 import { connect } from "react-redux";
-import { Row, Col, Panel } from "react-bootstrap";
+import { Alert, Col, Panel, Row } from "react-bootstrap";
 
 import { testProxy, updateSetting } from "../../actions";
 import { Button, Checkbox, Flex, FlexItem, Icon, InputSave } from "../../../base";
@@ -41,9 +41,17 @@ const ProxyTestIcon = ({ proxyTestPending, proxyTestSucceeded, proxyTestFailed }
 
 const ProxyOptions = (props) => {
 
-    console.log(props.proxyTestFailed);
-
     const disableInputs = !props.enabled || props.trust;
+
+    let alert;
+
+    if (props.proxyTestFailed) {
+        alert = (
+            <Alert bsStyle="danger">
+                {props.proxyTestFailed}
+            </Alert>
+        );
+    }
 
     return (
         <Row>
@@ -66,6 +74,7 @@ const ProxyOptions = (props) => {
                     <Col smHidden md={6} />
                 </Row>
             </Col>
+
             <Col xs={12} md={6} mdPush={6}>
                 <Panel footer={<ProxyFooter />}>
                     Configure the server to use a proxy for outgoing requests.
@@ -73,6 +82,8 @@ const ProxyOptions = (props) => {
             </Col>
             <Col xs={12} md={6} mdPull={6}>
                 <Panel>
+                    {alert}
+
                     <InputSave
                         label="Address"
                         autoComplete={false}
