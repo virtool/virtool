@@ -12,3 +12,7 @@ class GitHubError(Exception):
 
 class NCBIError(Exception):
     pass
+
+
+class ProxyError(Exception):
+    pass
