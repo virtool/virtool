@@ -48,12 +48,13 @@ async def update(req):
     return json_response(settings.data)
 
 
-async def proxy(req):
+async def check_proxy(req):
     """
-    Test that the proxy settings are working.
+    Check that the proxy settings are working.
 
     :param req:
     :return:
+
     """
     settings = req.app["settings"]
 
