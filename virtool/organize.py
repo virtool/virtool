@@ -442,3 +442,9 @@ async def organize_viruses(db, logger_cb=None):
 
         if logger_cb and count % 100 == 0:
             logger_cb("  {}".format(count))
+
+    await db.viruses.update_many({"schema": {"$exists": False}}, {
+        "$set": {
+            "schema": list()
+        }
+    })
