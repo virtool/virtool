@@ -10,6 +10,7 @@ import IsolateEditor from "./Editor";
 import EditVirus from "./EditVirus";
 import General from "./General";
 import History from "./History";
+import Schema from "./Schema";
 import RemoveVirus from "./RemoveVirus";
 import { getVirus, showEditVirus, showRemoveVirus } from "../../actions";
 import { Flex, FlexItem, Icon, LoadingPlaceholder } from "../../../base";
@@ -109,6 +110,12 @@ class VirusDetail extends React.Component {
                             History
                         </NavItem>
                     </LinkContainer>
+
+                    <LinkContainer to={`/viruses/${virusId}/schema`}>
+                        <NavItem>
+                            Schema
+                        </NavItem>
+                    </LinkContainer>
                 </Nav>
 
                 <EditVirus virusId={virusId} name={name} abbreviation={abbreviation} />
@@ -118,6 +125,7 @@ class VirusDetail extends React.Component {
                     <Redirect from="/viruses/:virusId" to={`/viruses/${virusId}/virus`} exact />
                     <Route path="/viruses/:virusId/virus" component={VirusSection} />
                     <Route path="/viruses/:virusId/history" component={History} />
+                    <Route path="/viruses/:virusId/schema" component={Schema} />
                 </Switch>
             </div>
         );

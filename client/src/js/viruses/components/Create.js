@@ -17,6 +17,7 @@ class CreateVirus extends React.Component {
     constructor (props) {
         super(props);
         this.state = getInitialState();
+        this.state.show = false;
     }
 
     handleChange = (e) => {
@@ -36,7 +37,13 @@ class CreateVirus extends React.Component {
 
     handleSubmit = (e) => {
         e.preventDefault();
-        this.props.onSubmit(this.state.name, this.state.abbreviation);
+
+        if (!this.state.name || !this.state.abbreviation) {
+            this.setState({show: true});
+        } else {
+            this.setState({show: false});
+            this.props.onSubmit(this.state.name, this.state.abbreviation);
+        }
     };
 
     render () {
@@ -58,6 +65,8 @@ class CreateVirus extends React.Component {
             );
         }
 
+        let errorMessage = this.state.show ? "Required Field" : "";
+
         return (
             <Modal show={this.props.show} onHide={this.handleHide} onExited={this.handleModalExited}>
                 <Modal.Header onHide={this.props.onHide} closeButton>
@@ -73,6 +82,7 @@ class CreateVirus extends React.Component {
                                     name="name"
                                     value={this.state.name}
                                     onChange={this.handleChange}
+                                    error={errorMessage}
                                 />
                             </Col>
                             <Col md={3}>
@@ -81,6 +91,7 @@ class CreateVirus extends React.Component {
                                     name="abbreviation"
                                     value={this.state.abbreviation}
                                     onChange={this.handleChange}
+                                    error={errorMessage}
                                 />
                             </Col>
                         </Row>
@@ -99,7 +110,6 @@ class CreateVirus extends React.Component {
             </Modal>
         );
     }
-
 }
 
 const mapStateToProps = state => ({

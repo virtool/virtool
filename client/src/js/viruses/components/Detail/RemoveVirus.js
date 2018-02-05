@@ -25,7 +25,7 @@ class RemoveVirus extends React.Component {
                     <Button
                         bsStyle="danger"
                         icon="checkmark"
-                        onClick={this.handleConfirm}
+                        onClick={this.handleConfirm.bind(this)}
                     >
                         Confirm
                     </Button>
