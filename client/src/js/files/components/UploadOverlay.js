@@ -23,32 +23,50 @@ const UploadItem = ({ localId, name, progress, size}) => (
     </ListGroupItem>
 );
 
-const UploadOverlay = (props) => {
+class UploadOverlay extends React.Component {
 
-    const classNames = CX("upload-overlay", {hidden: !props.showUploadOverlay});
+    componentWillReceiveProps (nextProps) {
+        if (nextProps.uploadsComplete !== this.props.uploadsComplete && nextProps.uploadsComplete) {
+            window.removeEventListener("beforeunload", this.handlePageLeave);
+        } else if (nextProps.uploadsComplete !== this.props.uploadsComplete && !nextProps.uploadsComplete) {
+            window.addEventListener("beforeunload", this.handlePageLeave);
+        }
+    }
 
-    const uploadComponents = map(sortBy(props.uploads, "progress").reverse(), upload =>
-        <UploadItem key={upload.localId} {...upload} />
-    );
+    handlePageLeave (e) {
+        const message = "Upload(s) still in progress";
+        e.returnValue = message;
+        return message;
+    }
 
-    return (
-        <div className={classNames}>
-            <div className="upload-overlay-content">
-                <h5>
-                    <span>
-                        <strong>Uploads</strong> <Badge>{uploadComponents.length}</Badge>
-                    </span>
-                    <button type="button" className="close pullRight" onClick={props.onClose}>
-                        <span>&times;</span>
-                    </button>
-                </h5>
-                <ListGroup>
-                    {uploadComponents}
-                </ListGroup>
+    render () {
+
+        const classNames = CX("upload-overlay", {hidden: !this.props.showUploadOverlay});
+        const uploadComponents = map(sortBy(this.props.uploads, "progress").reverse(), upload =>
+            upload.progress === 100 ? <div key={upload.localId}/> : <UploadItem key={upload.localId} {...upload} />
+        );
+
+        let content = this.props.uploadsComplete ? null : (
+            <div className={classNames}>
+                <div className="upload-overlay-content">
+                    <h5>
+                        <span>
+                            <strong>Uploads</strong> <Badge>{uploadComponents.length}</Badge>
+                        </span>
+                        <button type="button" className="close pullRight" onClick={this.props.onClose}>
+                            <span>&times;</span>
+                        </button>
+                    </h5>
+                    <ListGroup style={{height: "auto", maxHeight: "175px", overflowX: "hidden"}}>
+                        {uploadComponents}
+                    </ListGroup>
+                </div>
             </div>
-        </div>
-    );
-};
+        );
+
+        return <div>{content}</div>;
+    }
+}
 
 UploadOverlay.propTypes = {
     uploads: PropTypes.arrayOf(PropTypes.object),
