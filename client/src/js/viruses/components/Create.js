@@ -38,7 +38,7 @@ class CreateVirus extends React.Component {
     handleSubmit = (e) => {
         e.preventDefault();
 
-        if (!this.state.name || !this.state.abbreviation) {
+        if (!this.state.name) {
             this.setState({show: true});
         } else {
             this.setState({show: false});
@@ -91,7 +91,6 @@ class CreateVirus extends React.Component {
                                     name="abbreviation"
                                     value={this.state.abbreviation}
                                     onChange={this.handleChange}
-                                    error={errorMessage}
                                 />
                             </Col>
                         </Row>
