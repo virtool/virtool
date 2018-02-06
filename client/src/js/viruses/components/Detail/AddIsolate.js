@@ -43,10 +43,6 @@ class AddIsolate extends React.Component {
         this.setState(update);
     };
 
-    handleModalEntered = () => {
-        this.formNode.focus();
-    };
-
     handleSubmit = () => {
         this.props.onSave(this.props.virusId, this.state.sourceType, this.state.sourceName);
     };
