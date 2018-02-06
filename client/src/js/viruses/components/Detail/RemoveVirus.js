@@ -8,7 +8,7 @@ import { Button } from "../../../base";
 
 class RemoveVirus extends React.Component {
 
-    handleConfirm () {
+    handleConfirm = () => {
         this.props.onConfirm(this.props.virusId, this.props.history);
     }
 
@@ -25,7 +25,7 @@ class RemoveVirus extends React.Component {
                     <Button
                         bsStyle="danger"
                         icon="checkmark"
-                        onClick={this.handleConfirm.bind(this)}
+                        onClick={this.handleConfirm}
                     >
                         Confirm
                     </Button>

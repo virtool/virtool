@@ -16,8 +16,8 @@ class CreateVirus extends React.Component {
 
     constructor (props) {
         super(props);
-        this.state = getInitialState();
-        this.state.show = false;
+
+        this.state = {show: false, ...getInitialState()};
     }
 
     handleChange = (e) => {
@@ -38,11 +38,11 @@ class CreateVirus extends React.Component {
     handleSubmit = (e) => {
         e.preventDefault();
 
-        if (!this.state.name) {
-            this.setState({show: true});
-        } else {
+        if (this.state.name) {
             this.setState({show: false});
             this.props.onSubmit(this.state.name, this.state.abbreviation);
+        } else {
+            this.setState({show: true});
         }
     };
 
@@ -65,7 +65,7 @@ class CreateVirus extends React.Component {
             );
         }
 
-        let errorMessage = this.state.show ? "Required Field" : "";
+        const errorMessage = this.state.show ? "Required Field" : "";
 
         return (
             <Modal show={this.props.show} onHide={this.handleHide} onExited={this.handleModalExited}>
