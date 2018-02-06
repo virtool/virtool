@@ -3,6 +3,7 @@ import { DragDropContext } from "react-dnd";
 import HTML5Backend from "react-dnd-html5-backend";
 import { map } from "lodash-es";
 import Segment from "./Segment";
+import AddSegment from "./AddSegment";
 import { Icon } from "../../../base";
 
 class Schema extends React.Component {
@@ -18,7 +19,8 @@ class Schema extends React.Component {
                 { id: 3, name: "Seg C" },
                 { id: 4, name: "Seg D" },
                 { id: 5, name: "Seg E" }
-            ]
+            ],
+            show: false
         };
 
         this.moveSeg = this.moveSeg.bind(this);
@@ -39,24 +41,43 @@ class Schema extends React.Component {
         console.log(`redux delete ${segment}`);
     }
 
+    handleClick = () => {
+        console.log("redux add new segment entry");
+        this.setState({show: true});
+    }
+
+    handleClose = () => {
+        this.setState({show: false});
+    }
+
     render () {
         const { segArray } = this.state;
 
         const segments = map(segArray, (segment, index) =>
-            <Segment key={segment.id} segName={segment.name} index={index} id={segment.id} moveSeg={this.moveSeg} onClick={this.handleRemove} />
+            <Segment
+                key={segment.id}
+                segName={segment.name}
+                index={index} id={segment.id}
+                moveSeg={this.moveSeg}
+                onClick={this.handleRemove}
+            />
         );
 
         return (
             <div>
                 <div>
+                    <AddSegment show={this.state.show} onHide={this.handleClose} />
                     <Icon
-                        name="remove"
-                        bsStyle="danger"
+                        name="plus-square"
+                        bsStyle="primary"
                         style={{fontSize: "17px"}}
-                        onClick={() => {this.props.onClick(this.props.segName)}}
+                        tip="Add new entry"
+                        onClick={this.handleClick}
                         pullRight
                     />
                 </div>
+                <br />
+                <br />
                 {segments}
             </div>
         );
