@@ -8,7 +8,7 @@ import { Button } from "../../../base";
 
 class RemoveVirus extends React.Component {
 
-    handleConfirm () {
+    handleConfirm = () => {
         this.props.onConfirm(this.props.virusId, this.props.history);
     }
 
