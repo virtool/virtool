@@ -38,14 +38,40 @@ async def find(req):
     return json_response(data)
 
 
+async def get(req):
+    """
+    Get a complete individual HMM annotation document.
+
+    """
+    document = await req.app["db"].hmm.find_one({"_id": req.match_info["hmm_id"]})
+
+    if document:
+        return json_response(virtool.utils.base_processor(document))
+
+    return not_found()
+
+
+async def get_install(req):
+    document = await req.app["db"].status.find_one({"_id": "hmm_install"})
+
+    if document is None:
+        return not_found()
+
+    return json_response(virtool.utils.base_processor(document))
+
+
 @protected("modify_hmm")
 async def install(req):
     db = req.app["db"]
 
     document = await db.status.find_one_and_update({"_id": "hmm_install"}, {
         "$set": {
+            "download_size": None,
             "ready": False,
-            "process": {}
+            "process": {
+                "progress": 0,
+                "step": "check_github"
+            }
         }
     }, return_document=pymongo.ReturnDocument.AFTER, upsert=True)
 
@@ -58,16 +84,3 @@ async def install(req):
     ), loop=req.app.loop)
 
     return json_response(virtool.utils.base_processor(document))
-
-
-async def get_annotation(req):
-    """
-    Get a complete individual HMM annotation document.
-
-    """
-    document = await req.app["db"].hmm.find_one({"_id": req.match_info["hmm_id"]})
-
-    if document:
-        return json_response(virtool.utils.base_processor(document))
-
-    return not_found()

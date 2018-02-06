@@ -5,7 +5,7 @@ export const find = () => (
 );
 
 export const install = () => (
-    Request.post("/api/hmms")
+    Request.patch("/api/hmms/install")
 );
 
 export const get = ({ hmmId }) => (
