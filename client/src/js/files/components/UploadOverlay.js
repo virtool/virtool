@@ -33,20 +33,24 @@ class UploadOverlay extends React.Component {
         }
     }
 
-    handlePageLeave (e) {
+    handlePageLeave = (e) => {
         const message = "Upload(s) still in progress";
         e.returnValue = message;
         return message;
-    }
+    };
 
     render () {
 
         const classNames = CX("upload-overlay", {hidden: !this.props.showUploadOverlay});
         const uploadComponents = map(sortBy(this.props.uploads, "progress").reverse(), upload =>
-            upload.progress === 100 ? <div key={upload.localId}/> : <UploadItem key={upload.localId} {...upload} />
+            upload.progress === 100 ? <div key={upload.localId} /> : <UploadItem key={upload.localId} {...upload} />
         );
 
-        let content = this.props.uploadsComplete ? null : (
+        if (this.props.uploadsComplete) {
+            return <div />;
+        }
+
+        return (
             <div className={classNames}>
                 <div className="upload-overlay-content">
                     <h5>
@@ -63,8 +67,6 @@ class UploadOverlay extends React.Component {
                 </div>
             </div>
         );
-
-        return <div>{content}</div>;
     }
 }
 
