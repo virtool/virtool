@@ -15,6 +15,10 @@
           "preventFullImport": true
         }
       }
+    ],
+
+    [
+      "transform-decorators-legacy"
     ]
   ],
 
