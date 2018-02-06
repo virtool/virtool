@@ -20,6 +20,27 @@ from virtool.handlers.utils import unpack_request, json_response, not_found, inv
     compose_regex_query, paginate, bad_request, no_content, conflict
 
 
+SCHEMA_VALIDATOR = {
+    "type": "list",
+    "default": list(),
+    "validator": virtool.validators.has_unique_segment_names,
+    "schema": {
+        "type": "dict",
+        "allow_unknown": False,
+        "schema": {
+            "name": {"type": "string", "required": True},
+            "molecule": {"type": "string", "default": None, "nullable": True, "allowed": [
+                "ssDNA",
+                "dsDNA",
+                "ssRNA+",
+                "ssRNA-",
+                "dsRNA"
+            ]}
+        }
+    }
+}
+
+
 async def find(req):
     """
     Find viruses.
@@ -69,7 +90,8 @@ async def get(req):
 @protected("modify_virus")
 @validation({
     "name": {"type": "string", "required": True, "min": 1},
-    "abbreviation": {"type": "string", "min": 1}
+    "abbreviation": {"type": "string", "min": 1},
+    "schema": SCHEMA_VALIDATOR
 })
 async def create(req):
     """
@@ -142,24 +164,7 @@ async def create(req):
 @validation({
     "name": {"type": "string"},
     "abbreviation": {"type": "string"},
-    "schema": {
-        "type": "list",
-        "validator": virtool.validators.has_unique_segment_names,
-        "schema": {
-            "type": "dict",
-            "allow_unknown": False,
-            "schema": {
-                "name": {"type": "string", "required": True},
-                "molecule": {"type": "string", "default": None, "nullable": True, "allowed": [
-                    "ssDNA",
-                    "dsDNA",
-                    "ssRNA+",
-                    "ssRNA-",
-                    "dsRNA"
-                ]}
-            }
-        }
-    }
+    "schema": SCHEMA_VALIDATOR
 })
 async def edit(req):
     """
