@@ -5,7 +5,7 @@ import { Modal } from "react-bootstrap";
 
 //import { addIsolate, hideVirusModal } from "../../actions";
 import { Button } from "../../../base";
-import IsolateForm from "./IsolateForm";
+import SegmentForm from "./SegmentForm";
 
 export default class AddIsolate extends React.Component {
 
@@ -16,7 +16,11 @@ export default class AddIsolate extends React.Component {
                     Add a New Segment Type
                 </Modal.Header>
                 <Modal.Body>
-                    <h1>Form Here</h1>
+                    <SegmentForm
+                        ref={(node) => this.formNode = node}
+                        onChange={this.handleChange}
+                        onSubmit={this.handleSubmit}
+                    />
                 </Modal.Body>
                 <Modal.Footer>
                     <Button bsStyle="primary" icon="floppy" onClick={this.save}>

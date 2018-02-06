@@ -39,7 +39,7 @@ class Schema extends React.Component {
 
     handleRemove = (segment) => {
         console.log(`redux delete ${segment}`);
-    }
+    } 
 
     handleClick = () => {
         console.log("redux add new segment entry");
