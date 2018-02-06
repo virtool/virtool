@@ -145,7 +145,7 @@ export function* analyze (action) {
 
 export function* blastNuvs (action) {
     try {
-        const response = yield samplesAPI.blastNuvs(action.analysisId, action.sequenceIndex);
+        const response = yield samplesAPI.blastNuvs(action);
         yield put({
             type: BLAST_NUVS.SUCCEEDED,
             analysisId: action.analysisId,
