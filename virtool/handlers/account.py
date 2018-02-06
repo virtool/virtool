@@ -249,6 +249,9 @@ async def logout(req):
     """
     db = req.app["db"]
 
-    await db.sessions.delete_one({"_id": req["client"].session_id})
+    session_id = req["client"].session_id
+
+    if session_id:
+        await db.sessions.delete_one({"_id": session_id})
 
     return no_content()
