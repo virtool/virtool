@@ -55,7 +55,7 @@ class Segment extends React.Component {
                                     name="remove"
                                     bsStyle="danger"
                                     style={{fontSize: "17px"}}
-                                    onClick={this.handleRemove}
+                                    onClick={() => {this.props.onClick(this.props.segName)}}
                                     pullRight
                                 />
                             </Col>
@@ -74,7 +74,8 @@ Segment.propTypes = {
     isDragging: PropTypes.bool.isRequired,
     id: PropTypes.any.isRequired,
     segName: PropTypes.string.isRequired,
-    moveSeg: PropTypes.func.isRequired
+    moveSeg: PropTypes.func.isRequired,
+    onClick: PropTypes.func
 };
 
 export default flow(
