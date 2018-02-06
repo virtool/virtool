@@ -9,5 +9,5 @@ export const install = () => (
 );
 
 export const get = ({ hmmId }) => (
-    Request.get(`/api/hmms/annotations/${hmmId}`)
+    Request.get(`/api/hmms/${hmmId}`)
 );
