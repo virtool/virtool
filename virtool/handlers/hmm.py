@@ -71,34 +71,3 @@ async def get_annotation(req):
         return json_response(virtool.utils.base_processor(document))
 
     return not_found()
-
-
-async def get_file(req):
-    db = req.app["db"]
-
-    hmm_dir_path = os.path.join(req.app["settings"].get("data_path"), "hmm")
-
-    if not os.path.isdir(hmm_dir_path):
-        os.mkdir(hmm_dir_path)
-
-    hmm_file_path = os.path.join(hmm_dir_path, "profiles.hmm")
-
-    try:
-        hmm_stats = await virtool.virus_hmm.hmmstat(req.app.loop, hmm_file_path)
-    except FileNotFoundError:
-        return not_found("profiles.hmm file does not exist")
-
-    annotations = await db.hmm.find({}, ["cluster", "count", "length"]).to_list(None)
-
-    clusters_in_file = {entry["cluster"] for entry in hmm_stats}
-    clusters_in_database = {entry["cluster"] for entry in annotations}
-
-    # Calculate which cluster ids are unique to the HMM file and/or the annotation database.
-    errors["not_in_file"] = list(clusters_in_database - clusters_in_file) or False
-    errors["not_in_database"] = list(clusters_in_file - clusters_in_database) or False
-
-    await db.status.update_one("hmm", {
-        "$set": errors
-    }, upsert=True)
-
-    return errors
