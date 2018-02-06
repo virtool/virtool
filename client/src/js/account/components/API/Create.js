@@ -9,13 +9,13 @@ import { Col, Modal, Row } from "react-bootstrap";
 import APIPermissions from "./Permissions";
 import { Button, Icon, Input, Flex, FlexItem } from "../../../base/index";
 import { routerLocationHasState } from "../../../utils";
+import {clearAPIKey, createAPIKey} from "../../actions";
 
 const getInitialState = (props) => ({
     name: "",
     permissions: mapValues(props.permissions, () => false),
     submitted: false,
-    copied: false,
-    key: ""
+    copied: false
 });
 
 export class CreateAPIKey extends React.Component {
@@ -33,7 +33,7 @@ export class CreateAPIKey extends React.Component {
         e.preventDefault();
 
         this.setState({submitted: true}, () => {
-            this.props.onCreate(this.state.name, this.state.permissions, (key) => this.setState({key}));
+            this.props.onCreate(this.state);
         });
     };
 
@@ -44,7 +44,7 @@ export class CreateAPIKey extends React.Component {
     render () {
         let content;
 
-        if (this.state.key) {
+        if (this.props.newKey) {
             content = (
                 <Modal.Body className="text-center">
                     <Row>
@@ -65,11 +65,11 @@ export class CreateAPIKey extends React.Component {
                                         style={{marginBottom: 0}}
                                         formGroupStyle={{marginBottom: 0}}
                                         className="text-center"
-                                        value={this.state.key}
+                                        value={this.props.newKey}
                                     />
                                 </FlexItem>
                                 <CopyToClipboard
-                                    text={this.state.key}
+                                    text={this.props.newKey}
                                     onCopy={() => this.setState({copied: true})}
                                 >
                                     <Button icon="paste" bsStyle="primary" />
@@ -125,13 +125,19 @@ export class CreateAPIKey extends React.Component {
 
 const mapStateToProps = (state) => ({
     show: routerLocationHasState(state, "createAPIKey"),
+    newKey: state.account.newKey,
     permissions: state.account.permissions
 });
 
 const mapDispatchToProps = (dispatch) => ({
 
+    onCreate: ({ name, permissions }) => {
+        dispatch(createAPIKey(name, permissions));
+    },
+
     onHide: () => {
         dispatch(push({...window.location, state: {createAPIKey: false}}));
+        dispatch(clearAPIKey());
     }
 
 });
