@@ -351,7 +351,7 @@ async def list_isolates(req):
 
 async def get_isolate(req):
     """
-    Get a complete specific isolate subdocument, including its sequences.
+    Get a complete specific isolate sub-document, including its sequences.
 
     """
     db = req.app["db"]
@@ -775,19 +775,25 @@ async def create_sequence(req):
     # Extract variables from URL path.
     virus_id, isolate_id = (req.match_info[key] for key in ["virus_id", "isolate_id"])
 
-    # Update POST data to make sequence document.
-    data.update({
-        "_id": data.pop("id"),
-        "virus_id": virus_id,
-        "isolate_id": isolate_id,
-        "host": data.get("host", "")
-    })
-
     # Get the subject virus document. Will be ``None`` if it doesn't exist. This will result in a ``404`` response.
     document = await db.viruses.find_one({"_id": virus_id, "isolates.id": isolate_id})
 
     if not document:
         return not_found()
+
+    segment = data.get("segment", None)
+
+    if segment and segment not in {s["name"] for s in document.get("schema", {})}:
+        return not_found("Segment not found: {}".format(segment))
+
+    # Update POST data to make sequence document.
+    data.update({
+        "_id": data.pop("id"),
+        "virus_id": virus_id,
+        "isolate_id": isolate_id,
+        "host": data.get("host", ""),
+        "segment": segment
+    })
 
     old = await virtool.virus.join(db, virus_id, document)
 
@@ -845,7 +851,8 @@ async def create_sequence(req):
 @validation({
     "host": {"type": "string"},
     "definition": {"type": "string"},
-    "sequence": {"type": "string"}
+    "sequence": {"type": "string"},
+    "schema": {"type": "list"}
 })
 async def edit_sequence(req):
     db, data = req.app["db"], req["data"]
@@ -861,6 +868,17 @@ async def edit_sequence(req):
         return not_found("Virus or isolate not found")
 
     old = await virtool.virus.join(db, virus_id, document)
+
+    # Get the subject virus document. Will be ``None`` if it doesn't exist. This will result in a ``404`` response.
+    document = await db.viruses.find_one({"_id": virus_id, "isolates.id": isolate_id})
+
+    if not document:
+        return not_found()
+
+    segment = data.get("segment", None)
+
+    if segment and segment not in {s["name"] for s in document.get("schema", {})}:
+        return not_found("Segment not found: {}".format(segment))
 
     updated_sequence = await db.sequences.find_one_and_update({"_id": sequence_id}, {
         "$set": data
