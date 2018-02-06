@@ -3,7 +3,14 @@
  *
  * @module account/reducer
  */
-import { GET_ACCOUNT, UPDATE_ACCOUNT_SETTINGS, CHANGE_ACCOUNT_PASSWORD, GET_API_KEYS } from "../actionTypes";
+import {
+    GET_ACCOUNT,
+    UPDATE_ACCOUNT_SETTINGS,
+    CHANGE_ACCOUNT_PASSWORD,
+    GET_API_KEYS,
+    CREATE_API_KEY,
+    CLEAR_API_KEY
+} from "../actionTypes";
 import { reportAPIError } from "../utils";
 
 /**
@@ -15,7 +22,8 @@ import { reportAPIError } from "../utils";
 const initialState = {
     ready: false,
     oldPasswordError: false,
-    apiKeys: null
+    apiKeys: null,
+    newKey: null
 };
 
 /**
@@ -32,8 +40,8 @@ export default function accountReducer (state = initialState, action) {
         case GET_ACCOUNT.SUCCEEDED:
             return {...state, ...action.data, ready: true};
 
-        case UPDATE_ACCOUNT_SETTINGS.SUCCEEDED:
-            return {...state, settings: action.data};
+        case GET_API_KEYS.SUCCEEDED:
+            return {...state, apiKeys: action.data};
 
         case CHANGE_ACCOUNT_PASSWORD.SUCCEEDED:
             return {...state, oldPasswordError: false};
@@ -45,8 +53,17 @@ export default function accountReducer (state = initialState, action) {
 
             return reportAPIError(action);
 
-        case GET_API_KEYS.SUCCEEDED:
-            return {...state, apiKeys: action.data};
+        case CREATE_API_KEY.REQUESTED:
+            return {...state, key: null};
+
+        case CREATE_API_KEY.SUCCEEDED:
+            return {...state, newKey: action.data.key};
+
+        case CLEAR_API_KEY:
+            return {...state, key: null};
+
+        case UPDATE_ACCOUNT_SETTINGS.SUCCEEDED:
+            return {...state, settings: action.data};
 
         default:
             return state;

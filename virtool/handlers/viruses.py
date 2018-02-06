@@ -11,6 +11,7 @@ from pymongo import ReturnDocument
 from cerberus import Validator
 
 import virtool.utils
+import virtool.validators
 import virtool.virus
 import virtool.virus_import
 import virtool.virus_history
@@ -140,7 +141,25 @@ async def create(req):
 @protected("modify_virus")
 @validation({
     "name": {"type": "string"},
-    "abbreviation": {"type": "string"}
+    "abbreviation": {"type": "string"},
+    "schema": {
+        "type": "list",
+        "validator": virtool.validators.has_unique_segment_names,
+        "schema": {
+            "type": "dict",
+            "allow_unknown": False,
+            "schema": {
+                "name": {"type": "string", "required": True},
+                "molecule": {"type": "string", "default": None, "nullable": True, "allowed": [
+                    "ssDNA",
+                    "dsDNA",
+                    "ssRNA+",
+                    "ssRNA-",
+                    "dsRNA"
+                ]}
+            }
+        }
+    }
 })
 async def edit(req):
     """
@@ -158,7 +177,9 @@ async def edit(req):
     if not old:
         return not_found()
 
-    name_change, abbreviation_change = data.get("name", None), data.get("abbreviation", None)
+    name_change = data.get("name", None)
+    abbreviation_change = data.get("abbreviation", None)
+    schema_change = data.get("schema", None)
 
     if name_change == old["name"]:
         name_change = None
@@ -168,8 +189,11 @@ async def edit(req):
     if abbreviation_change == old_abbreviation:
         abbreviation_change = None
 
+    if schema_change == old.get("schema", None):
+        schema_change = None
+
     # Sent back ``200`` with the existing virus record if no change will be made.
-    if name_change is None and abbreviation_change is None:
+    if name_change is None and abbreviation_change is None and schema_change is None:
         return json_response(await virtool.virus.join_and_format(db, virus_id))
 
     # Make sure new name and/or abbreviation are not already in use.
@@ -199,7 +223,7 @@ async def edit(req):
     issues = await virtool.virus.verify(db, virus_id, new)
 
     if issues is None:
-        document = await db.viruses.update_one({"_id": virus_id}, {
+        await db.viruses.update_one({"_id": virus_id}, {
             "$set": {
                 "verified": True
             }
@@ -233,6 +257,12 @@ async def edit(req):
         # Abbreviation is being changed from one value to another.
         else:
             description = "Changed abbreviation to {}".format(new["abbreviation"])
+
+    if schema_change is not None:
+        if description is None:
+            description = "Modified schema"
+        else:
+            description += " and modified schema"
 
     await virtool.virus_history.add(
         db,
