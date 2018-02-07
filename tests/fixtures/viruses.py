@@ -5,8 +5,6 @@ import json
 import copy
 import pytest
 
-from virtool.utils import random_alphanumeric
-
 TEST_FILES_PATH = os.path.join(sys.path[0], "tests", "test_files")
 
 
@@ -41,6 +39,7 @@ def test_virus():
         "lower_name": "prunus virus f",
         "verified": False,
         "name": "Prunus virus F",
+        "schema": [],
         "_id": "6116cba1"
     }
 
@@ -63,7 +62,8 @@ def test_sequence():
         "host": "sweet cherry",
         "virus_id": "6116cba1",
         "isolate_id": "cab8b360",
-        "sequence": "TGTTTAAGAGATTAAACAACCGCTTTC"
+        "sequence": "TGTTTAAGAGATTAAACAACCGCTTTC",
+        "segment": None
     }
 
 
@@ -84,7 +84,8 @@ def test_merged_virus():
                         "isolate_id": "cab8b360",
                         "definition": "Prunus virus F isolate 8816-s2 segment RNA2 polyprotein 2 gene, complete cds.",
                         "host": "sweet cherry",
-                        "sequence": "TGTTTAAGAGATTAAACAACCGCTTTC"
+                        "sequence": "TGTTTAAGAGATTAAACAACCGCTTTC",
+                        "segment": None
                     }
                 ],
                 "source_name": "8816-v2",
@@ -95,6 +96,7 @@ def test_merged_virus():
         "lower_name": "prunus virus f",
         "verified": False,
         "name": "Prunus virus F",
+        "schema": [],
         "_id": "6116cba1"
     }
 
@@ -114,43 +116,6 @@ def test_add_history(monkeypatch, mocker):
 @pytest.fixture(scope="function")
 def import_json(import_json_from_file):
     return copy.deepcopy(import_json_from_file)
-
-
-@pytest.fixture(scope="function")
-def import_report():
-    return {
-        "progress": 1,
-        "added": 0,
-        "replaced": 0,
-        "skipped": 0,
-        "warnings": []
-    }
-
-
-@pytest.fixture
-def test_sequences_list():
-    return [
-        {
-            "annotated": True,
-            "sequence": "CAT",
-            "_id": "NC_001440",
-            "definition": "Cucumber mosaic virus RNA 3, complete sequence",
-            "_version": 0,
-            "isolate_id": "dqz9u58g",
-            "host": None,
-            "length": 2216
-        },
-        {
-            "annotated": True,
-            "sequence": "GAT",
-            "_id": "NC_001441",
-            "definition": "Cucumber mosaic virus RNA 2, complete sequence",
-            "_version": 0,
-            "isolate_id": "sad23gat",
-            "host": None,
-            "length": 2212
-        }
-    ]
 
 
 @pytest.fixture
@@ -183,31 +148,6 @@ def test_virus_list(test_merged_virus):
             isolate["sequences"][0]["_id"] = "{}_seq_{}".format(prefix, i)
 
     return [first_virus, second_virus, third_virus, fourth_virus]
-
-
-@pytest.fixture
-def get_test_insertions(test_virus, test_change):
-    def func(length=30):
-        insertions = []
-
-        for _ in range(length):
-            virus = dict(test_virus, name=random_alphanumeric(7), _id=random_alphanumeric(7), abbreviation="")
-            insertions.append((virus, test_change))
-
-        return insertions
-
-    return func
-
-
-@pytest.fixture
-def get_test_replacements(get_test_insertions):
-    def func(length=30):
-        insertions = get_test_insertions(length)
-        removals = [(virus["_id"], change) for virus, change in get_test_insertions(length)]
-
-        return list(zip(removals, insertions))
-
-    return func
 
 
 @pytest.fixture

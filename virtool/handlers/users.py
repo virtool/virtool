@@ -1,6 +1,5 @@
 import hashlib
 from pymongo import ReturnDocument
-from cerberus import Validator
 
 import virtool.user
 import virtool.utils
@@ -106,7 +105,7 @@ async def edit(req):
     user_id = req.match_info["user_id"]
 
     if not await virtool.user.user_exists(db, user_id):
-        return not_found()
+        return not_found("User not found")
 
     update = dict()
 
@@ -115,10 +114,10 @@ async def edit(req):
 
         if primary_group != "none":
             if not await db.groups.count({"_id": primary_group}):
-                return not_found("Group does not exist: {}".format(primary_group))
+                return not_found("Group not found")
 
             if not await db.users.count({"_id": user_id, "groups": primary_group}):
-                return bad_request("User is not member of group {}".format(primary_group))
+                return bad_request("User is not member of group: {}".format(primary_group))
 
         update.update({
             "primary_group": primary_group

@@ -22,7 +22,6 @@ from virtool.handlers.utils import unpack_request, json_response, not_found, inv
 
 SCHEMA_VALIDATOR = {
     "type": "list",
-    "default": list(),
     "validator": virtool.validators.has_unique_segment_names,
     "schema": {
         "type": "dict",

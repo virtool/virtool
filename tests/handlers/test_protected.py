@@ -16,7 +16,7 @@ parameters = [
     ("delete", ("/api/history/foobar",)),
 
     # HMMs
-    ("post", ("/api/hmms", {})),
+    ("patch", ("/api/hmms/install", {})),
 
     # Indexes
     ("post", ("/api/indexes", {})),
@@ -40,9 +40,7 @@ parameters = [
     ("get", ("/api/users",)),
     ("get", ("/api/users/foobar",)),
     ("post", ("/api/users", {})),
-    ("put", ("/api/users/foobar/password", {})),
-    ("put", ("/api/users/foobar/reset", {})),
-    ("put", ("/api/users/foobar/primary", {})),
+    ("patch", ("/api/users/foobar", {})),
     ("post", ("/api/users/foobar/groups", {})),
     ("delete", ("/api/users/foobar/groups/baz",)),
     ("delete", ("/api/users/foobar",)),
