@@ -29,9 +29,11 @@ SCHEMA_VALIDATOR = {
         "allow_unknown": False,
         "schema": {
             "name": {"type": "string", "required": True},
+            "required": {"type": "boolean", "default": True},
             "molecule": {"type": "string", "default": None, "nullable": True, "allowed": [
                 "ssDNA",
                 "dsDNA",
+                "ssRNA",
                 "ssRNA+",
                 "ssRNA-",
                 "dsRNA"
