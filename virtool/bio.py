@@ -296,7 +296,7 @@ async def initialize_ncbi_blast(sequence):
     with aiohttp.ClientSession() as session:
         async with session.post(BLAST_CGI_URL, params=params, data=data) as resp:
             if resp.status != 200:
-                raise NCBIError("BLAST request returned status {}".format(resp.status))
+                raise virtool.errors.NCBIError("BLAST request returned status: {}".format(resp.status))
 
             # Extract and return the RID and RTOE from the QBlastInfo tag.
             return extract_blast_info(await resp.text())
