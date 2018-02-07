@@ -225,10 +225,8 @@ def setup_users_routes(app):
     app.router.add_get("/api/users", users.find)
     app.router.add_post("/api/users", users.create)
     app.router.add_get("/api/users/{user_id}", users.get)
+    app.router.add_patch("/api/users/{user_id}", users.edit)
     app.router.add_delete("/api/users/{user_id}", users.remove)
-    app.router.add_put("/api/users/{user_id}/password", users.set_password)
-    app.router.add_put("/api/users/{user_id}/reset", users.set_force_reset)
-    app.router.add_put("/api/users/{user_id}/primary", users.set_primary_group)
     app.router.add_post("/api/users/{user_id}/groups", users.add_group)
     app.router.add_delete("/api/users/{user_id}/groups/{group_id}", users.remove_group)
 
