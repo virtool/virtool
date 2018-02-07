@@ -7,28 +7,21 @@ import { Modal } from "react-bootstrap";
 import { Button } from "../../../base";
 import SegmentForm from "./SegmentForm";
 
+
+const getInitialState = () => ({
+    newEntry: {
+        id: 0,
+        name: "",
+        type: "",
+    }
+});
+
 export default class AddIsolate extends React.Component {
 
     constructor (props) {
         super(props);
 
-        this.state = {
-            newEntry: {
-                id: 0,
-                name: "",
-                type: "",
-            }
-        }
-    }
-
-    defaultState = () => {
-        this.setState({
-            newEntry: {
-                id: 0,
-                name: "",
-                type: "",
-            }
-        });
+        this.state = getInitialState();
     }
 
     handleChange = (entry) => {
@@ -43,12 +36,16 @@ export default class AddIsolate extends React.Component {
 
     handleSubmit = () => {
         this.props.onSubmit(this.state.newEntry);
-        this.defaultState();
+    }
+
+    handleExited = () => {
+        this.setState(getInitialState());
     }
 
     render () {
+
         return (
-            <Modal show={this.props.show}>
+            <Modal show={this.props.show} onExited={this.handleExited}>
                 <Modal.Header onHide={this.props.onHide} closeButton>
                     Add New Segment Type
                 </Modal.Header>

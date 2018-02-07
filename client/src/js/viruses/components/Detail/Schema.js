@@ -92,7 +92,7 @@ class Schema extends React.Component {
         return (
             <div>
                 <div>
-                    <AddSegment show={this.state.show} onHide={this.handleClose} onSubmit={this.handleSubmit} newSeg={this.state.newEntry} total={this.state.length} />
+                    <AddSegment show={this.state.show} onHide={this.handleClose} onSubmit={this.handleSubmit} total={this.state.length} />
                     <Button
                         icon="new-entry"
                         bsStyle="primary"

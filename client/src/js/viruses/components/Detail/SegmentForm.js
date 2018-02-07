@@ -42,6 +42,7 @@ export default class SegmentForm extends React.Component {
                 <Row>
                     <Col md={12}>
                         <Input type="select" label="Molecule Type" value={this.props.newEntry.type} onChange={(e) => {this.changeMolType(e)}}>
+                            <option key="default" style={{display: "none"}} />
                             <option key="ssDNA" value="ssDNA">
                                 ssDNA
                             </option>
