@@ -65,3 +65,26 @@ export default class AddIsolate extends React.Component {
         );
     }
 }
+/*
+const mapStateToProps = state => ({
+    show: state.viruses.addSequence,
+    virusId: state.viruses.detail.id,
+    isolateId: state.viruses.activeIsolateId
+});
+
+const mapDispatchToProps = dispatch => ({
+
+    onHide: () => {
+        dispatch(hideVirusModal());
+    },
+
+    onSave: (virusId, isolateId, sequenceId, definition, host, sequence) => {
+        dispatch(addSequence(virusId, isolateId, sequenceId, definition, host, sequence));
+    }
+
+});
+
+const Container = connect(mapStateToProps, mapDispatchToProps)(AddSequence);
+
+export default Container;
+*/

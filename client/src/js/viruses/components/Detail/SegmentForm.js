@@ -8,14 +8,7 @@ import { Input } from "../../../base";
 
 export default class SegmentForm extends React.Component {
 
-//    constructor (props) {
-//        super(props);
-
-//        this.state = this.props.newEntry;
-//    }
-
     changeSegName = (e) => {
-//        this.setState({name: e.target.value});
         this.props.onChange({
             ...this.props.newEntry,
             name: e.target.value
