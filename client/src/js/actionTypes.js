@@ -39,7 +39,6 @@ export const WS_UPDATE_SAMPLE = "WS_UPDATE_SAMPLE";
 export const WS_REMOVE_SAMPLE = "WS_REMOVE_SAMPLE";
 export const WS_UPDATE_ANALYSIS = "WS_UPDATE_ANALYSIS";
 export const WS_REMOVE_ANALYSIS = "WS_REMOVE_ANALYSIS";
-
 export const FIND_SAMPLES = createRequestActionType("FIND_SAMPLES");
 export const FIND_READY_HOSTS = createRequestActionType("FIND_READY_HOSTS");
 export const GET_SAMPLE = createRequestActionType("GET_SAMPLE");
@@ -55,7 +54,6 @@ export const GET_ANALYSIS_PROGRESS = "GET_ANALYSIS_PROGRESS";
 export const ANALYZE = createRequestActionType("ANALYZE");
 export const BLAST_NUVS = createRequestActionType("BLAST_NUVS");
 export const REMOVE_ANALYSIS = createRequestActionType("REMOVE_ANALYSIS");
-
 export const SHOW_REMOVE_SAMPLE = "SHOW_REMOVE_SAMPLE";
 export const HIDE_SAMPLE_MODAL = "HIDE_SAMPLE_MODAL";
 
@@ -134,6 +132,7 @@ export const GET_API_KEYS = createRequestActionType("GET_API_KEYS");
 export const CREATE_API_KEY = createRequestActionType("CREATE_API_KEY");
 export const UPDATE_API_KEY = createRequestActionType("UPDATE_API_KEY");
 export const REMOVE_API_KEY = createRequestActionType("REMOVE_API_KEY");
+export const CLEAR_API_KEY = "CLEAR_API_KEY";
 export const LOGOUT = createRequestActionType("LOGOUT");
 
 // Administrative Settings
@@ -145,9 +144,7 @@ export const GET_CONTROL_READAHEAD = createRequestActionType("GET_CONTROL_READAH
 export const LIST_USERS = createRequestActionType("LIST_USERS");
 export const FILTER_USERS = "FILTER_USERS";
 export const CREATE_USER = createRequestActionType("CREATE_USER");
-export const SET_PASSWORD = createRequestActionType("SET_PASSWORD");
-export const SET_FORCE_RESET = createRequestActionType("SET_FORCE_RESET");
-export const SET_PRIMARY_GROUP = createRequestActionType("SET_PRIMARY_GROUP");
+export const EDIT_USER = createRequestActionType("EDIT_USER");
 export const ADD_USER_TO_GROUP = createRequestActionType("ADD_USER_TO_GROUP");
 export const REMOVE_USER_FROM_GROUP = createRequestActionType("REMOVE_USER_FROM_GROUP");
 

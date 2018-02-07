@@ -40,7 +40,7 @@ class TestUpload:
             "type": "reads",
             "ready": False,
             "reserved": False,
-            "uploaded_at": "2017-10-06T20:00:00Z",
+            "uploaded_at": "2015-10-06T20:00:00Z",
             "id": "{}-Test.fq.gz".format(test_random_alphanumeric.last_choice),
             "user": {
                 "id": "test"

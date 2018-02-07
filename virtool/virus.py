@@ -26,7 +26,8 @@ SEQUENCE_PROJECTION = [
     "host",
     "virus_id",
     "isolate_id",
-    "sequence"
+    "sequence",
+    "segment"
 ]
 
 

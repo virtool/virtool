@@ -68,7 +68,7 @@ def test_random_alphanumeric(monkeypatch):
 
 @pytest.fixture
 def static_time(monkeypatch):
-    time = arrow.Arrow(2017, 10, 6, 20, 0, 0).naive
+    time = arrow.Arrow(2015, 10, 6, 20, 0, 0).naive
 
     monkeypatch.setattr("virtool.utils.timestamp", lambda: time)
 

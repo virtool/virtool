@@ -3,7 +3,7 @@ import { connect } from "react-redux";
 import { capitalize, includes, map } from "lodash-es";
 import { Alert, Panel } from "react-bootstrap";
 import { Icon, Input, LoadingPlaceholder } from "../../base";
-import { updateSampleGroup, updateSampleRights } from "../actions";
+import { updateSampleRights } from "../actions";
 import { listGroups } from "../../groups/actions";
 
 class SampleRights extends React.Component {
@@ -111,7 +111,7 @@ const mapDispatchToProps = dispatch => ({
     },
 
     onChangeGroup: (sampleId, groupId) => {
-        dispatch(updateSampleGroup(sampleId, groupId));
+        dispatch(updateSampleRights(sampleId, {group: groupId}));
     },
 
     onChangeRights: (sampleId, name, value) => {

@@ -60,7 +60,8 @@ def test_virus_edit():
                                           "cds.",
                             "host": "sweet cherry",
                             "isolate_id": "cab8b360",
-                            "sequence": "TGTTTAAGAGATTAAACAACCGCTTTC"
+                            "sequence": "TGTTTAAGAGATTAAACAACCGCTTTC",
+                            "segment": None
                         }
                     ],
                     "source_name": "8816-v2",
@@ -70,6 +71,7 @@ def test_virus_edit():
             "last_indexed_version": 0,
             "lower_name": "prunus virus f",
             "name": "Prunus virus F",
+            "schema": [],
             "version": 0
         },
         {
@@ -87,7 +89,8 @@ def test_virus_edit():
                                           "cds.",
                             "host": "sweet cherry",
                             "isolate_id": "cab8b360",
-                            "sequence": "TGTTTAAGAGATTAAACAACCGCTTTC"
+                            "sequence": "TGTTTAAGAGATTAAACAACCGCTTTC",
+                            "segment": None
                         }
                     ],
                     "source_name": "8816-v2",
@@ -97,6 +100,7 @@ def test_virus_edit():
             "last_indexed_version": 0,
             "lower_name": "prunus virus f",
             "name": "Prunus virus E",
+            "schema": [],
             "version": 1
         }
     )
@@ -130,11 +134,13 @@ def create_mock_history(test_motor):
                                     "host": "sweet cherry",
                                     "isolate_id": "cab8b360",
                                     "sequence": "TGTTTAAGAGATTAAACAACCGCTTTC",
-                                    "virus_id": "6116cba1"
+                                    "virus_id": "6116cba1",
+                                    "segment": None
                                 }
                             ]
                         }
                     ],
+                    "schema": [],
                     "last_indexed_version": 0,
                     "lower_name": "prunus virus f",
                     "verified": False,
@@ -215,7 +221,8 @@ def create_mock_history(test_motor):
                             "host": "sweet cherry",
                             "isolate_id": "cab8b360",
                             "sequence": "TGTTTAAGAGATTAAACAACCGCTTTC",
-                            "virus_id": "6116cba1"
+                            "virus_id": "6116cba1",
+                            "segment": None
                         }],
                         "source_name": "8816-v2",
                         "source_type": "isolate"}]
@@ -252,7 +259,8 @@ def create_mock_history(test_motor):
                     "lower_name": "prunus virus f",
                     "verified": False,
                     "name": "Test Virus",
-                    "version": 3
+                    "version": 3,
+                    "schema": [],
                 },
                 "index": {
                     "id": "unbuilt",
@@ -278,7 +286,8 @@ def create_mock_history(test_motor):
                 "lower_name": "prunus virus f",
                 "verified": False,
                 "name": "Test Virus",
-                "version": 3
+                "version": 3,
+                "schema": [],
             }
 
             await test_motor.viruses.insert_one(virus)

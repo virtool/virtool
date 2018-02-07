@@ -6,7 +6,7 @@ import { ListGroup } from "react-bootstrap";
 
 import APIKey from "./Key";
 import CreateAPIKey from "./Create";
-import { getAPIKeys, createAPIKey } from "../../actions";
+import { getAPIKeys } from "../../actions";
 import { Button, Flex, FlexItem, LoadingPlaceholder, NoneFound } from "../../../base/index";
 
 class APIKeys extends React.Component {
@@ -67,7 +67,6 @@ class APIKeys extends React.Component {
 
                 <CreateAPIKey
                     permissions={this.props.permissions}
-                    onHide={() => this.props.history.push({state: {createAPIKey: false}})}
                     onCreate={this.props.onCreate}
                 />
             </div>
@@ -83,10 +82,6 @@ const mapDispatchToProps = (dispatch) => ({
 
     onGet: () => {
         dispatch(getAPIKeys());
-    },
-
-    onCreate: (name, permissions, callback) => {
-        dispatch(createAPIKey(name, permissions, callback));
     }
 
 });

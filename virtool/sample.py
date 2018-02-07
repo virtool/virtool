@@ -42,6 +42,16 @@ PROJECTION = [
 ]
 
 
+RIGHTS_PROJECTION = {
+    "_id": False,
+    "group": True,
+    "group_read": True,
+    "group_write": True,
+    "all_read": True,
+    "all_write": True
+}
+
+
 def calculate_algorithm_tags(analyses):
     """
     Calculate the algorithm tags (eg. "ip", True) that should be applied to a sample document based on a list of its

@@ -58,7 +58,7 @@ async def test_files(tmpdir, test_motor):
 
     await organize_samples(test_motor, {"data_path": str(tmpdir)})
 
-    assert os.listdir(str(samples_dir)) == ["dhj2109", "432asd"]
+    assert set(os.listdir(str(samples_dir))) == {"dhj2109", "432asd"}
 
 
 async def test_host_to_subtraction(tmpdir, samples, test_motor, static_time):

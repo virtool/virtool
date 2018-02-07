@@ -8,7 +8,6 @@ import {
     GET_SAMPLE,
     CREATE_SAMPLE,
     UPDATE_SAMPLE,
-    UPDATE_SAMPLE_GROUP,
     UPDATE_SAMPLE_RIGHTS,
     REMOVE_SAMPLE,
     FIND_ANALYSES,
@@ -61,12 +60,6 @@ export const editSample = (sampleId, update) => ({
     type: UPDATE_SAMPLE.REQUESTED,
     sampleId,
     update
-});
-
-export const updateSampleGroup = (sampleId, groupId) => ({
-    type: UPDATE_SAMPLE_GROUP.REQUESTED,
-    sampleId,
-    groupId
 });
 
 export const updateSampleRights = (sampleId, update) => ({

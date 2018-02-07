@@ -134,7 +134,6 @@ def setup_samples_routes(app):
     app.router.add_delete("/api/samples/{sample_id}", samples.remove)
     app.router.add_get("/api/samples/{sample_id}/analyses", samples.list_analyses)
     app.router.add_post("/api/samples/{sample_id}/analyses", samples.analyze)
-    app.router.add_put("/api/samples/{sample_id}/group", samples.set_owner_group)
     app.router.add_patch("/api/samples/{sample_id}/rights", samples.set_rights)
 
 
@@ -187,9 +186,9 @@ def setup_history_routes(app):
 
 def setup_hmm_routes(app):
     app.router.add_get("/api/hmms", hmm.find)
-    app.router.add_post("/api/hmms", hmm.install)
-    app.router.add_get("/api/hmms/file", hmm.get_file)
-    app.router.add_get("/api/hmms/annotations/{hmm_id}", hmm.get_annotation)
+    app.router.add_get("/api/hmms/install", hmm.get_install)
+    app.router.add_patch("/api/hmms/install", hmm.install)
+    app.router.add_get("/api/hmms/{hmm_id}", hmm.get)
 
 
 def setup_subtraction_routes(app):
@@ -226,10 +225,8 @@ def setup_users_routes(app):
     app.router.add_get("/api/users", users.find)
     app.router.add_post("/api/users", users.create)
     app.router.add_get("/api/users/{user_id}", users.get)
+    app.router.add_patch("/api/users/{user_id}", users.edit)
     app.router.add_delete("/api/users/{user_id}", users.remove)
-    app.router.add_put("/api/users/{user_id}/password", users.set_password)
-    app.router.add_put("/api/users/{user_id}/reset", users.set_force_reset)
-    app.router.add_put("/api/users/{user_id}/primary", users.set_primary_group)
     app.router.add_post("/api/users/{user_id}/groups", users.add_group)
     app.router.add_delete("/api/users/{user_id}/groups/{group_id}", users.remove_group)
 

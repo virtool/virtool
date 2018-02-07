@@ -245,7 +245,7 @@ class TestCreateAPIKey:
 
         expected.update({
             "key": "abc123xyz789",
-            "created_at": "2017-10-06T20:00:00Z"
+            "created_at": "2015-10-06T20:00:00Z"
         })
 
         del expected["_id"]
@@ -292,7 +292,7 @@ class TestCreateAPIKey:
 
         expected.update({
             "key": "987zyx321cba",
-            "created_at": "2017-10-06T20:00:00Z"
+            "created_at": "2015-10-06T20:00:00Z"
         })
 
         del expected["_id"]
@@ -345,7 +345,7 @@ class TestUpdateAPIKey:
         del expected["_id"]
         del expected["user"]
 
-        expected["created_at"] = "2017-10-06T20:00:00Z"
+        expected["created_at"] = "2015-10-06T20:00:00Z"
 
         assert await resp.json() == expected
 

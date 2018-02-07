@@ -33,13 +33,6 @@ export const update = ({ sampleId, update }) => (
         .send(update)
 );
 
-export const updateGroup = ({ sampleId, groupId }) => (
-    Request.put(`/api/samples/${sampleId}/group`)
-        .send({
-            group_id: groupId
-        })
-);
-
 export const updateRights = ({ sampleId, update }) => (
     Request.patch(`/api/samples/${sampleId}/rights`)
         .send(update)

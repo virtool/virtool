@@ -176,24 +176,21 @@ async def create(req):
     return json_response(virtool.utils.base_processor(document), status=201, headers=headers)
 
 
+@validation({
+    "name": {"type": "string"},
+    "host": {"type": "string"},
+    "isolate": {"type": "string"},
+    "locale": {"type": "string"}
+})
 async def edit(req):
     """
     Update specific fields in the sample document.
 
     """
-    db, data = await unpack_request(req)
-
-    v = Validator({
-        "name": {"type": "string"},
-        "host": {"type": "string"},
-        "isolate": {"type": "string"}
-    })
-
-    if not v(dict(data)):
-        return invalid_query(v.errors)
+    db, data = req.app["db"], req["data"]
 
     document = await db.samples.find_one_and_update({"_id": req.match_info["sample_id"]}, {
-        "$set": v.document
+        "$set": data
     }, return_document=ReturnDocument.AFTER, projection=virtool.sample.LIST_PROJECTION)
 
     processed = virtool.utils.base_processor(document)
@@ -203,44 +200,19 @@ async def edit(req):
     return json_response(processed)
 
 
-async def set_owner_group(req):
-    """
-    Set the owner group for the sample.
-
-    """
-    db, data = await unpack_request(req)
-
-    print(data)
-
-    sample_id = req.match_info["sample_id"]
-
-    await virtool.sample.get_sample_owner(db, sample_id)
-
-    if "administrator" not in req["client"].groups and req["client"].user_id != sample_owner:
-        return json_response({"message": "Must be administrator or sample owner."}, status=403)
-
-    existing_group_ids = await db.groups.distinct("_id")
-
-    existing_group_ids.append("none")
-
-    if data["group_id"] not in existing_group_ids:
-        return not_found("Group does not exist")
-
-    await db.samples.update_one({"_id": sample_id}, {
-        "$set": {
-            "group": data["group_id"]
-        }
-    })
-
-    return json_response({"group_id": data["group_id"]})
-
-
+@validation({
+    "group": {"type": "string"},
+    "all_read": {"type": "boolean"},
+    "all_write": {"type": "boolean"},
+    "group_read": {"type": "boolean"},
+    "group_write": {"type": "boolean"}
+})
 async def set_rights(req):
     """
-    Change rights setting for the specified sample document.
+    Change rights settings for the specified sample document.
 
     """
-    db, data = await unpack_request(req)
+    db, data = req.app["db"], req["data"]
 
     user_id = req["client"].user_id
     user_groups = req["client"].groups
@@ -249,17 +221,17 @@ async def set_rights(req):
 
     # Only update the document if the connected user owns the samples or is an administrator.
     if "administrator" in user_groups or user_id == await virtool.sample.get_sample_owner(db, sample_id):
-        valid_fields = ["all_read", "all_write", "group_read", "group_write"]
+        if "group" in data:
+            existing_group_ids = await db.groups.distinct("_id")
+            existing_group_ids.append("none")
 
-        # Make a dict for updating the rights fields. Fail the transaction if there is an unknown right key.
-        for field in data:
-            if field not in valid_fields:
-                return bad_request("Unknown right name: {}".format(field))
+            if data["group"] not in existing_group_ids:
+                return not_found("Group does not exist")
 
         # Update the sample document with the new rights.
         document = await db.samples.find_one_and_update({"_id": sample_id}, {
             "$set": data
-        }, return_document=ReturnDocument.AFTER, projection=valid_fields)
+        }, return_document=ReturnDocument.AFTER, projection=virtool.sample.RIGHTS_PROJECTION)
 
         return json_response(document)
 
@@ -304,7 +276,7 @@ async def list_analyses(req):
 
 
 @validation({
-    "algorithm": {"type": "string", "required": True}
+    "algorithm": {"type": "string", "required": True, "allowed": ["pathoscope_bowtie", "nuvs"]}
 })
 async def analyze(req):
     """

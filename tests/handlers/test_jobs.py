@@ -36,28 +36,28 @@ async def test_get(status, spawn_client, test_job, resp_is):
                     "state": "waiting",
                     "error": None,
                     "stage": None,
-                    "timestamp": "2017-10-06T20:00:00Z",
+                    "timestamp": "2015-10-06T20:00:00Z",
                     "progress": 0
                 },
                 {
                     "state": "running",
                     "error": None,
                     "stage": None,
-                    "timestamp": "2017-10-06T20:00:00Z",
+                    "timestamp": "2015-10-06T20:00:00Z",
                     "progress": 0
                 },
                 {
                     "state": "running",
                     "error": None,
                     "stage": "mk_analysis_dir",
-                    "timestamp": "2017-10-06T20:00:00Z",
+                    "timestamp": "2015-10-06T20:00:00Z",
                     "progress": 0.091
                 },
                 {
                     "state": "complete",
                     "error": None,
                     "stage": "import_results",
-                    "timestamp": "2017-10-06T20:00:00Z",
+                    "timestamp": "2015-10-06T20:00:00Z",
                     "progress": 1.0
                 }
             ]
