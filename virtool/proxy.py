@@ -1,7 +1,6 @@
 import aiohttp
 import os
 from aiohttp import web
-from contextlib import contextmanager
 
 import virtool.errors
 from virtool.handlers.utils import json_response
@@ -43,6 +42,7 @@ class ProxyRequest:
         self.settings = settings
         self.method = method
         self.url = url
+        self.resp = None
         self._kwargs = kwargs
 
     async def __aenter__(self):
@@ -55,8 +55,11 @@ class ProxyRequest:
 
         return self.resp
 
-    async def __aexit__(self):
-        await self.resp.close()
+    async def __aexit__(self, exc_type, exc_value, traceback):
+        if exc_type is not None:
+            print(exc_type, exc_value, traceback)
+
+        self.resp.close()
 
 
 @web.middleware
