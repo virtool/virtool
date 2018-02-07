@@ -276,7 +276,7 @@ async def list_analyses(req):
 
 
 @validation({
-    "algorithm": {"type": "string", "required": True}
+    "algorithm": {"type": "string", "required": True, "allowed": ["pathoscope_bowtie", "nuvs"]}
 })
 async def analyze(req):
     """
