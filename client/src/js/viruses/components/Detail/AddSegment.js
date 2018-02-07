@@ -9,21 +9,58 @@ import SegmentForm from "./SegmentForm";
 
 export default class AddIsolate extends React.Component {
 
+    constructor (props) {
+        super(props);
+
+        this.state = {
+            newEntry: {
+                id: 0,
+                name: "",
+                type: "",
+            }
+        }
+    }
+
+    defaultState = () => {
+        this.setState({
+            newEntry: {
+                id: 0,
+                name: "",
+                type: "",
+            }
+        });
+    }
+
+    handleChange = (entry) => {
+        this.setState({
+            newEntry: {
+                id: this.props.total+1,
+                name: entry.name,
+                type: entry.type
+            }
+        });
+    }
+
+    handleSubmit = () => {
+        this.props.onSubmit(this.state.newEntry);
+        this.defaultState();
+    }
+
     render () {
         return (
             <Modal show={this.props.show}>
                 <Modal.Header onHide={this.props.onHide} closeButton>
-                    Add a New Segment Type
+                    Add New Segment Type
                 </Modal.Header>
                 <Modal.Body>
                     <SegmentForm
                         ref={(node) => this.formNode = node}
                         onChange={this.handleChange}
-                        onSubmit={this.handleSubmit}
+                        newEntry={this.state.newEntry}
                     />
                 </Modal.Body>
                 <Modal.Footer>
-                    <Button bsStyle="primary" icon="floppy" onClick={this.save}>
+                    <Button bsStyle="primary" icon="floppy" onClick={this.handleSubmit} >
                         Save
                     </Button>
                 </Modal.Footer>

@@ -40,15 +40,18 @@ function combine (connect) {
 class Segment extends React.Component {
 
     render () {
-        const { segName, isDragging, connectDragSource, connectDropTarget } = this.props;
+        const { segName, segType, isDragging, connectDragSource, connectDropTarget } = this.props;
 
         return connectDragSource(
             connectDropTarget(
                 <div style={{opacity: isDragging ? 0 : 1}}>
                     <ListGroupItem className="spaced">
                         <Row>
-                            <Col md={11}>
+                            <Col md={10}>
                                 <strong>{segName}</strong>
+                            </Col>
+                            <Col md={1}>
+                                {segType}
                             </Col>
                             <Col md={1}>
                                 <Icon

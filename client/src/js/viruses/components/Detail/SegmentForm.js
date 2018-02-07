@@ -7,37 +7,60 @@ import { formatIsolateName } from "../../../utils";
 import { Input } from "../../../base";
 
 export default class SegmentForm extends React.Component {
-/*
-    static propTypes = {
-        sourceType: PropTypes.string,
-        sourceName: PropTypes.string,
-        allowedSourceTypes: PropTypes.arrayOf(PropTypes.string),
-        restrictSourceTypes: PropTypes.bool,
-        onChange: PropTypes.func,
-        onSubmit: PropTypes.func
-    };
 
-    changeSourceType = (e) => {
-        this.props.onChange({
-            sourceType: toLower(e.target.value),
-            sourceName: e.target.value === "unknown" ? "" : this.props.sourceName
-        });
-    };
+//    constructor (props) {
+//        super(props);
 
-    changeSourceName = (e) => {
+//        this.state = this.props.newEntry;
+//    }
+
+    changeSegName = (e) => {
+//        this.setState({name: e.target.value});
         this.props.onChange({
-            sourceName: e.target.value,
-            sourceType: this.props.sourceType
+            ...this.props.newEntry,
+            name: e.target.value
         });
-    };
-*/
+    }
+
+    changeMolType = (e) => {
+        this.props.onChange({
+            ...this.props.newEntry,
+            type: e.target.value
+        });
+    }
+
     render () {
 
         return (
             <form onSubmit={this.props.onSubmit}>
                 <Row>
                     <Col md={12}>
-                        <Input placeholder="segment name" />
+                        <Input label="Segment Name" value={this.props.newEntry.name} onChange={(e) => {this.changeSegName(e)}} />
+                    </Col>
+                </Row>
+
+                <Row>
+                    <Col md={12}>
+                        <Input type="select" label="Molecule Type" value={this.props.newEntry.type} onChange={(e) => {this.changeMolType(e)}}>
+                            <option key="ssDNA" value="ssDNA">
+                                ssDNA
+                            </option>
+                            <option key="dsDNA" value="dsDNA">
+                                dsDNA
+                            </option>
+                            <option key="ssRNA+" value="ssRNA+">
+                                ssRNA+
+                            </option>
+                            <option key="ssRNA-" value="ssRNA-">
+                                ssRNA-
+                            </option>
+                            <option key="dsRNA" value="dsRNA">
+                                dsRNA
+                            </option>
+                            <option key="ssRNA" value="ssRNA">
+                                ssRNA
+                            </option>
+                        </Input>
                     </Col>
                 </Row>
             </form>
