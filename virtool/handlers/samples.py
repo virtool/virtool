@@ -176,24 +176,21 @@ async def create(req):
     return json_response(virtool.utils.base_processor(document), status=201, headers=headers)
 
 
+@validation({
+    "name": {"type": "string"},
+    "host": {"type": "string"},
+    "isolate": {"type": "string"},
+    "locale": {"type": "string"}
+})
 async def edit(req):
     """
     Update specific fields in the sample document.
 
     """
-    db, data = await unpack_request(req)
-
-    v = Validator({
-        "name": {"type": "string"},
-        "host": {"type": "string"},
-        "isolate": {"type": "string"}
-    })
-
-    if not v(dict(data)):
-        return invalid_query(v.errors)
+    db, data = req.app["db"], req["data"]
 
     document = await db.samples.find_one_and_update({"_id": req.match_info["sample_id"]}, {
-        "$set": v.document
+        "$set": data
     }, return_document=ReturnDocument.AFTER, projection=virtool.sample.LIST_PROJECTION)
 
     processed = virtool.utils.base_processor(document)
