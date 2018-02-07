@@ -181,7 +181,7 @@ async def add_group(req):
 
     await virtool.user.update_sessions_and_keys(db, user_id, document["groups"], document["permissions"])
 
-    return json_response(virtool.utils.base_processor(document))
+    return json_response(document["groups"])
 
 
 @protected("manage_users")
@@ -224,7 +224,7 @@ async def remove_group(req):
 
     await virtool.user.update_sessions_and_keys(db, user_id, document["groups"], document["permissions"])
 
-    return json_response(virtool.utils.base_processor(document))
+    return json_response(document["groups"])
 
 
 @protected("manage_users")

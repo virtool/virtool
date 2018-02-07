@@ -44,10 +44,11 @@ const reducer = (state = initialState, action) => {
             return {...state, list: state.list.concat([action.data])};
 
         case EDIT_USER.SUCCEEDED:
-        case ADD_USER_TO_GROUP.SUCCEEDED:
-        case REMOVE_USER_FROM_GROUP.SUCCEEDED: {
             return updateUser(state, action.data);
-        }
+
+        case ADD_USER_TO_GROUP.SUCCEEDED:
+        case REMOVE_USER_FROM_GROUP.SUCCEEDED:
+            return updateUser(state, {groups: action.data, id: action.id});
 
         case CREATE_USER.REQUESTED:
             return {...state, createPending: true, createError: null};

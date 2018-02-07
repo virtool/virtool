@@ -27,11 +27,11 @@ function* editUser (action) {
 }
 
 function* addToGroup (action) {
-    yield setPending(apiCall(usersAPI.addUserToGroup, action, ADD_USER_TO_GROUP));
+    yield setPending(apiCall(usersAPI.addUserToGroup, action, ADD_USER_TO_GROUP, {id: action.userId}));
 }
 
 function* removeFromGroup (action) {
-    yield setPending(apiCall(usersAPI.removeUserFromGroup, action, REMOVE_USER_FROM_GROUP));
+    yield setPending(apiCall(usersAPI.removeUserFromGroup, action, REMOVE_USER_FROM_GROUP, {id: action.userId}));
 }
 
 export function* watchUsers () {
