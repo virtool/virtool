@@ -122,7 +122,8 @@ async def create(req):
         "verified": False,
         "lower_name": data["name"].lower(),
         "isolates": [],
-        "version": 0
+        "version": 0,
+        "schema": []
     })
 
     # Insert the virus document.
