@@ -13,7 +13,7 @@ async def get(req):
 
     channel = settings.get("software_channel")
 
-    releases = await virtool.updates.get_releases(db, channel, req.app["version"])
+    releases = await virtool.updates.get_releases(db, req.app["settings"], channel, req.app["version"])
 
     document = await db.status.find_one_and_update({"_id": "software_update"}, {
         "$set": {
@@ -50,7 +50,7 @@ async def upgrade(req):
         document = await db.status.find_one_and_update({"_id": "software_update"}, {
             "$set": {
                 "current_version": req.app["version"],
-                "releases": await virtool.updates.get_releases(db, channel, req.app["version"])
+                "releases": await virtool.updates.get_releases(db, req.app["settings"], channel, req.app["version"])
             }
         }, return_document=pymongo.ReturnDocument)
 

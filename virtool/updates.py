@@ -12,6 +12,7 @@ import tempfile
 import virtool.app
 import virtool.errors
 import virtool.github
+import virtool.proxy
 import virtool.utils
 
 logger = logging.getLogger(__name__)
@@ -29,7 +30,7 @@ RELEASE_KEYS = [
 ]
 
 
-async def get_releases(db, channel, server_version):
+async def get_releases(db, settings, channel, server_version):
     """
     Get a list of releases, from the Virtool Github repository, published since the current server version.
 
@@ -46,7 +47,7 @@ async def get_releases(db, channel, server_version):
     url = "https://www.virtool.ca/releases"
 
     async with aiohttp.ClientSession() as session:
-        async with session.get(url) as resp:
+        async with virtool.proxy.ProxyRequest(settings, session.get, url) as resp:
             data = await resp.text()
             data = json.loads(data)
 
@@ -126,7 +127,7 @@ async def install(app, db, dispatch, loop, download_url, size):
             await update_software_process(db, dispatch, progress)
 
         try:
-            await virtool.github.download_asset(download_url, size, compressed_path, progress_handler=handler)
+            await virtool.github.download_asset(app["settings"], download_url, size, compressed_path, progress_handler=handler)
         except virtool.errors.GitHubError:
             document = await db.status.find_one_and_update({"_id": "software_update"}, {
                 "$set": {

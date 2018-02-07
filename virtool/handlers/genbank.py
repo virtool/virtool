@@ -30,31 +30,28 @@ async def get(req):
 
         search_url = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi"
 
-        async with virtool.proxy.make_request(settings, session.get, search_url, params=params):
+        gi = None
 
-            data = await resp.text()
+        async with virtool.proxy.ProxyRequest(settings, session.get, search_url, params=params) as search_resp:
+
+            data = await search_resp.text()
             gi = re.search("<Id>([0-9]+)</Id>", data).group(1)
 
-            if gi:
-                url = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi"
+        if gi:
+            fetch_url = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi"
 
-                fetch_params = {
-                    "db": "nuccore",
-                    "id": gi,
-                    "rettype": "gb",
-                    "retmode": "text",
-                    "tool": tool,
-                    "email": email
-                }
+            fetch_params = {
+                "db": "nuccore",
+                "id": gi,
+                "rettype": "gb",
+                "retmode": "text",
+                "tool": tool,
+                "email": email
+            }
 
-                resp = await virtool.proxy.make_request(
-                    settings,
-                    session.get,
-                    url,
-                    params=fetch_params
-                )
+            async with virtool.proxy.ProxyRequest(settings, session.get, fetch_url, params=fetch_params) as fetch_resp:
 
-                body = await resp.text()
+                body = await fetch_resp.text()
 
                 data = {
                     "host": ""
