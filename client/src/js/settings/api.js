@@ -8,3 +8,7 @@ export const update = ({ update }) => (
     Request.patch("/api/settings")
         .send(update)
 );
+
+export const proxy = () => (
+    Request.get("/api/settings/proxy")
+);

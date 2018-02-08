@@ -109,12 +109,12 @@ async def blast(req):
         raise ValueError("More than one sequence with index {} found".format(sequence_index))
 
     # Start a BLAST at NCBI with the specified sequence. Return a RID that identifies the BLAST run.
-    rid, _ = await virtool.bio.initialize_ncbi_blast(sequences[0])
+    rid, _ = await virtool.bio.initialize_ncbi_blast(req.app["settings"], sequences[0])
 
     # Do initial check of RID to populate BLAST embedded document.
     data = {
         "rid": rid,
-        "ready": await virtool.bio.check_rid(rid),
+        "ready": await virtool.bio.check_rid(req.app["settings"], rid),
         "last_checked_at": virtool.utils.timestamp(),
         "interval": 3
     }
@@ -133,6 +133,7 @@ async def blast(req):
     # updated with the BLAST result.
     asyncio.ensure_future(virtool.bio.wait_for_blast_result(
         db,
+        req.app["settings"],
         req.app["dispatcher"].dispatch,
         analysis_id,
         sequence_index,

@@ -44,8 +44,6 @@ async def setup_redirect(req):
 async def setup_get(req):
     template = Template(filename=os.path.join(sys.path[0], "templates", "setup.html"))
 
-    print(req.app["setup"])
-
     setup = copy.deepcopy(req.app["setup"])
 
     if setup["first_user_password"]:

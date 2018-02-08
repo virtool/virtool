@@ -57,7 +57,9 @@ export class InputSave extends React.Component {
      * @param event {event} - the change event from the FormControl
      */
     handleChange = (e) => {
-        this.setState({value: e.target.value});
+        if (!this.props.disabled) {
+            this.setState({value: e.target.value});
+        }
     };
 
     /**
@@ -98,9 +100,6 @@ export class InputSave extends React.Component {
     };
 
     render () {
-
-        const disabled = this.state.pending || this.props.disabled;
-
         return (
             <form onSubmit={this.handleSubmit}>
                 <h5><strong>{this.props.label}</strong></h5>
@@ -113,14 +112,14 @@ export class InputSave extends React.Component {
                             onChange={this.handleChange}
                             onBlur={this.handleBlur}
                             value={this.state.value}
-                            disabled={disabled}
+                            disabled={this.props.disabled}
                             noMargin
                         />
                     </FlexItem>
                     <Button
                         type="submit"
                         bsStyle="primary"
-                        disabled={disabled}
+                        disabled={this.state.pending || this.props.disabled}
                         icon="floppy"
                         ref={(button) => this.buttonNode = button}
                     />
