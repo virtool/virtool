@@ -13,6 +13,7 @@ packages = [
     "packaging",
     "packaging.version",
     "raven",
+    "raven.deprecated",
     "raven.processors",
     "uvloop"
 ]
