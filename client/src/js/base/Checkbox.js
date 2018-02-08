@@ -2,6 +2,22 @@ import CX from "classnames";
 import React from "react";
 import PropTypes from "prop-types";
 
+const CheckboxIcon = ({ checked, partial }) => {
+
+    let name;
+
+    if (checked) {
+        name = "checked";
+    } else if (partial) {
+        name = "partial";
+    } else {
+        name = "unchecked";
+    }
+
+    return <i className={`i-checkbox-${name}`} />;
+};
+
+
 /**
  * A simple checkbox component based on the application icon font.
  *
@@ -10,16 +26,6 @@ import PropTypes from "prop-types";
  * @constructor
  */
 export const Checkbox = (props) => {
-
-    let name;
-
-    if (props.checked) {
-        name = "checked";
-    } else if (props.partial) {
-        name = "partial";
-    } else {
-        name = "unchecked";
-    }
 
     let className = CX("pointer", {
         "pull-right": props.pullRight,
@@ -39,7 +45,7 @@ export const Checkbox = (props) => {
 
     return (
         <span className={className} onClick={props.disabled ? null : props.onClick} style={style}>
-            <i className={`i-checkbox-${name}`} /> {props.label ? <span>{props.label}</span> : null}
+             <CheckboxIcon {...props} /> {props.label ? <span>{props.label}</span> : null}
         </span>
     );
 };

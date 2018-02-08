@@ -5,7 +5,7 @@ from cerberus import Validator
 
 import virtool.app_settings
 import virtool.utils
-from virtool.handlers.utils import bad_request, invalid_input, json_response, not_found, protected
+from virtool.handlers.utils import invalid_input, json_response, not_found, protected
 
 
 async def get_all(req):
