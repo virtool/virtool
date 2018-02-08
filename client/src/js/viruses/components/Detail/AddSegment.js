@@ -10,9 +10,10 @@ import SegmentForm from "./SegmentForm";
 
 const getInitialState = () => ({
     newEntry: {
-        id: 0,
+        //id: 0,
         name: "",
-        type: "",
+        molecule: "",
+        required: false
     }
 });
 
@@ -27,9 +28,10 @@ export default class AddIsolate extends React.Component {
     handleChange = (entry) => {
         this.setState({
             newEntry: {
-                id: this.props.total+1,
+                //id: this.props.total+1,
                 name: entry.name,
-                type: entry.type
+                molecule: entry.molecule,
+                //required: entry.required
             }
         });
     }

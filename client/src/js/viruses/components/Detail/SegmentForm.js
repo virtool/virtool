@@ -18,7 +18,7 @@ export default class SegmentForm extends React.Component {
     changeMolType = (e) => {
         this.props.onChange({
             ...this.props.newEntry,
-            type: e.target.value
+            molecule: e.target.value
         });
     }
 

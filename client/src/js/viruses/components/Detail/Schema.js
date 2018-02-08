@@ -14,12 +14,12 @@ class Schema extends React.Component {
         // FIXME: simple tester data array, change to handle redux data instead
         this.state = {
             segArray: [
-                { id: 1, name: "Seg A", type: "ssDNA" },
-                { id: 2, name: "Seg B", type: "dsDNA" },
-                { id: 3, name: "Seg C", type: "ssRNA+" },
-                { id: 4, name: "Seg D", type: "ssRNA-" },
-                { id: 5, name: "Seg E", type: "dsRNA" },
-                { id: 6, name: "Seg F", type: "ssRNA" }
+                { name: "Seg A", molecule: "ssDNA", required: false },
+                { name: "Seg B", molecule: "dsDNA", required: false },
+                { name: "Seg C", molecule: "ssRNA+", required: false },
+                { name: "Seg D", molecule: "ssRNA-", required: false },
+                { name: "Seg E", molecule: "dsRNA", required: false },
+                { name: "Seg F", molecule: "ssRNA", required: false }
             ],
             show: false,
             length: 6
@@ -80,10 +80,11 @@ class Schema extends React.Component {
 
         const segments = map(segArray, (segment, index) =>
             <Segment
-                key={segment.id}
+                key={segment.name}
                 segName={segment.name}
-                segType={segment.type}
-                index={index} id={segment.id}
+                segType={segment.molecule}
+                segReq={segment.required}
+                index={index}
                 moveSeg={this.moveSeg}
                 onClick={this.handleRemove}
             />

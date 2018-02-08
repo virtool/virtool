@@ -9,7 +9,7 @@ import { flow } from "lodash-es";
 const segSource = {
     beginDrag (props) {
         return {
-            id: props.id,
+            //id: props.id,
             index: props.index
         };
     }
@@ -39,6 +39,19 @@ function combine (connect) {
 
 class Segment extends React.Component {
 
+    constructor (props) {
+        super(props);
+
+        this.state = {
+            segName: this.props.segName,
+            segType: this.props.segType
+        };
+    }
+
+    handleClick = (e) => {
+        console.log(`handle segment edit of ${e}`);
+    }
+
     render () {
         const { segName, segType, isDragging, connectDragSource, connectDropTarget } = this.props;
 
@@ -61,6 +74,13 @@ class Segment extends React.Component {
                                     onClick={() => {this.props.onClick(this.props.segName)}}
                                     pullRight
                                 />
+                                <Icon
+                                    name="pencil"
+                                    bsStyle="warning"
+                                    style={{fontSize: "17px"}}
+                                    onClick={() => this.handleClick(this.props.segName)}
+                                    pullRight
+                                />
                             </Col>
                         </Row>
                     </ListGroupItem>
@@ -75,7 +95,7 @@ Segment.propTypes = {
     connectDropTarget: PropTypes.func.isRequired,
     index: PropTypes.number.isRequired,
     isDragging: PropTypes.bool.isRequired,
-    id: PropTypes.any.isRequired,
+    //id: PropTypes.any.isRequired,
     segName: PropTypes.string.isRequired,
     moveSeg: PropTypes.func.isRequired,
     onClick: PropTypes.func
