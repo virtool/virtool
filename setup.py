@@ -12,6 +12,8 @@ packages = [
     "motor",
     "packaging",
     "packaging.version",
+    "raven",
+    "raven.processors",
     "uvloop"
 ]
 
