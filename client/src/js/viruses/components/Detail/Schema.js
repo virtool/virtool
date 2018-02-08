@@ -7,10 +7,10 @@ import Segment from "./Segment";
 import AddSegment from "./AddSegment";
 //import EditSegment from "./EditSegment";
 //import RemoveSegment from "./RemoveSegment";
-//import { showAddSegment, showEditSegment, showRemoveSegment } from "../../actions";
-import { Icon, Button } from "../../../base";
+import { showAddSegment, showEditSegment, showRemoveSegment } from "../../actions";
+import { Button } from "../../../base";
 
-class Schema extends React.Component {
+class VirusSchema extends React.Component {
 
     constructor (props) {
         super(props);
@@ -97,7 +97,6 @@ class Schema extends React.Component {
         return (
             <div>
                 <div>
-                    <AddSegment show={this.state.show} onHide={this.handleClose} onSubmit={this.handleSubmit} total={this.state.length} />
                     <Button
                         icon="new-entry"
                         bsStyle="primary"
@@ -109,6 +108,9 @@ class Schema extends React.Component {
                 <br />
                 <br />
                 {segments}
+                <AddSegment show={this.state.show} onHide={this.handleClose} onSubmit={this.handleSubmit} total={this.state.length} />
+                {/*<EditSegment />
+                <RemoveSegment />*/}
             </div>
         );
     }
@@ -117,26 +119,12 @@ class Schema extends React.Component {
 //export default DragDropContext(HTML5Backend)(Schema);
 
 const mapStateToProps = (state) => {
-    let sequences = null;
-    let activeIsolate = null;
-
-    const activeIsolateId = state.viruses.activeIsolateId;
-
-    if (state.viruses.detail.isolates.length) {
-        activeIsolate = find(state.viruses.detail.isolates, {id: activeIsolateId});
-        sequences = activeIsolate.sequences;
-    }
 
     return {
-        activeIsolateId,
-        sequences,
-        virusId: state.viruses.detail.id,
-        canModify: state.account.permissions.modify_virus,
-        editing: state.viruses.editSequence,
-        isolateName: formatIsolateName(activeIsolate),
-        showAddSequence: state.viruses.showAddSequence,
-        showEditSequence: state.viruses.showEditSequence,
-        showRemoveSequence: state.viruses.showRemoveSequence
+        segments: state.viruses.schema,
+        showAddSegment: state.viruses.showAddSequence,
+        showEditSegment: state.viruses.showEditSequence,
+        showRemoveSegment: state.viruses.showRemoveSequence
     };
 };
 
@@ -146,17 +134,17 @@ const mapDispatchToProps = (dispatch) => ({
         dispatch(showAddSegment());
     },
 
-    showEditSequence: (sequenceId) => {
-        dispatch(showEditSegment(sequenceId));
+    showEditSequence: (segmentName) => {
+        dispatch(showEditSegment(segmentName));
     },
 
-    showRemoveSequence: (sequenceId) => {
-        dispatch(showRemoveSegment(sequenceId));
+    showRemoveSequence: (segmentName) => {
+        dispatch(showRemoveSegment(segmentName));
     }
 
 });
 
-const Schemas = DragDropContext(HTML5Backend)(Schema);
+const Schema = DragDropContext(HTML5Backend)(VirusSchema);
 
-export default connect(mapStateToProps, mapDispatchToProps)(Schemas);
+export default connect(mapStateToProps, mapDispatchToProps)(Schema);
 

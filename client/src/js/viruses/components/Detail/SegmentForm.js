@@ -1,9 +1,9 @@
 import React from "react";
-import PropTypes from "prop-types";
-import { map, toLower } from "lodash-es";
+//import PropTypes from "prop-types";
+//import { map, toLower } from "lodash-es";
 import { Row, Col } from "react-bootstrap";
 
-import { formatIsolateName } from "../../../utils";
+//import { formatIsolateName } from "../../../utils";
 import { Input } from "../../../base";
 
 export default class SegmentForm extends React.Component {
@@ -28,13 +28,22 @@ export default class SegmentForm extends React.Component {
             <form onSubmit={this.props.onSubmit}>
                 <Row>
                     <Col md={12}>
-                        <Input label="Segment Name" value={this.props.newEntry.name} onChange={(e) => {this.changeSegName(e)}} />
+                        <Input 
+                            label="Segment Name" 
+                            value={this.props.newEntry.name} 
+                            onChange={(e) => {this.changeSegName(e)}} 
+                        />
                     </Col>
                 </Row>
 
                 <Row>
                     <Col md={12}>
-                        <Input type="select" label="Molecule Type" value={this.props.newEntry.type} onChange={(e) => {this.changeMolType(e)}}>
+                        <Input 
+                            type="select" 
+                            label="Molecule Type" 
+                            value={this.props.newEntry.type} 
+                            onChange={(e) => {this.changeMolType(e)}}
+                        >
                             <option key="default" style={{display: "none"}} />
                             <option key="ssDNA" value="ssDNA">
                                 ssDNA
