@@ -114,7 +114,7 @@ async def blast(req):
     # Do initial check of RID to populate BLAST embedded document.
     data = {
         "rid": rid,
-        "ready": await virtool.bio.check_rid(rid),
+        "ready": await virtool.bio.check_rid(req.app["settings"], rid),
         "last_checked_at": virtool.utils.timestamp(),
         "interval": 3
     }

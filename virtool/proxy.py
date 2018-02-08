@@ -50,6 +50,8 @@ class ProxyRequest:
 
         self.resp = await self.method(self.url, proxy=address, proxy_auth=auth, **self._kwargs)
 
+        print(self.resp)
+
         if self.resp.status == 407:
             raise virtool.errors.ProxyError("Proxy authentication failed")
 

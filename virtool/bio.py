@@ -297,7 +297,8 @@ async def initialize_ncbi_blast(settings, sequence):
     }
 
     with aiohttp.ClientSession() as session:
-        async with virtool.proxy.ProxyRequest(settings, session.get, BLAST_CGI_URL, params=params, data=data) as resp:
+        print(BLAST_CGI_URL)
+        async with virtool.proxy.ProxyRequest(settings, session.post, BLAST_CGI_URL, params=params, data=data) as resp:
             if resp.status != 200:
                 raise virtool.errors.NCBIError("BLAST request returned status: {}".format(resp.status))
 

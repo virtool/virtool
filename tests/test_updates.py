@@ -60,7 +60,7 @@ async def test_install(download_release_error, loop, tmpdir, monkeypatch, mocker
         temp_dir = tempfile.TemporaryDirectory(dir=str(tmpdir))
         return temp_dir
 
-    async def m_download_asset(url, size, target_path, progress_handler=None):
+    async def m_download_asset(settings, url, size, target_path, progress_handler=None):
         if download_release_error:
             raise download_release_error
 
@@ -100,7 +100,7 @@ async def test_install(download_release_error, loop, tmpdir, monkeypatch, mocker
         make_mocked_coro()
     ])
 
-    await virtool.updates.install(app, test_motor, test_dispatch, loop, "foobar", 1234)
+    await virtool.updates.install(app, test_motor, {"proxy_enable": False}, test_dispatch, loop, "foobar", 1234)
 
     if not download_release_error:
         assert set(os.listdir(install_path)) == {"run", "client", "VERSION", "install.sh"}
