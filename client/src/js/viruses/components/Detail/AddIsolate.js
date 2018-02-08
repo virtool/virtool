@@ -61,11 +61,10 @@ class AddIsolate extends React.Component {
                         allowedSourceTypes={this.props.allowedSourceTypes}
                         restrictSourceTypes={this.props.restrictSourceTypes}
                         onChange={this.handleChange}
-                        onSubmit={this.handleSubmit}
                     />
                 </Modal.Body>
                 <Modal.Footer>
-                    <Button bsStyle="primary" icon="floppy" onClick={this.save}>
+                    <Button bsStyle="primary" icon="floppy" onClick={this.handleSubmit}>
                         Save
                     </Button>
                 </Modal.Footer>
