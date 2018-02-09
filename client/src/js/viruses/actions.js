@@ -162,37 +162,3 @@ export const showRemoveSequence = (sequenceId) => ({
 });
 
 export const hideVirusModal = simpleActionCreator(HIDE_VIRUS_MODAL);
-
-// Newly Added
-export const addSegment = (segmentName, moleculeType, isRequired) => ({
-    type: ADD_SEGMENT.REQUESTED,
-    segmentName,
-    moleculeType,
-    isRequired
-});
-
-export const editSegment = (segmentName, moleculeType, isRequired) => ({
-    type: EDIT_SEGMENT.REQUESTED,
-    segmentName,
-    moleculeType,
-    isRequired
-});
-
-export const removeSegment = (segmentName, moleculeType, isRequired) => ({
-    type: REMOVE_SEGMENT.REQUESTED,
-    segmentName,
-    moleculeType,
-    isRequired
-});
-
-export const showAddSegment = simpleActionCreator(SHOW_ADD_SEGMENT);
-
-export const showEditSegment = (segmentName) => ({
-    type: SHOW_EDIT_SEGMENT,
-    segmentName
-});
-
-export const showRemoveSegment = (segmentName) => ({
-    type: SHOW_REMOVE_SEGMENT,
-    segmentName
-});

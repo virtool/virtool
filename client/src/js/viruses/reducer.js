@@ -120,11 +120,6 @@ export default function virusesReducer (state = initialState, action) {
 
             return state;
 
-        // Newly Added
-        case ADD_SEGMENT.SUCCEEDED:
-        case EDIT_SEGMENT.SUCCEEDED:
-        case REMOVE_SEGMENT.SUCCEEDED:
-        //
         case GET_VIRUS.SUCCEEDED:
         case EDIT_VIRUS.SUCCEEDED:
         case EDIT_ISOLATE.SUCCEEDED:
@@ -182,17 +177,7 @@ export default function virusesReducer (state = initialState, action) {
 
         case HIDE_VIRUS_MODAL:
             return hideVirusModal(state);
-
-        // Newly Added
-        case SHOW_ADD_SEGMENT:
-            return {...state, addSegment: true};
-
-        case SHOW_EDIT_SEGMENT:
-            return {...state, editSegment: action.segmentName};
-
-        case SHOW_REMOVE_SEGMENT:
-            return {...state, removeSegment: action.segmentName};
-        //
+            
         default:
             return state;
     }
