@@ -25,14 +25,6 @@ import {
     SHOW_EDIT_SEQUENCE,
     SHOW_REMOVE_SEQUENCE,
     HIDE_VIRUS_MODAL,
-    // Newly added
-    ADD_SEGMENT,
-    EDIT_SEGMENT,
-    REMOVE_SEGMENT,
-    SELECT_SEGMENT,
-    SHOW_ADD_SEGMENT,
-    SHOW_EDIT_SEGMENT,
-    SHOW_REMOVE_SEGMENT
 } from "../actionTypes";
 
 export const getVirus = (virusId) => ({
