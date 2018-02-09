@@ -18,6 +18,7 @@ dictdiffer==0.7.0
 execnet==1.5.0
 humanfriendly==4.7
 idna==2.6
+idna-ssl==1.0.0
 Mako==1.0.7
 MarkupSafe==1.0
 motor==1.2.1
@@ -38,7 +39,7 @@ pytest-forked==0.2
 pytest-mock==1.6.3
 pytest-xdist==1.20.1
 python-dateutil==2.6.1
-raven==6.4.0
+raven==6.5.0
 raven-aiohttp==0.6.0
 semver==2.7.9
 setproctitle==1.1.10
