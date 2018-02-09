@@ -10,7 +10,6 @@ import SegmentForm from "./SegmentForm";
 
 const getInitialState = () => ({
     newEntry: {
-        //id: 0,
         name: "",
         molecule: "",
         required: false

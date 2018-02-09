@@ -7,16 +7,25 @@ import Segment from "./Segment";
 import AddSegment from "./AddSegment";
 //import EditSegment from "./EditSegment";
 //import RemoveSegment from "./RemoveSegment";
-import { showAddSegment, showEditSegment, showRemoveSegment } from "../../actions";
+import { editVirus } from "../../actions";
 import { Button } from "../../../base";
+
+const getInitialState = (props) => ({
+    segArray: props.schema ? props.schema : [],
+    showAdd: false,
+    showRemove: false,
+    showEdit: false,
+    length: 0
+});
 
 class VirusSchema extends React.Component {
 
     constructor (props) {
         super(props);
 
-        // FIXME: simple tester data array, change to handle redux data instead
-        this.state = {
+        this.state = getInitialState(this.props);
+
+/*      this.state = {
             segArray: [
                 { name: "Seg A", molecule: "ssDNA", required: false },
                 { name: "Seg B", molecule: "dsDNA", required: false },
@@ -28,11 +37,10 @@ class VirusSchema extends React.Component {
             show: false,
             length: 6
         };
-
-        this.moveSeg = this.moveSeg.bind(this);
+*/
     }
 
-    moveSeg (dragIndex, hoverIndex) {
+    moveSeg = (dragIndex, hoverIndex) => {
         const { segArray } = this.state;
         const dragSeg = segArray[dragIndex];
 
@@ -43,7 +51,7 @@ class VirusSchema extends React.Component {
         this.setState({segArray: newArray});
     }
 
-    // FIXME: simple deletion for internal tester array
+/*    // FIXME: simple deletion for internal tester array
     handleRemove = (segment) => {
         console.log(`redux delete ${segment}`);
 
@@ -54,9 +62,12 @@ class VirusSchema extends React.Component {
 
         this.setState({segArray: newArray});
     } 
-
+*/
     handleClick = () => {
-        this.setState({show: true});
+        console.log(this.props);
+        //console.log(this.props.match.params.virusId);
+
+        this.setState({showAdd: true});
     }
 
     // FIXME: simple addition for internal tester array
@@ -70,13 +81,21 @@ class VirusSchema extends React.Component {
 
         this.setState({
             segArray: newArray, 
-            show: false,
+            showAdd: false,
+            showRemove: false,
+            showEdit: false,
             length: newArray.length
         });
+
+        this.props.onSave(this.props.match.params.virusId, this.props.detail.name, this.props.detail.abbreviation, this.state.segArray);
     }
 
     handleClose = () => {
-        this.setState({show: false});
+        this.setState({
+            showAdd: false,
+            showRemove: false,
+            showEdit: false
+        });
     }
 
     render () {
@@ -108,7 +127,7 @@ class VirusSchema extends React.Component {
                 <br />
                 <br />
                 {segments}
-                <AddSegment show={this.state.show} onHide={this.handleClose} onSubmit={this.handleSubmit} total={this.state.length} />
+                <AddSegment show={this.state.showAdd} onHide={this.handleClose} onSubmit={this.handleSubmit} total={this.state.length} />
                 {/*<EditSegment />
                 <RemoveSegment />*/}
             </div>
@@ -121,25 +140,14 @@ class VirusSchema extends React.Component {
 const mapStateToProps = (state) => {
 
     return {
-        segments: state.viruses.schema,
-        showAddSegment: state.viruses.showAddSequence,
-        showEditSegment: state.viruses.showEditSequence,
-        showRemoveSegment: state.viruses.showRemoveSequence
+        schema: state.viruses.schema,
     };
 };
 
 const mapDispatchToProps = (dispatch) => ({
 
-    showAddSegment: () => {
-        dispatch(showAddSegment());
-    },
-
-    showEditSequence: (segmentName) => {
-        dispatch(showEditSegment(segmentName));
-    },
-
-    showRemoveSequence: (segmentName) => {
-        dispatch(showRemoveSegment(segmentName));
+    onSave: (virusId, name, abbreviation, schema) => {
+        dispatch(editVirus(virusId, name, abbreviation, schema));
     }
 
 });

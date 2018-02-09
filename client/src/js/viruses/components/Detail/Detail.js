@@ -125,7 +125,7 @@ class VirusDetail extends React.Component {
                     <Redirect from="/viruses/:virusId" to={`/viruses/${virusId}/virus`} exact />
                     <Route path="/viruses/:virusId/virus" component={VirusSection} />
                     <Route path="/viruses/:virusId/history" component={History} />
-                    <Route path="/viruses/:virusId/schema" component={Schema} />
+                    <Route path="/viruses/:virusId/schema" component={() => <Schema detail={this.props.detail} match={this.props.match} />} />
                 </Switch>
             </div>
         );

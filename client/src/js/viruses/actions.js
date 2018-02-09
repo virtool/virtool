@@ -43,11 +43,12 @@ export const createVirus = (name, abbreviation) => ({
     abbreviation
 });
 
-export const editVirus = (virusId, name, abbreviation) => ({
+export const editVirus = (virusId, name, abbreviation, schema) => ({
     type: EDIT_VIRUS.REQUESTED,
     virusId,
     name,
-    abbreviation
+    abbreviation,
+    schema
 });
 
 export const removeVirus = (virusId, history) => ({
