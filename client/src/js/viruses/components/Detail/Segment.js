@@ -9,7 +9,6 @@ import { flow } from "lodash-es";
 const segSource = {
     beginDrag (props) {
         return {
-            //id: props.id,
             index: props.index
         };
     }
@@ -44,7 +43,8 @@ class Segment extends React.Component {
 
         this.state = {
             segName: this.props.segName,
-            segType: this.props.segType
+            segType: this.props.segType,
+            segReq: this.props.segReq
         };
     }
 
@@ -95,8 +95,9 @@ Segment.propTypes = {
     connectDropTarget: PropTypes.func.isRequired,
     index: PropTypes.number.isRequired,
     isDragging: PropTypes.bool.isRequired,
-    //id: PropTypes.any.isRequired,
     segName: PropTypes.string.isRequired,
+    segType: PropTypes.string.isRequired,
+    segReq: PropTypes.bool.isRequired,
     moveSeg: PropTypes.func.isRequired,
     onClick: PropTypes.func
 };

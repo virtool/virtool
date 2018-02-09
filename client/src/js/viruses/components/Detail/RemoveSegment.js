@@ -1,32 +1,36 @@
 import React from "react";
-import PropTypes from "prop-types";
-//import { connect } from "react-redux";
+// import PropTypes from "prop-types";
 import { Modal } from "react-bootstrap";
-
-//import { removeSequence, hideVirusModal } from "../../actions";
 import { Button } from "../../../base";
+import SegmentForm from "./SegmentForm";
+import { filter } from "lodash-es";
 
 export default class RemoveSegment extends React.Component {
 
-    handleConfirm = () => {
-//        this.props.onConfirm(this.props.virusId, this.props.isolateId, this.props.sequenceId, this.props.onSuccess);
-        console.log("click delete");
-    };
+    handleSubmit = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+
+        let newArray = this.props.curSegArr.slice();
+        newArray = filter(newArray, (o) => o.name !== this.props.curSeg.name);
+
+        this.props.onSubmit(newArray);
+    }
 
     render () {
         return (
-            <Modal show={Boolean(this.props.segName)} onHide={this.props.onHide} dialogClassName="modal-danger">
+            <Modal show={this.props.show} onExited={this.handleExited} dialogClassName="modal-danger">
                 <Modal.Header onHide={this.props.onHide} closeButton>
-                    Remove Sequence
+                    Remove Segment
                 </Modal.Header>
                 <Modal.Body>
-                    Are you sure you want to remove the segment <strong>{this.props.segName}</strong>?
+                    Are you sure you want to remove the segment <strong>{this.props.curSeg.name}</strong>?
                 </Modal.Body>
                 <Modal.Footer>
                     <Button
                         bsStyle="danger"
                         icon="checkmark"
-                        onClick={this.handleConfirm}
+                        onClick={this.handleSubmit}
                     >
                         Confirm
                     </Button>
@@ -35,25 +39,3 @@ export default class RemoveSegment extends React.Component {
         );
     }
 }
-
-/*
-const mapStateToProps = state => ({
-    sequenceId: state.viruses.removeSequence
-});
-
-const mapDispatchToProps = dispatch => ({
-
-    onHide: () => {
-        dispatch(hideVirusModal());
-    },
-
-    onConfirm: (virusId, isolateId, onSuccess) => {
-        dispatch(removeSequence(virusId, isolateId, onSuccess));
-    }
-
-});
-
-const Container = connect(mapStateToProps, mapDispatchToProps)(RemoveSequence);
-
-export default Container;
-*/

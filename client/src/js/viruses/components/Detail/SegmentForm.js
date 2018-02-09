@@ -1,12 +1,18 @@
 import React from "react";
-//import PropTypes from "prop-types";
-//import { map, toLower } from "lodash-es";
+// import PropTypes from "prop-types";
+// import { map, toLower } from "lodash-es";
 import { Row, Col } from "react-bootstrap";
-
-//import { formatIsolateName } from "../../../utils";
-import { Input } from "../../../base";
+import { Input, Checkbox } from "../../../base";
 
 export default class SegmentForm extends React.Component {
+
+    constructor (props) {
+        super(props);
+
+        this.state = {
+            isChecked: false
+        };
+    }
 
     changeSegName = (e) => {
         this.props.onChange({
@@ -22,26 +28,32 @@ export default class SegmentForm extends React.Component {
         });
     }
 
+    toggleCheck = () => {
+        this.props.onChange({
+            ...this.props.newEntry,
+            required: !this.state.isChecked
+        });
+        this.setState({isChecked: !this.state.isChecked});
+    }
+
     render () {
 
         return (
             <form onSubmit={this.props.onSubmit}>
                 <Row>
-                    <Col md={12}>
-                        <Input 
-                            label="Segment Name" 
-                            value={this.props.newEntry.name} 
-                            onChange={(e) => {this.changeSegName(e)}} 
+                    <Col md={9}>
+                        <Input
+                            label="Segment Name"
+                            value={this.props.newEntry.name}
+                            onChange={(e) => {this.changeSegName(e)}}
                         />
                     </Col>
-                </Row>
 
-                <Row>
-                    <Col md={12}>
-                        <Input 
-                            type="select" 
-                            label="Molecule Type" 
-                            value={this.props.newEntry.type} 
+                    <Col md={3}>
+                        <Input
+                            type="select"
+                            label="Molecule Type"
+                            value={this.props.newEntry.molecule}
                             onChange={(e) => {this.changeMolType(e)}}
                         >
                             <option key="default" style={{display: "none"}} />
@@ -64,6 +76,17 @@ export default class SegmentForm extends React.Component {
                                 ssRNA
                             </option>
                         </Input>
+                    </Col>
+                </Row>
+
+                <Row>
+                    <Col md={12}>
+                        <Checkbox
+                            label="Segment Required"
+                            checked={this.state.isChecked}
+                            onClick={this.toggleCheck}
+                            pullRight
+                        />
                     </Col>
                 </Row>
             </form>

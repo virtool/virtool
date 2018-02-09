@@ -28,14 +28,14 @@ export const create = ({ name, abbreviation }) => (
         })
 );
 
-export const edit = ({ virusId, name, abbreviation, schema }) => (
-    Request.patch(`/api/viruses/${virusId}`)
-        .send({
-            name,
-            abbreviation,
-            schema
-        })
-);
+export const edit = ({ virusId, name, abbreviation, schema }) => {
+    return Request.patch(`/api/viruses/${virusId}`)
+            .send({
+                name,
+                abbreviation,
+                schema
+            });
+}
 
 export const remove = ({ virusId }) => (
     Request.delete(`/api/viruses/${virusId}`)

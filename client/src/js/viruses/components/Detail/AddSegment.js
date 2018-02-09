@@ -1,12 +1,9 @@
 import React from "react";
-import PropTypes from "prop-types";
-//import { connect } from "react-redux";
+// import PropTypes from "prop-types";
 import { Modal } from "react-bootstrap";
-
-//import { addIsolate, hideVirusModal } from "../../actions";
 import { Button } from "../../../base";
 import SegmentForm from "./SegmentForm";
-
+import { concat } from "lodash-es";
 
 const getInitialState = () => ({
     newEntry: {
@@ -16,7 +13,7 @@ const getInitialState = () => ({
     }
 });
 
-export default class AddIsolate extends React.Component {
+export default class AddSegment extends React.Component {
 
     constructor (props) {
         super(props);
@@ -27,19 +24,27 @@ export default class AddIsolate extends React.Component {
     handleChange = (entry) => {
         this.setState({
             newEntry: {
-                //id: this.props.total+1,
                 name: entry.name,
                 molecule: entry.molecule,
-                //required: entry.required
+                required: entry.required
             }
         });
     }
 
-    handleSubmit = () => {
-        this.props.onSubmit(this.state.newEntry);
+    handleSubmit = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+
+        let newArray = this.props.curSegArr.slice();
+        newArray = concat(newArray, this.state.newEntry);
+
+        this.props.onSubmit(newArray);
     }
 
-    handleExited = () => {
+    handleExited = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+
         this.setState(getInitialState());
     }
 
@@ -66,26 +71,3 @@ export default class AddIsolate extends React.Component {
         );
     }
 }
-/*
-const mapStateToProps = state => ({
-    show: state.viruses.addSequence,
-    virusId: state.viruses.detail.id,
-    isolateId: state.viruses.activeIsolateId
-});
-
-const mapDispatchToProps = dispatch => ({
-
-    onHide: () => {
-        dispatch(hideVirusModal());
-    },
-
-    onSave: (virusId, isolateId, sequenceId, definition, host, sequence) => {
-        dispatch(addSequence(virusId, isolateId, sequenceId, definition, host, sequence));
-    }
-
-});
-
-const Container = connect(mapStateToProps, mapDispatchToProps)(AddSequence);
-
-export default Container;
-*/

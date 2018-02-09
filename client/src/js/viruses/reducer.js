@@ -27,7 +27,7 @@ import {
     SHOW_EDIT_SEQUENCE,
     SHOW_REMOVE_SEQUENCE,
     HIDE_VIRUS_MODAL,
-    GET_VIRUS_HISTORY,
+    GET_VIRUS_HISTORY
 } from "../actionTypes";
 
 const initialState = {
@@ -177,7 +177,7 @@ export default function virusesReducer (state = initialState, action) {
 
         case HIDE_VIRUS_MODAL:
             return hideVirusModal(state);
-            
+
         default:
             return state;
     }

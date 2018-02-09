@@ -2,11 +2,11 @@ import React from "react";
 import { connect } from "react-redux";
 import { DragDropContext } from "react-dnd";
 import HTML5Backend from "react-dnd-html5-backend";
-import { map, filter, concat } from "lodash-es";
+import { map } from "lodash-es";
 import Segment from "./Segment";
 import AddSegment from "./AddSegment";
 //import EditSegment from "./EditSegment";
-//import RemoveSegment from "./RemoveSegment";
+import RemoveSegment from "./RemoveSegment";
 import { editVirus } from "../../actions";
 import { Button } from "../../../base";
 
@@ -24,20 +24,6 @@ class VirusSchema extends React.Component {
         super(props);
 
         this.state = getInitialState(this.props);
-
-/*      this.state = {
-            segArray: [
-                { name: "Seg A", molecule: "ssDNA", required: false },
-                { name: "Seg B", molecule: "dsDNA", required: false },
-                { name: "Seg C", molecule: "ssRNA+", required: false },
-                { name: "Seg D", molecule: "ssRNA-", required: false },
-                { name: "Seg E", molecule: "dsRNA", required: false },
-                { name: "Seg F", molecule: "ssRNA", required: false }
-            ],
-            show: false,
-            length: 6
-        };
-*/
     }
 
     moveSeg = (dragIndex, hoverIndex) => {
@@ -51,43 +37,27 @@ class VirusSchema extends React.Component {
         this.setState({segArray: newArray});
     }
 
-/*    // FIXME: simple deletion for internal tester array
-    handleRemove = (segment) => {
-        console.log(`redux delete ${segment}`);
-
-        const { segArray } = this.state;
-
-        let newArray = segArray.slice();
-        newArray = filter(newArray, function (f) { return f.name !== segment});
-
-        this.setState({segArray: newArray});
-    } 
-*/
     handleClick = () => {
-        console.log(this.props);
-        //console.log(this.props.match.params.virusId);
-
         this.setState({showAdd: true});
     }
 
-    // FIXME: simple addition for internal tester array
-    handleSubmit = (newSegment) => {
-        console.log("redux add new segment entry");
-
-        const { segArray } = this.state;
-
-        let newArray = segArray.slice();
-        newArray = concat(newArray, newSegment);
+    handleSubmit = (newArray) => {
+        const newLength = newArray.length;
 
         this.setState({
-            segArray: newArray, 
+            segArray: newArray,
             showAdd: false,
             showRemove: false,
             showEdit: false,
-            length: newArray.length
+            length: newLength
         });
 
-        this.props.onSave(this.props.match.params.virusId, this.props.detail.name, this.props.detail.abbreviation, this.state.segArray);
+        this.props.onSave(
+            this.props.match.params.virusId,
+            this.props.detail.name,
+            this.props.detail.abbreviation,
+            newArray
+        );
     }
 
     handleClose = () => {
@@ -109,7 +79,7 @@ class VirusSchema extends React.Component {
                 segReq={segment.required}
                 index={index}
                 moveSeg={this.moveSeg}
-                onClick={this.handleRemove}
+                onSubmit={this.handleSubmit}
             />
         );
 
@@ -127,20 +97,35 @@ class VirusSchema extends React.Component {
                 <br />
                 <br />
                 {segments}
-                <AddSegment show={this.state.showAdd} onHide={this.handleClose} onSubmit={this.handleSubmit} total={this.state.length} />
-                {/*<EditSegment />
-                <RemoveSegment />*/}
+                <AddSegment
+                    show={this.state.showAdd}
+                    onHide={this.handleClose}
+                    onSubmit={this.handleSubmit}
+                    total={this.state.length}
+                    curSegArr={this.state.segArray}
+                />
+                {/*<EditSegment
+                    show={this.state.showEdit}
+                    onHide={this.handleClose}
+                    onSubmit={this.handleSubmit}
+                    currSegArr={this.state.segArray}
+                />*/}
+                <RemoveSegment
+                    show={this.state.showRemove}
+                    onHide={this.handleClose}
+                    onSubmit={this.handleSubmit}
+                    curSegArr={this.state.segArray}
+                    curSeg={}
+                />
             </div>
         );
     }
 }
 
-//export default DragDropContext(HTML5Backend)(Schema);
-
 const mapStateToProps = (state) => {
 
     return {
-        schema: state.viruses.schema,
+        schema: state.viruses.detail.schema,
     };
 };
 
