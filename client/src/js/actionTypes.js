@@ -87,6 +87,14 @@ export const SHOW_ADD_SEQUENCE = "SHOW_ADD_SEQUENCE";
 export const SHOW_EDIT_SEQUENCE = "SHOW_EDIT_SEQUENCE";
 export const SHOW_REMOVE_SEQUENCE = "SHOW_REMOVE_SEQUENCE";
 export const HIDE_VIRUS_MODAL = "HIDE_VIRUS_MODAL";
+// Newly added
+export const ADD_SEGMENT = createRequestActionType("ADD_SEGMENT");
+export const EDIT_SEGMENT = createRequestActionType("EDIT_SEGMENT");
+export const REMOVE_SEGMENT = createRequestActionType("REMOVESEGMENT");
+export const SELECT_SEGMENT = "SELECT_SEGMENT";
+export const SHOW_ADD_SEGMENT = "SHOW_ADD_SEGMENT";
+export const SHOW_EDIT_SEGMENT = "SHOW_EDIT_SEGMENT";
+export const SHOW_REMOVE_SEGMENT = "SHOW_REMOVE_SEGMENT";
 
 // HMMs
 export const FIND_HMMS = createRequestActionType("FIND_HMMS");
