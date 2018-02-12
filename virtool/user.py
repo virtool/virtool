@@ -5,7 +5,6 @@ import hashlib
 
 PROJECTION = [
     "_id",
-
     "force_reset",
     "groups",
     "identicon",
@@ -17,6 +16,7 @@ PROJECTION = [
 
 ACCOUNT_PROJECTION = [
     "_id",
+    "email",
     "groups",
     "identicon",
     "last_password_change",
