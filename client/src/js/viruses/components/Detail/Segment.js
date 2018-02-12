@@ -1,6 +1,6 @@
 import React from "react";
 import PropTypes from "prop-types";
-import { Col, Row } from "react-bootstrap";
+import { Col, Row, Label } from "react-bootstrap";
 import { DragSource, DropTarget } from "react-dnd";
 import { Icon, ListGroupItem } from "../../../base";
 import { ItemTypes } from "./ItemTypes";
@@ -54,20 +54,22 @@ class Segment extends React.Component {
                 <div style={{opacity: isDragging ? 0 : 1}}>
                     <ListGroupItem className="spaced">
                         <Row>
-                            <Col md={9}>
+                            <Col md={5}>
                                 <strong>{seg.name}</strong>
                             </Col>
-                            <Col md={1}>
+                            <Col md={4}>
                                 {seg.molecule}
                             </Col>
-                            <Col md={1}>
-                                {seg.required ? "required" : "not required"}
+                            <Col md={2}>
+                                <Label bsStyle={seg.required ? "info" : "warning"}>
+                                    {seg.required ? "required" : "not required"}
+                                </Label>
                             </Col>
                             <Col md={1}>
                                 <Icon
                                     name="remove"
                                     bsStyle="danger"
-                                    style={{fontSize: "17px"}}
+                                    style={{fontSize: "17px", padding: "0 5px"}}
                                     onClick={() => {this.handleRemove(seg)}}
                                     pullRight
                                 />

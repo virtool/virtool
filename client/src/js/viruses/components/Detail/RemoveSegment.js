@@ -19,8 +19,13 @@ class RemoveSegment extends React.Component {
     render () {
 
         return (
-            <Modal show={this.props.show} onExited={this.handleExited} dialogClassName="modal-danger">
-                <Modal.Header onHide={this.props.onHide} closeButton>
+            <Modal
+                show={this.props.show}
+                onExited={this.handleExited}
+                dialogClassName="modal-danger"
+                onHide={this.props.onHide}
+            >
+                <Modal.Header closeButton>
                     Remove Segment
                 </Modal.Header>
                 <Modal.Body>

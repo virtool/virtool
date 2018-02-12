@@ -105,17 +105,18 @@ class VirusDetail extends React.Component {
                         </NavItem>
                     </LinkContainer>
 
+                    <LinkContainer to={`/viruses/${virusId}/schema`}>
+                        <NavItem>
+                            Schema
+                        </NavItem>
+                    </LinkContainer>
+
                     <LinkContainer to={`/viruses/${virusId}/history`}>
                         <NavItem>
                             History
                         </NavItem>
                     </LinkContainer>
 
-                    <LinkContainer to={`/viruses/${virusId}/schema`}>
-                        <NavItem>
-                            Schema
-                        </NavItem>
-                    </LinkContainer>
                 </Nav>
 
                 <EditVirus virusId={virusId} name={name} abbreviation={abbreviation} />

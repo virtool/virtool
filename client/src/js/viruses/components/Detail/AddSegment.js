@@ -9,7 +9,7 @@ import { concat } from "lodash-es";
 const getInitialState = () => ({
     newEntry: {
         name: "",
-        molecule: "",
+        molecule: null,
         required: false
     },
     showError: false
@@ -35,7 +35,7 @@ class AddSegment extends React.Component {
 
     handleSubmit = () => {
 
-        if (this.state.newEntry.name && this.state.newEntry.molecule) {
+        if (this.state.newEntry.name) {
             let newArray = this.props.schema.slice();
             newArray = concat(newArray, this.state.newEntry);
 
@@ -53,9 +53,9 @@ class AddSegment extends React.Component {
     render () {
 
         return (
-            <Modal show={this.props.show} onExited={this.handleExited}>
-                <Modal.Header onHide={this.props.onHide} closeButton>
-                    Add New Segment Type
+            <Modal show={this.props.show} onExited={this.handleExited} onHide={this.props.onHide}>
+                <Modal.Header closeButton>
+                    Add Segment
                 </Modal.Header>
                 <Modal.Body>
                     <SegmentForm

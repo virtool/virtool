@@ -8,7 +8,7 @@ import AddSegment from "./AddSegment";
 import EditSegment from "./EditSegment";
 import RemoveSegment from "./RemoveSegment";
 import { editVirus } from "../../actions";
-import { Button, Flex, FlexItem } from "../../../base";
+import { NoneFound, ListGroupItem, Icon } from "../../../base";
 
 const getInitialState = (props) => ({
     segArray: props.schema ? props.schema : [],
@@ -35,6 +35,13 @@ class VirusSchema extends React.Component {
         newArray.splice(hoverIndex, 0, dragSeg);
 
         this.setState({segArray: newArray});
+
+        this.props.onSave(
+            this.props.match.params.virusId,
+            this.props.detail.name,
+            this.props.detail.abbreviation,
+            newArray
+        );
     }
 
     handleAddNew = () => {
@@ -75,50 +82,37 @@ class VirusSchema extends React.Component {
         }
     }
 
-    handleSave = () => {
-        this.props.onSave(
-            this.props.match.params.virusId,
-            this.props.detail.name,
-            this.props.detail.abbreviation,
-            this.state.segArray
-        );
-    }
-
     render () {
         const { segArray } = this.state;
 
-        const segments = map(segArray, (segment, index) =>
-            <Segment
-                key={segment.name}
-                seg={segment}
-                index={index}
-                moveSeg={this.moveSeg}
-                onClick={this.handleSegment}
-            />
-        );
+        let segments;
+
+        if (segArray.length) {
+            segments = map(segArray, (segment, index) =>
+                <Segment
+                    key={segment.name}
+                    seg={segment}
+                    index={index}
+                    moveSeg={this.moveSeg}
+                    onClick={this.handleSegment}
+                />
+            );
+        } else {
+            segments = <NoneFound noun="segments" noListGroup />;
+        }
 
         return (
             <div>
-                <Flex alignItems="flex-end">
-                    <FlexItem grow={1}>
-                        <Button
-                            icon="new-entry"
-                            bsStyle="primary"
-                            tip="Add new segment"
-                            onClick={this.handleAddNew}
-                            style={{margin: "0 2px 20px 2px"}}
-                            pullRight
-                        />
-                        <Button
-                            icon="floppy"
-                            bsStyle="primary"
-                            tip="Save order"
-                            onClick={this.handleSave}
-                            style={{margin: "0 2px 20px 2px"}}
-                            pullRight
-                        />
-                    </FlexItem>
-                </Flex>
+                <ListGroupItem className="spaced" onClick={this.handleAddNew}>
+                    Add a new segment
+                    <Icon
+                        name="new-entry"
+                        bsStyle="primary"
+                        style={{fontSize: "17px"}}
+                        pullRight
+                    />
+                </ListGroupItem>
+                <br />
                 {segments}
                 <AddSegment
                     show={this.state.showAdd}

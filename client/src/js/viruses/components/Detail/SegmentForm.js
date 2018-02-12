@@ -52,7 +52,7 @@ export default class SegmentForm extends React.Component {
                 <Row>
                     <Col md={9}>
                         <Input
-                            label="Segment Name"
+                            label="Name"
                             value={this.props.newEntry.name}
                             onChange={(e) => {this.changeSegName(e)}}
                             error={errorMessage}
@@ -65,7 +65,6 @@ export default class SegmentForm extends React.Component {
                             label="Molecule Type"
                             value={this.props.newEntry.molecule}
                             onChange={(e) => {this.changeMolType(e)}}
-                            error={errorMessage}
                         >
                             <option key="default" style={{display: "none"}} />
                             <option key="ssDNA" value="ssDNA">
@@ -96,7 +95,7 @@ export default class SegmentForm extends React.Component {
                             label="Segment Required"
                             checked={this.state.isChecked}
                             onClick={this.toggleCheck}
-                            pullRight
+                            pullLeft
                         />
                     </Col>
                 </Row>

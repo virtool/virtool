@@ -39,7 +39,7 @@ class EditSegment extends React.Component {
 
     handleSubmit = () => {
 
-        if (this.state.newEntry.name && this.state.newEntry.molecule) {
+        if (this.state.newEntry.name) {
             const newArray = this.props.schema.slice();
             const name = this.props.curSeg.name;
             const index = findIndex(newArray, ["name", name]);
@@ -55,8 +55,8 @@ class EditSegment extends React.Component {
     render () {
 
         return (
-            <Modal show={this.props.show} >
-                <Modal.Header onHide={this.props.onHide} closeButton>
+            <Modal show={this.props.show} onHide={this.props.onHide}>
+                <Modal.Header closeButton>
                     Edit Segment Type
                 </Modal.Header>
                 <Modal.Body>
