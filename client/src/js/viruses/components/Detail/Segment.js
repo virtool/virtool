@@ -54,7 +54,7 @@ class Segment extends React.Component {
                 <div style={{opacity: isDragging ? 0 : 1}}>
                     <ListGroupItem className="spaced">
                         <Row>
-                            <Col md={5}>
+                            <Col md={5} >
                                 <strong>{seg.name}</strong>
                             </Col>
                             <Col md={4}>

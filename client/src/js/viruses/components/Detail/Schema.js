@@ -2,13 +2,14 @@ import React from "react";
 import { connect } from "react-redux";
 import { DragDropContext } from "react-dnd";
 import HTML5Backend from "react-dnd-html5-backend";
+import { Button } from "react-bootstrap";
 import { map } from "lodash-es";
 import Segment from "./Segment";
 import AddSegment from "./AddSegment";
 import EditSegment from "./EditSegment";
 import RemoveSegment from "./RemoveSegment";
 import { editVirus } from "../../actions";
-import { NoneFound, ListGroupItem, Icon } from "../../../base";
+import { NoneFound } from "../../../base";
 
 const getInitialState = (props) => ({
     segArray: props.schema ? props.schema : [],
@@ -103,15 +104,9 @@ class VirusSchema extends React.Component {
 
         return (
             <div>
-                <ListGroupItem className="spaced" onClick={this.handleAddNew}>
+                <Button bsStyle="primary" bsSize="large" block onClick={this.handleAddNew}>
                     Add a new segment
-                    <Icon
-                        name="new-entry"
-                        bsStyle="primary"
-                        style={{fontSize: "17px"}}
-                        pullRight
-                    />
-                </ListGroupItem>
+                </Button>
                 <br />
                 {segments}
                 <AddSegment
