@@ -210,6 +210,7 @@ def setup_files_routes(app):
 
 def setup_account_routes(app):
     app.router.add_get("/api/account", account.get)
+    app.router.add_patch("/api/account", account.edit)
     app.router.add_get("/api/account/settings", account.get_settings)
     app.router.add_patch("/api/account/settings", account.update_settings)
     app.router.add_put("/api/account/password", account.change_password)

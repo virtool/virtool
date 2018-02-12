@@ -45,6 +45,50 @@ async def test_get_settings(spawn_client):
     }
 
 
+@pytest.mark.parametrize("error", [False, True])
+async def test_edit(error, spawn_client, resp_is):
+    client = await spawn_client(authorize=True)
+
+    email = "dev-at-virtool.ca" if error else "dev@virtool.ca"
+
+    resp = await client.patch("/api/account", {
+        "email": email
+    })
+
+    if error:
+        await resp_is.invalid_input(resp, {"dev-at-virtool.ca": ["unknown field"]})
+    else:
+        assert resp.status == 200
+
+        assert await resp.json() == {
+            "permissions": {
+                "cancel_job": False,
+                "create_sample": False,
+                "manage_users": False,
+                "modify_hmm": False,
+                "modify_settings": False,
+                "modify_subtraction": False,
+                "modify_virus": False,
+                "rebuild_index": False,
+                "remove_file": False,
+                "remove_job": False,
+                "remove_virus": False,
+                "upload_file": False
+            },
+            "groups": [],
+            "last_password_change": "2015-10-06T20:00:00Z",
+            "primary_group": "technician",
+            "settings": {
+                "skip_quick_analyze_dialog": True,
+                "show_ids": True,
+                "show_versions": True,
+                "quick_analyze_algorithm": "pathoscope_bowtie"
+            },
+            "email": "dev@virtool.ca",
+            "id": "test"
+        }
+
+
 class TestUpdateSettings:
 
     async def test(self, spawn_client):

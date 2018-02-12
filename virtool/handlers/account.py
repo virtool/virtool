@@ -44,6 +44,29 @@ async def get(req):
 
 
 @protected()
+@validation({
+    "email": {"type": "string", "regex": "^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$"}
+})
+async def edit(req):
+    """
+    Edit the user account.
+
+    """
+    db = req.app["db"]
+    data = req["data"]
+
+    user_id = req["client"].user_id
+
+    document = await db.users.find_one_and_update({"_id": user_id}, {
+        "$set": {
+            "email": data["email"]
+        }
+    }, return_document=ReturnDocument.AFTER, projection=virtool.user.ACCOUNT_PROJECTION)
+
+    return json_response(virtool.utils.base_processor(document))
+
+
+@protected()
 async def get_settings(req):
     """
     Get account settings
