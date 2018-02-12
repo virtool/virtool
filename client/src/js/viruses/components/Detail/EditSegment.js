@@ -1,5 +1,5 @@
 import React from "react";
-// import PropTypes from "prop-types";
+import PropTypes from "prop-types";
 import { Modal } from "react-bootstrap";
 import { Button } from "../../../base";
 import SegmentForm from "./SegmentForm";
@@ -8,10 +8,11 @@ import { connect } from "react-redux";
 
 const getInitialState = (props) => ({
     newEntry: {
-        name: props.name,
-        molecule: props.molecule,
-        required: props.required
-    }
+        name: props.curSeg.name,
+        molecule: props.curSeg.molecule,
+        required: props.curSeg.required
+    },
+    showError: false
 });
 
 class EditSegment extends React.Component {
@@ -20,6 +21,10 @@ class EditSegment extends React.Component {
         super(props);
 
         this.state = getInitialState(this.props);
+    }
+
+    componentWillReceiveProps (nextProps) {
+        this.setState(getInitialState(nextProps));
     }
 
     handleChange = (entry) => {
@@ -32,38 +37,25 @@ class EditSegment extends React.Component {
         });
     }
 
-    handleSubmit = (e) => {
-        e.preventDefault();
-        e.stopPropagation();
+    handleSubmit = () => {
 
-        console.log(this.props);
+        if (this.state.newEntry.name && this.state.newEntry.molecule) {
+            const newArray = this.props.schema.slice();
+            const name = this.props.curSeg.name;
+            const index = findIndex(newArray, ["name", name]);
 
-        let newArray = this.props.schema.slice();
-        let name = this.props.curSeg;
-//        const index = findIndex(newArray, function(o) { return o.name === this.props.curSeg; });
-        const index = findIndex(newArray, function(o) { return o.name === name; });
-//        const index = findIndex(newArray, function(o) { return o.name === "bye"});
-//        console.log(`index is = ${index}`);
+            newArray[index] = this.state.newEntry;
 
-        console.log(this.props.curSeg);
-        console.log(newArray);
-        console.log(typeof this.props.curSeg);
-        newArray[index] = this.state.newEntry;
-
-        this.props.onSubmit(newArray);
-    }
-
-    handleExited = (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        
-        this.setState(getInitialState());
+            this.props.onSubmit(newArray);
+        } else {
+            this.setState({showError: true});
+        }
     }
 
     render () {
 
         return (
-            <Modal show={this.props.show} onExited={this.handleExited}>
+            <Modal show={this.props.show} >
                 <Modal.Header onHide={this.props.onHide} closeButton>
                     Edit Segment Type
                 </Modal.Header>
@@ -72,6 +64,7 @@ class EditSegment extends React.Component {
                         ref={(node) => this.formNode = node}
                         onChange={this.handleChange}
                         newEntry={this.state.newEntry}
+                        show={this.state.showError}
                     />
                 </Modal.Body>
                 <Modal.Footer>
@@ -84,11 +77,20 @@ class EditSegment extends React.Component {
     }
 }
 
-const mapStateToProps = (state) => {
-
-    return {
-        schema: state.viruses.detail.schema,
-    };
+EditSegment.propTypes = {
+    schema: PropTypes.arrayOf(PropTypes.object),
+    show: PropTypes.bool.isRequired,
+    onHide: PropTypes.func,
+    onSubmit: PropTypes.func,
+    curSeg: PropTypes.shape({
+        name: PropTypes.string,
+        molecule: PropTypes.string,
+        required: PropTypes.bool
+    }).isRequired
 };
+
+const mapStateToProps = (state) => ({
+    schema: state.viruses.detail.schema
+});
 
 export default connect(mapStateToProps)(EditSegment);

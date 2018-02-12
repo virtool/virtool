@@ -63,8 +63,8 @@ class UploadOverlay extends React.Component {
                 </div>
             </div>
         );
-        
-      return <div>{content}</div>;
+
+        return <div>{content}</div>;
     }
 }
 

@@ -24,7 +24,7 @@ import {
     SHOW_ADD_SEQUENCE,
     SHOW_EDIT_SEQUENCE,
     SHOW_REMOVE_SEQUENCE,
-    HIDE_VIRUS_MODAL,
+    HIDE_VIRUS_MODAL
 } from "../actionTypes";
 
 export const getVirus = (virusId) => ({

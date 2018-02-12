@@ -1,6 +1,7 @@
 import React from "react";
-// import PropTypes from "prop-types";
+import PropTypes from "prop-types";
 import { Modal } from "react-bootstrap";
+import { connect } from "react-redux";
 import { Button } from "../../../base";
 import SegmentForm from "./SegmentForm";
 import { concat } from "lodash-es";
@@ -10,10 +11,11 @@ const getInitialState = () => ({
         name: "",
         molecule: "",
         required: false
-    }
+    },
+    showError: false
 });
 
-export default class AddSegment extends React.Component {
+class AddSegment extends React.Component {
 
     constructor (props) {
         super(props);
@@ -31,19 +33,19 @@ export default class AddSegment extends React.Component {
         });
     }
 
-    handleSubmit = (e) => {
-        e.preventDefault();
-        e.stopPropagation();
+    handleSubmit = () => {
 
-        let newArray = this.props.curSegArr.slice();
-        newArray = concat(newArray, this.state.newEntry);
+        if (this.state.newEntry.name && this.state.newEntry.molecule) {
+            let newArray = this.props.schema.slice();
+            newArray = concat(newArray, this.state.newEntry);
 
-        this.props.onSubmit(newArray);
+            this.props.onSubmit(newArray);
+        } else {
+            this.setState({showError: true});
+        }
     }
 
-    handleExited = (e) => {
-        e.preventDefault();
-        e.stopPropagation();
+    handleExited = () => {
 
         this.setState(getInitialState());
     }
@@ -60,6 +62,7 @@ export default class AddSegment extends React.Component {
                         ref={(node) => this.formNode = node}
                         onChange={this.handleChange}
                         newEntry={this.state.newEntry}
+                        show={this.state.showError}
                     />
                 </Modal.Body>
                 <Modal.Footer>
@@ -71,3 +74,16 @@ export default class AddSegment extends React.Component {
         );
     }
 }
+
+AddSegment.propTypes = {
+    schema: PropTypes.arrayOf(PropTypes.object),
+    show: PropTypes.bool.isRequired,
+    onHide: PropTypes.func,
+    onSubmit: PropTypes.func
+};
+
+const mapStateToProps = (state) => ({
+    schema: state.viruses.detail.schema
+});
+
+export default connect(mapStateToProps)(AddSegment);

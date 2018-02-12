@@ -8,15 +8,14 @@ import AddSegment from "./AddSegment";
 import EditSegment from "./EditSegment";
 import RemoveSegment from "./RemoveSegment";
 import { editVirus } from "../../actions";
-import { Button } from "../../../base";
+import { Button, Flex, FlexItem } from "../../../base";
 
 const getInitialState = (props) => ({
     segArray: props.schema ? props.schema : [],
     showAdd: false,
     showRemove: false,
     showEdit: false,
-    selected: "",
-    length: 0
+    selected: {}
 });
 
 class VirusSchema extends React.Component {
@@ -38,19 +37,17 @@ class VirusSchema extends React.Component {
         this.setState({segArray: newArray});
     }
 
-    handleClick = () => {
+    handleAddNew = () => {
         this.setState({showAdd: true});
     }
 
     handleSubmit = (newArray) => {
-        const newLength = newArray.length;
 
         this.setState({
             segArray: newArray,
             showAdd: false,
             showRemove: false,
-            showEdit: false,
-            length: newLength
+            showEdit: false
         });
 
         this.props.onSave(
@@ -70,13 +67,21 @@ class VirusSchema extends React.Component {
     }
 
     handleSegment = (entry) => {
-        if (entry.type === "remove") {
-            this.setState({showRemove: true, selected: entry.name});
-        } 
-        
-        if (entry.type === "edit") {
-            this.setState({showEdit: true, selected: entry.name});
-        } 
+        if (entry.handler === "remove") {
+            this.setState({showRemove: true, selected: entry.segment});
+        }
+        if (entry.handler === "edit") {
+            this.setState({showEdit: true, selected: entry.segment});
+        }
+    }
+
+    handleSave = () => {
+        this.props.onSave(
+            this.props.match.params.virusId,
+            this.props.detail.name,
+            this.props.detail.abbreviation,
+            this.state.segArray
+        );
     }
 
     render () {
@@ -85,9 +90,7 @@ class VirusSchema extends React.Component {
         const segments = map(segArray, (segment, index) =>
             <Segment
                 key={segment.name}
-                segName={segment.name}
-                segType={segment.molecule}
-                segReq={segment.required}
+                seg={segment}
                 index={index}
                 moveSeg={this.moveSeg}
                 onClick={this.handleSegment}
@@ -96,24 +99,31 @@ class VirusSchema extends React.Component {
 
         return (
             <div>
-                <div>
-                    <Button
-                        icon="new-entry"
-                        bsStyle="primary"
-                        tip="Add new segment"
-                        onClick={this.handleClick}
-                        pullRight
-                    />
-                </div>
-                <br />
-                <br />
+                <Flex alignItems="flex-end">
+                    <FlexItem grow={1}>
+                        <Button
+                            icon="new-entry"
+                            bsStyle="primary"
+                            tip="Add new segment"
+                            onClick={this.handleAddNew}
+                            style={{margin: "0 2px 20px 2px"}}
+                            pullRight
+                        />
+                        <Button
+                            icon="floppy"
+                            bsStyle="primary"
+                            tip="Save order"
+                            onClick={this.handleSave}
+                            style={{margin: "0 2px 20px 2px"}}
+                            pullRight
+                        />
+                    </FlexItem>
+                </Flex>
                 {segments}
                 <AddSegment
                     show={this.state.showAdd}
                     onHide={this.handleClose}
                     onSubmit={this.handleSubmit}
-                    total={this.state.length}
-                    curSegArr={this.state.segArray}
                 />
                 <EditSegment
                     show={this.state.showEdit}
@@ -121,23 +131,20 @@ class VirusSchema extends React.Component {
                     onSubmit={this.handleSubmit}
                     curSeg={this.state.selected}
                 />
-                {/*<RemoveSegment
+                <RemoveSegment
                     show={this.state.showRemove}
                     onHide={this.handleClose}
                     onSubmit={this.handleSubmit}
-                    curSeg={this.selected}
-                />*/}
+                    curSeg={this.state.selected}
+                />
             </div>
         );
     }
 }
 
-const mapStateToProps = (state) => {
-
-    return {
-        schema: state.viruses.detail.schema,
-    };
-};
+const mapStateToProps = (state) => ({
+    schema: state.viruses.detail.schema
+});
 
 const mapDispatchToProps = (dispatch) => ({
 
@@ -150,4 +157,3 @@ const mapDispatchToProps = (dispatch) => ({
 const Schema = DragDropContext(HTML5Backend)(VirusSchema);
 
 export default connect(mapStateToProps, mapDispatchToProps)(Schema);
-

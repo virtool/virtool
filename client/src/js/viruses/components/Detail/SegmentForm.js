@@ -1,6 +1,5 @@
 import React from "react";
-// import PropTypes from "prop-types";
-// import { map, toLower } from "lodash-es";
+import PropTypes from "prop-types";
 import { Row, Col } from "react-bootstrap";
 import { Input, Checkbox } from "../../../base";
 
@@ -10,8 +9,16 @@ export default class SegmentForm extends React.Component {
         super(props);
 
         this.state = {
-            isChecked: false
+            isChecked: false,
+            showError: this.props.show
         };
+    }
+
+    componentWillReceiveProps (nextProps) {
+        this.setState({
+            isChecked: nextProps.newEntry.required,
+            showError: nextProps.show
+        });
     }
 
     changeSegName = (e) => {
@@ -38,14 +45,17 @@ export default class SegmentForm extends React.Component {
 
     render () {
 
+        const errorMessage = this.state.showError ? "Required Field" : "";
+
         return (
-            <form onSubmit={this.props.onSubmit}>
+            <form>
                 <Row>
                     <Col md={9}>
                         <Input
                             label="Segment Name"
                             value={this.props.newEntry.name}
                             onChange={(e) => {this.changeSegName(e)}}
+                            error={errorMessage}
                         />
                     </Col>
 
@@ -55,6 +65,7 @@ export default class SegmentForm extends React.Component {
                             label="Molecule Type"
                             value={this.props.newEntry.molecule}
                             onChange={(e) => {this.changeMolType(e)}}
+                            error={errorMessage}
                         >
                             <option key="default" style={{display: "none"}} />
                             <option key="ssDNA" value="ssDNA">
@@ -93,3 +104,13 @@ export default class SegmentForm extends React.Component {
         );
     }
 }
+
+SegmentForm.propTypes = {
+    onChange: PropTypes.func.isRequired,
+    newEntry: PropTypes.shape({
+        name: PropTypes.string,
+        molecule: PropTypes.string,
+        required: PropTypes.bool
+    }).isRequired,
+    show: PropTypes.bool
+};

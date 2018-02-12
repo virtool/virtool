@@ -38,43 +38,44 @@ function combine (connect) {
 
 class Segment extends React.Component {
 
-    handleRemove = (name) => {
-        console.log(`handle segment remove of ${name}`);
-        this.props.onClick({name: name, type: "remove"});
+    handleRemove = (segment) => {
+        this.props.onClick({segment, handler: "remove"});
     }
 
-    handleEdit = (name) => {
-        console.log(`handle segment edit of ${name}`);
-        this.props.onClick({name: name, type: "edit"});
+    handleEdit = (segment) => {
+        this.props.onClick({segment, handler: "edit"});
     }
 
     render () {
-        const { segName, segType, isDragging, connectDragSource, connectDropTarget } = this.props;
+        const { seg, isDragging, connectDragSource, connectDropTarget } = this.props;
 
         return connectDragSource(
             connectDropTarget(
                 <div style={{opacity: isDragging ? 0 : 1}}>
                     <ListGroupItem className="spaced">
                         <Row>
-                            <Col md={10}>
-                                <strong>{segName}</strong>
+                            <Col md={9}>
+                                <strong>{seg.name}</strong>
                             </Col>
                             <Col md={1}>
-                                {segType}
+                                {seg.molecule}
+                            </Col>
+                            <Col md={1}>
+                                {seg.required ? "required" : "not required"}
                             </Col>
                             <Col md={1}>
                                 <Icon
                                     name="remove"
                                     bsStyle="danger"
                                     style={{fontSize: "17px"}}
-                                    onClick={() => {this.handleRemove(segName)}}
+                                    onClick={() => {this.handleRemove(seg)}}
                                     pullRight
                                 />
                                 <Icon
                                     name="pencil"
                                     bsStyle="warning"
                                     style={{fontSize: "17px"}}
-                                    onClick={() => this.handleEdit(segName)}
+                                    onClick={() => this.handleEdit(seg)}
                                     pullRight
                                 />
                             </Col>
@@ -90,10 +91,12 @@ Segment.propTypes = {
     connectDragSource: PropTypes.func.isRequired,
     connectDropTarget: PropTypes.func.isRequired,
     index: PropTypes.number.isRequired,
+    seg: PropTypes.shape({
+        name: PropTypes.string,
+        molecule: PropTypes.string,
+        required: PropTypes.bool
+    }).isRequired,
     isDragging: PropTypes.bool.isRequired,
-    segName: PropTypes.string.isRequired,
-    segType: PropTypes.string.isRequired,
-    segReq: PropTypes.bool.isRequired,
     moveSeg: PropTypes.func.isRequired,
     onClick: PropTypes.func
 };
