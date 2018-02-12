@@ -3,7 +3,8 @@ import React from "react";
 import { Modal } from "react-bootstrap";
 import { Button } from "../../../base";
 import SegmentForm from "./SegmentForm";
-import { concat } from "lodash-es";
+import { findIndex } from "lodash-es";
+import { connect } from "react-redux";
 
 const getInitialState = (props) => ({
     newEntry: {
@@ -13,7 +14,7 @@ const getInitialState = (props) => ({
     }
 });
 
-export default class EditSegment extends React.Component {
+class EditSegment extends React.Component {
 
     constructor (props) {
         super(props);
@@ -23,7 +24,7 @@ export default class EditSegment extends React.Component {
 
     handleChange = (entry) => {
         this.setState({
-            modEntry: {
+            newEntry: {
                 name: entry.name,
                 molecule: entry.molecule,
                 required: entry.required
@@ -35,8 +36,19 @@ export default class EditSegment extends React.Component {
         e.preventDefault();
         e.stopPropagation();
 
-        let newArray = this.props.curSegArr.slice();
-//        newArray = concat(newArray, this.state.newEntry);
+        console.log(this.props);
+
+        let newArray = this.props.schema.slice();
+        let name = this.props.curSeg;
+//        const index = findIndex(newArray, function(o) { return o.name === this.props.curSeg; });
+        const index = findIndex(newArray, function(o) { return o.name === name; });
+//        const index = findIndex(newArray, function(o) { return o.name === "bye"});
+//        console.log(`index is = ${index}`);
+
+        console.log(this.props.curSeg);
+        console.log(newArray);
+        console.log(typeof this.props.curSeg);
+        newArray[index] = this.state.newEntry;
 
         this.props.onSubmit(newArray);
     }
@@ -71,3 +83,12 @@ export default class EditSegment extends React.Component {
         );
     }
 }
+
+const mapStateToProps = (state) => {
+
+    return {
+        schema: state.viruses.detail.schema,
+    };
+};
+
+export default connect(mapStateToProps)(EditSegment);

@@ -38,18 +38,14 @@ function combine (connect) {
 
 class Segment extends React.Component {
 
-    constructor (props) {
-        super(props);
-
-        this.state = {
-            segName: this.props.segName,
-            segType: this.props.segType,
-            segReq: this.props.segReq
-        };
+    handleRemove = (name) => {
+        console.log(`handle segment remove of ${name}`);
+        this.props.onClick({name: name, type: "remove"});
     }
 
-    handleClick = (e) => {
-        console.log(`handle segment edit of ${e}`);
+    handleEdit = (name) => {
+        console.log(`handle segment edit of ${name}`);
+        this.props.onClick({name: name, type: "edit"});
     }
 
     render () {
@@ -71,14 +67,14 @@ class Segment extends React.Component {
                                     name="remove"
                                     bsStyle="danger"
                                     style={{fontSize: "17px"}}
-                                    onClick={() => {this.props.onClick(this.props.segName)}}
+                                    onClick={() => {this.handleRemove(segName)}}
                                     pullRight
                                 />
                                 <Icon
                                     name="pencil"
                                     bsStyle="warning"
                                     style={{fontSize: "17px"}}
-                                    onClick={() => this.handleClick(this.props.segName)}
+                                    onClick={() => this.handleEdit(segName)}
                                     pullRight
                                 />
                             </Col>

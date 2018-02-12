@@ -24,7 +24,7 @@ export default class RemoveSegment extends React.Component {
                     Remove Segment
                 </Modal.Header>
                 <Modal.Body>
-                    Are you sure you want to remove the segment <strong>{this.props.curSeg.name}</strong>?
+                    Are you sure you want to remove the segment <strong>{this.props.selected}</strong>?
                 </Modal.Body>
                 <Modal.Footer>
                     <Button

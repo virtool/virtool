@@ -5,7 +5,7 @@ import HTML5Backend from "react-dnd-html5-backend";
 import { map } from "lodash-es";
 import Segment from "./Segment";
 import AddSegment from "./AddSegment";
-//import EditSegment from "./EditSegment";
+import EditSegment from "./EditSegment";
 import RemoveSegment from "./RemoveSegment";
 import { editVirus } from "../../actions";
 import { Button } from "../../../base";
@@ -15,6 +15,7 @@ const getInitialState = (props) => ({
     showAdd: false,
     showRemove: false,
     showEdit: false,
+    selected: "",
     length: 0
 });
 
@@ -68,6 +69,16 @@ class VirusSchema extends React.Component {
         });
     }
 
+    handleSegment = (entry) => {
+        if (entry.type === "remove") {
+            this.setState({showRemove: true, selected: entry.name});
+        } 
+        
+        if (entry.type === "edit") {
+            this.setState({showEdit: true, selected: entry.name});
+        } 
+    }
+
     render () {
         const { segArray } = this.state;
 
@@ -79,7 +90,7 @@ class VirusSchema extends React.Component {
                 segReq={segment.required}
                 index={index}
                 moveSeg={this.moveSeg}
-                onSubmit={this.handleSubmit}
+                onClick={this.handleSegment}
             />
         );
 
@@ -104,19 +115,18 @@ class VirusSchema extends React.Component {
                     total={this.state.length}
                     curSegArr={this.state.segArray}
                 />
-                {/*<EditSegment
+                <EditSegment
                     show={this.state.showEdit}
                     onHide={this.handleClose}
                     onSubmit={this.handleSubmit}
-                    currSegArr={this.state.segArray}
-                />*/}
-                <RemoveSegment
+                    curSeg={this.state.selected}
+                />
+                {/*<RemoveSegment
                     show={this.state.showRemove}
                     onHide={this.handleClose}
                     onSubmit={this.handleSubmit}
-                    curSegArr={this.state.segArray}
-                    curSeg={}
-                />
+                    curSeg={this.selected}
+                />*/}
             </div>
         );
     }
