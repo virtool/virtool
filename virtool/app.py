@@ -19,6 +19,7 @@ import virtool.job_resources
 import virtool.error_pages
 import virtool.file_manager
 import virtool.organize
+import virtool.proxy
 import virtool.sentry
 import virtool.setup
 import virtool.utils
@@ -267,6 +268,7 @@ def create_app(loop, db_name=None, disable_job_manager=False, disable_file_manag
 
     """
     middlewares = [
+        virtool.proxy.middleware,
         virtool.error_pages.middleware
     ]
 

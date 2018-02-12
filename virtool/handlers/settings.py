@@ -1,3 +1,6 @@
+import aiohttp
+import aiohttp.client_exceptions
+import os
 from cerberus import Validator
 
 import virtool.app_settings
@@ -43,3 +46,62 @@ async def update(req):
     await settings.write()
 
     return json_response(settings.data)
+
+
+async def check_proxy(req):
+    """
+    Check that the proxy settings are working.
+
+    :param req:
+    :return:
+
+    """
+    settings = req.app["settings"]
+
+    body = {
+        "id": "proxy_failure"
+    }
+
+    if settings.get("proxy_enable"):
+
+        url = "http://www.example.com"
+
+        auth = None
+
+        trust = settings.get("proxy_trust")
+
+        if trust:
+            address = os.environ.get("HTTPS_PROXY") or os.environ.get("HTTP_PROXY")
+
+            if not address:
+                return json_response(dict(body, message="Environmental variables not found"), status=400)
+
+        else:
+            address = settings.get("proxy_address", None)
+
+            if not address:
+                return json_response(dict(body, message="Proxy address is invalid"), status=400)
+
+            if address:
+                username = settings.get("proxy_username", None)
+                password = settings.get("proxy_password", None)
+
+                if username and password:
+                    auth = aiohttp.BasicAuth(username, password)
+
+        if address:
+            async with aiohttp.ClientSession() as session:
+                try:
+                    async with session.get(url, proxy=address, proxy_auth=auth) as resp:
+                        if resp.status == 407:
+                            return json_response(dict(body, message="Proxy authentication failed"), status=400)
+
+                        if "Example" in await resp.text():
+                            return json_response({"enabled": True})
+
+                        return json_response(dict(body, message="Could not reach internet"), status=400)
+
+                except aiohttp.client_exceptions.ClientProxyConnectionError:
+                    return json_response(dict(body, message="Could not connect to proxy"), status=400)
+
+    return json_response(dict(body, message="Proxy use is not enabled"), status=400)

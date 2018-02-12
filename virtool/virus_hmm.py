@@ -81,7 +81,7 @@ async def update_process(db, dispatch, progress, step=None, error=None):
     return await virtool.utils.update_status_process(db, dispatch, "hmm_install", progress, step)
 
 
-async def get_asset(server_version, username, token):
+async def get_asset(settings, server_version, username, token):
     """
     Get the asset information associated with the latest HMM release.
 
@@ -98,7 +98,7 @@ async def get_asset(server_version, username, token):
     :rtype: Coroutine[dict]
 
     """
-    release = await virtool.github.get(LATEST_RELEASE_URL, server_version, username, token)
+    release = await virtool.github.get(settings, LATEST_RELEASE_URL, server_version, username, token)
 
     assets = list()
 
@@ -149,7 +149,7 @@ async def install_official(loop, db, settings, dispatch, server_version, usernam
     """
     await update_process(db, dispatch, 0, step="check_github")
 
-    assets = await get_asset(server_version, username, token)
+    assets = await get_asset(settings, server_version, username, token)
 
     await db.status.update_one({"_id": "hmm_install"}, {
         "$set": {
@@ -172,7 +172,7 @@ async def install_official(loop, db, settings, dispatch, server_version, usernam
         url, size = assets[0]
 
         await update_process(db, dispatch, 0, step="download")
-        await virtool.github.download_asset(url, size, target_path, progress_handler=handler)
+        await virtool.github.download_asset(settings, url, size, target_path, progress_handler=handler)
 
         await update_process(db, dispatch, 0, step="decompress")
 

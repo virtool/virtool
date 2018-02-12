@@ -3,6 +3,7 @@ import aiohttp
 import tarfile
 
 import virtool.errors
+import virtool.proxy
 
 
 def get_headers(server_version):
@@ -29,7 +30,7 @@ def create_auth(username, token):
     return None
 
 
-async def get(url, server_version, username, token):
+async def get(settings, url, server_version, username, token):
     """
     GET data from a GitHub API url.
 
@@ -52,16 +53,18 @@ async def get(url, server_version, username, token):
     auth = create_auth(username, token)
 
     async with aiohttp.ClientSession(auth=auth) as session:
-        async with session.get(url, headers=headers) as resp:
+        async with virtool.proxy.ProxyRequest(settings, session.get, url, headers=headers) as resp:
             if resp.status != 200:
                 raise virtool.errors.GitHubError("Encountered error {}".format(resp.status))
 
             return await resp.json()
 
 
-async def download_asset(url, size, target_path, progress_handler=None):
+async def download_asset(settings, url, size, target_path, progress_handler=None):
     """
     Download the GitHub release at ``url`` to the location specified by ``target_path``.
+
+    :param settings: the application settings object
 
     :param url: the download URL for the release
     :type url str
@@ -80,8 +83,7 @@ async def download_asset(url, size, target_path, progress_handler=None):
     last_reported = 0
 
     async with aiohttp.ClientSession() as session:
-        async with session.get(url) as resp:
-
+        async with virtool.proxy.ProxyRequest(settings, session.get, url) as resp:
             if resp.status != 200:
                 raise virtool.errors.GitHubError("Could not download release asset")
 

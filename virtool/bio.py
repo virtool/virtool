@@ -7,6 +7,7 @@ import re
 import zipfile
 
 import virtool.errors
+import virtool.proxy
 import virtool.sample_analysis
 import virtool.utils
 
@@ -266,9 +267,11 @@ def find_orfs(sequence):
     return orfs
 
 
-async def initialize_ncbi_blast(sequence):
+async def initialize_ncbi_blast(settings, sequence):
     """
     Send a request to NCBI to BLAST the passed sequence. Return the RID and RTOE from the response.
+
+    :param settings: the application settings object
 
     :param sequence: the nucleotide sequence to BLAST
     :type sequence: str
@@ -294,9 +297,10 @@ async def initialize_ncbi_blast(sequence):
     }
 
     with aiohttp.ClientSession() as session:
-        async with session.post(BLAST_CGI_URL, params=params, data=data) as resp:
+        print(BLAST_CGI_URL)
+        async with virtool.proxy.ProxyRequest(settings, session.post, BLAST_CGI_URL, params=params, data=data) as resp:
             if resp.status != 200:
-                raise NCBIError("BLAST request returned status {}".format(resp.status))
+                raise virtool.errors.NCBIError("BLAST request returned status: {}".format(resp.status))
 
             # Extract and return the RID and RTOE from the QBlastInfo tag.
             return extract_blast_info(await resp.text())
@@ -324,7 +328,7 @@ def extract_blast_info(html):
     return rid, int(rtoe)
 
 
-async def check_rid(rid):
+async def check_rid(settings, rid):
     """
     Check if the BLAST process identified by the passed RID is ready.
 
@@ -342,14 +346,14 @@ async def check_rid(rid):
     }
 
     with aiohttp.ClientSession() as session:
-        async with session.get(BLAST_CGI_URL, params=params) as resp:
+        async with virtool.proxy.ProxyRequest(settings, session.get, BLAST_CGI_URL, params=params) as resp:
             if resp.status != 200:
                 raise virtool.errors.NCBIError("RID check request returned status {}".format(resp.status))
 
             return "Status=WAITING" not in await resp.text()
 
 
-async def get_ncbi_blast_result(rid):
+async def get_ncbi_blast_result(settings, rid):
     params = {
         "CMD": "Get",
         "RID": rid,
@@ -358,7 +362,7 @@ async def get_ncbi_blast_result(rid):
     }
 
     with aiohttp.ClientSession() as session:
-        async with session.get(BLAST_CGI_URL, params=params) as resp:
+        async with virtool.proxy.ProxyRequest(settings, session.get, BLAST_CGI_URL, params=params) as resp:
             return parse_blast_content(await resp.read(), rid)
 
 
@@ -415,13 +419,10 @@ def parse_blast_content(content, rid):
     return output
 
 
-async def wait_for_blast_result(db, dispatch, analysis_id, sequence_index, rid):
+async def wait_for_blast_result(db, settings, dispatch, analysis_id, sequence_index, rid):
     """
     Retrieve the Genbank data associated with the given accession and transform it into a Virtool-format sequence
     document.
-
-    :param rid: the identifier to the BLAST request
-    :type rid: str
 
     """
     ready = False
@@ -433,7 +434,7 @@ async def wait_for_blast_result(db, dispatch, analysis_id, sequence_index, rid):
         # Do this before checking RID for more accurate time.
         last_checked_at = virtool.utils.timestamp()
 
-        ready = await check_rid(rid)
+        ready = await check_rid(settings, rid)
 
         update = {
             "interval": interval,
@@ -445,7 +446,7 @@ async def wait_for_blast_result(db, dispatch, analysis_id, sequence_index, rid):
         interval += 5
 
         if update["ready"]:
-            update["result"] = await get_ncbi_blast_result(rid)
+            update["result"] = await get_ncbi_blast_result(settings, rid)
 
         document = await db.analyses.find_one_and_update({"_id": analysis_id, "results.index": sequence_index}, {
             "$set": {
