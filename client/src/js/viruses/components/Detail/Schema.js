@@ -1,7 +1,6 @@
 import React from "react";
 import { connect } from "react-redux";
-import { DragDropContext } from "react-dnd";
-import HTML5Backend from "react-dnd-html5-backend";
+import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd";
 import { Button } from "react-bootstrap";
 import { map } from "lodash-es";
 import Segment from "./Segment";
@@ -19,7 +18,21 @@ const getInitialState = (props) => ({
     selected: {}
 });
 
-class VirusSchema extends React.Component {
+const reorder = (list, startIndex, endIndex) => {
+    const result = Array.from(list);
+    const [removed] = result.splice(startIndex, 1);
+    result.splice(endIndex, 0, removed);
+
+    return result;
+};
+
+const getItemStyle = (isDragging, draggableStyle) => ({
+    userSelect: "none",
+    margin: "0 0 10px 0",
+    ...draggableStyle
+});
+
+class Schema extends React.Component {
 
     constructor (props) {
         super(props);
@@ -27,13 +40,16 @@ class VirusSchema extends React.Component {
         this.state = getInitialState(this.props);
     }
 
-    moveSeg = (dragIndex, hoverIndex) => {
-        const { segArray } = this.state;
-        const dragSeg = segArray[dragIndex];
+    onDragEnd = (result) => {
+        if (!result.destination) {
+            return;
+        }
 
-        const newArray = segArray.slice();
-        newArray.splice(dragIndex, 1);
-        newArray.splice(hoverIndex, 0, dragSeg);
+        const newArray = reorder(
+            this.state.segArray,
+            result.source.index,
+            result.destination.index
+        );
 
         this.setState({segArray: newArray});
 
@@ -90,13 +106,28 @@ class VirusSchema extends React.Component {
 
         if (segArray.length) {
             segments = map(segArray, (segment, index) =>
-                <Segment
-                    key={segment.name}
-                    seg={segment}
-                    index={index}
-                    moveSeg={this.moveSeg}
-                    onClick={this.handleSegment}
-                />
+                <Draggable key={segment.name} draggableId={segment.name} index={index}>
+                    {(provided, snapshot) => (
+                        <div>
+                            <div
+                                ref={provided.innerRef}
+                                {...provided.draggableProps}
+                                {...provided.dragHandleProps}
+                                style={getItemStyle(
+                                    snapshot.isDragging,
+                                    provided.draggableProps.style
+                                )}
+                            >
+                                <Segment
+                                    seg={segment}
+                                    index={index}
+                                    onClick={this.handleSegment}
+                                />
+                            </div>
+                            {provided.placeholder}
+                        </div>
+                    )}
+                </Draggable>
             );
         } else {
             segments = <NoneFound noun="segments" noListGroup />;
@@ -108,7 +139,18 @@ class VirusSchema extends React.Component {
                     Add a new segment
                 </Button>
                 <br />
-                {segments}
+
+                <DragDropContext onDragEnd={this.onDragEnd}>
+                    <Droppable droppableId="droppable">
+                        {(provided) => (
+                            <div ref={provided.innerRef}>
+                                {segments}
+                                {provided.placeholder}
+                            </div>
+                        )}
+                    </Droppable>
+                </DragDropContext>
+
                 <AddSegment
                     show={this.state.showAdd}
                     onHide={this.handleClose}
@@ -142,7 +184,5 @@ const mapDispatchToProps = (dispatch) => ({
     }
 
 });
-
-const Schema = DragDropContext(HTML5Backend)(VirusSchema);
 
 export default connect(mapStateToProps, mapDispatchToProps)(Schema);
