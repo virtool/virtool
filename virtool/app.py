@@ -3,6 +3,7 @@ import concurrent.futures
 import logging
 import os
 import pymongo
+import pymongo.errors
 import ssl
 import sys
 import subprocess
@@ -16,6 +17,7 @@ import virtool.app_routes
 import virtool.app_settings
 import virtool.job_manager
 import virtool.job_resources
+import virtool.errors
 import virtool.error_pages
 import virtool.file_manager
 import virtool.organize
@@ -93,7 +95,19 @@ async def init_db(app):
     """
     app["db_name"] = app.get("db_name", None) or app["settings"].get("db_name")
 
-    app["db"] = motor_asyncio.AsyncIOMotorClient(io_loop=app.loop)[app["db_name"]]
+    db_host = app["settings"].get("db_host", "localhost")
+    db_port = app["settings"].get("db_port", 27017)
+
+    client = motor_asyncio.AsyncIOMotorClient(db_host, db_port, serverSelectionTimeoutMS=6000, io_loop=app.loop)
+
+    try:
+        await client.database_names()
+    except pymongo.errors.ServerSelectionTimeoutError:
+        raise virtool.errors.MongoConnectionError(
+            "Could not connect to MongoDB server at {}:{}".format(db_host, db_port)
+        )
+
+    app["db"] = client[app["db_name"]]
 
 
 async def init_check_db(app):
