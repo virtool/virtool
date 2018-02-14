@@ -161,6 +161,7 @@ export default class PathoscopeController extends React.Component {
                                 onSelect={this.handleSelect}
                                 className="split-dropdown"
                                 pullRight
+                                style={{zIndex: "1"}}
                             >
                                 <Button
                                     title="Filter"

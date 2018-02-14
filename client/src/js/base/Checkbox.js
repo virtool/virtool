@@ -45,7 +45,7 @@ export const Checkbox = (props) => {
 
     return (
         <span className={className} onClick={props.disabled ? null : props.onClick} style={style}>
-             <CheckboxIcon {...props} /> {props.label ? <span>{props.label}</span> : null}
+            <CheckboxIcon {...props} /> {props.label ? <span>{props.label}</span> : null}
         </span>
     );
 };
