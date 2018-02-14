@@ -116,14 +116,52 @@ export default class CoverageChart extends React.Component {
             this.chartNode,
             this.props.data,
             this.props.length,
-            { id, definition},
+            { id, definition },
             this.props.yMax,
             this.chartNode.offsetWidth,
             this.props.showYAxis
         );
     };
 
+    handleClick = () => {
+
+        const doctype = '<?xml version="1.0" standalone="no"?>'
+        + '<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">';
+
+        select(this.chartNode).select("svg").select("path").node().setAttribute("fill", "#428bca");
+
+        const svg = (new XMLSerializer()).serializeToString(select(this.chartNode).select("svg").node());
+
+        const blob = new Blob([ doctype + svg ], { type: "image/svg+xml;charset=utf-8" });
+
+        const url = window.URL.createObjectURL(blob);
+
+        const width = select(this.chartNode).select("svg").attr("width");
+        const height = select(this.chartNode).select("svg").attr("height");
+
+        const img = document.createElement("img");
+        img.width = width;
+        img.height = height;
+
+        img.onload = function(){
+            var canvas = document.createElement("canvas");
+            canvas.width = width;
+            canvas.height = height;
+            var ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0);
+            var canvasUrl = canvas.toDataURL("image/png");
+            var img2 = document.createElement("img");
+            img2.width = width;
+            img2.height = height;
+            img2.src = canvasUrl; 
+
+            const x = canvasUrl.replace("image/png", "image/octet-stream");
+            window.location.href = x;
+        }
+        img.src = url;
+    }
+
     render () {
-        return <div className="coverage-chart" ref={(node) => this.chartNode = node} />;
+        return <div className="coverage-chart" onDoubleClick={this.handleClick} ref={(node) => this.chartNode = node} />;
     }
 }
