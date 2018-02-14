@@ -4,7 +4,6 @@ import { Modal } from "react-bootstrap";
 import { connect } from "react-redux";
 import { Button } from "../../../base";
 import SegmentForm from "./SegmentForm";
-import { concat } from "lodash-es";
 
 const getInitialState = () => ({
     newEntry: {
@@ -36,10 +35,7 @@ class AddSegment extends React.Component {
     handleSubmit = () => {
 
         if (this.state.newEntry.name) {
-            let newArray = this.props.schema.slice();
-            newArray = concat(newArray, this.state.newEntry);
-
-            this.props.onSubmit(newArray);
+            this.props.onSubmit([...this.props.schema, this.state.newEntry]);
         } else {
             this.setState({showError: true});
         }
@@ -59,7 +55,6 @@ class AddSegment extends React.Component {
                 </Modal.Header>
                 <Modal.Body>
                     <SegmentForm
-                        ref={(node) => this.formNode = node}
                         onChange={this.handleChange}
                         newEntry={this.state.newEntry}
                         show={this.state.showError}

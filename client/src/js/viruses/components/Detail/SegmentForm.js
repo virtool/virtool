@@ -2,6 +2,7 @@ import React from "react";
 import PropTypes from "prop-types";
 import { Row, Col } from "react-bootstrap";
 import { Input, Checkbox } from "../../../base";
+import { map } from "lodash-es";
 
 export default class SegmentForm extends React.Component {
 
@@ -47,6 +48,21 @@ export default class SegmentForm extends React.Component {
 
         const errorMessage = this.state.showError ? "Required Field" : "";
 
+        const moleculeTypes = [
+            "ssDNA",
+            "dsDNA",
+            "ssRNA+",
+            "ssRNA-",
+            "ssRNA",
+            "dsRNA"
+        ];
+
+        const molecules = map(moleculeTypes, (molecule) =>
+            <option key={molecule} value={molecule}>
+                {molecule}
+            </option>
+        );
+
         return (
             <form>
                 <Row>
@@ -54,7 +70,7 @@ export default class SegmentForm extends React.Component {
                         <Input
                             label="Name"
                             value={this.props.newEntry.name}
-                            onChange={(e) => {this.changeSegName(e)}}
+                            onChange={this.changeSegName}
                             error={errorMessage}
                         />
                     </Col>
@@ -64,27 +80,10 @@ export default class SegmentForm extends React.Component {
                             type="select"
                             label="Molecule Type"
                             value={this.props.newEntry.molecule}
-                            onChange={(e) => {this.changeMolType(e)}}
+                            onChange={this.changeMolType}
                         >
                             <option key="default" style={{display: "none"}} />
-                            <option key="ssDNA" value="ssDNA">
-                                ssDNA
-                            </option>
-                            <option key="dsDNA" value="dsDNA">
-                                dsDNA
-                            </option>
-                            <option key="ssRNA+" value="ssRNA+">
-                                ssRNA+
-                            </option>
-                            <option key="ssRNA-" value="ssRNA-">
-                                ssRNA-
-                            </option>
-                            <option key="dsRNA" value="dsRNA">
-                                dsRNA
-                            </option>
-                            <option key="ssRNA" value="ssRNA">
-                                ssRNA
-                            </option>
+                            {molecules}
                         </Input>
                     </Col>
                 </Row>
@@ -106,10 +105,6 @@ export default class SegmentForm extends React.Component {
 
 SegmentForm.propTypes = {
     onChange: PropTypes.func.isRequired,
-    newEntry: PropTypes.shape({
-        name: PropTypes.string,
-        molecule: PropTypes.string,
-        required: PropTypes.bool
-    }).isRequired,
+    newEntry: PropTypes.object.isRequired,
     show: PropTypes.bool
 };

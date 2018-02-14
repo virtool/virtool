@@ -54,7 +54,7 @@ class Schema extends React.Component {
         this.setState({segArray: newArray});
 
         this.props.onSave(
-            this.props.match.params.virusId,
+            this.props.virusId,
             this.props.detail.name,
             this.props.detail.abbreviation,
             newArray
@@ -75,7 +75,7 @@ class Schema extends React.Component {
         });
 
         this.props.onSave(
-            this.props.match.params.virusId,
+            this.props.virusId,
             this.props.detail.name,
             this.props.detail.abbreviation,
             newArray
@@ -174,7 +174,9 @@ class Schema extends React.Component {
 }
 
 const mapStateToProps = (state) => ({
-    schema: state.viruses.detail.schema
+    schema: state.viruses.detail.schema,
+    detail: state.viruses.detail,
+    virusId: state.viruses.detail.id
 });
 
 const mapDispatchToProps = (dispatch) => ({

@@ -10,9 +10,9 @@ const getInitialState = (props) => ({
     newEntry: {
         name: props.curSeg.name,
         molecule: props.curSeg.molecule,
-        required: props.curSeg.required
-    },
-    showError: false
+        required: props.curSeg.required,
+        showError: false
+    }
 });
 
 class EditSegment extends React.Component {
@@ -23,8 +23,8 @@ class EditSegment extends React.Component {
         this.state = getInitialState(this.props);
     }
 
-    componentWillReceiveProps (nextProps) {
-        this.setState(getInitialState(nextProps));
+    updateState = () => {
+        this.setState(getInitialState(this.props));
     }
 
     handleChange = (entry) => {
@@ -55,13 +55,12 @@ class EditSegment extends React.Component {
     render () {
 
         return (
-            <Modal show={this.props.show} onHide={this.props.onHide}>
+            <Modal show={this.props.show} onHide={this.props.onHide} onEnter={this.updateState}>
                 <Modal.Header closeButton>
                     Edit Segment Type
                 </Modal.Header>
                 <Modal.Body>
                     <SegmentForm
-                        ref={(node) => this.formNode = node}
                         onChange={this.handleChange}
                         newEntry={this.state.newEntry}
                         show={this.state.showError}
@@ -82,11 +81,7 @@ EditSegment.propTypes = {
     show: PropTypes.bool.isRequired,
     onHide: PropTypes.func,
     onSubmit: PropTypes.func,
-    curSeg: PropTypes.shape({
-        name: PropTypes.string,
-        molecule: PropTypes.string,
-        required: PropTypes.bool
-    }).isRequired
+    curSeg: PropTypes.object.isRequired
 };
 
 const mapStateToProps = (state) => ({

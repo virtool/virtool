@@ -5,12 +5,12 @@ import { Icon, ListGroupItem } from "../../../base";
 
 export default class Segment extends React.Component {
 
-    handleRemove = (segment) => {
-        this.props.onClick({segment, handler: "remove"});
+    handleRemove = () => {
+        this.props.onClick({segment: this.props.seg, handler: "remove"});
     }
 
-    handleEdit = (segment) => {
-        this.props.onClick({segment, handler: "edit"});
+    handleEdit = () => {
+        this.props.onClick({segment: this.props.seg, handler: "edit"});
     }
 
     render () {
@@ -36,14 +36,14 @@ export default class Segment extends React.Component {
                                 name="remove"
                                 bsStyle="danger"
                                 style={{fontSize: "17px", padding: "0 5px"}}
-                                onClick={() => {this.handleRemove(seg)}}
+                                onClick={this.handleRemove}
                                 pullRight
                             />
                             <Icon
                                 name="pencil"
                                 bsStyle="warning"
                                 style={{fontSize: "17px"}}
-                                onClick={() => this.handleEdit(seg)}
+                                onClick={this.handleEdit}
                                 pullRight
                             />
                         </Col>
@@ -56,10 +56,6 @@ export default class Segment extends React.Component {
 
 Segment.propTypes = {
     index: PropTypes.number.isRequired,
-    seg: PropTypes.shape({
-        name: PropTypes.string,
-        molecule: PropTypes.string,
-        required: PropTypes.bool
-    }).isRequired,
+    seg: PropTypes.object.isRequired,
     onClick: PropTypes.func
 };

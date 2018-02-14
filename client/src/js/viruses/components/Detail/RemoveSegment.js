@@ -50,11 +50,7 @@ RemoveSegment.propTypes = {
     show: PropTypes.bool.isRequired,
     onHide: PropTypes.func,
     onSubmit: PropTypes.func,
-    curSeg: PropTypes.shape({
-        name: PropTypes.string,
-        molecule: PropTypes.string,
-        required: PropTypes.bool
-    }).isRequired
+    curSeg: PropTypes.object.isRequired
 };
 
 const mapStateToProps = (state) => ({
