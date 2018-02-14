@@ -46,11 +46,7 @@ class UploadOverlay extends React.Component {
             upload.progress === 100 ? <div key={upload.localId} /> : <UploadItem key={upload.localId} {...upload} />
         );
 
-        if (this.props.uploadsComplete) {
-            return <div />;
-        }
-
-        return (
+        const content = this.props.uploadsComplete ? null : (
             <div className={classNames}>
                 <div className="upload-overlay-content">
                     <h5>
@@ -67,6 +63,8 @@ class UploadOverlay extends React.Component {
                 </div>
             </div>
         );
+
+        return <div>{content}</div>;
     }
 }
 
