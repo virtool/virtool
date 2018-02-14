@@ -71,6 +71,14 @@ SCHEMA = {
     "server_port": get_default_integer(9950),
     "enable_api": {"type": "boolean", "default": False},
 
+    # Proxy Server
+    "proxy_address": {"type": "string", "default": ""},
+    "proxy_enable": get_default_boolean(False),
+    "proxy_password": {"type": "string", "default": ""},
+    "proxy_username": {"type": "string", "default": ""},
+    "proxy_trust": get_default_boolean(False),
+
+
     # Github
     "github_token": {"type": "string", "default": None, "nullable": True},
     "github_username": {"type": "string", "default": None, "nullable": True},
@@ -139,8 +147,8 @@ class Settings:
     def update(self, update_dict):
         self.data.update(update_dict)
 
-    def get(self, key):
-        return self.data[key]
+    def get(self, *args, **kwargs):
+        return self.data.get(*args, **kwargs)
 
     def set(self, key, value):
         self.data[key] = value

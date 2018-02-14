@@ -54,7 +54,7 @@ async def test_download_asset(error, tmpdir):
 
     handler = make_mocked_coro()
 
-    task = virtool.github.download_asset(url, size, target_path, progress_handler=handler)
+    task = virtool.github.download_asset({"proxy_enable": False}, url, size, target_path, progress_handler=handler)
 
     if error == "url":
         with pytest.raises(virtool.errors.GitHubError) as err:

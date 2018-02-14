@@ -130,7 +130,7 @@ async def test_get_assets(mocker):
 
     mocker.patch("virtool.github.get", new=m)
 
-    assets = await virtool.virus_hmm.get_asset("v1.9.2-beta.2", "fred", "abc123")
+    assets = await virtool.virus_hmm.get_asset({"proxy_enable": False}, "v1.9.2-beta.2", "fred", "abc123")
 
     assert assets == [(
         "https://github.com/virtool/virtool-hmm/releases/download/v0.1.0/annotations.json.gz",
@@ -142,6 +142,7 @@ async def test_install_official(loop, mocker, tmpdir, test_motor, test_dispatch)
     tmpdir.mkdir("hmm")
 
     settings = {
+        "proxy_enable": False,
         "data_path": str(tmpdir)
     }
 
@@ -152,8 +153,8 @@ async def test_install_official(loop, mocker, tmpdir, test_motor, test_dispatch)
 
     m_download_asset = mocker.stub(name="download_asset")
 
-    async def download_asset(url, size, target_path, progress_handler):
-        m_download_asset(url, size, target_path, progress_handler)
+    async def download_asset(settings, url, size, target_path, progress_handler):
+        m_download_asset(settings, url, size, target_path, progress_handler)
         shutil.copyfile(os.path.join(TEST_FILE_PATH, "vthmm.tar.gz"), os.path.join(target_path))
 
     m_update_process = make_mocked_coro()
@@ -170,7 +171,7 @@ async def test_install_official(loop, mocker, tmpdir, test_motor, test_dispatch)
         "v1.9.2-beta.2"
     )
 
-    m_get_assets.assert_called_with("v1.9.2-beta.2", None, None)
+    m_get_assets.assert_called_with(settings, "v1.9.2-beta.2", None, None)
 
 
 async def test_insert_annotations(test_motor, test_random_alphanumeric):

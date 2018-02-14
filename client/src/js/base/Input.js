@@ -25,7 +25,8 @@ export class Input extends React.Component {
         style: PropTypes.object,
         formGroupStyle: PropTypes.object,
         children: PropTypes.node,
-        noMargin: PropTypes.bool
+        noMargin: PropTypes.bool,
+        disabled: PropTypes.bool
     };
 
     static defaultProps = {
@@ -113,6 +114,7 @@ export class Input extends React.Component {
                     autoComplete={this.props.autoComplete ? "on" : "off"}
                     componentClass={componentClass}
                     style={this.props.style}
+                    disabled={this.props.disabled}
                 >
                     {this.props.children}
                 </FormControl>

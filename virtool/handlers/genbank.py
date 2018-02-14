@@ -2,6 +2,7 @@ import re
 import string
 import aiohttp
 
+import virtool.proxy
 from virtool.handlers.utils import json_response, not_found
 
 
@@ -16,20 +17,28 @@ async def get(req):
     tool = "Virtool"
     email = "igboyes@virtool.ca"
 
-    params = {
-        "db": "nucleotide",
-        "term": "{}[accn]".format(accession),
-        "tool": tool,
-        "email": email
-    }
+    settings = req.app["settings"]
 
     async with aiohttp.ClientSession() as session:
-        async with session.get("https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi", params=params) as resp:
-            data = await resp.text()
+
+        params = {
+            "db": "nucleotide",
+            "term": "{}[accn]".format(accession),
+            "tool": tool,
+            "email": email
+        }
+
+        search_url = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi"
+
+        gi = None
+
+        async with virtool.proxy.ProxyRequest(settings, session.get, search_url, params=params) as search_resp:
+
+            data = await search_resp.text()
             gi = re.search("<Id>([0-9]+)</Id>", data).group(1)
 
         if gi:
-            url = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi"
+            fetch_url = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi"
 
             fetch_params = {
                 "db": "nuccore",
@@ -40,8 +49,9 @@ async def get(req):
                 "email": email
             }
 
-            async with session.get(url, params=fetch_params) as resp:
-                body = await resp.text()
+            async with virtool.proxy.ProxyRequest(settings, session.get, fetch_url, params=fetch_params) as fetch_resp:
+
+                body = await fetch_resp.text()
 
                 data = {
                     "host": ""

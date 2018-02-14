@@ -208,8 +208,8 @@ async def test_blast(error, mocker, spawn_client, test_dispatch, static_time):
 
         assert await resp.json() == blast
 
-        assert m_initialize_ncbi_blast.call_args[0] == ("GGAGTTAGATTGG",)
-        assert m_check_rid.call_args[0] == ("FOOBAR1337",)
+        assert m_initialize_ncbi_blast.call_args[0] == ({}, "GGAGTTAGATTGG")
+        assert m_check_rid.call_args[0] == ({}, "FOOBAR1337")
 
         expected_format_arg = deepcopy(analysis_document)
         expected_format_arg["results"][1]["blast"] = dict(blast, last_checked_at= static_time)
@@ -237,6 +237,7 @@ async def test_blast(error, mocker, spawn_client, test_dispatch, static_time):
 
         assert stub.call_args[0] == (
             client.db,
+            {},
             test_dispatch,
             "foobar",
             5,

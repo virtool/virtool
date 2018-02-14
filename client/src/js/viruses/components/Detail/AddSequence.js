@@ -10,7 +10,7 @@
  */
 import React from "react";
 import { connect } from "react-redux";
-import { Row, Col, Modal, FormGroup, FormControl, InputGroup, ControlLabel, Popover, Overlay } from "react-bootstrap";
+import { Row, Col, Modal, FormGroup, InputGroup, ControlLabel, Popover, Overlay } from "react-bootstrap";
 import { ClipLoader } from "halogenium";
 
 import SequenceField from "./SequenceField";
@@ -31,7 +31,7 @@ class AddSequence extends React.Component {
 
     constructor (props) {
         super(props);
-        this.state = getInitialState();
+        this.state = {show: false, ...getInitialState()};
     }
 
     handleAutofill = () => {
@@ -76,14 +76,19 @@ class AddSequence extends React.Component {
     handleSubmit = (e) => {
         e.preventDefault();
 
-        this.props.onSave(
-            this.props.virusId,
-            this.props.isolateId,
-            this.state.id,
-            this.state.definition,
-            this.state.host,
-            this.state.sequence
-        );
+        if (this.state.id) {
+            this.setState({show: false});
+            this.props.onSave(
+                this.props.virusId,
+                this.props.isolateId,
+                this.state.id,
+                this.state.definition,
+                this.state.host,
+                this.state.sequence
+            );
+        } else {
+            this.setState({show: true});
+        }
     };
 
     render () {
@@ -98,6 +103,8 @@ class AddSequence extends React.Component {
                 </div>
             );
         }
+
+        const errorMessage = this.state.show ? "Required Field" : "";
 
         return (
             <Modal show={this.props.show} onHide={this.props.onHide} onExited={this.handleModalExited}>
@@ -125,11 +132,11 @@ class AddSequence extends React.Component {
                                                 {this.state.error}
                                             </Popover>
                                         </Overlay>
-                                        <FormControl
-                                            ref={(node) => this.accessionNode = node}
+                                        <Input
                                             name="id"
                                             value={this.state.id}
                                             onChange={this.handleChange}
+                                            error={errorMessage}
                                         />
                                         <InputGroup.Button>
                                             <Button type="button" onClick={this.handleAutofill}>
