@@ -1,15 +1,13 @@
 import React from "react";
 import PropTypes from "prop-types";
-import { Modal } from "react-bootstrap";
-import { Button } from "../../../base";
-import { reject } from "lodash-es";
 import { connect } from "react-redux";
+import { Modal } from "react-bootstrap";
+import { reject } from "lodash-es";
+import { Button } from "../../../base";
 
 class RemoveSegment extends React.Component {
 
-    handleSubmit = (e) => {
-        e.preventDefault();
-
+    handleSubmit = () => {
         let newArray = this.props.schema.slice();
         newArray = reject(newArray, ["name", this.props.curSeg.name]);
 

@@ -1,10 +1,10 @@
 import React from "react";
 import PropTypes from "prop-types";
-import { Modal } from "react-bootstrap";
-import { Button } from "../../../base";
-import SegmentForm from "./SegmentForm";
-import { findIndex } from "lodash-es";
 import { connect } from "react-redux";
+import { Modal } from "react-bootstrap";
+import { findIndex } from "lodash-es";
+import SegmentForm from "./SegmentForm";
+import { Button } from "../../../base";
 
 const getInitialState = (props) => ({
     newEntry: {
@@ -38,7 +38,6 @@ class EditSegment extends React.Component {
     }
 
     handleSubmit = () => {
-
         if (this.state.newEntry.name) {
             const newArray = this.props.schema.slice();
             const name = this.props.curSeg.name;
@@ -57,7 +56,7 @@ class EditSegment extends React.Component {
         return (
             <Modal show={this.props.show} onHide={this.props.onHide} onEnter={this.updateState}>
                 <Modal.Header closeButton>
-                    Edit Segment Type
+                    Edit Segment
                 </Modal.Header>
                 <Modal.Body>
                     <SegmentForm

@@ -1,8 +1,8 @@
 import React from "react";
 import PropTypes from "prop-types";
 import { Row, Col } from "react-bootstrap";
-import { Input, Checkbox } from "../../../base";
 import { map } from "lodash-es";
+import { Input, Checkbox } from "../../../base";
 
 export default class SegmentForm extends React.Component {
 
@@ -74,7 +74,6 @@ export default class SegmentForm extends React.Component {
                             error={errorMessage}
                         />
                     </Col>
-
                     <Col md={3}>
                         <Input
                             type="select"
@@ -87,7 +86,6 @@ export default class SegmentForm extends React.Component {
                         </Input>
                     </Col>
                 </Row>
-
                 <Row>
                     <Col md={12}>
                         <Checkbox

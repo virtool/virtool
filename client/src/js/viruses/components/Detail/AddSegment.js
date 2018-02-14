@@ -1,9 +1,9 @@
 import React from "react";
 import PropTypes from "prop-types";
-import { Modal } from "react-bootstrap";
 import { connect } from "react-redux";
-import { Button } from "../../../base";
+import { Modal } from "react-bootstrap";
 import SegmentForm from "./SegmentForm";
+import { Button } from "../../../base";
 
 const getInitialState = () => ({
     newEntry: {
@@ -33,7 +33,6 @@ class AddSegment extends React.Component {
     }
 
     handleSubmit = () => {
-
         if (this.state.newEntry.name) {
             this.props.onSubmit([...this.props.schema, this.state.newEntry]);
         } else {
@@ -42,7 +41,6 @@ class AddSegment extends React.Component {
     }
 
     handleExited = () => {
-
         this.setState(getInitialState());
     }
 

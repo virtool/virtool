@@ -66,7 +66,6 @@ class Schema extends React.Component {
     }
 
     handleSubmit = (newArray) => {
-
         this.setState({
             segArray: newArray,
             showAdd: false,
@@ -100,8 +99,8 @@ class Schema extends React.Component {
     }
 
     render () {
-        const { segArray } = this.state;
 
+        const { segArray } = this.state;
         let segments;
 
         if (segArray.length) {
@@ -180,11 +179,9 @@ const mapStateToProps = (state) => ({
 });
 
 const mapDispatchToProps = (dispatch) => ({
-
     onSave: (virusId, name, abbreviation, schema) => {
         dispatch(editVirus(virusId, name, abbreviation, schema));
     }
-
 });
 
 export default connect(mapStateToProps, mapDispatchToProps)(Schema);
