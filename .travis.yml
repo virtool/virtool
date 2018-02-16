@@ -12,6 +12,7 @@ addons:
     - libtbb-dev
     - mongodb-org-server
     - mongodb-org-shell
+    - libffi-dev
 cache:
   pip: true
   apt: true
@@ -61,7 +62,7 @@ script:
 - mkdir gh_build
 - mkdir gh_build/virtool
 - python setup.py build
-- echo $?
+- ls -lh build/exe.linux-x86_64-3.6
 - cp -rv build/exe.linux-x86_64-3.6/* gh_build/virtool
 - cp -rv assets gh_build/virtool
 - cp -rv templates gh_build/virtool
