@@ -10,9 +10,10 @@ addons:
     - mongodb-3.4-precise
     packages:
     - libtbb-dev
+    - libffi6
+    - libffi-dev
     - mongodb-org-server
     - mongodb-org-shell
-    - libffi-dev
 cache:
   pip: true
   apt: true
