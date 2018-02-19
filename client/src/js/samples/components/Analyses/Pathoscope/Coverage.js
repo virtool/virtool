@@ -91,11 +91,12 @@ const tooltip = (
 );
 
 const convertAndDownloadImage = (filename, width, height, img) => {
+
     const canvas = document.createElement("canvas");
     canvas.width = width;
     canvas.height = height;
     const ctx = canvas.getContext("2d");
-    // Fill transparent background white
+
     ctx.beginPath();
     ctx.rect(0, 0, width, height);
     ctx.fillStyle = "white";
@@ -170,19 +171,15 @@ export default class CoverageChart extends React.Component {
             .setAttribute("display", "none");
 
         const svg = (new XMLSerializer()).serializeToString(select(this.chartNode).select("svg").node());
-
         const blob = new Blob([ doctype + svg ], { type: "image/svg+xml;charset=utf-8" });
-
         const url = window.URL.createObjectURL(blob);
-
         const width = select(this.chartNode).select("svg").attr("width");
         const height = select(this.chartNode).select("svg").attr("height");
+        const filename = select(this.chartNode).select("svg").selectAll("text").filter(".coverage-label").text();
 
         const img = document.createElement("img");
         img.width = width;
         img.height = height;
-
-        const filename = select(this.chartNode).select("svg").selectAll("text").filter(".coverage-label").text();
 
         img.onload = function () {
             convertAndDownloadImage(filename, width, height, this);
@@ -192,6 +189,7 @@ export default class CoverageChart extends React.Component {
     }
 
     render () {
+
         return (
             <div>
                 <OverlayTrigger placement="top" overlay={tooltip}>
