@@ -90,7 +90,26 @@ const tooltip = (
     </Tooltip>
 );
 
-const convertImage = (width, height, img) => {
+const createBlob = (svgNode, doctype) => {
+
+    const svg = (new XMLSerializer()).serializeToString(svgNode);
+    const blob = new Blob([ doctype + svg ], { type: "image/svg+xml;charset=utf-8" });
+    const url = window.URL.createObjectURL(blob);
+
+    return url;
+};
+
+const createImage = (width, height, url) => {
+    
+    const img = document.createElement("img");
+    img.width = width;
+    img.height = height;
+    img.src = url;
+
+    return img;
+};
+
+const convertSvgToPng = (width, height, img) => {
 
     const canvas = document.createElement("canvas");
     canvas.width = width;
@@ -112,8 +131,8 @@ const convertImage = (width, height, img) => {
     return canvasUrl;
 };
 
-const downloadImage = (filename, canvasUrl) => {
-    
+const downloadPng = (filename, canvasUrl) => {
+
     const a = document.createElement("a");
     a.href = canvasUrl;
     a.download = filename;
@@ -173,25 +192,24 @@ export default class CoverageChart extends React.Component {
             .setAttribute("fill", "#428bca");
 
         select(this.chartNode).select("svg").selectAll("text").filter(".coverage-label").node()
-            .setAttribute("display", "none");
+            .setAttribute("visibility", "hidden");
 
-        const svg = (new XMLSerializer()).serializeToString(select(this.chartNode).select("svg").node());
-        const blob = new Blob([ doctype + svg ], { type: "image/svg+xml;charset=utf-8" });
-        const url = window.URL.createObjectURL(blob);
+        const svgNode = select(this.chartNode).select("svg").node();
+        const url = createBlob(svgNode, doctype);
+
         const width = select(this.chartNode).select("svg").attr("width");
         const height = select(this.chartNode).select("svg").attr("height");
         const filename = select(this.chartNode).select("svg").selectAll("text").filter(".coverage-label").text();
 
-        const img = document.createElement("img");
-        img.width = width;
-        img.height = height;
+        const img = createImage(width, height, url);
 
         img.onload = function () {
-            const canvasUrl = convertImage(width, height, this);
-            downloadImage(filename, canvasUrl);
+            const canvasUrl = convertSvgToPng(width, height, this);
+            downloadPng(filename, canvasUrl);
         };
 
-        img.src = url;
+        select(this.chartNode).select("svg").selectAll("text").filter(".coverage-label").node()
+            .setAttribute("visibility", "visible");
     }
 
     render () {
