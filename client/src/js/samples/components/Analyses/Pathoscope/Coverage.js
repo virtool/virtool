@@ -152,6 +152,12 @@ export default class CoverageChart extends React.Component {
             canvas.width = width;
             canvas.height = height;
             const ctx = canvas.getContext("2d");
+            // Fill transparent background white
+            ctx.beginPath();
+            ctx.rect(0, 0, width, height);
+            ctx.fillStyle = "white";
+            ctx.fill();
+
             ctx.drawImage(img, 0, 0);
             const canvasUrl = canvas.toDataURL("image/png");
             const canvasImg = document.createElement("img");
