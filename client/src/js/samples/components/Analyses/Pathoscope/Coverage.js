@@ -138,6 +138,9 @@ export default class CoverageChart extends React.Component {
         select(this.chartNode).select("svg").select("path").node()
             .setAttribute("fill", "#428bca");
 
+        select(this.chartNode).select("svg").selectAll("text").filter(".coverage-label").node()
+            .setAttribute("display", "none");
+
         const svg = (new XMLSerializer()).serializeToString(select(this.chartNode).select("svg").node());
 
         const blob = new Blob([ doctype + svg ], { type: "image/svg+xml;charset=utf-8" });
