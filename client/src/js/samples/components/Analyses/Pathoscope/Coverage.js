@@ -4,7 +4,7 @@ import { select } from "d3-selection";
 import { area } from "d3-shape";
 import { scaleLinear } from "d3-scale";
 import { axisBottom, axisLeft } from "d3-axis";
-import { Button } from "../../../../base";
+import { Tooltip, OverlayTrigger } from "react-bootstrap";
 
 const createChart = (element, data, length, meta, yMax, xMin, showYAxis) => {
 
@@ -83,6 +83,12 @@ const createChart = (element, data, length, meta, yMax, xMin, showYAxis) => {
         .attr("transform", "translate(4,10)")
         .text(`${meta.id} - ${meta.definition}`);
 };
+
+const tooltip = (
+    <Tooltip id="downloadtip">
+        Double-click to download
+    </Tooltip>
+);
 
 export default class CoverageChart extends React.Component {
 
@@ -181,10 +187,13 @@ export default class CoverageChart extends React.Component {
     render () {
         return (
             <div>
-                <div className="coverage-chart" ref={(node) => this.chartNode = node} />
-                <Button bsStyle="primary" pullRight onClick={this.handleClick}>
-                    Download PNG
-                </Button>
+                <OverlayTrigger placement="top" overlay={tooltip}>
+                    <div
+                        className="coverage-chart"
+                        ref={(node) => this.chartNode = node}
+                        onDoubleClick={this.handleClick}
+                    />
+                </OverlayTrigger>
             </div>
         );
     }
