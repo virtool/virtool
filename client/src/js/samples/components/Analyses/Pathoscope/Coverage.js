@@ -90,7 +90,7 @@ const tooltip = (
     </Tooltip>
 );
 
-const convertAndDownloadImage = (filename, width, height, img) => {
+const convertImage = (width, height, img) => {
 
     const canvas = document.createElement("canvas");
     canvas.width = width;
@@ -109,6 +109,11 @@ const convertAndDownloadImage = (filename, width, height, img) => {
     canvasImg.height = height;
     canvasImg.src = canvasUrl;
 
+    return canvasUrl;
+};
+
+const downloadImage = (filename, canvasUrl) => {
+    
     const a = document.createElement("a");
     a.href = canvasUrl;
     a.download = filename;
@@ -182,7 +187,8 @@ export default class CoverageChart extends React.Component {
         img.height = height;
 
         img.onload = function () {
-            convertAndDownloadImage(filename, width, height, this);
+            const canvasUrl = convertImage(width, height, this);
+            downloadImage(filename, canvasUrl);
         };
 
         img.src = url;
