@@ -4,6 +4,7 @@ import { select } from "d3-selection";
 import { area } from "d3-shape";
 import { scaleLinear } from "d3-scale";
 import { axisBottom, axisLeft } from "d3-axis";
+import { Button } from "../../../../base";
 
 const createChart = (element, data, length, meta, yMax, xMin, showYAxis) => {
 
@@ -125,10 +126,11 @@ export default class CoverageChart extends React.Component {
 
     handleClick = () => {
 
-        const doctype = '<?xml version="1.0" standalone="no"?>'
-        + '<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">';
+        const doctype = "<?xml version='1.0' standalone='no'?>"
+        + "<!DOCTYPE svg PUBLIC '-//W3C//DTD SVG 1.1//EN' 'http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd'>";
 
-        select(this.chartNode).select("svg").select("path").node().setAttribute("fill", "#428bca");
+        select(this.chartNode).select("svg").select("path").node()
+            .setAttribute("fill", "#428bca");
 
         const svg = (new XMLSerializer()).serializeToString(select(this.chartNode).select("svg").node());
 
@@ -143,25 +145,41 @@ export default class CoverageChart extends React.Component {
         img.width = width;
         img.height = height;
 
-        img.onload = function(){
-            var canvas = document.createElement("canvas");
+        const filename = select(this.chartNode).select("svg").selectAll("text").filter(".coverage-label").text();
+
+        img.onload = function () {
+            const canvas = document.createElement("canvas");
             canvas.width = width;
             canvas.height = height;
-            var ctx = canvas.getContext('2d');
+            const ctx = canvas.getContext("2d");
             ctx.drawImage(img, 0, 0);
-            var canvasUrl = canvas.toDataURL("image/png");
-            var img2 = document.createElement("img");
-            img2.width = width;
-            img2.height = height;
-            img2.src = canvasUrl; 
+            const canvasUrl = canvas.toDataURL("image/png");
+            const canvasImg = document.createElement("img");
+            canvasImg.width = width;
+            canvasImg.height = height;
+            canvasImg.src = canvasUrl;
 
-            const x = canvasUrl.replace("image/png", "image/octet-stream");
-            window.location.href = x;
-        }
+            const a = document.createElement("a");
+            a.href = canvasUrl;
+            a.download = filename;
+
+            a.style.display = "none";
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+        };
+
         img.src = url;
     }
 
     render () {
-        return <div className="coverage-chart" onDoubleClick={this.handleClick} ref={(node) => this.chartNode = node} />;
+        return (
+            <div>
+                <div className="coverage-chart" ref={(node) => this.chartNode = node} />
+                <Button bsStyle="primary" pullRight onClick={this.handleClick}>
+                    Download PNG
+                </Button>
+            </div>
+        );
     }
 }
