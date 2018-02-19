@@ -90,6 +90,34 @@ const tooltip = (
     </Tooltip>
 );
 
+const convertAndDownloadImage = (filename, width, height, img) => {
+    const canvas = document.createElement("canvas");
+    canvas.width = width;
+    canvas.height = height;
+    const ctx = canvas.getContext("2d");
+    // Fill transparent background white
+    ctx.beginPath();
+    ctx.rect(0, 0, width, height);
+    ctx.fillStyle = "white";
+    ctx.fill();
+
+    ctx.drawImage(img, 0, 0);
+    const canvasUrl = canvas.toDataURL("image/png");
+    const canvasImg = document.createElement("img");
+    canvasImg.width = width;
+    canvasImg.height = height;
+    canvasImg.src = canvasUrl;
+
+    const a = document.createElement("a");
+    a.href = canvasUrl;
+    a.download = filename;
+
+    a.style.display = "none";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+};
+
 export default class CoverageChart extends React.Component {
 
     static propTypes = {
@@ -157,31 +185,7 @@ export default class CoverageChart extends React.Component {
         const filename = select(this.chartNode).select("svg").selectAll("text").filter(".coverage-label").text();
 
         img.onload = function () {
-            const canvas = document.createElement("canvas");
-            canvas.width = width;
-            canvas.height = height;
-            const ctx = canvas.getContext("2d");
-            // Fill transparent background white
-            ctx.beginPath();
-            ctx.rect(0, 0, width, height);
-            ctx.fillStyle = "white";
-            ctx.fill();
-
-            ctx.drawImage(img, 0, 0);
-            const canvasUrl = canvas.toDataURL("image/png");
-            const canvasImg = document.createElement("img");
-            canvasImg.width = width;
-            canvasImg.height = height;
-            canvasImg.src = canvasUrl;
-
-            const a = document.createElement("a");
-            a.href = canvasUrl;
-            a.download = filename;
-
-            a.style.display = "none";
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
+            convertAndDownloadImage(filename, width, height, this);
         };
 
         img.src = url;
