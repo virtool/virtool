@@ -90,7 +90,10 @@ const tooltip = (
     </Tooltip>
 );
 
-const createBlob = (svgNode, doctype) => {
+const createBlob = (svgNode) => {
+
+    const doctype = "<?xml version='1.0' standalone='no'?>"
+    + "<!DOCTYPE svg PUBLIC '-//W3C//DTD SVG 1.1//EN' 'http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd'>";
 
     const svg = (new XMLSerializer()).serializeToString(svgNode);
     const blob = new Blob([ doctype + svg ], { type: "image/svg+xml;charset=utf-8" });
@@ -100,7 +103,7 @@ const createBlob = (svgNode, doctype) => {
 };
 
 const createImage = (width, height, url) => {
-    
+
     const img = document.createElement("img");
     img.width = width;
     img.height = height;
@@ -185,21 +188,19 @@ export default class CoverageChart extends React.Component {
 
     handleClick = () => {
 
-        const doctype = "<?xml version='1.0' standalone='no'?>"
-        + "<!DOCTYPE svg PUBLIC '-//W3C//DTD SVG 1.1//EN' 'http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd'>";
+        const svg = select(this.chartNode).select("svg");
 
-        select(this.chartNode).select("svg").select("path").node()
+        svg.select("path").node()
             .setAttribute("fill", "#428bca");
 
-        select(this.chartNode).select("svg").selectAll("text").filter(".coverage-label").node()
+        svg.selectAll("text").filter(".coverage-label").node()
             .setAttribute("visibility", "hidden");
 
-        const svgNode = select(this.chartNode).select("svg").node();
-        const url = createBlob(svgNode, doctype);
+        const url = createBlob(svg.node());
 
-        const width = select(this.chartNode).select("svg").attr("width");
-        const height = select(this.chartNode).select("svg").attr("height");
-        const filename = select(this.chartNode).select("svg").selectAll("text").filter(".coverage-label").text();
+        const width = svg.attr("width");
+        const height = svg.attr("height");
+        const filename = svg.selectAll("text").filter(".coverage-label").text();
 
         const img = createImage(width, height, url);
 
@@ -208,7 +209,7 @@ export default class CoverageChart extends React.Component {
             downloadPng(filename, canvasUrl);
         };
 
-        select(this.chartNode).select("svg").selectAll("text").filter(".coverage-label").node()
+        svg.selectAll("text").filter(".coverage-label").node()
             .setAttribute("visibility", "visible");
     }
 
