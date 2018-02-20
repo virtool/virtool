@@ -4,6 +4,13 @@ import { select } from "d3-selection";
 import { area } from "d3-shape";
 import { scaleLinear } from "d3-scale";
 import { axisBottom, axisLeft } from "d3-axis";
+import { Tooltip, OverlayTrigger } from "react-bootstrap";
+import { 
+    createBlob,
+    formatSvg,
+    getSvgAttr,
+    getPng
+} from "./Download"
 
 const createChart = (element, data, length, meta, yMax, xMin, showYAxis) => {
 
@@ -83,6 +90,12 @@ const createChart = (element, data, length, meta, yMax, xMin, showYAxis) => {
         .text(`${meta.id} - ${meta.definition}`);
 };
 
+const tooltip = (
+    <Tooltip id="downloadtip">
+        Double-click to download
+    </Tooltip>
+);
+
 export default class CoverageChart extends React.Component {
 
     static propTypes = {
@@ -116,14 +129,39 @@ export default class CoverageChart extends React.Component {
             this.chartNode,
             this.props.data,
             this.props.length,
-            { id, definition},
+            { id, definition },
             this.props.yMax,
             this.chartNode.offsetWidth,
             this.props.showYAxis
         );
     };
 
+    handleClick = () => {
+
+        const svg = select(this.chartNode).select("svg");
+
+        formatSvg(svg, "hidden");
+
+        const url = createBlob(svg.node());
+        const { width, height, filename } = getSvgAttr(svg);
+
+        getPng({ width, height, url, filename });
+
+        formatSvg(svg, "visible");
+    }
+
     render () {
-        return <div className="coverage-chart" ref={(node) => this.chartNode = node} />;
+
+        return (
+            <div>
+                <OverlayTrigger placement="top" overlay={tooltip}>
+                    <div
+                        className="coverage-chart"
+                        ref={(node) => this.chartNode = node}
+                        onDoubleClick={this.handleClick}
+                    />
+                </OverlayTrigger>
+            </div>
+        );
     }
 }
