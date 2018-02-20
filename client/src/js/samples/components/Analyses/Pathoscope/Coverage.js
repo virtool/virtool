@@ -6,9 +6,10 @@ import { scaleLinear } from "d3-scale";
 import { axisBottom, axisLeft } from "d3-axis";
 import { Tooltip, OverlayTrigger } from "react-bootstrap";
 import { 
-    createBlob, 
-    formatSvg, 
-    getPng, 
+    createBlob,
+    formatSvg,
+    getSvgAttr,
+    getPng
 } from "./Download"
 
 const createChart = (element, data, length, meta, yMax, xMin, showYAxis) => {
@@ -142,11 +143,9 @@ export default class CoverageChart extends React.Component {
         formatSvg(svg, "hidden");
 
         const url = createBlob(svg.node());
-        const width = svg.attr("width");
-        const height = svg.attr("height");
-        const filename = svg.selectAll("text").filter(".coverage-label").text();
+        const { width, height, filename } = getSvgAttr(svg);
 
-        getPng(width, height, url, filename);
+        getPng({ width, height, url, filename });
 
         formatSvg(svg, "visible");
     }

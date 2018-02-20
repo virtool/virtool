@@ -21,6 +21,18 @@ export const formatSvg = (svg, setting) => {
         .setAttribute("visibility", setting);
 };
 
+export const getSvgAttr = (svg) => {
+    const width = svg.attr("width");
+    const height = svg.attr("height");
+    const filename = svg.selectAll("text").filter(".coverage-label").text();
+
+    return {
+        width,
+        height,
+        filename
+    };
+};
+
 export const createImage = (width, height, url) => {
 
     const img = document.createElement("img");
@@ -79,7 +91,9 @@ export const downloadPng = (filename, canvasUrl) => {
     document.body.removeChild(a);
 };
 
-export const getPng = (width, height, url, filename) => {
+export const getPng = (svgAttr) => {
+    const { width, height, url, filename } = svgAttr;
+
     const img = createImage(width, height, url);
 
     img.onload = function () {
