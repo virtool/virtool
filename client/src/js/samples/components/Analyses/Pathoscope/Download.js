@@ -1,0 +1,71 @@
+/*  Helper functions to enable svg to png conversion and file download
+ */
+export const createBlob = (svgNode) => {
+
+    const doctype = "<?xml version='1.0' standalone='no'?>"
+    + "<!DOCTYPE svg PUBLIC '-//W3C//DTD SVG 1.1//EN' 'http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd'>";
+
+    const svg = (new XMLSerializer()).serializeToString(svgNode);
+    const blob = new Blob([ doctype + svg ], { type: "image/svg+xml;charset=utf-8" });
+    const url = window.URL.createObjectURL(blob);
+
+    return url;
+};
+
+export const formatSvg = (svg, setting) => {
+
+    svg.select("path").node()
+        .setAttribute("fill", "#428bca");
+
+    svg.selectAll("text").filter(".coverage-label").node()
+        .setAttribute("visibility", setting);
+};
+
+export const createImage = (width, height, url) => {
+
+    const img = document.createElement("img");
+    img.width = width;
+    img.height = height;
+    img.src = url;
+
+    return img;
+};
+
+const drawBackground = (ctx, width, height) => {
+
+    ctx.beginPath();
+    ctx.rect(0, 0, width, height);
+    ctx.fillStyle = "white";
+    ctx.fill();
+};
+
+export const convertSvgToPng = (width, height, img) => {
+
+    const canvas = document.createElement("canvas");
+    canvas.width = width;
+    canvas.height = height;
+    const ctx = canvas.getContext("2d");
+
+    drawBackground(ctx, width, height);
+
+    ctx.drawImage(img, 0, 0);
+    const canvasUrl = canvas.toDataURL("image/png");
+    const canvasImg = document.createElement("img");
+    canvasImg.width = width;
+    canvasImg.height = height;
+    canvasImg.src = canvasUrl;
+
+    return canvasUrl;
+};
+
+export const downloadPng = (filename, canvasUrl) => {
+
+    const a = document.createElement("a");
+    a.href = canvasUrl;
+    a.download = filename;
+
+    a.style.display = "none";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+};
