@@ -8,9 +8,7 @@ import { Tooltip, OverlayTrigger } from "react-bootstrap";
 import { 
     createBlob, 
     formatSvg, 
-    createImage, 
-    convertSvgToPng, 
-    downloadPng 
+    getPng, 
 } from "./Download"
 
 const createChart = (element, data, length, meta, yMax, xMin, showYAxis) => {
@@ -144,17 +142,11 @@ export default class CoverageChart extends React.Component {
         formatSvg(svg, "hidden");
 
         const url = createBlob(svg.node());
-
         const width = svg.attr("width");
         const height = svg.attr("height");
         const filename = svg.selectAll("text").filter(".coverage-label").text();
 
-        const img = createImage(width, height, url);
-
-        img.onload = function () {
-            const canvasUrl = convertSvgToPng(width, height, this);
-            downloadPng(filename, canvasUrl);
-        };
+        getPng(width, height, url, filename);
 
         formatSvg(svg, "visible");
     }

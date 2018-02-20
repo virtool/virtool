@@ -39,12 +39,21 @@ const drawBackground = (ctx, width, height) => {
     ctx.fill();
 };
 
-export const convertSvgToPng = (width, height, img) => {
-
+export const createCanvas = (width, height) => {
     const canvas = document.createElement("canvas");
     canvas.width = width;
     canvas.height = height;
     const ctx = canvas.getContext("2d");
+
+    return {
+        ctx,
+        canvas
+    };
+};
+
+export const convertSvgToPng = (width, height, img) => {
+
+    const { ctx, canvas } = createCanvas(width, height);
 
     drawBackground(ctx, width, height);
 
@@ -68,4 +77,13 @@ export const downloadPng = (filename, canvasUrl) => {
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
+};
+
+export const getPng = (width, height, url, filename) => {
+    const img = createImage(width, height, url);
+
+    img.onload = function () {
+        const canvasUrl = convertSvgToPng(width, height, this);
+        downloadPng(filename, canvasUrl);
+    };
 };
