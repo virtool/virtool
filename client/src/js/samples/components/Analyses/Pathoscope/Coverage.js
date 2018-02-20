@@ -4,7 +4,6 @@ import { select } from "d3-selection";
 import { area } from "d3-shape";
 import { scaleLinear } from "d3-scale";
 import { axisBottom, axisLeft } from "d3-axis";
-import { Tooltip, OverlayTrigger } from "react-bootstrap";
 import { 
     createBlob,
     formatSvg,
@@ -88,13 +87,12 @@ const createChart = (element, data, length, meta, yMax, xMin, showYAxis) => {
         .attr("class", "coverage-label small")
         .attr("transform", "translate(4,10)")
         .text(`${meta.id} - ${meta.definition}`);
-};
 
-const tooltip = (
-    <Tooltip id="downloadtip">
-        Double-click to download
-    </Tooltip>
-);
+    svg.append("text")
+        .attr("class", "download-overlay")
+        .attr("transform", `translate(${(width-margin.left-margin.right)/3},${height/2})`)
+        .text("Click to download");
+};
 
 export default class CoverageChart extends React.Component {
 
@@ -153,15 +151,11 @@ export default class CoverageChart extends React.Component {
     render () {
 
         return (
-            <div>
-                <OverlayTrigger placement="top" overlay={tooltip}>
-                    <div
-                        className="coverage-chart"
-                        ref={(node) => this.chartNode = node}
-                        onDoubleClick={this.handleClick}
-                    />
-                </OverlayTrigger>
-            </div>
+            <div
+                className="coverage-chart"
+                ref={(node) => this.chartNode = node}
+                onClick={this.handleClick}
+            />
         );
     }
 }

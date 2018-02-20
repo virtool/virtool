@@ -14,10 +14,15 @@ export const createBlob = (svgNode) => {
 
 export const formatSvg = (svg, setting) => {
 
-    svg.select("path").node()
-        .setAttribute("fill", "#428bca");
+    if (setting === "hidden") {
+        svg.select("path").node()
+            .setAttribute("fill", "#428bca");
+    }
 
     svg.selectAll("text").filter(".coverage-label").node()
+        .setAttribute("visibility", setting);
+
+    svg.selectAll("text").filter(".download-overlay").node()
         .setAttribute("visibility", setting);
 };
 
@@ -92,6 +97,7 @@ export const downloadPng = (filename, canvasUrl) => {
 };
 
 export const getPng = (svgAttr) => {
+
     const { width, height, url, filename } = svgAttr;
 
     const img = createImage(width, height, url);

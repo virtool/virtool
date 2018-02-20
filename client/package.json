@@ -16,7 +16,6 @@
     "classnames": "^2.2.5",
     "clean-webpack-plugin": "^0.1.16",
     "css-loader": "^0.26.1",
-    "d3": "^4.13.0",
     "d3-axis": "^1.0.6",
     "d3-dispatch": "^1.0.3",
     "d3-interpolate": "^1.1.4",
