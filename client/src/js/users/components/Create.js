@@ -1,12 +1,11 @@
 import React from "react";
 import { connect } from "react-redux";
+import { push } from "react-router-redux";
 import { Row, Col, Modal, ButtonToolbar } from "react-bootstrap";
 
 import { createUser } from "../actions";
 import { Icon, Input, Checkbox, Button } from "../../base";
 import { routerLocationHasState } from "../../utils";
-
-import {pushHistoryState} from "../../sagaUtils";
 
 const getInitialState = () => ({
     userId: "",
@@ -40,63 +39,65 @@ export class CreateUser extends React.PureComponent {
         this.props.onCreate(this.state);
     };
 
-    render = () => (
-        <Modal show={this.props.show} onHide={this.props.onHide} onEnter={this.modalEnter}>
-            <Modal.Header onHide={this.props.onHide} closeButton>
-                Create User
-            </Modal.Header>
-            <form onSubmit={this.handleSubmit}>
-                <Modal.Body>
-                    <Row>
-                        <Col xs={12}>
-                            <Input
-                                label="Username"
-                                name="userId"
-                                value={this.state.userId}
-                                onChange={this.handleChange}
-                            />
-                        </Col>
-                    </Row>
-                    <Row>
-                        <Col xs={6}>
-                            <Input
-                                type="password"
-                                label="Password"
-                                name="password"
-                                value={this.state.password}
-                                onChange={this.handleChange}
-                            />
-                        </Col>
-                        <Col xs={6}>
-                            <Input
-                                type="password"
-                                label="Confirm"
-                                name="confirm"
-                                value={this.state.confirm}
-                                onChange={this.handleChange}
-                            />
-                        </Col>
-                    </Row>
-                    <Row>
-                        <Col xs={12}>
-                            <Checkbox
-                                label="Force user to reset password on login"
-                                checked={this.state.forceReset}
-                                onClick={this.handleToggleForceReset}
-                            />
-                        </Col>
-                    </Row>
-                </Modal.Body>
-                <Modal.Footer>
-                    <ButtonToolbar className="pull-right">
-                        <Button bsStyle="primary" type="submit">
-                            <Icon name="floppy" /> Save
-                        </Button>
-                    </ButtonToolbar>
-                </Modal.Footer>
-            </form>
-        </Modal>
-    );
+    render () {
+        return (
+            <Modal show={this.props.show} onHide={this.props.onHide}>
+                <Modal.Header onHide={this.props.onHide} closeButton>
+                    Create User
+                </Modal.Header>
+                <form onSubmit={this.handleSubmit}>
+                    <Modal.Body>
+                        <Row>
+                            <Col xs={12}>
+                                <Input
+                                    label="Username"
+                                    name="userId"
+                                    value={this.state.userId}
+                                    onChange={this.handleChange}
+                                />
+                            </Col>
+                        </Row>
+                        <Row>
+                            <Col xs={6}>
+                                <Input
+                                    type="password"
+                                    label="Password"
+                                    name="password"
+                                    value={this.state.password}
+                                    onChange={this.handleChange}
+                                />
+                            </Col>
+                            <Col xs={6}>
+                                <Input
+                                    type="password"
+                                    label="Confirm"
+                                    name="confirm"
+                                    value={this.state.confirm}
+                                    onChange={this.handleChange}
+                                />
+                            </Col>
+                        </Row>
+                        <Row>
+                            <Col xs={12}>
+                                <Checkbox
+                                    label="Force user to reset password on login"
+                                    checked={this.state.forceReset}
+                                    onClick={this.handleToggleForceReset}
+                                />
+                            </Col>
+                        </Row>
+                    </Modal.Body>
+                    <Modal.Footer>
+                        <ButtonToolbar className="pull-right">
+                            <Button bsStyle="primary" type="submit">
+                                <Icon name="floppy" /> Save
+                            </Button>
+                        </ButtonToolbar>
+                    </Modal.Footer>
+                </form>
+            </Modal>
+        );
+    }
 }
 
 const mapStateToProps = state => ({
@@ -112,7 +113,7 @@ const mapDispatchToProps = dispatch => ({
     },
 
     onHide: () => {
-        dispatch(pushHistoryState({createUser: false}));
+        dispatch(push({...window.location, state: {createUser: false}}));
     }
 
 });
