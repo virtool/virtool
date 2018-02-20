@@ -40,6 +40,9 @@ export default function accountReducer (state = initialState, action) {
         case GET_ACCOUNT.SUCCEEDED:
             return {...state, ...action.data, ready: true};
 
+        case UPDATE_ACCOUNT_SETTINGS.SUCCEEDED:
+            return {...state, ...action.data};
+
         case GET_API_KEYS.SUCCEEDED:
             return {...state, apiKeys: action.data};
 

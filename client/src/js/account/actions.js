@@ -6,6 +6,7 @@
 import { simpleActionCreator } from "../utils";
 import {
     GET_ACCOUNT,
+    UPDATE_ACCOUNT,
     UPDATE_ACCOUNT_SETTINGS,
     CHANGE_ACCOUNT_PASSWORD,
     GET_API_KEYS,
@@ -23,6 +24,18 @@ import {
  * @returns {object}
  */
 export const getAccount = simpleActionCreator(GET_ACCOUNT.REQUESTED);
+
+/**
+ * Returns an action that can trigger an API call for updating the current account.
+ *
+ * @func
+ * @param update {object} the update to apply to the account
+ * @returns {object}
+ */
+export const updateAccount = (update) => ({
+    type: UPDATE_ACCOUNT.REQUESTED,
+    update
+});
 
 /**
  * Returns an action that can trigger an API call for updating the settings for the current account.

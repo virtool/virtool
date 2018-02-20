@@ -125,6 +125,7 @@ export const HIDE_UPLOAD_OVERLAY = "HIDE_UPLOAD_OVERLAY";
 // Account
 export const WS_UPDATE_ACCOUNT = createRequestActionType("WS_UPDATE_ACCOUNT");
 export const GET_ACCOUNT = createRequestActionType("GET_ACCOUNT");
+export const UPDATE_ACCOUNT = createRequestActionType("UPDATE_ACCOUNT");
 export const GET_ACCOUNT_SETTINGS = createRequestActionType("GET_ACCOUNT_SETTINGS");
 export const UPDATE_ACCOUNT_SETTINGS = createRequestActionType("UPDATE_ACCOUNT_SETTINGS");
 export const CHANGE_ACCOUNT_PASSWORD = createRequestActionType("CHANGE_ACCOUNT_PASSWORD");
