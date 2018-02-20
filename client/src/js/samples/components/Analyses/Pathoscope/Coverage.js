@@ -102,6 +102,14 @@ const createBlob = (svgNode) => {
     return url;
 };
 
+const formatSvg = (svg, setting) => {
+    svg.select("path").node()
+        .setAttribute("fill", "#428bca");
+
+    svg.selectAll("text").filter(".coverage-label").node()
+        .setAttribute("visibility", setting);
+};
+
 const createImage = (width, height, url) => {
 
     const img = document.createElement("img");
@@ -112,6 +120,13 @@ const createImage = (width, height, url) => {
     return img;
 };
 
+const drawBackground = (ctx, width, height) => {
+    ctx.beginPath();
+    ctx.rect(0, 0, width, height);
+    ctx.fillStyle = "white";
+    ctx.fill();
+};
+
 const convertSvgToPng = (width, height, img) => {
 
     const canvas = document.createElement("canvas");
@@ -119,10 +134,7 @@ const convertSvgToPng = (width, height, img) => {
     canvas.height = height;
     const ctx = canvas.getContext("2d");
 
-    ctx.beginPath();
-    ctx.rect(0, 0, width, height);
-    ctx.fillStyle = "white";
-    ctx.fill();
+    drawBackground(ctx, width, height);
 
     ctx.drawImage(img, 0, 0);
     const canvasUrl = canvas.toDataURL("image/png");
@@ -190,11 +202,7 @@ export default class CoverageChart extends React.Component {
 
         const svg = select(this.chartNode).select("svg");
 
-        svg.select("path").node()
-            .setAttribute("fill", "#428bca");
-
-        svg.selectAll("text").filter(".coverage-label").node()
-            .setAttribute("visibility", "hidden");
+        formatSvg(svg, "hidden");
 
         const url = createBlob(svg.node());
 
@@ -209,8 +217,7 @@ export default class CoverageChart extends React.Component {
             downloadPng(filename, canvasUrl);
         };
 
-        svg.selectAll("text").filter(".coverage-label").node()
-            .setAttribute("visibility", "visible");
+        formatSvg(svg, "visible");
     }
 
     render () {
