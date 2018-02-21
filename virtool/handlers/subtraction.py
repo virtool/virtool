@@ -4,8 +4,8 @@ import shutil
 import virtool.sample
 import virtool.subtraction
 import virtool.utils
-from virtool.handlers.utils import unpack_request, json_response, no_content, not_found, compose_regex_query, paginate,\
-    protected, validation
+from virtool.handlers.utils import conflict, compose_regex_query, json_response, no_content, not_found, paginate, \
+    protected, unpack_request, validation
 
 
 async def find(req):
@@ -60,6 +60,7 @@ async def get(req):
 @protected("modify_subtraction")
 @validation({
     "subtraction_id": {"type": "string", "required": True},
+    "nickname": {"type": "string", "default": ""},
     "file_id": {"type": "string", "required": True}
 })
 async def create(req):
@@ -70,8 +71,11 @@ async def create(req):
     db, data = req.app["db"], req["data"]
 
     subtraction_id = data["subtraction_id"]
+
+    if await db.subtraction.count({"_id": subtraction_id}):
+        return conflict("Subtraction name already exists.")
+
     file_id = data["file_id"]
-    user_id = req["client"].user_id
 
     file = await db.files.find_one(file_id, ["name"])
 
@@ -79,6 +83,8 @@ async def create(req):
         return not_found("File not found")
 
     job_id = await virtool.utils.get_new_id(db.jobs)
+
+    user_id = req["client"].user_id
 
     document = {
         "_id": data["subtraction_id"],
