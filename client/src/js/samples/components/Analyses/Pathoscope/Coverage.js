@@ -4,6 +4,12 @@ import { select } from "d3-selection";
 import { area } from "d3-shape";
 import { scaleLinear } from "d3-scale";
 import { axisBottom, axisLeft } from "d3-axis";
+import { 
+    createBlob,
+    formatSvg,
+    getSvgAttr,
+    getPng
+} from "./Download"
 
 const createChart = (element, data, length, meta, yMax, xMin, showYAxis) => {
 
@@ -81,6 +87,11 @@ const createChart = (element, data, length, meta, yMax, xMin, showYAxis) => {
         .attr("class", "coverage-label small")
         .attr("transform", "translate(4,10)")
         .text(`${meta.id} - ${meta.definition}`);
+
+    svg.append("text")
+        .attr("class", "download-overlay")
+        .attr("transform", `translate(${(width-margin.left-margin.right)/3},${height/2})`)
+        .text("Click to download");
 };
 
 export default class CoverageChart extends React.Component {
@@ -116,14 +127,35 @@ export default class CoverageChart extends React.Component {
             this.chartNode,
             this.props.data,
             this.props.length,
-            { id, definition},
+            { id, definition },
             this.props.yMax,
             this.chartNode.offsetWidth,
             this.props.showYAxis
         );
     };
 
+    handleClick = () => {
+
+        const svg = select(this.chartNode).select("svg");
+
+        formatSvg(svg, "hidden");
+
+        const url = createBlob(svg.node());
+        const { width, height, filename } = getSvgAttr(svg);
+
+        getPng({ width, height, url, filename });
+
+        formatSvg(svg, "visible");
+    }
+
     render () {
-        return <div className="coverage-chart" ref={(node) => this.chartNode = node} />;
+
+        return (
+            <div
+                className="coverage-chart"
+                ref={(node) => this.chartNode = node}
+                onClick={this.handleClick}
+            />
+        );
     }
 }
