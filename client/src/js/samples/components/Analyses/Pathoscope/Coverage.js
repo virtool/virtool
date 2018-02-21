@@ -4,12 +4,7 @@ import { select } from "d3-selection";
 import { area } from "d3-shape";
 import { scaleLinear } from "d3-scale";
 import { axisBottom, axisLeft } from "d3-axis";
-import { 
-    createBlob,
-    formatSvg,
-    getSvgAttr,
-    getPng
-} from "./Download"
+import { createBlob, formatSvg, getSvgAttr, getPng } from "./Download";
 
 const createChart = (element, data, length, meta, yMax, xMin, showYAxis) => {
 
@@ -90,7 +85,7 @@ const createChart = (element, data, length, meta, yMax, xMin, showYAxis) => {
 
     svg.append("text")
         .attr("class", "download-overlay")
-        .attr("transform", `translate(${(width-margin.left-margin.right)/3},${height/2})`)
+        .attr("transform", `translate(${(width - margin.left - margin.right) / 3}, ${height / 2})`)
         .text("Click to download");
 };
 
