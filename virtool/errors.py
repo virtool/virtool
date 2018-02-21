@@ -10,6 +10,10 @@ class GitHubError(Exception):
     pass
 
 
+class MongoConnectionError(Exception):
+    pass
+
+
 class NCBIError(Exception):
     pass
 
