@@ -4,8 +4,8 @@ import shutil
 import virtool.sample
 import virtool.subtraction
 import virtool.utils
-from virtool.handlers.utils import unpack_request, json_response, no_content, not_found, compose_regex_query, paginate, \
-    protected
+from virtool.handlers.utils import unpack_request, json_response, no_content, not_found, compose_regex_query, paginate,\
+    protected, validation
 
 
 async def find(req):
@@ -58,20 +58,27 @@ async def get(req):
 
 
 @protected("modify_subtraction")
+@validation({
+    "subtraction_id": {"type": "string", "required": True},
+    "file_id": {"type": "string", "required": True}
+})
 async def create(req):
     """
     Adds a new host described by the transaction. Starts an :class:`.CreateSubtraction` job process.
 
     """
-    db, data = await unpack_request(req)
+    db, data = req.app["db"], req["data"]
 
     subtraction_id = data["subtraction_id"]
     file_id = data["file_id"]
     user_id = req["client"].user_id
 
-    job_id = await virtool.utils.get_new_id(db.jobs)
+    file = await db.files.find_one(file_id, ["name"])
 
-    file = await db.files.find_one(data["file_id"], ["name"])
+    if file is None:
+        return not_found("File not found")
+
+    job_id = await virtool.utils.get_new_id(db.jobs)
 
     document = {
         "_id": data["subtraction_id"],
