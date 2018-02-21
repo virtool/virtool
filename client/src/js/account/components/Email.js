@@ -13,7 +13,7 @@ const getInitialState = (email) => ({
 });
 
 const validateEmail = (email) => {
-    const re = /\S+@\S+\.\S+/;
+    const re = /^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$/;
     return re.test(email);
 };
 
