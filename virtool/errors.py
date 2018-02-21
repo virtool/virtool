@@ -2,6 +2,10 @@ class AuthError(Exception):
     pass
 
 
+class ClientError(Exception):
+    pass
+
+
 class DatabaseError(Exception):
     pass
 
