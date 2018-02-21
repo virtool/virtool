@@ -20,7 +20,7 @@ async def get(req):
             "releases": releases,
             "current_version": req.app["version"]
         }
-    })
+    }, return_document=pymongo.ReturnDocument.AFTER)
 
     return json_response(virtool.utils.base_processor(document))
 
