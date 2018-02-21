@@ -3,12 +3,12 @@ import { map } from "lodash-es";
 import { connect } from "react-redux";
 import { Alert, Col, Panel, Row } from "react-bootstrap";
 
-import { changePassword } from "../actions";
+import { updateAccount } from "../actions";
 import { Button, Input } from "../../base";
 
-const getInitialState = () => ({
-    defaultEmail: "",
-    tempEmail: "",
+const getInitialState = (email) => ({
+    defaultEmail: email ? email : "",
+    tempEmail: email ? email : "",
     errors: []
 });
 
@@ -21,17 +21,7 @@ class Email extends React.Component {
 
     constructor (props) {
         super(props);
-        this.state = getInitialState();
-    }
-
-    componentWillReceiveProps (nextProps) {
-        if (nextProps.oldPasswordError) {
-            this.setState({errors: ["Old password is invalid"]});
-        }
-
-        if (nextProps.lastPasswordChange !== this.props.lastPasswordChange) {
-            this.setState(getInitialState());
-        }
+        this.state = getInitialState(this.props.email);
     }
 
     onSubmit = (e) => {
@@ -50,16 +40,15 @@ class Email extends React.Component {
         }
 
         this.setState({
-            defaultEmail: this.state.tempEmail,
-            tempEmail: ""
+            defaultEmail: this.state.tempEmail
+        });
+
+        this.props.onUpdateEmail({
+            email: this.state.tempEmail
         });
     };
 
     render () {
-
-        if (!this.props.settings) {
-            return <div />;
-        }
 
         let errorAlert;
 
@@ -81,18 +70,11 @@ class Email extends React.Component {
             <Panel header="Email">
                 <form onSubmit={this.onSubmit}>
                     <Input
-                        label="Primary email address"
-                        value={this.state.defaultEmail}
-                        readOnly={true}
-                    />
-                    <Input
-                        label="Change email address"
+                        label="Email address"
                         value={this.state.tempEmail}
                         onChange={(e) => this.setState({tempEmail: e.target.value, errors: []})}
                     />
-
                     {errorAlert}
-
                     <div style={{marginTop: "20px"}}>
                         <Row>
                             <Col xs={24} md={12}>
@@ -109,15 +91,14 @@ class Email extends React.Component {
 }
 
 const mapStateToProps = (state) => ({
-    settings: state.settings.data
+    email: state.account.email
 });
 
 const mapDispatchToProps = (dispatch) => ({
 
-    onChangePassword: (oldPassword, newPassword) => {
-        dispatch(changePassword(oldPassword, newPassword));
+    onUpdateEmail: (email) => {
+        dispatch(updateAccount(email));
     }
-
 });
 
 const Container = connect(mapStateToProps, mapDispatchToProps)(Email);

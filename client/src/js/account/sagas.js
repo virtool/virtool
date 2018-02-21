@@ -4,6 +4,7 @@ import * as accountAPI from "./api";
 import { setPending, apiCall } from "../sagaUtils";
 import {
     GET_ACCOUNT,
+    UPDATE_ACCOUNT,
     GET_ACCOUNT_SETTINGS,
     UPDATE_ACCOUNT_SETTINGS,
     CHANGE_ACCOUNT_PASSWORD,
@@ -17,6 +18,7 @@ import {
 export function* watchAccount () {
     yield takeLatest(GET_ACCOUNT.REQUESTED, getAccount);
     yield takeLatest(GET_ACCOUNT_SETTINGS.REQUESTED, getAccountSettings);
+    yield takeLatest(UPDATE_ACCOUNT.REQUESTED, updateAccount);
     yield takeLatest(UPDATE_ACCOUNT_SETTINGS.REQUESTED, updateAccountSettings);
     yield takeLatest(CHANGE_ACCOUNT_PASSWORD.REQUESTED, changeAccountPassword);
     yield takeLatest(GET_API_KEYS.REQUESTED, getAPIKeys);
@@ -32,6 +34,10 @@ export function* getAccount () {
 
 export function* getAccountSettings () {
     yield apiCall(accountAPI.getSettings, {}, GET_ACCOUNT_SETTINGS);
+}
+
+export function* updateAccount (action) {
+    yield setPending(apiCall(accountAPI.update, action, UPDATE_ACCOUNT));
 }
 
 export function* updateAccountSettings (action) {

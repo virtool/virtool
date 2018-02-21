@@ -23,7 +23,7 @@ export const get = () => (
  * @param update {object} the update to apply to current account.
  * @returns {promise}
  */
-export const edit = ({ update }) => (
+export const update = ({ update }) => (
     Request.patch("/api/account")
         .send(update)
 );
