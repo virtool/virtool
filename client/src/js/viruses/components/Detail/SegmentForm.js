@@ -27,14 +27,14 @@ export default class SegmentForm extends React.Component {
             ...this.props.newEntry,
             name: e.target.value
         });
-    }
+    };
 
     changeMolType = (e) => {
         this.props.onChange({
             ...this.props.newEntry,
             molecule: e.target.value
         });
-    }
+    };
 
     toggleCheck = () => {
         this.props.onChange({
@@ -42,7 +42,7 @@ export default class SegmentForm extends React.Component {
             required: !this.state.isChecked
         });
         this.setState({isChecked: !this.state.isChecked});
-    }
+    };
 
     render () {
 

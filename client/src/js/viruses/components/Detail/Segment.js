@@ -7,11 +7,11 @@ export default class Segment extends React.Component {
 
     handleRemove = () => {
         this.props.onClick({segment: this.props.seg, handler: "remove"});
-    }
+    };
 
     handleEdit = () => {
         this.props.onClick({segment: this.props.seg, handler: "edit"});
-    }
+    };
 
     render () {
         const { seg } = this.props;

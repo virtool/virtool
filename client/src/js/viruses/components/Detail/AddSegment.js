@@ -29,7 +29,7 @@ class AddSegment extends React.Component {
                 required: entry.required
             }
         });
-    }
+    };
 
     handleSubmit = () => {
         if (this.state.newEntry.name) {
@@ -37,11 +37,11 @@ class AddSegment extends React.Component {
         } else {
             this.setState({showError: true});
         }
-    }
+    };
 
     handleExited = () => {
         this.setState(getInitialState());
-    }
+    };
 
     render () {
 
