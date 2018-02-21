@@ -288,7 +288,10 @@ async def analyze(req):
     sample_id = req.match_info["sample_id"]
 
     if not await db.samples.count({"_id": sample_id}):
-        return not_found()
+        return not_found("Sample not found.")
+
+    if not await db.indexes.count({"ready": True}):
+        return not_found("Could not find a virus index build. Build at least one index before running analyses.")
 
     # Generate a unique _id for the analysis entry
     document = await virtool.sample_analysis.new(
