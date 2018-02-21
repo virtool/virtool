@@ -44,6 +44,9 @@ async def get_releases(db, settings, channel, server_version):
     :rtype: Coroutine[list]
 
     """
+    if server_version is None:
+        return list()
+
     url = "https://www.virtool.ca/releases"
 
     async with aiohttp.ClientSession() as session:
