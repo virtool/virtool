@@ -49,6 +49,7 @@ export default class SegmentForm extends React.Component {
         const errorMessage = this.state.showError ? "Required Field" : "";
 
         const moleculeTypes = [
+            "",
             "ssDNA",
             "dsDNA",
             "ssRNA+",
@@ -59,7 +60,7 @@ export default class SegmentForm extends React.Component {
 
         const molecules = map(moleculeTypes, (molecule) =>
             <option key={molecule} value={molecule}>
-                {molecule}
+                {molecule || "None"}
             </option>
         );
 
@@ -81,7 +82,6 @@ export default class SegmentForm extends React.Component {
                             value={this.props.newEntry.molecule}
                             onChange={this.changeMolType}
                         >
-                            <option key="default" style={{display: "none"}} />
                             {molecules}
                         </Input>
                     </Col>

@@ -8,7 +8,7 @@ import { Button } from "../../../base";
 const getInitialState = () => ({
     newEntry: {
         name: "",
-        molecule: null,
+        molecule: "",
         required: false
     },
     showError: false
@@ -18,7 +18,6 @@ class AddSegment extends React.Component {
 
     constructor (props) {
         super(props);
-
         this.state = getInitialState();
     }
 
