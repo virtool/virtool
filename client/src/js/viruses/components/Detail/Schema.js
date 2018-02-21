@@ -1,14 +1,14 @@
 import React from "react";
 import { connect } from "react-redux";
 import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd";
-import { Button } from "react-bootstrap";
 import { map } from "lodash-es";
+
 import Segment from "./Segment";
 import AddSegment from "./AddSegment";
 import EditSegment from "./EditSegment";
 import RemoveSegment from "./RemoveSegment";
 import { editVirus } from "../../actions";
-import { NoneFound } from "../../../base";
+import { Button, NoneFound } from "../../../base";
 
 const getInitialState = (props) => ({
     segArray: props.schema ? props.schema : [],
@@ -41,29 +41,27 @@ class Schema extends React.Component {
     }
 
     onDragEnd = (result) => {
-        if (!result.destination) {
-            return;
+        if (result.destination) {
+            const newArray = reorder(
+                this.state.segArray,
+                result.source.index,
+                result.destination.index
+            );
+
+            this.setState({segArray: newArray});
+
+            this.props.onSave(
+                this.props.virusId,
+                this.props.detail.name,
+                this.props.detail.abbreviation,
+                newArray
+            );
         }
-
-        const newArray = reorder(
-            this.state.segArray,
-            result.source.index,
-            result.destination.index
-        );
-
-        this.setState({segArray: newArray});
-
-        this.props.onSave(
-            this.props.virusId,
-            this.props.detail.name,
-            this.props.detail.abbreviation,
-            newArray
-        );
-    }
+    };
 
     handleAddNew = () => {
         this.setState({showAdd: true});
-    }
+    };
 
     handleSubmit = (newArray) => {
         this.setState({
@@ -79,7 +77,7 @@ class Schema extends React.Component {
             this.props.detail.abbreviation,
             newArray
         );
-    }
+    };
 
     handleClose = () => {
         this.setState({
@@ -87,7 +85,7 @@ class Schema extends React.Component {
             showRemove: false,
             showEdit: false
         });
-    }
+    };
 
     handleSegment = (entry) => {
         if (entry.handler === "remove") {
@@ -96,7 +94,7 @@ class Schema extends React.Component {
         if (entry.handler === "edit") {
             this.setState({showEdit: true, selected: entry.segment});
         }
-    }
+    };
 
     render () {
 
@@ -134,10 +132,15 @@ class Schema extends React.Component {
 
         return (
             <div>
-                <Button bsStyle="primary" bsSize="large" block onClick={this.handleAddNew}>
-                    Add a new segment
+                <Button
+                    bsStyle="primary"
+                    icon="new-entry"
+                    onClick={this.handleAddNew}
+                    style={{marginBottom: "10px"}}
+                    block
+                >
+                    Add Segment
                 </Button>
-                <br />
 
                 <DragDropContext onDragEnd={this.onDragEnd}>
                     <Droppable droppableId="droppable">

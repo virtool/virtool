@@ -1,32 +1,31 @@
 from cx_Freeze import setup, Executable
 
-packages = [
-    "_cffi_backend",
-    "appdirs",
-    "asyncio",
-    "asyncio.base_events",
-    "asyncio.compat",
-    "bcrypt",
-    "encodings",
-    "idna",
-    "motor",
-    "packaging",
-    "packaging.version",
-    "uvloop"
-]
-
 # Dependencies are automatically detected, but it might need
 # fine tuning.
-buildOptions = dict(packages=packages, excludes=[])
+build_exe_options = {
+    "excludes": [
+        "numpy"
+    ],
+    "packages": [
+        "_cffi_backend",
+        "appdirs",
+        "asyncio",
+        "bcrypt",
+        "encodings",
+        "idna",
+        "motor",
+        "packaging",
+        "raven",
+        "uvloop"
+    ]
+}
 
-base = 'Console'
+options = {
+    "build_exe": build_exe_options
+}
 
 executables = [
-    Executable('run.py', base=base)
+    Executable('run.py', base="Console")
 ]
 
-setup(name='virtool',
-      version='3.0.0',
-      description='',
-      options=dict(build_exe=buildOptions),
-      executables=executables)
+setup(name='virtool', executables=executables, options=options)

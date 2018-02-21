@@ -19,17 +19,27 @@ export const formatSvg = (svg, setting) => {
             .setAttribute("fill", "#428bca");
     }
 
-    svg.selectAll("text").filter(".coverage-label").node()
+    // eslint-disable-next-line
+    svg.selectAll("text")
+        .filter(".coverage-label")
+        .node()
         .setAttribute("visibility", setting);
 
-    svg.selectAll("text").filter(".download-overlay").node()
+    // eslint-disable-next-line
+    svg.selectAll("text")
+        .filter(".download-overlay")
+        .node()
         .setAttribute("visibility", setting);
 };
 
 export const getSvgAttr = (svg) => {
     const width = svg.attr("width");
     const height = svg.attr("height");
-    const filename = svg.selectAll("text").filter(".coverage-label").text();
+
+    // eslint-disable-next-line
+    const filename = svg.selectAll("text")
+        .filter(".coverage-label")
+        .text();
 
     return {
         width,
@@ -53,6 +63,8 @@ const drawBackground = (ctx, width, height) => {
     ctx.beginPath();
     ctx.rect(0, 0, width, height);
     ctx.fillStyle = "white";
+
+    // eslint-disable-next-line
     ctx.fill();
 };
 

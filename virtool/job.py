@@ -204,7 +204,7 @@ class Job:
         self._state = state or self._state
         self._stage = stage or self._stage
 
-        if self._progress != 1:
+        if self._stage and self._progress != 1:
             stage_index = [m.__name__ for m in self._stage_list].index(self._stage)
             self._progress = round((stage_index + 1) / (len(self._stage_list) + 1), 2)
 
@@ -242,9 +242,11 @@ class Job:
             while not self.finished:
                 await asyncio.sleep(0.1, loop=self.loop)
 
-        await self.cleanup()
-
-        self.finished = True
+        elif not self.started:
+            self._progress = 1
+            await self.add_status(state="cancelled")
+            await self.cleanup()
+            self.finished = True
 
     async def cleanup(self):
         pass

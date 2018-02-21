@@ -27,14 +27,14 @@ export default class SegmentForm extends React.Component {
             ...this.props.newEntry,
             name: e.target.value
         });
-    }
+    };
 
     changeMolType = (e) => {
         this.props.onChange({
             ...this.props.newEntry,
             molecule: e.target.value
         });
-    }
+    };
 
     toggleCheck = () => {
         this.props.onChange({
@@ -42,13 +42,14 @@ export default class SegmentForm extends React.Component {
             required: !this.state.isChecked
         });
         this.setState({isChecked: !this.state.isChecked});
-    }
+    };
 
     render () {
 
         const errorMessage = this.state.showError ? "Required Field" : "";
 
         const moleculeTypes = [
+            "",
             "ssDNA",
             "dsDNA",
             "ssRNA+",
@@ -59,7 +60,7 @@ export default class SegmentForm extends React.Component {
 
         const molecules = map(moleculeTypes, (molecule) =>
             <option key={molecule} value={molecule}>
-                {molecule}
+                {molecule || "None"}
             </option>
         );
 
@@ -81,7 +82,6 @@ export default class SegmentForm extends React.Component {
                             value={this.props.newEntry.molecule}
                             onChange={this.changeMolType}
                         >
-                            <option key="default" style={{display: "none"}} />
                             {molecules}
                         </Input>
                     </Col>

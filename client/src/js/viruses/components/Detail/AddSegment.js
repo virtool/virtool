@@ -8,7 +8,7 @@ import { Button } from "../../../base";
 const getInitialState = () => ({
     newEntry: {
         name: "",
-        molecule: null,
+        molecule: "",
         required: false
     },
     showError: false
@@ -18,7 +18,6 @@ class AddSegment extends React.Component {
 
     constructor (props) {
         super(props);
-
         this.state = getInitialState();
     }
 
@@ -30,7 +29,7 @@ class AddSegment extends React.Component {
                 required: entry.required
             }
         });
-    }
+    };
 
     handleSubmit = () => {
         if (this.state.newEntry.name) {
@@ -38,11 +37,11 @@ class AddSegment extends React.Component {
         } else {
             this.setState({showError: true});
         }
-    }
+    };
 
     handleExited = () => {
         this.setState(getInitialState());
-    }
+    };
 
     render () {
 

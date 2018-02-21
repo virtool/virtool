@@ -58,7 +58,7 @@ class Manager:
                     except InsufficientResourceError:
                         pass
 
-                if job.started and job.finished:
+                if job.finished:
                     self.release_resources(job)
                     to_delete.append(job.id)
 
