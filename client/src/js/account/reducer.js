@@ -5,6 +5,7 @@
  */
 import {
     GET_ACCOUNT,
+    UPDATE_ACCOUNT,
     UPDATE_ACCOUNT_SETTINGS,
     CHANGE_ACCOUNT_PASSWORD,
     GET_API_KEYS,
@@ -39,6 +40,9 @@ export default function accountReducer (state = initialState, action) {
 
         case GET_ACCOUNT.SUCCEEDED:
             return {...state, ...action.data, ready: true};
+
+        case UPDATE_ACCOUNT.SUCCEEDED:
+            return {...state, ...action.data};
 
         case GET_API_KEYS.SUCCEEDED:
             return {...state, apiKeys: action.data};

@@ -17,6 +17,18 @@ export const get = () => (
 );
 
 /**
+ * Updates the complete data for the current account.
+ *
+ * @func
+ * @param update {object} the update to apply to current account.
+ * @returns {promise}
+ */
+export const update = ({ update }) => (
+    Request.patch("/api/account")
+        .send(update)
+);
+
+/**
  * Gets the settings object for the current account.
  *
  * @func
