@@ -19,9 +19,23 @@ class NotificationIcon extends React.Component {
 
     handleToggle = () => {
 
+        if (this.state.show) {
+            window.removeEventListener("click", this.handleExit, false);
+        } else {
+            window.addEventListener("click", this.handleExit, false);
+        }
+
         this.setState({
             show: !this.state.show
         });
+    }
+
+    handleExit = (e) => {
+        if (this.target.contains(e.target)) {
+            return;
+        }
+
+        this.handleToggle();
     }
 
     componentWillMount () {
@@ -29,24 +43,18 @@ class NotificationIcon extends React.Component {
         this.props.onGetUnbuilt();
     }
 
-    // gives infinite render loop for some reason
-/*
-    componentWillReceiveProps (nextProps) {
-
-        console.log("a");
-
-        if (this.props.updates !== nextProps.updates) {
+    componentDidMount () {
+        this.interval = window.setInterval(() => {
             this.props.onGet();
-        }
-
-        if (this.props.unbuilt !== nextProps.unbuilt) {
             this.props.onGetUnbuilt();
-        }
+        }, 10000);
     }
-*/
-    render () {
 
-    //    console.log(this.props);
+    componentWillUnmount () {
+        window.clearInterval(this.interval);
+    }
+
+    render () {
 
         const iconStyle = (this.props.updates || this.props.unbuilt) ? "icon-pulse" : "icon";
 

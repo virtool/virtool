@@ -3,13 +3,11 @@ import { connect } from "react-redux";
 import { Popover } from "react-bootstrap";
 import { LinkContainer } from "react-router-bootstrap";
 import { map } from "lodash-es";
-import { getSoftwareUpdates } from "../../updates/actions";
-import { getUnbuilt } from "../../indexes/actions";
 
 const getInitialState = (props) => {
     const notifArray = [];
 
-    if (props.updates) {
+    if (props.updates && props.updates.releases.length) {
         notifArray.push({
             message: "Software updates available",
             link: "/settings/updates"
@@ -17,7 +15,7 @@ const getInitialState = (props) => {
 
     }
 
-    if (props.unbuilt) {
+    if (props.unbuilt && props.unbuilt.history.length) {
         notifArray.push({
             message: "Rebuild Index",
             link: "/viruses/indexes"
@@ -35,13 +33,8 @@ class Notifications extends React.Component {
         this.state = getInitialState(this.props);
     }
 
-    componentWillMount () {
-        this.props.onGet();
-        this.props.onGetUnbuilt();
-    }
-
     componentWillReceiveProps (nextProps) {
-        if (this.props.updates !== nextProps.updates) {
+        if (this.props !== nextProps) {
             this.setState(getInitialState(nextProps));
         }
     }
@@ -75,7 +68,9 @@ class Notifications extends React.Component {
                 placement="bottom"
                 style={{
                     ...this.props.style,
-                    position: "absolute"
+                    position: "absolute",
+                    minWidth: "250px",
+                    maxWidth: "250px"
                 }}
             >
                 {notifications}
@@ -89,17 +84,6 @@ const mapStateToProps = (state) => ({
     unbuilt: state.indexes.unbuilt
 });
 
-const mapDispatchToProps = (dispatch) => ({
-
-    onGet: () => {
-        dispatch(getSoftwareUpdates());
-    },
-
-    onGetUnbuilt: () => {
-        dispatch(getUnbuilt());
-    }
-});
-
-const Container = connect(mapStateToProps, mapDispatchToProps)(Notifications);
+const Container = connect(mapStateToProps)(Notifications);
 
 export default Container;
