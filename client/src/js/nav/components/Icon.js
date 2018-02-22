@@ -46,18 +46,18 @@ class NotificationIcon extends React.Component {
 */
     render () {
 
-        console.log(this.props);
+    //    console.log(this.props);
 
-        const iconStyle = (this.props.updates || this.props.unbuilt) ? "yellow" : "white";
+        const iconStyle = (this.props.updates || this.props.unbuilt) ? "icon-pulse" : "icon";
 
         return (
             <div>
                 <div ref={node => this.target = node} onClick={this.handleToggle}>
                     <Icon
+                        className={iconStyle}
                         name="notification"
                         tip="Click to see notifications"
                         tipPlacement="left"
-                        style={{color: iconStyle}}
                     />
                 </div>
 
