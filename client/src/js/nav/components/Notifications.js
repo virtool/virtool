@@ -9,7 +9,7 @@ import { getUnbuilt } from "../../indexes/actions";
 const getInitialState = (props) => {
     const notifArray = [];
 
-    if (props.updates && props.updates.length) {
+    if (props.updates) {
         notifArray.push({
             message: "Software updates available",
             link: "/settings/updates"
@@ -24,8 +24,6 @@ const getInitialState = (props) => {
         });
     }
 
-    console.log(notifArray);
-
     return { notifArray };
 };
 
@@ -39,6 +37,7 @@ class Notifications extends React.Component {
 
     componentWillMount () {
         this.props.onGet();
+        this.props.onGetUnbuilt();
     }
 
     componentWillReceiveProps (nextProps) {
@@ -49,16 +48,22 @@ class Notifications extends React.Component {
 
     render () {
 
-    //    console.log(this.props.updates);
-
         const { notifArray } = this.state;
 
         const notifications = map(notifArray, (item, index) =>
-            <div key={index}>
+            <div
+                key={index}
+                style={{
+                    border: "1px solid lightgrey",
+                    margin: "0 -5px -1px -5px",
+                    padding: "5px 10px"
+                }}
+                onClick={this.props.onClick}
+            >
                 <LinkContainer to={item.link}>
-                    <div>
+                    <a>
                         {item.message}
-                    </div>
+                    </a>
                 </LinkContainer>
             </div>
         );
