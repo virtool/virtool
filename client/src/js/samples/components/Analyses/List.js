@@ -10,8 +10,6 @@ import AnalysisItem from "./Item";
 import CreateAnalysis from "./Create";
 import {getCanModify} from "../../selectors";
 
-import { findIndexes } from "../../../indexes/actions";
-
 const AnalysesToolbar = ({ onClick, isModified }) => (
     <div className="toolbar">
         <FormGroup>
@@ -40,11 +38,7 @@ class AnalysesList extends React.Component {
             show: false
         };
     }
-/*
-    componentWillMount () {
-        this.props.onFind();
-    }
-*/
+
     render () {
 
         if (this.props.analyses === null) {
