@@ -60,6 +60,7 @@ export const HIDE_SAMPLE_MODAL = "HIDE_SAMPLE_MODAL";
 // Virus
 export const WS_UPDATE_VIRUS = "WS_UPDATE_VIRUS";
 export const WS_REMOVE_VIRUS = "WS_REMOVE_VIRUS";
+export const FETCH_VIRUSES = "FETCH_VIRUSES";
 export const FIND_VIRUSES = createRequestActionType("FIND_VIRUSES");
 export const GET_VIRUS = createRequestActionType("GET_VIRUS");
 export const CREATE_VIRUS = createRequestActionType("CREATE_VIRUS");
