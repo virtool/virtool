@@ -33,11 +33,11 @@ class UploadOverlay extends React.Component {
         }
     }
 
-    handlePageLeave (e) {
+    handlePageLeave = (e) => {
         const message = "Upload(s) still in progress";
         e.returnValue = message;
         return message;
-    }
+    };
 
     render () {
 

@@ -44,7 +44,7 @@ class TestFind:
         assert await resp.json() == {
             "documents": [
                 {
-                    "created_at": "2017-10-06T20:00:00Z",
+                    "created_at": "2015-10-06T20:00:00Z",
                     "has_files": True,
                     "id": "bar",
                     "job": {
@@ -58,7 +58,7 @@ class TestFind:
                     "virus_count": 232
                 },
                 {
-                    "created_at": "2017-10-06T20:00:00Z",
+                    "created_at": "2015-10-06T20:00:00Z",
                     "has_files": True,
                     "id": "foo",
                     "job": {
@@ -186,7 +186,7 @@ class TestGet:
         assert resp.status == 200
 
         assert await resp.json() == {
-            "created_at": "2017-10-06T20:00:00Z",
+            "created_at": "2015-10-06T20:00:00Z",
             "has_files": True,
             "id": "foobar",
             "version": 0,
@@ -306,7 +306,7 @@ class TestCreate:
         }
 
         assert await resp.json() == {
-            "created_at": "2017-10-06T20:00:00Z",
+            "created_at": "2015-10-06T20:00:00Z",
             "has_files": True,
             "id": expected_id,
             "job": {

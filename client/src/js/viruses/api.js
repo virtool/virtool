@@ -28,11 +28,12 @@ export const create = ({ name, abbreviation }) => (
         })
 );
 
-export const edit = ({ virusId, name, abbreviation }) => (
+export const edit = ({ virusId, name, abbreviation, schema }) => (
     Request.patch(`/api/viruses/${virusId}`)
         .send({
             name,
-            abbreviation
+            abbreviation,
+            schema
         })
 );
 

@@ -4,7 +4,7 @@ import pytest
 import virtool.job
 
 
-def test_processor(test_db, test_job):
+def test_processor(test_db, test_job, static_time):
     """
     Test that the dispatch processor properly formats a raw job document into a dispatchable format.
 
@@ -15,7 +15,7 @@ def test_processor(test_db, test_job):
 
     assert virtool.job.processor(document) == {
         "id": "4c530449",
-        "created_at": datetime.datetime(2017, 10, 6, 20, 0),
+        "created_at": static_time,
         "args": {
             "algorithm": "nuvs",
             "analysis_id": "e410429b",

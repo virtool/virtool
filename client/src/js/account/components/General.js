@@ -5,6 +5,7 @@ import { Label } from "react-bootstrap";
 
 import { Flex, FlexItem, Identicon } from "../../base";
 import ChangePassword from "./Password";
+import Email from "./Email";
 
 export const AccountGeneral = ({ id, groups, hash }) => {
 
@@ -32,6 +33,7 @@ export const AccountGeneral = ({ id, groups, hash }) => {
                 </FlexItem>
             </Flex>
 
+            <Email />
             <ChangePassword />
         </div>
     );

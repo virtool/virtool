@@ -4,7 +4,9 @@
     "document": true,
     "dispatcher": true,
     "console": true,
-    "fetch": true
+    "fetch": true,
+    "XMLSerializer": true,
+    "Blob": true
   },
   "parser": "babel-eslint",
   "parserOptions": {
@@ -15,7 +17,7 @@
   },
   "extends": [
     "eslint:recommended",
-    "plugin:react/recommended",
+    "plugin:react/recommended"
   ],
   "plugins": [
     "import",

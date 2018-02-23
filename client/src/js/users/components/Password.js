@@ -14,7 +14,7 @@ import CX from "classnames";
 import { connect } from "react-redux";
 import { Row, Col, Alert, Panel, ButtonToolbar } from "react-bootstrap";
 
-import { setForceReset, setPassword } from "../actions";
+import { editUser } from "../actions";
 import { Input, Checkbox, Button, RelativeTime } from "../../base";
 
 const getInitialState = () => ({
@@ -153,11 +153,11 @@ class Password extends React.Component {
 const mapDispatchToProps = (dispatch) => ({
 
     onSubmit: (userId, password) => {
-        dispatch(setPassword(userId, password));
+        dispatch(editUser(userId, {password}));
     },
 
     onSetForceReset: (userId, enabled) => {
-        dispatch(setForceReset(userId, enabled));
+        dispatch(editUser(userId, {force_reset: enabled}));
     }
 
 });
