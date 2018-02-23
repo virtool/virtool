@@ -7,6 +7,8 @@ import { getUnbuilt } from "../../indexes/actions";
 
 import { Icon } from "../../base";
 
+const hrToMs = 3600000;
+
 class NotificationIcon extends React.Component {
 
     constructor (props) {
@@ -47,12 +49,14 @@ class NotificationIcon extends React.Component {
         this.interval = window.setInterval(() => {
             this.props.onGet();
             this.props.onGetUnbuilt();
-        }, 10000);
+        }, (3 * hrToMs));
     }
 
     componentWillUnmount () {
         window.clearInterval(this.interval);
     }
+
+    componentWill
 
     render () {
 
