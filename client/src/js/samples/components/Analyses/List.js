@@ -1,15 +1,18 @@
 import React from "react";
 import { map, sortBy } from "lodash-es";
 import { connect } from "react-redux";
-import { ListGroup, FormGroup, InputGroup, FormControl } from "react-bootstrap";
+import { Link } from "react-router-dom";
+import { ListGroup, FormGroup, InputGroup, FormControl, Alert } from "react-bootstrap";
 
 import { analyze } from "../../actions";
-import { Icon, Button, LoadingPlaceholder, NoneFound } from "../../../base";
+import { Icon, Button, LoadingPlaceholder, NoneFound, Flex, FlexItem } from "../../../base";
 import AnalysisItem from "./Item";
 import CreateAnalysis from "./Create";
 import {getCanModify} from "../../selectors";
 
-const AnalysesToolbar = ({ onClick }) => (
+import { findIndexes } from "../../../indexes/actions";
+
+const AnalysesToolbar = ({ onClick, isModified }) => (
     <div className="toolbar">
         <FormGroup>
             <InputGroup>
@@ -24,6 +27,7 @@ const AnalysesToolbar = ({ onClick }) => (
             tip="New Analysis"
             bsStyle="primary"
             onClick={onClick}
+            disabled={isModified}
         />
     </div>
 );
@@ -36,7 +40,11 @@ class AnalysesList extends React.Component {
             show: false
         };
     }
-
+/*
+    componentWillMount () {
+        this.props.onFind();
+    }
+*/
     render () {
 
         if (this.props.analyses === null) {
@@ -55,9 +63,32 @@ class AnalysesList extends React.Component {
             listContent = <NoneFound noun="analyses" noListGroup />;
         }
 
+        let alert;
+
+        if (this.props.modified_count) {
+            alert = (
+                <Alert bsStyle="warning">
+                    <Flex alignItems="center">
+                        <Icon name="info" />
+                        <FlexItem pad={5}>
+                            <span>The virus database has changed. </span>
+                            <Link to="/viruses/indexes">Rebuild the index</Link>
+                            <span> to use the changes in further analyses.</span>
+                        </FlexItem>
+                    </Flex>
+                </Alert>
+            );
+        }
+
         return (
             <div>
-                {this.props.canModify ? <AnalysesToolbar onClick={() => this.setState({show: true})} /> : null}
+                {alert}
+
+                {this.props.canModify ?
+                    <AnalysesToolbar
+                        onClick={() => this.setState({show: true})}
+                        isModified={!!this.props.modified_count}
+                    /> : null}
 
                 <ListGroup>
                     {listContent}
@@ -77,7 +108,8 @@ class AnalysesList extends React.Component {
 const mapStateToProps = (state) => ({
     detail: state.samples.detail,
     analyses: state.samples.analyses,
-    canModify: getCanModify(state)
+    canModify: getCanModify(state),
+    modified_count: state.viruses.modified_count
 });
 
 const mapDispatchToProps = (dispatch) => ({
