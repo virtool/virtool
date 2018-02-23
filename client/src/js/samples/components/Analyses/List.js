@@ -1,13 +1,14 @@
 import React from "react";
 import { map, sortBy } from "lodash-es";
 import { connect } from "react-redux";
-import { ListGroup, FormGroup, InputGroup, FormControl } from "react-bootstrap";
-
+import { ListGroup, FormGroup, InputGroup, FormControl, Alert } from "react-bootstrap";
+import { Link } from "react-router-dom";
 import { analyze } from "../../actions";
-import { Icon, Button, LoadingPlaceholder, NoneFound } from "../../../base";
+import { Icon, Button, LoadingPlaceholder, NoneFound, Flex, FlexItem } from "../../../base";
 import AnalysisItem from "./Item";
 import CreateAnalysis from "./Create";
 import {getCanModify} from "../../selectors";
+import { fetchHmms } from "../../../hmm/actions";
 
 const AnalysesToolbar = ({ onClick }) => (
     <div className="toolbar">
@@ -37,9 +38,13 @@ class AnalysesList extends React.Component {
         };
     }
 
+    componentWillMount () {
+        this.props.onFetchHMMs();
+    }
+
     render () {
 
-        if (this.props.analyses === null) {
+        if (this.props.analyses === null || this.props.hmms.documents === null) {
             return <LoadingPlaceholder margin="37px" />;
         }
 
@@ -55,8 +60,28 @@ class AnalysesList extends React.Component {
             listContent = <NoneFound noun="analyses" noListGroup />;
         }
 
+        let alert;
+        const checkHMM = !this.props.hmms.file_exists || !this.props.hmms.total_count;
+
+        if (checkHMM) {
+            alert = (
+                <Alert bsStyle="warning">
+                    <Flex alignItems="center">
+                        <Icon name="info" />
+                        <FlexItem pad={5}>
+                            <span>The HMM data is not installed. </span>
+                            <Link to="/hmm">Install HMMs</Link>
+                            <span> to use in further NuV analyses.</span>
+                        </FlexItem>
+                    </Flex>
+                </Alert>
+            );
+        }
+
         return (
             <div>
+                {alert}
+
                 {this.props.canModify ? <AnalysesToolbar onClick={() => this.setState({show: true})} /> : null}
 
                 <ListGroup>
@@ -68,6 +93,7 @@ class AnalysesList extends React.Component {
                     show={this.state.show}
                     onHide={() => this.setState({show: false})}
                     onSubmit={this.props.onAnalyze}
+                    isHMM={!checkHMM}
                 />
             </div>
         );
@@ -77,10 +103,15 @@ class AnalysesList extends React.Component {
 const mapStateToProps = (state) => ({
     detail: state.samples.detail,
     analyses: state.samples.analyses,
+    hmms: state.hmms,
     canModify: getCanModify(state)
 });
 
 const mapDispatchToProps = (dispatch) => ({
+
+    onFetchHMMs: () => {
+        dispatch(fetchHmms());
+    },
 
     onAnalyze: (sampleId, algorithm) => {
         dispatch(analyze(sampleId, algorithm));
