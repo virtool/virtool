@@ -71,7 +71,6 @@ class NotificationIcon extends React.Component {
 
                 <Overlay
                     show={this.state.show}
-                    onHide={() => this.setState({ show: false })}
                     placement="bottom"
                     target={this.target}
                 >

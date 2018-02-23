@@ -42,17 +42,18 @@ class Notifications extends React.Component {
     render () {
 
         const { notifArray } = this.state;
+        const notifStyle = {
+            border: "1px solid lightgrey",
+            margin: "0 -5px -1px -5px",
+            padding: "5px 10px"
+        };
         let notifications;
 
         if (notifArray.length) {
             notifications = map(notifArray, (item, index) =>
                 <div
                     key={index}
-                    style={{
-                        border: "1px solid lightgrey",
-                        margin: "0 -5px -1px -5px",
-                        padding: "5px 10px"
-                    }}
+                    style={notifStyle}
                     onClick={this.props.onClick}
                 >
                     <LinkContainer to={item.link}>
@@ -65,11 +66,7 @@ class Notifications extends React.Component {
         } else {
             notifications = (
                 <div
-                    style={{
-                        border: "1px solid lightgrey",
-                        margin: "0 -5px -1px -5px",
-                        padding: "5px 10px"
-                    }}
+                    style={notifStyle}
                 >
                     No new notifications
                 </div>
