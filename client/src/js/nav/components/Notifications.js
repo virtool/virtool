@@ -42,24 +42,40 @@ class Notifications extends React.Component {
     render () {
 
         const { notifArray } = this.state;
+        let notifications;
 
-        const notifications = map(notifArray, (item, index) =>
-            <div
-                key={index}
-                style={{
-                    border: "1px solid lightgrey",
-                    margin: "0 -5px -1px -5px",
-                    padding: "5px 10px"
-                }}
-                onClick={this.props.onClick}
-            >
-                <LinkContainer to={item.link}>
-                    <a>
-                        {item.message}
-                    </a>
-                </LinkContainer>
-            </div>
-        );
+        if (notifArray.length) {
+            notifications = map(notifArray, (item, index) =>
+                <div
+                    key={index}
+                    style={{
+                        border: "1px solid lightgrey",
+                        margin: "0 -5px -1px -5px",
+                        padding: "5px 10px"
+                    }}
+                    onClick={this.props.onClick}
+                >
+                    <LinkContainer to={item.link}>
+                        <a>
+                            {item.message}
+                        </a>
+                    </LinkContainer>
+                </div>
+            );
+        } else {
+            notifications = (
+                <div
+                    style={{
+                        border: "1px solid lightgrey",
+                        margin: "0 -5px -1px -5px",
+                        padding: "5px 10px"
+                    }}
+                >
+                    No new notifications
+                </div>
+            );
+        }
+
 
         return (
             <Popover
