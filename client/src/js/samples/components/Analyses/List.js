@@ -61,10 +61,9 @@ class AnalysesList extends React.Component {
         }
 
         let alert;
+        const checkHMM = !this.props.hmms.file_exists || !this.props.hmms.total_count;
 
-        const check = !this.props.hmms.file_exists || !this.props.hmms.total_count;
-
-        if (check) {
+        if (checkHMM) {
             alert = (
                 <Alert bsStyle="warning">
                     <Flex alignItems="center">
@@ -94,7 +93,7 @@ class AnalysesList extends React.Component {
                     show={this.state.show}
                     onHide={() => this.setState({show: false})}
                     onSubmit={this.props.onAnalyze}
-                    isHMM={check}
+                    isHMM={!checkHMM}
                 />
             </div>
         );
