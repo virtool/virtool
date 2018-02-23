@@ -1,5 +1,6 @@
 import { simpleActionCreator } from "../utils";
 import {
+    FETCH_VIRUSES,
     GET_VIRUS,
     GET_VIRUS_HISTORY,
     CREATE_VIRUS,
@@ -26,6 +27,8 @@ import {
     SHOW_REMOVE_SEQUENCE,
     HIDE_VIRUS_MODAL
 } from "../actionTypes";
+
+export const fetchViruses = simpleActionCreator(FETCH_VIRUSES);
 
 export const getVirus = (virusId) => ({
     type: GET_VIRUS.REQUESTED,

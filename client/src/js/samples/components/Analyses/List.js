@@ -10,6 +10,8 @@ import AnalysisItem from "./Item";
 import CreateAnalysis from "./Create";
 import {getCanModify} from "../../selectors";
 
+import { fetchViruses } from "../../../viruses/actions";
+
 const AnalysesToolbar = ({ onClick, isModified }) => (
     <div className="toolbar">
         <FormGroup>
@@ -37,6 +39,10 @@ class AnalysesList extends React.Component {
         this.state = {
             show: false
         };
+    }
+
+    componentWillMount () {
+        this.props.onFetchViruses();
     }
 
     render () {
@@ -110,6 +116,10 @@ const mapDispatchToProps = (dispatch) => ({
 
     onAnalyze: (sampleId, algorithm) => {
         dispatch(analyze(sampleId, algorithm));
+    },
+
+    onFetchViruses: () => {
+        dispatch(fetchViruses());
     }
 
 });
