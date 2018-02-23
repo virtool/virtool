@@ -116,7 +116,7 @@ async def create(req):
         job_id=job_id
     )
 
-    return json_response(virtool.utils.base_processor(document))
+    return json_response(virtool.utils.base_processor(document), status=201)
 
 
 async def authorize_upload(req):
