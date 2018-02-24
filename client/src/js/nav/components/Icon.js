@@ -33,11 +33,9 @@ class NotificationIcon extends React.Component {
     }
 
     handleExit = (e) => {
-        if (this.target.contains(e.target)) {
-            return;
+        if (!this.target.contains(e.target)) {
+            this.handleToggle();
         }
-
-        this.handleToggle();
     }
 
     componentWillMount () {
