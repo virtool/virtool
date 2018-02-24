@@ -9,8 +9,10 @@ const getInitialState = (props) => {
 
     if (props.updates && props.updates.releases.length) {
         notifArray.push({
-            message: "Software updates available",
-            link: "/settings/updates"
+            message: props.canUpdate
+                ? "Software updates available"
+                : "Software updates available:\nRequires administrator to install",
+            link: props.canUpdate ? "/settings/updates" : ""
         });
 
     }
@@ -94,7 +96,8 @@ class Notifications extends React.Component {
 
 const mapStateToProps = (state) => ({
     updates: state.updates.software,
-    unbuilt: state.indexes.unbuilt
+    unbuilt: state.indexes.unbuilt,
+    canUpdate: state.account.permissions.modify_settings
 });
 
 const Container = connect(mapStateToProps)(Notifications);

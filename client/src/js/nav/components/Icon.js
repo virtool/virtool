@@ -54,8 +54,6 @@ class NotificationIcon extends React.Component {
         window.clearInterval(this.interval);
     }
 
-    componentWill
-
     render () {
 
         const iconStyle = (this.props.updates || this.props.unbuilt) ? "icon-pulse" : "icon";
