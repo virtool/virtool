@@ -29,14 +29,6 @@ class VirusDetail extends React.Component {
         this.props.getVirus(this.props.match.params.virusId);
     }
 
-    componentWillReceiveProps (nextProps) {
-        if (this.props.detail) {
-            if (this.props.detail.isolates !== nextProps.detail.isolates) {
-                this.props.getVirus(this.props.match.params.virusId);
-            }
-        }
-    }
-
     render = () => {
 
         if (this.props.detail === null || this.props.detail.id !== this.props.match.params.virusId) {

@@ -20,6 +20,7 @@ import SequenceField from "./SequenceField";
 import { getGenbank } from "../../api";
 
 const getInitialState = (props) => {
+
     if (props.sequenceId) {
         const isolate = {...props.isolate};
         const sequence = find(isolate.sequences, {id: props.sequenceId});
@@ -107,8 +108,10 @@ class EditSequence extends React.Component {
             );
         }
 
+        const currentOption = this.state.segment
+            ? (<option key={this.state.segment} value={this.state.segment}>{this.state.segment}</option>)
+            : null;
         const defaultOption = (<option key="" value=""> - None - </option>);
-
         const segmentNames = map(this.props.schema, (segment) =>
             <option key={segment} value={segment}>
                 {segment}
@@ -151,6 +154,7 @@ class EditSequence extends React.Component {
                                     onChange={this.handleChange}
                                 >
                                     {defaultOption}
+                                    {currentOption}
                                     {segmentNames}
                                 </Input>
                             </Col>

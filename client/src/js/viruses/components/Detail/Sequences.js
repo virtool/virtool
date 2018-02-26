@@ -8,31 +8,32 @@ import EditSequence from "./EditSequence";
 import RemoveSequence from "./RemoveSequence";
 import Sequence from "./Sequence";
 import { Flex, Icon, NoneFound } from "../../../base";
-import { showAddSequence, showEditSequence, showRemoveSequence, getVirus } from "../../actions";
+import { showAddSequence, showEditSequence, showRemoveSequence } from "../../actions";
 import { formatIsolateName } from "../../../utils";
+
+const getInitialState = (props) => {
+    const originalSchema = map(props.schema, "name");
+    const sequencesWithSegment = filter(props.sequences, "segment");
+    const segmentsInUse = map(sequencesWithSegment, "segment");
+    const remainingSchema = differenceWith(originalSchema, segmentsInUse, isEqual);
+
+    return {
+        schema: remainingSchema
+    };
+};
 
 class IsolateSequences extends React.Component {
 
     constructor (props) {
         super(props);
 
-        this.state = {
-            schema: map(this.props.schema, "name")
-        };
+        this.state = getInitialState(this.props);
     }
 
     componentWillReceiveProps (nextProps) {
 
         if (this.props.sequences !== nextProps.sequences) {
-    //        this.props.getVirus(this.props.virusId);
-
-            const sequencesWithSegment = filter(nextProps.sequences, "segment");
-            const segmentsInUse = map(sequencesWithSegment, "segment");
-            const remainingSchema = differenceWith(this.state.schema, segmentsInUse, isEqual);
-//                console.log(this.state.schema);
-//                console.log(segmentsInUse);
-//                console.log(remainingSchema);
-            this.setState({schema: remainingSchema});
+            this.setState(getInitialState(nextProps));
         }
     }
 
@@ -133,10 +134,6 @@ const mapDispatchToProps = (dispatch) => ({
 
     showRemoveSequence: (sequenceId) => {
         dispatch(showRemoveSequence(sequenceId));
-    },
-
-    getVirus: (virusId) => {
-        dispatch(getVirus(virusId));
     }
 
 });
