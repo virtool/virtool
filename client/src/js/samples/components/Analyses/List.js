@@ -9,10 +9,9 @@ import { Icon, Button, LoadingPlaceholder, NoneFound, Flex, FlexItem } from "../
 import AnalysisItem from "./Item";
 import CreateAnalysis from "./Create";
 import {getCanModify} from "../../selectors";
+import { findIndexes } from "../../../indexes/actions";
 
-import { fetchViruses } from "../../../viruses/actions";
-
-const AnalysesToolbar = ({ onClick, isModified }) => (
+const AnalysesToolbar = ({ onClick, isDisabled }) => (
     <div className="toolbar">
         <FormGroup>
             <InputGroup>
@@ -27,7 +26,7 @@ const AnalysesToolbar = ({ onClick, isModified }) => (
             tip="New Analysis"
             bsStyle="primary"
             onClick={onClick}
-            disabled={isModified}
+            disabled={isDisabled}
         />
     </div>
 );
@@ -42,7 +41,7 @@ class AnalysesList extends React.Component {
     }
 
     componentWillMount () {
-        this.props.onFetchViruses();
+        this.props.onFindIndexes();
     }
 
     render () {
@@ -63,22 +62,55 @@ class AnalysesList extends React.Component {
             listContent = <NoneFound noun="analyses" noListGroup />;
         }
 
-        let alert;
+        let alertMessage;
+        let isBlocked = false;
 
-        if (this.props.modified_count) {
-            alert = (
-                <Alert bsStyle="warning">
-                    <Flex alignItems="center">
-                        <Icon name="info" />
-                        <FlexItem pad={5}>
-                            <span>The virus database has changed. </span>
-                            <Link to="/viruses/indexes">Rebuild the index</Link>
-                            <span> to use the changes in further analyses.</span>
-                        </FlexItem>
-                    </Flex>
-                </Alert>
+        if (this.props.modifiedCount) {
+            alertMessage = (
+                <div>
+                    <span>Note: The virus database has changed. </span>
+                    <Link to="/viruses/indexes">Rebuild the index</Link>
+                    <span> to use the latest changes.</span>
+                </div>
             );
         }
+
+        if (this.props.indexArray) {
+            const readyIndexes = map(this.props.indexArray, [ "ready", true ]);
+
+            if (!readyIndexes.length) {
+                alertMessage = (
+                    <div>
+                        <span>
+                            A virus database index build is in progress.
+                        </span>
+                    </div>
+                );
+
+                isBlocked = true;
+            }
+        } else {
+            alertMessage = (
+                <div>
+                    <span>A virus database is not found. </span>
+                    <Link to="/viruses/indexes">Add a database</Link>
+                    <span> to use in analyses.</span>
+                </div>
+            );
+
+            isBlocked = true;
+        }
+
+        const alert = alertMessage ? (
+            <Alert bsStyle="warning">
+                <Flex alignItems="center">
+                    <Icon name="info" />
+                    <FlexItem pad={5}>
+                        {alertMessage}
+                    </FlexItem>
+                </Flex>
+            </Alert>
+        ) : null;
 
         return (
             <div>
@@ -87,7 +119,7 @@ class AnalysesList extends React.Component {
                 {this.props.canModify ?
                     <AnalysesToolbar
                         onClick={() => this.setState({show: true})}
-                        isModified={!!this.props.modified_count}
+                        isDisabled={isBlocked}
                     /> : null}
 
                 <ListGroup>
@@ -109,7 +141,8 @@ const mapStateToProps = (state) => ({
     detail: state.samples.detail,
     analyses: state.samples.analyses,
     canModify: getCanModify(state),
-    modified_count: state.viruses.modified_count
+    modifiedCount: state.indexes.modified_virus_count,
+    indexArray: state.indexes.documents
 });
 
 const mapDispatchToProps = (dispatch) => ({
@@ -118,8 +151,8 @@ const mapDispatchToProps = (dispatch) => ({
         dispatch(analyze(sampleId, algorithm));
     },
 
-    onFetchViruses: () => {
-        dispatch(fetchViruses());
+    onFindIndexes: () => {
+        dispatch(findIndexes());
     }
 
 });
