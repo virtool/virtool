@@ -72,7 +72,5 @@
     "webpack-bundle-analyzer": "^2.8.2",
     "webpack-dev-server": "^2.6.1"
   },
-  "devDependencies": {
-    "webpack-cli": "^2.0.9"
-  }
+  "devDependencies": {}
 }
