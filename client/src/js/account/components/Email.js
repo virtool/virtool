@@ -49,13 +49,15 @@ class Email extends React.Component {
 
     render () {
 
+        const formStyle = this.state.error ? "panel-danger" : "panel-default";
+
         return (
-            <Panel header="Email">
+            <Panel className={formStyle} header="Email">
                 <form onSubmit={this.onSubmit}>
                     <Input
                         label="Email address"
                         value={this.state.tempEmail}
-                        onChange={(e) => this.setState({tempEmail: e.target.value, errors: []})}
+                        onChange={(e) => this.setState({tempEmail: e.target.value, error: ""})}
                         error={this.state.error}
                     />
 

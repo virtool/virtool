@@ -56,7 +56,7 @@ export class Input extends React.Component {
 
         if (this.props.error) {
             errorMessage = (
-                <div style={{display: "inline", color: "red", fontSize: "small", float: "right"}}>
+                <div style={{display: "block", color: "red", fontSize: "small", float: "right"}}>
                     {this.props.error}
                 </div>
             );
@@ -93,7 +93,6 @@ export class Input extends React.Component {
         return (
             <FormGroup style={groupStyle}>
                 {label}
-                {errorMessage}
                 <FormControl
                     inputRef={(ref) => this.inputNode = ref}
                     type={this.props.type}
@@ -112,6 +111,7 @@ export class Input extends React.Component {
                 >
                     {this.props.children}
                 </FormControl>
+                {errorMessage}
             </FormGroup>
         );
     }
