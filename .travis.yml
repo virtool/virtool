@@ -50,7 +50,7 @@ install:
 - source ~/.nvm/nvm.sh
 - nvm install $TRAVIS_NODE_VERSION
 - npm install -g yarn
-- npm install -g webpack
+- npm install -g webpack@v3.11.0
 - cd $TRAVIS_BUILD_DIR
 - cd client
 - yarn install
