@@ -17,7 +17,6 @@ export class Input extends React.Component {
         placeholder: PropTypes.any,
         autoComplete: PropTypes.bool,
         error: PropTypes.oneOfType([PropTypes.string, PropTypes.element]),
-        errorPlacement: PropTypes.string,
         onHide: PropTypes.func,
         onBlur: PropTypes.func,
         onFocus: PropTypes.func,
@@ -32,7 +31,6 @@ export class Input extends React.Component {
     static defaultProps = {
         type: "text",
         autoComplete: true,
-        errorPlacement: "top",
         formGroupStyle: {}
     };
 
