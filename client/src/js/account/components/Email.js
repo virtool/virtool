@@ -1,7 +1,6 @@
 import React from "react";
-import { map } from "lodash-es";
 import { connect } from "react-redux";
-import { Alert, Col, Panel, Row } from "react-bootstrap";
+import { Col, Panel, Row } from "react-bootstrap";
 
 import { updateAccount } from "../actions";
 import { Button, Input } from "../../base";
@@ -9,7 +8,7 @@ import { Button, Input } from "../../base";
 const getInitialState = (email) => ({
     defaultEmail: email ? email : "",
     tempEmail: email ? email : "",
-    errors: []
+    error: ""
 });
 
 const validateEmail = (email) => {
@@ -27,16 +26,16 @@ class Email extends React.Component {
     onSubmit = (e) => {
         e.preventDefault();
 
-        const errors = [];
+        let error = "";
 
         const checkEmail = validateEmail(this.state.tempEmail);
 
         if (!checkEmail) {
-            errors.push("Invalid email");
+            error = "Please provide a valid email address";
         }
 
-        if (errors.length) {
-            return this.setState({errors});
+        if (error) {
+            return this.setState({error});
         }
 
         this.setState({
@@ -50,22 +49,6 @@ class Email extends React.Component {
 
     render () {
 
-        let errorAlert;
-
-        if (this.state.errors.length) {
-            const errorComponents = map(this.state.errors, error =>
-                <li key={error}>
-                    {error}
-                </li>
-            );
-
-            errorAlert = (
-                <Alert bsStyle="danger">
-                    {errorComponents}
-                </Alert>
-            );
-        }
-
         return (
             <Panel header="Email">
                 <form onSubmit={this.onSubmit}>
@@ -73,8 +56,9 @@ class Email extends React.Component {
                         label="Email address"
                         value={this.state.tempEmail}
                         onChange={(e) => this.setState({tempEmail: e.target.value, errors: []})}
+                        error={this.state.error}
                     />
-                    {errorAlert}
+
                     <div style={{marginTop: "20px"}}>
                         <Row>
                             <Col xs={24} md={12}>
