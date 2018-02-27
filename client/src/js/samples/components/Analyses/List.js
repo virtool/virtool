@@ -8,9 +8,10 @@ import { Icon, Button, LoadingPlaceholder, NoneFound, Flex, FlexItem } from "../
 import AnalysisItem from "./Item";
 import CreateAnalysis from "./Create";
 import {getCanModify} from "../../selectors";
+import { findIndexes } from "../../../indexes/actions";
 import { fetchHmms } from "../../../hmm/actions";
 
-const AnalysesToolbar = ({ onClick }) => (
+const AnalysesToolbar = ({ onClick, isDisabled }) => (
     <div className="toolbar">
         <FormGroup>
             <InputGroup>
@@ -25,6 +26,7 @@ const AnalysesToolbar = ({ onClick }) => (
             tip="New Analysis"
             bsStyle="primary"
             onClick={onClick}
+            disabled={isDisabled}
         />
     </div>
 );
@@ -39,12 +41,13 @@ class AnalysesList extends React.Component {
     }
 
     componentWillMount () {
+        this.props.onFindIndexes();
         this.props.onFetchHMMs();
     }
 
     render () {
 
-        if (this.props.analyses === null || this.props.hmms.documents === null) {
+        if (this.props.analyses === null || this.props.hmms.documents === null || this.props.indexArray === null) {
             return <LoadingPlaceholder margin="37px" />;
         }
 
@@ -59,12 +62,61 @@ class AnalysesList extends React.Component {
         } else {
             listContent = <NoneFound noun="analyses" noListGroup />;
         }
+      
+        let alertMessage;
+        let isBlocked = false;
 
-        let alert;
-        const checkHMM = !this.props.hmms.file_exists || !this.props.hmms.total_count;
+        if (this.props.modifiedCount) {
+            alertMessage = (
+                <div>
+                    <span>Note: The virus database has changed. </span>
+                    <Link to="/viruses/indexes">Rebuild the index</Link>
+                    <span> to use the latest changes.</span>
+                </div>
+            );
+        }
 
-        if (checkHMM) {
-            alert = (
+        if (this.props.indexArray) {
+            const readyIndexes = map(this.props.indexArray, ["ready", true]);
+
+            if (!readyIndexes.length) {
+                alertMessage = (
+                    <div>
+                        <span>
+                            A virus database index build is in progress.
+                        </span>
+                    </div>
+                );
+
+                isBlocked = true;
+            }
+        } else {
+            alertMessage = (
+                <div>
+                    <span>A virus database is not found. </span>
+                    <Link to="/viruses/indexes">Add a database</Link>
+                    <span> to use in analyses.</span>
+                </div>
+            );
+
+            isBlocked = true;
+        }
+
+        const indexAlert = alertMessage ? (
+            <Alert bsStyle="warning">
+                <Flex alignItems="center">
+                    <Icon name="info" />
+                    <FlexItem pad={5}>
+                        {alertMessage}
+                    </FlexItem>
+                </Flex>
+            </Alert>
+        ) : null;
+      
+        let hmmAlert;
+      
+        if (!this.props.hmms.file_exists || !this.props.hmms.total_count) {
+            hmmAlert = (
                 <Alert bsStyle="warning">
                     <Flex alignItems="center">
                         <Icon name="info" />
@@ -77,12 +129,17 @@ class AnalysesList extends React.Component {
                 </Alert>
             );
         }
-
+      
         return (
             <div>
-                {alert}
-
-                {this.props.canModify ? <AnalysesToolbar onClick={() => this.setState({show: true})} /> : null}
+                {hmmAlert}
+                {indexAlert}
+          
+                {this.props.canModify ?
+                    <AnalysesToolbar
+                        onClick={() => this.setState({show: true})}
+                        isDisabled={isBlocked}
+                    /> : null}
 
                 <ListGroup>
                     {listContent}
@@ -103,18 +160,24 @@ class AnalysesList extends React.Component {
 const mapStateToProps = (state) => ({
     detail: state.samples.detail,
     analyses: state.samples.analyses,
+    modifiedCount: state.indexes.modified_virus_count,
+    indexArray: state.indexes.documents,
     hmms: state.hmms,
     canModify: getCanModify(state)
 });
 
 const mapDispatchToProps = (dispatch) => ({
 
+    onAnalyze: (sampleId, algorithm) => {
+        dispatch(analyze(sampleId, algorithm));
+    },
+  
     onFetchHMMs: () => {
         dispatch(fetchHmms());
     },
 
-    onAnalyze: (sampleId, algorithm) => {
-        dispatch(analyze(sampleId, algorithm));
+    onFindIndexes: () => {
+        dispatch(findIndexes());
     }
 
 });
