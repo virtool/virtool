@@ -24,7 +24,13 @@ export const AlgorithmSelect = (props) => (
         onChange={props.onChange}
     >
         {map(algorithms, algorithm =>
-            <option key={algorithm} value={algorithm}>{getTaskDisplayName(algorithm)}</option>
+            <option
+                key={algorithm}
+                value={algorithm}
+                disabled={(algorithm === "nuvs" && !props.disabled)}
+            >
+                {getTaskDisplayName(algorithm)}
+            </option>
         )}
     </Input>
 );
@@ -32,6 +38,7 @@ export const AlgorithmSelect = (props) => (
 AlgorithmSelect.propTypes = {
     noLabel: PropTypes.bool,
     value: PropTypes.oneOf(["pathoscope_bowtie", "nuvs"]),
-    onChange: PropTypes.func
+    onChange: PropTypes.func,
+    disabled: PropTypes.bool
 };
 

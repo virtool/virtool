@@ -1,15 +1,15 @@
 import React from "react";
 import { map, sortBy } from "lodash-es";
 import { connect } from "react-redux";
-import { Link } from "react-router-dom";
 import { ListGroup, FormGroup, InputGroup, FormControl, Alert } from "react-bootstrap";
-
+import { Link } from "react-router-dom";
 import { analyze } from "../../actions";
 import { Icon, Button, LoadingPlaceholder, NoneFound, Flex, FlexItem } from "../../../base";
 import AnalysisItem from "./Item";
 import CreateAnalysis from "./Create";
 import {getCanModify} from "../../selectors";
 import { findIndexes } from "../../../indexes/actions";
+import { fetchHmms } from "../../../hmm/actions";
 
 const AnalysesToolbar = ({ onClick, isDisabled }) => (
     <div className="toolbar">
@@ -42,11 +42,12 @@ class AnalysesList extends React.Component {
 
     componentWillMount () {
         this.props.onFindIndexes();
+        this.props.onFetchHMMs();
     }
 
     render () {
 
-        if (this.props.analyses === null) {
+        if (this.props.analyses === null || this.props.hmms.documents === null || this.props.indexArray === null) {
             return <LoadingPlaceholder margin="37px" />;
         }
 
@@ -61,7 +62,7 @@ class AnalysesList extends React.Component {
         } else {
             listContent = <NoneFound noun="analyses" noListGroup />;
         }
-
+      
         let alertMessage;
         let isBlocked = false;
 
@@ -76,7 +77,7 @@ class AnalysesList extends React.Component {
         }
 
         if (this.props.indexArray) {
-            const readyIndexes = map(this.props.indexArray, [ "ready", true ]);
+            const readyIndexes = map(this.props.indexArray, ["ready", true]);
 
             if (!readyIndexes.length) {
                 alertMessage = (
@@ -101,7 +102,7 @@ class AnalysesList extends React.Component {
             isBlocked = true;
         }
 
-        const alert = alertMessage ? (
+        const indexAlert = alertMessage ? (
             <Alert bsStyle="warning">
                 <Flex alignItems="center">
                     <Icon name="info" />
@@ -111,11 +112,29 @@ class AnalysesList extends React.Component {
                 </Flex>
             </Alert>
         ) : null;
-
+      
+        let hmmAlert;
+      
+        if (!this.props.hmms.file_exists || !this.props.hmms.total_count) {
+            hmmAlert = (
+                <Alert bsStyle="warning">
+                    <Flex alignItems="center">
+                        <Icon name="info" />
+                        <FlexItem pad={5}>
+                            <span>The HMM data is not installed. </span>
+                            <Link to="/hmm">Install HMMs</Link>
+                            <span> to use in further NuV analyses.</span>
+                        </FlexItem>
+                    </Flex>
+                </Alert>
+            );
+        }
+      
         return (
             <div>
-                {alert}
-
+                {hmmAlert}
+                {indexAlert}
+          
                 {this.props.canModify ?
                     <AnalysesToolbar
                         onClick={() => this.setState({show: true})}
@@ -131,6 +150,7 @@ class AnalysesList extends React.Component {
                     show={this.state.show}
                     onHide={() => this.setState({show: false})}
                     onSubmit={this.props.onAnalyze}
+                    isHMM={!checkHMM}
                 />
             </div>
         );
@@ -140,15 +160,20 @@ class AnalysesList extends React.Component {
 const mapStateToProps = (state) => ({
     detail: state.samples.detail,
     analyses: state.samples.analyses,
-    canModify: getCanModify(state),
     modifiedCount: state.indexes.modified_virus_count,
-    indexArray: state.indexes.documents
+    indexArray: state.indexes.documents,
+    hmms: state.hmms,
+    canModify: getCanModify(state)
 });
 
 const mapDispatchToProps = (dispatch) => ({
 
     onAnalyze: (sampleId, algorithm) => {
         dispatch(analyze(sampleId, algorithm));
+    },
+  
+    onFetchHMMs: () => {
+        dispatch(fetchHmms());
     },
 
     onFindIndexes: () => {
