@@ -2,7 +2,7 @@ import React from "react";
 import PropTypes from "prop-types";
 import { connect } from "react-redux";
 import { Modal } from "react-bootstrap";
-import { findIndex } from "lodash-es";
+import { findIndex, find } from "lodash-es";
 import SegmentForm from "./SegmentForm";
 import { Button } from "../../../base";
 
@@ -11,7 +11,8 @@ const getInitialState = (props) => ({
         name: props.curSeg.name,
         molecule: props.curSeg.molecule,
         required: props.curSeg.required,
-        showError: false
+        showError: false,
+        nameTaken: false
     }
 });
 
@@ -38,7 +39,11 @@ class EditSegment extends React.Component {
     }
 
     handleSubmit = () => {
-        if (this.state.newEntry.name) {
+        const checkName = find(this.props.schema, ["name", this.state.newEntry.name]);
+
+        if (checkName) {
+            this.setState({nameTaken: true});
+        } else if (this.state.newEntry.name) {
             const newArray = this.props.schema.slice();
             const name = this.props.curSeg.name;
             const index = findIndex(newArray, ["name", name]);
@@ -63,6 +68,7 @@ class EditSegment extends React.Component {
                         onChange={this.handleChange}
                         newEntry={this.state.newEntry}
                         show={this.state.showError}
+                        segmentExists={this.state.nameTaken}
                     />
                 </Modal.Body>
                 <Modal.Footer>

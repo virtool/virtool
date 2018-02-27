@@ -85,24 +85,26 @@ export const removeIsolate = (virusId, isolateId, nextIsolateId) => ({
     nextIsolateId
 });
 
-export const addSequence = (virusId, isolateId, sequenceId, definition, host, sequence) => ({
+export const addSequence = (virusId, isolateId, sequenceId, definition, host, sequence, segment) => ({
     type: ADD_SEQUENCE.REQUESTED,
     virusId,
     isolateId,
     sequenceId,
     definition,
     host,
-    sequence
+    sequence,
+    segment
 });
 
-export const editSequence = (virusId, isolateId, sequenceId, definition, host, sequence) => ({
+export const editSequence = (virusId, isolateId, sequenceId, definition, host, sequence, segment) => ({
     type: EDIT_SEQUENCE.REQUESTED,
     virusId,
     isolateId,
     sequenceId,
     definition,
     host,
-    sequence
+    sequence,
+    segment
 });
 
 export const removeSequence = (virusId, isolateId, sequenceId) => ({

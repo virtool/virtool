@@ -12,6 +12,7 @@ import React from "react";
 import { connect } from "react-redux";
 import { Row, Col, Modal, FormGroup, InputGroup, ControlLabel, Popover, Overlay } from "react-bootstrap";
 import { ClipLoader } from "halogenium";
+import { map } from "lodash-es";
 
 import SequenceField from "./SequenceField";
 import { addSequence, hideVirusModal } from "../../actions";
@@ -23,6 +24,7 @@ const getInitialState = () => ({
     definition: "",
     host: "",
     sequence: "",
+    segment: "",
     autofillPending: false,
     error: false
 });
@@ -84,7 +86,8 @@ class AddSequence extends React.Component {
                 this.state.id,
                 this.state.definition,
                 this.state.host,
-                this.state.sequence
+                this.state.sequence,
+                this.state.segment
             );
         } else {
             this.setState({show: true});
@@ -92,6 +95,7 @@ class AddSequence extends React.Component {
     };
 
     render () {
+
         let overlay;
 
         if (this.state.autofillPending) {
@@ -105,6 +109,14 @@ class AddSequence extends React.Component {
         }
 
         const errorMessage = this.state.show ? "Required Field" : "";
+
+        const defaultOption = (<option key="" value=""> - None - </option>);
+
+        const segmentNames = map(this.props.schema, (segment) =>
+            <option key={segment} value={segment}>
+                {segment}
+            </option>
+        );
 
         return (
             <Modal show={this.props.show} onHide={this.props.onHide} onExited={this.handleModalExited}>
@@ -147,6 +159,20 @@ class AddSequence extends React.Component {
                                 </FormGroup>
                             </Col>
                             <Col xs={12} md={6}>
+                                <Input
+                                    type="select"
+                                    label="Segment"
+                                    name="segment"
+                                    value={this.state.segment}
+                                    onChange={this.handleChange}
+                                >
+                                    {defaultOption}
+                                    {segmentNames}
+                                </Input>
+                            </Col>
+                        </Row>
+                        <Row>
+                            <Col xs={12}>
                                 <Input
                                     label="Host"
                                     name="host"
@@ -198,8 +224,8 @@ const mapDispatchToProps = dispatch => ({
         dispatch(hideVirusModal());
     },
 
-    onSave: (virusId, isolateId, sequenceId, definition, host, sequence) => {
-        dispatch(addSequence(virusId, isolateId, sequenceId, definition, host, sequence));
+    onSave: (virusId, isolateId, sequenceId, definition, host, sequence, segment) => {
+        dispatch(addSequence(virusId, isolateId, sequenceId, definition, host, sequence, segment));
     }
 
 });
