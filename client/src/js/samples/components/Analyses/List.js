@@ -62,7 +62,7 @@ class AnalysesList extends React.Component {
         } else {
             listContent = <NoneFound noun="analyses" noListGroup />;
         }
-      
+
         let alertMessage;
         let isBlocked = false;
 
@@ -112,9 +112,9 @@ class AnalysesList extends React.Component {
                 </Flex>
             </Alert>
         ) : null;
-      
+
         let hmmAlert;
-      
+
         if (!this.props.hmms.file_exists || !this.props.hmms.total_count) {
             hmmAlert = (
                 <Alert bsStyle="warning">
@@ -129,12 +129,12 @@ class AnalysesList extends React.Component {
                 </Alert>
             );
         }
-      
+
         return (
             <div>
                 {hmmAlert}
                 {indexAlert}
-          
+
                 {this.props.canModify ?
                     <AnalysesToolbar
                         onClick={() => this.setState({show: true})}
@@ -150,7 +150,7 @@ class AnalysesList extends React.Component {
                     show={this.state.show}
                     onHide={() => this.setState({show: false})}
                     onSubmit={this.props.onAnalyze}
-                    isHMM={!checkHMM}
+                    isHMM={!this.props.hmms.total_count || !this.props.hmms.file_exists}
                 />
             </div>
         );
@@ -171,7 +171,7 @@ const mapDispatchToProps = (dispatch) => ({
     onAnalyze: (sampleId, algorithm) => {
         dispatch(analyze(sampleId, algorithm));
     },
-  
+
     onFetchHMMs: () => {
         dispatch(fetchHmms());
     },
