@@ -47,8 +47,6 @@ class EditSample extends React.Component {
 
     render () {
 
-
-        // Not sure what this <p> element will show? true/false?
         let error;
 
         if (this.props.error) {
