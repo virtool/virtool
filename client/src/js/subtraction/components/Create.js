@@ -38,7 +38,8 @@ class SubtractionFileItem extends React.Component {
 
 const getInitialState = () => ({
     subtractionId: "",
-    fileId: ""
+    fileId: "",
+    error: ""
 });
 
 class CreateSubtraction extends React.Component {
@@ -49,7 +50,10 @@ class CreateSubtraction extends React.Component {
     }
 
     handleChange = (e) => {
-        this.setState({subtractionId: e.target.value});
+        this.setState({
+            subtractionId: e.target.value,
+            error: ""
+        });
     };
 
     handleModalEnter = () => {
@@ -68,7 +72,12 @@ class CreateSubtraction extends React.Component {
 
     handleSubmit = (e) => {
         e.preventDefault();
-        this.props.onCreate(this.state);
+
+        if (this.state.subtractionId) {
+            this.props.onCreate(this.state);
+        } else {
+            this.setState({error: "Required"});
+        }
     };
 
     render () {
@@ -114,6 +123,7 @@ class CreateSubtraction extends React.Component {
                             label="Unique Name"
                             value={this.state.subtractionId}
                             onChange={this.handleChange}
+                            error={this.state.error}
                         />
 
                         <h5><strong>Files</strong></h5>

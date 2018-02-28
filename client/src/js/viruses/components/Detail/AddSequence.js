@@ -10,7 +10,7 @@
  */
 import React from "react";
 import { connect } from "react-redux";
-import { Row, Col, Modal, FormGroup, InputGroup, ControlLabel, Popover, Overlay } from "react-bootstrap";
+import { Row, Col, Modal, FormGroup, InputGroup, ControlLabel } from "react-bootstrap";
 import { ClipLoader } from "halogenium";
 
 import SequenceField from "./SequenceField";
@@ -120,25 +120,13 @@ class AddSequence extends React.Component {
                                 <FormGroup>
                                     <ControlLabel>Accession (ID)</ControlLabel>
                                     <InputGroup>
-                                        <Overlay
-                                            show={!!this.state.error}
-                                            target={this.accessionNode}
-                                            placement="top"
-                                            container={this}
-                                            onHide={this.handleHideError}
-                                            animation={false}
-                                        >
-                                            <Popover id="error-popover">
-                                                {this.state.error}
-                                            </Popover>
-                                        </Overlay>
                                         <Input
                                             name="id"
                                             value={this.state.id}
                                             onChange={this.handleChange}
                                             error={errorMessage}
                                         />
-                                        <InputGroup.Button>
+                                        <InputGroup.Button style={{verticalAlign: "top", zIndex: "0"}}>
                                             <Button type="button" onClick={this.handleAutofill}>
                                                 <Icon name="wand" />
                                             </Button>

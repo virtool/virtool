@@ -54,7 +54,7 @@ export class Input extends React.Component {
 
         if (this.props.error) {
             errorMessage = (
-                <div style={{display: "block", color: "red", fontSize: "small", float: "right"}}>
+                <div style={{display: "inline", color: "red", fontSize: "small", float: "right"}}>
                     {this.props.error}
                 </div>
             );
