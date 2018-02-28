@@ -158,7 +158,13 @@ class CreateSample extends React.Component {
         const errorFile = find(this.state.errors, ["id", 2]) ? find(this.state.errors, ["id", 2]).message : null;
 
         return (
-            <Modal bsSize="large" show={this.props.show} onHide={this.props.onHide} onEnter={this.modalEnter} onExited={this.handleModalExited}>
+            <Modal
+                bsSize="large"
+                show={this.props.show}
+                onHide={this.props.onHide}
+                onEnter={this.modalEnter}
+                onExited={this.handleModalExited}
+            >
                 <Modal.Header onHide={this.props.onHide} closeButton>
                     Create Sample
                 </Modal.Header>
