@@ -240,7 +240,8 @@ class TestCreate:
             "sample_all_read": True,
             "sample_all_write": True,
             "sample_group_read": True,
-            "sample_group_write": True
+            "sample_group_write": True,
+            "sample_unique_names": True
         })
 
         m_reserve = make_mocked_coro()
@@ -327,6 +328,8 @@ class TestCreate:
     async def test_name_exists(self, spawn_client, static_time, resp_is):
         client = await spawn_client(authorize=True, permissions=["create_sample"])
 
+        client.app["settings"]["sample_unique_names"] = True
+
         await client.db.samples.insert_one({
             "_id": "foobar",
             "name": "Foobar",
@@ -342,7 +345,7 @@ class TestCreate:
             "subtraction": "apple"
         })
 
-        assert await resp_is.conflict(resp, "Sample name 'Foobar' already exists")
+        assert await resp_is.conflict(resp, "Sample name is already in use")
 
     async def test_force_choice(self, spawn_client, static_time, resp_is):
         """
@@ -353,6 +356,7 @@ class TestCreate:
         client = await spawn_client(authorize=True, permissions=["create_sample"])
 
         client.app["settings"]["sample_group"] = "force_choice"
+        client.app["settings"]["sample_unique_names"] = True
 
         resp = await client.post("/api/samples", {
             "name": "Foobar",
@@ -366,6 +370,7 @@ class TestCreate:
         client = await spawn_client(authorize=True, permissions=["create_sample"])
 
         client.app["settings"]["sample_group"] = "force_choice"
+        client.app["settings"]["sample_unique_names"] = True
 
         resp = await client.post("/api/samples", {
             "name": "Foobar",
@@ -379,6 +384,8 @@ class TestCreate:
     @pytest.mark.parametrize("in_db", [True, False])
     async def test_subtraction_dne(self, in_db, spawn_client, resp_is):
         client = await spawn_client(authorize=True, permissions=["create_sample"])
+
+        client.app["settings"]["sample_unique_names"] = True
 
         resp = await client.post("/api/samples", {
             "name": "Foobar",
@@ -401,6 +408,8 @@ class TestCreate:
 
         """
         client = await spawn_client(authorize=True, permissions=["create_sample"])
+
+        client.app["settings"]["sample_unique_names"] = True
 
         await client.db.subtraction.insert_one({
             "_id": "apple",
