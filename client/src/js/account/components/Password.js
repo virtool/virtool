@@ -47,14 +47,14 @@ class ChangePassword extends React.Component {
         if (!this.state.oldPassword.length) {
             errors.push({
                 id: 0,
-                message: "Old password is empty"
+                message: "Please provide your old password"
             });
         }
 
         if (this.state.newPassword.length < minLength) {
             errors.push({
                 id: 1,
-                message: `Password must contain at least ${minLength} characters`
+                message: `Passwords must contain at least ${minLength} characters`
             });
         }
 
