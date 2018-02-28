@@ -67,6 +67,18 @@ class CreateSample extends React.Component {
         this.props.onFindFiles();
     };
 
+    handleModalExited = () => {
+        this.setState({
+            selected: [],
+            name: "",
+            host: "",
+            isolate: "",
+            locale: "",
+            group: this.props.forceGroupChoice ? "none" : "",
+            errors: []
+        });
+    };
+
     handleSubmit = (e) => {
         e.preventDefault();
 
@@ -146,7 +158,7 @@ class CreateSample extends React.Component {
         const errorFile = find(this.state.errors, ["id", 2]) ? find(this.state.errors, ["id", 2]).message : null;
 
         return (
-            <Modal bsSize="large" show={this.props.show} onHide={this.props.onHide} onEnter={this.modalEnter}>
+            <Modal bsSize="large" show={this.props.show} onHide={this.props.onHide} onEnter={this.modalEnter} onExited={this.handleModalExited}>
                 <Modal.Header onHide={this.props.onHide} closeButton>
                     Create Sample
                 </Modal.Header>
