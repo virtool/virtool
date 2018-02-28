@@ -97,6 +97,11 @@ async def get(req):
 async def create(req):
     db, data = await unpack_request(req)
 
+    message = await virtool.sample.check_name(db, req.app["settings"], data["name"])
+
+    if message:
+        return conflict(message)
+
     if req.app["settings"].get("sample_group") == "force_choice":
         try:
             if not await db.groups.count({"_id": data["group"]}):
@@ -189,7 +194,14 @@ async def edit(req):
     """
     db, data = req.app["db"], req["data"]
 
-    document = await db.samples.find_one_and_update({"_id": req.match_info["sample_id"]}, {
+    sample_id = req.match_info["sample_id"]
+
+    message = await virtool.sample.check_name(db, req.app["settings"], data["name"], sample_id=sample_id)
+
+    if message:
+        return conflict(message)
+
+    document = await db.samples.find_one_and_update({"_id": sample_id}, {
         "$set": data
     }, return_document=ReturnDocument.AFTER, projection=virtool.sample.LIST_PROJECTION)
 
