@@ -7,7 +7,8 @@ import { Button, Icon, Input } from "../../../base";
 
 const getInitialState = ({ name = "", abbreviation = "" }) => ({
     name,
-    abbreviation
+    abbreviation,
+    error: ""
 });
 
 class EditVirus extends React.Component {
@@ -30,6 +31,12 @@ class EditVirus extends React.Component {
 
     handleSave = (e) => {
         e.preventDefault();
+
+        if (!this.state.name) {
+            this.setState({error: "Required Field"});
+            return;
+        }
+
         this.props.onSave(this.props.virusId, this.state.name, this.state.abbreviation);
     };
 
@@ -59,6 +66,7 @@ class EditVirus extends React.Component {
                                     name="name"
                                     value={this.state.name}
                                     onChange={this.handleChange}
+                                    error={this.state.error}
                                 />
                             </Col>
                             <Col md={6} xs={12}>
