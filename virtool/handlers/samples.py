@@ -86,7 +86,7 @@ async def get(req):
 
 @protected("create_sample")
 @validation({
-    "name": {"type": "string", "required": True},
+    "name": {"type": "string", "minlength": 1, "required": True},
     "host": {"type": "string"},
     "isolate": {"type": "string"},
     "group": {"type": "string"},
@@ -177,7 +177,7 @@ async def create(req):
 
 
 @validation({
-    "name": {"type": "string"},
+    "name": {"type": "string", "minlength": 1},
     "host": {"type": "string"},
     "isolate": {"type": "string"},
     "locale": {"type": "string"}
