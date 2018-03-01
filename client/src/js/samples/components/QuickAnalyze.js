@@ -64,6 +64,7 @@ class QuickAnalyze extends React.Component {
     };
 
     render () {
+
         return (
             <Modal bsSize="small" show={this.props.show} onHide={this.props.onHide} onExited={this.modalExited}>
                 <form onSubmit={this.handleSubmit}>
@@ -74,7 +75,7 @@ class QuickAnalyze extends React.Component {
                     <Modal.Body>
                         <Input
                             label="Sample"
-                            value={this.props.name}
+                            value={this.props.show ? this.props.quickAnalyze.name : ""}
                             readOnly
                         />
 
@@ -110,7 +111,11 @@ class QuickAnalyze extends React.Component {
 const mapStateToProps = (state) => ({
     ...(state.router.location.state || {}),
     algorithm: state.account.settings.quick_analyze_algorithm,
-    show: routerLocationHasState(state, "quickAnalyze")
+    show: routerLocationHasState(
+        state,
+        "quickAnalyze",
+        state.router.location.state ? state.router.location.state["quickAnalyze"] : false
+    )
 
 });
 

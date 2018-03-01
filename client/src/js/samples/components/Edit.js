@@ -1,5 +1,5 @@
 import React from "react";
-import { get } from "lodash-es";
+import { get, pick } from "lodash-es";
 import { push } from "react-router-redux";
 import { connect } from "react-redux";
 import { Row, Col, Modal } from "react-bootstrap";
@@ -10,7 +10,8 @@ import { Button, Icon, Input } from "../../base";
 const getInitialState = ({ name, isolate, host }) => ({
     name: name || "",
     isolate: isolate || "",
-    host: host || ""
+    host: host || "",
+    error: ""
 });
 
 class EditSample extends React.Component {
@@ -33,7 +34,15 @@ class EditSample extends React.Component {
 
     handleSubmit = (e) => {
         e.preventDefault();
-        this.props.onEdit(this.props.id, this.state);
+
+        if (!this.state.name) {
+            this.setState({
+                error: "Required Field"
+            });
+            return;
+        }
+
+        this.props.onEdit(this.props.id, pick(this.state, ["name", "isolate", "host"]));
     };
 
     render () {
@@ -62,6 +71,7 @@ class EditSample extends React.Component {
                                     name="name"
                                     value={this.state.name}
                                     onChange={this.handleChange}
+                                    error={this.state.error}
                                 />
                             </Col>
                             <Col xs={12} md={6}>

@@ -10,7 +10,7 @@
  */
 import React from "react";
 import { connect } from "react-redux";
-import { Row, Col, Modal, FormGroup, InputGroup, ControlLabel, Popover, Overlay } from "react-bootstrap";
+import { Row, Col, Modal, FormGroup, InputGroup, ControlLabel } from "react-bootstrap";
 import { ClipLoader } from "halogenium";
 import { map } from "lodash-es";
 
@@ -26,7 +26,7 @@ const getInitialState = () => ({
     sequence: "",
     segment: "",
     autofillPending: false,
-    error: false
+    error: ""
 });
 
 class AddSequence extends React.Component {
@@ -51,7 +51,7 @@ class AddSequence extends React.Component {
             }, (err) => {
                 this.setState({
                     autofillPending: false,
-                    error: err.status === 404 ? "Accession not found" : false
+                    error: err.status === 404 ? "Accession not found" : ""
                 });
                 return err;
             });
@@ -63,12 +63,12 @@ class AddSequence extends React.Component {
 
         this.setState({
             [name]: value,
-            error: name === "id" ? false : this.state.error
+            error: name === "id" ? "" : this.state.error
         });
     };
 
     handleHideError = () => {
-        this.setState({error: false});
+        this.setState({error: ""});
     };
 
     handleModalExited = () => {
@@ -90,7 +90,10 @@ class AddSequence extends React.Component {
                 this.state.segment
             );
         } else {
-            this.setState({show: true});
+            this.setState({
+                show: true,
+                error: "Required Field"
+            });
         }
     };
 
@@ -107,7 +110,7 @@ class AddSequence extends React.Component {
                 </div>
             );
         }
-
+      
         const errorMessage = this.state.show ? "Required Field" : "";
 
         const defaultOption = (<option key="" value=""> - None - </option>);
@@ -117,7 +120,7 @@ class AddSequence extends React.Component {
                 {segment}
             </option>
         );
-
+      
         return (
             <Modal show={this.props.show} onHide={this.props.onHide} onExited={this.handleModalExited}>
                 <Modal.Header onHide={this.props.onHide} closeButton>
@@ -132,25 +135,13 @@ class AddSequence extends React.Component {
                                 <FormGroup>
                                     <ControlLabel>Accession (ID)</ControlLabel>
                                     <InputGroup>
-                                        <Overlay
-                                            show={!!this.state.error}
-                                            target={this.accessionNode}
-                                            placement="top"
-                                            container={this}
-                                            onHide={this.handleHideError}
-                                            animation={false}
-                                        >
-                                            <Popover id="error-popover">
-                                                {this.state.error}
-                                            </Popover>
-                                        </Overlay>
                                         <Input
                                             name="id"
                                             value={this.state.id}
                                             onChange={this.handleChange}
-                                            error={errorMessage}
+                                            error={this.state.error}
                                         />
-                                        <InputGroup.Button>
+                                        <InputGroup.Button style={{verticalAlign: "top", zIndex: "0"}}>
                                             <Button type="button" onClick={this.handleAutofill}>
                                                 <Icon name="wand" />
                                             </Button>

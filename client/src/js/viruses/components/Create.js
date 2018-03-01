@@ -2,14 +2,15 @@ import React from "react";
 import { connect } from "react-redux";
 import { push } from "react-router-redux";
 import { withRouter } from "react-router-dom";
-import { Row, Col, Modal, Alert, ButtonToolbar } from "react-bootstrap";
+import { Row, Col, Modal, ButtonToolbar } from "react-bootstrap";
 
-import { Icon, Flex, FlexItem, Input, Button } from "../../base";
+import { Input, Button } from "../../base";
 import { createVirus } from "../actions";
 
 const getInitialState = () => ({
     name: "",
-    abbreviation: ""
+    abbreviation: "",
+    error: ""
 });
 
 class CreateVirus extends React.Component {
@@ -20,10 +21,19 @@ class CreateVirus extends React.Component {
         this.state = {show: false, ...getInitialState()};
     }
 
+    componentWillReceiveProps (nextProps) {
+        if (nextProps.error !== this.props.error) {
+            this.setState({
+                error: nextProps.error
+            });
+        }
+    }
+
     handleChange = (e) => {
         const { name, value } = e.target;
         this.setState({
-            [name]: value
+            [name]: value,
+            error: ""
         });
     };
 
@@ -41,31 +51,16 @@ class CreateVirus extends React.Component {
         if (this.state.name) {
             this.setState({show: false});
             this.props.onSubmit(this.state.name, this.state.abbreviation);
+
         } else {
-            this.setState({show: true});
+            this.setState({
+                show: true,
+                error: "Required Field"
+            });
         }
     };
 
     render () {
-
-        let alert;
-
-        if (this.props.error) {
-            alert = (
-                <Alert bsStyle="danger">
-                    <Flex>
-                        <FlexItem grow={0} shrink={0}>
-                            <Icon name="warning" />
-                        </FlexItem>
-                        <FlexItem grow={1} shrink={0} pad>
-                            {this.props.error}
-                        </FlexItem>
-                    </Flex>
-                </Alert>
-            );
-        }
-
-        const errorMessage = this.state.show ? "Required Field" : "";
 
         return (
             <Modal show={this.props.show} onHide={this.handleHide} onExited={this.handleModalExited}>
@@ -82,7 +77,7 @@ class CreateVirus extends React.Component {
                                     name="name"
                                     value={this.state.name}
                                     onChange={this.handleChange}
-                                    error={errorMessage}
+                                    error={this.state.error}
                                 />
                             </Col>
                             <Col md={3}>
@@ -95,7 +90,6 @@ class CreateVirus extends React.Component {
                             </Col>
                         </Row>
 
-                        {alert}
                     </Modal.Body>
 
                     <Modal.Footer>
