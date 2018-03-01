@@ -110,8 +110,6 @@ class AddSequence extends React.Component {
                 </div>
             );
         }
-      
-        const errorMessage = this.state.show ? "Required Field" : "";
 
         const defaultOption = (<option key="" value=""> - None - </option>);
 
@@ -120,7 +118,7 @@ class AddSequence extends React.Component {
                 {segment}
             </option>
         );
-      
+
         return (
             <Modal show={this.props.show} onHide={this.props.onHide} onExited={this.handleModalExited}>
                 <Modal.Header onHide={this.props.onHide} closeButton>
