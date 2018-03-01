@@ -21,7 +21,7 @@ const Bar = (props) => {
 
     return (
         <div className="vt-header">
-            <Navbar fixedTop>
+            <Navbar fixedTop style={{overflow: "hidden"}}>
                 <Navbar.Header>
                     <Navbar.Brand>
                         <Icon name="vtlogo" className="vtlogo" />
