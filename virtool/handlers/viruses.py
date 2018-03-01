@@ -766,6 +766,7 @@ async def get_sequence(req):
     "id": {"type": "string", "required": True},
     "definition": {"type": "string", "required": True},
     "host": {"type": "string"},
+    "segment": {"type": "string"},
     "sequence": {"type": "string", "required": True}
 })
 async def create_sequence(req):
@@ -854,6 +855,7 @@ async def create_sequence(req):
 @validation({
     "host": {"type": "string"},
     "definition": {"type": "string"},
+    "segment": {"type": "string"},
     "sequence": {"type": "string"},
     "schema": {"type": "list"}
 })

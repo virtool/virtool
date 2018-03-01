@@ -86,6 +86,8 @@ class TestCreate:
         """
         client = await spawn_client(authorize=True, permissions=["manage_users"])
 
+        client.app["settings"]["minimum_password_length"] = 8
+
         data = {
             "user_id": "bob",
             "password": "hello_world",
@@ -128,6 +130,8 @@ class TestCreate:
         """
         client = await spawn_client(authorize=True, permissions=["manage_users"])
 
+        client.app["settings"]["minimum_password_length"] = 8
+
         data = {
             "username": "bob",
             "password": 1234,
@@ -151,6 +155,8 @@ class TestCreate:
         """
         client = await spawn_client(authorize=True, permissions=["manage_users"])
 
+        client.app["settings"]["minimum_password_length"] = 8
+
         data = {
             "user_id": "test",
             "password": "hello_world",
@@ -163,11 +169,11 @@ class TestCreate:
 
 
 @pytest.mark.parametrize("data", [
-    {"password": "foo_bar", "force_reset": True, "primary_group": "tech"},
-    {"password": "foo_bar", "force_reset": True},
+    {"password": "hello_world", "force_reset": True, "primary_group": "tech"},
+    {"password": "hello_world", "force_reset": True},
     {"force_reset": True, "primary_group": "tech"},
-    {"password": "foo_bar", "primary_group": "tech"},
-    {"password": "foo_bar"},
+    {"password": "hello_world", "primary_group": "tech"},
+    {"password": "hello_world"},
     {"force_reset": True},
     {"primary_group": "tech"}
 ])
@@ -176,13 +182,13 @@ async def test_edit(data, error, spawn_client, resp_is, static_time, create_user
 
     client = await spawn_client(authorize=True, permissions=["manage_users"])
 
+    client.app["settings"]["minimum_password_length"] = 8
+
     bob = None
 
     if error != "user_dne":
         groups = [] if error == "not_group_member" else ["tech"]
         bob = dict(create_user("bob", groups=groups))
-        import pprint
-        pprint.pprint(bob)
         await client.db.users.insert_one(bob)
 
     groups_to_insert = [{

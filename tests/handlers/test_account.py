@@ -138,6 +138,8 @@ class TestChangePassword:
         """
         client = await spawn_client(authorize=True)
 
+        client.app["settings"]["minimum_password_length"] = 8
+
         resp = await client.put("/api/account/password", {"old_password": "hello_world", "new_password": "foo_bar_1"})
 
         assert resp.status == 200
@@ -153,12 +155,14 @@ class TestChangePassword:
         """
         client = await spawn_client(authorize=True)
 
+        client.app["settings"]["minimum_password_length"] = 8
+
         resp = await client.put("/api/account/password", {
             "old_password": "not_right",
             "new_password": "foo_bar"
         })
 
-        assert await resp_is.bad_request(resp, "Password is to short. Must be at least 8 characters.")
+        assert await resp_is.invalid_input(resp, {'new_password': ['min length is 8']})
 
     async def test_invalid_old(self, spawn_client, resp_is):
         """
@@ -166,6 +170,8 @@ class TestChangePassword:
 
         """
         client = await spawn_client(authorize=True)
+
+        client.app["settings"]["minimum_password_length"] = 8
 
         resp = await client.put("/api/account/password", {
             "old_password": "not_right",
@@ -180,6 +186,8 @@ class TestChangePassword:
 
         """
         client = await spawn_client(authorize=True)
+
+        client.app["settings"]["minimum_password_length"] = 8
 
         resp = await client.put("/api/account/password", {"new_password": 1234})
 
@@ -265,8 +273,6 @@ class TestCreateAPIKey:
             body["permissions"] = req_permissions
 
         resp = await client.post("/api/account/keys", body)
-
-        print(await resp.json())
 
         assert resp.status == 201
 

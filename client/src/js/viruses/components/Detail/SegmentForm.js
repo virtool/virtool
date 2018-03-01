@@ -1,6 +1,6 @@
 import React from "react";
 import PropTypes from "prop-types";
-import { Row, Col } from "react-bootstrap";
+import { Row, Col, Alert } from "react-bootstrap";
 import { map } from "lodash-es";
 import { Input, Checkbox } from "../../../base";
 
@@ -10,7 +10,7 @@ export default class SegmentForm extends React.Component {
         super(props);
 
         this.state = {
-            isChecked: false,
+            isChecked: true,
             showError: this.props.show
         };
     }
@@ -47,6 +47,16 @@ export default class SegmentForm extends React.Component {
     render () {
 
         const errorMessage = this.state.showError ? "Required Field" : "";
+
+        const alert = this.props.segmentExists ? (
+            <Row>
+                <Col md={12}>
+                    <Alert bsStyle="danger" style={{margin: "10px 0 0 0"}}>
+                        <span>Segment names must be unique. This name is currently in use.</span>
+                    </Alert>
+                </Col>
+            </Row>
+        ) : null;
 
         const moleculeTypes = [
             "",
@@ -96,6 +106,7 @@ export default class SegmentForm extends React.Component {
                         />
                     </Col>
                 </Row>
+                {alert}
             </form>
         );
     }
@@ -104,5 +115,6 @@ export default class SegmentForm extends React.Component {
 SegmentForm.propTypes = {
     onChange: PropTypes.func.isRequired,
     newEntry: PropTypes.object.isRequired,
-    show: PropTypes.bool
+    show: PropTypes.bool,
+    segmentExists: PropTypes.bool
 };

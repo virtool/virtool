@@ -10,16 +10,17 @@
  */
 
 import React from "react";
-import { find } from "lodash-es";
+import { find, map } from "lodash-es";
 import { connect } from "react-redux";
 import { Row, Col, Modal, FormGroup, FormControl, InputGroup, ControlLabel } from "react-bootstrap";
 
 import { editSequence, hideVirusModal } from "../../actions";
-import { Button, Icon } from "../../../base";
+import { Button, Icon, Input } from "../../../base";
 import SequenceField from "./SequenceField";
 import { getGenbank } from "../../api";
 
 const getInitialState = (props) => {
+
     if (props.sequenceId) {
         const isolate = {...props.isolate};
         const sequence = find(isolate.sequences, {id: props.sequenceId});
@@ -28,6 +29,7 @@ const getInitialState = (props) => {
             definition: sequence.definition,
             host: sequence.host,
             sequence: sequence.sequence,
+            segment: sequence.segment,
             autofillPending: false
         };
     }
@@ -36,6 +38,7 @@ const getInitialState = (props) => {
         definition: "",
         host: "",
         sequence: "",
+        segment: "",
         autofillPending: false
     };
 };
@@ -49,6 +52,7 @@ class EditSequence extends React.Component {
 
     handleChange = (e) => {
         const { name, value } = e.target;
+
         this.setState({
             [name]: value
         });
@@ -67,7 +71,8 @@ class EditSequence extends React.Component {
             this.props.sequenceId,
             this.state.definition,
             this.state.host,
-            this.state.sequence
+            this.state.sequence,
+            this.state.segment
         );
     };
 
@@ -90,6 +95,7 @@ class EditSequence extends React.Component {
     };
 
     render () {
+
         let overlay;
 
         if (this.state.autofillPending) {
@@ -101,6 +107,16 @@ class EditSequence extends React.Component {
                 </div>
             );
         }
+
+        const currentOption = this.state.segment
+            ? (<option key={this.state.segment} value={this.state.segment}>{this.state.segment}</option>)
+            : null;
+        const defaultOption = (<option key="" value=""> - None - </option>);
+        const segmentNames = map(this.props.schema, (segment) =>
+            <option key={segment} value={segment}>
+                {segment}
+            </option>
+        );
 
         return (
             <Modal show={!!this.props.sequenceId} onEnter={this.handleModalEnter} onHide={this.props.onHide}>
@@ -130,6 +146,21 @@ class EditSequence extends React.Component {
                                 </FormGroup>
                             </Col>
                             <Col xs={12} md={6}>
+                                <Input
+                                    type="select"
+                                    label="Segment"
+                                    name="segment"
+                                    value={this.state.segment}
+                                    onChange={this.handleChange}
+                                >
+                                    {defaultOption}
+                                    {currentOption}
+                                    {segmentNames}
+                                </Input>
+                            </Col>
+                        </Row>
+                        <Row>
+                            <Col xs={12}>
                                 <FormGroup>
                                     <ControlLabel>Host</ControlLabel>
                                     <FormControl
@@ -186,8 +217,8 @@ const mapDispatchToProps = dispatch => ({
         dispatch(hideVirusModal());
     },
 
-    onSave: (virusId, isolateId, sequenceId, definition, host, sequence) => {
-        dispatch(editSequence(virusId, isolateId, sequenceId, definition, host, sequence));
+    onSave: (virusId, isolateId, sequenceId, definition, host, sequence, segment) => {
+        dispatch(editSequence(virusId, isolateId, sequenceId, definition, host, sequence, segment));
     }
 
 });

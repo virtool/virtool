@@ -2,6 +2,7 @@ import React from "react";
 import PropTypes from "prop-types";
 import { connect } from "react-redux";
 import { Modal } from "react-bootstrap";
+import { find } from "lodash-es";
 import SegmentForm from "./SegmentForm";
 import { Button } from "../../../base";
 
@@ -9,9 +10,10 @@ const getInitialState = () => ({
     newEntry: {
         name: "",
         molecule: "",
-        required: false
-    },
-    showError: false
+        required: true,
+        showError: false,
+        nameTaken: false
+    }
 });
 
 class AddSegment extends React.Component {
@@ -32,7 +34,12 @@ class AddSegment extends React.Component {
     };
 
     handleSubmit = () => {
-        if (this.state.newEntry.name) {
+
+        const checkName = find(this.props.schema, ["name", this.state.newEntry.name]);
+
+        if (checkName) {
+            this.setState({nameTaken: true});
+        } else if (this.state.newEntry.name) {
             this.props.onSubmit([...this.props.schema, this.state.newEntry]);
         } else {
             this.setState({showError: true});
@@ -55,6 +62,7 @@ class AddSegment extends React.Component {
                         onChange={this.handleChange}
                         newEntry={this.state.newEntry}
                         show={this.state.showError}
+                        segmentExists={this.state.nameTaken}
                     />
                 </Modal.Body>
                 <Modal.Footer>

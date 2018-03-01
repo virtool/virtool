@@ -65,22 +65,24 @@ export const removeIsolate = ({ virusId, isolateId }) => (
     Request.delete(`/api/viruses/${virusId}/isolates/${isolateId}`)
 );
 
-export const addSequence = ({ virusId, isolateId, sequenceId, definition, host, sequence }) => (
+export const addSequence = ({ virusId, isolateId, sequenceId, definition, host, sequence, segment }) => (
     Request.post(`/api/viruses/${virusId}/isolates/${isolateId}/sequences`)
         .send({
             id: sequenceId,
             definition,
             host,
-            sequence
+            sequence,
+            segment
         })
 );
 
-export const editSequence = ({ virusId, isolateId, sequenceId, definition, host, sequence }) => (
+export const editSequence = ({ virusId, isolateId, sequenceId, definition, host, sequence, segment }) => (
     Request.patch(`/api/viruses/${virusId}/isolates/${isolateId}/sequences/${sequenceId}`)
         .send({
             definition,
             host,
-            sequence
+            sequence,
+            segment
         })
 );
 
