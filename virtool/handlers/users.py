@@ -1,12 +1,13 @@
 import hashlib
+from cerberus import Validator
 from pymongo import ReturnDocument
 
 import virtool.user
 import virtool.utils
 import virtool.user_groups
 from virtool.user_permissions import PERMISSIONS
-from virtool.handlers.utils import protected, no_content, bad_request, invalid_input, unpack_request, json_response,\
-    not_found, validation
+from virtool.handlers.utils import bad_request, conflict, invalid_input, json_response, no_content, not_found,\
+    protected, validation
 
 
 @protected("manage_users")
@@ -35,26 +36,28 @@ async def get(req):
 
 
 @protected("manage_users")
-@validation({
-    "user_id": {"type": "string", "required": True},
-    "password": {"type": "string", "required": True},
-    "force_reset": {"type": "boolean"}
-})
 async def create(req):
     """
     Add a new user to the user database.
 
     """
-    db, data = req.app["db"], req["data"]
+    db = req.app["db"]
+    data = await req.json()
+
+    v = Validator({
+        "user_id": {"type": "string", "minlength": 1, "required": True},
+        "password": {"type": "string", "minlength": req.app["settings"]["minimum_password_length"], "required": True},
+        "force_reset": {"type": "boolean"}
+    })
+
+    if not v(data):
+        return invalid_input(v.errors)
 
     user_id = data["user_id"]
 
     # Check if the username is already taken. Fail if it does.
     if await virtool.user.user_exists(db, user_id):
-        return json_response({
-            "id": "conflict",
-            "message": "User already exists"
-        }, status=409)
+        return conflict("User already exists")
 
     document = {
         "_id": user_id,
@@ -94,13 +97,18 @@ async def create(req):
 
 
 @protected("manage_users")
-@validation({
-    "force_reset": {"type": "boolean"},
-    "password": {"type": "string"},
-    "primary_group": {"type": "string"}
-})
 async def edit(req):
-    db, data = req.app["db"], req["data"]
+    db = req.app["db"]
+    data = await req.json()
+
+    v = Validator({
+        "force_reset": {"type": "boolean"},
+        "password": {"type": "string", "minlength": req.app["settings"]["minimum_password_length"]},
+        "primary_group": {"type": "string"}
+    })
+
+    if not v(data):
+        return invalid_input(v.errors)
 
     user_id = req.match_info["user_id"]
 
