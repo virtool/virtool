@@ -11,7 +11,7 @@
 import React from "react";
 import { filter, includes, intersection, map, sortBy, toLower, without} from "lodash-es";
 import PropTypes from "prop-types";
-import { Panel } from "react-bootstrap";
+import { Panel, FormGroup, InputGroup } from "react-bootstrap";
 import { Link } from "react-router-dom";
 
 import ReadItem from "./ReadItem";
@@ -89,15 +89,17 @@ export default class ReadSelector extends React.PureComponent {
 
         const panelStyle = this.props.error ? "red" : "";
 
-        let errorMessage;
-
-        if (this.props.error) {
-            errorMessage = (
-                <div style={{display: "inline", color: "red", fontSize: "small", float: "right"}}>
+        const errorMessage = this.props.error
+            ? (
+                <div style={{color: "red", fontSize: "small", textAlign: "right", margin: "0 0 2px 0"}}>
                     {this.props.error}
                 </div>
+            )
+            : (
+                <div style={{visibility: "hidden", fontSize: "small", textAlign: "right", margin: "0 0 2px 0"}}>
+                    None
+                </div>
             );
-        }
 
         return (
             <div>
@@ -110,15 +112,21 @@ export default class ReadSelector extends React.PureComponent {
 
                 <Panel style={{borderColor: `${panelStyle}`}} ref={(node) => this.panelNode = node}>
                     <div className="toolbar">
-                        <Input
-                            type="text"
-                            placeholder="Filename"
-                            value={this.state.filter}
-                            onChange={(e) => this.setState({filter: e.target.value})}
-                        />
-                        <Button type="button" tip="Clear" onClick={this.reset}>
-                            <Icon name="reset" />
-                        </Button>
+                        <FormGroup>
+                            <InputGroup>
+                                <Input
+                                    type="text"
+                                    placeholder="Filename"
+                                    value={this.state.filter}
+                                    onChange={(e) => this.setState({filter: e.target.value})}
+                                />
+                                <InputGroup.Button style={{verticalAlign: "top", zIndex: "0"}}>
+                                    <Button type="button" tip="Clear" onClick={this.reset}>
+                                        <Icon name="reset" />
+                                    </Button>
+                                </InputGroup.Button>
+                            </InputGroup>
+                        </FormGroup>
                     </div>
 
                     <div className="panel panel-default">

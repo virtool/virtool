@@ -106,6 +106,9 @@ export default function virusesReducer (state = initialState, action) {
         case FIND_VIRUSES.SUCCEEDED:
             return {...state, ...action.data};
 
+        case CREATE_VIRUS.REQUESTED:
+            return {...state, createError: null};
+
         case CREATE_VIRUS.FAILED:
             return {...state, createError: action.message};
 

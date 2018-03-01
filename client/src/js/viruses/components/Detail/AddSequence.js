@@ -24,7 +24,7 @@ const getInitialState = () => ({
     host: "",
     sequence: "",
     autofillPending: false,
-    error: false
+    error: ""
 });
 
 class AddSequence extends React.Component {
@@ -49,7 +49,7 @@ class AddSequence extends React.Component {
             }, (err) => {
                 this.setState({
                     autofillPending: false,
-                    error: err.status === 404 ? "Accession not found" : false
+                    error: err.status === 404 ? "Accession not found" : ""
                 });
                 return err;
             });
@@ -61,12 +61,12 @@ class AddSequence extends React.Component {
 
         this.setState({
             [name]: value,
-            error: name === "id" ? false : this.state.error
+            error: name === "id" ? "" : this.state.error
         });
     };
 
     handleHideError = () => {
-        this.setState({error: false});
+        this.setState({error: ""});
     };
 
     handleModalExited = () => {
@@ -87,7 +87,10 @@ class AddSequence extends React.Component {
                 this.state.sequence
             );
         } else {
-            this.setState({show: true});
+            this.setState({
+                show: true,
+                error: "Required Field"
+            });
         }
     };
 
@@ -103,8 +106,6 @@ class AddSequence extends React.Component {
                 </div>
             );
         }
-
-        const errorMessage = this.state.show ? "Required Field" : "";
 
         return (
             <Modal show={this.props.show} onHide={this.props.onHide} onExited={this.handleModalExited}>
@@ -124,7 +125,7 @@ class AddSequence extends React.Component {
                                             name="id"
                                             value={this.state.id}
                                             onChange={this.handleChange}
-                                            error={errorMessage}
+                                            error={this.state.error}
                                         />
                                         <InputGroup.Button style={{verticalAlign: "top", zIndex: "0"}}>
                                             <Button type="button" onClick={this.handleAutofill}>

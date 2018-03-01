@@ -50,15 +50,17 @@ export class Input extends React.Component {
 
     render () {
 
-        let errorMessage;
-
-        if (this.props.error) {
-            errorMessage = (
-                <div style={{display: "inline", color: "red", fontSize: "small", float: "right"}}>
+        const errorMessage = this.props.error
+            ? (
+                <div style={{color: "red", fontSize: "small", textAlign: "right", margin: "0 0 2px 0"}}>
                     {this.props.error}
                 </div>
+            )
+            : (
+                <div style={{visibility: "hidden", fontSize: "small", textAlign: "right", margin: "0 0 2px 0"}}>
+                    None
+                </div>
             );
-        }
 
         const inputStyle = this.props.error ? "red" : "";
 
@@ -105,7 +107,7 @@ export class Input extends React.Component {
                     autoComplete={this.props.autoComplete ? "on" : "off"}
                     componentClass={componentClass}
                     disabled={this.props.disabled}
-                    style={{...this.props.style, borderColor: `${inputStyle}`}}
+                    style={{...this.props.style, borderColor: `${inputStyle}`, margin: "0 0 3px 0"}}
                 >
                     {this.props.children}
                 </FormControl>
