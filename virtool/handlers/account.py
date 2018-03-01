@@ -1,3 +1,4 @@
+from cerberus import Validator
 from pymongo import ReturnDocument
 
 import virtool.utils
@@ -5,8 +6,9 @@ import virtool.user
 import virtool.user_permissions
 import virtool.validators
 
-from virtool.handlers.utils import json_response, no_content, bad_request, protected, validation, unpack_request, \
-    not_found
+from virtool.handlers.utils import bad_request, invalid_input, json_response, no_content, not_found, protected,\
+    unpack_request, validation
+
 
 SETTINGS_SCHEMA = {
     "show_ids": {
@@ -21,12 +23,6 @@ SETTINGS_SCHEMA = {
         "type": "string",
         "required": False
     }
-}
-
-
-PASSWORD_SCHEMA = {
-    "old_password": {"type": "string", "required": True},
-    "new_password": {"type": "string", "required": True}
 }
 
 
@@ -106,20 +102,26 @@ async def update_settings(req):
 
 
 @protected()
-@validation(PASSWORD_SCHEMA)
 async def change_password(req):
     """
     Allows a user change their own password.
 
     """
-    db, data = req.app["db"], req["data"]
+    db = req.app["db"]
 
     user_id = req["client"].user_id
 
     data = await req.json()
 
-    if len(data["new_password"]) < 8:
-        return bad_request("Password is to short. Must be at least 8 characters.")
+    minlength = req.app["settings"]["minimum_password_length"]
+
+    v = Validator({
+        "old_password": {"type": "string", "minlength": minlength, "required": True},
+        "new_password": {"type": "string", "minlength": minlength, "required": True}
+    })
+
+    if not v(data):
+        return invalid_input(v.errors)
 
     # Will evaluate true if the passed username and password are correct.
     if not await virtool.user.validate_credentials(db, user_id, data["old_password"]):
