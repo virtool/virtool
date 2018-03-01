@@ -128,15 +128,17 @@ class CreateSubtraction extends React.Component {
 
         const fileGroupStyle = errorFile ? "red" : "white";
 
-        let errorMessage;
-
-        if (errorFile) {
-            errorMessage = (
-                <div style={{display: "inline", color: "red", fontSize: "small", float: "right"}}>
+        const errorMessage = errorFile
+            ? (
+                <div style={{color: "red", fontSize: "small", textAlign: "right", margin: "3px 0 2px 0"}}>
                     {errorFile}
                 </div>
+            )
+            : (
+                <div style={{visibility: "hidden", fontSize: "small", textAlign: "right", margin: "3px 0 2px 0"}}>
+                    None
+                </div>
             );
-        }
 
         return (
             <Modal
