@@ -3,7 +3,7 @@ import { includes } from "lodash-es";
 import { connect } from "react-redux";
 import { Row, Col, Panel } from "react-bootstrap";
 import { updateSetting, updateSettings } from "../../actions";
-import { Help, Input } from "../../../base";
+import { Help, InputError } from "../../../base";
 
 const SampleRights = (props) => (
     <Row>
@@ -29,7 +29,7 @@ const SampleRights = (props) => (
                     </Help>
                 </label>
 
-                <Input
+                <InputError
                     type="select"
                     value={props.sampleGroup}
                     onChange={(e) => props.onChangeSampleGroup(e.target.value)}
@@ -37,9 +37,9 @@ const SampleRights = (props) => (
                     <option value="none">None</option>
                     <option value="force_choice">Force choice</option>
                     <option value="users_primary_group">{"User's"} primary group</option>
-                </Input>
+                </InputError>
 
-                <Input
+                <InputError
                     type="select"
                     label="Group Rights"
                     value={props.group}
@@ -48,9 +48,9 @@ const SampleRights = (props) => (
                     <option value="">None</option>
                     <option value="r">Read</option>
                     <option value="rw">Read & write</option>
-                </Input>
+                </InputError>
 
-                <Input
+                <InputError
                     name="all"
                     type="select"
                     label="All Users' Rights"
@@ -60,7 +60,7 @@ const SampleRights = (props) => (
                     <option value="">None</option>
                     <option value="r">Read</option>
                     <option value="rw">Read & write</option>
-                </Input>
+                </InputError>
             </Panel>
         </Col>
         <Col md={6}>

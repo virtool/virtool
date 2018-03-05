@@ -15,7 +15,7 @@ import { connect } from "react-redux";
 import { Row, Col, Modal, FormGroup, FormControl, InputGroup, ControlLabel } from "react-bootstrap";
 
 import { editSequence, hideVirusModal } from "../../actions";
-import { Button, Icon, Input } from "../../../base";
+import { Button, Icon, InputError } from "../../../base";
 import SequenceField from "./SequenceField";
 import { getGenbank } from "../../api";
 
@@ -146,7 +146,7 @@ class EditSequence extends React.Component {
                                 </FormGroup>
                             </Col>
                             <Col xs={12} md={6}>
-                                <Input
+                                <InputError
                                     type="select"
                                     label="Segment"
                                     name="segment"
@@ -156,7 +156,7 @@ class EditSequence extends React.Component {
                                     {defaultOption}
                                     {currentOption}
                                     {segmentNames}
-                                </Input>
+                                </InputError>
                             </Col>
                         </Row>
                         <Row>

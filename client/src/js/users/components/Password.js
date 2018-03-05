@@ -15,7 +15,7 @@ import { connect } from "react-redux";
 import { Row, Col, Alert, Panel, ButtonToolbar } from "react-bootstrap";
 import { find } from "lodash-es";
 import { editUser } from "../actions";
-import { Input, Checkbox, Button, RelativeTime } from "../../base";
+import { InputError, Checkbox, Button, RelativeTime } from "../../base";
 
 const getInitialState = () => ({
     password: "",
@@ -104,7 +104,7 @@ class Password extends React.Component {
                 <form onSubmit={this.handleSubmit}>
                     <Row>
                         <Col xs={12} md={6}>
-                            <Input
+                            <InputError
                                 type="password"
                                 name="password"
                                 placeholder="New Password"
@@ -115,7 +115,7 @@ class Password extends React.Component {
                         </Col>
 
                         <Col xs={12} md={6}>
-                            <Input
+                            <InputError
                                 type="password"
                                 name="confirm"
                                 placeholder="Confirm Password"

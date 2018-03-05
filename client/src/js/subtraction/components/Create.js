@@ -8,7 +8,7 @@ import { push } from "react-router-redux";
 
 import { findFiles } from "../../files/actions";
 import { createSubtraction } from "../actions";
-import { Button, Icon, Input, ListGroupItem, RelativeTime } from "../../base";
+import { Button, Icon, InputError, ListGroupItem, RelativeTime } from "../../base";
 import {routerLocationHasState} from "../../utils";
 
 class SubtractionFileItem extends React.Component {
@@ -155,7 +155,7 @@ class CreateSubtraction extends React.Component {
 
                 <form onSubmit={this.handleSubmit}>
                     <Modal.Body style={{margin: "0 0 10px 0"}}>
-                        <Input
+                        <InputError
                             type="text"
                             label="Unique Name"
                             value={this.state.subtractionId}

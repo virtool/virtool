@@ -4,7 +4,7 @@ import { push } from "react-router-redux";
 import { withRouter } from "react-router-dom";
 import { Row, Col, Modal, ButtonToolbar } from "react-bootstrap";
 
-import { Input, Button } from "../../base";
+import { InputError, Button } from "../../base";
 import { createVirus } from "../actions";
 
 const getInitialState = () => ({
@@ -72,7 +72,7 @@ class CreateVirus extends React.Component {
                     <Modal.Body>
                         <Row>
                             <Col md={9}>
-                                <Input
+                                <InputError
                                     label="Name"
                                     name="name"
                                     value={this.state.name}
@@ -81,7 +81,7 @@ class CreateVirus extends React.Component {
                                 />
                             </Col>
                             <Col md={3}>
-                                <Input
+                                <InputError
                                     label="Abbreviation"
                                     name="abbreviation"
                                     value={this.state.abbreviation}

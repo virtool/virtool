@@ -16,7 +16,7 @@ import { map } from "lodash-es";
 
 import SequenceField from "./SequenceField";
 import { addSequence, hideVirusModal } from "../../actions";
-import { Button, Icon, Input } from "../../../base";
+import { Button, Icon, InputError } from "../../../base";
 import { getGenbank } from "../../api";
 
 const getInitialState = () => ({
@@ -133,7 +133,7 @@ class AddSequence extends React.Component {
                                 <FormGroup>
                                     <ControlLabel>Accession (ID)</ControlLabel>
                                     <InputGroup>
-                                        <Input
+                                        <InputError
                                             name="id"
                                             value={this.state.id}
                                             onChange={this.handleChange}
@@ -148,7 +148,7 @@ class AddSequence extends React.Component {
                                 </FormGroup>
                             </Col>
                             <Col xs={12} md={6}>
-                                <Input
+                                <InputError
                                     type="select"
                                     label="Segment"
                                     name="segment"
@@ -157,12 +157,12 @@ class AddSequence extends React.Component {
                                 >
                                     {defaultOption}
                                     {segmentNames}
-                                </Input>
+                                </InputError>
                             </Col>
                         </Row>
                         <Row>
                             <Col xs={12}>
-                                <Input
+                                <InputError
                                     label="Host"
                                     name="host"
                                     value={this.state.host}
@@ -172,7 +172,7 @@ class AddSequence extends React.Component {
                         </Row>
                         <Row>
                             <Col xs={12}>
-                                <Input
+                                <InputError
                                     label="Definition"
                                     name="definition"
                                     value={this.state.definition}

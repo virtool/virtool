@@ -3,7 +3,7 @@ import { connect } from "react-redux";
 import { Row, Col, Panel } from "react-bootstrap";
 
 import { updateSetting } from "../../actions";
-import { InputSave } from "../../../base";
+import { InputError } from "../../../base";
 
 
 const Resources = (props) => (
@@ -18,17 +18,19 @@ const Resources = (props) => (
         </Col>
         <Col xs={12} md={6} mdPull={6}>
             <Panel>
-                <InputSave
+                <InputError
                     label="CPU Limit"
                     type="number"
                     onSave={props.onUpdateProc}
                     initialValue={props.proc}
+                    withButton
                 />
-                <InputSave
+                <InputError
                     label="Memory Limit (GB)"
                     type="number"
                     onSave={props.onUpdateMem}
                     initialValue={props.mem}
+                    withButton
                 />
             </Panel>
         </Col>
