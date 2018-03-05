@@ -10,7 +10,7 @@
  */
 import React from "react";
 import { connect } from "react-redux";
-import { Row, Col, Modal, FormGroup, InputGroup, ControlLabel } from "react-bootstrap";
+import { Row, Col, Modal, InputGroup, ControlLabel } from "react-bootstrap";
 import { ClipLoader } from "halogenium";
 import { map } from "lodash-es";
 
@@ -130,22 +130,20 @@ class AddSequence extends React.Component {
                         {overlay}
                         <Row>
                             <Col xs={12} md={6}>
-                                <FormGroup>
-                                    <ControlLabel>Accession (ID)</ControlLabel>
-                                    <InputGroup>
-                                        <InputError
-                                            name="id"
-                                            value={this.state.id}
-                                            onChange={this.handleChange}
-                                            error={this.state.error}
-                                        />
-                                        <InputGroup.Button style={{verticalAlign: "top", zIndex: "0"}}>
-                                            <Button type="button" onClick={this.handleAutofill}>
-                                                <Icon name="wand" />
-                                            </Button>
-                                        </InputGroup.Button>
-                                    </InputGroup>
-                                </FormGroup>
+                                <ControlLabel>Accession (ID)</ControlLabel>
+                                <InputGroup>
+                                    <InputError
+                                        name="id"
+                                        value={this.state.id}
+                                        onChange={this.handleChange}
+                                        error={this.state.error}
+                                    />
+                                    <InputGroup.Button style={{verticalAlign: "top", zIndex: "0"}}>
+                                        <Button type="button" onClick={this.handleAutofill}>
+                                            <Icon name="wand" />
+                                        </Button>
+                                    </InputGroup.Button>
+                                </InputGroup>
                             </Col>
                             <Col xs={12} md={6}>
                                 <InputError

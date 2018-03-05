@@ -5,7 +5,6 @@ import {
     Modal,
     Row,
     Col,
-    FormGroup,
     ControlLabel,
     InputGroup
 } from "react-bootstrap";
@@ -173,30 +172,28 @@ class CreateSample extends React.Component {
                     <Modal.Body>
 
                         <Row>
-                            <Col md={9}>
-                                <FormGroup>
-                                    <ControlLabel>Sample Name</ControlLabel>
-                                    <InputGroup>
-                                        <InputError
-                                            name="sample name"
-                                            value={this.state.name}
-                                            onChange={(e) => this.setState({name: e.target.value, errors: []})}
-                                            autocomplete={false}
-                                            error={errorName}
-                                        />
-                                        <InputGroup.Button style={{verticalAlign: "top", zIndex: "0"}}>
-                                            <Button
-                                                type="button"
-                                                onClick={this.autofill}
-                                                disabled={!this.state.selected.length}
-                                            >
-                                                <Icon name="wand" />
-                                            </Button>
-                                        </InputGroup.Button>
-                                    </InputGroup>
-                                </FormGroup>
+                            <Col md={6}>
+                                <ControlLabel>Sample Name</ControlLabel>
+                                <InputGroup>
+                                    <InputError
+                                        name="sample name"
+                                        value={this.state.name}
+                                        onChange={(e) => this.setState({name: e.target.value, errors: []})}
+                                        autocomplete={false}
+                                        error={errorName}
+                                    />
+                                    <InputGroup.Button style={{verticalAlign: "top", zIndex: "0"}}>
+                                        <Button
+                                            type="button"
+                                            onClick={this.autofill}
+                                            disabled={!this.state.selected.length}
+                                        >
+                                            <Icon name="wand" />
+                                        </Button>
+                                    </InputGroup.Button>
+                                </InputGroup>
                             </Col>
-                            <Col md={3}>
+                            <Col md={6}>
                                 <InputError
                                     label="Isolate"
                                     value={this.state.isolate}
@@ -227,7 +224,7 @@ class CreateSample extends React.Component {
                         </Row>
 
                         <Row>
-                            <Col md={this.state.forceGroupChoice ? 6 : 8}>
+                            <Col md={6}>
                                 <InputError
                                     label="Locale"
                                     value={this.state.locale}
@@ -235,7 +232,7 @@ class CreateSample extends React.Component {
                                 />
                             </Col>
                             {userGroup}
-                            <Col md={this.state.forceGroupChoice ? 3 : 4}>
+                            <Col md={6}>
                                 <InputError
                                     type="text"
                                     label="Library Type"

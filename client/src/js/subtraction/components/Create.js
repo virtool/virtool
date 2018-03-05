@@ -126,19 +126,14 @@ class CreateSubtraction extends React.Component {
         const errorName = find(this.state.errors, ["id", 0]) ? find(this.state.errors, ["id", 0]).message : null;
         const errorFile = find(this.state.errors, ["id", 1]) ? find(this.state.errors, ["id", 1]).message : null;
 
-        const fileGroupStyle = errorFile ? "red" : "white";
+        const panelListStyle = errorFile ? "panel-list-custom-error" : "panel-list-custom";
+        const inputErrorClassName = errorFile ? "input-form-error" : "input-form-error-none";
 
-        const errorMessage = errorFile
-            ? (
-                <div style={{color: "red", fontSize: "small", textAlign: "right", margin: "3px 0 2px 0"}}>
-                    {errorFile}
-                </div>
-            )
-            : (
-                <div style={{visibility: "hidden", fontSize: "small", textAlign: "right", margin: "3px 0 2px 0"}}>
-                    None
-                </div>
-            );
+        const errorMessage = (
+            <div className={inputErrorClassName}>
+                {errorFile ? errorFile : "None"}
+            </div>
+        );
 
         return (
             <Modal
@@ -164,7 +159,7 @@ class CreateSubtraction extends React.Component {
                         />
 
                         <h5><strong>Files</strong></h5>
-                        <ListGroup style={{border: `1px solid ${fileGroupStyle}`, margin: "0"}}>
+                        <ListGroup className={panelListStyle}>
                             {fileComponents}
                         </ListGroup>
                         {errorMessage}

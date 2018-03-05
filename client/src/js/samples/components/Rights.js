@@ -2,7 +2,7 @@ import React from "react";
 import { connect } from "react-redux";
 import { capitalize, includes, map } from "lodash-es";
 import { Alert, Panel } from "react-bootstrap";
-import { Icon, InputError, LoadingPlaceholder } from "../../base";
+import { Icon, Input, LoadingPlaceholder } from "../../base";
 import { updateSampleRights } from "../actions";
 import { listGroups } from "../../groups/actions";
 
@@ -50,7 +50,7 @@ class SampleRights extends React.Component {
                 </Alert>
 
                 <Panel>
-                    <InputError
+                    <Input
                         type="select"
                         label="Group"
                         value={this.props.group}
@@ -58,9 +58,9 @@ class SampleRights extends React.Component {
                     >
                         <option value="none">None</option>
                         {nameOptionComponents}
-                    </InputError>
+                    </Input>
 
-                    <InputError
+                    <Input
                         type="select"
                         label="Group Rights"
                         value={groupRights}
@@ -69,9 +69,9 @@ class SampleRights extends React.Component {
                         <option value="">None</option>
                         <option value="r">Read</option>
                         <option value="rw">Read & write</option>
-                    </InputError>
+                    </Input>
 
-                    <InputError
+                    <Input
                         type="select"
                         label="All Users' Rights"
                         value={allRights}
@@ -80,7 +80,7 @@ class SampleRights extends React.Component {
                         <option value="">None</option>
                         <option value="r">Read</option>
                         <option value="rw">Read & write</option>
-                    </InputError>
+                    </Input>
                 </Panel>
             </div>
         );
