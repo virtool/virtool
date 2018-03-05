@@ -4,7 +4,7 @@ import { connect } from "react-redux";
 import { Col, Panel, Row } from "react-bootstrap";
 
 import { changePassword } from "../actions";
-import { Button, Input, RelativeTime } from "../../base";
+import { Button, InputError, RelativeTime } from "../../base";
 
 const getInitialState = () => ({
     oldPassword: "",
@@ -88,21 +88,21 @@ class ChangePassword extends React.Component {
         return (
             <Panel className={formStyle} header="Password">
                 <form onSubmit={this.onSubmit}>
-                    <Input
+                    <InputError
                         label="Old Password"
                         type="password"
                         value={this.state.oldPassword}
                         onChange={(e) => this.setState({oldPassword: e.target.value, errors: []})}
                         error={errorOldPass}
                     />
-                    <Input
+                    <InputError
                         label="New password"
                         type="password"
                         value={this.state.newPassword}
                         onChange={(e) => this.setState({newPassword: e.target.value, errors: []})}
                         error={errorPassLen}
                     />
-                    <Input
+                    <InputError
                         label="Confirm New Password"
                         type="password"
                         value={this.state.confirmPassword}

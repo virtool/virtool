@@ -1,6 +1,6 @@
 import React from "react";
 import PropTypes from "prop-types";
-import { FormControl, FormGroup } from "react-bootstrap";
+import { FormControl } from "react-bootstrap";
 import { Flex, FlexItem, Button } from "./index";
 
 /**
@@ -23,7 +23,8 @@ export class InputSave extends React.Component {
         type: PropTypes.string,
         initialValue: PropTypes.any,
         autoComplete: PropTypes.bool,
-        disabled: PropTypes.bool
+        disabled: PropTypes.bool,
+        error: PropTypes.string
     };
 
     static defaultProps = {
@@ -101,12 +102,16 @@ export class InputSave extends React.Component {
     };
 
     render () {
+
+        const formClass = this.props.error ? "form-control-error" : "";
+
         return (
             <form onSubmit={this.handleSubmit}>
                 <h5><strong>{this.props.label}</strong></h5>
                 <Flex alignItems="stretch" style={{marginBottom: "15px"}}>
                     <FlexItem grow={1} shrink={1}>
-                        {/*<Input
+                        <FormControl
+                            className={formClass}
                             ref={(node) => this.inputNode = node}
                             type={this.props.type}
                             autoComplete={this.props.autoComplete}
@@ -114,23 +119,9 @@ export class InputSave extends React.Component {
                             onBlur={this.handleBlur}
                             value={this.state.value}
                             disabled={this.props.disabled}
-                            withButton={true}
-                            noMargin
-                        />*/}
-                        <FormGroup>
-                            <FormControl
-                                ref={(node) => this.inputNode = node}
-                                type={this.props.type}
-                                autoComplete={this.props.autoComplete}
-                                onChange={this.handleChange}
-                                onBlur={this.handleBlur}
-                                value={this.state.value}
-                                disabled={this.props.disabled}
-                                withButton={true}
-                                noMargin
-                            >
-                            </FormControl>
-                        </FormGroup>
+                            style={{marginBottom: "0"}}
+                        >
+                        </FormControl>
                     </FlexItem>
                     <Button
                         type="submit"

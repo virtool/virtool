@@ -7,7 +7,7 @@ import { mapValues } from "lodash-es";
 import { Col, Modal, Row } from "react-bootstrap";
 
 import APIPermissions from "./Permissions";
-import { Button, Icon, Input, Flex, FlexItem } from "../../../base/index";
+import { Button, Icon, InputError, Flex, FlexItem } from "../../../base/index";
 import { routerLocationHasState } from "../../../utils";
 import {clearAPIKey, createAPIKey} from "../../actions";
 
@@ -61,7 +61,7 @@ export class CreateAPIKey extends React.Component {
                         <Col xs={12} md={8} mdOffset={2}>
                             <Flex alignItems="stretch" alignContent="stretch">
                                 <FlexItem grow={1}>
-                                    <Input
+                                    <InputError
                                         style={{marginBottom: 0}}
                                         formGroupStyle={{marginBottom: 0}}
                                         className="text-center"
@@ -87,7 +87,7 @@ export class CreateAPIKey extends React.Component {
             content = (
                 <form onSubmit={this.handleSubmit}>
                     <Modal.Body>
-                        <Input
+                        <InputError
                             label="Name"
                             value={this.state.name}
                             onChange={(e) => this.setState({name: e.target.value})}

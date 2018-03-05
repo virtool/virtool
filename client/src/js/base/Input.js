@@ -50,17 +50,7 @@ export class Input extends React.Component {
 
     render () {
 
-        const error = this.props.error;
-
-        const inputErrorClassName = error ? "input-form-error" : "input-form-error-none";
-
-        const errorMessage = (
-                <div className={inputErrorClassName}>
-                    {error ? error : "None"}
-                </div>
-            );
-
-        const formClass = error ? "form-control-error" : "";
+        const formClass = this.props.error ? "form-control-error" : "";
 
         let componentClass;
 
@@ -110,7 +100,6 @@ export class Input extends React.Component {
                 >
                     {this.props.children}
                 </FormControl>
-                {errorMessage}
             </FormGroup>
         );
     }

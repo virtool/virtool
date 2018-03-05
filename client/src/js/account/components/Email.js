@@ -3,7 +3,7 @@ import { connect } from "react-redux";
 import { Col, Panel, Row } from "react-bootstrap";
 
 import { updateAccount } from "../actions";
-import { Button, Input } from "../../base";
+import { Button, InputError } from "../../base";
 
 const getInitialState = (email) => ({
     defaultEmail: email ? email : "",
@@ -54,7 +54,7 @@ class Email extends React.Component {
         return (
             <Panel className={formStyle} header="Email">
                 <form onSubmit={this.onSubmit}>
-                    <Input
+                    <InputError
                         label="Email address"
                         value={this.state.tempEmail}
                         onChange={(e) => this.setState({tempEmail: e.target.value, error: ""})}

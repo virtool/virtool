@@ -5,7 +5,7 @@ import { connect } from "react-redux";
 import { Row, Col, Modal } from "react-bootstrap";
 
 import { editSample } from "../actions";
-import { Button, Icon, Input } from "../../base";
+import { Button, Icon, InputError } from "../../base";
 
 const getInitialState = ({ name, isolate, host }) => ({
     name: name || "",
@@ -66,7 +66,7 @@ class EditSample extends React.Component {
                     <Modal.Body>
                         <Row>
                             <Col xs={12}>
-                                <Input
+                                <InputError
                                     label="Name"
                                     name="name"
                                     value={this.state.name}
@@ -75,7 +75,7 @@ class EditSample extends React.Component {
                                 />
                             </Col>
                             <Col xs={12} md={6}>
-                                <Input
+                                <InputError
                                     label="Isolate"
                                     name="isolate"
                                     value={this.state.isolate}
@@ -83,7 +83,7 @@ class EditSample extends React.Component {
                                 />
                             </Col>
                             <Col xs={12} md={6}>
-                                <Input
+                                <InputError
                                     label="Host"
                                     name="host"
                                     value={this.state.host}

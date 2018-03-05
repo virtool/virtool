@@ -64,6 +64,8 @@ export default class ReadSelector extends React.PureComponent {
 
     render () {
 
+        const error = this.props.error;
+
         const loweredFilter = toLower(this.state.filter);
 
         const files = filter(this.props.files, file =>
@@ -87,19 +89,15 @@ export default class ReadSelector extends React.PureComponent {
             );
         }
 
-        const panelStyle = this.props.error ? "red" : "";
+        const panelStyle = error ? "panel-custom-error" : "";
 
-        const errorMessage = this.props.error
-            ? (
-                <div style={{color: "red", fontSize: "small", textAlign: "right", margin: "0 0 2px 0"}}>
-                    {this.props.error}
-                </div>
-            )
-            : (
-                <div style={{visibility: "hidden", fontSize: "small", textAlign: "right", margin: "0 0 2px 0"}}>
-                    None
-                </div>
-            );
+        const inputErrorClassName = error ? "input-form-error" : "input-form-error-none";
+
+        const errorMessage = (
+            <div className={inputErrorClassName}>
+                {error ? error : "None"}
+            </div>
+        );
 
         return (
             <div>
@@ -110,7 +108,7 @@ export default class ReadSelector extends React.PureComponent {
                     </small>
                 </h5>
 
-                <Panel style={{borderColor: `${panelStyle}`}} ref={(node) => this.panelNode = node}>
+                <Panel className={panelStyle} ref={(node) => this.panelNode = node}>
                     <div className="toolbar">
                         <FormGroup>
                             <InputGroup>
@@ -120,7 +118,7 @@ export default class ReadSelector extends React.PureComponent {
                                     value={this.state.filter}
                                     onChange={(e) => this.setState({filter: e.target.value})}
                                 />
-                                <InputGroup.Button style={{verticalAlign: "top", zIndex: "0"}}>
+                                <InputGroup.Button>
                                     <Button type="button" tip="Clear" onClick={this.reset}>
                                         <Icon name="reset" />
                                     </Button>
