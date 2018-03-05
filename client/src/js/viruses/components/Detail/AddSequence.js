@@ -16,7 +16,7 @@ import { map } from "lodash-es";
 
 import SequenceField from "./SequenceField";
 import { addSequence, hideVirusModal } from "../../actions";
-import { Button, Icon, Input } from "../../../base";
+import { Button, Icon, Input, InputError } from "../../../base";
 import { getGenbank } from "../../api";
 
 const getInitialState = () => ({
@@ -162,11 +162,18 @@ class AddSequence extends React.Component {
                         </Row>
                         <Row>
                             <Col xs={12}>
-                                <Input
+                                {/*<Input
                                     label="Host"
                                     name="host"
                                     value={this.state.host}
                                     onChange={this.handleChange}
+                                />*/}
+                                <InputError
+                                    label="Host"
+                                    name="host"
+                                    value={this.state.host}
+                                    onChange={this.handleChange}
+                                    withButton={false}
                                 />
                             </Col>
                         </Row>

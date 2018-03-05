@@ -1,6 +1,7 @@
 import React from "react";
 import PropTypes from "prop-types";
-import { Flex, FlexItem, Input, Button } from "./index";
+import { FormControl, FormGroup } from "react-bootstrap";
+import { Flex, FlexItem, Button } from "./index";
 
 /**
  * An Input component combined with a save button addon.
@@ -105,7 +106,7 @@ export class InputSave extends React.Component {
                 <h5><strong>{this.props.label}</strong></h5>
                 <Flex alignItems="stretch" style={{marginBottom: "15px"}}>
                     <FlexItem grow={1} shrink={1}>
-                        <Input
+                        {/*<Input
                             ref={(node) => this.inputNode = node}
                             type={this.props.type}
                             autoComplete={this.props.autoComplete}
@@ -113,8 +114,23 @@ export class InputSave extends React.Component {
                             onBlur={this.handleBlur}
                             value={this.state.value}
                             disabled={this.props.disabled}
+                            withButton={true}
                             noMargin
-                        />
+                        />*/}
+                        <FormGroup>
+                            <FormControl
+                                ref={(node) => this.inputNode = node}
+                                type={this.props.type}
+                                autoComplete={this.props.autoComplete}
+                                onChange={this.handleChange}
+                                onBlur={this.handleBlur}
+                                value={this.state.value}
+                                disabled={this.props.disabled}
+                                withButton={true}
+                                noMargin
+                            >
+                            </FormControl>
+                        </FormGroup>
                     </FlexItem>
                     <Button
                         type="submit"
