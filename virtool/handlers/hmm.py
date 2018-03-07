@@ -52,10 +52,22 @@ async def get(req):
 
 
 async def get_install(req):
-    document = await req.app["db"].status.find_one({"_id": "hmm_install"})
+    db = req.app["db"]
 
-    if document is None:
-        return not_found()
+    document = await db.status.find_one({"_id": "hmm_install"})
+
+    if not document:
+        document = {
+            "_id": "hmm_install",
+            "download_size": None,
+            "ready": False,
+            "process": {
+                "progress": 0,
+                "step": "check_github"
+            }
+        }
+
+        await db.status.insert_one(document)
 
     return json_response(virtool.utils.base_processor(document))
 
