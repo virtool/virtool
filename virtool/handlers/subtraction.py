@@ -1,11 +1,12 @@
 import os
+import pymongo.errors
 import shutil
 
 import virtool.sample
 import virtool.subtraction
 import virtool.utils
-from virtool.handlers.utils import unpack_request, json_response, no_content, not_found, compose_regex_query, paginate,\
-    protected, validation
+from virtool.handlers.utils import compose_regex_query, conflict, json_response, no_content, not_found, paginate,\
+    protected, unpack_request, validation
 
 
 async def find(req):
@@ -96,7 +97,10 @@ async def create(req):
         }
     }
 
-    await db.subtraction.insert_one(document)
+    try:
+        await db.subtraction.insert_one(document)
+    except pymongo.errors.DuplicateKeyError:
+        return conflict("Subtraction id already exists")
 
     task_args = {
         "subtraction_id": subtraction_id,
