@@ -108,21 +108,17 @@ async def create(req):
     if req.app["settings"].get("sample_group") == "force_choice":
         try:
             if not await db.groups.count({"_id": data["group"]}):
-                return not_found("Group '{}' not found".format(data["group"]))
+                return not_found("Group not found")
         except KeyError:
             return bad_request("Server requires a 'group' field for sample creation")
 
-    # Check if the submitted sample name is unique if unique sample names are being enforced.
-    if await db.samples.count({"lower_name": data["name"].lower()}):
-        return conflict("Sample name '{}' already exists".format(data["name"]))
-
     # Make sure a subtraction host was submitted and it exists.
     if data["subtraction"] not in await db.subtraction.find({"is_host": True}).distinct("_id"):
-        return not_found("Subtraction host '{}' not found".format(data["subtraction"]))
+        return not_found("Subtraction host not found")
 
     # Make sure all of the passed file ids exist.
     if await db.files.count({"_id": {"$in": data["files"]}}) != len(data["files"]):
-        return not_found("One or more of the passed file ids do(es) not exist")
+        return not_found("File id does not exist")
 
     sample_id = await virtool.utils.get_new_id(db.samples)
 
