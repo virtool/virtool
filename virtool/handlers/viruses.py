@@ -773,11 +773,11 @@ async def get_sequence(req):
 
 @protected("modify_virus")
 @validation({
-    "id": {"type": "string", "required": True},
-    "definition": {"type": "string", "required": True},
+    "id": {"type": "string", "minlength": 1, "required": True},
+    "definition": {"type": "string", "minlength": 1, "required": True},
     "host": {"type": "string"},
     "segment": {"type": "string"},
-    "sequence": {"type": "string", "required": True}
+    "sequence": {"type": "string", "minlength": 1, "required": True}
 })
 async def create_sequence(req):
     """
