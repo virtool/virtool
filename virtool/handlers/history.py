@@ -1,7 +1,7 @@
 import virtool.utils
 import virtool.virus
 import virtool.virus_history
-from virtool.handlers.utils import json_response, no_content, not_found, paginate, protected
+from virtool.handlers.utils import conflict, json_response, no_content, not_found, paginate, protected
 
 
 async def find(req):
@@ -54,6 +54,9 @@ async def revert(req):
 
     if not change:
         return not_found()
+
+    if change["index"]["id"] != "unbuilt" or change["index"]["version"] != "unbuilt":
+        return conflict("Not unbuilt")
 
     virus_id, virus_version = change_id.split(".")
 
