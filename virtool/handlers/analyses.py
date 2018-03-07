@@ -62,7 +62,8 @@ async def remove(req):
         return not_found()
 
     if not document["ready"]:
-        return conflict("Analysis is still running. Cancel job '{}' instead".format(document["job"]["id"]))
+        return conflict("Analysis is still running")
+
     sample = await db.samples.find_one({"_id": document["sample"]["id"]}, virtool.sample.PROJECTION)
 
     if not sample:
