@@ -136,6 +136,9 @@ async def remove(req):
 
     subtraction_id = req.match_info["subtraction_id"]
 
+    if await db.samples.count({"subtraction.id": subtraction_id}, ["name"]):
+        return conflict("Has linked samples")
+
     reference_path = os.path.join(
         req.app["settings"].get("data_path"),
         "reference",
