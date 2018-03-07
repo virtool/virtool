@@ -95,7 +95,7 @@ async def get(req):
     "group": {"type": "string"},
     "locale": {"type": "string"},
     "subtraction": {"type": "string", "required": True},
-    "files": {"type": "list", "required": True}
+    "files": {"type": "list", "minlength": 1, "maxlength": 2, "required": True}
 })
 async def create(req):
     db, data = await unpack_request(req)
