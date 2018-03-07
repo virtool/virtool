@@ -56,23 +56,24 @@ async def remove(req):
 
     analysis_id = req.match_info["analysis_id"]
 
-    document = await db.analyses.find_one({"_id": analysis_id}, ["ready", "job"])
+    document = await db.analyses.find_one({"_id": analysis_id}, ["job", "ready", "sample"])
 
     if not document:
         return not_found()
 
     if not document["ready"]:
         return conflict("Analysis is still running. Cancel job '{}' instead".format(document["job"]["id"]))
+    sample = await db.samples.find_one({"_id": document["sample"]["id"]}, virtool.sample.PROJECTION)
 
-    document = await db.analyses.find_one_and_delete({"_id": analysis_id}, ["sample"])
+    if not sample:
+        return not_found("Sample not found")
 
     read, write = virtool.sample.get_sample_rights(sample, req["client"])
 
     if not read or not write:
         return insufficient_rights()
 
-    if sample:
-        await req.app["dispatcher"].dispatch("samples", "update", virtool.utils.base_processor(sample))
+    await req.app["dispatcher"].dispatch("samples", "update", virtool.utils.base_processor(sample))
 
     return no_content()
 
