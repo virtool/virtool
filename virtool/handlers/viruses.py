@@ -508,6 +508,9 @@ async def edit_isolate(req):
 
     isolate = virtool.virus.find_isolate(isolates, isolate_id)
 
+    if not isolate:
+        return not_found()
+
     # All source types are stored in lower case.
     if "source_type" in data:
         data["source_type"] = data["source_type"].lower()
@@ -585,11 +588,14 @@ async def set_as_default(req):
 
     isolates = deepcopy(document["isolates"])
 
+    isolate = virtool.virus.find_isolate(isolates, isolate_id)
+
+    if not isolate:
+        return not_found()
+
     # Set ``default`` to ``False`` for all existing isolates if the new one should be default.
     for isolate in isolates:
         isolate["default"] = False
-
-    isolate = virtool.virus.find_isolate(isolates, isolate_id)
 
     isolate["default"] = True
 
@@ -668,6 +674,9 @@ async def remove_isolate(req):
 
     # Get any isolates that have the isolate id to be removed (only one should match!).
     isolate_to_remove = virtool.virus.find_isolate(isolates, isolate_id)
+
+    if not isolate_to_remove:
+        return not_found()
 
     # Remove the isolate from the virus' isolate list.
     isolates.remove(isolate_to_remove)
