@@ -173,6 +173,31 @@ async def check_name_and_abbreviation(db, name=None, abbreviation=None):
     return False
 
 
+def check_source_type(settings, source_type):
+    """
+    Check if the provided `source_type` is valid based on the current server `settings`.
+
+    :param settings: a Virtool settings object
+    :type settings: :class:`.Settings`
+
+    :param source_type: the source type to check
+    :type source_type: str
+
+    :return: source type is valid
+    :rtype: bool
+
+    """
+    # Return `False` when source_types are restricted and source_type is not allowed.
+    if source_type and settings["restrict_source_types"]:
+        return source_type not in settings["allowed_source_types"]
+
+    # Return `True` when:
+    # - source_type is empty string (unknown)
+    # - source_types are not restricted
+    # - source_type is an allowed source_type
+    return True
+
+
 def check_virus(joined):
     """
     Checks that the passed virus and sequences constitute valid Virtool records and can be included in a virus

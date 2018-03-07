@@ -409,6 +409,9 @@ async def add_isolate(req):
     # All source types are stored in lower case.
     data["source_type"] = data["source_type"].lower()
 
+    if not virtool.virus.check_source_type(settings, data["source_type"]):
+        return conflict("Source type is not allowed")
+
     # Get a unique isolate_id for the new isolate.
     isolate_id = await virtool.virus.get_new_isolate_id(db)
 
@@ -508,6 +511,9 @@ async def edit_isolate(req):
     # All source types are stored in lower case.
     if "source_type" in data:
         data["source_type"] = data["source_type"].lower()
+
+        if settings.get("restrict_source_types") and data["source_type"] not in settings.get("allowed_source_types"):
+            return conflict("Not an allowed source type")
 
     old_isolate_name = virtool.virus.format_isolate_name(isolate)
 
