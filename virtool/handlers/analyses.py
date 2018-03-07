@@ -8,7 +8,7 @@ import virtool.errors
 import virtool.sample
 import virtool.sample_analysis
 import virtool.utils
-from virtool.handlers.utils import bad_request, conflict, json_response, no_content, not_found
+from virtool.handlers.utils import bad_request, conflict, insufficient_rights, json_response, no_content, not_found
 
 
 async def get(req):
@@ -66,9 +66,10 @@ async def remove(req):
 
     document = await db.analyses.find_one_and_delete({"_id": analysis_id}, ["sample"])
 
-    sample_id = document["sample"]["id"]
+    read, write = virtool.sample.get_sample_rights(sample, req["client"])
 
-    sample = await db.samples.find_one({"_id": sample_id}, virtool.sample.PROJECTION)
+    if not read or not write:
+        return insufficient_rights()
 
     if sample:
         await req.app["dispatcher"].dispatch("samples", "update", virtool.utils.base_processor(sample))

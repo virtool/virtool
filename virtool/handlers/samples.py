@@ -6,8 +6,8 @@ import virtool.file
 import virtool.utils
 import virtool.sample
 import virtool.sample_analysis
-from virtool.handlers.utils import unpack_request, json_response, bad_request, not_found, invalid_query,\
-    compose_regex_query, paginate, protected, validation, no_content, conflict
+from virtool.handlers.utils import bad_request, compose_regex_query, conflict, insufficient_rights, invalid_query,\
+    json_response, no_content, not_found, paginate, protected, unpack_request, validation
 
 
 async def find(req):
@@ -80,6 +80,9 @@ async def get(req):
 
     if not document:
         return not_found()
+
+    if not virtool.sample.get_sample_rights(document, req["client"])[0]:
+        return insufficient_rights()
 
     return json_response(virtool.utils.base_processor(document))
 
@@ -196,6 +199,16 @@ async def edit(req):
 
     sample_id = req.match_info["sample_id"]
 
+    sample_rights = await db.samples.find_one({"_id": sample_id}, virtool.sample.RIGHTS_PROJECTION)
+
+    if not sample_rights:
+        return not_found()
+
+    read, write = virtool.sample.get_sample_rights(sample_rights, req["client"])
+
+    if not read or not write:
+        return insufficient_rights()
+
     message = await virtool.sample.check_name(db, req.app["settings"], data["name"], sample_id=sample_id)
 
     if message:
@@ -247,7 +260,7 @@ async def set_rights(req):
 
         return json_response(document)
 
-    return json_response({"message": "Must be administrator or sample owner."}, status=403)
+    return insufficient_rights("Must be administrator or sample owner")
 
 
 async def remove(req):
@@ -256,6 +269,16 @@ async def remove(req):
 
     """
     delete_result = await virtool.sample.remove_samples(
+    sample_rights = await req.app["db"].samples.find_one({"_id": sample_id}, virtool.sample.RIGHTS_PROJECTION)
+
+    if not sample_rights:
+        return not_found()
+
+    read, write = virtool.sample.get_sample_rights(sample_rights, req["client"])
+
+    if not read or not write:
+        return insufficient_rights()
+
         req.app["db"],
         req.app["settings"],
         [req.match_info["sample_id"]]
@@ -276,8 +299,15 @@ async def list_analyses(req):
 
     sample_id = req.match_info["sample_id"]
 
-    if not await db.samples.count({"_id": sample_id}):
+    sample_rights = await db.samples.find_one({"_id": sample_id}, virtool.sample.RIGHTS_PROJECTION)
+
+    if not sample_rights:
         return not_found()
+
+    read, write = virtool.sample.get_sample_rights(sample_rights, req["client"])
+
+    if not read or not write:
+        return insufficient_rights()
 
     documents = await db.analyses.find({"sample.id": sample_id}, virtool.sample_analysis.LIST_PROJECTION).to_list(None)
 
@@ -299,8 +329,15 @@ async def analyze(req):
 
     sample_id = req.match_info["sample_id"]
 
-    if not await db.samples.count({"_id": sample_id}):
+    sample_rights = await db.samples.find_one({"_id": sample_id}, virtool.sample.RIGHTS_PROJECTION)
+
+    if not sample_rights:
         return not_found()
+
+    read, write = virtool.sample.get_sample_rights(sample_rights, req["client"])
+
+    if not read or not write:
+        return insufficient_rights()
 
     # Generate a unique _id for the analysis entry
     document = await virtool.sample_analysis.new(
