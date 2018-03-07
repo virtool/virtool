@@ -4,7 +4,7 @@ import { connect } from "react-redux";
 import { Row, Col, Panel } from "react-bootstrap";
 
 import { updateSetting } from "../../actions";
-import { Checkbox, Icon, InputSave } from "../../../base";
+import { Checkbox, Icon, InputError } from "../../../base";
 
 const HTTPCheckboxLabel = () => (
     <span>
@@ -30,18 +30,20 @@ const HTTPOptions = (props) => (
         </Col>
         <Col xs={12} md={6} mdPull={6}>
             <Panel>
-                <InputSave
+                <InputError
                     label="Host"
                     autoComplete={false}
                     onSave={props.onUpdateHost}
                     initialValue={props.host}
+                    withButton
                 />
-                <InputSave
+                <InputError
                     label="Port"
                     type="number"
                     autoComplete={false}
                     onSave={props.onUpdatePort}
                     initialValue={props.port}
+                    withButton
                 />
                 <Checkbox
                     label={<HTTPCheckboxLabel />}

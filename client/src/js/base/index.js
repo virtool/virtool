@@ -9,6 +9,7 @@ import { Icon } from "./Icon";
 import { Identicon } from "./Identicon";
 import { IDRow } from "./IDRow";
 import { Input } from "./Input";
+import { InputError } from "./InputError";
 import { InputSave } from "./InputSave";
 import { ListGroupItem } from "./ListGroupItem";
 import { LoadingPlaceholder } from "./LoadingPlaceholder";
@@ -33,6 +34,7 @@ export {
     Identicon,
     IDRow,
     Input,
+    InputError,
     InputSave,
     ListGroupItem,
     LoadingPlaceholder,

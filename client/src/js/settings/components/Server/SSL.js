@@ -3,7 +3,7 @@ import { connect } from "react-redux";
 import { Row, Col, Panel } from "react-bootstrap";
 
 import { updateSetting } from "../../actions";
-import { Icon, Flex, FlexItem, InputSave, Checkbox } from "../../../base";
+import { Icon, Flex, FlexItem, InputError, Checkbox } from "../../../base";
 
 const SSLFooter = () => (
     <small className="text-warning">
@@ -38,17 +38,19 @@ const SSLOptions = (props) => (
             </Col>
             <Col xs={12} md={6} mdPull={6}>
                 <Panel>
-                    <InputSave
+                    <InputError
                         label="Certificate Path"
                         onSave={props.onUpdateCertPath}
                         initialValue={props.certPath}
                         disabled={!props.enabled}
+                        withButton
                     />
-                    <InputSave
+                    <InputError
                         label="Key Path"
                         onSave={props.onUpdateKeyPath}
                         initialValue={props.keyPath}
                         disabled={!props.enabled}
+                        withButton
                     />
                 </Panel>
             </Col>

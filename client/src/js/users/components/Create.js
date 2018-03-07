@@ -5,7 +5,7 @@ import { Row, Col, Modal, ButtonToolbar } from "react-bootstrap";
 import { pick, find } from "lodash-es";
 
 import { createUser } from "../actions";
-import { Icon, Input, Checkbox, Button } from "../../base";
+import { Icon, InputError, Checkbox, Button } from "../../base";
 import { routerLocationHasState } from "../../utils";
 
 const getInitialState = () => ({
@@ -86,7 +86,7 @@ export class CreateUser extends React.PureComponent {
                     <Modal.Body>
                         <Row>
                             <Col xs={12}>
-                                <Input
+                                <InputError
                                     label="Username"
                                     name="userId"
                                     value={this.state.userId}
@@ -97,7 +97,7 @@ export class CreateUser extends React.PureComponent {
                         </Row>
                         <Row>
                             <Col xs={6}>
-                                <Input
+                                <InputError
                                     type="password"
                                     label="Password"
                                     name="password"
@@ -107,7 +107,7 @@ export class CreateUser extends React.PureComponent {
                                 />
                             </Col>
                             <Col xs={6}>
-                                <Input
+                                <InputError
                                     type="password"
                                     label="Confirm"
                                     name="confirm"

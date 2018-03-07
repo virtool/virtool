@@ -4,7 +4,7 @@ import { connect } from "react-redux";
 import { Alert, Col, Panel, Row } from "react-bootstrap";
 
 import { testProxy, updateSetting } from "../../actions";
-import { Button, Checkbox, Flex, FlexItem, Icon, InputSave } from "../../../base";
+import { Button, Checkbox, Flex, FlexItem, Icon, InputError } from "../../../base";
 
 const ProxyFooter = () => (
     <small className="text-danger">
@@ -84,27 +84,30 @@ const ProxyOptions = (props) => {
                 <Panel>
                     {alert}
 
-                    <InputSave
+                    <InputError
                         label="Address"
                         autoComplete={false}
                         onSave={props.onUpdateAddress}
                         initialValue={props.address}
                         disabled={disableInputs}
+                        withButton
                     />
-                    <InputSave
+                    <InputError
                         label="Username"
                         autoComplete={false}
                         onSave={props.onUpdateUsername}
                         initialValue={props.username}
                         disabled={disableInputs}
+                        withButton
                     />
-                    <InputSave
+                    <InputError
                         label="Password"
                         type="password"
                         autoComplete={false}
                         onSave={props.onUpdatePassword}
                         initialValue={props.password}
                         disabled={disableInputs}
+                        withButton
                     />
                     <Flex alignItems="center">
                         <FlexItem grow={1} shrink={0}>

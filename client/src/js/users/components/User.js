@@ -17,7 +17,7 @@ import { LinkContainer } from "react-router-bootstrap";
 import { ListGroupItem } from "react-bootstrap";
 
 import { editUser } from "../actions";
-import { Flex, FlexItem, Identicon, Input } from "../../base";
+import { Flex, FlexItem, Identicon, InputError } from "../../base";
 import Password from "./Password";
 import UserPermissions from "./Permissions";
 import UserGroups from "./Groups";
@@ -73,14 +73,14 @@ export class UserItem extends React.Component {
                         <UserGroups userId={this.props.id} memberGroups={this.props.groups} />
 
                         <label>Primary Group</label>
-                        <Input
+                        <InputError
                             type="select"
                             value={this.props.primary_group}
                             onChange={this.handleSetPrimaryGroup}
                         >
                             <option key="none" value="none">None</option>
                             {groupOptions}
-                        </Input>
+                        </InputError>
 
                         <Flex alignItems="center" justifyContent="space-between">
                             <label>Permissions</label>

@@ -330,6 +330,20 @@ i.vtlogo {
   background: white;
 }
 
+.panel-custom-error {
+  border-color: @brand-danger;
+}
+
+.panel-list-custom {
+  border: 1px solid white;
+  margin: 0;
+}
+
+.panel-list-custom-error {
+  border: 1px solid @brand-danger;
+  margin: 0;
+}
+
 td.input-cell {
   padding: 0 !important;
   box-sizing: border-box !important;
@@ -357,6 +371,27 @@ td.input-cell {
   width: 100%;
   border: none;
   outline-style: none;
+}
+
+.input-form-error {
+  color: @brand-danger;
+  font-size: 90%;
+  text-align: right;
+}
+
+.input-form-error-none {
+  visibility: hidden;
+  font-size: 90%;
+  text-align: right;
+}
+
+.input-error-message {
+  display: inline-block;
+  margin: 3px 0 0 0;
+}
+
+.form-control-error {
+  border-color: @brand-danger;
 }
 
 div.static-value {

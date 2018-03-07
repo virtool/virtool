@@ -3,7 +3,7 @@ import { connect } from "react-redux";
 import { Row, Col, Modal } from "react-bootstrap";
 
 import { editVirus, hideVirusModal } from "../../actions";
-import { Button, Icon, Input } from "../../../base";
+import { Button, Icon, InputError } from "../../../base";
 
 const getInitialState = ({ name = "", abbreviation = "" }) => ({
     name,
@@ -61,7 +61,7 @@ class EditVirus extends React.Component {
                     <Modal.Body>
                         <Row>
                             <Col md={6} xs={12}>
-                                <Input
+                                <InputError
                                     label="Name"
                                     name="name"
                                     value={this.state.name}
@@ -70,7 +70,7 @@ class EditVirus extends React.Component {
                                 />
                             </Col>
                             <Col md={6} xs={12}>
-                                <Input
+                                <InputError
                                     label="Abbreviation"
                                     name="abbreviation"
                                     value={this.state.abbreviation}

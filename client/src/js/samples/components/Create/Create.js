@@ -5,7 +5,6 @@ import {
     Modal,
     Row,
     Col,
-    FormGroup,
     ControlLabel,
     InputGroup
 } from "react-bootstrap";
@@ -13,7 +12,7 @@ import { push } from "react-router-redux";
 
 import ReadSelector from "./ReadSelector";
 import { findReadyHosts, createSample } from "../../actions";
-import { Button, Icon, Input, LoadingPlaceholder } from "../../../base";
+import { Button, Icon, InputError, LoadingPlaceholder } from "../../../base";
 import { findFiles } from "../../../files/actions";
 import { routerLocationHasState } from "../../../utils";
 
@@ -41,10 +40,10 @@ const SampleUserGroup = ({ group, groups, onChange }) => {
 
     return (
         <Col md={3}>
-            <Input type="select" label="User Group" value={group} onChange={onChange}>
+            <InputError type="select" label="User Group" value={group} onChange={onChange}>
                 <option key="none" value="none">None</option>
                 {groupComponents}
-            </Input>
+            </InputError>
         </Col>
     );
 };
@@ -173,31 +172,29 @@ class CreateSample extends React.Component {
                     <Modal.Body>
 
                         <Row>
-                            <Col md={9}>
-                                <FormGroup>
-                                    <ControlLabel>Sample Name</ControlLabel>
-                                    <InputGroup>
-                                        <Input
-                                            name="sample name"
-                                            value={this.state.name}
-                                            onChange={(e) => this.setState({name: e.target.value, errors: []})}
-                                            autocomplete={false}
-                                            error={errorName}
-                                        />
-                                        <InputGroup.Button style={{verticalAlign: "top", zIndex: "0"}}>
-                                            <Button
-                                                type="button"
-                                                onClick={this.autofill}
-                                                disabled={!this.state.selected.length}
-                                            >
-                                                <Icon name="wand" />
-                                            </Button>
-                                        </InputGroup.Button>
-                                    </InputGroup>
-                                </FormGroup>
+                            <Col md={6}>
+                                <ControlLabel>Sample Name</ControlLabel>
+                                <InputGroup>
+                                    <InputError
+                                        name="sample name"
+                                        value={this.state.name}
+                                        onChange={(e) => this.setState({name: e.target.value, errors: []})}
+                                        autocomplete={false}
+                                        error={errorName}
+                                    />
+                                    <InputGroup.Button style={{verticalAlign: "top", zIndex: "0"}}>
+                                        <Button
+                                            type="button"
+                                            onClick={this.autofill}
+                                            disabled={!this.state.selected.length}
+                                        >
+                                            <Icon name="wand" />
+                                        </Button>
+                                    </InputGroup.Button>
+                                </InputGroup>
                             </Col>
-                            <Col md={3}>
-                                <Input
+                            <Col md={6}>
+                                <InputError
                                     label="Isolate"
                                     value={this.state.isolate}
                                     onChange={(e) => this.setState({isolate: e.target.value})}
@@ -207,14 +204,14 @@ class CreateSample extends React.Component {
 
                         <Row>
                             <Col md={6}>
-                                <Input
+                                <InputError
                                     label="True Host"
                                     value={this.state.host}
                                     onChange={(e) => this.setState({host: e.target.value})}
                                 />
                             </Col>
                             <Col md={6}>
-                                <Input
+                                <InputError
                                     type="select"
                                     label="Subtraction Host"
                                     value={this.state.subtraction}
@@ -222,21 +219,21 @@ class CreateSample extends React.Component {
                                     error={errorHost}
                                 >
                                     {hostComponents}
-                                </Input>
+                                </InputError>
                             </Col>
                         </Row>
 
                         <Row>
-                            <Col md={this.state.forceGroupChoice ? 6 : 8}>
-                                <Input
+                            <Col md={6}>
+                                <InputError
                                     label="Locale"
                                     value={this.state.locale}
                                     onChange={(e) => this.setState({locale: e.target.value})}
                                 />
                             </Col>
                             {userGroup}
-                            <Col md={this.state.forceGroupChoice ? 3 : 4}>
-                                <Input
+                            <Col md={6}>
+                                <InputError
                                     type="text"
                                     label="Library Type"
                                     value={libraryType}

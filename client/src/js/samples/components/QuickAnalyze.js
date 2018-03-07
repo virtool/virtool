@@ -15,7 +15,7 @@ import { Modal } from "react-bootstrap";
 
 import { analyze } from "../actions";
 import { updateAccountSettings } from "../../account/actions";
-import { AlgorithmSelect, Input, Checkbox, Button } from "../../base";
+import { AlgorithmSelect, InputError, Checkbox, Button } from "../../base";
 import { routerLocationHasState } from "../../utils";
 
 const getInitialState = ({ algorithm = "pathoscope_bowtie" }) => ({
@@ -73,7 +73,7 @@ class QuickAnalyze extends React.Component {
                     </Modal.Header>
 
                     <Modal.Body>
-                        <Input
+                        <InputError
                             label="Sample"
                             value={this.props.show ? this.props.quickAnalyze.name : ""}
                             readOnly

@@ -3,7 +3,7 @@ import { connect } from "react-redux";
 import { Row, Col, Panel } from "react-bootstrap";
 
 import { updateSetting } from "../actions";
-import { Icon, InputSave } from "../../base";
+import { Icon, InputError } from "../../base";
 
 const WarningFooter = () => (
     <small className="text-danger">
@@ -24,21 +24,24 @@ const DataOptions = ({ db_name, db_host, db_port, data_path, watch_path, onSave 
             </Col>
             <Col xs={12} md={6} mdPull={6}>
                 <Panel>
-                    <InputSave
+                    <InputError
                         label="Database Name"
                         onSave={(e) => onSave("db_name", e.value)}
                         initialValue={db_name}
+                        withButton
                     />
-                    <InputSave
+                    <InputError
                         label="MongoDB Host"
                         onSave={(e) => onSave("db_host", e.value)}
                         initialValue={db_host}
+                        withButton
                     />
-                    <InputSave
+                    <InputError
                         label="MongoDB Port"
                         type="number"
                         onSave={(e) => onSave("db_port", Number(e.value))}
                         initialValue={db_port}
+                        withButton
                     />
                 </Panel>
             </Col>
@@ -54,15 +57,17 @@ const DataOptions = ({ db_name, db_host, db_port, data_path, watch_path, onSave 
             </Col>
             <Col xs={12} md={6} mdPull={6}>
                 <Panel>
-                    <InputSave
+                    <InputError
                         label="Virtool Data"
                         onSave={(e) => onSave("watch_path", e.value)}
                         initialValue={data_path}
+                        withButton
                     />
-                    <InputSave
+                    <InputError
                         label="Watch Folder"
                         onSave={(e) => onSave("watch_path", e.value)}
                         initialValue={watch_path}
+                        withButton
                     />
                 </Panel>
             </Col>

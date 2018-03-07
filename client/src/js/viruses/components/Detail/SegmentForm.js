@@ -2,7 +2,7 @@ import React from "react";
 import PropTypes from "prop-types";
 import { Row, Col, Alert } from "react-bootstrap";
 import { map } from "lodash-es";
-import { Input, Checkbox } from "../../../base";
+import { InputError, Checkbox } from "../../../base";
 
 export default class SegmentForm extends React.Component {
 
@@ -78,7 +78,7 @@ export default class SegmentForm extends React.Component {
             <form>
                 <Row>
                     <Col md={9}>
-                        <Input
+                        <InputError
                             label="Name"
                             value={this.props.newEntry.name}
                             onChange={this.changeSegName}
@@ -86,14 +86,14 @@ export default class SegmentForm extends React.Component {
                         />
                     </Col>
                     <Col md={3}>
-                        <Input
+                        <InputError
                             type="select"
                             label="Molecule Type"
                             value={this.props.newEntry.molecule}
                             onChange={this.changeMolType}
                         >
                             {molecules}
-                        </Input>
+                        </InputError>
                     </Col>
                 </Row>
                 <Row>
