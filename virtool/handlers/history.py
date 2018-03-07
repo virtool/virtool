@@ -50,7 +50,9 @@ async def revert(req):
 
     change_id = req.match_info["change_id"]
 
-    if not await db.history.count({"_id": change_id}):
+    change = await db.history.find_one({"_id": change_id}, ["index"])
+
+    if not change:
         return not_found()
 
     virus_id, virus_version = change_id.split(".")
