@@ -33,9 +33,11 @@ async def get(req):
         gi = None
 
         async with virtool.proxy.ProxyRequest(settings, session.get, search_url, params=params) as search_resp:
-
             data = await search_resp.text()
-            gi = re.search("<Id>([0-9]+)</Id>", data).group(1)
+            match = re.search("<Id>([0-9]+)</Id>", data)
+
+            if match:
+                gi = match.group(1)
 
         if gi:
             fetch_url = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi"
