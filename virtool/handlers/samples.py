@@ -267,7 +267,8 @@ async def remove(req):
     Remove a sample document and all associated analyses.
 
     """
-    delete_result = await virtool.sample.remove_samples(
+    sample_id = req.match_info["sample_id"]
+
     sample_rights = await req.app["db"].samples.find_one({"_id": sample_id}, virtool.sample.RIGHTS_PROJECTION)
 
     if not sample_rights:
@@ -278,13 +279,11 @@ async def remove(req):
     if not read or not write:
         return insufficient_rights()
 
+    await virtool.sample.remove_samples(
         req.app["db"],
         req.app["settings"],
-        [req.match_info["sample_id"]]
+        [sample_id]
     )
-
-    if not delete_result.deleted_count:
-        return not_found()
 
     return no_content()
 
