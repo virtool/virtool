@@ -30,6 +30,20 @@ export default class PathoscopeList extends React.Component {
         });
     };
 
+    handlePosition = (node) => {
+        const {left, top, right, bottom, height, width} = node.getBoundingClientRect();
+        const scrollCorrection = window.pageYOffset;
+
+        return {
+            left,
+            right,
+            bottom: bottom + scrollCorrection,
+            top: top + scrollCorrection,
+            height,
+            width
+        };
+    }
+
     render () {
 
         if (this.props.data.length) {
@@ -83,7 +97,8 @@ export default class PathoscopeList extends React.Component {
                         typeName="div"
                         className="list-group"
                         enterAnimation="accordionVertical"
-                        leaveAnimation={false}
+                        leaveAnimation="accordionVertical"
+                        getPosition={this.handlePosition}
                     >
                         {flatten(rows)}
                     </FlipMove>
