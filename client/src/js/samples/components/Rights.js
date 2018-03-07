@@ -20,8 +20,8 @@ class SampleRights extends React.Component {
         this.props.onChangeGroup(this.props.sampleId, e.target.value);
     };
 
-    handleChangeRights = (e) => {
-        this.props.onChangeRights(this.props.sampleId, "group", e.target.value);
+    handleChangeRights = (e, scope) => {
+        this.props.onChangeRights(this.props.sampleId, scope, e.target.value);
     };
 
     render () {
@@ -62,9 +62,10 @@ class SampleRights extends React.Component {
 
                     <Input
                         type="select"
+                        name="groupRights"
                         label="Group Rights"
                         value={groupRights}
-                        onChange={this.handleChangeRights}
+                        onChange={(e) => this.handleChangeRights(e, "group")}
                     >
                         <option value="">None</option>
                         <option value="r">Read</option>
@@ -73,9 +74,10 @@ class SampleRights extends React.Component {
 
                     <Input
                         type="select"
+                        name="allUsers"
                         label="All Users' Rights"
                         value={allRights}
-                        onChange={this.handleChangeRights}
+                        onChange={(e) => this.handleChangeRights(e, "all")}
                     >
                         <option value="">None</option>
                         <option value="r">Read</option>
@@ -114,10 +116,10 @@ const mapDispatchToProps = dispatch => ({
         dispatch(updateSampleRights(sampleId, {group: groupId}));
     },
 
-    onChangeRights: (sampleId, name, value) => {
+    onChangeRights: (sampleId, scope, value) => {
         const update = {
-            [`${name}_read`]: includes(value, "r"),
-            [`${name}_write`]: includes(value, "w")
+            [`${scope}_read`]: includes(value, "r"),
+            [`${scope}_write`]: includes(value, "w")
         };
 
         dispatch(updateSampleRights(sampleId, update));
