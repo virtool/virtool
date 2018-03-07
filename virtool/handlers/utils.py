@@ -195,7 +195,7 @@ def invalid_query(errors):
 
 def protected(required_perm=None):
     if required_perm and required_perm not in virtool.user_permissions.PERMISSIONS:
-        raise ValueError("Permission {} is not valid".format(required_perm))
+        raise ValueError("Requires permission: {}".format(required_perm))
 
     def decorator(handler):
         async def wrapped(req):

@@ -96,7 +96,7 @@ async def blast(req):
         return bad_request("Not a NuVs analysis")
 
     if not analysis["ready"]:
-        return bad_request("Still in progress")
+        return conflict("Analysis is still running")
 
     sequences = [result["sequence"] for result in analysis["results"] if result["index"] == int(sequence_index)]
 
@@ -106,7 +106,7 @@ async def blast(req):
 
     # Raise exception if more than one sequence has the provided index. This should never happen, just being careful.
     if len(sequences) > 1:
-        raise ValueError("More than one sequence with index {} found".format(sequence_index))
+        raise ValueError("More than one sequence with index {}".format(sequence_index))
 
     # Start a BLAST at NCBI with the specified sequence. Return a RID that identifies the BLAST run.
     rid, _ = await virtool.bio.initialize_ncbi_blast(req.app["settings"], sequences[0])

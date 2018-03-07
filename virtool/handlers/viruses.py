@@ -110,7 +110,7 @@ async def create(req):
     message = await virtool.virus.check_name_and_abbreviation(db, data["name"], abbreviation)
 
     if message:
-        return json_response({"message": message},  status=409)
+        return conflict(message)
 
     virus_id = await virtool.utils.get_new_id(db.viruses)
 
@@ -387,7 +387,9 @@ async def add_isolate(req):
     Add a new isolate to a virus.
 
     """
-    db, data = req.app["db"], req["data"]
+    db = req.app["db"]
+    settings = req.app["settings"]
+    data = req["data"]
 
     virus_id = req.match_info["virus_id"]
 
@@ -477,26 +479,19 @@ async def add_isolate(req):
     return json_response(dict(data, sequences=[]), status=201, headers=headers)
 
 
+@validation({
+    "source_type": {"type": "string"},
+    "source_name": {"type": "string"}
+})
 @protected("modify_virus")
 async def edit_isolate(req):
     """
     Edit an existing isolate.
 
     """
-    db, data = await unpack_request(req)
-
-    if not len(data):
-        return bad_request("Empty Input")
-
-    v = Validator({
-        "source_type": {"type": "string"},
-        "source_name": {"type": "string"}
-    })
-
-    if not v(data):
-        return invalid_input(v.errors)
-
-    data = v.document
+    db = req.app["db"]
+    settings = req.app["settings"]
+    data = req["data"]
 
     virus_id = req.match_info["virus_id"]
     isolate_id = req.match_info["isolate_id"]
@@ -504,7 +499,7 @@ async def edit_isolate(req):
     document = await db.viruses.find_one({"_id": virus_id, "isolates.id": isolate_id})
 
     if not document:
-        return not_found()
+        return not_found("Virus not found")
 
     isolates = deepcopy(document["isolates"])
 
@@ -580,7 +575,7 @@ async def set_as_default(req):
     document = await db.viruses.find_one({"_id": virus_id, "isolates.id": isolate_id})
 
     if not document:
-        return not_found()
+        return not_found("Virus not found")
 
     isolates = deepcopy(document["isolates"])
 
@@ -659,7 +654,7 @@ async def remove_isolate(req):
     document = await db.viruses.find_one(virus_id)
 
     if not document:
-        return not_found()
+        return not_found("Virus not found")
 
     isolates = deepcopy(document["isolates"])
 
@@ -783,12 +778,12 @@ async def create_sequence(req):
     document = await db.viruses.find_one({"_id": virus_id, "isolates.id": isolate_id})
 
     if not document:
-        return not_found()
+        return not_found("Virus or isolate not found")
 
     segment = data.get("segment", None)
 
     if segment and segment not in {s["name"] for s in document.get("schema", {})}:
-        return not_found("Segment not found: {}".format(segment))
+        return not_found("Segment not found")
 
     # Update POST data to make sequence document.
     data.update({
@@ -804,10 +799,7 @@ async def create_sequence(req):
     try:
         await db.sequences.insert_one(data)
     except pymongo.errors.DuplicateKeyError:
-        return json_response({
-            "id": "conflict",
-            "message": "Sequence id already exists"
-        }, status=409)
+        return conflict("Sequence id already exists")
 
     document = await db.viruses.find_one_and_update({"_id": virus_id}, {
         "$set": {
@@ -870,27 +862,21 @@ async def edit_sequence(req):
     document = await db.viruses.find_one({"_id": virus_id, "isolates.id": isolate_id})
 
     if not document:
-        return not_found("Virus or isolate not found")
+        return not_found()
 
     old = await virtool.virus.join(db, virus_id, document)
-
-    # Get the subject virus document. Will be ``None`` if it doesn't exist. This will result in a ``404`` response.
-    document = await db.viruses.find_one({"_id": virus_id, "isolates.id": isolate_id})
-
-    if not document:
-        return not_found()
 
     segment = data.get("segment", None)
 
     if segment and segment not in {s["name"] for s in document.get("schema", {})}:
-        return not_found("Segment not found: {}".format(segment))
+        return not_found("Segment not found")
 
     updated_sequence = await db.sequences.find_one_and_update({"_id": sequence_id}, {
         "$set": data
     }, return_document=ReturnDocument.AFTER)
 
     if not updated_sequence:
-        return not_found("Sequence not found")
+        return not_found()
 
     document = await db.viruses.find_one_and_update({"_id": virus_id}, {
         "$set": {

@@ -125,7 +125,7 @@ async def change_password(req):
 
     # Will evaluate true if the passed username and password are correct.
     if not await virtool.user.validate_credentials(db, user_id, data["old_password"]):
-        return bad_request("Invalid old password.")
+        return bad_request("Invalid old password")
 
     # Salt and hash the new password
     hashed = virtool.user.hash_password(data["new_password"])
@@ -239,7 +239,7 @@ async def update_api_key(req):
         }
     }, return_document=ReturnDocument.AFTER, projection={"_id": False, "user": False})
 
-    return json_response(document, status=200)
+    return json_response(document)
 
 
 @protected()

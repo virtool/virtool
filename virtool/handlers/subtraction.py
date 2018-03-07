@@ -48,13 +48,13 @@ async def get(req):
 
     document = await db.subtraction.find_one(subtraction_id)
 
-    if document:
-        linked_samples = await db.samples.find({"subtraction.id": subtraction_id}, ["name"]).to_list(None)
-        document["linked_samples"] = [virtool.utils.base_processor(d) for d in linked_samples]
+    if not document:
+        return not_found()
 
-        return json_response(virtool.utils.base_processor(document))
+    linked_samples = await db.samples.find({"subtraction.id": subtraction_id}, ["name"]).to_list(None)
+    document["linked_samples"] = [virtool.utils.base_processor(d) for d in linked_samples]
 
-    return not_found()
+    return json_response(virtool.utils.base_processor(document))
 
 
 @protected("modify_subtraction")
