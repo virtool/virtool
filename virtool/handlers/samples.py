@@ -235,10 +235,13 @@ async def set_rights(req):
     """
     db, data = req.app["db"], req["data"]
 
+    sample_id = req.match_info["sample_id"]
+
+    if not await db.samples.count({"_id": sample_id}):
+        return not_found()
+
     user_id = req["client"].user_id
     user_groups = req["client"].groups
-
-    sample_id = req.match_info["sample_id"]
 
     # Only update the document if the connected user owns the samples or is an administrator.
     if "administrator" in user_groups or user_id == await virtool.sample.get_sample_owner(db, sample_id):
