@@ -16,7 +16,6 @@ import {
     REFRESH_SAMPLE,
     CREATE_SAMPLE,
     UPDATE_SAMPLE,
-    UPDATE_SAMPLE_GROUP,
     UPDATE_SAMPLE_RIGHTS,
     REMOVE_SAMPLE,
     FIND_ANALYSES,
@@ -25,6 +24,25 @@ import {
     BLAST_NUVS,
     REMOVE_ANALYSIS
 } from "../actionTypes";
+
+export function* watchSamples () {
+    yield throttle(200, LOCATION_CHANGE, findSamples);
+    yield takeEvery(WS_UPDATE_SAMPLE, wsSample);
+    yield takeEvery(WS_REMOVE_SAMPLE, wsSample);
+    yield takeEvery(WS_UPDATE_ANALYSIS, wsUpdateAnalysis);
+    yield takeLatest(FIND_READY_HOSTS.REQUESTED, findReadyHosts);
+    yield takeLatest(REFRESH_SAMPLE.REQUESTED, getSample);
+    yield takeLatest(GET_SAMPLE.REQUESTED, getSample);
+    yield takeLatest(CREATE_SAMPLE.REQUESTED, createSample);
+    yield takeEvery(UPDATE_SAMPLE.REQUESTED, updateSample);
+    yield takeEvery(UPDATE_SAMPLE_RIGHTS.REQUESTED, updateSampleRights);
+    yield throttle(300, REMOVE_SAMPLE.REQUESTED, removeSample);
+    yield takeLatest(FIND_ANALYSES.REQUESTED, findAnalyses);
+    yield takeLatest(GET_ANALYSIS.REQUESTED, getAnalysis);
+    yield takeEvery(ANALYZE.REQUESTED, analyze);
+    yield throttle(150, BLAST_NUVS.REQUESTED, blastNuvs);
+    yield takeLatest(REMOVE_ANALYSIS.REQUESTED, removeAnalysis);
+}
 
 export function* wsSample () {
     yield apiCall(samplesAPI.find, {}, FIND_SAMPLES);
@@ -70,11 +88,6 @@ export function* updateSample (action) {
     yield setPending(apiCall(samplesAPI.update, action, UPDATE_SAMPLE));
     yield getSample(action);
     yield pushHistoryState({editSample: false});
-}
-
-export function* updateSampleGroup (action) {
-    yield setPending(apiCall(samplesAPI.updateGroup, action, UPDATE_SAMPLE_GROUP));
-    yield getSample(action);
 }
 
 export function* updateSampleRights (action) {
@@ -145,7 +158,7 @@ export function* analyze (action) {
 
 export function* blastNuvs (action) {
     try {
-        const response = yield samplesAPI.blastNuvs(action.analysisId, action.sequenceIndex);
+        const response = yield samplesAPI.blastNuvs(action);
         yield put({
             type: BLAST_NUVS.SUCCEEDED,
             analysisId: action.analysisId,
@@ -159,24 +172,4 @@ export function* blastNuvs (action) {
 
 export function* removeAnalysis (action) {
     yield apiCall(samplesAPI.removeAnalysis, action, REMOVE_ANALYSIS, {id: action.analysisId});
-}
-
-export function* watchSamples () {
-    yield throttle(200, LOCATION_CHANGE, findSamples);
-    yield takeEvery(WS_UPDATE_SAMPLE, wsSample);
-    yield takeEvery(WS_REMOVE_SAMPLE, wsSample);
-    yield takeEvery(WS_UPDATE_ANALYSIS, wsUpdateAnalysis);
-    yield takeLatest(FIND_READY_HOSTS.REQUESTED, findReadyHosts);
-    yield takeLatest(REFRESH_SAMPLE.REQUESTED, getSample);
-    yield takeLatest(GET_SAMPLE.REQUESTED, getSample);
-    yield takeLatest(CREATE_SAMPLE.REQUESTED, createSample);
-    yield takeEvery(UPDATE_SAMPLE.REQUESTED, updateSample);
-    yield takeEvery(UPDATE_SAMPLE_GROUP.REQUESTED, updateSampleGroup);
-    yield takeEvery(UPDATE_SAMPLE_RIGHTS.REQUESTED, updateSampleRights);
-    yield throttle(300, REMOVE_SAMPLE.REQUESTED, removeSample);
-    yield takeLatest(FIND_ANALYSES.REQUESTED, findAnalyses);
-    yield takeLatest(GET_ANALYSIS.REQUESTED, getAnalysis);
-    yield takeEvery(ANALYZE.REQUESTED, analyze);
-    yield throttle(150, BLAST_NUVS.REQUESTED, blastNuvs);
-    yield takeLatest(REMOVE_ANALYSIS.REQUESTED, removeAnalysis);
 }

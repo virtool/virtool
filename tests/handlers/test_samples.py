@@ -137,7 +137,7 @@ class TestFind:
                 "host": "",
                 "imported": True,
                 "isolate": "",
-                "created_at": "2017-10-06T22:00:00Z",
+                "created_at": "2015-10-06T22:00:00Z",
                 "archived": False,
                 "id": "cb400e6d",
                 "name": "16SPP044",
@@ -151,7 +151,7 @@ class TestFind:
                 "host": "",
                 "imported": True,
                 "isolate": "Thing",
-                "created_at": "2017-10-06T21:00:00Z",
+                "created_at": "2015-10-06T21:00:00Z",
                 "archived": True,
                 "id": "beb1eb10",
                 "name": "16GVP042",
@@ -165,7 +165,7 @@ class TestFind:
                 "host": "",
                 "imported": True,
                 "isolate": "Test",
-                "created_at": "2017-10-06T20:00:00Z",
+                "created_at": "2015-10-06T20:00:00Z",
                 "archived": True,
                 "id": "72bb8b31",
                 "name": "16GVP043",
@@ -203,7 +203,7 @@ class TestGet:
 
         assert await resp.json() == {
             "id": "test",
-            "created_at": "2017-10-06T20:00:00Z"
+            "created_at": "2015-10-06T20:00:00Z"
         }
 
     async def test_not_found(self, spawn_client, resp_is):
@@ -240,7 +240,8 @@ class TestCreate:
             "sample_all_read": True,
             "sample_all_write": True,
             "sample_group_read": True,
-            "sample_group_write": True
+            "sample_group_write": True,
+            "sample_unique_names": True
         })
 
         m_reserve = make_mocked_coro()
@@ -281,7 +282,7 @@ class TestCreate:
             "group": expected_group,
             "nuvs": False,
             "pathoscope": False,
-            "created_at": "2017-10-06T20:00:00Z",
+            "created_at": "2015-10-06T20:00:00Z",
             "format": "fastq",
             "imported": "ip",
             "quality": None,
@@ -327,6 +328,8 @@ class TestCreate:
     async def test_name_exists(self, spawn_client, static_time, resp_is):
         client = await spawn_client(authorize=True, permissions=["create_sample"])
 
+        client.app["settings"]["sample_unique_names"] = True
+
         await client.db.samples.insert_one({
             "_id": "foobar",
             "name": "Foobar",
@@ -342,7 +345,7 @@ class TestCreate:
             "subtraction": "apple"
         })
 
-        assert await resp_is.conflict(resp, "Sample name 'Foobar' already exists")
+        assert await resp_is.conflict(resp, "Sample name is already in use")
 
     async def test_force_choice(self, spawn_client, static_time, resp_is):
         """
@@ -353,6 +356,7 @@ class TestCreate:
         client = await spawn_client(authorize=True, permissions=["create_sample"])
 
         client.app["settings"]["sample_group"] = "force_choice"
+        client.app["settings"]["sample_unique_names"] = True
 
         resp = await client.post("/api/samples", {
             "name": "Foobar",
@@ -366,6 +370,7 @@ class TestCreate:
         client = await spawn_client(authorize=True, permissions=["create_sample"])
 
         client.app["settings"]["sample_group"] = "force_choice"
+        client.app["settings"]["sample_unique_names"] = True
 
         resp = await client.post("/api/samples", {
             "name": "Foobar",
@@ -379,6 +384,8 @@ class TestCreate:
     @pytest.mark.parametrize("in_db", [True, False])
     async def test_subtraction_dne(self, in_db, spawn_client, resp_is):
         client = await spawn_client(authorize=True, permissions=["create_sample"])
+
+        client.app["settings"]["sample_unique_names"] = True
 
         resp = await client.post("/api/samples", {
             "name": "Foobar",
@@ -401,6 +408,8 @@ class TestCreate:
 
         """
         client = await spawn_client(authorize=True, permissions=["create_sample"])
+
+        client.app["settings"]["sample_unique_names"] = True
 
         await client.db.subtraction.insert_one({
             "_id": "apple",
@@ -525,7 +534,7 @@ class TestListAnalyses:
                 {
                     "id": "test_1",
                     "algorithm": "pathopscope_bowtie",
-                    "created_at": "2017-10-06T20:00:00Z",
+                    "created_at": "2015-10-06T20:00:00Z",
                     "ready": True,
                     "job": {
                         "id": "test"
@@ -544,7 +553,7 @@ class TestListAnalyses:
                 {
                     "id": "test_2",
                     "algorithm": "pathopscope_bowtie",
-                    "created_at": "2017-10-06T20:00:00Z",
+                    "created_at": "2015-10-06T20:00:00Z",
                     "ready": True,
                     "job": {
                         "id": "test"
@@ -563,7 +572,7 @@ class TestListAnalyses:
                 {
                     "id": "test_3",
                     "algorithm": "pathopscope_bowtie",
-                    "created_at": "2017-10-06T20:00:00Z",
+                    "created_at": "2015-10-06T20:00:00Z",
                     "ready": True,
                     "job": {
                         "id": "test"
@@ -637,7 +646,7 @@ class TestAnalyze:
             "id": "test_analysis",
             "ready": False,
             "algorithm": "pathoscope_bowtie",
-            "created_at": "2017-10-06T20:00:00Z",
+            "created_at": "2015-10-06T20:00:00Z",
             "sample": {
                 "id": "test"
             },

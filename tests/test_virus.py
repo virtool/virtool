@@ -149,7 +149,8 @@ class TestCheckVirus:
                 "host": "sweet cherry",
                 "virus_id": "6116cba1",
                 "isolate_id": "cab8b360",
-                "sequence": ""
+                "sequence": "",
+                "segment": None
             }],
             "empty_virus": False,
             "isolate_inconsistency": False

@@ -45,6 +45,50 @@ async def test_get_settings(spawn_client):
     }
 
 
+@pytest.mark.parametrize("error", [False, True])
+async def test_edit(error, spawn_client, resp_is):
+    client = await spawn_client(authorize=True)
+
+    email = "dev-at-virtool.ca" if error else "dev@virtool.ca"
+
+    resp = await client.patch("/api/account", {
+        "email": email
+    })
+
+    if error:
+        await resp_is.invalid_input(resp, {"dev-at-virtool.ca": ["unknown field"]})
+    else:
+        assert resp.status == 200
+
+        assert await resp.json() == {
+            "permissions": {
+                "cancel_job": False,
+                "create_sample": False,
+                "manage_users": False,
+                "modify_hmm": False,
+                "modify_settings": False,
+                "modify_subtraction": False,
+                "modify_virus": False,
+                "rebuild_index": False,
+                "remove_file": False,
+                "remove_job": False,
+                "remove_virus": False,
+                "upload_file": False
+            },
+            "groups": [],
+            "last_password_change": "2015-10-06T20:00:00Z",
+            "primary_group": "technician",
+            "settings": {
+                "skip_quick_analyze_dialog": True,
+                "show_ids": True,
+                "show_versions": True,
+                "quick_analyze_algorithm": "pathoscope_bowtie"
+            },
+            "email": "dev@virtool.ca",
+            "id": "test"
+        }
+
+
 class TestUpdateSettings:
 
     async def test(self, spawn_client):
@@ -94,6 +138,8 @@ class TestChangePassword:
         """
         client = await spawn_client(authorize=True)
 
+        client.app["settings"]["minimum_password_length"] = 8
+
         resp = await client.put("/api/account/password", {"old_password": "hello_world", "new_password": "foo_bar_1"})
 
         assert resp.status == 200
@@ -109,12 +155,14 @@ class TestChangePassword:
         """
         client = await spawn_client(authorize=True)
 
+        client.app["settings"]["minimum_password_length"] = 8
+
         resp = await client.put("/api/account/password", {
             "old_password": "not_right",
             "new_password": "foo_bar"
         })
 
-        assert await resp_is.bad_request(resp, "Password is to short. Must be at least 8 characters.")
+        assert await resp_is.invalid_input(resp, {'new_password': ['min length is 8']})
 
     async def test_invalid_old(self, spawn_client, resp_is):
         """
@@ -122,6 +170,8 @@ class TestChangePassword:
 
         """
         client = await spawn_client(authorize=True)
+
+        client.app["settings"]["minimum_password_length"] = 8
 
         resp = await client.put("/api/account/password", {
             "old_password": "not_right",
@@ -136,6 +186,8 @@ class TestChangePassword:
 
         """
         client = await spawn_client(authorize=True)
+
+        client.app["settings"]["minimum_password_length"] = 8
 
         resp = await client.put("/api/account/password", {"new_password": 1234})
 
@@ -222,8 +274,6 @@ class TestCreateAPIKey:
 
         resp = await client.post("/api/account/keys", body)
 
-        print(await resp.json())
-
         assert resp.status == 201
 
         expected = {
@@ -245,7 +295,7 @@ class TestCreateAPIKey:
 
         expected.update({
             "key": "abc123xyz789",
-            "created_at": "2017-10-06T20:00:00Z"
+            "created_at": "2015-10-06T20:00:00Z"
         })
 
         del expected["_id"]
@@ -292,7 +342,7 @@ class TestCreateAPIKey:
 
         expected.update({
             "key": "987zyx321cba",
-            "created_at": "2017-10-06T20:00:00Z"
+            "created_at": "2015-10-06T20:00:00Z"
         })
 
         del expected["_id"]
@@ -345,7 +395,7 @@ class TestUpdateAPIKey:
         del expected["_id"]
         del expected["user"]
 
-        expected["created_at"] = "2017-10-06T20:00:00Z"
+        expected["created_at"] = "2015-10-06T20:00:00Z"
 
         assert await resp.json() == expected
 

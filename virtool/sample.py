@@ -42,6 +42,16 @@ PROJECTION = [
 ]
 
 
+RIGHTS_PROJECTION = {
+    "_id": False,
+    "group": True,
+    "group_read": True,
+    "group_write": True,
+    "all_read": True,
+    "all_write": True
+}
+
+
 def calculate_algorithm_tags(analyses):
     """
     Calculate the algorithm tags (eg. "ip", True) that should be applied to a sample document based on a list of its
@@ -73,27 +83,22 @@ def calculate_algorithm_tags(analyses):
     }
 
 
-async def recalculate_algorithm_tags(db, sample_id):
-    """
-    Recalculate and apply algorithm tags (eg. "ip", True) for a given sample. Finds the associated analyses and calls
-    :func:`calculate_algorithm_tags`, then applies the update to the sample document.
+async def check_name(db, settings, name, sample_id=None):
 
-    :param db: the application database client
-    :type db: :class:`~motor.motor_asyncio.AsyncIOMotorClient`
+    if settings["sample_unique_names"]:
+        query = {
+            "name": name
+        }
 
-    :param sample_id: the id of the sample to recalculate tags for
-    :type sample_id: str
+        if sample_id:
+            query["_id"] = {
+                "$ne": sample_id
+            }
 
-    """
-    analyses = await db.analyses.find({"sample.id": sample_id}, ["ready", "algorithm"]).to_list(None)
+        if await db.samples.count(query):
+            return "Sample name is already in use"
 
-    update = calculate_algorithm_tags(analyses)
-
-    document = await db.samples.find_one_and_update({"_id": sample_id}, {
-        "$set": update
-    }, return_document=pymongo.ReturnDocument.AFTER, projection=LIST_PROJECTION)
-
-    return document
+    return None
 
 
 async def get_sample_owner(db, sample_id):
@@ -115,6 +120,29 @@ async def get_sample_owner(db, sample_id):
         return document["user"]["id"]
 
     return None
+
+
+async def recalculate_algorithm_tags(db, sample_id):
+    """
+    Recalculate and apply algorithm tags (eg. "ip", True) for a given sample. Finds the associated analyses and calls
+    :func:`calculate_algorithm_tags`, then applies the update to the sample document.
+
+    :param db: the application database client
+    :type db: :class:`~motor.motor_asyncio.AsyncIOMotorClient`
+
+    :param sample_id: the id of the sample to recalculate tags for
+    :type sample_id: str
+
+    """
+    analyses = await db.analyses.find({"sample.id": sample_id}, ["ready", "algorithm"]).to_list(None)
+
+    update = calculate_algorithm_tags(analyses)
+
+    document = await db.samples.find_one_and_update({"_id": sample_id}, {
+        "$set": update
+    }, return_document=pymongo.ReturnDocument.AFTER, projection=LIST_PROJECTION)
+
+    return document
 
 
 async def remove_samples(db, settings, id_list):

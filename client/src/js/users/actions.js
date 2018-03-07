@@ -11,11 +11,8 @@ import {
     LIST_USERS,
     FILTER_USERS,
     CREATE_USER,
-    SET_PASSWORD,
-    SET_PRIMARY_GROUP,
-    SET_FORCE_RESET,
     ADD_USER_TO_GROUP,
-    REMOVE_USER_FROM_GROUP
+    REMOVE_USER_FROM_GROUP, EDIT_USER
 } from "../actionTypes";
 
 export const listUsers = () => ({
@@ -32,22 +29,10 @@ export const createUser = (data) => ({
     ...data
 });
 
-export const setForceReset = (userId, enabled) => ({
-    type: SET_FORCE_RESET.REQUESTED,
+export const editUser = (userId, update) => ({
+    type: EDIT_USER.REQUESTED,
     userId,
-    enabled
-});
-
-export const setPassword = (userId, password) => ({
-    type: SET_PASSWORD.REQUESTED,
-    userId,
-    password
-});
-
-export const setPrimaryGroup = (userId, primaryGroup) => ({
-    type: SET_PRIMARY_GROUP.REQUESTED,
-    userId,
-    primaryGroup
+    update
 });
 
 export const addUserToGroup = (userId, groupId) => ({

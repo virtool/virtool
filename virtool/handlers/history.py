@@ -1,7 +1,7 @@
 import virtool.utils
 import virtool.virus
 import virtool.virus_history
-from virtool.handlers.utils import json_response, not_found, paginate, protected
+from virtool.handlers.utils import json_response, no_content, not_found, paginate, protected
 
 
 async def find(req):
@@ -82,4 +82,4 @@ async def revert(req):
 
     await db.history.delete_many({"_id": {"$in": history_to_delete}})
 
-    return json_response(virtool.utils.base_processor(patched))
+    return no_content()

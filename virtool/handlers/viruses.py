@@ -11,12 +11,36 @@ from pymongo import ReturnDocument
 from cerberus import Validator
 
 import virtool.utils
+import virtool.validators
 import virtool.virus
 import virtool.virus_import
 import virtool.virus_history
 
 from virtool.handlers.utils import unpack_request, json_response, not_found, invalid_input, protected, validation,\
     compose_regex_query, paginate, bad_request, no_content, conflict
+
+
+SCHEMA_VALIDATOR = {
+    "type": "list",
+    "validator": virtool.validators.has_unique_segment_names,
+    "schema": {
+        "type": "dict",
+        "allow_unknown": False,
+        "schema": {
+            "name": {"type": "string", "required": True},
+            "required": {"type": "boolean", "default": True},
+            "molecule": {"type": "string", "default": "", "allowed": [
+                "",
+                "ssDNA",
+                "dsDNA",
+                "ssRNA",
+                "ssRNA+",
+                "ssRNA-",
+                "dsRNA"
+            ]}
+        }
+    }
+}
 
 
 async def find(req):
@@ -68,7 +92,8 @@ async def get(req):
 @protected("modify_virus")
 @validation({
     "name": {"type": "string", "required": True, "min": 1},
-    "abbreviation": {"type": "string", "min": 1}
+    "abbreviation": {"type": "string", "min": 1},
+    "schema": SCHEMA_VALIDATOR
 })
 async def create(req):
     """
@@ -97,7 +122,8 @@ async def create(req):
         "verified": False,
         "lower_name": data["name"].lower(),
         "isolates": [],
-        "version": 0
+        "version": 0,
+        "schema": []
     })
 
     # Insert the virus document.
@@ -140,7 +166,8 @@ async def create(req):
 @protected("modify_virus")
 @validation({
     "name": {"type": "string"},
-    "abbreviation": {"type": "string"}
+    "abbreviation": {"type": "string"},
+    "schema": SCHEMA_VALIDATOR
 })
 async def edit(req):
     """
@@ -158,7 +185,9 @@ async def edit(req):
     if not old:
         return not_found()
 
-    name_change, abbreviation_change = data.get("name", None), data.get("abbreviation", None)
+    name_change = data.get("name", None)
+    abbreviation_change = data.get("abbreviation", None)
+    schema_change = data.get("schema", None)
 
     if name_change == old["name"]:
         name_change = None
@@ -168,8 +197,11 @@ async def edit(req):
     if abbreviation_change == old_abbreviation:
         abbreviation_change = None
 
+    if schema_change == old.get("schema", None):
+        schema_change = None
+
     # Sent back ``200`` with the existing virus record if no change will be made.
-    if name_change is None and abbreviation_change is None:
+    if name_change is None and abbreviation_change is None and schema_change is None:
         return json_response(await virtool.virus.join_and_format(db, virus_id))
 
     # Make sure new name and/or abbreviation are not already in use.
@@ -199,7 +231,7 @@ async def edit(req):
     issues = await virtool.virus.verify(db, virus_id, new)
 
     if issues is None:
-        document = await db.viruses.update_one({"_id": virus_id}, {
+        await db.viruses.update_one({"_id": virus_id}, {
             "$set": {
                 "verified": True
             }
@@ -233,6 +265,12 @@ async def edit(req):
         # Abbreviation is being changed from one value to another.
         else:
             description = "Changed abbreviation to {}".format(new["abbreviation"])
+
+    if schema_change is not None:
+        if description is None:
+            description = "Modified schema"
+        else:
+            description += " and modified schema"
 
     await virtool.virus_history.add(
         db,
@@ -316,7 +354,7 @@ async def list_isolates(req):
 
 async def get_isolate(req):
     """
-    Get a complete specific isolate subdocument, including its sequences.
+    Get a complete specific isolate sub-document, including its sequences.
 
     """
     db = req.app["db"]
@@ -728,6 +766,7 @@ async def get_sequence(req):
     "id": {"type": "string", "required": True},
     "definition": {"type": "string", "required": True},
     "host": {"type": "string"},
+    "segment": {"type": "string"},
     "sequence": {"type": "string", "required": True}
 })
 async def create_sequence(req):
@@ -740,19 +779,25 @@ async def create_sequence(req):
     # Extract variables from URL path.
     virus_id, isolate_id = (req.match_info[key] for key in ["virus_id", "isolate_id"])
 
-    # Update POST data to make sequence document.
-    data.update({
-        "_id": data.pop("id"),
-        "virus_id": virus_id,
-        "isolate_id": isolate_id,
-        "host": data.get("host", "")
-    })
-
     # Get the subject virus document. Will be ``None`` if it doesn't exist. This will result in a ``404`` response.
     document = await db.viruses.find_one({"_id": virus_id, "isolates.id": isolate_id})
 
     if not document:
         return not_found()
+
+    segment = data.get("segment", None)
+
+    if segment and segment not in {s["name"] for s in document.get("schema", {})}:
+        return not_found("Segment not found: {}".format(segment))
+
+    # Update POST data to make sequence document.
+    data.update({
+        "_id": data.pop("id"),
+        "virus_id": virus_id,
+        "isolate_id": isolate_id,
+        "host": data.get("host", ""),
+        "segment": segment
+    })
 
     old = await virtool.virus.join(db, virus_id, document)
 
@@ -810,7 +855,9 @@ async def create_sequence(req):
 @validation({
     "host": {"type": "string"},
     "definition": {"type": "string"},
-    "sequence": {"type": "string"}
+    "segment": {"type": "string"},
+    "sequence": {"type": "string"},
+    "schema": {"type": "list"}
 })
 async def edit_sequence(req):
     db, data = req.app["db"], req["data"]
@@ -826,6 +873,17 @@ async def edit_sequence(req):
         return not_found("Virus or isolate not found")
 
     old = await virtool.virus.join(db, virus_id, document)
+
+    # Get the subject virus document. Will be ``None`` if it doesn't exist. This will result in a ``404`` response.
+    document = await db.viruses.find_one({"_id": virus_id, "isolates.id": isolate_id})
+
+    if not document:
+        return not_found()
+
+    segment = data.get("segment", None)
+
+    if segment and segment not in {s["name"] for s in document.get("schema", {})}:
+        return not_found("Segment not found: {}".format(segment))
 
     updated_sequence = await db.sequences.find_one_and_update({"_id": sequence_id}, {
         "$set": data

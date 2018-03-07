@@ -11,7 +11,7 @@
 import React from "react";
 import { filter, includes, intersection, map, sortBy, toLower, without} from "lodash-es";
 import PropTypes from "prop-types";
-import { Overlay, Popover, Panel } from "react-bootstrap";
+import { Panel, FormGroup, InputGroup } from "react-bootstrap";
 import { Link } from "react-router-dom";
 
 import ReadItem from "./ReadItem";
@@ -29,7 +29,7 @@ export default class ReadSelector extends React.PureComponent {
 
     static propTypes = {
         files: PropTypes.arrayOf(PropTypes.object),
-        error: PropTypes.bool,
+        error: PropTypes.string,
         selected: PropTypes.arrayOf(PropTypes.string),
         onSelect: PropTypes.func
     };
@@ -38,6 +38,7 @@ export default class ReadSelector extends React.PureComponent {
         if (nextProps.files !== this.props.files) {
             this.props.onSelect(intersection(this.props.selected, map(nextProps.files, "id")));
         }
+
     }
 
     onSelect = (selectedId) => {
@@ -86,22 +87,22 @@ export default class ReadSelector extends React.PureComponent {
             );
         }
 
-        let overlay;
+        const panelStyle = this.props.error ? "red" : "";
 
-        if (this.props.error) {
-            overlay = (
-                <Overlay container={this} target={this.panelNode} placement="top" show={true}>
-                    <Popover id="read-error-popover" {...this.props}>
-                        <span className="text-danger">At least one read file must be attached to the sample</span>
-                    </Popover>
-                </Overlay>
+        const errorMessage = this.props.error
+            ? (
+                <div style={{color: "red", fontSize: "small", textAlign: "right", margin: "0 0 2px 0"}}>
+                    {this.props.error}
+                </div>
+            )
+            : (
+                <div style={{visibility: "hidden", fontSize: "small", textAlign: "right", margin: "0 0 2px 0"}}>
+                    None
+                </div>
             );
-        }
 
         return (
             <div>
-                {overlay}
-
                 <h5 style={{display: "flex", alignItems: "center"}}>
                     <strong style={{flex: "1 0 auto"}}>Read Files</strong>
                     <small className="text-muted pull-right">
@@ -109,17 +110,23 @@ export default class ReadSelector extends React.PureComponent {
                     </small>
                 </h5>
 
-                <Panel ref={(node) => this.panelNode = node}>
+                <Panel style={{borderColor: `${panelStyle}`}} ref={(node) => this.panelNode = node}>
                     <div className="toolbar">
-                        <Input
-                            type="text"
-                            placeholder="Filename"
-                            value={this.state.filter}
-                            onChange={(e) => this.setState({filter: e.target.value})}
-                        />
-                        <Button type="button" tip="Clear" onClick={this.reset}>
-                            <Icon name="reset" />
-                        </Button>
+                        <FormGroup>
+                            <InputGroup>
+                                <Input
+                                    type="text"
+                                    placeholder="Filename"
+                                    value={this.state.filter}
+                                    onChange={(e) => this.setState({filter: e.target.value})}
+                                />
+                                <InputGroup.Button style={{verticalAlign: "top", zIndex: "0"}}>
+                                    <Button type="button" tip="Clear" onClick={this.reset}>
+                                        <Icon name="reset" />
+                                    </Button>
+                                </InputGroup.Button>
+                            </InputGroup>
+                        </FormGroup>
                     </div>
 
                     <div className="panel panel-default">
@@ -127,6 +134,7 @@ export default class ReadSelector extends React.PureComponent {
                             {fileComponents}
                         </div>
                     </div>
+                    {errorMessage}
                 </Panel>
             </div>
         );

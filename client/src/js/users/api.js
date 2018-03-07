@@ -17,19 +17,9 @@ export const create = ({ userId, password, forceReset }) => (
         })
 );
 
-export const setPassword = ({ userId, password }) => (
-    Request.put(`/api/users/${userId}/password`)
-        .send({password})
-);
-
-export const setForceReset = ({ userId, enabled }) => (
-    Request.put(`/api/users/${userId}/reset`)
-        .send({force_reset: enabled})
-);
-
-export const setPrimaryGroup = ({ userId, primaryGroup }) => (
-    Request.put(`/api/users/${userId}/primary`)
-        .send({primary_group: primaryGroup})
+export const edit = ({ userId, update }) => (
+    Request.patch(`/api/users/${userId}`)
+        .send(update)
 );
 
 export const addUserToGroup = ({ userId, groupId }) => (

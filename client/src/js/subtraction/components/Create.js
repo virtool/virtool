@@ -1,5 +1,5 @@
 import React from "react";
-import { filter, map } from "lodash-es";
+import { filter, map, find } from "lodash-es";
 import { Row, Col, ListGroup, Modal } from "react-bootstrap";
 import { connect } from "react-redux";
 import { Link } from "react-router-dom";
@@ -38,7 +38,8 @@ class SubtractionFileItem extends React.Component {
 
 const getInitialState = () => ({
     subtractionId: "",
-    fileId: ""
+    fileId: "",
+    errors: []
 });
 
 class CreateSubtraction extends React.Component {
@@ -49,7 +50,10 @@ class CreateSubtraction extends React.Component {
     }
 
     handleChange = (e) => {
-        this.setState({subtractionId: e.target.value});
+        this.setState({
+            subtractionId: e.target.value,
+            errors: []
+        });
     };
 
     handleModalEnter = () => {
@@ -68,7 +72,32 @@ class CreateSubtraction extends React.Component {
 
     handleSubmit = (e) => {
         e.preventDefault();
-        this.props.onCreate(this.state);
+
+        const errors = [];
+
+        if (this.state.subtractionId && this.state.fileId) {
+
+            this.props.onCreate(this.state);
+
+        } else {
+
+            if (!this.state.subtractionId) {
+                errors.push({
+                    id: 0,
+                    message: "Required Field"
+                });
+            }
+
+            if (!this.state.fileId) {
+                errors.push({
+                    id: 1,
+                    message: "Please select a file"
+                });
+            }
+        }
+
+        this.setState({errors});
+
     };
 
     render () {
@@ -94,6 +123,23 @@ class CreateSubtraction extends React.Component {
             );
         }
 
+        const errorName = find(this.state.errors, ["id", 0]) ? find(this.state.errors, ["id", 0]).message : null;
+        const errorFile = find(this.state.errors, ["id", 1]) ? find(this.state.errors, ["id", 1]).message : null;
+
+        const fileGroupStyle = errorFile ? "red" : "white";
+
+        const errorMessage = errorFile
+            ? (
+                <div style={{color: "red", fontSize: "small", textAlign: "right", margin: "3px 0 2px 0"}}>
+                    {errorFile}
+                </div>
+            )
+            : (
+                <div style={{visibility: "hidden", fontSize: "small", textAlign: "right", margin: "3px 0 2px 0"}}>
+                    None
+                </div>
+            );
+
         return (
             <Modal
                 bsSize="large"
@@ -108,18 +154,20 @@ class CreateSubtraction extends React.Component {
                 </Modal.Header>
 
                 <form onSubmit={this.handleSubmit}>
-                    <Modal.Body>
+                    <Modal.Body style={{margin: "0 0 10px 0"}}>
                         <Input
                             type="text"
                             label="Unique Name"
                             value={this.state.subtractionId}
                             onChange={this.handleChange}
+                            error={errorName}
                         />
 
                         <h5><strong>Files</strong></h5>
-                        <ListGroup>
+                        <ListGroup style={{border: `1px solid ${fileGroupStyle}`, margin: "0"}}>
                             {fileComponents}
                         </ListGroup>
+                        {errorMessage}
                     </Modal.Body>
 
                     <Modal.Footer className="modal-footer">

@@ -1,5 +1,6 @@
 import { simpleActionCreator } from "../utils";
 import {
+    FETCH_VIRUSES,
     GET_VIRUS,
     GET_VIRUS_HISTORY,
     CREATE_VIRUS,
@@ -27,6 +28,8 @@ import {
     HIDE_VIRUS_MODAL
 } from "../actionTypes";
 
+export const fetchViruses = simpleActionCreator(FETCH_VIRUSES);
+
 export const getVirus = (virusId) => ({
     type: GET_VIRUS.REQUESTED,
     virusId
@@ -43,11 +46,12 @@ export const createVirus = (name, abbreviation) => ({
     abbreviation
 });
 
-export const editVirus = (virusId, name, abbreviation) => ({
+export const editVirus = (virusId, name, abbreviation, schema) => ({
     type: EDIT_VIRUS.REQUESTED,
     virusId,
     name,
-    abbreviation
+    abbreviation,
+    schema
 });
 
 export const removeVirus = (virusId, history) => ({
@@ -84,24 +88,26 @@ export const removeIsolate = (virusId, isolateId, nextIsolateId) => ({
     nextIsolateId
 });
 
-export const addSequence = (virusId, isolateId, sequenceId, definition, host, sequence) => ({
+export const addSequence = (virusId, isolateId, sequenceId, definition, host, sequence, segment) => ({
     type: ADD_SEQUENCE.REQUESTED,
     virusId,
     isolateId,
     sequenceId,
     definition,
     host,
-    sequence
+    sequence,
+    segment
 });
 
-export const editSequence = (virusId, isolateId, sequenceId, definition, host, sequence) => ({
+export const editSequence = (virusId, isolateId, sequenceId, definition, host, sequence, segment) => ({
     type: EDIT_SEQUENCE.REQUESTED,
     virusId,
     isolateId,
     sequenceId,
     definition,
     host,
-    sequence
+    sequence,
+    segment
 });
 
 export const removeSequence = (virusId, isolateId, sequenceId) => ({

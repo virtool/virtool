@@ -39,7 +39,7 @@ class TestFind:
                         "version": "unbuilt"
                     },
                     "method_name": "edit",
-                    "created_at": "2017-10-06T20:00:00Z",
+                    "created_at": "2015-10-06T20:00:00Z",
                     "user": {
                         "id": "test"
                     },
@@ -57,7 +57,7 @@ class TestFind:
                         "version": "unbuilt"
                     },
                     "method_name": "edit",
-                    "created_at": "2017-10-06T20:00:00Z",
+                    "created_at": "2015-10-06T20:00:00Z",
                     "user": {
                         "id": "test"
                     },
@@ -75,7 +75,7 @@ class TestFind:
                         "version": "unbuilt"
                     },
                     "method_name": "edit",
-                    "created_at": "2017-10-06T20:00:00Z",
+                    "created_at": "2015-10-06T20:00:00Z",
                     "user": {
                         "id": "test"
                     },
@@ -94,7 +94,7 @@ class TestGet:
     async def test(self, spawn_client, test_changes):
         """
         Test that a specific history change can be retrieved by its change_id.
-         
+
         """
         client = await spawn_client()
 
@@ -117,7 +117,7 @@ class TestGet:
                 "version": "unbuilt"
             },
             "method_name": "edit",
-            "created_at": "2017-10-06T20:00:00Z",
+            "created_at": "2015-10-06T20:00:00Z",
             "user": {
                 "id": "test"
             },
@@ -146,7 +146,7 @@ class TestRemove:
     async def test(self, remove, spawn_client, create_mock_history):
         """
         Test that a valid request results in a reversion and a ``204`` response.
-         
+
         """
         client = await spawn_client(authorize=True, permissions=["modify_virus"])
 
@@ -157,40 +157,42 @@ class TestRemove:
         joined = await virtool.virus.join(client.db, "6116cba1")
 
         assert joined == {
-            '_id': '6116cba1',
-            'abbreviation': 'TST',
-            'imported': True,
-            'isolates': [
+            "_id": "6116cba1",
+            "abbreviation": "TST",
+            "imported": True,
+            "isolates": [
                 {
-                    'default': True,
-                    'id': 'cab8b360',
-                    'sequences': [
+                    "default": True,
+                    "id": "cab8b360",
+                    "sequences": [
                         {
-                            '_id': 'KX269872',
-                            'definition': 'Prunus virus F isolate 8816-s2 '
-                            'segment RNA2 polyprotein 2 gene, '
-                            'complete cds.',
-                            'host': 'sweet cherry',
-                            'isolate_id': 'cab8b360',
-                            'sequence': 'TGTTTAAGAGATTAAACAACCGCTTTC',
-                            'virus_id': '6116cba1'
+                            "_id": "KX269872",
+                            "definition": "Prunus virus F isolate 8816-s2 "
+                            "segment RNA2 polyprotein 2 gene, "
+                            "complete cds.",
+                            "host": "sweet cherry",
+                            "isolate_id": "cab8b360",
+                            "sequence": "TGTTTAAGAGATTAAACAACCGCTTTC",
+                            "virus_id": "6116cba1",
+                            "segment": None
                          }
                     ],
-                    'source_name': '8816-v2',
-                    'source_type': 'isolate'
+                    "source_name": "8816-v2",
+                    "source_type": "isolate"
                 }
             ],
-            'last_indexed_version': 0,
-            'lower_name': 'prunus virus f',
-            'name': 'Prunus virus F',
-            'verified': False,
-            'version': 1
+            "last_indexed_version": 0,
+            "lower_name": "prunus virus f",
+            "name": "Prunus virus F",
+            "verified": False,
+            "schema": [],
+            "version": 1
         }
 
     async def test_not_found(self, spawn_client, resp_is):
         """
         Test that a request for a non-existent ``change_id`` results in a ``404`` response.
-         
+
         """
         client = await spawn_client(authorize=True, permissions=["modify_virus"])
 

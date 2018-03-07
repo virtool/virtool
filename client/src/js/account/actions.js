@@ -6,13 +6,15 @@
 import { simpleActionCreator } from "../utils";
 import {
     GET_ACCOUNT,
+    UPDATE_ACCOUNT,
     UPDATE_ACCOUNT_SETTINGS,
     CHANGE_ACCOUNT_PASSWORD,
     GET_API_KEYS,
     CREATE_API_KEY,
     UPDATE_API_KEY,
     REMOVE_API_KEY,
-    LOGOUT
+    LOGOUT,
+    CLEAR_API_KEY
 } from "../actionTypes";
 
 /**
@@ -22,6 +24,18 @@ import {
  * @returns {object}
  */
 export const getAccount = simpleActionCreator(GET_ACCOUNT.REQUESTED);
+
+/**
+ * Returns an action that can trigger an API call for updating the current account.
+ *
+ * @func
+ * @param update {object} the update to apply to the account
+ * @returns {object}
+ */
+export const updateAccount = (update) => ({
+    type: UPDATE_ACCOUNT.REQUESTED,
+    update
+});
 
 /**
  * Returns an action that can trigger an API call for updating the settings for the current account.
@@ -66,12 +80,19 @@ export const getAPIKeys = simpleActionCreator(GET_API_KEYS.REQUESTED);
  * @param callback {function} a function to call when the request completes
  * @returns {object}
  */
-export const createAPIKey = (name, permissions, callback) => ({
+export const createAPIKey = (name, permissions) => ({
     type: CREATE_API_KEY.REQUESTED,
     name,
-    permissions,
-    callback
+    permissions
 });
+
+/**
+ * Clears temporarily stored new API keys.
+ *
+ * @func
+ * @returns {object}
+ */
+export const clearAPIKey = simpleActionCreator(CLEAR_API_KEY);
 
 /**
  * Returns action that can trigger an API call for updating the permissions for an API key owned by the current account.

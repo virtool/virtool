@@ -177,6 +177,7 @@ class TestGet:
             "name": "Prunus virus F",
             "version": 0,
             "id": "6116cba1",
+            "schema": [],
             "isolates": [
                 {
                     "id": "cab8b360",
@@ -189,7 +190,8 @@ class TestGet:
                             "definition": "Prunus virus F isolate 8816-s2 "
                             "segment RNA2 polyprotein 2 gene, complete cds.",
                             "host": "sweet cherry",
-                            "sequence": "TGTTTAAGAGATTAAACAACCGCTTTC"
+                            "sequence": "TGTTTAAGAGATTAAACAACCGCTTTC",
+                            "segment": None
                         }
                     ]
                 }
@@ -222,6 +224,7 @@ class TestGet:
             "version": 0,
             "id": "6116cba1",
             "isolates": [],
+            "schema": [],
             "issues": {
                 "empty_isolate": False,
                 "empty_sequence": False,
@@ -252,6 +255,7 @@ class TestGet:
             "name": "Prunus virus F",
             "version": 0,
             "id": "6116cba1",
+            "schema": [],
             "isolates": [
                 {
                     "id": "cab8b360",
@@ -295,6 +299,7 @@ class TestGet:
             "name": "Prunus virus F",
             "version": 0,
             "id": "6116cba1",
+            "schema": [],
             "isolates": [
                 {
                     "id": "cab8b360",
@@ -307,7 +312,8 @@ class TestGet:
                             "definition": "Prunus virus F isolate 8816-s2 "
                                           "segment RNA2 polyprotein 2 gene, complete cds.",
                             "host": "sweet cherry",
-                            "sequence": ""
+                            "sequence": "",
+                            "segment": None
                         }
                     ]
                 }
@@ -321,7 +327,8 @@ class TestGet:
                         "host": "sweet cherry",
                         "isolate_id": "cab8b360",
                         "virus_id": "6116cba1",
-                        "sequence": ""
+                        "sequence": "",
+                        "segment": None
                     }
                 ],
                 "empty_virus": False,
@@ -364,6 +371,7 @@ class TestGet:
             "name": "Prunus virus F",
             "version": 0,
             "id": "6116cba1",
+            "schema": [],
             "isolates": [
                 {
                     "id": "cab8b360",
@@ -376,7 +384,8 @@ class TestGet:
                             "definition": "Prunus virus F isolate 8816-s2 "
                                           "segment RNA2 polyprotein 2 gene, complete cds.",
                             "host": "sweet cherry",
-                            "sequence": "TGTTTAAGAGATTAAACAACCGCTTTC"
+                            "sequence": "TGTTTAAGAGATTAAACAACCGCTTTC",
+                            "segment": None
                         }
                     ]
                 },
@@ -391,14 +400,16 @@ class TestGet:
                             "definition": "Prunus virus F isolate 8816-s2 "
                                           "segment RNA2 polyprotein 2 gene, complete cds.",
                             "host": "sweet cherry",
-                            "sequence": "TGTTTAAGAGATTAAACAACCGCTTTC"
+                            "sequence": "TGTTTAAGAGATTAAACAACCGCTTTC",
+                            "segment": None
                         },
                         {
                             "id": "b",
                             "definition": "Prunus virus F isolate 8816-s2 "
                                           "segment RNA2 polyprotein 2 gene, complete cds.",
                             "host": "sweet cherry",
-                            "sequence": "TGTTTAAGAGATTAAACAACCGCTTTC"
+                            "sequence": "TGTTTAAGAGATTAAACAACCGCTTTC",
+                            "segment": None
                         }
                     ]
                 }
@@ -464,6 +475,7 @@ class TestCreate:
             "name": "Tobacco mosaic virus",
             "version": 0,
             "id": "test",
+            "schema": [],
             "issues": {
                 "empty_virus": True,
                 "empty_isolate": False,
@@ -481,7 +493,8 @@ class TestCreate:
             "last_indexed_version": None,
             "verified": False,
             "abbreviation": expected_abbreviation,
-            "version": 0
+            "version": 0,
+            "schema": [],
         }
 
         assert test_add_history.call_args[0][1:] == (
@@ -493,6 +506,7 @@ class TestCreate:
                 "abbreviation": expected_abbreviation,
                 "lower_name": "tobacco mosaic virus",
                 "_id": "test",
+                "schema": [],
                 "version": 0,
                 "verified": False,
                 "last_indexed_version": None
@@ -681,6 +695,7 @@ class TestEdit:
             "most_recent_change": None,
             "name": "Prunus virus F",
             "version": 1,
+            "schema": [],
             "issues": {
                 "empty_virus": False,
                 "empty_sequence": False,
@@ -694,7 +709,6 @@ class TestEdit:
         expected.update(data)
 
         assert await resp.json() == expected
-
 
         expected.update({
             "lower_name": expected["name"].lower(),
@@ -1794,11 +1808,13 @@ class TestRemoveIsolate:
                             "host": "sweet cherry",
                             "virus_id": "6116cba1",
                             "isolate_id": "cab8b360",
-                            "sequence": "TGTTTAAGAGATTAAACAACCGCTTTC"
+                            "sequence": "TGTTTAAGAGATTAAACAACCGCTTTC",
+                            "segment": None
                         }
                     ]
                 }
             ],
+            "schema": [],
             "last_indexed_version": 0,
             "lower_name": "prunus virus f",
             "verified": False,
@@ -1879,7 +1895,8 @@ class TestRemoveIsolate:
                             "host": "sweet cherry",
                             "virus_id": "6116cba1",
                             "isolate_id": "cab8b360",
-                            "sequence": "TGTTTAAGAGATTAAACAACCGCTTTC"
+                            "sequence": "TGTTTAAGAGATTAAACAACCGCTTTC",
+                            "segment": None
                         }
                     ]
                 },
@@ -1891,6 +1908,7 @@ class TestRemoveIsolate:
                     "sequences": []
                 }
             ],
+            "schema": [],
             "last_indexed_version": 0,
             "lower_name": "prunus virus f",
             "verified": False,
@@ -1915,6 +1933,7 @@ class TestRemoveIsolate:
             "lower_name": "prunus virus f",
             "verified": False,
             "name": "Prunus virus F",
+            "schema": [],
             "version": 1
         }
 
@@ -1969,7 +1988,8 @@ class TestListSequences:
             "id": "KX269872",
             "definition": "Prunus virus F isolate 8816-s2 segment RNA2 polyprotein 2 gene, complete cds.",
             "host": "sweet cherry",
-            "sequence": "TGTTTAAGAGATTAAACAACCGCTTTC"
+            "sequence": "TGTTTAAGAGATTAAACAACCGCTTTC",
+            "segment": None
         }]
 
     @pytest.mark.parametrize("url", [
@@ -2049,13 +2069,15 @@ class TestCreateSequence:
             "virus_id": "6116cba1",
             "isolate_id": "cab8b360",
             "host": "Plant",
-            "sequence": "ATGCGTGTACTG"
+            "sequence": "ATGCGTGTACTG",
+            "segment": None
         }
 
         old = {
             "_id": "6116cba1",
             "abbreviation": "PVF",
             "imported": True,
+            "schema": [],
             "isolates": [
                 {
                     "default": True,
@@ -2080,7 +2102,8 @@ class TestCreateSequence:
             "virus_id": "6116cba1",
             "isolate_id": "cab8b360",
             "host": "Plant",
-            "sequence": "ATGCGTGTACTG"
+            "sequence": "ATGCGTGTACTG",
+            "segment": None
         }]
 
         new.update({
@@ -2191,7 +2214,8 @@ class TestEditSequence:
             "host": "Grapevine",
             "virus_id": "6116cba1",
             "isolate_id": "cab8b360",
-            "sequence": "ATGCGTGTACTG"
+            "sequence": "ATGCGTGTACTG",
+            "segment": None
         }
 
         old = {
@@ -2211,6 +2235,7 @@ class TestEditSequence:
             "lower_name": "prunus virus f",
             "verified": False,
             "name": "Prunus virus F",
+            "schema": [],
             "version": 0
         }
 
@@ -2222,7 +2247,8 @@ class TestEditSequence:
             "virus_id": "6116cba1",
             "isolate_id": "cab8b360",
             "host": "Grapevine",
-            "sequence": "ATGCGTGTACTG"
+            "sequence": "ATGCGTGTACTG",
+            "segment": None
         }]
 
         new.update({

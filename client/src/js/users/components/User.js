@@ -16,7 +16,7 @@ import { push } from "react-router-redux";
 import { LinkContainer } from "react-router-bootstrap";
 import { ListGroupItem } from "react-bootstrap";
 
-import { setPrimaryGroup } from "../actions";
+import { editUser } from "../actions";
 import { Flex, FlexItem, Identicon, Input } from "../../base";
 import Password from "./Password";
 import UserPermissions from "./Permissions";
@@ -113,7 +113,7 @@ const mapDispatchToProps = dispatch => ({
     },
 
     onSetPrimaryGroup: (userId, groupId) => {
-        dispatch(setPrimaryGroup(userId, groupId));
+        dispatch(editUser(userId, {primary_group: groupId}));
     }
 
 });

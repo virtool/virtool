@@ -110,7 +110,7 @@ class TestGet:
 
         await client.db.hmm.insert_one(hmm_document)
 
-        resp = await client.get("/api/hmms/annotations/f8666902")
+        resp = await client.get("/api/hmms/f8666902")
 
         assert resp.status == 200
 
@@ -129,6 +129,6 @@ class TestGet:
 
         await client.db.hmm.insert_one(hmm_document)
 
-        resp = await client.get("/api/hmms/annotations/foobar")
+        resp = await client.get("/api/hmms/foobar")
 
         assert await resp_is.not_found(resp)

@@ -42,9 +42,6 @@ export default function indexesReducer (state = initialState, action) {
         case GET_INDEX.SUCCEEDED:
             return {...state, detail: action.data};
 
-        case GET_UNBUILT.REQUESTED:
-            return {...state, unbuilt: null};
-
         case GET_UNBUILT.SUCCEEDED:
             return {...state, unbuilt: action.data};
 

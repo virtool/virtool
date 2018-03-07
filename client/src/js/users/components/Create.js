@@ -2,6 +2,7 @@ import React from "react";
 import { connect } from "react-redux";
 import { push } from "react-router-redux";
 import { Row, Col, Modal, ButtonToolbar } from "react-bootstrap";
+import { pick, find } from "lodash-es";
 
 import { createUser } from "../actions";
 import { Icon, Input, Checkbox, Button } from "../../base";
@@ -11,7 +12,8 @@ const getInitialState = () => ({
     userId: "",
     password: "",
     confirm: "",
-    forceReset: false
+    forceReset: false,
+    errors: []
 });
 
 export class CreateUser extends React.PureComponent {
@@ -24,7 +26,8 @@ export class CreateUser extends React.PureComponent {
     handleChange = (e) => {
         const { name, value } = e.target;
         this.setState({
-            [name]: value
+            [name]: value,
+            errors: []
         });
     };
 
@@ -36,10 +39,44 @@ export class CreateUser extends React.PureComponent {
 
     handleSubmit = (e) => {
         e.preventDefault();
-        this.props.onCreate(this.state);
+
+        const errors = [];
+
+        if (!this.state.userId) {
+            errors.push({
+                id: 0,
+                message: "Please specify a username"
+            });
+        }
+
+        if (!this.state.password || this.state.password.length < this.props.minPassLen) {
+            errors.push({
+                id: 1,
+                message: `Passwords must contain at least ${this.props.minPassLen} characters`
+            });
+        }
+
+        if (this.state.confirm !== this.state.password) {
+            errors.push({
+                id: 2,
+                message: "Passwords do not match"
+            });
+        }
+
+        if (errors.length) {
+            this.setState({errors});
+            return;
+        }
+
+        this.props.onCreate(pick(this.state, ["userId", "password", "confirm", "forceReset"]));
     };
 
     render () {
+
+        const errorUserName = find(this.state.errors, ["id", 0]) ? find(this.state.errors, ["id", 0]).message : null;
+        const errorPassLen = find(this.state.errors, ["id", 1]) ? find(this.state.errors, ["id", 1]).message : null;
+        const errorPassMatch = find(this.state.errors, ["id", 2]) ? find(this.state.errors, ["id", 2]).message : null;
+
         return (
             <Modal show={this.props.show} onHide={this.props.onHide}>
                 <Modal.Header onHide={this.props.onHide} closeButton>
@@ -54,6 +91,7 @@ export class CreateUser extends React.PureComponent {
                                     name="userId"
                                     value={this.state.userId}
                                     onChange={this.handleChange}
+                                    error={errorUserName}
                                 />
                             </Col>
                         </Row>
@@ -65,6 +103,7 @@ export class CreateUser extends React.PureComponent {
                                     name="password"
                                     value={this.state.password}
                                     onChange={this.handleChange}
+                                    error={errorPassLen}
                                 />
                             </Col>
                             <Col xs={6}>
@@ -74,6 +113,7 @@ export class CreateUser extends React.PureComponent {
                                     name="confirm"
                                     value={this.state.confirm}
                                     onChange={this.handleChange}
+                                    error={errorPassMatch}
                                 />
                             </Col>
                         </Row>
@@ -103,7 +143,8 @@ export class CreateUser extends React.PureComponent {
 const mapStateToProps = state => ({
     show: routerLocationHasState(state, "createUser"),
     error: state.users.createError,
-    pending: state.users.createPending
+    pending: state.users.createPending,
+    minPassLen: state.settings.data.minimum_password_length
 });
 
 const mapDispatchToProps = dispatch => ({
