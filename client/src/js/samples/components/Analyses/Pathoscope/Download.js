@@ -5,8 +5,8 @@ export const createBlob = (svgNode) => {
     const doctype = "<?xml version='1.0' standalone='no'?>"
     + "<!DOCTYPE svg PUBLIC '-//W3C//DTD SVG 1.1//EN' 'http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd'>";
 
-    const svg = (new XMLSerializer()).serializeToString(svgNode);
-    const blob = new Blob([ doctype + svg ], { type: "image/svg+xml;charset=utf-8" });
+    const svg = (new window.XMLSerializer()).serializeToString(svgNode);
+    const blob = new window.Blob([ doctype + svg ], { type: "image/svg+xml;charset=utf-8" });
     const url = window.URL.createObjectURL(blob);
 
     return url;
