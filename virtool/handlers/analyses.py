@@ -61,9 +61,6 @@ async def remove(req):
     if not document:
         return not_found()
 
-    if not document["ready"]:
-        return conflict("Analysis is still running")
-
     sample = await db.samples.find_one({"_id": document["sample"]["id"]}, virtool.sample.PROJECTION)
 
     if not sample:
@@ -73,6 +70,9 @@ async def remove(req):
 
     if not read or not write:
         return insufficient_rights()
+
+    if not document["ready"]:
+        return conflict("Analysis is still running")
 
     await req.app["dispatcher"].dispatch("samples", "update", virtool.utils.base_processor(sample))
 

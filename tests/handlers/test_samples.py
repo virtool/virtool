@@ -189,7 +189,9 @@ class TestFind:
 
 class TestGet:
 
-    async def test(self, spawn_client, static_time):
+    async def test(self, mocker, spawn_client, static_time):
+        mocker.patch("virtool.sample.get_sample_rights", return_value=(True, True))
+
         client = await spawn_client()
 
         await client.db.samples.insert_one({
@@ -379,7 +381,7 @@ class TestCreate:
             "group": "foobar"
         })
 
-        assert await resp_is.not_found(resp, "Group 'foobar' not found")
+        assert await resp_is.not_found(resp, "Group not found")
 
     @pytest.mark.parametrize("in_db", [True, False])
     async def test_subtraction_dne(self, in_db, spawn_client, resp_is):
@@ -399,7 +401,7 @@ class TestCreate:
                 "is_host": False
             })
 
-        assert await resp_is.not_found(resp, "Subtraction host 'apple' not found")
+        assert await resp_is.not_found(resp, "Subtraction not found")
 
     @pytest.mark.parametrize("one_exists", [True, False])
     async def test_file_dne(self, one_exists, spawn_client, resp_is):
@@ -427,7 +429,7 @@ class TestCreate:
             "subtraction": "apple"
         })
 
-        assert await resp_is.not_found(resp, "One or more of the passed file ids do(es) not exist")
+        assert await resp_is.not_found(resp, "File id does not exist")
 
 
 class TestRemove:
@@ -435,6 +437,15 @@ class TestRemove:
     @pytest.mark.parametrize("delete_result,resp_is_attr", [(1, "no_content"), (0, "not_found")])
     async def test(self, delete_result, resp_is_attr, mocker, spawn_client, resp_is, create_delete_result):
         client = await spawn_client(authorize=True)
+
+        mocker.patch("virtool.sample.get_sample_rights", return_value=(True, True))
+
+        if resp_is_attr == "no_content":
+            await client.db.samples.insert_one({
+                "_id": "test",
+                "all_read": True,
+                "all_write": True
+            })
 
         m = mocker.stub(name="remove_samples")
 
@@ -444,21 +455,31 @@ class TestRemove:
 
         mocker.patch("virtool.sample.remove_samples", new=mock_remove_samples)
 
-        resp = await client.delete("/api/samples/foobar")
+        resp = await client.delete("/api/samples/test")
 
-        assert m.call_args[0] == (client.db, client.app["settings"], ["foobar"])
+        print(resp.status)
 
         assert await getattr(resp_is, resp_is_attr)(resp)
+
+        if resp_is_attr == "no_content":
+            assert m.call_args[0] == (client.db, client.app["settings"], ["test"])
+        else:
+            assert not m.called
 
 
 class TestListAnalyses:
 
-    async def test(self, spawn_client, static_time):
+    async def test(self, mocker, spawn_client, static_time):
+
+        mocker.patch("virtool.sample.get_sample_rights", return_value=(True, True))
+
         client = await spawn_client()
 
         await client.db.samples.insert_one({
             "_id": "test",
-            "created_at": static_time
+            "created_at": static_time,
+            "all_read": True,
+            "all_write": True
         })
 
         await client.db.analyses.insert_many([
@@ -602,6 +623,9 @@ class TestListAnalyses:
 class TestAnalyze:
 
     async def test(self, mocker, spawn_client, static_time):
+
+        mocker.patch("virtool.sample.get_sample_rights", return_value=(True, True))
+
         client = await spawn_client(job_manager=True)
 
         m = mocker.Mock(return_value={
@@ -629,7 +653,9 @@ class TestAnalyze:
 
         await client.db.samples.insert_one({
             "_id": "test",
-            "created_at": static_time
+            "created_at": static_time,
+            "all_ready": True,
+            "all_write": True
         })
 
         mocker.patch("virtool.sample_analysis.new", new=mock_new)

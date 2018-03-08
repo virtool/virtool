@@ -48,20 +48,25 @@ async def test_get(mocker, not_found, spawn_client):
 
 
 @pytest.mark.parametrize("has_sample", [True, False], ids=["with_sample", "without_sample"])
-@pytest.mark.parametrize("status", [204, 404, 409])
-async def test_remove(has_sample, status, spawn_client, resp_is, test_dispatch):
+@pytest.mark.parametrize("status", [204, 403, 404, 409])
+async def test_remove(has_sample, status, mocker, spawn_client, resp_is, test_dispatch):
+
     client = await spawn_client(authorize=True)
 
+    mocker.patch("virtool.sample.get_sample_rights", return_value=(True, status != 403))
+
     if has_sample:
-        await client.db.samples.insert_one({
+        sample = {
             "_id": "baz",
             "name": "Baz"
-        })
+        }
+
+        await client.db.samples.insert_one(sample)
 
     if status != 404:
         analysis_document = {
             "_id": "foobar",
-            "ready": status == 204,
+            "ready": status != 409,
             "sample": {
                 "id": "baz",
                 "name": "Baz"
@@ -75,29 +80,36 @@ async def test_remove(has_sample, status, spawn_client, resp_is, test_dispatch):
 
     resp = await client.delete("/api/analyses/foobar")
 
-    assert resp.status == status
+    if status == 204 and has_sample:
+        assert resp.status == 204
 
-    if status == 409:
-        assert await resp_is.conflict(resp, "Analysis is still running. Cancel job 'hello' instead")
+        assert test_dispatch.stub.call_args[0] == (
+            "samples",
+            "update",
+            {
+                "id": "baz",
+                "name": "Baz"
+            }
+        )
 
-    elif status == 404:
+        return
+
+    assert not test_dispatch.stub.called
+
+    if status == 404:
         assert await resp_is.not_found(resp)
 
-    else:
-        if has_sample:
-            assert test_dispatch.stub.call_args[0] == (
-                "samples",
-                "update",
-                {
-                    "id": "baz",
-                    "name": "Baz"
-                }
-            )
-        else:
-            assert not test_dispatch.stub.called
+    elif not has_sample:
+        assert await resp_is.not_found(resp, "Sample not found")
+
+    elif status == 403:
+        assert await resp_is.insufficient_rights(resp)
+
+    elif status == 409:
+        assert await resp_is.conflict(resp, "Analysis is still running")
 
 
-@pytest.mark.parametrize("error", [None, "404_analysis", "404_sequence", "400_algorithm", "400_ready", "500_index"])
+@pytest.mark.parametrize("error", [None, "404_analysis", "404_sequence", "400_algorithm", "409_ready", "500_index"])
 async def test_blast(error, mocker, spawn_client, test_dispatch, static_time):
     client = await spawn_client(authorize=True)
 
@@ -119,7 +131,7 @@ async def test_blast(error, mocker, spawn_client, test_dispatch, static_time):
         elif error == "400_algorithm":
             analysis_document["algorithm"] = "pathoscope_bowtie"
 
-        elif error == "400_ready":
+        elif error == "409_ready":
             analysis_document["ready"] = False
 
         elif error == "extra_index":
@@ -186,10 +198,10 @@ async def test_blast(error, mocker, spawn_client, test_dispatch, static_time):
             "message": "Not a NuVs analysis"
         }
 
-    elif error == "400_ready":
+    elif error == "409_ready":
         assert await resp.json() == {
-            "id": "bad_request",
-            "message": "Still in progress"
+            "id": "conflict",
+            "message": "Analysis is still running"
         }
 
     elif error == "extra_index":

@@ -114,7 +114,7 @@ async def create(req):
 
     # Make sure a subtraction host was submitted and it exists.
     if data["subtraction"] not in await db.subtraction.find({"is_host": True}).distinct("_id"):
-        return not_found("Subtraction host not found")
+        return not_found("Subtraction not found")
 
     # Make sure all of the passed file ids exist.
     if await db.files.count({"_id": {"$in": data["files"]}}) != len(data["files"]):
@@ -267,9 +267,11 @@ async def remove(req):
     Remove a sample document and all associated analyses.
 
     """
+    db = req.app["db"]
+
     sample_id = req.match_info["sample_id"]
 
-    sample_rights = await req.app["db"].samples.find_one({"_id": sample_id}, virtool.sample.RIGHTS_PROJECTION)
+    sample_rights = await db.samples.find_one({"_id": sample_id}, virtool.sample.RIGHTS_PROJECTION)
 
     if not sample_rights:
         return not_found()
@@ -280,7 +282,7 @@ async def remove(req):
         return insufficient_rights()
 
     await virtool.sample.remove_samples(
-        req.app["db"],
+        db,
         req.app["settings"],
         [sample_id]
     )

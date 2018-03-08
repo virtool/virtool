@@ -502,7 +502,7 @@ async def edit_isolate(req):
     document = await db.viruses.find_one({"_id": virus_id, "isolates.id": isolate_id})
 
     if not document:
-        return not_found("Virus not found")
+        return not_found()
 
     isolates = deepcopy(document["isolates"])
 
@@ -584,7 +584,7 @@ async def set_as_default(req):
     document = await db.viruses.find_one({"_id": virus_id, "isolates.id": isolate_id})
 
     if not document:
-        return not_found("Virus not found")
+        return not_found()
 
     isolates = deepcopy(document["isolates"])
 
@@ -594,8 +594,8 @@ async def set_as_default(req):
         return not_found()
 
     # Set ``default`` to ``False`` for all existing isolates if the new one should be default.
-    for isolate in isolates:
-        isolate["default"] = False
+    for existing_isolate in isolates:
+        existing_isolate["default"] = False
 
     isolate["default"] = True
 
@@ -666,7 +666,7 @@ async def remove_isolate(req):
     document = await db.viruses.find_one(virus_id)
 
     if not document:
-        return not_found("Virus not found")
+        return not_found()
 
     isolates = deepcopy(document["isolates"])
 

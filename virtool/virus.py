@@ -189,7 +189,7 @@ def check_source_type(settings, source_type):
     """
     # Return `False` when source_types are restricted and source_type is not allowed.
     if source_type and settings["restrict_source_types"]:
-        return source_type not in settings["allowed_source_types"]
+        return source_type in settings["allowed_source_types"]
 
     # Return `True` when:
     # - source_type is empty string (unknown)
