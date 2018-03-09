@@ -140,7 +140,6 @@ const mapDispatchToProps = (dispatch) => ({
     },
 
     showRemove: (sampleId, sampleName) => {
-        console.log({ sampleId, sampleName });
         dispatch(showRemoveSample(sampleId, sampleName));
     }
 
