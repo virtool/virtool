@@ -17,14 +17,6 @@ import { getCanModify } from "../selectors";
 
 class SampleDetail extends React.Component {
 
-    constructor (props) {
-        super(props);
-
-        this.state = {
-            show: this.props.show
-        };
-    }
-
     componentDidMount () {
         this.props.getSample(this.props.match.params.sampleId);
     }
@@ -122,7 +114,7 @@ class SampleDetail extends React.Component {
                     <Route path="/samples/:sampleId/rights" component={Rights} />
                 </Switch>
 
-                <RemoveSample id={detail.id} name={detail.name} show={this.state.show} onHide={this.props.onHide} />
+                <RemoveSample id={detail.id} name={detail.name} onHide={this.props.onHide} />
             </div>
         );
     }
@@ -130,8 +122,7 @@ class SampleDetail extends React.Component {
 
 const mapStateToProps = (state) => ({
     detail: state.samples.detail,
-    canModify: getCanModify(state),
-    show: state.samples.showRemove
+    canModify: getCanModify(state)
 });
 
 const mapDispatchToProps = (dispatch) => ({
