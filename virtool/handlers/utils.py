@@ -283,10 +283,6 @@ async def paginate(collection, db_query, url_query, sort=None, projection=None, 
     documents = list()
 
     if found_count:
-
-        if page > page_count:
-            return not_found("Page outside range: {}".format(page))
-
         if page > 1:
             cursor.skip((page - 1) * per_page)
 
