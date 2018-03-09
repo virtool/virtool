@@ -114,7 +114,11 @@ async def create(req):
         job_id=job_id
     )
 
-    return json_response(virtool.utils.base_processor(document))
+    headers = {
+        "Location": "/api/account/keys/{}".format(data["subtraction_id"])
+    }
+
+    return json_response(virtool.utils.base_processor(document), headers=headers, status=201)
 
 
 async def authorize_upload(req):

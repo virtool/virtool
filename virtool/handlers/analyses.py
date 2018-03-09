@@ -147,4 +147,4 @@ async def blast(req):
         "Location": "/api/analyses/{}/{}/blast".format(analysis_id, sequence_index)
     }
 
-    return json_response(data, status=200, headers=headers)
+    return json_response(data, headers=headers, status=200)

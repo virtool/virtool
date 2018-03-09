@@ -161,6 +161,20 @@ async def get_api_keys(req):
 
 
 @protected()
+async def get_api_key(req):
+    db = req.app["db"]
+    user_id = req["client"].user_id
+    key_id = req.match_info.get("key_id")
+
+    document = await db.keys.find_one({"id": key_id, "user.id": user_id}, {"_id": False, "user": False})
+
+    if document is None:
+        return not_found()
+
+    return json_response(document, status=200)
+
+
+@protected()
 @validation({
     "name": {"type": "string", "required": True, "minlength": 1},
     "permissions": {"type": "dict", "validator": virtool.validators.is_permission_dict}
@@ -210,7 +224,11 @@ async def create_api_key(req):
 
     document["key"] = raw
 
-    return json_response(document, status=201)
+    headers = {
+        "Location": "/api/account/keys/{}".format(document["id"])
+    }
+
+    return json_response(document, headers=headers, status=201)
 
 
 @protected()
