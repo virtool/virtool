@@ -1,5 +1,5 @@
 import { includes, noop } from "lodash-es";
-import { LOCATION_CHANGE } from "react-router-redux";
+import { LOCATION_CHANGE, push } from "react-router-redux";
 import { buffers, END, eventChannel } from "redux-saga";
 import { call, put, select, take, takeEvery, takeLatest, throttle } from "redux-saga/effects";
 
@@ -97,7 +97,7 @@ export function* updateSampleRights (action) {
 
 export function* removeSample (action) {
     yield setPending(apiCall(samplesAPI.remove, action, REMOVE_SAMPLE));
-    yield findSamples();
+    yield put(push("/samples"));
 }
 
 export function* findAnalyses (action) {
