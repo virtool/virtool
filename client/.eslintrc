@@ -4,9 +4,7 @@
     "document": true,
     "dispatcher": true,
     "console": true,
-    "fetch": true,
-    "XMLSerializer": true,
-    "Blob": true
+    "fetch": true
   },
   "parser": "babel-eslint",
   "parserOptions": {

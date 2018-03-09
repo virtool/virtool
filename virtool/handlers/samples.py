@@ -6,8 +6,8 @@ import virtool.file
 import virtool.utils
 import virtool.sample
 import virtool.sample_analysis
-from virtool.handlers.utils import unpack_request, json_response, bad_request, not_found, invalid_query,\
-    compose_regex_query, paginate, protected, validation, no_content, conflict
+from virtool.handlers.utils import bad_request, compose_regex_query, conflict, insufficient_rights, invalid_query,\
+    json_response, no_content, not_found, paginate, protected, unpack_request, validation
 
 
 async def find(req):
@@ -81,6 +81,9 @@ async def get(req):
     if not document:
         return not_found()
 
+    if not virtool.sample.get_sample_rights(document, req["client"])[0]:
+        return insufficient_rights()
+
     return json_response(virtool.utils.base_processor(document))
 
 
@@ -92,7 +95,7 @@ async def get(req):
     "group": {"type": "string"},
     "locale": {"type": "string"},
     "subtraction": {"type": "string", "required": True},
-    "files": {"type": "list", "required": True}
+    "files": {"type": "list", "minlength": 1, "maxlength": 2, "required": True}
 })
 async def create(req):
     db, data = await unpack_request(req)
@@ -105,21 +108,17 @@ async def create(req):
     if req.app["settings"].get("sample_group") == "force_choice":
         try:
             if not await db.groups.count({"_id": data["group"]}):
-                return not_found("Group '{}' not found".format(data["group"]))
+                return not_found("Group not found")
         except KeyError:
             return bad_request("Server requires a 'group' field for sample creation")
 
-    # Check if the submitted sample name is unique if unique sample names are being enforced.
-    if await db.samples.count({"lower_name": data["name"].lower()}):
-        return conflict("Sample name '{}' already exists".format(data["name"]))
-
     # Make sure a subtraction host was submitted and it exists.
     if data["subtraction"] not in await db.subtraction.find({"is_host": True}).distinct("_id"):
-        return not_found("Subtraction host '{}' not found".format(data["subtraction"]))
+        return not_found("Subtraction not found")
 
     # Make sure all of the passed file ids exist.
     if await db.files.count({"_id": {"$in": data["files"]}}) != len(data["files"]):
-        return not_found("One or more of the passed file ids do(es) not exist")
+        return not_found("File id does not exist")
 
     sample_id = await virtool.utils.get_new_id(db.samples)
 
@@ -196,6 +195,16 @@ async def edit(req):
 
     sample_id = req.match_info["sample_id"]
 
+    sample_rights = await db.samples.find_one({"_id": sample_id}, virtool.sample.RIGHTS_PROJECTION)
+
+    if not sample_rights:
+        return not_found()
+
+    read, write = virtool.sample.get_sample_rights(sample_rights, req["client"])
+
+    if not read or not write:
+        return insufficient_rights()
+
     message = await virtool.sample.check_name(db, req.app["settings"], data["name"], sample_id=sample_id)
 
     if message:
@@ -226,10 +235,13 @@ async def set_rights(req):
     """
     db, data = req.app["db"], req["data"]
 
+    sample_id = req.match_info["sample_id"]
+
+    if not await db.samples.count({"_id": sample_id}):
+        return not_found()
+
     user_id = req["client"].user_id
     user_groups = req["client"].groups
-
-    sample_id = req.match_info["sample_id"]
 
     # Only update the document if the connected user owns the samples or is an administrator.
     if "administrator" in user_groups or user_id == await virtool.sample.get_sample_owner(db, sample_id):
@@ -247,7 +259,7 @@ async def set_rights(req):
 
         return json_response(document)
 
-    return json_response({"message": "Must be administrator or sample owner."}, status=403)
+    return insufficient_rights("Must be administrator or sample owner")
 
 
 async def remove(req):
@@ -255,14 +267,25 @@ async def remove(req):
     Remove a sample document and all associated analyses.
 
     """
-    delete_result = await virtool.sample.remove_samples(
-        req.app["db"],
-        req.app["settings"],
-        [req.match_info["sample_id"]]
-    )
+    db = req.app["db"]
 
-    if not delete_result.deleted_count:
+    sample_id = req.match_info["sample_id"]
+
+    sample_rights = await db.samples.find_one({"_id": sample_id}, virtool.sample.RIGHTS_PROJECTION)
+
+    if not sample_rights:
         return not_found()
+
+    read, write = virtool.sample.get_sample_rights(sample_rights, req["client"])
+
+    if not read or not write:
+        return insufficient_rights()
+
+    await virtool.sample.remove_samples(
+        db,
+        req.app["settings"],
+        [sample_id]
+    )
 
     return no_content()
 
@@ -276,8 +299,15 @@ async def list_analyses(req):
 
     sample_id = req.match_info["sample_id"]
 
-    if not await db.samples.count({"_id": sample_id}):
+    sample_rights = await db.samples.find_one({"_id": sample_id}, virtool.sample.RIGHTS_PROJECTION)
+
+    if not sample_rights:
         return not_found()
+
+    read, write = virtool.sample.get_sample_rights(sample_rights, req["client"])
+
+    if not read or not write:
+        return insufficient_rights()
 
     documents = await db.analyses.find({"sample.id": sample_id}, virtool.sample_analysis.LIST_PROJECTION).to_list(None)
 
@@ -299,8 +329,15 @@ async def analyze(req):
 
     sample_id = req.match_info["sample_id"]
 
-    if not await db.samples.count({"_id": sample_id}):
+    sample_rights = await db.samples.find_one({"_id": sample_id}, virtool.sample.RIGHTS_PROJECTION)
+
+    if not sample_rights:
         return not_found()
+
+    read, write = virtool.sample.get_sample_rights(sample_rights, req["client"])
+
+    if not read or not write:
+        return insufficient_rights()
 
     # Generate a unique _id for the analysis entry
     document = await virtool.sample_analysis.new(

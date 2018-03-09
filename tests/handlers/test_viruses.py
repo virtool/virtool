@@ -591,6 +591,7 @@ class TestCreate:
         assert resp.status == 409
 
         assert await resp.json() == {
+            "id": "conflict",
             "message": message
         }
 
@@ -1097,6 +1098,9 @@ class TestAddIsolate:
         """
         client = await spawn_client(authorize=True, permissions=["modify_virus"])
 
+        client.app["settings"]["restrict_source_types"] = True
+        client.app["settings"]["allowed_source_types"] = ["isolate"]
+
         await client.db.viruses.insert_one(test_virus)
 
         data = {
@@ -1172,6 +1176,9 @@ class TestAddIsolate:
 
         """
         client = await spawn_client(authorize=True, permissions=["modify_virus"])
+
+        client.app["settings"]["restrict_source_types"] = True
+        client.app["settings"]["allowed_source_types"] = ["isolate"]
 
         await client.db.viruses.insert_one(test_virus)
 
@@ -1250,6 +1257,9 @@ class TestAddIsolate:
         """
         client = await spawn_client(authorize=True, permissions=["modify_virus"])
 
+        client.app["settings"]["restrict_source_types"] = True
+        client.app["settings"]["allowed_source_types"] = ["isolate"]
+
         test_virus["isolates"] = []
 
         await client.db.viruses.insert_one(test_virus)
@@ -1316,6 +1326,9 @@ class TestAddIsolate:
 
         """
         client = await spawn_client(authorize=True, permissions=["modify_virus"])
+
+        client.app["settings"]["restrict_source_types"] = True
+        client.app["settings"]["allowed_source_types"] = ["isolate"]
 
         await client.db.viruses.insert_one(test_virus)
 
@@ -1560,21 +1573,6 @@ class TestEditIsolate:
                 "version": 1
             }
         )
-
-    async def test_empty(self, spawn_client, test_dispatch, resp_is):
-        """
-        Test that an empty data input results in a ``400`` response.
-
-        """
-        client = await spawn_client(authorize=True, permissions=["modify_virus"])
-
-        resp = await client.patch("/api/viruses/6116cba1/isolates/cab8b360", {})
-
-        assert resp.status == 400
-
-        assert await resp_is.bad_request(resp, "Empty Input")
-
-        assert test_dispatch.stub.call_args is None
 
     async def test_invalid_input(self, spawn_client, test_virus, resp_is):
         """
@@ -2187,7 +2185,7 @@ class TestCreateSequence:
 
         resp = await client.post(url, data)
 
-        assert await resp_is.not_found(resp)
+        assert await resp_is.not_found(resp, "Virus or isolate not found")
 
 
 class TestEditSequence:
@@ -2320,12 +2318,7 @@ class TestEditSequence:
             "definition": "A made up sequence"
         })
 
-        assert resp.status == 404
-
-        if foobar == "sequence_id":
-            assert await resp_is.not_found(resp, "Sequence not found")
-        else:
-            assert await resp_is.not_found(resp, "Virus or isolate not found")
+        assert await resp_is.not_found(resp)
 
 
 class TestRemoveSequence:

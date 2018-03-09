@@ -64,7 +64,7 @@ export default function accountReducer (state = initialState, action) {
             return {...state, newKey: action.data.key};
 
         case CLEAR_API_KEY:
-            return {...state, key: null};
+            return {...state, newKey: null};
 
         case UPDATE_ACCOUNT_SETTINGS.SUCCEEDED:
             return {...state, settings: action.data};

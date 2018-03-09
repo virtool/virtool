@@ -224,7 +224,7 @@ async def test_edit(data, error, spawn_client, resp_is, static_time, create_user
         })
 
     elif error == "user_dne":
-        assert await resp_is.not_found(resp, "User not found")
+        assert await resp_is.not_found(resp)
 
     else:
         expected = dict(bob, last_password_change=static_time)
@@ -291,7 +291,7 @@ async def test_add_group(error, spawn_client, resp_is, create_user, no_permissio
         assert await resp.json() == ["tech"]
 
     elif error == "user_dne":
-        assert await resp_is.not_found(resp, "User not found")
+        assert await resp_is.not_found(resp)
 
     elif error == "group_dne":
         assert await resp_is.not_found(resp, "Group not found")

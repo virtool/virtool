@@ -178,7 +178,7 @@ class TestChangePassword:
             "new_password": "foo_bar_1"
         })
 
-        assert await resp_is.bad_request(resp, "Invalid old password.")
+        assert await resp_is.bad_request(resp, "Invalid old password")
 
     async def test_invalid_input(self, spawn_client, resp_is):
         """

@@ -1,11 +1,12 @@
 import os
+import pymongo.errors
 import shutil
 
 import virtool.sample
 import virtool.subtraction
 import virtool.utils
-from virtool.handlers.utils import unpack_request, json_response, no_content, not_found, compose_regex_query, paginate,\
-    protected, validation
+from virtool.handlers.utils import compose_regex_query, conflict, json_response, no_content, not_found, paginate,\
+    protected, unpack_request, validation
 
 
 async def find(req):
@@ -48,13 +49,13 @@ async def get(req):
 
     document = await db.subtraction.find_one(subtraction_id)
 
-    if document:
-        linked_samples = await db.samples.find({"subtraction.id": subtraction_id}, ["name"]).to_list(None)
-        document["linked_samples"] = [virtool.utils.base_processor(d) for d in linked_samples]
+    if not document:
+        return not_found()
 
-        return json_response(virtool.utils.base_processor(document))
+    linked_samples = await db.samples.find({"subtraction.id": subtraction_id}, ["name"]).to_list(None)
+    document["linked_samples"] = [virtool.utils.base_processor(d) for d in linked_samples]
 
-    return not_found()
+    return json_response(virtool.utils.base_processor(document))
 
 
 @protected("modify_subtraction")
@@ -96,7 +97,10 @@ async def create(req):
         }
     }
 
-    await db.subtraction.insert_one(document)
+    try:
+        await db.subtraction.insert_one(document)
+    except pymongo.errors.DuplicateKeyError:
+        return conflict("Subtraction id already exists")
 
     task_args = {
         "subtraction_id": subtraction_id,
@@ -110,7 +114,11 @@ async def create(req):
         job_id=job_id
     )
 
-    return json_response(virtool.utils.base_processor(document))
+    headers = {
+        "Location": "/api/account/keys/{}".format(data["subtraction_id"])
+    }
+
+    return json_response(virtool.utils.base_processor(document), headers=headers, status=201)
 
 
 async def authorize_upload(req):
@@ -131,6 +139,9 @@ async def remove(req):
     db = req.app["db"]
 
     subtraction_id = req.match_info["subtraction_id"]
+
+    if await db.samples.count({"subtraction.id": subtraction_id}, ["name"]):
+        return conflict("Has linked samples")
 
     reference_path = os.path.join(
         req.app["settings"].get("data_path"),
