@@ -178,12 +178,15 @@ class TestFind:
     async def test_invalid_query(self, spawn_client, resp_is):
         client = await spawn_client()
 
-        resp = await client.get("/api/samples?per_pag=12")
+        resp = await client.get("/api/samples?per_page=five")
 
         assert resp.status == 422
 
         assert await resp_is.invalid_query(resp, {
-            "per_pag": ["unknown field"]
+                'per_page': [
+                    "field 'per_page' cannot be coerced: invalid literal for int() with base 10: 'five'",
+                    'must be of integer type'
+                ]
         })
 
 
