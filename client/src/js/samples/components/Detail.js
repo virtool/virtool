@@ -66,7 +66,7 @@ class SampleDetail extends React.Component {
                         bsStyle="danger"
                         name="remove"
                         tip="Remove Sample"
-                        onClick={this.props.showRemove}
+                        onClick={() => this.props.showRemove(sampleId, detail.name)}
                     />
                 </small>
             );
@@ -140,6 +140,7 @@ const mapDispatchToProps = (dispatch) => ({
     },
 
     showRemove: (sampleId, sampleName) => {
+        console.log({ sampleId, sampleName });
         dispatch(showRemoveSample(sampleId, sampleName));
     }
 
