@@ -92,6 +92,8 @@ async def update_permissions(req):
         }
     }, return_document=ReturnDocument.AFTER)
 
+    await virtool.user_groups.update_member_users(db, group_id)
+
     return json_response(virtool.utils.base_processor(document))
 
 
