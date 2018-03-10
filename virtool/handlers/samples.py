@@ -21,7 +21,7 @@ async def find(req):
         "find": {"type": "string", "default": "", "coerce": str},
         "page": {"type": "integer", "coerce": int, "default": 1, "min": 1},
         "per_page": {"type": "integer", "coerce": int, "default": 15, "min": 1, "max": 100}
-    })
+    }, allow_unknown=True)
 
     if not v(dict(req.query)):
         return invalid_query(v.errors)
