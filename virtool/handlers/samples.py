@@ -98,7 +98,8 @@ async def get(req):
     "files": {"type": "list", "minlength": 1, "maxlength": 2, "required": True}
 })
 async def create(req):
-    db, data = await unpack_request(req)
+    db = req.app["db"]
+    data = req["data"]
 
     message = await virtool.sample.check_name(db, req.app["settings"], data["name"])
 
@@ -191,7 +192,8 @@ async def edit(req):
     Update specific fields in the sample document.
 
     """
-    db, data = req.app["db"], req["data"]
+    db = req.app["db"]
+    data = req["data"]
 
     sample_id = req.match_info["sample_id"]
 
@@ -233,7 +235,8 @@ async def set_rights(req):
     Change rights settings for the specified sample document.
 
     """
-    db, data = req.app["db"], req["data"]
+    db = req.app["db"]
+    data = req["data"]
 
     sample_id = req.match_info["sample_id"]
 
@@ -325,7 +328,8 @@ async def analyze(req):
     Starts an analysis job for a given sample.
 
     """
-    db, data = await unpack_request(req)
+    db = req.app["db"]
+    data = req["data"]
 
     sample_id = req.match_info["sample_id"]
 
