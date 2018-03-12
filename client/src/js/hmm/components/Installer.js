@@ -4,7 +4,7 @@ import { replace } from "lodash-es";
 import { Alert, Col, Panel, ProgressBar, Row } from "react-bootstrap";
 import { connect } from "react-redux";
 
-import { installHMMs } from "../actions";
+import { installHMMs, fetchHmms } from "../actions";
 import { Button, Icon } from "../../base";
 
 const steps = [
@@ -17,6 +17,10 @@ const steps = [
 
 class HMMInstall extends React.Component {
 
+    handleRefresh = () => {
+        this.props.onRefresh();
+    }
+
     render () {
         if (this.props.process && !this.props.process.error) {
 
@@ -28,6 +32,10 @@ class HMMInstall extends React.Component {
                 const size = this.props.size;
                 const part = this.props.size * this.props.process.progress;
                 step += ` (${Numeral(part).format("0.0 b")}/${Numeral(size).format("0.0 b")})`;
+            }
+
+            if (progress === 100) {
+                this.handleRefresh();
             }
 
             return (
@@ -75,6 +83,10 @@ const mapDispatchToProps = (dispatch) => ({
 
     onInstall: () => {
         dispatch(installHMMs());
+    },
+
+    onRefresh: () => {
+        dispatch(fetchHmms());
     }
 
 });
