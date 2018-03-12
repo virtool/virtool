@@ -110,6 +110,7 @@ class CreateSample extends React.Component {
         }
 
         this.props.onCreate({...this.state, files: this.state.selected});
+        this.props.onHide();
     };
 
     autofill = () => {

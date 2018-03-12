@@ -51,7 +51,7 @@ class CreateVirus extends React.Component {
         if (this.state.name) {
             this.setState({show: false});
             this.props.onSubmit(this.state.name, this.state.abbreviation);
-
+            this.handleHide();
         } else {
             this.setState({
                 show: true,
@@ -67,39 +67,36 @@ class CreateVirus extends React.Component {
                 <Modal.Header onHide={this.props.onHide} closeButton>
                     Create Virus
                 </Modal.Header>
+                <Modal.Body>
+                    <Row>
+                        <Col md={9}>
+                            <InputError
+                                label="Name"
+                                name="name"
+                                value={this.state.name}
+                                onChange={this.handleChange}
+                                error={this.state.error}
+                            />
+                        </Col>
+                        <Col md={3}>
+                            <InputError
+                                label="Abbreviation"
+                                name="abbreviation"
+                                value={this.state.abbreviation}
+                                onChange={this.handleChange}
+                            />
+                        </Col>
+                    </Row>
 
-                <form onSubmit={this.handleSubmit}>
-                    <Modal.Body>
-                        <Row>
-                            <Col md={9}>
-                                <InputError
-                                    label="Name"
-                                    name="name"
-                                    value={this.state.name}
-                                    onChange={this.handleChange}
-                                    error={this.state.error}
-                                />
-                            </Col>
-                            <Col md={3}>
-                                <InputError
-                                    label="Abbreviation"
-                                    name="abbreviation"
-                                    value={this.state.abbreviation}
-                                    onChange={this.handleChange}
-                                />
-                            </Col>
-                        </Row>
+                </Modal.Body>
 
-                    </Modal.Body>
-
-                    <Modal.Footer>
-                        <ButtonToolbar className="pull-right">
-                            <Button icon="floppy" type="submit" bsStyle="primary">
-                                Save
-                            </Button>
-                        </ButtonToolbar>
-                    </Modal.Footer>
-                </form>
+                <Modal.Footer>
+                    <ButtonToolbar className="pull-right">
+                        <Button icon="floppy" type="submit" bsStyle="primary" onClick={this.handleSubmit}>
+                            Save
+                        </Button>
+                    </ButtonToolbar>
+                </Modal.Footer>
             </Modal>
         );
     }

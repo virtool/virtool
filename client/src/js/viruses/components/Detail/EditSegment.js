@@ -39,10 +39,10 @@ class EditSegment extends React.Component {
     }
 
     handleSubmit = () => {
-        const checkName = find(this.props.schema, ["name", this.state.newEntry.name]);
+        const takenName = find(this.props.schema, ["name", this.state.newEntry.name]);
 
-        if (checkName) {
-            this.setState({nameTaken: true});
+        if (takenName && (takenName.name !== this.props.curSeg.name)) {
+            this.setState({newEntry: {...this.state.newEntry, showError: false, nameTaken: true}});
         } else if (this.state.newEntry.name) {
             const newArray = this.props.schema.slice();
             const name = this.props.curSeg.name;
@@ -50,16 +50,27 @@ class EditSegment extends React.Component {
 
             newArray[index] = this.state.newEntry;
 
+            this.setState({newEntry: {...this.state.newEntry, showError: false, nameTaken: false}});
+
             this.props.onSubmit(newArray);
         } else {
-            this.setState({showError: true});
+            this.setState({newEntry: {...this.state.newEntry, showError: true, nameTaken: false}});
         }
+    }
+
+    handleExited = () => {
+        this.setState({showError: false, nameTaken: false});
     }
 
     render () {
 
         return (
-            <Modal show={this.props.show} onHide={this.props.onHide} onEnter={this.updateState}>
+            <Modal
+                show={this.props.show}
+                onExited={this.handleExited}
+                onHide={this.props.onHide}
+                onEnter={this.updateState}
+            >
                 <Modal.Header closeButton>
                     Edit Segment
                 </Modal.Header>
@@ -67,8 +78,6 @@ class EditSegment extends React.Component {
                     <SegmentForm
                         onChange={this.handleChange}
                         newEntry={this.state.newEntry}
-                        show={this.state.showError}
-                        segmentExists={this.state.nameTaken}
                     />
                 </Modal.Body>
                 <Modal.Footer>
