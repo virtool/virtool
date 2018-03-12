@@ -68,7 +68,8 @@ async def create(req):
     Adds a new host described by the transaction. Starts an :class:`.CreateSubtraction` job process.
 
     """
-    db, data = req.app["db"], req["data"]
+    db = req.app["db"]
+    data = req["data"]
 
     subtraction_id = data["subtraction_id"]
     file_id = data["file_id"]

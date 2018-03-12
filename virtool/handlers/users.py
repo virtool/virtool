@@ -160,7 +160,8 @@ async def add_group(req):
     Enable membership in a group for the given user.
 
     """
-    db, data = req.app["db"], req["data"]
+    db = req.app["db"]
+    data = req["data"]
 
     user_id = req.match_info["user_id"]
 
