@@ -17,15 +17,15 @@ const steps = [
 
 class HMMInstall extends React.Component {
 
-    getProgress = () => {
-        const progress = 20 * (steps.indexOf(this.props.process.step) + this.props.process.progress);
-        return progress;
+    getProgress (props) {
+        return 20 * (steps.indexOf(props.process.step) + props.process.progress);
     }
 
-    componentDidUpdate () {
-        const progress = this.getProgress();
+    componentDidUpdate (prevProps) {
+        const prevProgress = this.getProgress(prevProps);
+        const progress = this.getProgress(this.props);
 
-        if (progress === 100) {
+        if (prevProgress !== 100 && progress === 100) {
             this.props.onRefresh();
         }
     }
@@ -33,7 +33,7 @@ class HMMInstall extends React.Component {
     render () {
         if (this.props.process && !this.props.process.error) {
 
-            const progress = this.getProgress();
+            const progress = this.getProgress(this.props);
 
             let step = replace(this.props.process.step, "_", " ");
 
