@@ -5,7 +5,7 @@ from cerberus import Validator
 
 import virtool.app_settings
 import virtool.utils
-from virtool.handlers.utils import invalid_input, json_response, not_found, protected
+from virtool.handlers.utils import invalid_input, json_response, not_found, protected, validation
 
 
 async def get_all(req):
@@ -23,25 +23,19 @@ async def get_one(req):
 
 
 @protected("modify_settings")
+@validation(virtool.app_settings.SCHEMA)
 async def update(req):
     """
     Update application settings based on request data.
 
     """
-    data = await req.json()
+    data = req["data"]
 
     keys = data.keys()
 
     settings = req.app["settings"]
 
-    v = Validator(virtool.app_settings.SCHEMA)
-
-    if not v.validate(data):
-        return invalid_input(v.errors)
-
-    document = {key: v.document[key] for key in keys}
-
-    settings.data.update(document)
+    settings.data.update({key: data[key] for key in keys})
 
     await settings.write()
 

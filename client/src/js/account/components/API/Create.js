@@ -7,7 +7,7 @@ import { mapValues } from "lodash-es";
 import { Col, Modal, Row } from "react-bootstrap";
 
 import APIPermissions from "./Permissions";
-import { Button, Icon, Input, Flex, FlexItem } from "../../../base/index";
+import { Button, Icon, Input, InputError, Flex, FlexItem } from "../../../base/index";
 import { routerLocationHasState } from "../../../utils";
 import {clearAPIKey, createAPIKey} from "../../actions";
 
@@ -15,7 +15,8 @@ const getInitialState = (props) => ({
     name: "",
     permissions: mapValues(props.permissions, () => false),
     submitted: false,
-    copied: false
+    copied: false,
+    error: ""
 });
 
 export class CreateAPIKey extends React.Component {
@@ -32,8 +33,17 @@ export class CreateAPIKey extends React.Component {
     handleSubmit = (e) => {
         e.preventDefault();
 
+        const { name, permissions, submitted, copied } = this.state;
+
+        if (!this.state.name) {
+            this.setState({
+                error: "Required Field"
+            });
+            return;
+        }
+
         this.setState({submitted: true}, () => {
-            this.props.onCreate(this.state);
+            this.props.onCreate({ name, permissions, submitted, copied });
         });
     };
 
@@ -66,6 +76,7 @@ export class CreateAPIKey extends React.Component {
                                         formGroupStyle={{marginBottom: 0}}
                                         className="text-center"
                                         value={this.props.newKey}
+                                        readOnly
                                     />
                                 </FlexItem>
                                 <CopyToClipboard
@@ -87,10 +98,11 @@ export class CreateAPIKey extends React.Component {
             content = (
                 <form onSubmit={this.handleSubmit}>
                     <Modal.Body>
-                        <Input
+                        <InputError
                             label="Name"
                             value={this.state.name}
-                            onChange={(e) => this.setState({name: e.target.value})}
+                            onChange={(e) => this.setState({name: e.target.value, error: ""})}
+                            error={this.state.error}
                         />
 
                         <label>Permissions</label>

@@ -27,7 +27,6 @@ async def get(req):
 
 @protected("modify_settings")
 async def upgrade(req):
-
     db = req.app["db"]
     dispatch = req.app["dispatcher"].dispatch
 

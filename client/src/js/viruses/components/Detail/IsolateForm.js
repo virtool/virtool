@@ -15,7 +15,7 @@ import { map, toLower } from "lodash-es";
 import { Row, Col } from "react-bootstrap";
 
 import { formatIsolateName } from "../../../utils";
-import { Input } from "../../../base";
+import { InputError } from "../../../base";
 
 export default class IsolateForm extends React.Component {
 
@@ -61,13 +61,13 @@ export default class IsolateForm extends React.Component {
             );
 
             sourceTypeInput = (
-                <Input type="select" {...sourceTypeInputProps}>
+                <InputError type="select" {...sourceTypeInputProps}>
                     <option key="default" value="unknown">Unknown</option>
                     {optionComponents}
-                </Input>
+                </InputError>
             );
         } else {
-            sourceTypeInput = <Input type="text" {...sourceTypeInputProps} />;
+            sourceTypeInput = <InputError type="text" {...sourceTypeInputProps} />;
         }
 
         return (
@@ -77,7 +77,7 @@ export default class IsolateForm extends React.Component {
                         {sourceTypeInput}
                     </Col>
                     <Col md={6}>
-                        <Input
+                        <InputError
                             label="Source Name"
                             value={this.props.sourceName}
                             onChange={this.changeSourceName}
@@ -86,7 +86,7 @@ export default class IsolateForm extends React.Component {
                         />
                     </Col>
                     <Col md={12}>
-                        <Input
+                        <InputError
                             label="Isolate Name"
                             value={formatIsolateName(this.props)}
                             readOnly

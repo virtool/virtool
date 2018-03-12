@@ -60,6 +60,7 @@ export const HIDE_SAMPLE_MODAL = "HIDE_SAMPLE_MODAL";
 // Virus
 export const WS_UPDATE_VIRUS = "WS_UPDATE_VIRUS";
 export const WS_REMOVE_VIRUS = "WS_REMOVE_VIRUS";
+export const FETCH_VIRUSES = "FETCH_VIRUSES";
 export const FIND_VIRUSES = createRequestActionType("FIND_VIRUSES");
 export const GET_VIRUS = createRequestActionType("GET_VIRUS");
 export const CREATE_VIRUS = createRequestActionType("CREATE_VIRUS");
@@ -89,6 +90,7 @@ export const SHOW_REMOVE_SEQUENCE = "SHOW_REMOVE_SEQUENCE";
 export const HIDE_VIRUS_MODAL = "HIDE_VIRUS_MODAL";
 
 // HMMs
+export const FETCH_HMMS = "FETCH_HHMS";
 export const FIND_HMMS = createRequestActionType("FIND_HMMS");
 export const GET_HMM = createRequestActionType("GET_HMM");
 export const INSTALL_HMMS = createRequestActionType("IMPORT_HMMS");

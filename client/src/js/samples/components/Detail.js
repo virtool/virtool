@@ -11,7 +11,7 @@ import General from "./General";
 import Quality from "./Quality/Quality";
 import RemoveSample from "./Remove";
 import Rights from "./Rights";
-import { getSample, showRemoveSample } from "../actions";
+import { getSample, showRemoveSample, hideSampleModal } from "../actions";
 import { Flex, FlexItem, Icon, LoadingPlaceholder } from "../../base";
 import { getCanModify } from "../selectors";
 
@@ -19,6 +19,10 @@ class SampleDetail extends React.Component {
 
     componentDidMount () {
         this.props.getSample(this.props.match.params.sampleId);
+    }
+
+    componentWillUnmount () {
+        this.props.onHide();
     }
 
     render () {
@@ -110,7 +114,7 @@ class SampleDetail extends React.Component {
                     <Route path="/samples/:sampleId/rights" component={Rights} />
                 </Switch>
 
-                <RemoveSample id={detail.id} name={detail.name} />
+                <RemoveSample id={detail.id} name={detail.name} onHide={this.props.onHide} />
             </div>
         );
     }
@@ -122,6 +126,10 @@ const mapStateToProps = (state) => ({
 });
 
 const mapDispatchToProps = (dispatch) => ({
+
+    onHide: () => {
+        dispatch(hideSampleModal());
+    },
 
     getSample: (sampleId) => {
         dispatch(getSample(sampleId));

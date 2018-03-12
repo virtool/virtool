@@ -31,6 +31,7 @@ export const createUser = (data) => ({
 
 export const editUser = (userId, update) => ({
     type: EDIT_USER.REQUESTED,
+    userId,
     update
 });
 

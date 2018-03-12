@@ -4,8 +4,10 @@ import { connect } from "react-redux";
 import { withRouter } from "react-router-dom";
 import { LinkContainer } from "react-router-bootstrap";
 import { Navbar, Nav, NavItem, NavDropdown, MenuItem } from "react-bootstrap";
+import NotificationIcon from "./Icon";
 import { logout } from "../../account/actions";
 import { Icon, AutoProgressBar } from "../../base";
+
 
 const isHomeActive = (match, location) => location.pathname === "/" || startsWith(location.pathname, "/home");
 
@@ -76,7 +78,15 @@ const Bar = (props) => {
                     </Nav>
 
                     <Nav pullRight>
-                        <NavItem target="_blank" href="https://github.com/virtool/virtool" rel="noopener noreferrer">
+                        <NavItem>
+                            <NotificationIcon />
+                        </NavItem>
+
+                        <NavItem
+                            target="_blank"
+                            href="https://github.com/virtool/virtool"
+                            rel="noopener noreferrer"
+                        >
                             <Icon name="github" />
                         </NavItem>
 
@@ -108,6 +118,7 @@ const mapStateToProps = (state) => ({
 });
 
 const mapDispatchToProps = (dispatch) => ({
+
     logout: () => {
         dispatch(logout());
     }

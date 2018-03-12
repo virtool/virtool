@@ -1,10 +1,10 @@
 import React from "react";
-import { map } from "lodash-es";
+import { find } from "lodash-es";
 import { connect } from "react-redux";
-import { Alert, Col, Panel, Row } from "react-bootstrap";
+import { Col, Panel, Row } from "react-bootstrap";
 
 import { changePassword } from "../actions";
-import { Button, Input, RelativeTime } from "../../base";
+import { Button, InputError, RelativeTime } from "../../base";
 
 const getInitialState = () => ({
     oldPassword: "",
@@ -22,7 +22,14 @@ class ChangePassword extends React.Component {
 
     componentWillReceiveProps (nextProps) {
         if (nextProps.oldPasswordError) {
-            this.setState({errors: ["Old password is invalid"]});
+            this.setState({
+                errors: [
+                    {
+                        id: 0,
+                        message: "Old password is invalid"
+                    }
+                ]
+            });
         }
 
         if (nextProps.lastPasswordChange !== this.props.lastPasswordChange) {
@@ -37,12 +44,25 @@ class ChangePassword extends React.Component {
 
         const minLength = this.props.settings.minimum_password_length;
 
-        if (this.state.confirmPassword.length < minLength || this.state.newPassword.length < minLength) {
-            errors.push(`Password must contain at least ${minLength} characters`);
+        if (!this.state.oldPassword.length) {
+            errors.push({
+                id: 0,
+                message: "Please provide your old password"
+            });
+        }
+
+        if (this.state.newPassword.length < minLength) {
+            errors.push({
+                id: 1,
+                message: `Passwords must contain at least ${minLength} characters`
+            });
         }
 
         if (this.state.confirmPassword !== this.state.newPassword) {
-            errors.push("New passwords do not match");
+            errors.push({
+                id: 2,
+                message: "New passwords do not match"
+            });
         }
 
         if (errors.length) {
@@ -59,45 +79,36 @@ class ChangePassword extends React.Component {
             return <div />;
         }
 
-        let errorAlert;
+        const errorOldPass = find(this.state.errors, ["id", 0]) ? find(this.state.errors, ["id", 0]).message : null;
+        const errorPassLen = find(this.state.errors, ["id", 1]) ? find(this.state.errors, ["id", 1]).message : null;
+        const errorPassMatch = find(this.state.errors, ["id", 2]) ? find(this.state.errors, ["id", 2]).message : null;
 
-        if (this.state.errors.length) {
-            const errorComponents = map(this.state.errors, error =>
-                <li key={error}>
-                    {error}
-                </li>
-            );
-
-            errorAlert = (
-                <Alert bsStyle="danger">
-                    {errorComponents}
-                </Alert>
-            );
-        }
+        const formStyle = this.state.errors.length ? "panel-danger" : "panel-default";
 
         return (
-            <Panel header="Password">
+            <Panel className={formStyle} header="Password">
                 <form onSubmit={this.onSubmit}>
-                    <Input
+                    <InputError
                         label="Old Password"
                         type="password"
                         value={this.state.oldPassword}
                         onChange={(e) => this.setState({oldPassword: e.target.value, errors: []})}
+                        error={errorOldPass}
                     />
-                    <Input
+                    <InputError
                         label="New password"
                         type="password"
                         value={this.state.newPassword}
                         onChange={(e) => this.setState({newPassword: e.target.value, errors: []})}
+                        error={errorPassLen}
                     />
-                    <Input
+                    <InputError
                         label="Confirm New Password"
                         type="password"
                         value={this.state.confirmPassword}
                         onChange={(e) => this.setState({confirmPassword: e.target.value, errors: []})}
+                        error={errorPassMatch}
                     />
-
-                    {errorAlert}
 
                     <div style={{marginTop: "20px"}}>
                         <Row>

@@ -2,6 +2,7 @@ import React from "react";
 import PropTypes from "prop-types";
 import { connect } from "react-redux";
 import { Modal } from "react-bootstrap";
+import { find } from "lodash-es";
 import SegmentForm from "./SegmentForm";
 import { Button } from "../../../base";
 
@@ -9,9 +10,10 @@ const getInitialState = () => ({
     newEntry: {
         name: "",
         molecule: "",
-        required: false
-    },
-    showError: false
+        required: true,
+        showError: false,
+        nameTaken: false
+    }
 });
 
 class AddSegment extends React.Component {
@@ -29,19 +31,25 @@ class AddSegment extends React.Component {
                 required: entry.required
             }
         });
-    };
+    }
 
     handleSubmit = () => {
-        if (this.state.newEntry.name) {
+
+        const checkName = find(this.props.schema, ["name", this.state.newEntry.name]);
+
+        if (checkName) {
+            this.setState({newEntry: {...this.state.newEntry, nameTaken: true}});
+        } else if (this.state.newEntry.name) {
+            this.setState({newEntry: {...this.state.newEntry, nameTaken: false}});
             this.props.onSubmit([...this.props.schema, this.state.newEntry]);
         } else {
-            this.setState({showError: true});
+            this.setState({newEntry: {...this.state.newEntry, showError: true, nameTaken: false}});
         }
-    };
+    }
 
     handleExited = () => {
         this.setState(getInitialState());
-    };
+    }
 
     render () {
 
@@ -54,7 +62,6 @@ class AddSegment extends React.Component {
                     <SegmentForm
                         onChange={this.handleChange}
                         newEntry={this.state.newEntry}
-                        show={this.state.showError}
                     />
                 </Modal.Body>
                 <Modal.Footer>

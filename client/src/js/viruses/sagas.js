@@ -5,6 +5,7 @@ import * as filesAPI from "../files/api";
 import * as virusesAPI from "./api";
 import {apiCall, apiFind, putGenericError, setPending} from "../sagaUtils";
 import {
+    FETCH_VIRUSES,
     FIND_VIRUSES,
     GET_VIRUS,
     GET_VIRUS_HISTORY,
@@ -33,6 +34,10 @@ export function* updateAndGetVirus (apiMethod, action, actionType) {
             yield putGenericError(actionType, err);
         }
     })(action));
+}
+
+export function* fetchViruses () {
+    yield apiCall(virusesAPI.find, {}, FIND_VIRUSES);
 }
 
 export function* findViruses (action) {
@@ -119,6 +124,7 @@ export function* commitImport (action) {
 
 export function* watchViruses () {
     yield throttle(300, LOCATION_CHANGE, findViruses);
+    yield takeLatest(FETCH_VIRUSES, fetchViruses);
     yield takeLatest(GET_VIRUS.REQUESTED, getVirus);
     yield takeLatest(GET_VIRUS_HISTORY.REQUESTED, getVirusHistory);
     yield takeEvery(CREATE_VIRUS.REQUESTED, createVirus);

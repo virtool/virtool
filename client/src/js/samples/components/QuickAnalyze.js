@@ -15,7 +15,7 @@ import { Modal } from "react-bootstrap";
 
 import { analyze } from "../actions";
 import { updateAccountSettings } from "../../account/actions";
-import { AlgorithmSelect, Input, Checkbox, Button } from "../../base";
+import { AlgorithmSelect, InputError, Checkbox, Button } from "../../base";
 import { routerLocationHasState } from "../../utils";
 
 const getInitialState = ({ algorithm = "pathoscope_bowtie" }) => ({
@@ -64,6 +64,7 @@ class QuickAnalyze extends React.Component {
     };
 
     render () {
+
         return (
             <Modal bsSize="small" show={this.props.show} onHide={this.props.onHide} onExited={this.modalExited}>
                 <form onSubmit={this.handleSubmit}>
@@ -72,9 +73,9 @@ class QuickAnalyze extends React.Component {
                     </Modal.Header>
 
                     <Modal.Body>
-                        <Input
+                        <InputError
                             label="Sample"
-                            value={this.props.name}
+                            value={this.props.show ? this.props.quickAnalyze.name : ""}
                             readOnly
                         />
 
@@ -110,7 +111,11 @@ class QuickAnalyze extends React.Component {
 const mapStateToProps = (state) => ({
     ...(state.router.location.state || {}),
     algorithm: state.account.settings.quick_analyze_algorithm,
-    show: routerLocationHasState(state, "quickAnalyze")
+    show: routerLocationHasState(
+        state,
+        "quickAnalyze",
+        state.router.location.state ? state.router.location.state["quickAnalyze"] : false
+    )
 
 });
 

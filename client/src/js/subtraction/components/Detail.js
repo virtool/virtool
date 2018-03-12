@@ -28,6 +28,7 @@ class SubtractionDetail extends React.Component {
 
         if (data.ready) {
             let linkedSamples;
+            let removeIcon;
 
             if (data.linked_samples.length) {
                 const linkedSampleComponents = map(data.linked_samples, sample =>
@@ -45,8 +46,19 @@ class SubtractionDetail extends React.Component {
                         {linkedSampleComponents}
                     </Row>
                 );
+
+                removeIcon = <div />;
             } else {
                 linkedSamples = <NoneFound noun="linked samples" />;
+
+                removeIcon = (
+                    <Icon
+                        name="remove"
+                        bsStyle="danger"
+                        onClick={this.props.onShowRemove}
+                        pullRight
+                    />
+                );
             }
 
             return (
@@ -59,12 +71,7 @@ class SubtractionDetail extends React.Component {
                             {this.props.canModify ? (
                                 <FlexItem grow={1} shrink={0}>
                                     <small>
-                                        <Icon
-                                            name="remove"
-                                            bsStyle="danger"
-                                            onClick={this.props.onShowRemove}
-                                            pullRight
-                                        />
+                                        {removeIcon}
                                     </small>
                                 </FlexItem>
                             ) : null}

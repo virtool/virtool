@@ -18,7 +18,7 @@ export const create = ({ userId, password, forceReset }) => (
 );
 
 export const edit = ({ userId, update }) => (
-    Request.put(`/api/users/${userId}`)
+    Request.patch(`/api/users/${userId}`)
         .send(update)
 );
 

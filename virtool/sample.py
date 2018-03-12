@@ -48,7 +48,8 @@ RIGHTS_PROJECTION = {
     "group_read": True,
     "group_write": True,
     "all_read": True,
-    "all_write": True
+    "all_write": True,
+    "user": True
 }
 
 
@@ -83,6 +84,61 @@ def calculate_algorithm_tags(analyses):
     }
 
 
+async def check_name(db, settings, name, sample_id=None):
+
+    if settings["sample_unique_names"]:
+        query = {
+            "name": name
+        }
+
+        if sample_id:
+            query["_id"] = {
+                "$ne": sample_id
+            }
+
+        if await db.samples.count(query):
+            return "Sample name is already in use"
+
+    return None
+
+
+async def get_sample_owner(db, sample_id: str):
+    """
+    A Shortcut function for getting the owner user id of a sample given its ``sample_id``.
+
+    :param db: the application database client
+    :type db: :class:`~motor.motor_asyncio.AsyncIOMotorClient`
+
+    :param sample_id: the id of the sample to get the owner for
+    :type sample_id: str
+
+    :return: the id of the owner user
+
+    """
+    document = await db.samples.find_one(sample_id, ["user"])
+
+    if document:
+        return document["user"]["id"]
+
+    return None
+
+
+def get_sample_rights(sample: dict, client):
+    if sample["user"]["id"] == client.user_id or "administrator" in client.groups:
+        return True, True
+
+    is_group_member = sample["group"] and sample["group"] in client.groups
+
+    read = sample["all_read"] or (is_group_member and sample["group_read"])
+
+    if not read:
+        return False, False
+
+    write = sample["all_write"] or (is_group_member and sample["group_write"])
+
+    return read, write
+
+
 async def recalculate_algorithm_tags(db, sample_id):
     """
     Recalculate and apply algorithm tags (eg. "ip", True) for a given sample. Finds the associated analyses and calls
@@ -104,27 +160,6 @@ async def recalculate_algorithm_tags(db, sample_id):
     }, return_document=pymongo.ReturnDocument.AFTER, projection=LIST_PROJECTION)
 
     return document
-
-
-async def get_sample_owner(db, sample_id):
-    """
-    A Shortcut function for getting the owner user id of a sample given its ``sample_id``.
-
-    :param db: the application database client
-    :type db: :class:`~motor.motor_asyncio.AsyncIOMotorClient`
-
-    :param sample_id: the id of the sample to get the owner for
-    :type sample_id: str
-
-    :return: the id of the owner user
-
-    """
-    document = await db.samples.find_one(sample_id, ["user"])
-
-    if document:
-        return document["user"]["id"]
-
-    return None
 
 
 async def remove_samples(db, settings, id_list):

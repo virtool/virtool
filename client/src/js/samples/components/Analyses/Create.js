@@ -18,7 +18,8 @@ export default class CreateAnalysis extends React.Component {
         show: PropTypes.bool,
         id: PropTypes.string,
         onSubmit: PropTypes.func,
-        onHide: PropTypes.func
+        onHide: PropTypes.func,
+        hasHmm: PropTypes.bool
     };
 
     handleSubmit = (e) => {
@@ -38,6 +39,7 @@ export default class CreateAnalysis extends React.Component {
                         <AlgorithmSelect
                             value={this.state.algorithm}
                             onChange={(e) => this.setState({algorithm: e.target.value})}
+                            hasHmm={this.props.hasHmm}
                         />
                     </div>
                 </Modal.Body>

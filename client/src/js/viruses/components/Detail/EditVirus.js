@@ -3,11 +3,12 @@ import { connect } from "react-redux";
 import { Row, Col, Modal } from "react-bootstrap";
 
 import { editVirus, hideVirusModal } from "../../actions";
-import { Button, Icon, Input } from "../../../base";
+import { Button, Icon, InputError } from "../../../base";
 
 const getInitialState = ({ name = "", abbreviation = "" }) => ({
     name,
-    abbreviation
+    abbreviation,
+    error: ""
 });
 
 class EditVirus extends React.Component {
@@ -30,6 +31,12 @@ class EditVirus extends React.Component {
 
     handleSave = (e) => {
         e.preventDefault();
+
+        if (!this.state.name) {
+            this.setState({error: "Required Field"});
+            return;
+        }
+
         this.props.onSave(this.props.virusId, this.state.name, this.state.abbreviation);
     };
 
@@ -54,15 +61,16 @@ class EditVirus extends React.Component {
                     <Modal.Body>
                         <Row>
                             <Col md={6} xs={12}>
-                                <Input
+                                <InputError
                                     label="Name"
                                     name="name"
                                     value={this.state.name}
                                     onChange={this.handleChange}
+                                    error={this.state.error}
                                 />
                             </Col>
                             <Col md={6} xs={12}>
-                                <Input
+                                <InputError
                                     label="Abbreviation"
                                     name="abbreviation"
                                     value={this.state.abbreviation}

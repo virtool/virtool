@@ -10,12 +10,13 @@
  */
 import React from "react";
 import { connect } from "react-redux";
-import { Row, Col, Modal, FormGroup, InputGroup, ControlLabel, Popover, Overlay } from "react-bootstrap";
+import { Row, Col, Modal, InputGroup, ControlLabel } from "react-bootstrap";
 import { ClipLoader } from "halogenium";
+import { map } from "lodash-es";
 
 import SequenceField from "./SequenceField";
 import { addSequence, hideVirusModal } from "../../actions";
-import { Button, Icon, Input } from "../../../base";
+import { Button, Icon, InputError } from "../../../base";
 import { getGenbank } from "../../api";
 
 const getInitialState = () => ({
@@ -23,8 +24,9 @@ const getInitialState = () => ({
     definition: "",
     host: "",
     sequence: "",
+    segment: "",
     autofillPending: false,
-    error: false
+    error: ""
 });
 
 class AddSequence extends React.Component {
@@ -49,7 +51,7 @@ class AddSequence extends React.Component {
             }, (err) => {
                 this.setState({
                     autofillPending: false,
-                    error: err.status === 404 ? "Accession not found" : false
+                    error: err.status === 404 ? "Accession not found" : ""
                 });
                 return err;
             });
@@ -61,12 +63,12 @@ class AddSequence extends React.Component {
 
         this.setState({
             [name]: value,
-            error: name === "id" ? false : this.state.error
+            error: name === "id" ? "" : this.state.error
         });
     };
 
     handleHideError = () => {
-        this.setState({error: false});
+        this.setState({error: ""});
     };
 
     handleModalExited = () => {
@@ -84,14 +86,19 @@ class AddSequence extends React.Component {
                 this.state.id,
                 this.state.definition,
                 this.state.host,
-                this.state.sequence
+                this.state.sequence,
+                this.state.segment
             );
         } else {
-            this.setState({show: true});
+            this.setState({
+                show: true,
+                error: "Required Field"
+            });
         }
     };
 
     render () {
+
         let overlay;
 
         if (this.state.autofillPending) {
@@ -104,7 +111,13 @@ class AddSequence extends React.Component {
             );
         }
 
-        const errorMessage = this.state.show ? "Required Field" : "";
+        const defaultOption = (<option key="" value=""> - None - </option>);
+
+        const segmentNames = map(this.props.schema, (segment) =>
+            <option key={segment} value={segment}>
+                {segment}
+            </option>
+        );
 
         return (
             <Modal show={this.props.show} onHide={this.props.onHide} onExited={this.handleModalExited}>
@@ -117,37 +130,37 @@ class AddSequence extends React.Component {
                         {overlay}
                         <Row>
                             <Col xs={12} md={6}>
-                                <FormGroup>
-                                    <ControlLabel>Accession (ID)</ControlLabel>
-                                    <InputGroup>
-                                        <Overlay
-                                            show={!!this.state.error}
-                                            target={this.accessionNode}
-                                            placement="top"
-                                            container={this}
-                                            onHide={this.handleHideError}
-                                            animation={false}
-                                        >
-                                            <Popover id="error-popover">
-                                                {this.state.error}
-                                            </Popover>
-                                        </Overlay>
-                                        <Input
-                                            name="id"
-                                            value={this.state.id}
-                                            onChange={this.handleChange}
-                                            error={errorMessage}
-                                        />
-                                        <InputGroup.Button>
-                                            <Button type="button" onClick={this.handleAutofill}>
-                                                <Icon name="wand" />
-                                            </Button>
-                                        </InputGroup.Button>
-                                    </InputGroup>
-                                </FormGroup>
+                                <ControlLabel>Accession (ID)</ControlLabel>
+                                <InputGroup>
+                                    <InputError
+                                        name="id"
+                                        value={this.state.id}
+                                        onChange={this.handleChange}
+                                        error={this.state.error}
+                                    />
+                                    <InputGroup.Button style={{verticalAlign: "top", zIndex: "0"}}>
+                                        <Button type="button" onClick={this.handleAutofill}>
+                                            <Icon name="wand" />
+                                        </Button>
+                                    </InputGroup.Button>
+                                </InputGroup>
                             </Col>
                             <Col xs={12} md={6}>
-                                <Input
+                                <InputError
+                                    type="select"
+                                    label="Segment"
+                                    name="segment"
+                                    value={this.state.segment}
+                                    onChange={this.handleChange}
+                                >
+                                    {defaultOption}
+                                    {segmentNames}
+                                </InputError>
+                            </Col>
+                        </Row>
+                        <Row>
+                            <Col xs={12}>
+                                <InputError
                                     label="Host"
                                     name="host"
                                     value={this.state.host}
@@ -157,7 +170,7 @@ class AddSequence extends React.Component {
                         </Row>
                         <Row>
                             <Col xs={12}>
-                                <Input
+                                <InputError
                                     label="Definition"
                                     name="definition"
                                     value={this.state.definition}
@@ -198,8 +211,8 @@ const mapDispatchToProps = dispatch => ({
         dispatch(hideVirusModal());
     },
 
-    onSave: (virusId, isolateId, sequenceId, definition, host, sequence) => {
-        dispatch(addSequence(virusId, isolateId, sequenceId, definition, host, sequence));
+    onSave: (virusId, isolateId, sequenceId, definition, host, sequence, segment) => {
+        dispatch(addSequence(virusId, isolateId, sequenceId, definition, host, sequence, segment));
     }
 
 });

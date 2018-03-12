@@ -16,6 +16,7 @@
 @import "./progress.less";
 @import "./upload.less";
 @import "./tabs.less";
+@import "./animation.less";
 
 // Bootstrap color variables
 @brand-primary: lighten(#05486c, 10%);
@@ -26,6 +27,9 @@
 
 @state-info-text: darken(@brand-info, 12%);
 @state-info-bg: lighten(@brand-info, 30%);
+
+// Bootstrap small-screen breakpoint variable
+@screen-sm: 992px;
 
 // Bootstrap border-radius variable
 @border-radius-base: 0;
@@ -43,6 +47,10 @@
 
 @input-group-addon-bg: #fff;
 @input-border-focus: lighten(@brand-primary, 8%);
+
+@state-danger-bg: lighten(@brand-danger, 25%);
+@state-danger-text: @brand-danger;
+@state-danger-border: @brand-danger;
 
 body {
   padding-top: 65px;
@@ -325,6 +333,20 @@ i.vtlogo {
   background: white;
 }
 
+.panel-custom-error {
+  border-color: @brand-danger;
+}
+
+.panel-list-custom {
+  border: 1px solid white;
+  margin: 0;
+}
+
+.panel-list-custom-error {
+  border: 1px solid @brand-danger;
+  margin: 0;
+}
+
 td.input-cell {
   padding: 0 !important;
   box-sizing: border-box !important;
@@ -352,6 +374,27 @@ td.input-cell {
   width: 100%;
   border: none;
   outline-style: none;
+}
+
+.input-form-error {
+  color: @brand-danger;
+  font-size: 90%;
+  text-align: right;
+}
+
+.input-form-error-none {
+  visibility: hidden;
+  font-size: 90%;
+  text-align: right;
+}
+
+.input-error-message {
+  display: inline-block;
+  margin: 3px 0 0 0;
+}
+
+.form-control-error {
+  border-color: @brand-danger;
 }
 
 div.static-value {

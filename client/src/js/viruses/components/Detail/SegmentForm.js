@@ -2,7 +2,7 @@ import React from "react";
 import PropTypes from "prop-types";
 import { Row, Col } from "react-bootstrap";
 import { map } from "lodash-es";
-import { Input, Checkbox } from "../../../base";
+import { InputError, Checkbox } from "../../../base";
 
 export default class SegmentForm extends React.Component {
 
@@ -10,15 +10,22 @@ export default class SegmentForm extends React.Component {
         super(props);
 
         this.state = {
-            isChecked: false,
-            showError: this.props.show
+            isChecked: true,
+            showError: this.props.newEntry.showError,
+            error: ""
         };
     }
 
     componentWillReceiveProps (nextProps) {
+
+        let error = "";
+        error = nextProps.newEntry.showError ? "Required Field" : "";
+        error = nextProps.newEntry.nameTaken ? "Segment names must be unique. This name is currently in use" : error;
+
         this.setState({
             isChecked: nextProps.newEntry.required,
-            showError: nextProps.show
+            showError: nextProps.newEntry.showError,
+            error
         });
     }
 
@@ -27,6 +34,7 @@ export default class SegmentForm extends React.Component {
             ...this.props.newEntry,
             name: e.target.value
         });
+        this.setState({error: ""});
     };
 
     changeMolType = (e) => {
@@ -34,6 +42,7 @@ export default class SegmentForm extends React.Component {
             ...this.props.newEntry,
             molecule: e.target.value
         });
+        this.setState({error: ""});
     };
 
     toggleCheck = () => {
@@ -41,12 +50,10 @@ export default class SegmentForm extends React.Component {
             ...this.props.newEntry,
             required: !this.state.isChecked
         });
-        this.setState({isChecked: !this.state.isChecked});
+        this.setState({isChecked: !this.state.isChecked, error: ""});
     };
 
     render () {
-
-        const errorMessage = this.state.showError ? "Required Field" : "";
 
         const moleculeTypes = [
             "",
@@ -68,22 +75,22 @@ export default class SegmentForm extends React.Component {
             <form>
                 <Row>
                     <Col md={9}>
-                        <Input
+                        <InputError
                             label="Name"
                             value={this.props.newEntry.name}
                             onChange={this.changeSegName}
-                            error={errorMessage}
+                            error={this.state.error}
                         />
                     </Col>
                     <Col md={3}>
-                        <Input
+                        <InputError
                             type="select"
                             label="Molecule Type"
                             value={this.props.newEntry.molecule}
                             onChange={this.changeMolType}
                         >
                             {molecules}
-                        </Input>
+                        </InputError>
                     </Col>
                 </Row>
                 <Row>
@@ -103,6 +110,5 @@ export default class SegmentForm extends React.Component {
 
 SegmentForm.propTypes = {
     onChange: PropTypes.func.isRequired,
-    newEntry: PropTypes.object.isRequired,
-    show: PropTypes.bool
+    newEntry: PropTypes.object.isRequired
 };
