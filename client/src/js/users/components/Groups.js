@@ -68,8 +68,7 @@ const UserGroups = ({ accountUserId, addToGroup, allGroups, memberGroups, remove
 
 const mapStateToProps = state => ({
     accountUserId: state.account.id,
-    allGroups: map(state.groups.list, "id"),
-    users: state.users.list
+    allGroups: map(state.groups.list, "id")
 });
 
 const mapDispatchToProps = dispatch => ({
