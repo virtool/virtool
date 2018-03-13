@@ -6,9 +6,8 @@ import { Button, InputError } from "../../base";
 
 const getInitialState = (props) => ({
     subtractionId: props.entry.id,
-    fileId: props.entry.file.id,
-    nickname: props.entry.nickname,
-    show: props.show
+    fileId: props.entry.file.name,
+    nickname: props.entry.nickname
 });
 
 class EditSubtraction extends React.Component {
@@ -18,35 +17,26 @@ class EditSubtraction extends React.Component {
         this.state = getInitialState(this.props);
     }
 
-    componentWillReceiveProps (nextProps) {
-        if (nextProps.show !== this.props.show) {
-            this.setState({
-                show: nextProps.show
-            });
-        }
-    }
-
     handleSubmit = (e) => {
         e.preventDefault();
-
         this.props.onUpdate(this.state.subtractionId, this.state.nickname);
+        this.props.exited();
     };
 
     render () {
 
         return (
             <Modal
-                bsSize="large"
-                show={this.state.show}
-                onHide={() => this.setState({show: false})}
-                onExited={this.props.Exited}
+                show={this.props.show}
+                onHide={this.props.exited}
+                onExited={this.props.exited}
             >
                 <Modal.Header closeButton>
                     Edit Subtraction
                 </Modal.Header>
                 <Modal.Body style={{margin: "0 0 10px 0"}}>
                     <Row>
-                        <Col md={6}>
+                        <Col md={12}>
                             <InputError
                                 type="text"
                                 label="Unique Name"
@@ -54,12 +44,24 @@ class EditSubtraction extends React.Component {
                                 readOnly
                             />
                         </Col>
-                        <Col md={6}>
+                    </Row>
+                    <Row>
+                        <Col md={12}>
                             <InputError
                                 type="text"
                                 label="Nickname"
                                 value={this.state.nickname}
                                 onChange={(e) => this.setState({nickname: e.target.value})}
+                            />
+                        </Col>
+                    </Row>
+                    <Row>
+                        <Col md={12}>
+                            <InputError
+                                type="text"
+                                label="File"
+                                value={this.state.fileId}
+                                readOnly
                             />
                         </Col>
                     </Row>

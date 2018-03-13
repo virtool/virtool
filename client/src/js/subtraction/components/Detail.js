@@ -29,6 +29,7 @@ class SubtractionDetail extends React.Component {
 
     handleExit = () => {
         this.setState({showEdit: false});
+        this.props.onGet(this.props.match.params.subtractionId);
     };
 
     render () {
@@ -107,6 +108,11 @@ class SubtractionDetail extends React.Component {
                     <Table bordered>
                         <tbody>
                             <tr>
+                                <th>Nickname</th>
+                                <td>{this.props.detail.nickname}</td>
+                            </tr>
+
+                            <tr>
                                 <th>File</th>
                                 <td>{data.file.id}</td>
                             </tr>
@@ -127,7 +133,7 @@ class SubtractionDetail extends React.Component {
                     <EditSubtraction
                         show={this.state.showEdit}
                         entry={this.props.detail}
-                        Exited={this.handleExit}
+                        exited={this.handleExit}
                     />
                     <RemoveSubtraction id={data.id} />
                 </div>

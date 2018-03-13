@@ -145,7 +145,7 @@ class CreateSubtraction extends React.Component {
                 <form onSubmit={this.handleSubmit}>
                     <Modal.Body style={{margin: "0 0 10px 0"}}>
                         <Row>
-                            <Col md={6}>
+                            <Col md={12}>
                                 <InputError
                                     type="text"
                                     label="Unique Name"
@@ -154,7 +154,9 @@ class CreateSubtraction extends React.Component {
                                     error={errorName}
                                 />
                             </Col>
-                            <Col md={6}>
+                        </Row>
+                        <Row>
+                            <Col md={12}>
                                 <InputError
                                     type="text"
                                     label="Nickname"
