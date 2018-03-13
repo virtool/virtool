@@ -72,6 +72,8 @@ class Groups extends React.Component {
             spaceError: false,
             submitted: false
         });
+
+        this.props.updatePermissions();
     };
 
     handleSelect = (activeId) => {

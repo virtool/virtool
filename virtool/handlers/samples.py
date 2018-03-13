@@ -343,6 +343,9 @@ async def analyze(req):
     if not read or not write:
         return insufficient_rights()
 
+    if not await db.indexes.count({"ready": True}):
+        return not_found("Ready index not found")
+
     # Generate a unique _id for the analysis entry
     document = await virtool.sample_analysis.new(
         db,
