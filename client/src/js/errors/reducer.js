@@ -1,4 +1,4 @@
-import { endsWith } from "lodash-es";
+import { endsWith, replace } from "lodash-es";
 import { reportAPIError } from "../utils";
 import {
     CREATE_SAMPLE,
@@ -18,10 +18,6 @@ import {
     CREATE_GROUP
 } from "../actionTypes";
 
-const initialState = {
-    errors: null
-};
-
 const checkActionFailed = (action) => {
     const actionType = action.type;
     const isFailed = endsWith(actionType, "_FAILED");
@@ -32,67 +28,61 @@ const checkActionFailed = (action) => {
     return false;
 };
 
-export default function errorsReducer (state = initialState, action) {
+const getErrorName = (action) => {
+    const actionType = action.type;
+    const errorName = replace(actionType, "_FAILED", "_ERROR");
+
+    return errorName;
+};
+
+const resetError = (successAction) => {
+    const actionType = successAction.type;
+    const errorName = endsWith(actionType, "_SUCCEEDED")
+        ? replace(actionType, "_SUCCEEDED", "_ERROR")
+        : null;
+
+    return errorName;
+};
+
+export default function errorsReducer (state = null, action) {
 
     const failedAction = checkActionFailed(action);
+    let errorName;
 
-    if (!failedAction) {
-        return {...state, errors: null};
+    if (failedAction) {
+        errorName = getErrorName(action);
+    } else {
+        errorName = state ? resetError(action) : null;
+        if (errorName && state[errorName]) {
+            return {...state, [errorName]: null};
+        } else {
+            return state;
+        }
     }
-
-    console.log(action, failedAction);
 
     const errorPayload = { status: failedAction.status, message: failedAction.message };
 
     switch (failedAction.type) {
 
         case CREATE_SAMPLE.FAILED:
-            return {...state, errors: {createSampleError: errorPayload}};
-
         case UPDATE_SAMPLE.FAILED:
-            return {...state, errors: {updateSampleError: errorPayload}};
-
         case CREATE_VIRUS.FAILED:
-            return {...state, errors: {createVirusError: errorPayload}};
-
         case EDIT_VIRUS.FAILED:
-            return {...state, errors: {editVirusError: errorPayload}};
-
         case ADD_ISOLATE.FAILED:
-            return {...state, errors: {addIsolateError: errorPayload}};
-
         case EDIT_ISOLATE.FAILED:
-            return {...state, errors: {editIsolateError: errorPayload}};
-
         case ADD_SEQUENCE.FAILED:
-            return {...state, errors: {addSequenceError: errorPayload}};
-
         case EDIT_SEQUENCE.FAILED:
-            return {...state, errors: {editSequenceError: errorPayload}};
-
         case CREATE_INDEX.FAILED:
-            return {...state, errors: {createIndexError: errorPayload}};
-
         case CREATE_SUBTRACTION.FAILED:
-            return {...state, errors: {createSubtractionError: errorPayload}};
-
         case UPDATE_ACCOUNT.FAILED:
-            return {...state, errors: {updateAccountError: errorPayload}};
-
         case CHANGE_ACCOUNT_PASSWORD.FAILED:
-            return {...state, errors: {changePasswordError: errorPayload}};
-
         case CREATE_USER.FAILED:
-            return {...state, errors: {createUserError: errorPayload}};
-
         case EDIT_USER.FAILED:
-            return {...state, errors: {editUserError: errorPayload}};
-
         case CREATE_GROUP.FAILED:
-            return {...state, errors: {createGroupError: errorPayload}};
+            return {...state, [errorName]: errorPayload};
 
         default:
             reportAPIError(failedAction);
-            return state;
+            return {...state, UNHANDLED_ERROR: errorPayload};
     }
 }
