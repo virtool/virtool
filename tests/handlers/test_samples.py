@@ -625,8 +625,8 @@ class TestListAnalyses:
 
 class TestAnalyze:
 
-    async def test(self, mocker, spawn_client, static_time):
-
+    @pytest.mark.parametrize("error", [None, "sample", "no_index", "no_ready_index"])
+    async def test(self, error, mocker, spawn_client, static_time, resp_is):
         mocker.patch("virtool.sample.get_sample_rights", return_value=(True, True))
 
         client = await spawn_client(job_manager=True)
@@ -654,12 +654,19 @@ class TestAnalyze:
         async def mock_new(*args, **kwargs):
             return m(*args, **kwargs)
 
-        await client.db.samples.insert_one({
-            "_id": "test",
-            "created_at": static_time,
-            "all_ready": True,
-            "all_write": True
-        })
+        if error != "sample":
+            await client.db.samples.insert_one({
+                "_id": "test",
+                "created_at": static_time,
+                "all_ready": True,
+                "all_write": True
+            })
+
+        if error != "no_index":
+            await client.db.indexes.insert_one({
+                "_id": "test",
+                "ready": error != "no_ready_index"
+            })
 
         mocker.patch("virtool.sample_analysis.new", new=mock_new)
 
@@ -667,40 +674,47 @@ class TestAnalyze:
             "algorithm": "pathoscope_bowtie"
         })
 
-        assert resp.status == 201
+        if error is None:
+            assert resp.status == 201
 
-        assert resp.headers["Location"] == "/api/analyses/test_analysis"
+            assert resp.headers["Location"] == "/api/analyses/test_analysis"
 
-        assert await resp.json() == {
-            "id": "test_analysis",
-            "ready": False,
-            "algorithm": "pathoscope_bowtie",
-            "created_at": "2015-10-06T20:00:00Z",
-            "sample": {
-                "id": "test"
-            },
-            "index": {
-                "id": "foobar",
-                "version": 3
-            },
+            assert await resp.json() == {
+                "id": "test_analysis",
+                "ready": False,
+                "algorithm": "pathoscope_bowtie",
+                "created_at": "2015-10-06T20:00:00Z",
+                "sample": {
+                    "id": "test"
+                },
+                "index": {
+                    "id": "foobar",
+                    "version": 3
+                },
 
-            "user": {
-                "id": "test"
-            },
+                "user": {
+                    "id": "test"
+                },
 
-            "job": {
-                "id": "baz"
+                "job": {
+                    "id": "baz"
+                }
             }
-        }
 
-        assert m.call_args[0] == (
-            client.db,
-            client.app["settings"],
-            client.app["job_manager"],
-            "test",
-            None,
-            "pathoscope_bowtie"
-        )
+            assert m.call_args[0] == (
+                client.db,
+                client.app["settings"],
+                client.app["job_manager"],
+                "test",
+                None,
+                "pathoscope_bowtie"
+            )
+
+        elif error == "sample":
+            assert await resp_is.not_found(resp)
+
+        else:
+            assert await resp_is.not_found(resp, "Ready index not found")
 
     async def test_invalid_input(self, spawn_client, resp_is):
         client = await spawn_client()
@@ -712,12 +726,3 @@ class TestAnalyze:
         assert await resp_is.invalid_input(resp, {
             "algorithm": ["required field"], "foobar": ["unknown field"]
         })
-
-    async def test_not_found(self, spawn_client, resp_is):
-        client = await spawn_client()
-
-        resp = await client.post("/api/samples/test/analyses", data={
-            "algorithm": "pathoscope_bowtie"
-        })
-
-        assert await resp_is.not_found(resp)
