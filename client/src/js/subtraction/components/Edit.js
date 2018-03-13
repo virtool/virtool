@@ -75,6 +75,7 @@ class EditSubtraction extends React.Component {
                         onClick={this.handleSubmit}
                         pullRight
                     >
+                        Save
                     </Button>
                 </Modal.Footer>
             </Modal>
