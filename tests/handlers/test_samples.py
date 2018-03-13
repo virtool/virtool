@@ -628,7 +628,7 @@ class TestAnalyze:
     @pytest.mark.parametrize("error", [None, "sample", "no_index", "no_ready_index"])
     async def test(self, error, mocker, spawn_client, static_time, resp_is):
         mocker.patch("virtool.sample.get_sample_rights", return_value=(True, True))
-        
+
         client = await spawn_client(job_manager=True)
 
         m = mocker.Mock(return_value={
@@ -661,7 +661,6 @@ class TestAnalyze:
                 "all_ready": True,
                 "all_write": True
             })
-            
 
         if error != "no_index":
             await client.db.indexes.insert_one({
@@ -712,13 +711,10 @@ class TestAnalyze:
             )
 
         elif error == "sample":
-            assert await resp_is.not_found(resp, "Sample not found.")
+            assert await resp_is.not_found(resp)
 
         else:
-            assert await resp_is.not_found(
-                resp,
-                "Could not find a virus index build. Build at least one index before running analyses."
-            )
+            assert await resp_is.not_found(resp, "Ready index not found")
 
     async def test_invalid_input(self, spawn_client, resp_is):
         client = await spawn_client()
