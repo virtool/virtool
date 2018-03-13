@@ -8,6 +8,7 @@ import {
     LIST_SUBTRACTION_IDS,
     GET_SUBTRACTION,
     CREATE_SUBTRACTION,
+    UPDATE_SUBTRACTION,
     REMOVE_SUBTRACTION
 } from "../actionTypes";
 
@@ -29,6 +30,10 @@ export function* createSubtraction (action) {
     yield pushHistoryState({createSubtraction: false});
 }
 
+export function* updateSubtraction (action) {
+    yield setPending(apiCall(subtractionAPI.update, action, UPDATE_SUBTRACTION));
+}
+
 export function* removeSubtraction (action) {
     yield apiCall(subtractionAPI.remove, action, REMOVE_SUBTRACTION);
     yield put(push("/subtraction"));
@@ -39,5 +44,6 @@ export function* watchSubtraction () {
     yield takeLatest(LIST_SUBTRACTION_IDS.REQUESTED, listSubtractionIds);
     yield takeLatest(GET_SUBTRACTION.REQUESTED, getSubtraction);
     yield throttle(500, CREATE_SUBTRACTION.REQUESTED, createSubtraction);
+    yield takeLatest(UPDATE_SUBTRACTION.REQUESTED, updateSubtraction);
     yield throttle(300, REMOVE_SUBTRACTION.REQUESTED, removeSubtraction);
 }

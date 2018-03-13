@@ -8,15 +8,28 @@ import { Badge, Col, Row, Table } from "react-bootstrap";
 
 import { getSubtraction } from "../actions";
 import { Button, Flex, FlexItem, Icon, LoadingPlaceholder, NoneFound } from "../../base";
+import EditSubtraction from "./Edit";
 import RemoveSubtraction from "./Remove";
 
 const calculateGC = (nucleotides) => Numeral(1 - nucleotides.a - nucleotides.t - nucleotides.n).format("0.000");
 
 class SubtractionDetail extends React.Component {
 
+    constructor (props) {
+        super(props);
+
+        this.state = {
+            showEdit: false
+        };
+    }
+
     componentDidMount () {
         this.props.onGet(this.props.match.params.subtractionId);
     }
+
+    handleExit = () => {
+        this.setState({showEdit: false});
+    };
 
     render () {
 
@@ -56,10 +69,20 @@ class SubtractionDetail extends React.Component {
                         name="remove"
                         bsStyle="danger"
                         onClick={this.props.onShowRemove}
+                        style={{paddingLeft: "5px"}}
                         pullRight
                     />
                 );
             }
+
+            const editIcon = (
+                <Icon
+                    name="pencil"
+                    bsStyle="warning"
+                    onClick={() => this.setState({showEdit: true})}
+                    pullRight
+                />
+            );
 
             return (
                 <div>
@@ -68,13 +91,16 @@ class SubtractionDetail extends React.Component {
                             <FlexItem grow={0} shrink={0}>
                                 <strong>{data.id}</strong>
                             </FlexItem>
-                            {this.props.canModify ? (
-                                <FlexItem grow={1} shrink={0}>
+                            <FlexItem grow={1} shrink={0}>
+                                {this.props.canModify ? (
                                     <small>
                                         {removeIcon}
                                     </small>
-                                </FlexItem>
-                            ) : null}
+                                ) : null}
+                                <small>
+                                    {editIcon}
+                                </small>
+                            </FlexItem>
                         </Flex>
                     </h3>
 
@@ -98,6 +124,11 @@ class SubtractionDetail extends React.Component {
 
                     {linkedSamples}
 
+                    <EditSubtraction
+                        show={this.state.showEdit}
+                        entry={this.props.detail}
+                        Exited={this.handleExit}
+                    />
                     <RemoveSubtraction id={data.id} />
                 </div>
             );
