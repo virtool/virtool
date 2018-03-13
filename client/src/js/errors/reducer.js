@@ -19,26 +19,18 @@ import {
 } from "../actionTypes";
 
 const checkActionFailed = (action) => {
-    const actionType = action.type;
-    const isFailed = endsWith(actionType, "_FAILED");
-
-    if (isFailed) {
-        return action;
-    }
-    return false;
+    const isFailed = endsWith(action.type, "_FAILED");
+    return isFailed ? action : false;
 };
 
 const getErrorName = (action) => {
-    const actionType = action.type;
-    const errorName = replace(actionType, "_FAILED", "_ERROR");
-
+    const errorName = replace(action.type, "_FAILED", "_ERROR");
     return errorName;
 };
 
-const resetError = (successAction) => {
-    const actionType = successAction.type;
-    const errorName = endsWith(actionType, "_SUCCEEDED")
-        ? replace(actionType, "_SUCCEEDED", "_ERROR")
+const resetErrorName = (successAction) => {
+    const errorName = endsWith(successAction.type, "_SUCCEEDED")
+        ? replace(successAction.type, "_SUCCEEDED", "_ERROR")
         : null;
 
     return errorName;
@@ -52,12 +44,11 @@ export default function errorsReducer (state = null, action) {
     if (failedAction) {
         errorName = getErrorName(action);
     } else {
-        errorName = state ? resetError(action) : null;
+        errorName = state ? resetErrorName(action) : null;
         if (errorName && state[errorName]) {
             return {...state, [errorName]: null};
-        } else {
-            return state;
         }
+        return state;
     }
 
     const errorPayload = { status: failedAction.status, message: failedAction.message };
@@ -83,6 +74,6 @@ export default function errorsReducer (state = null, action) {
 
         default:
             reportAPIError(failedAction);
-            return {...state, UNHANDLED_ERROR: errorPayload};
+            return state;
     }
 }
