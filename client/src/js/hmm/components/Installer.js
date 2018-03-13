@@ -17,16 +17,22 @@ const steps = [
 
 class HMMInstall extends React.Component {
 
+    constructor (props) {
+        super(props);
+    }
+
     getProgress (props) {
         return 20 * (steps.indexOf(props.process.step) + props.process.progress);
     }
 
     componentDidUpdate (prevProps) {
-        const prevProgress = this.getProgress(prevProps);
-        const progress = this.getProgress(this.props);
+        if (prevProps.process) {
+            const prevProgress = this.getProgress(prevProps);
+            const progress = this.getProgress(this.props);
 
-        if (prevProgress !== 100 && progress === 100) {
-            this.props.onRefresh();
+            if (prevProgress !== 100 && progress === 100) {
+                this.props.onRefresh();
+            }
         }
     }
 
