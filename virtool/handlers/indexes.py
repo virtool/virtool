@@ -12,7 +12,7 @@ async def find(req):
     """
     db = req.app["db"]
 
-    modified_virus_count = len(await db.history.find({"index.id": "unbuilt"}, ["virus"]).distinct("virus.name"))
+    modified_virus_count = len(await db.history.distinct("virus.id", {"index.id": "unbuilt"}))
 
     total_virus_count = await db.viruses.count()
 
@@ -142,7 +142,6 @@ async def create(req):
         "_id": index_id,
         "version": index_version,
         "created_at": virtool.utils.timestamp(),
-        "virus_count": None,
         "manifest": virus_manifest,
         "ready": False,
         "has_files": True,
