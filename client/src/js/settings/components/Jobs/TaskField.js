@@ -9,19 +9,21 @@ export default class TaskField extends React.PureComponent {
     constructor (props) {
         super(props);
         this.state = {
+            name: this.props.name,
             value: this.props.value,
             pending: false
         };
     }
 
     static propTypes = {
+        name: PropTypes.string,
         value: PropTypes.number,
         onChange: PropTypes.func,
         readOnly: PropTypes.bool
     };
 
     componentWillReceiveProps (nextProps) {
-        if (nextProps.value !== this.props.value) {
+        if (nextProps.value !== this.state.value) {
             this.setState({
                 value: nextProps.value,
                 pending: false
@@ -44,7 +46,7 @@ export default class TaskField extends React.PureComponent {
     handleSubmit = (e) => {
         e.preventDefault();
         this.setState({pending: true}, () => {
-            this.props.onChange(this.state.value);
+            this.props.onChange(this.state.name, this.state.value);
             this.inputNode.blur();
         });
 

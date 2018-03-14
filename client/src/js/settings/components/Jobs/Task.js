@@ -11,8 +11,8 @@ const readOnlyFields = ["create_subtraction", "rebuild_index"];
 
 class Task extends React.Component {
 
-    handleChangeLimit = (value) => {
-        this.props.onChangeLimit(this.props.taskPrefix, "proc", value);
+    handleChangeLimit = (name, value) => {
+        this.props.onChangeLimit(this.props.taskPrefix, name, value);
     };
 
     render () {
@@ -27,6 +27,7 @@ class Task extends React.Component {
                 <Row>
                     <Col md={4}>
                         <TaskField
+                            name="proc"
                             value={proc}
                             readOnly={readOnly}
                             onChange={this.handleChangeLimit}
@@ -34,6 +35,7 @@ class Task extends React.Component {
                     </Col>
                     <Col md={4}>
                         <TaskField
+                            name="mem"
                             value={mem}
                             readOnly={readOnly}
                             onChange={this.handleChangeLimit}
@@ -41,6 +43,7 @@ class Task extends React.Component {
                     </Col>
                     <Col md={4}>
                         <TaskField
+                            name="inst"
                             value={inst}
                             readOnly={taskPrefix === "rebuild_index"}
                             onChange={this.handleChangeLimit}
