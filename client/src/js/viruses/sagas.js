@@ -53,7 +53,18 @@ export function* getVirusHistory (action) {
 }
 
 export function* createVirus (action) {
-    yield setPending(apiCall(virusesAPI.create, action, CREATE_VIRUS));
+    yield setPending(apiCustomCall(virusesAPI.create, action, CREATE_VIRUS));
+
+
+    function* apiCustomCall (apiMethod, action, actionType, extra = {}) {
+        try {
+            const response = yield apiMethod(action);
+            yield put({type: actionType.SUCCEEDED, data: response.body, ...extra});
+            yield put(push({state: {createVirus: false}}));
+        } catch (error) {
+            yield putGenericError(actionType, error);
+        }
+    }
 }
 
 export function* editVirus (action) {

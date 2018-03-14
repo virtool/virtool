@@ -28,9 +28,9 @@ const getErrorName = (action) => {
     return errorName;
 };
 
-const resetErrorName = (successAction) => {
-    const errorName = endsWith(successAction.type, "_SUCCEEDED")
-        ? replace(successAction.type, "_SUCCEEDED", "_ERROR")
+const resetErrorName = (newAction) => {
+    const errorName = endsWith(newAction.type, "_REQUESTED")
+        ? replace(newAction.type, "_REQUESTED", "_ERROR")
         : null;
 
     return errorName;

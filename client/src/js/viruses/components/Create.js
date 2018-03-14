@@ -22,17 +22,11 @@ class CreateVirus extends React.Component {
     }
 
     componentWillReceiveProps (nextProps) {
-        console.log("this.props.errors: ", this.props.errors);
-        console.log("nextProps.errors: ", nextProps.errors);
-
-        if (nextProps.errors && nextProps.errors.CREATE_VIRUS_ERROR) {
-            console.log("set state error message");
-            this.setState(() => {
-                return { error: nextProps.errors.CREATE_VIRUS_ERROR.message };
-            });
+        if (!this.state.name || this.props.error) {
+            this.setState({ error: "" });
+        } else if (nextProps.errors && nextProps.errors.CREATE_VIRUS_ERROR) {
+            this.setState({ error: nextProps.errors.CREATE_VIRUS_ERROR.message });
         }
-
-        console.log("current state: ", this.state);
     }
 
     handleChange = (e) => {
@@ -48,20 +42,14 @@ class CreateVirus extends React.Component {
     };
 
     handleModalExited = () => {
-        console.log("modal exit");
         this.setState(getInitialState());
     };
 
     handleSubmit = (e) => {
         e.preventDefault();
 
-        console.log("inside submit");
-
         if (this.state.name && !this.state.error) {
-            console.log("nonempty name, no error: submit form");
-            () => (this.props.onSubmit(this.state.name, this.state.abbreviation));
-            console.log("check for error update: ", this.state.error);
-            // this.props.onHide();
+            this.props.onSubmit(this.state.name, this.state.abbreviation);
         } else if (!this.state.name) {
             this.setState({
                 error: "Required Field"
@@ -70,7 +58,6 @@ class CreateVirus extends React.Component {
     };
 
     render () {
-        console.log("RENDER");
 
         return (
             <Modal show={this.props.show} onHide={this.handleHide} onExited={this.handleModalExited}>
