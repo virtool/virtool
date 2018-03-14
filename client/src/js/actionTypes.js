@@ -113,6 +113,7 @@ export const FIND_SUBTRACTIONS = createRequestActionType("FIND_SUBTRACTIONS");
 export const LIST_SUBTRACTION_IDS = createRequestActionType("LIST_SUBTRACTION_IDS");
 export const GET_SUBTRACTION = createRequestActionType("GET_SUBTRACTION");
 export const CREATE_SUBTRACTION = createRequestActionType("CREATE_SUBTRACTION");
+export const UPDATE_SUBTRACTION = createRequestActionType("UPDATE_SUBTRACTION");
 export const REMOVE_SUBTRACTION = createRequestActionType("REMOVE_SUBTRACTION");
 
 // Files

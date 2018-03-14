@@ -39,6 +39,7 @@ class SubtractionFileItem extends React.Component {
 const getInitialState = () => ({
     subtractionId: "",
     fileId: "",
+    nickname: "",
     errors: []
 });
 
@@ -48,13 +49,6 @@ class CreateSubtraction extends React.Component {
         super(props);
         this.state = getInitialState();
     }
-
-    handleChange = (e) => {
-        this.setState({
-            subtractionId: e.target.value,
-            errors: []
-        });
-    };
 
     handleModalEnter = () => {
         this.props.onFindFiles();
@@ -150,14 +144,27 @@ class CreateSubtraction extends React.Component {
 
                 <form onSubmit={this.handleSubmit}>
                     <Modal.Body style={{margin: "0 0 10px 0"}}>
-                        <InputError
-                            type="text"
-                            label="Unique Name"
-                            value={this.state.subtractionId}
-                            onChange={this.handleChange}
-                            error={errorName}
-                        />
-
+                        <Row>
+                            <Col md={12}>
+                                <InputError
+                                    type="text"
+                                    label="Unique Name"
+                                    value={this.state.subtractionId}
+                                    onChange={(e) => this.setState({subtractionId: e.target.value, errors: []})}
+                                    error={errorName}
+                                />
+                            </Col>
+                        </Row>
+                        <Row>
+                            <Col md={12}>
+                                <InputError
+                                    type="text"
+                                    label="Nickname"
+                                    value={this.state.nickname}
+                                    onChange={(e) => this.setState({nickname: e.target.value, errors: []})}
+                                />
+                            </Col>
+                        </Row>
                         <h5><strong>Files</strong></h5>
                         <ListGroup className={panelListStyle}>
                             {fileComponents}
@@ -188,8 +195,8 @@ const mapStateToProps = (state) => ({
 
 const mapDispatchToProps = (dispatch) => ({
 
-    onCreate: ({ subtractionId, fileId }) => {
-        dispatch(createSubtraction(subtractionId, fileId));
+    onCreate: ({ subtractionId, fileId, nickname }) => {
+        dispatch(createSubtraction(subtractionId, fileId, nickname));
     },
 
     onFindFiles: () => {
@@ -202,6 +209,4 @@ const mapDispatchToProps = (dispatch) => ({
 
 });
 
-const Container = connect(mapStateToProps, mapDispatchToProps)(CreateSubtraction);
-
-export default Container;
+export default connect(mapStateToProps, mapDispatchToProps)(CreateSubtraction);
