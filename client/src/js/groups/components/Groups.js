@@ -1,11 +1,11 @@
 import React from "react";
 import { difference, filter, find, includes, map, some, sortBy, transform } from "lodash-es";
-import { Col, FormControl, Label, ListGroup, Modal, Overlay, Panel, Popover, Row } from "react-bootstrap";
+import { Col, Label, InputGroup, ListGroup, Modal, Panel, Row } from "react-bootstrap";
 import { connect } from "react-redux";
 import { push } from "react-router-redux";
 
 import { listGroups, createGroup, setGroupPermission, removeGroup } from "../actions";
-import { AutoProgressBar, Button, Flex, FlexItem, Icon, ListGroupItem, LoadingPlaceholder } from "../../base";
+import { AutoProgressBar, Button, Icon, InputError, ListGroupItem, LoadingPlaceholder } from "../../base";
 import {routerLocationHasState} from "../../utils";
 
 class Group extends React.Component {
@@ -36,7 +36,8 @@ class Groups extends React.Component {
             activeId: null,
             createGroupId: "",
             spaceError: false,
-            submitted: false
+            submitted: false,
+            error: ""
         };
     }
 
@@ -70,7 +71,8 @@ class Groups extends React.Component {
         this.setState({
             createGroupId: "",
             spaceError: false,
-            submitted: false
+            submitted: false,
+            error: ""
         });
     };
 
@@ -83,14 +85,16 @@ class Groups extends React.Component {
     handleSubmit = (e) => {
         e.preventDefault();
 
-        if (this.state.createGroupId !== "") {
-            if (includes(this.state.createGroupId, " ")) {
-                this.setState({
-                    spaceError: true
-                });
-            } else {
-                this.setState({submitted: true}, () => this.props.onCreate(this.state.createGroupId));
-            }
+        if (this.state.createGroupId === "") {
+            this.setState({
+                error: "Group id missing"
+            });
+        } else if (includes(this.state.createGroupId, " ")) {
+            this.setState({
+                spaceError: true
+            });
+        } else {
+            this.setState({submitted: true}, () => this.props.onCreate(this.state.createGroupId));
         }
     };
 
@@ -124,8 +128,8 @@ class Groups extends React.Component {
 
         let error;
 
-        if (this.state.submitted && this.props.createError) {
-            error = "Group with that name already exists";
+        if (this.state.submitted && this.props.errors && this.props.errors.CREATE_GROUP_ERROR) {
+            error = this.props.errors.CREATE_GROUP_ERROR.message;
         }
 
         // This error text is shown when the group name contains a space.
@@ -160,41 +164,25 @@ class Groups extends React.Component {
                 <Modal.Body>
                     <Row>
                         <Col md={5}>
-                            <form onSubmit={this.handleSubmit}>
-                                <Flex alignItems="stretch" style={{marginBottom: "5px"}}>
-                                    <FlexItem grow={1} shrink={1}>
-                                        <Overlay
-                                            show={!!error}
-                                            container={this}
-                                            target={() => this.inputNode}
-                                            placement="top"
-                                        >
-                                            <Popover id="create-group-error">
-                                                {error}
-                                            </Popover>
-                                        </Overlay>
-                                        <FormControl
-                                            type="text"
-                                            inputRef={(node) => this.inputNode = node}
-                                            value={this.state.createGroupId}
-                                            onChange={(e) => this.setState({
-                                                createGroupId: e.target.value,
-                                                spaceError: this.state.spaceError && includes(e.target.value, " "),
-                                                submitted: false
-                                            })}
-                                        />
-                                    </FlexItem>
-                                    <FlexItem grow={1} shrink={1}>
-                                        <Button
-                                            type="submit"
-                                            bsStyle="primary"
-                                            icon="plus-square"
-                                            style={{height: "100%"}}
-                                        />
-                                    </FlexItem>
-                                </Flex>
-                            </form>
-
+                            <InputGroup>
+                                <InputError
+                                    type="text"
+                                    value={this.state.createGroupId}
+                                    onChange={(e) => this.setState({
+                                        createGroupId: e.target.value,
+                                        spaceError: this.state.spaceError && includes(e.target.value, " "),
+                                        submitted: false,
+                                        error: ""
+                                    })}
+                                    error={error || this.state.error}
+                                />
+                                <InputGroup.Button style={{verticalAlign: "top", zIndex: "0"}}>
+                                    <Button type="button" bsStyle="primary" onClick={this.handleSubmit}>
+                                        <Icon name="plus-square" style={{verticalAlign: "middle", marginLeft: "3px"}} />
+                                    </Button>
+                                </InputGroup.Button>
+                            </InputGroup>
+                            <br />
                             <ListGroup>
                                 {groupComponents}
                             </ListGroup>
@@ -232,7 +220,7 @@ const mapStateToProps = (state) => ({
     users: state.users.list,
     groups: state.groups.list,
     pending: state.groups.pending,
-    createError: state.groups.createError
+    errors: state.errors
 });
 
 const mapDispatchToProps = (dispatch) => ({
