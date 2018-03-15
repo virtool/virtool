@@ -23,19 +23,23 @@ async def get_one(req):
 
 
 @protected("modify_settings")
-@validation(virtool.app_settings.SCHEMA)
 async def update(req):
     """
     Update application settings based on request data.
 
     """
-    data = req["data"]
+    data = await req.json()
 
     keys = data.keys()
 
+    v = Validator(virtool.app_settings.SCHEMA)
+
+    if not v(data):
+        return invalid_input(v.errors)
+
     settings = req.app["settings"]
 
-    settings.data.update({key: data[key] for key in keys})
+    settings.data.update({key: v.document[key] for key in keys})
 
     await settings.write()
 
