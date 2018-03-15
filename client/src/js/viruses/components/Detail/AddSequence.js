@@ -202,7 +202,8 @@ class AddSequence extends React.Component {
 const mapStateToProps = state => ({
     show: state.viruses.addSequence,
     virusId: state.viruses.detail.id,
-    isolateId: state.viruses.activeIsolateId
+    isolateId: state.viruses.activeIsolateId,
+    errors: state.errors
 });
 
 const mapDispatchToProps = dispatch => ({

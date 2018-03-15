@@ -44,7 +44,10 @@ export default function errorsReducer (state = null, action) {
     if (failedAction) {
         errorName = getErrorName(action);
     } else {
+        // Ignore requests until an error has occurred
         errorName = state ? resetErrorName(action) : null;
+
+        // Only reset errors that had been set previously
         if (errorName && state[errorName]) {
             return {...state, [errorName]: null};
         }

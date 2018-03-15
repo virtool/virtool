@@ -4,7 +4,7 @@ import { Row, Col, ListGroup, ListGroupItem, Panel } from "react-bootstrap";
 
 import { LoadingPlaceholder } from "../../base";
 
-export default function RebuildHistory ({ unbuilt }) {
+export default function RebuildHistory ({ unbuilt, error }) {
 
     let content;
 
@@ -31,11 +31,11 @@ export default function RebuildHistory ({ unbuilt }) {
         );
     }
 
+    const panelStyle = error ? "panel-danger" : "panel-default";
+
     return (
-        <Panel header="Changes">
-            <Panel header="Changes">
-                {content}
-            </Panel>
+        <Panel className={panelStyle} header="Changes">
+            {content}
         </Panel>
     );
 }

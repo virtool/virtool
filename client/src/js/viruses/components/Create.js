@@ -22,7 +22,7 @@ class CreateVirus extends React.Component {
     }
 
     componentWillReceiveProps (nextProps) {
-        if (!this.state.name || this.props.error) {
+        if (!this.state.name) {
             this.setState({ error: "" });
         } else if (nextProps.errors && nextProps.errors.CREATE_VIRUS_ERROR) {
             this.setState({ error: nextProps.errors.CREATE_VIRUS_ERROR.message });
@@ -58,6 +58,8 @@ class CreateVirus extends React.Component {
     };
 
     render () {
+        const errorName = (this.state.error === "Abbreviation already exists") ? null : this.state.error;
+        const errorAbbreviation = (this.state.error === "Abbreviation already exists") ? this.state.error : null;
 
         return (
             <Modal show={this.props.show} onHide={this.handleHide} onExited={this.handleModalExited}>
@@ -66,21 +68,22 @@ class CreateVirus extends React.Component {
                 </Modal.Header>
                 <Modal.Body>
                     <Row>
-                        <Col md={9}>
+                        <Col md={8}>
                             <InputError
                                 label="Name"
                                 name="name"
                                 value={this.state.name}
                                 onChange={this.handleChange}
-                                error={this.state.error}
+                                error={errorName}
                             />
                         </Col>
-                        <Col md={3}>
+                        <Col md={4}>
                             <InputError
                                 label="Abbreviation"
                                 name="abbreviation"
                                 value={this.state.abbreviation}
                                 onChange={this.handleChange}
+                                error={errorAbbreviation}
                             />
                         </Col>
                     </Row>
@@ -101,7 +104,6 @@ class CreateVirus extends React.Component {
 
 const mapStateToProps = state => ({
     show: !!state.router.location.state && state.router.location.state.createVirus,
-    error: state.viruses.createError,
     errors: state.errors,
     pending: state.viruses.createPending
 });

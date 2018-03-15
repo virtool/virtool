@@ -10,12 +10,25 @@ import {routerLocationHasState} from "../../utils";
 
 class RebuildIndex extends React.Component {
 
+    constructor (props) {
+        super(props);
+
+        this.state = { error: "" };
+    }
+
+    componentWillReceiveProps (nextProps) {
+        if (nextProps.errors && nextProps.errors.CREATE_INDEX_ERROR) {
+            this.setState({ error: nextProps.errors.CREATE_INDEX_ERROR.message });
+        }
+    }
+
     modalEntered = () => {
         this.props.onGetUnbuilt();
     };
 
     save = (e) => {
         e.preventDefault();
+
         this.props.onRebuild();
     };
 
@@ -23,10 +36,22 @@ class RebuildIndex extends React.Component {
         let history;
 
         if (this.props.unbuilt) {
-            history = <RebuildHistory unbuilt={this.props.unbuilt} />;
+            history = <RebuildHistory unbuilt={this.props.unbuilt} error={this.state.error} />;
         } else {
             history = <LoadingPlaceholder margin="70px" />;
         }
+
+        const errorDisplay = this.state.error
+            ? (
+                <div className="input-form-error">
+                    <span className="input-error-message">{this.state.error}</span>
+                    <br />
+                    <span className="input-error-message">
+                        Please modify the unverified viruses before rebuilding the index
+                    </span>
+                </div>
+            )
+            : null;
 
         return (
             <Modal bsSize="large" onEntered={this.modalEntered} show={this.props.show} onHide={this.props.onHide}>
@@ -36,6 +61,7 @@ class RebuildIndex extends React.Component {
                 <form onSubmit={this.save}>
                     <Modal.Body>
                         {history}
+                        {errorDisplay}
                     </Modal.Body>
                     <Modal.Footer>
                         <Button type="submit" bsStyle="primary" icon="hammer">
@@ -50,7 +76,8 @@ class RebuildIndex extends React.Component {
 
 const mapStateToProps = (state) => ({
     show: routerLocationHasState(state, "rebuild", true),
-    unbuilt: state.indexes.unbuilt
+    unbuilt: state.indexes.unbuilt,
+    errors: state.errors
 });
 
 const mapDispatchToProps = (dispatch) => ({
