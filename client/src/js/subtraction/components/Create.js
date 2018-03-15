@@ -49,6 +49,21 @@ class CreateSubtraction extends React.Component {
         this.state = getInitialState();
     }
 
+    componentWillReceiveProps (nextProps) {
+        const errors = this.state.errors;
+
+        if (!this.state.subtractionId) {
+            this.setState({ error: "" });
+        } else if (nextProps.errors && nextProps.errors.CREATE_SUBTRACTION_ERROR) {
+            errors.push({
+                id: 2,
+                message: nextProps.errors.CREATE_SUBTRACTION_ERROR.message
+            });
+
+            this.setState({ errors });
+        }
+    }
+
     handleChange = (e) => {
         this.setState({
             subtractionId: e.target.value,
@@ -76,11 +91,10 @@ class CreateSubtraction extends React.Component {
         const errors = [];
 
         if (this.state.subtractionId && this.state.fileId) {
-
-            this.props.onCreate(this.state);
-
+            if (!this.state.errors.length) {
+                this.props.onCreate(this.state);
+            }
         } else {
-
             if (!this.state.subtractionId) {
                 errors.push({
                     id: 0,
@@ -97,7 +111,6 @@ class CreateSubtraction extends React.Component {
         }
 
         this.setState({errors});
-
     };
 
     render () {
@@ -123,8 +136,9 @@ class CreateSubtraction extends React.Component {
             );
         }
 
-        const errorName = find(this.state.errors, ["id", 0]) ? find(this.state.errors, ["id", 0]).message : null;
+        const errorNameEmpty = find(this.state.errors, ["id", 0]) ? find(this.state.errors, ["id", 0]).message : null;
         const errorFile = find(this.state.errors, ["id", 1]) ? find(this.state.errors, ["id", 1]).message : null;
+        const errorNameTaken = find(this.state.errors, ["id", 2]) ? find(this.state.errors, ["id", 2]).message : null;
 
         const panelListStyle = errorFile ? "panel-list-custom-error" : "panel-list-custom";
         const inputErrorClassName = errorFile ? "input-form-error" : "input-form-error-none";
@@ -155,7 +169,7 @@ class CreateSubtraction extends React.Component {
                             label="Unique Name"
                             value={this.state.subtractionId}
                             onChange={this.handleChange}
-                            error={errorName}
+                            error={errorNameEmpty || errorNameTaken}
                         />
 
                         <h5><strong>Files</strong></h5>
@@ -183,7 +197,8 @@ class CreateSubtraction extends React.Component {
 
 const mapStateToProps = (state) => ({
     show: routerLocationHasState(state, "createSubtraction"),
-    files: state.files.documents
+    files: state.files.documents,
+    errors: state.errors
 });
 
 const mapDispatchToProps = (dispatch) => ({
