@@ -8,7 +8,7 @@ import { getResources } from "../../../jobs/actions";
 import { InputError, LoadingPlaceholder } from "../../../base";
 
 class Resources extends React.Component {
-    
+
     constructor (props) {
         super(props);
 
