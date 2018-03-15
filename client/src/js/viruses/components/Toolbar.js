@@ -5,7 +5,7 @@ import { LinkContainer } from "react-router-bootstrap";
 import { Icon, Button } from "../../base";
 import {createFindURL, getFindTerm} from "../../utils";
 
-const VirusToolbar = ({ canModify, onFind, term }) => (
+const VirusToolbar = ({ canModify, onFind, term, onFilter }) => (
     <div className="toolbar">
         <div className="form-group">
             <div className="input-group">
@@ -30,6 +30,10 @@ const VirusToolbar = ({ canModify, onFind, term }) => (
             />
         </LinkContainer>
 
+        <Button tip="Filter Unverified" onClick={() => onFilter("/viruses?verified=false")}>
+            <Icon name="filter" />
+        </Button>
+
         {canModify ? (
             <LinkContainer to={{...window.location, state: {createVirus: true}}} replace>
                 <Button bsStyle="primary" tip="Create">
@@ -50,6 +54,15 @@ const mapDispatchToProps = (dispatch) => ({
     onFind: (e) => {
         const url = createFindURL({ find: e.target.value });
         dispatch(push(url.pathname + url.search));
+    },
+
+    onFilter: (url) => {
+        const currentUrl = window.location.pathname + window.location.search;
+        if (currentUrl === url) {
+            dispatch(push("/viruses"));
+        } else {
+            dispatch(push(url));
+        }
     }
 
 });
