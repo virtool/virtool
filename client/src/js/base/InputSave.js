@@ -21,9 +21,14 @@ export class InputSave extends React.Component {
         onSave: PropTypes.func.isRequired,
         label: PropTypes.string,
         type: PropTypes.string,
+        min: PropTypes.number,
+        max: PropTypes.number,
+        step: PropTypes.number,
         initialValue: PropTypes.any,
         autoComplete: PropTypes.bool,
+        onInvalid: PropTypes.func,
         disabled: PropTypes.bool,
+        noMargin: PropTypes.bool,
         error: PropTypes.string
     };
 
@@ -101,21 +106,26 @@ export class InputSave extends React.Component {
     };
 
     render () {
+        const formStyle = this.props.noMargin ? "0px" : "15px";
 
         const formClass = this.props.error ? "form-control-error" : "";
 
         return (
             <form onSubmit={this.handleSubmit}>
                 <h5><strong>{this.props.label}</strong></h5>
-                <Flex alignItems="stretch" style={{marginBottom: "15px"}}>
+                <Flex alignItems="stretch" style={{marginBottom: formStyle}}>
                     <FlexItem grow={1} shrink={1}>
                         <FormControl
                             className={formClass}
                             ref={(node) => this.inputNode = node}
                             type={this.props.type}
+                            min={this.props.min}
+                            max={this.props.max}
+                            step={this.props.step}
                             autoComplete={this.props.autoComplete}
                             onChange={this.handleChange}
                             onBlur={this.handleBlur}
+                            onInvalid={this.props.onInvalid}
                             value={this.state.value}
                             disabled={this.props.disabled}
                             style={{marginBottom: "0"}}
