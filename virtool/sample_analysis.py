@@ -893,20 +893,7 @@ class NuVs(Base):
     async def reunite_pairs(self):
         if self.paired:
             unmapped_path = os.path.join(self.analysis_path, "unmapped_hosts.fq")
-
-            headers = await self.run_in_executor(virtool.bio.read_fastq_headers, unmapped_path)
-
-            unmapped_roots = {h.split(" ")[0] for h in headers}
-
-            with open(os.path.join(self.analysis_path, "unmapped_1.fq"), "w") as f:
-                for header, seq, quality in await self.run_in_executor(virtool.bio.read_fastq, self.read_paths[0]):
-                    if header.split(" ")[0] in unmapped_roots:
-                        f.write("\n".join([header, seq, "+", quality]) + "\n")
-
-            with open(os.path.join(self.analysis_path, "unmapped_2.fq"), "w") as f:
-                for header, seq, quality in await self.run_in_executor(virtool.bio.read_fastq, self.read_paths[1]):
-                    if header.split(" ")[0] in unmapped_roots:
-                        f.write("\n".join([header, seq, "+", quality]) + "\n")
+            await self.run_in_executor(run_reunion, self.analysis_path, self.read_paths, unmapped_path)
 
     @virtool.job.stage_method
     async def assemble(self):
