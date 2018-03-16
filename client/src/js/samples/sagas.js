@@ -81,13 +81,32 @@ export function* getSample (action) {
 }
 
 export function* createSample (action) {
-    yield setPending(apiCall(samplesAPI.create, action, CREATE_SAMPLE));
+    yield setPending(apiCustomCall(samplesAPI.create, action, CREATE_SAMPLE));
+
+    function* apiCustomCall (apiMethod, action, actionType, extra = {}) {
+        try {
+            const response = yield apiMethod(action);
+            yield put({type: actionType.SUCCEEDED, data: response.body, ...extra});
+            yield put(push({state: {create: false}}));
+        } catch (error) {
+            yield putGenericError(actionType, error);
+        }
+    }
 }
 
 export function* updateSample (action) {
-    yield setPending(apiCall(samplesAPI.update, action, UPDATE_SAMPLE));
-    yield getSample(action);
-    yield pushHistoryState({editSample: false});
+    yield setPending(apiCustomCall(samplesAPI.update, action, UPDATE_SAMPLE));
+
+    function* apiCustomCall (apiMethod, action, actionType, extra = {}) {
+        try {
+            const response = yield apiMethod(action);
+            yield put({type: actionType.SUCCEEDED, data: response.body, ...extra});
+            yield getSample(action);
+            yield pushHistoryState({editSample: false});
+        } catch (error) {
+            yield putGenericError(actionType, error);
+        }
+    }
 }
 
 export function* updateSampleRights (action) {

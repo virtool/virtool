@@ -55,7 +55,6 @@ export function* getVirusHistory (action) {
 export function* createVirus (action) {
     yield setPending(apiCustomCall(virusesAPI.create, action, CREATE_VIRUS));
 
-
     function* apiCustomCall (apiMethod, action, actionType, extra = {}) {
         try {
             const response = yield apiMethod(action);

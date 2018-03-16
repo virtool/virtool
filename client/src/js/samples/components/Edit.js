@@ -21,10 +21,19 @@ class EditSample extends React.Component {
         this.state = getInitialState(this.props);
     }
 
+    componentWillReceiveProps (nextProps) {
+        if (!this.state.name) {
+            this.setState({ error: "" });
+        } else if (nextProps.errors && nextProps.errors.UPDATE_SAMPLE_ERROR) {
+            this.setState({ error: nextProps.errors.UPDATE_SAMPLE_ERROR.message });
+        }
+    }
+
     handleChange = (e) => {
         const { name, value } = e.target;
         this.setState({
-            [name]: value
+            [name]: value,
+            error: ""
         });
     };
 
@@ -109,7 +118,7 @@ class EditSample extends React.Component {
 const mapStateToProps = (state) => ({
     ...state.samples.detail,
     show: get(state.router.location.state, "editSample", false),
-    error: state.samples.editError
+    errors: state.errors
 });
 
 const mapDispatchToProps = (dispatch) => ({

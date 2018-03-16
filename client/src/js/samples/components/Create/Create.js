@@ -57,7 +57,19 @@ class CreateSample extends React.Component {
 
     componentWillReceiveProps (nextProps) {
         if (nextProps.readyHosts !== this.props.readyHosts) {
-            this.setState({subtraction: getReadyHosts(nextProps)});
+            return this.setState({subtraction: getReadyHosts(nextProps)});
+        }
+
+        const errors = [];
+
+        if (!this.state.name) {
+            this.setState({ error: "" });
+        } else if (nextProps.errors && nextProps.errors.CREATE_SAMPLE_ERROR) {
+            errors.push({
+                id: 0,
+                message: nextProps.errors.CREATE_SAMPLE_ERROR.message
+            });
+            this.setState({ errors });
         }
     }
 
@@ -110,7 +122,6 @@ class CreateSample extends React.Component {
         }
 
         this.props.onCreate({...this.state, files: this.state.selected});
-        this.props.onHide();
     };
 
     autofill = () => {
@@ -271,7 +282,8 @@ const mapStateToProps = (state) => {
         groups: state.account.groups,
         readyHosts: state.samples.readyHosts,
         readyReads: filter(state.files.documents, {type: "reads", reserved: false}),
-        forceGroupChoice: state.settings.sample_group === "force_choice"
+        forceGroupChoice: state.settings.sample_group === "force_choice",
+        errors: state.errors
     };
 };
 
