@@ -23,12 +23,32 @@ export class CreateUser extends React.PureComponent {
         this.state = getInitialState();
     }
 
+    componentWillReceiveProps (nextProps) {
+        const errors = [];
+
+        if (!this.state.userId) {
+            return this.setState({ errors });
+        }
+
+        if (nextProps.errors && nextProps.errors.CREATE_USER_ERROR && nextProps.show) {
+            errors.push({
+                id: 0,
+                message: nextProps.errors.CREATE_USER_ERROR.message
+            });
+            this.setState({ errors });
+        }
+    }
+
     handleChange = (e) => {
         const { name, value } = e.target;
         this.setState({
             [name]: value,
             errors: []
         });
+    };
+
+    handleModalExited = () => {
+        this.setState(getInitialState());
     };
 
     handleToggleForceReset = () => {
@@ -78,7 +98,7 @@ export class CreateUser extends React.PureComponent {
         const errorPassMatch = find(this.state.errors, ["id", 2]) ? find(this.state.errors, ["id", 2]).message : null;
 
         return (
-            <Modal show={this.props.show} onHide={this.props.onHide}>
+            <Modal show={this.props.show} onHide={this.props.onHide} onExited={this.handleModalExited}>
                 <Modal.Header onHide={this.props.onHide} closeButton>
                     Create User
                 </Modal.Header>
@@ -142,9 +162,9 @@ export class CreateUser extends React.PureComponent {
 
 const mapStateToProps = state => ({
     show: routerLocationHasState(state, "createUser"),
-    error: state.users.createError,
     pending: state.users.createPending,
-    minPassLen: state.settings.data.minimum_password_length
+    minPassLen: state.settings.data.minimum_password_length,
+    errors: state.errors
 });
 
 const mapDispatchToProps = dispatch => ({
