@@ -23,6 +23,12 @@ class Email extends React.Component {
         this.state = getInitialState(this.props.email);
     }
 
+    componentWillReceiveProps (nextProps) {
+        if (nextProps.errors && nextProps.errors.UPDATE_ACCOUNT_ERROR) {
+            this.setState({ error: nextProps.errors.UPDATE_ACCOUNT_ERROR.message });
+        }
+    }
+
     onSubmit = (e) => {
         e.preventDefault();
 
@@ -77,7 +83,8 @@ class Email extends React.Component {
 }
 
 const mapStateToProps = (state) => ({
-    email: state.account.email
+    email: state.account.email,
+    errors: state.errors
 });
 
 const mapDispatchToProps = (dispatch) => ({

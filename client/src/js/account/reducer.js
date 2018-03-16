@@ -55,7 +55,8 @@ export default function accountReducer (state = initialState, action) {
                 return {...state, oldPasswordError: true};
             }
 
-            return reportAPIError(action);
+            reportAPIError(action);
+            return state;
 
         case CREATE_API_KEY.REQUESTED:
             return {...state, key: null};

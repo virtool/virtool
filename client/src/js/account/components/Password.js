@@ -21,15 +21,27 @@ class ChangePassword extends React.Component {
     }
 
     componentWillReceiveProps (nextProps) {
-        if (nextProps.oldPasswordError) {
-            this.setState({
-                errors: [
-                    {
-                        id: 0,
-                        message: "Old password is invalid"
-                    }
-                ]
-            });
+        if (nextProps.errors && nextProps.errors.CHANGE_ACCOUNT_PASSWORD_ERROR) {
+            if (nextProps.errors.CHANGE_ACCOUNT_PASSWORD_ERROR.status === "400") {
+                this.setState({
+                    errors: [
+                        {
+                            id: 0,
+                            message: nextProps.errors.CHANGE_ACCOUNT_PASSWORD_ERROR.message
+                        }
+                    ]
+                });
+            } else {
+                this.setState({
+                    errors: [
+                        {
+                            id: 0,
+                            message: nextProps.errors.CHANGE_ACCOUNT_PASSWORD_ERROR.message
+                        }
+                    ]
+                });
+            }
+
         }
 
         if (nextProps.lastPasswordChange !== this.props.lastPasswordChange) {
@@ -130,8 +142,8 @@ class ChangePassword extends React.Component {
 
 const mapStateToProps = (state) => ({
     lastPasswordChange: state.account.last_password_change,
-    oldPasswordError: state.account.oldPasswordError,
-    settings: state.settings.data
+    settings: state.settings.data,
+    errors: state.errors
 });
 
 const mapDispatchToProps = (dispatch) => ({
