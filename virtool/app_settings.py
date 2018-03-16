@@ -80,8 +80,8 @@ SCHEMA = {
 
 
     # Github
-    "github_token": {"type": "string", "default": None, "nullable": True},
-    "github_username": {"type": "string", "default": None, "nullable": True},
+    "github_token": {"type": "string", "default": ""},
+    "github_username": {"type": "string", "default": ""},
     "software_channel": {"type": "string", "default": "stable", "allowed": ["stable", "alpha", "beta"]},
 
     # Accounts
