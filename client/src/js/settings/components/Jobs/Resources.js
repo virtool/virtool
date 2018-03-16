@@ -5,7 +5,7 @@ import { toNumber } from "lodash-es";
 
 import { updateSetting } from "../../actions";
 import { getResources } from "../../../jobs/actions";
-import { InputError, LoadingPlaceholder } from "../../../base";
+import { InputError, LoadingPlaceholder} from "../../../base";
 
 class Resources extends React.Component {
 

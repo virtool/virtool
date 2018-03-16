@@ -48,6 +48,7 @@ class Task extends React.Component {
             ? parseFloat((upperLimits.mem.total / Math.pow(1024, 3)).toFixed(1))
             : mem;
 
+
         const errorMessage = (
             <div className={this.state.error ? "input-form-error" : "input-form-error-none"}>
                 <span className="input-error-message">
