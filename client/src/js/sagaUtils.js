@@ -31,6 +31,40 @@ export function* apiCall (apiMethod, action, actionType, extra = {}) {
 }
 
 /**
+ * Executes an API call by calling ``apiMethod`` with ``action``.
+ *
+ * If the call succeeds an action with ``actionType.SUCCEEDED`` and a ``data`` property is dispatched.
+ *
+ * If the call fails an action with ``actionType.FAILED`` and generic error properties is dispatched.
+ *
+ * @generator
+ * @param apiMethod {function} the function to call with ``action``
+ * @param action {object} an action to pass to ``apiMethod``
+ * @param actionType {object} a request-style action type
+ * @param extra {object} extra properties to assign to the SUCCEEDED action
+ */
+export function* apiCallWithStateChange (apiMethod, action, actionType, extra = {}, extraFunction, isPushHistory) {
+    try {
+        const response = yield apiMethod(action);
+        yield put({type: actionType.SUCCEEDED, data: response.body, ...extra});
+
+        if (extraFunction) {
+            yield put(push({state: {createVirus: false}}));
+            yield put(push(`/settings/users/${action.userId}`, {state: {createUser: false}}));
+            yield put(push({state: {createVirus: false}}));
+        }
+
+        if (isPushHistory) {
+            yield pushHistoryState({createSubtraction: false});
+        }
+
+    } catch (error) {
+        yield putGenericError(actionType, error);
+    }
+
+}
+
+/**
  * Executes an API call that uses Virtool's find implementation when the browser URL matches to ``path``.
  *
  * This generator is intended to be used in a saga triggered by ``LOCATION_CHANGE`` from ``react-router-redux``. If the
