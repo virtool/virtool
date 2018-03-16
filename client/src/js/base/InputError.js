@@ -22,7 +22,7 @@ export class InputError extends React.Component {
         const error = this.props.error;
 
         const inputErrorClassName = error ? "input-form-error" : "input-form-error-none";
-
+/*
         let renderInputType;
         let errorDisplayType;
 
@@ -35,6 +35,9 @@ export class InputError extends React.Component {
             renderInputType = this.renderInput;
             errorDisplayType = <span className="input-error-message">{error ? error : "None"}</span>;
         }
+*/
+            const renderInputType = this.props.withButton ? this.renderInputSave : this.renderInput;
+            const errorDisplayType = <span className="input-error-message">{error ? error : "None"}</span>;
 
         const errorMessage = (
             <div className={inputErrorClassName}>

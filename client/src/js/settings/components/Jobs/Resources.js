@@ -68,7 +68,7 @@ class Resources extends React.Component {
                         <InputError
                             label="CPU Limit"
                             type="number"
-                            min={1}
+                            min={this.props.procLowerLimit}
                             max={procLimit}
                             onSave={this.props.onUpdateProc}
                             onInvalid={this.handleInvalidProc}
@@ -80,7 +80,7 @@ class Resources extends React.Component {
                         <InputError
                             label="Memory Limit (GB)"
                             type="number"
-                            min={1}
+                            min={this.props.memLowerLimit}
                             max={memLimit}
                             step={0.1}
                             onSave={this.props.onUpdateMem}
@@ -100,7 +100,9 @@ class Resources extends React.Component {
 const mapStateToProps = (state) => ({
     proc: state.settings.data.proc,
     mem: state.settings.data.mem,
-    resources: state.jobs.resources
+    resources: state.jobs.resources,
+    procLowerLimit: state.settings.data.rebuild_index_proc,
+    memLowerLimit: state.settings.data.rebuild_index_mem
 });
 
 const mapDispatchToProps = (dispatch) => ({

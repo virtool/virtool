@@ -53,9 +53,14 @@ export class InputSave extends React.Component {
      * make the form lose focus. The form is intentionally blurred once an updated initialValue is received in props.
      */
     handleBlur = (e) => {
+        // If click on focus element that does not submit, reset value
         if (!this.state.pending && e.relatedTarget && e.relatedTarget.type !== "submit") {
             this.setState({value: this.props.initialValue});
+        // If click on non focus element, reset value
+        } else if (!e.relatedTarget) {
+            this.setState({value: this.props.initialValue});
         }
+        // If click on focus element that does submit, keep value
     };
 
     /**
@@ -102,6 +107,7 @@ export class InputSave extends React.Component {
     };
 
     blur = () => {
+        this.inputNode.blur();
         this.buttonNode.blur();
     };
 
@@ -117,7 +123,7 @@ export class InputSave extends React.Component {
                     <FlexItem grow={1} shrink={1}>
                         <FormControl
                             className={formClass}
-                            ref={(node) => this.inputNode = node}
+                            inputRef={(ref) => this.inputNode = ref}
                             type={this.props.type}
                             min={this.props.min}
                             max={this.props.max}
