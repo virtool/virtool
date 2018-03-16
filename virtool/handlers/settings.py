@@ -4,8 +4,9 @@ import os
 from cerberus import Validator
 
 import virtool.app_settings
+import virtool.job_resources
 import virtool.utils
-from virtool.handlers.utils import invalid_input, json_response, not_found, protected, validation
+from virtool.handlers.utils import conflict, invalid_input, json_response, not_found, protected, validation
 
 
 async def get_all(req):
@@ -23,27 +24,59 @@ async def get_one(req):
 
 
 @protected("modify_settings")
+@validation(virtool.app_settings.SCHEMA)
 async def update(req):
     """
     Update application settings based on request data.
 
     """
-    data = await req.json()
+    raw_data = await req.json()
+    data = {key: req["data"][key] for key in raw_data}
 
-    keys = data.keys()
+    proc = data.get("proc", False)
+    mem = data.get("mem", False)
 
-    v = Validator(virtool.app_settings.SCHEMA)
+    settings = req.app["settings"].data
 
-    if not v(data):
-        return invalid_input(v.errors)
+    if proc or mem:
 
-    settings = req.app["settings"]
+        resources = virtool.job_resources.get()
 
-    settings.data.update({key: v.document[key] for key in keys})
+        if proc:
+            if proc > len(resources["proc"]):
+                return conflict("Exceeds system processor count")
 
-    await settings.write()
+            task_proc = max(settings[key] for key in virtool.app_settings.TASK_SPECIFIC_LIMIT_KEYS if "_proc" in key)
 
-    return json_response(settings.data)
+            if proc < task_proc:
+                return conflict("Less than a task-specific proc limit")
+
+        if mem:
+            if mem > resources["mem"]["total"] / 1000000000:
+                return conflict("Exceeds system memory")
+
+            task_mem = max(settings[key] for key in virtool.app_settings.TASK_SPECIFIC_LIMIT_KEYS if "_mem" in key)
+
+            if mem < task_mem:
+                return conflict("Less than a task-specific mem limit")
+
+    for key in virtool.app_settings.TASK_SPECIFIC_LIMIT_KEYS:
+        if key in data:
+            value = data[key]
+
+            if "_proc" in key and value > proc:
+                return conflict("Exceeds proc resource limit")
+
+            if "_mem" in key and value > mem:
+                return conflict("Exceeds mem resource specific limit")
+
+    app_settings = req.app["settings"]
+
+    app_settings.update(data)
+
+    await app_settings.write()
+
+    return json_response(app_settings.data)
 
 
 async def check_proxy(req):
