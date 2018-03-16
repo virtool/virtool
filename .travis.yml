@@ -54,7 +54,7 @@ install:
 - cd $TRAVIS_BUILD_DIR
 - cd client
 - yarn install
-- webpack --config webpack.production.config.babel.js
+- webpack --config webpack.production.config.js
 - cd $TRAVIS_BUILD_DIR
 before_script:
 - sleep 15
