@@ -5,7 +5,7 @@ import { LinkContainer } from "react-router-bootstrap";
 import { Icon, Button } from "../../base";
 import {createFindURL, getFindTerm} from "../../utils";
 
-const VirusToolbar = ({ canModify, onFind, term }) => (
+const VirusToolbar = ({ canModify, onFind, term, onFilter, search }) => (
     <div className="toolbar">
         <div className="form-group">
             <div className="input-group">
@@ -30,6 +30,14 @@ const VirusToolbar = ({ canModify, onFind, term }) => (
             />
         </LinkContainer>
 
+        <Button
+            tip="Filter Unverified"
+            onClick={() => onFilter("/viruses?verified=false")}
+            active={search === "?verified=false"}
+        >
+            <Icon name="filter" />
+        </Button>
+
         {canModify ? (
             <LinkContainer to={{...window.location, state: {createVirus: true}}} replace>
                 <Button bsStyle="primary" tip="Create">
@@ -42,7 +50,8 @@ const VirusToolbar = ({ canModify, onFind, term }) => (
 
 const mapStateToProps = (state) => ({
     canModify: state.account.permissions.modify_virus,
-    term: getFindTerm()
+    term: getFindTerm(),
+    search: state.router.location.search
 });
 
 const mapDispatchToProps = (dispatch) => ({
@@ -50,6 +59,15 @@ const mapDispatchToProps = (dispatch) => ({
     onFind: (e) => {
         const url = createFindURL({ find: e.target.value });
         dispatch(push(url.pathname + url.search));
+    },
+
+    onFilter: (url) => {
+        const currentUrl = window.location.pathname + window.location.search;
+        if (currentUrl === url) {
+            dispatch(push("/viruses"));
+        } else {
+            dispatch(push(url));
+        }
     }
 
 });
