@@ -141,7 +141,7 @@ export class InputSave extends React.Component {
                     <Button
                         type="submit"
                         bsStyle="primary"
-                        disabled={this.state.pending || this.props.disabled}
+                        disabled={this.props.disabled}
                         icon="floppy"
                         ref={(button) => this.buttonNode = button}
                     />

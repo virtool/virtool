@@ -13,7 +13,11 @@ export class Input extends React.Component {
         type: PropTypes.string,
         rows: PropTypes.number,
         value: PropTypes.any,
+        min: PropTypes.number,
+        max: PropTypes.number,
+        step: PropTypes.number,
         readOnly: PropTypes.bool,
+        onInvalid: PropTypes.func,
         placeholder: PropTypes.any,
         autoComplete: PropTypes.bool,
         error: PropTypes.oneOfType([PropTypes.string, PropTypes.element]),
@@ -88,10 +92,14 @@ export class Input extends React.Component {
                     name={this.props.name}
                     rows={this.props.rows}
                     value={this.props.value || ""}
+                    min={this.props.min}
+                    max={this.props.max}
+                    step={this.props.step}
                     onBlur={this.props.onBlur}
                     onFocus={this.props.onFocus}
                     onChange={this.props.onChange}
                     readOnly={this.props.readOnly}
+                    onInvalid={this.props.onInvalid}
                     placeholder={this.props.placeholder}
                     autoComplete={this.props.autoComplete ? "on" : "off"}
                     componentClass={componentClass}

@@ -14,7 +14,9 @@ class Resources extends React.Component {
 
         this.state = {
             errorProc: false,
-            errorMem: false
+            errorMem: false,
+            procUpperLimit: this.props.proc,
+            memUpperLimit: this.props.mem
         };
     }
 
@@ -30,6 +32,13 @@ class Resources extends React.Component {
         if (nextProps.proc !== this.props.proc) {
             this.setState({errorProc: false});
         }
+
+        if (nextProps.resources) {
+            this.setState({
+                memUpperLimit: parseFloat((nextProps.resources.mem.total / Math.pow(1024, 3)).toFixed(1)),
+                procUpperLimit: nextProps.resources.proc.length
+            });
+        }
     }
 
     handleInvalidProc = (e) => {
@@ -42,16 +51,29 @@ class Resources extends React.Component {
         this.setState({errorMem: true});
     };
 
+    handleSaveProc = (e) => {
+        if (e.value <= this.state.procUpperLimit && e.value >= this.props.procLowerLimit) {
+            this.props.onUpdateProc(e);
+        } else {
+            this.setState({ errorProc: true });
+        }
+    };
+
+    handleSaveMem = (e) => {
+        if (e.value <= this.state.memUpperLimit && e.value >= this.props.memLowerLimit) {
+            this.props.onUpdateMem(e);
+        } else {
+            this.setState({ errorMem: true });
+        }
+    };
+
     render () {
         if (this.props.resources === null) {
             return <LoadingPlaceholder />;
         }
 
-        const memLimit = parseFloat((this.props.resources.mem.total / Math.pow(1024, 3)).toFixed(1));
-        const procLimit = this.props.resources.proc.length;
-
-        const errorMessageProc = this.state.errorProc ? "Cannot exceed resource limits" : null;
-        const errorMessageMem = this.state.errorMem ? "Cannot exceed resource limits" : null;
+        const errorMessageProc = this.state.errorProc ? "Cannot go over or under resource limits" : null;
+        const errorMessageMem = this.state.errorMem ? "Cannot go over or under resource limits" : null;
 
         return (
             <Row>
@@ -69,10 +91,15 @@ class Resources extends React.Component {
                             label="CPU Limit"
                             type="number"
                             min={this.props.procLowerLimit}
-                            max={procLimit}
-                            onSave={this.props.onUpdateProc}
+                            max={this.state.procUpperLimit}
+                            onSave={this.handleSaveProc}
                             onInvalid={this.handleInvalidProc}
-                            initialValue={this.props.proc}
+                            onChange={() => this.setState({errorProc: false})}
+                            initialValue={
+                                this.props.proc > this.state.procUpperLimit
+                                    ? this.state.procUpperLimit
+                                    : this.props.proc
+                            }
                             error={errorMessageProc}
                             noMargin
                             withButton
@@ -81,11 +108,16 @@ class Resources extends React.Component {
                             label="Memory Limit (GB)"
                             type="number"
                             min={this.props.memLowerLimit}
-                            max={memLimit}
+                            max={this.state.memUpperLimit}
                             step={0.1}
-                            onSave={this.props.onUpdateMem}
+                            onSave={this.handleSaveMem}
                             onInvalid={this.handleInvalidMem}
-                            initialValue={this.props.mem}
+                            onChange={() => this.setState({errorMem: false})}
+                            initialValue={
+                                this.props.mem > this.state.memUpperLimit
+                                    ? this.state.memUpperLimit
+                                    : this.props.mem
+                            }
                             error={errorMessageMem}
                             noMargin
                             withButton
