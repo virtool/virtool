@@ -80,8 +80,8 @@ SCHEMA = {
 
 
     # Github
-    "github_token": {"type": "string", "default": None, "nullable": True},
-    "github_username": {"type": "string", "default": None, "nullable": True},
+    "github_token": {"type": "string", "default": ""},
+    "github_username": {"type": "string", "default": ""},
     "software_channel": {"type": "string", "default": "stable", "allowed": ["stable", "alpha", "beta"]},
 
     # Accounts
@@ -94,12 +94,25 @@ SCHEMA = {
 
     # Virus settings
     "restrict_source_types": get_default_boolean(True),
-    "allowed_source_types": {"type": "list", "default": ["clone", "culture", "genotype", "isolate", "strain"]},
+    "allowed_source_types": {"type": "list", "default": ["isolate", "strain"]},
 
     # Analysis settings
     "use_internal_control": get_default_boolean(False),
     "internal_control_id": {"type": "string", "default": ""}
 }
+
+TASK_SPECIFIC_LIMIT_KEYS = [
+    "create_sample_mem",
+    "create_sample_proc",
+    "create_subtraction_proc",
+    "create_subtraction_mem",
+    "nuvs_proc",
+    "nuvs_mem",
+    "pathoscope_bowtie_proc",
+    "pathoscope_bowtie_mem",
+    "rebuild_index_proc",
+    "rebuild_index_mem"
+]
 
 
 async def write_settings_file(path, settings_dict):
