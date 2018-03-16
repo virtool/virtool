@@ -1,10 +1,9 @@
-var path = require("path");
-var webpack = require("webpack");
-var HTMLPlugin = require("html-webpack-plugin");
-var CleanPlugin = require("clean-webpack-plugin");
-var ExtractTextPlugin = require("extract-text-webpack-plugin");
+import path from "path";
+import HTMLPlugin from "html-webpack-plugin";
+import CleanPlugin from "clean-webpack-plugin";
+import ExtractTextPlugin from "extract-text-webpack-plugin";
 
-module.exports = {
+export default {
 
     entry: ["babel-polyfill", "./src/js/index.js"],
 
@@ -18,7 +17,9 @@ module.exports = {
                     {
                         loader: "eslint-loader",
                         options: {
-                            configFile: path.resolve(__dirname, "./.eslintrc")
+                            configFile: path.resolve(__dirname, "./.eslintrc"),
+                            // Fail on warnings during production build.
+                            failOnWarning: true
                         }
 
                     }
