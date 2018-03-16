@@ -101,6 +101,19 @@ SCHEMA = {
     "internal_control_id": {"type": "string", "default": ""}
 }
 
+TASK_SPECIFIC_LIMIT_KEYS = [
+    "create_sample_mem",
+    "create_sample_proc",
+    "create_subtraction_proc",
+    "create_subtraction_mem",
+    "nuvs_proc",
+    "nuvs_mem",
+    "pathoscope_bowtie_proc",
+    "pathoscope_bowtie_mem",
+    "rebuild_index_proc",
+    "rebuild_index_mem"
+]
+
 
 async def write_settings_file(path, settings_dict):
     validated = Settings.validate(settings_dict)
