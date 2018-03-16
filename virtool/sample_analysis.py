@@ -410,6 +410,8 @@ class Base(virtool.job.Job):
 
         self.sample = None
 
+        self.paired = None
+
         self.read_paths = None
 
         #: The document for the host associated with the sample being analyzed. Assigned after job start.
@@ -433,7 +435,9 @@ class Base(virtool.job.Job):
         # Calculate the path(s) to the sample read file(s).
         self.read_paths = [os.path.join(self.sample_path, "reads_1.fastq")]
 
-        if self.sample.get("paired", False):
+        self.paired = self.sample.get("paired", False) or len(self.sample["files"]) == 2
+
+        if self.paired:
             self.read_paths.append(os.path.join(self.sample_path, "reads_2.fastq"))
 
         # Get the complete host document from the database.
@@ -887,7 +891,7 @@ class NuVs(Base):
 
     @virtool.job.stage_method
     async def reunite_pairs(self):
-        if self.sample.get("paired", False):
+        if self.paired:
             unmapped_path = os.path.join(self.analysis_path, "unmapped_hosts.fq")
 
             headers = await self.run_in_executor(virtool.bio.read_fastq_headers, unmapped_path)
@@ -917,7 +921,7 @@ class NuVs(Base):
             "-m", str(self.mem)
         ]
 
-        if self.sample.get("paired", False):
+        if self.paired:
             command += [
                 "-1", os.path.join(self.analysis_path, "unmapped_1.fq"),
                 "-2", os.path.join(self.analysis_path, "unmapped_2.fq"),
@@ -1147,3 +1151,20 @@ def run_patho(analysis_path, vta_path, reassigned_path):
         refs,
         reads
     )
+
+
+def run_reunion(analysis_path, read_paths, unmapped_path):
+
+    headers = virtool.bio.read_fastq_headers(unmapped_path)
+
+    unmapped_roots = {h.split(" ")[0] for h in headers}
+
+    with open(os.path.join(analysis_path, "unmapped_1.fq"), "w") as f:
+        for header, seq, quality in virtool.bio.read_fastq(read_paths[0]):
+            if header.split(" ")[0] in unmapped_roots:
+                f.write("\n".join([header, seq, "+", quality]) + "\n")
+
+    with open(os.path.join(analysis_path, "unmapped_2.fq"), "w") as f:
+        for header, seq, quality in virtool.bio.read_fastq(read_paths[1]):
+            if header.split(" ")[0] in unmapped_roots:
+                f.write("\n".join([header, seq, "+", quality]) + "\n")
