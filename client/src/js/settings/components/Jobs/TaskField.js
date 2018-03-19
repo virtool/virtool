@@ -53,10 +53,14 @@ export default class TaskField extends React.PureComponent {
 
     handleSubmit = (e) => {
         e.preventDefault();
-        this.setState({pending: true}, () => {
-            this.props.onChange(this.props.name, this.state.value);
-        });
 
+        if (this.state.value) {
+            this.setState({pending: true}, () => {
+                this.props.onChange(this.props.name, this.state.value);
+            });
+        } else {
+            this.props.onInvalid();
+        }
     };
 
     render () {
