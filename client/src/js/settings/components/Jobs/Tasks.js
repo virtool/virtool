@@ -50,7 +50,6 @@ const TaskLimits = (props) => {
             memLowerLimit={props.memLowerLimit}
             currentLimitProc={props.resourceProc}
             currentLimitMem={props.resourceMem}
-            limitChange={props.limitChange}
         />
     );
 

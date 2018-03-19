@@ -26,9 +26,14 @@ class Task extends React.Component {
             this.setState({ error: false });
         }
 
-        if (currentLimitProc > nextProps.currentLimitProc || currentLimitMem > nextProps.currentLimitMem) {
-            console.log("alert!");
-            this.props.limitChange();
+        if (nextProps.currentLimitProc < currentLimitProc) {
+            console.log("alertPROC!");
+            this.handleChangeLimit("proc", nextProps.currentLimitProc);
+        }
+
+        if (nextProps.currentLimitMem < currentLimitMem) {
+            console.log("alertMEM!");
+            this.handleChangeLimit("mem", nextProps.currentLimitMem);
         }
     }
 
@@ -51,9 +56,6 @@ class Task extends React.Component {
 
         const readOnly = includes(readOnlyFields, taskPrefix);
 
-        const procUpperLimit = currentLimitProc < proc ? currentLimitProc : proc;
-        const memUpperLimit = currentLimitMem < mem ? currentLimitMem : mem;
-
         const errorMessage = (
             <div className={this.state.error ? "input-form-error" : "input-form-error-none"}>
                 <span className="input-error-message">
@@ -62,6 +64,11 @@ class Task extends React.Component {
             </div>
         );
 
+        const procUpperLimit = currentLimitProc < proc ? currentLimitProc : proc; 
+        const memUpperLimit = currentLimitMem < mem ? currentLimitMem : mem;
+
+        // console.log("task: ", this.props);
+
         return (
             <ListGroupItem allowFocus className={this.state.error ? "list-group-item-danger" : ""}>
                 <h5><strong>{getTaskDisplayName(taskPrefix)}</strong></h5>
@@ -69,7 +76,7 @@ class Task extends React.Component {
                     <Col md={4}>
                         <TaskField
                             name="proc"
-                            value={procUpperLimit < proc ? procUpperLimit : proc}
+                            value={currentLimitProc < proc ? currentLimitProc : proc}
                             readOnly={readOnly}
                             onChange={this.handleChangeLimit}
                             clear={this.handleClearError}
@@ -81,7 +88,7 @@ class Task extends React.Component {
                     <Col md={4}>
                         <TaskField
                             name="mem"
-                            value={memUpperLimit < mem ? memUpperLimit : mem}
+                            value={currentLimitMem < mem ? currentLimitMem : mem}
                             readOnly={readOnly}
                             onChange={this.handleChangeLimit}
                             clear={this.handleClearError}
@@ -118,8 +125,7 @@ Task.propTypes = {
     procLowerLimit: PropTypes.number,
     memLowerLimit: PropTypes.number,
     currentLimitProc: PropTypes.number,
-    currentLimitMem: PropTypes.number,
-    limitChange: PropTypes.func
+    currentLimitMem: PropTypes.number
 };
 
 export default Task;

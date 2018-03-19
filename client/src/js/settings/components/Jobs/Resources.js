@@ -37,14 +37,19 @@ class Resources extends React.Component {
             this.setState({errorProc: false});
         }
 
+        // when resource data is retrieved
         if (!this.props.resources && nextProps.resources) {
-            this.setState({
-                procUpperLimit: procLimit,
-                memUpperLimit: memLimit
-            });
-            this.props.onUpdateProc({ value: procLimit });
-            this.props.onUpdateMem({ value: memLimit });
-        }
+            // if current proc/mem values are greater than resource limits, set as limits
+            if (procLimit < this.props.proc) {
+                this.setState({ procUpperLimit: procLimit });
+                this.props.onUpdateProc({ value: procLimit });
+            }
+
+            if (memLimit < this.props.mem) {
+                this.setState({ memUpperLimit: memLimit });
+                this.props.onUpdateMem({ value: memLimit });
+            }
+        } 
     }
 
     handleChangeProc = (e) => {
@@ -93,12 +98,14 @@ class Resources extends React.Component {
 
         const alert = this.state.showAlert
             ? (
-                <Alert bsStyle="warning">
+                <Alert bsStyle="danger">
                     <Icon name="warning" />
-                    Lowering the Resource Limits has changed the values of certain Task-specific Limits.
+                    <span> Lowering the Resource Limits has changed the values of certain Task-specific Limits.</span>
                 </Alert>
             )
             : null;
+
+        // console.log("resources: ", this.props);
 
         return (
             <div>
