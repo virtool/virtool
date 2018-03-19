@@ -66,6 +66,10 @@ export class Input extends React.Component {
             componentClass = "textarea";
         }
 
+        const style = this.props.type === "number"
+            ? {...this.props.style, paddingRight: "12px"}
+            : this.props.style;
+
         let label;
 
         if (this.props.label) {
@@ -104,7 +108,7 @@ export class Input extends React.Component {
                     autoComplete={this.props.autoComplete ? "on" : "off"}
                     componentClass={componentClass}
                     disabled={this.props.disabled}
-                    style={this.props.style}
+                    style={style}
                 >
                     {this.props.children}
                 </FormControl>
