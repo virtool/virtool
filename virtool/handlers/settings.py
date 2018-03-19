@@ -1,26 +1,16 @@
 import aiohttp
 import aiohttp.client_exceptions
 import os
-from cerberus import Validator
 
 import virtool.app_settings
 import virtool.job_resources
 import virtool.utils
-from virtool.handlers.utils import conflict, invalid_input, json_response, not_found, protected, validation
+from virtool.handlers.utils import conflict, json_response, protected, validation
 
 
-async def get_all(req):
+async def get(req):
     amended = await virtool.app_settings.attach_virus_name(req.app["db"], req.app["settings"])
     return json_response(amended)
-
-
-async def get_one(req):
-    key = req.match_info["key"]
-
-    if key not in virtool.app_settings.SCHEMA:
-        return not_found("Unknown setting key")
-
-    return json_response(req["settings"].data[key])
 
 
 @protected("modify_settings")
