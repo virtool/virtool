@@ -41,14 +41,24 @@ class Resources extends React.Component {
         }
     }
 
+    handleChangeProc = (e) => {
+        e.preventDefault();
+        this.setState({ errorProc: false });
+    };
+
+    handleChangeMem = (e) => {
+        e.preventDefault();
+        this.setState({ errorMem: false });
+    };
+
     handleInvalidProc = (e) => {
         e.preventDefault();
-        this.setState({errorProc: true});
+        this.setState({ errorProc: true });
     };
 
     handleInvalidMem = (e) => {
         e.preventDefault();
-        this.setState({errorMem: true});
+        this.setState({ errorMem: true });
     };
 
     handleSaveProc = (e) => {
@@ -94,7 +104,7 @@ class Resources extends React.Component {
                             max={this.state.procUpperLimit}
                             onSave={this.handleSaveProc}
                             onInvalid={this.handleInvalidProc}
-                            onChange={() => this.setState({errorProc: false})}
+                            onChange={this.handleChangeProc}
                             initialValue={
                                 this.props.proc > this.state.procUpperLimit
                                     ? this.state.procUpperLimit
@@ -112,7 +122,7 @@ class Resources extends React.Component {
                             step={0.1}
                             onSave={this.handleSaveMem}
                             onInvalid={this.handleInvalidMem}
-                            onChange={() => this.setState({errorMem: false})}
+                            onChange={this.handleChangeMem}
                             initialValue={
                                 this.props.mem > this.state.memUpperLimit
                                     ? this.state.memUpperLimit

@@ -27,6 +27,7 @@ export class InputSave extends React.Component {
         initialValue: PropTypes.any,
         autoComplete: PropTypes.bool,
         onInvalid: PropTypes.func,
+        onChange: PropTypes.func,
         disabled: PropTypes.bool,
         noMargin: PropTypes.bool,
         error: PropTypes.string
@@ -61,6 +62,7 @@ export class InputSave extends React.Component {
             this.setState({value: this.props.initialValue});
         }
         // If click on focus element that does submit, keep value
+        this.props.onChange(e);
     };
 
     /**
@@ -72,6 +74,7 @@ export class InputSave extends React.Component {
         if (!this.props.disabled) {
             this.setState({value: e.target.value});
         }
+        this.props.onChange(e);
     };
 
     /**

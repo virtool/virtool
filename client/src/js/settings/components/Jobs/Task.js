@@ -32,6 +32,10 @@ class Task extends React.Component {
         this.props.onChangeLimit(this.props.taskPrefix, name, value);
     };
 
+    handleClearError = () => {
+        this.setState({ error: false });
+    };
+
     handleInvalid = () => {
         this.setState({ error: true });
     };
@@ -67,6 +71,7 @@ class Task extends React.Component {
                             value={proc > procUpperLimit ? procUpperLimit : proc}
                             readOnly={readOnly}
                             onChange={this.handleChangeLimit}
+                            clear={this.handleClearError}
                             lowerLimit={this.props.procLowerLimit}
                             upperLimit={procUpperLimit}
                             onInvalid={this.handleInvalid}
@@ -78,6 +83,7 @@ class Task extends React.Component {
                             value={mem > memUpperLimit ? memUpperLimit : mem}
                             readOnly={readOnly}
                             onChange={this.handleChangeLimit}
+                            clear={this.handleClearError}
                             lowerLimit={this.props.memLowerLimit}
                             upperLimit={memUpperLimit}
                             onInvalid={this.handleInvalid}
@@ -89,6 +95,7 @@ class Task extends React.Component {
                             value={inst}
                             readOnly={taskPrefix === "rebuild_index"}
                             onChange={this.handleChangeLimit}
+                            clear={this.handleClearError}
                             lowerLimit={1}
                             upperLimit={10}
                             onInvalid={this.handleInvalid}

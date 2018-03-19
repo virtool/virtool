@@ -18,6 +18,7 @@ export default class TaskField extends React.PureComponent {
         name: PropTypes.string,
         value: PropTypes.number,
         onChange: PropTypes.func,
+        clear: PropTypes.func,
         readOnly: PropTypes.bool,
         lowerLimit: PropTypes.number,
         upperLimit: PropTypes.number,
@@ -37,6 +38,7 @@ export default class TaskField extends React.PureComponent {
         if (!this.state.pending) {
             this.setState({value: this.props.value});
         }
+        this.props.clear();
     };
 
     handleChange = (e) => {
@@ -47,7 +49,6 @@ export default class TaskField extends React.PureComponent {
 
     handleInvalid = (e) => {
         e.preventDefault();
-
         this.props.onInvalid();
     };
 
