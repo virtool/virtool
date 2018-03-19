@@ -23,42 +23,23 @@ async def update(req):
     raw_data = await req.json()
     data = {key: req["data"][key] for key in raw_data}
 
-    proc = data.get("proc", False)
-    mem = data.get("mem", False)
+    proc = data.get("proc", None)
+    mem = data.get("mem", None)
 
-    settings = req.app["settings"].data
+    settings = req.app["settings"]
 
-    if proc or mem:
+    error_message = virtool.app_settings.check_resource_limits(proc, mem, settings.data)
 
-        resources = virtool.job_resources.get()
+    if error_message:
+        return conflict(error_message)
 
-        if proc:
-            if proc > len(resources["proc"]):
-                return conflict("Exceeds system processor count")
+    proc = proc or settings["proc"]
+    mem = mem or settings["mem"]
 
-            task_proc = max(settings[key] for key in virtool.app_settings.TASK_SPECIFIC_LIMIT_KEYS if "_proc" in key)
+    error_message = virtool.app_settings.check_task_specific_limits(proc, mem, data)
 
-            if proc < task_proc:
-                return conflict("Less than a task-specific proc limit")
-
-        if mem:
-            if mem > resources["mem"]["total"] / 1000000000:
-                return conflict("Exceeds system memory")
-
-            task_mem = max(settings[key] for key in virtool.app_settings.TASK_SPECIFIC_LIMIT_KEYS if "_mem" in key)
-
-            if mem < task_mem:
-                return conflict("Less than a task-specific mem limit")
-
-    for key in virtool.app_settings.TASK_SPECIFIC_LIMIT_KEYS:
-        if key in data:
-            value = data[key]
-
-            if "_proc" in key and value > proc:
-                return conflict("Exceeds proc resource limit")
-
-            if "_mem" in key and value > mem:
-                return conflict("Exceeds mem resource specific limit")
+    if error_message:
+        return conflict(error_message)
 
     app_settings = req.app["settings"]
 
