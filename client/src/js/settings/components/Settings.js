@@ -18,6 +18,8 @@ import Users from "../../users/components/Users";
 import Updates from "../../updates/components/Viewer";
 import { LoadingPlaceholder } from "../../base";
 
+let showAlert;
+
 const General = () => (
     <div>
         <SourceTypes />
@@ -35,12 +37,16 @@ const Server = () => (
     </div>
 );
 
-const Jobs = () => (
-    <div>
-        <Resources />
-        <Tasks />
-    </div>
-);
+const Jobs = () => {
+    showAlert = false;
+
+    return (
+        <div>
+            <Resources showAlert={showAlert} />
+            <Tasks limitChange={() => (showAlert = true)} />
+        </div>
+    );
+};
 
 const Settings = ({ settings }) => {
     let content;

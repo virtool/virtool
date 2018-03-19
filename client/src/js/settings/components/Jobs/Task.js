@@ -20,10 +20,15 @@ class Task extends React.Component {
     }
 
     componentWillReceiveProps (nextProps) {
-        const { proc, mem, inst } = this.props;
+        const { proc, mem, inst, currentLimitProc, currentLimitMem } = this.props;
 
         if (proc === nextProps.proc && mem === nextProps.mem && inst === nextProps.inst) {
             this.setState({ error: false });
+        }
+
+        if (currentLimitProc > nextProps.currentLimitProc || currentLimitMem > nextProps.currentLimitMem) {
+            console.log("alert!");
+            this.props.limitChange();
         }
     }
 
@@ -42,16 +47,12 @@ class Task extends React.Component {
 
     render () {
 
-        const { inst, mem, proc, taskPrefix } = this.props;
+        const { inst, mem, proc, taskPrefix, currentLimitProc, currentLimitMem } = this.props;
 
         const readOnly = includes(readOnlyFields, taskPrefix);
 
-        const upperLimits = this.props.upperLimits ? this.props.upperLimits : null;
-        const procUpperLimit = upperLimits ? upperLimits.proc.length : proc;
-        const memUpperLimit = upperLimits
-            ? parseFloat((upperLimits.mem.total / Math.pow(1024, 3)).toFixed(1))
-            : mem;
-
+        const procUpperLimit = currentLimitProc < proc ? currentLimitProc : proc;
+        const memUpperLimit = currentLimitMem < mem ? currentLimitMem : mem;
 
         const errorMessage = (
             <div className={this.state.error ? "input-form-error" : "input-form-error-none"}>
@@ -68,7 +69,7 @@ class Task extends React.Component {
                     <Col md={4}>
                         <TaskField
                             name="proc"
-                            value={proc > procUpperLimit ? procUpperLimit : proc}
+                            value={procUpperLimit < proc ? procUpperLimit : proc}
                             readOnly={readOnly}
                             onChange={this.handleChangeLimit}
                             clear={this.handleClearError}
@@ -80,7 +81,7 @@ class Task extends React.Component {
                     <Col md={4}>
                         <TaskField
                             name="mem"
-                            value={mem > memUpperLimit ? memUpperLimit : mem}
+                            value={memUpperLimit < mem ? memUpperLimit : mem}
                             readOnly={readOnly}
                             onChange={this.handleChangeLimit}
                             clear={this.handleClearError}
@@ -116,7 +117,9 @@ Task.propTypes = {
     onChangeLimit: PropTypes.func,
     procLowerLimit: PropTypes.number,
     memLowerLimit: PropTypes.number,
-    upperLimits: PropTypes.object
+    currentLimitProc: PropTypes.number,
+    currentLimitMem: PropTypes.number,
+    limitChange: PropTypes.func
 };
 
 export default Task;
