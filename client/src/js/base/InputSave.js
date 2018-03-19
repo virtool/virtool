@@ -21,9 +21,15 @@ export class InputSave extends React.Component {
         onSave: PropTypes.func.isRequired,
         label: PropTypes.string,
         type: PropTypes.string,
+        min: PropTypes.number,
+        max: PropTypes.number,
+        step: PropTypes.number,
         initialValue: PropTypes.any,
         autoComplete: PropTypes.bool,
+        onInvalid: PropTypes.func,
+        onChange: PropTypes.func,
         disabled: PropTypes.bool,
+        noMargin: PropTypes.bool,
         error: PropTypes.string
     };
 
@@ -48,9 +54,15 @@ export class InputSave extends React.Component {
      * make the form lose focus. The form is intentionally blurred once an updated initialValue is received in props.
      */
     handleBlur = (e) => {
+        // If click on focus element that does not submit, reset value
         if (!this.state.pending && e.relatedTarget && e.relatedTarget.type !== "submit") {
             this.setState({value: this.props.initialValue});
+        // If click on non focus element, reset value
+        } else if (!e.relatedTarget) {
+            this.setState({value: this.props.initialValue});
         }
+        // If click on focus element that does submit, keep value
+        this.props.onChange(e);
     };
 
     /**
@@ -62,6 +74,7 @@ export class InputSave extends React.Component {
         if (!this.props.disabled) {
             this.setState({value: e.target.value});
         }
+        this.props.onChange(e);
     };
 
     /**
@@ -97,25 +110,31 @@ export class InputSave extends React.Component {
     };
 
     blur = () => {
+        this.inputNode.blur();
         this.buttonNode.blur();
     };
 
     render () {
+        const formStyle = this.props.noMargin ? "0px" : "15px";
 
         const formClass = this.props.error ? "form-control-error" : "";
 
         return (
             <form onSubmit={this.handleSubmit}>
                 <h5><strong>{this.props.label}</strong></h5>
-                <Flex alignItems="stretch" style={{marginBottom: "15px"}}>
+                <Flex alignItems="stretch" style={{marginBottom: formStyle}}>
                     <FlexItem grow={1} shrink={1}>
                         <FormControl
                             className={formClass}
-                            ref={(node) => this.inputNode = node}
+                            inputRef={(ref) => this.inputNode = ref}
                             type={this.props.type}
+                            min={this.props.min}
+                            max={this.props.max}
+                            step={this.props.step}
                             autoComplete={this.props.autoComplete}
                             onChange={this.handleChange}
                             onBlur={this.handleBlur}
+                            onInvalid={this.props.onInvalid}
                             value={this.state.value}
                             disabled={this.props.disabled}
                             style={{marginBottom: "0"}}
@@ -125,7 +144,7 @@ export class InputSave extends React.Component {
                     <Button
                         type="submit"
                         bsStyle="primary"
-                        disabled={this.state.pending || this.props.disabled}
+                        disabled={this.props.disabled}
                         icon="floppy"
                         ref={(button) => this.buttonNode = button}
                     />

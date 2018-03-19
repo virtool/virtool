@@ -115,7 +115,7 @@ class SourceTypes extends React.Component {
                                         />
                                         <InputGroup.Button>
                                             <Button type="submit" bsStyle="primary" disabled={!restrictSourceTypes}>
-                                                <Icon name="plus-square" />
+                                                <Icon name="plus-square" style={{paddingLeft: "3px"}} />
                                             </Button>
                                         </InputGroup.Button>
                                     </InputGroup>
