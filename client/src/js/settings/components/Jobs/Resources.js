@@ -40,13 +40,16 @@ class Resources extends React.Component {
         // when resource data is retrieved
         if (!this.props.resources && nextProps.resources) {
             // if current proc/mem values are greater than resource limits, set as limits
+            this.setState({
+                procUpperLimit: procLimit,
+                memUpperLimit: memLimit
+            });
+
             if (procLimit < this.props.proc) {
-                this.setState({ procUpperLimit: procLimit });
                 this.props.onUpdateProc({ value: procLimit });
             }
 
             if (memLimit < this.props.mem) {
-                this.setState({ memUpperLimit: memLimit });
                 this.props.onUpdateMem({ value: memLimit });
             }
         } 
@@ -54,6 +57,7 @@ class Resources extends React.Component {
 
     handleChangeProc = (e) => {
         e.preventDefault();
+        console.log("e: ", e.target.value);
         this.setState({ errorProc: false });
     };
 
@@ -96,16 +100,14 @@ class Resources extends React.Component {
         const errorMessageProc = this.state.errorProc ? "Cannot go over or under resource limits" : null;
         const errorMessageMem = this.state.errorMem ? "Cannot go over or under resource limits" : null;
 
-        const alert = this.state.showAlert
+        const alert = this.props.error
             ? (
                 <Alert bsStyle="danger">
                     <Icon name="warning" />
-                    <span> Lowering the Resource Limits has changed the values of certain Task-specific Limits.</span>
+                    <span> Lowering the Resource Limits requires lowering certain corresponding Task-specific Limits.</span>
                 </Alert>
             )
             : null;
-
-        // console.log("resources: ", this.props);
 
         return (
             <div>
@@ -169,7 +171,8 @@ const mapStateToProps = (state) => ({
     mem: state.settings.data.mem,
     resources: state.jobs.resources,
     procLowerLimit: state.settings.data.rebuild_index_proc,
-    memLowerLimit: state.settings.data.rebuild_index_mem
+    memLowerLimit: state.settings.data.rebuild_index_mem,
+    error: state.settings.data.updateError
 });
 
 const mapDispatchToProps = (dispatch) => ({

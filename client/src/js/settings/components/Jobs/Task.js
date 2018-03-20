@@ -20,13 +20,14 @@ class Task extends React.Component {
     }
 
     componentWillReceiveProps (nextProps) {
-        const { proc, mem, inst, currentLimitProc, currentLimitMem } = this.props;
+//        const { proc, mem, inst, currentLimitProc, currentLimitMem } = this.props;
+        const { proc, mem, inst } = this.props;
 
         if (proc === nextProps.proc && mem === nextProps.mem && inst === nextProps.inst) {
             this.setState({ error: false });
         }
 
-        if (nextProps.currentLimitProc < currentLimitProc) {
+/*        if (nextProps.currentLimitProc < currentLimitProc) {
             console.log("alertPROC!");
             this.handleChangeLimit("proc", nextProps.currentLimitProc);
         }
@@ -34,7 +35,7 @@ class Task extends React.Component {
         if (nextProps.currentLimitMem < currentLimitMem) {
             console.log("alertMEM!");
             this.handleChangeLimit("mem", nextProps.currentLimitMem);
-        }
+        } */
     }
 
     handleChangeLimit = (name, value) => {
