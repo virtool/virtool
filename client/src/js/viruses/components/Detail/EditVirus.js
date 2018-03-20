@@ -19,9 +19,7 @@ class EditVirus extends React.Component {
     }
 
     componentWillReceiveProps (nextProps) {
-        if (!this.state.name) {
-            this.setState({ error: "" });
-        } else if (nextProps.errors && nextProps.errors.EDIT_VIRUS_ERROR) {
+        if (nextProps.errors && nextProps.errors.EDIT_VIRUS_ERROR) {
             this.setState({ error: nextProps.errors.EDIT_VIRUS_ERROR.message });
         }
     }
@@ -29,7 +27,8 @@ class EditVirus extends React.Component {
     handleChange = (e) => {
         const { name, value } = e.target;
         this.setState({
-            [name]: value
+            [name]: value,
+            error: ""
         });
     };
 
