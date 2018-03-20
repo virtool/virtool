@@ -5,14 +5,15 @@ import logging
 import aiofiles
 from cerberus import Validator
 
-from virtool.utils import to_bool
+import virtool.job_resources
+import virtool.utils
 
 
 logger = logging.getLogger(__name__)
 
 
 def get_default_boolean(default):
-    return {"type": "boolean", "coerce": to_bool, "default": default}
+    return {"type": "boolean", "coerce": virtool.utils.to_bool, "default": default}
 
 
 def get_default_integer(default):
@@ -78,8 +79,8 @@ SCHEMA = {
     "proxy_username": {"type": "string", "default": ""},
     "proxy_trust": get_default_boolean(False),
 
-
-    # Github
+    # External Services
+    "enable_sentry": {"type": "boolean", "default": True},
     "github_token": {"type": "string", "default": ""},
     "github_username": {"type": "string", "default": ""},
     "software_channel": {"type": "string", "default": "stable", "allowed": ["stable", "alpha", "beta"]},
@@ -115,13 +116,6 @@ TASK_SPECIFIC_LIMIT_KEYS = [
 ]
 
 
-async def write_settings_file(path, settings_dict):
-    validated = Settings.validate(settings_dict)
-
-    with open(path, "w") as f:
-        json.dump(validated, f)
-
-
 async def attach_virus_name(db, settings):
     internal_control_id = settings.get("internal_control_id")
 
@@ -143,6 +137,79 @@ async def attach_virus_name(db, settings):
     }
 
     return to_send
+
+
+def check_resource_limits(proc, mem, settings_data):
+    """
+    Return an error message if the `proc` or `mem` values exceed real system resources or any task-specific
+    limits.
+
+    :param proc: processor count
+    :type proc: int
+
+    :param mem: memory in gigabytes
+    :type mem: int
+
+    :param settings: the server settings
+    :type settings: dict
+
+    :return: an error message if applicable
+    :rtype: Union[str, None]
+
+    """
+    if proc or mem:
+
+        resources = virtool.job_resources.get()
+
+        if proc:
+            if proc > len(resources["proc"]):
+                return "Exceeds system processor count"
+
+            if proc < max(settings_data[key] for key in TASK_SPECIFIC_LIMIT_KEYS if "_proc" in key):
+                return "Less than a task-specific proc limit"
+
+        if mem:
+            if mem > resources["mem"]["total"] / 1000000000:
+                return "Exceeds system memory"
+
+            if mem < max(settings_data[key] for key in TASK_SPECIFIC_LIMIT_KEYS if "_mem" in key):
+                return "Less than a task-specific mem limit"
+
+
+def check_task_specific_limits(proc, mem, update):
+    """
+    Return an error message if an task-specific limits in the `update` exceed the instance resource limits.
+
+    :param proc: processor count
+    :type proc: int
+
+    :param mem: memory in gigabytes
+    :type mem: int
+
+    :param settings: the server settings
+    :type settings: dict
+
+    :return: ab error message if applicable
+    :rtype Union[str, None]
+
+    """
+    for key in TASK_SPECIFIC_LIMIT_KEYS:
+        if key in update:
+            value = update[key]
+
+            if "_proc" in key and value > proc:
+                return "Exceeds proc resource limit"
+
+            if "_mem" in key and value > mem:
+                return "Exceeds mem resource specific limit"
+
+
+
+async def write_settings_file(path, settings_dict):
+    validated = Settings.validate(settings_dict)
+
+    with open(path, "w") as f:
+        json.dump(validated, f)
 
 
 class Settings:

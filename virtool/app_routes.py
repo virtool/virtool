@@ -200,7 +200,7 @@ def setup_subtraction_routes(app):
 
 
 def setup_settings_routes(app):
-    app.router.add_get("/api/settings", settings.get_all)
+    app.router.add_get("/api/settings", settings.get)
     app.router.add_patch("/api/settings", settings.update)
     app.router.add_get("/api/settings/proxy", settings.check_proxy)
 
