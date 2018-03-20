@@ -1,4 +1,5 @@
 import React from "react";
+import { get } from "lodash-es";
 import { connect } from "react-redux";
 import { Col, Panel, Row } from "react-bootstrap";
 
@@ -6,15 +7,11 @@ import { updateAccount } from "../actions";
 import { Button, InputError } from "../../base";
 
 const getInitialState = (email) => ({
-    defaultEmail: email ? email : "",
-    tempEmail: email ? email : "",
+    email: email || "",
     error: ""
 });
 
-const validateEmail = (email) => {
-    const re = /^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$/;
-    return re.test(email);
-};
+const re = /^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$/;
 
 class Email extends React.Component {
 
@@ -24,8 +21,8 @@ class Email extends React.Component {
     }
 
     componentWillReceiveProps (nextProps) {
-        if (nextProps.errors && nextProps.errors.UPDATE_ACCOUNT_ERROR) {
-            this.setState({ error: nextProps.errors.UPDATE_ACCOUNT_ERROR.message });
+        if (!this.props.error && nextProps.error === "Invalid input") {
+            this.setState({ error: "Please provide a valid email address" });
         }
     }
 
@@ -34,9 +31,7 @@ class Email extends React.Component {
 
         let error = "";
 
-        const checkEmail = validateEmail(this.state.tempEmail);
-
-        if (!checkEmail) {
+        if (!re.test(this.state.tempEmail)) {
             error = "Please provide a valid email address";
         }
 
@@ -44,12 +39,8 @@ class Email extends React.Component {
             return this.setState({error});
         }
 
-        this.setState({
-            defaultEmail: this.state.tempEmail
-        });
-
         this.props.onUpdateEmail({
-            email: this.state.tempEmail
+            email: this.state.email
         });
     };
 
@@ -84,7 +75,7 @@ class Email extends React.Component {
 
 const mapStateToProps = (state) => ({
     email: state.account.email,
-    errors: state.errors
+    error: get(state, "errors.UPDATE_ACCOUNT_ERROR.message", "")
 });
 
 const mapDispatchToProps = (dispatch) => ({
