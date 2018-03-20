@@ -195,7 +195,10 @@ async def organize_hmms(db):
 async def organize_indexes(db):
     await db.indexes.update_many({}, {
         "$unset": {
-            "_version": ""
+            "_version": "",
+            "virus_count": "",
+            "modified_virus_count": "",
+            "modification_count": ""
         },
         "$rename": {
             "index_version": "version",

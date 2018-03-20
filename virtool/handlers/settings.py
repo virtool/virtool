@@ -1,25 +1,16 @@
 import aiohttp
 import aiohttp.client_exceptions
 import os
-from cerberus import Validator
 
 import virtool.app_settings
+import virtool.job_resources
 import virtool.utils
-from virtool.handlers.utils import invalid_input, json_response, not_found, protected, validation
+from virtool.handlers.utils import conflict, json_response, protected, validation
 
 
-async def get_all(req):
+async def get(req):
     amended = await virtool.app_settings.attach_virus_name(req.app["db"], req.app["settings"])
     return json_response(amended)
-
-
-async def get_one(req):
-    key = req.match_info["key"]
-
-    if key not in virtool.app_settings.SCHEMA:
-        return not_found("Unknown setting key")
-
-    return json_response(req["settings"].data[key])
 
 
 @protected("modify_settings")
@@ -29,17 +20,34 @@ async def update(req):
     Update application settings based on request data.
 
     """
-    data = req["data"]
+    raw_data = await req.json()
+    data = {key: req["data"][key] for key in raw_data}
 
-    keys = data.keys()
+    proc = data.get("proc", None)
+    mem = data.get("mem", None)
 
     settings = req.app["settings"]
 
-    settings.data.update({key: data[key] for key in keys})
+    error_message = virtool.app_settings.check_resource_limits(proc, mem, settings.data)
 
-    await settings.write()
+    if error_message:
+        return conflict(error_message)
 
-    return json_response(settings.data)
+    proc = proc or settings["proc"]
+    mem = mem or settings["mem"]
+
+    error_message = virtool.app_settings.check_task_specific_limits(proc, mem, data)
+
+    if error_message:
+        return conflict(error_message)
+
+    app_settings = req.app["settings"]
+
+    app_settings.update(data)
+
+    await app_settings.write()
+
+    return json_response(app_settings.data)
 
 
 async def check_proxy(req):

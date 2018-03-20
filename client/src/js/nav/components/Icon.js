@@ -56,7 +56,10 @@ class NotificationIcon extends React.Component {
 
     render () {
 
-        const iconStyle = (this.props.updates || this.props.unbuilt) ? "icon-pulse" : "icon";
+        const availableUpdates = this.props.updates ? this.props.updates.releases.length : null;
+        const unbuiltIndex = this.props.unbuilt ? this.props.unbuilt.history.length : null;
+
+        const iconStyle = (availableUpdates || unbuiltIndex) ? "icon-pulse" : "icon";
 
         return (
             <div>

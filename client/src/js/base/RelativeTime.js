@@ -1,16 +1,10 @@
 import React from "react";
 import Moment from "moment";
 import PropTypes from "prop-types";
-import { forEach, includes } from "lodash-es";
-
-window.relativeTimeCallbacks = [];
-
-window.setInterval(1000, () => {
-    forEach(window.relativeTimeCallbacks, callback => callback());
-});
+import { includes } from "lodash-es";
 
 /**
- * Shows the passed time prop relative to the current time (eg. 3 days ago). The relative time string is updates
+ * Shows the passed time prop relative to the current time (eg. 3 days ago). The relative time string is updated
  * automatically as time passes.
  */
 export class RelativeTime extends React.Component {
@@ -26,8 +20,8 @@ export class RelativeTime extends React.Component {
         time: PropTypes.string.isRequired
     };
 
-    componentWillMount () {
-        window.relativeTimeCallbacks.push(this.update);
+    componentDidMount () {
+        this.interval = window.setInterval(this.update, 8000);
     }
 
     componentWillReceiveProps (nextProps) {
@@ -49,11 +43,7 @@ export class RelativeTime extends React.Component {
     }
 
     componentWillUnmount () {
-        const index = window.relativeTimeCallbacks.indexOf(this.update);
-
-        if (index !== -1) {
-            window.relativeTimeCallbacks.splice(index, 1);
-        }
+        window.clearInterval(this.interval);
     }
 
     getTimeString = () => {

@@ -12,12 +12,11 @@
 import React from "react";
 import { find, map } from "lodash-es";
 import { connect } from "react-redux";
-import { Row, Col, Modal, FormGroup, FormControl, InputGroup, ControlLabel } from "react-bootstrap";
+import { Row, Col, Modal, FormGroup, FormControl, ControlLabel } from "react-bootstrap";
 
 import { editSequence, hideVirusModal } from "../../actions";
-import { Button, Icon, InputError } from "../../../base";
+import { Button, InputError } from "../../../base";
 import SequenceField from "./SequenceField";
-import { getGenbank } from "../../api";
 
 const getInitialState = (props) => {
 
@@ -85,24 +84,6 @@ class EditSequence extends React.Component {
         );
     };
 
-    handleAutofill = () => {
-        this.setState({autofillPending: true}, () => {
-            getGenbank(this.props.sequenceId).then((resp) => {
-                // Success
-                const { definition, host, sequence } = resp.body;
-
-                this.setState({
-                    autofillPending: false,
-                    definition,
-                    host,
-                    sequence
-                });
-            }, () => {
-                this.setState({autofillPending: false});
-            });
-        });
-    };
-
     render () {
 
         let overlay;
@@ -139,20 +120,12 @@ class EditSequence extends React.Component {
 
                         <Row>
                             <Col xs={12} md={6}>
-                                <FormGroup>
-                                    <ControlLabel>Accession (ID)</ControlLabel>
-                                    <InputGroup>
-                                        <FormControl
-                                            value={this.props.sequenceId}
-                                            readOnly
-                                        />
-                                        <InputGroup.Button>
-                                            <Button onClick={this.handleAutofill}>
-                                                <Icon name="wand" />
-                                            </Button>
-                                        </InputGroup.Button>
-                                    </InputGroup>
-                                </FormGroup>
+                                <InputError
+                                    label="Accession (ID)"
+                                    name="id"
+                                    value={this.props.sequenceId}
+                                    readOnly
+                                />
                             </Col>
                             <Col xs={12} md={6}>
                                 <InputError

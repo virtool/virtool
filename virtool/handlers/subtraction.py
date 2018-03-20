@@ -1,4 +1,5 @@
 import os
+import pymongo
 import pymongo.errors
 import shutil
 
@@ -61,6 +62,7 @@ async def get(req):
 @protected("modify_subtraction")
 @validation({
     "subtraction_id": {"type": "string", "required": True},
+    "nickname": {"type": "string", "default": ""},
     "file_id": {"type": "string", "required": True}
 })
 async def create(req):
@@ -72,8 +74,11 @@ async def create(req):
     data = req["data"]
 
     subtraction_id = data["subtraction_id"]
+
+    if await db.subtraction.count({"_id": subtraction_id}):
+        return conflict("Subtraction name already exists.")
+
     file_id = data["file_id"]
-    user_id = req["client"].user_id
 
     file = await db.files.find_one(file_id, ["name"])
 
@@ -82,8 +87,11 @@ async def create(req):
 
     job_id = await virtool.utils.get_new_id(db.jobs)
 
+    user_id = req["client"].user_id
+
     document = {
         "_id": data["subtraction_id"],
+        "nickname": data["nickname"],
         "ready": False,
         "is_host": True,
         "file": {
@@ -122,17 +130,30 @@ async def create(req):
     return json_response(virtool.utils.base_processor(document), headers=headers, status=201)
 
 
-async def authorize_upload(req):
-    db, data = await unpack_request(req)
+@protected("modify_subtraction")
+@validation({
+    "nickname": {"type": "string", "required": True}
+})
+async def edit(req):
+    """
+    Updates the nickname for an existing subtraction.
 
-    file_id = await db.files.register(
-        name=data["name"],
-        size=data["size"],
-        file_type="host",
-        expires=None
-    )
+    """
+    db = req.app["db"]
+    data = req["data"]
 
-    return json_response({"file_id": file_id})
+    subtraction_id = req.match_info["subtraction_id"]
+
+    document = await db.subtraction.find_one_and_update({"_id": subtraction_id}, {
+        "$set": {
+            "nickname": data["nickname"]
+        }
+    }, return_document=pymongo.ReturnDocument.AFTER)
+
+    if document is None:
+        return not_found()
+
+    return json_response(virtool.utils.base_processor(document))
 
 
 @protected("modify_subtraction")

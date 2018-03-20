@@ -195,11 +195,12 @@ def setup_subtraction_routes(app):
     app.router.add_get("/api/subtraction", subtraction.find)
     app.router.add_get("/api/subtraction/{subtraction_id}", subtraction.get)
     app.router.add_post("/api/subtraction", subtraction.create)
+    app.router.add_patch("/api/subtraction/{subtraction_id}", subtraction.edit)
     app.router.add_delete("/api/subtraction/{subtraction_id}", subtraction.remove)
 
 
 def setup_settings_routes(app):
-    app.router.add_get("/api/settings", settings.get_all)
+    app.router.add_get("/api/settings", settings.get)
     app.router.add_patch("/api/settings", settings.update)
     app.router.add_get("/api/settings/proxy", settings.check_proxy)
 

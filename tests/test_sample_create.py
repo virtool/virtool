@@ -6,7 +6,7 @@ import virtool.sample_create
 
 
 @pytest.fixture
-def test_create_sample_job(tmpdir, loop, test_motor, test_dispatch):
+def test_create_sample_job(mocker, tmpdir, loop, test_motor, test_dispatch):
     tmpdir.mkdir("samples")
     tmpdir.mkdir("logs").mkdir("jobs")
 
@@ -23,6 +23,7 @@ def test_create_sample_job(tmpdir, loop, test_motor, test_dispatch):
         test_motor,
         settings,
         test_dispatch,
+        mocker.stub("capture_exception"),
         "foobar",
         "create_sample",
         dict(sample_id="foobar", files=["foobar.fastq"], paired=False),

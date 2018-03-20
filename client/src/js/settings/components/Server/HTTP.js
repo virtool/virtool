@@ -35,6 +35,7 @@ const HTTPOptions = (props) => (
                     autoComplete={false}
                     onSave={props.onUpdateHost}
                     initialValue={props.host}
+                    noMargin
                     withButton
                 />
                 <InputError
@@ -43,6 +44,7 @@ const HTTPOptions = (props) => (
                     autoComplete={false}
                     onSave={props.onUpdatePort}
                     initialValue={props.port}
+                    noMargin
                     withButton
                 />
                 <Checkbox

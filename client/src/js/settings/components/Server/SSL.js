@@ -43,6 +43,7 @@ const SSLOptions = (props) => (
                         onSave={props.onUpdateCertPath}
                         initialValue={props.certPath}
                         disabled={!props.enabled}
+                        noMargin
                         withButton
                     />
                     <InputError
@@ -50,6 +51,7 @@ const SSLOptions = (props) => (
                         onSave={props.onUpdateKeyPath}
                         initialValue={props.keyPath}
                         disabled={!props.enabled}
+                        noMargin
                         withButton
                     />
                 </Panel>

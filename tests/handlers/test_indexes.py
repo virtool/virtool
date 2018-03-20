@@ -11,7 +11,6 @@ class TestFind:
                 "_id": "foo",
                 "version": 0,
                 "created_at": static_time,
-                "virus_count": 231,
                 "ready": True,
                 "has_files": True,
                 "user": {
@@ -25,7 +24,6 @@ class TestFind:
                 "_id": "bar",
                 "version": 1,
                 "created_at": static_time,
-                "virus_count": 232,
                 "ready": False,
                 "has_files": True,
                 "user": {
@@ -47,6 +45,8 @@ class TestFind:
                     "created_at": "2015-10-06T20:00:00Z",
                     "has_files": True,
                     "id": "bar",
+                    "modification_count": 0,
+                    "modified_virus_count": 0,
                     "job": {
                         "id": "sj82la"
                     },
@@ -55,12 +55,13 @@ class TestFind:
                         "id": "test"
                     },
                     "version": 1,
-                    "virus_count": 232
                 },
                 {
                     "created_at": "2015-10-06T20:00:00Z",
                     "has_files": True,
                     "id": "foo",
+                    "modification_count": 0,
+                    "modified_virus_count": 0,
                     "job": {
                         "id": "abh675"
                     },
@@ -69,7 +70,6 @@ class TestFind:
                         "id": "test"
                     },
                     "version": 0,
-                    "virus_count": 231
                 }
             ],
             "total_count": 2,
@@ -91,7 +91,6 @@ class TestGet:
             "_id": "foobar",
             "version": 0,
             "created_at": static_time,
-            "virus_count": 232,
             "ready": False,
             "has_files": True,
             "user": {
@@ -190,7 +189,6 @@ class TestGet:
             "has_files": True,
             "id": "foobar",
             "version": 0,
-            "virus_count": 232,
             "change_count": 4,
             "viruses": [
                 {
@@ -293,7 +291,6 @@ class TestCreate:
             "_id": expected_id,
             "version": 1,
             "created_at": static_time,
-            "virus_count": None,
             "ready": False,
             "has_files": True,
             "manifest": {},
@@ -318,7 +315,6 @@ class TestCreate:
                 "id": "test"
             },
             "version": 1,
-            "virus_count": None
         }
 
         # Check that ``job_manager.new`` is called with the expected args and kwargs.

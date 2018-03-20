@@ -191,7 +191,7 @@ class CreateSubtraction extends React.Component {
                                 />
                             </Col>
                         </Row>
-
+          
                         <h5><strong>Files</strong></h5>
                         <ListGroup className={panelListStyle}>
                             {fileComponents}
@@ -223,8 +223,8 @@ const mapStateToProps = (state) => ({
 
 const mapDispatchToProps = (dispatch) => ({
 
-    onCreate: ({ subtractionId, fileId }) => {
-        dispatch(createSubtraction(subtractionId, fileId));
+    onCreate: ({ subtractionId, fileId, nickname }) => {
+        dispatch(createSubtraction(subtractionId, fileId, nickname));
     },
 
     onFindFiles: () => {
@@ -237,6 +237,4 @@ const mapDispatchToProps = (dispatch) => ({
 
 });
 
-const Container = connect(mapStateToProps, mapDispatchToProps)(CreateSubtraction);
-
-export default Container;
+export default connect(mapStateToProps, mapDispatchToProps)(CreateSubtraction);
