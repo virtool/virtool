@@ -2,7 +2,7 @@ import CX from "classnames";
 import React from "react";
 import PropTypes from "prop-types";
 import { toNumber } from "lodash-es";
-import { Icon } from "../../../base";
+import { Icon, InputError } from "../../../base";
 
 export default class TaskField extends React.PureComponent {
 
@@ -18,7 +18,11 @@ export default class TaskField extends React.PureComponent {
         name: PropTypes.string,
         value: PropTypes.number,
         onChange: PropTypes.func,
-        readOnly: PropTypes.bool
+        clear: PropTypes.func,
+        readOnly: PropTypes.bool,
+        lowerLimit: PropTypes.number,
+        upperLimit: PropTypes.number,
+        onInvalid: PropTypes.func
     };
 
     componentWillReceiveProps (nextProps) {
@@ -34,6 +38,7 @@ export default class TaskField extends React.PureComponent {
         if (!this.state.pending) {
             this.setState({value: this.props.value});
         }
+        this.props.clear();
     };
 
     handleChange = (e) => {
@@ -42,13 +47,21 @@ export default class TaskField extends React.PureComponent {
         });
     };
 
+    handleInvalid = (e) => {
+        e.preventDefault();
+        this.props.onInvalid();
+    };
+
     handleSubmit = (e) => {
         e.preventDefault();
-        this.setState({pending: true}, () => {
-            this.props.onChange(this.props.name, this.state.value);
-            this.inputNode.blur();
-        });
 
+        if (this.state.value) {
+            this.setState({pending: true}, () => {
+                this.props.onChange(this.props.name, this.state.value);
+            });
+        } else {
+            this.props.onInvalid();
+        }
     };
 
     render () {
@@ -70,15 +83,18 @@ export default class TaskField extends React.PureComponent {
         return (
             <form onSubmit={this.handleSubmit}>
                 <div className={groupClass}>
-                    <input
-                        key="input"
+                    <InputError
                         type="number"
-                        ref={(node) => this.inputNode = node}
-                        className="form-control"
                         value={this.state.value}
+                        min={this.props.lowerLimit}
+                        max={this.props.upperLimit}
+                        step={this.props.name === "mem" ? 0.1 : 1}
                         onBlur={this.handleBlur}
                         onChange={this.handleChange}
-                        disabled={this.state.pending || this.props.readOnly}
+                        onInvalid={this.handleInvalid}
+                        disabled={this.props.readOnly}
+                        noError
+                        noMargin
                     />
                     {feedbackIcon}
                 </div>
