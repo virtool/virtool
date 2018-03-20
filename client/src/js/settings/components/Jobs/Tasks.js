@@ -46,6 +46,9 @@ const TaskLimits = (props) => {
             mem={props.limits[taskPrefix].mem}
             inst={props.limits[taskPrefix].inst}
             onChangeLimit={props.onChangeLimit}
+            procLowerLimit={props.procLowerLimit}
+            memLowerLimit={props.memLowerLimit}
+            upperLimits={props.resources}
         />
     );
 
@@ -86,7 +89,13 @@ const mapStateToProps = (state) => {
         };
     });
 
-    return {limits};
+    const settings = {
+        procLowerLimit: state.settings.data.rebuild_index_proc,
+        memLowerLimit: state.settings.data.rebuild_index_mem,
+        resources: state.jobs.resources
+    };
+
+    return {limits, ...settings};
 };
 
 const mapDispatchToProps = (dispatch) => ({

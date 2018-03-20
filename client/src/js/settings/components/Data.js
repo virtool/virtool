@@ -28,12 +28,14 @@ const DataOptions = ({ db_name, db_host, db_port, data_path, watch_path, onSave 
                         label="Database Name"
                         onSave={(e) => onSave("db_name", e.value)}
                         initialValue={db_name}
+                        noMargin
                         withButton
                     />
                     <InputError
                         label="MongoDB Host"
                         onSave={(e) => onSave("db_host", e.value)}
                         initialValue={db_host}
+                        noMargin
                         withButton
                     />
                     <InputError
@@ -41,6 +43,7 @@ const DataOptions = ({ db_name, db_host, db_port, data_path, watch_path, onSave 
                         type="number"
                         onSave={(e) => onSave("db_port", Number(e.value))}
                         initialValue={db_port}
+                        noMargin
                         withButton
                     />
                 </Panel>
@@ -61,12 +64,14 @@ const DataOptions = ({ db_name, db_host, db_port, data_path, watch_path, onSave 
                         label="Virtool Data"
                         onSave={(e) => onSave("watch_path", e.value)}
                         initialValue={data_path}
+                        noMargin
                         withButton
                     />
                     <InputError
                         label="Watch Folder"
                         onSave={(e) => onSave("watch_path", e.value)}
                         initialValue={watch_path}
+                        noMargin
                         withButton
                     />
                 </Panel>

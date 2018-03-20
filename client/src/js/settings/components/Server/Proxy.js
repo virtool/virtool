@@ -90,6 +90,7 @@ const ProxyOptions = (props) => {
                         onSave={props.onUpdateAddress}
                         initialValue={props.address}
                         disabled={disableInputs}
+                        noMargin
                         withButton
                     />
                     <InputError
@@ -98,6 +99,7 @@ const ProxyOptions = (props) => {
                         onSave={props.onUpdateUsername}
                         initialValue={props.username}
                         disabled={disableInputs}
+                        noMargin
                         withButton
                     />
                     <InputError
@@ -107,6 +109,7 @@ const ProxyOptions = (props) => {
                         onSave={props.onUpdatePassword}
                         initialValue={props.password}
                         disabled={disableInputs}
+                        noMargin
                         withButton
                     />
                     <Flex alignItems="center">
