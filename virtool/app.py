@@ -69,7 +69,8 @@ async def init_settings(app):
 
 
 async def init_sentry(app):
-    app["sentry"] = virtool.sentry.setup(app["version"])
+    if app["settings"].get("enable_sentry", False):
+        app["sentry"] = virtool.sentry.setup(app["version"])
 
 
 def init_dispatcher(app):
@@ -308,16 +309,17 @@ def create_app(loop, db_name=None, disable_job_manager=False, disable_file_manag
         app.on_startup.append(init_setup)
     else:
         app.on_startup.append(init_version)
-
-        if not no_sentry:
-            app.on_startup.append(init_sentry)
-
         app.on_startup.append(init_routes)
 
         if not ignore_settings:
             app.on_startup.append(init_settings)
+
+            if not no_sentry:
+                app.on_startup.append(init_sentry)
         else:
             app["settings"] = dict()
+
+
 
         app.on_startup.append(init_executors)
         app.on_startup.append(init_dispatcher)

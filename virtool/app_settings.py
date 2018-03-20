@@ -78,8 +78,8 @@ SCHEMA = {
     "proxy_username": {"type": "string", "default": ""},
     "proxy_trust": get_default_boolean(False),
 
-
-    # Github
+    # External Services
+    "enable_sentry": {"type": "boolean", "default": True},
     "github_token": {"type": "string", "default": ""},
     "github_username": {"type": "string", "default": ""},
     "software_channel": {"type": "string", "default": "stable", "allowed": ["stable", "alpha", "beta"]},
