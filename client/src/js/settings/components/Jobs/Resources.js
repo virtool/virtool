@@ -43,12 +43,6 @@ class Resources extends React.Component {
         if (nextProps.proc !== this.props.proc) {
             this.setState({errorProc: false});
         }
-/*
-        if (!this.props.resources && nextProps.resources) {
-            const { procLimit, memLimit } = getUpperLimits(nextProps.resources);
-            this.props.onUpdate({ value: procLimit, name: "proc" });
-            this.props.onUpdate({ value: memLimit, name: "mem" });
-        }*/
     }
 
     handleChange = (e) => {
@@ -83,9 +77,6 @@ class Resources extends React.Component {
             return <LoadingPlaceholder />;
         }
 
-    //    const procLimit = this.props.resources.proc.length;
-    //    const memLimit = parseFloat((this.props.resources.mem.total / Math.pow(1024, 3)).toFixed(1));
-
         const { procLimit, memLimit } = getUpperLimits(this.props.resources);
 
         const errorMessageProc = getErrorMessage(this.state.errorProc, this.props.procLowerLimit, procLimit);
@@ -96,7 +87,7 @@ class Resources extends React.Component {
                 <Alert bsStyle="danger">
                     <Icon name="warning" />
                     <span>
-                        {" "}Lowering the Resource Limits requires lowering certain corresponding Task-specific Limits.
+                        {" "}Resource Limit values cannot be lower than corresponding Task-specific Limits.
                     </span>
                 </Alert>
             )
