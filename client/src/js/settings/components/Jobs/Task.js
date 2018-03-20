@@ -20,22 +20,11 @@ class Task extends React.Component {
     }
 
     componentWillReceiveProps (nextProps) {
-//        const { proc, mem, inst, currentLimitProc, currentLimitMem } = this.props;
         const { proc, mem, inst } = this.props;
 
         if (proc === nextProps.proc && mem === nextProps.mem && inst === nextProps.inst) {
             this.setState({ error: false });
         }
-
-/*        if (nextProps.currentLimitProc < currentLimitProc) {
-            console.log("alertPROC!");
-            this.handleChangeLimit("proc", nextProps.currentLimitProc);
-        }
-
-        if (nextProps.currentLimitMem < currentLimitMem) {
-            console.log("alertMEM!");
-            this.handleChangeLimit("mem", nextProps.currentLimitMem);
-        } */
     }
 
     handleChangeLimit = (name, value) => {
@@ -65,10 +54,8 @@ class Task extends React.Component {
             </div>
         );
 
-        const procUpperLimit = currentLimitProc < proc ? currentLimitProc : proc; 
+        const procUpperLimit = currentLimitProc < proc ? currentLimitProc : proc;
         const memUpperLimit = currentLimitMem < mem ? currentLimitMem : mem;
-
-        // console.log("task: ", this.props);
 
         return (
             <ListGroupItem allowFocus className={this.state.error ? "list-group-item-danger" : ""}>
