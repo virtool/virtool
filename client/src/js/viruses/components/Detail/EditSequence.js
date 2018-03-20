@@ -30,7 +30,8 @@ const getInitialState = (props) => {
             host: sequence.host,
             sequence: sequence.sequence,
             segment: sequence.segment,
-            autofillPending: false
+            autofillPending: false,
+            error: ""
         };
     }
 
@@ -39,7 +40,8 @@ const getInitialState = (props) => {
         host: "",
         sequence: "",
         segment: "",
-        autofillPending: false
+        autofillPending: false,
+        error: ""
     };
 };
 
@@ -50,11 +52,18 @@ class EditSequence extends React.Component {
         this.state = getInitialState(this.props);
     }
 
+    componentWillReceiveProps (nextProps) {
+        if (nextProps.errors && nextProps.errors.EDIT_SEQUENCE_ERROR) {
+            this.setState({ error: nextProps.errors.EDIT_SEQUENCE_ERROR.message });
+        }
+    }
+
     handleChange = (e) => {
         const { name, value } = e.target;
 
         this.setState({
-            [name]: value
+            [name]: value,
+            error: ""
         });
     };
 
@@ -152,6 +161,7 @@ class EditSequence extends React.Component {
                                     name="segment"
                                     value={this.state.segment}
                                     onChange={this.handleChange}
+                                    error={this.state.error}
                                 >
                                     {defaultOption}
                                     {currentOption}
@@ -208,7 +218,8 @@ const mapStateToProps = state => ({
     detail: state.viruses.detail,
     isolate: state.viruses.activeIsolate,
     sequenceId: state.viruses.editSequence,
-    virusId: state.viruses.detail.id
+    virusId: state.viruses.detail.id,
+    errors: state.errors
 });
 
 const mapDispatchToProps = dispatch => ({

@@ -36,6 +36,18 @@ class AddSequence extends React.Component {
         this.state = {show: false, ...getInitialState()};
     }
 
+    componentWillReceiveProps (nextProps) {
+        if (!this.state.id) {
+            this.setState({ error: "" });
+        } else if (nextProps.errors && nextProps.errors.ADD_SEQUENCE_ERROR) {
+            if (nextProps.errors.ADD_SEQUENCE_ERROR.status === 422) {
+                this.setState({ error: "Minimum length is 1" });
+            } else {
+                this.setState({ error: nextProps.errors.ADD_SEQUENCE_ERROR.message });
+            }
+        }
+    }
+
     handleAutofill = () => {
         this.setState({autofillPending: true}, () => {
             getGenbank(this.state.id).then((resp) => {
@@ -119,6 +131,15 @@ class AddSequence extends React.Component {
             </option>
         );
 
+        const errorLength = this.state.error === "Minimum length is 1" ? this.state.error : null;
+        const errorSegment = this.state.error === "Segment not found" ? this.state.error : null;
+
+        let errorId = null;
+
+        if (this.state.error !== errorLength && this.state.error !== errorSegment) {
+            errorId = this.state.error;
+        }
+
         return (
             <Modal show={this.props.show} onHide={this.props.onHide} onExited={this.handleModalExited}>
                 <Modal.Header onHide={this.props.onHide} closeButton>
@@ -136,7 +157,7 @@ class AddSequence extends React.Component {
                                         name="id"
                                         value={this.state.id}
                                         onChange={this.handleChange}
-                                        error={this.state.error}
+                                        error={errorId}
                                     />
                                     <InputGroup.Button style={{verticalAlign: "top", zIndex: "0"}}>
                                         <Button type="button" onClick={this.handleAutofill}>
@@ -152,6 +173,7 @@ class AddSequence extends React.Component {
                                     name="segment"
                                     value={this.state.segment}
                                     onChange={this.handleChange}
+                                    error={errorSegment}
                                 >
                                     {defaultOption}
                                     {segmentNames}
@@ -175,6 +197,7 @@ class AddSequence extends React.Component {
                                     name="definition"
                                     value={this.state.definition}
                                     onChange={this.handleChange}
+                                    error={this.state.definition ? null : errorLength}
                                 />
                             </Col>
                         </Row>
@@ -183,6 +206,7 @@ class AddSequence extends React.Component {
                                 <SequenceField
                                     sequence={this.state.sequence}
                                     onChange={this.handleChange}
+                                    error={this.state.sequence ? null : errorLength}
                                 />
                             </Col>
                         </Row>
