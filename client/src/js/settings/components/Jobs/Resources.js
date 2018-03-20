@@ -1,11 +1,22 @@
 import React from "react";
 import { connect } from "react-redux";
 import { Row, Col, Panel, Alert } from "react-bootstrap";
-import { toNumber } from "lodash-es";
+import { toNumber, upperFirst } from "lodash-es";
 
 import { updateSetting } from "../../actions";
 import { getResources } from "../../../jobs/actions";
 import { InputError, LoadingPlaceholder, Icon} from "../../../base";
+
+const getErrorMessage = (isError, min, max) => (
+    isError ? `Value must be between ${min} and ${max}` : null
+);
+
+const getUpperLimits = (resources) => {
+    const procLimit = resources.proc.length;
+    const memLimit = parseFloat((resources.mem.total / Math.pow(1024, 3)).toFixed(1));
+
+    return { procLimit, memLimit };
+};
 
 class Resources extends React.Component {
 
@@ -15,8 +26,6 @@ class Resources extends React.Component {
         this.state = {
             errorProc: false,
             errorMem: false,
-            procUpperLimit: this.props.proc,
-            memUpperLimit: this.props.mem,
             showAlert: false
         };
     }
@@ -26,8 +35,6 @@ class Resources extends React.Component {
     }
 
     componentWillReceiveProps (nextProps) {
-        const procLimit = nextProps.resources.proc.length;
-        const memLimit = parseFloat((nextProps.resources.mem.total / Math.pow(1024, 3)).toFixed(1));
 
         if (nextProps.mem !== this.props.mem) {
             this.setState({errorMem: false});
@@ -36,66 +43,53 @@ class Resources extends React.Component {
         if (nextProps.proc !== this.props.proc) {
             this.setState({errorProc: false});
         }
-
+/*
         if (!this.props.resources && nextProps.resources) {
-            this.setState({
-                procUpperLimit: procLimit,
-                memUpperLimit: memLimit
-            });
-
-            if (procLimit < this.props.proc) {
-                this.props.onUpdateProc({ value: procLimit });
-            }
-
-            if (memLimit < this.props.mem) {
-                this.props.onUpdateMem({ value: memLimit });
-            }
-        }
+            const { procLimit, memLimit } = getUpperLimits(nextProps.resources);
+            this.props.onUpdate({ value: procLimit, name: "proc" });
+            this.props.onUpdate({ value: memLimit, name: "mem" });
+        }*/
     }
 
-    handleChangeProc = (e) => {
+    handleChange = (e) => {
         e.preventDefault();
-        this.setState({ errorProc: false });
+
+        const error = `error${upperFirst(e.target.name)}`;
+        this.setState({ [error]: false });
     };
 
-    handleChangeMem = (e) => {
+    handleInvalid = (e) => {
         e.preventDefault();
-        this.setState({ errorMem: false });
+
+        const error = `error${upperFirst(e.target.name)}`;
+        this.setState({ [error]: true });
     };
 
-    handleInvalidProc = (e) => {
-        e.preventDefault();
-        this.setState({ errorProc: true });
-    };
+    handleSave = (e) => {
+        const name = e.name;
+        const value = toNumber(e.value);
+        const error = `error${upperFirst(name)}`;
 
-    handleInvalidMem = (e) => {
-        e.preventDefault();
-        this.setState({ errorMem: true });
-    };
-
-    handleSaveProc = (e) => {
-        if (e.value <= this.state.procUpperLimit && e.value >= this.props.procLowerLimit) {
-            this.props.onUpdateProc(e);
+        if (value <= e.max && value >= e.min) {
+            this.props.onUpdate(e);
         } else {
-            this.setState({ errorProc: true });
-        }
-    };
-
-    handleSaveMem = (e) => {
-        if (e.value <= this.state.memUpperLimit && e.value >= this.props.memLowerLimit) {
-            this.props.onUpdateMem(e);
-        } else {
-            this.setState({ errorMem: true });
+            this.setState({ [error]: true });
         }
     };
 
     render () {
+
         if (this.props.resources === null) {
             return <LoadingPlaceholder />;
         }
 
-        const errorMessageProc = this.state.errorProc ? "Cannot go over or under resource limits" : null;
-        const errorMessageMem = this.state.errorMem ? "Cannot go over or under resource limits" : null;
+    //    const procLimit = this.props.resources.proc.length;
+    //    const memLimit = parseFloat((this.props.resources.mem.total / Math.pow(1024, 3)).toFixed(1));
+
+        const { procLimit, memLimit } = getUpperLimits(this.props.resources);
+
+        const errorMessageProc = getErrorMessage(this.state.errorProc, this.props.procLowerLimit, procLimit);
+        const errorMessageMem = getErrorMessage(this.state.errorMem, this.props.memLowerLimit, memLimit);
 
         const alert = this.props.error
             ? (
@@ -125,14 +119,15 @@ class Resources extends React.Component {
                             <InputError
                                 label="CPU Limit"
                                 type="number"
+                                name="proc"
                                 min={this.props.procLowerLimit}
-                                max={this.state.procUpperLimit}
-                                onSave={this.handleSaveProc}
-                                onInvalid={this.handleInvalidProc}
-                                onChange={this.handleChangeProc}
+                                max={procLimit}
+                                onSave={this.handleSave}
+                                onInvalid={this.handleInvalid}
+                                onChange={this.handleChange}
                                 initialValue={
-                                    this.state.procUpperLimit < this.props.proc
-                                        ? this.state.procUpperLimit
+                                    procLimit < this.props.proc
+                                        ? procLimit
                                         : this.props.proc
                                 }
                                 error={errorMessageProc}
@@ -142,15 +137,16 @@ class Resources extends React.Component {
                             <InputError
                                 label="Memory Limit (GB)"
                                 type="number"
+                                name="mem"
                                 min={this.props.memLowerLimit}
-                                max={this.state.memUpperLimit}
+                                max={memLimit}
                                 step={0.1}
-                                onSave={this.handleSaveMem}
-                                onInvalid={this.handleInvalidMem}
-                                onChange={this.handleChangeMem}
+                                onSave={this.handleSave}
+                                onInvalid={this.handleInvalid}
+                                onChange={this.handleChange}
                                 initialValue={
-                                    this.state.memUpperLimit < this.props.mem
-                                        ? this.state.memUpperLimit
+                                    memLimit < this.props.mem
+                                        ? memLimit
                                         : this.props.mem
                                 }
                                 error={errorMessageMem}
@@ -176,12 +172,8 @@ const mapStateToProps = (state) => ({
 
 const mapDispatchToProps = (dispatch) => ({
 
-    onUpdateProc: (e) => {
-        dispatch(updateSetting("proc", toNumber(e.value)));
-    },
-
-    onUpdateMem: (e) => {
-        dispatch(updateSetting("mem", toNumber(e.value)));
+    onUpdate: (e) => {
+        dispatch(updateSetting(e.name, toNumber(e.value)));
     },
 
     onGet: () => {

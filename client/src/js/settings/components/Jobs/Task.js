@@ -54,11 +54,8 @@ class Task extends React.Component {
             </div>
         );
 
-        const procUpperLimit = currentLimitProc < proc ? currentLimitProc : proc;
-        const memUpperLimit = currentLimitMem < mem ? currentLimitMem : mem;
-
         return (
-            <ListGroupItem allowFocus className={this.state.error ? "list-group-item-danger" : ""}>
+            <ListGroupItem allowFocus bsStyle={this.state.error ? "danger" : null}>
                 <h5><strong>{getTaskDisplayName(taskPrefix)}</strong></h5>
                 <Row>
                     <Col md={4}>
@@ -69,7 +66,7 @@ class Task extends React.Component {
                             onChange={this.handleChangeLimit}
                             clear={this.handleClearError}
                             lowerLimit={this.props.procLowerLimit}
-                            upperLimit={procUpperLimit}
+                            upperLimit={currentLimitProc}
                             onInvalid={this.handleInvalid}
                         />
                     </Col>
@@ -81,7 +78,7 @@ class Task extends React.Component {
                             onChange={this.handleChangeLimit}
                             clear={this.handleClearError}
                             lowerLimit={this.props.memLowerLimit}
-                            upperLimit={memUpperLimit}
+                            upperLimit={currentLimitMem}
                             onInvalid={this.handleInvalid}
                         />
                     </Col>

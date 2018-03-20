@@ -38,6 +38,8 @@ const TasksFooter = () => (
 
 const TaskLimits = (props) => {
 
+    // console.log("Task limits: ", props.procLowerLimit, props.memLowerLimit, props.resourceProc, props.resourceMem);
+
     const taskComponents = map(taskNames, taskPrefix =>
         <Task
             key={taskPrefix}
@@ -103,6 +105,7 @@ const mapStateToProps = (state) => {
 const mapDispatchToProps = (dispatch) => ({
 
     onChangeLimit: (taskPrefix, key, value) => {
+        console.log("taskprefix: ", taskPrefix, ", key: ", key, ", value: ", value);
         dispatch(updateSetting(`${taskPrefix}_${key}`, value));
     }
 
