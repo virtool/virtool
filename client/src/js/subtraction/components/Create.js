@@ -39,6 +39,7 @@ class SubtractionFileItem extends React.Component {
 const getInitialState = () => ({
     subtractionId: "",
     fileId: "",
+    nickname: "",
     errors: []
 });
 
@@ -65,8 +66,11 @@ class CreateSubtraction extends React.Component {
     }
 
     handleChange = (e) => {
+
+        const { name, value } = e.target;
+
         this.setState({
-            subtractionId: e.target.value,
+            [name]: value,
             errors: []
         });
     };
@@ -164,13 +168,29 @@ class CreateSubtraction extends React.Component {
 
                 <form onSubmit={this.handleSubmit}>
                     <Modal.Body style={{margin: "0 0 10px 0"}}>
-                        <InputError
-                            type="text"
-                            label="Unique Name"
-                            value={this.state.subtractionId}
-                            onChange={this.handleChange}
-                            error={errorNameEmpty || errorNameTaken}
-                        />
+                        <Row>
+                            <Col md={12}>
+                                <InputError
+                                    type="text"
+                                    label="Unique Name"
+                                    name="subtractionId"
+                                    value={this.state.subtractionId}
+                                    onChange={this.handleChange}
+                                    error={errorNameEmpty || errorNameTaken}
+                                />
+                            </Col>
+                        </Row>
+                        <Row>
+                            <Col md={12}>
+                                <InputError
+                                    type="text"
+                                    label="Nickname"
+                                    name="nickname"
+                                    value={this.state.nickname}
+                                    onChange={this.handleChange}
+                                />
+                            </Col>
+                        </Row>
 
                         <h5><strong>Files</strong></h5>
                         <ListGroup className={panelListStyle}>
