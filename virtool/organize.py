@@ -1,8 +1,23 @@
-import virtool.virus
-import virtool.virus_index
-import virtool.sample
+import semver
+
 from virtool.user_permissions import PERMISSIONS
 from virtool.user_groups import merge_group_permissions
+
+
+async def organize(db, server_version):
+    if semver.parse(server_version)["major"] == 3:
+        return
+
+    if "viruses" in await db.collection_names():
+        await db.viruses.rename("targets")
+
+    linked_references = await db.targets.distinct("ref")
+
+    print("linked_references", linked_references)
+
+    await organize_analyses(db)
+    await organize_files(db)
+    await organize_groups(db)
 
 
 async def organize_analyses(db):
@@ -22,11 +37,6 @@ async def organize_files(db):
 
 
 async def organize_groups(db):
-    if not await db.groups.count({"_id": "administrator"}):
-        await db.groups.insert_one({
-            "_id": "administrator"
-        })
-
     async for group in db.groups.find():
         default_setting = True if group["_id"] == "administrator" else False
 
@@ -46,7 +56,6 @@ async def organize_groups(db):
 
 
 async def organize_indexes(db):
-    pass
 
 
 async def organize_samples(db, settings):
