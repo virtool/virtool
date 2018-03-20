@@ -181,11 +181,17 @@ async def init_job_manager(app):
     :type app: :class:`aiohttp.web.Application`
 
     """
+    capture_exception = None
+
+    if "sentry" in app:
+        capture_exception = app["sentry"].captureException
+
     app["job_manager"] = virtool.job_manager.Manager(
         app.loop,
         app["db"],
         app["settings"],
-        app["dispatcher"].dispatch
+        app["dispatcher"].dispatch,
+        capture_exception
     )
 
     app["job_manager"].start()

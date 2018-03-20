@@ -69,7 +69,13 @@ class MockSettings:
 @pytest.fixture
 def test_job_manager(mocker, loop, test_motor):
 
-    manager = virtool.job_manager.Manager(loop, test_motor, MockSettings(), mocker.stub(name="dispatch"))
+    manager = virtool.job_manager.Manager(
+        loop,
+        test_motor,
+        MockSettings(),
+        mocker.stub(name="dispatch"),
+        mocker.stub(name="capture_exception")
+    )
 
     yield manager
 
