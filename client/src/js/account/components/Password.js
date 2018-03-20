@@ -22,7 +22,7 @@ class ChangePassword extends React.Component {
 
     componentWillReceiveProps (nextProps) {
         if (nextProps.errors && nextProps.errors.CHANGE_ACCOUNT_PASSWORD_ERROR) {
-            if (nextProps.errors.CHANGE_ACCOUNT_PASSWORD_ERROR.status === "400") {
+            if (nextProps.errors.CHANGE_ACCOUNT_PASSWORD_ERROR.status === 400) {
                 this.setState({
                     errors: [
                         {
@@ -36,7 +36,7 @@ class ChangePassword extends React.Component {
                     errors: [
                         {
                             id: 0,
-                            message: nextProps.errors.CHANGE_ACCOUNT_PASSWORD_ERROR.message
+                            message: "Passwords must contain at least 8 characters"
                         }
                     ]
                 });
