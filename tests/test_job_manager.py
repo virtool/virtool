@@ -5,7 +5,7 @@ import virtool.job_manager
 
 
 @pytest.fixture
-def test_job_manager(tmpdir, loop, test_motor, test_dispatch):
+def test_job_manager(loop, mocker, tmpdir, test_motor, test_dispatch):
     settings = {
         "proc": 6,
         "mem": 24,
@@ -16,7 +16,7 @@ def test_job_manager(tmpdir, loop, test_motor, test_dispatch):
 
     tmpdir.mkdir("logs").mkdir("jobs")
 
-    manager = virtool.job_manager.Manager(loop, test_motor, settings, test_dispatch)
+    manager = virtool.job_manager.Manager(loop, test_motor, settings, test_dispatch, mocker.stub("capture_exception"))
 
     manager.start()
 
@@ -227,6 +227,7 @@ class TestReserveResources:
             test_job_manager.db,
             test_job_manager.settings,
             test_job_manager.dispatch,
+            test_job_manager.capture_exception,
             "foobar",
             "dummy",
             {},
@@ -258,6 +259,7 @@ class TestReserveResources:
             test_job_manager.db,
             test_job_manager.settings,
             test_job_manager.dispatch,
+            test_job_manager.capture_exception,
             "foobar",
             "dummy",
             {},
@@ -271,6 +273,7 @@ class TestReserveResources:
             test_job_manager.db,
             test_job_manager.settings,
             test_job_manager.dispatch,
+            test_job_manager.capture_exception,
             "foobar",
             "dummy",
             {},
@@ -306,6 +309,7 @@ class TestReleaseResources:
             test_job_manager.db,
             test_job_manager.settings,
             test_job_manager.dispatch,
+            test_job_manager.capture_exception,
             "foobar",
             "dummy",
             {},
