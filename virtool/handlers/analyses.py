@@ -25,26 +25,28 @@ async def get(req):
     if document is None:
         return not_found()
 
-    if document["algorithm"] == "nuvs" and document["results"] == "file":
+    if document["ready"]:
 
-        sample_id = document["sample"]["id"]
+        if document["algorithm"] == "nuvs" and document["results"] == "file":
 
-        path = os.path.join(
-            req.app["settings"].get("data_path"),
-            "samples",
-            sample_id,
-            "analysis",
-            analysis_id,
-            "nuvs.json"
-        )
+            sample_id = document["sample"]["id"]
 
-        async with aiofiles.open(path, "r") as f:
-            json_string = await f.read()
-            document["results"] = json.loads(json_string)
+            path = os.path.join(
+                req.app["settings"].get("data_path"),
+                "samples",
+                sample_id,
+                "analysis",
+                analysis_id,
+                "nuvs.json"
+            )
 
-    formatted = await virtool.sample_analysis.format_analysis(db, document)
+            async with aiofiles.open(path, "r") as f:
+                json_string = await f.read()
+                document["results"] = json.loads(json_string)
 
-    return json_response(virtool.utils.base_processor(formatted))
+        document = await virtool.sample_analysis.format_analysis(db, document)
+
+    return json_response(virtool.utils.base_processor(document))
 
 
 async def remove(req):
