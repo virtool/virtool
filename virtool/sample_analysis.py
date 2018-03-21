@@ -850,6 +850,8 @@ class NuVs(Base):
             self.import_results
         ]
 
+        self.temp_dir = None
+
     @virtool.job.stage_method
     async def map_viruses(self):
         """
@@ -918,31 +920,36 @@ class NuVs(Base):
                 "-s", os.path.join(self.analysis_path, "unmapped_hosts.fq"),
             ]
 
-        with tempfile.TemporaryDirectory() as temp_path:
-            command += [
-                "-o", temp_path,
-                "-k", "21,33,55,75"
-            ]
+        self.temp_dir = tempfile.TemporaryDirectory()
 
-            await self.run_subprocess(command)
+        temp_path = self.temp_dir.name
 
+        command += [
+            "-o", temp_path,
+            "-k", "21,33,55,75"
+        ]
+
+        await self.run_subprocess(command)
+
+        shutil.copyfile(
+            os.path.join(temp_path, "scaffolds.fasta"),
+            os.path.join(self.analysis_path, "assembly.fa")
+        )
+
+        shutil.copy(
+            os.path.join(temp_path, "spades.log"),
+            self.analysis_path
+        )
+
+        warnings_path = os.path.join(temp_path, "warnings.log")
+
+        if os.path.isfile(warnings_path):
             shutil.copyfile(
-                os.path.join(temp_path, "scaffolds.fasta"),
-                os.path.join(self.analysis_path, "assembly.fa")
+                warnings_path,
+                os.path.join(self.analysis_path, "spades.warnings")
             )
 
-            shutil.copy(
-                os.path.join(temp_path, "spades.log"),
-                self.analysis_path
-            )
-
-            warnings_path = os.path.join(temp_path, "warnings.log")
-
-            if os.path.isfile(warnings_path):
-                shutil.copyfile(
-                    warnings_path,
-                    os.path.join(self.analysis_path, "spades.warnings")
-                )
+        self.temp_dir.cleanup()
 
     @virtool.job.stage_method
     async def process_fasta(self):
@@ -1100,6 +1107,14 @@ class NuVs(Base):
         document = await virtool.sample.recalculate_algorithm_tags(self.db, self.sample_id)
 
         await self.dispatch("samples", "update", document)
+
+    async def cleanup(self):
+        try:
+            self.temp_dir.cleanup()
+        except AttributeError:
+            pass
+
+        await super().cleanup()
 
 
 def run_patho(analysis_path, vta_path, reassigned_path):
