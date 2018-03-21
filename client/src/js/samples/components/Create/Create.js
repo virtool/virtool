@@ -1,5 +1,5 @@
 import React from "react";
-import { filter, map, replace, split, find, remove } from "lodash-es";
+import { filter, map, replace, split, upperFirst, get } from "lodash-es";
 import { connect } from "react-redux";
 import {
     Modal,
@@ -12,6 +12,7 @@ import { push } from "react-router-redux";
 
 import ReadSelector from "./ReadSelector";
 import { findReadyHosts, createSample } from "../../actions";
+import { clearError } from "../../../errors/actions";
 import { Button, Icon, InputError, LoadingPlaceholder } from "../../../base";
 import { findFiles } from "../../../files/actions";
 import { routerLocationHasState } from "../../../utils";
@@ -28,7 +29,9 @@ const getInitialState = (props) => ({
     locale: "",
     subtraction: getReadyHosts(props),
     group: props.forceGroupChoice ? "none" : "",
-    errors: []
+    errorName: "",
+    errorSubtraction: "",
+    errorFile: ""
 });
 
 const SampleUserGroup = ({ group, groups, onChange }) => {
@@ -60,16 +63,10 @@ class CreateSample extends React.Component {
             return this.setState({subtraction: getReadyHosts(nextProps)});
         }
 
-        const errors = [];
-
-        if (!this.state.name) {
-            this.setState({ error: "" });
-        } else if (nextProps.errors && nextProps.errors.CREATE_SAMPLE_ERROR) {
-            errors.push({
-                id: 0,
-                message: nextProps.errors.CREATE_SAMPLE_ERROR.message
+        if (!this.props.error && nextProps.error) {
+            this.setState({
+                errorName: nextProps.error
             });
-            this.setState({ errors });
         }
     }
 
@@ -78,50 +75,62 @@ class CreateSample extends React.Component {
         this.props.onFindFiles();
     };
 
+    handleHide = () => {
+        this.props.onHide();
+        if (this.state.error) {
+            this.props.onClearError("UPDATE_SAMPLE_ERROR");
+        }
+    };
+
     handleModalExited = () => {
-        this.setState({
-            selected: [],
-            name: "",
-            host: "",
-            isolate: "",
-            locale: "",
-            group: this.props.forceGroupChoice ? "none" : "",
-            errors: []
-        });
+        this.setState(getInitialState(this.props));
+    };
+
+    handleChange = (e) => {
+        const name = e.target.name;
+
+        if (name === "name" || name === "subtraction") {
+            const errorType = `error${upperFirst(name)}`;
+
+            this.setState({
+                [name]: e.target.value,
+                [errorType]: ""
+            });
+
+            if (this.state.errorName) {
+                this.props.onClearError("CREATE_SAMPLE_ERROR");
+            }
+        } else {
+            this.setState({
+                [name]: e.target.value
+            });
+        }
+
     };
 
     handleSubmit = (e) => {
         e.preventDefault();
 
-        const errors = [];
+        let error = "";
 
         if (!this.state.name) {
-            errors.push({
-                id: 0,
-                message: "Required Field"
-            });
+            error = "Required Field";
+            this.setState({ errorName: error });
         }
 
         if (!this.props.readyHosts || !this.props.readyHosts.length) {
-            errors.push({
-                id: 1,
-                message: "A host genome must be added to Virtool before samples can be created and analyzed."
-            });
+            error = "A host genome must be added to Virtool before samples can be created and analyzed.";
+            this.setState({ errorSubtraction: error });
         }
 
         if (!this.state.selected.length) {
-            errors.push({
-                id: 2,
-                message: "At least one read file must be attached to the sample"
-            });
+            error = "At least one read file must be attached to the sample";
+            this.setState({ errorFile: error });
         }
 
-        if (errors.length) {
-            this.setState({errors});
-            return;
+        if (!error) {
+            this.props.onCreate({...this.state, files: this.state.selected});
         }
-
-        this.props.onCreate({...this.state, files: this.state.selected});
     };
 
     autofill = () => {
@@ -131,11 +140,7 @@ class CreateSample extends React.Component {
     };
 
     handleSelect = (selected) => {
-        const newErrors = this.state.errors;
-
-        remove(newErrors, {id: 2});
-
-        this.setState({selected, errors: newErrors});
+        this.setState({ selected, errorFile: "" });
     };
 
     render () {
@@ -164,19 +169,17 @@ class CreateSample extends React.Component {
 
         const libraryType = this.state.selected.length === 2 ? "Paired" : "Unpaired";
 
-        const errorName = find(this.state.errors, ["id", 0]) ? find(this.state.errors, ["id", 0]).message : null;
-        const errorHost = find(this.state.errors, ["id", 1]) ? find(this.state.errors, ["id", 1]).message : null;
-        const errorFile = find(this.state.errors, ["id", 2]) ? find(this.state.errors, ["id", 2]).message : null;
+        const { errorName, errorSubtraction, errorFile } = this.state;
 
         return (
             <Modal
                 bsSize="large"
                 show={this.props.show}
-                onHide={this.props.onHide}
+                onHide={this.handleHide}
                 onEnter={this.modalEnter}
                 onExited={this.handleModalExited}
             >
-                <Modal.Header onHide={this.props.onHide} closeButton>
+                <Modal.Header onHide={this.handleHide} closeButton>
                     Create Sample
                 </Modal.Header>
 
@@ -188,9 +191,9 @@ class CreateSample extends React.Component {
                                 <ControlLabel>Sample Name</ControlLabel>
                                 <InputGroup>
                                     <InputError
-                                        name="sample name"
+                                        name="name"
                                         value={this.state.name}
-                                        onChange={(e) => this.setState({name: e.target.value, errors: []})}
+                                        onChange={this.handleChange}
                                         autocomplete={false}
                                         error={errorName}
                                     />
@@ -207,9 +210,10 @@ class CreateSample extends React.Component {
                             </Col>
                             <Col md={6}>
                                 <InputError
+                                    name="isolate"
                                     label="Isolate"
                                     value={this.state.isolate}
-                                    onChange={(e) => this.setState({isolate: e.target.value})}
+                                    onChange={this.handleChange}
                                 />
                             </Col>
                         </Row>
@@ -217,18 +221,20 @@ class CreateSample extends React.Component {
                         <Row>
                             <Col md={6}>
                                 <InputError
+                                    name="host"
                                     label="True Host"
                                     value={this.state.host}
-                                    onChange={(e) => this.setState({host: e.target.value})}
+                                    onChange={this.handleChange}
                                 />
                             </Col>
                             <Col md={6}>
                                 <InputError
+                                    name="subtraction"
                                     type="select"
                                     label="Subtraction Host"
                                     value={this.state.subtraction}
-                                    onChange={(e) => this.setState({subtraction: e.target.value, errors: []})}
-                                    error={errorHost}
+                                    onChange={this.handleChange}
+                                    error={errorSubtraction}
                                 >
                                     {hostComponents}
                                 </InputError>
@@ -238,9 +244,10 @@ class CreateSample extends React.Component {
                         <Row>
                             <Col md={6}>
                                 <InputError
+                                    name="locale"
                                     label="Locale"
                                     value={this.state.locale}
-                                    onChange={(e) => this.setState({locale: e.target.value})}
+                                    onChange={this.handleChange}
                                 />
                             </Col>
                             {userGroup}
@@ -283,7 +290,7 @@ const mapStateToProps = (state) => {
         readyHosts: state.samples.readyHosts,
         readyReads: filter(state.files.documents, {type: "reads", reserved: false}),
         forceGroupChoice: state.settings.sample_group === "force_choice",
-        errors: state.errors
+        error: get(state, "errors.CREATE_SAMPLE_ERROR.message", "")
     };
 };
 
@@ -303,6 +310,10 @@ const mapDispatchToProps = (dispatch) => ({
 
     onHide: () => {
         dispatch(push({...window.location, state: {create: false}}));
+    },
+
+    onClearError: (error) => {
+        dispatch(clearError(error));
     }
 
 });

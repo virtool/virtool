@@ -2,8 +2,10 @@ import React from "react";
 import { push } from "react-router-redux";
 import { connect } from "react-redux";
 import { Modal } from "react-bootstrap";
+import { get } from "lodash-es";
 
 import { getUnbuilt, createIndex } from "../actions";
+import { clearError } from "../../errors/actions";
 import { Button, LoadingPlaceholder } from "../../base";
 import RebuildHistory from "./History";
 import {routerLocationHasState} from "../../utils";
@@ -12,13 +14,12 @@ class RebuildIndex extends React.Component {
 
     constructor (props) {
         super(props);
-
         this.state = { error: "" };
     }
 
     componentWillReceiveProps (nextProps) {
-        if (nextProps.errors && nextProps.errors.CREATE_INDEX_ERROR) {
-            this.setState({ error: nextProps.errors.CREATE_INDEX_ERROR.message });
+        if (!this.props.error && nextProps.error) {
+            this.setState({ error: nextProps.error });
         }
     }
 
@@ -26,9 +27,18 @@ class RebuildIndex extends React.Component {
         this.props.onGetUnbuilt();
     };
 
+    handleHide = () => {
+        this.setState({ error: "" });
+
+        this.props.onHide();
+
+        if (this.props.error) {
+            this.props.onClearError("CREATE_INDEX_ERROR");
+        }
+    };
+
     save = (e) => {
         e.preventDefault();
-
         this.props.onRebuild();
     };
 
@@ -54,8 +64,8 @@ class RebuildIndex extends React.Component {
             : null;
 
         return (
-            <Modal bsSize="large" onEntered={this.modalEntered} show={this.props.show} onHide={this.props.onHide}>
-                <Modal.Header>
+            <Modal bsSize="large" onEntered={this.modalEntered} show={this.props.show} onHide={this.handleHide}>
+                <Modal.Header onHide={this.handleHide} closeButton>
                     Rebuild Index
                 </Modal.Header>
                 <form onSubmit={this.save}>
@@ -77,7 +87,7 @@ class RebuildIndex extends React.Component {
 const mapStateToProps = (state) => ({
     show: routerLocationHasState(state, "rebuild", true),
     unbuilt: state.indexes.unbuilt,
-    errors: state.errors
+    error: get(state, "errors.CREATE_INDEX_ERROR.message", "")
 });
 
 const mapDispatchToProps = (dispatch) => ({
@@ -92,10 +102,12 @@ const mapDispatchToProps = (dispatch) => ({
 
     onHide: () => {
         dispatch(push({...window.location, state: {rebuild: false}}));
+    },
+
+    onClearError: (error) => {
+        dispatch(clearError(error));
     }
 
 });
 
-const Container = connect(mapStateToProps, mapDispatchToProps)(RebuildIndex);
-
-export default Container;
+export default connect(mapStateToProps, mapDispatchToProps)(RebuildIndex);

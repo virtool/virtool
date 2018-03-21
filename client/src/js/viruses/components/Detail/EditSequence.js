@@ -10,11 +10,12 @@
  */
 
 import React from "react";
-import { find, map } from "lodash-es";
+import { find, map, get } from "lodash-es";
 import { connect } from "react-redux";
 import { Row, Col, Modal, FormGroup, FormControl, ControlLabel } from "react-bootstrap";
 
 import { editSequence, hideVirusModal } from "../../actions";
+import { clearError } from "../../../errors/actions";
 import { Button, InputError } from "../../../base";
 import SequenceField from "./SequenceField";
 
@@ -52,8 +53,8 @@ class EditSequence extends React.Component {
     }
 
     componentWillReceiveProps (nextProps) {
-        if (nextProps.errors && nextProps.errors.EDIT_SEQUENCE_ERROR) {
-            this.setState({ error: nextProps.errors.EDIT_SEQUENCE_ERROR.message });
+        if (!this.props.error && nextProps.error) {
+            this.setState({ error: nextProps.error });
         }
     }
 
@@ -64,10 +65,22 @@ class EditSequence extends React.Component {
             [name]: value,
             error: ""
         });
+
+        if (this.props.error) {
+            this.props.onClearError("EDIT_SEQUENCE_ERROR");
+        }
     };
 
     handleModalEnter = () => {
         this.setState(getInitialState(this.props));
+    };
+
+    handleHide = () => {
+        this.props.onHide();
+
+        if (this.props.error) {
+            this.props.onClearError("EDIT_SEQUENCE_ERROR");
+        }
     };
 
     handleSubmit = (e) => {
@@ -109,8 +122,8 @@ class EditSequence extends React.Component {
         );
 
         return (
-            <Modal show={!!this.props.sequenceId} onEnter={this.handleModalEnter} onHide={this.props.onHide}>
-                <Modal.Header onHide={this.props.onHide} closeButton>
+            <Modal show={!!this.props.sequenceId} onEnter={this.handleModalEnter} onHide={this.handleHide}>
+                <Modal.Header onHide={this.handleHide} closeButton>
                     Edit Sequence
                 </Modal.Header>
 
@@ -192,7 +205,7 @@ const mapStateToProps = state => ({
     isolate: state.viruses.activeIsolate,
     sequenceId: state.viruses.editSequence,
     virusId: state.viruses.detail.id,
-    errors: state.errors
+    error: get(state, "errors.EDIT_SEQUENCE_ERROR.message", "")
 });
 
 const mapDispatchToProps = dispatch => ({
@@ -203,6 +216,10 @@ const mapDispatchToProps = dispatch => ({
 
     onSave: (virusId, isolateId, sequenceId, definition, host, sequence, segment) => {
         dispatch(editSequence(virusId, isolateId, sequenceId, definition, host, sequence, segment));
+    },
+
+    onClearError: (error) => {
+        dispatch(clearError(error));
     }
 
 });

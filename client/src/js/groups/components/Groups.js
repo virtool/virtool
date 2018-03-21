@@ -1,10 +1,11 @@
 import React from "react";
-import { difference, filter, find, includes, map, some, sortBy, transform } from "lodash-es";
+import { difference, filter, find, includes, map, some, sortBy, transform, get } from "lodash-es";
 import { Col, Label, InputGroup, ListGroup, Modal, Panel, Row } from "react-bootstrap";
 import { connect } from "react-redux";
 import { push } from "react-router-redux";
 
 import { listGroups, createGroup, setGroupPermission, removeGroup } from "../actions";
+import { clearError } from "../../errors/actions";
 import { AutoProgressBar, Button, Icon, InputError, ListGroupItem, LoadingPlaceholder } from "../../base";
 import {routerLocationHasState} from "../../utils";
 
@@ -76,12 +77,29 @@ class Groups extends React.Component {
         });
 
         this.props.updatePermissions();
+
+        if (this.props.error) {
+            this.props.onClearError("CREATE_GROUP_ERROR");
+        }
     };
 
     handleSelect = (activeId) => {
         this.setState({
             activeId
         });
+    };
+
+    handleChange = (e) => {
+        this.setState({
+            createGroupId: e.target.value,
+            spaceError: this.state.spaceError && includes(e.target.value, " "),
+            submitted: false,
+            error: ""
+        });
+
+        if (this.props.error) {
+            this.props.onClearError("CREATE_GROUP_ERROR");
+        }
     };
 
     handleSubmit = (e) => {
@@ -111,7 +129,6 @@ class Groups extends React.Component {
         );
 
         const activeGroup = find(this.props.groups, {id: this.state.activeId});
-
         const members = filter(this.props.users, user => includes(user.groups, activeGroup.id));
 
         let memberComponents = map(members, member =>
@@ -130,11 +147,10 @@ class Groups extends React.Component {
 
         let error;
 
-        if (this.state.submitted && this.props.errors && this.props.errors.CREATE_GROUP_ERROR) {
-            error = this.props.errors.CREATE_GROUP_ERROR.message;
+        if (this.state.submitted && this.props.error) {
+            error = this.props.error;
         }
 
-        // This error text is shown when the group name contains a space.
         if (this.state.spaceError) {
             error = "Group names may not contain spaces";
         }
@@ -170,12 +186,7 @@ class Groups extends React.Component {
                                 <InputError
                                     type="text"
                                     value={this.state.createGroupId}
-                                    onChange={(e) => this.setState({
-                                        createGroupId: e.target.value,
-                                        spaceError: this.state.spaceError && includes(e.target.value, " "),
-                                        submitted: false,
-                                        error: ""
-                                    })}
+                                    onChange={this.handleChange}
                                     error={error || this.state.error}
                                 />
                                 <InputGroup.Button style={{verticalAlign: "top", zIndex: "0"}}>
@@ -222,7 +233,7 @@ const mapStateToProps = (state) => ({
     users: state.users.list,
     groups: state.groups.list,
     pending: state.groups.pending,
-    errors: state.errors
+    error: get(state, "errors.CREATE_GROUP_ERROR.message", "")
 });
 
 const mapDispatchToProps = (dispatch) => ({
@@ -245,10 +256,12 @@ const mapDispatchToProps = (dispatch) => ({
 
     onSetPermission: (groupId, permission, value) => {
         dispatch(setGroupPermission(groupId, permission, value));
+    },
+
+    onClearError: (error) => {
+        dispatch(clearError(error));
     }
 
 });
 
-const Container = connect(mapStateToProps, mapDispatchToProps)(Groups);
-
-export default Container;
+export default connect(mapStateToProps, mapDispatchToProps)(Groups);

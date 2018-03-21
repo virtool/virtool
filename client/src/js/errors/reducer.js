@@ -1,6 +1,7 @@
 import { endsWith, replace } from "lodash-es";
 import { reportAPIError } from "../utils";
 import {
+    CLEAR_ERROR,
     CREATE_SAMPLE,
     UPDATE_SAMPLE,
     CREATE_VIRUS,
@@ -43,11 +44,14 @@ export default function errorsReducer (state = null, action) {
 
     if (failedAction) {
         errorName = getErrorName(action);
+    } else if (action.type === CLEAR_ERROR) {
+        // Clear specific error explicitly
+        return {...state, [action.error]: null};
     } else {
         // Ignore requests until an error has occurred
         errorName = state ? resetErrorName(action) : null;
 
-        // Only reset errors that had been set previously
+        // Only clear errors on request that had been set previously
         if (errorName && state[errorName]) {
             return {...state, [errorName]: null};
         }
@@ -76,6 +80,7 @@ export default function errorsReducer (state = null, action) {
             return {...state, [errorName]: errorPayload};
 
         default:
+            // Report uncaught errors to Sentry
             reportAPIError(failedAction);
             return state;
     }

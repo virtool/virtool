@@ -2,9 +2,10 @@ import React from "react";
 import { connect } from "react-redux";
 import { push } from "react-router-redux";
 import { Row, Col, Modal, ButtonToolbar } from "react-bootstrap";
-import { pick, find } from "lodash-es";
+import { pick, get, upperFirst } from "lodash-es";
 
 import { createUser } from "../actions";
+import { clearError } from "../../errors/actions";
 import { Icon, InputError, Checkbox, Button } from "../../base";
 import { routerLocationHasState } from "../../utils";
 
@@ -13,7 +14,9 @@ const getInitialState = () => ({
     password: "",
     confirm: "",
     forceReset: false,
-    errors: []
+    errorUserId: "",
+    errorPassword: "",
+    errorConfirm: ""
 });
 
 export class CreateUser extends React.PureComponent {
@@ -24,31 +27,33 @@ export class CreateUser extends React.PureComponent {
     }
 
     componentWillReceiveProps (nextProps) {
-        const errors = [];
 
-        if (!this.state.userId) {
-            return this.setState({ errors });
-        }
-
-        if (nextProps.errors && nextProps.errors.CREATE_USER_ERROR && nextProps.show) {
-            errors.push({
-                id: 0,
-                message: nextProps.errors.CREATE_USER_ERROR.message
+        if (!this.props.error && nextProps.error) {
+            this.setState({
+                errorUserId: nextProps.error
             });
-            this.setState({ errors });
         }
     }
 
     handleChange = (e) => {
         const { name, value } = e.target;
+        const errorType = `error${upperFirst(name)}`;
+
         this.setState({
             [name]: value,
-            errors: []
+            [errorType]: ""
         });
+
+        if (this.props.error) {
+            this.props.onClearError("CREATE_USER_ERROR");
+        }
     };
 
     handleModalExited = () => {
         this.setState(getInitialState());
+        if (this.props.error) {
+            this.props.onClearError("CREATE_USER_ERROR");
+        }
     };
 
     handleToggleForceReset = () => {
@@ -60,42 +65,29 @@ export class CreateUser extends React.PureComponent {
     handleSubmit = (e) => {
         e.preventDefault();
 
-        const errors = [];
+        let error = "";
 
         if (!this.state.userId) {
-            errors.push({
-                id: 0,
-                message: "Please specify a username"
-            });
+            error = "Please specify a username";
+            this.setState({ errorUserId: error });
         }
 
-        if (!this.state.password || this.state.password.length < this.props.minPassLen) {
-            errors.push({
-                id: 1,
-                message: `Passwords must contain at least ${this.props.minPassLen} characters`
-            });
+        if (this.state.password.length < this.props.minPassLen) {
+            error = `Passwords must contain at least ${this.props.minPassLen} characters`;
+            this.setState({ errorPassword: error });
         }
 
         if (this.state.confirm !== this.state.password) {
-            errors.push({
-                id: 2,
-                message: "Passwords do not match"
-            });
+            error = "Passwords do not match";
+            this.setState({ errorConfirm: error });
         }
 
-        if (errors.length) {
-            this.setState({errors});
-            return;
+        if (!error) {
+            this.props.onCreate(pick(this.state, ["userId", "password", "confirm", "forceReset"]));
         }
-
-        this.props.onCreate(pick(this.state, ["userId", "password", "confirm", "forceReset"]));
     };
 
     render () {
-
-        const errorUserName = find(this.state.errors, ["id", 0]) ? find(this.state.errors, ["id", 0]).message : null;
-        const errorPassLen = find(this.state.errors, ["id", 1]) ? find(this.state.errors, ["id", 1]).message : null;
-        const errorPassMatch = find(this.state.errors, ["id", 2]) ? find(this.state.errors, ["id", 2]).message : null;
 
         return (
             <Modal show={this.props.show} onHide={this.props.onHide} onExited={this.handleModalExited}>
@@ -111,7 +103,7 @@ export class CreateUser extends React.PureComponent {
                                     name="userId"
                                     value={this.state.userId}
                                     onChange={this.handleChange}
-                                    error={errorUserName}
+                                    error={this.state.errorUserId}
                                 />
                             </Col>
                         </Row>
@@ -123,7 +115,7 @@ export class CreateUser extends React.PureComponent {
                                     name="password"
                                     value={this.state.password}
                                     onChange={this.handleChange}
-                                    error={errorPassLen}
+                                    error={this.state.errorPassword}
                                 />
                             </Col>
                             <Col xs={6}>
@@ -133,7 +125,7 @@ export class CreateUser extends React.PureComponent {
                                     name="confirm"
                                     value={this.state.confirm}
                                     onChange={this.handleChange}
-                                    error={errorPassMatch}
+                                    error={this.state.errorConfirm}
                                 />
                             </Col>
                         </Row>
@@ -164,7 +156,7 @@ const mapStateToProps = state => ({
     show: routerLocationHasState(state, "createUser"),
     pending: state.users.createPending,
     minPassLen: state.settings.data.minimum_password_length,
-    errors: state.errors
+    error: get(state, "errors.CREATE_USER_ERROR.message", "")
 });
 
 const mapDispatchToProps = dispatch => ({
@@ -175,6 +167,10 @@ const mapDispatchToProps = dispatch => ({
 
     onHide: () => {
         dispatch(push({...window.location, state: {createUser: false}}));
+    },
+
+    onClearError: (error) => {
+        dispatch(clearError(error));
     }
 
 });

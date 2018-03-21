@@ -12,10 +12,11 @@ import React from "react";
 import { connect } from "react-redux";
 import { Row, Col, Modal, InputGroup, ControlLabel } from "react-bootstrap";
 import { ClipLoader } from "halogenium";
-import { map } from "lodash-es";
+import { map, get, upperFirst } from "lodash-es";
 
 import SequenceField from "./SequenceField";
 import { addSequence, hideVirusModal } from "../../actions";
+import { clearError } from "../../../errors/actions";
 import { Button, Icon, InputError } from "../../../base";
 import { getGenbank } from "../../api";
 
@@ -26,7 +27,10 @@ const getInitialState = () => ({
     sequence: "",
     segment: "",
     autofillPending: false,
-    error: ""
+    errorId: "",
+    errorSegment: "",
+    errorDefinition: "",
+    errorSequence: ""
 });
 
 class AddSequence extends React.Component {
@@ -37,13 +41,22 @@ class AddSequence extends React.Component {
     }
 
     componentWillReceiveProps (nextProps) {
-        if (!this.state.id) {
-            this.setState({ error: "" });
-        } else if (nextProps.errors && nextProps.errors.ADD_SEQUENCE_ERROR) {
-            if (nextProps.errors.ADD_SEQUENCE_ERROR.status === 422) {
-                this.setState({ error: "Minimum length is 1" });
+        if (!this.props.error && nextProps.error) {
+            let error = "";
+
+            if (nextProps.error.status === 422) {
+                error = "Minimum length is 1";
+
+                this.setState({
+                    errorId: this.state.id ? "" : error,
+                    errorDefinition: this.state.definition ? "" : error,
+                    errorSequence: this.state.sequence ? "" : error
+
+                });
+            } else if (nextProps.error.status === 404) {
+                this.setState({ errorSegment: nextProps.error.message });
             } else {
-                this.setState({ error: nextProps.errors.ADD_SEQUENCE_ERROR.message });
+                this.setState({ errorId: nextProps.error.message });
             }
         }
     }
@@ -51,7 +64,6 @@ class AddSequence extends React.Component {
     handleAutofill = () => {
         this.setState({autofillPending: true}, () => {
             getGenbank(this.state.id).then((resp) => {
-                // Success
                 const { definition, host, sequence } = resp.body;
 
                 this.setState({
@@ -73,18 +85,29 @@ class AddSequence extends React.Component {
     handleChange = (e) => {
         const { name, value } = e.target;
 
+        if (name === "host") {
+            return this.setState({
+                [name]: value
+            });
+        }
+
+        const error = `error${upperFirst(name)}`;
+
         this.setState({
             [name]: value,
-            error: name === "id" ? "" : this.state.error
+            [error]: ""
         });
-    };
 
-    handleHideError = () => {
-        this.setState({error: ""});
+        if (this.props.error) {
+            this.props.onClearError("ADD_SEQUENCE_ERROR");
+        }
     };
 
     handleModalExited = () => {
         this.setState(getInitialState());
+        if (this.props.error) {
+            this.props.onClearError("ADD_SEQUENCE_ERROR");
+        }
     };
 
     handleSubmit = (e) => {
@@ -104,7 +127,7 @@ class AddSequence extends React.Component {
         } else {
             this.setState({
                 show: true,
-                error: "Required Field"
+                errorId: "Required Field"
             });
         }
     };
@@ -131,15 +154,6 @@ class AddSequence extends React.Component {
             </option>
         );
 
-        const errorLength = this.state.error === "Minimum length is 1" ? this.state.error : null;
-        const errorSegment = this.state.error === "Segment not found" ? this.state.error : null;
-
-        let errorId = null;
-
-        if (this.state.error !== errorLength && this.state.error !== errorSegment) {
-            errorId = this.state.error;
-        }
-
         return (
             <Modal show={this.props.show} onHide={this.props.onHide} onExited={this.handleModalExited}>
                 <Modal.Header onHide={this.props.onHide} closeButton>
@@ -157,7 +171,7 @@ class AddSequence extends React.Component {
                                         name="id"
                                         value={this.state.id}
                                         onChange={this.handleChange}
-                                        error={errorId}
+                                        error={this.state.errorId}
                                     />
                                     <InputGroup.Button style={{verticalAlign: "top", zIndex: "0"}}>
                                         <Button type="button" onClick={this.handleAutofill}>
@@ -173,7 +187,7 @@ class AddSequence extends React.Component {
                                     name="segment"
                                     value={this.state.segment}
                                     onChange={this.handleChange}
-                                    error={errorSegment}
+                                    error={this.state.errorSegment}
                                 >
                                     {defaultOption}
                                     {segmentNames}
@@ -197,16 +211,17 @@ class AddSequence extends React.Component {
                                     name="definition"
                                     value={this.state.definition}
                                     onChange={this.handleChange}
-                                    error={this.state.definition ? null : errorLength}
+                                    error={this.state.errorDefinition}
                                 />
                             </Col>
                         </Row>
                         <Row>
                             <Col xs={12}>
                                 <SequenceField
+                                    name="sequence"
                                     sequence={this.state.sequence}
                                     onChange={this.handleChange}
-                                    error={this.state.sequence ? null : errorLength}
+                                    error={this.state.errorSequence}
                                 />
                             </Col>
                         </Row>
@@ -227,7 +242,7 @@ const mapStateToProps = state => ({
     show: state.viruses.addSequence,
     virusId: state.viruses.detail.id,
     isolateId: state.viruses.activeIsolateId,
-    errors: state.errors
+    error: get(state, "errors.ADD_SEQUENCE_ERROR", "")
 });
 
 const mapDispatchToProps = dispatch => ({
@@ -238,10 +253,12 @@ const mapDispatchToProps = dispatch => ({
 
     onSave: (virusId, isolateId, sequenceId, definition, host, sequence, segment) => {
         dispatch(addSequence(virusId, isolateId, sequenceId, definition, host, sequence, segment));
+    },
+
+    onClearError: (error) => {
+        dispatch(clearError(error));
     }
 
 });
 
-const Container = connect(mapStateToProps, mapDispatchToProps)(AddSequence);
-
-export default Container;
+export default connect(mapStateToProps, mapDispatchToProps)(AddSequence);

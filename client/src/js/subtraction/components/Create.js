@@ -1,13 +1,13 @@
 import React from "react";
-import { filter, map, find } from "lodash-es";
+import { filter, map, upperFirst, get } from "lodash-es";
 import { Row, Col, ListGroup, Modal } from "react-bootstrap";
 import { connect } from "react-redux";
 import { Link } from "react-router-dom";
 import { push } from "react-router-redux";
 
-
 import { findFiles } from "../../files/actions";
 import { createSubtraction } from "../actions";
+import { clearError } from "../../errors/actions";
 import { Button, Icon, InputError, ListGroupItem, RelativeTime } from "../../base";
 import {routerLocationHasState} from "../../utils";
 
@@ -40,7 +40,8 @@ const getInitialState = () => ({
     subtractionId: "",
     fileId: "",
     nickname: "",
-    errors: []
+    errorSubtractionId: "",
+    errorFile: ""
 });
 
 class CreateSubtraction extends React.Component {
@@ -51,28 +52,25 @@ class CreateSubtraction extends React.Component {
     }
 
     componentWillReceiveProps (nextProps) {
-        const errors = this.state.errors;
-
-        if (!this.state.subtractionId) {
-            this.setState({ error: "" });
-        } else if (nextProps.errors && nextProps.errors.CREATE_SUBTRACTION_ERROR) {
-            errors.push({
-                id: 2,
-                message: nextProps.errors.CREATE_SUBTRACTION_ERROR.message
+        if (!this.props.error && nextProps.error) {
+            this.setState({
+                errorSubtractionId: nextProps.error
             });
-
-            this.setState({ errors });
         }
     }
 
     handleChange = (e) => {
-
         const { name, value } = e.target;
+        const errorType = `error${upperFirst(name)}`;
 
         this.setState({
             [name]: value,
-            errors: []
+            [errorType]: ""
         });
+
+        if (this.props.error) {
+            this.props.onClearError("CREATE_SUBTRACTION_ERROR");
+        }
     };
 
     handleModalEnter = () => {
@@ -81,40 +79,36 @@ class CreateSubtraction extends React.Component {
 
     handleModalExited = () => {
         this.setState(getInitialState());
+        if (this.props.error) {
+            this.props.onClearError("CREATE_SUBTRACTION_ERROR");
+        }
     };
 
     handleSelectFile = (fileId) => {
         this.setState({
-            fileId: fileId === this.state.fileId ? "" : fileId
+            fileId: fileId === this.state.fileId ? "" : fileId,
+            errorFile: ""
         });
     };
 
     handleSubmit = (e) => {
         e.preventDefault();
 
-        const errors = [];
+        let error = "";
 
-        if (this.state.subtractionId && this.state.fileId) {
-            if (!this.state.errors.length) {
-                this.props.onCreate(this.state);
-            }
-        } else {
-            if (!this.state.subtractionId) {
-                errors.push({
-                    id: 0,
-                    message: "Required Field"
-                });
-            }
-
-            if (!this.state.fileId) {
-                errors.push({
-                    id: 1,
-                    message: "Please select a file"
-                });
-            }
+        if (!this.state.subtractionId) {
+            error = "Required Field";
+            this.setState({ errorSubtractionId: error });
         }
 
-        this.setState({errors});
+        if (!this.state.fileId) {
+            error = "Please select a file";
+            this.setState({ errorFile: error });
+        }
+
+        if (!error) {
+            this.props.onCreate(this.state);
+        }
     };
 
     render () {
@@ -140,16 +134,12 @@ class CreateSubtraction extends React.Component {
             );
         }
 
-        const errorNameEmpty = find(this.state.errors, ["id", 0]) ? find(this.state.errors, ["id", 0]).message : null;
-        const errorFile = find(this.state.errors, ["id", 1]) ? find(this.state.errors, ["id", 1]).message : null;
-        const errorNameTaken = find(this.state.errors, ["id", 2]) ? find(this.state.errors, ["id", 2]).message : null;
-
-        const panelListStyle = errorFile ? "panel-list-custom-error" : "panel-list-custom";
-        const inputErrorClassName = errorFile ? "input-form-error" : "input-form-error-none";
+        const panelListStyle = this.state.errorFile ? "panel-list-custom-error" : "panel-list-custom";
+        const inputErrorClassName = this.state.errorFile ? "input-form-error" : "input-form-error-none";
 
         const errorMessage = (
-            <div className={inputErrorClassName}>
-                {errorFile ? errorFile : "None"}
+            <div className={inputErrorClassName} style={{margin: "3px 0 0 0"}}>
+                {this.state.errorFile || "None"}
             </div>
         );
 
@@ -176,7 +166,7 @@ class CreateSubtraction extends React.Component {
                                     name="subtractionId"
                                     value={this.state.subtractionId}
                                     onChange={this.handleChange}
-                                    error={errorNameEmpty || errorNameTaken}
+                                    error={this.state.errorSubtractionId}
                                 />
                             </Col>
                         </Row>
@@ -191,7 +181,7 @@ class CreateSubtraction extends React.Component {
                                 />
                             </Col>
                         </Row>
-          
+
                         <h5><strong>Files</strong></h5>
                         <ListGroup className={panelListStyle}>
                             {fileComponents}
@@ -218,7 +208,7 @@ class CreateSubtraction extends React.Component {
 const mapStateToProps = (state) => ({
     show: routerLocationHasState(state, "createSubtraction"),
     files: state.files.documents,
-    errors: state.errors
+    error: get(state, "errors.CREATE_SUBTRACTION_ERROR.message", "")
 });
 
 const mapDispatchToProps = (dispatch) => ({
@@ -233,6 +223,10 @@ const mapDispatchToProps = (dispatch) => ({
 
     onHide: () => {
         dispatch(push({...window.location, state: {createSubtraction: false}}));
+    },
+
+    onClearError: (error) => {
+        dispatch(clearError(error));
     }
 
 });

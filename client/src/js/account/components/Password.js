@@ -1,16 +1,19 @@
 import React from "react";
-import { find } from "lodash-es";
+import { get, upperFirst } from "lodash-es";
 import { connect } from "react-redux";
 import { Col, Panel, Row } from "react-bootstrap";
 
 import { changePassword } from "../actions";
+import { clearError } from "../../errors/actions";
 import { Button, InputError, RelativeTime } from "../../base";
 
 const getInitialState = () => ({
     oldPassword: "",
     newPassword: "",
     confirmPassword: "",
-    errors: []
+    errorOldPassword: "",
+    errorNewPassword: "",
+    errorConfirmPassword: ""
 });
 
 class ChangePassword extends React.Component {
@@ -21,68 +24,59 @@ class ChangePassword extends React.Component {
     }
 
     componentWillReceiveProps (nextProps) {
-        if (nextProps.errors && nextProps.errors.CHANGE_ACCOUNT_PASSWORD_ERROR) {
-            if (nextProps.errors.CHANGE_ACCOUNT_PASSWORD_ERROR.status === 400) {
+        if (!this.props.error && nextProps.error) {
+            const minLength = nextProps.settings.minimum_password_length;
+
+            if (nextProps.error.status === 400) {
                 this.setState({
-                    errors: [
-                        {
-                            id: 0,
-                            message: nextProps.errors.CHANGE_ACCOUNT_PASSWORD_ERROR.message
-                        }
-                    ]
+                    errorOldPassword: nextProps.error.message
                 });
             } else {
                 this.setState({
-                    errors: [
-                        {
-                            id: 0,
-                            message: "Passwords must contain at least 8 characters"
-                        }
-                    ]
+                    errorOldPassword: `Passwords must contain at least ${minLength} characters`
                 });
             }
-
         }
 
+        // Clears form on successful password change
         if (nextProps.lastPasswordChange !== this.props.lastPasswordChange) {
             this.setState(getInitialState());
         }
     }
 
+    handleChange = (e) => {
+        const errorType = `error${upperFirst(e.target.name)}`;
+        this.setState({[e.target.name]: e.target.value, [errorType]: ""});
+
+        if (this.props.error) {
+            this.props.onClearError("CHANGE_ACCOUNT_PASSWORD_ERROR");
+        }
+    };
+
     onSubmit = (e) => {
         e.preventDefault();
 
-        const errors = [];
-
+        let error = "";
         const minLength = this.props.settings.minimum_password_length;
 
         if (!this.state.oldPassword.length) {
-            errors.push({
-                id: 0,
-                message: "Please provide your old password"
-            });
+            error = "Please provide your old password";
+            this.setState({ errorOldPassword: error });
         }
 
         if (this.state.newPassword.length < minLength) {
-            errors.push({
-                id: 1,
-                message: `Passwords must contain at least ${minLength} characters`
-            });
+            error = `Passwords must contain at least ${minLength} characters`;
+            this.setState({ errorNewPassword: error });
         }
 
         if (this.state.confirmPassword !== this.state.newPassword) {
-            errors.push({
-                id: 2,
-                message: "New passwords do not match"
-            });
+            error = "New passwords do not match";
+            this.setState({ errorConfirmPassword: error });
         }
 
-        if (errors.length) {
-            return this.setState({errors});
+        if (!error) {
+            this.props.onChangePassword(this.state.oldPassword, this.state.newPassword, this.state.confirmPassword);
         }
-
-        // Set state to show that the user attempted to submit the form.
-        this.props.onChangePassword(this.state.oldPassword, this.state.newPassword, this.state.confirmPassword);
     };
 
     render () {
@@ -91,11 +85,8 @@ class ChangePassword extends React.Component {
             return <div />;
         }
 
-        const errorOldPass = find(this.state.errors, ["id", 0]) ? find(this.state.errors, ["id", 0]).message : null;
-        const errorPassLen = find(this.state.errors, ["id", 1]) ? find(this.state.errors, ["id", 1]).message : null;
-        const errorPassMatch = find(this.state.errors, ["id", 2]) ? find(this.state.errors, ["id", 2]).message : null;
-
-        const formStyle = this.state.errors.length ? "panel-danger" : "panel-default";
+        const formStyle = this.state.errorOldPassword || this.state.errorNewPassword || this.state.errorConfirmPassword
+            ? "panel-danger" : "panel-default";
 
         return (
             <Panel className={formStyle} header="Password">
@@ -103,23 +94,26 @@ class ChangePassword extends React.Component {
                     <InputError
                         label="Old Password"
                         type="password"
+                        name="oldPassword"
                         value={this.state.oldPassword}
-                        onChange={(e) => this.setState({oldPassword: e.target.value, errors: []})}
-                        error={errorOldPass}
+                        onChange={this.handleChange}
+                        error={this.state.errorOldPassword}
                     />
                     <InputError
                         label="New password"
                         type="password"
+                        name="newPassword"
                         value={this.state.newPassword}
-                        onChange={(e) => this.setState({newPassword: e.target.value, errors: []})}
-                        error={errorPassLen}
+                        onChange={this.handleChange}
+                        error={this.state.errorNewPassword}
                     />
                     <InputError
                         label="Confirm New Password"
                         type="password"
+                        name="confirmPassword"
                         value={this.state.confirmPassword}
-                        onChange={(e) => this.setState({confirmPassword: e.target.value, errors: []})}
-                        error={errorPassMatch}
+                        onChange={this.handleChange}
+                        error={this.state.errorConfirmPassword}
                     />
 
                     <div style={{marginTop: "20px"}}>
@@ -143,17 +137,19 @@ class ChangePassword extends React.Component {
 const mapStateToProps = (state) => ({
     lastPasswordChange: state.account.last_password_change,
     settings: state.settings.data,
-    errors: state.errors
+    error: get(state, "errors.CHANGE_ACCOUNT_PASSWORD_ERROR", "")
 });
 
 const mapDispatchToProps = (dispatch) => ({
 
     onChangePassword: (oldPassword, newPassword) => {
         dispatch(changePassword(oldPassword, newPassword));
+    },
+
+    onClearError: (error) => {
+        dispatch(clearError(error));
     }
 
 });
 
-const Container = connect(mapStateToProps, mapDispatchToProps)(ChangePassword);
-
-export default Container;
+export default connect(mapStateToProps, mapDispatchToProps)(ChangePassword);

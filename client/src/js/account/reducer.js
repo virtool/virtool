@@ -12,7 +12,6 @@ import {
     CREATE_API_KEY,
     CLEAR_API_KEY
 } from "../actionTypes";
-import { reportAPIError } from "../utils";
 
 /**
  * The state that should initially be stored.
@@ -49,14 +48,6 @@ export default function accountReducer (state = initialState, action) {
 
         case CHANGE_ACCOUNT_PASSWORD.SUCCEEDED:
             return {...state, oldPasswordError: false};
-
-        case CHANGE_ACCOUNT_PASSWORD.FAILED:
-            if (action.message === "Invalid old password.") {
-                return {...state, oldPasswordError: true};
-            }
-
-            reportAPIError(action);
-            return state;
 
         case CREATE_API_KEY.REQUESTED:
             return {...state, key: null};

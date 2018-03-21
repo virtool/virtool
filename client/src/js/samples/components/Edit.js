@@ -5,7 +5,8 @@ import { connect } from "react-redux";
 import { Row, Col, Modal } from "react-bootstrap";
 
 import { editSample } from "../actions";
-import { Button, Icon, InputError } from "../../base";
+import { clearError } from "../../errors/actions";
+import { Button, InputError } from "../../base";
 
 const getInitialState = ({ name, isolate, host }) => ({
     name: name || "",
@@ -22,10 +23,8 @@ class EditSample extends React.Component {
     }
 
     componentWillReceiveProps (nextProps) {
-        if (!this.state.name) {
-            this.setState({ error: "" });
-        } else if (nextProps.errors && nextProps.errors.UPDATE_SAMPLE_ERROR) {
-            this.setState({ error: nextProps.errors.UPDATE_SAMPLE_ERROR.message });
+        if (!this.props.error && nextProps.error) {
+            this.setState({ error: nextProps.error });
         }
     }
 
@@ -35,6 +34,10 @@ class EditSample extends React.Component {
             [name]: value,
             error: ""
         });
+
+        if (this.state.error) {
+            this.props.onClearError("UPDATE_SAMPLE_ERROR");
+        }
     };
 
     handleModalEnter = () => {
@@ -45,26 +48,15 @@ class EditSample extends React.Component {
         e.preventDefault();
 
         if (!this.state.name) {
-            this.setState({
+            return this.setState({
                 error: "Required Field"
             });
-            return;
         }
 
         this.props.onEdit(this.props.id, pick(this.state, ["name", "isolate", "host"]));
     };
 
     render () {
-
-        let error;
-
-        if (this.props.error) {
-            error = (
-                <p className="text-danger">
-                    <Icon name="warning" /> {this.props.error}
-                </p>
-            );
-        }
 
         return (
             <Modal show={this.props.show} onEnter={this.handleModalEnter} onHide={this.props.onHide}>
@@ -101,8 +93,6 @@ class EditSample extends React.Component {
                             </Col>
                         </Row>
 
-                        {error}
-
                     </Modal.Body>
                     <Modal.Footer>
                         <Button type="submit" bsStyle="primary" icon="floppy">
@@ -118,7 +108,7 @@ class EditSample extends React.Component {
 const mapStateToProps = (state) => ({
     ...state.samples.detail,
     show: get(state.router.location.state, "editSample", false),
-    errors: state.errors
+    error: get(state, "errors.UPDATE_SAMPLE_ERROR.message", "")
 });
 
 const mapDispatchToProps = (dispatch) => ({
@@ -129,10 +119,12 @@ const mapDispatchToProps = (dispatch) => ({
 
     onEdit: (sampleId, update) => {
         dispatch(editSample(sampleId, update));
+    },
+
+    onClearError: (error) => {
+        dispatch(clearError(error));
     }
 
 });
 
-const Container = connect(mapStateToProps, mapDispatchToProps)(EditSample);
-
-export default Container;
+export default connect(mapStateToProps, mapDispatchToProps)(EditSample);
