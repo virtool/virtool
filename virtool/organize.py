@@ -26,7 +26,7 @@ async def delete_unready(collection):
     await collection.delete_many({"ready": False})
 
 
-async def organize(db):
+async def organize(db, server_version):
     await organize_analyses(db)
     await organize_files(db)
     await organize_groups(db)
@@ -36,7 +36,7 @@ async def organize(db):
     await organize_species(db)
     await organize_sequences(db)
     await organize_species(db)
-    await organize_status(db)
+    await organize_status(db, server_version)
     await organize_subtraction(db)
     await organize_users(db)
     await organize_references(db)
