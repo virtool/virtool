@@ -1,5 +1,3 @@
-import semver
-
 import virtool.references
 import virtool.utils
 from virtool.user_permissions import PERMISSIONS
