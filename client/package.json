@@ -72,5 +72,9 @@
     "webpack-bundle-analyzer": "^2.8.2",
     "webpack-dev-server": "^2.6.1"
   },
-  "devDependencies": {}
+  "devDependencies": {},
+  "resolutions": {
+    "**/react": "^15.6.2",
+    "**/react-dom": "^15.6.2"
+  }
 }
