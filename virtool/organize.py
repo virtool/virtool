@@ -1,23 +1,45 @@
 import semver
 
+import virtool.references
+import virtool.utils
 from virtool.user_permissions import PERMISSIONS
-from virtool.user_groups import merge_group_permissions
 
 
-async def organize(db, server_version):
-    if semver.parse(server_version)["major"] == 3:
-        return
+REF_QUERY = {
+    "ref": {
+        "$exists": False
+    }
+}
 
-    if "viruses" in await db.collection_names():
-        await db.viruses.rename("targets")
 
-    linked_references = await db.targets.distinct("ref")
+async def add_original_ref(collection):
+    await collection.update_many(REF_QUERY, {
+        "$set": {
+            "ref": {
+                "id": "original"
+            }
+        }
+    })
 
-    print("linked_references", linked_references)
 
+async def delete_unready(collection):
+    await collection.delete_many({"ready": False})
+
+
+async def organize(db):
     await organize_analyses(db)
     await organize_files(db)
     await organize_groups(db)
+    await organize_history(db)
+    await organize_indexes(db)
+    await organize_references(db)
+    await organize_species(db)
+    await organize_sequences(db)
+    await organize_species(db)
+    await organize_status(db)
+    await organize_subtraction(db)
+    await organize_users(db)
+    await organize_references(db)
 
 
 async def organize_analyses(db):
@@ -25,7 +47,8 @@ async def organize_analyses(db):
     Delete any analyses with the ``ready`` field set to ``False``.
 
     """
-    await db.analyses.delete_many({"ready": False})
+    await delete_unready(db.analyses)
+    await add_original_ref(db.analyses)
 
 
 async def organize_files(db):
@@ -37,37 +60,49 @@ async def organize_files(db):
 
 
 async def organize_groups(db):
+    await db.groups.delete_one({"_id": "administrator"})
+
     async for group in db.groups.find():
-        default_setting = True if group["_id"] == "administrator" else False
-
-        permissions = {perm: default_setting for perm in PERMISSIONS}
-
-        for perm in permissions:
-            try:
-                permissions[perm] = group["permissions"][perm]
-            except KeyError:
-                pass
-
         await db.groups.update_one({"_id": group["_id"]}, {
             "$set": {
-                "permissions": permissions
+                "permissions": {perm: group["permissions"].get(perm, False) for perm in PERMISSIONS}
             }
         })
 
 
+async def organize_history(db):
+    await add_original_ref(db.history)
+
+
 async def organize_indexes(db):
+    await add_original_ref(db.indexes)
 
 
-async def organize_samples(db, settings):
-    """
-    Bring sample documents up-to-date by doing the following:
+async def organize_references(db):
+    if await db.species.count() and not await db.references.count():
+        await virtool.references.create_original(db)
 
 
-    :param db: a Motor connection to the database to update
-    :type db: :class:`motor.motor_asyncio.AsyncIOMotorCollection`
+async def organize_sequences(db):
+    async for document in db.sequences.find(REF_QUERY):
+        document.update({
+            "_id": await virtool.utils.get_new_id(db.sequences),
+            "accession": document["_id"],
+            "ref": {
+                "id": "original"
+            }
+        })
 
-    """
-    pass
+        await db.sequences.insert_one(document)
+
+    await db.sequences.delete_many(REF_QUERY)
+
+
+async def organize_species(db):
+    if "viruses" in await db.collection_names():
+        await db.viruses.rename("species")
+
+    await add_original_ref(db.species)
 
 
 async def organize_status(db, server_version):
@@ -85,22 +120,16 @@ async def organize_status(db, server_version):
 
 
 async def organize_subtraction(db):
-    await db.subtraction.delete_many({"ready": False})
+    await delete_unready(db.subtraction)
 
 
 async def organize_users(db):
-    # Make sure permissions are correct for all users.
-    async for user in db.users.find():
-        groups = await db.groups.find({"_id": {
-            "$in": user["groups"]
-        }}).to_list(None)
-
-        await db.users.update_one({"_id": user["_id"]}, {
+    async for document in db.users.find({"groups": "administrator"}):
+        await db.users.update_one({"_id": document["_id"]}, {
             "$set": {
-                "permissions": merge_group_permissions(list(groups))
+                "administrator": True
+            },
+            "$pull": {
+                "groups": "administrator"
             }
         })
-
-
-async def organize_viruses(db):
-    pass
