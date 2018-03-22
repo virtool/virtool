@@ -16,7 +16,7 @@ const validateEmail = (email) => {
     return re.test(email);
 };
 
-class Email extends React.Component {
+export class Email extends React.Component {
 
     constructor (props) {
         super(props);
@@ -87,6 +87,4 @@ const mapDispatchToProps = (dispatch) => ({
     }
 });
 
-const Container = connect(mapStateToProps, mapDispatchToProps)(Email);
-
-export default Container;
+export default connect(mapStateToProps, mapDispatchToProps)(Email);
