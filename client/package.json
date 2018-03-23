@@ -49,7 +49,7 @@
     "raven-js": "^3.19.1",
     "rc-progress": "^2.0.3",
     "react": "15",
-    "react-beautiful-dnd": "^4.0.1",
+    "react-beautiful-dnd": "^6.0.1",
     "react-bootstrap": "^0.32.1",
     "react-bootstrap-typeahead": "^2.0.0",
     "react-copy-to-clipboard": "^5.0.1",
