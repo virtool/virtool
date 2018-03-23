@@ -1,5 +1,6 @@
 import React from "react";
-import { Pagination as BSPagination } from "react-bootstrap";
+// Migration path for older version of bootstrap pagination
+import { Pagination as BSPagination } from "@react-bootstrap/pagination";
 
 /**
  * A thin composition of the react-bootstrap Pagination component that simplifies the required props. Also centers the

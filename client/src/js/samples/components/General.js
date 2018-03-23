@@ -34,42 +34,48 @@ const SampleDetailGeneral = (props) => (
             </tbody>
         </table>
 
-        <Panel header="Library">
-            <Table bordered fill>
-                <tbody>
-                    <tr>
-                        <th className="col-xs-4">Read Count</th>
-                        <td className="col-xs-8">{props.count}</td>
-                    </tr>
-                    <tr>
-                        <th>Length Range</th>
-                        <td>{props.lengthRange}</td>
-                    </tr>
-                    <tr>
-                        <th>GC Content</th>
-                        <td>{props.gc}</td>
-                    </tr>
-                    <tr>
-                        <th>Paired</th>
-                        <td>{props.paired ? "Yes" : "No"}</td>
-                    </tr>
-                </tbody>
-            </Table>
+        <Panel>
+            <Panel.Heading>Library</Panel.Heading>
+            <Panel.Body>
+                <Table bordered fill>
+                    <tbody>
+                        <tr>
+                            <th className="col-xs-4">Read Count</th>
+                            <td className="col-xs-8">{props.count}</td>
+                        </tr>
+                        <tr>
+                            <th>Length Range</th>
+                            <td>{props.lengthRange}</td>
+                        </tr>
+                        <tr>
+                            <th>GC Content</th>
+                            <td>{props.gc}</td>
+                        </tr>
+                        <tr>
+                            <th>Paired</th>
+                            <td>{props.paired ? "Yes" : "No"}</td>
+                        </tr>
+                    </tbody>
+                </Table>
+            </Panel.Body>
         </Panel>
 
-        <Panel header="Files">
-            <Table bordered fill>
-                <tbody>
-                    <tr>
-                        <th className="col-xs-4">Original Files</th>
-                        <td className="col-xs-8">{props.files.join(", ")}</td>
-                    </tr>
-                    <tr>
-                        <th>Encoding</th>
-                        <td>{props.encoding}</td>
-                    </tr>
-                </tbody>
-            </Table>
+        <Panel>
+            <Panel.Heading>Files</Panel.Heading>
+            <Panel.Body>
+                <Table bordered fill>
+                    <tbody>
+                        <tr>
+                            <th className="col-xs-4">Original Files</th>
+                            <td className="col-xs-8">{props.files.join(", ")}</td>
+                        </tr>
+                        <tr>
+                            <th>Encoding</th>
+                            <td>{props.encoding}</td>
+                        </tr>
+                    </tbody>
+                </Table>
+            </Panel.Body>
         </Panel>
 
         <EditSample />
@@ -89,6 +95,4 @@ const mapStateToProps = (state) => {
     };
 };
 
-const Container = connect(mapStateToProps)(SampleDetailGeneral);
-
-export default Container;
+export default connect(mapStateToProps)(SampleDetailGeneral);

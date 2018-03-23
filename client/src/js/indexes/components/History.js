@@ -32,10 +32,11 @@ export default function RebuildHistory ({ unbuilt }) {
     }
 
     return (
-        <Panel header="Changes">
-            <Panel header="Changes">
+        <Panel>
+            <Panel.Heading>Changes</Panel.Heading>
+            <Panel.Body>
                 {content}
-            </Panel>
+            </Panel.Body>
         </Panel>
     );
 }

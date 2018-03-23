@@ -94,19 +94,21 @@ class HMMDetail extends React.Component {
                     <strong>Cluster Members</strong> <Badge>{this.props.detail.entries.length}</Badge>
                 </h5>
 
-                <Panel style={{height: "408px"}}>
-                    <Table className="cluster-table" fill>
-                        <thead>
-                            <tr>
-                                <th>Accession</th>
-                                <th>Name</th>
-                                <th>Organism</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {clusterMembers}
-                        </tbody>
-                    </Table>
+                <Panel>
+                    <Panel.Body style={{height: "408px"}}>
+                        <Table className="cluster-table" fill>
+                            <thead>
+                                <tr>
+                                    <th>Accession</th>
+                                    <th>Name</th>
+                                    <th>Organism</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {clusterMembers}
+                            </tbody>
+                        </Table>
+                    </Panel.Body>
                 </Panel>
 
                 <Row>
@@ -142,6 +144,4 @@ const mapDispatchToProps = (dispatch) => ({
 
 });
 
-const Container = connect(mapStateToProps, mapDispatchToProps)(HMMDetail);
-
-export default Container;
+export default connect(mapStateToProps, mapDispatchToProps)(HMMDetail);

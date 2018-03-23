@@ -38,7 +38,9 @@ class AnalysisDetail extends React.Component {
         if (!detail.ready) {
             content = (
                 <Panel>
-                    <LoadingPlaceholder message="Analysis in progress" margin="1.2rem" />
+                    <Panel.Body>
+                        <LoadingPlaceholder message="Analysis in progress" margin="1.2rem" />
+                    </Panel.Body>
                 </Panel>
             );
         } else if (detail.algorithm === "pathoscope_bowtie") {
@@ -110,6 +112,4 @@ const mapDispatchToProps = (dispatch) => ({
 
 });
 
-const Container = connect(mapStateToProps, mapDispatchToProps)(AnalysisDetail);
-
-export default Container;
+export default connect(mapStateToProps, mapDispatchToProps)(AnalysisDetail);

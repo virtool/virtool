@@ -20,16 +20,23 @@ const SentryOptions = ({ enabled, onToggle }) => (
         </Row>
         <Row>
             <Col xs={12} md={6} mdPush={6}>
-                <Panel footer={<SentryFooter />}>
-                    Enable or disable Sentry error reporting. Error reporting allows the developers to prevent future
-                    errors.
+                <Panel>
+                    <Panel.Body>
+                        Enable or disable Sentry error reporting.
+                         Error reporting allows the developers to prevent future errors.
+                    </Panel.Body>
+                    <Panel.Footer>
+                        <SentryFooter />
+                    </Panel.Footer>
                 </Panel>
             </Col>
             <Col xs={12} md={6} mdPull={6}>
                 <Panel>
-                    <Button onClick={() => {onToggle(!enabled)}} block>
-                        <Checkbox checked={enabled} /> Enable
-                    </Button>
+                    <Panel.Body>
+                        <Button onClick={() => {onToggle(!enabled)}} block>
+                            <Checkbox checked={enabled} /> Enable
+                        </Button>
+                    </Panel.Body>
                 </Panel>
             </Col>
         </Row>

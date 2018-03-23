@@ -24,34 +24,41 @@ const HTTPOptions = (props) => (
             <h5><strong>HTTP Server</strong></h5>
         </Col>
         <Col xs={12} md={6} mdPush={6}>
-            <Panel footer={<HTTPFooter />}>
-                Change the address and port the the web server listens on.
+            <Panel>
+                <Panel.Body>
+                    Change the address and port the the web server listens on.
+                </Panel.Body>
+                <Panel.Footer>
+                    <HTTPFooter />
+                </Panel.Footer>
             </Panel>
         </Col>
         <Col xs={12} md={6} mdPull={6}>
             <Panel>
-                <InputError
-                    label="Host"
-                    autoComplete={false}
-                    onSave={props.onUpdateHost}
-                    initialValue={props.host}
-                    noMargin
-                    withButton
-                />
-                <InputError
-                    label="Port"
-                    type="number"
-                    autoComplete={false}
-                    onSave={props.onUpdatePort}
-                    initialValue={props.port}
-                    noMargin
-                    withButton
-                />
-                <Checkbox
-                    label={<HTTPCheckboxLabel />}
-                    checked={props.enableApi}
-                    onClick={() => props.onUpdateAPI(!props.enableApi)}
-                />
+                <Panel.Body>
+                    <InputError
+                        label="Host"
+                        autoComplete={false}
+                        onSave={props.onUpdateHost}
+                        initialValue={props.host}
+                        noMargin
+                        withButton
+                    />
+                    <InputError
+                        label="Port"
+                        type="number"
+                        autoComplete={false}
+                        onSave={props.onUpdatePort}
+                        initialValue={props.port}
+                        noMargin
+                        withButton
+                    />
+                    <Checkbox
+                        label={<HTTPCheckboxLabel />}
+                        checked={props.enableApi}
+                        onClick={() => props.onUpdateAPI(!props.enableApi)}
+                    />
+                </Panel.Body>
             </Panel>
         </Col>
     </Row>
@@ -79,6 +86,4 @@ const mapDispatchToProps = (dispatch) => ({
 
 });
 
-const Container = connect(mapStateToProps, mapDispatchToProps)(HTTPOptions);
-
-export default Container;
+export default connect(mapStateToProps, mapDispatchToProps)(HTTPOptions);

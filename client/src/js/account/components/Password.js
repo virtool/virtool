@@ -83,46 +83,47 @@ class ChangePassword extends React.Component {
         const errorPassLen = find(this.state.errors, ["id", 1]) ? find(this.state.errors, ["id", 1]).message : null;
         const errorPassMatch = find(this.state.errors, ["id", 2]) ? find(this.state.errors, ["id", 2]).message : null;
 
-        const formStyle = this.state.errors.length ? "panel-danger" : "panel-default";
-
         return (
-            <Panel className={formStyle} header="Password">
-                <form onSubmit={this.onSubmit}>
-                    <InputError
-                        label="Old Password"
-                        type="password"
-                        value={this.state.oldPassword}
-                        onChange={(e) => this.setState({oldPassword: e.target.value, errors: []})}
-                        error={errorOldPass}
-                    />
-                    <InputError
-                        label="New password"
-                        type="password"
-                        value={this.state.newPassword}
-                        onChange={(e) => this.setState({newPassword: e.target.value, errors: []})}
-                        error={errorPassLen}
-                    />
-                    <InputError
-                        label="Confirm New Password"
-                        type="password"
-                        value={this.state.confirmPassword}
-                        onChange={(e) => this.setState({confirmPassword: e.target.value, errors: []})}
-                        error={errorPassMatch}
-                    />
+            <Panel bsStyle={this.state.errors.length ? "danger" : "default"}>
+                <Panel.Heading>Password</Panel.Heading>
+                <Panel.Body>
+                    <form onSubmit={this.onSubmit}>
+                        <InputError
+                            label="Old Password"
+                            type="password"
+                            value={this.state.oldPassword}
+                            onChange={(e) => this.setState({oldPassword: e.target.value, errors: []})}
+                            error={errorOldPass}
+                        />
+                        <InputError
+                            label="New password"
+                            type="password"
+                            value={this.state.newPassword}
+                            onChange={(e) => this.setState({newPassword: e.target.value, errors: []})}
+                            error={errorPassLen}
+                        />
+                        <InputError
+                            label="Confirm New Password"
+                            type="password"
+                            value={this.state.confirmPassword}
+                            onChange={(e) => this.setState({confirmPassword: e.target.value, errors: []})}
+                            error={errorPassMatch}
+                        />
 
-                    <div style={{marginTop: "20px"}}>
-                        <Row>
-                            <Col xs={12} md={6} className="text-muted">
-                                Last changed <RelativeTime time={this.props.lastPasswordChange} />
-                            </Col>
-                            <Col xs={12} md={6}>
-                                <Button type="submit" bsStyle="primary" icon="floppy" pullRight>
-                                    Change
-                                </Button>
-                            </Col>
-                        </Row>
-                    </div>
-                </form>
+                        <div style={{marginTop: "20px"}}>
+                            <Row>
+                                <Col xs={12} md={6} className="text-muted">
+                                    Last changed <RelativeTime time={this.props.lastPasswordChange} />
+                                </Col>
+                                <Col xs={12} md={6}>
+                                    <Button type="submit" bsStyle="primary" icon="floppy" pullRight>
+                                        Change
+                                    </Button>
+                                </Col>
+                            </Row>
+                        </div>
+                    </form>
+                </Panel.Body>
             </Panel>
         );
     }
@@ -142,6 +143,4 @@ const mapDispatchToProps = (dispatch) => ({
 
 });
 
-const Container = connect(mapStateToProps, mapDispatchToProps)(ChangePassword);
-
-export default Container;
+export default connect(mapStateToProps, mapDispatchToProps)(ChangePassword);

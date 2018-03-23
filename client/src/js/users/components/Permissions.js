@@ -31,9 +31,11 @@ const UserPermissions = ({ permissions }) => {
 
     return (
         <Panel>
-            <Row>
-                {permissionComponents}
-            </Row>
+            <Panel.Body>
+                <Row>
+                    {permissionComponents}
+                </Row>
+            </Panel.Body>
         </Panel>
     );
 };
