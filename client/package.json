@@ -78,7 +78,8 @@
     "enzyme-adapter-react-15": "^1.0.5",
     "jest": "^22.4.3",
     "react-test-renderer": "^15.5.0",
-    "regenerator-runtime": "^0.11.1"
+    "regenerator-runtime": "^0.11.1",
+    "sinon": "^4.4.8"
   },
   "scripts": {
     "test": "jest",
@@ -94,6 +95,10 @@
     "moduleFileExtensions": [
       "js",
       "json"
+    ],
+    "collectCoverageFrom": [
+      "(/tests/unit/.*|(\\.|/)(test|spec))\\.js?$",
+      "!**/node_modules/**"
     ]
   }
 }
