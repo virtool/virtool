@@ -19,6 +19,16 @@ function setup() {
     };
 }
 
+const generateComponent = (extraProps={}) => (
+    <Email {...extraProps} />
+);
+
+it("sample test", () => {
+    let wrapper = mount(generateComponent());
+});
+
+
+
 describe("Email component", () => {
     it("should render without throwing error", () => {
         const { enzymeWrapper } = setup();
