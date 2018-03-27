@@ -59,9 +59,11 @@ const UserGroups = ({ accountUserId, addToGroup, allGroups, memberGroups, remove
 
     return (
         <Panel>
-            <Row>
-                {groupComponents}
-            </Row>
+            <Panel.Body>
+                <Row>
+                    {groupComponents}
+                </Row>
+            </Panel.Body>
         </Panel>
     );
 };

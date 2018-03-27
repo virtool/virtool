@@ -202,14 +202,20 @@ class Groups extends React.Component {
                             </ListGroup>
                         </Col>
                         <Col md={7}>
-                            <Panel header="Permissions">
-                                <ListGroup style={{marginBottom: "10px"}} fill>
-                                    {permissionComponents}
-                                </ListGroup>
+                            <Panel>
+                                <Panel.Heading>Permissions</Panel.Heading>
+                                <Panel.Body>
+                                    <ListGroup style={{marginBottom: "10px"}}>
+                                        {permissionComponents}
+                                    </ListGroup>
+                                </Panel.Body>
                             </Panel>
 
-                            <Panel header="Members">
-                                {memberComponents}
+                            <Panel>
+                                <Panel.Heading>Members</Panel.Heading>
+                                <Panel.Body>
+                                    {memberComponents}
+                                </Panel.Body>
                             </Panel>
 
                             <Button
@@ -261,6 +267,4 @@ const mapDispatchToProps = (dispatch) => ({
 
 });
 
-const Container = connect(mapStateToProps, mapDispatchToProps)(Groups);
-
-export default Container;
+export default connect(mapStateToProps, mapDispatchToProps)(Groups);

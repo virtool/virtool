@@ -25,17 +25,18 @@ export default function RebuildHistory ({ unbuilt }) {
         );
 
         content = (
-            <ListGroup style={{overflowY: "auto", maxHeight: "700px"}} fill>
+            <ListGroup style={{overflowY: "auto", maxHeight: "700px"}}>
                 {historyComponents}
             </ListGroup>
         );
     }
 
     return (
-        <Panel header="Changes">
-            <Panel header="Changes">
+        <Panel>
+            <Panel.Heading>Changes</Panel.Heading>
+            <Panel.Body>
                 {content}
-            </Panel>
+            </Panel.Body>
         </Panel>
     );
 }

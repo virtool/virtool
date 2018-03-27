@@ -90,7 +90,7 @@ const IsolateEditor = (props) => {
             <Row>
                 {noIsolatesFound}
                 <Col md={3}>
-                    <ListGroup style={{height: "100%"}} fill>
+                    <ListGroup style={{height: "100%"}}>
                         {isolateComponents}
                     </ListGroup>
                 </Col>
@@ -121,6 +121,4 @@ const mapDispatchToProps = dispatch => ({
 
 });
 
-const Container = withRouter(connect(mapStateToProps, mapDispatchToProps)(IsolateEditor));
-
-export default Container;
+export default withRouter(connect(mapStateToProps, mapDispatchToProps)(IsolateEditor));

@@ -38,21 +38,19 @@ class AnalysisDetail extends React.Component {
         if (!detail.ready) {
             content = (
                 <Panel>
-                    <LoadingPlaceholder message="Analysis in progress" margin="1.2rem" />
+                    <Panel.Body>
+                        <LoadingPlaceholder message="Analysis in progress" margin="1.2rem" />
+                    </Panel.Body>
                 </Panel>
             );
-        }
-
-        else if (detail.algorithm === "pathoscope_bowtie") {
+        } else if (detail.algorithm === "pathoscope_bowtie") {
             content = (
                 <PathoscopeViewer
                     {...detail}
                     maxReadLength={this.props.quality.length[1]}
                 />
             );
-        }
-
-        else if (detail.algorithm === "nuvs") {
+        } else if (detail.algorithm === "nuvs") {
             content = (
                 <NuVsViewer
                     history={this.props.history}
@@ -60,9 +58,7 @@ class AnalysisDetail extends React.Component {
                     {...detail}
                 />
             );
-        }
-
-        else {
+        } else {
             throw Error("Unusable analysis detail content");
         }
 
@@ -116,6 +112,4 @@ const mapDispatchToProps = (dispatch) => ({
 
 });
 
-const Container = connect(mapStateToProps, mapDispatchToProps)(AnalysisDetail);
-
-export default Container;
+export default connect(mapStateToProps, mapDispatchToProps)(AnalysisDetail);

@@ -145,7 +145,7 @@ class Schema extends React.Component {
                 <DragDropContext onDragEnd={this.onDragEnd}>
                     <Droppable droppableId="droppable">
                         {(provided) => (
-                            <div ref={provided.innerRef}>
+                            <div ref={provided.innerRef} {...provided.droppableProps}>
                                 {segments}
                                 {provided.placeholder}
                             </div>

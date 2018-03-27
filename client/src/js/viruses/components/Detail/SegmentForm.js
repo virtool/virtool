@@ -72,7 +72,7 @@ export default class SegmentForm extends React.Component {
         );
 
         return (
-            <form>
+            <div>
                 <Row>
                     <Col md={9}>
                         <InputError
@@ -103,7 +103,7 @@ export default class SegmentForm extends React.Component {
                         />
                     </Col>
                 </Row>
-            </form>
+            </div>
         );
     }
 }
