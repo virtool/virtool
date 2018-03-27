@@ -88,15 +88,7 @@ module.exports = {
                 "NODE_ENV": JSON.stringify("production")
             }
         }),
-/*
-        new webpack.optimize.UglifyJsPlugin({
-            compress: {
-                warnings: true
-            },
 
-            comments: false
-        }),
-*/
         new ExtractTextPlugin("style.[hash:8].css"),
 
         new HTMLPlugin({
