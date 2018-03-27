@@ -115,41 +115,10 @@ async def init_check_db(app):
 
     db = app["db"]
 
-    logger.info("Checking viruses...")
-    await virtool.organize.organize_viruses(db, logger.info)
-
-    logger.info("Checking hmms...")
-    await virtool.organize.organize_hmms(db)
-
-    logger.info("Checking jobs...")
-    await virtool.organize.organize_jobs(db)
-
-    logger.info("Checking samples...")
-    await virtool.organize.organize_samples(db, app["settings"])
-
-    logger.info("Checking analyses...")
-    await virtool.organize.organize_analyses(db, logger.info)
-
-    logger.info("Checking indexes...")
-    await virtool.organize.organize_indexes(db)
-
-    logger.info("Checking subtraction...")
-    await virtool.organize.organize_subtraction(db, app["settings"])
-
-    logger.info("Checking groups...")
-    await virtool.organize.organize_groups(db)
-
-    logger.info("Checking users...")
-    await virtool.organize.organize_users(db)
-
-    logger.info("Checking status...")
-    await virtool.organize.organize_status(db)
-
-    logger.info("Checking files...")
-    await virtool.organize.organize_files(db)
+    logger.info("Checking database...")
+    await virtool.organize.organize(db, app["version"])
 
     logger.info("Creating database indexes...")
-
     await db.analyses.create_index("sample.id")
     await db.history.create_index("virus.id")
     await db.history.create_index("index.id")
