@@ -71,11 +71,14 @@ export default {
     optimization: {
         minimizer: [
             new UglifyJSPlugin({
-                compress: {
-                    warnings: true
-                },
-    
-                comments: false
+                uglifyOptions: {
+                    output: {
+                        comments: false
+                    },
+                    compress: {
+                        warnings: true
+                    }
+                }
             })
         ]
     },
