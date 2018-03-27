@@ -58,28 +58,13 @@ module.exports = {
         fs: "empty"
     },
 
+    mode: "production",
+
     output: {
         path: path.resolve(__dirname, "./dist"),
         filename: "app.[hash:8].js",
         sourceMapFilename: "[name].js.map",
         publicPath: "/static/"
-    },
-
-    devtool: "source-map",
-
-    optimization: {
-        minimizer: [
-            new UglifyJSPlugin({
-                uglifyOptions: {
-                    output: {
-                        comments: false
-                    },
-                    compress: {
-                        warnings: true
-                    }
-                }
-            })
-        ]
     },
 
     plugins: [
