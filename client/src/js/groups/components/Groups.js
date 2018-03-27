@@ -205,7 +205,7 @@ class Groups extends React.Component {
                             <Panel>
                                 <Panel.Heading>Permissions</Panel.Heading>
                                 <Panel.Body>
-                                    <ListGroup style={{marginBottom: "10px"}} fill>
+                                    <ListGroup style={{marginBottom: "10px"}}>
                                         {permissionComponents}
                                     </ListGroup>
                                 </Panel.Body>

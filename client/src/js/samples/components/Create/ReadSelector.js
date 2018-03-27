@@ -106,7 +106,7 @@ export default class ReadSelector extends React.PureComponent {
                     </small>
                 </h5>
 
-                <Panel bsStyle={error ? "danger" : null} ref={(node) => this.panelNode = node}>
+                <Panel bsStyle={error ? "danger" : "default"} ref={(node) => this.panelNode = node}>
                     <Panel.Body>
                         <div className="toolbar">
                             <FormGroup>

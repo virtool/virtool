@@ -37,7 +37,7 @@ const SampleDetailGeneral = (props) => (
         <Panel>
             <Panel.Heading>Library</Panel.Heading>
             <Panel.Body>
-                <Table bordered fill>
+                <Table bordered>
                     <tbody>
                         <tr>
                             <th className="col-xs-4">Read Count</th>
@@ -63,7 +63,7 @@ const SampleDetailGeneral = (props) => (
         <Panel>
             <Panel.Heading>Files</Panel.Heading>
             <Panel.Body>
-                <Table bordered fill>
+                <Table bordered>
                     <tbody>
                         <tr>
                             <th className="col-xs-4">Original Files</th>

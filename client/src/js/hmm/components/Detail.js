@@ -96,7 +96,7 @@ class HMMDetail extends React.Component {
 
                 <Panel>
                     <Panel.Body style={{height: "408px"}}>
-                        <Table className="cluster-table" fill>
+                        <Table className="cluster-table">
                             <thead>
                                 <tr>
                                     <th>Accession</th>

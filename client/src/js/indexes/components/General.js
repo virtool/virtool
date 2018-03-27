@@ -74,7 +74,7 @@ const IndexGeneral = ({ detail }) => {
                     <PanelBadgeHeader title="Contributors" count={contributors.length} />
                 </Panel.Heading>
                 <Panel.Body>
-                    <ListGroup fill>
+                    <ListGroup>
                         {contributors}
                     </ListGroup>
                 </Panel.Body>
@@ -85,7 +85,7 @@ const IndexGeneral = ({ detail }) => {
                     <PanelBadgeHeader title="Viruses" count={viruses.length} />
                 </Panel.Heading>
                 <Panel.Body>
-                    <ListGroup fill>
+                    <ListGroup>
                         {viruses}
                     </ListGroup>
                 </Panel.Body>

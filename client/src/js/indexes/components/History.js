@@ -25,7 +25,7 @@ export default function RebuildHistory ({ unbuilt }) {
         );
 
         content = (
-            <ListGroup style={{overflowY: "auto", maxHeight: "700px"}} fill>
+            <ListGroup style={{overflowY: "auto", maxHeight: "700px"}}>
                 {historyComponents}
             </ListGroup>
         );

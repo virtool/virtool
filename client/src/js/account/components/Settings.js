@@ -14,7 +14,7 @@ const AccountSettings = (props) => {
             <Panel>
                 <Panel.Heading>User Interface</Panel.Heading>
                 <Panel.Body>
-                    <ListGroup fill>
+                    <ListGroup>
                         <ListGroupItem>
                             <Flex>
                                 <FlexItem>
@@ -39,7 +39,7 @@ const AccountSettings = (props) => {
             <Panel>
                 <Panel.Heading>Quick Analyze</Panel.Heading>
                 <Panel.Body>
-                    <ListGroup fill>
+                    <ListGroup>
                         <ListGroupItem>
                             <Flex>
                                 <FlexItem>

@@ -75,7 +75,7 @@ const BLASTResults = ({ hits }) => {
         <Panel>
             <Panel.Heading>NCBI BLAST</Panel.Heading>
             <Panel.Body>
-                <Table fill condensed>
+                <Table condensed>
                     <thead>
                         <tr>
                             <th>Accession</th>
