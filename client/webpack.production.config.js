@@ -2,6 +2,7 @@ import path from "path";
 import HTMLPlugin from "html-webpack-plugin";
 import CleanPlugin from "clean-webpack-plugin";
 import ExtractTextPlugin from "extract-text-webpack-plugin";
+import UglifyJSPlugin from "uglifyjs-webpack-plugin";
 
 export default {
 
@@ -67,6 +68,18 @@ export default {
 
     devtool: "source-map",
 
+    optimization: {
+        minimizer: [
+            new UglifyJSPlugin({
+                compress: {
+                    warnings: true
+                },
+    
+                comments: false
+            })
+        ]
+    },
+
     plugins: [
         new webpack.DefinePlugin({
             "process.env": {
@@ -74,6 +87,7 @@ export default {
             }
         }),
 
+        /*
         new webpack.optimize.UglifyJsPlugin({
             compress: {
                 warnings: true
@@ -81,6 +95,7 @@ export default {
 
             comments: false
         }),
+    */
 
         new ExtractTextPlugin("style.[hash:8].css"),
 

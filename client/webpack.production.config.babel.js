@@ -3,6 +3,7 @@ var webpack = require("webpack");
 var HTMLPlugin = require("html-webpack-plugin");
 var CleanPlugin = require("clean-webpack-plugin");
 var ExtractTextPlugin = require("extract-text-webpack-plugin");
+var UglifyJSPlugin = require("uglifyjs-webpack-plugin");
 
 module.exports = {
 
@@ -66,13 +67,25 @@ module.exports = {
 
     devtool: "source-map",
 
+    optimization: {
+        minimizer: [
+            new UglifyJSPlugin({
+                compress: {
+                    warnings: true
+                },
+    
+                comments: false
+            })
+        ]
+    },
+
     plugins: [
         new webpack.DefinePlugin({
             "process.env": {
                 "NODE_ENV": JSON.stringify("production")
             }
         }),
-
+/*
         new webpack.optimize.UglifyJsPlugin({
             compress: {
                 warnings: true
@@ -80,7 +93,7 @@ module.exports = {
 
             comments: false
         }),
-
+*/
         new ExtractTextPlugin("style.[hash:8].css"),
 
         new HTMLPlugin({
