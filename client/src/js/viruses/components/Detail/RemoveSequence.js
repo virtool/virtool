@@ -62,6 +62,4 @@ const mapDispatchToProps = dispatch => ({
 
 });
 
-const Container = connect(mapStateToProps, mapDispatchToProps)(RemoveSequence);
-
-export default Container;
+export default connect(mapStateToProps, mapDispatchToProps)(RemoveSequence);

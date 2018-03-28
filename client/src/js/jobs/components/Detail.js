@@ -2,8 +2,9 @@ import React from "react";
 import Moment from "moment";
 import { connect } from "react-redux";
 import { Table } from "react-bootstrap";
+import { push } from "react-router-redux";
 
-import { getJob } from "../actions";
+import { getJob, removeJob } from "../actions";
 import { getTaskDisplayName } from "../../utils";
 import { Flex, FlexItem, Icon, LoadingPlaceholder, ProgressBar } from "../../base";
 import TaskArgs from "./TaskArgs";
@@ -40,6 +41,10 @@ class JobDetail extends React.Component {
 
     componentDidMount () {
         this.props.getDetail(this.props.match.params.jobId);
+    }
+
+    handleClick = () => {
+        this.props.onRemove(this.props.detail.id);
     }
 
     render () {
@@ -83,7 +88,7 @@ class JobDetail extends React.Component {
                             bsStyle="danger"
                             name="remove"
                             style={{fontSize: "18px"}}
-                            onClick={() => window.console.log(detail.id)}
+                            onClick={this.handleClick}
                         />
                     </Flex>
                 </h3>
@@ -113,10 +118,13 @@ const mapDispatchToProps = (dispatch) => ({
 
     getDetail: (jobId) => {
         dispatch(getJob(jobId));
+    },
+
+    onRemove: (jobId) => {
+        dispatch(removeJob(jobId));
+        dispatch(push("/jobs"));
     }
 
 });
 
-const Container = connect(mapStateToProps, mapDispatchToProps)(JobDetail);
-
-export default Container;
+export default connect(mapStateToProps, mapDispatchToProps)(JobDetail);
