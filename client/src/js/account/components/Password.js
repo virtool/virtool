@@ -85,8 +85,10 @@ class ChangePassword extends React.Component {
             return <div />;
         }
 
+        const hasError = this.state.errorOldPassword || this.state.errorNewPassword || this.state.ConfirmPassword;
+
         return (
-            <Panel bsStyle={this.state.errors.length ? "danger" : "default"}>
+            <Panel bsStyle={hasError ? "danger" : "default"}>
                 <Panel.Heading>Password</Panel.Heading>
                 <Panel.Body>
                     <form onSubmit={this.onSubmit}>
