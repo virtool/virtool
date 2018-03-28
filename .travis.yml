@@ -62,6 +62,8 @@ script:
 - pytest --loop uvloop --cov --cov-report xml
 - mkdir gh_build
 - mkdir gh_build/virtool
+- python -c 'import os,sys,fcntl; flags = fcntl.fcntl(sys.stdout, fcntl.F_GETFL); fcntl.fcntl(sys.stdout, fcntl.F_SETFL, flags&~os.O_NONBLOCK);'
+- python -c 'import os,sys,fcntl; flags = fcntl.fcntl(sys.stdout, fcntl.F_GETFL); print(flags&os.O_NONBLOCK);'
 - python setup.py build
 - ls -lh build/exe.linux-x86_64-3.6
 - cp -rv build/exe.linux-x86_64-3.6/* gh_build/virtool
