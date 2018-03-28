@@ -49,7 +49,7 @@ export function* wsSample () {
 }
 
 export function* wsUpdateAnalysis (action) {
-    yield getAnalysis(action);
+    yield getAnalysis({analysisId: action.update.id});
 }
 
 export function* findSamples (action) {

@@ -13,15 +13,19 @@ const UniqueNames = ({ enabled, onToggle }) => (
             </Col>
             <Col xs={12} md={6} mdPush={6}>
                 <Panel>
-                    Enable this feature to ensure that every created sample has a unique name. If a user
-                    attempts to assign an existing name to a new sample an error will be displayed.
+                    <Panel.Body>
+                        Enable this feature to ensure that every created sample has a unique name. If a user
+                        attempts to assign an existing name to a new sample an error will be displayed.
+                    </Panel.Body>
                 </Panel>
             </Col>
             <Col xs={12} md={6} mdPull={6}>
                 <Panel>
-                    <Button onClick={() => {onToggle(!enabled)}} block>
-                        <Checkbox checked={enabled} /> Enable
-                    </Button>
+                    <Panel.Body>
+                        <Button onClick={() => {onToggle(!enabled)}} block>
+                            <Checkbox checked={enabled} /> Enable
+                        </Button>
+                    </Panel.Body>
                 </Panel>
             </Col>
         </Row>
@@ -40,6 +44,4 @@ const mapDispatchToProps = (dispatch) => ({
 
 });
 
-const Container = connect(mapStateToProps, mapDispatchToProps)(UniqueNames);
-
-export default Container;
+export default connect(mapStateToProps, mapDispatchToProps)(UniqueNames);

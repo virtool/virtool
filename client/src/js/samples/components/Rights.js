@@ -30,7 +30,13 @@ class SampleRights extends React.Component {
         }
 
         if (!this.isOwnerOrAdministrator()) {
-            return <Panel>Not allowed</Panel>;
+            return (
+                <Panel>
+                    <Panel.Body>
+                        Not allowed
+                    </Panel.Body>
+                </Panel>
+            );
         }
 
         const groupRights = (this.props.group_read ? "r" : "") + (this.props.group_write ? "w" : "");
@@ -50,39 +56,41 @@ class SampleRights extends React.Component {
                 </Alert>
 
                 <Panel>
-                    <Input
-                        type="select"
-                        label="Group"
-                        value={this.props.group}
-                        onChange={this.handleChangeGroup}
-                    >
-                        <option value="none">None</option>
-                        {nameOptionComponents}
-                    </Input>
+                    <Panel.Body>
+                        <Input
+                            type="select"
+                            label="Group"
+                            value={this.props.group}
+                            onChange={this.handleChangeGroup}
+                        >
+                            <option value="none">None</option>
+                            {nameOptionComponents}
+                        </Input>
 
-                    <Input
-                        type="select"
-                        name="groupRights"
-                        label="Group Rights"
-                        value={groupRights}
-                        onChange={(e) => this.handleChangeRights(e, "group")}
-                    >
-                        <option value="">None</option>
-                        <option value="r">Read</option>
-                        <option value="rw">Read & write</option>
-                    </Input>
+                        <Input
+                            type="select"
+                            name="groupRights"
+                            label="Group Rights"
+                            value={groupRights}
+                            onChange={(e) => this.handleChangeRights(e, "group")}
+                        >
+                            <option value="">None</option>
+                            <option value="r">Read</option>
+                            <option value="rw">Read & write</option>
+                        </Input>
 
-                    <Input
-                        type="select"
-                        name="allUsers"
-                        label="All Users' Rights"
-                        value={allRights}
-                        onChange={(e) => this.handleChangeRights(e, "all")}
-                    >
-                        <option value="">None</option>
-                        <option value="r">Read</option>
-                        <option value="rw">Read & write</option>
-                    </Input>
+                        <Input
+                            type="select"
+                            name="allUsers"
+                            label="All Users' Rights"
+                            value={allRights}
+                            onChange={(e) => this.handleChangeRights(e, "all")}
+                        >
+                            <option value="">None</option>
+                            <option value="r">Read</option>
+                            <option value="rw">Read & write</option>
+                        </Input>
+                    </Panel.Body>
                 </Panel>
             </div>
         );
@@ -127,6 +135,4 @@ const mapDispatchToProps = dispatch => ({
 
 });
 
-const Container = connect(mapStateToProps, mapDispatchToProps)(SampleRights);
-
-export default Container;
+export default connect(mapStateToProps, mapDispatchToProps)(SampleRights);

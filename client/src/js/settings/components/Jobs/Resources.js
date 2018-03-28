@@ -92,46 +92,50 @@ class Resources extends React.Component {
                 </Col>
                 <Col xs={12} md={6} mdPush={6}>
                     <Panel>
-                        Set limits on the computing resources Virtool can use on the host server.
+                        <Panel.Body>
+                            Set limits on the computing resources Virtool can use on the host server.
+                        </Panel.Body>
                     </Panel>
                 </Col>
                 <Col xs={12} md={6} mdPull={6}>
                     <Panel>
-                        <InputError
-                            label="CPU Limit"
-                            type="number"
-                            min={this.props.procLowerLimit}
-                            max={this.state.procUpperLimit}
-                            onSave={this.handleSaveProc}
-                            onInvalid={this.handleInvalidProc}
-                            onChange={this.handleChangeProc}
-                            initialValue={
-                                this.props.proc > this.state.procUpperLimit
-                                    ? this.state.procUpperLimit
-                                    : this.props.proc
-                            }
-                            error={errorMessageProc}
-                            noMargin
-                            withButton
-                        />
-                        <InputError
-                            label="Memory Limit (GB)"
-                            type="number"
-                            min={this.props.memLowerLimit}
-                            max={this.state.memUpperLimit}
-                            step={0.1}
-                            onSave={this.handleSaveMem}
-                            onInvalid={this.handleInvalidMem}
-                            onChange={this.handleChangeMem}
-                            initialValue={
-                                this.props.mem > this.state.memUpperLimit
-                                    ? this.state.memUpperLimit
-                                    : this.props.mem
-                            }
-                            error={errorMessageMem}
-                            noMargin
-                            withButton
-                        />
+                        <Panel.Body>
+                            <InputError
+                                label="CPU Limit"
+                                type="number"
+                                min={this.props.procLowerLimit}
+                                max={this.state.procUpperLimit}
+                                onSave={this.handleSaveProc}
+                                onInvalid={this.handleInvalidProc}
+                                onChange={this.handleChangeProc}
+                                initialValue={
+                                    this.props.proc > this.state.procUpperLimit
+                                        ? this.state.procUpperLimit
+                                        : this.props.proc
+                                }
+                                error={errorMessageProc}
+                                noMargin
+                                withButton
+                            />
+                            <InputError
+                                label="Memory Limit (GB)"
+                                type="number"
+                                min={this.props.memLowerLimit}
+                                max={this.state.memUpperLimit}
+                                step={0.1}
+                                onSave={this.handleSaveMem}
+                                onInvalid={this.handleInvalidMem}
+                                onChange={this.handleChangeMem}
+                                initialValue={
+                                    this.props.mem > this.state.memUpperLimit
+                                        ? this.state.memUpperLimit
+                                        : this.props.mem
+                                }
+                                error={errorMessageMem}
+                                noMargin
+                                withButton
+                            />
+                        </Panel.Body>
                     </Panel>
                 </Col>
             </Row>

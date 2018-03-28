@@ -63,29 +63,30 @@ class Email extends React.Component {
 
     render () {
 
-        const formStyle = this.state.error ? "panel-danger" : "panel-default";
-
         return (
-            <Panel className={formStyle} header="Email">
-                <form onSubmit={this.onSubmit}>
-                    <InputError
-                        label="Email address"
-                        value={this.state.email}
-                        onChange={this.handleChange}
-                        onBlur={this.handleBlur}
-                        error={this.state.error}
-                    />
+            <Panel bsStyle={this.state.error ? "danger" : "default"}>
+                <Panel.Heading>Email</Panel.Heading>
+                <Panel.Body>
+                    <form onSubmit={this.onSubmit}>
+                        <InputError
+                            label="Email address"
+                            value={this.state.email}
+                            onChange={this.handleChange}
+                            onBlur={this.handleBlur}
+                            error={this.state.error}
+                        />
 
-                    <div style={{marginTop: "20px"}}>
-                        <Row>
-                            <Col xs={24} md={12}>
-                                <Button type="submit" bsStyle="primary" icon="floppy" pullRight>
-                                    Save
-                                </Button>
-                            </Col>
-                        </Row>
-                    </div>
-                </form>
+                        <div style={{marginTop: "20px"}}>
+                            <Row>
+                                <Col xs={24} md={12}>
+                                    <Button type="submit" bsStyle="primary" icon="floppy" pullRight>
+                                        Save
+                                    </Button>
+                                </Col>
+                            </Row>
+                        </div>
+                    </form>
+                </Panel.Body>
             </Panel>
         );
     }

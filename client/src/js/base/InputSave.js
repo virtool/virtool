@@ -131,7 +131,7 @@ export class InputSave extends React.Component {
                             min={this.props.min}
                             max={this.props.max}
                             step={this.props.step}
-                            autoComplete={this.props.autoComplete}
+                            autoComplete={this.props.autoComplete ? "on" : "off"}
                             onChange={this.handleChange}
                             onBlur={this.handleBlur}
                             onInvalid={this.props.onInvalid}
