@@ -8,7 +8,6 @@ import pymongo.errors
 from aiohttp import web
 from copy import deepcopy
 from pymongo import ReturnDocument
-from cerberus import Validator
 
 import virtool.utils
 import virtool.validators
@@ -16,8 +15,8 @@ import virtool.virus
 import virtool.virus_import
 import virtool.virus_history
 
-from virtool.handlers.utils import unpack_request, json_response, not_found, invalid_input, protected, validation,\
-    compose_regex_query, paginate, bad_request, no_content, conflict
+from virtool.handlers.utils import bad_request, compose_regex_query, conflict, json_response,  no_content, not_found, \
+    paginate, protected, unpack_request, validation
 
 
 SCHEMA_VALIDATOR = {
