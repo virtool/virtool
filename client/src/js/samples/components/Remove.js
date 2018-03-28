@@ -1,7 +1,7 @@
 import React from "react";
 import { connect } from "react-redux";
 
-import { removeSample, hideSampleModal } from "../actions";
+import { removeSample } from "../actions";
 import { RemoveModal } from "../../base";
 
 const RemoveSample = ({ id, name, show, onHide, onConfirm }) => (
@@ -20,16 +20,10 @@ const mapStateToProps = (state) => ({
 
 const mapDispatchToProps = (dispatch) => ({
 
-    onHide: () => {
-        dispatch(hideSampleModal());
-    },
-
     onConfirm: (sampleId) => {
         dispatch(removeSample(sampleId));
     }
 
 });
 
-const Container = connect(mapStateToProps, mapDispatchToProps)(RemoveSample);
-
-export default Container;
+export default connect(mapStateToProps, mapDispatchToProps)(RemoveSample);

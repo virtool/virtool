@@ -20,8 +20,8 @@ class SampleRights extends React.Component {
         this.props.onChangeGroup(this.props.sampleId, e.target.value);
     };
 
-    handleChangeRights = (e) => {
-        this.props.onChangeRights(this.props.sampleId, "group", e.target.value);
+    handleChangeRights = (e, scope) => {
+        this.props.onChangeRights(this.props.sampleId, scope, e.target.value);
     };
 
     render () {
@@ -30,7 +30,13 @@ class SampleRights extends React.Component {
         }
 
         if (!this.isOwnerOrAdministrator()) {
-            return <Panel>Not allowed</Panel>;
+            return (
+                <Panel>
+                    <Panel.Body>
+                        Not allowed
+                    </Panel.Body>
+                </Panel>
+            );
         }
 
         const groupRights = (this.props.group_read ? "r" : "") + (this.props.group_write ? "w" : "");
@@ -50,37 +56,41 @@ class SampleRights extends React.Component {
                 </Alert>
 
                 <Panel>
-                    <Input
-                        type="select"
-                        label="Group"
-                        value={this.props.group}
-                        onChange={this.handleChangeGroup}
-                    >
-                        <option value="none">None</option>
-                        {nameOptionComponents}
-                    </Input>
+                    <Panel.Body>
+                        <Input
+                            type="select"
+                            label="Group"
+                            value={this.props.group}
+                            onChange={this.handleChangeGroup}
+                        >
+                            <option value="none">None</option>
+                            {nameOptionComponents}
+                        </Input>
 
-                    <Input
-                        type="select"
-                        label="Group Rights"
-                        value={groupRights}
-                        onChange={this.handleChangeRights}
-                    >
-                        <option value="">None</option>
-                        <option value="r">Read</option>
-                        <option value="rw">Read & write</option>
-                    </Input>
+                        <Input
+                            type="select"
+                            name="groupRights"
+                            label="Group Rights"
+                            value={groupRights}
+                            onChange={(e) => this.handleChangeRights(e, "group")}
+                        >
+                            <option value="">None</option>
+                            <option value="r">Read</option>
+                            <option value="rw">Read & write</option>
+                        </Input>
 
-                    <Input
-                        type="select"
-                        label="All Users' Rights"
-                        value={allRights}
-                        onChange={this.handleChangeRights}
-                    >
-                        <option value="">None</option>
-                        <option value="r">Read</option>
-                        <option value="rw">Read & write</option>
-                    </Input>
+                        <Input
+                            type="select"
+                            name="allUsers"
+                            label="All Users' Rights"
+                            value={allRights}
+                            onChange={(e) => this.handleChangeRights(e, "all")}
+                        >
+                            <option value="">None</option>
+                            <option value="r">Read</option>
+                            <option value="rw">Read & write</option>
+                        </Input>
+                    </Panel.Body>
                 </Panel>
             </div>
         );
@@ -114,10 +124,10 @@ const mapDispatchToProps = dispatch => ({
         dispatch(updateSampleRights(sampleId, {group: groupId}));
     },
 
-    onChangeRights: (sampleId, name, value) => {
+    onChangeRights: (sampleId, scope, value) => {
         const update = {
-            [`${name}_read`]: includes(value, "r"),
-            [`${name}_write`]: includes(value, "w")
+            [`${scope}_read`]: includes(value, "r"),
+            [`${scope}_write`]: includes(value, "w")
         };
 
         dispatch(updateSampleRights(sampleId, update));
@@ -125,6 +135,4 @@ const mapDispatchToProps = dispatch => ({
 
 });
 
-const Container = connect(mapStateToProps, mapDispatchToProps)(SampleRights);
-
-export default Container;
+export default connect(mapStateToProps, mapDispatchToProps)(SampleRights);

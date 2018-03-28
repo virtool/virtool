@@ -23,7 +23,7 @@ async def upload(req):
 
     v = Validator({
         "name": {"type": "string", "required": True}
-    })
+    }, allow_unknown=True)
 
     if not v(dict(req.query)):
         return invalid_query(v.errors)

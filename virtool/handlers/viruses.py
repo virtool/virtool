@@ -8,7 +8,6 @@ import pymongo.errors
 from aiohttp import web
 from copy import deepcopy
 from pymongo import ReturnDocument
-from cerberus import Validator
 
 import virtool.utils
 import virtool.validators
@@ -16,8 +15,8 @@ import virtool.virus
 import virtool.virus_import
 import virtool.virus_history
 
-from virtool.handlers.utils import unpack_request, json_response, not_found, invalid_input, protected, validation,\
-    compose_regex_query, paginate, bad_request, no_content, conflict
+from virtool.handlers.utils import bad_request, compose_regex_query, conflict, json_response,  no_content, not_found, \
+    paginate, protected, unpack_request, validation
 
 
 SCHEMA_VALIDATOR = {
@@ -110,7 +109,7 @@ async def create(req):
     message = await virtool.virus.check_name_and_abbreviation(db, data["name"], abbreviation)
 
     if message:
-        return json_response({"message": message},  status=409)
+        return conflict(message)
 
     virus_id = await virtool.utils.get_new_id(db.viruses)
 
@@ -387,7 +386,9 @@ async def add_isolate(req):
     Add a new isolate to a virus.
 
     """
-    db, data = req.app["db"], req["data"]
+    db = req.app["db"]
+    settings = req.app["settings"]
+    data = req["data"]
 
     virus_id = req.match_info["virus_id"]
 
@@ -406,6 +407,9 @@ async def add_isolate(req):
 
     # All source types are stored in lower case.
     data["source_type"] = data["source_type"].lower()
+
+    if not virtool.virus.check_source_type(settings, data["source_type"]):
+        return conflict("Source type is not allowed")
 
     # Get a unique isolate_id for the new isolate.
     isolate_id = await virtool.virus.get_new_isolate_id(db)
@@ -477,26 +481,19 @@ async def add_isolate(req):
     return json_response(dict(data, sequences=[]), status=201, headers=headers)
 
 
+@validation({
+    "source_type": {"type": "string"},
+    "source_name": {"type": "string"}
+})
 @protected("modify_virus")
 async def edit_isolate(req):
     """
     Edit an existing isolate.
 
     """
-    db, data = await unpack_request(req)
-
-    if not len(data):
-        return bad_request("Empty Input")
-
-    v = Validator({
-        "source_type": {"type": "string"},
-        "source_name": {"type": "string"}
-    })
-
-    if not v(data):
-        return invalid_input(v.errors)
-
-    data = v.document
+    db = req.app["db"]
+    settings = req.app["settings"]
+    data = req["data"]
 
     virus_id = req.match_info["virus_id"]
     isolate_id = req.match_info["isolate_id"]
@@ -510,9 +507,15 @@ async def edit_isolate(req):
 
     isolate = virtool.virus.find_isolate(isolates, isolate_id)
 
+    if not isolate:
+        return not_found()
+
     # All source types are stored in lower case.
     if "source_type" in data:
         data["source_type"] = data["source_type"].lower()
+
+        if settings.get("restrict_source_types") and data["source_type"] not in settings.get("allowed_source_types"):
+            return conflict("Not an allowed source type")
 
     old_isolate_name = virtool.virus.format_isolate_name(isolate)
 
@@ -584,11 +587,14 @@ async def set_as_default(req):
 
     isolates = deepcopy(document["isolates"])
 
-    # Set ``default`` to ``False`` for all existing isolates if the new one should be default.
-    for isolate in isolates:
-        isolate["default"] = False
-
     isolate = virtool.virus.find_isolate(isolates, isolate_id)
+
+    if not isolate:
+        return not_found()
+
+    # Set ``default`` to ``False`` for all existing isolates if the new one should be default.
+    for existing_isolate in isolates:
+        existing_isolate["default"] = False
 
     isolate["default"] = True
 
@@ -667,6 +673,9 @@ async def remove_isolate(req):
 
     # Get any isolates that have the isolate id to be removed (only one should match!).
     isolate_to_remove = virtool.virus.find_isolate(isolates, isolate_id)
+
+    if not isolate_to_remove:
+        return not_found()
 
     # Remove the isolate from the virus' isolate list.
     isolates.remove(isolate_to_remove)
@@ -763,11 +772,11 @@ async def get_sequence(req):
 
 @protected("modify_virus")
 @validation({
-    "id": {"type": "string", "required": True},
-    "definition": {"type": "string", "required": True},
+    "id": {"type": "string", "minlength": 1, "required": True},
+    "definition": {"type": "string", "minlength": 1, "required": True},
     "host": {"type": "string"},
     "segment": {"type": "string"},
-    "sequence": {"type": "string", "required": True}
+    "sequence": {"type": "string", "minlength": 1, "required": True}
 })
 async def create_sequence(req):
     """
@@ -783,12 +792,12 @@ async def create_sequence(req):
     document = await db.viruses.find_one({"_id": virus_id, "isolates.id": isolate_id})
 
     if not document:
-        return not_found()
+        return not_found("Virus or isolate not found")
 
     segment = data.get("segment", None)
 
     if segment and segment not in {s["name"] for s in document.get("schema", {})}:
-        return not_found("Segment not found: {}".format(segment))
+        return not_found("Segment not found")
 
     # Update POST data to make sequence document.
     data.update({
@@ -804,10 +813,7 @@ async def create_sequence(req):
     try:
         await db.sequences.insert_one(data)
     except pymongo.errors.DuplicateKeyError:
-        return json_response({
-            "id": "conflict",
-            "message": "Sequence id already exists"
-        }, status=409)
+        return conflict("Sequence id already exists")
 
     document = await db.viruses.find_one_and_update({"_id": virus_id}, {
         "$set": {
@@ -870,27 +876,21 @@ async def edit_sequence(req):
     document = await db.viruses.find_one({"_id": virus_id, "isolates.id": isolate_id})
 
     if not document:
-        return not_found("Virus or isolate not found")
+        return not_found()
 
     old = await virtool.virus.join(db, virus_id, document)
-
-    # Get the subject virus document. Will be ``None`` if it doesn't exist. This will result in a ``404`` response.
-    document = await db.viruses.find_one({"_id": virus_id, "isolates.id": isolate_id})
-
-    if not document:
-        return not_found()
 
     segment = data.get("segment", None)
 
     if segment and segment not in {s["name"] for s in document.get("schema", {})}:
-        return not_found("Segment not found: {}".format(segment))
+        return not_found("Segment not found")
 
     updated_sequence = await db.sequences.find_one_and_update({"_id": sequence_id}, {
         "$set": data
     }, return_document=ReturnDocument.AFTER)
 
     if not updated_sequence:
-        return not_found("Sequence not found")
+        return not_found()
 
     document = await db.viruses.find_one_and_update({"_id": virus_id}, {
         "$set": {

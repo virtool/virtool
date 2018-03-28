@@ -96,47 +96,51 @@ class SourceTypes extends React.Component {
                 <Row>
                     <Col xs={12} md={6} mdPush={6}>
                         <Panel>
-                            Configure a list of allowable source types. When a user creates a new isolate they will
-                            only be able to select a source type from this list. If this feature is disabled, users
-                            will be able to enter any string as a source type.
+                            <Panel.Body>
+                                Configure a list of allowable source types. When a user creates a new isolate they will
+                                only be able to select a source type from this list. If this feature is disabled, users
+                                will be able to enter any string as a source type.
+                            </Panel.Body>
                         </Panel>
                     </Col>
                     <Col xs={12} md={6} mdPull={6}>
                         <Panel>
-                            <form onSubmit={this.handleSubmit}>
-                                <FormGroup>
-                                    <InputGroup ref={(node) => this.containerNode = node}>
-                                        <FormControl
-                                            type="text"
-                                            inputRef={(node) => this.inputNode = node}
-                                            disabled={!restrictSourceTypes}
-                                            onChange={(e) => this.setState({value: e.target.value, error: null})}
-                                            value={this.state.value}
-                                        />
-                                        <InputGroup.Button>
-                                            <Button type="submit" bsStyle="primary" disabled={!restrictSourceTypes}>
-                                                <Icon name="plus-square" />
-                                            </Button>
-                                        </InputGroup.Button>
-                                    </InputGroup>
-                                </FormGroup>
-                            </form>
+                            <Panel.Body>
+                                <form onSubmit={this.handleSubmit}>
+                                    <FormGroup>
+                                        <InputGroup ref={(node) => this.containerNode = node}>
+                                            <FormControl
+                                                type="text"
+                                                inputRef={(node) => this.inputNode = node}
+                                                disabled={!restrictSourceTypes}
+                                                onChange={(e) => this.setState({value: e.target.value, error: null})}
+                                                value={this.state.value}
+                                            />
+                                            <InputGroup.Button>
+                                                <Button type="submit" bsStyle="primary" disabled={!restrictSourceTypes}>
+                                                    <Icon name="plus-square" style={{paddingLeft: "3px"}} />
+                                                </Button>
+                                            </InputGroup.Button>
+                                        </InputGroup>
+                                    </FormGroup>
+                                </form>
 
-                            <div>
-                                {listComponents}
-                            </div>
+                                <div>
+                                    {listComponents}
+                                </div>
 
-                            <Overlay
-                                show={!!this.state.error}
-                                target={() => this.inputNode}
-                                container={() => this.containerNode}
-                                placement="top"
-                                animation={false}
-                            >
-                                <Popover id="source-type-error-popover" className="text-danger">
-                                    {this.state.error}
-                                </Popover>
-                            </Overlay>
+                                <Overlay
+                                    show={!!this.state.error}
+                                    target={() => this.inputNode}
+                                    container={() => this.containerNode}
+                                    placement="top"
+                                    animation={false}
+                                >
+                                    <Popover id="source-type-error-popover" className="text-danger">
+                                        {this.state.error}
+                                    </Popover>
+                                </Overlay>
+                            </Panel.Body>
                         </Panel>
                     </Col>
                 </Row>
@@ -166,6 +170,4 @@ const mapDispatchToProps = (dispatch) => ({
 
 });
 
-const SourceTypesContainer = connect(mapStateToProps, mapDispatchToProps)(SourceTypes);
-
-export default SourceTypesContainer;
+export default connect(mapStateToProps, mapDispatchToProps)(SourceTypes);

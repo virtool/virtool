@@ -4,7 +4,7 @@ import { Row, Col, ListGroup, ListGroupItem, Panel } from "react-bootstrap";
 
 import { LoadingPlaceholder } from "../../base";
 
-export default function RebuildHistory ({ unbuilt }) {
+export default function RebuildHistory ({ unbuilt, error }) {
 
     let content;
 
@@ -25,17 +25,20 @@ export default function RebuildHistory ({ unbuilt }) {
         );
 
         content = (
-            <ListGroup style={{overflowY: "auto", maxHeight: "700px"}} fill>
+            <ListGroup style={{overflowY: "auto", maxHeight: "700px"}}>
                 {historyComponents}
             </ListGroup>
         );
     }
 
+    const panelStyle = error ? "panel-danger" : "panel-default";
+
     return (
-        <Panel header="Changes">
-            <Panel header="Changes">
+        <Panel className={panelStyle}>
+            <Panel.Heading>Changes</Panel.Heading>
+            <Panel.Body>
                 {content}
-            </Panel>
+            </Panel.Body>
         </Panel>
     );
 }

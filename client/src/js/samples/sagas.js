@@ -1,5 +1,5 @@
 import { includes, noop } from "lodash-es";
-import { LOCATION_CHANGE } from "react-router-redux";
+import { LOCATION_CHANGE, push } from "react-router-redux";
 import { buffers, END, eventChannel } from "redux-saga";
 import { call, put, select, take, takeEvery, takeLatest, throttle } from "redux-saga/effects";
 
@@ -49,7 +49,7 @@ export function* wsSample () {
 }
 
 export function* wsUpdateAnalysis (action) {
-    yield getAnalysis(action);
+    yield getAnalysis({analysisId: action.update.id});
 }
 
 export function* findSamples (action) {
@@ -81,13 +81,32 @@ export function* getSample (action) {
 }
 
 export function* createSample (action) {
-    yield setPending(apiCall(samplesAPI.create, action, CREATE_SAMPLE));
+    yield setPending(apiCustomCall(samplesAPI.create, action, CREATE_SAMPLE));
+
+    function* apiCustomCall (apiMethod, action, actionType, extra = {}) {
+        try {
+            const response = yield apiMethod(action);
+            yield put({type: actionType.SUCCEEDED, data: response.body, ...extra});
+            yield put(push({state: {create: false}}));
+        } catch (error) {
+            yield putGenericError(actionType, error);
+        }
+    }
 }
 
 export function* updateSample (action) {
-    yield setPending(apiCall(samplesAPI.update, action, UPDATE_SAMPLE));
-    yield getSample(action);
-    yield pushHistoryState({editSample: false});
+    yield setPending(apiCustomCall(samplesAPI.update, action, UPDATE_SAMPLE));
+
+    function* apiCustomCall (apiMethod, action, actionType, extra = {}) {
+        try {
+            const response = yield apiMethod(action);
+            yield put({type: actionType.SUCCEEDED, data: response.body, ...extra});
+            yield getSample(action);
+            yield pushHistoryState({editSample: false});
+        } catch (error) {
+            yield putGenericError(actionType, error);
+        }
+    }
 }
 
 export function* updateSampleRights (action) {
@@ -97,7 +116,7 @@ export function* updateSampleRights (action) {
 
 export function* removeSample (action) {
     yield setPending(apiCall(samplesAPI.remove, action, REMOVE_SAMPLE));
-    yield findSamples();
+    yield put(push("/samples"));
 }
 
 export function* findAnalyses (action) {

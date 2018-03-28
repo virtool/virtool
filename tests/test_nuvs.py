@@ -21,7 +21,7 @@ UNITE_PATH = os.path.join(TEST_NUVS_PATH, "unite.json")
 
 
 @pytest.fixture
-async def mock_job(tmpdir, loop, test_motor, test_dispatch):
+async def mock_job(loop, mocker, tmpdir, test_motor, test_dispatch):
     # Add index files.
     shutil.copytree(INDEX_PATH, os.path.join(str(tmpdir), "reference", "viruses", "index"))
 
@@ -52,6 +52,7 @@ async def mock_job(tmpdir, loop, test_motor, test_dispatch):
         test_motor,
         settings,
         test_dispatch,
+        mocker.stub("capture_exception"),
         "foobar",
         "pathoscope_bowtie",
         task_args,

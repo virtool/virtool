@@ -76,61 +76,71 @@ const ProxyOptions = (props) => {
             </Col>
 
             <Col xs={12} md={6} mdPush={6}>
-                <Panel footer={<ProxyFooter />}>
-                    Configure the server to use a proxy for outgoing requests.
+                <Panel>
+                    <Panel.Body>
+                        Configure the server to use a proxy for outgoing requests.
+                    </Panel.Body>
+                    <Panel.Footer>
+                        <ProxyFooter />
+                    </Panel.Footer>
                 </Panel>
             </Col>
             <Col xs={12} md={6} mdPull={6}>
                 <Panel>
-                    {alert}
+                    <Panel.Body>
+                        {alert}
 
-                    <InputError
-                        label="Address"
-                        autoComplete={false}
-                        onSave={props.onUpdateAddress}
-                        initialValue={props.address}
-                        disabled={disableInputs}
-                        withButton
-                    />
-                    <InputError
-                        label="Username"
-                        autoComplete={false}
-                        onSave={props.onUpdateUsername}
-                        initialValue={props.username}
-                        disabled={disableInputs}
-                        withButton
-                    />
-                    <InputError
-                        label="Password"
-                        type="password"
-                        autoComplete={false}
-                        onSave={props.onUpdatePassword}
-                        initialValue={props.password}
-                        disabled={disableInputs}
-                        withButton
-                    />
-                    <Flex alignItems="center">
-                        <FlexItem grow={1} shrink={0}>
-                            <Checkbox
-                                label="Trust Environmental Variables"
-                                checked={props.trust}
-                                onClick={() => props.onUpdateTrust(!props.trust)}
-                                disabled={!props.enabled}
-                            />
-                        </FlexItem>
-                        <FlexItem grow={0} shrink={0}>
-                            <Button onClick={props.onTest} disabled={!props.enabled} pullRight>
-                                <Flex>
-                                    <FlexItem>
-                                        <ProxyTestIcon {...props} />
-                                    </FlexItem>
-                                    <FlexItem pad>
-                                        Test
-                                    </FlexItem>
-                                </Flex>
-                            </Button>
-                        </FlexItem>
-                    </Flex>
+                        <InputError
+                            label="Address"
+                            autoComplete={false}
+                            onSave={props.onUpdateAddress}
+                            initialValue={props.address}
+                            disabled={disableInputs}
+                            noMargin
+                            withButton
+                        />
+                        <InputError
+                            label="Username"
+                            autoComplete={false}
+                            onSave={props.onUpdateUsername}
+                            initialValue={props.username}
+                            disabled={disableInputs}
+                            noMargin
+                            withButton
+                        />
+                        <InputError
+                            label="Password"
+                            type="password"
+                            autoComplete={false}
+                            onSave={props.onUpdatePassword}
+                            initialValue={props.password}
+                            disabled={disableInputs}
+                            noMargin
+                            withButton
+                        />
+                        <Flex alignItems="center">
+                            <FlexItem grow={1} shrink={0}>
+                                <Checkbox
+                                    label="Trust Environmental Variables"
+                                    checked={props.trust}
+                                    onClick={() => props.onUpdateTrust(!props.trust)}
+                                    disabled={!props.enabled}
+                                />
+                            </FlexItem>
+                            <FlexItem grow={0} shrink={0}>
+                                <Button onClick={props.onTest} disabled={!props.enabled} pullRight>
+                                    <Flex>
+                                        <FlexItem>
+                                            <ProxyTestIcon {...props} />
+                                        </FlexItem>
+                                        <FlexItem pad>
+                                            Test
+                                        </FlexItem>
+                                    </Flex>
+                                </Button>
+                            </FlexItem>
+                        </Flex>
+                    </Panel.Body>
                 </Panel>
             </Col>
         </Row>

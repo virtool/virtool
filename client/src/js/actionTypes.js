@@ -24,6 +24,9 @@ export const SET_APP_PENDING = "SET_APP_PENDING";
 export const UNSET_APP_PENDING = "UNSET_APP_PENDING";
 export const WS_CLOSED = "WS_CLOSED";
 
+// Errors
+export const CLEAR_ERROR = "CLEAR_ERROR";
+
 // Jobs
 export const WS_UPDATE_JOB = "WS_UPDATE_JOB";
 export const WS_REMOVE_JOB = "WS_REMOVE_JOB";
@@ -113,6 +116,7 @@ export const FIND_SUBTRACTIONS = createRequestActionType("FIND_SUBTRACTIONS");
 export const LIST_SUBTRACTION_IDS = createRequestActionType("LIST_SUBTRACTION_IDS");
 export const GET_SUBTRACTION = createRequestActionType("GET_SUBTRACTION");
 export const CREATE_SUBTRACTION = createRequestActionType("CREATE_SUBTRACTION");
+export const UPDATE_SUBTRACTION = createRequestActionType("UPDATE_SUBTRACTION");
 export const REMOVE_SUBTRACTION = createRequestActionType("REMOVE_SUBTRACTION");
 
 // Files

@@ -30,6 +30,7 @@ const VirusItem = ({ abbreviation, id, name, modified, verified }) => (
                         {modified ? <Icon bsStyle="warning" name="flag" /> : null}
                     </span>
                 </Col>
+                {verified ? null : <Icon name="tag" pullRight tip="This virus is unverified" />}
             </Row>
         </ListGroupItem>
     </LinkContainer>
@@ -124,6 +125,4 @@ const mapDispatchToProps = (dispatch) => ({
     }
 });
 
-const Container = connect(mapStateToProps, mapDispatchToProps)(VirusesList);
-
-export default Container;
+export default connect(mapStateToProps, mapDispatchToProps)(VirusesList);

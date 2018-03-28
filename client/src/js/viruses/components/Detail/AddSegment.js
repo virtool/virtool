@@ -31,24 +31,25 @@ class AddSegment extends React.Component {
                 required: entry.required
             }
         });
-    };
+    }
 
     handleSubmit = () => {
 
         const checkName = find(this.props.schema, ["name", this.state.newEntry.name]);
 
         if (checkName) {
-            this.setState({nameTaken: true});
+            this.setState({newEntry: {...this.state.newEntry, nameTaken: true}});
         } else if (this.state.newEntry.name) {
+            this.setState({newEntry: {...this.state.newEntry, nameTaken: false}});
             this.props.onSubmit([...this.props.schema, this.state.newEntry]);
         } else {
-            this.setState({showError: true});
+            this.setState({newEntry: {...this.state.newEntry, showError: true, nameTaken: false}});
         }
-    };
+    }
 
     handleExited = () => {
         this.setState(getInitialState());
-    };
+    }
 
     render () {
 
@@ -61,8 +62,6 @@ class AddSegment extends React.Component {
                     <SegmentForm
                         onChange={this.handleChange}
                         newEntry={this.state.newEntry}
-                        show={this.state.showError}
-                        segmentExists={this.state.nameTaken}
                     />
                 </Modal.Body>
                 <Modal.Footer>

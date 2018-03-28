@@ -8,7 +8,7 @@ import virtool.errors
 import virtool.sample
 import virtool.sample_analysis
 import virtool.utils
-from virtool.handlers.utils import bad_request, conflict, json_response, no_content, not_found
+from virtool.handlers.utils import bad_request, conflict, insufficient_rights, json_response, no_content, not_found
 
 
 async def get(req):
@@ -25,26 +25,28 @@ async def get(req):
     if document is None:
         return not_found()
 
-    if document["algorithm"] == "nuvs" and document["results"] == "file":
+    if document["ready"]:
 
-        sample_id = document["sample"]["id"]
+        if document["algorithm"] == "nuvs" and document["results"] == "file":
 
-        path = os.path.join(
-            req.app["settings"].get("data_path"),
-            "samples",
-            sample_id,
-            "analysis",
-            analysis_id,
-            "nuvs.json"
-        )
+            sample_id = document["sample"]["id"]
 
-        async with aiofiles.open(path, "r") as f:
-            json_string = await f.read()
-            document["results"] = json.loads(json_string)
+            path = os.path.join(
+                req.app["settings"].get("data_path"),
+                "samples",
+                sample_id,
+                "analysis",
+                analysis_id,
+                "nuvs.json"
+            )
 
-    formatted = await virtool.sample_analysis.format_analysis(db, document)
+            async with aiofiles.open(path, "r") as f:
+                json_string = await f.read()
+                document["results"] = json.loads(json_string)
 
-    return json_response(virtool.utils.base_processor(formatted))
+        document = await virtool.sample_analysis.format_analysis(db, document)
+
+    return json_response(virtool.utils.base_processor(document))
 
 
 async def remove(req):
@@ -56,22 +58,25 @@ async def remove(req):
 
     analysis_id = req.match_info["analysis_id"]
 
-    document = await db.analyses.find_one({"_id": analysis_id}, ["ready", "job"])
+    document = await db.analyses.find_one({"_id": analysis_id}, ["job", "ready", "sample"])
 
     if not document:
         return not_found()
 
+    sample = await db.samples.find_one({"_id": document["sample"]["id"]}, virtool.sample.PROJECTION)
+
+    if not sample:
+        return not_found("Sample not found")
+
+    read, write = virtool.sample.get_sample_rights(sample, req["client"])
+
+    if not read or not write:
+        return insufficient_rights()
+
     if not document["ready"]:
-        return conflict("Analysis is still running. Cancel job '{}' instead".format(document["job"]["id"]))
+        return conflict("Analysis is still running")
 
-    document = await db.analyses.find_one_and_delete({"_id": analysis_id}, ["sample"])
-
-    sample_id = document["sample"]["id"]
-
-    sample = await db.samples.find_one({"_id": sample_id}, virtool.sample.PROJECTION)
-
-    if sample:
-        await req.app["dispatcher"].dispatch("samples", "update", virtool.utils.base_processor(sample))
+    await req.app["dispatcher"].dispatch("samples", "update", virtool.utils.base_processor(sample))
 
     return no_content()
 
@@ -96,7 +101,7 @@ async def blast(req):
         return bad_request("Not a NuVs analysis")
 
     if not analysis["ready"]:
-        return bad_request("Still in progress")
+        return conflict("Analysis is still running")
 
     sequences = [result["sequence"] for result in analysis["results"] if result["index"] == int(sequence_index)]
 
@@ -106,7 +111,7 @@ async def blast(req):
 
     # Raise exception if more than one sequence has the provided index. This should never happen, just being careful.
     if len(sequences) > 1:
-        raise ValueError("More than one sequence with index {} found".format(sequence_index))
+        raise ValueError("More than one sequence with index {}".format(sequence_index))
 
     # Start a BLAST at NCBI with the specified sequence. Return a RID that identifies the BLAST run.
     rid, _ = await virtool.bio.initialize_ncbi_blast(req.app["settings"], sequences[0])
@@ -144,4 +149,4 @@ async def blast(req):
         "Location": "/api/analyses/{}/{}/blast".format(analysis_id, sequence_index)
     }
 
-    return json_response(data, status=200, headers=headers)
+    return json_response(data, headers=headers, status=200)

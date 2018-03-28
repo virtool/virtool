@@ -113,7 +113,7 @@ async def edit(req):
     user_id = req.match_info["user_id"]
 
     if not await virtool.user.user_exists(db, user_id):
-        return not_found("User not found")
+        return not_found()
 
     update = dict()
 
@@ -160,12 +160,13 @@ async def add_group(req):
     Enable membership in a group for the given user.
 
     """
-    db, data = req.app["db"], req["data"]
+    db = req.app["db"]
+    data = req["data"]
 
     user_id = req.match_info["user_id"]
 
     if not await virtool.user.user_exists(db, user_id):
-        return not_found("User not found")
+        return not_found()
 
     if data["group_id"] not in await db.groups.distinct("_id"):
         return not_found("Group not found")

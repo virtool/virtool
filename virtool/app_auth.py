@@ -44,8 +44,10 @@ async def middleware(req, handler):
 
     authorization = req.headers.get("AUTHORIZATION", None)
 
+    can_use_api_key = req.path[0:4] == "/api" or req.path[0:7] == "/upload"
+
     # Try API key authorization if there was no session_id.
-    if authorization and req.app["settings"].get("enable_api") and req.path[0:4] == "/api":
+    if authorization and req.app["settings"].get("enable_api") and can_use_api_key:
         if authorization:
             try:
                 user_id, key = decode_authorization(authorization)

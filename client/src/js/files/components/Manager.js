@@ -138,6 +138,4 @@ const mapDispatchToProps = (dispatch) => ({
 
 });
 
-const Container = connect(mapStateToProps, mapDispatchToProps)(FileManager);
-
-export default Container;
+export default connect(mapStateToProps, mapDispatchToProps)(FileManager);

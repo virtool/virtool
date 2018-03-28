@@ -18,31 +18,41 @@ const DataOptions = ({ db_name, db_host, db_port, data_path, watch_path, onSave 
                 <h5><strong>Database</strong></h5>
             </Col>
             <Col xs={12} md={6} mdPush={6}>
-                <Panel footer={<WarningFooter />}>
-                    Change the parameters for connecting to MongoDB.
+                <Panel>
+                    <Panel.Body>
+                        Change the parameters for connecting to MongoDB.
+                    </Panel.Body>
+                    <Panel.Footer>
+                        <WarningFooter />
+                    </Panel.Footer>
                 </Panel>
             </Col>
             <Col xs={12} md={6} mdPull={6}>
                 <Panel>
-                    <InputError
-                        label="Database Name"
-                        onSave={(e) => onSave("db_name", e.value)}
-                        initialValue={db_name}
-                        withButton
-                    />
-                    <InputError
-                        label="MongoDB Host"
-                        onSave={(e) => onSave("db_host", e.value)}
-                        initialValue={db_host}
-                        withButton
-                    />
-                    <InputError
-                        label="MongoDB Port"
-                        type="number"
-                        onSave={(e) => onSave("db_port", Number(e.value))}
-                        initialValue={db_port}
-                        withButton
-                    />
+                    <Panel.Body>
+                        <InputError
+                            label="Database Name"
+                            onSave={(e) => onSave("db_name", e.value)}
+                            initialValue={db_name}
+                            noMargin
+                            withButton
+                        />
+                        <InputError
+                            label="MongoDB Host"
+                            onSave={(e) => onSave("db_host", e.value)}
+                            initialValue={db_host}
+                            noMargin
+                            withButton
+                        />
+                        <InputError
+                            label="MongoDB Port"
+                            type="number"
+                            onSave={(e) => onSave("db_port", Number(e.value))}
+                            initialValue={db_port}
+                            noMargin
+                            withButton
+                        />
+                    </Panel.Body>
                 </Panel>
             </Col>
         </Row>
@@ -51,24 +61,33 @@ const DataOptions = ({ db_name, db_host, db_port, data_path, watch_path, onSave 
                 <h5><strong>Paths</strong></h5>
             </Col>
             <Col xs={12} md={6} mdPush={6}>
-                <Panel footer={<WarningFooter />}>
-                    Set the paths where Virtool looks for its data files and for FASTQ files to import.
+                <Panel>
+                    <Panel.Body>
+                        Set the paths where Virtool looks for its data files and for FASTQ files to import.
+                    </Panel.Body>
+                    <Panel.Footer>
+                        <WarningFooter />
+                    </Panel.Footer>
                 </Panel>
             </Col>
             <Col xs={12} md={6} mdPull={6}>
                 <Panel>
-                    <InputError
-                        label="Virtool Data"
-                        onSave={(e) => onSave("watch_path", e.value)}
-                        initialValue={data_path}
-                        withButton
-                    />
-                    <InputError
-                        label="Watch Folder"
-                        onSave={(e) => onSave("watch_path", e.value)}
-                        initialValue={watch_path}
-                        withButton
-                    />
+                    <Panel.Body>
+                        <InputError
+                            label="Virtool Data"
+                            onSave={(e) => onSave("watch_path", e.value)}
+                            initialValue={data_path}
+                            noMargin
+                            withButton
+                        />
+                        <InputError
+                            label="Watch Folder"
+                            onSave={(e) => onSave("watch_path", e.value)}
+                            initialValue={watch_path}
+                            noMargin
+                            withButton
+                        />
+                    </Panel.Body>
                 </Panel>
             </Col>
         </Row>
@@ -87,6 +106,4 @@ const mapDispatchToProps = (dispatch) => ({
 
 });
 
-const Container = connect(mapStateToProps, mapDispatchToProps)(DataOptions);
-
-export default Container;
+export default connect(mapStateToProps, mapDispatchToProps)(DataOptions);
