@@ -84,10 +84,6 @@ class ChangePassword extends React.Component {
         if (!this.props.settings) {
             return <div />;
         }
-      
-        const errorOldPass = find(this.state.errors, ["id", 0]) ? find(this.state.errors, ["id", 0]).message : null;
-        const errorPassLen = find(this.state.errors, ["id", 1]) ? find(this.state.errors, ["id", 1]).message : null;
-        const errorPassMatch = find(this.state.errors, ["id", 2]) ? find(this.state.errors, ["id", 2]).message : null;
 
         return (
             <Panel bsStyle={this.state.errors.length ? "danger" : "default"}>
