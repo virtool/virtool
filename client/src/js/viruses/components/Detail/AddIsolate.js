@@ -91,4 +91,4 @@ const mapDispatchToProps = dispatch => ({
 
 });
 
-export default onnect(mapStateToProps, mapDispatchToProps)(AddIsolate);
+export default connect(mapStateToProps, mapDispatchToProps)(AddIsolate);
