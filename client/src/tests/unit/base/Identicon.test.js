@@ -1,5 +1,5 @@
 import React from "react";
-import { Identicon } from "../../js/base/Identicon";
+import { Identicon } from "../../../js/base/Identicon";
 
 describe("<Identicon />", () => {
     const size = 64;

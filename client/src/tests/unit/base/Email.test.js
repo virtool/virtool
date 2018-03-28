@@ -1,9 +1,5 @@
 import React from "react";
-import Enzyme, { mount, shallow, render } from "enzyme";
-import Adapter from "enzyme-adapter-react-15";
-import EmailContainer, { Email } from "../js/account/components/Email";
-
-Enzyme.configure({ adapter: new Adapter() });
+import EmailContainer, { Email } from "../../../js/account/components/Email";
 
 // This function is used to mock required props for the component
 function setup() {

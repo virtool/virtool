@@ -1,11 +1,11 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`<NoneFound /> renders correctly 1`] = `
+exports[`<NoneFound /> when supplied [noListGroup=false] prop renders correctly 1`] = `
 ShallowWrapper {
   "length": 1,
   Symbol(enzyme.__root__): [Circular],
   Symbol(enzyme.__unrendered__): <NoneFound
-    noListGroup={undefined}
+    noListGroup={false}
     noun="test"
   />,
   Symbol(enzyme.__renderer__): Object {
@@ -152,9 +152,120 @@ ShallowWrapper {
     },
   ],
   Symbol(enzyme.__options__): Object {
-    "adapter": ReactFifteenAdapter {
+    "adapter": ReactSixteenAdapter {
       "options": Object {
-        "supportPrevContextArgumentOfComponentDidUpdate": true,
+        "enableComponentDidUpdateOnSetState": true,
+      },
+    },
+  },
+}
+`;
+
+exports[`<NoneFound /> when supplied [noListGroup=true] prop renders correctly 1`] = `
+ShallowWrapper {
+  "length": 1,
+  Symbol(enzyme.__root__): [Circular],
+  Symbol(enzyme.__unrendered__): <NoneFound
+    noListGroup={true}
+    noun="test"
+  />,
+  Symbol(enzyme.__renderer__): Object {
+    "batchedUpdates": [Function],
+    "getNode": [Function],
+    "render": [Function],
+    "simulateEvent": [Function],
+    "unmount": [Function],
+  },
+  Symbol(enzyme.__node__): Object {
+    "instance": null,
+    "key": undefined,
+    "nodeType": "class",
+    "props": Object {
+      "bsClass": "list-group-item",
+      "children": Array [
+        <Icon
+          fixedWidth={false}
+          name="info"
+          pending={false}
+          pullRight={false}
+        />,
+        " No ",
+        "test",
+        " found",
+      ],
+      "className": "text-center",
+      "listItem": false,
+    },
+    "ref": null,
+    "rendered": Array [
+      Object {
+        "instance": null,
+        "key": undefined,
+        "nodeType": "function",
+        "props": Object {
+          "fixedWidth": false,
+          "name": "info",
+          "pending": false,
+          "pullRight": false,
+        },
+        "ref": null,
+        "rendered": null,
+        "type": [Function],
+      },
+      " No ",
+      "test",
+      " found",
+    ],
+    "type": [Function],
+  },
+  Symbol(enzyme.__nodes__): Array [
+    Object {
+      "instance": null,
+      "key": undefined,
+      "nodeType": "class",
+      "props": Object {
+        "bsClass": "list-group-item",
+        "children": Array [
+          <Icon
+            fixedWidth={false}
+            name="info"
+            pending={false}
+            pullRight={false}
+          />,
+          " No ",
+          "test",
+          " found",
+        ],
+        "className": "text-center",
+        "listItem": false,
+      },
+      "ref": null,
+      "rendered": Array [
+        Object {
+          "instance": null,
+          "key": undefined,
+          "nodeType": "function",
+          "props": Object {
+            "fixedWidth": false,
+            "name": "info",
+            "pending": false,
+            "pullRight": false,
+          },
+          "ref": null,
+          "rendered": null,
+          "type": [Function],
+        },
+        " No ",
+        "test",
+        " found",
+      ],
+      "type": [Function],
+    },
+  ],
+  Symbol(enzyme.__options__): Object {
+    "adapter": ReactSixteenAdapter {
+      "options": Object {
+        "enableComponentDidUpdateOnSetState": true,
       },
     },
   },
