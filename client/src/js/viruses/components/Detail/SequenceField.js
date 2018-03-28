@@ -11,28 +11,26 @@
 
 
 import React from "react";
-import { Badge, FormGroup, FormControl, ControlLabel } from "react-bootstrap";
+import { Badge } from "react-bootstrap";
+import { InputError } from "../../../base";
 
 /**
  * A component that wraps a textarea input element. Used for displaying and editing genetic sequences.
  *
  * @class
  */
-const SequenceField = ({ sequence, readOnly, onChange }) => (
-    <FormGroup>
-        <ControlLabel>
-            Sequence <Badge>{sequence.length}</Badge>
-        </ControlLabel>
-        <FormControl
-            name="sequence"
-            className="sequence"
-            componentClass="textarea"
-            value={sequence}
-            onChange={onChange}
-            readOnly={readOnly}
-            rows={5}
-        />
-    </FormGroup>
+const SequenceField = ({ sequence, readOnly, onChange, error }) => (
+    <InputError
+        label={<div> Sequence <Badge>{sequence.length}</Badge></div>}
+        name="sequence"
+        className="sequence"
+        type="textarea"
+        value={sequence}
+        onChange={onChange}
+        readOnly={readOnly}
+        rows={5}
+        error={error}
+    />
 );
 
 SequenceField.defaultProps = {

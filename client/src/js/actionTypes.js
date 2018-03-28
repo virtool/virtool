@@ -24,6 +24,9 @@ export const SET_APP_PENDING = "SET_APP_PENDING";
 export const UNSET_APP_PENDING = "UNSET_APP_PENDING";
 export const WS_CLOSED = "WS_CLOSED";
 
+// Errors
+export const CLEAR_ERROR = "CLEAR_ERROR";
+
 // Jobs
 export const WS_UPDATE_JOB = "WS_UPDATE_JOB";
 export const WS_REMOVE_JOB = "WS_REMOVE_JOB";

@@ -1,20 +1,18 @@
 import React from "react";
+import { get } from "lodash-es";
 import { connect } from "react-redux";
 import { Col, Panel, Row } from "react-bootstrap";
 
 import { updateAccount } from "../actions";
+import { clearError } from "../../errors/actions";
 import { Button, InputError } from "../../base";
 
 const getInitialState = (email) => ({
-    defaultEmail: email ? email : "",
-    tempEmail: email ? email : "",
+    email: email || "",
     error: ""
 });
 
-const validateEmail = (email) => {
-    const re = /^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$/;
-    return re.test(email);
-};
+const re = /^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$/;
 
 class Email extends React.Component {
 
@@ -23,27 +21,43 @@ class Email extends React.Component {
         this.state = getInitialState(this.props.email);
     }
 
+    componentWillReceiveProps (nextProps) {
+        if (!this.props.error && nextProps.error === "Invalid input") {
+            this.setState({ error: "Please provide a valid email address" });
+        }
+    }
+
+    handleChange = (e) => {
+
+        this.setState({
+            email: e.target.value,
+            error: ""
+        });
+
+        if (this.props.error) {
+            this.props.onClearError("UPDATE_ACCOUNT_ERROR");
+        }
+    };
+
+    handleBlur = (e) => {
+        if (!e.relatedTarget) {
+            this.setState({
+                email: this.props.email,
+                error: ""
+            });
+        }
+    };
+
     onSubmit = (e) => {
         e.preventDefault();
 
-        let error = "";
-
-        const checkEmail = validateEmail(this.state.tempEmail);
-
-        if (!checkEmail) {
-            error = "Please provide a valid email address";
-        }
-
-        if (error) {
+        if (!re.test(this.state.email)) {
+            const error = "Please provide a valid email address";
             return this.setState({error});
         }
 
-        this.setState({
-            defaultEmail: this.state.tempEmail
-        });
-
         this.props.onUpdateEmail({
-            email: this.state.tempEmail
+            email: this.state.email
         });
     };
 
@@ -56,8 +70,9 @@ class Email extends React.Component {
                     <form onSubmit={this.onSubmit}>
                         <InputError
                             label="Email address"
-                            value={this.state.tempEmail}
-                            onChange={(e) => this.setState({tempEmail: e.target.value, error: ""})}
+                            value={this.state.email}
+                            onChange={this.handleChange}
+                            onBlur={this.handleBlur}
                             error={this.state.error}
                         />
 
@@ -78,16 +93,19 @@ class Email extends React.Component {
 }
 
 const mapStateToProps = (state) => ({
-    email: state.account.email
+    email: state.account.email,
+    error: get(state, "errors.UPDATE_ACCOUNT_ERROR.message", "")
 });
 
 const mapDispatchToProps = (dispatch) => ({
 
     onUpdateEmail: (email) => {
         dispatch(updateAccount(email));
+    },
+
+    onClearError: (error) => {
+        dispatch(clearError(error));
     }
 });
 
-const Container = connect(mapStateToProps, mapDispatchToProps)(Email);
-
-export default Container;
+export default connect(mapStateToProps, mapDispatchToProps)(Email);
