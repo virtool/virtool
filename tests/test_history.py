@@ -2,7 +2,7 @@ import pytest
 import datetime
 
 import virtool.utils
-import virtool.virus_history
+import virtool.history
 
 
 class TestAdd:
@@ -11,7 +11,7 @@ class TestAdd:
 
         old, new = test_virus_edit
 
-        returned_change = await virtool.virus_history.add(
+        returned_change = await virtool.history.add(
             test_motor,
             "edit",
             old,
@@ -61,7 +61,7 @@ class TestAdd:
 
         description = "Created virus {}".format(new["name"])
 
-        returned_change = await virtool.virus_history.add(test_motor, "create", old, new, description, "test")
+        returned_change = await virtool.history.add(test_motor, "create", old, new, description, "test")
 
         document = await test_motor.history.find_one()
 
@@ -99,7 +99,7 @@ class TestAdd:
 
         description = "Removed virus {}".format(old["name"])
 
-        returned_change = await virtool.virus_history.add(test_motor, "remove", old, new, description, "test")
+        returned_change = await virtool.history.add(test_motor, "remove", old, new, description, "test")
 
         document = await test_motor.history.find_one()
 
@@ -136,7 +136,7 @@ class TestCalculateDiff:
         """
         old, new = test_virus_edit
 
-        diff = virtool.virus_history.calculate_diff(old, new)
+        diff = virtool.history.calculate_diff(old, new)
 
         assert diff.sort() == [
             ("change", "name", ("Prunus virus F", "Prunus virus E")),
@@ -191,7 +191,7 @@ class TestGetMostRecentChange:
             }
         ])
 
-        most_recent = await virtool.virus_history.get_most_recent_change(test_motor, "6116cba1")
+        most_recent = await virtool.history.get_most_recent_change(test_motor, "6116cba1")
 
         assert most_recent == {
             "_id": "6116cba1.2",
@@ -213,7 +213,7 @@ class TestGetMostRecentChange:
         Test that ``None`` is returned if no change documents exist for the given ``virus_id``.
 
         """
-        most_recent = await virtool.virus_history.get_most_recent_change(test_motor, "6116cba1.1")
+        most_recent = await virtool.history.get_most_recent_change(test_motor, "6116cba1.1")
         assert most_recent is None
 
 
@@ -223,7 +223,7 @@ class TestPatchVirusToVersion:
     async def test(self, remove, test_motor, test_merged_virus, create_mock_history):
         expected_current = await create_mock_history(remove)
 
-        current, patched, reverted_change_ids = await virtool.virus_history.patch_virus_to_version(
+        current, patched, reverted_change_ids = await virtool.history.patch_virus_to_version(
             test_motor,
             "6116cba1",
             1

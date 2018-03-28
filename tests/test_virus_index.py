@@ -1,7 +1,7 @@
 import os
 
 import virtool.errors
-import virtool.virus_index
+import virtool.indexes
 
 
 class TestRemoveUnusedIndexFiles:
@@ -12,7 +12,7 @@ class TestRemoveUnusedIndexFiles:
 
         base_path = str(tmpdir)
 
-        virtool.virus_index.remove_unused_index_files(base_path, ["anb763hj"])
+        virtool.indexes.remove_unused_index_files(base_path, ["anb763hj"])
 
         assert set(os.listdir(base_path)) == {"anb763hj"}
 
@@ -26,10 +26,10 @@ class TestGetCurrentIndexVersion:
             {"_id": "xnm00sla", "version": 0, "ready": True}
         ])
 
-        assert await virtool.virus_index.get_current_index_version(test_motor) == 1
+        assert await virtool.indexes.get_current_index_version(test_motor) == 1
 
     async def test_dne(self, test_motor):
-        assert await virtool.virus_index.get_current_index_version(test_motor) == -1
+        assert await virtool.indexes.get_current_index_version(test_motor) == -1
 
 
 class TestGetCurrentIndex:
@@ -41,4 +41,4 @@ class TestGetCurrentIndex:
             {"_id": "xnm00sla", "version": 0, "ready": True}
         ])
 
-        assert await virtool.virus_index.get_current_index(test_motor) == ("hd7hd902", 1)
+        assert await virtool.indexes.get_current_index(test_motor) == ("hd7hd902", 1)

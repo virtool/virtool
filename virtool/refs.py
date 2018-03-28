@@ -14,6 +14,7 @@ async def clone(db, name, user_id, source_id):
     ref = await create(
         db,
         name,
+        source["organism"],
         user_id=user_id,
         data_type=source["data_type"],
         users=[get_owner_user(user_id)],

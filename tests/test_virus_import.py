@@ -2,7 +2,7 @@ import os
 import pytest
 from copy import deepcopy
 
-import virtool.virus_import
+import virtool.refs_import
 
 
 FIXTURE_DIR = os.path.join(os.path.dirname(os.path.realpath(__file__)), "test_files")
@@ -45,7 +45,7 @@ class TestVerifyVirusList:
         Test that a valid virus list returns no duplicates or errors.
 
         """
-        result = virtool.virus_import.verify_virus_list(test_virus_list)
+        result = virtool.refs_import.verify_virus_list(test_virus_list)
         assert result == (None, None)
 
     @pytest.mark.parametrize("multiple", [False, True])
@@ -55,7 +55,7 @@ class TestVerifyVirusList:
         if multiple:
             test_virus_list[3]["_id"] = "067jz213"
 
-        duplicates, error = virtool.virus_import.verify_virus_list(test_virus_list)
+        duplicates, error = virtool.refs_import.verify_virus_list(test_virus_list)
 
         assert error is None
 
@@ -76,7 +76,7 @@ class TestVerifyVirusList:
         test_virus_list[0]["abbreviation"] = ""
         test_virus_list[1]["abbreviation"] = ""
 
-        result = virtool.virus_import.verify_virus_list(test_virus_list)
+        result = virtool.refs_import.verify_virus_list(test_virus_list)
 
         assert result == (None, None)
 
@@ -92,7 +92,7 @@ class TestVerifyVirusList:
         if multiple:
             test_virus_list[3]["abbreviation"] = "EXV"
 
-        duplicates, error = virtool.virus_import.verify_virus_list(test_virus_list)
+        duplicates, error = virtool.refs_import.verify_virus_list(test_virus_list)
 
         assert error is None
 
@@ -119,7 +119,7 @@ class TestVerifyVirusList:
         if multiple:
             test_virus_list[3]["name"] = "Example virus"
 
-        duplicates, error = virtool.virus_import.verify_virus_list(test_virus_list)
+        duplicates, error = virtool.refs_import.verify_virus_list(test_virus_list)
 
         assert error is None
 
@@ -148,7 +148,7 @@ class TestVerifyVirusList:
                 dict(test_virus_list[1]["isolates"][0]["sequences"][0])
             )
 
-        duplicates, error = virtool.virus_import.verify_virus_list(test_virus_list)
+        duplicates, error = virtool.refs_import.verify_virus_list(test_virus_list)
 
         assert error is None
 
@@ -189,7 +189,7 @@ class TestVerifyVirusList:
 
         extra_isolate["sequences"].append(extra_sequence)
 
-        duplicates, errors = virtool.virus_import.verify_virus_list(test_virus_list)
+        duplicates, errors = virtool.refs_import.verify_virus_list(test_virus_list)
 
         assert duplicates is None
 
@@ -207,7 +207,7 @@ class TestVerifyVirusList:
         if multiple:
             test_virus_list[1]["isolates"] = list()
 
-        duplicates, errors = virtool.virus_import.verify_virus_list(test_virus_list)
+        duplicates, errors = virtool.refs_import.verify_virus_list(test_virus_list)
 
         assert duplicates is None
 
@@ -228,7 +228,7 @@ class TestVerifyVirusList:
         if multiple:
             test_virus_list[1]["isolates"][0]["sequences"] = list()
 
-        _, errors = virtool.virus_import.verify_virus_list(test_virus_list)
+        _, errors = virtool.refs_import.verify_virus_list(test_virus_list)
 
         assert errors["prunus virus f"]["empty_isolate"] == ["cab8b360"]
 
@@ -247,7 +247,7 @@ class TestVerifyVirusList:
         if multiple:
             test_virus_list[2]["isolates"][0]["sequences"][0]["sequence"] = ""
 
-        duplicates, errors = virtool.virus_import.verify_virus_list(test_virus_list)
+        duplicates, errors = virtool.refs_import.verify_virus_list(test_virus_list)
 
         assert duplicates is None
 
@@ -271,7 +271,7 @@ class TestImportFile:
             "_id": "virus_import"
         })
 
-        await virtool.virus_import.import_data(test_motor, test_dispatch, import_data, "test")
+        await virtool.refs_import.import_data(test_motor, test_dispatch, import_data, "test")
 
         expected = {
             "_id": "virus_import",

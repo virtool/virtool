@@ -2,7 +2,7 @@ import dictdiffer
 from copy import deepcopy
 
 import virtool.utils
-import virtool.virus
+import virtool.species
 
 MOST_RECENT_PROJECTION = [
     "_id",
@@ -160,7 +160,7 @@ async def patch_virus_to_version(db, virus_id, version):
     # A list of history_ids reverted to produce the patched entry.
     reverted_history_ids = list()
 
-    current = await virtool.virus.join(db, virus_id) or dict()
+    current = await virtool.species.join(db, virus_id) or dict()
 
     if "version" in current and current["version"] == version:
         return current, deepcopy(current), reverted_history_ids

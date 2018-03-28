@@ -3,7 +3,7 @@ import os
 import pymongo
 
 import virtool.utils
-import virtool.virus_hmm
+import virtool.hmm
 from virtool.handlers.utils import compose_regex_query, json_response, not_found, paginate, protected
 
 
@@ -27,7 +27,7 @@ async def find(req):
         db_query,
         req.query,
         sort="cluster",
-        projection=virtool.virus_hmm.PROJECTION,
+        projection=virtool.hmm.PROJECTION,
         base_query={"hidden": False}
     )
 
@@ -87,7 +87,7 @@ async def install(req):
         }
     }, return_document=pymongo.ReturnDocument.AFTER, upsert=True)
 
-    asyncio.ensure_future(virtool.virus_hmm.install_official(
+    asyncio.ensure_future(virtool.hmm.install_official(
         req.app.loop,
         db,
         req.app["settings"],

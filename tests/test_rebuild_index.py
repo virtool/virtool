@@ -3,7 +3,7 @@ import pytest
 from concurrent.futures import ProcessPoolExecutor
 
 import virtool.job
-import virtool.virus_index
+import virtool.indexes
 
 
 @pytest.fixture
@@ -17,7 +17,7 @@ def test_rebuild_job(mocker, tmpdir, loop, test_motor, test_dispatch):
         "data_path": str(tmpdir)
     }
 
-    job = virtool.virus_index.RebuildIndex(
+    job = virtool.indexes.RebuildIndex(
         loop,
         executor,
         test_motor,
@@ -162,7 +162,7 @@ async def test_replace_old(in_use, mocker, tmpdir, test_motor, test_rebuild_job)
     assert m.called
 
     assert m.call_args[0][0:2] == (
-        virtool.virus_index.remove_unused_index_files,
+        virtool.indexes.remove_unused_index_files,
         os.path.join(str(tmpdir), "reference", "viruses")
     )
 

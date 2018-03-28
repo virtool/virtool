@@ -1,8 +1,8 @@
 import os
 
 import virtool.job
-import virtool.virus
-import virtool.virus_history
+import virtool.species
+import virtool.history
 import virtool.utils
 import virtool.errors
 
@@ -136,12 +136,12 @@ class RebuildIndex(virtool.job.Job):
             document = await self.db.viruses.find_one(virus_id)
 
             if document["version"] == virus_version:
-                joined = await virtool.virus.join(self.db, virus_id)
+                joined = await virtool.species.join(self.db, virus_id)
             else:
-                _, joined, _ = await virtool.virus_history.patch_virus_to_version(self.db, virus_id, virus_version)
+                _, joined, _ = await virtool.history.patch_virus_to_version(self.db, virus_id, virus_version)
 
             # Extract the list of sequences from the joined patched virus.
-            sequences = virtool.virus.get_default_sequences(joined)
+            sequences = virtool.species.get_default_sequences(joined)
 
             defaults = list()
 

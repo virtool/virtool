@@ -10,7 +10,7 @@ import sys
 from aiohttp import web
 from aiohttp.test_utils import make_mocked_coro
 
-import virtool.virus_hmm
+import virtool.hmm
 
 
 TEST_FILE_PATH = os.path.join(sys.path[0], "tests", "test_files")
@@ -56,7 +56,7 @@ def mock_gh_server(monkeypatch, loop, test_server):
 
     server = loop.run_until_complete(test_server(app))
 
-    monkeypatch.setattr("virtool.virus_hmm.LATEST_RELEASE_URL", "http://{}:{}/latest".format(server.host, server.port))
+    monkeypatch.setattr("virtool.hmm.LATEST_RELEASE_URL", "http://{}:{}/latest".format(server.host, server.port))
 
     return server
 
@@ -75,18 +75,18 @@ async def test_hmm_stat(error, loop, tmpdir):
             f.write("foo1bar2hello3world4")
 
         with pytest.raises(subprocess.CalledProcessError) as err:
-            await virtool.virus_hmm.hmmstat(loop, path)
+            await virtool.hmm.hmmstat(loop, path)
 
         assert "returned non-zero" in str(err)
 
     elif error == "missing":
         with pytest.raises(FileNotFoundError) as err:
-            await virtool.virus_hmm.hmmstat(loop, "/home/watson/crick.hmm")
+            await virtool.hmm.hmmstat(loop, "/home/watson/crick.hmm")
 
         assert "HMM file does not exist" in str(err)
 
     else:
-        assert await virtool.virus_hmm.hmmstat(loop, path) == [
+        assert await virtool.hmm.hmmstat(loop, path) == [
             {"cluster": 2, "count": 253, "length": 356},
             {"cluster": 3, "count": 216, "length": 136},
             {"cluster": 4, "count": 210, "length": 96},
@@ -102,9 +102,9 @@ async def test_update_process(step, mocker):
     m = mocker.patch("virtool.utils.update_status_process", new=make_mocked_coro())
 
     if step is False:
-        await virtool.virus_hmm.update_process("db", "dispatch", 0.65)
+        await virtool.hmm.update_process("db", "dispatch", 0.65)
     else:
-        await virtool.virus_hmm.update_process("db", "dispatch", 0.65, step=step)
+        await virtool.hmm.update_process("db", "dispatch", 0.65, step=step)
 
     assert m.call_args[0] == ("db", "dispatch", "hmm_install", 0.65, step or None)
 
@@ -130,7 +130,7 @@ async def test_get_assets(mocker):
 
     mocker.patch("virtool.github.get", new=m)
 
-    assets = await virtool.virus_hmm.get_asset({"proxy_enable": False}, "v1.9.2-beta.2", "fred", "abc123")
+    assets = await virtool.hmm.get_asset({"proxy_enable": False}, "v1.9.2-beta.2", "fred", "abc123")
 
     assert assets == [(
         "https://github.com/virtool/virtool-hmm/releases/download/v0.1.0/annotations.json.gz",
@@ -159,11 +159,11 @@ async def test_install_official(loop, mocker, tmpdir, test_motor, test_dispatch)
 
     m_update_process = make_mocked_coro()
 
-    mocker.patch("virtool.virus_hmm.get_asset", new=m_get_assets)
-    mocker.patch("virtool.virus_hmm.update_process", new=m_update_process)
+    mocker.patch("virtool.hmm.get_asset", new=m_get_assets)
+    mocker.patch("virtool.hmm.update_process", new=m_update_process)
     mocker.patch("virtool.github.download_asset", new=download_asset)
 
-    await virtool.virus_hmm.install_official(
+    await virtool.hmm.install_official(
         loop,
         test_motor,
         settings,
@@ -178,7 +178,7 @@ async def test_insert_annotations(test_motor, test_random_alphanumeric):
     with gzip.open(os.path.join(TEST_FILE_PATH, "annotations.json.gz"), "rt") as f:
         annotations = json.load(f)
 
-    await virtool.virus_hmm.insert_annotations(test_motor, annotations)
+    await virtool.hmm.insert_annotations(test_motor, annotations)
 
     expected_ids = {"9pfsom1b", "g5cpjjvk", "kfvw9vd2", "u3cuwaoq", "v4xryery", "xjqvxigh", "yglirxr7"}
 

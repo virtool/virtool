@@ -1,8 +1,8 @@
 import pytest
 from operator import itemgetter
 
-import virtool.virus
-import virtool.virus_history
+import virtool.species
+import virtool.history
 
 
 class TestFind:
@@ -154,7 +154,7 @@ class TestRemove:
 
         await client.delete("/api/history/6116cba1.2")
 
-        joined = await virtool.virus.join(client.db, "6116cba1")
+        joined = await virtool.species.join(client.db, "6116cba1")
 
         assert joined == {
             "_id": "6116cba1",

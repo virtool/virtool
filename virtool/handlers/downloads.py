@@ -4,7 +4,7 @@ Provides request handlers for file downloads.
 """
 from aiohttp import web
 
-import virtool.virus
+import virtool.species
 
 
 async def download_sequence(req):
@@ -22,12 +22,12 @@ async def download_sequence(req):
     if virus is None:
         return web.Response(status=404)
 
-    isolate = virtool.virus.find_isolate(virus["isolates"], sequence["isolate_id"])
+    isolate = virtool.species.find_isolate(virus["isolates"], sequence["isolate_id"])
 
     if isolate is None:
         return web.Response(status=404)
 
-    isolate_name = virtool.virus.format_isolate_name(isolate)
+    isolate_name = virtool.species.format_isolate_name(isolate)
 
     seq = sequence["sequence"]
 
@@ -53,12 +53,12 @@ async def download_isolate_sequences(req):
     if not virus:
         return web.Response(status=404)
 
-    isolate = virtool.virus.find_isolate(virus["isolates"], isolate_id)
+    isolate = virtool.species.find_isolate(virus["isolates"], isolate_id)
 
     if isolate is None:
         return web.Response(status=404)
 
-    isolate_name = virtool.virus.format_isolate_name(isolate)
+    isolate_name = virtool.species.format_isolate_name(isolate)
 
     fasta = list()
 
@@ -90,7 +90,7 @@ async def download_virus_sequences(req):
     fasta = list()
 
     for isolate in virus["isolates"]:
-        isolate_name = virtool.virus.format_isolate_name(isolate)
+        isolate_name = virtool.species.format_isolate_name(isolate)
 
         async for sequence in db.sequences.find({"isolate_id": isolate["id"]}, ["sequence"]):
             seq = sequence["sequence"]

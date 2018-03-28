@@ -13,14 +13,14 @@ import tempfile
 
 import virtool.app_settings
 import virtool.bio
+import virtool.hmm
 import virtool.job
 import virtool.pathoscope
 import virtool.sample
 import virtool.utils
-import virtool.virus
-import virtool.virus_history
-import virtool.virus_hmm
-import virtool.virus_index
+import virtool.species
+import virtool.history
+import virtool.indexes
 
 LIST_PROJECTION = [
     "_id",
@@ -41,7 +41,7 @@ async def new(db, settings, manager, sample_id, user_id, algorithm):
 
     """
     # Get the current id and version of the virus index currently being used for analysis.
-    index_id, index_version = await virtool.virus_index.get_current_index(db)
+    index_id, index_version = await virtool.indexes.get_current_index(db)
 
     sample = await db.samples.find_one(sample_id, ["name"])
 
@@ -268,7 +268,7 @@ async def format_analysis(db, analysis):
 
             if virus is None:
                 # Get the virus entry (patched to correct version).
-                _, virus_document, _ = await virtool.virus_history.patch_virus_to_version(
+                _, virus_document, _ = await virtool.history.patch_virus_to_version(
                     db,
                     virus_id,
                     version

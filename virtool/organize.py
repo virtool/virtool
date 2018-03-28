@@ -1,4 +1,4 @@
-import virtool.references
+import virtool.refs
 import virtool.utils
 from virtool.user_permissions import PERMISSIONS
 
@@ -78,7 +78,7 @@ async def organize_indexes(db):
 
 async def organize_references(db):
     if await db.species.count() and not await db.references.count():
-        await virtool.references.create_original(db)
+        await virtool.refs.create_original(db)
 
 
 async def organize_sequences(db):

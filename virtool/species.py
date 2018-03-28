@@ -8,7 +8,7 @@ from copy import deepcopy
 
 import virtool.utils
 import virtool.errors
-import virtool.virus_history
+import virtool.history
 
 logger = logging.getLogger(__name__)
 
@@ -117,7 +117,7 @@ async def join_and_format(db, virus_id, joined=None, issues=False):
 
             sequence["id"] = sequence.pop("_id")
 
-    most_recent_change = await virtool.virus_history.get_most_recent_change(db, virus_id)
+    most_recent_change = await virtool.history.get_most_recent_change(db, virus_id)
 
     if most_recent_change:
         most_recent_change["change_id"] = most_recent_change.pop("_id")
@@ -673,7 +673,7 @@ async def upgrade_legacy_virus_and_history(db, virus_id):
 
     for addition in history_additions:
         change_id = addition[0]
-        await virtool.virus_history.add(*addition[1])
+        await virtool.history.add(*addition[1])
         await db.history.update_one({"_id": change_id}, {
             "$set": addition[2]
         })

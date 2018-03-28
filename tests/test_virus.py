@@ -5,7 +5,7 @@ import pytest
 from string import ascii_lowercase, digits
 from copy import deepcopy
 
-import virtool.virus
+import virtool.species
 
 TEST_FILES_PATH = os.path.join(sys.path[0], "tests", "test_files")
 OLD_VIRUS_PATH = os.path.join(TEST_FILES_PATH, "old_virus.json")
@@ -48,7 +48,7 @@ class TestJoin:
         await test_motor.viruses.insert(test_virus)
         await test_motor.sequences.insert(test_sequence)
 
-        joined = await virtool.virus.join(test_motor, "6116cba1")
+        joined = await virtool.species.join(test_motor, "6116cba1")
 
         assert joined == test_merged_virus
 
@@ -79,7 +79,7 @@ class TestJoin:
 
         assert not stub.called
 
-        joined = await virtool.virus.join(test_motor, "6116cba1", document)
+        joined = await virtool.species.join(test_motor, "6116cba1", document)
 
         assert not stub.called
 
@@ -101,7 +101,7 @@ class TestCheckNameAndAbbreviation:
         """
         await test_motor.viruses.insert_one(test_virus)
 
-        result = await virtool.virus.check_name_and_abbreviation(test_motor, name, abbreviation)
+        result = await virtool.species.check_name_and_abbreviation(test_motor, name, abbreviation)
 
         assert result == return_value
 
@@ -113,7 +113,7 @@ class TestCheckVirus:
         Test that a valid virus and sequence list results in return value of ``None``.
 
         """
-        result = virtool.virus.check_virus(test_merged_virus)
+        result = virtool.species.check_virus(test_merged_virus)
         assert result is None
 
     def test_empty_isolate(self, test_merged_virus):
@@ -123,7 +123,7 @@ class TestCheckVirus:
         """
         test_merged_virus["isolates"][0]["sequences"] = list()
 
-        result = virtool.virus.check_virus(test_merged_virus)
+        result = virtool.species.check_virus(test_merged_virus)
 
         assert result == {
             "empty_isolate": ["cab8b360"],
@@ -139,7 +139,7 @@ class TestCheckVirus:
         """
         test_merged_virus["isolates"][0]["sequences"][0]["sequence"] = ""
 
-        result = virtool.virus.check_virus(test_merged_virus)
+        result = virtool.species.check_virus(test_merged_virus)
 
         assert result == {
             "empty_isolate": False,
@@ -163,7 +163,7 @@ class TestCheckVirus:
         """
         test_merged_virus["isolates"] = []
 
-        result = virtool.virus.check_virus(test_merged_virus)
+        result = virtool.species.check_virus(test_merged_virus)
 
         assert result == {
             "empty_isolate": False,
@@ -184,7 +184,7 @@ class TestCheckVirus:
             dict(test_sequence, _id="foobar_2")
         ]
 
-        result = virtool.virus.check_virus(test_merged_virus)
+        result = virtool.species.check_virus(test_merged_virus)
 
         assert result == {
             "empty_isolate": False,
@@ -210,7 +210,7 @@ class TestUpdateLastIndexedVersion:
 
         await test_motor.viruses.insert_many([virus_1, virus_2])
 
-        await virtool.virus.update_last_indexed_version(test_motor, ["foobar"], 5)
+        await virtool.species.update_last_indexed_version(test_motor, ["foobar"], 5)
 
         virus_1 = await test_motor.viruses.find_one({"_id": "6116cba1"})
         virus_2 = await test_motor.viruses.find_one({"_id": "foobar"})
@@ -238,7 +238,7 @@ class TestGetDefaultIsolate:
             dict(test_isolate, isolate_id="foobar4", default=False)
         ]
 
-        assert virtool.virus.get_default_isolate(test_virus) == default_isolate
+        assert virtool.species.get_default_isolate(test_virus) == default_isolate
 
     def test_processor(self, test_virus, test_isolate):
         """
@@ -258,7 +258,7 @@ class TestGetDefaultIsolate:
         def test_processor(isolate):
             return dict(isolate, processed=True)
 
-        assert virtool.virus.get_default_isolate(test_virus, test_processor) == expected
+        assert virtool.species.get_default_isolate(test_virus, test_processor) == expected
 
     def test_no_default(self, test_virus):
         """
@@ -268,7 +268,7 @@ class TestGetDefaultIsolate:
         test_virus["isolates"][0]["default"] = False
 
         with pytest.raises(ValueError) as err:
-            virtool.virus.get_default_isolate(test_virus)
+            virtool.species.get_default_isolate(test_virus)
 
         assert "No default isolate found" in str(err)
 
@@ -282,7 +282,7 @@ class TestGetDefaultIsolate:
         test_virus["isolates"].append(extra_isolate)
 
         with pytest.raises(ValueError) as err:
-            virtool.virus.get_default_isolate(test_virus)
+            virtool.species.get_default_isolate(test_virus)
 
         assert "Found more than one" in str(err)
 
@@ -292,7 +292,7 @@ class TestGetNewIsolateId:
     async def test(self, test_motor, test_virus):
         await test_motor.viruses.insert(test_virus)
 
-        new_id = await virtool.virus.get_new_isolate_id(test_motor)
+        new_id = await virtool.species.get_new_isolate_id(test_motor)
 
         allowed = ascii_lowercase + digits
 
@@ -311,7 +311,7 @@ class TestGetNewIsolateId:
 
         await test_motor.viruses.insert(test_virus)
 
-        new_id = await virtool.virus.get_new_isolate_id(test_motor)
+        new_id = await virtool.species.get_new_isolate_id(test_motor)
 
         assert new_id == expected
 
@@ -324,7 +324,7 @@ class TestGetNewIsolateId:
 
         expected = test_random_alphanumeric.choices[-2][:8].lower()
 
-        new_id = await virtool.virus.get_new_isolate_id(test_motor, excluded=excluded)
+        new_id = await virtool.species.get_new_isolate_id(test_motor, excluded=excluded)
 
         assert new_id == expected
 
@@ -341,7 +341,7 @@ class TestGetNewIsolateId:
 
         expected = test_random_alphanumeric.choices[-3][:8].lower()
 
-        new_id = await virtool.virus.get_new_isolate_id(test_motor, excluded=excluded)
+        new_id = await virtool.species.get_new_isolate_id(test_motor, excluded=excluded)
 
         assert new_id == expected
 
@@ -349,7 +349,7 @@ class TestGetNewIsolateId:
 class TestMergeVirus:
 
     def test(self, test_virus, test_sequence, test_merged_virus):
-        merged = virtool.virus.merge_virus(test_virus, [test_sequence])
+        merged = virtool.species.merge_virus(test_virus, [test_sequence])
 
         assert merged == test_merged_virus
 
@@ -357,7 +357,7 @@ class TestMergeVirus:
 class TestSplitVirus:
 
     def test(self, test_virus, test_sequence, test_merged_virus):
-        virus, sequences = virtool.virus.split_virus(test_merged_virus)
+        virus, sequences = virtool.species.split_virus(test_merged_virus)
 
         assert virus == test_virus
         assert sequences == [test_sequence]
@@ -366,11 +366,11 @@ class TestSplitVirus:
 class TestExtractIsolateIds:
 
     def test_merged_virus(self, test_merged_virus):
-        isolate_ids = virtool.virus.extract_isolate_ids(test_merged_virus)
+        isolate_ids = virtool.species.extract_isolate_ids(test_merged_virus)
         assert isolate_ids == ["cab8b360"]
 
     def test_virus_document(self, test_virus):
-        isolate_ids = virtool.virus.extract_isolate_ids(test_virus)
+        isolate_ids = virtool.species.extract_isolate_ids(test_virus)
         assert isolate_ids == ["cab8b360"]
 
     def test_multiple(self, test_virus):
@@ -381,7 +381,7 @@ class TestExtractIsolateIds:
             "default": False
         })
 
-        isolate_ids = virtool.virus.extract_isolate_ids(test_virus)
+        isolate_ids = virtool.species.extract_isolate_ids(test_virus)
 
         assert set(isolate_ids) == {"cab8b360", "foobar"}
 
@@ -389,7 +389,7 @@ class TestExtractIsolateIds:
         del test_virus["isolates"]
 
         with pytest.raises(KeyError):
-            virtool.virus.extract_isolate_ids(test_virus)
+            virtool.species.extract_isolate_ids(test_virus)
 
 
 class TestFindIsolate:
@@ -399,25 +399,25 @@ class TestFindIsolate:
 
         test_virus["isolates"].append(new_isolate)
 
-        isolate = virtool.virus.find_isolate(test_virus["isolates"], "foobar")
+        isolate = virtool.species.find_isolate(test_virus["isolates"], "foobar")
 
         assert isolate == new_isolate
 
     def test_does_not_exist(self, test_virus):
-        assert virtool.virus.find_isolate(test_virus["isolates"], "foobar") is None
+        assert virtool.species.find_isolate(test_virus["isolates"], "foobar") is None
 
 
 class TestExtractSequenceIds:
 
     def test_valid(self, test_merged_virus):
-        sequence_ids = virtool.virus.extract_sequence_ids(test_merged_virus)
+        sequence_ids = virtool.species.extract_sequence_ids(test_merged_virus)
         assert sequence_ids == ["KX269872"]
 
     def test_missing_isolates(self, test_merged_virus):
         del test_merged_virus["isolates"]
 
         with pytest.raises(KeyError) as err:
-            virtool.virus.extract_sequence_ids(test_merged_virus)
+            virtool.species.extract_sequence_ids(test_merged_virus)
 
         assert "'isolates'" in str(err)
 
@@ -425,7 +425,7 @@ class TestExtractSequenceIds:
         test_merged_virus["isolates"] = list()
 
         with pytest.raises(ValueError) as err:
-            virtool.virus.extract_sequence_ids(test_merged_virus)
+            virtool.species.extract_sequence_ids(test_merged_virus)
 
         assert "Empty isolates list" in str(err)
 
@@ -433,7 +433,7 @@ class TestExtractSequenceIds:
         del test_merged_virus["isolates"][0]["sequences"]
 
         with pytest.raises(KeyError) as err:
-            virtool.virus.extract_sequence_ids(test_merged_virus)
+            virtool.species.extract_sequence_ids(test_merged_virus)
 
         assert "missing sequences field" in str(err)
 
@@ -441,7 +441,7 @@ class TestExtractSequenceIds:
         test_merged_virus["isolates"][0]["sequences"] = list()
 
         with pytest.raises(ValueError) as err:
-            virtool.virus.extract_sequence_ids(test_merged_virus)
+            virtool.species.extract_sequence_ids(test_merged_virus)
 
         assert "Empty sequences list" in str(err)
 
@@ -460,7 +460,7 @@ class TestFormatIsolateName:
             "source_name": source_name
         })
 
-        formatted = virtool.virus.format_isolate_name(test_isolate)
+        formatted = virtool.species.format_isolate_name(test_isolate)
 
         if source_type and source_name:
             assert formatted == "Isolate 8816 - v2"
@@ -472,4 +472,4 @@ class TestUpgradeVirusAndHistoryFormat:
 
     async def test(self, test_old, capsys):
         with capsys.disabled():
-            await virtool.virus.upgrade_legacy_virus_and_history(test_old, "4114ebff")
+            await virtool.species.upgrade_legacy_virus_and_history(test_old, "4114ebff")

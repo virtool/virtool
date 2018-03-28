@@ -2,8 +2,8 @@ import json
 import gzip
 from pymongo import ReturnDocument
 
-import virtool.virus
-import virtool.virus_history
+import virtool.species
+import virtool.history
 import virtool.utils
 import virtool.errors
 
@@ -95,7 +95,7 @@ async def import_data(db, dispatch, data, user_id):
     _sequence_buffer = list()
 
     for virus in viruses:
-        document, sequences = virtool.virus.split_virus(virus)
+        document, sequences = virtool.species.split_virus(virus)
 
         document.update({
             "lower_name": document["name"].lower(),
@@ -145,7 +145,7 @@ async def import_data(db, dispatch, data, user_id):
 
     for virus in viruses:
         # Join the virus document into a complete virus record. This will be used for recording history.
-        joined = await virtool.virus.join(db, virus["_id"])
+        joined = await virtool.species.join(db, virus["_id"])
 
         # Build a ``description`` field for the virus creation change document.
         description = "Created {}".format(joined["name"])
@@ -156,7 +156,7 @@ async def import_data(db, dispatch, data, user_id):
         if abbreviation:
             description += " ({})".format(abbreviation)
 
-        await virtool.virus_history.add(
+        await virtool.history.add(
             db,
             "create",
             None,
@@ -179,7 +179,7 @@ def verify_virus_list(viruses):
     for joined in viruses:
 
         # Check for problems local to the virus document.
-        errors[joined["name"].lower()] = virtool.virus.check_virus(joined)
+        errors[joined["name"].lower()] = virtool.species.check_virus(joined)
 
         # Check for problems in the list as a whole.
         for field in fields:
@@ -326,7 +326,7 @@ async def insert_from_import(db, virus_document, user_id):
     # Perform the actual database insert operation, retaining the response.
     await db.viruses.insert_one(virus_document)
 
-    issues = await virtool.virus.verify(db, virus_document["_id"], virus_document)
+    issues = await virtool.species.verify(db, virus_document["_id"], virus_document)
 
     if issues is None:
         await db.viruses.update_one({"_id": virus_document["_id"]}, {
@@ -337,11 +337,11 @@ async def insert_from_import(db, virus_document, user_id):
 
         virus_document["verified"] = True
 
-    to_dispatch = virtool.utils.base_processor({key: virus_document[key] for key in virtool.virus.LIST_PROJECTION})
+    to_dispatch = virtool.utils.base_processor({key: virus_document[key] for key in virtool.species.LIST_PROJECTION})
 
-    joined = await virtool.virus.join(db, virus_document["_id"])
+    joined = await virtool.species.join(db, virus_document["_id"])
 
-    change = await virtool.virus_history.add(
+    change = await virtool.history.add(
         db,
         "create",
         None,
@@ -350,7 +350,7 @@ async def insert_from_import(db, virus_document, user_id):
         user_id
     )
 
-    change_to_dispatch = {key: change[key] for key in virtool.virus_history.LIST_PROJECTION}
+    change_to_dispatch = {key: change[key] for key in virtool.history.LIST_PROJECTION}
 
     change_to_dispatch = virtool.utils.base_processor(change_to_dispatch)
 
@@ -371,18 +371,18 @@ async def delete_for_import(db, virus_id, user_id):
     :type user_id: str
 
     """
-    joined = await virtool.virus.join(db, virus_id)
+    joined = await virtool.species.join(db, virus_id)
 
     if not joined:
         raise ValueError("Could not find virus_id {}".format(virus_id))
 
     # Perform database operations.
-    await db.sequences.delete_many({"isolate_id": {"$in": virtool.virus.extract_isolate_ids(joined)}})
+    await db.sequences.delete_many({"isolate_id": {"$in": virtool.species.extract_isolate_ids(joined)}})
 
     await db.viruses.delete_one({"_id": virus_id})
 
     # Put an entry in the history collection saying the virus was removed.
-    change = await virtool.virus_history.add(
+    change = await virtool.history.add(
         db,
         "remove",
         joined,
@@ -391,7 +391,7 @@ async def delete_for_import(db, virus_id, user_id):
         user_id
     )
 
-    change_to_dispatch = {key: change[key] for key in virtool.virus_history.LIST_PROJECTION}
+    change_to_dispatch = {key: change[key] for key in virtool.history.LIST_PROJECTION}
 
     change_to_dispatch = virtool.utils.base_processor(change_to_dispatch)
 
