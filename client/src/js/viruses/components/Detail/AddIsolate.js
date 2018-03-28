@@ -91,6 +91,4 @@ const mapDispatchToProps = dispatch => ({
 
 });
 
-const Container = connect(mapStateToProps, mapDispatchToProps)(AddIsolate);
-
-export default Container;
+export default onnect(mapStateToProps, mapDispatchToProps)(AddIsolate);

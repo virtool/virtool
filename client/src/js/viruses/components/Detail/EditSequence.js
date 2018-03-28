@@ -196,6 +196,4 @@ const mapDispatchToProps = dispatch => ({
 
 });
 
-const Container = connect(mapStateToProps, mapDispatchToProps)(EditSequence);
-
-export default Container;
+export default connect(mapStateToProps, mapDispatchToProps)(EditSequence);

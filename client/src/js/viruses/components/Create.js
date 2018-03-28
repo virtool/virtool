@@ -120,7 +120,5 @@ const mapDispatchToProps = dispatch => ({
 
 });
 
-const CreateVirusContainer = withRouter(connect(mapStateToProps, mapDispatchToProps)(CreateVirus));
-
-export default CreateVirusContainer;
+export default withRouter(connect(mapStateToProps, mapDispatchToProps)(CreateVirus));
 

@@ -44,6 +44,4 @@ const mapStateToProps = (state) => {
     };
 };
 
-const Container = connect(mapStateToProps)(SampleDetailQuality);
-
-export default Container;
+export default connect(mapStateToProps)(SampleDetailQuality);

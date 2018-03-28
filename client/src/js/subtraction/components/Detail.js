@@ -161,6 +161,4 @@ const mapDispatchToProps = (dispatch) => ({
 
 });
 
-const Container = connect(mapStateToProps, mapDispatchToProps)(SubtractionDetail);
-
-export default Container;
+export default connect(mapStateToProps, mapDispatchToProps)(SubtractionDetail);
