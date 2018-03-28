@@ -89,8 +89,6 @@ export default class ReadSelector extends React.PureComponent {
             );
         }
 
-        const panelStyle = error ? "panel-custom-error" : "";
-
         const inputErrorClassName = error ? "input-form-error" : "input-form-error-none";
 
         const errorMessage = (
@@ -108,31 +106,33 @@ export default class ReadSelector extends React.PureComponent {
                     </small>
                 </h5>
 
-                <Panel className={panelStyle} ref={(node) => this.panelNode = node}>
-                    <div className="toolbar">
-                        <FormGroup>
-                            <InputGroup>
-                                <Input
-                                    type="text"
-                                    placeholder="Filename"
-                                    value={this.state.filter}
-                                    onChange={(e) => this.setState({filter: e.target.value})}
-                                />
-                                <InputGroup.Button>
-                                    <Button type="button" tip="Clear" onClick={this.reset}>
-                                        <Icon name="reset" />
-                                    </Button>
-                                </InputGroup.Button>
-                            </InputGroup>
-                        </FormGroup>
-                    </div>
-
-                    <div className="panel panel-default">
-                        <div className="list-group">
-                            {fileComponents}
+                <Panel bsStyle={error ? "danger" : "default"} ref={(node) => this.panelNode = node}>
+                    <Panel.Body>
+                        <div className="toolbar">
+                            <FormGroup>
+                                <InputGroup>
+                                    <Input
+                                        type="text"
+                                        placeholder="Filename"
+                                        value={this.state.filter}
+                                        onChange={(e) => this.setState({filter: e.target.value})}
+                                    />
+                                    <InputGroup.Button>
+                                        <Button type="button" tip="Clear" onClick={this.reset}>
+                                            <Icon name="reset" />
+                                        </Button>
+                                    </InputGroup.Button>
+                                </InputGroup>
+                            </FormGroup>
                         </div>
-                    </div>
-                    {errorMessage}
+
+                        <div className="panel panel-default">
+                            <div className="list-group">
+                                {fileComponents}
+                            </div>
+                        </div>
+                        {errorMessage}
+                    </Panel.Body>
                 </Panel>
             </div>
         );

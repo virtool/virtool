@@ -1,11 +1,12 @@
 import React from "react";
-import { difference, filter, find, includes, map, some, sortBy, transform } from "lodash-es";
-import { Col, FormControl, Label, ListGroup, Modal, Overlay, Panel, Popover, Row } from "react-bootstrap";
+import { difference, filter, find, includes, map, some, sortBy, transform, get } from "lodash-es";
+import { Col, Label, InputGroup, ListGroup, Modal, Panel, Row } from "react-bootstrap";
 import { connect } from "react-redux";
 import { push } from "react-router-redux";
 
 import { listGroups, createGroup, setGroupPermission, removeGroup } from "../actions";
-import { AutoProgressBar, Button, Flex, FlexItem, Icon, ListGroupItem, LoadingPlaceholder } from "../../base";
+import { clearError } from "../../errors/actions";
+import { AutoProgressBar, Button, Icon, InputError, ListGroupItem, LoadingPlaceholder } from "../../base";
 import {routerLocationHasState} from "../../utils";
 
 class Group extends React.Component {
@@ -36,7 +37,8 @@ class Groups extends React.Component {
             activeId: null,
             createGroupId: "",
             spaceError: false,
-            submitted: false
+            submitted: false,
+            error: ""
         };
     }
 
@@ -70,10 +72,15 @@ class Groups extends React.Component {
         this.setState({
             createGroupId: "",
             spaceError: false,
-            submitted: false
+            submitted: false,
+            error: ""
         });
 
         this.props.updatePermissions();
+
+        if (this.props.error) {
+            this.props.onClearError("CREATE_GROUP_ERROR");
+        }
     };
 
     handleSelect = (activeId) => {
@@ -82,17 +89,32 @@ class Groups extends React.Component {
         });
     };
 
+    handleChange = (e) => {
+        this.setState({
+            createGroupId: e.target.value,
+            spaceError: this.state.spaceError && includes(e.target.value, " "),
+            submitted: false,
+            error: ""
+        });
+
+        if (this.props.error) {
+            this.props.onClearError("CREATE_GROUP_ERROR");
+        }
+    };
+
     handleSubmit = (e) => {
         e.preventDefault();
 
-        if (this.state.createGroupId !== "") {
-            if (includes(this.state.createGroupId, " ")) {
-                this.setState({
-                    spaceError: true
-                });
-            } else {
-                this.setState({submitted: true}, () => this.props.onCreate(this.state.createGroupId));
-            }
+        if (this.state.createGroupId === "") {
+            this.setState({
+                error: "Group id missing"
+            });
+        } else if (includes(this.state.createGroupId, " ")) {
+            this.setState({
+                spaceError: true
+            });
+        } else {
+            this.setState({submitted: true}, () => this.props.onCreate(this.state.createGroupId));
         }
     };
 
@@ -107,7 +129,6 @@ class Groups extends React.Component {
         );
 
         const activeGroup = find(this.props.groups, {id: this.state.activeId});
-
         const members = filter(this.props.users, user => includes(user.groups, activeGroup.id));
 
         let memberComponents = map(members, member =>
@@ -126,11 +147,10 @@ class Groups extends React.Component {
 
         let error;
 
-        if (this.state.submitted && this.props.createError) {
-            error = "Group with that name already exists";
+        if (this.state.submitted && this.props.error) {
+            error = this.props.error;
         }
 
-        // This error text is shown when the group name contains a space.
         if (this.state.spaceError) {
             error = "Group names may not contain spaces";
         }
@@ -162,54 +182,39 @@ class Groups extends React.Component {
                 <Modal.Body>
                     <Row>
                         <Col md={5}>
-                            <form onSubmit={this.handleSubmit}>
-                                <Flex alignItems="stretch" style={{marginBottom: "5px"}}>
-                                    <FlexItem grow={1} shrink={1}>
-                                        <Overlay
-                                            show={!!error}
-                                            container={this}
-                                            target={() => this.inputNode}
-                                            placement="top"
-                                        >
-                                            <Popover id="create-group-error">
-                                                {error}
-                                            </Popover>
-                                        </Overlay>
-                                        <FormControl
-                                            type="text"
-                                            inputRef={(node) => this.inputNode = node}
-                                            value={this.state.createGroupId}
-                                            onChange={(e) => this.setState({
-                                                createGroupId: e.target.value,
-                                                spaceError: this.state.spaceError && includes(e.target.value, " "),
-                                                submitted: false
-                                            })}
-                                        />
-                                    </FlexItem>
-                                    <FlexItem grow={1} shrink={1}>
-                                        <Button
-                                            type="submit"
-                                            bsStyle="primary"
-                                            icon="plus-square"
-                                            style={{height: "100%"}}
-                                        />
-                                    </FlexItem>
-                                </Flex>
-                            </form>
-
+                            <InputGroup>
+                                <InputError
+                                    type="text"
+                                    value={this.state.createGroupId}
+                                    onChange={this.handleChange}
+                                    error={error || this.state.error}
+                                />
+                                <InputGroup.Button style={{verticalAlign: "top", zIndex: "0"}}>
+                                    <Button type="button" bsStyle="primary" onClick={this.handleSubmit}>
+                                        <Icon name="plus-square" style={{verticalAlign: "middle", marginLeft: "3px"}} />
+                                    </Button>
+                                </InputGroup.Button>
+                            </InputGroup>
+                            <br />
                             <ListGroup>
                                 {groupComponents}
                             </ListGroup>
                         </Col>
                         <Col md={7}>
-                            <Panel header="Permissions">
-                                <ListGroup style={{marginBottom: "10px"}} fill>
-                                    {permissionComponents}
-                                </ListGroup>
+                            <Panel>
+                                <Panel.Heading>Permissions</Panel.Heading>
+                                <Panel.Body>
+                                    <ListGroup style={{marginBottom: "10px"}}>
+                                        {permissionComponents}
+                                    </ListGroup>
+                                </Panel.Body>
                             </Panel>
 
-                            <Panel header="Members">
-                                {memberComponents}
+                            <Panel>
+                                <Panel.Heading>Members</Panel.Heading>
+                                <Panel.Body>
+                                    {memberComponents}
+                                </Panel.Body>
                             </Panel>
 
                             <Button
@@ -234,7 +239,7 @@ const mapStateToProps = (state) => ({
     users: state.users.list,
     groups: state.groups.list,
     pending: state.groups.pending,
-    createError: state.groups.createError
+    error: get(state, "errors.CREATE_GROUP_ERROR.message", "")
 });
 
 const mapDispatchToProps = (dispatch) => ({
@@ -257,10 +262,12 @@ const mapDispatchToProps = (dispatch) => ({
 
     onSetPermission: (groupId, permission, value) => {
         dispatch(setGroupPermission(groupId, permission, value));
+    },
+
+    onClearError: (error) => {
+        dispatch(clearError(error));
     }
 
 });
 
-const Container = connect(mapStateToProps, mapDispatchToProps)(Groups);
-
-export default Container;
+export default connect(mapStateToProps, mapDispatchToProps)(Groups);

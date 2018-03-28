@@ -14,7 +14,7 @@ export default {
                 test: /\.js$/,
                 exclude: /(node_modules)/,
                 use: [
-                    "babel-loader?cacheDirectory=true",
+                    "babel-loader",
                     {
                         loader: "eslint-loader",
                         options: {
@@ -62,6 +62,8 @@ export default {
         filename: "app.[hash:8].js",
         publicPath: "/static/"
     },
+
+    mode: "development",
 
     plugins: [
         new ExtractTextPlugin("style.[hash:8].css"),

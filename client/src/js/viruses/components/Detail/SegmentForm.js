@@ -1,10 +1,11 @@
 import React from "react";
 import PropTypes from "prop-types";
 import { Row, Col } from "react-bootstrap";
+import { connect } from "react-redux";
 import { map } from "lodash-es";
 import { InputError, Checkbox } from "../../../base";
 
-export default class SegmentForm extends React.Component {
+class SegmentForm extends React.Component {
 
     constructor (props) {
         super(props);
@@ -18,9 +19,13 @@ export default class SegmentForm extends React.Component {
 
     componentWillReceiveProps (nextProps) {
 
+        if (nextProps.errors && nextProps.errors.EDIT_VIRUS_ERROR) {
+            return this.setState({ error: nextProps.errors.EDIT_VIRUS_ERROR.message });
+        }
+
         let error = "";
         error = nextProps.newEntry.showError ? "Required Field" : "";
-        error = nextProps.newEntry.nameTaken ? "Segment names must be unique. This name is currently in use" : error;
+        error = nextProps.newEntry.nameTaken ? "Segment names must be unique. This name is currently in use." : error;
 
         this.setState({
             isChecked: nextProps.newEntry.required,
@@ -72,7 +77,7 @@ export default class SegmentForm extends React.Component {
         );
 
         return (
-            <form>
+            <div>
                 <Row>
                     <Col md={9}>
                         <InputError
@@ -103,12 +108,19 @@ export default class SegmentForm extends React.Component {
                         />
                     </Col>
                 </Row>
-            </form>
+            </div>
         );
     }
 }
 
 SegmentForm.propTypes = {
     onChange: PropTypes.func.isRequired,
-    newEntry: PropTypes.object.isRequired
+    newEntry: PropTypes.object.isRequired,
+    errors: PropTypes.object
 };
+
+const mapStateToProps = state => ({
+    errors: state.errors
+});
+
+export default connect(mapStateToProps, null)(SegmentForm);

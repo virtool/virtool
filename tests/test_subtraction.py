@@ -33,7 +33,7 @@ def mock_subtraction():
 
 
 @pytest.fixture
-def test_create_subtraction(tmpdir, write_mock_fasta, loop, test_motor, test_dispatch):
+def test_create_subtraction(mocker, tmpdir, write_mock_fasta, loop, test_motor, test_dispatch):
     tmpdir.mkdir("reference").mkdir("subtraction")
     tmpdir.mkdir("logs").mkdir("jobs")
     tmpdir.mkdir("files")
@@ -52,6 +52,7 @@ def test_create_subtraction(tmpdir, write_mock_fasta, loop, test_motor, test_dis
         test_motor,
         settings,
         test_dispatch,
+        mocker.stub("capture_exception"),
         "foobar",
         "create_subtraction",
         dict(subtraction_id="Arabidopsis thaliana", file_id="foobar-arabidopsis.fa"),
