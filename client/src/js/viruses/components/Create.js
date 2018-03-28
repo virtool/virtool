@@ -3,38 +3,53 @@ import { connect } from "react-redux";
 import { push } from "react-router-redux";
 import { withRouter } from "react-router-dom";
 import { Row, Col, Modal, ButtonToolbar } from "react-bootstrap";
+import { get, upperFirst } from "lodash-es";
 
 import { InputError, Button } from "../../base";
 import { createVirus } from "../actions";
+import { clearError } from "../../errors/actions";
 
 const getInitialState = () => ({
     name: "",
     abbreviation: "",
-    error: ""
+    errorName: "",
+    errorAbbreviation: ""
 });
 
 class CreateVirus extends React.Component {
 
     constructor (props) {
         super(props);
-
-        this.state = {show: false, ...getInitialState()};
+        this.state = getInitialState();
     }
 
     componentWillReceiveProps (nextProps) {
-        if (nextProps.error !== this.props.error) {
-            this.setState({
-                error: nextProps.error
-            });
+        if (!this.props.error && nextProps.error) {
+            if (nextProps.error === "Name already exists") {
+                this.setState({ errorName: nextProps.error });
+            } else if (nextProps.error === "Abbreviation already exists") {
+                this.setState({ errorAbbreviation: nextProps.error });
+            } else {
+                this.setState({
+                    errorName: "Name already exists",
+                    errorAbbreviation: "Abbreviation already exists"
+                });
+            }
         }
     }
 
     handleChange = (e) => {
         const { name, value } = e.target;
+        const error = `error${upperFirst(name)}`;
+
         this.setState({
             [name]: value,
-            error: ""
+            [error]: ""
         });
+
+        if (this.props.error) {
+            this.props.onClearError("CREATE_VIRUS_ERROR");
+        }
     };
 
     handleHide = () => {
@@ -43,21 +58,25 @@ class CreateVirus extends React.Component {
 
     handleModalExited = () => {
         this.setState(getInitialState());
+
+        if (this.props.error) {
+            this.props.onClearError("CREATE_VIRUS_ERROR");
+        }
     };
 
     handleSubmit = (e) => {
         e.preventDefault();
 
-        if (this.state.name) {
-            this.setState({show: false});
-            this.props.onSubmit(this.state.name, this.state.abbreviation);
-            this.handleHide();
-        } else {
-            this.setState({
-                show: true,
-                error: "Required Field"
+        if (!this.state.name) {
+            return this.setState({
+                errorName: "Required Field"
             });
         }
+
+        if (!this.state.errorName || !this.state.errorAbbreviation) {
+            this.props.onSubmit(this.state.name, this.state.abbreviation);
+        }
+
     };
 
     render () {
@@ -69,21 +88,22 @@ class CreateVirus extends React.Component {
                 </Modal.Header>
                 <Modal.Body>
                     <Row>
-                        <Col md={9}>
+                        <Col md={8}>
                             <InputError
                                 label="Name"
                                 name="name"
                                 value={this.state.name}
                                 onChange={this.handleChange}
-                                error={this.state.error}
+                                error={this.state.errorName}
                             />
                         </Col>
-                        <Col md={3}>
+                        <Col md={4}>
                             <InputError
                                 label="Abbreviation"
                                 name="abbreviation"
                                 value={this.state.abbreviation}
                                 onChange={this.handleChange}
+                                error={this.state.errorAbbreviation}
                             />
                         </Col>
                     </Row>
@@ -104,7 +124,7 @@ class CreateVirus extends React.Component {
 
 const mapStateToProps = state => ({
     show: !!state.router.location.state && state.router.location.state.createVirus,
-    error: state.viruses.createError,
+    error: get(state, "errors.CREATE_VIRUS_ERROR.message", ""),
     pending: state.viruses.createPending
 });
 
@@ -116,9 +136,12 @@ const mapDispatchToProps = dispatch => ({
 
     onHide: ({ location }) => {
         dispatch(push({...location, state: {createVirus: false}}));
+    },
+
+    onClearError: (error) => {
+        dispatch(clearError(error));
     }
 
 });
 
 export default withRouter(connect(mapStateToProps, mapDispatchToProps)(CreateVirus));
-
