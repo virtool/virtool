@@ -154,6 +154,4 @@ const mapDispatchToProps = dispatch => ({
 
 });
 
-const Container = connect(mapStateToProps, mapDispatchToProps)(VirusDetail);
-
-export default Container;
+export default connect(mapStateToProps, mapDispatchToProps)(VirusDetail);

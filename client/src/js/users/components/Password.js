@@ -95,82 +95,83 @@ class Password extends React.Component {
 
         return (
             <Panel>
-                <p>
-                    <em>
-                        Last changed <RelativeTime time={this.props.last_password_change} em={true} />
-                    </em>
-                </p>
+                <Panel.Body>
+                    <p>
+                        <em>
+                            Last changed <RelativeTime time={this.props.last_password_change} em={true} />
+                        </em>
+                    </p>
 
-                <form onSubmit={this.handleSubmit}>
-                    <Row>
-                        <Col xs={12} md={6}>
-                            <InputError
-                                type="password"
-                                name="password"
-                                placeholder="New Password"
-                                value={this.state.password}
-                                onChange={this.handleChange}
-                                error={errorPassLen}
-                            />
-                        </Col>
+                    <form onSubmit={this.handleSubmit}>
+                        <Row>
+                            <Col xs={12} md={6}>
+                                <InputError
+                                    type="password"
+                                    name="password"
+                                    placeholder="New Password"
+                                    value={this.state.password}
+                                    onChange={this.handleChange}
+                                    error={errorPassLen}
+                                />
+                            </Col>
 
-                        <Col xs={12} md={6}>
-                            <InputError
-                                type="password"
-                                name="confirm"
-                                placeholder="Confirm Password"
-                                value={this.state.confirm}
-                                onChange={this.handleChange}
-                                error={errorPassMatch}
-                            />
-                        </Col>
-                    </Row>
-                    <Row>
-                        <Col xs={12} md={6}>
-                            <Checkbox
-                                label="Force user to reset password on next login"
-                                checked={this.props.force_reset}
-                                onClick={this.handleSetForceReset}
-                            />
-                        </Col>
+                            <Col xs={12} md={6}>
+                                <InputError
+                                    type="password"
+                                    name="confirm"
+                                    placeholder="Confirm Password"
+                                    value={this.state.confirm}
+                                    onChange={this.handleChange}
+                                    error={errorPassMatch}
+                                />
+                            </Col>
+                        </Row>
+                        <Row>
+                            <Col xs={12} md={6}>
+                                <Checkbox
+                                    label="Force user to reset password on next login"
+                                    checked={this.props.force_reset}
+                                    onClick={this.handleSetForceReset}
+                                />
+                            </Col>
 
-                        <Col xs={12} mdHidden lgHidden>
-                            <div style={{height: "15px"}} />
-                        </Col>
+                            <Col xs={12} mdHidden lgHidden>
+                                <div style={{height: "15px"}} />
+                            </Col>
 
-                        <Col xs={12} md={6}>
-                            <ButtonToolbar className="pull-right">
-                                <Button
-                                    type="button"
-                                    onClick={this.handleClear}
-                                >
-                                    Clear
-                                </Button>
+                            <Col xs={12} md={6}>
+                                <ButtonToolbar className="pull-right">
+                                    <Button
+                                        type="button"
+                                        onClick={this.handleClear}
+                                    >
+                                        Clear
+                                    </Button>
 
-                                <Button
-                                    icon="floppy"
-                                    type="submit"
-                                    bsStyle="primary"
-                                >
-                                    Save
-                                </Button>
-                            </ButtonToolbar>
-                        </Col>
+                                    <Button
+                                        icon="floppy"
+                                        type="submit"
+                                        bsStyle="primary"
+                                    >
+                                        Save
+                                    </Button>
+                                </ButtonToolbar>
+                            </Col>
 
-                        <Col xs={12} className={CX({hidden: !this.state.error})}>
-                            <h5 className="text-danger">
-                                Passwords do not match
-                            </h5>
-                        </Col>
-                    </Row>
-                </form>
+                            <Col xs={12} className={CX({hidden: !this.state.error})}>
+                                <h5 className="text-danger">
+                                    Passwords do not match
+                                </h5>
+                            </Col>
+                        </Row>
+                    </form>
 
-                {this.props.error ? (
-                    <Alert bsStyle="danger">
-                        {this.props.error}
-                    </Alert>
-                ) : null}
-
+                    {this.props.error ? (
+                        <Alert bsStyle="danger">
+                            {this.props.error}
+                        </Alert>
+                    ) : null}
+                </Panel.Body>
             </Panel>
         );
     }
@@ -192,6 +193,4 @@ const mapDispatchToProps = (dispatch) => ({
 
 });
 
-const Container = connect(mapStateToProps, mapDispatchToProps)(Password);
-
-export default Container;
+export default connect(mapStateToProps, mapDispatchToProps)(Password);

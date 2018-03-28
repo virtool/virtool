@@ -59,29 +59,33 @@ class SoftwareUpdateViewer extends React.Component {
 
             updateComponent = (
                 <Panel>
-                    <Flex alignItems="center" style={{marginBottom: "15px"}}>
-                        <FlexItem grow={1} shrink={0}>
-                            <strong className="text-warning">
-                                <Icon name="info" /> Update{releases.length === 1 ? "" : "s"} Available
-                            </strong>
-                        </FlexItem>
-                        <FlexItem grow={0} shrink={0} pad={15}>
-                            <Button icon="download" bsStyle="primary" onClick={this.props.onShowModal}>
-                                Install
-                            </Button>
-                        </FlexItem>
-                    </Flex>
+                    <Panel.Body>
+                        <Flex alignItems="center" style={{marginBottom: "15px"}}>
+                            <FlexItem grow={1} shrink={0}>
+                                <strong className="text-warning">
+                                    <Icon name="info" /> Update{releases.length === 1 ? "" : "s"} Available
+                                </strong>
+                            </FlexItem>
+                            <FlexItem grow={0} shrink={0} pad={15}>
+                                <Button icon="download" bsStyle="primary" onClick={this.props.onShowModal}>
+                                    Install
+                                </Button>
+                            </FlexItem>
+                        </Flex>
 
-                    <ListGroup>
-                        {releaseComponents}
-                    </ListGroup>
+                        <ListGroup>
+                            {releaseComponents}
+                        </ListGroup>
+                    </Panel.Body>
                 </Panel>
             );
         } else {
             updateComponent = (
                 <Panel>
-                    <Icon bsStyle="success" name="checkmark" />
-                    <strong className="text-success"> Software is up-to-date</strong>
+                    <Panel.Body>
+                        <Icon bsStyle="success" name="checkmark" />
+                        <strong className="text-success"> Software is up-to-date</strong>
+                    </Panel.Body>
                 </Panel>
             );
         }
@@ -108,12 +112,14 @@ class SoftwareUpdateViewer extends React.Component {
                     </Col>
                     <Col xs={12} md={4}>
                         <Panel>
-                            <Row>
-                                <Col xs={12}>
-                                    <label>Software Channel</label>
-                                    {radioComponents}
-                                </Col>
-                            </Row>
+                            <Panel.Body>
+                                <Row>
+                                    <Col xs={12}>
+                                        <label>Software Channel</label>
+                                        {radioComponents}
+                                    </Col>
+                                </Row>
+                            </Panel.Body>
                         </Panel>
                     </Col>
                 </Row>
@@ -144,6 +150,4 @@ const mapDispatchToProps = (dispatch) => ({
 
 });
 
-const Container = connect(mapStateToProps, mapDispatchToProps)(SoftwareUpdateViewer);
-
-export default Container;
+export default connect(mapStateToProps, mapDispatchToProps)(SoftwareUpdateViewer);

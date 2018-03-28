@@ -100,6 +100,4 @@ const mapDispatchToProps = (dispatch) => ({
     }
 });
 
-const Container = connect(mapStateToProps, mapDispatchToProps)(NotificationIcon);
-
-export default Container;
+export default connect(mapStateToProps, mapDispatchToProps)(NotificationIcon);

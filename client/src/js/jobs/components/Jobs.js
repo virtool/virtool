@@ -29,6 +29,4 @@ const mapDispatchToProps = (dispatch) => ({
 
 });
 
-const Container = connect(mapStateToProps, mapDispatchToProps)(Jobs);
-
-export default Container;
+export default connect(mapStateToProps, mapDispatchToProps)(Jobs);
