@@ -1,5 +1,6 @@
 import pymongo
 
+import virtool.errors
 import virtool.utils
 
 
@@ -34,9 +35,12 @@ async def clone(db, name, user_id, source_id):
         })
 
 
-async def create(db, name, user_id=None, cloned_from=None, created_at=None, data_type="whole_genome", github="", ref_id=None, ready=False, users=None):
+async def create(db, name, organism, user_id=None, cloned_from=None, created_at=None, data_type="whole_genome", github=None, imported_from=None, public=False, ref_id=None, ready=False, users=None):
 
     created_at = created_at or virtool.utils.timestamp()
+
+    if await db.references.count({"_id": ref_id}):
+        raise virtool.errors.DatabaseError("ref_id already exists")
 
     ref_id = ref_id or await virtool.utils.get_new_id(db.viruses)
 
@@ -55,12 +59,33 @@ async def create(db, name, user_id=None, cloned_from=None, created_at=None, data
     document = {
         "_id": ref_id,
         "created_at": created_at,
+        "data_type": data_type,
         "name": name,
-        "public": True,
+        "organism": organism,
+        "public": public,
         "ready": ready,
         "users": users,
         "user": user
     }
+
+    if len([x for x in (cloned_from, github) if x]):
+        raise ValueError("Can only take one of cloned_from, github, imported_from")
+
+    if cloned_from:
+        source = await db.references.find_one({"_id": cloned_from}, ["name", "organism"])
+
+        if source is None:
+            raise virtool.errors.DatabaseError("Clone source ref does not exist")
+
+        document["cloned_from"] = {
+            "id": cloned_from,
+            "name": source["name"]
+        }
+
+    if imported_from:
+
+    if github:
+        document["github"] = github
 
     await db.references.insert_one(document)
 
@@ -85,7 +110,7 @@ async def create_original(db):
             "modify_viruses": permissions.get("modify_virus", False)
         })
 
-    return await create(db, "Original", created_at=created_at, ref_id="original", ready=ready)
+    return await create(db, "Original", "Virus", created_at=created_at, public=True, ref_id="original", ready=ready)
 
 
 async def get_last_build(db, ref_id):
