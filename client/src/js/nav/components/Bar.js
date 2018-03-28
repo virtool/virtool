@@ -124,6 +124,4 @@ const mapDispatchToProps = (dispatch) => ({
     }
 });
 
-const BarContainer = withRouter(connect(mapStateToProps, mapDispatchToProps)(Bar));
-
-export default BarContainer;
+export default withRouter(connect(mapStateToProps, mapDispatchToProps)(Bar));

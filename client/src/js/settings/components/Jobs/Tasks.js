@@ -46,6 +46,9 @@ const TaskLimits = (props) => {
             mem={props.limits[taskPrefix].mem}
             inst={props.limits[taskPrefix].inst}
             onChangeLimit={props.onChangeLimit}
+            procLowerLimit={props.procLowerLimit}
+            memLowerLimit={props.memLowerLimit}
+            upperLimits={props.resources}
         />
     );
 
@@ -67,8 +70,13 @@ const TaskLimits = (props) => {
                 </ListGroup>
             </Col>
             <Col md={6}>
-                <Panel footer={<TasksFooter />}>
-                    Set limits on specific tasks.
+                <Panel>
+                    <Panel.Body>
+                        Set limits on specific tasks.
+                    </Panel.Body>
+                    <Panel.Footer>
+                        <TasksFooter />
+                    </Panel.Footer>
                 </Panel>
             </Col>
         </Row>
@@ -86,7 +94,13 @@ const mapStateToProps = (state) => {
         };
     });
 
-    return {limits};
+    const settings = {
+        procLowerLimit: state.settings.data.rebuild_index_proc,
+        memLowerLimit: state.settings.data.rebuild_index_mem,
+        resources: state.jobs.resources
+    };
+
+    return {limits, ...settings};
 };
 
 const mapDispatchToProps = (dispatch) => ({

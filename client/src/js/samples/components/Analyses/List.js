@@ -182,6 +182,4 @@ const mapDispatchToProps = (dispatch) => ({
 
 });
 
-const Container = connect(mapStateToProps, mapDispatchToProps)(AnalysesList);
-
-export default Container;
+export default connect(mapStateToProps, mapDispatchToProps)(AnalysesList);

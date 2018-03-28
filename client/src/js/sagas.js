@@ -16,7 +16,7 @@ import { watchSubtraction } from "./subtraction/sagas";
 import { watchUpdates } from "./updates/sagas";
 import { watchUsers } from "./users/sagas";
 import { watchViruses } from "./viruses/sagas";
-
+import { all } from "redux-saga/effects";
 
 /**
  * Yields all of the sagas in the application. Intended for use with the ``react-saga`` middleware.
@@ -24,7 +24,7 @@ import { watchViruses } from "./viruses/sagas";
  * @generator
  */
 function* rootSaga () {
-    yield [
+    yield all([
         watchAccount(),
         watchFiles(),
         watchSubtraction(),
@@ -37,7 +37,7 @@ function* rootSaga () {
         watchUpdates(),
         watchUsers(),
         watchViruses()
-    ];
+    ]);
 }
 
 export default rootSaga;

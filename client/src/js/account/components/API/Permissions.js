@@ -26,9 +26,11 @@ export default function APIPermissions ({ style, userPermissions, keyPermissions
 
     return (
         <Panel style={style}>
-            <ListGroup fill>
-                {rowComponents}
-            </ListGroup>
+            <Panel.Body>
+                <ListGroup>
+                    {rowComponents}
+                </ListGroup>
+            </Panel.Body>
         </Panel>
     );
 }

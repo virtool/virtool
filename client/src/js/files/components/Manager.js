@@ -104,12 +104,13 @@ class FileManager extends React.Component {
 }
 
 const mapStateToProps = (state) => {
-    const { documents, page, found_count, total_count } = state.files;
+    const { documents, found_count, page, page_count, total_count } = state.files;
 
     return {
         documents,
-        page,
         found_count,
+        page,
+        page_count,
         total_count,
         canUpload: state.account.permissions.upload_file
     };
@@ -137,6 +138,4 @@ const mapDispatchToProps = (dispatch) => ({
 
 });
 
-const Container = connect(mapStateToProps, mapDispatchToProps)(FileManager);
-
-export default Container;
+export default connect(mapStateToProps, mapDispatchToProps)(FileManager);

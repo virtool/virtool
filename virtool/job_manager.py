@@ -8,7 +8,7 @@ import virtool.job_classes
 
 class Manager:
 
-    def __init__(self, loop, db, settings, dispatch):
+    def __init__(self, loop, db, settings, dispatch, capture_exception):
         #: The application IO loop
         self.loop = loop
 
@@ -20,6 +20,9 @@ class Manager:
 
         #: A reference to the dispatcher's dispatch method.
         self.dispatch = dispatch
+
+        #: A reference to Sentry client's `captureException` method.
+        self.capture_exception = capture_exception
 
         self._used = {
             "proc": 0,
@@ -116,6 +119,7 @@ class Manager:
             self.db,
             self.settings,
             self.dispatch,
+            self.capture_exception,
             job_id,
             task_name,
             task_args,

@@ -32,26 +32,35 @@ const SSLOptions = (props) => (
         </Row>
         <Row>
             <Col xs={12} md={6} mdPush={6}>
-                <Panel footer={<SSLFooter />}>
-                    Configure the server to use SSL.
+                <Panel>
+                    <Panel.Body>
+                        Configure the server to use SSL.
+                    </Panel.Body>
+                    <Panel.Footer>
+                        <SSLFooter />
+                    </Panel.Footer>
                 </Panel>
             </Col>
             <Col xs={12} md={6} mdPull={6}>
                 <Panel>
-                    <InputError
-                        label="Certificate Path"
-                        onSave={props.onUpdateCertPath}
-                        initialValue={props.certPath}
-                        disabled={!props.enabled}
-                        withButton
-                    />
-                    <InputError
-                        label="Key Path"
-                        onSave={props.onUpdateKeyPath}
-                        initialValue={props.keyPath}
-                        disabled={!props.enabled}
-                        withButton
-                    />
+                    <Panel.Body>
+                        <InputError
+                            label="Certificate Path"
+                            onSave={props.onUpdateCertPath}
+                            initialValue={props.certPath}
+                            disabled={!props.enabled}
+                            noMargin
+                            withButton
+                        />
+                        <InputError
+                            label="Key Path"
+                            onSave={props.onUpdateKeyPath}
+                            initialValue={props.keyPath}
+                            disabled={!props.enabled}
+                            noMargin
+                            withButton
+                        />
+                    </Panel.Body>
                 </Panel>
             </Col>
         </Row>
@@ -80,6 +89,4 @@ const mapDispatchToProps = (dispatch) => ({
 
 });
 
-const Container = connect(mapStateToProps, mapDispatchToProps)(SSLOptions);
-
-export default Container;
+export default connect(mapStateToProps, mapDispatchToProps)(SSLOptions);

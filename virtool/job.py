@@ -71,12 +71,15 @@ async def get_waiting_and_running_ids(db):
 
 class Job:
 
-    def __init__(self, loop, executor, db, settings, dispatch, job_id, task_name, task_args, proc, mem):
+    def __init__(self, loop, executor, db, settings, dispatch, capture_exception, job_id, task_name, task_args, proc,
+                 mem):
+
         self.loop = loop
         self.executor = executor
         self.db = db
         self.settings = settings
         self.dispatch = dispatch
+        self.capture_exception = capture_exception
         self.id = job_id
         self.task_name = task_name
         self.task_args = task_args
@@ -113,6 +116,9 @@ class Job:
             except asyncio.CancelledError:
                 self._cancelled = True
             except:
+                if self.capture_exception:
+                    self.capture_exception()
+
                 self._error = handle_exception()
 
             if self._error or self._cancelled:

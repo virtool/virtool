@@ -101,6 +101,4 @@ const mapStateToProps = (state) => ({
     canUpdate: state.account.permissions.modify_settings
 });
 
-const Container = connect(mapStateToProps)(Notifications);
-
-export default Container;
+export default connect(mapStateToProps)(Notifications);

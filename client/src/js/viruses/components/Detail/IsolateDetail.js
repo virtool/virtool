@@ -108,29 +108,31 @@ export class IsolateDetail extends React.Component {
                 />
 
                 <Panel>
-                    <h5 style={{display: "flex", alignItems: "center", marginBottom: "15px"}}>
-                        <strong style={{flex: "1 0 auto"}}>{isolate.name}</strong>
+                    <Panel.Body>
+                        <h5 style={{display: "flex", alignItems: "center", marginBottom: "15px"}}>
+                            <strong style={{flex: "1 0 auto"}}>{isolate.name}</strong>
 
-                        {defaultIsolateLabel}
-                        {modifyIcons}
+                            {defaultIsolateLabel}
+                            {modifyIcons}
 
-                        <Icon
-                            name="download"
-                            tip="Download FASTA"
-                            style={{paddingLeft: "3px"}}
-                            onClick={this.handleDownload}
+                            <Icon
+                                name="download"
+                                tip="Download FASTA"
+                                style={{paddingLeft: "3px"}}
+                                onClick={this.handleDownload}
+                            />
+                        </h5>
+
+                        <IsolateTable
+                            id={isolate.id}
+                            isDefault={isolate.default}
+                            isolateName={isolate.name}
+                            sourceName={isolate.sourceName}
+                            sourceType={isolate.sourceType}
                         />
-                    </h5>
 
-                    <IsolateTable
-                        id={isolate.id}
-                        isDefault={isolate.default}
-                        isolateName={isolate.name}
-                        sourceName={isolate.sourceName}
-                        sourceType={isolate.sourceType}
-                    />
-
-                    <IsolateSequences />
+                        <IsolateSequences />
+                    </Panel.Body>
                 </Panel>
             </div>
         );
@@ -165,6 +167,4 @@ const mapDispatchToProps = (dispatch) => ({
 
 });
 
-const Container = connect(mapStateToProps, mapDispatchToProps)(IsolateDetail);
-
-export default Container;
+export default connect(mapStateToProps, mapDispatchToProps)(IsolateDetail);

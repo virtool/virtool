@@ -37,22 +37,26 @@ class InternalControl extends React.Component {
                 <Row>
                     <Col xs={12} mdPush={6} md={6}>
                         <Panel>
-                            Set a virus that is spiked into samples to be used as a positive control. Viral abundances
-                            in a sample can be calculated as proportions relative to the control.
+                            <Panel.Body>
+                                Set a virus that is spiked into samples to be used as a positive control.
+                                Viral abundances in a sample can be calculated as proportions relative to the control.
+                            </Panel.Body>
                         </Panel>
                     </Col>
                     <Col xs={12} mdPull={6} md={6}>
                         <Panel>
-                            <AsyncTypeahead
-                                labelKey="name"
-                                allowNew={false}
-                                isLoading={this.props.readaheadPending}
-                                onSearch={this.props.onGetReadahead}
-                                onChange={this.props.onUpdate}
-                                selected={selected}
-                                options={this.props.readahead || []}
-                                renderMenuItemChildren={option => <option key={option.id}>{option.name}</option>}
-                            />
+                            <Panel.Body>
+                                <AsyncTypeahead
+                                    labelKey="name"
+                                    allowNew={false}
+                                    isLoading={this.props.readaheadPending}
+                                    onSearch={this.props.onGetReadahead}
+                                    onChange={this.props.onUpdate}
+                                    selected={selected}
+                                    options={this.props.readahead || []}
+                                    renderMenuItemChildren={option => <option key={option.id}>{option.name}</option>}
+                                />
+                            </Panel.Body>
                         </Panel>
                     </Col>
                 </Row>
@@ -83,6 +87,4 @@ const mapDispatchToProps = (dispatch) => ({
 
 });
 
-const Container = connect(mapStateToProps, mapDispatchToProps)(InternalControl);
-
-export default Container;
+export default connect(mapStateToProps, mapDispatchToProps)(InternalControl);

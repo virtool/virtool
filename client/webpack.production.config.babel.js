@@ -3,6 +3,7 @@ var webpack = require("webpack");
 var HTMLPlugin = require("html-webpack-plugin");
 var CleanPlugin = require("clean-webpack-plugin");
 var ExtractTextPlugin = require("extract-text-webpack-plugin");
+var UglifyJSPlugin = require("uglifyjs-webpack-plugin");
 
 module.exports = {
 
@@ -57,6 +58,8 @@ module.exports = {
         fs: "empty"
     },
 
+    mode: "production",
+
     output: {
         path: path.resolve(__dirname, "./dist"),
         filename: "app.[hash:8].js",
@@ -64,21 +67,11 @@ module.exports = {
         publicPath: "/static/"
     },
 
-    devtool: "source-map",
-
     plugins: [
         new webpack.DefinePlugin({
             "process.env": {
                 "NODE_ENV": JSON.stringify("production")
             }
-        }),
-
-        new webpack.optimize.UglifyJsPlugin({
-            compress: {
-                warnings: true
-            },
-
-            comments: false
         }),
 
         new ExtractTextPlugin("style.[hash:8].css"),

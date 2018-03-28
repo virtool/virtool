@@ -10,14 +10,14 @@
  */
 
 import React from "react";
-import { find, map } from "lodash-es";
+import { find, map, get } from "lodash-es";
 import { connect } from "react-redux";
-import { Row, Col, Modal, FormGroup, FormControl, InputGroup, ControlLabel } from "react-bootstrap";
+import { Row, Col, Modal, FormGroup, FormControl, ControlLabel } from "react-bootstrap";
 
 import { editSequence, hideVirusModal } from "../../actions";
-import { Button, Icon, InputError } from "../../../base";
+import { clearError } from "../../../errors/actions";
+import { Button, InputError } from "../../../base";
 import SequenceField from "./SequenceField";
-import { getGenbank } from "../../api";
 
 const getInitialState = (props) => {
 
@@ -30,7 +30,8 @@ const getInitialState = (props) => {
             host: sequence.host,
             sequence: sequence.sequence,
             segment: sequence.segment,
-            autofillPending: false
+            autofillPending: false,
+            error: ""
         };
     }
 
@@ -39,7 +40,8 @@ const getInitialState = (props) => {
         host: "",
         sequence: "",
         segment: "",
-        autofillPending: false
+        autofillPending: false,
+        error: ""
     };
 };
 
@@ -50,16 +52,35 @@ class EditSequence extends React.Component {
         this.state = getInitialState(this.props);
     }
 
+    componentWillReceiveProps (nextProps) {
+        if (!this.props.error && nextProps.error) {
+            this.setState({ error: nextProps.error });
+        }
+    }
+
     handleChange = (e) => {
         const { name, value } = e.target;
 
         this.setState({
-            [name]: value
+            [name]: value,
+            error: ""
         });
+
+        if (this.props.error) {
+            this.props.onClearError("EDIT_SEQUENCE_ERROR");
+        }
     };
 
     handleModalEnter = () => {
         this.setState(getInitialState(this.props));
+    };
+
+    handleHide = () => {
+        this.props.onHide();
+
+        if (this.props.error) {
+            this.props.onClearError("EDIT_SEQUENCE_ERROR");
+        }
     };
 
     handleSubmit = (e) => {
@@ -74,24 +95,6 @@ class EditSequence extends React.Component {
             this.state.sequence,
             this.state.segment
         );
-    };
-
-    handleAutofill = () => {
-        this.setState({autofillPending: true}, () => {
-            getGenbank(this.props.sequenceId).then((resp) => {
-                // Success
-                const { definition, host, sequence } = resp.body;
-
-                this.setState({
-                    autofillPending: false,
-                    definition,
-                    host,
-                    sequence
-                });
-            }, () => {
-                this.setState({autofillPending: false});
-            });
-        });
     };
 
     render () {
@@ -119,8 +122,8 @@ class EditSequence extends React.Component {
         );
 
         return (
-            <Modal show={!!this.props.sequenceId} onEnter={this.handleModalEnter} onHide={this.props.onHide}>
-                <Modal.Header onHide={this.props.onHide} closeButton>
+            <Modal show={!!this.props.sequenceId} onEnter={this.handleModalEnter} onHide={this.handleHide}>
+                <Modal.Header onHide={this.handleHide} closeButton>
                     Edit Sequence
                 </Modal.Header>
 
@@ -130,20 +133,12 @@ class EditSequence extends React.Component {
 
                         <Row>
                             <Col xs={12} md={6}>
-                                <FormGroup>
-                                    <ControlLabel>Accession (ID)</ControlLabel>
-                                    <InputGroup>
-                                        <FormControl
-                                            value={this.props.sequenceId}
-                                            readOnly
-                                        />
-                                        <InputGroup.Button>
-                                            <Button onClick={this.handleAutofill}>
-                                                <Icon name="wand" />
-                                            </Button>
-                                        </InputGroup.Button>
-                                    </InputGroup>
-                                </FormGroup>
+                                <InputError
+                                    label="Accession (ID)"
+                                    name="id"
+                                    value={this.props.sequenceId}
+                                    readOnly
+                                />
                             </Col>
                             <Col xs={12} md={6}>
                                 <InputError
@@ -152,6 +147,7 @@ class EditSequence extends React.Component {
                                     name="segment"
                                     value={this.state.segment}
                                     onChange={this.handleChange}
+                                    error={this.state.error}
                                 >
                                     {defaultOption}
                                     {currentOption}
@@ -208,7 +204,8 @@ const mapStateToProps = state => ({
     detail: state.viruses.detail,
     isolate: state.viruses.activeIsolate,
     sequenceId: state.viruses.editSequence,
-    virusId: state.viruses.detail.id
+    virusId: state.viruses.detail.id,
+    error: get(state, "errors.EDIT_SEQUENCE_ERROR.message", "")
 });
 
 const mapDispatchToProps = dispatch => ({
@@ -219,10 +216,12 @@ const mapDispatchToProps = dispatch => ({
 
     onSave: (virusId, isolateId, sequenceId, definition, host, sequence, segment) => {
         dispatch(editSequence(virusId, isolateId, sequenceId, definition, host, sequence, segment));
+    },
+
+    onClearError: (error) => {
+        dispatch(clearError(error));
     }
 
 });
 
-const Container = connect(mapStateToProps, mapDispatchToProps)(EditSequence);
-
-export default Container;
+export default connect(mapStateToProps, mapDispatchToProps)(EditSequence);

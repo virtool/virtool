@@ -3,20 +3,31 @@ import { connect } from "react-redux";
 import { Row, Col, Panel } from "react-bootstrap";
 
 import { updateSetting } from "../../actions";
-import { Checkbox, Button } from "../../../base";
+import { Button, Icon, Checkbox } from "../../../base";
 
-const UniqueNames = ({ enabled, onToggle }) => (
+const SentryFooter = () => (
+    <small className="text-warning">
+        <Icon name="warning" /> Changes to these settings will only take effect when the server is reloaded.
+    </small>
+);
+
+const SentryOptions = ({ enabled, onToggle }) => (
     <div>
         <Row>
-            <Col md={12}>
-                <h5><strong>Unique Sample Names</strong></h5>
+            <Col xs={12}>
+                <label>Sentry</label>
             </Col>
+        </Row>
+        <Row>
             <Col xs={12} md={6} mdPush={6}>
                 <Panel>
                     <Panel.Body>
-                        Enable this feature to ensure that every created sample has a unique name. If a user
-                        attempts to assign an existing name to a new sample an error will be displayed.
+                        Enable or disable Sentry error reporting.
+                         Error reporting allows the developers to prevent future errors.
                     </Panel.Body>
+                    <Panel.Footer>
+                        <SentryFooter />
+                    </Panel.Footer>
                 </Panel>
             </Col>
             <Col xs={12} md={6} mdPull={6}>
@@ -33,15 +44,15 @@ const UniqueNames = ({ enabled, onToggle }) => (
 );
 
 const mapStateToProps = (state) => ({
-    enabled: state.settings.data.sample_unique_names
+    enabled: state.settings.data.enable_sentry
 });
 
 const mapDispatchToProps = (dispatch) => ({
 
     onToggle: (value) => {
-        dispatch(updateSetting("sample_unique_names", value));
+        dispatch(updateSetting("enable_sentry", value));
     }
 
 });
 
-export default connect(mapStateToProps, mapDispatchToProps)(UniqueNames);
+export default connect(mapStateToProps, mapDispatchToProps)(SentryOptions);

@@ -44,6 +44,4 @@ const mapStateToProps = state => ({
     ...state.viruses.detail
 });
 
-const Container = connect(mapStateToProps)(VirusGeneral);
-
-export default Container;
+export default connect(mapStateToProps)(VirusGeneral);
