@@ -111,24 +111,26 @@ class CreateSample extends React.Component {
     handleSubmit = (e) => {
         e.preventDefault();
 
-        let error = "";
+        let hasError = false;
 
         if (!this.state.name) {
-            error = "Required Field";
-            this.setState({ errorName: error });
+            hasError = true;
+            this.setState({ errorName: "Required Field" });
         }
 
         if (!this.props.readyHosts || !this.props.readyHosts.length) {
-            error = "A host genome must be added to Virtool before samples can be created and analyzed.";
-            this.setState({ errorSubtraction: error });
+            hasError = true;
+            this.setState({
+                errorSubtraction: "A host genome must be added to Virtool before samples can be created and analyzed."
+            });
         }
 
         if (!this.state.selected.length) {
-            error = "At least one read file must be attached to the sample";
-            this.setState({ errorFile: error });
+            hasError = true;
+            this.setState({ errorFile: "At least one read file must be attached to the sample" });
         }
 
-        if (!error) {
+        if (!hasError) {
             this.props.onCreate({...this.state, files: this.state.selected});
         }
     };

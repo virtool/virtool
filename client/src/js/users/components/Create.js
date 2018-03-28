@@ -65,24 +65,26 @@ export class CreateUser extends React.PureComponent {
     handleSubmit = (e) => {
         e.preventDefault();
 
-        let error = "";
+        let hasError = false;
 
         if (!this.state.userId) {
-            error = "Please specify a username";
-            this.setState({ errorUserId: error });
+            hasError = true;
+            this.setState({ errorUserId: "Please specify a username" });
         }
 
         if (this.state.password.length < this.props.minPassLen) {
-            error = `Passwords must contain at least ${this.props.minPassLen} characters`;
-            this.setState({ errorPassword: error });
+            hasError = true;
+            this.setState({
+                errorPassword: `Passwords must contain at least ${this.props.minPassLen} characters`
+            });
         }
 
         if (this.state.confirm !== this.state.password) {
-            error = "Passwords do not match";
-            this.setState({ errorConfirm: error });
+            hasError = true;
+            this.setState({ errorConfirm: "Passwords do not match" });
         }
 
-        if (!error) {
+        if (!hasError) {
             this.props.onCreate(pick(this.state, ["userId", "password", "confirm", "forceReset"]));
         }
     };

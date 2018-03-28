@@ -94,19 +94,19 @@ class CreateSubtraction extends React.Component {
     handleSubmit = (e) => {
         e.preventDefault();
 
-        let error = "";
+        let hasError = false;
 
         if (!this.state.subtractionId) {
-            error = "Required Field";
-            this.setState({ errorSubtractionId: error });
+            hasError = true;
+            this.setState({ errorSubtractionId: "Required Field" });
         }
 
         if (!this.state.fileId) {
-            error = "Please select a file";
-            this.setState({ errorFile: error });
+            hasError = true;
+            this.setState({ errorFile: "Please select a file" });
         }
 
-        if (!error) {
+        if (!hasError) {
             this.props.onCreate(this.state);
         }
     };

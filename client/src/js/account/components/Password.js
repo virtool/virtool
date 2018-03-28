@@ -56,25 +56,25 @@ class ChangePassword extends React.Component {
     onSubmit = (e) => {
         e.preventDefault();
 
-        let error = "";
+        let hasError = false;
         const minLength = this.props.settings.minimum_password_length;
 
         if (!this.state.oldPassword.length) {
-            error = "Please provide your old password";
-            this.setState({ errorOldPassword: error });
+            hasError = true;
+            this.setState({ errorOldPassword: "Please provide your old password" });
         }
 
         if (this.state.newPassword.length < minLength) {
-            error = `Passwords must contain at least ${minLength} characters`;
-            this.setState({ errorNewPassword: error });
+            hasError = true;
+            this.setState({ errorNewPassword: `Passwords must contain at least ${minLength} characters` });
         }
 
         if (this.state.confirmPassword !== this.state.newPassword) {
-            error = "New passwords do not match";
-            this.setState({ errorConfirmPassword: error });
+            hasError = true;
+            this.setState({ errorConfirmPassword: "New passwords do not match" });
         }
 
-        if (!error) {
+        if (!hasError) {
             this.props.onChangePassword(this.state.oldPassword, this.state.newPassword, this.state.confirmPassword);
         }
     };

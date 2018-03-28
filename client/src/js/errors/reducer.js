@@ -24,64 +24,62 @@ const checkActionFailed = (action) => {
     return isFailed ? action : false;
 };
 
-const getErrorName = (action) => {
-    const errorName = replace(action.type, "_FAILED", "_ERROR");
-    return errorName;
-};
+const getErrorName = (action) => (
+    replace(action.type, "_FAILED", "_ERROR")
+);
 
-const resetErrorName = (newAction) => {
-    const errorName = endsWith(newAction.type, "_REQUESTED")
-        ? replace(newAction.type, "_REQUESTED", "_ERROR")
-        : null;
-
-    return errorName;
+const resetErrorName = (action) => {
+    if (endsWith(action.type, "_REQUESTED")) {
+        return replace(action.type, "_REQUESTED", "_ERROR");
+    }
 };
 
 export default function errorsReducer (state = null, action) {
 
-    const failedAction = checkActionFailed(action);
-    let errorName;
-
-    if (failedAction) {
-        errorName = getErrorName(action);
-    } else if (action.type === CLEAR_ERROR) {
+    if (action.type === CLEAR_ERROR) {
         // Clear specific error explicitly
         return {...state, [action.error]: null};
-    } else {
-        // Ignore requests until an error has occurred
-        errorName = state ? resetErrorName(action) : null;
+    }
 
-        // Only clear errors on request that had been set previously
-        if (errorName && state[errorName]) {
-            return {...state, [errorName]: null};
+    const failedAction = checkActionFailed(action);
+
+    if (failedAction) {
+        const errorName = getErrorName(action);
+
+        const errorPayload = { status: failedAction.status, message: failedAction.message };
+
+        switch (failedAction.type) {
+
+            case CREATE_SAMPLE.FAILED:
+            case UPDATE_SAMPLE.FAILED:
+            case CREATE_VIRUS.FAILED:
+            case EDIT_VIRUS.FAILED:
+            case ADD_ISOLATE.FAILED:
+            case EDIT_ISOLATE.FAILED:
+            case ADD_SEQUENCE.FAILED:
+            case EDIT_SEQUENCE.FAILED:
+            case CREATE_INDEX.FAILED:
+            case CREATE_SUBTRACTION.FAILED:
+            case UPDATE_ACCOUNT.FAILED:
+            case CHANGE_ACCOUNT_PASSWORD.FAILED:
+            case CREATE_USER.FAILED:
+            case EDIT_USER.FAILED:
+            case CREATE_GROUP.FAILED:
+                return {...state, [errorName]: errorPayload};
+
+            default:
+                // Report uncaught errors to Sentry
+                reportAPIError(failedAction);
+                return state;
         }
-        return state;
     }
 
-    const errorPayload = { status: failedAction.status, message: failedAction.message };
+    // Ignore requests until an error has occurred
+    const errorName = state ? resetErrorName(action) : null;
 
-    switch (failedAction.type) {
-
-        case CREATE_SAMPLE.FAILED:
-        case UPDATE_SAMPLE.FAILED:
-        case CREATE_VIRUS.FAILED:
-        case EDIT_VIRUS.FAILED:
-        case ADD_ISOLATE.FAILED:
-        case EDIT_ISOLATE.FAILED:
-        case ADD_SEQUENCE.FAILED:
-        case EDIT_SEQUENCE.FAILED:
-        case CREATE_INDEX.FAILED:
-        case CREATE_SUBTRACTION.FAILED:
-        case UPDATE_ACCOUNT.FAILED:
-        case CHANGE_ACCOUNT_PASSWORD.FAILED:
-        case CREATE_USER.FAILED:
-        case EDIT_USER.FAILED:
-        case CREATE_GROUP.FAILED:
-            return {...state, [errorName]: errorPayload};
-
-        default:
-            // Report uncaught errors to Sentry
-            reportAPIError(failedAction);
-            return state;
+    // Only clear errors on request that had been set previously
+    if (errorName && state[errorName]) {
+        return {...state, [errorName]: null};
     }
+    return state;
 }
