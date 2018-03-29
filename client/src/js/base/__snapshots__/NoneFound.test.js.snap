@@ -5,7 +5,7 @@ ShallowWrapper {
   "length": 1,
   Symbol(enzyme.__root__): [Circular],
   Symbol(enzyme.__unrendered__): <NoneFound
-    noListGroup={false}
+    noListGroup={true}
     noun="test"
   />,
   Symbol(enzyme.__renderer__): Object {
@@ -20,25 +20,45 @@ ShallowWrapper {
     "key": undefined,
     "nodeType": "class",
     "props": Object {
-      "bsClass": "list-group",
-      "children": <ListGroupItem
-        bsClass="list-group-item"
-        className="text-center"
-        listItem={false}
-      >
+      "bsClass": "list-group-item",
+      "children": Array [
         <Icon
           fixedWidth={false}
           name="info"
           pending={false}
           pullRight={false}
-        />
-         No 
-        test
-         found
-      </ListGroupItem>,
+        />,
+        " No ",
+        "test",
+        " found",
+      ],
+      "className": "text-center",
+      "listItem": false,
     },
     "ref": null,
-    "rendered": Object {
+    "rendered": Array [
+      Object {
+        "instance": null,
+        "key": undefined,
+        "nodeType": "function",
+        "props": Object {
+          "fixedWidth": false,
+          "name": "info",
+          "pending": false,
+          "pullRight": false,
+        },
+        "ref": null,
+        "rendered": null,
+        "type": [Function],
+      },
+      " No ",
+      "test",
+      " found",
+    ],
+    "type": [Function],
+  },
+  Symbol(enzyme.__nodes__): Array [
+    Object {
       "instance": null,
       "key": undefined,
       "nodeType": "class",
@@ -78,76 +98,6 @@ ShallowWrapper {
         "test",
         " found",
       ],
-      "type": [Function],
-    },
-    "type": [Function],
-  },
-  Symbol(enzyme.__nodes__): Array [
-    Object {
-      "instance": null,
-      "key": undefined,
-      "nodeType": "class",
-      "props": Object {
-        "bsClass": "list-group",
-        "children": <ListGroupItem
-          bsClass="list-group-item"
-          className="text-center"
-          listItem={false}
-        >
-          <Icon
-            fixedWidth={false}
-            name="info"
-            pending={false}
-            pullRight={false}
-          />
-           No 
-          test
-           found
-        </ListGroupItem>,
-      },
-      "ref": null,
-      "rendered": Object {
-        "instance": null,
-        "key": undefined,
-        "nodeType": "class",
-        "props": Object {
-          "bsClass": "list-group-item",
-          "children": Array [
-            <Icon
-              fixedWidth={false}
-              name="info"
-              pending={false}
-              pullRight={false}
-            />,
-            " No ",
-            "test",
-            " found",
-          ],
-          "className": "text-center",
-          "listItem": false,
-        },
-        "ref": null,
-        "rendered": Array [
-          Object {
-            "instance": null,
-            "key": undefined,
-            "nodeType": "function",
-            "props": Object {
-              "fixedWidth": false,
-              "name": "info",
-              "pending": false,
-              "pullRight": false,
-            },
-            "ref": null,
-            "rendered": null,
-            "type": [Function],
-          },
-          " No ",
-          "test",
-          " found",
-        ],
-        "type": [Function],
-      },
       "type": [Function],
     },
   ],

@@ -1,5 +1,5 @@
 import React from "react";
-import { NoneFound } from "../../../js/base/NoneFound";
+import { NoneFound } from "./NoneFound";
 import { ListGroup, ListGroupItem } from "react-bootstrap";
 
 describe("<NoneFound />", () => {

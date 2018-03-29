@@ -1,5 +1,5 @@
 import React from "react";
-import EmailContainer, { Email } from "../../../js/account/components/Email";
+import EmailContainer, { Email } from "./Email";
 
 // This function is used to mock required props for the component
 function setup() {

@@ -106,6 +106,6 @@
       "(/tests/unit/.*|(\\.|/)(test|spec))\\.js?$",
       "!**/node_modules/**"
     ],
-    "setupTestFrameworkScriptFile": "./src/tests/jestsetup.js"
+    "setupTestFrameworkScriptFile": "./src/tests/setupTests.js"
   }
 }
