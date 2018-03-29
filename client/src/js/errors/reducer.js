@@ -19,16 +19,16 @@ import {
     CREATE_GROUP
 } from "../actionTypes";
 
-const checkActionFailed = (action) => {
+export const checkActionFailed = (action) => {
     const isFailed = endsWith(action.type, "_FAILED");
     return isFailed ? action : false;
 };
 
-const getErrorName = (action) => (
+export const getErrorName = (action) => (
     replace(action.type, "_FAILED", "_ERROR")
 );
 
-const resetErrorName = (action) => {
+export const resetErrorName = (action) => {
     if (endsWith(action.type, "_REQUESTED")) {
         return replace(action.type, "_REQUESTED", "_ERROR");
     }
