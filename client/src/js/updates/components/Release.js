@@ -1,3 +1,4 @@
+import CX from "classnames";
 import React from "react";
 import Marked from "marked";
 import PropTypes from "prop-types";
@@ -6,7 +7,8 @@ import { Button, Col, ListGroupItem, Row } from "react-bootstrap";
 
 import { Icon } from "../../base";
 
-export const renderReleaseMarkdown = (body) => {
+export const ReleaseMarkdown = ({ body, noMargin = false }) => {
+
     let html = Marked(body);
 
     html = replace(
@@ -15,7 +17,11 @@ export const renderReleaseMarkdown = (body) => {
         "<a target='_blank' href='https://github.com/virtool/virtool/issues/$1'>#$1</a>"
     );
 
-    return <div style={{marginTop: "10px"}} dangerouslySetInnerHTML={{__html: html}} />;
+    return (
+        <div className={CX("markdown-container", {"no-margin": noMargin})}>
+            <div dangerouslySetInnerHTML={{__html: html}} />
+        </div>
+    );
 };
 
 export default class Release extends React.Component {
@@ -53,8 +59,8 @@ export default class Release extends React.Component {
 
         if (this.state.in) {
             markdown = (
-                <Col xs={12} className="markdown-container">
-                    {renderReleaseMarkdown(this.props.body)}
+                <Col xs={12}>
+                    <ReleaseMarkdown body={this.props.body} />
                 </Col>
             );
         }
