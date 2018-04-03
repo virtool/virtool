@@ -100,11 +100,12 @@ matrix:
 
     - language: node_js
       node_js:
-      - 'node'
+      - 'stable'
       cache:
+        yarn: true
         directories:
         - client/node_modules
-      install:
+      before_script:
       - cd $TRAVIS_BUILD_DIR
       - cd client
       - yarn install
