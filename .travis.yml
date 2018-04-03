@@ -101,3 +101,12 @@ matrix:
     - language: node_js
       node_js:
       - 'node'
+      cache:
+        directories:
+        - client/node_modules
+      install:
+      - cd $TRAVIS_BUILD_DIR
+      - cd client
+      - yarn install
+      script:
+      - yarn test
