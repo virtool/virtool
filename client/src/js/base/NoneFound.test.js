@@ -9,7 +9,9 @@ describe("<NoneFound />", () => {
         const noun = "test";
         const noListGroup = false;
 
-        wrapper = shallow(<NoneFound noun={noun} noListGroup={noListGroup} />);
+        beforeEach(() => {
+            wrapper = shallow(<NoneFound noun={noun} noListGroup={noListGroup} />);
+        });
 
         it("renders correctly", () => {
             expect(wrapper).toMatchSnapshot();
@@ -18,13 +20,16 @@ describe("<NoneFound />", () => {
         it("renders a ListGroup", () => {
             expect(wrapper.find(ListGroup).exists()).toBe(true);
         });
+
     });
 
     describe("when supplied [noListGroup=true] prop", () => {
         const noun = "test";
         const noListGroup = true;
 
-        wrapper = shallow(<NoneFound noun={noun} noListGroup={noListGroup} />);
+        beforeEach(() => {
+            wrapper = shallow(<NoneFound noun={noun} noListGroup={noListGroup} />);
+        });
 
         it("renders correctly", () => {
             expect(wrapper).toMatchSnapshot();
