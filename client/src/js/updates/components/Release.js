@@ -1,16 +1,10 @@
-/**
- *
- *
- * @copyright 2017 Government of Canada
- * @license MIT
- * @author igboyes
- *
- */
 import React from "react";
 import Marked from "marked";
 import PropTypes from "prop-types";
 import { replace } from "lodash-es";
-import { ListGroupItem, Button, Row, Col } from "react-bootstrap";
+import { Button, Col, ListGroupItem, Row } from "react-bootstrap";
+
+import { Icon } from "../../base";
 
 export const renderReleaseMarkdown = (body) => {
     let html = Marked(body);
@@ -40,21 +34,48 @@ export default class Release extends React.Component {
         html_url: PropTypes.string
     };
 
+    handleClick = () => {
+        this.setState({
+            in: !this.state.in
+        });
+    };
+
     render () {
+
+        const caret = (
+            <Icon
+                className="fixed-width"
+                name={`caret-${this.state.in ? "down" : "right"}`}
+            />
+        );
+
+        let markdown;
+
+        if (this.state.in) {
+            markdown = (
+                <Col xs={12} className="markdown-container">
+                    {renderReleaseMarkdown(this.props.body)}
+                </Col>
+            );
+        }
+
         return (
             <ListGroupItem>
                 <Row>
                     <Col xs={12}>
-                        <strong>{this.props.name}</strong>
-                        <span className="pull-right">
-                            <Button bsSize="xsmall" target="_blank" href={this.props.html_url}>
-                                <i className="i-github" /> GitHub
-                            </Button>
-                        </span>
+                        <Row>
+                            <Col xs={9} style={{cursor: "pointer"}} onClick={this.handleClick}>
+                                {caret} <strong>{this.props.name}</strong>
+                            </Col>
+                            <Col xs={3}>
+                                <Button bsSize="xsmall" target="_blank" href={this.props.html_url}>
+                                    <i className="i-github" /> GitHub
+                                </Button>
+                            </Col>
+                        </Row>
                     </Col>
-                    <Col xs={12}>
-                        {renderReleaseMarkdown(this.props.body)}
-                    </Col>
+
+                    {markdown}
                 </Row>
             </ListGroupItem>
         );
