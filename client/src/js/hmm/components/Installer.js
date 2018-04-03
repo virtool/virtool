@@ -51,19 +51,21 @@ class HMMInstall extends React.Component {
 
             return (
                 <Panel>
-                    <Row>
-                        <Col xs={10} xsOffset={1} md={6} mdOffset={3}>
-                            <div className="text-center">
-                                <p><strong>Installing</strong></p>
-                                <ProgressBar now={progress} />
-                                <p>
-                                    <small className="text-muted text-capitalize">
-                                        {step}
-                                    </small>
-                                </p>
-                            </div>
-                        </Col>
-                    </Row>
+                    <Panel.Body>
+                        <Row>
+                            <Col xs={10} xsOffset={1} md={6} mdOffset={3}>
+                                <div className="text-center">
+                                    <p><strong>Installing</strong></p>
+                                    <ProgressBar now={progress} />
+                                    <p>
+                                        <small className="text-muted text-capitalize">
+                                            {step}
+                                        </small>
+                                    </p>
+                                </div>
+                            </Col>
+                        </Row>
+                    </Panel.Body>
                 </Panel>
             );
         }
@@ -102,7 +104,5 @@ const mapDispatchToProps = (dispatch) => ({
 
 });
 
-const Container = connect(mapStateToProps, mapDispatchToProps)(HMMInstall);
-
-export default Container;
+export default connect(mapStateToProps, mapDispatchToProps)(HMMInstall);
 

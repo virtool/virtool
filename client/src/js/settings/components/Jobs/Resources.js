@@ -94,19 +94,20 @@ class Resources extends React.Component {
             : null;
 
         return (
-            <div>
-                {alert}
-                <Row>
-                    <Col md={12}>
-                        <h5><strong>Resource Limits</strong></h5>
-                    </Col>
-                    <Col xs={12} md={6} mdPush={6}>
-                        <Panel>
+            <Row>
+                <Col md={12}>
+                    <h5><strong>Resource Limits</strong></h5>
+                </Col>
+                <Col xs={12} md={6} mdPush={6}>
+                    <Panel>
+                        <Panel.Body>
                             Set limits on the computing resources Virtool can use on the host server.
-                        </Panel>
-                    </Col>
-                    <Col xs={12} md={6} mdPull={6}>
-                        <Panel>
+                        </Panel.Body>
+                    </Panel>
+                </Col>
+                <Col xs={12} md={6} mdPull={6}>
+                    <Panel>
+                        <Panel.Body>
                             <InputError
                                 label="CPU Limit"
                                 type="number"
@@ -144,10 +145,10 @@ class Resources extends React.Component {
                                 noMargin
                                 withButton
                             />
-                        </Panel>
-                    </Col>
-                </Row>
-            </div>
+                        </Panel.Body>
+                    </Panel>
+                </Col>
+            </Row>
         );
     }
 }

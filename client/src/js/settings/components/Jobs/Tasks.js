@@ -71,8 +71,13 @@ const TaskLimits = (props) => {
                 </ListGroup>
             </Col>
             <Col md={6}>
-                <Panel footer={<TasksFooter />}>
-                    Set limits on specific tasks.
+                <Panel>
+                    <Panel.Body>
+                        Set limits on specific tasks.
+                    </Panel.Body>
+                    <Panel.Footer>
+                        <TasksFooter />
+                    </Panel.Footer>
                 </Panel>
             </Col>
         </Row>

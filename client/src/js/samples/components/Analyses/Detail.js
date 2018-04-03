@@ -1,8 +1,8 @@
 import React from "react";
 import Numeral from "numeral";
 import { connect } from "react-redux";
-import { Col, Label, ProgressBar, Row, Table } from "react-bootstrap";
-import { IDRow, RelativeTime } from "../../../base";
+import { Col, Label, Panel, ProgressBar, Row, Table } from "react-bootstrap";
+import {IDRow, LoadingPlaceholder, RelativeTime} from "../../../base";
 
 import { getAnalysis } from "../../actions";
 import { getTaskDisplayName } from "../../../utils";
@@ -35,11 +35,22 @@ class AnalysisDetail extends React.Component {
 
         let content;
 
-        if (detail.algorithm === "pathoscope_bowtie") {
-            content = <PathoscopeViewer {...detail} maxReadLength={this.props.quality.length[1]} />;
-        }
-
-        if (detail.algorithm === "nuvs") {
+        if (!detail.ready) {
+            content = (
+                <Panel>
+                    <Panel.Body>
+                        <LoadingPlaceholder message="Analysis in progress" margin="1.2rem" />
+                    </Panel.Body>
+                </Panel>
+            );
+        } else if (detail.algorithm === "pathoscope_bowtie") {
+            content = (
+                <PathoscopeViewer
+                    {...detail}
+                    maxReadLength={this.props.quality.length[1]}
+                />
+            );
+        } else if (detail.algorithm === "nuvs") {
             content = (
                 <NuVsViewer
                     history={this.props.history}
@@ -47,6 +58,8 @@ class AnalysisDetail extends React.Component {
                     {...detail}
                 />
             );
+        } else {
+            throw Error("Unusable analysis detail content");
         }
 
         return (
@@ -99,6 +112,4 @@ const mapDispatchToProps = (dispatch) => ({
 
 });
 
-const Container = connect(mapStateToProps, mapDispatchToProps)(AnalysisDetail);
-
-export default Container;
+export default connect(mapStateToProps, mapDispatchToProps)(AnalysisDetail);

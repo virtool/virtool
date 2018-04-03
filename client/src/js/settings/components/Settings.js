@@ -106,6 +106,4 @@ const mapStateToProps = (state) => ({
     settings: state.settings.data
 });
 
-const Container = connect(mapStateToProps)(Settings);
-
-export default Container;
+export default connect(mapStateToProps)(Settings);

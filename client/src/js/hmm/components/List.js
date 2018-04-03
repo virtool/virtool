@@ -80,6 +80,4 @@ const mapDispatchToProps = (dispatch) => ({
 
 });
 
-const Container = connect(mapStateToProps, mapDispatchToProps)(HMMList);
-
-export default Container;
+export default connect(mapStateToProps, mapDispatchToProps)(HMMList);

@@ -67,10 +67,12 @@ class VirusImport extends React.Component {
                 if (data.inProgress) {
                     progress = (
                         <Panel>
-                            <ProgressBar now={data.inserted || 0 / data.totals.viruses * 100} />
-                            <p className="text-center text-muted">
-                                <small>Inserted {data.inserted} of {data.totals.viruses}</small>
-                            </p>
+                            <Panel.Body>
+                                <ProgressBar now={data.inserted || 0 / data.totals.viruses * 100} />
+                                <p className="text-center text-muted">
+                                    <small>Inserted {data.inserted} of {data.totals.viruses}</small>
+                                </p>
+                            </Panel.Body>
                         </Panel>
                     );
                 }
@@ -154,8 +156,6 @@ const mapDispatchToProps = dispatch => ({
 
 });
 
-const Container = connect(mapStateToProps, mapDispatchToProps)(VirusImport);
-
-export default Container;
+export default connect(mapStateToProps, mapDispatchToProps)(VirusImport);
 
 

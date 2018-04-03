@@ -109,7 +109,9 @@ export default class PathoscopeList extends React.Component {
         // Show a message if no hits matched the filters.
         return (
             <Panel className="text-center">
-                <Icon name="info" /> No hits found.
+                <Panel.Body>
+                    <Icon name="info" /> No hits found.
+                </Panel.Body>
             </Panel>
         );
     }

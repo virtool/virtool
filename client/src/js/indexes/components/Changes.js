@@ -70,6 +70,4 @@ const mapDispatchToProps = (dispatch) => ({
 
 });
 
-const Container = connect(mapStateToProps, mapDispatchToProps)(IndexChanges);
-
-export default Container;
+export default connect(mapStateToProps, mapDispatchToProps)(IndexChanges);

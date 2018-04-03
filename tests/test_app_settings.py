@@ -1,5 +1,4 @@
 import pytest
-from aiohttp.test_utils import make_mocked_coro
 
 import virtool.app_settings
 import virtool.utils
@@ -51,6 +50,6 @@ def test_check_resource_limits(proc, mem, error_message, mocker):
         "rebuild_index_mem": 4
     }
 
-    m_get_resources = mocker.patch("virtool.job_resources.get", return_value=return_value)
+    mocker.patch("virtool.job_resources.get", return_value=return_value)
 
     assert virtool.app_settings.check_resource_limits(proc, mem, settings) == error_message
