@@ -103,8 +103,7 @@
       "json"
     ],
     "collectCoverageFrom": [
-      "(/tests/unit/.*|(\\.|/)(test|spec))\\.js?$",
-      "!**/node_modules/**"
+      "src/js/**/*.{js,jsx}"
     ],
     "setupTestFrameworkScriptFile": "./src/tests/setupTests.js"
   }
