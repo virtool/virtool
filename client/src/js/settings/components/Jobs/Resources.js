@@ -94,61 +94,64 @@ class Resources extends React.Component {
             : null;
 
         return (
-            <Row>
-                <Col md={12}>
-                    <h5><strong>Resource Limits</strong></h5>
-                </Col>
-                <Col xs={12} md={6} mdPush={6}>
-                    <Panel>
-                        <Panel.Body>
-                            Set limits on the computing resources Virtool can use on the host server.
-                        </Panel.Body>
-                    </Panel>
-                </Col>
-                <Col xs={12} md={6} mdPull={6}>
-                    <Panel>
-                        <Panel.Body>
-                            <InputError
-                                label="CPU Limit"
-                                type="number"
-                                name="proc"
-                                min={this.props.procLowerLimit}
-                                max={procLimit}
-                                onSave={this.handleSave}
-                                onInvalid={this.handleInvalid}
-                                onChange={this.handleChange}
-                                initialValue={
-                                    procLimit < this.props.proc
-                                        ? procLimit
-                                        : this.props.proc
-                                }
-                                error={errorMessageProc}
-                                noMargin
-                                withButton
-                            />
-                            <InputError
-                                label="Memory Limit (GB)"
-                                type="number"
-                                name="mem"
-                                min={this.props.memLowerLimit}
-                                max={memLimit}
-                                step={0.1}
-                                onSave={this.handleSave}
-                                onInvalid={this.handleInvalid}
-                                onChange={this.handleChange}
-                                initialValue={
-                                    memLimit < this.props.mem
-                                        ? memLimit
-                                        : this.props.mem
-                                }
-                                error={errorMessageMem}
-                                noMargin
-                                withButton
-                            />
-                        </Panel.Body>
-                    </Panel>
-                </Col>
-            </Row>
+            <div>
+                {alert}
+                <Row>
+                    <Col md={12}>
+                        <h5><strong>Resource Limits</strong></h5>
+                    </Col>
+                    <Col xs={12} md={6} mdPush={6}>
+                        <Panel>
+                            <Panel.Body>
+                                Set limits on the computing resources Virtool can use on the host server.
+                            </Panel.Body>
+                        </Panel>
+                    </Col>
+                    <Col xs={12} md={6} mdPull={6}>
+                        <Panel>
+                            <Panel.Body>
+                                <InputError
+                                    label="CPU Limit"
+                                    type="number"
+                                    name="proc"
+                                    min={this.props.procLowerLimit}
+                                    max={procLimit}
+                                    onSave={this.handleSave}
+                                    onInvalid={this.handleInvalid}
+                                    onChange={this.handleChange}
+                                    initialValue={
+                                        procLimit < this.props.proc
+                                            ? procLimit
+                                            : this.props.proc
+                                    }
+                                    error={errorMessageProc}
+                                    noMargin
+                                    withButton
+                                />
+                                <InputError
+                                    label="Memory Limit (GB)"
+                                    type="number"
+                                    name="mem"
+                                    min={this.props.memLowerLimit}
+                                    max={memLimit}
+                                    step={0.1}
+                                    onSave={this.handleSave}
+                                    onInvalid={this.handleInvalid}
+                                    onChange={this.handleChange}
+                                    initialValue={
+                                        memLimit < this.props.mem
+                                            ? memLimit
+                                            : this.props.mem
+                                    }
+                                    error={errorMessageMem}
+                                    noMargin
+                                    withButton
+                                />
+                            </Panel.Body>
+                        </Panel>
+                    </Col>
+                </Row>
+            </div>
         );
     }
 }
