@@ -17,7 +17,7 @@ const getInitialState = (props) => {
 
     }
 
-    if (props.unbuilt && props.unbuilt.history.length) {
+    if (props.modifiedCount || props.modifiedVirusCount) {
         notifArray.push({
             message: "Rebuild Index",
             link: "/viruses/indexes"
@@ -96,10 +96,9 @@ class Notifications extends React.Component {
 
 const mapStateToProps = (state) => ({
     updates: state.updates.software,
-    unbuilt: state.indexes.unbuilt,
+    modifiedVirusCount: state.indexes.modified_virus_count,
+    modifiedCount: state.viruses.modified_count,
     canUpdate: state.account.permissions.modify_settings
 });
 
-const Container = connect(mapStateToProps)(Notifications);
-
-export default Container;
+export default connect(mapStateToProps)(Notifications);

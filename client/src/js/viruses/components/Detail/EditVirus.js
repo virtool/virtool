@@ -1,14 +1,17 @@
 import React from "react";
 import { connect } from "react-redux";
 import { Row, Col, Modal } from "react-bootstrap";
+import { get, upperFirst } from "lodash-es";
 
 import { editVirus, hideVirusModal } from "../../actions";
-import { Button, Icon, InputError } from "../../../base";
+import { clearError } from "../../../errors/actions";
+import { Button, InputError } from "../../../base";
 
 const getInitialState = ({ name = "", abbreviation = "" }) => ({
     name,
     abbreviation,
-    error: ""
+    errorName: "",
+    errorAbbreviation: ""
 });
 
 class EditVirus extends React.Component {
@@ -18,69 +21,89 @@ class EditVirus extends React.Component {
         this.state = getInitialState(props);
     }
 
+    componentWillReceiveProps (nextProps) {
+        if (!this.props.error && nextProps.error) {
+            if (nextProps.error === "Name already exists") {
+                this.setState({ errorName: nextProps.error });
+            } else if (nextProps.error === "Abbreviation already exists") {
+                this.setState({ errorAbbreviation: nextProps.error });
+            } else {
+                this.setState({
+                    errorName: "Name already exists",
+                    errorAbbreviation: "Abbreviation already exists"
+                });
+            }
+        }
+    }
+
     handleChange = (e) => {
         const { name, value } = e.target;
+        const error = `error${upperFirst(name)}`;
+
         this.setState({
-            [name]: value
+            [name]: value,
+            [error]: ""
         });
+
+        if (this.props.error) {
+            this.props.onClearError("EDIT_VIRUS_ERROR");
+        }
     };
 
     handleModalEnter = () => {
         this.setState(getInitialState(this.props));
     };
 
+    handleHide = () => {
+        this.props.onHide(this.props);
+        if (this.props.error) {
+            this.props.onClearError("EDIT_VIRUS_ERROR");
+        }
+    };
+
     handleSave = (e) => {
         e.preventDefault();
 
         if (!this.state.name) {
-            this.setState({error: "Required Field"});
-            return;
+            return this.setState({
+                errorName: "Required Field"
+            });
         }
 
-        this.props.onSave(this.props.virusId, this.state.name, this.state.abbreviation);
+        if (!this.state.error) {
+            this.props.onSave(this.props.virusId, this.state.name, this.state.abbreviation);
+        }
     };
 
     render () {
 
-        let error;
-
-        if (this.props.error) {
-            error = (
-                <p className="text-danger">
-                    <Icon name="warning" /> {this.props.error}
-                </p>
-            );
-        }
-
         return (
-            <Modal show={this.props.show} onEnter={this.handleModalEnter} onHide={this.props.onHide}>
-                <Modal.Header onHide={this.props.onHide} closeButton>
+            <Modal show={this.props.show} onEnter={this.handleModalEnter} onHide={this.handleHide}>
+                <Modal.Header onHide={this.handleHide} closeButton>
                     Edit Virus
                 </Modal.Header>
                 <form onSubmit={this.handleSave}>
                     <Modal.Body>
                         <Row>
-                            <Col md={6} xs={12}>
+                            <Col md={8} xs={12}>
                                 <InputError
                                     label="Name"
                                     name="name"
                                     value={this.state.name}
                                     onChange={this.handleChange}
-                                    error={this.state.error}
+                                    error={this.state.errorName}
                                 />
                             </Col>
-                            <Col md={6} xs={12}>
+                            <Col md={4} xs={12}>
                                 <InputError
                                     label="Abbreviation"
                                     name="abbreviation"
                                     value={this.state.abbreviation}
                                     onChange={this.handleChange}
+                                    error={this.state.errorAbbreviation}
                                 />
                             </Col>
                         </Row>
-
-                        {error}
-
                     </Modal.Body>
                     <Modal.Footer>
                         <Button type="submit" bsStyle="primary" icon="floppy">
@@ -95,7 +118,7 @@ class EditVirus extends React.Component {
 
 const mapStateToProps = (state) => ({
     show: state.viruses.edit,
-    error: state.viruses.editError
+    error: get(state, "errors.EDIT_VIRUS_ERROR.message", "")
 });
 
 const mapDispatchToProps = (dispatch) => ({
@@ -106,10 +129,12 @@ const mapDispatchToProps = (dispatch) => ({
 
     onSave: (virusId, name, abbreviation) => {
         dispatch(editVirus(virusId, name, abbreviation));
+    },
+
+    onClearError: (error) => {
+        dispatch(clearError(error));
     }
 
 });
 
-const Container = connect(mapStateToProps, mapDispatchToProps)(EditVirus);
-
-export default Container;
+export default connect(mapStateToProps, mapDispatchToProps)(EditVirus);

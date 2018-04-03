@@ -14,12 +14,18 @@ export const get = ({ subtractionId }) => (
     Request.get(`/api/subtraction/${subtractionId}`)
 );
 
-export const create = ({ subtractionId, fileId }) => (
+export const create = ({ subtractionId, fileId, nickname }) => (
     Request.post("/api/subtraction")
         .send({
             subtraction_id: subtractionId,
-            file_id: fileId
+            file_id: fileId,
+            nickname
         })
+);
+
+export const update = ({ subtractionId, nickname }) => (
+    Request.patch(`/api/subtraction/${subtractionId}`)
+        .send({ nickname })
 );
 
 export const remove = ({ subtractionId }) => (

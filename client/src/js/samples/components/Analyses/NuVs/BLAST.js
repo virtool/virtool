@@ -40,16 +40,18 @@ const BLASTInProgress = ({ interval, lastCheckedAt, rid }) => {
 
     return (
         <Panel>
-            <Flex alignItems="center">
-                <FlexItem>
-                    <ClipLoader size={16} color="#000" />
-                </FlexItem>
-                <FlexItem pad={5}>
-                    <span>BLAST in progress {ridText}</span>
-                    {ridLink}
-                </FlexItem>
-                {timing}
-            </Flex>
+            <Panel.Body>
+                <Flex alignItems="center">
+                    <FlexItem>
+                        <ClipLoader size={16} color="#000" />
+                    </FlexItem>
+                    <FlexItem pad={5}>
+                        <span>BLAST in progress {ridText}</span>
+                        {ridLink}
+                    </FlexItem>
+                    {timing}
+                </Flex>
+            </Panel.Body>
         </Panel>
     );
 };
@@ -70,21 +72,24 @@ const BLASTResults = ({ hits }) => {
     );
 
     return (
-        <Panel header="NCBI BLAST">
-            <Table fill condensed>
-                <thead>
-                    <tr>
-                        <th>Accession</th>
-                        <th>Name</th>
-                        <th>E-value</th>
-                        <th>Score</th>
-                        <th>Identity</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {components}
-                </tbody>
-            </Table>
+        <Panel>
+            <Panel.Heading>NCBI BLAST</Panel.Heading>
+            <Panel.Body>
+                <Table condensed>
+                    <thead>
+                        <tr>
+                            <th>Accession</th>
+                            <th>Name</th>
+                            <th>E-value</th>
+                            <th>Score</th>
+                            <th>Identity</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {components}
+                    </tbody>
+                </Table>
+            </Panel.Body>
         </Panel>
     );
 };
@@ -98,8 +103,11 @@ const NuVsBLAST = (props) => {
             }
 
             return (
-                <Panel header="NCBI BLAST">
-                    No BLAST hits found.
+                <Panel>
+                    <Panel.Heading>NCBI BLAST</Panel.Heading>
+                    <Panel.Body>
+                        No BLAST hits found.
+                    </Panel.Body>
                 </Panel>
             );
         }
@@ -148,6 +156,4 @@ const mapDispatchToProps = (dispatch) => ({
 
 });
 
-const Container = connect(mapStateToProps, mapDispatchToProps)(NuVsBLAST);
-
-export default Container;
+export default connect(mapStateToProps, mapDispatchToProps)(NuVsBLAST);

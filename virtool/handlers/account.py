@@ -125,7 +125,7 @@ async def change_password(req):
 
     # Will evaluate true if the passed username and password are correct.
     if not await virtool.user.validate_credentials(db, user_id, data["old_password"]):
-        return bad_request("Invalid old password.")
+        return bad_request("Invalid old password")
 
     # Salt and hash the new password
     hashed = virtool.user.hash_password(data["new_password"])
@@ -158,6 +158,20 @@ async def get_api_keys(req):
         del api_key["user"]
 
     return json_response(api_keys, status=200)
+
+
+@protected()
+async def get_api_key(req):
+    db = req.app["db"]
+    user_id = req["client"].user_id
+    key_id = req.match_info.get("key_id")
+
+    document = await db.keys.find_one({"id": key_id, "user.id": user_id}, {"_id": False, "user": False})
+
+    if document is None:
+        return not_found()
+
+    return json_response(document, status=200)
 
 
 @protected()
@@ -210,7 +224,11 @@ async def create_api_key(req):
 
     document["key"] = raw
 
-    return json_response(document, status=201)
+    headers = {
+        "Location": "/api/account/keys/{}".format(document["id"])
+    }
+
+    return json_response(document, headers=headers, status=201)
 
 
 @protected()
@@ -239,7 +257,7 @@ async def update_api_key(req):
         }
     }, return_document=ReturnDocument.AFTER, projection={"_id": False, "user": False})
 
-    return json_response(document, status=200)
+    return json_response(document)
 
 
 @protected()

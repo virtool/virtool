@@ -119,6 +119,24 @@ def bad_request(message="Bad request"):
     }, status=400)
 
 
+def insufficient_rights(message="Insufficient rights"):
+    """
+    A shortcut for creating a :class:`~aiohttp.web.Response` object with a ``401`` status and the JSON body
+    ``{"message": "Bad request"}``.
+
+    :param message: text to send instead of 'Bad request'
+    :type message: str
+
+    :return: the response
+    :rtype: :class:`aiohttp.Response`
+
+    """
+    return json_response({
+        "id": "insufficient_rights",
+        "message": message
+    }, status=403)
+
+
 def not_found(message="Not found"):
     """
     A shortcut for creating a :class:`~aiohttp.web.Response` object with a ``404`` status the JSON body
@@ -195,7 +213,7 @@ def invalid_query(errors):
 
 def protected(required_perm=None):
     if required_perm and required_perm not in virtool.user_permissions.PERMISSIONS:
-        raise ValueError("Permission {} is not valid".format(required_perm))
+        raise ValueError("Requires permission: {}".format(required_perm))
 
     def decorator(handler):
         async def wrapped(req):

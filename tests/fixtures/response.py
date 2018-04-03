@@ -4,9 +4,20 @@ import pytest
 class RespIs:
 
     @staticmethod
+    async def insufficient_rights(resp, message="Insufficient rights"):
+        """
+        Check whether a response object is a valid Virtool ``insufficient_rights``.
+
+        """
+        return resp.status == 403 and await resp.json() == {
+            "id": "insufficient_rights",
+            "message": message
+        }
+
+    @staticmethod
     async def no_content(resp):
         """
-        Check whether a response object is a valid Virtool ``bad_request``.
+        Check whether a response object is a valid Virtool ``no_content``.
 
         """
         return resp.status == 204

@@ -1,7 +1,7 @@
 import { push } from "react-router-redux";
 import { takeEvery, takeLatest, throttle, put } from "redux-saga/effects";
 
-import { apiCall, setPending } from "../sagaUtils";
+import { apiCall, setPending, putGenericError } from "../sagaUtils";
 import * as usersAPI from "./api";
 import {
     LIST_USERS,
@@ -16,10 +16,19 @@ function* listUsers (action) {
 }
 
 function* createUser (action) {
-    yield setPending(apiCall(usersAPI.create, action, CREATE_USER));
+    yield setPending(apiCustomCall(usersAPI.create, action, CREATE_USER));
 
-    // Close the create user modal and navigate to the new user.
-    yield put(push(`/settings/users/${action.userId}`, {state: {createUser: false}}));
+    function* apiCustomCall (apiMethod, action, actionType, extra = {}) {
+        try {
+            const response = yield apiMethod(action);
+            yield put({type: actionType.SUCCEEDED, data: response.body, ...extra});
+
+            // Close the create user modal and navigate to the new user.
+            yield put(push(`/settings/users/${action.userId}`, {state: {createUser: false}}));
+        } catch (error) {
+            yield putGenericError(actionType, error);
+        }
+    }
 }
 
 function* editUser (action) {

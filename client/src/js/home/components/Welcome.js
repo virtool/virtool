@@ -18,23 +18,27 @@ class Welcome extends React.Component {
         if (this.props.version) {
             content = (
                 <Panel>
-                    <h3>Virtool <small className="text-muted">{this.props.version}</small></h3>
-                    <p>Viral infection diagnostics using next-generation sequencing</p>
+                    <Panel.Body>
+                        <h3>Virtool <small className="text-muted">{this.props.version}</small></h3>
+                        <p>Viral infection diagnostics using next-generation sequencing</p>
 
-                    <a
-                        className="btn btn-default"
-                        href="http://www.virtool.ca/"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                    >
-                        <Icon name="vtlogo" /> Website
-                    </a>
+                        <a
+                            className="btn btn-default"
+                            href="http://www.virtool.ca/"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                        >
+                            <Icon name="vtlogo" /> Website
+                        </a>
+                    </Panel.Body>
                 </Panel>
             );
         } else {
             content = (
                 <Panel>
-                    <LoadingPlaceholder margin={0} />
+                    <Panel.Body>
+                        <LoadingPlaceholder margin={0} />
+                    </Panel.Body>
                 </Panel>
             );
         }
@@ -59,6 +63,4 @@ const mapDispatchToProps = (dispatch) => ({
 
 });
 
-const Container = connect(mapStateToProps, mapDispatchToProps)(Welcome);
-
-export default Container;
+export default connect(mapStateToProps, mapDispatchToProps)(Welcome);

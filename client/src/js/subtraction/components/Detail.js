@@ -8,15 +8,29 @@ import { Badge, Col, Row, Table } from "react-bootstrap";
 
 import { getSubtraction } from "../actions";
 import { Button, Flex, FlexItem, Icon, LoadingPlaceholder, NoneFound } from "../../base";
+import EditSubtraction from "./Edit";
 import RemoveSubtraction from "./Remove";
 
 const calculateGC = (nucleotides) => Numeral(1 - nucleotides.a - nucleotides.t - nucleotides.n).format("0.000");
 
 class SubtractionDetail extends React.Component {
 
+    constructor (props) {
+        super(props);
+
+        this.state = {
+            showEdit: false
+        };
+    }
+
     componentDidMount () {
         this.props.onGet(this.props.match.params.subtractionId);
     }
+
+    handleExit = () => {
+        this.setState({showEdit: false});
+        this.props.onGet(this.props.match.params.subtractionId);
+    };
 
     render () {
 
@@ -28,6 +42,7 @@ class SubtractionDetail extends React.Component {
 
         if (data.ready) {
             let linkedSamples;
+            let removeIcon;
 
             if (data.linked_samples.length) {
                 const linkedSampleComponents = map(data.linked_samples, sample =>
@@ -45,9 +60,30 @@ class SubtractionDetail extends React.Component {
                         {linkedSampleComponents}
                     </Row>
                 );
+
+                removeIcon = <div />;
             } else {
                 linkedSamples = <NoneFound noun="linked samples" />;
+
+                removeIcon = (
+                    <Icon
+                        name="remove"
+                        bsStyle="danger"
+                        onClick={this.props.onShowRemove}
+                        style={{paddingLeft: "5px"}}
+                        pullRight
+                    />
+                );
             }
+
+            const editIcon = (
+                <Icon
+                    name="pencil"
+                    bsStyle="warning"
+                    onClick={() => this.setState({showEdit: true})}
+                    pullRight
+                />
+            );
 
             return (
                 <div>
@@ -56,23 +92,26 @@ class SubtractionDetail extends React.Component {
                             <FlexItem grow={0} shrink={0}>
                                 <strong>{data.id}</strong>
                             </FlexItem>
-                            {this.props.canModify ? (
-                                <FlexItem grow={1} shrink={0}>
+                            <FlexItem grow={1} shrink={0}>
+                                {this.props.canModify ? (
                                     <small>
-                                        <Icon
-                                            name="remove"
-                                            bsStyle="danger"
-                                            onClick={this.props.onShowRemove}
-                                            pullRight
-                                        />
+                                        {removeIcon}
                                     </small>
-                                </FlexItem>
-                            ) : null}
+                                ) : null}
+                                <small>
+                                    {editIcon}
+                                </small>
+                            </FlexItem>
                         </Flex>
                     </h3>
 
                     <Table bordered>
                         <tbody>
+                            <tr>
+                                <th>Nickname</th>
+                                <td>{this.props.detail.nickname}</td>
+                            </tr>
+
                             <tr>
                                 <th>File</th>
                                 <td>{data.file.id}</td>
@@ -91,6 +130,11 @@ class SubtractionDetail extends React.Component {
 
                     {linkedSamples}
 
+                    <EditSubtraction
+                        show={this.state.showEdit}
+                        entry={this.props.detail}
+                        exited={this.handleExit}
+                    />
                     <RemoveSubtraction id={data.id} />
                 </div>
             );
@@ -117,6 +161,4 @@ const mapDispatchToProps = (dispatch) => ({
 
 });
 
-const Container = connect(mapStateToProps, mapDispatchToProps)(SubtractionDetail);
-
-export default Container;
+export default connect(mapStateToProps, mapDispatchToProps)(SubtractionDetail);

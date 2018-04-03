@@ -1,24 +1,36 @@
 import React from "react";
 import PropTypes from "prop-types";
-import { Row, Col, Alert } from "react-bootstrap";
+import { Row, Col } from "react-bootstrap";
+import { connect } from "react-redux";
 import { map } from "lodash-es";
 import { InputError, Checkbox } from "../../../base";
 
-export default class SegmentForm extends React.Component {
+class SegmentForm extends React.Component {
 
     constructor (props) {
         super(props);
 
         this.state = {
             isChecked: true,
-            showError: this.props.show
+            showError: this.props.newEntry.showError,
+            error: ""
         };
     }
 
     componentWillReceiveProps (nextProps) {
+
+        if (nextProps.errors && nextProps.errors.EDIT_VIRUS_ERROR) {
+            return this.setState({ error: nextProps.errors.EDIT_VIRUS_ERROR.message });
+        }
+
+        let error = "";
+        error = nextProps.newEntry.showError ? "Required Field" : "";
+        error = nextProps.newEntry.nameTaken ? "Segment names must be unique. This name is currently in use." : error;
+
         this.setState({
             isChecked: nextProps.newEntry.required,
-            showError: nextProps.show
+            showError: nextProps.newEntry.showError,
+            error
         });
     }
 
@@ -27,6 +39,7 @@ export default class SegmentForm extends React.Component {
             ...this.props.newEntry,
             name: e.target.value
         });
+        this.setState({error: ""});
     };
 
     changeMolType = (e) => {
@@ -34,6 +47,7 @@ export default class SegmentForm extends React.Component {
             ...this.props.newEntry,
             molecule: e.target.value
         });
+        this.setState({error: ""});
     };
 
     toggleCheck = () => {
@@ -41,22 +55,10 @@ export default class SegmentForm extends React.Component {
             ...this.props.newEntry,
             required: !this.state.isChecked
         });
-        this.setState({isChecked: !this.state.isChecked});
+        this.setState({isChecked: !this.state.isChecked, error: ""});
     };
 
     render () {
-
-        const errorMessage = this.state.showError ? "Required Field" : "";
-
-        const alert = this.props.segmentExists ? (
-            <Row>
-                <Col md={12}>
-                    <Alert bsStyle="danger" style={{margin: "10px 0 0 0"}}>
-                        <span>Segment names must be unique. This name is currently in use.</span>
-                    </Alert>
-                </Col>
-            </Row>
-        ) : null;
 
         const moleculeTypes = [
             "",
@@ -75,14 +77,14 @@ export default class SegmentForm extends React.Component {
         );
 
         return (
-            <form>
+            <div>
                 <Row>
                     <Col md={9}>
                         <InputError
                             label="Name"
                             value={this.props.newEntry.name}
                             onChange={this.changeSegName}
-                            error={errorMessage}
+                            error={this.state.error}
                         />
                     </Col>
                     <Col md={3}>
@@ -106,8 +108,7 @@ export default class SegmentForm extends React.Component {
                         />
                     </Col>
                 </Row>
-                {alert}
-            </form>
+            </div>
         );
     }
 }
@@ -115,6 +116,11 @@ export default class SegmentForm extends React.Component {
 SegmentForm.propTypes = {
     onChange: PropTypes.func.isRequired,
     newEntry: PropTypes.object.isRequired,
-    show: PropTypes.bool,
-    segmentExists: PropTypes.bool
+    errors: PropTypes.object
 };
+
+const mapStateToProps = state => ({
+    errors: state.errors
+});
+
+export default connect(mapStateToProps, null)(SegmentForm);

@@ -57,6 +57,4 @@ const mapDispatchToProps = (dispatch) => ({
 
 });
 
-const Container = connect(mapStateToProps, mapDispatchToProps)(Account);
-
-export default Container;
+export default connect(mapStateToProps, mapDispatchToProps)(Account);

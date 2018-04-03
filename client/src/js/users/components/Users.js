@@ -44,7 +44,11 @@ export class ManageUsers extends React.Component {
 
     handleFilter = (e) => {
         this.props.onFilter(e.target.value);
-    };
+    }
+
+    handlePermissionChanges = () => {
+        this.props.onListUsers();
+    }
 
     render () {
 
@@ -88,7 +92,7 @@ export class ManageUsers extends React.Component {
                 </Row>
 
                 <CreateUser />
-                <Groups />
+                <Groups updatePermissions={this.handlePermissionChanges} />
             </div>
         );
     }

@@ -4,9 +4,15 @@ import { connect } from "react-redux";
 import { Row, Col, Panel } from "react-bootstrap";
 import { ListGroupItem, Checkbox } from "../../base";
 
-import { addUserToGroup, removeUserFromGroup } from "../actions";
+import { addUserToGroup, removeUserFromGroup, listUsers } from "../actions";
 
 class UserGroup extends React.Component {
+
+    componentWillReceiveProps (nextProps) {
+        if (nextProps.toggled !== this.props.toggled) {
+            this.props.onListUsers();
+        }
+    }
 
     handleClick = () => {
         const { groupId, userId } = this.props;
@@ -16,6 +22,7 @@ class UserGroup extends React.Component {
         }
 
         this.props.onAddToGroup(userId, groupId);
+
     };
 
     render () {
@@ -34,7 +41,7 @@ class UserGroup extends React.Component {
     }
 }
 
-const UserGroups = ({ accountUserId, addToGroup, allGroups, memberGroups, removeFromGroup, userId }) => {
+const UserGroups = ({ accountUserId, addToGroup, allGroups, memberGroups, removeFromGroup, userId, list }) => {
 
     const groupComponents = map(allGroups, groupId =>
         <UserGroup
@@ -46,14 +53,17 @@ const UserGroups = ({ accountUserId, addToGroup, allGroups, memberGroups, remove
             toggled={includes(memberGroups, groupId)}
             onAddToGroup={addToGroup}
             onRemoveFromGroup={removeFromGroup}
+            onListUsers={list}
         />
     );
 
     return (
         <Panel>
-            <Row>
-                {groupComponents}
-            </Row>
+            <Panel.Body>
+                <Row>
+                    {groupComponents}
+                </Row>
+            </Panel.Body>
         </Panel>
     );
 };
@@ -71,10 +81,12 @@ const mapDispatchToProps = dispatch => ({
 
     removeFromGroup: (userId, groupId) => {
         dispatch(removeUserFromGroup(userId, groupId));
+    },
+
+    list: () => {
+        dispatch(listUsers());
     }
 
 });
 
-const Container = connect(mapStateToProps, mapDispatchToProps)(UserGroups);
-
-export default Container;
+export default connect(mapStateToProps, mapDispatchToProps)(UserGroups);

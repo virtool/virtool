@@ -1,10 +1,12 @@
 import os
+import pymongo
+import pymongo.errors
 import shutil
 
 import virtool.sample
 import virtool.subtraction
 import virtool.utils
-from virtool.handlers.utils import unpack_request, json_response, no_content, not_found, compose_regex_query, paginate,\
+from virtool.handlers.utils import compose_regex_query, conflict, json_response, no_content, not_found, paginate,\
     protected, validation
 
 
@@ -48,18 +50,19 @@ async def get(req):
 
     document = await db.subtraction.find_one(subtraction_id)
 
-    if document:
-        linked_samples = await db.samples.find({"subtraction.id": subtraction_id}, ["name"]).to_list(None)
-        document["linked_samples"] = [virtool.utils.base_processor(d) for d in linked_samples]
+    if not document:
+        return not_found()
 
-        return json_response(virtool.utils.base_processor(document))
+    linked_samples = await db.samples.find({"subtraction.id": subtraction_id}, ["name"]).to_list(None)
+    document["linked_samples"] = [virtool.utils.base_processor(d) for d in linked_samples]
 
-    return not_found()
+    return json_response(virtool.utils.base_processor(document))
 
 
 @protected("modify_subtraction")
 @validation({
     "subtraction_id": {"type": "string", "required": True},
+    "nickname": {"type": "string", "default": ""},
     "file_id": {"type": "string", "required": True}
 })
 async def create(req):
@@ -67,11 +70,15 @@ async def create(req):
     Adds a new host described by the transaction. Starts an :class:`.CreateSubtraction` job process.
 
     """
-    db, data = req.app["db"], req["data"]
+    db = req.app["db"]
+    data = req["data"]
 
     subtraction_id = data["subtraction_id"]
+
+    if await db.subtraction.count({"_id": subtraction_id}):
+        return conflict("Subtraction name already exists.")
+
     file_id = data["file_id"]
-    user_id = req["client"].user_id
 
     file = await db.files.find_one(file_id, ["name"])
 
@@ -80,8 +87,11 @@ async def create(req):
 
     job_id = await virtool.utils.get_new_id(db.jobs)
 
+    user_id = req["client"].user_id
+
     document = {
         "_id": data["subtraction_id"],
+        "nickname": data["nickname"],
         "ready": False,
         "is_host": True,
         "file": {
@@ -96,7 +106,10 @@ async def create(req):
         }
     }
 
-    await db.subtraction.insert_one(document)
+    try:
+        await db.subtraction.insert_one(document)
+    except pymongo.errors.DuplicateKeyError:
+        return conflict("Subtraction id already exists")
 
     task_args = {
         "subtraction_id": subtraction_id,
@@ -110,20 +123,37 @@ async def create(req):
         job_id=job_id
     )
 
+    headers = {
+        "Location": "/api/account/keys/{}".format(data["subtraction_id"])
+    }
+
+    return json_response(virtool.utils.base_processor(document), headers=headers, status=201)
+
+
+@protected("modify_subtraction")
+@validation({
+    "nickname": {"type": "string", "required": True}
+})
+async def edit(req):
+    """
+    Updates the nickname for an existing subtraction.
+
+    """
+    db = req.app["db"]
+    data = req["data"]
+
+    subtraction_id = req.match_info["subtraction_id"]
+
+    document = await db.subtraction.find_one_and_update({"_id": subtraction_id}, {
+        "$set": {
+            "nickname": data["nickname"]
+        }
+    }, return_document=pymongo.ReturnDocument.AFTER)
+
+    if document is None:
+        return not_found()
+
     return json_response(virtool.utils.base_processor(document))
-
-
-async def authorize_upload(req):
-    db, data = await unpack_request(req)
-
-    file_id = await db.files.register(
-        name=data["name"],
-        size=data["size"],
-        file_type="host",
-        expires=None
-    )
-
-    return json_response({"file_id": file_id})
 
 
 @protected("modify_subtraction")
@@ -131,6 +161,9 @@ async def remove(req):
     db = req.app["db"]
 
     subtraction_id = req.match_info["subtraction_id"]
+
+    if await db.samples.count({"subtraction.id": subtraction_id}, ["name"]):
+        return conflict("Has linked samples")
 
     reference_path = os.path.join(
         req.app["settings"].get("data_path"),

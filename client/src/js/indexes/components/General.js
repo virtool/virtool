@@ -69,16 +69,26 @@ const IndexGeneral = ({ detail }) => {
                 </tbody>
             </Table>
 
-            <Panel header={<PanelBadgeHeader title="Contributors" count={contributors.length} />}>
-                <ListGroup fill>
-                    {contributors}
-                </ListGroup>
+            <Panel>
+                <Panel.Heading>
+                    <PanelBadgeHeader title="Contributors" count={contributors.length} />
+                </Panel.Heading>
+                <Panel.Body>
+                    <ListGroup>
+                        {contributors}
+                    </ListGroup>
+                </Panel.Body>
             </Panel>
 
-            <Panel header={<PanelBadgeHeader title="Viruses" count={viruses.length} />}>
-                <ListGroup fill>
-                    {viruses}
-                </ListGroup>
+            <Panel>
+                <Panel.Heading>
+                    <PanelBadgeHeader title="Viruses" count={viruses.length} />
+                </Panel.Heading>
+                <Panel.Body>
+                    <ListGroup>
+                        {viruses}
+                    </ListGroup>
+                </Panel.Body>
             </Panel>
         </div>
     );
@@ -88,6 +98,4 @@ const mapStateToProps = (state) => ({
     detail: state.indexes.detail
 });
 
-const Container = connect(mapStateToProps)(IndexGeneral);
-
-export default Container;
+export default connect(mapStateToProps)(IndexGeneral);

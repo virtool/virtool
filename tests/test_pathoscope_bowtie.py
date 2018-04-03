@@ -45,7 +45,7 @@ def virus_resource():
 
 
 @pytest.fixture
-async def mock_job(tmpdir, loop, test_motor, test_dispatch, virus_resource):
+async def mock_job(loop, mocker, tmpdir, test_motor, test_dispatch, virus_resource):
     # Add index files.
     shutil.copytree(INDEX_PATH, os.path.join(str(tmpdir), "reference", "viruses", "index"))
 
@@ -80,6 +80,7 @@ async def mock_job(tmpdir, loop, test_motor, test_dispatch, virus_resource):
         test_motor,
         settings,
         test_dispatch,
+        mocker.stub("capture_exception"),
         "foobar",
         "pathoscope_bowtie",
         task_args,
