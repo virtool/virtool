@@ -28,7 +28,7 @@ describe("Account Action Creators:", () => {
     it("getAccount: returns simple action", () => {
         const result = getAccount();
         const expected = {
-            type: "GET_ACCOUNT_REQUESTED",
+            type: "GET_ACCOUNT_REQUESTED"
         };
 
         expect(result).toEqual(expected);
@@ -74,7 +74,7 @@ describe("Account Action Creators:", () => {
     it("getAPIKeys: returns simple action", () => {
         const result = getAPIKeys();
         const expected = {
-            type: "GET_API_KEYS_REQUESTED",
+            type: "GET_API_KEYS_REQUESTED"
         };
 
         expect(result).toEqual(expected);
@@ -96,7 +96,7 @@ describe("Account Action Creators:", () => {
     it("clearAPIKey: returns simple action", () => {
         const result = clearAPIKey();
         const expected = {
-            type: "CLEAR_API_KEY",
+            type: "CLEAR_API_KEY"
         };
 
         expect(result).toEqual(expected);
@@ -129,7 +129,7 @@ describe("Account Action Creators:", () => {
     it("logout: returns simple action", () => {
         const result = logout();
         const expected = {
-            type: "LOGOUT_REQUESTED",
+            type: "LOGOUT_REQUESTED"
         };
 
         expect(result).toEqual(expected);

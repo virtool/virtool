@@ -98,7 +98,7 @@ describe("Files Action Creators", () => {
     it("hideUploadOverlay: returns simple action", () => {
         const result = hideUploadOverlay();
         const expected = {
-            type: "HIDE_UPLOAD_OVERLAY",
+            type: "HIDE_UPLOAD_OVERLAY"
         };
 
         expect(result).toEqual(expected);

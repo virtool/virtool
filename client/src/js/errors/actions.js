@@ -6,7 +6,7 @@
 import { CLEAR_ERROR } from "../actionTypes";
 
 /**
- * Clears specific temprorarily stored error.
+ * Returns action that clears specific error in the store.
  *
  * @func
  * @returns {object}
