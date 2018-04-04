@@ -1,11 +1,11 @@
 import React from "react";
 import { connect } from "react-redux";
-import { Row, Col, Panel, Alert } from "react-bootstrap";
+import { Col, Panel, Row } from "react-bootstrap";
 import { toNumber, upperFirst } from "lodash-es";
 
 import { updateSetting } from "../../actions";
 import { getResources } from "../../../jobs/actions";
-import { InputError, LoadingPlaceholder, Icon} from "../../../base";
+import { Alert, InputError, LoadingPlaceholder } from "../../../base";
 
 const getErrorMessage = (isError, min, max) => (
     isError ? `Value must be between ${min} and ${max}` : null
@@ -82,16 +82,15 @@ class Resources extends React.Component {
         const errorMessageProc = getErrorMessage(this.state.errorProc, this.props.procLowerLimit, procLimit);
         const errorMessageMem = getErrorMessage(this.state.errorMem, this.props.memLowerLimit, memLimit);
 
-        const alert = this.props.error
-            ? (
-                <Alert bsStyle="danger">
-                    <Icon name="warning" />
-                    <span>
-                        {" "}Resource Limit values cannot be lower than corresponding Task-specific Limits.
-                    </span>
+        let alert;
+
+        if (this.props.error) {
+            alert = (
+                <Alert bsStyle="danger" icon="warning">
+                    Resource Limit values cannot be lower than corresponding Task-specific Limits.
                 </Alert>
-            )
-            : null;
+            );
+        }
 
         return (
             <div>

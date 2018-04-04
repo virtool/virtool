@@ -1,10 +1,10 @@
 import React from "react";
 import { ClipLoader } from "halogenium";
 import { connect } from "react-redux";
-import { Alert, Col, Panel, Row } from "react-bootstrap";
+import { Col, Panel, Row } from "react-bootstrap";
 
 import { testProxy, updateSetting } from "../../actions";
-import { Button, Checkbox, Flex, FlexItem, Icon, InputError } from "../../../base";
+import { Alert, Button, Checkbox, Flex, FlexItem, Icon, InputError } from "../../../base";
 
 const ProxyFooter = () => (
     <small className="text-danger">

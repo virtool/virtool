@@ -1,15 +1,16 @@
 import React from "react";
 import { map, sortBy } from "lodash-es";
 import { connect } from "react-redux";
-import { ListGroup, FormGroup, InputGroup, FormControl, Alert } from "react-bootstrap";
+import { Alert, FormControl, FormGroup, InputGroup, ListGroup } from "react-bootstrap";
 import { Link } from "react-router-dom";
-import { analyze } from "../../actions";
-import { Icon, Button, LoadingPlaceholder, NoneFound, Flex, FlexItem } from "../../../base";
+
 import AnalysisItem from "./Item";
 import CreateAnalysis from "./Create";
-import {getCanModify} from "../../selectors";
+import { analyze } from "../../actions";
+import { getCanModify } from "../../selectors";
 import { findIndexes } from "../../../indexes/actions";
 import { fetchHmms } from "../../../hmm/actions";
+import { Icon, Button, LoadingPlaceholder, NoneFound, Flex, FlexItem } from "../../../base";
 
 const AnalysesToolbar = ({ onClick, isDisabled }) => (
     <div className="toolbar">
@@ -102,16 +103,16 @@ class AnalysesList extends React.Component {
             isBlocked = true;
         }
 
-        const indexAlert = alertMessage ? (
-            <Alert bsStyle="warning">
-                <Flex alignItems="center">
-                    <Icon name="info" />
-                    <FlexItem pad={5}>
-                        {alertMessage}
-                    </FlexItem>
-                </Flex>
-            </Alert>
-        ) : null;
+
+        let indexAlert;
+
+        if (alertMessage) {
+            indexAlert = (
+                <Alert bsStyle="warning" icon="info">
+                    {alertMessage}
+                </Alert>
+            );
+        }
 
         let hmmAlert;
 
