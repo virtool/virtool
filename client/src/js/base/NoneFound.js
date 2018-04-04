@@ -1,4 +1,5 @@
 import React from "react";
+import PropTypes from "prop-types";
 import { ListGroup, ListGroupItem } from "react-bootstrap";
 import { Icon } from "./Icon";
 
@@ -25,4 +26,9 @@ export const NoneFound = ({ noun, noListGroup }) => {
             {item}
         </ListGroup>
     );
+};
+
+NoneFound.propTypes = {
+    noun: PropTypes.string.isRequired,
+    noListGroup: PropTypes.bool
 };
