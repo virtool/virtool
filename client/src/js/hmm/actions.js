@@ -2,7 +2,7 @@ import { simpleActionCreator } from "../utils";
 import { GET_HMM, INSTALL_HMMS, FETCH_HMMS } from "../actionTypes";
 
 /**
- * Returns action that can trigger an API call for fetching available HMMs.
+ * Returns action for fetching available HMMs.
  *
  * @func
  * @returns {object}

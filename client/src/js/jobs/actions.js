@@ -26,7 +26,7 @@ export const wsUpdateJob = (data) => ({
  * Returns an action that should be dispatched when a job document is removed via websocket.
  *
  * @func
- * @param data {object} the data passed in the websocket message
+ * @param jobId {string} the id for the specific job
  * @returns {object}
  */
 export const wsRemoveJob = (jobId) => ({
