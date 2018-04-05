@@ -61,8 +61,11 @@ export class InputSave extends React.Component {
         } else if (!e.relatedTarget) {
             this.setState({value: this.props.initialValue});
         }
+
         // If click on focus element that does submit, keep value
-        this.props.onChange(e);
+        if (this.props.onChange) {
+            this.props.onChange(e);
+        }
     };
 
     /**
@@ -74,7 +77,10 @@ export class InputSave extends React.Component {
         if (!this.props.disabled) {
             this.setState({value: e.target.value});
         }
-        this.props.onChange(e);
+
+        if (this.props.onChange) {
+            this.props.onChange(e);
+        }
     };
 
     /**
