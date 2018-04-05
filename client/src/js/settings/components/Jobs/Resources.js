@@ -3,20 +3,29 @@ import { connect } from "react-redux";
 import { Col, Panel, Row } from "react-bootstrap";
 import { toNumber, upperFirst } from "lodash-es";
 
-import { updateSetting } from "../../actions";
+import { Alert, Flex, FlexItem, InputError, LoadingPlaceholder } from "../../../base";
 import { getResources } from "../../../jobs/actions";
-import { Alert, InputError, LoadingPlaceholder } from "../../../base";
+import { maxResourcesSelector, minResourcesSelector } from "../../selectors";
+import { updateSetting } from "../../actions";
 
 const getErrorMessage = (isError, min, max) => (
     isError ? `Value must be between ${min} and ${max}` : null
 );
 
-const getUpperLimits = (resources) => {
-    const procLimit = resources.proc.length;
-    const memLimit = parseFloat((resources.mem.total / Math.pow(1024, 3)).toFixed(1));
-
-    return { procLimit, memLimit };
-};
+const LimitLabel = ({ label, available, unit }) => (
+    <h5>
+        <Flex alignItems="center">
+            <FlexItem grow={1} shrink={0}>
+                <strong>{label}</strong>
+            </FlexItem>
+            <FlexItem grow={0} shrink={0}>
+                <small className="text-info">
+                    {available} {unit} available
+                </small>
+            </FlexItem>
+        </Flex>
+    </h5>
+);
 
 class Resources extends React.Component {
 
@@ -35,7 +44,6 @@ class Resources extends React.Component {
     }
 
     componentWillReceiveProps (nextProps) {
-
         if (nextProps.mem !== this.props.mem) {
             this.setState({errorMem: false});
         }
@@ -46,17 +54,11 @@ class Resources extends React.Component {
     }
 
     handleChange = (e) => {
-        e.preventDefault();
-
-        const error = `error${upperFirst(e.target.name)}`;
-        this.setState({ [error]: false });
+        this.setError(e, false);
     };
 
     handleInvalid = (e) => {
-        e.preventDefault();
-
-        const error = `error${upperFirst(e.target.name)}`;
-        this.setState({ [error]: true });
+        this.setError(e, true);
     };
 
     handleSave = (e) => {
@@ -71,16 +73,31 @@ class Resources extends React.Component {
         }
     };
 
+    setError = (e, value) => {
+        e.preventDefault();
+
+        this.setState({
+            [`error${upperFirst(e.target.name)}`]: value
+        });
+    };
+
     render () {
 
         if (this.props.resources === null) {
             return <LoadingPlaceholder />;
         }
 
-        const { procLimit, memLimit } = getUpperLimits(this.props.resources);
+        const errorMessageProc = getErrorMessage(
+            this.state.errorProc,
+            this.props.minProc,
+            this.props.maxProc
+        );
 
-        const errorMessageProc = getErrorMessage(this.state.errorProc, this.props.procLowerLimit, procLimit);
-        const errorMessageMem = getErrorMessage(this.state.errorMem, this.props.memLowerLimit, memLimit);
+        const errorMessageMem = getErrorMessage(
+            this.state.errorMem,
+            this.props.minMem,
+            this.props.maxMem
+        );
 
         let alert;
 
@@ -109,39 +126,32 @@ class Resources extends React.Component {
                     <Col xs={12} md={6} mdPull={6}>
                         <Panel>
                             <Panel.Body>
+                                <LimitLabel label="CPU Limit" available={this.props.maxProc} unit="cores" />
                                 <InputError
-                                    label="CPU Limit"
                                     type="number"
                                     name="proc"
-                                    min={this.props.procLowerLimit}
-                                    max={procLimit}
+                                    min={this.props.minProc}
+                                    max={this.props.maxProc}
                                     onSave={this.handleSave}
                                     onInvalid={this.handleInvalid}
                                     onChange={this.handleChange}
-                                    initialValue={
-                                        procLimit < this.props.proc
-                                            ? procLimit
-                                            : this.props.proc
-                                    }
+                                    initialValue={this.props.proc}
                                     error={errorMessageProc}
                                     noMargin
                                     withButton
                                 />
+
+                                <LimitLabel label="Memory Limit (GB)" available={this.props.maxMem} unit="GB" />
                                 <InputError
-                                    label="Memory Limit (GB)"
                                     type="number"
                                     name="mem"
-                                    min={this.props.memLowerLimit}
-                                    max={memLimit}
+                                    min={this.props.minMem}
+                                    max={this.props.maxMem}
                                     step={0.1}
                                     onSave={this.handleSave}
                                     onInvalid={this.handleInvalid}
                                     onChange={this.handleChange}
-                                    initialValue={
-                                        memLimit < this.props.mem
-                                            ? memLimit
-                                            : this.props.mem
-                                    }
+                                    initialValue={this.props.mem}
                                     error={errorMessageMem}
                                     noMargin
                                     withButton
@@ -155,14 +165,21 @@ class Resources extends React.Component {
     }
 }
 
-const mapStateToProps = (state) => ({
-    proc: state.settings.data.proc,
-    mem: state.settings.data.mem,
-    resources: state.jobs.resources,
-    procLowerLimit: state.settings.data.rebuild_index_proc,
-    memLowerLimit: state.settings.data.rebuild_index_mem,
-    error: state.settings.data.updateError
-});
+const mapStateToProps = (state) => {
+    const { maxProc, maxMem } = maxResourcesSelector(state);
+    const { minProc, minMem } = minResourcesSelector(state);
+
+    return {
+        proc: state.settings.data.proc,
+        mem: state.settings.data.mem,
+        minProc,
+        minMem,
+        maxProc,
+        maxMem,
+        resources: state.jobs.resources,
+        error: state.settings.data.updateError
+    };
+};
 
 const mapDispatchToProps = (dispatch) => ({
 
