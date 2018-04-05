@@ -1,6 +1,7 @@
 import React from "react";
 import { map } from "lodash-es";
-import { Alert } from "react-bootstrap";
+
+import { Alert } from "../../base";
 
 const JobError = ({ error }) => {
     if (!error) {
