@@ -943,7 +943,8 @@ class NuVs(Base):
 
             raise
 
-        shutil.copyfile(
+        await self.run_in_executor(
+            shutil.copyfile,
             os.path.join(temp_path, "scaffolds.fasta"),
             os.path.join(self.analysis_path, "assembly.fa")
         )
