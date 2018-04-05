@@ -147,7 +147,6 @@ class Resources extends React.Component {
                                     name="mem"
                                     min={this.props.minMem}
                                     max={this.props.maxMem}
-                                    step={0.1}
                                     onSave={this.handleSave}
                                     onInvalid={this.handleInvalid}
                                     onChange={this.handleChange}

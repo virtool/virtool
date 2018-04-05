@@ -91,7 +91,6 @@ export default class TaskField extends React.PureComponent {
                         value={this.state.value}
                         min={this.props.lowerLimit}
                         max={this.props.upperLimit}
-                        step={this.props.name === "mem" ? 0.1 : 1}
                         onBlur={this.handleBlur}
                         onChange={this.handleChange}
                         onInvalid={this.handleInvalid}
