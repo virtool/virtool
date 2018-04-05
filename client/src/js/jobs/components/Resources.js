@@ -6,6 +6,8 @@ import { Flex, FlexItem, LoadingPlaceholder } from "../../base";
 
 import { getResources } from "../actions";
 
+const color = "#d44b40";
+
 class JobsResources extends React.Component {
 
     componentDidMount () {
@@ -21,8 +23,6 @@ class JobsResources extends React.Component {
         if (this.props.resources === null) {
             return <LoadingPlaceholder />;
         }
-
-        const color = "#d44b40";
 
         const coreGauges = map(this.props.resources.proc, (value, index) =>
             <Gauge

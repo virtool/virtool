@@ -1,9 +1,8 @@
 import React from "react";
 import { map, max, maxBy, sumBy, reduce, sortBy } from "lodash-es";
 import PropTypes from "prop-types";
-import { Alert } from "react-bootstrap";
 
-import { Icon } from "../../../../base";
+import { Alert } from "../../../../base";
 import { formatIsolateName } from "../../../../utils";
 
 import PathoscopeController from "./Controller";
@@ -81,10 +80,8 @@ const PathoscopeViewer = (props) => {
     }
 
     return (
-        <Alert bsStyle="info" className="text-center">
-            <p>
-                <Icon name="notification" /> No virus sequences found in sample
-            </p>
+        <Alert bsStyle="info" className="text-center" icon="notification">
+            No virus sequences found in sample
         </Alert>
     );
 

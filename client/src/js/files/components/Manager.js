@@ -1,13 +1,13 @@
 import React from "react";
 import Dropzone from "react-dropzone";
 import { capitalize, filter, forEach, map } from "lodash-es";
-import { Alert, ListGroup } from "react-bootstrap";
+import { ListGroup } from "react-bootstrap";
 import { connect } from "react-redux";
 import { push } from "react-router-redux";
 
 import File from "./File";
 import { findFiles, removeFile, upload, uploadProgress } from "../actions";
-import { Button, Icon, LoadingPlaceholder, NoneFound, Pagination, ViewHeader } from "../../base";
+import { Alert, Button, LoadingPlaceholder, NoneFound, Pagination, ViewHeader } from "../../base";
 import { createRandomString } from "../../utils";
 
 class FileManager extends React.Component {
@@ -68,9 +68,8 @@ class FileManager extends React.Component {
             );
         } else {
             toolbar = (
-                <Alert bsStyle="warning">
-                    <Icon name="warning" />
-                    <strong> {"You do not have permission to upload files."} </strong>
+                <Alert bsStyle="warning" icon="warning">
+                    <strong>You do not have permission to upload files.</strong>
                     <span>Contact an administrator.</span>
                 </Alert>
             );
