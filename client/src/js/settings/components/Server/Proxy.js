@@ -4,7 +4,7 @@ import { connect } from "react-redux";
 import { Col, Panel, Row } from "react-bootstrap";
 
 import { testProxy, updateSetting } from "../../actions";
-import { Alert, Button, Checkbox, Flex, FlexItem, Icon, InputError } from "../../../base";
+import { Button, Checkbox, Flex, FlexItem, Icon, InputError } from "../../../base";
 
 const ProxyFooter = () => (
     <small className="text-danger">
@@ -80,7 +80,6 @@ const ProxyOptions = (props) => {
             <Col xs={12} md={6} mdPull={6}>
                 <Panel>
                     <Panel.Body>
-
                         <InputError
                             label="Address"
                             autoComplete={false}
