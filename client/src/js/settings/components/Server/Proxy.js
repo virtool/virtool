@@ -1,7 +1,7 @@
 import React from "react";
 import { ClipLoader } from "halogenium";
 import { connect } from "react-redux";
-import { Alert, Col, Panel, Row } from "react-bootstrap";
+import { Col, Panel, Row } from "react-bootstrap";
 
 import { testProxy, updateSetting } from "../../actions";
 import { Button, Checkbox, Flex, FlexItem, Icon, InputError } from "../../../base";
@@ -43,15 +43,7 @@ const ProxyOptions = (props) => {
 
     const disableInputs = !props.enabled || props.trust;
 
-    let alert;
-
-    if (props.proxyTestFailed) {
-        alert = (
-            <Alert bsStyle="danger">
-                {props.proxyTestFailed}
-            </Alert>
-        );
-    }
+    const errorProxyAddress = props.proxyTestFailed || null;
 
     return (
         <Row>
@@ -88,7 +80,6 @@ const ProxyOptions = (props) => {
             <Col xs={12} md={6} mdPull={6}>
                 <Panel>
                     <Panel.Body>
-                        {alert}
 
                         <InputError
                             label="Address"
@@ -96,6 +87,7 @@ const ProxyOptions = (props) => {
                             onSave={props.onUpdateAddress}
                             initialValue={props.address}
                             disabled={disableInputs}
+                            error={errorProxyAddress}
                             noMargin
                             withButton
                         />
