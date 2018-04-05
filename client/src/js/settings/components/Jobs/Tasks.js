@@ -17,20 +17,12 @@ const taskNames = [
 
 const TasksFooter = () => (
     <small>
-        <Flex className="text-warning" style={{marginBottom: "8px"}}>
+        <Flex className="text-warning">
             <FlexItem grow={0} shrink={0}>
                 <Icon name="warning" />
             </FlexItem>
             <FlexItem grow={1} pad>
                 Changing CPU and memory settings will not affect jobs that have already been initialized.
-            </FlexItem>
-        </Flex>
-        <Flex className="text-danger">
-            <FlexItem grow={0} shrink={0}>
-                <Icon name="warning" />
-            </FlexItem>
-            <FlexItem grow={1} pad>
-                 Setting task-specific limits higher than system resource limits will prevent jobs from starting.
             </FlexItem>
         </Flex>
     </small>
@@ -46,8 +38,8 @@ const TaskLimits = (props) => {
             mem={props.limits[taskPrefix].mem}
             inst={props.limits[taskPrefix].inst}
             onChangeLimit={props.onChangeLimit}
-            procLowerLimit={props.procLowerLimit}
-            memLowerLimit={props.memLowerLimit}
+            procLowerLimit={1}
+            memLowerLimit={1}
             currentLimitProc={props.resourceProc}
             currentLimitMem={props.resourceMem}
         />

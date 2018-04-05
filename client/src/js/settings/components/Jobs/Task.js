@@ -7,37 +7,44 @@ import { getTaskDisplayName } from "../../../utils";
 
 import TaskField from "./TaskField";
 
+const getInitialState = () => ({
+    exceedsError: false,
+    zeroError: false
+});
+
 const readOnlyFields = ["create_subtraction", "rebuild_index"];
 
 class Task extends React.Component {
 
     constructor (props) {
         super(props);
-
-        this.state = {
-            error: false
-        };
+        this.state = getInitialState();
     }
 
     componentWillReceiveProps (nextProps) {
         const { proc, mem, inst } = this.props;
 
         if (proc === nextProps.proc && mem === nextProps.mem && inst === nextProps.inst) {
-            this.setState({ error: false });
+            this.handleClearError();
         }
     }
 
     handleChangeLimit = (name, value) => {
-        this.setState({ error: false });
+        this.handleClearError();
         this.props.onChangeLimit(this.props.taskPrefix, name, value);
     };
 
     handleClearError = () => {
-        this.setState({ error: false });
+        this.setState(getInitialState());
     };
 
-    handleInvalid = () => {
-        this.setState({ error: true });
+    handleInvalid = (e) => {
+        const zeroError = e.target.value === "0";
+
+        this.setState({
+            exceedsError: !zeroError,
+            zeroError
+        });
     };
 
     render () {
@@ -46,10 +53,20 @@ class Task extends React.Component {
 
         const readOnly = includes(readOnlyFields, taskPrefix);
 
-        const errorMessage = (
-            <div className={this.state.error ? "input-form-error" : "input-form-error-none"}>
+        let error;
+
+        if (this.state.zeroError) {
+            error = "Value cannot be 0";
+        }
+
+        if (this.state.exceedsError) {
+            error = "Value cannot exceed system resource limits";
+        }
+
+        const errorComponent = (
+            <div className={error ? "input-form-error" : "input-form-error-none"}>
                 <span className="input-error-message">
-                    {this.state.error ? "Cannot go over or under resource limits" : "None"}
+                    {error || "None"}
                 </span>
             </div>
         );
@@ -94,7 +111,8 @@ class Task extends React.Component {
                             onInvalid={this.handleInvalid}
                         />
                     </Col>
-                    {errorMessage}
+
+                    {errorComponent}
                 </Row>
             </ListGroupItem>
         );
