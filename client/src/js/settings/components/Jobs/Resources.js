@@ -1,11 +1,31 @@
 import React from "react";
 import { connect } from "react-redux";
-import { Row, Col, Panel } from "react-bootstrap";
-import { toNumber } from "lodash-es";
+import { Col, Panel, Row } from "react-bootstrap";
+import { toNumber, upperFirst } from "lodash-es";
 
-import { updateSetting } from "../../actions";
+import { Alert, Flex, FlexItem, InputError, LoadingPlaceholder } from "../../../base";
 import { getResources } from "../../../jobs/actions";
-import { InputError, LoadingPlaceholder} from "../../../base";
+import { maxResourcesSelector, minResourcesSelector } from "../../selectors";
+import { updateSetting } from "../../actions";
+
+const getErrorMessage = (isError, min, max) => (
+    isError ? `Value must be between ${min} and ${max}` : null
+);
+
+const LimitLabel = ({ label, available, unit }) => (
+    <h5>
+        <Flex alignItems="center">
+            <FlexItem grow={1} shrink={0}>
+                <strong>{label}</strong>
+            </FlexItem>
+            <FlexItem grow={0} shrink={0}>
+                <small className="text-info">
+                    {available} {unit} available
+                </small>
+            </FlexItem>
+        </Flex>
+    </h5>
+);
 
 class Resources extends React.Component {
 
@@ -15,8 +35,7 @@ class Resources extends React.Component {
         this.state = {
             errorProc: false,
             errorMem: false,
-            procUpperLimit: this.props.proc,
-            memUpperLimit: this.props.mem
+            showAlert: false
         };
     }
 
@@ -32,133 +51,139 @@ class Resources extends React.Component {
         if (nextProps.proc !== this.props.proc) {
             this.setState({errorProc: false});
         }
-
-        if (nextProps.resources) {
-            this.setState({
-                memUpperLimit: parseFloat((nextProps.resources.mem.total / Math.pow(1024, 3)).toFixed(1)),
-                procUpperLimit: nextProps.resources.proc.length
-            });
-        }
     }
 
-    handleChangeProc = (e) => {
-        e.preventDefault();
-        this.setState({ errorProc: false });
+    handleChange = (e) => {
+        this.setError(e, false);
     };
 
-    handleChangeMem = (e) => {
-        e.preventDefault();
-        this.setState({ errorMem: false });
+    handleInvalid = (e) => {
+        this.setError(e, true);
     };
 
-    handleInvalidProc = (e) => {
-        e.preventDefault();
-        this.setState({ errorProc: true });
-    };
+    handleSave = (e) => {
+        const name = e.name;
+        const value = toNumber(e.value);
+        const error = `error${upperFirst(name)}`;
 
-    handleInvalidMem = (e) => {
-        e.preventDefault();
-        this.setState({ errorMem: true });
-    };
-
-    handleSaveProc = (e) => {
-        if (e.value <= this.state.procUpperLimit && e.value >= this.props.procLowerLimit) {
-            this.props.onUpdateProc(e);
+        if (value <= e.max && value >= e.min) {
+            this.props.onUpdate(e);
         } else {
-            this.setState({ errorProc: true });
+            this.setState({ [error]: true });
         }
     };
 
-    handleSaveMem = (e) => {
-        if (e.value <= this.state.memUpperLimit && e.value >= this.props.memLowerLimit) {
-            this.props.onUpdateMem(e);
-        } else {
-            this.setState({ errorMem: true });
-        }
+    setError = (e, value) => {
+        e.preventDefault();
+
+        this.setState({
+            [`error${upperFirst(e.target.name)}`]: value
+        });
     };
 
     render () {
+
         if (this.props.resources === null) {
             return <LoadingPlaceholder />;
         }
 
-        const errorMessageProc = this.state.errorProc ? "Cannot go over or under resource limits" : null;
-        const errorMessageMem = this.state.errorMem ? "Cannot go over or under resource limits" : null;
+        const errorMessageProc = getErrorMessage(
+            this.state.errorProc,
+            this.props.minProc,
+            this.props.maxProc
+        );
+
+        const errorMessageMem = getErrorMessage(
+            this.state.errorMem,
+            this.props.minMem,
+            this.props.maxMem
+        );
+
+        let alert;
+
+        if (this.props.error) {
+            alert = (
+                <Alert bsStyle="danger" icon="warning">
+                    Resource Limit values cannot be lower than corresponding Task-specific Limits.
+                </Alert>
+            );
+        }
 
         return (
-            <Row>
-                <Col md={12}>
-                    <h5><strong>Resource Limits</strong></h5>
-                </Col>
-                <Col xs={12} md={6} mdPush={6}>
-                    <Panel>
-                        <Panel.Body>
-                            Set limits on the computing resources Virtool can use on the host server.
-                        </Panel.Body>
-                    </Panel>
-                </Col>
-                <Col xs={12} md={6} mdPull={6}>
-                    <Panel>
-                        <Panel.Body>
-                            <InputError
-                                label="CPU Limit"
-                                type="number"
-                                min={this.props.procLowerLimit}
-                                max={this.state.procUpperLimit}
-                                onSave={this.handleSaveProc}
-                                onInvalid={this.handleInvalidProc}
-                                onChange={this.handleChangeProc}
-                                initialValue={
-                                    this.props.proc > this.state.procUpperLimit
-                                        ? this.state.procUpperLimit
-                                        : this.props.proc
-                                }
-                                error={errorMessageProc}
-                                noMargin
-                                withButton
-                            />
-                            <InputError
-                                label="Memory Limit (GB)"
-                                type="number"
-                                min={this.props.memLowerLimit}
-                                max={this.state.memUpperLimit}
-                                step={0.1}
-                                onSave={this.handleSaveMem}
-                                onInvalid={this.handleInvalidMem}
-                                onChange={this.handleChangeMem}
-                                initialValue={
-                                    this.props.mem > this.state.memUpperLimit
-                                        ? this.state.memUpperLimit
-                                        : this.props.mem
-                                }
-                                error={errorMessageMem}
-                                noMargin
-                                withButton
-                            />
-                        </Panel.Body>
-                    </Panel>
-                </Col>
-            </Row>
+            <div>
+                {alert}
+                <Row>
+                    <Col md={12}>
+                        <h5><strong>Resource Limits</strong></h5>
+                    </Col>
+                    <Col xs={12} md={6} mdPush={6}>
+                        <Panel>
+                            <Panel.Body>
+                                Set limits on the computing resources Virtool can use on the host server.
+                            </Panel.Body>
+                        </Panel>
+                    </Col>
+                    <Col xs={12} md={6} mdPull={6}>
+                        <Panel>
+                            <Panel.Body>
+                                <LimitLabel label="CPU Limit" available={this.props.maxProc} unit="cores" />
+                                <InputError
+                                    type="number"
+                                    name="proc"
+                                    min={this.props.minProc}
+                                    max={this.props.maxProc}
+                                    onSave={this.handleSave}
+                                    onInvalid={this.handleInvalid}
+                                    onChange={this.handleChange}
+                                    initialValue={this.props.proc}
+                                    error={errorMessageProc}
+                                    noMargin
+                                    withButton
+                                />
+
+                                <LimitLabel label="Memory Limit (GB)" available={this.props.maxMem} unit="GB" />
+                                <InputError
+                                    type="number"
+                                    name="mem"
+                                    min={this.props.minMem}
+                                    max={this.props.maxMem}
+                                    onSave={this.handleSave}
+                                    onInvalid={this.handleInvalid}
+                                    onChange={this.handleChange}
+                                    initialValue={this.props.mem}
+                                    error={errorMessageMem}
+                                    noMargin
+                                    withButton
+                                />
+                            </Panel.Body>
+                        </Panel>
+                    </Col>
+                </Row>
+            </div>
         );
     }
 }
 
-const mapStateToProps = (state) => ({
-    proc: state.settings.data.proc,
-    mem: state.settings.data.mem,
-    resources: state.jobs.resources,
-    procLowerLimit: state.settings.data.rebuild_index_proc,
-    memLowerLimit: state.settings.data.rebuild_index_mem
-});
+const mapStateToProps = (state) => {
+    const { maxProc, maxMem } = maxResourcesSelector(state);
+    const { minProc, minMem } = minResourcesSelector(state);
+
+    return {
+        proc: state.settings.data.proc,
+        mem: state.settings.data.mem,
+        minProc,
+        minMem,
+        maxProc,
+        maxMem,
+        resources: state.jobs.resources,
+        error: state.settings.data.updateError
+    };
+};
 
 const mapDispatchToProps = (dispatch) => ({
 
-    onUpdateProc: (e) => {
-        dispatch(updateSetting("proc", toNumber(e.value)));
-    },
-
-    onUpdateMem: (e) => {
-        dispatch(updateSetting("mem", toNumber(e.value)));
+    onUpdate: (e) => {
+        dispatch(updateSetting(e.name, toNumber(e.value)));
     },
 
     onGet: () => {

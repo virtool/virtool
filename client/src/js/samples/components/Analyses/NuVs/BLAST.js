@@ -3,11 +3,11 @@ import Moment from "moment";
 import Numeral from "numeral";
 import { ClipLoader } from "halogenium";
 import { map } from "lodash-es";
-import { Panel, Alert, Table } from "react-bootstrap";
+import { Table, Panel } from "react-bootstrap";
 import { connect } from "react-redux";
 
 import { blastNuvs } from "../../../actions";
-import { Button, Flex, FlexItem, Icon, RelativeTime } from "../../../../base";
+import { Alert, Button, Flex, FlexItem, Icon, RelativeTime } from "../../../../base";
 
 const ridRoot = "https://blast.ncbi.nlm.nih.gov/Blast.cgi?\
     CMD=Web&PAGE_TYPE=BlastFormatting&OLD_BLAST=false&GET_RID_INFO=on&RID=";
