@@ -949,19 +949,6 @@ class NuVs(Base):
             os.path.join(self.analysis_path, "assembly.fa")
         )
 
-        shutil.copy(
-            os.path.join(temp_path, "spades.log"),
-            self.analysis_path
-        )
-
-        warnings_path = os.path.join(temp_path, "warnings.log")
-
-        if os.path.isfile(warnings_path):
-            shutil.copyfile(
-                warnings_path,
-                os.path.join(self.analysis_path, "spades.warnings")
-            )
-
         self.temp_dir.cleanup()
 
     @virtool.job.stage_method
