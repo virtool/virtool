@@ -1,22 +1,14 @@
-/**
- *
- *
- * @copyright 2017 Government of Canada
- * @license MIT
- * @author igboyes
- *
- */
 import React from "react";
 import Request from "superagent";
 import PropTypes from "prop-types";
 import { connect } from "react-redux";
-import { map, replace } from "lodash-es";
+import { forEach, reduce, replace, split, trimEnd } from "lodash-es";
 import { ClipLoader } from "halogenium";
 import { Label, Modal, ProgressBar } from "react-bootstrap";
 
 import { installSoftwareUpdates, hideInstallModal } from "../actions";
 import { Button } from "../../base";
-import { renderReleaseMarkdown } from "./Release";
+import { ReleaseMarkdown } from "./Release";
 import { byteSize } from "../../utils";
 
 const installSteps = [
@@ -34,6 +26,27 @@ const attemptReload = () => {
                 window.location = window.location.origin;
             }
         });
+};
+
+const mergeBody = (releases) => {
+
+    const result = {};
+
+    forEach(releases, release => {
+        forEach(split(release.body, "#### "), body => {
+            if (body) {
+                const header = split(body, "\n", 1);
+
+                if (result[header] === undefined) {
+                    result[header] = [];
+                }
+
+                result[header].push(replace(trimEnd(body), `${header}\n`, ""));
+            }
+        });
+    });
+
+    return reduce(result, (body, list, header) => `${body}\n\n#### ${header}\n${list.join("")}`, "");
 };
 
 const Process = ({ complete, progress, size, step }) => {
@@ -90,7 +103,8 @@ class SoftwareInstallModal extends React.Component {
     };
 
     render () {
-        const mergedBody = map(this.props.releases, "body").join("\n");
+
+        const mergedBody = mergeBody(this.props.releases);
 
         let content;
 
@@ -98,13 +112,9 @@ class SoftwareInstallModal extends React.Component {
             content = (
                 <div>
                     <Modal.Body>
-                        <h5>
-                            <strong>
-                                Update to <Label>{this.props.releases[0].name}</Label>
-                            </strong>
-                        </h5>
-                        {renderReleaseMarkdown(mergedBody)}
+                        <ReleaseMarkdown body={mergedBody} noMargin />
                     </Modal.Body>
+
                     <Modal.Footer>
                         <Button bsStyle="primary" icon="download" onClick={this.props.onInstall}>
                             Install
@@ -119,8 +129,9 @@ class SoftwareInstallModal extends React.Component {
         return (
             <Modal show={this.props.show} onHide={this.props.onHide}>
                 <Modal.Header onHide={this.props.onHide} closeButton>
-                    Software Update
+                    Software Update <Label>{this.props.releases[0].name}</Label>
                 </Modal.Header>
+
                 {content}
             </Modal>
         );

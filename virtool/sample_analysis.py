@@ -410,6 +410,8 @@ class Base(virtool.job.Job):
 
         self.sample = None
 
+        self.paired = None
+
         self.read_paths = None
 
         #: The document for the host associated with the sample being analyzed. Assigned after job start.
@@ -433,7 +435,12 @@ class Base(virtool.job.Job):
         # Calculate the path(s) to the sample read file(s).
         self.read_paths = [os.path.join(self.sample_path, "reads_1.fastq")]
 
-        if self.sample.get("paired", False):
+        self.paired = self.sample.get("paired", None)
+
+        if self.paired is None:
+            self.paired = len(self.sample["files"]) == 2
+
+        if self.paired:
             self.read_paths.append(os.path.join(self.sample_path, "reads_2.fastq"))
 
         # Get the complete host document from the database.
@@ -846,6 +853,8 @@ class NuVs(Base):
             self.import_results
         ]
 
+        self.temp_dir = None
+
     @virtool.job.stage_method
     async def map_viruses(self):
         """
@@ -887,22 +896,9 @@ class NuVs(Base):
 
     @virtool.job.stage_method
     async def reunite_pairs(self):
-        if self.sample.get("paired", False):
+        if self.paired:
             unmapped_path = os.path.join(self.analysis_path, "unmapped_hosts.fq")
-
-            headers = await self.run_in_executor(virtool.bio.read_fastq_headers, unmapped_path)
-
-            unmapped_roots = {h.split(" ")[0] for h in headers}
-
-            with open(os.path.join(self.analysis_path, "unmapped_1.fq"), "w") as f:
-                for header, seq, quality in await self.run_in_executor(virtool.bio.read_fastq, self.read_paths[0]):
-                    if header.split(" ")[0] in unmapped_roots:
-                        f.write("\n".join([header, seq, "+", quality]) + "\n")
-
-            with open(os.path.join(self.analysis_path, "unmapped_2.fq"), "w") as f:
-                for header, seq, quality in await self.run_in_executor(virtool.bio.read_fastq, self.read_paths[1]):
-                    if header.split(" ")[0] in unmapped_roots:
-                        f.write("\n".join([header, seq, "+", quality]) + "\n")
+            await self.run_in_executor(run_reunion, self.analysis_path, self.read_paths, unmapped_path)
 
     @virtool.job.stage_method
     async def assemble(self):
@@ -917,7 +913,7 @@ class NuVs(Base):
             "-m", str(self.mem)
         ]
 
-        if self.sample.get("paired", False):
+        if self.paired:
             command += [
                 "-1", os.path.join(self.analysis_path, "unmapped_1.fq"),
                 "-2", os.path.join(self.analysis_path, "unmapped_2.fq"),
@@ -927,31 +923,34 @@ class NuVs(Base):
                 "-s", os.path.join(self.analysis_path, "unmapped_hosts.fq"),
             ]
 
-        with tempfile.TemporaryDirectory() as temp_path:
-            command += [
-                "-o", temp_path,
-                "-k", "21,33,55,75"
-            ]
+        self.temp_dir = tempfile.TemporaryDirectory()
 
+        temp_path = self.temp_dir.name
+
+        command += [
+            "-o", temp_path,
+            "-k", "21,33,55,75"
+        ]
+
+        try:
             await self.run_subprocess(command)
+        except virtool.job.SubprocessError:
+            spades_log_path = os.path.join(temp_path, "spades.log")
 
-            shutil.copyfile(
-                os.path.join(temp_path, "scaffolds.fasta"),
-                os.path.join(self.analysis_path, "assembly.fa")
-            )
+            if os.path.isfile(spades_log_path):
+                async with aiofiles.open(spades_log_path, "r") as f:
+                    if "Error in malloc(): out of memory" in await f.read():
+                        raise virtool.job.SubprocessError("Out of memory")
 
-            shutil.copy(
-                os.path.join(temp_path, "spades.log"),
-                self.analysis_path
-            )
+            raise
 
-            warnings_path = os.path.join(temp_path, "warnings.log")
+        await self.run_in_executor(
+            shutil.copyfile,
+            os.path.join(temp_path, "scaffolds.fasta"),
+            os.path.join(self.analysis_path, "assembly.fa")
+        )
 
-            if os.path.isfile(warnings_path):
-                shutil.copyfile(
-                    warnings_path,
-                    os.path.join(self.analysis_path, "spades.warnings")
-                )
+        self.temp_dir.cleanup()
 
     @virtool.job.stage_method
     async def process_fasta(self):
@@ -1110,6 +1109,14 @@ class NuVs(Base):
 
         await self.dispatch("samples", "update", document)
 
+    async def cleanup(self):
+        try:
+            self.temp_dir.cleanup()
+        except AttributeError:
+            pass
+
+        await super().cleanup()
+
 
 def run_patho(analysis_path, vta_path, reassigned_path):
 
@@ -1147,3 +1154,20 @@ def run_patho(analysis_path, vta_path, reassigned_path):
         refs,
         reads
     )
+
+
+def run_reunion(analysis_path, read_paths, unmapped_path):
+
+    headers = virtool.bio.read_fastq_headers(unmapped_path)
+
+    unmapped_roots = {h.split(" ")[0] for h in headers}
+
+    with open(os.path.join(analysis_path, "unmapped_1.fq"), "w") as f:
+        for header, seq, quality in virtool.bio.read_fastq(read_paths[0]):
+            if header.split(" ")[0] in unmapped_roots:
+                f.write("\n".join([header, seq, "+", quality]) + "\n")
+
+    with open(os.path.join(analysis_path, "unmapped_2.fq"), "w") as f:
+        for header, seq, quality in virtool.bio.read_fastq(read_paths[1]):
+            if header.split(" ")[0] in unmapped_roots:
+                f.write("\n".join([header, seq, "+", quality]) + "\n")

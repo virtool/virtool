@@ -119,9 +119,7 @@ async def test_reunite_pairs(is_paired, mock_job):
             for line in unite["separate"]:
                 f.write(line + "\n")
 
-    mock_job.sample = {
-        "paired": is_paired
-    }
+    mock_job.paired = is_paired
 
     await mock_job.reunite_pairs()
 
@@ -137,9 +135,7 @@ async def test_reunite_pairs(is_paired, mock_job):
 async def test_assemble(is_paired, mock_job):
     os.mkdir(mock_job.analysis_path)
 
-    mock_job.sample = {
-        "paired": is_paired
-    }
+    mock_job.paired = is_paired
 
     mock_job.proc = 2
     mock_job.mem = 10

@@ -98,7 +98,6 @@
     "lodash/matches-prop-shorthand": [1],
     "lodash/matches-shorthand": [1],
     "lodash/prefer-compact": [1],
-    "lodash/prefer-filter": [1],
     "lodash/prefer-flat-map": [1],
     "lodash/prefer-map": [1],
     "lodash/prefer-reject": [1],

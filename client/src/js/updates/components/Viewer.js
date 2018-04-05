@@ -29,11 +29,48 @@ class ChannelButton extends React.Component {
     }
 }
 
-class SoftwareUpdateViewer extends React.Component {
+const Releases = ({ onShowModal, releases }) => {
 
-    constructor (props) {
-        super(props);
+    if (releases.length) {
+        const releaseComponents = map(releases, release =>
+            <Release key={release.name} {...release} />
+        );
+
+        return (
+            <Panel>
+                <Panel.Body>
+                    <Flex alignItems="center" style={{marginBottom: "15px"}}>
+                        <FlexItem grow={1} shrink={0}>
+                            <strong className="text-warning">
+                                <Icon name="info" /> Update{releases.length === 1 ? "" : "s"} Available
+                            </strong>
+                        </FlexItem>
+                        <FlexItem grow={0} shrink={0} pad={15}>
+                            <Button icon="download" bsStyle="primary" onClick={onShowModal}>
+                                Install
+                            </Button>
+                        </FlexItem>
+                    </Flex>
+
+                    <ListGroup>
+                        {releaseComponents}
+                    </ListGroup>
+                </Panel.Body>
+            </Panel>
+        );
     }
+
+    return (
+        <Panel>
+            <Panel.Body>
+                <Icon bsStyle="success" name="checkmark" />
+                <strong className="text-success"> Software is up-to-date</strong>
+            </Panel.Body>
+        </Panel>
+    );
+};
+
+class SoftwareUpdateViewer extends React.Component {
 
     componentWillMount () {
         this.props.onGet();
@@ -46,49 +83,6 @@ class SoftwareUpdateViewer extends React.Component {
         }
 
         const releases = this.props.updates.releases;
-
-        let installModal;
-        let updateComponent;
-
-        if (releases.length) {
-            const releaseComponents = map(releases, release =>
-                <Release key={release.name} {...release} />
-            );
-
-            installModal = <InstallModal releases={releases} />;
-
-            updateComponent = (
-                <Panel>
-                    <Panel.Body>
-                        <Flex alignItems="center" style={{marginBottom: "15px"}}>
-                            <FlexItem grow={1} shrink={0}>
-                                <strong className="text-warning">
-                                    <Icon name="info" /> Update{releases.length === 1 ? "" : "s"} Available
-                                </strong>
-                            </FlexItem>
-                            <FlexItem grow={0} shrink={0} pad={15}>
-                                <Button icon="download" bsStyle="primary" onClick={this.props.onShowModal}>
-                                    Install
-                                </Button>
-                            </FlexItem>
-                        </Flex>
-
-                        <ListGroup>
-                            {releaseComponents}
-                        </ListGroup>
-                    </Panel.Body>
-                </Panel>
-            );
-        } else {
-            updateComponent = (
-                <Panel>
-                    <Panel.Body>
-                        <Icon bsStyle="success" name="checkmark" />
-                        <strong className="text-success"> Software is up-to-date</strong>
-                    </Panel.Body>
-                </Panel>
-            );
-        }
 
         const radioComponents = map(["stable", "beta", "alpha"], channel =>
             <ChannelButton
@@ -108,7 +102,10 @@ class SoftwareUpdateViewer extends React.Component {
                         </h5>
                     </Col>
                     <Col xs={12} md={8}>
-                        {updateComponent}
+                        <Releases
+                            releases={releases}
+                            onShowModal={this.props.onShowModal}
+                        />
                     </Col>
                     <Col xs={12} md={4}>
                         <Panel>
@@ -123,7 +120,8 @@ class SoftwareUpdateViewer extends React.Component {
                         </Panel>
                     </Col>
                 </Row>
-                {installModal}
+
+                {releases.length ? <InstallModal releases={releases} /> : null}
             </div>
         );
     }
