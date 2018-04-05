@@ -937,9 +937,10 @@ class NuVs(Base):
         except virtool.job.SubprocessError:
             spades_log_path = os.path.join(temp_path, "spades.log")
 
-            async with aiofiles.open(spades_log_path, "r") as f:
-                if "Error in malloc(): out of memory" in await f.read():
-                    raise virtool.job.SubprocessError("Out of memory")
+            if os.path.isfile(spades_log_path):
+                async with aiofiles.open(spades_log_path, "r") as f:
+                    if "Error in malloc(): out of memory" in await f.read():
+                        raise virtool.job.SubprocessError("Out of memory")
 
             raise
 
