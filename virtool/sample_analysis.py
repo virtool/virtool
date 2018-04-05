@@ -435,7 +435,10 @@ class Base(virtool.job.Job):
         # Calculate the path(s) to the sample read file(s).
         self.read_paths = [os.path.join(self.sample_path, "reads_1.fastq")]
 
-        self.paired = self.sample.get("paired", False) or len(self.sample["files"]) == 2
+        self.paired = self.sample.get("paired", None)
+
+        if self.paired is None:
+            self.paired = len(self.sample["files"]) == 2
 
         if self.paired:
             self.read_paths.append(os.path.join(self.sample_path, "reads_2.fastq"))
