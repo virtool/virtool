@@ -1,7 +1,8 @@
 import CX from "classnames";
 import React from "react";
 import PropTypes from "prop-types";
-import { toNumber } from "lodash-es";
+import { toInteger } from "lodash-es";
+
 import { Icon, InputError } from "../../../base";
 
 export default class TaskField extends React.PureComponent {
@@ -43,13 +44,13 @@ export default class TaskField extends React.PureComponent {
 
     handleChange = (e) => {
         this.setState({
-            value: toNumber(e.target.value)
+            value: e.target.value
         });
     };
 
     handleInvalid = (e) => {
         e.preventDefault();
-        this.props.onInvalid();
+        this.props.onInvalid(e);
     };
 
     handleSubmit = (e) => {
@@ -57,7 +58,7 @@ export default class TaskField extends React.PureComponent {
 
         if (this.state.value) {
             this.setState({pending: true}, () => {
-                this.props.onChange(this.props.name, this.state.value);
+                this.props.onChange(this.props.name, toInteger(this.state.value));
             });
         } else {
             this.props.onInvalid();
@@ -66,13 +67,15 @@ export default class TaskField extends React.PureComponent {
 
     render () {
 
+        const hasFeedback = this.state.pending || this.props.readOnly;
+
         // Apply the "has-feedback" Bootstrap class to the input element if a setting save is pending.
-        const groupClass = CX("form-group", {"has-feedback": this.state.pending || this.props.readOnly});
+        const groupClass = CX("form-group", {"has-feedback": hasFeedback});
 
         let feedbackIcon;
 
         // If a settings save is pending show a spinner in the input element.
-        if (this.state.pending || this.props.readOnly) {
+        if (hasFeedback) {
             feedbackIcon = (
                 <span className="form-control-feedback">
                     <Icon name="lock" pending={this.state.pending} />
@@ -88,7 +91,6 @@ export default class TaskField extends React.PureComponent {
                         value={this.state.value}
                         min={this.props.lowerLimit}
                         max={this.props.upperLimit}
-                        step={this.props.name === "mem" ? 0.1 : 1}
                         onBlur={this.handleBlur}
                         onChange={this.handleChange}
                         onInvalid={this.handleInvalid}

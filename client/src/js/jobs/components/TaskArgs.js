@@ -8,12 +8,13 @@ const TaskArgs = (props) => {
 
     switch (props.taskType) {
 
+        case "nuvs":
         case "pathoscope_bowtie":
             return (
                 <Table bordered>
                     <tbody>
                         <tr>
-                            <th>Sample Name</th>
+                            <th>Sample</th>
                             <td>
                                 <Link to={`/samples/${props.taskArgs.sample_id}`}>
                                     {props.taskArgs.sample_name}
@@ -21,15 +22,7 @@ const TaskArgs = (props) => {
                             </td>
                         </tr>
                         <tr>
-                            <th>Sample ID</th>
-                            <td>
-                                <Link to={`/samples/${props.taskArgs.sample_id}`}>
-                                    {props.taskArgs.sample_id}
-                                </Link>
-                            </td>
-                        </tr>
-                        <tr>
-                            <th>Analysis ID</th>
+                            <th>Analysis</th>
                             <td>
                                 <Link to={`/samples/${props.taskArgs.sample_id}/analyses`}>
                                     {props.taskArgs.analysis_id}
@@ -45,8 +38,8 @@ const TaskArgs = (props) => {
                 <Table bordered>
                     <tbody>
                         <tr>
-                            <th className="col-xs-3">Index Version</th>
-                            <td className="col-xs-9">
+                            <th>Index Version</th>
+                            <td>
                                 <Link to={`/viruses/indexes/${props.taskArgs.index_version}`}>
                                     <span>{props.taskArgs.index_version}</span>
                                 </Link>
@@ -55,6 +48,7 @@ const TaskArgs = (props) => {
                     </tbody>
                 </Table>
             );
+
     }
 
     const rowComponents = values(mapValues(props.taskArgs, (value, key) =>

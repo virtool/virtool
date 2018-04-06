@@ -1,9 +1,8 @@
 import React from "react";
 import { map } from "lodash-es";
-import { Alert } from "react-bootstrap";
 import { connect } from "react-redux";
+import { Alert } from "react-bootstrap";
 import { LinkContainer } from "react-router-bootstrap";
-
 
 import { Button, Flex, FlexItem, Icon, LoadingPlaceholder, NoneFound, ViewHeader } from "../../base";
 import { findIndexes } from "../actions";
@@ -61,7 +60,7 @@ class IndexesList extends React.Component {
                 }
 
                 alert = (
-                    <Alert bsStyle="warning">
+                    <Alert bsStyle="warning" icon="notification">
                         <Flex alignItems="center">
                             <FlexItem grow={1}>
                                 <Flex alignItems="center">
@@ -91,13 +90,8 @@ class IndexesList extends React.Component {
             );
         } else {
             content = (
-                <Alert bsStyle="warning">
-                    <Flex alignItems="center">
-                        <Icon name="warning" />
-                        <FlexItem pad={5}>
-                            At least one virus must be added to the database before an index can be built.
-                        </FlexItem>
-                    </Flex>
+                <Alert bsStyle="warning" icon="warning">
+                    At least one virus must be added to the database before an index can be built.
                 </Alert>
             );
         }
