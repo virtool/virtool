@@ -4,7 +4,7 @@ from aiohttp import web
 import virtool.user
 import virtool.utils
 import virtool.errors
-from virtool.handlers.utils import bad_request
+from virtool.api.utils import bad_request
 
 
 AUTHORIZATION_PROJECTION = ["user", "groups", "permissions"]

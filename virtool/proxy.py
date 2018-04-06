@@ -3,7 +3,7 @@ import os
 from aiohttp import web
 
 import virtool.errors
-from virtool.handlers.utils import json_response
+from virtool.api.utils import json_response
 
 
 class ProxyRequest:

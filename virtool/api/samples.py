@@ -6,7 +6,7 @@ import virtool.file
 import virtool.utils
 import virtool.sample
 import virtool.sample_analysis
-from virtool.handlers.utils import bad_request, compose_regex_query, conflict, insufficient_rights, invalid_query,\
+from virtool.api.utils import bad_request, compose_regex_query, conflict, insufficient_rights, invalid_query,\
     json_response, no_content, not_found, paginate, protected, validation
 
 

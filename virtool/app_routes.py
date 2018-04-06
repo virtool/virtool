@@ -5,7 +5,7 @@ from aiohttp import web
 
 import virtool.utils
 from virtool.user_login import get_login_template, generate_verification_keys, login_handler
-from virtool.handlers import root, jobs, samples, viruses, history, hmm, subtraction, settings, account, groups, users,\
+from virtool.api import root, jobs, samples, viruses, history, hmm, subtraction, settings, account, groups, users,\
     genbank, status, websocket, resources, analyses, indexes, files, uploads, downloads, updates
 
 

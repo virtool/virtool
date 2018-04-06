@@ -6,7 +6,7 @@ import shutil
 import virtool.sample
 import virtool.subtraction
 import virtool.utils
-from virtool.handlers.utils import compose_regex_query, conflict, json_response, no_content, not_found, paginate,\
+from virtool.api.utils import compose_regex_query, conflict, json_response, no_content, not_found, paginate,\
     protected, validation
 
 

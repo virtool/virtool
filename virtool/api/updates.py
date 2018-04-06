@@ -4,7 +4,7 @@ import pymongo
 import virtool.app
 import virtool.utils
 import virtool.updates
-from virtool.handlers.utils import json_response, not_found, protected
+from virtool.api.utils import json_response, not_found, protected
 
 
 async def get(req):

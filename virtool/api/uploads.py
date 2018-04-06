@@ -3,7 +3,7 @@ from cerberus import Validator
 
 import virtool.file
 import virtool.utils
-from virtool.handlers.utils import invalid_query, json_response, not_found, protected
+from virtool.api.utils import invalid_query, json_response, not_found, protected
 
 FILE_TYPES = {
     "/upload/viruses": "viruses",

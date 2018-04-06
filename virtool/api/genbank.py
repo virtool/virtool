@@ -3,7 +3,7 @@ import string
 import aiohttp
 
 import virtool.proxy
-from virtool.handlers.utils import json_response, not_found
+from virtool.api.utils import json_response, not_found
 
 
 async def get(req):

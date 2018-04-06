@@ -2,7 +2,7 @@ import os
 
 import virtool.job
 import virtool.utils
-from virtool.handlers.utils import compose_regex_query, bad_request, json_response, no_content, not_found, paginate,\
+from virtool.api.utils import compose_regex_query, bad_request, json_response, no_content, not_found, paginate,\
     protected
 
 

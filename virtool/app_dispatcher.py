@@ -1,7 +1,7 @@
 import asyncio
 from copy import deepcopy
 
-import virtool.handlers.utils
+import virtool.api.utils
 
 
 class Connection:
@@ -13,7 +13,7 @@ class Connection:
         self.permissions = session.permissions
 
     async def send(self, message):
-        await self._ws.send_json(message, dumps=virtool.handlers.utils.dumps)
+        await self._ws.send_json(message, dumps=virtool.api.utils.dumps)
 
     def ping(self):
         return self._ws.ping()

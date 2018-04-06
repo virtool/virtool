@@ -4,7 +4,7 @@ import pymongo
 
 import virtool.utils
 import virtool.hmm
-from virtool.handlers.utils import compose_regex_query, json_response, not_found, paginate, protected
+from virtool.api.utils import compose_regex_query, json_response, not_found, paginate, protected
 
 
 async def find(req):

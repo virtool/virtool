@@ -1,7 +1,7 @@
 import virtool.utils
 import virtool.species
 import virtool.history
-from virtool.handlers.utils import conflict, json_response, no_content, not_found, paginate, protected
+from virtool.api.utils import conflict, json_response, no_content, not_found, paginate, protected
 
 
 async def find(req):

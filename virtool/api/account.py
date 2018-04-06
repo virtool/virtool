@@ -6,7 +6,7 @@ import virtool.user
 import virtool.user_permissions
 import virtool.validators
 
-from virtool.handlers.utils import bad_request, invalid_input, json_response, no_content, not_found, protected,\
+from virtool.api.utils import bad_request, invalid_input, json_response, no_content, not_found, protected,\
     unpack_request, validation
 
 

@@ -1,7 +1,7 @@
 import virtool.utils
 import virtool.indexes
 import virtool.history
-from virtool.handlers.utils import json_response, bad_request, not_found, protected, compose_regex_query, paginate, \
+from virtool.api.utils import json_response, bad_request, not_found, protected, compose_regex_query, paginate, \
     conflict
 
 

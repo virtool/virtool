@@ -8,7 +8,7 @@ import virtool.errors
 import virtool.sample
 import virtool.sample_analysis
 import virtool.utils
-from virtool.handlers.utils import bad_request, conflict, insufficient_rights, json_response, no_content, not_found
+from virtool.api.utils import bad_request, conflict, insufficient_rights, json_response, no_content, not_found
 
 
 async def get(req):

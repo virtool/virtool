@@ -6,7 +6,7 @@ import virtool.user
 import virtool.utils
 import virtool.user_groups
 from virtool.user_permissions import PERMISSIONS
-from virtool.handlers.utils import bad_request, conflict, invalid_input, json_response, no_content, not_found,\
+from virtool.api.utils import bad_request, conflict, invalid_input, json_response, no_content, not_found,\
     protected, validation
 
 

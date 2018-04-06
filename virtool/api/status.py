@@ -1,4 +1,4 @@
-from virtool.handlers.utils import json_response
+from virtool.api.utils import json_response
 
 
 def status_processor(document):

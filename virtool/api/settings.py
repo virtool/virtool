@@ -5,7 +5,7 @@ import os
 import virtool.app_settings
 import virtool.job_resources
 import virtool.utils
-from virtool.handlers.utils import conflict, json_response, protected, validation
+from virtool.api.utils import conflict, json_response, protected, validation
 
 
 async def get(req):

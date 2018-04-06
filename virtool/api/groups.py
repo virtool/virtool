@@ -5,7 +5,7 @@ from pymongo import ReturnDocument
 import virtool.utils
 import virtool.user_groups
 import virtool.user_permissions
-from virtool.handlers.utils import bad_request, conflict, json_response, not_found, no_content, protected, validation
+from virtool.api.utils import bad_request, conflict, json_response, not_found, no_content, protected, validation
 
 logger = logging.getLogger(__name__)
 

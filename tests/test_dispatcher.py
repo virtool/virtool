@@ -1,6 +1,6 @@
 import pytest
 
-import virtool.handlers.utils
+import virtool.api.utils
 from virtool.app_dispatcher import Dispatcher
 
 
@@ -32,7 +32,7 @@ class TestConnection:
             },
             'interface': 'users',
             'operation': 'update'
-        }, virtool.handlers.utils.dumps)
+        }, virtool.api.utils.dumps)
 
     async def test_close(self, test_ws_connection):
         await test_ws_connection.close()

@@ -4,7 +4,7 @@ from aiohttp import web
 from mako.template import Template
 
 from virtool.utils import get_static_hash
-from virtool.handlers.utils import not_found
+from virtool.api.utils import not_found
 
 
 @web.middleware

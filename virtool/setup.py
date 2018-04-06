@@ -12,7 +12,7 @@ import virtool.app_settings
 import virtool.user
 import virtool.user_permissions
 import virtool.utils
-from virtool.handlers.utils import json_response
+from virtool.api.utils import json_response
 
 logger = logging.getLogger(__name__)
 

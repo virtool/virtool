@@ -15,7 +15,7 @@ import virtool.species
 import virtool.refs_import
 import virtool.history
 
-from virtool.handlers.utils import bad_request, compose_regex_query, conflict, json_response,  no_content, not_found, \
+from virtool.api.utils import bad_request, compose_regex_query, conflict, json_response,  no_content, not_found, \
     paginate, protected, unpack_request, validation
 
 

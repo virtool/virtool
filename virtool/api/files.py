@@ -2,7 +2,7 @@ import os
 
 import virtool.file
 import virtool.utils
-from virtool.handlers.utils import json_response, not_found, paginate, protected
+from virtool.api.utils import json_response, not_found, paginate, protected
 
 
 async def find(req):
