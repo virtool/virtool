@@ -2,8 +2,7 @@ import datetime
 import pytest
 from operator import itemgetter
 
-from virtool.user import check_password
-from virtool.user_permissions import PERMISSIONS
+from virtool.users import check_password, PERMISSIONS
 
 
 async def test_find(spawn_client, create_user):

@@ -1,16 +1,16 @@
-import aiohttp
 import asyncio
 import io
 import json
-import pymongo
 import re
 import zipfile
 
-import virtool.errors
-import virtool.proxy
-import virtool.sample_analysis
-import virtool.utils
+import aiohttp
+import pymongo
 
+import virtool.errors
+import virtool.http.proxy
+import virtool.jobs.analysis
+import virtool.utils
 
 BLAST_CGI_URL = "https://blast.ncbi.nlm.nih.gov/Blast.cgi"
 
@@ -297,7 +297,7 @@ async def initialize_ncbi_blast(settings, sequence):
     }
 
     with aiohttp.ClientSession() as session:
-        async with virtool.proxy.ProxyRequest(settings, session.post, BLAST_CGI_URL, params=params, data=data) as resp:
+        async with virtool.http.proxy.ProxyRequest(settings, session.post, BLAST_CGI_URL, params=params, data=data) as resp:
             if resp.status != 200:
                 raise virtool.errors.NCBIError("BLAST request returned status: {}".format(resp.status))
 
@@ -334,6 +334,8 @@ async def check_rid(settings, rid):
     :param rid: the RID to check
     :type rid: str
 
+    :param settings: the application setting object
+
     :return: ``True`` if ready, ``False`` otherwise
     :rtype: Coroutine[bool]
 
@@ -345,7 +347,7 @@ async def check_rid(settings, rid):
     }
 
     with aiohttp.ClientSession() as session:
-        async with virtool.proxy.ProxyRequest(settings, session.get, BLAST_CGI_URL, params=params) as resp:
+        async with virtool.http.proxy.ProxyRequest(settings, session.get, BLAST_CGI_URL, params=params) as resp:
             if resp.status != 200:
                 raise virtool.errors.NCBIError("RID check request returned status {}".format(resp.status))
 
@@ -361,7 +363,7 @@ async def get_ncbi_blast_result(settings, rid):
     }
 
     with aiohttp.ClientSession() as session:
-        async with virtool.proxy.ProxyRequest(settings, session.get, BLAST_CGI_URL, params=params) as resp:
+        async with virtool.http.proxy.ProxyRequest(settings, session.get, BLAST_CGI_URL, params=params) as resp:
             return parse_blast_content(await resp.read(), rid)
 
 
@@ -453,6 +455,6 @@ async def wait_for_blast_result(db, settings, dispatch, analysis_id, sequence_in
             }
         }, return_document=pymongo.ReturnDocument.AFTER)
 
-        formatted = await virtool.sample_analysis.format_analysis(db, document)
+        formatted = await virtool.jobs.analysis.format_analysis(db, document)
 
         await dispatch("analyses", "update", virtool.utils.base_processor(formatted))

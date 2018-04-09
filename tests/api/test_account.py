@@ -1,7 +1,6 @@
 import pytest
 
-from virtool.user import check_password
-from virtool.user_permissions import PERMISSIONS
+from virtool.users import check_password, PERMISSIONS
 
 
 async def test_get(spawn_client):

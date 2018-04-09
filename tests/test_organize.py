@@ -181,7 +181,7 @@ async def test_organize_references(has_references, has_species, mocker, test_mot
             "_id": "baz"
         })
 
-    m = mocker.patch("virtool.references.create_original", new=aiohttp.test_utils.make_mocked_coro())
+    m = mocker.patch("virtool.db.refs.create_original", new=aiohttp.test_utils.make_mocked_coro())
 
     await virtool.organize.organize_references(test_motor)
 

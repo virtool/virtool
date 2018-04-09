@@ -1,9 +1,10 @@
 import asyncio
+
 import pymongo
 
 import virtool.app
-import virtool.utils
 import virtool.updates
+import virtool.utils
 from virtool.api.utils import json_response, not_found, protected
 
 

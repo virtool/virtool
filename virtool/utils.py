@@ -1,12 +1,12 @@
-import arrow
 import datetime
 import os
-import pymongo
 import shutil
 import sys
-
 from random import choice
 from string import ascii_letters, ascii_lowercase, digits
+
+import arrow
+import pymongo
 
 
 def base_processor(document):
@@ -96,7 +96,7 @@ def random_alphanumeric(length=6, mixed_case=False, excluded=None):
 
     characters = digits + ascii_letters if mixed_case else ascii_lowercase
 
-    candidate = "".join([choice(characters) for i in range(length)])
+    candidate = "".join([choice(characters) for _ in range(length)])
 
     if candidate not in excluded:
         return candidate
@@ -217,4 +217,3 @@ async def update_status_process(db, dispatch, _id, progress, step=None, error=No
     await dispatch("status", "update", document)
 
     return document
-

@@ -1,9 +1,10 @@
-import aiofiles
-import aiohttp
 import tarfile
 
+import aiofiles
+import aiohttp
+
 import virtool.errors
-import virtool.proxy
+import virtool.http.proxy
 
 
 def get_headers(server_version):
@@ -11,7 +12,6 @@ def get_headers(server_version):
     Return a dict of GitHub-specific headers based on the passed ``server_version``.
 
     :param server_version: the running server version
-    :type server_version: str
 
     :return: a headers dict
     :rtype: dict
@@ -53,7 +53,7 @@ async def get(settings, url, server_version, username, token):
     auth = create_auth(username, token)
 
     async with aiohttp.ClientSession(auth=auth) as session:
-        async with virtool.proxy.ProxyRequest(settings, session.get, url, headers=headers) as resp:
+        async with virtool.http.proxy.ProxyRequest(settings, session.get, url, headers=headers) as resp:
             if resp.status != 200:
                 raise virtool.errors.GitHubError("Encountered error {}".format(resp.status))
 
@@ -83,7 +83,7 @@ async def download_asset(settings, url, size, target_path, progress_handler=None
     last_reported = 0
 
     async with aiohttp.ClientSession() as session:
-        async with virtool.proxy.ProxyRequest(settings, session.get, url) as resp:
+        async with virtool.http.proxy.ProxyRequest(settings, session.get, url) as resp:
             if resp.status != 200:
                 raise virtool.errors.GitHubError("Could not download release asset")
 

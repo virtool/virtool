@@ -1,12 +1,14 @@
 from copy import deepcopy
-from pymongo import ReturnDocument
-from cerberus import Validator
 
-import virtool.file
+from cerberus import Validator
+from pymongo import ReturnDocument
+
+import virtool.db.files
+import virtool.db.samples
+import virtool.jobs.analysis
+import virtool.samples
 import virtool.utils
-import virtool.sample
-import virtool.sample_analysis
-from virtool.api.utils import bad_request, compose_regex_query, conflict, insufficient_rights, invalid_query,\
+from virtool.api.utils import bad_request, compose_regex_query, conflict, insufficient_rights, invalid_query, \
     json_response, no_content, not_found, paginate, protected, validation
 
 
@@ -63,7 +65,7 @@ async def find(req):
         db_query,
         req.query,
         sort="created_at",
-        projection=virtool.sample.LIST_PROJECTION,
+        projection=virtool.samples.LIST_PROJECTION,
         base_query=base_query,
         reverse=True
     )
@@ -81,7 +83,7 @@ async def get(req):
     if not document:
         return not_found()
 
-    if not virtool.sample.get_sample_rights(document, req["client"])[0]:
+    if not virtool.samples.get_sample_rights(document, req["client"])[0]:
         return insufficient_rights()
 
     return json_response(virtool.utils.base_processor(document))
@@ -101,7 +103,7 @@ async def create(req):
     db = req.app["db"]
     data = req["data"]
 
-    message = await virtool.sample.check_name(db, req.app["settings"], data["name"])
+    message = await virtool.db.samples.check_name(db, req.app["settings"], data["name"])
 
     if message:
         return conflict(message)
@@ -165,7 +167,7 @@ async def create(req):
 
     await db.samples.insert_one(document)
 
-    await virtool.file.reserve(db, req.app["dispatcher"].dispatch, data["files"])
+    await virtool.db.files.reserve(db, req.app["dispatcher"].dispatch, data["files"])
 
     task_args = {
         "sample_id": sample_id,
@@ -197,24 +199,24 @@ async def edit(req):
 
     sample_id = req.match_info["sample_id"]
 
-    sample_rights = await db.samples.find_one({"_id": sample_id}, virtool.sample.RIGHTS_PROJECTION)
+    sample_rights = await db.samples.find_one({"_id": sample_id}, virtool.samples.RIGHTS_PROJECTION)
 
     if not sample_rights:
         return not_found()
 
-    read, write = virtool.sample.get_sample_rights(sample_rights, req["client"])
+    read, write = virtool.samples.get_sample_rights(sample_rights, req["client"])
 
     if not read or not write:
         return insufficient_rights()
 
-    message = await virtool.sample.check_name(db, req.app["settings"], data["name"], sample_id=sample_id)
+    message = await virtool.db.samples.check_name(db, req.app["settings"], data["name"], sample_id=sample_id)
 
     if message:
         return conflict(message)
 
     document = await db.samples.find_one_and_update({"_id": sample_id}, {
         "$set": data
-    }, return_document=ReturnDocument.AFTER, projection=virtool.sample.LIST_PROJECTION)
+    }, return_document=ReturnDocument.AFTER, projection=virtool.samples.LIST_PROJECTION)
 
     processed = virtool.utils.base_processor(document)
 
@@ -247,7 +249,7 @@ async def set_rights(req):
     user_groups = req["client"].groups
 
     # Only update the document if the connected user owns the samples or is an administrator.
-    if "administrator" in user_groups or user_id == await virtool.sample.get_sample_owner(db, sample_id):
+    if "administrator" in user_groups or user_id == await virtool.db.samples.get_sample_owner(db, sample_id):
         if "group" in data:
             existing_group_ids = await db.groups.distinct("_id")
             existing_group_ids.append("none")
@@ -258,7 +260,7 @@ async def set_rights(req):
         # Update the sample document with the new rights.
         document = await db.samples.find_one_and_update({"_id": sample_id}, {
             "$set": data
-        }, return_document=ReturnDocument.AFTER, projection=virtool.sample.RIGHTS_PROJECTION)
+        }, return_document=ReturnDocument.AFTER, projection=virtool.samples.RIGHTS_PROJECTION)
 
         return json_response(document)
 
@@ -274,17 +276,17 @@ async def remove(req):
 
     sample_id = req.match_info["sample_id"]
 
-    sample_rights = await db.samples.find_one({"_id": sample_id}, virtool.sample.RIGHTS_PROJECTION)
+    sample_rights = await db.samples.find_one({"_id": sample_id}, virtool.samples.RIGHTS_PROJECTION)
 
     if not sample_rights:
         return not_found()
 
-    read, write = virtool.sample.get_sample_rights(sample_rights, req["client"])
+    read, write = virtool.samples.get_sample_rights(sample_rights, req["client"])
 
     if not read or not write:
         return insufficient_rights()
 
-    await virtool.sample.remove_samples(
+    await virtool.db.samples.remove_samples(
         db,
         req.app["settings"],
         [sample_id]
@@ -302,17 +304,17 @@ async def list_analyses(req):
 
     sample_id = req.match_info["sample_id"]
 
-    sample_rights = await db.samples.find_one({"_id": sample_id}, virtool.sample.RIGHTS_PROJECTION)
+    sample_rights = await db.samples.find_one({"_id": sample_id}, virtool.samples.RIGHTS_PROJECTION)
 
     if not sample_rights:
         return not_found()
 
-    read, write = virtool.sample.get_sample_rights(sample_rights, req["client"])
+    read, write = virtool.samples.get_sample_rights(sample_rights, req["client"])
 
     if not read or not write:
         return insufficient_rights()
 
-    documents = await db.analyses.find({"sample.id": sample_id}, virtool.sample_analysis.LIST_PROJECTION).to_list(None)
+    documents = await db.analyses.find({"sample.id": sample_id}, virtool.jobs.analysis.LIST_PROJECTION).to_list(None)
 
     return json_response({
         "total_count": len(documents),
@@ -333,12 +335,12 @@ async def analyze(req):
 
     sample_id = req.match_info["sample_id"]
 
-    sample_rights = await db.samples.find_one({"_id": sample_id}, virtool.sample.RIGHTS_PROJECTION)
+    sample_rights = await db.samples.find_one({"_id": sample_id}, virtool.samples.RIGHTS_PROJECTION)
 
     if not sample_rights:
         return not_found()
 
-    read, write = virtool.sample.get_sample_rights(sample_rights, req["client"])
+    read, write = virtool.samples.get_sample_rights(sample_rights, req["client"])
 
     if not read or not write:
         return insufficient_rights()
@@ -347,7 +349,7 @@ async def analyze(req):
         return not_found("Ready index not found")
 
     # Generate a unique _id for the analysis entry
-    document = await virtool.sample_analysis.new(
+    document = await virtool.jobs.analysis.new(
         db,
         req.app["settings"],
         req.app["job_manager"],

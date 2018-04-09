@@ -1,13 +1,13 @@
-import aiofiles
 import concurrent.futures
 import logging
 import os
+import ssl
+import subprocess
+import sys
+
+import aiofiles
 import pymongo
 import pymongo.errors
-import ssl
-import sys
-import subprocess
-
 from aiohttp import web
 from motor import motor_asyncio
 
@@ -15,13 +15,13 @@ import virtool.app_auth
 import virtool.app_dispatcher
 import virtool.app_routes
 import virtool.app_settings
-import virtool.job_manager
-import virtool.job_resources
 import virtool.errors
-import virtool.error_pages
-import virtool.file_manager
+import virtool.files
+import virtool.http.errors
+import virtool.http.proxy
+import virtool.jobs.manager
 import virtool.organize
-import virtool.proxy
+import virtool.resources
 import virtool.sentry
 import virtool.setup
 import virtool.utils
@@ -52,7 +52,7 @@ def init_executors(app):
 
 
 def init_resources(app):
-    app["resources"] = virtool.job_resources.get()
+    app["resources"] = virtool.resources.get()
 
 
 async def init_settings(app):
@@ -156,7 +156,7 @@ async def init_job_manager(app):
     if "sentry" in app:
         capture_exception = app["sentry"].captureException
 
-    app["job_manager"] = virtool.job_manager.Manager(
+    app["job_manager"] = virtool.jobs.manager.Manager(
         app.loop,
         app["db"],
         app["settings"],
@@ -179,7 +179,7 @@ async def init_file_manager(app):
     files_path = os.path.join(app["settings"].get("data_path"), "files")
 
     if os.path.isdir(files_path):
-        app["file_manager"] = virtool.file_manager.Manager(
+        app["file_manager"] = virtool.files.Manager(
             app.loop,
             app["executor"],
             app["db"],
@@ -260,8 +260,8 @@ def create_app(loop, db_name=None, disable_job_manager=False, disable_file_manag
 
     """
     middlewares = [
-        virtool.proxy.middleware,
-        virtool.error_pages.middleware
+        virtool.http.proxy.middleware,
+        virtool.http.errors.middleware
     ]
 
     if skip_setup:

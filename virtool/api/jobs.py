@@ -1,8 +1,9 @@
 import os
 
-import virtool.job
+import virtool.db.jobs
+import virtool.jobs.job
 import virtool.utils
-from virtool.api.utils import compose_regex_query, bad_request, json_response, no_content, not_found, paginate,\
+from virtool.api.utils import compose_regex_query, bad_request, json_response, no_content, not_found, paginate, \
     protected
 
 
@@ -24,8 +25,8 @@ async def find(req):
         db.jobs,
         db_query,
         req.query,
-        projection=virtool.job.LIST_PROJECTION,
-        processor=virtool.job.processor
+        projection=virtool.db.jobs.LIST_PROJECTION,
+        processor=virtool.db.jobs.processor
     )
 
     data["documents"].sort(key=lambda d: d["created_at"])

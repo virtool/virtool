@@ -1,14 +1,13 @@
 from cerberus import Validator
 from pymongo import ReturnDocument
 
+import virtool.db.account
+import virtool.db.users
+import virtool.users
 import virtool.utils
-import virtool.user
-import virtool.user_permissions
 import virtool.validators
-
-from virtool.api.utils import bad_request, invalid_input, json_response, no_content, not_found, protected,\
+from virtool.api.utils import bad_request, invalid_input, json_response, no_content, not_found, protected, \
     unpack_request, validation
-
 
 SETTINGS_SCHEMA = {
     "show_ids": {
@@ -34,7 +33,7 @@ async def get(req):
     """
     user_id = req["client"].user_id
 
-    document = await req.app["db"].users.find_one(user_id, virtool.user.ACCOUNT_PROJECTION)
+    document = await req.app["db"].users.find_one(user_id, virtool.db.users.ACCOUNT_PROJECTION)
 
     return json_response(virtool.utils.base_processor(document))
 
@@ -57,7 +56,7 @@ async def edit(req):
         "$set": {
             "email": data["email"]
         }
-    }, return_document=ReturnDocument.AFTER, projection=virtool.user.ACCOUNT_PROJECTION)
+    }, return_document=ReturnDocument.AFTER, projection=virtool.db.users.ACCOUNT_PROJECTION)
 
     return json_response(virtool.utils.base_processor(document))
 
@@ -84,21 +83,9 @@ async def update_settings(req):
     """
     db, data = req.app["db"], req["data"]
 
-    user_id = req["client"].user_id
+    settings = await virtool.db.account.update_settings(db, req["client"].user_id, data)
 
-    document = await db.users.find_one(user_id, ["settings"])
-
-    settings = document["settings"]
-
-    settings.update(data)
-
-    document = await db.users.find_one_and_update({"_id": user_id}, {
-        "$set": {
-            "settings": settings
-        }
-    }, return_document=ReturnDocument.AFTER, projection=["settings"])
-
-    return json_response(document["settings"])
+    return json_response(settings)
 
 
 @protected()
@@ -124,11 +111,11 @@ async def change_password(req):
         return invalid_input(v.errors)
 
     # Will evaluate true if the passed username and password are correct.
-    if not await virtool.user.validate_credentials(db, user_id, data["old_password"]):
+    if not await virtool.db.users.validate_credentials(db, user_id, data["old_password"]):
         return bad_request("Invalid old password")
 
     # Salt and hash the new password
-    hashed = virtool.user.hash_password(data["new_password"])
+    hashed = virtool.users.hash_password(data["new_password"])
 
     last_password_change = virtool.utils.timestamp()
 
@@ -184,7 +171,7 @@ async def create_api_key(req):
 
     name = data["name"]
 
-    permissions = {key: False for key in virtool.user_permissions.PERMISSIONS}
+    permissions = {key: False for key in virtool.users.PERMISSIONS}
 
     permissions.update(data.get("permissions", {}))
 
@@ -203,10 +190,10 @@ async def create_api_key(req):
 
         suffix += 1
 
-    raw = virtool.user.get_api_key()
+    raw = virtool.users.get_api_key()
 
     document = {
-        "_id": virtool.user.hash_api_key(raw),
+        "_id": virtool.users.hash_api_key(raw),
         "id": alt_id,
         "name": name,
         "groups": req["client"].groups,

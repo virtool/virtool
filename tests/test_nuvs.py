@@ -8,8 +8,8 @@ import sys
 from concurrent.futures import ProcessPoolExecutor
 
 import virtool.bio
-import virtool.job
-import virtool.sample_analysis
+import virtool.jobs.job
+import virtool.jobs.analysis
 
 
 TEST_FILES_PATH = os.path.join(sys.path[0], "tests", "test_files")
@@ -46,7 +46,7 @@ async def mock_job(loop, mocker, tmpdir, test_motor, test_dispatch):
         "index_id": "index"
     }
 
-    job = virtool.sample_analysis.NuVs(
+    job = virtool.jobs.analysis.NuVs(
         loop,
         executor,
         test_motor,

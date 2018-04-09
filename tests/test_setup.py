@@ -1,10 +1,11 @@
-import motor.motor_asyncio
 import os
-import pytest
 import sys
+
+import motor.motor_asyncio
+import pytest
 from aiohttp.test_utils import make_mocked_coro
 
-from virtool.user_permissions import PERMISSIONS
+import virtool.users
 
 
 @pytest.fixture
@@ -225,7 +226,7 @@ class TestSetupUser:
             "password_confirm": "foobar"
         }
 
-        mocker.patch("virtool.user.hash_password", return_value="hashed")
+        mocker.patch("virtool.users.hash_password", return_value="hashed")
 
         resp = await client.post_form("/setup/user", update)
 
@@ -386,7 +387,7 @@ async def test_save_and_reload(mocker, tmpdir, spawn_client, mock_setup, static_
             "show_ids": False,
             "show_versions": False
         },
-        "permissions": {p: True for p in PERMISSIONS}
+        "permissions": {p: True for p in virtool.users.PERMISSIONS}
     }
 
     await connection.drop_database("foobar")

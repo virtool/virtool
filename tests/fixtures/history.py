@@ -7,7 +7,7 @@ def test_change(static_time):
     return {
         "_id": "6116cba1.1",
         "method_name": "edit",
-        "description": "Edited virus Prunus virus E",
+        "description": "Edited Prunus virus E",
         "created_at": static_time,
         "diff": [
             ["change", "abbreviation", ["PVF", ""]],
@@ -21,7 +21,7 @@ def test_change(static_time):
         "user": {
             "id": "test"
         },
-        "virus": {
+        "species": {
             "id": "6116cba1",
             "name": "Prunus virus F",
             "version": 1
@@ -39,9 +39,9 @@ def test_changes(test_change):
 
 
 @pytest.fixture
-def test_virus_edit():
+def test_species_edit():
     """
-    An :class:`tuple` containing old and new virus documents for testing history diffing.
+    An :class:`tuple` containing old and new species documents for testing history diffing.
 
     """
     return (
@@ -134,7 +134,7 @@ def create_mock_history(test_motor):
                                     "host": "sweet cherry",
                                     "isolate_id": "cab8b360",
                                     "sequence": "TGTTTAAGAGATTAAACAACCGCTTTC",
-                                    "virus_id": "6116cba1",
+                                    "species_id": "6116cba1",
                                     "segment": None
                                 }
                             ]
@@ -155,7 +155,7 @@ def create_mock_history(test_motor):
                 "user": {
                     "id": "test"
                 },
-                "virus": {
+                "species": {
                     "id": "6116cba1",
                     "name": "Prunus virus F",
                     "version": 0
@@ -177,7 +177,7 @@ def create_mock_history(test_motor):
                 "user": {
                     "id": "test"
                 },
-                "virus": {
+                "species": {
                     "id": "6116cba1",
                     "name": "Prunus virus F",
                     "version": 1
@@ -199,7 +199,7 @@ def create_mock_history(test_motor):
                 "user": {
                     "id": "test"
                 },
-                "virus": {
+                "species": {
                     "id": "6116cba1",
                     "name": "Prunus virus F",
                     "version": 2
@@ -221,7 +221,7 @@ def create_mock_history(test_motor):
                             "host": "sweet cherry",
                             "isolate_id": "cab8b360",
                             "sequence": "TGTTTAAGAGATTAAACAACCGCTTTC",
-                            "virus_id": "6116cba1",
+                            "species_id": "6116cba1",
                             "segment": None
                         }],
                         "source_name": "8816-v2",
@@ -235,7 +235,7 @@ def create_mock_history(test_motor):
                 "user": {
                     "id": "test"
                 },
-                "virus": {
+                "species": {
                     "id": "6116cba1",
                     "name": "Test Virus",
                     "version": 3
@@ -243,7 +243,7 @@ def create_mock_history(test_motor):
             }
         ]
 
-        virus = None
+        species = None
 
         if remove:
             documents.append({
@@ -270,14 +270,14 @@ def create_mock_history(test_motor):
                 "user": {
                     "id": "test"
                 },
-                "virus": {
+                "species": {
                     "id": "6116cba1",
                     "name": "Test Virus",
                     "version": "removed"
                 }
             })
         else:
-            virus = {
+            species = {
                 "_id": "6116cba1",
                 "abbreviation": "TST",
                 "imported": True,
@@ -290,11 +290,10 @@ def create_mock_history(test_motor):
                 "schema": [],
             }
 
-            await test_motor.viruses.insert_one(virus)
+            await test_motor.species.insert_one(species)
 
         await test_motor.history.insert_many(documents)
 
-        return virus
+        return species
 
     return func
-

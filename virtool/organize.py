@@ -1,7 +1,7 @@
+import virtool.db.refs
 import virtool.refs
+import virtool.users
 import virtool.utils
-from virtool.user_permissions import PERMISSIONS
-
 
 REF_QUERY = {
     "ref": {
@@ -63,7 +63,7 @@ async def organize_groups(db):
     async for group in db.groups.find():
         await db.groups.update_one({"_id": group["_id"]}, {
             "$set": {
-                "permissions": {perm: group["permissions"].get(perm, False) for perm in PERMISSIONS}
+                "permissions": {perm: group["permissions"].get(perm, False) for perm in virtool.users.PERMISSIONS}
             }
         })
 
@@ -78,7 +78,7 @@ async def organize_indexes(db):
 
 async def organize_references(db):
     if await db.species.count() and not await db.references.count():
-        await virtool.refs.create_original(db)
+        await virtool.db.refs.create_original(db)
 
 
 async def organize_sequences(db):

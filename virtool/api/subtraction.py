@@ -1,12 +1,14 @@
 import os
-import pymongo
-import pymongo.errors
 import shutil
 
-import virtool.sample
+import pymongo
+import pymongo.errors
+
+import virtool.db.subtractions
+import virtool.samples
 import virtool.subtraction
 import virtool.utils
-from virtool.api.utils import compose_regex_query, conflict, json_response, no_content, not_found, paginate,\
+from virtool.api.utils import compose_regex_query, conflict, json_response, no_content, not_found, paginate, \
     protected, validation
 
 
@@ -29,7 +31,7 @@ async def find(req):
     if term:
         db_query.update(compose_regex_query(term, ["_id"]))
 
-    data = await paginate(db.subtraction, db_query, req.query, sort="_id", projection=virtool.subtraction.PROJECTION)
+    data = await paginate(db.subtraction, db_query, req.query, sort="_id", projection=virtool.db.subtractions.PROJECTION)
 
     data.update({
         "host_count": host_count,

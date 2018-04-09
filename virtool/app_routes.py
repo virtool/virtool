@@ -4,7 +4,7 @@ import sys
 from aiohttp import web
 
 import virtool.utils
-from virtool.user_login import get_login_template, generate_verification_keys, login_handler
+import virtool.http.login
 from virtool.api import root, jobs, samples, viruses, history, hmm, subtraction, settings, account, groups, users,\
     genbank, status, websocket, resources, analyses, indexes, files, uploads, downloads, updates
 
@@ -26,7 +26,7 @@ async def index_handler(req):
     static_hash = virtool.utils.get_static_hash(req.app["client_path"])
 
     if not req["client"].user_id:
-        keys = generate_verification_keys()
+        keys = virtool.http.login.generate_verification_keys()
 
         session_id = req["client"].session_id
 
@@ -36,7 +36,7 @@ async def index_handler(req):
             }
         })
 
-        html = get_login_template().render(
+        html = virtool.http.login.get_login_template().render(
             key_1=keys[0],
             key_2=keys[1],
             key_3=keys[2],
@@ -88,7 +88,7 @@ def setup_basic_routes(app):
         app.router.add_get(path, index_handler)
 
     app.router.add_get("/ws", websocket.root)
-    app.router.add_post("/login", login_handler)
+    app.router.add_post("/login", virtool.http.login.login_handler)
 
 
 def setup_file_routes(app):

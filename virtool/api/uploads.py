@@ -1,7 +1,8 @@
 import os
+
 from cerberus import Validator
 
-import virtool.file
+import virtool.db.files
 import virtool.utils
 from virtool.api.utils import invalid_query, json_response, not_found, protected
 
@@ -35,7 +36,7 @@ async def upload(req):
 
     filename = req.query["name"]
 
-    document = await virtool.file.create(
+    document = await virtool.db.files.create(
         db,
         req.app["dispatcher"].dispatch,
         filename,

@@ -2,7 +2,7 @@ import json
 import pytest
 
 import virtool.app
-import virtool.user
+import virtool.users
 
 
 class VTClient:

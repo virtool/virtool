@@ -1,9 +1,10 @@
 import asyncio
 import os
+
 import pymongo
 
-import virtool.utils
 import virtool.hmm
+import virtool.utils
 from virtool.api.utils import compose_regex_query, json_response, not_found, paginate, protected
 
 

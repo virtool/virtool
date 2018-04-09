@@ -460,8 +460,6 @@ class TestRemove:
 
         resp = await client.delete("/api/samples/test")
 
-        print(resp.status)
-
         assert await getattr(resp_is, resp_is_attr)(resp)
 
         if resp_is_attr == "no_content":

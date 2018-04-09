@@ -4,11 +4,12 @@ import datetime
 import json
 import math
 import re
+
 from aiohttp import web
 from cerberus import Validator
 
+import virtool.users
 import virtool.utils
-import virtool.user_permissions
 
 
 class CustomEncoder(json.JSONEncoder):
@@ -212,7 +213,7 @@ def invalid_query(errors):
 
 
 def protected(required_perm=None):
-    if required_perm and required_perm not in virtool.user_permissions.PERMISSIONS:
+    if required_perm and required_perm not in virtool.users.PERMISSIONS:
         raise ValueError("Requires permission: {}".format(required_perm))
 
     def decorator(handler):

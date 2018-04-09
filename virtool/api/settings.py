@@ -1,9 +1,10 @@
-import aiohttp
-import aiohttp.client_exceptions
 import os
 
+import aiohttp
+import aiohttp.client_exceptions
+
 import virtool.app_settings
-import virtool.job_resources
+import virtool.resources
 import virtool.utils
 from virtool.api.utils import conflict, json_response, protected, validation
 

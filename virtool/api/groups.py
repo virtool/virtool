@@ -1,10 +1,12 @@
 import logging
+
 import pymongo.errors
 from pymongo import ReturnDocument
 
+import virtool.db.groups
+import virtool.db.users
+import virtool.users
 import virtool.utils
-import virtool.user_groups
-import virtool.user_permissions
 from virtool.api.utils import bad_request, conflict, json_response, not_found, no_content, protected, validation
 
 logger = logging.getLogger(__name__)
@@ -38,7 +40,7 @@ async def create(req):
 
     document = {
         "_id": data["group_id"].lower(),
-        "permissions": {permission: False for permission in virtool.user_permissions.PERMISSIONS}
+        "permissions": {permission: False for permission in virtool.users.PERMISSIONS}
     }
 
     try:
@@ -68,7 +70,7 @@ async def get(req):
 
 
 @protected("manage_users")
-@validation({key: {"type": "boolean"} for key in virtool.user_permissions.PERMISSIONS})
+@validation({key: {"type": "boolean"} for key in virtool.users.PERMISSIONS})
 async def update_permissions(req):
     """
     Updates the permissions of a given group.
@@ -92,7 +94,7 @@ async def update_permissions(req):
         }
     }, return_document=ReturnDocument.AFTER)
 
-    await virtool.user_groups.update_member_users(db, group_id)
+    await virtool.db.groups.update_member_users(db, group_id)
 
     return json_response(virtool.utils.base_processor(document))
 
@@ -116,6 +118,6 @@ async def remove(req):
     if not document:
         return not_found()
 
-    await virtool.user_groups.update_member_users(db, group_id, remove=True)
+    await virtool.db.groups.update_member_users(db, group_id, remove=True)
 
     return no_content()

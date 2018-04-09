@@ -1,4 +1,5 @@
 import logging
+
 from aiohttp import web
 
 import virtool.app_dispatcher

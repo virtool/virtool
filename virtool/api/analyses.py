@@ -1,12 +1,17 @@
-import aiofiles
+"""
+Provides request handlers for managing and viewing analyses.
+
+"""
 import asyncio
 import json
 import os
 
+import aiofiles
+
 import virtool.bio
 import virtool.errors
-import virtool.sample
-import virtool.sample_analysis
+import virtool.jobs.analysis
+import virtool.samples
 import virtool.utils
 from virtool.api.utils import bad_request, conflict, insufficient_rights, json_response, no_content, not_found
 
@@ -44,7 +49,7 @@ async def get(req):
                 json_string = await f.read()
                 document["results"] = json.loads(json_string)
 
-        document = await virtool.sample_analysis.format_analysis(db, document)
+        document = await virtool.jobs.analysis.format_analysis(db, document)
 
     return json_response(virtool.utils.base_processor(document))
 
@@ -63,12 +68,12 @@ async def remove(req):
     if not document:
         return not_found()
 
-    sample = await db.samples.find_one({"_id": document["sample"]["id"]}, virtool.sample.PROJECTION)
+    sample = await db.samples.find_one({"_id": document["sample"]["id"]}, virtool.samples.PROJECTION)
 
     if not sample:
         return not_found("Sample not found")
 
-    read, write = virtool.sample.get_sample_rights(sample, req["client"])
+    read, write = virtool.samples.get_sample_rights(sample, req["client"])
 
     if not read or not write:
         return insufficient_rights()
@@ -130,7 +135,7 @@ async def blast(req):
         }
     })
 
-    formatted = await virtool.sample_analysis.format_analysis(db, document)
+    formatted = await virtool.jobs.analysis.format_analysis(db, document)
 
     await req.app["dispatcher"].dispatch("analyses", "update", virtool.utils.base_processor(formatted))
 

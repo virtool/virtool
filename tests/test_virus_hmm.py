@@ -1,11 +1,9 @@
-import concurrent.futures
 import gzip
 import json
 import operator
 import os
 import pytest
 import shutil
-import subprocess
 import sys
 from aiohttp import web
 from aiohttp.test_utils import make_mocked_coro
@@ -59,42 +57,6 @@ def mock_gh_server(monkeypatch, loop, test_server):
     monkeypatch.setattr("virtool.hmm.LATEST_RELEASE_URL", "http://{}:{}/latest".format(server.host, server.port))
 
     return server
-
-
-@pytest.mark.parametrize("error", [None, "missing", "bad"], ids=["good", "missing", "bad"])
-async def test_hmm_stat(error, loop, tmpdir):
-    loop.set_default_executor(concurrent.futures.ThreadPoolExecutor())
-
-    path = os.path.join(str(tmpdir), "profiles.hmm")
-
-    if error != "missing":
-        shutil.copyfile(os.path.join(TEST_FILE_PATH, "test.hmm"), path)
-
-    if error == "bad":
-        with open(path, "a") as f:
-            f.write("foo1bar2hello3world4")
-
-        with pytest.raises(subprocess.CalledProcessError) as err:
-            await virtool.hmm.hmmstat(loop, path)
-
-        assert "returned non-zero" in str(err)
-
-    elif error == "missing":
-        with pytest.raises(FileNotFoundError) as err:
-            await virtool.hmm.hmmstat(loop, "/home/watson/crick.hmm")
-
-        assert "HMM file does not exist" in str(err)
-
-    else:
-        assert await virtool.hmm.hmmstat(loop, path) == [
-            {"cluster": 2, "count": 253, "length": 356},
-            {"cluster": 3, "count": 216, "length": 136},
-            {"cluster": 4, "count": 210, "length": 96},
-            {"cluster": 5, "count": 208, "length": 133},
-            {"cluster": 8, "count": 101, "length": 612},
-            {"cluster": 9, "count": 97, "length": 500},
-            {"cluster": 10, "count": 113, "length": 505}
-        ]
 
 
 @pytest.mark.parametrize("step", [False, None, "decompress_profiles"])

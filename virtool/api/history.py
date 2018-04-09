@@ -1,6 +1,7 @@
-import virtool.utils
-import virtool.species
+import virtool.db.history
 import virtool.history
+import virtool.species
+import virtool.utils
 from virtool.api.utils import conflict, json_response, no_content, not_found, paginate, protected
 
 
@@ -16,7 +17,7 @@ async def find(req):
         {},
         req.query,
         sort="created_at",
-        projection=virtool.history.LIST_PROJECTION,
+        projection=virtool.db.history.LIST_PROJECTION,
         reverse=True
     )
 
@@ -32,7 +33,7 @@ async def get(req):
 
     change_id = req.match_info["change_id"]
 
-    document = await db.history.find_one(change_id, virtool.history.PROJECTION)
+    document = await db.history.find_one(change_id, virtool.db.history.PROJECTION)
 
     if not document:
         return not_found()
@@ -63,7 +64,7 @@ async def revert(req):
     if virus_version != "removed":
         virus_version = int(virus_version)
 
-    _, patched, history_to_delete = await virtool.history.patch_virus_to_version(
+    _, patched, history_to_delete = await virtool.db.history.patch_to_version(
         db,
         virus_id,
         virus_version - 1
@@ -73,7 +74,7 @@ async def revert(req):
     await db.sequences.delete_many({"virus_id": virus_id})
 
     if patched is not None:
-        patched_virus, sequences = virtool.species.split_virus(patched)
+        patched_virus, sequences = virtool.species.split_species(patched)
 
         # Add the reverted sequences to the collection.
         if len(sequences):

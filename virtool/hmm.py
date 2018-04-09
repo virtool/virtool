@@ -1,9 +1,9 @@
-import aiofiles
 import json
 import os
 import shutil
-import subprocess
 import tempfile
+
+import aiofiles
 
 import virtool.errors
 import virtool.github
@@ -19,33 +19,6 @@ PROJECTION = [
 ]
 
 LATEST_RELEASE_URL = "https://api.github.com/repos/virtool/virtool-hmm/releases/latest"
-
-
-async def hmmstat(loop, path):
-    """
-
-    :param loop: the application loop
-    :param executor: the application executor
-    :param path: the path to the profiles.hmm file
-
-    :return: a list of profiles in the file
-    :rtype: Coroutine[list]
-
-    """
-    if not os.path.isfile(path):
-        raise FileNotFoundError("HMM file does not exist")
-
-    command = ["hmmstat", path]
-
-    output = await loop.run_in_executor(None, subprocess.check_output, command)
-
-    result = [line.split() for line in output.decode("utf-8").split("\n") if line and line[0] != "#"]
-
-    return [{
-        "cluster": int(line[1].replace("vFam_", "")),
-        "count": int(line[3]),
-        "length": int(line[5])
-    } for line in result]
 
 
 async def get_referenced_hmm_ids(db):
@@ -84,6 +57,8 @@ async def update_process(db, dispatch, progress, step=None, error=None):
 async def get_asset(settings, server_version, username, token):
     """
     Get the asset information associated with the latest HMM release.
+
+    :param settings: the application settings object
 
     :param server_version: the current server version
     :type server_version: str
@@ -232,7 +207,3 @@ async def insert_annotations(db, annotations, progress_handler=None):
         if progress_handler:
             count += len(chunk)
             await progress_handler(count / total_count)
-
-
-
-

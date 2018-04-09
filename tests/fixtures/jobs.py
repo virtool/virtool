@@ -4,9 +4,9 @@ import pytest
 import collections
 import multiprocessing
 
-import virtool.job
-import virtool.job_dummy
-import virtool.job_manager
+import virtool.jobs.job
+import virtool.jobs.dummy
+import virtool.jobs.manager
 
 
 class MockQueue:
@@ -69,7 +69,7 @@ class MockSettings:
 @pytest.fixture
 def test_job_manager(mocker, loop, test_motor):
 
-    manager = virtool.job_manager.Manager(
+    manager = virtool.jobs.manager.Manager(
         loop,
         test_motor,
         MockSettings(),
@@ -178,6 +178,6 @@ def test_task_inst(test_task_class):
     proc = 1
     mem = 1
 
-    job = virtool.job_dummy.DummyJob(job_id, settings, queue, task, task_args, proc, mem)
+    job = virtool.jobs.dummy.DummyJob(job_id, settings, queue, task, task_args, proc, mem)
 
     return job

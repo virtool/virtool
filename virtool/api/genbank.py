@@ -1,8 +1,13 @@
+"""
+Provides request handlers for managing and viewing analyses.
+
+"""
 import re
 import string
+
 import aiohttp
 
-import virtool.proxy
+import virtool.http.proxy
 from virtool.api.utils import json_response, not_found
 
 
@@ -30,7 +35,7 @@ async def get(req):
 
         search_url = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi"
 
-        async with virtool.proxy.ProxyRequest(settings, session.get, search_url, params=params) as search_resp:
+        async with virtool.http.proxy.ProxyRequest(settings, session.get, search_url, params=params) as search_resp:
             data = await search_resp.text()
             match = re.search("<Id>([0-9]+)</Id>", data)
 
@@ -49,7 +54,7 @@ async def get(req):
                 "email": email
             }
 
-            async with virtool.proxy.ProxyRequest(settings, session.get, fetch_url, params=fetch_params) as fetch_resp:
+            async with virtool.http.proxy.ProxyRequest(settings, session.get, fetch_url, params=fetch_params) as fetch_resp:
 
                 body = await fetch_resp.text()
 

@@ -1,13 +1,13 @@
-import os
-import sys
 import json
 import logging
+import os
+import sys
+
 import aiofiles
 from cerberus import Validator
 
-import virtool.job_resources
+import virtool.resources
 import virtool.utils
-
 
 logger = logging.getLogger(__name__)
 
@@ -150,8 +150,8 @@ def check_resource_limits(proc, mem, settings_data):
     :param mem: memory in gigabytes
     :type mem: int
 
-    :param settings: the server settings
-    :type settings: dict
+    :param settings_data: the server settings
+    :type settings_data: dict
 
     :return: an error message if applicable
     :rtype: Union[str, None]
@@ -159,7 +159,7 @@ def check_resource_limits(proc, mem, settings_data):
     """
     if proc or mem:
 
-        resources = virtool.job_resources.get()
+        resources = virtool.resources.get()
 
         if proc:
             if proc > len(resources["proc"]):
@@ -186,8 +186,8 @@ def check_task_specific_limits(proc, mem, update):
     :param mem: memory in gigabytes
     :type mem: int
 
-    :param settings: the server settings
-    :type settings: dict
+    :param update: the limit update to be applied
+    :type update: dict
 
     :return: ab error message if applicable
     :rtype Union[str, None]
@@ -202,7 +202,6 @@ def check_task_specific_limits(proc, mem, update):
 
             if "_mem" in key and value > mem:
                 return "Exceeds mem resource specific limit"
-
 
 
 async def write_settings_file(path, settings_dict):

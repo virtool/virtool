@@ -1,6 +1,10 @@
+"""
+Provides request handlers for managing and viewing files.
+
+"""
 import os
 
-import virtool.file
+import virtool.db.files
 import virtool.utils
 from virtool.api.utils import json_response, not_found, paginate, protected
 
@@ -25,7 +29,7 @@ async def find(req):
         db_query,
         req.query,
         sort="uploaded_at",
-        projection=virtool.file.PROJECTION,
+        projection=virtool.db.files.PROJECTION,
         base_query=base_query
     )
 
