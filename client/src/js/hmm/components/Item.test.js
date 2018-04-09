@@ -1,6 +1,3 @@
-import React from "react";
-// Provides context for testing routed components
-import { MemoryRouter } from "react-router";
 import { Col, Row, Label } from "react-bootstrap";
 import { LinkContainer } from "react-router-bootstrap";
 import { ListGroupItem } from "../../base";

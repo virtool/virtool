@@ -1,0 +1,19 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`<Checkbox /> renders correctly 1`] = `
+<span
+  className="pointer"
+  style={
+    Object {
+      "cursor": "pointer",
+    }
+  }
+>
+  <CheckboxIcon
+    checked={false}
+    partial={false}
+    pullRight={false}
+  />
+   
+</span>
+`;

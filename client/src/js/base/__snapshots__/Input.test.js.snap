@@ -1,0 +1,88 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`<Input /> renders a FormGroup 1`] = `
+<FormGroup
+  bsClass="form-group"
+  style={Object {}}
+>
+  <FormControl
+    autoComplete="on"
+    bsClass="form-control"
+    className=""
+    componentClass="input"
+    inputRef={[Function]}
+    type="text"
+    value=""
+  />
+</FormGroup>
+`;
+
+exports[`<Input /> renders correctly 1`] = `
+<FormGroup
+  bsClass="form-group"
+  style={
+    Object {
+      "marginBottom": 0,
+    }
+  }
+>
+  <ControlLabel
+    bsClass="control-label"
+    srOnly={false}
+  >
+    test_label
+  </ControlLabel>
+  <FormControl
+    autoComplete="off"
+    bsClass="form-control"
+    className="form-control-error"
+    componentClass="input"
+    disabled={false}
+    inputRef={[Function]}
+    max={10}
+    min={0}
+    name="test_input"
+    onBlur={[MockFunction]}
+    onChange={[MockFunction]}
+    onFocus={[MockFunction]}
+    onInvalid={[MockFunction]}
+    placeholder="test_placeholder"
+    readOnly={false}
+    rows={1}
+    step={1}
+    style={
+      Object {
+        "paddingRight": "12px",
+        "width": "100px",
+      }
+    }
+    type="number"
+    value={1}
+  >
+    <div>
+      Test Node
+    </div>
+  </FormControl>
+</FormGroup>
+`;
+
+exports[`<Input /> renders two children: optional ControlLabel + FormControl components 1`] = `
+<ControlLabel
+  bsClass="control-label"
+  srOnly={false}
+>
+  Test Label
+</ControlLabel>
+`;
+
+exports[`<Input /> renders two children: optional ControlLabel + FormControl components 2`] = `
+<FormControl
+  autoComplete="on"
+  bsClass="form-control"
+  className=""
+  componentClass="input"
+  inputRef={[Function]}
+  type="text"
+  value=""
+/>
+`;

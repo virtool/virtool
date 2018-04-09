@@ -1,3 +1,8 @@
+/**
+ * Exports a reducer for managing uploaded files.
+ *
+ * @module files/reducer
+ */
 import { every, map, reject } from "lodash-es";
 
 import {
@@ -37,6 +42,13 @@ export const checkUploadsComplete = (state) => ({
     uploadsComplete: every(state.uploads, {progress: 100})
 });
 
+/**
+ * A reducer for managing uploaded files.
+ *
+ * @param state {object}
+ * @param action {object}
+ * @returns {object}
+ */
 export default function fileReducer (state = initialState, action) {
 
     switch (action.type) {

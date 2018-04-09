@@ -1,9 +1,19 @@
-import React from "react";
 import { NoneFound } from "./NoneFound";
 import { ListGroup, ListGroupItem } from "react-bootstrap";
+import { Icon } from "./Icon";
 
 describe("<NoneFound />", () => {
     let wrapper;
+
+    it("renders an info Icon component", () => {
+        const noun = "test";
+
+        wrapper = shallow(<NoneFound noun={noun} />);
+
+        expect(wrapper.find(Icon).exists()).toBe(true);
+        expect(wrapper.find(Icon).prop('name')).toEqual("info");
+        expect(wrapper).toMatchSnapshot();
+    });
 
     describe("when supplied [noListGroup=false] prop", () => {
         const noun = "test";
@@ -19,6 +29,11 @@ describe("<NoneFound />", () => {
 
         it("renders a ListGroup", () => {
             expect(wrapper.find(ListGroup).exists()).toBe(true);
+
+            const message = wrapper.find(ListGroupItem).childAt(1).text() +
+                wrapper.find(ListGroupItem).childAt(2).text() +
+                wrapper.find(ListGroupItem).childAt(3).text();
+            expect(message).toEqual(` No ${noun} found`);
         });
 
     });

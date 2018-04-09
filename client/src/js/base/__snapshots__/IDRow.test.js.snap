@@ -1,0 +1,23 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`<IDRow /> when [account.settings.show_ids=false], renders nothing (null) 1`] = `""`;
+
+exports[`<IDRow /> when [account.settings.show_ids=true]:  renders correctly 1`] = `
+<table>
+  <tbody>
+    <IDRowComponent
+      id="test_id"
+      showIds={true}
+    >
+      <tr>
+        <th>
+          Unique ID
+        </th>
+        <td>
+          test_id
+        </td>
+      </tr>
+    </IDRowComponent>
+  </tbody>
+</table>
+`;

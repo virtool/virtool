@@ -1,0 +1,116 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`<InputSave /> renders correctly 1`] = `
+<form
+  onSubmit={[Function]}
+>
+  <h5>
+    <strong>
+      Test Label
+    </strong>
+  </h5>
+  <Flex
+    alignContent="stretch"
+    alignItems="stretch"
+    direction="row"
+    justifyContent="flex-start"
+    style={
+      Object {
+        "marginBottom": "0px",
+      }
+    }
+    wrap="nowrap"
+  >
+    <FlexItem
+      alignSelf={null}
+      basis="auto"
+      grow={1}
+      shrink={1}
+    >
+      <FormControl
+        autoComplete="off"
+        bsClass="form-control"
+        className="form-control-error"
+        componentClass="input"
+        disabled={false}
+        inputRef={[Function]}
+        max={10}
+        min={0}
+        onBlur={[Function]}
+        onChange={[Function]}
+        onInvalid={[MockFunction]}
+        step={1}
+        style={
+          Object {
+            "marginBottom": "0",
+          }
+        }
+        type="number"
+        value={5}
+      />
+    </FlexItem>
+    <Button
+      bsStyle="primary"
+      disabled={false}
+      icon="floppy"
+      pullRight={false}
+      tipPlacement="top"
+      type="submit"
+    />
+  </Flex>
+</form>
+`;
+
+exports[`<InputSave /> renders subcomponents: renders main <form> element 1`] = `
+<form
+  onSubmit={[Function]}
+>
+  <h5>
+    <strong>
+      Test Label
+    </strong>
+  </h5>
+  <Flex
+    alignContent="stretch"
+    alignItems="stretch"
+    direction="row"
+    justifyContent="flex-start"
+    style={
+      Object {
+        "marginBottom": "15px",
+      }
+    }
+    wrap="nowrap"
+  >
+    <FlexItem
+      alignSelf={null}
+      basis="auto"
+      grow={1}
+      shrink={1}
+    >
+      <FormControl
+        autoComplete="on"
+        bsClass="form-control"
+        className=""
+        componentClass="input"
+        inputRef={[Function]}
+        onBlur={[Function]}
+        onChange={[Function]}
+        style={
+          Object {
+            "marginBottom": "0",
+          }
+        }
+        value=""
+      />
+    </FlexItem>
+    <Button
+      bsStyle="primary"
+      icon="floppy"
+      pullRight={false}
+      tipPlacement="top"
+      type="submit"
+    />
+  </Flex>
+</form>
+`;

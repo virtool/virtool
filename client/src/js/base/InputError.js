@@ -1,4 +1,5 @@
 import React from "react";
+import PropTypes from "prop-types";
 import { Input, InputSave } from "./index";
 
 /**
@@ -42,3 +43,9 @@ export class InputError extends React.Component {
         );
     }
 }
+
+InputError.propTypes = {
+    error: PropTypes.string,
+    withButton: PropTypes.bool,
+    noError: PropTypes.bool
+};

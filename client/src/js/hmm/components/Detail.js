@@ -32,7 +32,7 @@ class HMMDetail extends React.Component {
     render () {
 
         if (this.props.detail === null) {
-            return <LoadingPlaceholder maring="130px" />;
+            return <LoadingPlaceholder margin="130px" />;
         }
 
         const clusterMembers = map(this.props.detail.entries, ({ name, accession, organism }, index) =>
