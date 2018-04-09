@@ -1,7 +1,7 @@
 import virtool.db.history
 import virtool.errors
 import virtool.utils
-import virtool.species
+import virtool.kinds
 
 
 async def join(db, species_id, document=None):
@@ -32,7 +32,7 @@ async def join(db, species_id, document=None):
     sequences = await db.sequences.find({"species_id": species_id}).to_list(None) or list()
 
     # Merge the sequence entries into the species entry.
-    return virtool.species.merge_species(document, sequences)
+    return virtool.kinds.merge_species(document, sequences)
 
 
 async def join_and_format(db, species_id, joined=None, issues=False):
@@ -141,7 +141,7 @@ async def verify(db, species_id, joined=None):
     if not joined:
         raise virtool.errors.DatabaseError("Could not find species '{}'".format(species_id))
 
-    return virtool.species.validate_species(joined)
+    return virtool.kinds.validate_species(joined)
 
 
 async def update_last_indexed_version(db, species_ids, version):

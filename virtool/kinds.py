@@ -1,5 +1,5 @@
 """
-Functions for working with species documents.
+Functions for working with kind documents.
 
 """
 import logging
@@ -23,7 +23,7 @@ SEQUENCE_PROJECTION = [
     "_id",
     "definition",
     "host",
-    "species_id",
+    "kind_id",
     "isolate_id",
     "sequence",
     "segment"
@@ -57,27 +57,27 @@ def check_source_type(settings, source_type):
 
 async def dispatch_version_only(req, new):
     """
-    Dispatch a species update. Should be called when the document itself is not being modified.
+    Dispatch a kind update. Should be called when the document itself is not being modified.
 
     :param req: the request object
 
-    :param new: the species document
+    :param new: the kind document
     :type new: Coroutine[dict]
 
     """
     await req.app["dispatcher"].dispatch(
-        "species",
+        "kinds",
         "update",
         virtool.utils.base_processor({key: new[key] for key in LIST_PROJECTION})
     )
 
 
-def extract_default_isolate(species, isolate_processor=None):
+def extract_default_isolate(kind, isolate_processor=None):
     """
-    Returns the default isolate dict for the given species document.
+    Returns the default isolate dict for the given kind document.
 
-    :param species: a species document.
-    :type species: dict
+    :param kind: a kind document.
+    :type kind: dict
 
     :param isolate_processor: a function to process the default isolate into a desired format.
     :type: func
@@ -86,8 +86,8 @@ def extract_default_isolate(species, isolate_processor=None):
     :rtype: dict
 
     """
-    # Get the species isolates with the default flag set to True. This list should only contain one item.
-    default_isolates = [isolate for isolate in species["isolates"] if isolate["default"] is True]
+    # Get the kind isolates with the default flag set to True. This list should only contain one item.
+    default_isolates = [isolate for isolate in kind["isolates"] if isolate["default"] is True]
 
     if len(default_isolates) > 1:
         raise ValueError("More than one default isolate found")
@@ -105,9 +105,9 @@ def extract_default_isolate(species, isolate_processor=None):
 
 def extract_default_sequences(joined):
     """
-    Return a list of sequences from the default isolate of the passed joined species document.
+    Return a list of sequences from the default isolate of the passed joined kind document.
 
-    :param joined: the joined species document.
+    :param joined: the joined kind document.
     :type joined: dict
 
     :return: a list of sequences associated with the default isolate.
@@ -119,41 +119,41 @@ def extract_default_sequences(joined):
             return isolate["sequences"]
 
 
-def extract_isolate_ids(species):
+def extract_isolate_ids(kind):
     """
-    Get the isolate ids from a species document.
+    Get the isolate ids from a kind document.
 
-    :param species: a species document.
+    :param kind: a kind document.
     :return: a list of isolate ids.
 
     """
-    return [isolate["id"] for isolate in species["isolates"]]
+    return [isolate["id"] for isolate in kind["isolates"]]
 
 
-def extract_sequence_ids(species):
+def extract_sequence_ids(kind):
     """
-    Extract all sequence ids from a merged species.
+    Extract all sequence ids from a merged kind.
 
-    :param species: the merged species
-    :type species: dict
+    :param kind: the merged kind
+    :type kind: dict
 
-    :return: the sequence ids belonging to ``species``
+    :return: the sequence ids belonging to ``kind``
     :rtype: list
 
     """
     sequence_ids = list()
 
-    isolates = species["isolates"]
+    isolates = kind["isolates"]
 
     if not isolates:
-        raise ValueError("Empty isolates list in merged species")
+        raise ValueError("Empty isolates list in merged kind")
 
     for isolate in isolates:
         if "sequences" not in isolate:
-            raise KeyError("Isolate in merged species missing sequences field")
+            raise KeyError("Isolate in merged kind missing sequences field")
 
         if not isolate["sequences"]:
-            raise ValueError("Empty sequences list in merged species")
+            raise ValueError("Empty sequences list in merged kind")
 
         sequence_ids += [sequence["_id"] for sequence in isolate["sequences"]]
 
@@ -194,22 +194,22 @@ def format_isolate_name(isolate):
     return " ".join((isolate["source_type"].capitalize(), isolate["source_name"]))
 
 
-def merge_species(species, sequences):
+def merge_kind(kind, sequences):
     """
-    Merge the given sequences in the given species document. The species will gain a ``sequences`` field containing a
+    Merge the given sequences in the given kind document. The kind will gain a ``sequences`` field containing a
     list of its associated sequence documents.
 
-    :param species: a species document.
-    :type species: dict
+    :param kind: a kind document.
+    :type kind: dict
 
-    :param sequences: the sequence documents to merge into the species.
+    :param sequences: the sequence documents to merge into the kind.
     :type sequences: list
 
-    :return: the merged species.
+    :return: the merged kind.
     :rtype: dict
 
     """
-    merged = deepcopy(species)
+    merged = deepcopy(kind)
 
     for isolate in merged["isolates"]:
         isolate_id = isolate.get("id", None) or isolate.get("isolate_id", None)
@@ -218,38 +218,38 @@ def merge_species(species, sequences):
     return merged
 
 
-def split_species(merged):
+def split_kind(merged):
     """
-    Split a merged species document into a list of sequence documents associated with the species and a regular species
+    Split a merged kind document into a list of sequence documents associated with the kind and a regular kind
     document containing no sequence sub-documents.
 
-    :param merged: the merged species to split
+    :param merged: the merged kind to split
     :type merged: dict
 
-    :return: a tuple containing the new species document and a list of sequence documents
+    :return: a tuple containing the new kind document and a list of sequence documents
     :type: tuple
 
     """
     sequences = list()
 
-    species = deepcopy(merged)
+    kind = deepcopy(merged)
 
-    for isolate in species["isolates"]:
+    for isolate in kind["isolates"]:
         sequences += isolate.pop("sequences")
 
-    return species, sequences
+    return kind, sequences
 
 
-def validate_species(joined):
+def validate_kind(joined):
     """
-    Checks that the passed species and sequences constitute valid Virtool records and can be included in a species
+    Checks that the passed kind and sequences constitute valid Virtool records and can be included in a kind
     index. Error fields are:
-    * emtpy_species - species has no isolates associated with it.
+    * emtpy_kind - kind has no isolates associated with it.
     * empty_isolate - isolates that have no sequences associated with them.
     * empty_sequence - sequences that have a zero length sequence field.
-    * isolate_inconsistency - species has isolates containing different numbers of sequences.
+    * isolate_inconsistency - kind has isolates containing different numbers of sequences.
 
-    :param joined: a joined species
+    :param joined: a joined kind
     :type joined: dict
 
     :return: return any errors or False if there are no errors.
@@ -257,7 +257,7 @@ def validate_species(joined):
 
     """
     errors = {
-        "empty_species": len(joined["isolates"]) == 0,
+        "empty_kind": len(joined["isolates"]) == 0,
         "empty_isolate": list(),
         "empty_sequence": list(),
         "isolate_inconsistency": False
@@ -280,13 +280,13 @@ def validate_species(joined):
         errors["empty_sequence"] += filter(lambda sequence: len(sequence["sequence"]) == 0, isolate_sequences)
 
     # Give an isolate_inconsistency error the number of sequences is not the same for every isolate. Only give the
-    # error if the species is not also emtpy (empty_species error).
+    # error if the kind is not also emtpy (empty_kind error).
     errors["isolate_inconsistency"] = (
         len(set(isolate_sequence_counts)) != 1 and not
-        (errors["empty_species"] or errors["empty_isolate"])
+        (errors["empty_kind"] or errors["empty_isolate"])
     )
 
-    # If there is an error in the species, return the errors object. Otherwise return False.
+    # If there is an error in the kind, return the errors object. Otherwise return False.
     has_errors = False
 
     for key, value in errors.items():

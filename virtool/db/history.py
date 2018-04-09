@@ -3,7 +3,7 @@ from copy import deepcopy
 import dictdiffer
 
 import virtool.db.species
-import virtool.species
+import virtool.kinds
 import virtool.utils
 import virtool.history
 

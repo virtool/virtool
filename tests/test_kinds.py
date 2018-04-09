@@ -6,7 +6,7 @@ from string import ascii_lowercase, digits
 from copy import deepcopy
 
 import virtool.db.species
-import virtool.species
+import virtool.kinds
 
 TEST_FILES_PATH = os.path.join(sys.path[0], "tests", "test_files")
 OLD_SPECIES_PATH = os.path.join(TEST_FILES_PATH, "old_virus.json")
@@ -112,7 +112,7 @@ class TestValidateSpecies:
         Test that a valid species and sequence list results in return value of ``None``.
 
         """
-        result = virtool.species.validate_species(test_merged_species)
+        result = virtool.kinds.validate_species(test_merged_species)
         assert result is None
 
     def test_empty_isolate(self, test_merged_species):
@@ -122,7 +122,7 @@ class TestValidateSpecies:
         """
         test_merged_species["isolates"][0]["sequences"] = list()
 
-        result = virtool.species.validate_species(test_merged_species)
+        result = virtool.kinds.validate_species(test_merged_species)
 
         assert result == {
             "empty_isolate": ["cab8b360"],
@@ -138,7 +138,7 @@ class TestValidateSpecies:
         """
         test_merged_species["isolates"][0]["sequences"][0]["sequence"] = ""
 
-        result = virtool.species.validate_species(test_merged_species)
+        result = virtool.kinds.validate_species(test_merged_species)
 
         assert result == {
             "empty_isolate": False,
@@ -162,7 +162,7 @@ class TestValidateSpecies:
         """
         test_merged_species["isolates"] = []
 
-        result = virtool.species.validate_species(test_merged_species)
+        result = virtool.kinds.validate_species(test_merged_species)
 
         assert result == {
             "empty_isolate": False,
@@ -183,7 +183,7 @@ class TestValidateSpecies:
             dict(test_sequence, _id="foobar_2")
         ]
 
-        result = virtool.species.validate_species(test_merged_species)
+        result = virtool.kinds.validate_species(test_merged_species)
 
         assert result == {
             "empty_isolate": False,
@@ -235,7 +235,7 @@ class TestGetDefaultIsolate:
             dict(test_isolate, isolate_id="foobar4", default=False)
         ]
 
-        assert virtool.species.extract_default_isolate(test_species) == default_isolate
+        assert virtool.kinds.extract_default_isolate(test_species) == default_isolate
 
     def test_processor(self, test_species, test_isolate):
         """
@@ -255,7 +255,7 @@ class TestGetDefaultIsolate:
         def test_processor(isolate):
             return dict(isolate, processed=True)
 
-        assert virtool.species.extract_default_isolate(test_species, test_processor) == expected
+        assert virtool.kinds.extract_default_isolate(test_species, test_processor) == expected
 
     def test_no_default(self, test_species):
         """
@@ -265,7 +265,7 @@ class TestGetDefaultIsolate:
         test_species["isolates"][0]["default"] = False
 
         with pytest.raises(ValueError) as err:
-            virtool.species.extract_default_isolate(test_species)
+            virtool.kinds.extract_default_isolate(test_species)
 
         assert "No default isolate found" in str(err)
 
@@ -279,7 +279,7 @@ class TestGetDefaultIsolate:
         test_species["isolates"].append(extra_isolate)
 
         with pytest.raises(ValueError) as err:
-            virtool.species.extract_default_isolate(test_species)
+            virtool.kinds.extract_default_isolate(test_species)
 
         assert "More than one" in str(err)
 
@@ -344,12 +344,12 @@ class TestGetNewIsolateId:
 
 
 def test_merged_species(test_species, test_sequence, test_merged_species):
-    merged = virtool.species.merge_species(test_species, [test_sequence])
+    merged = virtool.kinds.merge_species(test_species, [test_sequence])
     assert merged == test_merged_species
 
 
 def test_split_species(test_species, test_sequence, test_merged_species):
-    species, sequences = virtool.species.split_species(test_merged_species)
+    species, sequences = virtool.kinds.split_species(test_merged_species)
 
     assert species == test_species
     assert sequences == [test_sequence]
@@ -358,11 +358,11 @@ def test_split_species(test_species, test_sequence, test_merged_species):
 class TestExtractIsolateIds:
 
     def test_merged_species(self, test_merged_species):
-        isolate_ids = virtool.species.extract_isolate_ids(test_merged_species)
+        isolate_ids = virtool.kinds.extract_isolate_ids(test_merged_species)
         assert isolate_ids == ["cab8b360"]
 
     def test_species_document(self, test_species):
-        isolate_ids = virtool.species.extract_isolate_ids(test_species)
+        isolate_ids = virtool.kinds.extract_isolate_ids(test_species)
         assert isolate_ids == ["cab8b360"]
 
     def test_multiple(self, test_species):
@@ -373,7 +373,7 @@ class TestExtractIsolateIds:
             "default": False
         })
 
-        isolate_ids = virtool.species.extract_isolate_ids(test_species)
+        isolate_ids = virtool.kinds.extract_isolate_ids(test_species)
 
         assert set(isolate_ids) == {"cab8b360", "foobar"}
 
@@ -381,7 +381,7 @@ class TestExtractIsolateIds:
         del test_species["isolates"]
 
         with pytest.raises(KeyError):
-            virtool.species.extract_isolate_ids(test_species)
+            virtool.kinds.extract_isolate_ids(test_species)
 
 
 class TestFindIsolate:
@@ -391,25 +391,25 @@ class TestFindIsolate:
 
         test_species["isolates"].append(new_isolate)
 
-        isolate = virtool.species.find_isolate(test_species["isolates"], "foobar")
+        isolate = virtool.kinds.find_isolate(test_species["isolates"], "foobar")
 
         assert isolate == new_isolate
 
     def test_does_not_exist(self, test_species):
-        assert virtool.species.find_isolate(test_species["isolates"], "foobar") is None
+        assert virtool.kinds.find_isolate(test_species["isolates"], "foobar") is None
 
 
 class TestExtractSequenceIds:
 
     def test_valid(self, test_merged_species):
-        sequence_ids = virtool.species.extract_sequence_ids(test_merged_species)
+        sequence_ids = virtool.kinds.extract_sequence_ids(test_merged_species)
         assert sequence_ids == ["KX269872"]
 
     def test_missing_isolates(self, test_merged_species):
         del test_merged_species["isolates"]
 
         with pytest.raises(KeyError) as err:
-            virtool.species.extract_sequence_ids(test_merged_species)
+            virtool.kinds.extract_sequence_ids(test_merged_species)
 
         assert "'isolates'" in str(err)
 
@@ -417,7 +417,7 @@ class TestExtractSequenceIds:
         test_merged_species["isolates"] = list()
 
         with pytest.raises(ValueError) as err:
-            virtool.species.extract_sequence_ids(test_merged_species)
+            virtool.kinds.extract_sequence_ids(test_merged_species)
 
         assert "Empty isolates list" in str(err)
 
@@ -425,7 +425,7 @@ class TestExtractSequenceIds:
         del test_merged_species["isolates"][0]["sequences"]
 
         with pytest.raises(KeyError) as err:
-            virtool.species.extract_sequence_ids(test_merged_species)
+            virtool.kinds.extract_sequence_ids(test_merged_species)
 
         assert "missing sequences field" in str(err)
 
@@ -433,7 +433,7 @@ class TestExtractSequenceIds:
         test_merged_species["isolates"][0]["sequences"] = list()
 
         with pytest.raises(ValueError) as err:
-            virtool.species.extract_sequence_ids(test_merged_species)
+            virtool.kinds.extract_sequence_ids(test_merged_species)
 
         assert "Empty sequences list" in str(err)
 
@@ -452,7 +452,7 @@ class TestFormatIsolateName:
             "source_name": source_name
         })
 
-        formatted = virtool.species.format_isolate_name(test_isolate)
+        formatted = virtool.kinds.format_isolate_name(test_isolate)
 
         if source_type and source_name:
             assert formatted == "Isolate 8816 - v2"

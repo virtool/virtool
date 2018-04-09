@@ -24,7 +24,7 @@ import virtool.jobs.rebuild_index
 import virtool.jobs.job
 import virtool.pathoscope
 import virtool.samples
-import virtool.species
+import virtool.kinds
 import virtool.utils
 
 LIST_PROJECTION = [

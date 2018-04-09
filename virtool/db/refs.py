@@ -4,7 +4,7 @@ from pymongo import ReturnDocument
 import virtool.db
 import virtool.db.species
 import virtool.errors
-import virtool.species
+import virtool.kinds
 import virtool.utils
 from virtool.refs import get_owner_user, verify_virus_list
 
@@ -193,7 +193,7 @@ async def import_data(db, dispatch, data, user_id):
     _sequence_buffer = list()
 
     for virus in viruses:
-        document, sequences = virtool.species.split_species(virus)
+        document, sequences = virtool.kinds.split_species(virus)
 
         document.update({
             "lower_name": document["name"].lower(),
@@ -338,7 +338,7 @@ async def insert_from_import(db, virus_document, user_id):
 
         virus_document["verified"] = True
 
-    to_dispatch = virtool.utils.base_processor({key: virus_document[key] for key in virtool.species.LIST_PROJECTION})
+    to_dispatch = virtool.utils.base_processor({key: virus_document[key] for key in virtool.kinds.LIST_PROJECTION})
 
     joined = await virtool.db.species.join(db, virus_document["_id"])
 
@@ -378,7 +378,7 @@ async def delete_for_import(db, virus_id, user_id):
         raise ValueError("Could not find virus_id {}".format(virus_id))
 
     # Perform database operations.
-    await db.sequences.delete_many({"isolate_id": {"$in": virtool.species.extract_isolate_ids(joined)}})
+    await db.sequences.delete_many({"isolate_id": {"$in": virtool.kinds.extract_isolate_ids(joined)}})
 
     await db.viruses.delete_one({"_id": virus_id})
 

@@ -2,7 +2,7 @@ import pytest
 from operator import itemgetter
 
 import virtool.db.species
-import virtool.species
+import virtool.kinds
 import virtool.history
 
 

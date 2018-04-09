@@ -31,9 +31,8 @@ async def organize(db, server_version):
     await organize_history(db)
     await organize_indexes(db)
     await organize_references(db)
-    await organize_species(db)
+    await organize_kinds(db)
     await organize_sequences(db)
-    await organize_species(db)
     await organize_status(db, server_version)
     await organize_subtraction(db)
     await organize_users(db)
@@ -76,8 +75,15 @@ async def organize_indexes(db):
     await add_original_ref(db.indexes)
 
 
+async def organize_kinds(db):
+    if "viruses" in await db.collection_names():
+        await db.viruses.rename("kinds")
+
+    await add_original_ref(db.kinds)
+
+
 async def organize_references(db):
-    if await db.species.count() and not await db.references.count():
+    if await db.kinds.count() and not await db.references.count():
         await virtool.db.refs.create_original(db)
 
 
@@ -94,13 +100,6 @@ async def organize_sequences(db):
         await db.sequences.insert_one(document)
 
     await db.sequences.delete_many(REF_QUERY)
-
-
-async def organize_species(db):
-    if "viruses" in await db.collection_names():
-        await db.viruses.rename("species")
-
-    await add_original_ref(db.species)
 
 
 async def organize_status(db, server_version):

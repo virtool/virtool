@@ -1,6 +1,6 @@
 import virtool.db.history
 import virtool.history
-import virtool.species
+import virtool.kinds
 import virtool.utils
 from virtool.api.utils import conflict, json_response, no_content, not_found, paginate, protected
 
@@ -74,7 +74,7 @@ async def revert(req):
     await db.sequences.delete_many({"virus_id": virus_id})
 
     if patched is not None:
-        patched_virus, sequences = virtool.species.split_species(patched)
+        patched_virus, sequences = virtool.kinds.split_species(patched)
 
         # Add the reverted sequences to the collection.
         if len(sequences):

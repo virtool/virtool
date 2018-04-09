@@ -1,19 +1,19 @@
 import gzip
 import json
 
-import virtool.species
+import virtool.kinds
 
 
 async def get_owner_user(user_id):
     return {
         "id": user_id,
         "modify": True,
-        "modify_virus": True,
+        "modify_kind": True,
         "remove": True
     }
 
 
-def verify_virus_list(viruses):
+def validate_kinds(kinds):
     fields = ["_id", "name", "abbreviation"]
 
     seen = {field: set() for field in fields + ["isolate_id", "sequence_id"]}
@@ -21,10 +21,9 @@ def verify_virus_list(viruses):
 
     errors = dict()
 
-    for joined in viruses:
-
-        # Check for problems local to the virus document.
-        errors[joined["name"].lower()] = virtool.species.validate_species(joined)
+    for joined in kinds:
+        # Check for problems local to the kind document.
+        errors[joined["name"].lower()] = virtool.kinds.validate_kind(joined)
 
         # Check for problems in the list as a whole.
         for field in fields:
@@ -75,12 +74,12 @@ def verify_virus_list(viruses):
 
 def load_import_file(path):
     """
-    Load a list of merged virus documents from a file handle associated with a Virtool ``viruses.json.gz`` file.
+    Load a list of merged kinds documents from a file handle associated with a Virtool ``kinds.json.gz`` file.
 
-    :param path: the path to the viruses.json.gz file
+    :param path: the path to the kinds.json.gz file
     :type path: str
 
-    :return: the virus data to import
+    :return: the kinds data to import
     :rtype: dict
 
     """
@@ -91,7 +90,7 @@ def load_import_file(path):
 
 async def send_import_dispatches(dispatch, insertions, replacements, flush=False):
     """
-    Dispatch all possible insertion and replacement messages for a running virus reference import. Called many times
+    Dispatch all possible insertion and replacement messages for a running kinds reference import. Called many times
     during an import process.
 
     :param dispatch: the dispatch function
@@ -109,18 +108,18 @@ async def send_import_dispatches(dispatch, insertions, replacements, flush=False
     """
 
     if len(insertions) == 30 or (flush and insertions):
-        virus_updates, history_updates = zip(*insertions)
+        kind_updates, history_updates = zip(*insertions)
 
-        await dispatch("viruses", "update", virus_updates)
+        await dispatch("kinds", "update", kinds_updates)
         await dispatch("history", "update", history_updates)
 
         del insertions[:]
 
     if len(replacements) == 30 or (flush and replacements):
-        await dispatch("viruses", "remove", [replace[0][0] for replace in replacements])
+        await dispatch("kinds", "remove", [replace[0][0] for replace in replacements])
         await dispatch("history", "update", [replace[0][1] for replace in replacements])
 
-        await dispatch("viruses", "update", [replace[1][0] for replace in replacements])
+        await dispatch("kinds", "update", [replace[1][0] for replace in replacements])
         await dispatch("history", "update", [replace[1][1] for replace in replacements])
 
         del replacements[:]

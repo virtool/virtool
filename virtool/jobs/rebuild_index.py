@@ -6,7 +6,7 @@ import virtool.db.species
 import virtool.errors
 import virtool.history
 import virtool.jobs.job
-import virtool.species
+import virtool.kinds
 import virtool.utils
 
 
@@ -56,7 +56,7 @@ class RebuildIndex(virtool.jobs.job.Job):
                 _, joined, _ = await virtool.db.history.patch_to_version(self.db, patch_id, patch_version)
 
             # Extract the list of sequences from the joined patched patch.
-            sequences = virtool.species.extract_default_sequences(joined)
+            sequences = virtool.kinds.extract_default_sequences(joined)
 
             defaults = list()
 

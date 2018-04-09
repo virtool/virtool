@@ -1,8 +1,8 @@
 import pytest
 from copy import deepcopy
 
-import virtool.db.species
-import virtool.species
+import virtool.db.kind
+import virtool.kinds
 
 
 @pytest.mark.parametrize("find,verified,modified,per_page,page,d_range,meta", [
@@ -1649,7 +1649,7 @@ class TestSetAsDefault:
             "sequences": []
         }
 
-        new = await virtool.db.species.join(client.db, "6116cba1")
+        new = await virtool.db.kinds.join(client.db, "6116cba1")
 
         assert new["isolates"] == [
             {
@@ -1721,7 +1721,7 @@ class TestSetAsDefault:
             "sequences": []
         }
 
-        new = await virtool.db.species.join(client.db, "6116cba1")
+        new = await virtool.db.kind.join(client.db, "6116cba1")
 
         assert new["version"] == 0
 
@@ -2330,11 +2330,11 @@ class TestRemoveSequence:
         await client.db.viruses.insert_one(test_virus)
         await client.db.sequences.insert_one(test_sequence)
 
-        old = await virtool.db.species.join(client.db, test_virus["_id"])
+        old = await virtool.db.kinds.join(client.db, test_virus["_id"])
 
         resp = await client.delete("/api/viruses/6116cba1/isolates/cab8b360/sequences/KX269872")
 
-        new = await virtool.db.species.join(client.db, test_virus["_id"])
+        new = await virtool.db.kinds.join(client.db, test_virus["_id"])
 
         assert test_add_history.call_args[0][1:] == (
             "remove_sequence",

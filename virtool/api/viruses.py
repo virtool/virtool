@@ -15,7 +15,7 @@ import virtool.db.species
 import virtool.history
 import virtool.refs
 import virtool.refs
-import virtool.species
+import virtool.kinds
 import virtool.utils
 import virtool.validators
 from virtool.api.utils import bad_request, compose_regex_query, conflict, json_response, no_content, not_found, \
@@ -67,7 +67,7 @@ async def find(req):
         data = await db.viruses.find(db_query, ["name"], sort=[("name", 1)]).to_list(None)
         data = [virtool.utils.base_processor(d) for d in data]
     else:
-        data = await paginate(db.viruses, db_query, req.query, sort="name", projection=virtool.species.LIST_PROJECTION)
+        data = await paginate(db.viruses, db_query, req.query, sort="name", projection=virtool.kinds.LIST_PROJECTION)
         data["modified_count"] = len(await db.history.find({"index.id": "unbuilt"}, ["virus"]).distinct("virus.name"))
 
     return json_response(data)
@@ -154,7 +154,7 @@ async def create(req):
     await req.app["dispatcher"].dispatch(
         "viruses",
         "update",
-        virtool.utils.base_processor({key: joined[key] for key in virtool.species.LIST_PROJECTION})
+        virtool.utils.base_processor({key: joined[key] for key in virtool.kinds.LIST_PROJECTION})
     )
 
     headers = {
@@ -285,7 +285,7 @@ async def edit(req):
     await req.app["dispatcher"].dispatch(
         "viruses",
         "update",
-        virtool.utils.base_processor({key: new[key] for key in virtool.species.LIST_PROJECTION})
+        virtool.utils.base_processor({key: new[key] for key in virtool.kinds.LIST_PROJECTION})
     )
 
     return json_response(await virtool.db.species.join_and_format(db, virus_id, joined=new, issues=issues))
@@ -368,7 +368,7 @@ async def get_isolate(req):
     if not document:
         return not_found()
 
-    isolate = dict(virtool.species.find_isolate(document["isolates"], isolate_id), sequences=[])
+    isolate = dict(virtool.kinds.find_isolate(document["isolates"], isolate_id), sequences=[])
 
     async for sequence in db.sequences.find({"isolate_id": isolate_id}, {"virus_id": False, "isolate_id": False}):
         sequence["id"] = sequence.pop("_id")
@@ -410,7 +410,7 @@ async def add_isolate(req):
     # All source types are stored in lower case.
     data["source_type"] = data["source_type"].lower()
 
-    if not virtool.species.check_source_type(settings, data["source_type"]):
+    if not virtool.kinds.check_source_type(settings, data["source_type"]):
         return conflict("Source type is not allowed")
 
     # Get a unique isolate_id for the new isolate.
@@ -458,7 +458,7 @@ async def add_isolate(req):
 
         new["verified"] = True
 
-    isolate_name = virtool.species.format_isolate_name(data)
+    isolate_name = virtool.kinds.format_isolate_name(data)
 
     description = "Added {}".format(isolate_name)
 
@@ -474,7 +474,7 @@ async def add_isolate(req):
         req["client"].user_id
     )
 
-    await virtool.species.dispatch_version_only(req, new)
+    await virtool.kinds.dispatch_version_only(req, new)
 
     headers = {
         "Location": "/api/viruses/{}/isolates/{}".format(virus_id, isolate_id)
@@ -507,7 +507,7 @@ async def edit_isolate(req):
 
     isolates = deepcopy(document["isolates"])
 
-    isolate = virtool.species.find_isolate(isolates, isolate_id)
+    isolate = virtool.kinds.find_isolate(isolates, isolate_id)
 
     if not isolate:
         return not_found()
@@ -519,7 +519,7 @@ async def edit_isolate(req):
         if settings.get("restrict_source_types") and data["source_type"] not in settings.get("allowed_source_types"):
             return conflict("Not an allowed source type")
 
-    old_isolate_name = virtool.species.format_isolate_name(isolate)
+    old_isolate_name = virtool.kinds.format_isolate_name(isolate)
 
     isolate.update(data)
 
@@ -550,7 +550,7 @@ async def edit_isolate(req):
 
         new["verified"] = True
 
-    isolate_name = virtool.species.format_isolate_name(isolate)
+    isolate_name = virtool.kinds.format_isolate_name(isolate)
 
     # Use the old and new entry to add a new history document for the change.
     await virtool.db.history.add(
@@ -562,7 +562,7 @@ async def edit_isolate(req):
         req["client"].user_id
     )
 
-    await virtool.species.dispatch_version_only(req, new)
+    await virtool.kinds.dispatch_version_only(req, new)
 
     complete = await virtool.db.species.join_and_format(db, virus_id, joined=new)
 
@@ -589,7 +589,7 @@ async def set_as_default(req):
 
     isolates = deepcopy(document["isolates"])
 
-    isolate = virtool.species.find_isolate(isolates, isolate_id)
+    isolate = virtool.kinds.find_isolate(isolates, isolate_id)
 
     if not isolate:
         return not_found()
@@ -633,7 +633,7 @@ async def set_as_default(req):
 
         new["verified"] = True
 
-    isolate_name = virtool.species.format_isolate_name(isolate)
+    isolate_name = virtool.kinds.format_isolate_name(isolate)
 
     # Use the old and new entry to add a new history document for the change.
     await virtool.db.history.add(
@@ -645,7 +645,7 @@ async def set_as_default(req):
         req["client"].user_id
     )
 
-    await virtool.species.dispatch_version_only(req, new)
+    await virtool.kinds.dispatch_version_only(req, new)
 
     complete = await virtool.db.species.join_and_format(db, virus_id, new)
 
@@ -674,7 +674,7 @@ async def remove_isolate(req):
     isolate_id = req.match_info["isolate_id"]
 
     # Get any isolates that have the isolate id to be removed (only one should match!).
-    isolate_to_remove = virtool.species.find_isolate(isolates, isolate_id)
+    isolate_to_remove = virtool.kinds.find_isolate(isolates, isolate_id)
 
     if not isolate_to_remove:
         return not_found()
@@ -717,10 +717,10 @@ async def remove_isolate(req):
     # Remove any sequences associated with the removed isolate.
     await db.sequences.delete_many({"isolate_id": isolate_id})
 
-    description = "Removed {}".format(virtool.species.format_isolate_name(isolate_to_remove))
+    description = "Removed {}".format(virtool.kinds.format_isolate_name(isolate_to_remove))
 
     if isolate_to_remove["default"] and new_default:
-        description += " and set {} as default".format(virtool.species.format_isolate_name(new_default))
+        description += " and set {} as default".format(virtool.kinds.format_isolate_name(new_default))
 
     await virtool.db.history.add(
         db,
@@ -731,7 +731,7 @@ async def remove_isolate(req):
         req["client"].user_id
     )
 
-    await virtool.species.dispatch_version_only(req, new)
+    await virtool.kinds.dispatch_version_only(req, new)
 
     return no_content()
 
@@ -745,7 +745,7 @@ async def list_sequences(req):
     if not await db.viruses.find({"_id": virus_id}, {"isolates.id": isolate_id}).count():
         return not_found()
 
-    projection = list(virtool.species.SEQUENCE_PROJECTION)
+    projection = list(virtool.kinds.SEQUENCE_PROJECTION)
 
     projection.remove("virus_id")
     projection.remove("isolate_id")
@@ -764,7 +764,7 @@ async def get_sequence(req):
 
     sequence_id = req.match_info["sequence_id"]
 
-    document = await db.sequences.find_one(sequence_id, virtool.species.SEQUENCE_PROJECTION)
+    document = await db.sequences.find_one(sequence_id, virtool.kinds.SEQUENCE_PROJECTION)
 
     if not document:
         return not_found()
@@ -839,18 +839,18 @@ async def create_sequence(req):
 
         new["verified"] = True
 
-    isolate = virtool.species.find_isolate(old["isolates"], isolate_id)
+    isolate = virtool.kinds.find_isolate(old["isolates"], isolate_id)
 
     await virtool.db.history.add(
         db,
         "create_sequence",
         old,
         new,
-        "Created new sequence {} in {}".format(data["_id"], virtool.species.format_isolate_name(isolate)),
+        "Created new sequence {} in {}".format(data["_id"], virtool.kinds.format_isolate_name(isolate)),
         req["client"].user_id
     )
 
-    await virtool.species.dispatch_version_only(req, new)
+    await virtool.kinds.dispatch_version_only(req, new)
 
     headers = {
         "Location": "/api/viruses/{}/isolates/{}/sequences/{}".format(virus_id, isolate_id, data["_id"])
@@ -914,18 +914,18 @@ async def edit_sequence(req):
 
         new["verified"] = True
 
-    isolate = virtool.species.find_isolate(old["isolates"], isolate_id)
+    isolate = virtool.kinds.find_isolate(old["isolates"], isolate_id)
 
     await virtool.db.history.add(
         db,
         "edit_sequence",
         old,
         new,
-        "Edited sequence {} in {}".format(sequence_id, virtool.species.format_isolate_name(isolate)),
+        "Edited sequence {} in {}".format(sequence_id, virtool.kinds.format_isolate_name(isolate)),
         req["client"].user_id
     )
 
-    await virtool.species.dispatch_version_only(req, new)
+    await virtool.kinds.dispatch_version_only(req, new)
 
     return json_response(virtool.utils.base_processor(updated_sequence))
 
@@ -949,7 +949,7 @@ async def remove_sequence(req):
     if not old:
         return not_found()
 
-    isolate = virtool.species.find_isolate(old["isolates"], isolate_id)
+    isolate = virtool.kinds.find_isolate(old["isolates"], isolate_id)
 
     await db.sequences.delete_one({"_id": sequence_id})
 
@@ -973,7 +973,7 @@ async def remove_sequence(req):
 
         new["verified"] = True
 
-    isolate_name = virtool.species.format_isolate_name(isolate)
+    isolate_name = virtool.kinds.format_isolate_name(isolate)
 
     await virtool.db.history.add(
         db,
@@ -984,7 +984,7 @@ async def remove_sequence(req):
         req["client"].user_id
     )
 
-    await virtool.species.dispatch_version_only(req, new)
+    await virtool.kinds.dispatch_version_only(req, new)
 
     return no_content()
 
