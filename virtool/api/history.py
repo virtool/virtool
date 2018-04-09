@@ -2,7 +2,7 @@ import virtool.db.history
 import virtool.history
 import virtool.kinds
 import virtool.utils
-from virtool.api.utils import conflict, json_response, no_content, not_found, paginate, protected
+from virtool.api.utils import conflict, json_response, no_content, not_found, paginate
 
 
 async def find(req):
@@ -41,7 +41,6 @@ async def get(req):
     return json_response(virtool.utils.base_processor(document))
 
 
-@protected("modify_virus")
 async def revert(req):
     """
     Remove the change document with the given ``change_id`` and any subsequent changes.
@@ -59,32 +58,32 @@ async def revert(req):
     if change["index"]["id"] != "unbuilt" or change["index"]["version"] != "unbuilt":
         return conflict("Not unbuilt")
 
-    virus_id, virus_version = change_id.split(".")
+    kind_id, kind_version = change_id.split(".")
 
-    if virus_version != "removed":
-        virus_version = int(virus_version)
+    if kind_version != "removed":
+        kind_version = int(kind_version)
 
     _, patched, history_to_delete = await virtool.db.history.patch_to_version(
         db,
-        virus_id,
-        virus_version - 1
+        kind_id,
+        kind_version - 1
     )
 
     # Remove the old sequences from the collection.
-    await db.sequences.delete_many({"virus_id": virus_id})
+    await db.sequences.delete_many({"kind_id": kind_id})
 
     if patched is not None:
-        patched_virus, sequences = virtool.kinds.split_species(patched)
+        patched_kind, sequences = virtool.kinds.split(patched)
 
         # Add the reverted sequences to the collection.
         if len(sequences):
             await db.sequences.insert_many(sequences)
 
-        # Replace the existing virus with the patched one. If it doesn't exist, insert it.
-        await db.viruses.replace_one({"_id": virus_id}, patched_virus, upsert=True)
+        # Replace the existing kind with the patched one. If it doesn't exist, insert it.
+        await db.kinds.replace_one({"_id": kind_id}, patched_kind, upsert=True)
 
     else:
-        await db.viruses.delete_one({"_id": virus_id})
+        await db.kinds.delete_one({"_id": kind_id})
 
     await db.history.delete_many({"_id": {"$in": history_to_delete}})
 

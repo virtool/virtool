@@ -2,7 +2,7 @@ import pymongo
 from pymongo import ReturnDocument
 
 import virtool.db
-import virtool.db.species
+import virtool.db.kinds
 import virtool.errors
 import virtool.kinds
 import virtool.utils
@@ -243,7 +243,7 @@ async def import_data(db, dispatch, data, user_id):
 
     for virus in viruses:
         # Join the virus document into a complete virus record. This will be used for recording history.
-        joined = await virtool.db.species.join(db, virus["_id"])
+        joined = await virtool.db.kinds.join(db, virus["_id"])
 
         # Build a ``description`` field for the virus creation change document.
         description = "Created {}".format(joined["name"])
@@ -327,7 +327,7 @@ async def insert_from_import(db, virus_document, user_id):
     # Perform the actual database insert operation, retaining the response.
     await db.viruses.insert_one(virus_document)
 
-    issues = await virtool.db.species.verify(db, virus_document["_id"], virus_document)
+    issues = await virtool.db.kinds.verify(db, virus_document["_id"], virus_document)
 
     if issues is None:
         await db.viruses.update_one({"_id": virus_document["_id"]}, {
@@ -340,7 +340,7 @@ async def insert_from_import(db, virus_document, user_id):
 
     to_dispatch = virtool.utils.base_processor({key: virus_document[key] for key in virtool.kinds.LIST_PROJECTION})
 
-    joined = await virtool.db.species.join(db, virus_document["_id"])
+    joined = await virtool.db.kinds.join(db, virus_document["_id"])
 
     change = await virtool.db.history.add(
         db,
@@ -372,7 +372,7 @@ async def delete_for_import(db, virus_id, user_id):
     :type user_id: str
 
     """
-    joined = await virtool.db.species.join(db, virus_id)
+    joined = await virtool.db.kinds.join(db, virus_id)
 
     if not joined:
         raise ValueError("Could not find virus_id {}".format(virus_id))

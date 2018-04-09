@@ -2,7 +2,7 @@ from copy import deepcopy
 
 import dictdiffer
 
-import virtool.db.species
+import virtool.db.kinds
 import virtool.kinds
 import virtool.utils
 import virtool.history
@@ -146,7 +146,7 @@ async def patch_to_version(db, virus_id, version):
     # A list of history_ids reverted to produce the patched entry.
     reverted_history_ids = list()
 
-    current = await virtool.db.species.join(db, virus_id) or dict()
+    current = await virtool.db.kinds.join(db, virus_id) or dict()
 
     if "version" in current and current["version"] == version:
         return current, deepcopy(current), reverted_history_ids

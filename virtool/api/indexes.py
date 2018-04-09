@@ -14,9 +14,9 @@ async def find(req):
     """
     db = req.app["db"]
 
-    unbuilt_modified_virus_count = len(await db.history.distinct("virus.id", {"index.id": "unbuilt"}))
+    unbuilt_modified_kind_count = len(await db.history.distinct("kind.id", {"index.id": "unbuilt"}))
 
-    total_virus_count = await db.viruses.count()
+    total_kind_count = await db.kinds.count()
 
     data = await paginate(
         db.indexes,
@@ -29,13 +29,13 @@ async def find(req):
 
     for document in data["documents"]:
         document.update({
-            "modified_virus_count": len(await db.history.distinct("virus.id", {"index.id": document["id"]})),
+            "modified_kind_count": len(await db.history.distinct("kind.id", {"index.id": document["id"]})),
             "modification_count": await db.history.count({"index.id": document["id"]})
         })
 
     data.update({
-        "modified_virus_count": unbuilt_modified_virus_count,
-        "total_virus_count": total_virus_count
+        "modified_kind_count": unbuilt_modified_kind_count,
+        "total_kind_count": total_kind_count
     })
 
     return json_response(data)
@@ -72,17 +72,17 @@ async def get(req):
 
     document["contributors"] = [{"id": c["_id"], "count": c["count"]} for c in contributors]
 
-    viruses = await db.history.aggregate([
+    kinds = await db.history.aggregate([
         {"$match": {
             "index.id": document["id"]
         }},
         {"$sort": {
-            "virus.id": 1,
-            "virus.version": -1
+            "kind.id": 1,
+            "kind.version": -1
         }},
         {"$group": {
-            "_id": "$virus.id",
-            "name": {"$first": "$virus.name"},
+            "_id": "$kind.id",
+            "name": {"$first": "$kind.name"},
             "count": {"$sum": 1}
         }},
         {"$match": {

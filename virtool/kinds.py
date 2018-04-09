@@ -218,7 +218,7 @@ def merge_kind(kind, sequences):
     return merged
 
 
-def split_kind(merged):
+def split(merged):
     """
     Split a merged kind document into a list of sequence documents associated with the kind and a regular kind
     document containing no sequence sub-documents.

@@ -5,7 +5,7 @@ import pytest
 from string import ascii_lowercase, digits
 from copy import deepcopy
 
-import virtool.db.species
+import virtool.db.kinds
 import virtool.kinds
 
 TEST_FILES_PATH = os.path.join(sys.path[0], "tests", "test_files")
@@ -49,7 +49,7 @@ class TestJoin:
         await test_motor.species.insert(test_species)
         await test_motor.sequences.insert(test_sequence)
 
-        joined = await virtool.db.species.join(test_motor, "6116cba1")
+        joined = await virtool.db.kinds.join(test_motor, "6116cba1")
 
         assert joined == test_merged_species
 
@@ -80,7 +80,7 @@ class TestJoin:
 
         assert not stub.called
 
-        joined = await virtool.db.species.join(test_motor, "6116cba1", document)
+        joined = await virtool.db.kinds.join(test_motor, "6116cba1", document)
 
         assert not stub.called
 
@@ -100,7 +100,7 @@ async def test_check_name_and_abbreviation(name, abbreviation, return_value, tes
     """
     await test_motor.species.insert_one(test_species)
 
-    result = await virtool.db.species.check_name_and_abbreviation(test_motor, name, abbreviation)
+    result = await virtool.db.kinds.check_name_and_abbreviation(test_motor, name, abbreviation)
 
     assert result == return_value
 
@@ -207,7 +207,7 @@ async def test_update_last_indexed_version(test_motor, test_species):
 
     await test_motor.species.insert_many([species_1, species_2])
 
-    await virtool.db.species.update_last_indexed_version(test_motor, ["foobar"], 5)
+    await virtool.db.kinds.update_last_indexed_version(test_motor, ["foobar"], 5)
 
     species_1 = await test_motor.species.find_one({"_id": "6116cba1"})
     species_2 = await test_motor.species.find_one({"_id": "foobar"})
@@ -289,7 +289,7 @@ class TestGetNewIsolateId:
     async def test(self, test_motor, test_species):
         await test_motor.species.insert(test_species)
 
-        new_id = await virtool.db.species.get_new_isolate_id(test_motor)
+        new_id = await virtool.db.kinds.get_new_isolate_id(test_motor)
 
         allowed = ascii_lowercase + digits
 
@@ -308,7 +308,7 @@ class TestGetNewIsolateId:
 
         await test_motor.species.insert(test_species)
 
-        new_id = await virtool.db.species.get_new_isolate_id(test_motor)
+        new_id = await virtool.db.kinds.get_new_isolate_id(test_motor)
 
         assert new_id == expected
 
@@ -321,7 +321,7 @@ class TestGetNewIsolateId:
 
         expected = test_random_alphanumeric.choices[-2][:8].lower()
 
-        new_id = await virtool.db.species.get_new_isolate_id(test_motor, excluded=excluded)
+        new_id = await virtool.db.kinds.get_new_isolate_id(test_motor, excluded=excluded)
 
         assert new_id == expected
 
@@ -338,7 +338,7 @@ class TestGetNewIsolateId:
 
         expected = test_random_alphanumeric.choices[-3][:8].lower()
 
-        new_id = await virtool.db.species.get_new_isolate_id(test_motor, excluded=excluded)
+        new_id = await virtool.db.kinds.get_new_isolate_id(test_motor, excluded=excluded)
 
         assert new_id == expected
 

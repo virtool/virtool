@@ -20,7 +20,7 @@ import virtool.db.samples
 import virtool.errors
 import virtool.history
 import virtool.hmm
-import virtool.jobs.rebuild_index
+import virtool.jobs.build_index
 import virtool.jobs.job
 import virtool.pathoscope
 import virtool.samples
