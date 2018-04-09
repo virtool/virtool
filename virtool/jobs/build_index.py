@@ -2,7 +2,7 @@ import os
 
 import virtool.db.history
 import virtool.db.indexes
-import virtool.db.species
+import virtool.db.kinds
 import virtool.errors
 import virtool.history
 import virtool.jobs.job
@@ -10,9 +10,9 @@ import virtool.kinds
 import virtool.utils
 
 
-class RebuildIndex(virtool.jobs.job.Job):
+class BuildIndex(virtool.jobs.job.Job):
     """
-    Job object that rebuilds the viral Bowtie2 index from the viral sequence database.
+    Job object that builds a new Bowtie2 index for a given reference.
 
     """
     def __init__(self, *args, **kwargs):
@@ -25,14 +25,15 @@ class RebuildIndex(virtool.jobs.job.Job):
             self.replace_old
         ]
 
+        self.ref_id = self.task_args["ref_id"]
         self.index_id = self.task_args["index_id"]
 
-        self.reference_path = os.path.join(self.settings.get("data_path"), "reference", "species", self.index_id)
+        self.reference_path = os.path.join(self.settings.get("data_path"), "reference", "kinds", self.index_id)
 
     @virtool.jobs.job.stage_method
     async def mk_index_dir(self):
         """
-        Make dir for the new index at ``<data_path/reference/species/<index_id>``.
+        Make dir for the new index at ``<data_path/reference/kinds/<index_id>``.
 
         """
         await self.run_in_executor(os.mkdir, self.reference_path)
@@ -47,11 +48,11 @@ class RebuildIndex(virtool.jobs.job.Job):
         """
         fasta_dict = dict()
 
-        for patch_id, patch_version in self.task_args["species_manifest"].items():
-            document = await self.db.species.find_one(patch_id)
+        for patch_id, patch_version in self.task_args["manifest"].items():
+            document = await self.db.kinds.find_one(patch_id)
 
             if document["version"] == patch_version:
-                joined = await virtool.db.species.join(self.db, patch_id)
+                joined = await virtool.db.kinds.join(self.db, patch_id)
             else:
                 _, joined, _ = await virtool.db.history.patch_to_version(self.db, patch_id, patch_version)
 
@@ -106,9 +107,9 @@ class RebuildIndex(virtool.jobs.job.Job):
             }
         })
 
-        active_indexes = await virtool.db.indexes.get_active_index_ids(self.db)
+        active_indexes = await virtool.db.indexes.get_active_index_ids(self.db, self.ref)
 
-        base_path = os.path.join(self.settings.get("data_path"), "reference", "species")
+        base_path = os.path.join(self.settings.get("data_path"), "reference", "kinds")
 
         await self.run_in_executor(remove_unused_index_files, base_path, active_indexes)
 
@@ -118,8 +119,8 @@ class RebuildIndex(virtool.jobs.job.Job):
             }
         })
 
-        # Find species with changes.
-        aggregation_cursor = self.db.species.aggregate([
+        # Find kinds with changes.
+        aggregation_cursor = self.db.kinds.aggregate([
             {"$project": {
                 "version": True,
                 "last_indexed_version": True,
@@ -131,7 +132,7 @@ class RebuildIndex(virtool.jobs.job.Job):
         ])
 
         async for agg in aggregation_cursor:
-            await self.db.species.update_one({"_id": agg["_id"]}, {
+            await self.db.kinds.update_one({"_id": agg["_id"]}, {
                 "$set": {
                     "last_indexed_version": agg["version"]
                 }
@@ -147,7 +148,7 @@ class RebuildIndex(virtool.jobs.job.Job):
         # Remove the index document from the database.
         await self.db.indexes.delete_one({"_id": self.index_id})
 
-        # Set all the species included in the build to "unbuilt" again.
+        # Set all the kinds included in the build to "unbuilt" again.
         await self.db.history.update_many({"index.id": self.index_id}, {
             "$set": {
                 "index": {

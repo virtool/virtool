@@ -2,7 +2,7 @@ import os
 
 import virtool.db.indexes
 import virtool.errors
-import virtool.jobs.rebuild_index
+import virtool.jobs.build_index
 
 
 class TestRemoveUnusedIndexFiles:
@@ -13,7 +13,7 @@ class TestRemoveUnusedIndexFiles:
 
         base_path = str(tmpdir)
 
-        virtool.jobs.rebuild_index.remove_unused_index_files(base_path, ["anb763hj"])
+        virtool.jobs.build_index.remove_unused_index_files(base_path, ["anb763hj"])
 
         assert set(os.listdir(base_path)) == {"anb763hj"}
 

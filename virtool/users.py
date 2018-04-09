@@ -10,7 +10,6 @@ PERMISSIONS = [
     "modify_hmm",
     "modify_subtraction",
     "modify_virus",
-    "rebuild_index",
     "remove_file",
     "remove_job",
     "remove_virus",

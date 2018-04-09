@@ -7,6 +7,7 @@ import virtool.kinds
 async def get_owner_user(user_id):
     return {
         "id": user_id,
+        "build": True,
         "modify": True,
         "modify_kind": True,
         "remove": True

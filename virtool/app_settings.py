@@ -50,9 +50,9 @@ SCHEMA = {
     "create_subtraction_proc": get_default_integer(2),
     "create_subtraction_mem": get_default_integer(4),
     "create_subtraction_inst": get_default_integer(2),
-    "rebuild_index_proc": get_default_integer(2),
-    "rebuild_index_mem": get_default_integer(4),
-    "rebuild_index_inst": get_default_integer(1),
+    "build_index_proc": get_default_integer(2),
+    "build_index_mem": get_default_integer(4),
+    "build_index_inst": get_default_integer(1),
 
     # Samples
     "sample_group": {"type": "string", "default": "none"},
@@ -111,8 +111,8 @@ TASK_SPECIFIC_LIMIT_KEYS = [
     "nuvs_mem",
     "pathoscope_bowtie_proc",
     "pathoscope_bowtie_mem",
-    "rebuild_index_proc",
-    "rebuild_index_mem"
+    "build_index_proc",
+    "build_index_mem"
 ]
 
 
@@ -239,6 +239,13 @@ class Settings:
                 content = json.loads(await f.read())
         except IOError:
             content = dict()
+
+        if "rebuild_index_proc" in content:
+            content.update({
+                "build_index_proc": content["rebuild_index_proc"],
+                "build_index_mem": content["rebuild_index_mem"],
+                "build_index_inst": content["rebuild_index_inst"]
+            })
 
         self.data = self.validate(content)
 

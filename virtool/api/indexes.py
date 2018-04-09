@@ -1,9 +1,9 @@
 import virtool.db.history
 import virtool.db.indexes
 import virtool.history
-import virtool.jobs.rebuild_index
+import virtool.jobs.build_index
 import virtool.utils
-from virtool.api.utils import json_response, bad_request, not_found, protected, compose_regex_query, paginate, \
+from virtool.api.utils import json_response, bad_request, not_found, compose_regex_query, paginate, \
     conflict
 
 
