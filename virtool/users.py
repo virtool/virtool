@@ -1,7 +1,7 @@
 import hashlib
-import uuid
 
 import bcrypt
+import virtool.utils
 
 #: A list of the permission strings used by Virtool.
 PERMISSIONS = [
@@ -22,17 +22,6 @@ PERMISSIONS = [
 
 def calculate_identicon(user_id):
     return hashlib.sha256(user_id.encode()).hexdigest()
-
-
-def get_api_key():
-    """
-    Create a unique, UUID-based API key.
-
-    :return: API key
-    :rtype str
-
-    """
-    return uuid.uuid4().hex
 
 
 def check_api_key(key, hashed):

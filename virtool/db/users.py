@@ -132,7 +132,7 @@ async def compose_primary_group_update(db, user_id, primary_group):
     }
 
 
-async def create(db, user_id, password, force_reset=True):
+async def create(db, user_id, password):
     """
     Insert a new user document into the database.
 
