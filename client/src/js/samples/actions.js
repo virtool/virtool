@@ -59,7 +59,7 @@ export const wsUpdateAnalysis = (update) => ({
  * Returns an action that should be dispatched when a analysis document is removed via websocket.
  *
  * @func
- * @param removed {string} the id for the specific analysis 
+ * @param removed {string} the id for the specific analysis
  * @returns {object}
  */
 export const wsRemoveAnalysis = (removed) => ({

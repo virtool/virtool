@@ -4,16 +4,13 @@ import {
     FIND_INDEXES,
     GET_INDEX,
     GET_UNBUILT,
-    CREATE_INDEX,
-    GET_INDEX_HISTORY,
-    CLEAR_INDEX_ERROR
+    GET_INDEX_HISTORY
 } from "../actionTypes";
 
-const initialState = {
+export const initialState = {
     documents: null,
     modified_count: 0,
     total_virus_count: 0,
-    error: false,
     detail: null,
     history: null,
     unbuilt: null,
@@ -45,17 +42,11 @@ export default function indexesReducer (state = initialState, action) {
         case GET_UNBUILT.SUCCEEDED:
             return {...state, unbuilt: action.data};
 
-        case CREATE_INDEX.FAILED:
-            return {...state, error: true};
-
         case GET_INDEX_HISTORY.REQUESTED:
             return {...state, history: null};
 
         case GET_INDEX_HISTORY.SUCCEEDED:
             return {...state, history: action.data};
-
-        case CLEAR_INDEX_ERROR:
-            return {...state, error: false};
 
         default:
             return state;

@@ -7,7 +7,7 @@ const initialState = {
     createError: false
 };
 
-const updateGroup = (state, update) => ({
+export const updateGroup = (state, update) => ({
     ...state,
     pending: false,
     list: sortBy(unionBy([update], state.list, "id"), "id")

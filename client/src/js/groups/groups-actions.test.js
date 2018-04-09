@@ -39,7 +39,7 @@ describe("Groups Action Creators:", () => {
         const value = true;
         const result = setGroupPermission(groupId, permission, value);
         const expected = {
-            type: "SET_GROUP_PERMISSIONS_REQUESTED",
+            type: "SET_GROUP_PERMISSION_REQUESTED",
             groupId,
             permission,
             value
