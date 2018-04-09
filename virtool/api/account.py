@@ -6,8 +6,12 @@ import virtool.db.users
 import virtool.users
 import virtool.utils
 import virtool.validators
-from virtool.api.utils import bad_request, invalid_input, json_response, no_content, not_found, protected, \
-    unpack_request, validation
+from virtool.api.utils import invalid_input, json_response, no_content, not_found, protected, validation
+
+API_KEY_PROJECTION = {
+    "_id": False,
+    "user": False
+}
 
 SETTINGS_SCHEMA = {
     "show_ids": {
@@ -39,23 +43,40 @@ async def get(req):
 
 
 @protected()
-@validation({
-    "email": {"type": "string", "regex": "^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$"}
-})
 async def edit(req):
     """
     Edit the user account.
 
     """
     db = req.app["db"]
-    data = req["data"]
-
+    data = await req.json()
     user_id = req["client"].user_id
 
+    minlength = req.app["settings"]["minimum_password_length"]
+
+    v = Validator({
+        "email": {"type": "string", "regex": "^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$"},
+        "old_password": {"type": "string", "minlength": minlength, "required": True},
+        "new_password": {"type": "string", "minlength": minlength, "required": True}
+    })
+
+    if not v.validate(data):
+        return invalid_input(v.errors)
+
+    data = v.document
+
+    update = await virtool.db.account.compose_password_update(
+        db,
+        user_id,
+        data["old_password"],
+        data["new_password"]
+    )
+
+    if "email" in data:
+        update["email"] = data["email"]
+
     document = await db.users.find_one_and_update({"_id": user_id}, {
-        "$set": {
-            "email": data["email"]
-        }
+        "$set": update
     }, return_document=ReturnDocument.AFTER, projection=virtool.db.users.ACCOUNT_PROJECTION)
 
     return json_response(virtool.utils.base_processor(document))
@@ -83,54 +104,20 @@ async def update_settings(req):
     """
     db, data = req.app["db"], req["data"]
 
-    settings = await virtool.db.account.update_settings(db, req["client"].user_id, data)
+    user_id = req.match_info["user_id"]
+
+    document = await db.users.find_one(user_id, ["settings"])
+
+    settings = {
+        **document["settings"],
+        **data
+    }
+
+    await db.users.update_one({"_id": user_id}, {
+        "$set": settings
+    })
 
     return json_response(settings)
-
-
-@protected()
-async def change_password(req):
-    """
-    Allows a user change their own password.
-
-    """
-    db = req.app["db"]
-
-    user_id = req["client"].user_id
-
-    data = await req.json()
-
-    minlength = req.app["settings"]["minimum_password_length"]
-
-    v = Validator({
-        "old_password": {"type": "string", "minlength": minlength, "required": True},
-        "new_password": {"type": "string", "minlength": minlength, "required": True}
-    })
-
-    if not v(data):
-        return invalid_input(v.errors)
-
-    # Will evaluate true if the passed username and password are correct.
-    if not await virtool.db.users.validate_credentials(db, user_id, data["old_password"]):
-        return bad_request("Invalid old password")
-
-    # Salt and hash the new password
-    hashed = virtool.users.hash_password(data["new_password"])
-
-    last_password_change = virtool.utils.timestamp()
-
-    # Update the user document. Remove all sessions so those clients will have to authenticate with the new
-    # password.
-    await db.users.update_one({"_id": user_id}, {
-        "$set": {
-            "password": hashed,
-            "invalidate_sessions": False,
-            "last_password_change": last_password_change,
-            "force_reset": False
-        }
-    })
-
-    return json_response({"last_password_change": last_password_change})
 
 
 @protected()
@@ -139,10 +126,7 @@ async def get_api_keys(req):
 
     user_id = req["client"].user_id
 
-    api_keys = await db.keys.find({"user.id": user_id}, {"_id": False}).to_list(None)
-
-    for api_key in api_keys:
-        del api_key["user"]
+    api_keys = await db.keys.find({"user.id": user_id}, API_KEY_PROJECTION).to_list(None)
 
     return json_response(api_keys, status=200)
 
@@ -153,7 +137,7 @@ async def get_api_key(req):
     user_id = req["client"].user_id
     key_id = req.match_info.get("key_id")
 
-    document = await db.keys.find_one({"id": key_id, "user.id": user_id}, {"_id": False, "user": False})
+    document = await db.keys.find_one({"id": key_id, "user.id": user_id}, API_KEY_PROJECTION)
 
     if document is None:
         return not_found()
@@ -167,34 +151,27 @@ async def get_api_key(req):
     "permissions": {"type": "dict", "validator": virtool.validators.is_permission_dict}
 })
 async def create_api_key(req):
-    db, data = await unpack_request(req)
+    """
+    Create a new API key.
 
-    name = data["name"]
-
-    permissions = {key: False for key in virtool.users.PERMISSIONS}
-
-    permissions.update(data.get("permissions", {}))
+    """
+    db = req.app["db"]
+    data = req["data"]
 
     user_id = req["client"].user_id
 
-    existing_alt_ids = await db.keys.distinct("id")
+    name = data["name"]
 
-    suffix = 0
+    permissions = {
+        **{key: False for key in virtool.users.PERMISSIONS},
+        **data.get("permissions", {})
+    }
 
-    while True:
-        candidate = "{}_{}".format(name.lower(), suffix)
-
-        if candidate not in existing_alt_ids:
-            alt_id = candidate
-            break
-
-        suffix += 1
-
-    raw = virtool.users.get_api_key()
+    raw, hashed = virtool.db.account.get_api_key()
 
     document = {
-        "_id": virtool.users.hash_api_key(raw),
-        "id": alt_id,
+        "_id": hashed,
+        "id": await virtool.db.account.get_alternate_id(db, name),
         "name": name,
         "groups": req["client"].groups,
         "permissions": permissions,
@@ -223,7 +200,8 @@ async def create_api_key(req):
     "permissions": {"type": "dict", "validator": virtool.validators.is_permission_dict}
 })
 async def update_api_key(req):
-    db, data = await unpack_request(req)
+    db = req.app["db"]
+    data = req["data"]
 
     key_id = req.match_info.get("key_id")
 
@@ -234,13 +212,10 @@ async def update_api_key(req):
     if document is None:
         return not_found()
 
-    permissions = document["permissions"]
-
-    permissions.update(data["permissions"])
-
     document = await db.keys.find_one_and_update({"_id": document["_id"]}, {
         "$set": {
-            "permissions": permissions
+            **document["permissions"],
+            **data["permissions"]
         }
     }, return_document=ReturnDocument.AFTER, projection={"_id": False, "user": False})
 

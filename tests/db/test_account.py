@@ -1,17 +1,26 @@
+import pytest
+
 import virtool.db.account
+import virtool.db.users
+import virtool.users
+import virtool.utils
 
 
-async def test_update_settings(test_motor, bob):
-    """
-    Test that account settings can be updated.
+@pytest.mark.parametrize("validated", [True, False])
+@pytest.mark.parametrize("has_old", [True, False])
+async def test_compose_password_update(validated, has_old, test_motor):
 
-    """
-    await test_motor.users.insert_one(bob)
+    password = "hello_world"
 
-    bob["settings"] = dict(bob["settings"], show_ids=False)
+    # Will evaluate true if the passed username and password are correct.
+    if not await virtool.db.users.validate_credentials(db, user_id, old_password):
+        raise ValueError("Invalid credentials")
 
-    assert bob["settings"] == await virtool.db.account.update_settings(test_motor, "bob", {
-        "show_ids": False
-    })
-
-    assert await test_motor.users.find_one("bob") == bob
+    # Update the user document. Remove all sessions so those clients will have to authenticate with the new
+    # password.
+    return {
+        "password": virtool.users.hash_password(password),
+        "invalidate_sessions": False,
+        "last_password_change": virtool.utils.timestamp(),
+        "force_reset": False
+    }

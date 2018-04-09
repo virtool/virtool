@@ -1,6 +1,6 @@
 import pytest
 
-from virtool.users import check_password, PERMISSIONS
+import virtool.users
 
 
 async def test_get(spawn_client):
@@ -14,7 +14,7 @@ async def test_get(spawn_client):
         "groups": [],
         "id": "test",
         "last_password_change": "2015-10-06T20:00:00Z",
-        "permissions": {p: False for p in PERMISSIONS},
+        "permissions": {p: False for p in virtool.users.PERMISSIONS},
         "primary_group": "technician",
         "settings": {
             "quick_analyze_algorithm": "pathoscope_bowtie",
@@ -88,19 +88,23 @@ async def test_edit(error, spawn_client, resp_is):
         }
 
 
-class TestUpdateSettings:
+@pytest.mark.parametrize("invalid_input", [False, True])
+async def test_update_settings(invalid_input, spawn_client, resp_is):
+    """
+    Test that account settings can be updated at ``POST /account/settings`` and that requests to
+    ``POST /account/settings`` return 422 for invalid JSON fields.
 
-    async def test(self, spawn_client):
-        """
-        Test that account settings can be updated at ``POST /account/settings``.
+    """
+    client = await spawn_client(authorize=True)
 
-        """
-        client = await spawn_client(authorize=True)
+    data = {
+        "show_ids": False,
+        "foo_bar": True
+    }
 
-        resp = await client.patch("/api/account/settings", {
-            "show_ids": False
-        })
+    resp = await client.patch("/api/account/settings", data)
 
+    if invalid_input:
         assert resp.status == 200
 
         assert await resp.json() == {
@@ -109,20 +113,8 @@ class TestUpdateSettings:
             "show_versions": True,
             "quick_analyze_algorithm": "pathoscope_bowtie"
         }
-
-    async def test_invalid_input(self, spawn_client, resp_is):
-        """
-        Test that requests to ``POST /account/settings`` return 422 for invalid JSON fields.
-
-        """
-        client = await spawn_client(authorize=True)
-
-        resp = await client.patch("/api/account/settings", {
-            "show_ids": "yes",
-            "foo_bar": True
-        })
-
-        assert await resp_is.invalid_input(resp,  {
+    else:
+        assert await resp_is.invalid_input(resp, {
             "show_ids": ["must be of boolean type"],
             "foo_bar": ["unknown field"]
         })
@@ -145,7 +137,7 @@ class TestChangePassword:
 
         document = await client.db.users.find_one({"_id": "test"}, ["password"])
 
-        assert check_password("foo_bar_1", document["password"])
+        assert virtool.users.check_password("foo_bar_1", document["password"])
 
     async def test_too_short(self, spawn_client, resp_is):
         """
@@ -284,7 +276,7 @@ class TestCreateAPIKey:
                 "id": "test"
             },
             "groups": [],
-            "permissions": {p: False for p in PERMISSIONS}
+            "permissions": {p: False for p in virtool.users.PERMISSIONS}
         }
 
         if req_permissions:
@@ -334,7 +326,7 @@ class TestCreateAPIKey:
                 "id": "test"
             },
             "groups": [],
-            "permissions": {p: False for p in PERMISSIONS}
+            "permissions": {p: False for p in virtool.users.PERMISSIONS}
         }
 
         assert await client.db.keys.find_one({"id": "foobar_1"}) == expected
