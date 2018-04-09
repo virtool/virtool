@@ -19,7 +19,7 @@ import {
  * @const
  * @type {object}
  */
-const initialState = {
+export const initialState = {
     ready: false,
     oldPasswordError: false,
     apiKeys: null,

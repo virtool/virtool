@@ -1,4 +1,7 @@
-import reducer, { updateGroup } from "./reducer";
+import reducer, {
+    initialState as reducerInitialState,
+    updateGroup
+} from "./reducer";
 import {
     LIST_GROUPS,
     CREATE_GROUP,
@@ -8,11 +11,7 @@ import {
 
 describe("Groups Reducer", () => {
 
-    const initialState = {
-        list: null,
-        pending: false,
-        createError: false
-    };
+    const initialState = reducerInitialState;
     let state;
     let action;
     let result;

@@ -14,7 +14,7 @@ import {
  * @const
  * @type {object}
  */
-const initialState = {
+export const initialState = {
     documents: null,
     fileType: null,
     found_count: 0,

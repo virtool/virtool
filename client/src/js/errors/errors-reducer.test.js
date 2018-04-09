@@ -3,6 +3,7 @@ import reducer, {
     getErrorName,
     resetErrorName
 } from "./reducer";
+import { map } from "lodash-es";
 import {
     CLEAR_ERROR,
     CREATE_SAMPLE,
@@ -50,22 +51,50 @@ describe("Errors Reducer", () => {
         expect(result).toEqual(expected);
     });
 
-    it("should handle target _FAILED actions", () => {
-        state = {};
-        action = {
-            type: "CREATE_SAMPLE_FAILED",
-            status: 409,
-            message: "test action failed"
-        };
-        result = reducer(state, action);
-        expected = {
-            CREATE_SAMPLE_ERROR: {
-                status: 409,
-                message: "test action failed"
-            }
-        };
+    describe("should handle target _FAILED actions", () => {
 
-        expect(result).toEqual(expected);
+        const failedActions = [
+            "CREATE_SAMPLE",
+            "UPDATE_SAMPLE",
+            "CREATE_VIRUS",
+            "EDIT_VIRUS",
+            "ADD_ISOLATE",
+            "EDIT_ISOLATE",
+            "ADD_SEQUENCE",
+            "EDIT_SEQUENCE",
+            "CREATE_INDEX",
+            "CREATE_SUBTRACTION",
+            "UPDATE_ACCOUNT",
+            "CHANGE_ACCOUNT_PASSWORD",
+            "CREATE_USER",
+            "EDIT_USER",
+            "CREATE_GROUP"
+        ];
+
+        map(failedActions, (failedActionType) => {
+
+            it(failedActionType, () => {
+                state = {};
+                action = {
+                    type: failedActionType + "_FAILED",
+                    status: 409,
+                    message: "test action failed"
+                };
+                result = reducer(state, action);
+
+                const failedActionError = failedActionType + "_ERROR";
+
+                expected = {
+                    [failedActionError]: {
+                        status: 409,
+                        message: "test action failed"
+                    }
+                };
+
+                expect(result).toEqual(expected);
+            })
+
+        });
     });
 
     it("should report uncaught errors and return state", () => {
