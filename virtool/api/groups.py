@@ -109,10 +109,6 @@ async def remove(req):
 
     group_id = req.match_info["group_id"]
 
-    # The administrator is not permitted to be removed.
-    if group_id == "administrator":
-        return bad_request("Cannot remove administrator group")
-
     document = await db.groups.find_one_and_delete({"_id": group_id})
 
     if not document:

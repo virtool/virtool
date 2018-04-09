@@ -78,7 +78,7 @@ def calculate_algorithm_tags(analyses):
 
 
 def get_sample_rights(sample: dict, client):
-    if sample["user"]["id"] == client.user_id or "administrator" in client.groups:
+    if client.administrator or sample["user"]["id"] == client.user_id:
         return True, True
 
     is_group_member = sample["group"] and sample["group"] in client.groups

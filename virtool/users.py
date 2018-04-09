@@ -7,9 +7,7 @@ import virtool.utils
 PERMISSIONS = [
     "cancel_job",
     "create_sample",
-    "manage_users",
     "modify_hmm",
-    "modify_settings",
     "modify_subtraction",
     "modify_virus",
     "rebuild_index",
