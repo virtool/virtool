@@ -109,7 +109,7 @@ async def send_import_dispatches(dispatch, insertions, replacements, flush=False
     """
 
     if len(insertions) == 30 or (flush and insertions):
-        kind_updates, history_updates = zip(*insertions)
+        kinds_updates, history_updates = zip(*insertions)
 
         await dispatch("kinds", "update", kinds_updates)
         await dispatch("history", "update", history_updates)
