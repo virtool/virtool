@@ -63,7 +63,7 @@ async def setup_db(req):
         "db_name": {"type": "string", "coerce": lambda x: x if x else "virtool", "required": True, "empty": False}
     }, allow_unknown=False)
 
-    v(dict(data))
+    v.validate(dict(data))
 
     data = v.document
 
@@ -127,7 +127,7 @@ async def setup_user(req):
         "password_confirm": {"type": "string", "required": True},
     }, allow_unknown=False)
 
-    v(dict(data))
+    v.validate(dict(data))
 
     data = v.document
 
@@ -154,7 +154,7 @@ async def setup_data(req):
         "data_path": {"type": "string", "coerce": lambda x: x if x else "data", "required": True}
     }, allow_unknown=False)
 
-    v(dict(data))
+    v.validate(dict(data))
 
     data_path = v.document["data_path"]
 
@@ -203,7 +203,7 @@ async def setup_watch(req):
         "watch_path": {"type": "string", "coerce": lambda x: x if x else "watch", "required": True}
     }, allow_unknown=False)
 
-    v(dict(data))
+    v.validate(dict(data))
 
     watch_path = v.document["watch_path"]
 

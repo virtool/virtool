@@ -244,7 +244,7 @@ def validation(schema):
 
             data = await req.json()
 
-            if not v(data):
+            if not v.validate(data):
                 return invalid_input(v.errors)
 
             req["data"] = v.document

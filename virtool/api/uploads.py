@@ -26,7 +26,7 @@ async def upload(req):
         "name": {"type": "string", "required": True}
     }, allow_unknown=True)
 
-    if not v(dict(req.query)):
+    if not v.validate(dict(req.query)):
         return invalid_query(v.errors)
 
     reader = await req.multipart()

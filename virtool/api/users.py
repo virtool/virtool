@@ -49,7 +49,7 @@ async def create(req):
         "force_reset": {"type": "boolean", "default": True}
     })
 
-    if not v(data):
+    if not v.validate(data):
         return invalid_input(v.errors)
 
     user_id = data["user_id"]
@@ -81,7 +81,7 @@ async def edit(req):
         "primary_group": {"type": "string"}
     })
 
-    if not v(data):
+    if not v.validate(data):
         return invalid_input(v.errors)
 
     user_id = req.match_info["user_id"]
