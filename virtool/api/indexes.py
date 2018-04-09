@@ -93,71 +93,61 @@ async def get(req):
         }}
     ]).to_list(None)
 
-    document["viruses"] = [{"id": v["_id"], "name": v["name"], "change_count": v["count"]} for v in viruses]
+    document["kinds"] = [{"id": v["_id"], "name": v["name"], "change_count": v["count"]} for v in kinds]
 
-    document["change_count"] = sum(v["count"] for v in viruses)
+    document["change_count"] = sum(v["count"] for v in kinds)
 
     return json_response(document)
 
 
-async def get_unbuilt(req):
-    """
-    Get a JSON document describing the unbuilt changes that could be used to create a new index.
-
-    """
-    db = req.app["db"]
-
-    history = await db.history.find({"index.id": "unbuilt"}, virtool.db.history.LIST_PROJECTION).to_list(None)
-
-    return json_response({
-        "history": [virtool.utils.base_processor(c) for c in history]
-    })
-
-
-@protected("rebuild_index")
 async def create(req):
     """
-    Starts a job to rebuild the viruses Bowtie2 index on disk. Does a check to make sure there are no unverified
-    viruses in the collection and updates virus history to show the version and id of the new index.
+    Starts a job to rebuild the kindes Bowtie2 index on disk. Does a check to make sure there are no unverified
+    kinds in the collection and updates kind history to show the version and id of the new index.
 
     """
     db = req.app["db"]
 
-    if await db.indexes.count({"ready": False}):
+    ref_id = req.match_info["ref_id"]
+
+    if await db.indexes.count({"ref.id": ref_id, "ready": False}):
         return conflict("Index build already in progress")
 
-    if await db.viruses.count({"verified": False}):
-        return bad_request("There are unverified viruses")
+    if await db.kinds.count({"ref.id": ref_id, "verified": False}):
+        return bad_request("There are unverified kinds")
 
-    if not await db.history.count({"index.id": "unbuilt"}):
+    if not await db.history.count({"ref.id": ref_id, "index.id": "unbuilt"}):
         return bad_request("There are no unbuilt changes")
 
     index_id = await virtool.utils.get_new_id(db.indexes)
-    index_version = await virtool.db.indexes.get_current_index_version(db) + 1
+    index_version = await db.indexes.find({"ref.id": ref_id, "ready": True}).count()
 
     user_id = req["client"].user_id
 
     job_id = await virtool.utils.get_new_id(db.jobs)
 
-    # Generate a dict of virus document version numbers keyed by the document id. We use this to make sure only changes
+    # Generate a dict of kind document version numbers keyed by the document id. We use this to make sure only changes
     # made at the time the index rebuild was started are
-    virus_manifest = dict()
+    manifest = dict()
 
-    async for document in db.viruses.find({}, ["version"]):
-        virus_manifest[document["_id"]] = document["version"]
+    async for document in db.kinds.find({}, ["version"]):
+        manifest[document["_id"]] = document["version"]
 
     await db.indexes.insert_one({
         "_id": index_id,
         "version": index_version,
         "created_at": virtool.utils.timestamp(),
-        "manifest": virus_manifest,
+        "manifest": manifest,
         "ready": False,
         "has_files": True,
-        "user": {
-            "id": user_id
-        },
         "job": {
             "id": job_id
+        },
+        "ref": {
+            "id": ref_id
+        },
+        "user": {
+            "id": user_id
         }
     })
 
@@ -173,10 +163,11 @@ async def create(req):
 
     # A dict of task_args for the rebuild job.
     task_args = {
+        "ref_id": ref_id,
         "user_id": user_id,
         "index_id": index_id,
         "index_version": index_version,
-        "virus_manifest": virus_manifest
+        "manifest": manifest
     }
 
     # Start the job.
@@ -211,13 +202,13 @@ async def find_history(req):
     }
 
     if term:
-        db_query.update(compose_regex_query(term, ["virus.name", "user.id"]))
+        db_query.update(compose_regex_query(term, ["kind.name", "user.id"]))
 
     data = await paginate(
         db.history,
         db_query,
         req.query,
-        sort=[("virus.name", 1), ("virus.version", -1)],
+        sort=[("kind.name", 1), ("kind.version", -1)],
         projection=virtool.db.history.LIST_PROJECTION,
         reverse=True
     )
