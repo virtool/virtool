@@ -34,8 +34,8 @@ def check_source_type(settings, source_type):
     """
     Check if the provided `source_type` is valid based on the current server `settings`.
 
-    :param settings: a Virtool settings object
-    :type settings: :class:`.Settings`
+    :param settings: the application settings object
+    :type settings: :class:`virtool.app_settings.Settings`
 
     :param source_type: the source type to check
     :type source_type: str

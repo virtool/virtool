@@ -39,6 +39,7 @@ async def get_releases(db, settings, channel, server_version):
     :type db: :class:`~motor.motor_asyncio.AsyncIOMotorClient`
 
     :param settings: the application settings object
+    :type settings: :class:`virtool.app_settings.Settings`
 
     :param channel: the software channel to use
     :type channel: str

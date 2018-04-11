@@ -12,10 +12,18 @@ async def format_analysis(db, settings, document):
     """
     Format an analysis document to be returned by the API.
 
-    :param db:
-    :param settings:
-    :param document:
-    :return:
+    :param db: the application database client
+    :type db: :class:`~motor.motor_asyncio.AsyncIOMotorClient`
+
+    :param settings: the application settings object
+    :type settings: :class:`virtool.app_settings.Settings`
+
+    :param document: the analysis document to format
+    :type document: dict
+
+    :return: a formatted document
+    :rtype: dict
+
     """
     algorithm = document.get("algorithm", None)
 

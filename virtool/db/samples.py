@@ -79,8 +79,8 @@ async def remove_samples(db, settings, id_list):
     :param db: a Motor client
     :type db: :class:`.motor.motor_asyncio.AsyncIOMotorClient``
 
-    :param settings: a Virtool settings object
-    :type settings: :class:`.Settings`
+    :param settings: the application settings object
+    :type settings: :class:`virtool.app_settings.Settings`
 
     :param id_list: a list sample ids to remove
     :type id_list: list

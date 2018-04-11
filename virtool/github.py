@@ -65,6 +65,7 @@ async def download_asset(settings, url, size, target_path, progress_handler=None
     Download the GitHub release at ``url`` to the location specified by ``target_path``.
 
     :param settings: the application settings object
+    :type settings: :class:`virtool.app_settings.Settings`
 
     :param url: the download URL for the release
     :type url str

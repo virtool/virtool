@@ -273,6 +273,7 @@ async def initialize_ncbi_blast(settings, sequence):
     Send a request to NCBI to BLAST the passed sequence. Return the RID and RTOE from the response.
 
     :param settings: the application settings object
+    :type settings: :class:`virtool.app_settings.Settings`
 
     :param sequence: the nucleotide sequence to BLAST
     :type sequence: str
@@ -335,7 +336,8 @@ async def check_rid(settings, rid):
     :param rid: the RID to check
     :type rid: str
 
-    :param settings: the application setting object
+    :param settings: the application settings object
+    :type settings: :class:`virtool.app_settings.Settings`
 
     :return: ``True`` if ready, ``False`` otherwise
     :rtype: Coroutine[bool]

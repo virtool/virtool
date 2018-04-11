@@ -59,6 +59,7 @@ async def get_asset(settings, server_version, username, token):
     Get the asset information associated with the latest HMM release.
 
     :param settings: the application settings object
+    :type settings: :class:`virtool.app_settings.Settings`
 
     :param server_version: the current server version
     :type server_version: str
@@ -106,7 +107,7 @@ async def install_official(loop, db, settings, dispatch, server_version, usernam
     :param db: the application database client
     :type db: :class:`~motor.motor_asyncio.AsyncIOMotorClient`
 
-    :param settings: the application Settings object
+    :param settings: the application settings object
     :type settings: :class:`virtool.app_settings.Settings`
 
     :param dispatch: the application dispatch method
