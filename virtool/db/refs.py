@@ -5,8 +5,8 @@ import virtool.db
 import virtool.db.kinds
 import virtool.errors
 import virtool.kinds
+import virtool.refs
 import virtool.utils
-from virtool.refs import get_owner_user, verify_virus_list
 
 
 async def clone(db, name, user_id, source_id):
@@ -22,7 +22,7 @@ async def clone(db, name, user_id, source_id):
         source["organism"],
         user_id=user_id,
         data_type=source["data_type"],
-        users=[get_owner_user(user_id)],
+        users=[virtool.refs.get_owner_user(user_id)],
         cloned_from={
             "id": source["_id"]
         }
