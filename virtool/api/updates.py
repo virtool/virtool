@@ -26,7 +26,7 @@ async def get(req):
     return json_response(virtool.utils.base_processor(document))
 
 
-@protected("modify_settings")
+@protected()
 async def upgrade(req):
     db = req.app["db"]
     dispatch = req.app["dispatcher"].dispatch

@@ -9,7 +9,7 @@ from virtool.api.utils import bad_request, conflict, invalid_input, json_respons
     protected, validation
 
 
-@protected("manage_users")
+@protected()
 async def find(req):
     """
     Get a list of all user documents in the database.
@@ -20,7 +20,7 @@ async def find(req):
     return json_response([virtool.utils.base_processor(user) for user in users])
 
 
-@protected("manage_users")
+@protected()
 async def get(req):
     """
     Get a near-complete user document. Password data are removed.
@@ -34,7 +34,7 @@ async def get(req):
     return json_response(virtool.utils.base_processor(document))
 
 
-@protected("manage_users")
+@protected()
 async def create(req):
     """
     Add a new user to the user database.
@@ -70,7 +70,7 @@ async def create(req):
     )
 
 
-@protected("manage_users")
+@protected()
 async def edit(req):
     db = req.app["db"]
     data = await req.json()
@@ -103,7 +103,7 @@ async def edit(req):
     return json_response(virtool.utils.base_processor(document))
 
 
-@protected("manage_users")
+@protected()
 async def remove(req):
     """
     Remove a user.

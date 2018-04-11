@@ -14,7 +14,6 @@ async def get(req):
     return json_response(amended)
 
 
-@protected("modify_settings")
 @validation(virtool.app_settings.SCHEMA)
 async def update(req):
     """

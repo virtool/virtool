@@ -1,6 +1,6 @@
 import pytest
 
-import virtool.jobs.analysis
+import virtool.analyses
 
 
 @pytest.mark.parametrize("coverage,expected", [
@@ -14,7 +14,12 @@ import virtool.jobs.analysis
     )
 ])
 def test_collapse_pathoscope_coverage(coverage, expected):
-    assert virtool.jobs.analysis.coverage_to_coordinates(coverage) == expected
+    assert virtool.analyses.coverage_to_coordinates(coverage) == expected
+
+
+def test_get_nuvs_json_path():
+    path = virtool.analyses.get_nuvs_json_path("data_foo", "foobar", "baz")
+    assert path == "data_foo/samples/foobar/analysis/baz/nuvs.json"
 
 
 def test_simplify_coordinates():
@@ -50,7 +55,7 @@ def test_simplify_coordinates():
         (847.16, 458.44), (851.38, 462.79), (853.97, 471.15), (866.36, 480.77)
     ]
 
-    result = virtool.jobs.analysis.smooth_coverage_coordinates(points, tolerance=5)
+    result = virtool.analyses.smooth_coverage_coordinates(points, tolerance=5)
 
     assert result == [
         (224.55, 250.15), (267.76, 213.81), (296.91, 155.64), (330.33, 137.57),

@@ -12,7 +12,7 @@ from virtool.api.utils import bad_request, conflict, json_response, not_found, n
 logger = logging.getLogger(__name__)
 
 
-@protected("manage_users")
+@protected()
 async def find(req):
     """
     Get a list of all existing group documents.
@@ -23,7 +23,7 @@ async def find(req):
     return json_response([virtool.utils.base_processor(d) for d in documents])
 
 
-@protected("manage_users")
+@protected()
 @validation({
     "group_id": {
         "type": "string",
@@ -55,7 +55,7 @@ async def create(req):
     return json_response(virtool.utils.base_processor(document), status=201, headers=headers)
 
 
-@protected("manage_users")
+@protected()
 async def get(req):
     """
     Gets a complete group document.
@@ -69,7 +69,7 @@ async def get(req):
     return not_found()
 
 
-@protected("manage_users")
+@protected()
 @validation({key: {"type": "boolean"} for key in virtool.users.PERMISSIONS})
 async def update_permissions(req):
     """
@@ -99,7 +99,7 @@ async def update_permissions(req):
     return json_response(virtool.utils.base_processor(document))
 
 
-@protected("manage_users")
+@protected()
 async def remove(req):
     """
     Remove a group.
