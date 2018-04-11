@@ -2,14 +2,14 @@ import datetime
 
 import pytest
 
-import virtool.db
+import virtool.db.history
 
 
 class TestAdd:
 
-    async def test(self, test_motor, static_time, test_virus_edit, test_change):
+    async def test(self, test_motor, static_time, test_kind_edit, test_change):
 
-        old, new = test_virus_edit
+        old, new = test_kind_edit
 
         returned_change = await virtool.db.history.add(
             test_motor,
@@ -46,18 +46,18 @@ class TestAdd:
             "user": {
                 "id": "test"
             },
-            "species": {
+            "kind": {
                 "id": "6116cba1",
                 "name": "Prunus virus F",
                 "version": 1
             }
         }
 
-    async def test_create(self, test_motor, static_time, test_species_edit, test_change):
-        # There is no old document because this is a change document for a species creation operation.
+    async def test_create(self, test_motor, static_time, test_kind_edit, test_change):
+        # There is no old document because this is a change document for a kind creation operation.
         old = None
 
-        new, _ = test_species_edit
+        new, _ = test_kind_edit
 
         description = "Created {}".format(new["name"])
 
@@ -68,7 +68,7 @@ class TestAdd:
         # Update the base test_change document to verify the real added change document.
         test_change.update({
             "_id": "6116cba1.0",
-            "species": {
+            "kind": {
                 "id": "6116cba1",
                 "name": "Prunus virus F",
                 "version": 0
@@ -87,15 +87,15 @@ class TestAdd:
 
         assert returned_change == test_change
 
-    async def test_remove(self, test_motor, static_time, test_species_edit, test_change):
+    async def test_remove(self, test_motor, static_time, test_kind_edit, test_change):
         """
-        Test that the addition of a change due to species removal inserts the expected change document.
+        Test that the addition of a change due to kind removal inserts the expected change document.
 
         """
-        # There is no new document because this is a change document for a virus removal operation.
+        # There is no new document because this is a change document for a kind removal operation.
         new = None
 
-        old, _ = test_species_edit
+        old, _ = test_kind_edit
 
         description = "Removed {}".format(old["name"])
 
@@ -106,7 +106,7 @@ class TestAdd:
         # Update the base test_change document to verify the real added change document.
         test_change.update({
             "_id": "6116cba1.removed",
-            "species": {
+            "kind": {
                 "id": "6116cba1",
                 "name": "Prunus virus F",
                 "version": "removed"
@@ -126,40 +126,38 @@ class TestAdd:
         assert returned_change == test_change
 
 
-class TestPatchVirusToVersion:
+@pytest.mark.parametrize("remove", [True, False])
+async def test_patch_to_version(remove, test_motor, test_merged_kind, create_mock_history):
+    expected_current = await create_mock_history(remove)
 
-    @pytest.mark.parametrize("remove", [True, False])
-    async def test(self, remove, test_motor, test_merged_virus, create_mock_history):
-        expected_current = await create_mock_history(remove)
+    current, patched, reverted_change_ids = await virtool.db.history.patch_to_version(
+        test_motor,
+        "6116cba1",
+        1
+    )
 
-        current, patched, reverted_change_ids = await virtool.db.history.patch_virus_to_version(
-            test_motor,
-            "6116cba1",
-            1
-        )
+    assert current == expected_current
 
-        assert current == expected_current
+    assert patched == dict(test_merged_kind, abbreviation="TST", version=1)
 
-        assert patched == dict(test_merged_virus, abbreviation="TST", version=1)
+    expected_reverted_change_ids = ["6116cba1.3", "6116cba1.2"]
 
-        expected_reverted_change_ids = ["6116cba1.3", "6116cba1.2"]
+    if remove:
+        expected_reverted_change_ids = ["6116cba1.removed"] + expected_reverted_change_ids
 
-        if remove:
-            expected_reverted_change_ids = ["6116cba1.removed"] + expected_reverted_change_ids
-
-        assert reverted_change_ids == expected_reverted_change_ids
+    assert reverted_change_ids == expected_reverted_change_ids
 
 
-class TestGetMostRecentChange:
+@pytest.mark.parametrize("exists", [True, False])
+async def test_get_most_recent_change(exists, test_motor, static_time):
+    """
+    Test that the most recent change document is returned for the given ``kind_id``.
 
-    async def test(self, test_motor, static_time):
-        """
-        Test that the most recent change document is returned for the given ``virus_id``.
+    """
+    # First change is 3 days before the second
+    delta = datetime.timedelta(3)
 
-        """
-        # First change is 3 days before the second
-        delta = datetime.timedelta(3)
-
+    if exists:
         await test_motor.history.insert_many([
             {
                 "_id": "6116cba1.1",
@@ -169,7 +167,7 @@ class TestGetMostRecentChange:
                 "user": {
                     "id": "test"
                 },
-                "virus": {
+                "kind": {
                     "id": "6116cba1",
                     "name": "Prunus virus F",
                     "version": 1
@@ -186,7 +184,7 @@ class TestGetMostRecentChange:
                 "user": {
                     "id": "test"
                 },
-                "virus": {
+                "kind": {
                     "id": "6116cba1",
                     "name": "Prunus virus F",
                     "version": 1
@@ -197,8 +195,9 @@ class TestGetMostRecentChange:
             }
         ])
 
-        most_recent = await virtool.db.history.get_most_recent_change(test_motor, "6116cba1")
+    most_recent = await virtool.db.history.get_most_recent_change(test_motor, "6116cba1")
 
+    if exists:
         assert most_recent == {
             "_id": "6116cba1.2",
             "description": "Description number 2",
@@ -207,17 +206,11 @@ class TestGetMostRecentChange:
             "user": {
                 "id": "test"
             },
-            "virus": {
+            "kind": {
                 "id": "6116cba1",
                 "name": "Prunus virus F",
                 "version": 1
             }
         }
-
-    async def test_none(self, test_motor, static_time):
-        """
-        Test that ``None`` is returned if no change documents exist for the given ``virus_id``.
-
-        """
-        most_recent = await virtool.db.history.get_most_recent_change(test_motor, "6116cba1.1")
+    else:
         assert most_recent is None

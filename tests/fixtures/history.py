@@ -21,7 +21,7 @@ def test_change(static_time):
         "user": {
             "id": "test"
         },
-        "species": {
+        "kind": {
             "id": "6116cba1",
             "name": "Prunus virus F",
             "version": 1
@@ -39,9 +39,9 @@ def test_changes(test_change):
 
 
 @pytest.fixture
-def test_species_edit():
+def test_kind_edit():
     """
-    An :class:`tuple` containing old and new species documents for testing history diffing.
+    An :class:`tuple` containing old and new kind documents for testing history diffing.
 
     """
     return (
@@ -134,7 +134,7 @@ def create_mock_history(test_motor):
                                     "host": "sweet cherry",
                                     "isolate_id": "cab8b360",
                                     "sequence": "TGTTTAAGAGATTAAACAACCGCTTTC",
-                                    "species_id": "6116cba1",
+                                    "kind_id": "6116cba1",
                                     "segment": None
                                 }
                             ]
@@ -155,7 +155,7 @@ def create_mock_history(test_motor):
                 "user": {
                     "id": "test"
                 },
-                "species": {
+                "kind": {
                     "id": "6116cba1",
                     "name": "Prunus virus F",
                     "version": 0
@@ -177,7 +177,7 @@ def create_mock_history(test_motor):
                 "user": {
                     "id": "test"
                 },
-                "species": {
+                "kind": {
                     "id": "6116cba1",
                     "name": "Prunus virus F",
                     "version": 1
@@ -199,7 +199,7 @@ def create_mock_history(test_motor):
                 "user": {
                     "id": "test"
                 },
-                "species": {
+                "kind": {
                     "id": "6116cba1",
                     "name": "Prunus virus F",
                     "version": 2
@@ -221,7 +221,7 @@ def create_mock_history(test_motor):
                             "host": "sweet cherry",
                             "isolate_id": "cab8b360",
                             "sequence": "TGTTTAAGAGATTAAACAACCGCTTTC",
-                            "species_id": "6116cba1",
+                            "kind_id": "6116cba1",
                             "segment": None
                         }],
                         "source_name": "8816-v2",
@@ -235,7 +235,7 @@ def create_mock_history(test_motor):
                 "user": {
                     "id": "test"
                 },
-                "species": {
+                "kind": {
                     "id": "6116cba1",
                     "name": "Test Virus",
                     "version": 3
@@ -243,7 +243,7 @@ def create_mock_history(test_motor):
             }
         ]
 
-        species = None
+        kind = None
 
         if remove:
             documents.append({
@@ -270,14 +270,14 @@ def create_mock_history(test_motor):
                 "user": {
                     "id": "test"
                 },
-                "species": {
+                "kind": {
                     "id": "6116cba1",
                     "name": "Test Virus",
                     "version": "removed"
                 }
             })
         else:
-            species = {
+            kind = {
                 "_id": "6116cba1",
                 "abbreviation": "TST",
                 "imported": True,
@@ -290,10 +290,10 @@ def create_mock_history(test_motor):
                 "schema": [],
             }
 
-            await test_motor.species.insert_one(species)
+            await test_motor.kinds.insert_one(kind)
 
         await test_motor.history.insert_many(documents)
 
-        return species
+        return kind
 
     return func

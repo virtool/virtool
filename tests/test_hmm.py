@@ -10,7 +10,6 @@ from aiohttp.test_utils import make_mocked_coro
 
 import virtool.hmm
 
-
 TEST_FILE_PATH = os.path.join(sys.path[0], "tests", "test_files")
 
 

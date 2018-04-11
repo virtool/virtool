@@ -30,7 +30,7 @@ async def create(db, dispatch, filename, file_type, user_id=None):
 
     expires_at = None
 
-    if file_type == "viruses":
+    if file_type == "kinds":
         expires_at = arrow.get(uploaded_at).shift(hours=+5).datetime
 
     user = None

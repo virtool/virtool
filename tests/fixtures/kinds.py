@@ -22,7 +22,7 @@ def import_data(import_data_file):
 
 
 @pytest.fixture
-def test_species():
+def test_kind():
     return {
         "version": 0,
         "abbreviation": "PVF",
@@ -60,7 +60,7 @@ def test_sequence():
         "_id": "KX269872",
         "definition": "Prunus virus F isolate 8816-s2 segment RNA2 polyprotein 2 gene, complete cds.",
         "host": "sweet cherry",
-        "species_id": "6116cba1",
+        "kind_id": "6116cba1",
         "isolate_id": "cab8b360",
         "sequence": "TGTTTAAGAGATTAAACAACCGCTTTC",
         "segment": None
@@ -68,7 +68,7 @@ def test_sequence():
 
 
 @pytest.fixture
-def test_merged_species():
+def test_merged_kind():
     return {
         "version": 0,
         "abbreviation": "PVF",
@@ -80,7 +80,7 @@ def test_merged_species():
                 "sequences": [
                     {
                         "_id": "KX269872",
-                        "species_id": "6116cba1",
+                        "kind_id": "6116cba1",
                         "isolate_id": "cab8b360",
                         "definition": "Prunus virus F isolate 8816-s2 segment RNA2 polyprotein 2 gene, complete cds.",
                         "host": "sweet cherry",
@@ -119,32 +119,32 @@ def import_json(import_json_from_file):
 
 
 @pytest.fixture
-def test_species_list(test_merged_species):
-    first_species = test_merged_species
-    second_species, third_species, fourth_species = (copy.deepcopy(test_merged_species) for _ in range(3))
+def test_kind_list(test_merged_kind):
+    first_kind = test_merged_kind
+    second_kind, third_kind, fourth_kind = (copy.deepcopy(test_merged_kind) for _ in range(3))
 
-    second_species.update({
+    second_kind.update({
         "_id": "067jz0t3",
         "abbreviation": "TST",
         "name": "Test Virus"
     })
 
-    third_species.update({
+    third_kind.update({
         "_id": "067jz213",
         "abbreviation": "EXV",
         "name": "Example Virus"
     })
 
-    fourth_species.update({
+    fourth_kind.update({
         "_id": "067jz1kj",
         "abbreviation": "FKV",
         "name": "Fake Virus"
     })
 
-    for prefix, species in [("second", second_species), ("third", third_species), ("fourth", fourth_species)]:
-        for i, isolate in enumerate(species["isolates"]):
+    for prefix, kind in [("second", second_kind), ("third", third_kind), ("fourth", fourth_kind)]:
+        for i, isolate in enumerate(kind["isolates"]):
             isolate["id"] = "{}_{}".format(prefix, i)
             isolate["sequences"][0]["isolate_id"] = isolate["id"]
             isolate["sequences"][0]["_id"] = "{}_seq_{}".format(prefix, i)
 
-    return [first_species, second_species, third_species, fourth_species]
+    return [first_kind, second_kind, third_kind, fourth_kind]
