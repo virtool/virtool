@@ -5,10 +5,6 @@ import virtool.groups
 import virtool.utils
 
 
-def processor(document):
-    return virtool.utils.base_processor(document)
-
-
 async def get_merged_permissions(db, id_list):
     groups = await db.groups.find({
         "_id": {
