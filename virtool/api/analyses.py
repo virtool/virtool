@@ -3,12 +3,10 @@ Provides request handlers for managing and viewing analyses.
 
 """
 import asyncio
-import json
-import os
 
-import aiofiles
-
+import virtool.analyses
 import virtool.bio
+import virtool.db.analyses
 import virtool.errors
 import virtool.jobs.analysis
 import virtool.samples
@@ -31,25 +29,7 @@ async def get(req):
         return not_found()
 
     if document["ready"]:
-
-        if document["algorithm"] == "nuvs" and document["results"] == "file":
-
-            sample_id = document["sample"]["id"]
-
-            path = os.path.join(
-                req.app["settings"].get("data_path"),
-                "samples",
-                sample_id,
-                "analysis",
-                analysis_id,
-                "nuvs.json"
-            )
-
-            async with aiofiles.open(path, "r") as f:
-                json_string = await f.read()
-                document["results"] = json.loads(json_string)
-
-        document = await virtool.jobs.analysis.format_analysis(db, document)
+        document = await virtool.db.analyses.format_analysis(req.app["settings"], document)
 
     return json_response(virtool.utils.base_processor(document))
 
@@ -135,7 +115,7 @@ async def blast(req):
         }
     })
 
-    formatted = await virtool.jobs.analysis.format_analysis(db, document)
+    formatted = await virtool.analyses.format_analysis(db, document)
 
     await req.app["dispatcher"].dispatch("analyses", "update", virtool.utils.base_processor(formatted))
 

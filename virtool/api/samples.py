@@ -3,6 +3,7 @@ from copy import deepcopy
 from cerberus import Validator
 from pymongo import ReturnDocument
 
+import virtool.db.analyses
 import virtool.db.files
 import virtool.db.samples
 import virtool.jobs.analysis
@@ -348,7 +349,7 @@ async def analyze(req):
         return not_found("Ready index not found")
 
     # Generate a unique _id for the analysis entry
-    document = await virtool.jobs.analysis.new(
+    document = await virtool.db.analyses.new(
         db,
         req.app["settings"],
         req.app["job_manager"],

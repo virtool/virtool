@@ -7,6 +7,7 @@ import zipfile
 import aiohttp
 import pymongo
 
+import virtool.analyses
 import virtool.errors
 import virtool.http.proxy
 import virtool.jobs.analysis
@@ -455,6 +456,6 @@ async def wait_for_blast_result(db, settings, dispatch, analysis_id, sequence_in
             }
         }, return_document=pymongo.ReturnDocument.AFTER)
 
-        formatted = await virtool.jobs.analysis.format_analysis(db, document)
+        formatted = await virtool.analyses.format_analysis(db, document)
 
         await dispatch("analyses", "update", virtool.utils.base_processor(formatted))
