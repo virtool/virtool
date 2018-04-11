@@ -4,6 +4,8 @@ Provides request handlers for file downloads.
 """
 from aiohttp import web
 
+import virtool.bio
+import virtool.db.downloads
 import virtool.kinds
 
 
@@ -12,26 +14,10 @@ async def download_sequence(req):
 
     sequence_id = req.match_info["sequence_id"]
 
-    sequence = await db.sequences.find_one(sequence_id, ["sequence", "virus_id", "isolate_id"])
+    fasta = await virtool.db.downloads.generate_sequence_fasta(db, sequence_id)
 
-    if sequence is None:
+    if fasta is None:
         return web.Response(status=404)
-
-    virus = await db.viruses.find_one({"_id": sequence["virus_id"]}, ["name", "isolates"])
-
-    if virus is None:
-        return web.Response(status=404)
-
-    isolate = virtool.kinds.find_isolate(virus["isolates"], sequence["isolate_id"])
-
-    if isolate is None:
-        return web.Response(status=404)
-
-    isolate_name = virtool.kinds.format_isolate_name(isolate)
-
-    seq = sequence["sequence"]
-
-    fasta = ">{}|{}|{}|{}\n{}".format(virus["name"], isolate_name, sequence["_id"], len(seq), seq)
 
     return web.Response(text=fasta, headers={
         "Content-Disposition": "attachment; filename='{}.{}.{}.fa'".format(
@@ -94,7 +80,12 @@ async def download_virus_sequences(req):
 
         async for sequence in db.sequences.find({"isolate_id": isolate["id"]}, ["sequence"]):
             seq = sequence["sequence"]
-            fasta.append(">{}|{}|{}|{}\n{}".format(virus["name"], isolate_name, sequence["_id"], len(seq), seq))
+            fasta.append(virtool.downloads.format_fasta_entry(
+                virus["name"],
+                isolate_name,
+                sequence["_id"],
+                seq
+            ))
 
     fasta = "\n".join(fasta)
 
