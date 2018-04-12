@@ -10,6 +10,11 @@ from virtool.api.utils import json_response, not_found, paginate, protected
 
 
 async def find(req):
+    """
+    Find files based on an optional text query that is matched against file names. Only ready, unreserved files are
+    returned.
+
+    """
     db = req.app["db"]
 
     base_query = {
