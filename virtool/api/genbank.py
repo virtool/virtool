@@ -2,11 +2,9 @@
 Provides request handlers for managing and viewing analyses.
 
 """
-import re
-import string
-
 import aiohttp
 
+import virtool.genbank
 import virtool.http.proxy
 from virtool.api.utils import json_response, not_found
 
@@ -18,69 +16,14 @@ async def get(req):
 
     """
     accession = req.match_info["accession"]
-
-    tool = "Virtool"
-    email = "igboyes@virtool.ca"
-
     settings = req.app["settings"]
 
     async with aiohttp.ClientSession() as session:
+        gi = await virtool.genbank.search(settings, session, accession)
 
-        params = {
-            "db": "nucleotide",
-            "term": "{}[accn]".format(accession),
-            "tool": tool,
-            "email": email
-        }
+        if not gi:
+            return not_found()
 
-        search_url = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi"
+        data = await virtool.genbank.fetch(settings, session, gi)
 
-        async with virtool.http.proxy.ProxyRequest(settings, session.get, search_url, params=params) as search_resp:
-            data = await search_resp.text()
-            match = re.search("<Id>([0-9]+)</Id>", data)
-
-            if match:
-                gi = match.group(1)
-
-        if gi:
-            fetch_url = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi"
-
-            fetch_params = {
-                "db": "nuccore",
-                "id": gi,
-                "rettype": "gb",
-                "retmode": "text",
-                "tool": tool,
-                "email": email
-            }
-
-            async with virtool.http.proxy.ProxyRequest(settings, session.get, fetch_url, params=fetch_params) as fetch_resp:
-
-                body = await fetch_resp.text()
-
-                data = {
-                    "host": ""
-                }
-
-                for line in body.split("\n"):
-
-                    if line.startswith("VERSION"):
-                        data["accession"] = line.replace("VERSION", "").lstrip(" ")
-
-                    if line.startswith("DEFINITION"):
-                        data["definition"] = line.replace("DEFINITION", "").lstrip(" ")
-
-                    if "/host=" in line:
-                        data["host"] = line.lstrip(" ").replace("/host=", "").replace('"', "")
-
-                    # Extract sequence
-                    sequence_field = body.split("ORIGIN")[1].lower()
-
-                    for char in [" ", "/", "\n"] + list(string.digits):
-                        sequence_field = sequence_field.replace(char, "")
-
-                    data["sequence"] = sequence_field.upper()
-
-                return json_response(data)
-
-    return not_found()
+        return json_response(data)
