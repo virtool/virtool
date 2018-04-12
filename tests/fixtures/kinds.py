@@ -40,6 +40,9 @@ def test_kind():
         "verified": False,
         "name": "Prunus virus F",
         "schema": [],
+        "ref": {
+            "id": "abc12345"
+        },
         "_id": "6116cba1"
     }
 

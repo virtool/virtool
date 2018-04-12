@@ -18,6 +18,9 @@ def test_change(static_time):
             "id": "unbuilt",
             "version": "unbuilt"
         },
+        "ref": {
+            "id": "hxn167"
+        },
         "user": {
             "id": "test"
         },
@@ -140,6 +143,9 @@ def create_mock_history(test_motor):
                             ]
                         }
                     ],
+                    "ref": {
+                        "id": "hxn167"
+                    },
                     "schema": [],
                     "last_indexed_version": 0,
                     "lower_name": "prunus virus f",
@@ -154,6 +160,9 @@ def create_mock_history(test_motor):
                 "method_name": "create",
                 "user": {
                     "id": "test"
+                },
+                "ref": {
+                    "id": "hxn167"
                 },
                 "kind": {
                     "id": "6116cba1",
@@ -177,6 +186,9 @@ def create_mock_history(test_motor):
                 "user": {
                     "id": "test"
                 },
+                "ref": {
+                    "id": "hxn167"
+                },
                 "kind": {
                     "id": "6116cba1",
                     "name": "Prunus virus F",
@@ -198,6 +210,9 @@ def create_mock_history(test_motor):
                 "method_name": "update",
                 "user": {
                     "id": "test"
+                },
+                "ref": {
+                    "id": "hxn167"
                 },
                 "kind": {
                     "id": "6116cba1",
@@ -235,6 +250,9 @@ def create_mock_history(test_motor):
                 "user": {
                     "id": "test"
                 },
+                "ref": {
+                    "id": "hxn167"
+                },
                 "kind": {
                     "id": "6116cba1",
                     "name": "Test Virus",
@@ -259,12 +277,18 @@ def create_mock_history(test_motor):
                     "lower_name": "prunus virus f",
                     "verified": False,
                     "name": "Test Virus",
+                    "ref": {
+                        "id": "hxn167"
+                    },
                     "version": 3,
                     "schema": [],
                 },
                 "index": {
                     "id": "unbuilt",
                     "version": "unbuilt"
+                },
+                "ref": {
+                    "id": "hxn167"
                 },
                 "method_name": "remove",
                 "user": {
@@ -286,11 +310,22 @@ def create_mock_history(test_motor):
                 "lower_name": "prunus virus f",
                 "verified": False,
                 "name": "Test Virus",
+                "ref": {
+                    "id": "hxn167"
+                },
                 "version": 3,
                 "schema": [],
             }
 
             await test_motor.kinds.insert_one(kind)
+
+        await test_motor.history.insert_many(documents)
+
+        for document in documents:
+            document.update({
+                "_id": "baz.{}".format(document["_id"].split(".")[1]),
+                "ref": {"id": "foobar"}
+            })
 
         await test_motor.history.insert_many(documents)
 
