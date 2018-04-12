@@ -5,7 +5,7 @@ from aiohttp import web
 
 import virtool.utils
 import virtool.http.login
-from virtool.api import root, jobs, samples, viruses, history, hmm, subtraction, settings, account, groups, users,\
+from virtool.api import root, jobs, samples, kinds, history, hmm, subtraction, settings, account, groups, users,\
     genbank, status, websocket, resources, analyses, indexes, files, uploads, downloads, updates
 
 
@@ -58,7 +58,7 @@ def setup_routes(app):
     setup_jobs_routes(app)
     setup_samples_routes(app)
     setup_analyses_routes(app)
-    setup_viruses_routes(app)
+    setup_kinds_routes(app)
     setup_ncbi_routes(app)
     setup_indexes_routes(app)
     setup_history_routes(app)
@@ -77,7 +77,7 @@ def setup_basic_routes(app):
         r"/home{suffix:.*}",
         r"/jobs{suffix:.*}",
         r"/samples{suffix:.*}",
-        r"/viruses{suffix:.*}",
+        r"/kinds{suffix:.*}",
         r"/hmm{suffix:.*}",
         r"/subtraction{suffix:.*}",
         r"/settings{suffix:.*}",
@@ -92,16 +92,16 @@ def setup_basic_routes(app):
 
 
 def setup_file_routes(app):
-    app.router.add_post("/upload/viruses", uploads.upload)
+    app.router.add_post("/upload/kinds", uploads.upload)
     app.router.add_post("/upload/reads", uploads.upload)
     app.router.add_post("/upload/hmm/profiles", uploads.upload)
     app.router.add_post("/upload/hmm/annotations", uploads.upload)
     app.router.add_post("/upload/subtraction", uploads.upload)
 
-    app.router.add_get("/download/viruses", viruses.export)
-    app.router.add_get("/download/viruses/{virus_id}", downloads.download_virus_sequences)
+    app.router.add_get("/download/kinds", kinds.export)
+    app.router.add_get("/download/kinds/{kind_id}", downloads.download_kind)
     app.router.add_get("/download/sequences/{sequence_id}", downloads.download_sequence)
-    app.router.add_get("/download/viruses/{virus_id}/isolates/{isolate_id}", downloads.download_isolate_sequences)
+    app.router.add_get("/download/kinds/{kind_id}/isolates/{isolate_id}", downloads.download_isolate)
 
 
 def setup_basic_api_routes(app):
@@ -143,27 +143,27 @@ def setup_analyses_routes(app):
     app.router.add_put("/api/analyses/{analysis_id}/{sequence_index}/blast", analyses.blast)
 
 
-def setup_viruses_routes(app):
-    app.router.add_get("/api/viruses", viruses.find)
-    app.router.add_get("/api/viruses/import", viruses.get_import)
-    app.router.add_post("/api/viruses/import", viruses.import_viruses)
-    app.router.add_get("/api/viruses/{virus_id}", viruses.get)
-    app.router.add_post("/api/viruses", viruses.create)
-    app.router.add_patch("/api/viruses/{virus_id}", viruses.edit)
-    app.router.add_delete("/api/viruses/{virus_id}", viruses.remove)
-    app.router.add_get("/api/viruses/{virus_id}/isolates", viruses.list_isolates)
-    app.router.add_get("/api/viruses/{virus_id}/isolates/{isolate_id}", viruses.get_isolate)
-    app.router.add_post("/api/viruses/{virus_id}/isolates", viruses.add_isolate)
-    app.router.add_patch("/api/viruses/{virus_id}/isolates/{isolate_id}", viruses.edit_isolate)
-    app.router.add_put("/api/viruses/{virus_id}/isolates/{isolate_id}/default", viruses.set_as_default)
-    app.router.add_delete("/api/viruses/{virus_id}/isolates/{isolate_id}", viruses.remove_isolate)
-    app.router.add_get("/api/viruses/{virus_id}/isolates/{isolate_id}/sequences", viruses.list_sequences)
-    app.router.add_post("/api/viruses/{virus_id}/isolates/{isolate_id}/sequences", viruses.create_sequence)
-    app.router.add_get("/api/viruses/{virus_id}/isolates/{isolate_id}/sequences/{sequence_id}", viruses.get_sequence)
-    app.router.add_patch("/api/viruses/{virus_id}/isolates/{isolate_id}/sequences/{sequence_id}", viruses.edit_sequence)
-    app.router.add_delete("/api/viruses/{virus_id}/isolates/{isolate_id}/sequences/{sequence_id}",
-                          viruses.remove_sequence)
-    app.router.add_get("/api/viruses/{virus_id}/history", viruses.list_history)
+def setup_kinds_routes(app):
+    app.router.add_get("/api/kinds", kinds.find)
+    app.router.add_get("/api/kinds/import", kinds.get_import)
+    app.router.add_post("/api/kinds/import", kinds.import_kinds)
+    app.router.add_get("/api/kinds/{kind_id}", kinds.get)
+    app.router.add_post("/api/kinds", kinds.create)
+    app.router.add_patch("/api/kinds/{kind_id}", kinds.edit)
+    app.router.add_delete("/api/kinds/{kind_id}", kinds.remove)
+    app.router.add_get("/api/kinds/{kind_id}/isolates", kinds.list_isolates)
+    app.router.add_get("/api/kinds/{kind_id}/isolates/{isolate_id}", kinds.get_isolate)
+    app.router.add_post("/api/kinds/{kind_id}/isolates", kinds.add_isolate)
+    app.router.add_patch("/api/kinds/{kind_id}/isolates/{isolate_id}", kinds.edit_isolate)
+    app.router.add_put("/api/kinds/{kind_id}/isolates/{isolate_id}/default", kinds.set_as_default)
+    app.router.add_delete("/api/kinds/{kind_id}/isolates/{isolate_id}", kinds.remove_isolate)
+    app.router.add_get("/api/kinds/{kind_id}/isolates/{isolate_id}/sequences", kinds.list_sequences)
+    app.router.add_post("/api/kinds/{kind_id}/isolates/{isolate_id}/sequences", kinds.create_sequence)
+    app.router.add_get("/api/kinds/{kind_id}/isolates/{isolate_id}/sequences/{sequence_id}", kinds.get_sequence)
+    app.router.add_patch("/api/kinds/{kind_id}/isolates/{isolate_id}/sequences/{sequence_id}", kinds.edit_sequence)
+    app.router.add_delete("/api/kinds/{kind_id}/isolates/{isolate_id}/sequences/{sequence_id}",
+                          kinds.remove_sequence)
+    app.router.add_get("/api/kinds/{kind_id}/history", kinds.list_history)
 
 
 def setup_ncbi_routes(app):
