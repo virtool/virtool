@@ -1,4 +1,5 @@
 import virtool.db.history
+import virtool.errors
 import virtool.history
 import virtool.kinds
 import virtool.utils
@@ -50,41 +51,15 @@ async def revert(req):
 
     change_id = req.match_info["change_id"]
 
-    change = await db.history.find_one({"_id": change_id}, ["index"])
+    try:
+        await virtool.db.history.revert(db, change_id)
+    except virtool.errors.DatabaseError as err:
+        err_string = str(err)
 
-    if not change:
-        return not_found()
+        if "Change does not exist" in err_string:
+            return not_found()
 
-    if change["index"]["id"] != "unbuilt" or change["index"]["version"] != "unbuilt":
-        return conflict("Not unbuilt")
-
-    kind_id, kind_version = change_id.split(".")
-
-    if kind_version != "removed":
-        kind_version = int(kind_version)
-
-    _, patched, history_to_delete = await virtool.db.history.patch_to_version(
-        db,
-        kind_id,
-        kind_version - 1
-    )
-
-    # Remove the old sequences from the collection.
-    await db.sequences.delete_many({"kind_id": kind_id})
-
-    if patched is not None:
-        patched_kind, sequences = virtool.kinds.split(patched)
-
-        # Add the reverted sequences to the collection.
-        if len(sequences):
-            await db.sequences.insert_many(sequences)
-
-        # Replace the existing kind with the patched one. If it doesn't exist, insert it.
-        await db.kinds.replace_one({"_id": kind_id}, patched_kind, upsert=True)
-
-    else:
-        await db.kinds.delete_one({"_id": kind_id})
-
-    await db.history.delete_many({"_id": {"$in": history_to_delete}})
+        if "Change is already built" in err_string:
+            return conflict("Change is already built")
 
     return no_content()

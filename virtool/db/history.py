@@ -3,6 +3,7 @@ from copy import deepcopy
 import dictdiffer
 
 import virtool.db.kinds
+import virtool.errors
 import virtool.kinds
 import virtool.utils
 import virtool.history
@@ -174,3 +175,53 @@ async def patch_to_version(db, kind_id, version):
         current = None
 
     return current, patched, reverted_history_ids
+
+
+async def revert(db, change_id):
+    """
+    Revert a history change given by the passed ``change_id``.
+
+    :param db: the application database client
+    :type db: :class:`~motor.motor_asyncio.AsyncIOMotorClient`
+
+    :param change_id: a unique id for the cah
+    :return:
+    """
+    change = await db.history.find_one({"_id": change_id}, ["index"])
+
+    if not change:
+        raise virtool.errors.DatabaseError("Change does not exist")
+
+    if change["index"]["id"] != "unbuilt" or change["index"]["version"] != "unbuilt":
+        raise virtool.errors.DatabaseError("Change is included in a build an not revertible")
+
+    kind_id, kind_version = change_id.split(".")
+
+    if kind_version != "removed":
+        kind_version = int(kind_version)
+
+    _, patched, history_to_delete = await patch_to_version(
+        db,
+        kind_id,
+        kind_version - 1
+    )
+
+    # Remove the old sequences from the collection.
+    await db.sequences.delete_many({"kind_id": kind_id})
+
+    if patched is not None:
+        patched_kind, sequences = virtool.kinds.split(patched)
+
+        # Add the reverted sequences to the collection.
+        if len(sequences):
+            await db.sequences.insert_many(sequences)
+
+        # Replace the existing kind with the patched one. If it doesn't exist, insert it.
+        await db.kinds.replace_one({"_id": kind_id}, patched_kind, upsert=True)
+
+    else:
+        await db.kinds.delete_one({"_id": kind_id})
+
+    await db.history.delete_many({"_id": {"$in": history_to_delete}})
+
+    return patched
