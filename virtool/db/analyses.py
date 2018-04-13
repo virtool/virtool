@@ -2,6 +2,7 @@ import aiofiles
 import json
 
 import virtool.analyses
+import virtool.bio
 import virtool.db.history
 import virtool.db.indexes
 import virtool.db.samples
@@ -134,7 +135,6 @@ async def format_pathoscope(db, document):
     return document
 
 
-
 async def new(db, settings, manager, sample_id, ref_id, user_id, algorithm):
     """
     Creates a new analysis. Ensures that a valid subtraction host was the submitted. Configures read and write
@@ -142,7 +142,7 @@ async def new(db, settings, manager, sample_id, ref_id, user_id, algorithm):
 
     """
     # Get the current id and version of the kind index currently being used for analysis.
-    index_id, index_version = await virtool.db.indexes.get_current_index(db, ref_id)
+    index_id, index_version = await virtool.db.indexes.get_current_id_and_version(db, ref_id)
 
     sample = await db.samples.find_one(sample_id, ["name"])
 
@@ -225,3 +225,30 @@ async def new(db, settings, manager, sample_id, ref_id, user_id, algorithm):
     await virtool.db.samples.recalculate_algorithm_tags(db, sample_id)
 
     return document
+
+
+async def update_nuvs_blast(db, settings, analysis_id, sequence_index, rid):
+    """
+    Update the BLAST data for a sequence in a NuVs analysis.
+
+    :param db:
+
+    :param analysis_id:
+    :param sequence_index:
+    :param rid:
+    :return:
+
+    """
+    # Do initial check of RID to populate BLAST embedded document.
+    data = {
+        "rid": rid,
+        "ready": await virtool.bio.check_rid(settings, rid),
+        "last_checked_at": virtool.utils.timestamp(),
+        "interval": 3
+    }
+
+    document = await db.analyses.find_one_and_update({"_id": analysis_id, "results.index": sequence_index}, {
+        "$set": {
+            "results.$.blast": data
+        }
+    })

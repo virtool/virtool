@@ -73,49 +73,30 @@ async def blast(req):
 
     """
     db = req.app["db"]
+    settings = req.app["settings"]
 
     analysis_id = req.match_info["analysis_id"]
     sequence_index = int(req.match_info["sequence_index"])
 
-    analysis = await db.analyses.find_one({"_id": analysis_id}, ["ready", "algorithm", "results"])
+    document = await db.analyses.find_one({"_id": analysis_id}, ["ready", "algorithm", "results"])
 
-    if not analysis:
+    if not document:
         return not_found("Analysis not found")
 
-    if analysis["algorithm"] != "nuvs":
+    if document["algorithm"] != "nuvs":
         return bad_request("Not a NuVs analysis")
 
-    if not analysis["ready"]:
+    if not document["ready"]:
         return conflict("Analysis is still running")
 
-    sequences = [result["sequence"] for result in analysis["results"] if result["index"] == int(sequence_index)]
-
-    # Empty sequences list means sequence was not found.
-    if not sequences:
-        return not_found("Sequence not found")
-
-    # Raise exception if more than one sequence has the provided index. This should never happen, just being careful.
-    if len(sequences) > 1:
-        raise ValueError("More than one sequence with index {}".format(sequence_index))
+    sequence = virtool.analyses.get_nuvs_sequence_by_index(document, sequence_index)
 
     # Start a BLAST at NCBI with the specified sequence. Return a RID that identifies the BLAST run.
-    rid, _ = await virtool.bio.initialize_ncbi_blast(req.app["settings"], sequences[0])
+    rid, _ = await virtool.bio.initialize_ncbi_blast(req.app["settings"], sequence)
 
-    # Do initial check of RID to populate BLAST embedded document.
-    data = {
-        "rid": rid,
-        "ready": await virtool.bio.check_rid(req.app["settings"], rid),
-        "last_checked_at": virtool.utils.timestamp(),
-        "interval": 3
-    }
+    document = await virtool.db.analyses.update_nuvs_blast(db, settings, analysis_id, sequence_index, rid)
 
-    document = await db.analyses.find_one_and_update({"_id": analysis_id, "results.index": sequence_index}, {
-        "$set": {
-            "results.$.blast": data
-        }
-    })
-
-    formatted = await virtool.analyses.format_analysis(db, document)
+    formatted = await virtool.db.analyses.format_analysis(db, settings, document)
 
     await req.app["dispatcher"].dispatch("analyses", "update", virtool.utils.base_processor(formatted))
 

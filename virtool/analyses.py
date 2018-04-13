@@ -1,9 +1,4 @@
-import aiofiles
-import json
 import os
-
-import virtool.db.history
-import virtool.jobs.analysis
 
 
 def coverage_to_coordinates(coverage_list):
@@ -33,6 +28,33 @@ def get_nuvs_json_path(data_path, analysis_id, sample_id):
         sample_id,
         "nuvs.json"
     )
+
+
+def get_nuvs_sequence_by_index(document, sequence_index):
+    """
+    Get a sequence from a NuVs analysis document by its sequence index.
+
+    :param document: a NuVs analysis document
+    :type document: dict
+
+    :param sequence_index: the index of the sequence to get
+    :type sequence_index: int
+
+    :return: a NuVs sequence
+    :rtype: Union[None, dict]
+
+    """
+    sequences = [result["sequence"] for result in document["results"] if result["index"] == int(sequence_index)]
+
+    # Empty sequences list means sequence was not found.
+    if not sequences:
+        return None
+
+    # Raise exception if more than one sequence has the provided index. This should never happen, just being careful.
+    if len(sequences) > 1:
+        raise ValueError("More than one sequence with index {}".format(sequence_index))
+
+    return sequences[0]
 
 
 def get_square_distance(p1, p2):
