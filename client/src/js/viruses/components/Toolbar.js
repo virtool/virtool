@@ -23,13 +23,6 @@ const VirusToolbar = ({ canModify, onFind, term, onFilter, search }) => (
             </div>
         </div>
 
-        <LinkContainer to="/viruses/indexes">
-            <Button
-                icon="filing"
-                tip="Indexes"
-            />
-        </LinkContainer>
-
         <Button
             tip="Filter Unverified"
             onClick={() => onFilter("/viruses?verified=false")}

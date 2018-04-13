@@ -103,10 +103,6 @@ const SubtractionList = (props) => {
                     </InputGroup>
                 </FormGroup>
 
-                <LinkContainer to="/subtraction/files">
-                    <Button icon="folder-open" tip="Files" />
-                </LinkContainer>
-
                 {props.canModify ? (
                     <LinkContainer to={{state: {createSubtraction: true}}}>
                         <Button bsStyle="primary" icon="new-entry" tip="Create" />
