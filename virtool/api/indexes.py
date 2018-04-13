@@ -14,10 +14,6 @@ async def find(req):
     """
     db = req.app["db"]
 
-    unbuilt_modified_kind_count = len(await db.history.distinct("kind.id", {"index.id": "unbuilt"}))
-
-    total_kind_count = await db.kinds.count()
-
     data = await paginate(
         db.indexes,
         {},
@@ -28,14 +24,16 @@ async def find(req):
     )
 
     for document in data["documents"]:
+        modified_kind_count, change_count = await virtool.db.indexes.get_modification_stats(db, document["id"])
+
         document.update({
-            "modified_kind_count": len(await db.history.distinct("kind.id", {"index.id": document["id"]})),
-            "modification_count": await db.history.count({"index.id": document["id"]})
+            "modified_kind_count": modified_kind_count,
+            "change_count": change_count
         })
 
     data.update({
-        "modified_kind_count": unbuilt_modified_kind_count,
-        "total_kind_count": total_kind_count
+        "unbuilt_change_count": len(await db.history.distinct("kind.id", {"index.id": "unbuilt"})),
+        "total_kind_count": await db.kinds.count()
     })
 
     return json_response(data)
@@ -48,61 +46,23 @@ async def get(req):
     """
     db = req.app["db"]
 
-    index_id_or_version = req.match_info["index_id_or_version"]
-
-    try:
-        document = await db.indexes.find_one({"version": int(index_id_or_version)})
-    except ValueError:
-        document = await db.indexes.find_one(index_id_or_version)
+    document = await virtool.db.indexes.get_index(db, req.match_info["index_id_or_version"])
 
     if not document:
         return not_found()
 
     document = virtool.utils.base_processor(document)
 
-    contributors = await db.history.aggregate([
-        {"$match": {
-            "index.id": document["id"]
-        }},
-        {"$group": {
-            "_id": "$user.id",
-            "count": {"$sum": 1}
-        }}
-    ]).to_list(None)
+    document["contributors"] = await virtool.db.indexes.get_contributors(db, document["id"])
 
-    document["contributors"] = [{"id": c["_id"], "count": c["count"]} for c in contributors]
-
-    kinds = await db.history.aggregate([
-        {"$match": {
-            "index.id": document["id"]
-        }},
-        {"$sort": {
-            "kind.id": 1,
-            "kind.version": -1
-        }},
-        {"$group": {
-            "_id": "$kind.id",
-            "name": {"$first": "$kind.name"},
-            "count": {"$sum": 1}
-        }},
-        {"$match": {
-            "name": {"$ne": None}
-        }},
-        {"$sort": {
-            "name": 1
-        }}
-    ]).to_list(None)
-
-    document["kinds"] = [{"id": v["_id"], "name": v["name"], "change_count": v["count"]} for v in kinds]
-
-    document["change_count"] = sum(v["count"] for v in kinds)
+    document["change_count"] = sum(v["count"] for v in document["kinds"])
 
     return json_response(document)
 
 
 async def create(req):
     """
-    Starts a job to rebuild the kindes Bowtie2 index on disk. Does a check to make sure there are no unverified
+    Starts a job to rebuild the kinds Bowtie2 index on disk. Does a check to make sure there are no unverified
     kinds in the collection and updates kind history to show the version and id of the new index.
 
     """
@@ -120,24 +80,20 @@ async def create(req):
         return bad_request("There are no unbuilt changes")
 
     index_id = await virtool.utils.get_new_id(db.indexes)
-    index_version = await db.indexes.find({"ref.id": ref_id, "ready": True}).count()
+
+    index_version = await virtool.db.indexes.get_next_version(db, ref_id)
 
     user_id = req["client"].user_id
 
     job_id = await virtool.utils.get_new_id(db.jobs)
 
-    # Generate a dict of kind document version numbers keyed by the document id. We use this to make sure only changes
-    # made at the time the index rebuild was started are
-    manifest = dict()
+    manifest = await virtool.db.indexes.create_manifest(db, ref_id)
 
-    async for document in db.kinds.find({}, ["version"]):
-        manifest[document["_id"]] = document["version"]
-
-    await db.indexes.insert_one({
+    document = {
         "_id": index_id,
         "version": index_version,
         "created_at": virtool.utils.timestamp(),
-        "manifest": manifest,
+        "manifest": await virtool.db.indexes.create_manifest(db, ref_id),
         "ready": False,
         "has_files": True,
         "job": {
@@ -149,17 +105,9 @@ async def create(req):
         "user": {
             "id": user_id
         }
-    })
+    }
 
-    # Update all history entries with no index_version to the new index version.
-    await db.history.update_many({"index.id": "unbuilt"}, {
-        "$set": {
-            "index": {
-                "id": index_id,
-                "version": index_version
-            }
-        }
-    })
+    await db.indexes.insert_one(document)
 
     # A dict of task_args for the rebuild job.
     task_args = {
@@ -173,8 +121,6 @@ async def create(req):
     # Start the job.
     await req.app["job_manager"].new("rebuild_index", task_args, user_id, job_id=job_id)
 
-    document = await db.indexes.find_one(index_id)
-
     headers = {
         "Location": "/api/indexes/" + index_id
     }
@@ -183,14 +129,13 @@ async def create(req):
 
 
 async def find_history(req):
+    """
+    Find history changes for a specific index.
+
+    """
     db = req.app["db"]
 
-    index_id_or_version = req.match_info["index_id_or_version"]
-
-    try:
-        document = await db.indexes.find_one({"version": int(index_id_or_version)}, ["_id"])
-    except ValueError:
-        document = await db.indexes.find_one(index_id_or_version, ["_id"])
+    document = await virtool.db.indexes.get_index(db, req.match_info["index_id_or_version"], projection=["_id"])
 
     if not document:
         return not_found()

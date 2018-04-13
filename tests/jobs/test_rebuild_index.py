@@ -211,3 +211,14 @@ async def test_cleanup(test_motor, test_rebuild_job):
     assert not await test_motor.indexes.count()
 
     assert await test_motor.history.count({"index.id": "unbuilt", "index.version": "unbuilt"}) == 2
+
+
+def test_remove_unused_index_files(tmpdir):
+    for path in ["anb763hj", "hd7hd902", "ab2c9081"]:
+        tmpdir.mkdir(path).join("test.fa")
+
+    base_path = str(tmpdir)
+
+    virtool.jobs.build_index.remove_unused_index_files(base_path, ["anb763hj"])
+
+    assert set(os.listdir(base_path)) == {"anb763hj"}
