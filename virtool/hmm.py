@@ -21,6 +21,10 @@ PROJECTION = [
 LATEST_RELEASE_URL = "https://api.github.com/repos/virtool/virtool-hmm/releases/latest"
 
 
+def file_exists(data_path):
+    return os.path.isfile(os.path.join(data_path, "hmm", "profiles.hmm"))
+
+
 async def get_referenced_hmm_ids(db):
     """
     Returns a list of HMM document ids that are referenced in analyses documents.

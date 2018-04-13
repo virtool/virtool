@@ -1,8 +1,6 @@
 import asyncio
-import os
 
-import pymongo
-
+import virtool.db.hmm
 import virtool.hmm
 import virtool.utils
 from virtool.api.utils import compose_regex_query, json_response, not_found, paginate, protected
@@ -32,9 +30,7 @@ async def find(req):
         base_query={"hidden": False}
     )
 
-    profiles_path = os.path.join(req.app["settings"].get("data_path"), "hmm", "profiles.hmm")
-
-    data["file_exists"] = os.path.isfile(profiles_path)
+    data["file_exists"] = virtool.hmm.file_exists(req.app["settings"].get("data_path"))
 
     return json_response(data)
 
@@ -46,47 +42,31 @@ async def get(req):
     """
     document = await req.app["db"].hmm.find_one({"_id": req.match_info["hmm_id"]})
 
-    if document:
-        return json_response(virtool.utils.base_processor(document))
+    if document is None:
+        return not_found()
 
-    return not_found()
+    return json_response(virtool.utils.base_processor(document))
 
 
 async def get_install(req):
-    db = req.app["db"]
+    """
+    Get the HMM install document. Create one first if none exists.
 
-    document = await db.status.find_one({"_id": "hmm_install"})
-
-    if not document:
-        document = {
-            "_id": "hmm_install",
-            "download_size": None,
-            "ready": False,
-            "process": {
-                "progress": 0,
-                "step": "check_github"
-            }
-        }
-
-        await db.status.insert_one(document)
+    """
+    document = await virtool.db.hmm.find_and_ensure_install(req.app["db"])
 
     return json_response(virtool.utils.base_processor(document))
 
 
 @protected("modify_hmm")
 async def install(req):
+    """
+    Install the official HMM database from GitHub.
+
+    """
     db = req.app["db"]
 
-    document = await db.status.find_one_and_update({"_id": "hmm_install"}, {
-        "$set": {
-            "download_size": None,
-            "ready": False,
-            "process": {
-                "progress": 0,
-                "step": "check_github"
-            }
-        }
-    }, return_document=pymongo.ReturnDocument.AFTER, upsert=True)
+    document = await virtool.db.hmm.find_and_ensure_install(req.app["db"], reset=True)
 
     asyncio.ensure_future(virtool.hmm.install_official(
         req.app.loop,
