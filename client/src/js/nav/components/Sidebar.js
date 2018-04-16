@@ -20,6 +20,8 @@ const isHomeActive = (location) => {
         activeTab = "Subtraction";
     } else if (startsWith(location.pathname, "/administration")) {
         activeTab = "Administration";
+    } else if (startsWith(location.pathname, "/hmm")) {
+        activeTab = "HMM";
     }
 
     return activeTab;
@@ -38,7 +40,7 @@ const Sidebar = (props) => {
                     <LinkContainer to="/jobs">
                         <NavItem className="sidebar-item">
                             <Icon name="menu" />
-                            <div>Jobs List</div>
+                            <div>List</div>
                         </NavItem>
                     </LinkContainer>
                     <LinkContainer to="/jobs/resources">
@@ -50,7 +52,7 @@ const Sidebar = (props) => {
                     <LinkContainer to="/jobs/settings">
                         <NavItem className="sidebar-item">
                             <Icon name="cog" />
-                            <div>Limit Settings</div>
+                            <div>Settings</div>
                         </NavItem>
                     </LinkContainer>
                 </Nav>
@@ -62,7 +64,7 @@ const Sidebar = (props) => {
                     <LinkContainer to="/samples">
                         <NavItem className="sidebar-item">
                             <Icon name="menu" />
-                            <div>Samples List</div>
+                            <div>List</div>
                         </NavItem>
                     </LinkContainer>
                     <LinkContainer to="/samples/files">
@@ -74,7 +76,7 @@ const Sidebar = (props) => {
                     <LinkContainer to="/samples/settings">
                         <NavItem className="sidebar-item">
                             <Icon name="cog" />
-                            <div>Sample Settings</div>
+                            <div>Settings</div>
                         </NavItem>
                     </LinkContainer>
                 </Nav>
@@ -86,7 +88,7 @@ const Sidebar = (props) => {
                     <LinkContainer to="/viruses">
                         <NavItem className="sidebar-item">
                             <Icon name="menu" />
-                            <div>Viruses List</div>
+                            <div>List</div>
                         </NavItem>
                     </LinkContainer>
                     <LinkContainer to="/viruses/indexes">
@@ -98,7 +100,7 @@ const Sidebar = (props) => {
                     <LinkContainer to="/viruses/settings">
                         <NavItem className="sidebar-item">
                             <Icon name="cog" />
-                            <div>Virus Settings</div>
+                            <div>Settings</div>
                         </NavItem>
                     </LinkContainer>
                 </Nav>
@@ -110,7 +112,7 @@ const Sidebar = (props) => {
                     <LinkContainer to="/subtraction">
                         <NavItem className="sidebar-item">
                             <Icon name="menu" />
-                            <div>Subtraction List</div>
+                            <div>List</div>
                         </NavItem>
                     </LinkContainer>
                     <LinkContainer to="/subtraction/files">
@@ -156,6 +158,18 @@ const Sidebar = (props) => {
                     </Nav>
                 ) : <Nav className="sidebar" />;
             break;
+        case "HMM":
+            sidebarComponents = (             
+                <Nav className="sidebar">
+                    <LinkContainer to="/hmm">
+                        <NavItem className="sidebar-item">
+                            <Icon name="menu" />
+                            <div>List</div>
+                        </NavItem>
+                    </LinkContainer>
+                </Nav>
+            );
+    break;
         default:
             sidebarComponents = <Nav className="sidebar" />;
     }
