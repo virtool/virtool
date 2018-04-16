@@ -2,6 +2,7 @@ import os
 
 import virtool.db.jobs
 import virtool.jobs.job
+import virtool.jobs.utils
 import virtool.utils
 from virtool.api.utils import compose_regex_query, bad_request, json_response, no_content, not_found, paginate, \
     protected
@@ -64,7 +65,7 @@ async def cancel(req):
     if not document:
         return not_found()
 
-    if not document["status"][-1]["state"] in ["waiting", "running"]:
+    if not virtool.jobs.utils.is_running_or_waiting(document):
         return bad_request("Not cancellable")
 
     await req.app["job_manager"].cancel(job_id)
@@ -89,9 +90,7 @@ async def remove(req):
     if not document:
         return not_found()
 
-    latest_state = document["status"][-1]["state"]
-
-    if latest_state in ["running", "waiting"]:
+    if virtool.jobs.utils.is_running_or_waiting(document):
         return json_response({
             "id": "conflict",
             "message": "Job is running or waiting and cannot be removed"
@@ -114,35 +113,15 @@ async def remove(req):
 async def clear(req):
     db = req.app["db"]
 
-    query = None
+    path = req.path
 
-    if req.path == "/api/jobs" or req.path == "/api/jobs/finished":
-        query = {
-            "$or": [
-                {"status.state": "error"},
-                {"status.state": "cancelled"},
-                {"status.state": "complete"}
-            ]
-        }
+    # Remove jobs that completed successfully.
+    complete = path == "/api/jobs" or path == "/api/jobs/finished" or path == "/api/jobs/complete"
 
-    if req.path == "/api/jobs/complete":
-        query = {
-            "status.state": "complete"
-        }
+    # Remove jobs that errored or were cancelled.
+    failed = path == "/api/jobs" or path == "/api/jobs/finished" or path == "/api/jobs/failed"
 
-    if req.path == "/api/jobs/failed":
-        query = {
-            "$or": [
-                {"status.state": "error"},
-                {"status.state": "cancelled"}
-            ]
-        }
-
-    removed = list()
-
-    if query is not None:
-        removed = await db.jobs.find(query).distinct("_id")
-        await db.jobs.delete_many(query)
+    removed = await virtool.db.jobs.clear(db, complete=complete, failed=failed)
 
     return json_response({
         "removed": removed

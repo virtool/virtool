@@ -1,5 +1,14 @@
 import virtool.utils
 
+OR_COMPLETE = [
+    {"status.state": "complete"}
+]
+
+OR_FAILED = [
+    {"status.state": "error"},
+    {"status.state": "cancelled"}
+]
+
 LIST_PROJECTION = [
     "_id",
     "task",
@@ -8,6 +17,30 @@ LIST_PROJECTION = [
     "mem",
     "user"
 ]
+
+
+async def clear(db, complete=False, failed=False):
+    or_list = list()
+
+    if complete:
+        or_list = OR_COMPLETE
+
+    if failed:
+        or_list = [*or_list, OR_FAILED]
+
+    removed = list()
+
+    if len(or_list):
+        query = {
+            "_id": {
+                "$in": or_list
+            }
+        }
+
+        removed = await db.jobs.find(query).distinct("_id")
+        await db.jobs.delete_many(query)
+
+    return removed
 
 
 async def get_waiting_and_running_ids(db):
