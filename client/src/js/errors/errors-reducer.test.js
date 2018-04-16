@@ -39,6 +39,17 @@ describe("Errors Reducer", () => {
         expect(result).toBe(null);
     });
 
+    it("should return the given state on other action types", () => {
+        state = {};
+        action = {
+            type: "UNHANDLED_ACTION"
+        };
+        result = reducer(state, action);
+        expected = state;
+
+        expect(result).toEqual(expected);
+    });
+
     it("should handle target _FAILED actions", () => {
         state = {};
         action = {

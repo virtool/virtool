@@ -32,7 +32,7 @@ const initialState = {
  * @param state {object}
  * @returns {object}
  */
-const checkUploadsComplete = (state) => ({
+export const checkUploadsComplete = (state) => ({
     ...state,
     uploadsComplete: every(state.uploads, {progress: 100})
 });

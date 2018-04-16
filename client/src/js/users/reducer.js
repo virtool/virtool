@@ -9,20 +9,18 @@ import {
     REMOVE_USER_FROM_GROUP
 } from "../actionTypes";
 
-const initialState = {
+export const initialState = {
     list: null,
     filter: "",
-    createPending: false,
-    createError: null
+    createPending: false
 };
 
-const updateUser = (state, update) => ({
+export const updateUser = (state, update) => ({
     ...state,
     list: map(state.list, user => {
         if (user.id === update.id) {
             return {...user, ...update};
         }
-
         return user;
     })
 });
@@ -51,14 +49,14 @@ const reducer = (state = initialState, action) => {
             return updateUser(state, {groups: action.data, id: action.id});
 
         case CREATE_USER.REQUESTED:
-            return {...state, createPending: true, createError: null};
+            return {...state, createPending: true};
 
         case CREATE_USER.FAILED:
-            return {...state, createPending: false, createError: action.error};
+            return {...state, createPending: false};
 
         case EDIT_USER.REQUESTED: {
             if (action.update.password) {
-                return updateUser(state, {passwordPending: true, passwordError: null});
+                return {...state, passwordPending: true};
             }
 
             return state;

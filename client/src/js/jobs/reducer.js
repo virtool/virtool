@@ -1,13 +1,13 @@
 import { map, reject } from "lodash-es";
 import { WS_UPDATE_JOB, WS_REMOVE_JOB, FIND_JOBS, GET_JOB, CANCEL_JOB, GET_RESOURCES } from "../actionTypes";
 
-const initialState = {
+export const initialState = {
     documents: null,
     detail: null,
     resources: null
 };
 
-const updateJob = (state, action) => ({
+export const updateJob = (state, action) => ({
     ...state,
     documents: map(state.documents, doc => doc.id === action.data.id ? {...doc, ...action.data} : doc)
 });

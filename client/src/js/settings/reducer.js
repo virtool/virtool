@@ -1,6 +1,6 @@
 import { GET_CONTROL_READAHEAD, GET_SETTINGS, TEST_PROXY, UPDATE_SETTINGS } from "../actionTypes";
 
-const initialState = {
+export const initialState = {
     data: null,
     readahead: null,
     readaheadPending: false,
@@ -9,7 +9,7 @@ const initialState = {
     proxyTestFailed: false
 };
 
-const proxyTestClear = {
+export const proxyTestClear = {
     proxyTestPending: false,
     proxyTestSucceeded: false,
     proxyTestFailed: false
