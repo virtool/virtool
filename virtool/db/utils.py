@@ -1,16 +1,38 @@
-async def id_exists(collection, _id):
+from virtool.utils import random_alphanumeric
+
+
+def apply_projection(document, projection):
     """
-    Check if the document id exists in the collection.
+    Apply a Mongo-style projection to a document and return it.
 
-    :param collection: a Motor collection object
+    :param document: the document to project
+    :type document: dict
 
-    :param _id: the _id to check for
-    :type _id: str
+    :param projection: the projection to apply
+    :type projection: Union[dict,list]
 
-    :return: ``bool`` indicating if the user exists
+    :return: the projected document
+    :rtype: dict
 
     """
-    return bool(await collection.count({"_id": _id}))
+    if isinstance(projection, list):
+        if "_id" not in projection:
+            projection.append("_id")
+
+        return {key: document[key] for key in projection}
+
+    if not isinstance(projection, dict):
+        raise TypeError("Invalid type for projection: {}".format(type(projection)))
+
+    if projection == {"_id": False}:
+        return {key: document[key] for key in document if key != "_id"}
+
+    if "_id" not in projection:
+        projection["_id"] = True
+
+    return {key: document[key] for key in document if projection.get(key, False)}
+
+
 async def get_new_id(collection, excluded=None):
     """
     Returns a new, unique, id that can be used for inserting a new document. Will not return any id that is included
@@ -38,5 +60,18 @@ async def get_non_existent_ids(collection, id_list):
     return set(id_list) - set(existing_group_ids)
 
 
+async def id_exists(collection, _id):
+    """
+    Check if the document id exists in the collection.
 
+    :param collection: the Mongo collection to check the _id against
+    :type collection: :class:`motor.motor_asyncio.AsyncIOMotorCollection`
 
+    :param _id: the _id to check for
+    :type _id: str
+
+    :return: ``bool`` indicating if the user exists
+    :rtype: bool
+
+    """
+    return bool(await collection.count({"_id": _id}))
