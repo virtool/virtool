@@ -5,6 +5,7 @@ import pymongo
 import pymongo.errors
 
 import virtool.db.subtractions
+import virtool.db.utils
 import virtool.samples
 import virtool.subtraction
 import virtool.utils
@@ -87,7 +88,7 @@ async def create(req):
     if file is None:
         return not_found("File not found")
 
-    job_id = await virtool.utils.get_new_id(db.jobs)
+    job_id = await virtool.db.utils.get_new_id(db.jobs)
 
     user_id = req["client"].user_id
 

@@ -6,6 +6,7 @@ import virtool.bio
 import virtool.db.history
 import virtool.db.indexes
 import virtool.db.samples
+import virtool.db.utils
 import virtool.utils
 
 
@@ -146,9 +147,9 @@ async def new(db, settings, manager, sample_id, ref_id, user_id, algorithm):
 
     sample = await db.samples.find_one(sample_id, ["name"])
 
-    analysis_id = await virtool.utils.get_new_id(db.analyses)
+    analysis_id = await virtool.db.utils.get_new_id(db.analyses)
 
-    job_id = await virtool.utils.get_new_id(db.jobs)
+    job_id = await virtool.db.utils.get_new_id(db.jobs)
 
     document = {
         "_id": analysis_id,

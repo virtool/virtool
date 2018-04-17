@@ -2,6 +2,7 @@ import asyncio
 from concurrent.futures import ProcessPoolExecutor
 
 import virtool.db.jobs
+import virtool.db.utils
 import virtool.errors
 import virtool.jobs.classes
 import virtool.jobs.job
@@ -90,7 +91,7 @@ class Manager:
 
     async def new(self, task_name, task_args, user_id, job_id=None):
 
-        job_id = job_id or await virtool.utils.get_new_id(self.db.jobs)
+        job_id = job_id or await virtool.db.utils.get_new_id(self.db.jobs)
 
         proc = self.settings.get("{}_proc".format(task_name))
         mem = self.settings.get("{}_mem".format(task_name))

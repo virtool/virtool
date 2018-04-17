@@ -1,4 +1,5 @@
 import virtool.db.refs
+import virtool.db.utils
 import virtool.refs
 import virtool.users
 import virtool.utils
@@ -90,7 +91,7 @@ async def organize_references(db):
 async def organize_sequences(db):
     async for document in db.sequences.find(REF_QUERY):
         document.update({
-            "_id": await virtool.utils.get_new_id(db.sequences),
+            "_id": await virtool.db.utils.get_new_id(db.sequences),
             "accession": document["_id"],
             "ref": {
                 "id": "original"

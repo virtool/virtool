@@ -113,7 +113,7 @@ async def create(req):
     if message:
         return conflict(message)
 
-    virus_id = await virtool.utils.get_new_id(db.viruses)
+    virus_id = await virtool.db.utils.get_new_id(db.viruses)
 
     # Start building a virus document.
     data.update({

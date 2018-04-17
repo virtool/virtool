@@ -3,6 +3,7 @@ import os
 
 import arrow
 
+import virtool.db.utils
 import virtool.utils
 
 logger = logging.getLogger(__name__)
@@ -24,7 +25,7 @@ async def create(db, dispatch, filename, file_type, user_id=None):
     file_id = None
 
     while file_id is None or file_id in await db.files.distinct("_id"):
-        file_id = "{}-{}".format(await virtool.utils.get_new_id(db.files), filename)
+        file_id = "{}-{}".format(await virtool.db.utils.get_new_id(db.files), filename)
 
     uploaded_at = virtool.utils.timestamp()
 

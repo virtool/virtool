@@ -6,6 +6,7 @@ from pymongo import ReturnDocument
 import virtool.db.analyses
 import virtool.db.files
 import virtool.db.samples
+import virtool.db.utils
 import virtool.jobs.analysis
 import virtool.samples
 import virtool.utils
@@ -124,7 +125,7 @@ async def create(req):
     if await db.files.count({"_id": {"$in": data["files"]}}) != len(data["files"]):
         return not_found("File id does not exist")
 
-    sample_id = await virtool.utils.get_new_id(db.samples)
+    sample_id = await virtool.db.utils.get_new_id(db.samples)
 
     user_id = req["client"].user_id
 

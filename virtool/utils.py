@@ -114,21 +114,6 @@ def average_list(list1, list2):
     return [(value + list2[i]) / 2 for i, value in enumerate(list1)]
 
 
-async def get_new_id(collection, excluded=None):
-    """
-    Returns a new, unique, id that can be used for inserting a new document. Will not return any id that is included
-    in ``excluded``.
-
-    """
-    excluded = excluded or list()
-
-    excluded += await collection.distinct("_id")
-
-    excluded = list(set(excluded))
-
-    return random_alphanumeric(length=8, excluded=excluded)
-
-
 def coerce_list(obj):
     """
     Takes an object of any type and returns a list. If ``obj`` is a list it will be passed back with modification.

@@ -3,6 +3,7 @@ from pymongo import ReturnDocument
 
 import virtool.db
 import virtool.db.kinds
+import virtool.db.utils
 import virtool.errors
 import virtool.kinds
 import virtool.refs
@@ -32,7 +33,7 @@ async def clone(db, name, user_id, source_id):
 
     async for source_virus in db.targets.find({"_id": source["_id"]}):
         source_virus.update({
-            "_id": await virtool.utils.get_new_id("targets"),
+            "_id": await virtool.db.utils.get_new_id("targets"),
             "version": 0,
             "created_at": created_at,
             "ref": {
@@ -48,7 +49,7 @@ async def create(db, name, organism, user_id=None, cloned_from=None, created_at=
     if await db.references.count({"_id": ref_id}):
         raise virtool.errors.DatabaseError("ref_id already exists")
 
-    ref_id = ref_id or await virtool.utils.get_new_id(db.viruses)
+    ref_id = ref_id or await virtool.db.utils.get_new_id(db.viruses)
 
     user = None
 

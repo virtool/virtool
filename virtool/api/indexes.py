@@ -1,5 +1,6 @@
 import virtool.db.history
 import virtool.db.indexes
+import virtool.db.utils
 import virtool.history
 import virtool.jobs.build_index
 import virtool.utils
@@ -79,13 +80,13 @@ async def create(req):
     if not await db.history.count({"ref.id": ref_id, "index.id": "unbuilt"}):
         return bad_request("There are no unbuilt changes")
 
-    index_id = await virtool.utils.get_new_id(db.indexes)
+    index_id = await virtool.db.utils.get_new_id(db.indexes)
 
     index_version = await virtool.db.indexes.get_next_version(db, ref_id)
 
     user_id = req["client"].user_id
 
-    job_id = await virtool.utils.get_new_id(db.jobs)
+    job_id = await virtool.db.utils.get_new_id(db.jobs)
 
     manifest = await virtool.db.indexes.create_manifest(db, ref_id)
 
