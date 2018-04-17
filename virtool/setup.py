@@ -289,6 +289,7 @@ async def save_and_reload(req):
         "_id": req.app["setup"]["first_user_id"],
         # A list of group _ids the user is associated with.
         "administrator": True,
+        "groups": list(),
         "settings": {
             "skip_quick_analyze_dialog": True,
             "show_ids": False,
