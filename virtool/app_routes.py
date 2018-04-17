@@ -77,7 +77,7 @@ def setup_routes(app):
     setup_file_routes(app)
     setup_files_routes(app)
     setup_jobs_routes(app)
-    setup_kinds_routes(app)
+    setup_kind_routes(app)
     setup_genbank_routes(app)
     setup_groups_routes(app)
     setup_history_routes(app)

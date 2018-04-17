@@ -10,7 +10,7 @@ from virtool.api.utils import conflict, json_response, protected, validation
 
 
 async def get(req):
-    return json_response(req.app["settings"])
+    return json_response(req.app["settings"].data)
 
 
 @validation(virtool.app_settings.SCHEMA)
