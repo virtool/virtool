@@ -136,7 +136,7 @@ async def format_pathoscope(db, document):
     return document
 
 
-async def new(db, settings, manager, sample_id, ref_id, user_id, algorithm):
+async def new(db, manager, sample_id, ref_id, user_id, algorithm):
     """
     Creates a new analysis. Ensures that a valid subtraction host was the submitted. Configures read and write
     permissions on the sample document and assigns it a creator username based on the requesting connection.

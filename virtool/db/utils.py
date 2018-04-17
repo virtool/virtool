@@ -55,6 +55,15 @@ async def get_new_id(collection, excluded=None):
     return random_alphanumeric(length=8, excluded=list(excluded))
 
 
+async def get_one_field(collection, field, query):
+    projected = await collection.find_one(query, [field])
+
+    if projected is None:
+        return None
+
+    return projected[field]
+
+
 async def get_non_existent_ids(collection, id_list):
     existing_group_ids = await collection.distinct("_id", {"_id": {"$in": id_list}})
     return set(id_list) - set(existing_group_ids)

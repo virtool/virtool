@@ -2,6 +2,7 @@ import os
 
 import pymongo
 
+import virtool.errors
 import virtool.utils
 import virtool.samples
 
@@ -22,6 +23,17 @@ async def check_name(db, settings, name, sample_id=None):
             return "Sample name is already in use"
 
     return None
+
+
+async def check_rights(db, sample_id, client, write=True):
+    sample_rights = await db.samples.find_one({"_id": sample_id}, virtool.samples.RIGHTS_PROJECTION)
+
+    if not sample_rights:
+        raise virtool.errors.DatabaseError("Sample does not exist")
+
+    has_read, has_write = virtool.samples.get_sample_rights(sample_rights, client)
+
+    return has_read and (write is False or has_write)
 
 
 async def get_sample_owner(db, sample_id: str):
@@ -111,3 +123,14 @@ async def remove_samples(db, settings, id_list):
             pass
 
     return result
+
+
+async def validate_force_choice_group(db, data):
+    try:
+        if not await db.groups.count({"_id": data["group"]}):
+            return "Group not found"
+
+    except KeyError:
+        return "Server requires a 'group' field for sample creation"
+
+    return None

@@ -34,13 +34,10 @@ async def find(req):
 
     rights_filter = [
         # The requesting user is the sample owner
-        {
-            "user.id": req["client"].user_id
-        },
+        {"user.id": req["client"].user_id},
+
         # The sample rights allow all users to view the sample.
-        {
-            "all_read": True
-        }
+        {"all_read": True}
     ]
 
     if req["client"].groups:
@@ -104,41 +101,38 @@ async def get(req):
 async def create(req):
     db = req.app["db"]
     data = req["data"]
+    user_id = req["client"].user_id
+    settings = req.app["settings"]
 
-    message = await virtool.db.samples.check_name(db, req.app["settings"], data["name"])
+    name_error_message = await virtool.db.samples.check_name(db, req.app["settings"], data["name"])
 
-    if message:
-        return conflict(message)
-
-    if req.app["settings"].get("sample_group") == "force_choice":
-        try:
-            if not await db.groups.count({"_id": data["group"]}):
-                return not_found("Group not found")
-        except KeyError:
-            return bad_request("Server requires a 'group' field for sample creation")
+    if name_error_message:
+        return conflict(name_error_message)
 
     # Make sure a subtraction host was submitted and it exists.
     if data["subtraction"] not in await db.subtraction.find({"is_host": True}).distinct("_id"):
         return not_found("Subtraction not found")
 
     # Make sure all of the passed file ids exist.
-    if await db.files.count({"_id": {"$in": data["files"]}}) != len(data["files"]):
+    if not await virtool.db.utils.ids_exist(db.files, data["files"]):
         return not_found("File id does not exist")
 
     sample_id = await virtool.db.utils.get_new_id(db.samples)
 
-    user_id = req["client"].user_id
-
-    document = deepcopy(data)
-
-    settings = req.app["settings"]
+    document = data
 
     sample_group_setting = settings.get("sample_group")
 
-    # Assign the user"s primary group as the sample owner group if the ``sample_group`` settings is
-    # ``users_primary_group``.
-    if sample_group_setting == "users_primary_group":
-        document["group"] = (await db.users.find_one(user_id, ["primary_group"]))["primary_group"]
+    # Require a valid ``group`` field if the ``sample_group`` setting is ``users_primary_group``.
+    if sample_group_setting == "force_choice":
+        force_choice_error_message = await virtool.db.samples.validate_force_choice_group(db, data)
+
+        if force_choice_error_message:
+            return json_response(force_choice_error_message)
+
+    # Assign the user"s primary group as the sample owner group if the setting is ``users_primary_group``.
+    elif sample_group_setting == "users_primary_group":
+        document["group"] = await virtool.db.utils.get_one_field(db.users, user_id, "primary_group")
 
     # Make the owner group none if the setting is none.
     elif sample_group_setting == "none":
@@ -201,14 +195,7 @@ async def edit(req):
 
     sample_id = req.match_info["sample_id"]
 
-    sample_rights = await db.samples.find_one({"_id": sample_id}, virtool.samples.RIGHTS_PROJECTION)
-
-    if not sample_rights:
-        return not_found()
-
-    read, write = virtool.samples.get_sample_rights(sample_rights, req["client"])
-
-    if not read or not write:
+    if not await virtool.db.samples.check_rights(db, sample_id, req["client"]):
         return insufficient_rights()
 
     message = await virtool.db.samples.check_name(db, req.app["settings"], data["name"], sample_id=sample_id)
@@ -250,22 +237,23 @@ async def set_rights(req):
     user_id = req["client"].user_id
 
     # Only update the document if the connected user owns the samples or is an administrator.
-    if req["client"].administrator or user_id == await virtool.db.samples.get_sample_owner(db, sample_id):
-        if "group" in data:
-            existing_group_ids = await db.groups.distinct("_id")
-            existing_group_ids.append("none")
+    if not req["client"].administrator or user_id != await virtool.db.samples.get_sample_owner(db, sample_id):
+        return insufficient_rights("Must be administrator or sample owner")
 
-            if data["group"] not in existing_group_ids:
-                return not_found("Group does not exist")
+    group = data.get("group", None)
 
-        # Update the sample document with the new rights.
-        document = await db.samples.find_one_and_update({"_id": sample_id}, {
-            "$set": data
-        }, return_document=ReturnDocument.AFTER, projection=virtool.samples.RIGHTS_PROJECTION)
+    if group:
+        existing_group_ids = await db.groups.distinct("_id") + ["none"]
 
-        return json_response(document)
+        if group not in existing_group_ids:
+            return not_found("Group does not exist")
 
-    return insufficient_rights("Must be administrator or sample owner")
+    # Update the sample document with the new rights.
+    document = await db.samples.find_one_and_update({"_id": sample_id}, {
+        "$set": data
+    }, return_document=ReturnDocument.AFTER, projection=virtool.samples.RIGHTS_PROJECTION)
+
+    return json_response(document)
 
 
 async def remove(req):
@@ -277,14 +265,7 @@ async def remove(req):
 
     sample_id = req.match_info["sample_id"]
 
-    sample_rights = await db.samples.find_one({"_id": sample_id}, virtool.samples.RIGHTS_PROJECTION)
-
-    if not sample_rights:
-        return not_found()
-
-    read, write = virtool.samples.get_sample_rights(sample_rights, req["client"])
-
-    if not read or not write:
+    if not await virtool.db.samples.check_rights(db, sample_id, req["client"]):
         return insufficient_rights()
 
     await virtool.db.samples.remove_samples(
@@ -305,14 +286,7 @@ async def list_analyses(req):
 
     sample_id = req.match_info["sample_id"]
 
-    sample_rights = await db.samples.find_one({"_id": sample_id}, virtool.samples.RIGHTS_PROJECTION)
-
-    if not sample_rights:
-        return not_found()
-
-    read, write = virtool.samples.get_sample_rights(sample_rights, req["client"])
-
-    if not read or not write:
+    if not await virtool.db.samples.check_rights(db, sample_id, req["client"], write=False):
         return insufficient_rights()
 
     documents = await db.analyses.find({"sample.id": sample_id}, virtool.jobs.analysis.LIST_PROJECTION).to_list(None)
@@ -324,7 +298,8 @@ async def list_analyses(req):
 
 
 @validation({
-    "algorithm": {"type": "string", "required": True, "allowed": ["pathoscope_bowtie", "nuvs"]}
+    "algorithm": {"type": "string", "required": True, "allowed": ["pathoscope_bowtie", "nuvs"]},
+    "ref_id": {"type": "string", "required": True}
 })
 async def analyze(req):
     """
@@ -336,25 +311,18 @@ async def analyze(req):
 
     sample_id = req.match_info["sample_id"]
 
-    sample_rights = await db.samples.find_one({"_id": sample_id}, virtool.samples.RIGHTS_PROJECTION)
-
-    if not sample_rights:
-        return not_found()
-
-    read, write = virtool.samples.get_sample_rights(sample_rights, req["client"])
-
-    if not read or not write:
+    if not await virtool.db.samples.check_rights(db, sample_id, req["client"]):
         return insufficient_rights()
 
-    if not await db.indexes.count({"ready": True}):
+    if not await db.indexes.count({"ref.id": "ref_id", "ready": True}):
         return not_found("Ready index not found")
 
     # Generate a unique _id for the analysis entry
     document = await virtool.db.analyses.new(
         db,
-        req.app["settings"],
         req.app["job_manager"],
         sample_id,
+        data["ref_id"],
         req["client"].user_id,
         data["algorithm"]
     )
